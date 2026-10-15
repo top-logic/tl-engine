@@ -569,8 +569,8 @@ public final class ConfigValidation {
 	 * </p>
 	 *
 	 * <p>
-	 * A polymorphic ITEM property renders a {@link PolymorphicItemControl}, whose type selector is a
-	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} the {@link ConfigFieldIndex}
+	 * A polymorphic ITEM property renders a {@link PolymorphicItemControl}, whose
+	 * {@link PolymorphicItemControl#getTypeModel() type selector field} the {@link ConfigFieldIndex}
 	 * does not carry either. Left unset, a mandatory one is nevertheless missing: it would be
 	 * written as an empty element the configuration cannot read back. The refusal lists it, so it
 	 * does not point at nothing, and the type selector carries the mandatory marker.

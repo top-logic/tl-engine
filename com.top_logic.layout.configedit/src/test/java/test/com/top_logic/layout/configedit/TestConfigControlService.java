@@ -38,9 +38,11 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.format.configured.FormatterService;
+import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigControl;
@@ -53,6 +55,8 @@ import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.configedit.DatePickerFormatProvider;
 import com.top_logic.layout.configedit.I18NStringFormatProvider;
 import com.top_logic.layout.form.format.ColorConfigFormat;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
@@ -66,7 +70,6 @@ import com.top_logic.layout.react.control.form.ReactColorInputControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.form.ReactIconSelectControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
@@ -1226,15 +1229,59 @@ public class TestConfigControlService extends TestCase {
 		assertTrue(control(TestConfig.RATIO) instanceof ReactNumberInputControl);
 	}
 
-	/** An enum property keeps the select. */
+	/** An enum property gets the dropdown select of model-based forms. */
 	public void testEnum() {
-		assertTrue(control(TestConfig.MODE) instanceof ReactSelectFormFieldControl);
+		assertTrue(control(TestConfig.MODE) instanceof ReactDropdownSelectControl);
 	}
 
-	/** A property with an options annotation gets a select, not a text input. */
+	/** A property with an options annotation gets the dropdown select, not a text input. */
 	public void testOptionsProperty() {
 		assertTrue("A property with options must be edited by selecting.",
-			control(TestConfig.COLOR) instanceof ReactSelectFormFieldControl);
+			control(TestConfig.COLOR) instanceof ReactDropdownSelectControl);
+	}
+
+	/**
+	 * Selecting an option of a single-valued enum property stores the enum constant itself, and an
+	 * empty selection is refused for the non-nullable property.
+	 *
+	 * <p>
+	 * The dropdown writes its selection as a list also where a single option is chosen, so the
+	 * selection goes through the control's own model exactly as the control hands it over.
+	 * </p>
+	 */
+	public void testSelectingAnEnumConstantStoresIt() {
+		ReactDropdownSelectControl control = (ReactDropdownSelectControl) control(TestConfig.MODE);
+		FieldModel model = control.getFieldModel();
+		assertEquals("The enum constants are the options.", Arrays.asList(TestConfig.Mode.values()),
+			((SelectFieldModel) model).getOptions());
+
+		model.setValue(Collections.singletonList(TestConfig.Mode.OFF));
+		assertSame("The selected enum constant is stored.", TestConfig.Mode.OFF, _config.getMode());
+		assertSame("The field shows the stored constant.", TestConfig.Mode.OFF, model.getValue());
+
+		model.setValue(Collections.emptyList());
+		assertSame("An empty selection leaves the non-nullable enum property unchanged.", TestConfig.Mode.OFF,
+			_config.getMode());
+		assertNotNull("The refused empty selection is reported as a field error.",
+			((ConfigFieldModel) model).getInputError());
+	}
+
+	/**
+	 * Selecting an option of a single-valued, identity-mapped {@code @Options} property stores the
+	 * option itself, and an empty selection clears it.
+	 */
+	public void testSelectingAnIdentityOptionStoresIt() {
+		ReactDropdownSelectControl control = (ReactDropdownSelectControl) control(TestConfig.COLOR);
+		FieldModel model = control.getFieldModel();
+
+		model.setValue(Collections.singletonList("green"));
+		assertEquals("The selected option is stored.", "green", _config.getColor());
+
+		model.setValue(Collections.emptyList());
+		String cleared = _config.getColor();
+		assertTrue("An empty selection clears the property, but was: " + cleared,
+			cleared == null || cleared.isEmpty());
+		assertNull("Clearing a String property is no error.", ((ConfigFieldModel) model).getInputError());
 	}
 
 	/**
@@ -1394,7 +1441,7 @@ public class TestConfigControlService extends TestCase {
 
 		ReactControl control = control(TestConfig.CLAIMED_WITH_OPTIONS);
 		assertTrue("An options property must get the select control.",
-			control instanceof ReactSelectFormFieldControl);
+			control instanceof ReactDropdownSelectControl);
 		assertFalse("The format mapping's date picker must not be reachable when @Options wins.",
 			control instanceof ReactDatePickerControl);
 	}
@@ -1634,8 +1681,8 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * The identity mapping changes nothing: the option is the stored value, and the plain select
-	 * (which knows an option by the text it carries) still edits it.
+	 * The identity mapping changes nothing: the option is the stored value, edited in the same
+	 * dropdown select as a mapped option.
 	 */
 	public void testAnIdentityMappingStoresTheOptionItself() {
 		ConfigFieldModel model = model(TestConfig.COLOR);
@@ -1646,8 +1693,8 @@ public class TestConfigControlService extends TestCase {
 		model.setValue("green");
 		assertEquals("The option itself is what is stored.", "green", _config.getColor());
 		assertEquals("green", model.getValue());
-		assertTrue("The plain select is enough for an option that is its own value.",
-			control(TestConfig.COLOR) instanceof ReactSelectFormFieldControl);
+		assertTrue("An option that is its own value is edited in the dropdown select.",
+			control(TestConfig.COLOR) instanceof ReactDropdownSelectControl);
 	}
 
 	/** Sets the named property of the given item, bypassing the need for a declared setter. */
@@ -1793,7 +1840,7 @@ public class TestConfigControlService extends TestCase {
 		assertTrue("An encrypted enum must be edited in a password field.",
 			control instanceof ReactPasswordInputControl);
 		assertFalse("An encrypted enum must not fall through to the select.",
-			control instanceof ReactSelectFormFieldControl);
+			control instanceof ReactDropdownSelectControl);
 	}
 
 	/**
@@ -1808,7 +1855,7 @@ public class TestConfigControlService extends TestCase {
 		assertTrue("An encrypted, optioned property must be edited in a password field.",
 			control instanceof ReactPasswordInputControl);
 		assertFalse("An encrypted, optioned property must not fall through to the select.",
-			control instanceof ReactSelectFormFieldControl);
+			control instanceof ReactDropdownSelectControl);
 	}
 
 	/**
@@ -1852,7 +1899,7 @@ public class TestConfigControlService extends TestCase {
 			ConfigPropertyOptions.optionProvider(property));
 
 		assertFalse("A plain class-valued property must not be edited by selecting.",
-			control(TestConfig.IMPL_TYPE) instanceof ReactSelectFormFieldControl);
+			control(TestConfig.IMPL_TYPE) instanceof ReactDropdownSelectControl);
 	}
 
 	/**
@@ -2120,6 +2167,7 @@ public class TestConfigControlService extends TestCase {
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestConfigControlService.class,
-				TypeIndex.Module.INSTANCE, FormatterService.Module.INSTANCE, ConfigControlService.Module.INSTANCE));
+				TypeIndex.Module.INSTANCE, FormatterService.Module.INSTANCE, MimeTypesModule.Module.INSTANCE, ThemeFactory.Module.INSTANCE,
+				ConfigControlService.Module.INSTANCE));
 	}
 }

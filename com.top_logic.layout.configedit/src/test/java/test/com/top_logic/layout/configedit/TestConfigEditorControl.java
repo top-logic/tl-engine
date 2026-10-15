@@ -76,6 +76,7 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -1748,9 +1749,9 @@ public class TestConfigEditorControl extends TestCase {
 	 * use, for instance, is left out of them. An entry that already has such a type must still show
 	 * it, and that takes two things: a key for a type nobody offers - which is why a key is the
 	 * type's name and not a position among the options - and a field that hands such a value to the
-	 * client along with its options, which is
-	 * {@link com.top_logic.layout.react.control.form.ReactSelectFormFieldControl}'s doing and tested
-	 * there. This is the first half: the value exists at all.
+	 * client along with its options, which is {@link ReactDropdownSelectControl}'s doing: it
+	 * describes every selected value, offered or not. This is the first half: the value exists at
+	 * all.
 	 * </p>
 	 */
 	public void testTheTypeInUseIsCarriedEvenWhenItIsNotAnOption() {
@@ -2504,6 +2505,35 @@ public class TestConfigEditorControl extends TestCase {
 		assertEquals("Handler should be HandlerBConfig",
 			HandlerBConfig.class, config.getHandler().descriptor().getConfigurationInterface());
 		assertNotNull("Should have a new nested editor", polyControl.getNestedEditor());
+	}
+
+	/**
+	 * The type selector of a polymorphic property is the dropdown select, and a type picked in it
+	 * - handed over as a selection list, the way the dropdown writes it - replaces the item.
+	 */
+	public void testPolymorphicTypeSelectorIsDropdown() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		HandlerAConfig handlerA = TypedConfiguration.newConfigItem(HandlerAConfig.class);
+		config.setHandler(handlerA);
+
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+		PolymorphicItemControl polyControl = findPolymorphicControl(editor);
+		assertNotNull("Should have PolymorphicItemControl", polyControl);
+
+		ReactDropdownSelectControl typeSelect = null;
+		for (ReactControl child : polyControl.scriptingChildren()) {
+			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
+				for (ReactControl field : child.scriptingChildren()) {
+					typeSelect = (ReactDropdownSelectControl) field;
+				}
+			}
+		}
+		assertNotNull("The type selector must be a dropdown select.", typeSelect);
+
+		typeSelect.getFieldModel().setValue(
+			Collections.singletonList(com.top_logic.layout.configedit.PolymorphicOptions.keyFor(HandlerB.class)));
+		assertEquals("The picked type must replace the item.",
+			HandlerBConfig.class, config.getHandler().descriptor().getConfigurationInterface());
 	}
 
 	/**

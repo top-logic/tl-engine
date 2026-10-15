@@ -18,11 +18,12 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.configedit.ConfigPendingEntries.PendingEntry;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
-import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.react.ReactContext;
@@ -33,12 +34,13 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.common.TextTone;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBorder;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.field.FixedOptionsFieldModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -704,8 +706,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * The entry's own type selector - a {@link SimpleSelectFieldModel}, disabled via
-	 * {@link SimpleSelectFieldModel#setEditable(boolean)} rather than left out while {@link #_editable}
+	 * The entry's own type selector - a {@link ReactDropdownSelectControl}, disabled via
+	 * {@link AbstractFieldModel#setEditable(boolean)} rather than left out while {@link #_editable}
 	 * is {@code false}, the same way {@link PolymorphicItemControl}'s top-level counterpart is: the
 	 * currently chosen type must stay legible to the reader even where it may not be changed.
 	 */
@@ -718,10 +720,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 		// Answers even for a type the options do not offer - an annotation not marked for in-app
 		// use, say - because a key is the type's name rather than a position among them. The field
-		// then carries a value none of its options names, and ReactSelectFormFieldControl adds it,
-		// the same way it does for every other select.
+		// then carries a value none of its options names, and ReactDropdownSelectControl displays
+		// it all the same, the way it does for every other select.
 		String currentKey = PolymorphicOptions.keyForItem(options, _choices.mapping(), item);
-		SimpleSelectFieldModel typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
+		AbstractFieldModel typeModel = new AbstractFieldModel(currentKey);
 		typeModel.setMandatory(true);
 		typeModel.setNullable(false);
 		// Where the type is the entry's key, it follows the key's rule: settled before the entry
@@ -748,8 +750,9 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 		});
 
-		ReactSelectFormFieldControl typeSelect =
-			new ReactSelectFormFieldControl(_context, typeModel, labelProvider);
+		ReactDropdownSelectControl typeSelect = new ReactDropdownSelectControl(_context,
+			new FixedOptionsFieldModel(typeModel, keys), labelProvider,
+			LabelComparator.newCachingInstance(labelProvider), false);
 		ReactFormFieldChromeControl result = new ReactFormFieldChromeControl(_context,
 			Resources.getInstance().getString(I18NConstants.TYPE_SELECTOR), false, false, null, null,
 			inHeader ? LabelPosition.HIDDEN : null, false, true, typeSelect);
@@ -804,7 +807,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	// stale or forged client message to reach them through. If a future change ever offers one of
 	// these operations through a control that stays rendered while !_editable (unlike every button
 	// here today), that control needs its own guard - the same lookup for the type selector is
-	// exactly why #createTypeSelector calls SimpleSelectFieldModel#setEditable(boolean) rather than
+	// exactly why #createTypeSelector calls AbstractFieldModel#setEditable(boolean) rather than
 	// omitting itself.
 
 	/**

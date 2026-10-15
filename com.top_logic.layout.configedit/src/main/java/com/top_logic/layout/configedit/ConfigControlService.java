@@ -41,7 +41,6 @@ import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.mig.html.HTMLFormatter;
@@ -70,9 +69,8 @@ import com.top_logic.mig.html.HTMLFormatter;
  * <li>An encrypted property always gets the password field, deliberately ahead of every other
  * step.</li>
  * <li>{@link ConfigControl} annotation on the property or on its value type.</li>
- * <li>A property edited by selecting from a fixed set of options gets a select - the plain one
- * where its options are the values it stores, and the dropdown addressing each option by an
- * identity of its own where they are not, or where more than one option is taken at a time.</li>
+ * <li>A property edited by selecting from a fixed set of options gets a searchable dropdown - the
+ * select model-based forms use - whether it takes one option or several.</li>
  * <li>The value-type-to-provider map configured in this service ({@link Config#getProviders()}).</li>
  * <li>The value-provider-to-provider map configured in this service ({@link Config#getFormats()}) -
  * claims a property whose {@link PropertyDescriptor#getValueProvider() value provider} (or one of
@@ -390,15 +388,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		// 3. Edited by selecting.
 		if (model instanceof ConfigSelectFieldModel selectModel) {
 			LabelProvider labels = selectLabels(selectModel.getFormModel(), property);
-			if (needsOptionIdentity(selectModel)) {
-				// Sorted by label rather than left in the order the option function produced, and
-				// without a custom order of the selection: an option list the user picks a type or
-				// a role from is read, and a list of a few hundred model parts is unreadable
-				// unordered.
-				return new ReactDropdownSelectControl(context, selectModel, labels,
-					LabelComparator.newCachingInstance(labels), false);
-			}
-			return new ReactSelectFormFieldControl(context, selectModel, labels);
+			// The control model-based forms use for every select: it addresses each option by an id
+			// of its own, so an option need not be the stored value nor have a text form, and it
+			// takes a multiple selection. The options are sorted by label, as in a model-based form,
+			// and the selection has no custom order.
+			return new ReactDropdownSelectControl(context, selectModel, labels,
+				LabelComparator.newCachingInstance(labels), false);
 		}
 
 		// 4. Configured provider by value type.
@@ -599,9 +594,9 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * that names one, and the {@link Fields#optionMapping(DerivedProperty) option mapping} declared
 	 * with the {@code @Options} annotation is the translation between the two. Such a property is
 	 * edited by selecting all the same: {@link ConfigSelectFieldModel} applies that mapping in both
-	 * directions, and the control such a model is paired with addresses an option by an identity of
-	 * its own instead of by the text {@link Object#toString()} would make of it - see
-	 * {@link #needsOptionIdentity(ConfigSelectFieldModel)}.
+	 * directions, and the {@link ReactDropdownSelectControl} such a model is paired with addresses
+	 * an option by an identity of its own instead of by the text {@link Object#toString()} would
+	 * make of it.
 	 * </p>
 	 *
 	 * @param optionProvider
@@ -667,32 +662,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 		OptionMapping mapping = Fields.optionMapping(optionProvider);
 		return mapping == null ? IdentityOptionMapping.INSTANCE : mapping;
-	}
-
-	/**
-	 * Whether the given select field needs a control that addresses each option by an identity of
-	 * its own.
-	 *
-	 * <p>
-	 * {@link ReactSelectFormFieldControl} renders the plain HTML select, which knows an option only
-	 * by the text it carries and gives back exactly that text. That is enough as long as the option
-	 * <em>is</em> the stored value and the property's own format can parse it back - an enum
-	 * constant, or a plain string from an option function. It is not enough for an option the
-	 * property only stores something else for (a model part stored as its qualified name, a role
-	 * stored as its name): the text such an option would carry is whatever
-	 * {@link Object#toString()} makes of it, which names nothing the server could resolve back.
-	 * Nor does a plain select take more than one value at a time.
-	 * </p>
-	 *
-	 * <p>
-	 * Both cases go to {@link ReactDropdownSelectControl}, which allocates an id per option and
-	 * resolves the ids the client sends back to the options themselves, and which takes a
-	 * multiple selection. The translation from those options to what the property stores is the
-	 * field model's, not the control's.
-	 * </p>
-	 */
-	private static boolean needsOptionIdentity(ConfigSelectFieldModel model) {
-		return model.isMultiple() || model.getOptionMapping() != IdentityOptionMapping.INSTANCE;
 	}
 
 	/**

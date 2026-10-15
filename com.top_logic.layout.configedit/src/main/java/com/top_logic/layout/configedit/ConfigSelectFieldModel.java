@@ -14,7 +14,6 @@ import java.util.Objects;
 import com.top_logic.basic.config.ConfigurationChange;
 import com.top_logic.basic.config.ConfigurationChange.Kind;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.values.DerivedProperty;
@@ -179,29 +178,23 @@ public class ConfigSelectFieldModel extends ConfigFieldModel implements SelectFi
 		return translates() ? toOptions(stored) : stored;
 	}
 
+	/**
+	 * Stores the given selection.
+	 *
+	 * <p>
+	 * A select control writes its selection as a list, also where the property takes a single
+	 * option: such a property receives the list's only element, or {@code null} for an empty
+	 * selection. Where options and stored values differ, the {@link #getOptionMapping() option
+	 * mapping} translates the selection into what the property stores.
+	 * </p>
+	 */
 	@Override
 	public void setValue(Object value) {
 		if (translates()) {
 			setSelection(value);
 			return;
 		}
-		// The client sends string values for select fields. If the property has a
-		// ConfigurationValueProvider (e.g. for enums), use it to parse the string back to the
-		// expected type.
-		if (value instanceof String stringValue) {
-			ConfigurationValueProvider<?> valueProvider = getProperty().getValueProvider();
-			if (valueProvider != null) {
-				try {
-					value = valueProvider.getValue(getProperty().getPropertyName(), (CharSequence) stringValue);
-				} catch (com.top_logic.basic.config.ConfigurationException ex) {
-					throw new IllegalArgumentException(
-						"Cannot parse value '" + stringValue + "' for property '"
-							+ getProperty().getPropertyName() + "'",
-						ex);
-				}
-			}
-		}
-		super.setValue(value);
+		super.setValue(_multiple ? value : singleValue(value));
 	}
 
 	/**

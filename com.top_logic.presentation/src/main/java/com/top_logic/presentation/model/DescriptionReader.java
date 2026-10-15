@@ -40,7 +40,8 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * An element on a slide is a dictionary whose entry {@link PresentationData#TYPE} selects the
  * {@link ElementReader} that creates it. The element types are registered in
- * {@link #createElementTypes()}, the building blocks (cards, banners, ...) by {@link BlockReader}.
+ * {@link #createElementTypes()}, the building blocks (cards, banners, ...) by {@link BlockReader},
+ * the charts by {@link ChartReader}.
  * </p>
  */
 public final class DescriptionReader {
@@ -77,6 +78,7 @@ public final class DescriptionReader {
 		result.put(TYPE_ROW, entries -> readContainer(entries, ContainerSpec.Direction.ROW));
 		result.put(TYPE_COLUMN, entries -> readContainer(entries, ContainerSpec.Direction.COLUMN));
 		BlockReader.register(result);
+		ChartReader.register(result);
 		return Collections.unmodifiableMap(result);
 	}
 
@@ -1004,7 +1006,7 @@ public final class DescriptionReader {
 	/**
 	 * The text of a string or number value.
 	 */
-	private static String text(Value value) {
+	static String text(Value value) {
 		if (value.isNumber()) {
 			return BigDecimal.valueOf(value.asNumber()).stripTrailingZeros().toPlainString();
 		}

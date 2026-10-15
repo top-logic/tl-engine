@@ -221,6 +221,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey EXPECTED_STEP;
 
 	/**
+	 * @en A list of at least one category label, e.g. ["Q1", "Q2"].
+	 */
+	public static ResKey EXPECTED_CATEGORIES;
+
+	/**
+	 * @en A data series of a chart: a dictionary with the entries "name", "values" and "role", or
+	 *     a list of these values in this order, e.g. ["Done", [12, 7, 3], "done"].
+	 */
+	public static ResKey EXPECTED_SERIES;
+
+	/**
+	 * @en A list of {0} values, one for each category, each a number or empty.
+	 */
+	public static ResKey1 EXPECTED_VALUES__COUNT;
+
+	/**
 	 * @en Strengths
 	 */
 	public static ResKey PROS_TITLE;

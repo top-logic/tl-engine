@@ -33,6 +33,7 @@ import org.openxmlformats.schemas.presentationml.x2006.main.CTShape;
 
 import com.top_logic.presentation.data.PresentationData;
 import com.top_logic.presentation.model.CellSpec;
+import com.top_logic.presentation.model.ChartSpec;
 import com.top_logic.presentation.model.ColorSpec;
 import com.top_logic.presentation.model.ElementSpec;
 import com.top_logic.presentation.model.GeometrySpec;
@@ -67,6 +68,7 @@ import com.top_logic.presentation.text.TextMeasure;
  * header rows is bold. Each row is separated from the next by a thin line, the
  * header rows by a stronger line.</li>
  * <li>An {@link ImageSpec image} is fitted into its bounds as requested.</li>
+ * <li>A {@link ChartSpec chart} fills its bounds, see {@link ChartWriter}.</li>
  * </ul>
  *
  * <p>
@@ -200,6 +202,9 @@ public final class ElementWriter {
 		} else if (element instanceof ImageSpec image) {
 			writeImage(image, bounds, path);
 			return 0;
+		} else if (element instanceof ChartSpec chart) {
+			new ChartWriter(_slide, _drawing, _text).write(chart, bounds, path);
+			return 0;
 		} else {
 			throw new IllegalArgumentException("Unsupported element: " + element);
 		}
@@ -210,8 +215,8 @@ public final class ElementWriter {
 	 *
 	 * <p>
 	 * A shape or text box needs the height of its text plus its inner margins, a table the height
-	 * of its rows, an image the height that keeps its aspect ratio. A shape without text needs no
-	 * height.
+	 * of its rows, an image the height that keeps its aspect ratio, a chart
+	 * {@link ChartWriter#NATURAL_ASPECT} of its width. A shape without text needs no height.
 	 * </p>
 	 *
 	 * @see Arrangement.HeightMeasure
@@ -242,6 +247,8 @@ public final class ElementWriter {
 			Dimension2D size =
 				Pictures.add(_slide.getSlideShow(), image.data(), child(path, PresentationData.DATA)).size();
 			return size.getWidth() > 0 ? width * size.getHeight() / size.getWidth() : 0;
+		} else if (element instanceof ChartSpec) {
+			return width * ChartWriter.NATURAL_ASPECT;
 		} else {
 			throw new IllegalArgumentException("Unsupported element: " + element);
 		}

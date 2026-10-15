@@ -25,14 +25,17 @@ import javax.imageio.ImageIO;
 
 import org.apache.poi.common.usermodel.fonts.FontInfo;
 import org.apache.poi.sl.draw.DrawFontManagerDefault;
+import org.apache.poi.sl.draw.DrawGraphicalFrame;
 import org.apache.poi.sl.draw.DrawPictureShape;
 import org.apache.poi.sl.draw.DrawShape;
 import org.apache.poi.sl.draw.Drawable;
 import org.apache.poi.sl.draw.ImageRenderer;
+import org.apache.poi.sl.usermodel.GraphicalFrame;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.sl.usermodel.PictureShape;
 import org.apache.poi.sl.usermodel.Sheet;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFGraphicFrame;
 import org.apache.poi.xslf.usermodel.XSLFShape;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
@@ -51,6 +54,10 @@ import com.top_logic.presentation.text.TextMeasure;
  * Rendering uses the drawing code of Apache POI. The graphics is configured with the
  * {@link TextMeasure#RENDERING_HINTS}, so text breaks into lines at the positions computed by
  * {@link TextMeasure}, and additionally with the {@link #QUALITY_HINTS}.
+ * </p>
+ *
+ * <p>
+ * A chart is drawn by the {@link ChartRenderer}.
  * </p>
  *
  * <p>
@@ -257,6 +264,31 @@ public final class SlideRenderer {
 		@Override
 		public DrawPictureShape getDrawable(PictureShape<?, ?> shape) {
 			return new RasterFirstPictureShape(shape);
+		}
+
+		@Override
+		public DrawGraphicalFrame getDrawable(GraphicalFrame<?, ?> shape) {
+			return new ChartFrame(shape);
+		}
+
+	}
+
+	/**
+	 * {@link DrawGraphicalFrame} drawing a chart with the {@link ChartRenderer}.
+	 */
+	private static final class ChartFrame extends DrawGraphicalFrame {
+
+		ChartFrame(GraphicalFrame<?, ?> shape) {
+			super(shape);
+		}
+
+		@Override
+		public void draw(Graphics2D graphics) {
+			if (getShape() instanceof XSLFGraphicFrame frame && frame.hasChart()) {
+				ChartRenderer.draw(graphics, frame.getChart(), frame.getSheet(), DrawShape.getAnchor(graphics, frame));
+			} else {
+				super.draw(graphics);
+			}
 		}
 
 	}

@@ -103,14 +103,20 @@ public class TestShowcase extends AbstractSearchExpressionTest {
 				], headerRows: 1, columnWeights: [6.6, 3, 3], rowHeight: 36)
 			], notes: "Tabellen: Kopfzeilen mit pptCell, Bewertungen mit pptRating."),
 
-			pptContent("Kennzahlen", "Kennzahlen mit Legende", [
+			pptContent("Kennzahlen", "Tickets nach Thema und Tempo der letzten Wochen", [
 				pptRow([
-					pptStat("17", "Thema A", "Meldungen im Quartal", role: "themaA"),
-					pptStat("12", "Thema B", "davon behoben", role: "erledigt"),
-					pptStat("5", "Thema C", "offene Fehler", role: "risiko")
-				], height: "auto"),
-				pptLegend([["neu", "themaA"], ["behoben", "erledigt"], ["Fehler", "risiko"]], width: 450)
-			], notes: "pptStat für Kennzahlen; pptLegend erklärt die Farben."),
+					pptBarChart(["React-Oberfläche", "Sicherheit", "TL-Script", "Klassische Oberfläche",
+							"Dokumentation"], [
+						pptSeries("Neue Funktionen", [59, 20, 11, 11, 2], "themaA"),
+						pptSeries("Fehlerbehebungen", [75, 34, 34, 31, 0], "risiko"),
+						pptSeries("Sonstige", [2, 2, 0, 0, 1], "muted")
+					], stacked: true, weight: 3),
+					pptColumnChart(["15.07.", "29.07.", "12.08.", "26.08.", "09.09.", "23.09."], [
+						["neu erfasst", [27, 19, 5, 16, 65, 80], "muted"],
+						["abgeschlossen", [24, 24, 15, 5, 10, 96], "themaB"]
+					], weight: 2)
+				])
+			], notes: "pptBarChart und pptColumnChart erzeugen echte Diagramme; ihre Daten lassen sich in PowerPoint bearbeiten."),
 
 			pptContent("Zeitplan", "Meilensteine auf einer Zeitachse", [
 				pptTimeline([
@@ -138,6 +144,7 @@ public class TestShowcase extends AbstractSearchExpressionTest {
 
 	public void testShowcase() throws Exception {
 		BinaryData deck = (BinaryData) evalOnce(SHOWCASE, template(), cardStyle());
+		writeDeck(deck, "showcase.pptx");
 		try (XMLSlideShow slideShow = open(deck)) {
 			List<XSLFSlide> slides = slideShow.getSlides();
 			assertEquals(7, slides.size());

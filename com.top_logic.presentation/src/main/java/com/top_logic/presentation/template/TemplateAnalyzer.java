@@ -315,6 +315,7 @@ final class TemplateAnalyzer {
 		}
 
 		TableInfo table = shape instanceof XSLFTable tableShape ? table(tableShape) : null;
+		ChartInfo chart = kind == ShapeInfo.Kind.CHART ? ChartInfo.of(((XSLFGraphicFrame) shape).getChart()) : null;
 
 		List<ShapeInfo> children = new ArrayList<>();
 		if (shape instanceof XSLFGroupShape group) {
@@ -325,7 +326,7 @@ final class TemplateAnalyzer {
 		}
 
 		return new ShapeInfo(kind, shape.getShapeName(), bounds, rotation, geometry, fill, line, shadow, text,
-			placeholder, contentType, table, children);
+			placeholder, contentType, table, chart, children);
 	}
 
 	private static AffineTransform childTransform(XSLFGroupShape group, AffineTransform transform) {

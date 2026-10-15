@@ -44,12 +44,14 @@ import com.top_logic.presentation.data.PresentationData;
  *        The content type of the image of a {@link Kind#PICTURE}.
  * @param table
  *        The description of a {@link Kind#TABLE}.
+ * @param chart
+ *        The description of a {@link Kind#CHART}.
  * @param children
  *        The shapes of a {@link Kind#GROUP}.
  */
 public record ShapeInfo(Kind kind, String name, Rectangle2D bounds, double rotation, GeometryInfo geometry,
 		PaintInfo fill, LineInfo line, ShadowInfo shadow, TextInfo text, PlaceholderRef placeholder,
-		String contentType, TableInfo table, List<ShapeInfo> children) {
+		String contentType, TableInfo table, ChartInfo chart, List<ShapeInfo> children) {
 
 	/**
 	 * Kinds of shapes.
@@ -122,8 +124,8 @@ public record ShapeInfo(Kind kind, String name, Rectangle2D bounds, double rotat
 	 * {@link PresentationData#HEIGHT}), {@link PresentationData#ROTATION}, {@link PresentationData#GEOMETRY},
 	 * {@link PresentationData#FILL}, {@link PresentationData#LINE}, {@link PresentationData#SHADOW},
 	 * {@link PresentationData#TEXT}, {@link PresentationData#PLACEHOLDER},
-	 * {@link PresentationData#CONTENT_TYPE}, {@link PresentationData#TABLE} and
-	 * {@link PresentationData#CHILDREN}.
+	 * {@link PresentationData#CONTENT_TYPE}, {@link PresentationData#TABLE},
+	 * {@link PresentationData#CHART} and {@link PresentationData#CHILDREN}.
 	 */
 	public Map<String, Object> toData() {
 		Map<String, Object> result = PresentationData.map();
@@ -141,6 +143,7 @@ public record ShapeInfo(Kind kind, String name, Rectangle2D bounds, double rotat
 		PresentationData.put(result, PresentationData.PLACEHOLDER, placeholder == null ? null : placeholder.toData());
 		PresentationData.put(result, PresentationData.CONTENT_TYPE, contentType);
 		PresentationData.put(result, PresentationData.TABLE, table == null ? null : table.toData());
+		PresentationData.put(result, PresentationData.CHART, chart == null ? null : chart.toData());
 		if (!children.isEmpty()) {
 			result.put(PresentationData.CHILDREN, PresentationData.list(children, ShapeInfo::toData));
 		}

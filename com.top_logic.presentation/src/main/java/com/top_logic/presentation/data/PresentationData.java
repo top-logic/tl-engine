@@ -313,7 +313,10 @@ public final class PresentationData {
 	/** Key of the shares of the children of a row or column. */
 	public static final String WEIGHTS = "weights";
 
-	/** Key of the distance between the children of a row or column. */
+	/**
+	 * Key of the distance between the children of a row or column, or of the distance between the
+	 * categories of a chart as percentage of the width of a bar.
+	 */
 	public static final String GAP = "gap";
 
 	/** Key of the smallest font size to which a text is shrunk to fit into its element. */
@@ -412,6 +415,33 @@ public final class PresentationData {
 	/** Key of the heading of the limits in a comparison of strengths and limits. */
 	public static final String CONS_TITLE = "consTitle";
 
+	/** Key of the category labels of a chart, or of the number of categories of a chart. */
+	public static final String CATEGORIES = "categories";
+
+	/** Key of the data series of a chart, or of the number of data series of a chart. */
+	public static final String SERIES = "series";
+
+	/** Key of the values of a data series of a chart. */
+	public static final String VALUES = "values";
+
+	/** Key of the flag telling whether the bars of a chart are stacked. */
+	public static final String STACKED = "stacked";
+
+	/** Key of the flag telling whether a chart shows the values at its bars. */
+	public static final String LABELS = "labels";
+
+	/** Key of the position of the legend of a chart. */
+	public static final String LEGEND = "legend";
+
+	/** Key of the largest value of the value axis of a chart. */
+	public static final String MAX = "max";
+
+	/** Key of the number format of the values of a chart. */
+	public static final String FORMAT = "format";
+
+	/** Key of the description of a chart in a template analysis. */
+	public static final String CHART = "chart";
+
 	/** {@link #TYPE} of a slide. */
 	public static final String TYPE_SLIDE = "slide";
 
@@ -465,6 +495,12 @@ public final class PresentationData {
 
 	/** {@link #TYPE} of a comparison of strengths and limits in two cards. */
 	public static final String TYPE_PRO_CON = "proCon";
+
+	/** {@link #TYPE} of a chart with horizontal bars. */
+	public static final String TYPE_BAR_CHART = "barChart";
+
+	/** {@link #TYPE} of a chart with vertical columns. */
+	public static final String TYPE_COLUMN_CHART = "columnChart";
 
 	/**
 	 * Color role standing for the {@link #ROLE} of the element it is used in.

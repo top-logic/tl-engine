@@ -170,6 +170,12 @@ public final class DeckWriter {
 		for (int n = _slideShow.getSlides().size() - 1; n >= 0; n--) {
 			_slideShow.removeSlide(n);
 		}
+		try {
+			// Parts created for the new slides must not take over relationships of removed parts.
+			PackagePruner.removeDetachedRelationships(_slideShow.getPackage());
+		} catch (InvalidFormatException ex) {
+			throw new UncheckedIOException(new IOException(ex));
+		}
 	}
 
 	/**

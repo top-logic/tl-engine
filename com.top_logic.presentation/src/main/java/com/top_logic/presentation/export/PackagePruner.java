@@ -75,6 +75,35 @@ public final class PackagePruner {
 	}
 
 	/**
+	 * Removes the relationship parts whose source part no longer exists.
+	 *
+	 * <p>
+	 * Removing a part from a package leaves its relationship part behind. A part created later
+	 * under the same name would take over these relationships, e.g. a chart created after removing
+	 * a slide with a chart would refer to the embedded workbook of the removed chart.
+	 * </p>
+	 *
+	 * @param pkg
+	 *        The package to clean up, opened for writing.
+	 */
+	public static void removeDetachedRelationships(OPCPackage pkg) throws InvalidFormatException {
+		List<PackagePart> detached = new ArrayList<>();
+		for (PackagePart part : pkg.getParts()) {
+			if (!part.isRelationshipPart()) {
+				continue;
+			}
+			URI source = PackagingURIHelper.getSourcePartUriFromRelationshipPartUri(part.getPartName().getURI());
+			if (!source.equals(PackagingURIHelper.PACKAGE_ROOT_URI)
+				&& !pkg.containPart(PackagingURIHelper.createPartName(source))) {
+				detached.add(part);
+			}
+		}
+		for (PackagePart relations : detached) {
+			pkg.removePart(relations.getPartName());
+		}
+	}
+
+	/**
 	 * The names of all parts that can be reached from the package root.
 	 */
 	public static Set<PackagePartName> reachableParts(OPCPackage pkg) throws InvalidFormatException {

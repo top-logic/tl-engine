@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -403,6 +404,22 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		directory.mkdirs();
 		for (int n = 0; n < images.size(); n++) {
 			ImageIO.write(images.get(n), "png", new File(directory, String.format("%s-slide-%02d.png", prefix, n)));
+		}
+	}
+
+	/**
+	 * Writes the given presentation into the directory of the system property
+	 * {@link #PNG_DIR_PROPERTY}, e.g. to open it in PowerPoint, if the property is set.
+	 */
+	static void writeDeck(BinaryData deck, String name) throws IOException {
+		String dir = System.getProperty(PNG_DIR_PROPERTY);
+		if (dir == null || dir.isEmpty()) {
+			return;
+		}
+		File directory = new File(dir);
+		directory.mkdirs();
+		try (InputStream in = deck.getStream()) {
+			Files.write(new File(directory, name).toPath(), in.readAllBytes());
 		}
 	}
 

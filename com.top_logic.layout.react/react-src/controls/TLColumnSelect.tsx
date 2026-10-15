@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, stateAttr, tooltipProps, ThemeIcon, ICON_HANDLE, ICON_VISIBLE, ICON_HIDDEN, ICON_LOCK, ICON_UNLOCK } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, stateAttr, usePart, ICON_HANDLE, ICON_VISIBLE, ICON_HIDDEN, ICON_LOCK, ICON_UNLOCK } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 import { SearchField } from './SearchField';
 
 const I18N_KEYS = {
@@ -67,6 +66,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
   const visibleCount = entries.filter((entry) => entry.visible).length;
@@ -86,9 +86,9 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   // remembered by column name and kind and focused again once the re-pushed list has rendered, as the keyboard move of
   // the handle does - but only a button that had the focus: a click that does not focus the button (Safari, for one)
   // must not scroll the list to the block and show a focus ring.
-  const buttonRefs = React.useRef(new Map<string, HTMLButtonElement>());
+  const buttonRefs = React.useRef(new Map<string, HTMLElement>());
   const pendingFocus = React.useRef<string | null>(null);
-  const buttonRef = (key: string) => (element: HTMLButtonElement | null) => {
+  const buttonRef = (key: string) => (element: HTMLElement | null) => {
     if (element) buttonRefs.current.set(key, element); else buttonRefs.current.delete(key);
   };
 
@@ -109,16 +109,16 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [entries]);
 
-  const keepFocus = (key: string, event: React.MouseEvent<HTMLButtonElement>) => {
+  const keepFocus = (key: string, event: React.MouseEvent<HTMLElement>) => {
     pendingFocus.current = document.activeElement === event.currentTarget ? key : null;
   };
 
-  const handleToggle = React.useCallback((name: string, visible: boolean, event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleToggle = React.useCallback((name: string, visible: boolean, event: React.MouseEvent<HTMLElement>) => {
     keepFocus(`${name}:eye`, event);
     sendCommand(CMD_COLUMN_VISIBLE, { [ARG_COLUMN]: name, [ARG_VISIBLE]: visible });
   }, [sendCommand]);
 
-  const handleLock = React.useCallback((name: string, locked: boolean, event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleLock = React.useCallback((name: string, locked: boolean, event: React.MouseEvent<HTMLElement>) => {
     keepFocus(`${name}:lock`, event);
     sendCommand(CMD_COLUMN_LOCK, { [ARG_COLUMN]: name, [ARG_LOCKED]: locked });
   }, [sendCommand]);
@@ -185,37 +185,40 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
               )}
               {...reorder.itemProps(index)}
             >
-              <button
-                type="button"
-                className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__handle' })}
-                {...tooltipProps(handle['aria-label'])}
+              <Button
+                label={handle['aria-label']}
+                image={ICON_HANDLE}
+                display="icon-only"
+                appearance="ghost"
+                small
+                className="tl-reorder-list__handle"
                 {...handle}
-              >
-                <ThemeIcon encoded={ICON_HANDLE} className="tl-button__icon tl-icon-sm" />
-              </button>
+              />
               <span className="tl-reorder-list__label">{entry.label}</span>
               <span className="tl-reorder-list__actions">
-                <button
-                  type="button"
-                  className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__lock' })}
-                  aria-label={lockLabel}
+                <Button
                   ref={buttonRef(`${entry.name}:lock`)}
-                  {...tooltipProps(lockTip)}
+                  label={lockLabel}
+                  tooltip={lockTip}
+                  image={entry.locked ? ICON_LOCK : ICON_UNLOCK}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
+                  className="tl-reorder-list__lock"
                   onClick={(event) => handleLock(entry.name, !entry.locked, event)}
-                >
-                  <ThemeIcon encoded={entry.locked ? ICON_LOCK : ICON_UNLOCK} className="tl-button__icon tl-icon-sm" />
-                </button>
-                <button
-                  type="button"
-                  className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__eye' })}
-                  aria-label={eyeLabel}
-                  {...tooltipProps(eyeTip)}
+                />
+                <Button
                   ref={buttonRef(`${entry.name}:eye`)}
+                  label={eyeLabel}
+                  tooltip={eyeTip}
+                  image={entry.visible ? ICON_VISIBLE : ICON_HIDDEN}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
                   disabled={lastVisible}
+                  className="tl-reorder-list__eye"
                   onClick={(event) => handleToggle(entry.name, !entry.visible, event)}
-                >
-                  <ThemeIcon encoded={entry.visible ? ICON_VISIBLE : ICON_HIDDEN} className="tl-button__icon tl-icon-sm" />
-                </button>
+                />
               </span>
             </li>
           );

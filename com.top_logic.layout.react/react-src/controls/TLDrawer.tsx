@@ -1,9 +1,8 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
-  rootClassName, tooltipProps, useFocusTrap, ThemeIcon, ICON_CLOSE,
+  rootClassName, useFocusTrap, usePart, ICON_CLOSE,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useRef } = React;
 
@@ -45,6 +44,8 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('close');
   }, [sendCommand]);
 
+  const Button = usePart('Button');
+
   // Escape key closes the drawer (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(open, { ESCAPE: handleClose });
 
@@ -81,15 +82,14 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
       {title !== null && (
         <div className="tl-titlebar">
           <h2 className="tl-titlebar__title tl-type-heading-sm" id={titleId}>{title}</h2>
-          <button
-            type="button"
-            className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+          <Button
+            label={i18n['js.drawer.close']}
+            image={ICON_CLOSE}
+            display="icon-only"
+            appearance="ghost"
+            small
             onClick={handleClose}
-            aria-label={i18n['js.drawer.close']}
-            {...tooltipProps(i18n['js.drawer.close'])}
-          >
-            <ThemeIcon encoded={ICON_CLOSE} className="tl-button__icon tl-icon-sm" />
-          </button>
+          />
         </div>
       )}
       <div className="tl-drawer__body">

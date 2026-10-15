@@ -1,6 +1,6 @@
-import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, OptionValues } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
-import { ARG_OPTION, CMD_GOTO, OptionContent, ReadonlyValues, optionRoleAttr } from './selectOptions';
+import { ARG_OPTION, CMD_GOTO, OptionContent, optionRoleAttr } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
@@ -109,7 +109,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (showsValueOnly(state)) {
     return (
-      <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />
+      <OptionValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />
     );
   }
 

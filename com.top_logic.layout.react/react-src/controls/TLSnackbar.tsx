@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps, ThemeIcon, tokenMs, ICON_CLOSE } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, usePart, tokenMs, ICON_CLOSE } from 'tl-react-bridge';
 import type { TLCellProps, SnackbarStateJson } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -82,6 +81,8 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
     return () => clearTimeout(timer);
   }, [visible, duration, hovered, handleDismiss]);
 
+  const Button = usePart('Button');
+
   if (!visible && !exiting) return null;
 
   return (
@@ -98,13 +99,16 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
           : <div className="tl-alert__message">{message}</div>
         }
       </div>
-      <button type="button"
-        className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-alert__close' })}
-        onClick={handleDismiss}
-        aria-label={i18n['js.snackbar.dismiss']}
-        {...tooltipProps(i18n['js.snackbar.dismiss'])}>
-        <ThemeIcon encoded={ICON_CLOSE} className="tl-button__icon tl-icon-sm" />
-      </button>
+      <span className="tl-alert__close">
+        <Button
+          label={i18n['js.snackbar.dismiss']}
+          image={ICON_CLOSE}
+          display="icon-only"
+          appearance="ghost"
+          small
+          onClick={handleDismiss}
+        />
+      </span>
     </div>
   );
 };

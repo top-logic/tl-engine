@@ -1,310 +1,191 @@
-// The wire contract of TLTextInput, checked against the MUI adapter.
+// The part TextInput drawn with Material UI: a small MUI TextField without a label of its own.
 
+import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup, fireEvent } from '@testing-library/react';
+import { screen, cleanup, render, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, VALUE_DEBOUNCE_MS, fieldLabel } from 'tl-react-bridge';
-import type { TextInputStateJson } from 'tl-react-bridge';
+import { TOOLTIP_ATTR } from 'tl-react-bridge';
+import type { TextInputPartProps } from 'tl-react-bridge';
+import { createMuiRoot, createPageThemes } from '../MuiRoot';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
-import { CONTROL_ID, fakeDebounceTimers, mountAdapter, settle } from './wire-test-support';
-import type { MountOptions } from './wire-test-support';
 
-/** The argument of {@link CMD_VALUE_CHANGED} and {@link CMD_SUBMIT} holding the text. */
-const ARG_VALUE = 'value';
+/** The root wrapper the adapter is drawn below: the one of the MUI default theme. */
+const MuiRoot = createMuiRoot(createPageThemes({}));
 
-/** The translation key of the label of the clear button; the test server answers it with itself. */
-const KEY_CLEAR = 'js.textInput.clear';
+/** The accessible name of the box. */
+const NAME = 'Name';
 
-/** The ID of the input inside the control. */
-const INPUT_ID = CONTROL_ID + '-input';
-
-/** The ID of the form field around the input. */
-const FIELD_ID = 'f1';
-
-function mountText(state: Partial<TextInputStateJson>, options?: MountOptions) {
-  return mountAdapter(MuiTextInputAdapter, state, options);
+function draw(props: Partial<TextInputPartProps>) {
+  const element = (next: Partial<TextInputPartProps>) => (
+    <MuiRoot><MuiTextInputAdapter value="" aria-label={NAME} {...props} {...next} /></MuiRoot>
+  );
+  const result = render(element({}));
+  return {
+    redraw: (next: Partial<TextInputPartProps>) => result.rerender(element(next)),
+  };
 }
 
-function changedTo(value: string) {
-  return [CMD_VALUE_CHANGED, { [ARG_VALUE]: value }];
-}
-
+/** The input of the box. */
 function input(): HTMLInputElement {
-  return screen.getByRole('textbox') as HTMLInputElement;
+  return screen.getByLabelText(NAME) as HTMLInputElement;
 }
 
 afterEach(() => {
   cleanup();
-  vi.useRealTimers();
-  vi.unstubAllGlobals();
 });
 
-describe('TLTextInput as MUI TextField', () => {
-  it('renders a small MUI text field without a label of its own, labelled by the form field', () => {
-    const setInputId = vi.fn();
-    mountText({ value: 'Hallo', placeholder: 'Name', cssClass: 'my-class' },
-      { fieldLabel: fieldLabel(FIELD_ID, CONTROL_ID, setInputId) });
+describe('the part TextInput as MUI TextField', () => {
+  it('puts ID, name, ref and passed-through attributes on the input, the class on the root', () => {
+    const ref = React.createRef<HTMLInputElement | HTMLTextAreaElement>();
+    draw({ id: 't1', ref, name: 'n', value: 'Hallo', placeholder: 'Name eingeben', className: 'x',
+      'aria-describedby': 'hint' });
 
     const box = input();
-    expect(box.id).toBe(INPUT_ID);
+    expect(box.id).toBe('t1');
+    expect(ref.current).toBe(box);
+    expect(box.name).toBe('n');
     expect(box.value).toBe('Hallo');
-    expect(box.placeholder).toBe('Name');
-    expect(box.getAttribute('aria-labelledby')).toBe(FIELD_ID + '-label');
-    expect(setInputId).toHaveBeenCalledWith(INPUT_ID);
+    expect(box.placeholder).toBe('Name eingeben');
+    expect(box.type).toBe('text');
+    expect(box.getAttribute('aria-describedby')).toBe('hint');
+    expect(box.closest('.MuiTextField-root')!.classList).toContain('x');
     expect(box.closest('.MuiInputBase-sizeSmall')).not.toBeNull();
-    expect(document.getElementById(CONTROL_ID)!.querySelector('label')).toBeNull();
-    expect(box.closest('.MuiTextField-root')!.classList).toContain('my-class');
+    expect(box.classList).not.toContain('tl-field');
+    expect(document.querySelector('label')).toBeNull();
   });
 
-  it('sends the typed text after the debounce, not before', async () => {
-    fakeDebounceTimers();
-    const sent = mountText({ value: '' });
+  it('reports each change with the text, and shows the text it is given', () => {
+    const onChange = vi.fn();
+    const { redraw } = draw({ value: 'a', onChange });
 
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    expect(input().value).toBe('abc');
-    vi.advanceTimersByTime(VALUE_DEBOUNCE_MS - 1);
-    await settle();
-    expect(sent).not.toHaveBeenCalled();
+    fireEvent.change(input(), { target: { value: 'ab' } });
 
-    vi.advanceTimersByTime(1);
-    await settle();
-    expect(sent.mock.calls).toEqual([changedTo('abc')]);
+    expect(onChange.mock.calls).toEqual([['ab']]);
+    // Controlled: the box shows the text it is given.
+    expect(input().value).toBe('a');
+    redraw({ value: 'ab' });
+    expect(input().value).toBe('ab');
   });
 
-  it('waits the debounce the state names', async () => {
-    fakeDebounceTimers();
-    const sent = mountText({ value: '', debounceMs: 1000 });
+  it('passes key, focus and blur to the handlers', () => {
+    const onKeyDown = vi.fn();
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    draw({ onKeyDown, onFocus, onBlur });
 
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    vi.advanceTimersByTime(999);
-    await settle();
-    expect(sent).not.toHaveBeenCalled();
-
-    vi.advanceTimersByTime(1);
-    await settle();
-    expect(sent.mock.calls).toEqual([changedTo('abc')]);
-  });
-
-  it('sends a value held back at once when it is left, and only once', async () => {
-    fakeDebounceTimers();
-    const sent = mountText({ value: '' });
-
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    fireEvent.blur(input());
-    await settle();
-    expect(sent.mock.calls).toEqual([changedTo('abc')]);
-
-    vi.advanceTimersByTime(VALUE_DEBOUNCE_MS);
-    await settle();
-    expect(sent.mock.calls).toEqual([changedTo('abc')]);
-  });
-
-  it('holds the value back until it is left with sendValueOnBlur', async () => {
-    fakeDebounceTimers();
-    const sent = mountText({ value: '', sendValueOnBlur: true });
-
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    vi.advanceTimersByTime(10 * VALUE_DEBOUNCE_MS);
-    await settle();
-    expect(sent).not.toHaveBeenCalled();
-
-    fireEvent.blur(input());
-    await settle();
-    expect(sent.mock.calls).toEqual([changedTo('abc')]);
-  });
-
-  it('sends commit after the value when it is left after an edit with commitEdits', async () => {
-    const sent = mountText({ value: '', commitEdits: true });
-
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    fireEvent.blur(input());
-    await settle();
-
-    expect(sent.mock.calls).toEqual([changedTo('abc'), [CMD_COMMIT, {}]]);
-  });
-
-  it('sends no commit when it is left without an edit', async () => {
-    const sent = mountText({ value: 'abc', commitEdits: true });
-
-    fireEvent.blur(input());
-    await settle();
-
-    expect(sent).not.toHaveBeenCalled();
-  });
-
-  it('sends no commit after an edit without commitEdits', async () => {
-    const sent = mountText({ value: '' });
-
-    fireEvent.change(input(), { target: { value: 'abc' } });
+    fireEvent.focus(input());
     fireEvent.keyDown(input(), { key: 'Enter' });
     fireEvent.blur(input());
-    await settle();
 
-    expect(sent.mock.calls).toEqual([changedTo('abc')]);
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(onKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['Enter']);
+    expect(onBlur).toHaveBeenCalledTimes(1);
   });
 
-  it('sends commit after the value on Enter after an edit, and lets Enter pass on', async () => {
-    const sent = mountText({ value: '', commitEdits: true });
+  it('draws the icon ahead of the text and the action at the end, inside the frame', () => {
+    draw({ icon: 'css:my-icon', action: <button type="button">Leeren</button> });
 
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    const passedOn = fireEvent.keyDown(input(), { key: 'Enter' });
-    await settle();
-
-    expect(sent.mock.calls).toEqual([changedTo('abc'), [CMD_COMMIT, {}]]);
-    expect(passedOn).toBe(true);
+    const box = input();
+    const frame = box.closest('.MuiInputBase-root')!;
+    const icon = frame.querySelector('.MuiInputAdornment-positionStart i.my-icon')!;
+    expect(icon).not.toBeNull();
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
+    const action = screen.getByRole('button', { name: 'Leeren' });
+    expect(action.closest('.MuiInputAdornment-positionEnd')).not.toBeNull();
+    expect(frame.contains(action)).toBe(true);
   });
 
-  it('sends no second commit when it is left right after Enter', async () => {
-    const sent = mountText({ value: '', commitEdits: true });
-
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    fireEvent.keyDown(input(), { key: 'Enter' });
-    fireEvent.blur(input());
-    await settle();
-
-    expect(sent.mock.calls).toEqual([changedTo('abc'), [CMD_COMMIT, {}]]);
-  });
-
-  it('commits each edit once: Enter, a further edit, leaving the field', async () => {
-    const sent = mountText({ value: '', commitEdits: true });
-
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    fireEvent.keyDown(input(), { key: 'Enter' });
-    fireEvent.change(input(), { target: { value: 'abcd' } });
-    fireEvent.blur(input());
-    await settle();
-
-    expect(sent.mock.calls).toEqual([
-      changedTo('abc'), [CMD_COMMIT, {}], changedTo('abcd'), [CMD_COMMIT, {}],
-    ]);
-  });
-
-  it('sends no commit on Enter without an edit, but still the submit', async () => {
-    const sent = mountText({ value: 'abc', commitEdits: true, submitOnEnter: true });
-
-    fireEvent.keyDown(input(), { key: 'Enter' });
-    await settle();
-
-    expect(sent.mock.calls).toEqual([[CMD_SUBMIT, { [ARG_VALUE]: 'abc' }]]);
-  });
-
-  it('sends the commit before the submit on Enter after an edit', async () => {
-    const sent = mountText({ value: '', commitEdits: true, submitOnEnter: true });
-
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    const passedOn = fireEvent.keyDown(input(), { key: 'Enter' });
-    await settle();
-
-    expect(sent.mock.calls).toEqual([
-      changedTo('abc'), [CMD_COMMIT, {}], [CMD_SUBMIT, { [ARG_VALUE]: 'abc' }],
-    ]);
-    expect(passedOn).toBe(false);
-  });
-
-  it('commits nothing on Enter with a modifier', async () => {
-    const sent = mountText({ value: '', commitEdits: true });
-
-    fireEvent.change(input(), { target: { value: 'abc' } });
-    fireEvent.keyDown(input(), { key: 'Enter', shiftKey: true });
-    await settle();
-
-    expect(sent.mock.calls).toEqual([]);
-  });
-
-  it('commits an edit of a text area only when it is left, Enter being text there', async () => {
-    const sent = mountText({ value: '', commitEdits: true, multiline: true });
-
-    fireEvent.change(input(), { target: { value: 'a' } });
-    fireEvent.keyDown(input(), { key: 'Enter' });
-    await settle();
-    expect(sent.mock.calls.filter(call => call[0] === CMD_COMMIT)).toEqual([]);
-
-    fireEvent.blur(input());
-    await settle();
-    expect(sent.mock.calls).toEqual([changedTo('a'), [CMD_COMMIT, {}]]);
-  });
-
-  it('sends submit with the text on Enter with submitOnEnter', async () => {
-    const sent = mountText({ value: 'abc', submitOnEnter: true });
-
-    fireEvent.keyDown(input(), { key: 'Enter' });
-    await settle();
-
-    expect(sent.mock.calls).toEqual([[CMD_SUBMIT, { [ARG_VALUE]: 'abc' }]]);
-  });
-
-  it('submits nothing on Enter without submitOnEnter', async () => {
-    const sent = mountText({ value: 'abc' });
-
-    fireEvent.keyDown(input(), { key: 'Enter' });
-    await settle();
-
-    expect(sent).not.toHaveBeenCalled();
-  });
-
-  it('completes a typed web address when it is left', async () => {
-    const sent = mountText({ value: '', inputType: 'url', sendValueOnBlur: true });
-
-    fireEvent.change(input(), { target: { value: 'example.org' } });
-    fireEvent.blur(input());
-    await settle();
-
-    expect(sent.mock.calls).toEqual([changedTo('https://example.org')]);
-  });
-
-  it('renders a text area of the given rows for a multi-line field', () => {
-    mountText({ value: 'a\nb', multiline: true, rows: 5 });
+  it('draws a text area of the given rows, with neither icon, action nor key handler', () => {
+    const onKeyDown = vi.fn();
+    draw({ multiline: true, rows: 5, value: 'a\nb', icon: 'css:my-icon', action: <button type="button">X</button>,
+      onKeyDown });
 
     const area = input();
     expect(area.tagName).toBe('TEXTAREA');
     expect(area.getAttribute('rows')).toBe('5');
+    expect(document.querySelector('.my-icon')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    fireEvent.keyDown(area, { key: 'Enter' });
+    expect(onKeyDown).not.toHaveBeenCalled();
   });
 
-  it('empties the input at once with its clear button', async () => {
-    const sent = mountText({ value: 'abc', clearable: true });
+  it('draws a multi-line box of three rows where it names none', () => {
+    draw({ multiline: true });
 
-    await userEvent.click(await screen.findByRole('button', { name: KEY_CLEAR }));
-    await settle();
-
-    expect(sent.mock.calls).toEqual([changedTo('')]);
-    expect(input().value).toBe('');
+    expect(input().getAttribute('rows')).toBe('3');
   });
 
-  it('marks an invalid mandatory field', () => {
-    mountText({ value: 'x', hasError: true, errorMessage: 'Falsch', mandatory: true });
+  it('marks an invalid required box, without the MUI required mark', () => {
+    draw({ validation: 'error', required: true });
 
     const box = input();
     expect(box.getAttribute('aria-invalid')).toBe('true');
     expect(box.getAttribute('aria-required')).toBe('true');
+    expect(box.required).toBe(false);
     expect(box.closest('.Mui-error')).not.toBeNull();
   });
 
-  it('shows the value as text while read-only, an e-mail address as link', () => {
-    mountText({ value: 'a@b.de', inputType: 'email', editable: false });
-
-    expect(screen.queryByRole('textbox')).toBeNull();
-    const link = screen.getByRole('link', { name: 'a@b.de' });
-    expect(link.id).toBe(CONTROL_ID);
-    expect(link.getAttribute('href')).toBe('mailto:a@b.de');
-  });
-
-  it('accepts no input and sends nothing while disabled', async () => {
-    const sent = mountText({ value: 'abc', editable: false, disabled: true });
+  it('draws a questionable value in the warning color, not as error', () => {
+    draw({ validation: 'warning' });
 
     const box = input();
-    expect(box.disabled).toBe(true);
-    await userEvent.setup({ pointerEventsCheck: 0 }).type(box, 'x');
-    // Real time: longer than the debounce after which a typed value would be sent.
-    await new Promise(resolve => setTimeout(resolve, VALUE_DEBOUNCE_MS + 50));
-    await settle();
-
-    expect(box.value).toBe('abc');
-    expect(sent).not.toHaveBeenCalled();
+    expect(box.hasAttribute('aria-invalid')).toBe(false);
+    expect(box.closest('.Mui-error')).toBeNull();
+    expect(box.closest('.MuiInputBase-colorWarning')).not.toBeNull();
   });
 
-  it('renders nothing while hidden', () => {
-    mountText({ value: 'abc', hidden: true });
+  it('marks nothing on a valid optional box', () => {
+    draw({});
 
-    expect(screen.queryByRole('textbox')).toBeNull();
+    const box = input();
+    expect(box.hasAttribute('aria-invalid')).toBe(false);
+    expect(box.hasAttribute('aria-required')).toBe(false);
+    expect(box.hasAttribute(TOOLTIP_ATTR)).toBe(false);
+  });
+
+  it('puts the tooltip on the input', () => {
+    draw({ tooltip: 'Falsch' });
+
+    expect(input().getAttribute(TOOLTIP_ATTR)).toBe('text:Falsch');
+  });
+
+  it('accepts no input and reports nothing while disabled', async () => {
+    const onChange = vi.fn();
+    draw({ value: 'abc', disabled: true, onChange });
+
+    expect(input().disabled).toBe(true);
+    await userEvent.setup({ pointerEventsCheck: 0 }).type(input(), 'x');
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('accepts no input and reports nothing while read-only', async () => {
+    const onChange = vi.fn();
+    draw({ value: 'abc', readOnly: true, onChange });
+
+    expect(input().readOnly).toBe(true);
+    await userEvent.type(input(), 'x');
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(input().value).toBe('abc');
+  });
+
+  it('draws a password box', () => {
+    draw({ type: 'password', value: 'geheim' });
+
+    expect(input().type).toBe('password');
+    expect(input().value).toBe('geheim');
+  });
+
+  it('draws a number box with its bounds and the keyboard asked for', () => {
+    draw({ type: 'number', min: 0, max: 255, inputMode: 'numeric', maxLength: 3, autoFocus: true });
+
+    const box = input();
+    expect(box.type).toBe('number');
+    expect(box.min).toBe('0');
+    expect(box.max).toBe('255');
+    expect(box.getAttribute('inputmode')).toBe('numeric');
+    expect(box.maxLength).toBe(3);
+    expect(document.activeElement).toBe(box);
   });
 });

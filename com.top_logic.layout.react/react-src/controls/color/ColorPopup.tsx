@@ -1,4 +1,4 @@
-import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope } from 'tl-react-bridge';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart } from 'tl-react-bridge';
 import ColorPalette, { COLOR_DRAG_TYPE } from './ColorPalette';
 import ColorMixer from './ColorMixer';
 import { hexToRgb, rgbToHex, isValidHex, clampByte } from './colorUtils';
@@ -67,6 +67,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
   const [draft, setDraft] = useState<string | null>(currentColor);
   const popupRef = useRef<HTMLDivElement>(null);
   const i18n = useI18N(I18N_KEYS);
+  const TextInput = usePart('TextInput');
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
   useLayoutEffect(() => {
@@ -101,8 +102,8 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
   useCloseOnOutsidePress(true, [popupRef], onCancel);
 
   const handleRgbChange = useCallback(
-    (channel: 'r' | 'g' | 'b') => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseInt(e.target.value, 10);
+    (channel: 'r' | 'g' | 'b') => (text: string) => {
+      const val = parseInt(text, 10);
       if (isNaN(val)) return;
       const clamped = clampByte(val);
       const newR = channel === 'r' ? clamped : r;
@@ -135,8 +136,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     [draft]
   );
 
-  const handleHexChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
+  const handleHexChange = useCallback((val: string) => {
     setHexInput(val);
     if (isValidHex(val)) {
       setDraft(val);
@@ -269,42 +269,42 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
 
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.red']}</span>
-            <input
-              className="tlColorInput__input"
+            <TextInput
               type="number"
               min={0}
               max={255}
-              value={hasColor ? r : ''}
+              aria-label={i18n['js.colorInput.red']}
+              value={hasColor ? String(r) : ''}
               onChange={handleRgbChange('r')}
             />
           </div>
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.green']}</span>
-            <input
-              className="tlColorInput__input"
+            <TextInput
               type="number"
               min={0}
               max={255}
-              value={hasColor ? g : ''}
+              aria-label={i18n['js.colorInput.green']}
+              value={hasColor ? String(g) : ''}
               onChange={handleRgbChange('g')}
             />
           </div>
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.blue']}</span>
-            <input
-              className="tlColorInput__input"
+            <TextInput
               type="number"
               min={0}
               max={255}
-              value={hasColor ? b : ''}
+              aria-label={i18n['js.colorInput.blue']}
+              value={hasColor ? String(b) : ''}
               onChange={handleRgbChange('b')}
             />
           </div>
           <div className="tlColorInput__inputRow">
             <span className="tlColorInput__inputLabel">{i18n['js.colorInput.hex']}</span>
-            <input
-              className={'tlColorInput__input' + (hexInput !== '' && !isValidHex(hexInput) ? ' tlColorInput__input--error' : '')}
-              type="text"
+            <TextInput
+              aria-label={i18n['js.colorInput.hex']}
+              validation={hexInput !== '' && !isValidHex(hexInput) ? 'error' : undefined}
               value={hexInput}
               onChange={handleHexChange}
             />

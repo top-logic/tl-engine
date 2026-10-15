@@ -3,11 +3,17 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel } from 'tl-react-bridge';
+import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import { deDE } from '@mui/material/locale';
 import MuiDropdownSelectAdapter from './MuiDropdownSelectAdapter';
 import { CONTROL_ID, mountAdapter, patchState, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiChipAdapter from './MuiChipAdapter';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+// The chosen options, the options with a color role and the chosen values of a field that is not editable.
+replacePart('Chip', MuiChipAdapter);
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** Command asking the server for the options. */
 const CMD_LOAD_OPTIONS = 'loadOptions';
@@ -144,6 +150,17 @@ describe('TLDropdownSelect as MUI Autocomplete', () => {
     await settle();
 
     expect(sent.mock.calls).toEqual([changedTo('b')]);
+  });
+
+  it('keeps the chips of the chosen options out of the tab order', async () => {
+    mountDropdown({ value: [ALPHA, BETA], multiSelect: true });
+
+    const chips = Array.from(document.getElementById(CONTROL_ID)!.querySelectorAll('.MuiChip-root'));
+    expect(chips).toHaveLength(2);
+    chips.forEach(chip => expect(chip.getAttribute('tabindex')).toBe('-1'));
+    await userEvent.tab();
+    expect(chips).not.toContain(document.activeElement);
+    expect(document.activeElement!.tagName).toBe('INPUT');
   });
 
   it('names its loading state in the page language', async () => {

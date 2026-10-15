@@ -42,15 +42,7 @@
     top: 0.5rem;
     right: 0.5rem;
     z-index: 10;
+    /* The button floats over the plot: a surface of its own keeps it readable there. */
     background: var(--layer-01);
-    border: 1px solid var(--border-color);
     border-radius: var(--corner-radius);
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    cursor: pointer;
-    color: var(--text-secondary);
-}
-
-.tlReactChart__zoomReset:hover {
-    background: var(--layer-hover);
 }

@@ -1,10 +1,5 @@
 import { React } from 'tl-react-bridge';
 import type { FieldStateJson } from 'tl-react-bridge';
-import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
-
-/** What stands in an empty line of a multi-line value, so that the line keeps its height. */
-const EMPTY_LINE = ' ';
 
 /** The style of the element carrying the control ID around an MUI input: a block of full width. */
 export const FIELD_ROOT_STYLE: React.CSSProperties = { display: 'block' };
@@ -34,40 +29,4 @@ export function fieldAriaProps(state: Partial<FieldStateJson>): Record<string, s
  */
 export function fieldColor(state: Partial<FieldStateJson>): 'primary' | 'warning' {
   return state.hasError !== true && state.hasWarnings === true ? 'warning' : 'primary';
-}
-
-/**
- * The value of a field that is not editable, shown as text instead of an input (as TopLogic does).
- *
- * <p>A multi-line value keeps its line breaks, a value pointing somewhere (`href`) is a link
- * opening in a new tab.</p>
- */
-export function MuiFieldValue({ id, className, text, href, multiline = false }: {
-  id: string;
-  className?: string;
-  text: string;
-  href?: string | null;
-  multiline?: boolean;
-}) {
-  if (multiline) {
-    return (
-      <Typography id={id} component="div" variant="body2" className={className}>
-        {text.split('\n').map((line, index) => (
-          <span key={index} style={FIELD_ROOT_STYLE}>{line === '' ? EMPTY_LINE : line}</span>
-        ))}
-      </Typography>
-    );
-  }
-  if (href != null) {
-    return (
-      <Link id={id} variant="body2" className={className} href={href} target="_blank" rel="noopener noreferrer">
-        {text}
-      </Link>
-    );
-  }
-  return (
-    <Typography id={id} component="span" variant="body2" noWrap className={className}>
-      {text}
-    </Typography>
-  );
 }

@@ -14,6 +14,16 @@ const _cache = new Map<string, string>();
 /** Keys waiting to be fetched in the next microtask. */
 const _pending = new Set<string>();
 
+/**
+ * Keys requested from the server whose answer has not arrived yet. A component rendering again
+ * before the answer requests none of them a second time: every answer re-renders all components
+ * using translations, so each duplicate request would cause another round of renders.
+ */
+const _inFlight = new Set<string>();
+
+/** Incremented by {@link clearI18NCache}: an answer to a request sent before is discarded. */
+let _generation = 0;
+
 /** Whether a microtask has been scheduled to flush pending keys. */
 let _fetchScheduled = false;
 
@@ -59,6 +69,9 @@ function getI18NVersion(): number {
 }
 
 function scheduleFetch(key: string): void {
+  if (_inFlight.has(key)) {
+    return;
+  }
   _pending.add(key);
   if (!_fetchScheduled) {
     _fetchScheduled = true;
@@ -74,7 +87,12 @@ async function flushPending(): Promise<void> {
 
   const keys = Array.from(_pending);
   _pending.clear();
+  for (const key of keys) {
+    _inFlight.add(key);
+  }
+  const generation = _generation;
 
+  let data: Record<string, string>;
   try {
     const url = _apiBase + 'react-api/i18n?keys=' + encodeURIComponent(keys.join(','))
       + '&windowName=' + encodeURIComponent(_windowName);
@@ -83,14 +101,32 @@ async function flushPending(): Promise<void> {
       console.error('[TLReact] i18n fetch failed:', resp.status);
       return;
     }
-    const data = await resp.json() as Record<string, string>;
-    for (const [k, v] of Object.entries(data)) {
-      _cache.set(k, v);
-    }
-    _cacheVersion++;
-    notifySubscribers();
+    data = await resp.json() as Record<string, string>;
   } catch (e) {
     console.error('[TLReact] i18n fetch error:', e);
+    return;
+  } finally {
+    if (generation === _generation) {
+      for (const key of keys) {
+        _inFlight.delete(key);
+      }
+    }
+  }
+  if (generation !== _generation) {
+    // The cache was cleared while the request was under way; the keys are requested anew.
+    return;
+  }
+
+  let changed = false;
+  for (const [k, v] of Object.entries(data)) {
+    if (_cache.get(k) !== v) {
+      _cache.set(k, v);
+      changed = true;
+    }
+  }
+  if (changed) {
+    _cacheVersion++;
+    notifySubscribers();
   }
 }
 
@@ -123,6 +159,8 @@ export function useI18N(keys: Record<string, string>): Record<string, string> {
  */
 export function clearI18NCache(): void {
   _cache.clear();
+  _inFlight.clear();
+  _generation++;
   _cacheVersion++;
   notifySubscribers();
 }

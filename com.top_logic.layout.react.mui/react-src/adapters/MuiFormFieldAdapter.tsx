@@ -1,12 +1,11 @@
 import {
   React, useTLState, useI18N, TLChild, ThemeIcon, FieldLabelContext, fieldLabel, focusFieldInput, rootClassName,
-  tooltipProps, useFormLayout, TOOLTIP_ATTR,
+  useFormLayout, usePart, TOOLTIP_ATTR,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import FormHelperText from '@mui/material/FormHelperText';
-import IconButton from '@mui/material/IconButton';
 import type { SxProps, Theme } from '@mui/material/styles';
 
 const { useCallback, useMemo, useState } = React;
@@ -61,7 +60,8 @@ const WARNING_SX = { ...MESSAGE_SX, color: 'warning.main' } as const;
  *     the `FormLabel` takes the error color as well;</li>
  * <li>warnings (while there is no error) → one `FormHelperText` per warning, announced politely,
  *     with warningIcon in front;</li>
- * <li>helpText → an `IconButton` beside the label toggling a `FormHelperText` below the input;</li>
+ * <li>helpText → the part `Button` beside the label, as TLFormField draws it, toggling a
+ *     `FormHelperText` below the input;</li>
  * <li>dirty → the dot of the design system beside the label;</li>
  * <li>labelPosition → the modifier class; `hidden` keeps the label off the screen, still naming
  *     the input; fullLine → `tl-form-field--full`;</li>
@@ -81,6 +81,7 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<FormFieldStateJson>>();
   const i18n = useI18N(I18N_KEYS);
   const formLayout = useFormLayout();
+  const Button = usePart('Button');
 
   const field = state.field;
   const fieldControlId = field?.controlId;
@@ -156,10 +157,9 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
           </FormLabel>
           {dirty && <span className="tl-form-field__dirty" aria-hidden="true" />}
           {showHelp && (
-            <IconButton size="small" onClick={toggleHelp} aria-label={i18n['js.formField.help']}
-              aria-expanded={helpVisible} aria-controls={helpTextId} {...tooltipProps(i18n['js.formField.help'])}>
-              <ThemeIcon encoded={HELP_ICON} className={ICON_CLASS} />
-            </IconButton>
+            <Button label={i18n['js.formField.help']} image={HELP_ICON} display="icon-only" appearance="ghost" small
+              className="tl-form-field__help" onClick={toggleHelp}
+              aria-expanded={helpVisible} aria-controls={helpTextId} />
           )}
         </div>
       )}

@@ -11,6 +11,8 @@ const I18N_KEYS = {
   'js.table.columnUnlock': 'Unfreeze {0}',
   'js.table.columnShowLock': 'Show and freeze {0}',
   'js.table.columnHideUnlock': 'Hide and unfreeze {0}',
+  'js.table.columnShowShort': 'Show',
+  'js.table.columnHideShort': 'Hide',
   'js.table.columnsLocked': 'Frozen',
   'js.table.columnLastVisible': 'At least one column stays visible',
 };
@@ -160,6 +162,11 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
             ? i18n['js.table.columnLastVisible']
             : format(i18n[!entry.visible ? 'js.table.columnShow'
               : entry.locked ? 'js.table.columnHideUnlock' : 'js.table.columnHide'], entry.label);
+          // The tooltip stands next to the row and needs no column name; the accessible name keeps it, since a screen
+          // reader announces the button on its own.
+          const eyeTip = lastVisible
+            ? eyeLabel
+            : i18n[entry.visible ? 'js.table.columnHideShort' : 'js.table.columnShowShort'];
           const lockLabel = format(i18n[entry.locked ? 'js.table.columnUnlock'
             : entry.visible ? 'js.table.columnLock' : 'js.table.columnShowLock'], entry.label);
           const handle = reorder.handleProps(index);
@@ -199,7 +206,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   type="button"
                   className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-reorder-list__eye' })}
                   aria-label={eyeLabel}
-                  {...tooltipProps(eyeLabel)}
+                  {...tooltipProps(eyeTip)}
                   ref={buttonRef(`${entry.name}:eye`)}
                   disabled={lastVisible}
                   onClick={(event) => handleToggle(entry.name, !entry.visible, event)}

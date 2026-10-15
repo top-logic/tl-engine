@@ -13,6 +13,7 @@
 					<locale name="es"/>
 				</supported-locales>
 				<bundles>
+					<bundle name="demoReactMessages"/>
 					<bundle name="model.demo.react.messages"/>
 					<bundle name="model.demo.tickets.messages"/>
 					<bundle name="model.demo.charts.messages"/>
@@ -51,6 +52,33 @@
 					<role name="demo.react.TicketWatcher"/>
 					<role name="demo.react.ProjectPathViewer"/>
 				</roles>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+				<group name="Approve" type="write"/>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+				<scripts>
+					<!--
+						A member of a project approves a milestone of it, although only an
+						administrator may write Milestone#approved (see the security-config).
+					-->
+					<privileged-script name="approveMilestone"
+						command-group="Approve"
+						security-object="$milestone.container()"
+					>
+						<parameters>
+							<parameter name="milestone"/>
+						</parameters>
+						<implementation>{
+							$milestone.set(`tl.demo.projectManagement:Milestone#approved`, true);
+							$milestone;
+						}</implementation>
+					</privileged-script>
+				</scripts>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.util.model.ModelService">
@@ -177,6 +205,9 @@
 						in the "New Milestone" dialog and when editing the milestone; a member creates a
 						milestone that is not approved. The ticket demo shows its tickets, but neither
 						creates nor deletes nor edits one.
+						
+						A member approves a milestone of P1 with the "Approve" command of the milestone list
+						(the privileged script approveMilestone), a ticket watcher cannot.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant
@@ -204,6 +235,10 @@
 						<grant
 							inherit="true"
 							operation="Write"
+							roles="demo.react.ProjectMember"
+						/>
+						<grant
+							operation="Approve"
 							roles="demo.react.ProjectMember"
 						/>
 						<grant

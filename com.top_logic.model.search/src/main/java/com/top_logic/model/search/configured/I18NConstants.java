@@ -34,6 +34,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_UNKNOWN_COMMAND_GROUP__GROUP_NAME;
 
+	/**
+	 * @en The argument of canCall() must be a call of a configured TL-Script function: {0}
+	 */
+	public static ResKey1 ERROR_CAN_CALL_NO_CALL__EXPR;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

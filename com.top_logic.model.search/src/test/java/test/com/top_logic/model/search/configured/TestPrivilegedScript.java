@@ -249,6 +249,44 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 		assertEquals(null, execute(search("p -> testPlainScript($p)"), _p2));
 	}
 
+	public void testCanCall() throws Exception {
+		becomeUser(_approver);
+		assertEquals(Boolean.TRUE, execute(search("p -> canCall(testPrivilegedRename($p, 'x'))"), _p1));
+		assertEquals("canCall does not call the function.", "p1", _p1.tValueByName("name"));
+		becomeUser(_auditor);
+		assertEquals(Boolean.FALSE, execute(search("p -> canCall(testPrivilegedRename($p, 'x'))"), _p1));
+		assertEquals("canCall does not call the function.", "p1", _p1.tValueByName("name"));
+	}
+
+	public void testCanCallNullSecurityObject() throws Exception {
+		becomeUser(_approver);
+		assertEquals(Boolean.FALSE, execute(search("p -> canCall(testPrivilegedNever($p))"), _p1));
+	}
+
+	public void testCanCallPlainScript() throws Exception {
+		becomeUser(_auditor);
+		assertEquals(Boolean.TRUE, execute(search("p -> canCall(testPlainScript($p))"), _p1));
+	}
+
+	public void testCanCallChecksAlsoUnsecured() throws Exception {
+		becomeUser(_auditor);
+		QueryExecutor executor = QueryExecutor.compile(search("p -> canCall(testPrivilegedRename($p, 'x'))"));
+		executor.disableSecurity();
+		assertEquals(Boolean.FALSE, executor.execute(_p1));
+	}
+
+	public void testCanCallRejectsNonCall() {
+		for (String script : new String[] { "canCall(true)", "p -> canCall(canExecute($p, 'Read'))" }) {
+			try {
+				QueryExecutor.compile(search(script));
+				fail("canCall must reject: " + script);
+			} catch (Exception ex) {
+				assertTrue(script + ": " + ex.getMessage(),
+					String.valueOf(ex.getMessage()).contains("must be a call of a configured TL-Script function"));
+			}
+		}
+	}
+
 	public static Test suite() {
 		return suite(TestPrivilegedScript.class,
 			AccessManager.Module.INSTANCE,

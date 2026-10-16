@@ -520,6 +520,10 @@
 											<label>
 												<en>Pending change</en>
 												<de>Ausstehende Änderung</de>
+												<tooltip>
+													<en>A change of the rule that is stored but takes effect only with "Apply configuration": the rule is new, changed or deleted. Empty for a rule in effect as it is stored.</en>
+													<de>Eine Änderung der Regel, die gespeichert ist, aber erst mit „Konfiguration anwenden“ wirksam wird: Die Regel ist neu, geändert oder gelöscht. Leer für eine Regel, die so gilt, wie sie gespeichert ist.</de>
+												</tooltip>
 											</label>
 											<value><![CDATA[row -> $row["stateLabel"]]]></value>
 										</computed-column>
@@ -540,6 +544,10 @@
 											<label>
 												<en>Stored</en>
 												<de>Gespeichert</de>
+												<tooltip>
+													<en>Whether the rule is stored in the application configuration, because it was created or edited in this view. A rule without the mark is taken unchanged from the configuration of the layers underneath.</en>
+													<de>Ob die Regel in der Anwendungskonfiguration gespeichert ist, weil sie in dieser Ansicht angelegt oder bearbeitet wurde. Eine Regel ohne Haken stammt unverändert aus der Konfiguration der darunterliegenden Schichten.</de>
+												</tooltip>
 											</label>
 											<value><![CDATA[row -> $row["stored"]]]></value>
 										</computed-column>

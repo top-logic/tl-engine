@@ -2493,11 +2493,18 @@ a.tl-field-value:hover {
 /* Die Hervorhebung ist die Tastaturposition (aria-activedescendant), nicht die Wahl: Fläche und
    Akzentlinie. Die Akzentlinie ist der Indikator, die Tönung nur ein Zusatz: surface-interactive-selected
    ist auf surface-layer abgestimmt, nicht auf die gehobene Overlay-Fläche; gehobene Flächen bekommen
-   ihre eigenen Rollen in Welle 3. Die Liste führt nur ungewählte Optionen; Gewähltes steht als Wert
-   oder Chip in der Wurzel. */
+   ihre eigenen Rollen in Welle 3. */
 .tl-select__option[data-tl-state~="highlighted"] {
   background: var(--tl-surface-interactive-selected);
   box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-interactive);
+}
+
+/* Die Wahl ist ein Haken am Zeilenende (aria-selected), unabhängig von der Hervorhebung. Die Liste
+   einer Einfachauswahl führt alle Optionen, die gewählte mit Haken; die einer Mehrfachauswahl nur die
+   ungewählten, das Gewählte steht als Chip in der Wurzel. */
+.tl-select__option-check {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
 }
 
 /* --- sidebar/sidebar.css --- */

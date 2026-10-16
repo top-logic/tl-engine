@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, rootClassName, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, rootClassName, usePart, ICON_CLOSE } from 'tl-react-bridge';
 import type { TLCellProps, AlertStateJson, ChildControlJson } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -14,7 +14,6 @@ const DISMISS_COMMAND = 'dismiss';
 const GENERATION_ARG = 'generation';
 
 /** The glyph of the dismiss button, the same as removing a value of a select. */
-const DISMISS_ICON = 'css:fa-solid fa-xmark';
 
 /**
  * A highlighted message standing in the content of a page: an icon, an optional heading, the
@@ -65,7 +64,7 @@ const TLAlert: React.FC<TLCellProps> = ({ controlId }) => {
         <span className="tl-alert__close">
           <Button
             label={i18n['js.alert.dismiss']}
-            image={DISMISS_ICON}
+            image={ICON_CLOSE}
             display="icon-only"
             appearance="ghost"
             small

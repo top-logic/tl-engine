@@ -258,7 +258,7 @@ describe('the TopLogic drawing of the parts', () => {
     render(<DisclosureTogglePart expanded opens="end" label="Seitenleiste zuklappen" />);
 
     expect(screen.getByRole('button', { name: 'Seitenleiste zuklappen' }).className)
-      .toBe('tl-toggle tlDisclosureToggle--end');
+      .toBe('tl-toggle tl-toggle--end');
   });
 
   it('draws a checkbox as the box of the design system, named by its attributes', async () => {
@@ -594,7 +594,7 @@ describe('the TopLogic drawing of the parts', () => {
     expect(chip.getAttribute(TOOLTIP_ATTR)).toBe('text:Tipp');
     expect(chip.getAttribute('data-role')).toBe('value');
     expect(Array.from(chip.children).map(child => child.className))
-      .toEqual(['fa-solid fa-star tl-pill__icon tl-icon-sm', 'tl-pill__label', 'tlChip__detail tl-nums']);
+      .toEqual(['fa-solid fa-star tl-pill__icon tl-icon-sm', 'tl-pill__label', 'tl-chip__detail tl-nums']);
     expect(chip.textContent).toBe('Alpha2 KB');
     expect(screen.queryByRole('button')).toBeNull();
   });
@@ -809,10 +809,10 @@ describe('the TopLogic drawing of the parts', () => {
     </>);
 
     const named = screen.getByRole('progressbar', { name: 'Laden…' });
-    expect(named.className).toBe('tlSpinner x');
+    expect(named.className).toBe('tl-spinner x');
     expect(named.hasAttribute('aria-hidden')).toBe(false);
-    const decoration = container.querySelectorAll('.tlSpinner')[1];
-    expect(decoration.className).toBe('tlSpinner tlSpinner--small');
+    const decoration = container.querySelectorAll('.tl-spinner')[1];
+    expect(decoration.className).toBe('tl-spinner tl-spinner--sm');
     expect(decoration.getAttribute('aria-hidden')).toBe('true');
     expect(decoration.hasAttribute('role')).toBe(false);
     expect(screen.getAllByRole('progressbar')).toEqual([named]);

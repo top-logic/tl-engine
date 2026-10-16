@@ -2,19 +2,19 @@
 // pushed onto a drill-down stack - as something a stylesheet can animate.
 //
 // What all three have in common is a list of keys: one key per element displayed, and a change of
-// that list is the moment to animate. The hook here marks the DOM for such a change - a class on
-// the element that arrived, a copy of the element that left - and takes the marks away again once
+// that list is the moment to animate. The hook here marks the DOM for such a change - a class or a word in
+// data-tl-state on the element that arrived, a copy of the element that left - and takes the marks away again once
 // the animation is over. Which animation runs, and whether one runs at all, is the stylesheet's
-// decision; the classes are the contract between the two.
+// decision; the marks are the contract between the two.
 
 import { useLayoutEffect, useRef } from 'react';
 
 /**
- * How long a transition class stays at most when an animation runs but never reports its end - one
+ * How long a transition mark stays at most when an animation runs but never reports its end - one
  * on an element that is hidden, for instance, or removed from the rendering.
  *
- * The classes are display state, so they must not survive the change they describe even where no
- * animation reports its end. Where nothing animates at all, the classes go right away.
+ * The marks are display state, so they must not survive the change they describe even where no
+ * animation reports its end. Where nothing animates at all, the marks go right away.
  */
 export const TRANSITION_FALLBACK_MS = 1000;
 
@@ -78,7 +78,7 @@ function animates(element: HTMLElement): boolean {
 /**
  * Calls `done` once the element has finished animating.
  *
- * The element must carry the classes it animates against when this is called. If its stylesheet
+ * The element must carry the marks it animates against when this is called. If its stylesheet
  * animates nothing then, `done` is called before this returns. Otherwise the end is the first
  * `animationend` or `transitionend` of the element itself, or {@link TRANSITION_FALLBACK_MS} for an
  * animation that never reports its end.
@@ -114,6 +114,55 @@ function whenFinished(element: HTMLElement, done: () => void): (() => void) | nu
   return end;
 }
 
+/** The attribute the package reads states from. */
+const STATE_ATTR = 'data-tl-state';
+
+/** How a change is marked on the DOM. */
+interface Marks {
+  enter: string;
+  exit: string;
+  /** The attribute the marks are written to. */
+  attribute: string;
+  has(element: HTMLElement, mark: string): boolean;
+  add(element: HTMLElement, mark: string): void;
+  remove(element: HTMLElement, mark: string): void;
+}
+
+const CLASS_MARKS = (enter: string, exit: string): Marks => ({
+  enter,
+  exit,
+  attribute: 'class',
+  has: (element, mark) => element.classList.contains(mark),
+  add: (element, mark) => element.classList.add(mark),
+  remove: (element, mark) => element.classList.remove(mark),
+});
+
+const STATE_MARKS: Marks = {
+  enter: 'entering',
+  exit: 'exiting',
+  attribute: STATE_ATTR,
+  has: (element, mark) => (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).includes(mark),
+  add: (element, mark) => {
+    const words = (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).filter(Boolean);
+    if (!words.includes(mark)) {
+      words.push(mark);
+    }
+    element.setAttribute(STATE_ATTR, words.join(' '));
+  },
+  remove: (element, mark) => {
+    const words = (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).filter((word) => word && word !== mark);
+    if (words.length > 0) {
+      element.setAttribute(STATE_ATTR, words.join(' '));
+    } else {
+      element.removeAttribute(STATE_ATTR);
+    }
+  },
+};
+
+function marksOf(options: KeyedTransitionOptions): Marks {
+  return 'state' in options ? STATE_MARKS : CLASS_MARKS(options.enterClass, options.exitClass);
+}
+
 /**
  * An inert copy of the given element, to be shown in its place while it leaves.
  *
@@ -121,21 +170,19 @@ function whenFinished(element: HTMLElement, done: () => void): (() => void) | nu
  * is nothing left to render. It is hidden from assistive technology, takes no input and carries no
  * ids, so that nothing addresses it by the ids of what it copies.
  */
-function snapshot(element: HTMLElement, enterClass: string, exitClass: string): HTMLElement {
+function snapshot(element: HTMLElement, marks: Marks): HTMLElement {
   const copy = element.cloneNode(true) as HTMLElement;
   copy.removeAttribute('id');
   copy.querySelectorAll('[id]').forEach((inner) => inner.removeAttribute('id'));
-  copy.classList.remove(enterClass);
-  copy.classList.add(exitClass);
+  marks.remove(copy, marks.enter);
+  marks.add(copy, marks.exit);
   copy.setAttribute('aria-hidden', 'true');
   copy.setAttribute('inert', '');
   return copy;
 }
 
-/**
- * What a control displays, and the classes its change is animated with.
- */
-export interface KeyedTransitionOptions {
+/** What a control displays: the keys, where each is shown, and where the copies of what left go. */
+interface KeyedTransitionBase {
 
   /**
    * The keys of the elements displayed now, one per element, in no particular order.
@@ -158,29 +205,29 @@ export interface KeyedTransitionOptions {
   /**
    * The element the copies of what left are shown in, or `null` while there is none.
    *
-   * A copy is placed by the stylesheet, which reaches it through {@link #exitClass}; the container
+   * A copy is placed by the stylesheet, which reaches it through the exit mark; the container
    * only has to outlive the element it holds the copy of.
    */
   container(): HTMLElement | null;
-
-  /** The class an element carries while it arrives. */
-  enterClass: string;
-
-  /** The class the copy of an element carries while it leaves. */
-  exitClass: string;
 }
 
 /**
- * Marks the change of what a control displays with the state classes an application stylesheet
- * animates against.
+ * How the change is marked: by two classes (the wizard and the tile stack, until wave 4b), or by the
+ * words `entering` and `exiting` in `data-tl-state` (`state: true`, the design system package).
+ */
+export type KeyedTransitionOptions = KeyedTransitionBase
+  & ({ enterClass: string; exitClass: string } | { state: true });
+
+/**
+ * Marks the change of what a control displays with the marks a stylesheet animates against.
  *
- * An element whose key appears carries {@link KeyedTransitionOptions#enterClass} until its
+ * An element whose key appears carries the enter mark until its
  * animation ends; an element whose key disappears is replaced by an inert copy of itself carrying
- * {@link KeyedTransitionOptions#exitClass} until its animation ends, or until the same key is
- * displayed again. The enter class stays while the element arrives even if the element's own
- * renderer rewrites its class attribute in the meantime. Where the stylesheet animates nothing,
- * class or copy is taken away at once, before the browser paints; an animation that never reports
- * its end is cut off after {@link TRANSITION_FALLBACK_MS}.
+ * the exit mark until its animation ends, or until the same key is displayed again. The enter mark
+ * stays while the element arrives even if the element's own renderer rewrites the attribute carrying
+ * it in the meantime. Where the stylesheet animates nothing, mark or copy is taken away at once,
+ * before the browser paints; an animation that never reports its end is cut off after
+ * {@link TRANSITION_FALLBACK_MS}.
  *
  * Two things do not count as a change: the first display of a control - what a wizard opens on or
  * a stack starts with was not moved to - and any change at all for a viewer who asked for reduced
@@ -209,7 +256,8 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
   // Runs before the browser paints what has changed, so that the classes and the copies are in
   // place by the time either the element arriving or the one leaving is seen.
   useLayoutEffect(() => {
-    const { keys, node, container, enterClass, exitClass } = latest.current;
+    const { keys, node, container } = latest.current;
+    const marks = marksOf(latest.current);
     const previous = displayed.current;
     displayed.current = [...keys];
     const quiet = reducedMotion();
@@ -230,7 +278,7 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
       if (quiet || !left || !host) {
         continue;
       }
-      const copy = snapshot(left, enterClass, exitClass);
+      const copy = snapshot(left, marks);
       host.appendChild(copy);
       const drop = whenFinished(copy, () => {
         leaving.delete(key);
@@ -251,22 +299,22 @@ export function useKeyedTransition(options: KeyedTransitionOptions): void {
         if (!arrived) {
           continue;
         }
-        arrived.classList.add(enterClass);
-        // The renderer of the element may write its class attribute anew while it arrives; the
-        // class is put back before the browser recalculates styles, so the animation runs on. Adding
-        // a class writes the attribute even when it is present, hence the check.
+        marks.add(arrived, marks.enter);
+        // The renderer of the element may write the attribute carrying the mark anew while it
+        // arrives; the mark is put back before the browser recalculates styles, so the animation runs
+        // on. Adding a mark writes the attribute even when the mark is present, hence the check.
         const keep = new MutationObserver(() => {
-          if (!arrived.classList.contains(enterClass)) {
-            arrived.classList.add(enterClass);
+          if (!marks.has(arrived, marks.enter)) {
+            marks.add(arrived, marks.enter);
           }
         });
         const end = whenFinished(arrived, () => {
           keep.disconnect();
           arriving.delete(key);
-          arrived.classList.remove(enterClass);
+          marks.remove(arrived, marks.enter);
         });
         if (end) {
-          keep.observe(arrived, { attributes: true, attributeFilter: ['class'] });
+          keep.observe(arrived, { attributes: true, attributeFilter: [marks.attribute] });
           arriving.set(key, end);
         }
       }

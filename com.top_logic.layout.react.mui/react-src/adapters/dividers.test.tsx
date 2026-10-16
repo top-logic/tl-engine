@@ -27,7 +27,7 @@ replacePart('Badge', MuiBadgeAdapter);
 const LABEL_OVERFLOW = 'js.toolbar.overflow';
 
 /** The class the toolbar finds the divider between two groups by, to read its width. */
-const TOOLBAR_SEPARATOR_CLASS = 'tlToolbar__separator';
+const TOOLBAR_SEPARATOR_CLASS = 'tl-toolbar__separator';
 
 /** The width of a button of a toolbar, as the stubbed layout reports it. */
 const UNIT_WIDTH = 100;
@@ -132,8 +132,8 @@ describe('the dividers of a toolbar (TLToolbar) as MUI dividers', () => {
     expect(divider.classList).not.toContain('MuiDivider-vertical');
     // The menu gives the space around the divider through the element around it.
     const separator = divider.parentElement!;
-    expect(divider.classList).not.toContain('tlMenu__separator');
-    expect(separator.classList).toContain('tlMenu__separator');
+    expect(divider.classList).not.toContain('tl-menu__separator');
+    expect(separator.classList).toContain('tl-menu__separator');
     expect(separator.parentElement).toBe(menu);
     expect(separator.previousElementSibling!.textContent).toBe('Kopieren');
     expect(separator.nextElementSibling!.textContent).toBe('Löschen');
@@ -154,7 +154,7 @@ describe('the dividers of a menu (TLMenu) as MUI dividers', () => {
     const menu = screen.getByRole('menu');
     const divider = menu.querySelector('hr')!;
     expectMuiDivider(divider);
-    expect(divider.parentElement!.classList).toContain('tlMenu__separator');
+    expect(divider.parentElement!.classList).toContain('tl-menu__separator');
     expect(Array.from(menu.children).map(child => child.tagName)).toEqual(['BUTTON', 'DIV', 'BUTTON']);
   });
 });

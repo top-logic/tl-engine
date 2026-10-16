@@ -629,7 +629,7 @@ describe('the search of the column selection as MUI text field', () => {
 
   function entries(count: number) {
     return Array.from({ length: count }, (_, index) => (
-      { name: 'c' + index, label: 'Spalte ' + index, visible: true, grouped: false }));
+      { name: 'c' + index, label: 'Spalte ' + index, visible: true, locked: false }));
   }
 
   it('narrows the listed columns to the ones matching the search', async () => {
@@ -639,13 +639,13 @@ describe('the search of the column selection as MUI text field', () => {
     const search = screen.getByRole('searchbox', { name: LABEL_COLUMN_SEARCH }) as HTMLInputElement;
     expectMuiBox(search);
     expect(search.closest('.tl-reorder-list__search')).not.toBeNull();
-    expect(screen.getAllByRole('checkbox')).toHaveLength(12);
+    const labels = () => [...document.querySelectorAll('.tl-reorder-list__label')].map(label => label.textContent);
+    expect(labels()).toHaveLength(12);
 
     await userEvent.type(search, 'Spalte 1');
 
     // "Spalte 1", "Spalte 10" and "Spalte 11".
-    expect(screen.getAllByRole('checkbox').map(box => box.getAttribute('aria-label') ?? box.closest('label')!.textContent))
-      .toEqual(['Spalte 1', 'Spalte 10', 'Spalte 11']);
+    expect(labels()).toEqual(['Spalte 1', 'Spalte 10', 'Spalte 11']);
   });
 
   it('offers no search for a short list', async () => {

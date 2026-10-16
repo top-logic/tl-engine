@@ -682,6 +682,78 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMN_SEARCH;
 
 	/**
+	 * @en Show {0}
+	 */
+	@CustomKey("js.table.columnShow")
+	public static ResKey JS_TABLE_COLUMN_SHOW;
+
+	/**
+	 * @en Hide {0}
+	 */
+	@CustomKey("js.table.columnHide")
+	public static ResKey JS_TABLE_COLUMN_HIDE;
+
+	/**
+	 * @en Freeze {0}
+	 */
+	@CustomKey("js.table.columnLock")
+	public static ResKey JS_TABLE_COLUMN_LOCK;
+
+	/**
+	 * @en Unfreeze {0}
+	 */
+	@CustomKey("js.table.columnUnlock")
+	public static ResKey JS_TABLE_COLUMN_UNLOCK;
+
+	/**
+	 * @en Show and freeze {0}
+	 */
+	@CustomKey("js.table.columnShowLock")
+	public static ResKey JS_TABLE_COLUMN_SHOW_LOCK;
+
+	/**
+	 * @en Hide and unfreeze {0}
+	 */
+	@CustomKey("js.table.columnHideUnlock")
+	public static ResKey JS_TABLE_COLUMN_HIDE_UNLOCK;
+
+	/**
+	 * @en Show
+	 */
+	@CustomKey("js.table.columnShowShort")
+	public static ResKey JS_TABLE_COLUMN_SHOW_SHORT;
+
+	/**
+	 * @en Hide
+	 */
+	@CustomKey("js.table.columnHideShort")
+	public static ResKey JS_TABLE_COLUMN_HIDE_SHORT;
+
+	/**
+	 * @en Freeze
+	 */
+	@CustomKey("js.table.columnLockShort")
+	public static ResKey JS_TABLE_COLUMN_LOCK_SHORT;
+
+	/**
+	 * @en Unfreeze
+	 */
+	@CustomKey("js.table.columnUnlockShort")
+	public static ResKey JS_TABLE_COLUMN_UNLOCK_SHORT;
+
+	/**
+	 * @en Frozen
+	 */
+	@CustomKey("js.table.columnsLocked")
+	public static ResKey JS_TABLE_COLUMNS_LOCKED;
+
+	/**
+	 * @en At least one column stays visible
+	 */
+	@CustomKey("js.table.columnLastVisible")
+	public static ResKey JS_TABLE_COLUMN_LAST_VISIBLE;
+
+	/**
 	 * @en Group by this column
 	 */
 	@CustomKey("js.table.groupBy")

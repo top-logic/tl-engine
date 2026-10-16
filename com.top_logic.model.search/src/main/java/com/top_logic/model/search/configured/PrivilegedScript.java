@@ -167,9 +167,11 @@ public class PrivilegedScript extends ConfiguredScript {
 	 *
 	 * <p>
 	 * The check is made on the persistent object. A security object expression that navigates from
-	 * an overlay argument (e.g. <code>$m.get(...)</code>) reads its not yet stored values; it should
-	 * therefore start from the argument itself or navigate along references the user can not change
-	 * in the form.
+	 * an overlay argument (e.g. <code>$m.get(...)</code>) reads its not yet stored values, and so does
+	 * any navigation while a {@link com.top_logic.model.form.TracingScope} is open on the current
+	 * thread (a traced computation of a form answers every attribute read from the form's overlays).
+	 * A security object expression should therefore start from the argument itself or navigate along
+	 * references the user can not change in the form.
 	 * </p>
 	 *
 	 * @param arguments

@@ -33,6 +33,7 @@ import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
@@ -191,13 +192,11 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 * </p>
 	 *
 	 * <p>
-	 * The plain route ({@link QueryExecutorMethod}) and the tracing route ({@link TracingScriptMethod},
-	 * e.g. a computation in a form) are checked alike. In the tracing route, the implementation is
-	 * evaluated in the context of the caller and therefore sees the overlays of its evaluation
-	 * context. The security object is computed in a fresh context without these overlays, and the
-	 * check is made on the persistent object (see {@link PrivilegedScript#isAllowed(Object[])}).
-	 * An overlay passed as argument, however, is the argument itself: a security object expression
-	 * navigating from it reads its not yet stored values.
+	 * A traced evaluation (e.g. a computation in a form) calls the function through the same
+	 * {@link QueryExecutorMethod} and is checked alike. The check is made on the persistent object
+	 * (see {@link PrivilegedScript#isAllowed(Object[])}). An overlay passed as argument, however, is
+	 * the argument itself: a security object expression navigating from it reads its not yet stored
+	 * values.
 	 * </p>
 	 *
 	 * @param scriptName

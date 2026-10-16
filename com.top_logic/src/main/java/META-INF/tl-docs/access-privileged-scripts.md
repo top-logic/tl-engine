@@ -217,12 +217,12 @@ by `canCall`:
   either. A privileged function must not return such values holding objects the caller may not
   discover.
 - **The tracing evaluation sees the overlays of a form.** Called from a traced computation (e.g. in
-  a form), the implementation sees the not yet stored values of the form. The security object is
-  computed in a context of its own without these overlays, and the check is made on the persistent
-  object (P3, step 2). An overlay passed as argument is the argument itself, though: a
-  `security-object` expression navigating from it (e.g. `$m.get(...)`) reads its not yet stored
-  values. A `security-object` expression should therefore start from the argument itself or
-  navigate along references the user cannot change in the form (e.g. `$m.container()`).
+  a form), every attribute read on the thread is answered from the form's overlays
+  (`TracingScope`): the implementation and the `security-object` expression see the not yet stored
+  values of the form. The check itself is made on the persistent object (P3, step 2), but a
+  `security-object` expression navigating along a reference (e.g. `$m.get(...)`) follows the value
+  the user entered. A `security-object` expression should therefore start from the argument itself
+  or navigate along references the user cannot change in the form (e.g. `$m.container()`).
 - **The security object must be of the intended type.** With `security-object="$arg"`, every
   persistent object the user holds the command group on passes the check - of any type carrying a
   grant of it, whatever the implementation expects. The `type` of a parameter is documentation

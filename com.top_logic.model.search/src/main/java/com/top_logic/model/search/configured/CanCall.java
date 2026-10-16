@@ -105,7 +105,7 @@ public class CanCall extends GenericMethod {
 
 		@Override
 		public CanCall build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			if (!(args[0] instanceof QueryExecutorMethod || args[0] instanceof TracingScriptMethod)) {
+			if (!(args[0] instanceof QueryExecutorMethod)) {
 				throw error(I18NConstants.ERROR_CAN_CALL_NO_CALL__EXPR.fill(toString(expr)));
 			}
 			return new CanCall(getName(), args);

@@ -61,6 +61,42 @@
 					</attributes>
 				</class>
 				
+				<!-- Container numbering its imported children per container. -->
+				<class name="Container">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String" />
+						<reference name="children"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Child"
+						/>
+					</attributes>
+				</class>
+				
+				<class name="Child">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<attributes>
+						<property name="name" type="tl.core:String" />
+						<property name="number" type="tl.core:Integer">
+							<annotations>
+								<default-value>
+									<provider class="com.top_logic.element.structured.util.SequenceDefaultProvider"
+										sequence-name="TestXMLInstanceImporter.Child"
+									>
+										<dynamic-sequence-name class="com.top_logic.element.structured.util.ContextAwareSequenceName"/>
+									</provider>
+								</default-value>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+				
 				<!-- Uniqueness constraint declared at the definition of an attribute that a subtype overrides. -->
 				<class name="UniqueBase">
 					<annotations>

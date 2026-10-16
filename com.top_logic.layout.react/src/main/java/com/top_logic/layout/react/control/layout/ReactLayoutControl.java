@@ -19,6 +19,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.selection.ItemSelection;
+import com.top_logic.layout.react.control.selection.ItemSelector;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -63,7 +64,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <li>{@link #MULTI_SELECT}: whether several items may be selected.</li>
  * </ul>
  */
-public abstract class ReactLayoutControl extends ReactControl {
+public abstract class ReactLayoutControl extends ReactControl implements ItemSelector {
 
 	/** @see #setChildren(List) */
 	protected static final String CHILDREN = "children";
@@ -231,6 +232,7 @@ public abstract class ReactLayoutControl extends ReactControl {
 	/**
 	 * Whether one item or several may be selected.
 	 */
+	@Override
 	public SelectionMode getSelectionMode() {
 		return _selection == null ? SelectionMode.SINGLE : _selection.getMode();
 	}
@@ -256,8 +258,17 @@ public abstract class ReactLayoutControl extends ReactControl {
 	 * is.
 	 * </p>
 	 */
+	@Override
 	public Set<Object> getSelection() {
 		return _selection == null ? Set.of() : _selection.getSelection();
+	}
+
+	/**
+	 * Whether the container displays an item for the given object, see {@link #setItems(List)}.
+	 */
+	@Override
+	public boolean displays(Object item) {
+		return _selection != null && _selection.displays(item);
 	}
 
 	/**
@@ -270,6 +281,7 @@ public abstract class ReactLayoutControl extends ReactControl {
 	 * @throws IllegalStateException
 	 *         If the container is not {@link #isSelectable() selectable}.
 	 */
+	@Override
 	public void setSelection(Collection<?> items) {
 		requireSelection().setSelection(items);
 	}
@@ -282,6 +294,7 @@ public abstract class ReactLayoutControl extends ReactControl {
 	 * @throws IllegalStateException
 	 *         If the container is not {@link #isSelectable() selectable}.
 	 */
+	@Override
 	public void setSelectionListener(Consumer<Set<Object>> listener) {
 		requireSelection().setListener(listener);
 	}

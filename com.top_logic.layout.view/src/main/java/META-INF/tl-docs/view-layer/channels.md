@@ -121,7 +121,7 @@ Demo: `com.top_logic.demo.react/src/main/webapp/WEB-INF/views/demo/live-channel-
 Elements and commands name channels in their configuration; a channel reference is the plain channel name. The common properties:
 
 - **`input="ch"`** - the object an element displays or a command works on: `<form input="selectedNode">`, `<text input="element"/>`, `<generic-command input="model">`. The element follows the channel and shows the new value.
-- **`selection="ch"`** - what the user selects in a `<table>`, a tree or a `<flow-diagram>` is written to the channel, and a value written to the channel by another element is marked as selected (see [selecting rows and nodes](doc:view-layer/tables#selecting-rows-and-nodes)).
+- **`selection="ch"`** - what the user selects in a `<table>`, a tree, a `<flow-diagram>`, a `<kanban-board>` or an `<object-list>` is written to the channel, and a value written to the channel by another element is marked as selected (see [selecting rows and nodes](doc:view-layer/tables#selecting-rows-and-nodes)).
 - **`inputs="a, b"`** - the channels whose values become the leading arguments of an element's TL-Script functions: the `<rows>` of a `<table>`, the `items` of an `<object-list>`, `<execute-script>`, a `<derived-channel>`. The values are read every time a function is applied.
 - **`value="ch"`** - a channel bound to an input control in both directions, as with `<value-input value="search"/>`.
 

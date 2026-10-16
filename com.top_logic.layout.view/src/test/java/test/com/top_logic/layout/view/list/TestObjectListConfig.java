@@ -33,6 +33,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.list.ObjectListElement;
 import com.top_logic.layout.view.list.ObjectListElement.Layout;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Tests the configuration of an {@link ObjectListElement}: the inputs its functions are applied to,
@@ -62,6 +63,8 @@ public class TestObjectListConfig extends TestCase {
 		assertEquals("The configured column bound.", Integer.valueOf(3), config.getMaxColumns());
 		assertEquals("The configured column width.", "18rem", config.getMinColumnWidth());
 		assertEquals("The item content is read.", 1, config.getItem().size());
+		assertEquals("The selection channel is read.", new ChannelRef("product"), config.getSelection());
+		assertEquals("The configured selection mode.", SelectionMode.MULTI, config.getSelectionMode());
 	}
 
 	/**
@@ -72,6 +75,17 @@ public class TestObjectListConfig extends TestCase {
 
 		assertEquals("The inputs are read in declaration order.",
 			List.of(new ChannelRef("catalogue"), new ChannelRef("season")), config.getInputs());
+	}
+
+	/**
+	 * Tests that a list without a selection channel is display-only, one selected element at a time
+	 * being the mode it would select in.
+	 */
+	public void testNoSelectionByDefault() throws Exception {
+		ObjectListElement.Config config = readConfig("test-object-list-inputs.view.xml");
+
+		assertNull("No selection channel is configured.", config.getSelection());
+		assertEquals("A single element is selected by default.", SelectionMode.SINGLE, config.getSelectionMode());
 	}
 
 	/**

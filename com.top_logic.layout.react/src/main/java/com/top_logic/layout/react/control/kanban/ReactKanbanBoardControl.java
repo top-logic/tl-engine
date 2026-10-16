@@ -38,6 +38,7 @@ import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.selection.ItemSelection;
+import com.top_logic.layout.react.control.selection.ItemSelector;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.table.SelectionMode;
@@ -101,7 +102,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * objects are already in is applied by the reorder function alone, and is not accepted without one.
  * </p>
  */
-public class ReactKanbanBoardControl extends ReactControl implements DragSourceControl {
+public class ReactKanbanBoardControl extends ReactControl implements DragSourceControl, ItemSelector {
 
 	/** Name of the client component rendering the board. */
 	public static final String REACT_MODULE = "TLKanbanBoard";
@@ -394,6 +395,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/**
 	 * Whether the board displays a card for the given object.
 	 */
+	@Override
 	public boolean displays(Object item) {
 		return _columnOfItem.containsKey(item);
 	}
@@ -408,6 +410,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/**
 	 * Whether one card or several may be selected.
 	 */
+	@Override
 	public SelectionMode getSelectionMode() {
 		return _cards.getMode();
 	}
@@ -428,6 +431,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * is.
 	 * </p>
 	 */
+	@Override
 	public Set<Object> getSelection() {
 		return _cards.getSelection();
 	}
@@ -440,6 +444,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 *        The selected objects, empty for no selection. In the selection mode
 	 *        {@link SelectionMode#SINGLE}, the caller passes at most one.
 	 */
+	@Override
 	public void setSelection(Collection<?> items) {
 		_cards.setSelection(items);
 	}
@@ -450,6 +455,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * @param listener
 	 *        Receives the selected objects; {@code null} for no listener.
 	 */
+	@Override
 	public void setSelectionListener(Consumer<Set<Object>> listener) {
 		_cards.setListener(listener);
 	}

@@ -27,6 +27,7 @@ import org.xml.sax.SAXException;
 
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -343,37 +344,94 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * A copy of the role parent rule with the given id, as it is currently in effect.
+	 * A copy of the role parent rule with the given id, as it is stored or, if it is not stored,
+	 * as it is currently in effect.
 	 *
 	 * <p>
 	 * The copy is meant to be edited and handed back to
 	 * {@link #putRoleParentRule(NavigationRuleConfig)}, which stores it under its id. A rule of
-	 * the underlying configuration layers is thereby replaced by the edited one.
+	 * the underlying configuration layers is thereby replaced by the edited one. A stored rule is
+	 * edited in its stored form, which differs from the one in effect until the stored definition
+	 * is {@link #apply() applied}.
 	 * </p>
 	 *
 	 * @param id
 	 *        The {@link NavigationRuleConfig#getId()} of the rule to edit.
-	 * @return The copy, or <code>null</code> when no such rule is in effect.
+	 * @return The copy, or <code>null</code> when no such rule is stored or in effect.
 	 */
 	public NavigationRuleConfig editableRoleParentRule(String id) {
-		return copyRule(effectiveConfig().getSecurityParents().getRules(), id);
+		NavigationRuleConfig stored = storedRule(this::storedRoleParentRules, id);
+		return stored != null ? stored : copyRule(effectiveConfig().getSecurityParents().getRules(), id);
 	}
 
 	/**
-	 * A copy of the role rule with the given id, as it is currently in effect.
+	 * A copy of the role rule with the given id, as it is stored or, if it is not stored, as it
+	 * is currently in effect.
 	 *
 	 * <p>
 	 * The copy is meant to be edited and handed back to {@link #putRoleRule(RoleRuleConfig)}, which
 	 * stores it under its id. A rule of the underlying configuration layers is thereby replaced by
-	 * the edited one.
+	 * the edited one. A stored rule is edited in its stored form, which differs from the one in
+	 * effect until the stored definition is {@link #apply() applied}.
 	 * </p>
 	 *
 	 * @param id
 	 *        The {@link NavigationRuleConfig#getId()} of the rule to edit.
-	 * @return The copy, or <code>null</code> when no such rule is in effect.
+	 * @return The copy, or <code>null</code> when no such rule is stored or in effect.
 	 */
 	public RoleRuleConfig editableRoleRule(String id) {
-		return copyRule(effectiveConfig().getRoleRules().getRules(), id);
+		RoleRuleConfig stored = storedRule(this::storedRoleRules, id);
+		return stored != null ? stored : copyRule(effectiveConfig().getRoleRules().getRules(), id);
+	}
+
+	/**
+	 * The role parent rule with the given id as it is currently in effect.
+	 *
+	 * @param id
+	 *        The {@link NavigationRuleConfig#getId()} of the rule.
+	 * @return The rule of the running definition, not to be modified, or <code>null</code> when no
+	 *         such rule is in effect.
+	 */
+	public NavigationRuleConfig effectiveRoleParentRule(String id) {
+		return findRule(effectiveConfig().getSecurityParents().getRules(), id);
+	}
+
+	/**
+	 * The role rule with the given id as it is currently in effect.
+	 *
+	 * @param id
+	 *        The {@link NavigationRuleConfig#getId()} of the rule.
+	 * @return The rule of the running definition, not to be modified, or <code>null</code> when no
+	 *         such rule is in effect.
+	 */
+	public RoleRuleConfig effectiveRoleRule(String id) {
+		return findRule(effectiveConfig().getRoleRules().getRules(), id);
+	}
+
+	/**
+	 * A copy of the stored rule with the given id, or <code>null</code> when no such rule is
+	 * stored or the stored configuration cannot be read.
+	 */
+	private static <R extends NavigationRuleConfig> R storedRule(StoredQuery<R> stored, String id) {
+		List<R> rules;
+		try {
+			rules = stored.run();
+		} catch (ConfigurationException ex) {
+			Logger.error("Cannot read the stored access definition.", ex, SecurityDefinitionEditor.class);
+			return null;
+		}
+		return copyRule(rules, id);
+	}
+
+	/**
+	 * A query for the stored rules of one kind.
+	 */
+	private interface StoredQuery<R extends NavigationRuleConfig> {
+
+		/**
+		 * Answers the query.
+		 */
+		List<R> run() throws ConfigurationException;
 	}
 
 	/**
@@ -999,8 +1057,16 @@ public class SecurityDefinitionEditor {
 	 * none.
 	 */
 	private static <R extends NavigationRuleConfig> R copyRule(List<R> rules, String id) {
+		R rule = findRule(rules, id);
+		return rule == null ? null : TypedConfiguration.copy(rule);
+	}
+
+	/**
+	 * The rule with the given id of the given definition, or <code>null</code> when it has none.
+	 */
+	private static <R extends NavigationRuleConfig> R findRule(List<R> rules, String id) {
 		int index = indexOf(rules, id);
-		return index < 0 ? null : TypedConfiguration.copy(rules.get(index));
+		return index < 0 ? null : rules.get(index);
 	}
 
 	/**

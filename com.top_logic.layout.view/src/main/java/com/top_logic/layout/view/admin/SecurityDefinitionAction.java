@@ -8,6 +8,7 @@ package com.top_logic.layout.view.admin;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -66,13 +67,19 @@ import com.top_logic.util.error.TopLogicException;
  * @implNote All file and service operations are delegated to {@link SecurityDefinitionEditor}, so
  *           that this action only maps between the view layer and that editor: it resolves the
  *           input, reports a failure of the editor as a {@link TopLogicException} and hands the
- *           result back to the chain. The marker of the stored but unapplied changes is
- *           {@link Boolean#TRUE}, so that a view displays it with the plain predicate
- *           {@code p -> $p != null}.
+ *           result back to the chain. The marker of the stored but unapplied changes is a
+ *           number new with every change, so that a view displays it with the plain predicate
+ *           {@code p -> $p != null} and a listener of the channel holding it notices every change,
+ *           not only the first one.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SecurityDefinitionAction implements ViewAction {
+
+	/**
+	 * Counter of the changes made, see {@link #changed()}.
+	 */
+	private static final AtomicLong CHANGES = new AtomicLong();
 
 	/**
 	 * Suffix of the id proposed for a new role rule, appended to the name of the type it applies
@@ -264,7 +271,7 @@ public class SecurityDefinitionAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_RULE_PATH);
 		}
 		store(() -> editor().putRoleParentRule(rule));
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
@@ -272,7 +279,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	 */
 	private Object saveRoleRule(RoleRuleConfig rule) {
 		store(() -> editor().putRoleRule(rule));
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
@@ -281,7 +288,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	 */
 	private Object removeRoleParentRule(String id) {
 		remove(() -> editor().removeRoleParentRule(id), I18NConstants.ERROR_UNKNOWN_ROLE_PARENT_RULE__ID.fill(id));
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
@@ -290,7 +297,14 @@ public class SecurityDefinitionAction implements ViewAction {
 	 */
 	private Object removeRoleRule(String id) {
 		remove(() -> editor().removeRoleRule(id), I18NConstants.ERROR_UNKNOWN_ROLE_RULE__ID.fill(id));
-		return Boolean.TRUE;
+		return changed();
+	}
+
+	/**
+	 * The marker of the stored but unapplied changes, new with every change.
+	 */
+	private static Object changed() {
+		return Long.valueOf(CHANGES.incrementAndGet());
 	}
 
 	/**
@@ -349,7 +363,7 @@ public class SecurityDefinitionAction implements ViewAction {
 		}
 		checkConstraints(entry);
 		store(() -> editor().putAccessRights(entry), grantsFile());
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
@@ -391,7 +405,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	private Object setInternal(TypeCoverage coverage, boolean value) {
 		TLClass type = coverage.type();
 		store(() -> editor().setInternal(type, value), grantsFile());
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**
@@ -402,7 +416,7 @@ public class SecurityDefinitionAction implements ViewAction {
 	private Object setWithoutSecurity(TypeCoverage coverage, boolean value) {
 		TLClass type = coverage.type();
 		store(() -> editor().setWithoutSecurity(type, value), grantsFile());
-		return Boolean.TRUE;
+		return changed();
 	}
 
 	/**

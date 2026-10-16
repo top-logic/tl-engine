@@ -316,6 +316,22 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		assertNull("An unknown rule has no editable copy.", _editor.editableRoleParentRule("noSuchRule"));
 	}
 
+	/**
+	 * A stored rule is edited in its stored form, not in the one in effect, which stays as it is
+	 * until the stored definition is applied.
+	 */
+	public void testEditStoredRuleEditsTheStoredForm() throws Exception {
+		NavigationRuleConfig rule = _editor.editableRoleParentRule(BASE_PARENT_ID);
+		assertTrue("The base rule applies to the sub types.", rule.isInherit());
+		rule.setInherit(false);
+		_editor.putRoleParentRule(rule);
+
+		assertFalse("The stored form is edited.", _editor.editableRoleParentRule(BASE_PARENT_ID).isInherit());
+		assertTrue("The rule in effect is unchanged until the stored definition is applied.",
+			_editor.effectiveRoleParentRule(BASE_PARENT_ID).isInherit());
+		assertNull(_editor.effectiveRoleParentRule("noSuchRule"));
+	}
+
 	public void testEditBaseRoleRule() throws Exception {
 		RoleRuleConfig rule = _editor.editableRoleRule(BASE_ROLE_RULE_ID);
 		assertNotNull("The role rule of the base configuration is in effect.", rule);

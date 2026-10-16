@@ -35,6 +35,11 @@
 	the rule prefilled, and "Delete rule" drops it from the application configuration - a rule of
 	the layers underneath is removed by a removal entry there.
 	
+	Changes stored but not yet applied are shown in the rules panel already: a stored rule that is
+	not yet in effect is listed as new, a rule in effect as changed or deleted, while the coverage
+	table and the findings keep showing the definition in effect. A deleted rule is not offered for
+	deletion again.
+	
 	All of these write to the application configuration rather than to the running application, so
 	the pending channel marks that the files and the running definition differ until "Apply
 	configuration" reads the files again and restarts the access services. That marker is shown in
@@ -110,6 +115,7 @@
 					</commands>
 					<child class="com.top_logic.layout.view.admin.SecurityCoverageTable"
 						input="rows"
+						pending="pending"
 						selected-findings="selectedFindings"
 						selected-internal="selectedInternal"
 						selected-module="selectedModule"
@@ -462,7 +468,7 @@
 											<de>Löscht die ausgewählte Regel. Eine Regel der darunterliegenden Schichten wird durch einen Eintrag in der Anwendungskonfiguration entfernt. Die Änderung wird mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<null-input-disabled/>
+											<visible-if expr="entry -> $entry != null &amp;&amp; $entry['state'] != 'deleted'"/>
 										</executability>
 										<confirm expr="entry -> #('Delete the rule {0}?'@en, 'Die Regel {0} löschen?'@de).fill($entry['id'])"/>
 										<switch value="entry -> $entry['kind']">
@@ -506,6 +512,16 @@
 												<de>Id</de>
 											</label>
 											<value><![CDATA[row -> $row["id"]]]></value>
+										</computed-column>
+										<computed-column name="state"
+											type="tl.core:String"
+											width="140"
+										>
+											<label>
+												<en>Pending change</en>
+												<de>Ausstehende Änderung</de>
+											</label>
+											<value><![CDATA[row -> $row["stateLabel"]]]></value>
 										</computed-column>
 										<computed-column name="description"
 											type="tl.core:String"

@@ -84,6 +84,13 @@ public final class IndexSync {
 	/** Commit data of a generation being built: how many objects are done. */
 	static final String BUILD_DONE = "buildDone";
 
+	/**
+	 * Commit data of a built generation: some of its chunks were written without the vectors of its
+	 * model, because another embedder or none was in use. It serves, but the next start with its
+	 * model builds a new generation, which embeds only these chunks.
+	 */
+	static final String VECTORS_MISSING = "vectorsMissing";
+
 	/** How long the worker sleeps when nothing woke it. */
 	private static final long IDLE_MILLIS = 5_000;
 
@@ -105,6 +112,10 @@ public final class IndexSync {
 	 *        The longest text indexed of one attribute.
 	 * @param embedder
 	 *        The embedder, or <code>null</code> for words only.
+	 * @param embedderUnavailable
+	 *        Whether an embedder is configured but could not be created: then the newest built
+	 *        generation serves and catches up with words only, instead of a new build that deletes
+	 *        its vectors.
 	 * @param fingerprint
 	 *        The fingerprint of the configuration.
 	 * @param batchSize
@@ -115,7 +126,8 @@ public final class IndexSync {
 	 *        How long one step of a build works before the worker commits and looks at the history.
 	 */
 	public record Settings(KnowledgeBase kb, Path root, IndexedTypes types, Chunker chunker, int maxTextChars,
-			Embedder embedder, String fingerprint, int batchSize, int revisionSlice, long buildMillis) {
+			Embedder embedder, boolean embedderUnavailable, String fingerprint, int batchSize, int revisionSlice,
+			long buildMillis) {
 		// A plain carrier.
 	}
 
@@ -172,6 +184,8 @@ public final class IndexSync {
 
 	private final ObjectIndexer _indexer;
 
+	private final ObjectIndexer _wordsIndexer;
+
 	private final String _model;
 
 	private final ReentrantReadWriteLock _switch = new ReentrantReadWriteLock();
@@ -194,6 +208,12 @@ public final class IndexSync {
 
 	private volatile String _lastError;
 
+	/** Guarded by {@link #_wake}: the worker has ended. */
+	private boolean _ended;
+
+	/** Guarded by {@link #_wake}: the stop gave up waiting, so the worker closes the generations. */
+	private boolean _closeAtEnd;
+
 	private Thread _thread;
 
 	private Runnable _beforeCommit = () -> {
@@ -211,6 +231,8 @@ public final class IndexSync {
 		_collector = new ChangeCollector(settings.kb(), settings.types());
 		_indexer = new ObjectIndexer(settings.kb(), settings.types(), settings.chunker(), settings.maxTextChars(),
 			settings.embedder());
+		_wordsIndexer = new ObjectIndexer(settings.kb(), settings.types(), settings.chunker(),
+			settings.maxTextChars(), null);
 		_model = settings.embedder() == null ? "" : settings.embedder().fingerprint();
 	}
 
@@ -218,7 +240,12 @@ public final class IndexSync {
 	 * Opens the generations, registers for commits and starts the worker.
 	 */
 	public void start() throws IOException {
-		openGenerations();
+		try {
+			openGenerations();
+		} catch (IOException | RuntimeException ex) {
+			closeGenerations();
+			throw ex;
+		}
 		_running = true;
 		_settings.kb().addUpdateListener(_listener);
 		_thread = new Thread(this::work, "tl-ai-index " + _settings.root().getFileName());
@@ -245,11 +272,21 @@ public final class IndexSync {
 			} catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
 			}
-			if (_thread.isAlive()) {
-				Logger.error("The index worker did not stop within two minutes.", IndexSync.class);
-			}
 			_thread = null;
+			synchronized (_wake) {
+				if (!_ended) {
+					// Closing the generations under the worker would fail its batch; it closes them itself.
+					_closeAtEnd = true;
+					Logger.error("The index worker did not stop within two minutes. It closes the index when its"
+						+ " current batch ends.", IndexSync.class);
+					return;
+				}
+			}
 		}
+		closeGenerations();
+	}
+
+	private void closeGenerations() {
 		_switch.writeLock().lock();
 		try {
 			close(_building);
@@ -273,7 +310,8 @@ public final class IndexSync {
 			int number = numbers.get(i);
 			Map<String, String> data = IndexGeneration.readCommitData(_generations.path(number));
 			boolean built = data.containsKey(IndexGeneration.WATERMARK);
-			boolean same = _settings.fingerprint().equals(data.get(IndexGeneration.FINGERPRINT));
+			boolean same = _settings.fingerprint().equals(data.get(IndexGeneration.FINGERPRINT))
+				&& !data.containsKey(VECTORS_MISSING);
 			if (built && same && matching == null) {
 				matching = number;
 			}
@@ -285,11 +323,18 @@ public final class IndexSync {
 			}
 		}
 		Integer serving = matching != null ? matching : newestBuilt;
-		Integer building = matching != null ? null
-			: unbuiltMatching != null ? unbuiltMatching : Integer.valueOf(_generations.next());
-		for (int number : numbers) {
-			if (!Integer.valueOf(number).equals(serving) && !Integer.valueOf(number).equals(building)) {
-				_generations.delete(number);
+		Integer building;
+		if (_settings.embedderUnavailable() && newestBuilt != null) {
+			// Keep everything for the start at which the embedder is back.
+			serving = newestBuilt;
+			building = null;
+		} else {
+			building = matching != null ? null
+				: unbuiltMatching != null ? unbuiltMatching : Integer.valueOf(_generations.next());
+			for (int number : numbers) {
+				if (!Integer.valueOf(number).equals(serving) && !Integer.valueOf(number).equals(building)) {
+					_generations.delete(number);
+				}
 			}
 		}
 		if (serving != null) {
@@ -402,12 +447,20 @@ public final class IndexSync {
 				failures++;
 				_lastError = ex.getClass().getSimpleName() + ": " + ex.getMessage();
 				Logger.error("The index worker failed, it tries again: " + _lastError, ex, IndexSync.class);
-				pause(Math.min(MAX_BACKOFF_MILLIS, 1_000L << Math.min(failures, 20)));
+				backOff(Math.min(MAX_BACKOFF_MILLIS, 1_000L << Math.min(failures, 20)));
 				continue;
 			}
 			if (!worked) {
 				pause(IDLE_MILLIS);
 			}
+		}
+		boolean close;
+		synchronized (_wake) {
+			_ended = true;
+			close = _closeAtEnd;
+		}
+		if (close) {
+			closeGenerations();
 		}
 	}
 
@@ -418,6 +471,24 @@ public final class IndexSync {
 					_wake.wait(millis);
 				} catch (InterruptedException ex) {
 					Thread.currentThread().interrupt();
+				}
+			}
+			_woken = false;
+		}
+	}
+
+	/**
+	 * Waits the given time after a failure: a commit does not end the wait, only a stop.
+	 */
+	private void backOff(long millis) {
+		long deadline = System.currentTimeMillis() + millis;
+		synchronized (_wake) {
+			for (long left = millis; left > 0 && _running; left = deadline - System.currentTimeMillis()) {
+				try {
+					_wake.wait(left);
+				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+					return;
 				}
 			}
 			_woken = false;
@@ -437,19 +508,23 @@ public final class IndexSync {
 		boolean worked = false;
 		Gen serving = _serving;
 		if (serving != null && serving.watermark() < head && _running) {
-			catchUp(serving, null, head);
-			worked = true;
+			worked = catchUp(serving, null, head);
 		}
 		Gen building = _building;
 		if (building != null && _running) {
 			if (!building.built()) {
 				build(building, head);
-			} else if (building.watermark() < head) {
-				catchUp(building, reuseFor(building), head);
+				worked = true;
 			} else {
-				switchTo(building);
+				if (building.watermark() < head) {
+					worked |= catchUp(building, reuseFor(building), head);
+				}
+				// In the same step: under steady commits the next step finds a newer head again.
+				if (building.watermark() >= head) {
+					switchTo(building);
+					worked = true;
+				}
 			}
-			worked = true;
 		}
 		return worked;
 	}
@@ -463,25 +538,45 @@ public final class IndexSync {
 			.equals(serving.data().get(IndexGeneration.EMBEDDING_MODEL)) ? serving.index() : null;
 	}
 
-	private void catchUp(Gen gen, IndexGeneration reuse, long head) throws IOException, EmbeddingException {
+	/**
+	 * Indexes the next slice of the history into the given generation.
+	 *
+	 * @return Whether the generation moved on.
+	 */
+	private boolean catchUp(Gen gen, IndexGeneration reuse, long head) throws IOException, EmbeddingException {
 		long watermark = gen.watermark();
 		HistoryManager history = _settings.kb().getHistoryManager();
 		if (watermark + 1 < history.getFirstRevision()) {
 			// The history before the first revision is gone; only a new build can recover.
-			if (gen == _serving && _building == null) {
+			if (gen == _building) {
+				gen.index().deleteAll();
+				commit(gen, new HashMap<>());
+				Logger.warn("The history of the index " + _settings.root() + " was compacted after revision "
+					+ watermark + ", generation " + gen.number() + " is built again.", IndexSync.class);
+				return true;
+			}
+			if (_building == null) {
 				int number = _generations.next();
 				_building = new Gen(number, IndexGeneration.open(_generations.path(number)));
 				Logger.warn("The history of the index " + _settings.root() + " was compacted after revision "
 					+ watermark + ", building generation " + number + ".", IndexSync.class);
+				return true;
 			}
-			return;
+			// The serving generation stays where it is until the build switches.
+			return false;
 		}
 		long target = Math.min(head, watermark + _settings.revisionSlice());
 		Set<ObjectKey> changed = _collector.changed(watermark, target);
-		indexAll(gen, reuse, new ArrayList<>(changed), head);
 		Map<String, String> data = new HashMap<>(gen.data());
+		boolean ownModel = _model.equals(data.get(IndexGeneration.EMBEDDING_MODEL));
+		if (!changed.isEmpty() && !ownModel) {
+			// The serving generation of another model: its vectors must not be mixed with this one's.
+			data.put(VECTORS_MISSING, "true");
+		}
+		indexAll(gen, ownModel ? _indexer : _wordsIndexer, reuse, new ArrayList<>(changed), head);
 		data.put(IndexGeneration.WATERMARK, Long.toString(target));
 		commit(gen, data);
+		return true;
 	}
 
 	private void build(Gen gen, long head) throws IOException, EmbeddingException {
@@ -511,7 +606,7 @@ public final class IndexSync {
 			for (String id : batch.ids()) {
 				objects.add(ObjectKey.fromStringObjectKey(_settings.kb().getMORepository(), id));
 			}
-			indexBatch(gen.index(), reuse, objects, head);
+			indexBatch(_indexer, gen.index(), reuse, objects, head);
 			offset = batch.next();
 			done += batch.ids().size();
 			end = batch.end();
@@ -531,20 +626,21 @@ public final class IndexSync {
 		}
 	}
 
-	private void indexAll(Gen gen, IndexGeneration reuse, List<ObjectKey> keys, long revision)
-			throws IOException, EmbeddingException {
+	private void indexAll(Gen gen, ObjectIndexer indexer, IndexGeneration reuse, List<ObjectKey> keys,
+			long revision) throws IOException, EmbeddingException {
 		int size = _settings.batchSize();
 		for (int start = 0; start < keys.size(); start += size) {
-			indexBatch(gen.index(), reuse, keys.subList(start, Math.min(keys.size(), start + size)), revision);
+			indexBatch(indexer, gen.index(), reuse, keys.subList(start, Math.min(keys.size(), start + size)),
+				revision);
 		}
 	}
 
-	private void indexBatch(IndexGeneration target, IndexGeneration reuse, List<ObjectKey> keys, long revision)
-			throws IOException, EmbeddingException {
+	private void indexBatch(ObjectIndexer indexer, IndexGeneration target, IndexGeneration reuse,
+			List<ObjectKey> keys, long revision) throws IOException, EmbeddingException {
 		synchronized (this) {
 			_largestBatch = Math.max(_largestBatch, keys.size());
 		}
-		_indexer.index(target, reuse, keys, revision);
+		indexer.index(target, reuse, keys, revision);
 	}
 
 	private void commit(Gen gen, Map<String, String> data) throws IOException {

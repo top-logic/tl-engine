@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.index.sync;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
@@ -86,7 +87,7 @@ final class BuildKeys {
 		try (RandomAccessFile in = new RandomAccessFile(file.toFile(), "r")) {
 			in.seek(offset);
 			while (ids.size() < max) {
-				String line = in.readLine();
+				String line = readLine(in);
 				if (line == null) {
 					return new Batch(ids, in.getFilePointer(), true);
 				}
@@ -96,6 +97,23 @@ final class BuildKeys {
 			}
 			return new Batch(ids, in.getFilePointer(), in.getFilePointer() >= in.length());
 		}
+	}
+
+	/**
+	 * The next line in UTF-8, as the file is written; {@link RandomAccessFile#readLine()} reads each
+	 * byte as a character.
+	 */
+	private static String readLine(RandomAccessFile in) throws IOException {
+		ByteArrayOutputStream line = new ByteArrayOutputStream();
+		int b = in.read();
+		if (b < 0) {
+			return null;
+		}
+		while (b >= 0 && b != '\n') {
+			line.write(b);
+			b = in.read();
+		}
+		return line.toString(StandardCharsets.UTF_8);
 	}
 
 }

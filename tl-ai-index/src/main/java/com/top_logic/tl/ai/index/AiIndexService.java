@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.tl.ai.index.embed.Embedder;
 import com.top_logic.util.model.ModelService;
@@ -34,6 +35,8 @@ import com.top_logic.util.model.ModelService;
 @ServiceDependencies({
 	PersistencyLayer.Module.class,
 	ModelService.Module.class,
+	// The text of uploaded files.
+	FormatConverterFactory.Module.class,
 })
 @Label("AI index")
 public class AiIndexService extends ConfiguredManagedClass<AiIndexService.Config<?>> {
@@ -104,7 +107,9 @@ public class AiIndexService extends ConfiguredManagedClass<AiIndexService.Config
 		AiIndex index = new AiIndex(getConfig(), _embedder, root, PersistencyLayer.getKnowledgeBase());
 		try {
 			index.start();
-		} catch (IOException ex) {
+		} catch (IOException | RuntimeException ex) {
+			// The service is not shut down after a failed start, and a restart creates a new embedder.
+			closeEmbedder();
 			throw new RuntimeException("Cannot open the AI index in " + root + ": " + ex.getMessage(), ex);
 		}
 		_index = index;
@@ -116,10 +121,14 @@ public class AiIndexService extends ConfiguredManagedClass<AiIndexService.Config
 			_index.stop();
 			_index = null;
 		}
+		closeEmbedder();
+		super.shutDown();
+	}
+
+	private void closeEmbedder() {
 		if (_embedder != null) {
 			_embedder.close();
 		}
-		super.shutDown();
 	}
 
 	/**

@@ -122,7 +122,7 @@ Operation:
   native library is extracted from the jar into `~/.djl.ai` (or `DJL_CACHE_DIR`), ONNX Runtime's into
   `java.io.tmpdir` (or `onnxruntime.native.path`) - both must be writable. Linux needs glibc 2.28.
   On a musl image (Alpine) the native libraries do not load. The application then starts, logs one
-  error, and the index searches words only.
+  error, and the index searches words only (see "Embedder not available" below).
 - **CPU.** `threads` per inference, no thread spinning, on the index worker's low-priority thread. On a
   laptop CPU (4 threads, int8, passages of about 60 tokens): arctic-embed-m-v2.0 about 47 passages/s,
   e5-small about 140 (230 with `rows-per-inference="16"`); a first load of a million chunks wants a
@@ -148,7 +148,16 @@ priority.
   fingerprint builds a new generation beside the serving one (`<location>/gen-<n>`), from a key file of
   all objects, in batches, resumable after a stop; it then catches up with the history and replaces the
   old one. Vectors of texts that did not change are reused, so a change of a keyword or of the analysis
-  embeds nothing.
+  embeds nothing. While the new generation is built, the old one follows the commits with words only:
+  its changed chunks get no vectors of the new model.
+- **Embedder not available.** When the configured embedder cannot be created (model files missing,
+  native library does not load), the index that exists serves and follows the commits with words only.
+  No new generation is built and nothing is deleted. At the next start with the embedder, a new
+  generation is built that embeds only the chunks written without a vector meanwhile.
+- **Failing object.** When the text, scope or keywords of one object cannot be computed (a script
+  fails), the object keeps its chunks, a warning names it, and the worker goes on with the others.
+  An embedder that fails stops the worker for the whole batch; it tries again with a growing pause
+  (up to 10 minutes) that commits do not shorten.
 - **History compaction.** A watermark the history no longer reaches builds a new generation.
 - **Freshness.** A search does not see the commits of the last seconds, nor the running transaction.
   The answers say how many commits the index is behind; the Java API can wait for a revision

@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -106,7 +107,16 @@ public final class ObjectIndexer {
 				removed.add(id);
 				continue;
 			}
-			contents.put(ReadFilter.idOf(object), type.content(object, _chunker, _maxTextChars));
+			IndexedType.Content content;
+			try {
+				content = type.content(object, _chunker, _maxTextChars);
+			} catch (RuntimeException ex) {
+				// One object must not stop the index: it keeps its chunks until it changes again.
+				Logger.warn("Cannot index " + id + ", its chunks stay as they were: " + ex.getMessage(), ex,
+					ObjectIndexer.class);
+				continue;
+			}
+			contents.put(ReadFilter.idOf(object), content);
 		}
 		for (String id : removed) {
 			target.delete(id);
@@ -123,22 +133,23 @@ public final class ObjectIndexer {
 			}
 		}
 
-		List<String> missingTexts = new ArrayList<>();
-		List<String> missingHashes = new ArrayList<>();
+		Map<IndexedType.PendingChunk, String> hashes = new HashMap<>();
+		Map<String, String> missing = new LinkedHashMap<>();
 		if (_embedder != null) {
 			for (IndexedType.Content content : contents.values()) {
 				for (IndexedType.PendingChunk chunk : content.chunks()) {
 					String hash = hash(chunk.embeddingText());
-					if (!known.containsKey(hash) && !missingHashes.contains(hash)) {
-						missingHashes.add(hash);
-						missingTexts.add(chunk.embeddingText());
+					hashes.put(chunk, hash);
+					if (!known.containsKey(hash)) {
+						missing.putIfAbsent(hash, chunk.embeddingText());
 					}
 				}
 			}
-			if (!missingTexts.isEmpty()) {
-				List<float[]> vectors = _embedder.embedPassages(missingTexts);
-				for (int i = 0; i < vectors.size(); i++) {
-					known.put(missingHashes.get(i), vectors.get(i));
+			if (!missing.isEmpty()) {
+				List<float[]> vectors = _embedder.embedPassages(new ArrayList<>(missing.values()));
+				int i = 0;
+				for (String hash : missing.keySet()) {
+					known.put(hash, vectors.get(i++));
 				}
 			}
 		}
@@ -149,15 +160,15 @@ public final class ObjectIndexer {
 			IndexedType.Content content = entry.getValue();
 			List<ChunkDocument> chunks = new ArrayList<>(content.chunks().size());
 			for (IndexedType.PendingChunk chunk : content.chunks()) {
-				String hash = hash(chunk.embeddingText());
-				float[] vector = _embedder == null ? null : known.get(hash);
+				String hash = hashes.get(chunk);
+				float[] vector = hash == null ? null : known.get(hash);
 				chunks.add(new ChunkDocument(id, chunk.part(), chunk.chunk().locator(), content.types(),
 					content.scopes(), content.keywords(), revision, chunk.chunk().text(), vector == null ? null : hash,
 					vector == null ? null : model, vector));
 			}
 			target.replace(id, chunks);
 		}
-		return missingTexts.size();
+		return missing.size();
 	}
 
 	/**

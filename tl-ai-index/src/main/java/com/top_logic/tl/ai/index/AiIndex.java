@@ -51,7 +51,9 @@ public final class AiIndex {
 	 * @param config
 	 *        What it holds.
 	 * @param embedder
-	 *        The embedder, or <code>null</code> for words only.
+	 *        The embedder, or <code>null</code> for words only. <code>null</code> while the
+	 *        configuration names an embedder means that it could not be created: then the existing
+	 *        index serves and is kept, and no new one is built.
 	 * @param root
 	 *        Its directory.
 	 * @param kb
@@ -62,8 +64,9 @@ public final class AiIndex {
 		_embedder = embedder;
 		_types = new IndexedTypes(config.getTypes());
 		_sync = new IndexSync(new IndexSync.Settings(kb, root, _types, ChunkingConfig.chunker(config.getChunking()),
-			config.getChunking().getMaxTextChars(), embedder, fingerprint(config, embedder), config.getBatchSize(),
-			config.getRevisionSlice(), config.getBuildStepMillis()));
+			config.getChunking().getMaxTextChars(), embedder, config.getEmbedder() != null && embedder == null,
+			fingerprint(config, embedder), config.getBatchSize(), config.getRevisionSlice(),
+			config.getBuildStepMillis()));
 		_search = new IndexSearch(_sync, _types, embedder, new ReadableScopes(config.getReadableScopes()), kb,
 			config.getMaxCandidates(), config.getMinSimilarity());
 	}

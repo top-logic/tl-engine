@@ -23,6 +23,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ReadFilter;
@@ -219,6 +220,105 @@ public class TestIndexSync extends BasicTestCase {
 		assertEquals(List.of("Kappa risk text."), texts(second, risk));
 		IndexFilter risks = new IndexFilter(Set.of(), null, Map.of("kind", Set.of("RISK")), Set.of());
 		assertTrue(search(second, "Kappa", risks).contains(ReadFilter.idOf(risk)));
+	}
+
+	/**
+	 * While a generation is built for another model, the serving one follows the commits with words
+	 * only: the vectors of the new model - here of another length - never go into it.
+	 */
+	public void testModelChangeKeepsTheServingGenerationCurrent() throws IOException {
+		AiIndex first = start(CONFIG, HashingEmbedder.create(32));
+		committed(() -> create(STATEMENT, Map.of("text", "Mu before the model change.")));
+		await(first);
+		stop(first);
+
+		TLObject later = committed(() -> create(STATEMENT, Map.of("text", "Nu after the model change.")));
+		AiIndex second = start(CONFIG, HashingEmbedder.create("other", 16));
+		awaitSwitch(second);
+		assertEquals(List.of("Nu after the model change."), texts(second, later));
+		assertTrue(second.status().meaning());
+	}
+
+	/**
+	 * An embedder that cannot be created keeps the index of its model: it serves and follows the
+	 * commits with words only, and when the embedder is back only the chunks changed meanwhile are
+	 * embedded.
+	 */
+	public void testUnavailableEmbedderKeepsTheIndex() throws IOException {
+		AiIndex first = start(CONFIG, HashingEmbedder.create(32));
+		committed(() -> create(STATEMENT, Map.of("text", "Xi while the model loads.")));
+		await(first);
+		int generation = generations();
+		stop(first);
+
+		String withEmbedder = CONFIG.replace("<types>",
+			"<embedder class=\"" + HashingEmbedder.class.getName() + "\" dimensions=\"32\"/>\n<types>");
+		AiIndex withoutModel = start(withEmbedder, null);
+		TLObject changed = committed(() -> create(STATEMENT, Map.of("text", "Omicron while the model is missing.")));
+		await(withoutModel);
+		assertFalse("Nothing is built.", withoutModel.sync().building());
+		assertEquals("The index of the model serves.", generation, generations());
+		assertEquals(List.of("Omicron while the model is missing."), texts(withoutModel, changed));
+		stop(withoutModel);
+
+		HashingEmbedder embedder = HashingEmbedder.create(32);
+		AiIndex back = start(CONFIG, embedder);
+		awaitSwitch(back);
+		assertEquals("Only the chunk written without a vector is embedded.", 1, embedder.texts());
+	}
+
+	/**
+	 * An object whose content cannot be computed does not stop the index: it is left out, the others
+	 * are indexed.
+	 */
+	public void testFailingObjectDoesNotStopTheIndex() throws IOException {
+		String poisoned = CONFIG.replace("script=\"s -> $s.get(`test.aiindex:Statement#kind`)\"",
+			"script=\"s -> if($s.get(`test.aiindex:Statement#text`).stringContains('Poison'), throw('Poisoned'),"
+				+ " $s.get(`test.aiindex:Statement#kind`))\"");
+		assertFalse(CONFIG.equals(poisoned));
+		AiIndex index = start(poisoned, HashingEmbedder.create(32));
+		committed(() -> create(STATEMENT, Map.of("text", "Poison pill.")));
+		TLObject good = committed(() -> create(STATEMENT, Map.of("text", "Pi is indexed.")));
+		await(index);
+		assertEquals(List.of("Pi is indexed."), texts(index, good));
+	}
+
+	/**
+	 * A built generation switches although every commit of the worker is followed by another commit
+	 * of the application.
+	 */
+	public void testSwitchUnderSteadyCommits() throws IOException {
+		AiIndex first = start(CONFIG, HashingEmbedder.create(32));
+		committed(() -> create(STATEMENT, Map.of("text", "Rho before the switch.")));
+		await(first);
+		stop(first);
+
+		String withKeyword = CONFIG.replace("<keyword name=\"kind\"",
+			"<keyword name=\"title\" script=\"s -> $s.get(`test.aiindex:Statement#title`)\"/>\n<keyword name=\"kind\"");
+		AiIndex second = new AiIndex(config(withKeyword), HashingEmbedder.create(32), _dir,
+			PersistencyLayer.getKnowledgeBase());
+		AtomicInteger commits = new AtomicInteger();
+		second.sync().setBeforeCommit(() -> {
+			if (commits.incrementAndGet() > 200) {
+				return;
+			}
+			Thread other = new Thread(() -> ThreadContextManager.inSystemInteraction(TestIndexSync.class,
+				() -> committed(() -> create(STATEMENT, Map.of("text", "Sigma meanwhile.")))));
+			other.start();
+			try {
+				other.join();
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
+		});
+		second.start();
+		_open.add(second);
+		long deadline = System.currentTimeMillis() + WAIT;
+		while (second.sync().building() && commits.get() <= 200 && System.currentTimeMillis() < deadline) {
+			second.awaitRevision(Long.MAX_VALUE, 100);
+		}
+		assertFalse("The new generation took over.", second.sync().building());
+		assertTrue("It took over while the application committed.", commits.get() <= 200);
 	}
 
 	/**

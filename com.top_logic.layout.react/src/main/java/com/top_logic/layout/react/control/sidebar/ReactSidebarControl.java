@@ -122,6 +122,11 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	private boolean _drawerOpen;
 
+	/**
+	 * The hamburger button opening the drawer, told whenever the drawer opens or closes; {@code null} without one.
+	 */
+	private DrawerToggleControl _drawerToggle;
+
 	private final List<RouteChangeListener> _routeChangeListeners = new ArrayList<>();
 
 	/**
@@ -208,6 +213,19 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		_drawerToggleContribution = contribution;
 		if (contribution != null) {
 			putState(DRAWER_TOGGLE_CONTRIBUTION, contribution);
+		}
+	}
+
+	/**
+	 * Registers the button that opens the drawer, so it can report the drawer's state.
+	 */
+	void setDrawerToggle(DrawerToggleControl toggle) {
+		_drawerToggle = toggle;
+	}
+
+	private void updateDrawerToggle() {
+		if (_drawerToggle != null) {
+			_drawerToggle.setOpen(_drawerOpen);
 		}
 	}
 
@@ -628,6 +646,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		if (_drawerOpen) {
 			_drawerOpen = false;
 			putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
+			updateDrawerToggle();
 		}
 	}
 
@@ -659,7 +678,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * Toggles the mobile drawer's open state (transient — not persisted).
 	 *
 	 * <p>
-	 * Triggered by the hamburger button in the app bar or by a click on the drawer backdrop.
+	 * Triggered by the hamburger button in the app bar, by Escape in the drawer or by a click on its scrim.
 	 * Independent of {@link #toggleCollapse()}, so the desktop rail preference is preserved across
 	 * mobile drawer interactions. Always defaults to {@code false} on a fresh page load.
 	 * </p>
@@ -667,6 +686,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	public void toggleDrawer() {
 		_drawerOpen = !_drawerOpen;
 		putState(DRAWER_OPEN, Boolean.valueOf(_drawerOpen));
+		updateDrawerToggle();
 	}
 
 	/**

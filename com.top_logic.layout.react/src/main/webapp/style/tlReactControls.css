@@ -1474,14 +1474,6 @@ button.tlSidebar__flyoutItem:focus-visible {
 	display: none;
 }
 
-/* --- Drawer toggle (mobile hamburger contributed via the sidebar's drawer-open-slot-name) -- */
-
-/* The element around the button (part Button), which keeps the display any implementation of the
-   part gives its own root. */
-.tlDrawerToggle {
-	display: none; /* desktop: hidden; mobile @media rules below override */
-}
-
 /* --- Responsive: sidebar becomes an off-canvas drawer on small viewports ---- */
 
 @media (max-width: 768px) {
@@ -2124,43 +2116,6 @@ button.tlBottomBar__item:hover {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	max-width: 100%;
-}
-
-/* --- TLAppShell ------------------------------------------------------------ */
-
-.tlAppShell {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-}
-
-/* Bounded flex column: the content control resolves its height against this region, so a filling
-   one spans it and scrolls internally while the app bar stays put. */
-.tlAppShell__content {
-	flex: 1;
-	min-height: 0;
-	overflow: hidden;
-	display: flex;
-	flex-direction: column;
-}
-
-/* Notice area between header and content. Carries neither padding nor border of its own, so it
-   collapses to zero height while every notice inside it is hidden (a hidden TLNoticeBar renders
-   nothing at all). */
-.tlAppShell__notices {
-	display: flex;
-	flex-direction: column;
-	flex: 0 0 auto;
-}
-
-/* Several notices stack flush: they are full-width bars, and the gap a stack puts between its
-   children would show the page through as a stripe between two announcements. */
-.tlAppShell__notices .tlStack {
-	gap: 0;
-}
-
-.tlAppShell .tl-breadcrumb { /* Übergang bis Welle 4 (Shell): liest die Paketklasse. */
-	padding: var(--spacing-02) var(--spacing-05);
 }
 
 /* --- TLAdaptiveDetail (responsive master-detail) --------------------------- */

@@ -295,6 +295,12 @@ public final class PresentationData {
 	/** Key of the number of a numbered bullet. */
 	public static final String START = "start";
 
+	/**
+	 * Key of the flag telling whether a paragraph stays on the slide of the following paragraph or
+	 * element, when the content continues on a further slide.
+	 */
+	public static final String KEEP_WITH_NEXT = "keepWithNext";
+
 	/** Key of the space before a paragraph. */
 	public static final String SPACE_BEFORE = "spaceBefore";
 

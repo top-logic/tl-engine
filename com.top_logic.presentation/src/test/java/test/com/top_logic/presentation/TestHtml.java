@@ -321,6 +321,102 @@ b = 2</pre>
 		assertEquals("Text danach", ((XSLFTextShape) contentShapes(deck, 2).get(0)).getText());
 	}
 
+	/**
+	 * A heading never ends a slide: wherever the slide break falls, the heading moves to the next
+	 * slide together with the paragraph following it.
+	 */
+	public void testHeadingKeptWithParagraph() throws Exception {
+		String paragraph = "<p>Ein Absatz, der eine Zeile füllt und den Platz auf der Folie Schritt für Schritt "
+			+ "verbraucht, damit die Überschrift an verschiedenen Stellen landet.</p>";
+		String longParagraph = "<p>" + "Der lange Absatz nach der Überschrift umfasst mehrere Zeilen. ".repeat(12)
+			+ "</p>";
+		assertHeadingKept(n -> paragraph.repeat(n) + "<h2>Kopf</h2>" + longParagraph + paragraph, "Kopf",
+			"html-keep-paragraph");
+	}
+
+	/**
+	 * A heading directly before a table moves to the next slide together with the table.
+	 */
+	public void testHeadingKeptWithTable() throws Exception {
+		String paragraph = "<p>Ein Absatz, der eine Zeile füllt und den Platz auf der Folie Schritt für Schritt "
+			+ "verbraucht, damit die Überschrift an verschiedenen Stellen landet.</p>";
+		StringBuilder table = new StringBuilder("<table><tr><th>Prüfung</th><th>Ergebnis</th></tr>");
+		for (int n = 1; n <= 3; n++) {
+			table.append("<tr><td>Prüfung ").append(n).append("</td><td>bestanden</td></tr>");
+		}
+		table.append("</table>");
+		assertHeadingKept(n -> paragraph.repeat(n) + "<h2>Tabelle</h2>" + table, "Tabelle", "html-keep-table");
+	}
+
+	private void assertHeadingKept(java.util.function.IntFunction<String> html, String heading, String prefix)
+			throws Exception {
+		boolean moved = false;
+		for (int count = 4; count <= 12; count++) {
+			XMLSlideShow deck = open((BinaryData) evalOnce(CONTENT_DECK, template(), html.apply(count)));
+			for (int n = 0; n < deck.getSlides().size(); n++) {
+				List<XSLFShape> shapes = contentShapes(deck, n);
+				assertFalse(shapes.isEmpty());
+				if (shapes.get(shapes.size() - 1) instanceof XSLFTextShape last) {
+					List<XSLFTextParagraph> paragraphs = last.getTextParagraphs();
+					assertFalse("Slide " + n + " of " + count + " ends with the heading.",
+						paragraphs.get(paragraphs.size() - 1).getText().equals(heading));
+				}
+				if (n > 0 && shapes.get(0) instanceof XSLFTextShape first
+					&& first.getTextParagraphs().get(0).getText().equals(heading)) {
+					assertTrue("Content follows the heading.",
+						shapes.size() > 1 || first.getTextParagraphs().size() > 1);
+					if (!moved) {
+						moved = true;
+						renderDeck(deck, prefix);
+					}
+				}
+			}
+		}
+		assertTrue("A heading must have been moved to a continuation slide.", moved);
+	}
+
+	/**
+	 * A continuation slide shows the subtitle of a layout without subtitle placeholder, for a
+	 * table, a split text and a split column.
+	 */
+	public void testSubtitleOnContinuation() throws Exception {
+		XMLSlideShow deck = open((BinaryData) evalOnce("""
+			h -> pptDeck(null, [
+				pptContent("Tabelle", "Untertitel A", pptTable(concat([["Nr"]], count(1, 40).map(n -> [$n])),
+					headerRows: 1)),
+				pptContent("Text", "Untertitel B", pptTextBox(count(1, 40).map(n -> toString("Zeile ", $n)),
+					split: true)),
+				pptContent("HTML", "Untertitel C", pptHtml($h))
+			], profile: {"continuationSuffix": "(Forts.)"})
+			""", "<p>Absatz</p>".repeat(40)));
+		String title = null;
+		String subtitle = null;
+		int continued = 0;
+		for (int n = 0; n < deck.getSlides().size(); n++) {
+			XSLFSlide slide = deck.getSlides().get(n);
+			String slideTitle = placeholderText(slide, "title", 0);
+			List<XSLFShape> shapes = contentShapes(deck, n);
+			String text = ((XSLFTextShape) shapes.get(0)).getText();
+			assertTrue(shapes.size() > 1);
+			if (slideTitle.endsWith(" (Forts.)")) {
+				assertEquals(title + " (Forts.)", slideTitle);
+				assertEquals("Subtitle repeated on slide " + n + ".", subtitle, text);
+				assertTrue("Content below the subtitle.",
+					shapes.get(1).getAnchor().getY() >= shapes.get(0).getAnchor().getMaxY());
+				continued++;
+			} else {
+				title = slideTitle;
+				subtitle = text;
+				assertTrue(subtitle, subtitle.startsWith("Untertitel"));
+			}
+			for (XSLFShape shape : shapes) {
+				assertTrue(shape.getAnchor().getMaxY() <= slide.getSlideShow().getPageSize().getHeight());
+			}
+		}
+		assertTrue(continued >= 3);
+		renderDeck(deck, "html-subtitle");
+	}
+
 	public void testEmpty() throws Exception {
 		for (Object html : new Object[] { null, "", "  ", new StructuredText("") }) {
 			XMLSlideShow deck = open((BinaryData) evalOnce(CONTENT_DECK, template(), html));

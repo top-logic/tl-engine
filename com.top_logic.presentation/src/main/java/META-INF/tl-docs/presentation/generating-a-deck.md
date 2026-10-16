@@ -55,7 +55,7 @@ The blocks of the text keep their order:
 
 | HTML | Slide content |
 |---|---|
-| `p`, `div`, `br`, `h1`-`h6` | Paragraphs of a text box; `br` breaks the line, headings are bold and larger (`h1` 1.6 times the base size). |
+| `p`, `div`, `br`, `h1`-`h6` | Paragraphs of a text box; `br` breaks the line, headings are bold and larger (`h1` 1.6 times the base size) and kept with the content following them (`keepWithNext`). |
 | `b`/`strong`, `i`/`em`, `u`, `a href` | Bold, italic, underlined runs, hyperlinks. |
 | `code`, `pre` | Monospace font ("Courier New"); `pre` keeps its lines. |
 | `ul`, `ol`, `li` | Bullets and numbers (`start`, `type`, `value` respected), nested lists indented by level. |

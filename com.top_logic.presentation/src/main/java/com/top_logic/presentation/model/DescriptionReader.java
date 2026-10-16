@@ -945,8 +945,10 @@ public final class DescriptionReader {
 		Double spaceBefore = entries.get(SPACE_BEFORE).optNonNegative();
 		Double spaceAfter = entries.get(SPACE_AFTER).optNonNegative();
 		Double lineSpacing = entries.get(LINE_SPACING).optPositive();
+		Boolean keepWithNext = entries.get(KEEP_WITH_NEXT).optBoolean();
 		entries.checkComplete();
-		return new ParagraphSpec(runs, style, align, level, bullet, spaceBefore, spaceAfter, lineSpacing);
+		return new ParagraphSpec(runs, style, align, level, bullet, spaceBefore, spaceAfter, lineSpacing,
+			keepWithNext != null && keepWithNext.booleanValue());
 	}
 
 	private static List<RunSpec> readRuns(Value runs) {

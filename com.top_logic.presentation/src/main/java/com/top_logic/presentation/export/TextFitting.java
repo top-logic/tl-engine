@@ -327,7 +327,7 @@ final class TextFitting {
 				new RunSpec(last.text().stripTrailing() + ELLIPSIS, last.style(), last.hyperlink()));
 		}
 		return new ParagraphSpec(runs, paragraph.style(), paragraph.align(), paragraph.level(), paragraph.bullet(),
-			paragraph.spaceBefore(), paragraph.spaceAfter(), paragraph.lineSpacing());
+			paragraph.spaceBefore(), paragraph.spaceAfter(), paragraph.lineSpacing(), paragraph.keepWithNext());
 	}
 
 }

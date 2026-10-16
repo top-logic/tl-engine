@@ -611,7 +611,8 @@ public final class BlockReader {
 			BulletSpec bullet) {
 		return new ParagraphSpec(paragraph.runs(), paragraph.style().inheritFrom(style), paragraph.align(),
 			paragraph.level(), paragraph.bullet() != null ? paragraph.bullet() : bullet, paragraph.spaceBefore(),
-			paragraph.spaceAfter() != null ? paragraph.spaceAfter() : spaceAfter, paragraph.lineSpacing());
+			paragraph.spaceAfter() != null ? paragraph.spaceAfter() : spaceAfter, paragraph.lineSpacing(),
+			paragraph.keepWithNext());
 	}
 
 	private static RunStyle size(RunStyle style, double size, ColorSpec color) {

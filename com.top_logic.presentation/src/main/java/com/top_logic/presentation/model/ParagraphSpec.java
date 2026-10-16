@@ -26,9 +26,20 @@ import java.util.List;
  *        The space after the paragraph in points, <code>null</code> if inherited.
  * @param lineSpacing
  *        The line spacing as multiple of the single line height, <code>null</code> if inherited.
+ * @param keepWithNext
+ *        Whether the paragraph stays on the slide of the following paragraph or element when its
+ *        text, or its split column, continues on a further slide, e.g. a heading.
  */
 public record ParagraphSpec(List<RunSpec> runs, RunStyle style, TextAlign align, Integer level, BulletSpec bullet,
-		Double spaceBefore, Double spaceAfter, Double lineSpacing) {
+		Double spaceBefore, Double spaceAfter, Double lineSpacing, boolean keepWithNext) {
+
+	/**
+	 * Creates a paragraph that is not kept with the next one.
+	 */
+	public ParagraphSpec(List<RunSpec> runs, RunStyle style, TextAlign align, Integer level, BulletSpec bullet,
+			Double spaceBefore, Double spaceAfter, Double lineSpacing) {
+		this(runs, style, align, level, bullet, spaceBefore, spaceAfter, lineSpacing, false);
+	}
 
 	/**
 	 * The highest {@link #level()}.

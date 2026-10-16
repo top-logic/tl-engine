@@ -1,5 +1,5 @@
 ---
-description: Read before arranging the content of a PowerPoint slide built with pptContent / pptSlide - pptRow and pptColumn with gap, weight, weights, align and height auto, positioned elements (x, y, width, height), the content area, text overflow (shrink, ellipsis, visible, error, minFontSize), numbered paragraphs (bullet autoNumber, start), and continuation slides for long tables (pptTable), split texts (pptTextBox split, pptBullets split) and split columns (pptColumn split).
+description: Read before arranging the content of a PowerPoint slide built with pptContent / pptSlide - pptRow and pptColumn with gap, weight, weights, align and height auto, positioned elements (x, y, width, height), the content area, text overflow (shrink, ellipsis, visible, error, minFontSize), numbered paragraphs (bullet autoNumber, start), and continuation slides with headings kept with the next paragraph (keepWithNext) for long tables (pptTable), split texts (pptTextBox split, pptBullets split) and split columns (pptColumn split).
 order: 20
 ---
 
@@ -81,7 +81,9 @@ Three kinds of elements continue on further slides instead of being cut:
 
 - A `pptTable()` whose rows do not fit into its height. The continuation slides repeat the header rows
   (`headerRows`) and the placeholder texts of the slide; the title gets the profile's `continuationSuffix`
-  (default "(cont.)" in the user's language). On continuation slides the table fills the whole content area.
+  (default "(cont.)" in the user's language). On continuation slides the table fills the whole content area,
+  below the subtitle if the layout shows the subtitle as content element (see
+  [Generating a presentation](doc:presentation/generating-a-deck#template)).
 - A text box or bullet list with `split: true` (`pptTextBox(..., split: true)`, `pptBullets(..., split: true)`),
   continued paragraph by paragraph.
 - A column with `split: true` (`pptColumn(children, split: true)`), continued child by child. Each child takes
@@ -93,6 +95,12 @@ Three kinds of elements continue on further slides instead of being cut:
 
   The first child on a slide is always shown; one that is higher than the whole content area on its own is
   reduced to its height (an image keeps its aspect ratio). `pptHtml()` creates such a column.
+
+A paragraph with `keepWithNext: true` (`pptParagraph(..., keepWithNext: true)`, set by `pptHtml()` on headings)
+never ends a slide when its text continues: it moves to the next slide together with the paragraph after it. In a
+split column, a text whose last paragraphs keep with the next one moves them along with the following child (a
+table, an image, ...) when that child starts on the next slide. Only if the slide would become empty, the paragraph
+stays.
 
 Only one element of a slide can be continued; the other content elements and the notes appear on the first slide
 only. A long table therefore belongs on a slide of its own or at the end of a column. Within a split column, the

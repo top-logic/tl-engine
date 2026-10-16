@@ -185,8 +185,9 @@ public final class DeckWriter {
 	 * If an element of the slide does not fit, see {@link ElementWriter#write(ElementSpec,
 	 * ElementWriter.Position, Rectangle2D, String)}, its rest is shown on continuation slides following the slide. A
 	 * continuation slide repeats the placeholder texts of the slide, its title extended by the
-	 * {@link TemplateProfile#continuationSuffix()}, and shows the continued element in the whole
-	 * content area. The other content elements and the notes appear only on the first slide.
+	 * {@link TemplateProfile#continuationSuffix()}, and its subtitle, and shows the continued element
+	 * in the rest of the content area. The other content elements and the notes appear only on the
+	 * first slide.
 	 * </p>
 	 *
 	 * <p>
@@ -240,9 +241,11 @@ public final class DeckWriter {
 		Rectangle2D area = layoutProfile.contentArea();
 
 		TextSpec subtitle = spec.subtitle();
+		ElementSpec subtitleElement = null;
 		if (subtitle != null && layoutProfile.subtitle() == null) {
+			subtitleElement = BlockReader.subtitleText(subtitle);
 			content = new ArrayList<>(content);
-			content.add(0, BlockReader.subtitleText(subtitle));
+			content.add(0, subtitleElement);
 			subtitle = null;
 		}
 
@@ -260,7 +263,11 @@ public final class DeckWriter {
 				placed = new Arrangement(_profile.gap(), elements::naturalHeight).arrange(content, area, path);
 				start = ElementWriter.Position.START;
 			} else {
-				placed = List.of(new Arrangement.Placed(continuation.element(), area, continuation.path()));
+				Rectangle2D continuedArea = area;
+				if (subtitleElement != null) {
+					continuedArea = writeSubtitle(elements, subtitleElement, area, path);
+				}
+				placed = List.of(new Arrangement.Placed(continuation.element(), continuedArea, continuation.path()));
 				start = continuation.start();
 			}
 
@@ -288,6 +295,21 @@ public final class DeckWriter {
 			continuation = next;
 		} while (continuation != null);
 		return result;
+	}
+
+	/**
+	 * Writes the subtitle element of a slide whose layout has no subtitle placeholder at the top of
+	 * the content area of a continuation slide.
+	 *
+	 * @return The rest of the content area below the subtitle.
+	 */
+	private Rectangle2D writeSubtitle(ElementWriter elements, ElementSpec subtitle, Rectangle2D area, String path) {
+		String subtitlePath = path + "." + PresentationData.SUBTITLE;
+		double height = Math.min(elements.naturalHeight(subtitle, area.getWidth(), subtitlePath), area.getHeight());
+		elements.write(subtitle, ElementWriter.Position.START,
+			new Rectangle2D.Double(area.getX(), area.getY(), area.getWidth(), height), subtitlePath);
+		double top = Math.min(area.getMaxY(), area.getY() + height + _profile.gap());
+		return new Rectangle2D.Double(area.getX(), top, area.getWidth(), area.getMaxY() - top);
 	}
 
 	/**
@@ -352,7 +374,7 @@ public final class DeckWriter {
 			RunStyle style = runs.isEmpty() ? RunStyle.INHERIT : runs.get(runs.size() - 1).style();
 			runs.add(new RunSpec(" " + suffix, style, null));
 			paragraphs.set(paragraphs.size() - 1, new ParagraphSpec(runs, last.style(), last.align(), last.level(),
-				last.bullet(), last.spaceBefore(), last.spaceAfter(), last.lineSpacing()));
+				last.bullet(), last.spaceBefore(), last.spaceAfter(), last.lineSpacing(), last.keepWithNext()));
 		}
 		return text.withParagraphs(paragraphs);
 	}

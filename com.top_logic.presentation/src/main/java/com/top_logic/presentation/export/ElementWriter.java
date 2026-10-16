@@ -17,6 +17,7 @@ import org.apache.poi.sl.usermodel.Insets2D;
 import org.apache.poi.sl.usermodel.PictureData.PictureType;
 import org.apache.poi.xslf.usermodel.XSLFAutoShape;
 import org.apache.poi.xslf.usermodel.XSLFPictureShape;
+import org.apache.poi.xslf.usermodel.XSLFShape;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFTable;
 import org.apache.poi.xslf.usermodel.XSLFTableCell;
@@ -238,6 +239,7 @@ public final class ElementWriter {
 		CrossAlign align = column.align() != null ? column.align() : CrossAlign.STRETCH;
 		double y = bounds.getY();
 		boolean first = true;
+		List<Written> written = new ArrayList<>();
 		for (int index = from.child(); index < children.size(); index++) {
 			ElementSpec child = children.get(index);
 			String childPath = Arrangement.childPath(path, index);
@@ -252,8 +254,9 @@ public final class ElementWriter {
 			double height = ownHeight != null ? ownHeight.doubleValue()
 				: arrangement.naturalHeight(rest(child, start, false), width, childPath);
 			if (height <= space + TOLERANCE) {
-				Position rest = writeChild(arrangement, child, start, new Rectangle2D.Double(x, y, width, height),
-					childPath, path);
+				Rectangle2D childBounds = new Rectangle2D.Double(x, y, width, height);
+				written.add(new Written(index, start, _slide.getShapes().size(), child, childBounds, childPath));
+				Position rest = writeChild(arrangement, child, start, childBounds, childPath, path);
 				if (rest != null) {
 					return new Position(index, rest.start());
 				}
@@ -264,23 +267,119 @@ public final class ElementWriter {
 			if (ownHeight == null && isSplittable(resolve(child, childPath))) {
 				if (!first && arrangement.naturalHeight(rest(child, start, true), width, childPath) > space + TOLERANCE) {
 					// Not even the first row or paragraph fits.
-					return new Position(index, start);
+					return keepWithNext(written, new Position(index, start));
 				}
-				Position rest = writeChild(arrangement, child, start, new Rectangle2D.Double(x, y, width, space),
-					childPath, path);
+				Rectangle2D childBounds = new Rectangle2D.Double(x, y, width, space);
+				written.add(new Written(index, start, _slide.getShapes().size(), child, childBounds, childPath));
+				Position rest = writeChild(arrangement, child, start, childBounds, childPath, path);
 				if (rest != null) {
 					return new Position(index, rest.start());
 				}
 			} else if (first) {
 				// The child alone is higher than the column.
-				writeChild(arrangement, child, start, new Rectangle2D.Double(x, y, width, space), childPath, path);
+				Rectangle2D childBounds = new Rectangle2D.Double(x, y, width, space);
+				written.add(new Written(index, start, _slide.getShapes().size(), child, childBounds, childPath));
+				writeChild(arrangement, child, start, childBounds, childPath, path);
 			} else {
-				return new Position(index, 0);
+				return keepWithNext(written, new Position(index, 0));
 			}
 			y = bounds.getMaxY();
 			first = false;
 		}
 		return null;
+	}
+
+	/**
+	 * A child of a split column written onto the current slide.
+	 *
+	 * @param index
+	 *        The index of the child in the column.
+	 * @param start
+	 *        The first paragraph or row of the child shown on the slide.
+	 * @param shapes
+	 *        The number of shapes of the slide before the child was written.
+	 * @param child
+	 *        The child.
+	 * @param bounds
+	 *        The bounds of the child.
+	 * @param path
+	 *        The path of the child in the description.
+	 */
+	private record Written(int index, int start, int shapes, ElementSpec child, Rectangle2D bounds, String path) {
+		// Pure data.
+	}
+
+	/**
+	 * Moves the paragraphs at the end of the children written onto the slide that are kept with
+	 * the next one to the next slide, together with the given rest of the split column.
+	 *
+	 * <p>
+	 * A text with {@link TextSpec#split()} whose last paragraphs are
+	 * {@link ParagraphSpec#keepWithNext() kept with the next one} is shown without them, a text
+	 * consisting of such paragraphs only is moved as a whole. The first child on the slide is never
+	 * moved as a whole, so that the slide does not become empty.
+	 * </p>
+	 *
+	 * @param written
+	 *        The children written onto the slide, in their order.
+	 * @param rest
+	 *        The rest of the column that continues on the next slide.
+	 * @return The rest of the column including the moved paragraphs.
+	 */
+	private Position keepWithNext(List<Written> written, Position rest) {
+		Position result = rest;
+		for (int n = written.size() - 1; n >= 0; n--) {
+			Written child = written.get(n);
+			TextSpec text = splitText(child.child());
+			if (text == null) {
+				break;
+			}
+			List<ParagraphSpec> paragraphs = text.paragraphs();
+			int cut = paragraphs.size();
+			while (cut > child.start() && paragraphs.get(cut - 1).keepWithNext()) {
+				cut--;
+			}
+			if (cut == paragraphs.size() || (cut == child.start() && n == 0)) {
+				break;
+			}
+			removeShapes(child.shapes());
+			if (cut > child.start()) {
+				write(withText(child.child(), text.withParagraphs(paragraphs.subList(0, cut))),
+					new Position(0, child.start()), child.bounds(), child.path());
+				return new Position(child.index(), cut);
+			}
+			result = new Position(child.index(), child.start());
+		}
+		return result;
+	}
+
+	/**
+	 * The text of the given text box or shape if it is marked with {@link TextSpec#split()},
+	 * <code>null</code> otherwise.
+	 */
+	private static TextSpec splitText(ElementSpec element) {
+		TextSpec text = element instanceof TextBoxSpec textBox ? textBox.text()
+			: element instanceof ShapeSpec shape ? shape.text() : null;
+		return text != null && text.split() ? text : null;
+	}
+
+	private static ElementSpec withText(ElementSpec element, TextSpec text) {
+		if (element instanceof TextBoxSpec textBox) {
+			return new TextBoxSpec(textBox.bounds(), text, textBox.role());
+		}
+		ShapeSpec shape = (ShapeSpec) element;
+		return new ShapeSpec(shape.bounds(), shape.geometry(), shape.fill(), shape.line(), shape.shadow(), text,
+			shape.style(), shape.role());
+	}
+
+	/**
+	 * Removes the shapes of the slide from the given index on.
+	 */
+	private void removeShapes(int from) {
+		List<XSLFShape> shapes = _slide.getShapes();
+		for (int n = shapes.size() - 1; n >= from; n--) {
+			_slide.removeShape(shapes.get(n));
+		}
 	}
 
 	/**
@@ -338,10 +437,9 @@ public final class ElementWriter {
 			return new TableSpec(table.bounds(), table.columnWeights(), table.columnWidths(), rows,
 				table.headerRows(), table.rowHeight());
 		} else if (element instanceof TextBoxSpec textBox) {
-			return new TextBoxSpec(textBox.bounds(), restText(textBox.text(), start, unit), textBox.role());
+			return withText(textBox, restText(textBox.text(), start, unit));
 		} else if (element instanceof ShapeSpec shape && shape.text() != null) {
-			return new ShapeSpec(shape.bounds(), shape.geometry(), shape.fill(), shape.line(), shape.shadow(),
-				restText(shape.text(), start, unit), shape.style(), shape.role());
+			return withText(shape, restText(shape.text(), start, unit));
 		}
 		return element;
 	}
@@ -349,8 +447,35 @@ public final class ElementWriter {
 	private static TextSpec restText(TextSpec text, int start, boolean unit) {
 		List<ParagraphSpec> paragraphs = text.paragraphs();
 		int from = Math.min(start, paragraphs.size());
-		int end = unit ? Math.min(from + 1, paragraphs.size()) : paragraphs.size();
+		int end = paragraphs.size();
+		if (unit) {
+			// The first paragraph together with the paragraphs it is kept with.
+			end = from;
+			while (end < paragraphs.size() && paragraphs.get(end).keepWithNext()) {
+				end++;
+			}
+			end = Math.min(end + 1, paragraphs.size());
+		}
 		return text.withParagraphs(paragraphs.subList(from, end));
+	}
+
+	/**
+	 * The end of the part of the given paragraphs to show on a slide, so that the part does not end
+	 * with a paragraph kept with the next one.
+	 *
+	 * @param start
+	 *        The first paragraph of the part.
+	 * @param end
+	 *        The end of the paragraphs that fit.
+	 * @return The given end, reduced by the {@link ParagraphSpec#keepWithNext()} paragraphs at the
+	 *         end of the part, unless the part would become empty.
+	 */
+	private static int keepWithNext(List<ParagraphSpec> paragraphs, int start, int end) {
+		int result = end;
+		while (result > start && paragraphs.get(result - 1).keepWithNext()) {
+			result--;
+		}
+		return result > start ? result : end;
 	}
 
 	private int writeResolved(ElementSpec element, int start, Rectangle2D bounds, String path) {
@@ -487,7 +612,7 @@ public final class ElementWriter {
 						tooMany = candidate;
 					}
 				}
-				end = start + fitting;
+				end = keepWithNext(paragraphs, start, start + fitting);
 			}
 		}
 		_fitting.write(shape, text.withParagraphs(paragraphs.subList(start, end)), true, path, start);

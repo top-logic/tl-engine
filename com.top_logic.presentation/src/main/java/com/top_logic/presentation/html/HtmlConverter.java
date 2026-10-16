@@ -47,7 +47,8 @@ import com.top_logic.presentation.data.PresentationData;
  * and automatic height. Headings <code>h1</code> to <code>h6</code> are bold and larger than the
  * base size, <code>b</code>/<code>strong</code>, <code>i</code>/<code>em</code>, <code>u</code>
  * and <code>a</code> become formatted runs, <code>code</code> and <code>pre</code> use the
- * {@link #MONOSPACE_FONT}. A <code>br</code> breaks the line within its paragraph. List items get
+ * {@link #MONOSPACE_FONT}. A heading is kept with the content following it
+ * ({@link PresentationData#KEEP_WITH_NEXT}). A <code>br</code> breaks the line within its paragraph. List items get
  * the indentation level of their list and a bullet, items of an ordered list a numbered bullet
  * ({@link PresentationData#AUTO_NUMBER}) with their number. A quotation is indented by one
  * level.</li>
@@ -397,6 +398,7 @@ public final class HtmlConverter {
 		double size = _baseSize * HEADING_SCALE[index];
 		_paragraph.put(BOLD, Boolean.TRUE);
 		_paragraph.put(SIZE, number(size));
+		_paragraph.put(KEEP_WITH_NEXT, Boolean.TRUE);
 		if (!_paragraphs.isEmpty()) {
 			_paragraph.put(SPACE_BEFORE, number(size * HEADING_SPACE));
 		}

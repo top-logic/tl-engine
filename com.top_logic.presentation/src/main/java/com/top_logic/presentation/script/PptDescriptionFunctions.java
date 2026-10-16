@@ -718,6 +718,9 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 *        Whether the text is shown in capital letters.
 	 * @param spacing
 	 *        Additional space between characters, negative to condense the text.
+	 * @param keepWithNext
+	 *        Whether the paragraph stays on the slide of the following paragraph or element when
+	 *        the text continues on a further slide, e.g. for a heading.
 	 * @return The dictionary describing the paragraph.
 	 */
 	@Label("Describe a paragraph")
@@ -737,7 +740,8 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Boolean italic,
 			Boolean underline,
 			Boolean caps,
-			Double spacing) {
+			Double spacing,
+			Boolean keepWithNext) {
 		Map<String, Object> result = map();
 		result.put(RUNS, runs);
 		putStyle(result, font, size, color, bold, italic, underline, caps, spacing);
@@ -747,6 +751,7 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 		put(result, SPACE_BEFORE, spaceBefore);
 		put(result, SPACE_AFTER, spaceAfter);
 		put(result, LINE_SPACING, lineSpacing);
+		put(result, KEEP_WITH_NEXT, keepWithNext);
 		return result;
 	}
 

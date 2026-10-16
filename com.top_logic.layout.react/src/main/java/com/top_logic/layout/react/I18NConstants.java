@@ -412,6 +412,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.toolbar.overflow")
 	public static ResKey JS_TOOLBAR_OVERFLOW;
 
+	// -- Dashboard client-side i18n keys --
+
+	/**
+	 * @en Hide tile
+	 */
+	@CustomKey("js.dashboard.hideTile")
+	public static ResKey JS_DASHBOARD_HIDE_TILE;
+
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 */

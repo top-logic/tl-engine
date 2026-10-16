@@ -5,6 +5,10 @@
  */
 package test.com.top_logic.layout.configedit;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,8 +51,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigCollection;
 import com.top_logic.layout.configedit.ConfigCollectionValue;
-import com.top_logic.layout.configedit.ConfigControl;
-import com.top_logic.layout.configedit.ConfigControlProvider;
+import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldIndex;
@@ -99,12 +102,23 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * {@link ConfigControlProvider} creating a control that, unlike a form field, does not display
-	 * the error of its field model itself.
+	 * Test annotation mapped to {@link PlainControlProvider} in the
+	 * {@link com.top_logic.layout.configedit.ConfigControlService.Config#getAnnotationControls()
+	 * annotation map} of this module's test configuration.
 	 */
-	public static class PlainControlProvider implements ConfigControlProvider {
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.METHOD)
+	public @interface PlainControl {
+		// Pure marker.
+	}
+
+	/**
+	 * {@link ConfigAnnotationControlProvider} creating a control that, unlike a form field, does not
+	 * display the error of its field model itself.
+	 */
+	public static class PlainControlProvider implements ConfigAnnotationControlProvider<PlainControl> {
 		@Override
-		public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
+		public ReactControl createControl(ReactContext context, ConfigFieldModel model, PlainControl annotation) {
 			return new ReactTextControl(context, "plain");
 		}
 	}
@@ -116,7 +130,7 @@ public class TestConfigEditorControl extends TestCase {
 		String TEXT = "text";
 
 		@Name(TEXT)
-		@ConfigControl(PlainControlProvider.class)
+		@PlainControl
 		String getText();
 	}
 

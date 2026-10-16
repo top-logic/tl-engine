@@ -12,9 +12,9 @@ import com.top_logic.layout.react.control.ReactControl;
  * Creates the {@link ReactControl} that edits a single configuration property.
  *
  * <p>
- * Implementations are picked by {@code ConfigControlService}, either through a {@link ConfigControl}
- * annotation on the property or through the service's value-type mapping. An implementation
- * referenced by {@link ConfigControl} must have a public constructor without arguments.
+ * Implementations are registered in the configuration of the {@link ConfigControlService}: by the
+ * Java type of the property value, by the class of the property's value provider, or by the control
+ * provider the declarative form's annotation names.
  * </p>
  *
  * <p>

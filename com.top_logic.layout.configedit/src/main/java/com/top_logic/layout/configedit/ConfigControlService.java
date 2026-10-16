@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -70,7 +72,10 @@ import com.top_logic.mig.html.HTMLFormatter;
  * <ol>
  * <li>An encrypted property always gets the password field, deliberately ahead of every other
  * step.</li>
- * <li>{@link ConfigControl} annotation on the property or on its value type.</li>
+ * <li>The map from an annotation of the property or of its value type to a control of this
+ * service ({@link Config#getAnnotationControls()}) - an annotation states what the value means
+ * (e.g. that its text spans multiple lines), and the map decides how such a value is edited. The
+ * first configured annotation the property carries wins.</li>
  * <li>A property edited by selecting from a fixed set of options gets a searchable dropdown - the
  * select model-based forms use - whether it takes one option or several.</li>
  * <li>The value-type-to-provider map configured in this service ({@link Config#getProviders()}).</li>
@@ -90,20 +95,22 @@ import com.top_logic.mig.html.HTMLFormatter;
  * </ol>
  *
  * <p>
- * The declarative form's annotation is honoured after the two value maps, although it is stated
- * on the single property: it names a control of the declarative form, which edits the field that
- * form built - the text a value is written as. A value map, in contrast, claims the property for a
- * control that edits its typed value (an internationalized string in an editor per language, a
- * color in a color chooser), and that typed editor is not given up for a text widget. Such a
- * mapped control therefore edits the value in the form the remaining rules give it, never claims
- * the property for its typed form: the typed value of a property whose Java type one of the
- * built-in widgets handles directly, otherwise its format's text.
+ * The two annotation maps ({@link Config#getAnnotationControls()} and
+ * {@link Config#getControlProviders()}) choose a control, but not the form of the value it edits:
+ * an annotation states something about the value, not that the value is held in a form other than
+ * the one the property would otherwise be edited in. A value map, in contrast, claims the property
+ * for a control that edits its typed value (an internationalized string in an editor per language,
+ * a color in a color chooser). A control chosen by an annotation therefore edits the value in the
+ * form the remaining rules give it: the typed value of a property whose Java type one of the
+ * built-in widgets handles directly or that a value map claims, the selected options of a property
+ * edited by selecting, otherwise its format's text.
  * </p>
  *
  * <p>
- * The configured maps ({@link Config#getProviders()}, {@link Config#getFormats()} and
- * {@link Config#getControlProviders()}) are what let a module above this one contribute a
- * control - the TL-Script editor, for instance, lives in {@code tl-model-search-react}.
+ * The configured maps ({@link Config#getAnnotationControls()}, {@link Config#getProviders()},
+ * {@link Config#getFormats()} and {@link Config#getControlProviders()}) are what let a module above
+ * this one contribute a control - the TL-Script editor, for instance, lives in
+ * {@code tl-model-search-react}.
  * </p>
  *
  * @implNote {@code createModel} decides the value domain that pairs with the widget above: a
@@ -120,11 +127,11 @@ import com.top_logic.mig.html.HTMLFormatter;
  *           value no format accepts is written in structured form - and edited by a nested editor
  *           or a type selector here.
  *           <p>
- *           {@code @Encrypted} runs before the {@link ConfigControl} annotation, not just before
- *           the built-in steps: a module may override the control for a property, but it must
- *           never be able to make a secret readable by choosing a control that displays it in the
- *           clear. This is a deliberate security decision on its own terms, independent of the
- *           specialization veto below.
+ *           {@code @Encrypted} runs before the annotation map, not just before the built-in
+ *           steps: a module may choose the control for a property, but it must never be able to
+ *           make a secret readable by choosing a control that displays it in the clear. This is
+ *           a deliberate security decision on its own terms, independent of the specialization
+ *           veto below.
  *           <p>
  *           The specialization veto is why a property with its own format is never handed to the
  *           "direct" widget for its Java type: a {@code Date} formatted as a time of day is
@@ -157,6 +164,28 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * Configuration options for {@link ConfigControlService}.
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<ConfigControlService> {
+
+		/** Property name of {@link #getAnnotationControls()}. */
+		String ANNOTATION_CONTROLS = "annotation-controls";
+
+		/**
+		 * Controls chosen by an annotation of the edited property.
+		 *
+		 * <p>
+		 * A property that carries one of the configured annotations, on the property itself or on
+		 * its value type, is edited with the control the annotation's
+		 * {@link ConfigAnnotationControlProvider} creates. If a property carries several of the
+		 * configured annotations, the first entry in this list whose annotation is present wins.
+		 * </p>
+		 *
+		 * <p>
+		 * A control chosen here takes precedence over every other mapping of this service and over
+		 * a select. Only an encrypted property is never edited with a control chosen here.
+		 * </p>
+		 */
+		@Name(ANNOTATION_CONTROLS)
+		@Key(AnnotationControlMapping.ANNOTATION)
+		List<AnnotationControlMapping> getAnnotationControls();
 
 		/**
 		 * Value-type-to-provider mappings, keyed by the Java type of the property value.
@@ -197,6 +226,38 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		@Name(CONTROL_PROVIDERS)
 		@Key(ControlProviderMapping.PROVIDER)
 		Map<Class<?>, ControlProviderMapping> getControlProviders();
+
+	}
+
+	/**
+	 * Entry of {@link Config#getAnnotationControls()}.
+	 */
+	public interface AnnotationControlMapping extends ConfigurationItem {
+
+		/** Property name of {@link #getAnnotation()}. */
+		String ANNOTATION = "annotation";
+
+		/** Property name of {@link #getImpl()}. */
+		String IMPL = "impl";
+
+		/**
+		 * The annotation type a property must carry for this entry to apply.
+		 */
+		@Name(ANNOTATION)
+		@Mandatory
+		Class<? extends Annotation> getAnnotation();
+
+		/**
+		 * The {@link ConfigAnnotationControlProvider} that creates the control for a property with
+		 * the annotation.
+		 *
+		 * <p>
+		 * The provider must accept the annotation type of this entry.
+		 * </p>
+		 */
+		@Name(IMPL)
+		@Mandatory
+		PolymorphicConfiguration<? extends ConfigAnnotationControlProvider<?>> getImpl();
 
 	}
 
@@ -275,6 +336,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	private final InstantiationContext _context;
 
+	private List<Map.Entry<Class<? extends Annotation>, ConfigAnnotationControlProvider<?>>> _providerByAnnotation;
+
 	private Map<Class<?>, ConfigControlProvider> _providerByType;
 
 	private Map<Class<?>, ConfigControlProvider> _providerByFormat;
@@ -293,6 +356,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	@Override
 	protected void startUp() {
 		super.startUp();
+
+		_providerByAnnotation = new ArrayList<>();
+		for (AnnotationControlMapping mapping : getConfig().getAnnotationControls()) {
+			_providerByAnnotation.add(Map.entry(mapping.getAnnotation(), _context.getInstance(mapping.getImpl())));
+		}
 
 		_providerByType = new HashMap<>();
 		for (ProviderMapping mapping : getConfig().getProviders().values()) {
@@ -440,18 +508,21 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		PropertyDescriptor property = model.getProperty();
 		checkSupportedKind(model.getConfig(), property);
 
-		// 1. Encrypted always wins, deliberately ahead of every other step including an explicit
-		// ConfigControl annotation: a module may override the control for a property, but it must
-		// never be able to make a secret readable by choosing a control that displays it in the
-		// clear. This is a security decision, independent of anything the other steps decide.
+		// 1. Encrypted always wins, deliberately ahead of every other step including the annotation
+		// map: a module may choose the control for a property, but it must never be able to make a
+		// secret readable by choosing a control that displays it in the clear. This is a security
+		// decision, independent of anything the other steps decide.
 		if (property.getAnnotation(Encrypted.class) != null) {
 			return new ReactPasswordInputControl(context, model);
 		}
 
-		// 2. Annotation on the property or on its value type.
-		ConfigControl annotation = controlAnnotation(property);
-		if (annotation != null) {
-			return newProvider(annotation.value()).createControl(context, model);
+		// 2. Configured provider for an annotation on the property or on its value type. Edits the
+		// value in the domain createModel chose by the remaining rules - the mapping is no claim.
+		for (Map.Entry<Class<? extends Annotation>, ConfigAnnotationControlProvider<?>> entry : _providerByAnnotation) {
+			ReactControl result = fromAnnotation(context, model, entry.getKey(), entry.getValue());
+			if (result != null) {
+				return result;
+			}
 		}
 
 		// 3. Edited by selecting.
@@ -607,8 +678,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	}
 
 	/**
-	 * The built-in widget for a property that reached neither the annotation, the select, nor
-	 * any configured-map step.
+	 * The built-in widget for a property that reached neither the select nor any configured-map
+	 * step.
 	 *
 	 * <p>
 	 * Only offers the type-specific widgets ({@link ReactCheckboxControl}, a number input, the
@@ -660,8 +731,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * </p>
 	 *
 	 * <p>
-	 * {@code @Encrypted} forces {@code false} unconditionally, exactly like an explicit control
-	 * annotation - a secret must never be offered as a dropdown of options, since that would
+	 * {@code @Encrypted} forces {@code false} unconditionally - a secret must never be offered as a
+	 * dropdown of options, since that would
 	 * display its value (and every other option) in the clear. This is what makes
 	 * {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider)}'s
 	 * inclusion of {@code @Encrypted} hold for every property, not only the ones whose Java type a
@@ -699,10 +770,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        it has none.
 	 */
 	private boolean isSelect(PropertyDescriptor property, DerivedProperty<? extends Iterable<?>> optionProvider) {
-		if (controlAnnotation(property) != null) {
-			// An explicitly named control decides on its own.
-			return false;
-		}
 		if (property.getAnnotation(Encrypted.class) != null) {
 			// A secret is never offered as a dropdown of options - see this method's own doc comment.
 			return false;
@@ -855,12 +922,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		if (property.getAnnotation(Encrypted.class) != null) {
 			return true;
 		}
-		if (controlAnnotation(property) != null) {
-			// An explicitly named control decides on its own, and edits the value in its typed form
-			// - the same reason a format claim below is not a specialization either. Checked in the
-			// order createControl resolves in: after @Encrypted, which outranks it there too.
-			return false;
-		}
 		if (optionProvider != null) {
 			return true;
 		}
@@ -881,9 +942,9 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * value in its typed form rather than as the text a format would make of it.
 	 *
 	 * <p>
-	 * The three ways to claim a property - the {@link ConfigControl} annotation,
-	 * {@link Config#getProviders()} by value type, and {@link Config#getFormats()} by value provider
-	 * - all bind a control to the raw typed value. Whether the property's Java type happens to be
+	 * The two ways to claim a property - {@link Config#getProviders()} by value type and
+	 * {@link Config#getFormats()} by value provider - both bind a control to the raw typed value.
+	 * Whether the property's Java type happens to be
 	 * one of {@link #isDirectlyEditable(Class)}'s built-in set has nothing to do with it, so
 	 * {@code createModel} has to hand out the typed {@link ConfigFieldModel} for a claimed property
 	 * either way; leaving it to the built-in set would give a claimed {@code ResKey} or a claimed
@@ -897,7 +958,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 */
 	private boolean isClaimed(PropertyDescriptor property, ConfigControlProvider formatProvider) {
 		return formatProvider != null
-			|| controlAnnotation(property) != null
 			|| _providerByType.containsKey(property.getType());
 	}
 
@@ -966,23 +1026,23 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			|| Date.class.isAssignableFrom(type);
 	}
 
-	private ConfigControl controlAnnotation(PropertyDescriptor property) {
-		ConfigControl annotation = property.getAnnotation(ConfigControl.class);
-		if (annotation != null) {
-			return annotation;
+	/**
+	 * The control the given provider creates for the given model, or {@code null} if the model's
+	 * property carries no annotation of the given type, neither itself nor on its value type.
+	 */
+	private static <A extends Annotation> ReactControl fromAnnotation(ReactContext context, ConfigFieldModel model,
+			Class<A> annotationType, ConfigAnnotationControlProvider<?> provider) {
+		PropertyDescriptor property = model.getProperty();
+		A annotation = property.getAnnotation(annotationType);
+		if (annotation == null) {
+			annotation = property.getType().getAnnotation(annotationType);
+			if (annotation == null) {
+				return null;
+			}
 		}
-		return property.getType().getAnnotation(ConfigControl.class);
-	}
-
-	private ConfigControlProvider newProvider(Class<? extends ConfigControlProvider> providerClass) {
-		try {
-			return providerClass.getDeclaredConstructor().newInstance();
-		} catch (ReflectiveOperationException ex) {
-			throw new IllegalArgumentException(
-				"Cannot instantiate control provider '" + providerClass.getName()
-					+ "'. A public constructor without arguments is required.",
-				ex);
-		}
+		@SuppressWarnings("unchecked")
+		ConfigAnnotationControlProvider<A> typedProvider = (ConfigAnnotationControlProvider<A>) provider;
+		return typedProvider.createControl(context, model, annotation);
 	}
 
 	/**

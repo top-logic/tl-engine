@@ -6,6 +6,10 @@
 package test.com.top_logic.layout.configedit;
 
 import java.awt.Color;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -49,7 +53,7 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.configedit.ConfigControl;
+import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
 import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
@@ -61,7 +65,6 @@ import com.top_logic.layout.configedit.I18NStringFormatProvider;
 import com.top_logic.layout.form.format.ColorConfigFormat;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
-import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.template.TextInputControlProvider;
 import com.top_logic.layout.form.values.CommonMarkText;
 import com.top_logic.layout.form.values.MultiLineText;
@@ -72,6 +75,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactColorInputControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
@@ -85,6 +89,7 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.state.DatePickerState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.TextInputState;
+import com.top_logic.layout.react.state.TextState;
 import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -413,12 +418,64 @@ public class TestConfigControlService extends TestCase {
 	/**
 	 * A {@link ConfigControlProvider} that always renders a checkbox, regardless of the property's
 	 * actual type - deliberately mismatched, so getting this control back can only be explained by
-	 * an explicit {@link ConfigControl} annotation, never by any built-in, type-based resolution.
+	 * a configured mapping, never by any built-in, type-based resolution.
 	 */
 	public static class FixedCheckboxProvider implements ConfigControlProvider {
 		@Override
 		public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
 			return new ReactCheckboxControl(context, model);
+		}
+	}
+
+	/**
+	 * Test annotation mapped to {@link AsCheckboxProvider} in the service's
+	 * {@link com.top_logic.layout.configedit.ConfigControlService.Config#getAnnotationControls()
+	 * annotation map} of this module's test configuration.
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target({ ElementType.METHOD, ElementType.TYPE })
+	public @interface AsCheckbox {
+		// Pure marker.
+	}
+
+	/**
+	 * Test annotation with a parameter, mapped to {@link CaptionProvider} in the service's
+	 * {@link com.top_logic.layout.configedit.ConfigControlService.Config#getAnnotationControls()
+	 * annotation map} of this module's test configuration - configured before
+	 * {@link AsCheckbox}.
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target({ ElementType.METHOD, ElementType.TYPE })
+	public @interface Caption {
+
+		/**
+		 * The text the control displays.
+		 */
+		String value();
+
+	}
+
+	/**
+	 * {@link ConfigAnnotationControlProvider} for {@link AsCheckbox}: always renders a checkbox,
+	 * regardless of the property's actual type - deliberately mismatched, so getting this control
+	 * back can only be explained by the annotation map, never by any built-in, type-based
+	 * resolution.
+	 */
+	public static class AsCheckboxProvider implements ConfigAnnotationControlProvider<AsCheckbox> {
+		@Override
+		public ReactControl createControl(ReactContext context, ConfigFieldModel model, AsCheckbox annotation) {
+			return new ReactCheckboxControl(context, model);
+		}
+	}
+
+	/**
+	 * {@link ConfigAnnotationControlProvider} for {@link Caption}: displays the annotation's text,
+	 * which proves that the annotation instance found for the property reaches the provider.
+	 */
+	public static class CaptionProvider implements ConfigAnnotationControlProvider<Caption> {
+		@Override
+		public ReactControl createControl(ReactContext context, ConfigFieldModel model, Caption annotation) {
+			return new ReactTextControl(context, annotation.value());
 		}
 	}
 
@@ -752,6 +809,15 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getAnnotated()}. */
 		String ANNOTATED = "annotated";
 
+		/** Property name for {@link #getCaptioned()}. */
+		String CAPTIONED = "captioned";
+
+		/** Property name for {@link #getCaptionedCheckbox()}. */
+		String CAPTIONED_CHECKBOX = "captionedCheckbox";
+
+		/** Property name for {@link #getAnnotatedColor()}. */
+		String ANNOTATED_COLOR = "annotatedColor";
+
 		/** Property name for {@link #getAnnotatedMode()}. */
 		String ANNOTATED_MODE = "annotatedMode";
 
@@ -803,11 +869,11 @@ public class TestConfigControlService extends TestCase {
 		}
 
 		/**
-		 * A second enum, annotated at the type level with {@link ConfigControl} - proves the
-		 * annotation is honored from the value type too, not just from the property: without it, a
-		 * plain enum property would get the select, never a checkbox.
+		 * A second enum, annotated at the type level with {@link AsCheckbox} - proves the
+		 * annotation map is consulted for the value type too, not just for the property: without
+		 * it, a plain enum property would get the select, never a checkbox.
 		 */
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		enum AnnotatedMode {
 			/** The one mode. */
 			A,
@@ -857,13 +923,12 @@ public class TestConfigControlService extends TestCase {
 		Color getColorValue();
 
 		/**
-		 * A color whose control is named by {@link ConfigControl} - the annotation (step 2) is
-		 * resolved before the value-type map (step 4) that claims every other {@link Color}
-		 * property.
+		 * A color carrying {@link AsCheckbox} - the annotation map (step 2) is consulted before
+		 * the value-type map (step 4) that claims every other {@link Color} property.
 		 */
 		@Name(ANNOTATED_COLOR_VALUE)
 		@Format(ColorConfigFormat.class)
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		Color getAnnotatedColorValue();
 
 		/** A whole number. */
@@ -1004,15 +1069,39 @@ public class TestConfigControlService extends TestCase {
 		Formatted getFormattedItem();
 
 		/**
-		 * A {@code String} property naming its own control via {@link ConfigControl} - a plain
-		 * {@code String} would otherwise get the text input, never a checkbox.
+		 * A {@code String} property carrying {@link AsCheckbox} - a plain {@code String} would
+		 * otherwise get the text input, never a checkbox.
 		 */
 		@Name(ANNOTATED)
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		String getAnnotated();
 
 		/**
-		 * An enum property whose control comes from its value type's own {@link ConfigControl}
+		 * A {@code String} property carrying {@link Caption} with a text of its own.
+		 */
+		@Name(CAPTIONED)
+		@Caption("The caption")
+		String getCaptioned();
+
+		/**
+		 * A property carrying two mapped annotations - {@link Caption}, configured first, and
+		 * {@link AsCheckbox}, configured after it.
+		 */
+		@Name(CAPTIONED_CHECKBOX)
+		@AsCheckbox
+		@Caption("Both")
+		String getCaptionedCheckbox();
+
+		/**
+		 * A property edited by selecting that carries {@link AsCheckbox} as well.
+		 */
+		@Name(ANNOTATED_COLOR)
+		@Options(fun = Colors.class)
+		@AsCheckbox
+		String getAnnotatedColor();
+
+		/**
+		 * An enum property whose control comes from its value type's own {@link AsCheckbox}
 		 * annotation, not from an annotation on the property itself.
 		 */
 		@Name(ANNOTATED_MODE)
@@ -1031,21 +1120,22 @@ public class TestConfigControlService extends TestCase {
 		String getDerivedChoice();
 
 		/**
-		 * A property carrying both its own {@code @Format} and a {@link ConfigControl} annotation -
-		 * the combination that decides whether the model follows the named control or the format.
+		 * A property carrying both its own {@code @Format} and the mapped {@link AsCheckbox}
+		 * annotation - the combination that decides whether the model follows the chosen control
+		 * or the format.
 		 */
 		@Name(ANNOTATED_COORDINATE)
 		@Format(CoordinateFormat.class)
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		Coordinate getAnnotatedCoordinate();
 
 		/**
-		 * Both {@link Encrypted} and a {@link ConfigControl} annotation - {@code @Encrypted} must
-		 * win: a module's custom control must never be able to expose a secret in the clear.
+		 * Both {@link Encrypted} and the mapped {@link AsCheckbox} annotation - {@code @Encrypted}
+		 * must win: a module's custom control must never be able to expose a secret in the clear.
 		 */
 		@Name(ENCRYPTED_ANNOTATED)
 		@Encrypted
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		String getEncryptedAnnotated();
 
 		/**
@@ -1095,16 +1185,9 @@ public class TestConfigControlService extends TestCase {
 		 * name of, through {@link ShapeNameMapping} - the shape
 		 * {@code RoleRuleConfig#getSourceMetaElement()} has, whose options are model classes and
 		 * whose value is the qualified name of one.
-		 *
-		 * <p>
-		 * Also carries the classic form's {@link ControlProvider @ControlProvider} annotation, as
-		 * those properties do: it names a control of the classic UI, which says nothing about how
-		 * this service edits the property.
-		 * </p>
 		 */
 		@Name(SHAPE_NAME)
 		@Options(fun = Shapes.class, mapping = ShapeNameMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		String getShapeName();
 
 		/** @see #getShapeName() */
@@ -1117,7 +1200,6 @@ public class TestConfigControlService extends TestCase {
 		@Name(SHAPE_NAMES)
 		@Format(CommaSeparatedStrings.class)
 		@Options(fun = Shapes.class, mapping = ShapeNameMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		List<String> getShapeNames();
 
 		/** @see #getShapeNames() */
@@ -1252,14 +1334,14 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * A control named by {@link ConfigControl} on a {@link Color} property wins over the mapping
-	 * registered for that value type - the annotation is step 2 of the resolution chain, the
+	 * A control chosen by the annotation map for a {@link Color} property wins over the mapping
+	 * registered for that value type - the annotation map is step 2 of the resolution chain, the
 	 * value-type map step 4.
 	 */
 	public void testAnnotatedControlWinsOverTheColorMapping() {
-		assertTrue("The named control must win over the mapping for the property's value type.",
+		assertTrue("The annotation's control must win over the mapping for the property's value type.",
 			control(TestConfig.ANNOTATED_COLOR_VALUE) instanceof ReactCheckboxControl);
-		assertFalse("The color input must not be reachable once the property names its control.",
+		assertFalse("The color input must not be reachable once an annotation chooses the control.",
 			control(TestConfig.ANNOTATED_COLOR_VALUE) instanceof ReactColorInputControl);
 	}
 
@@ -1468,7 +1550,7 @@ public class TestConfigControlService extends TestCase {
 
 	/**
 	 * {@code @Encrypted} wins over a claim in the configured format-provider map, exactly like it
-	 * wins over an explicit {@link ConfigControl} annotation: a module must never be able to make
+	 * wins over the annotation map: a module must never be able to make
 	 * a secret readable by mapping a control to its value provider. Uses the very same
 	 * {@link TimeOfDayAsDateValueProvider} format {@link #testTimeOfDayFormatIsClaimedByDatePicker()}
 	 * proves is claimed - the only difference is {@code @Encrypted} - so the only possible
@@ -1580,33 +1662,24 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * A property whose control is named by {@link ConfigControl} gets the plain model, even though
-	 * it also carries a {@code @Format}.
-	 *
-	 * <p>
-	 * The named control edits the value in its typed form, exactly as a claim from the
-	 * format-provider map does - so the same domain pairing has to follow. Left to the
-	 * {@code @Format} alone, {@code createModel} would hand out the format model over <em>text</em>
-	 * while {@code createControl} handed that text to the named control, which expects the typed
-	 * value: the existing value would never render, and what the control sent back would be
-	 * re-parsed by the format and rejected.
-	 * </p>
+	 * A property whose control is chosen by the annotation map keeps the format model of its own
+	 * {@code @Format}: an annotation chooses the control, not the form of the value it edits.
 	 */
-	public void testAnnotatedControlOnAFormattedPropertyGetsPlainModel() {
+	public void testAnnotatedControlOnAFormattedPropertyKeepsFormatModel() {
 		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.ANNOTATED_COORDINATE);
 
 		ConfigFieldModel model = model(TestConfig.ANNOTATED_COORDINATE);
-		assertFalse("A property whose control is named by @ConfigControl must get the plain model, "
-			+ "regardless of its own @Format - the named control edits the typed value.",
+		assertTrue("A property whose control is chosen by an annotation must be edited in the domain "
+			+ "its own @Format gives it.",
 			model instanceof ConfigFormatFieldModel);
-		assertTrue("The named control must be the one used.",
+		assertTrue("The annotation's control must be the one used.",
 			control(TestConfig.ANNOTATED_COORDINATE) instanceof ReactCheckboxControl);
 		assertNotNull("Precondition: the property really does carry a format.", property.getValueProvider());
 	}
 
 	/**
-	 * The value-type provider map pairs its control with the plain model too, for the same reason
-	 * the format map and {@link ConfigControl} do.
+	 * The value-type provider map pairs its control with the plain model, for the same reason the
+	 * format map does.
 	 */
 	public void testProviderMappingOnAFormattedPropertyGetsPlainModel() {
 		ConfigControlService.ProviderMapping mapping =
@@ -1751,16 +1824,6 @@ public class TestConfigControlService extends TestCase {
 		model.setValue(((ConfigSelectFieldModel) model).getOptions().get(0));
 		assertEquals("The property stores the option's name, not the option.",
 			"circle", _config.getShapeName());
-	}
-
-	/**
-	 * The classic form's {@link ControlProvider @ControlProvider} annotation names a control of the
-	 * classic UI and says nothing about this service, which resolves its controls through
-	 * {@link ConfigControl} instead. A property carrying it is therefore still edited by selecting.
-	 */
-	public void testTheClassicControlProviderAnnotationDoesNotPreventSelecting() {
-		assertTrue("The classic UI's control annotation must not keep a property with options out "
-			+ "of a select.", model(TestConfig.SHAPE_NAME) instanceof ConfigSelectFieldModel);
 	}
 
 	/**
@@ -1992,29 +2055,64 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * A plain {@code String} property naming its own control via a {@link ConfigControl}
-	 * annotation on the property gets that control, not the built-in text input a plain
-	 * {@code String} would otherwise get.
+	 * A plain {@code String} property carrying a mapped annotation gets the mapped control, not the
+	 * built-in text input a plain {@code String} would otherwise get.
 	 */
-	public void testConfigControlAnnotationOnProperty() {
-		assertTrue("The annotated control must be used instead of the built-in text input.",
+	public void testAnnotationOnProperty() {
+		assertTrue("The annotation's control must be used instead of the built-in text input.",
 			control(TestConfig.ANNOTATED) instanceof ReactCheckboxControl);
 	}
 
 	/**
-	 * A {@link ConfigControl} annotation on the property's value type is honored too, not just on
-	 * the property itself: without it, a plain enum property would get the select.
+	 * A mapped annotation on the property's value type is honored too, not just on the property
+	 * itself: without it, a plain enum property would get the select.
 	 */
-	public void testConfigControlAnnotationOnValueType() {
-		assertTrue("The value type's annotated control must be used instead of the enum select.",
+	public void testAnnotationOnValueType() {
+		assertTrue("The value type's annotation must choose the control instead of the enum select.",
 			control(TestConfig.ANNOTATED_MODE) instanceof ReactCheckboxControl);
+		assertTrue("The annotation does not change the domain: an enum is still held as a selection.",
+			model(TestConfig.ANNOTATED_MODE) instanceof ConfigSelectFieldModel);
 	}
 
 	/**
-	 * {@code @Encrypted} wins over an explicit {@link ConfigControl} annotation: a module's own
-	 * choice of control must never be able to expose a secret in the clear.
+	 * The annotation instance found for the property, with its parameters, is what the mapped
+	 * provider receives.
 	 */
-	public void testEncryptedWinsOverConfigControlAnnotation() {
+	public void testAnnotationReachesTheProvider() {
+		ReactControl control = control(TestConfig.CAPTIONED);
+		assertTrue("The annotation's control must be used.", control instanceof ReactTextControl);
+		assertEquals("The provider must receive the property's annotation.",
+			"The caption", control.scriptingScalarState().get(TextState.TEXT__PROP));
+	}
+
+	/**
+	 * Of two mapped annotations on one property, the one configured first decides the control.
+	 */
+	public void testConfiguredOrderDecidesBetweenAnnotations() {
+		ReactControl control = control(TestConfig.CAPTIONED_CHECKBOX);
+		assertTrue("The annotation configured first must choose the control.",
+			control instanceof ReactTextControl);
+		assertEquals("Both", control.scriptingScalarState().get(TextState.TEXT__PROP));
+	}
+
+	/**
+	 * The annotation map is consulted before a property is edited by selecting - the control it
+	 * chooses edits the selection the property is held as.
+	 */
+	public void testAnnotationWinsOverSelect() {
+		assertTrue("An annotated property with options is still held as a selection.",
+			model(TestConfig.ANNOTATED_COLOR) instanceof ConfigSelectFieldModel);
+		ReactControl control = control(TestConfig.ANNOTATED_COLOR);
+		assertTrue("The annotation's control must win over the select.",
+			control instanceof ReactCheckboxControl);
+		assertFalse(control instanceof ReactDropdownSelectControl);
+	}
+
+	/**
+	 * {@code @Encrypted} wins over a mapped annotation: a module's own choice of control must never
+	 * be able to expose a secret in the clear.
+	 */
+	public void testEncryptedWinsOverAnnotation() {
 		ReactControl control = control(TestConfig.ENCRYPTED_ANNOTATED);
 		assertTrue("Encrypted must win over an explicit control annotation.",
 			control instanceof ReactPasswordInputControl);

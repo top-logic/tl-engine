@@ -79,6 +79,131 @@
   align-self: start;
 }
 
+/* --- app-bar/app-bar.css --- */
+/* AppBar — Spec 2026-10-16 Welle 4b §5. Die Leiste am oberen Rand: Anfang (Hamburger), Titel, Kinder (Breadcrumb),
+   Aktionen (tl-toolbar), Ende (Benutzermenü). Höhe size-shell-bar, Fläche surface-layer. Die Variante --elevated
+   trennt mit einer Linie, nicht mit einem Schatten: die Leiste schwebt nicht (docs/skalen.md „Welle 4b“). */
+
+.tl-app-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  box-sizing: border-box;
+  height: var(--tl-size-shell-bar);
+  padding: 0 var(--tl-space-sm);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+}
+.tl-app-bar[hidden] { display: none; }
+
+.tl-app-bar--elevated {
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-app-bar__leading {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+.tl-app-bar__title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Kinder (Breadcrumb) wachsen nicht: den Rest der Leiste nehmen die Aktionen. */
+.tl-app-bar__children {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+}
+
+.tl-app-bar__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: end;
+  margin-inline-start: auto;
+}
+
+/* Ohne Befehl rendert die Toolbar nichts; dann trägt die Hülle keine Lücke zur Leiste bei. */
+.tl-app-bar__actions:empty {
+  display: none;
+}
+
+/* Wer nachgibt, wenn die Leiste zu schmal wird: eine Toolbar, die überlaufen kann, nimmt nur den Platz, der übrig ist
+   (Basis 0, sie wächst in den Rest) und misst daran, was sie zeigt — erst fallen die Labels, dann wandern Befehle ins
+   Überlaufmenü. Bei ihrem Überlaufknopf (min-width) hält sie; erst dann schrumpfen Titel und Kinder
+   (app-bar-shrink.test.mjs). Ohne die Zahl 100000 des Altbestands. */
+.tl-app-bar__actions:has(> .tl-toolbar[data-tl-overflow]) {
+  flex: 1 1 0;
+  min-width: var(--tl-size-control);
+}
+
+.tl-app-bar__trailing {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  margin-inline-start: auto;
+}
+
+/* Aktionen vor dem Ende haben den freien Platz schon genommen; ein zweiter automatischer Rand teilte ihn und ließe die
+   Aktionen in der Mitte stehen. Eine leere Hülle nimmt nichts, dann behält das Ende seinen Rand. */
+.tl-app-bar__actions:not(:empty) + .tl-app-bar__trailing {
+  margin-inline-start: 0;
+}
+
+/* --- app-shell/app-shell.css --- */
+/* AppShell — Spec 2026-10-16 Welle 4b §3. Der Rahmen der Anwendung: Kopf, Hinweise, Inhalt (main), Fuß. Den Breakpoint
+   misst nur TLAppShell (matchMedia) und setzt data-tl-display="compact" | "regular" an dieser Wurzel; keine
+   Komponentendatei enthält eine Breiten-Media-Query (navigation.test.mjs). Eine Regel für schmale Bildschirme liest
+   [data-tl-display~="compact"]. */
+
+.tl-app-shell {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+}
+.tl-app-shell[hidden] { display: none; }
+
+.tl-app-shell__header,
+.tl-app-shell__footer {
+  flex: none;
+}
+
+/* Hinweise zwischen Kopf und Inhalt: ohne eigenen Rand und Abstand, damit der Bereich verschwindet, wenn kein Hinweis
+   sichtbar ist. */
+.tl-app-shell__notices {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+/* Mehrere Hinweise stehen bündig: Balken über die volle Breite; die Lücke eines Stapels zeigte die Seite als Streifen
+   zwischen zwei Ansagen. Zwei Klassen, damit die Regel die Lücke des Stapels schlägt, wo immer er steht. */
+.tl-app-shell .tl-app-shell__notices > * {
+  gap: 0;
+}
+
+/* Begrenzte Spalte: die aktive Ansicht löst ihre Höhe gegen diesen Bereich auf, füllt ihn und rollt in sich, die
+   AppBar bleibt stehen. Bündig: die Ansicht trägt ihren Abstand selbst (Abstandsmodell). */
+.tl-app-shell__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* --- avatar/avatar.css --- */
 /* Avatar — docs/skalen.md „Avatar: die Farbe ist eine Kategorie“.
    Ein Kreis für eine Person oder ein Objekt: das Bild, wo es eines gibt; sonst die Initialen auf

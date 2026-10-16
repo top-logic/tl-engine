@@ -22,6 +22,7 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.index.AiIndexService;
+import com.top_logic.tl.ai.index.config.IndexedType;
 import com.top_logic.tl.ai.index.query.Hit;
 import com.top_logic.tl.ai.index.query.Hits;
 import com.top_logic.tl.ai.index.query.SearchMode;
@@ -115,7 +116,7 @@ public class AiIndexScriptFunctions extends TLScriptFunctions {
 		return result;
 	}
 
-	private static SearchRequest request(String query, Map<String, Object> options) {
+	static SearchRequest request(String query, Map<String, Object> options) {
 		Map<String, Object> given = options == null ? Map.of() : options;
 		Set<String> types = strings(given.get("types"));
 		Set<String> scopes = new LinkedHashSet<>();
@@ -125,7 +126,8 @@ public class AiIndexScriptFunctions extends TLScriptFunctions {
 		Map<String, Set<String>> filters = new LinkedHashMap<>();
 		if (given.get("filters") instanceof Map<?, ?> map) {
 			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				filters.put(String.valueOf(entry.getKey()), strings(entry.getValue()));
+				// As the index stores keywords: an enumeration value by its name.
+				filters.put(String.valueOf(entry.getKey()), new LinkedHashSet<>(IndexedType.keywordValues(entry.getValue())));
 			}
 		}
 		Object mode = given.get("mode");

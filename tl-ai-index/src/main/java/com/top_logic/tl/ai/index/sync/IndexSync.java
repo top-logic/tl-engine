@@ -357,12 +357,23 @@ public final class IndexSync {
 			if (serving == null) {
 				return search.apply(null);
 			}
-			Map<String, String> data = serving.data();
-			return search.apply(new Serving(serving.index(), _settings.embedder() != null
-				&& _model.equals(data.get(IndexGeneration.EMBEDDING_MODEL)), serving.watermark()));
+			return search.apply(new Serving(serving.index(), vectors(serving), serving.watermark()));
 		} finally {
 			_switch.readLock().unlock();
 		}
+	}
+
+	/**
+	 * Whether the serving generation holds vectors of the configured embedder, at the moment of the
+	 * call; {@link Serving#vectors()} is the answer for a search.
+	 */
+	public boolean servesVectors() {
+		return vectors(_serving);
+	}
+
+	private boolean vectors(Gen gen) {
+		return gen != null && _settings.embedder() != null
+			&& _model.equals(gen.data().get(IndexGeneration.EMBEDDING_MODEL));
 	}
 
 	/**
@@ -388,10 +399,8 @@ public final class IndexSync {
 			total = Long.parseLong(data.getOrDefault(BUILD_TOTAL, "0"));
 			done = building.built() ? total : Long.parseLong(data.getOrDefault(BUILD_DONE, "0"));
 		}
-		boolean vectors = serving != null && _settings.embedder() != null
-			&& _model.equals(serving.data().get(IndexGeneration.EMBEDDING_MODEL));
 		return new IndexStatus(serving != null, indexed, head, Math.max(0, head - indexed), building != null, total,
-			done, vectors, _lastError);
+			done, vectors(serving), _lastError);
 	}
 
 	/**

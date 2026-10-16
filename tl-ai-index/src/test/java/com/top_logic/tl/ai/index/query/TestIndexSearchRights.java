@@ -119,6 +119,14 @@ public class TestIndexSearchRights extends BasicTestCase {
 		assertEquals(Set.of(id(bobPump), id(sharedPump)), forBob);
 	}
 
+	/** A query without a word finds nothing, by meaning neither. */
+	public void testBlankQueryFindsNothing() {
+		Hits hits = SearchFixture.asUser(alice,
+			() -> _index.search(SearchRequest.of("  ").withMode(SearchMode.MEANING), new SearchFixture.Rights().read(all)));
+		assertEquals(List.of(), hits.hits());
+		assertEquals("The query has no word to search for.", hits.notice());
+	}
+
 	/** The rights of the run decide too: a scope the script answers but the reader may not read is out. */
 	public void testOnlyReadableScopes() {
 		SearchFixture.Rights noShared =

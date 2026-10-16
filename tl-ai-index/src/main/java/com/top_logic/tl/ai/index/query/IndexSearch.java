@@ -166,11 +166,16 @@ public final class IndexSearch {
 	 */
 	public Hits search(SearchRequest request, ModelSecurity security) {
 		refuseWithoutReader();
+		if (request.query() == null || request.query().isBlank()) {
+			return empty(request.mode(), "The query has no word to search for.");
+		}
 		awaitIfAsked(request);
 		IndexFilter filter = filter(request, security);
 		if (filter == null) {
 			return empty(request.mode(), "Nothing to search: none of the requested types is indexed.");
 		}
+		// Before the switch lock: an embedding call can take minutes, and a switch waits for every search.
+		QueryVector query = embed(request);
 		try {
 			return _sync.withServing(serving -> {
 				if (serving == null) {
@@ -182,12 +187,12 @@ public final class IndexSearch {
 				if (mode != SearchMode.WORDS) {
 					String unavailable = meaningUnavailable(serving);
 					if (unavailable == null) {
-						try {
-							vector = _embedder.embedQuery(request.query());
-						} catch (EmbeddingException ex) {
-							unavailable = "The meaning search is not available now (" + ex.getMessage()
-								+ "); these hits come from words only.";
-						}
+						vector = query.vector();
+						unavailable = query.problem();
+					}
+					if (unavailable == null && vector == null) {
+						// The generation switched to one with vectors after the query was embedded.
+						unavailable = "The meaning search is not available now; these hits come from words only.";
 					}
 					if (unavailable != null) {
 						if (mode == SearchMode.MEANING) {
@@ -206,6 +211,25 @@ public final class IndexSearch {
 			});
 		} catch (IOException ex) {
 			throw new IllegalStateException("The index cannot be read: " + ex.getMessage(), ex);
+		}
+	}
+
+	/**
+	 * The query's vector, or why there is none.
+	 */
+	private record QueryVector(float[] vector, String problem) {
+		// A plain carrier.
+	}
+
+	private QueryVector embed(SearchRequest request) {
+		if (request.mode() == SearchMode.WORDS || _embedder == null || !_sync.servesVectors()) {
+			return new QueryVector(null, null);
+		}
+		try {
+			return new QueryVector(_embedder.embedQuery(request.query()), null);
+		} catch (EmbeddingException ex) {
+			return new QueryVector(null,
+				"The meaning search is not available now (" + ex.getMessage() + "); these hits come from words only.");
 		}
 	}
 

@@ -315,7 +315,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	 */
 	@Override
 	protected void startUpInContext() throws ConfigurationException, KnowledgeBaseException {
-		ThreadContext.<Void, ConfigurationException, KnowledgeBaseException> uncheckedSecurity(() -> {
+		ThreadContext.<Void, ConfigurationException, KnowledgeBaseException> withoutSecurityChecks(() -> {
 			internalStartUpInContext();
 			return null;
 		});

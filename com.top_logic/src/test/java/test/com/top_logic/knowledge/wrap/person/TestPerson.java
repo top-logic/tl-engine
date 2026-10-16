@@ -260,7 +260,7 @@ public class TestPerson extends BasicTestCase {
         KnowledgeBase kBase = KBSetup.getKnowledgeBase ();
         PersonManager thePM = PersonManager.getManager();
         
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			KnowledgeObject thePersonKO =
 				kBase.getKnowledgeObject("Person", KBUtils.getWrappedObjectName(TestPersonSetup.getTestPerson()));
             Person thePerson  = thePersonKO.getWrapper();

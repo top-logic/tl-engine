@@ -108,12 +108,12 @@ public class TestThreadContext extends TestCase {
 						ThreadContext nested = ThreadContext.getThreadContext();
 						assertSame("The sub-session is kept.", currentContext, nested);
 						assertEquals(ThreadContextManager.systemContextId(ExampleContext.class), nested.getContextId());
-						assertTrue(ThreadContext.isSecurityUnchecked());
+						assertTrue(ThreadContext.isSecurityBypassed());
 					}
 				});
 				assertSame(currentContext, ThreadContext.getThreadContext());
 				assertEquals(outerContextId, currentContext.getContextId());
-				assertTrue(ThreadContext.isSecurityUnchecked());
+				assertTrue(ThreadContext.isSecurityBypassed());
 			}
 		});
 	}
@@ -123,14 +123,14 @@ public class TestThreadContext extends TestCase {
 	 */
 	public void testSecurityCheckedOutsideJob() {
 		assertNull(ThreadContextManager.getInteraction());
-		assertFalse(ThreadContext.isSecurityUnchecked());
+		assertFalse(ThreadContext.isSecurityBypassed());
 		assertFalse(ThreadContext.isAdmin());
 		assertFalse(ThreadContext.isSystemContext());
 	}
 
 	/**
 	 * A system context without a surrounding interaction creates an interaction of its own with
-	 * unchecked security and removes it afterwards.
+	 * security checks bypassed and removes it afterwards.
 	 */
 	public void testSystemContextWithoutInteraction() {
 		String result = ThreadContext.inSystemContext(TestThreadContext.class, () -> {
@@ -138,14 +138,14 @@ public class TestThreadContext extends TestCase {
 			assertEquals(ThreadContextManager.systemContextId(TestThreadContext.class),
 				ThreadContextManager.getSubSession().getContextId());
 			assertTrue(ThreadContext.isSystemContext());
-			assertTrue(ThreadContext.isSecurityUnchecked());
+			assertTrue(ThreadContext.isSecurityBypassed());
 			assertTrue(ThreadContext.isAdmin());
 			return "result";
 		});
 		assertEquals("result", result);
 
 		assertNull(ThreadContextManager.getInteraction());
-		assertFalse(ThreadContext.isSecurityUnchecked());
+		assertFalse(ThreadContext.isSecurityBypassed());
 		assertFalse(ThreadContext.isAdmin());
 	}
 
@@ -160,7 +160,7 @@ public class TestThreadContext extends TestCase {
 			SessionContext userSession = ThreadContextManager.getSession();
 			assertSame(userContext, ThreadContextManager.getSubSession());
 			assertFalse(ThreadContext.isSystemContext());
-			assertFalse(ThreadContext.isSecurityUnchecked());
+			assertFalse(ThreadContext.isSecurityBypassed());
 
 			int result = ThreadContext.inSystemContext(TestThreadContext.class, () -> {
 				assertSame("No new interaction is created.", interaction, ThreadContextManager.getInteraction());
@@ -170,7 +170,7 @@ public class TestThreadContext extends TestCase {
 				assertEquals(ThreadContextManager.systemContextId(TestThreadContext.class),
 					systemContext.getContextId());
 				assertTrue(ThreadContext.isSystemContext());
-				assertTrue(ThreadContext.isSecurityUnchecked());
+				assertTrue(ThreadContext.isSecurityBypassed());
 				assertTrue(ThreadContext.isAdmin());
 				return 42;
 			});
@@ -182,7 +182,7 @@ public class TestThreadContext extends TestCase {
 				ThreadContext.inSystemContext(TestThreadContext.class, new InContext() {
 					@Override
 					public void inContext() {
-						assertTrue(ThreadContext.isSecurityUnchecked());
+						assertTrue(ThreadContext.isSecurityBypassed());
 						throw failure;
 					}
 				});
@@ -202,39 +202,39 @@ public class TestThreadContext extends TestCase {
 		assertSame(userSession, ThreadContextManager.getSession());
 		assertEquals(USER_CONTEXT_ID, userContext.getContextId());
 		assertFalse(ThreadContext.isSystemContext());
-		assertFalse(ThreadContext.isSecurityUnchecked());
+		assertFalse(ThreadContext.isSecurityBypassed());
 		assertFalse(ThreadContext.isAdmin());
 	}
 
 	/**
-	 * Unchecked security keeps the current context, nests, and is restored also on failure.
+	 * Bypassing the security checks keeps the current context, nests, and is restored also on failure.
 	 */
-	public void testUncheckedSecurity() {
+	public void testWithoutSecurityChecks() {
 		ThreadContext userContext = newUserContext();
 		ThreadContextManager.inContext(userContext, () -> {
-			assertFalse(ThreadContext.isSecurityUnchecked());
+			assertFalse(ThreadContext.isSecurityBypassed());
 			assertFalse(ThreadContext.isAdmin());
 
-			ThreadContext.uncheckedSecurity(() -> {
-				assertSame("Unchecked security keeps the context.", userContext,
+			ThreadContext.withoutSecurityChecks(() -> {
+				assertSame("Bypassing the security checks keeps the context.", userContext,
 					ThreadContextManager.getSubSession());
-				assertTrue(ThreadContext.isSecurityUnchecked());
+				assertTrue(ThreadContext.isSecurityBypassed());
 				assertTrue(ThreadContext.isAdmin());
 
-				boolean inner = ThreadContext.uncheckedSecurity(() -> ThreadContext.isSecurityUnchecked());
+				boolean inner = ThreadContext.withoutSecurityChecks(() -> ThreadContext.isSecurityBypassed());
 				assertTrue(inner);
-				assertTrue("Nested job must not reset the outer state.", ThreadContext.isSecurityUnchecked());
+				assertTrue("Nested job must not reset the outer state.", ThreadContext.isSecurityBypassed());
 
 				boolean checked =
-					ThreadContext.withSecurityUnchecked(false, () -> ThreadContext.isSecurityUnchecked());
+					ThreadContext.withSecurityChecks(true, () -> ThreadContext.isSecurityBypassed());
 				assertFalse("Security can be switched on for a job.", checked);
-				assertTrue(ThreadContext.isSecurityUnchecked());
+				assertTrue(ThreadContext.isSecurityBypassed());
 			});
-			assertFalse(ThreadContext.isSecurityUnchecked());
+			assertFalse(ThreadContext.isSecurityBypassed());
 
-			RuntimeException failure = new RuntimeException("failure with unchecked security");
+			RuntimeException failure = new RuntimeException("failure with security checks bypassed");
 			try {
-				ThreadContext.uncheckedSecurity(new InContext() {
+				ThreadContext.withoutSecurityChecks(new InContext() {
 					@Override
 					public void inContext() {
 						throw failure;
@@ -244,7 +244,7 @@ public class TestThreadContext extends TestCase {
 			} catch (RuntimeException ex) {
 				assertSame(failure, ex);
 			}
-			assertFalse(ThreadContext.isSecurityUnchecked());
+			assertFalse(ThreadContext.isSecurityBypassed());
 			assertFalse(ThreadContext.isAdmin());
 		});
 	}
@@ -258,13 +258,13 @@ public class TestThreadContext extends TestCase {
 	}
 
 	/**
-	 * {@link ThreadContext#isAdmin()} holds while the security is unchecked.
+	 * {@link ThreadContext#isAdmin()} holds while the security checks are bypassed.
 	 */
-	public void testAdminWhileUnchecked() {
+	public void testAdminWhileSecurityBypassed() {
 		assertFalse(ThreadContext.isAdmin());
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			assertTrue(ThreadContext.isAdmin());
-			ThreadContext.withSecurityUnchecked(false, () -> assertFalse(ThreadContext.isAdmin()));
+			ThreadContext.withSecurityChecks(true, () -> assertFalse(ThreadContext.isAdmin()));
 			assertTrue(ThreadContext.isAdmin());
 		});
 		assertFalse(ThreadContext.isAdmin());

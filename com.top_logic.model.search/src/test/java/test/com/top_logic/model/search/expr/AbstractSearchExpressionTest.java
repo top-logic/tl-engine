@@ -144,7 +144,7 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 	 */
 	protected static void becomeUser(Person person) {
 		assertFalse("A user switch has no effect on the access checks: the test does not check security.",
-			ThreadContext.isSecurityUnchecked());
+			ThreadContext.isSecurityBypassed());
 		TLContextManager.getSubSession().setPerson(person);
 	}
 

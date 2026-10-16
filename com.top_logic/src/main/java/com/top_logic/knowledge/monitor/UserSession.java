@@ -335,7 +335,7 @@ public class UserSession extends AbstractWrapper {
      */
     public static void cleanupUserSessions(KnowledgeBase aBase, int maxcount) {
 
-        ThreadContext.uncheckedSecurity(() -> {
+        ThreadContext.withoutSecurityChecks(() -> {
             Date          theDate    = new Date();
             String        theServer  = UserSession.getServerName();
                 

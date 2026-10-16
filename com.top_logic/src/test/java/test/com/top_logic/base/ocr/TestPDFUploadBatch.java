@@ -58,7 +58,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         if (!compress.isInstalled())
             return; // No need to choke on this ...
         
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			Person ocrPerson = Person.byName("root");
 			assertTrue(ocrPerson.getKnowledgeBase().commit());
 		});
@@ -112,7 +112,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         if (!compress.isInstalled())
             return; // No need to choke on this ...
         
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			Person ocrPerson = Person.byName("dau");
 			assertTrue(ocrPerson.getKnowledgeBase().commit());
 		});
@@ -166,7 +166,7 @@ public class TestPDFUploadBatch extends BasicTestCase {
         if (!compress.isInstalled())
             return; // No need to choke on this ...
         
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			Person ocrPerson = Person.byName("dau");
 			assertTrue(ocrPerson.getKnowledgeBase().commit());
 		});

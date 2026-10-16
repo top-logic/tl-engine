@@ -310,7 +310,7 @@ public abstract class ThreadContextManager extends ManagedClass {
 	 */
 	protected <T, E1 extends Throwable, E2 extends Throwable> T inSystemContextInternal(String contextId,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		return this.<T, E1, E2> inIdentity(subSession -> applySystemIdentity(subSession, contextId), true, job);
+		return this.<T, E1, E2> inIdentity(subSession -> applySystemIdentity(subSession, contextId), false, job);
 	}
 
 	/**
@@ -328,16 +328,17 @@ public abstract class ThreadContextManager extends ManagedClass {
 	 *
 	 * @param applyIdentity
 	 *        Establishes the identity on the {@link SubSessionContext} the job runs in.
-	 * @param unchecked
-	 *        Value of {@link ThreadContext#isSecurityUnchecked()} during the job.
+	 * @param securityChecks
+	 *        Whether access checks are performed during the job, see
+	 *        {@link ThreadContext#withSecurityChecks(boolean, ComputationEx2)}.
 	 * @param job
 	 *        Callback to execute
 	 * @return The result of the given job.
 	 */
 	protected final <T, E1 extends Throwable, E2 extends Throwable> T inIdentity(
-			Consumer<? super ThreadContext> applyIdentity, boolean unchecked, ComputationEx2<T, E1, E2> job)
+			Consumer<? super ThreadContext> applyIdentity, boolean securityChecks, ComputationEx2<T, E1, E2> job)
 			throws E1, E2 {
-		ComputationEx2<T, E1, E2> securedJob = () -> ThreadContext.withSecurityUnchecked(unchecked, job);
+		ComputationEx2<T, E1, E2> securedJob = () -> ThreadContext.withSecurityChecks(securityChecks, job);
 		InteractionContext interaction = getInteractionInternal();
 		if (interaction == null) {
 			InteractionContext freshInteraction = newInteractionInternal();

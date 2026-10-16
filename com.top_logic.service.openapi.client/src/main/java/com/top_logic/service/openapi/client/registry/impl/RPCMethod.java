@@ -54,9 +54,9 @@ public class RPCMethod extends GenericMethodWithSecurity {
 	 *           user, which must not happen when the calling script was executed with definer's
 	 *           rights: its author decided that the computation is not subject to the user's rights,
 	 *           and an attribute read that silently delivers <code>null</code> would send a request
-	 *           with missing values instead of failing. The whole call is therefore performed in an
-	 *           with {@link ThreadContext#uncheckedSecurity(com.top_logic.basic.util.ComputationEx2)
-	 *           unchecked security} in that case.
+	 *           with missing values instead of failing. The whole call is therefore performed
+	 *           {@link ThreadContext#withoutSecurityChecks(com.top_logic.basic.util.ComputationEx2)
+	 *           without security checks} in that case.
 	 */
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
@@ -64,7 +64,7 @@ public class RPCMethod extends GenericMethodWithSecurity {
 			if (usesSecurity()) {
 				return _handler.execute(arguments);
 			}
-			return ThreadContext.<Object, Exception, RuntimeException> uncheckedSecurity(
+			return ThreadContext.<Object, Exception, RuntimeException> withoutSecurityChecks(
 				() -> _handler.execute(arguments));
 		} catch (I18NRuntimeException ex) {
 			throw ex;

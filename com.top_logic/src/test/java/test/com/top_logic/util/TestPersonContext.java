@@ -29,7 +29,7 @@ import com.top_logic.util.TLContextManager;
 /**
  * Test case for {@link TLContextManager#inPersonContext(Person, com.top_logic.basic.thread.InContext)}
  * in combination with {@link ThreadContext#inSystemContext(Class, com.top_logic.basic.thread.InContext)}
- * and {@link ThreadContext#uncheckedSecurity(com.top_logic.basic.thread.InContext)}.
+ * and {@link ThreadContext#withoutSecurityChecks(com.top_logic.basic.thread.InContext)}.
  */
 public class TestPersonContext extends BasicTestCase {
 
@@ -70,7 +70,7 @@ public class TestPersonContext extends BasicTestCase {
 			assertSame("The sub-session is kept.", outer, TLContext.getContext());
 			assertSame(_person, TLContext.currentUser());
 			assertEquals(TLSessionContext.contextId(_person), outer.getContextId());
-			assertFalse(ThreadContext.isSecurityUnchecked());
+			assertFalse(ThreadContext.isSecurityBypassed());
 			assertFalse("A person without administrative rights is no administrator.", ThreadContext.isAdmin());
 			assertFalse(ThreadContext.isSystemContext());
 		});
@@ -136,22 +136,22 @@ public class TestPersonContext extends BasicTestCase {
 		assertSame(personContext, TLContext.getContext());
 		assertSame(_person, TLContext.currentUser());
 		assertEquals(TLSessionContext.contextId(_person), personContext.getContextId());
-		assertFalse(ThreadContext.isSecurityUnchecked());
+		assertFalse(ThreadContext.isSecurityBypassed());
 		assertFalse(ThreadContext.isSystemContext());
 		assertFalse(AccessManager.getInstance().hasRole(_object, _roles));
 	}
 
 	/**
-	 * Tests that {@link ThreadContext#uncheckedSecurity(com.top_logic.basic.thread.InContext)}
+	 * Tests that {@link ThreadContext#withoutSecurityChecks(com.top_logic.basic.thread.InContext)}
 	 * inside a person context keeps the person and allows every access during its job only.
 	 */
-	public void testUncheckedSecurityInPersonContext() {
+	public void testWithoutSecurityChecksInPersonContext() {
 		TLContextManager.inPersonContext(_person, () -> {
 			assertDenied();
 
-			ThreadContext.uncheckedSecurity(() -> {
+			ThreadContext.withoutSecurityChecks(() -> {
 				assertSame(_person, TLContext.currentUser());
-				assertTrue(ThreadContext.isSecurityUnchecked());
+				assertTrue(ThreadContext.isSecurityBypassed());
 				assertTrue(AccessManager.getInstance().hasRole(_object, _roles));
 				assertEquals(Boolean.TRUE,
 					BoundChecker.isAllowedBypass(_person, SimpleBoundCommandGroup.READ));
@@ -167,7 +167,7 @@ public class TestPersonContext extends BasicTestCase {
 	public void testNoPersonDenied() {
 		TLContextManager.inPersonContext(null, () -> {
 			assertNull(TLContext.currentUser());
-			assertFalse(ThreadContext.isSecurityUnchecked());
+			assertFalse(ThreadContext.isSecurityBypassed());
 			assertFalse(ThreadContext.isAdmin());
 			assertFalse(AccessManager.getInstance().hasRole(_object, _roles));
 			assertEquals(Boolean.FALSE, BoundChecker.isAllowedBypass(null, SimpleBoundCommandGroup.READ));
@@ -176,7 +176,7 @@ public class TestPersonContext extends BasicTestCase {
 
 	private void assertDenied() {
 		assertSame(_person, TLContext.currentUser());
-		assertFalse(ThreadContext.isSecurityUnchecked());
+		assertFalse(ThreadContext.isSecurityBypassed());
 		assertFalse("The person has no role on the object.", AccessManager.getInstance().hasRole(_object, _roles));
 		assertNull("The access of the person is decided by its roles.",
 			BoundChecker.isAllowedBypass(_person, SimpleBoundCommandGroup.READ));
@@ -184,7 +184,7 @@ public class TestPersonContext extends BasicTestCase {
 
 	private static void assertSystemContext() {
 		assertNull(TLContext.currentUser());
-		assertTrue(ThreadContext.isSecurityUnchecked());
+		assertTrue(ThreadContext.isSecurityBypassed());
 		assertTrue(ThreadContext.isSystemContext());
 	}
 

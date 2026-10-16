@@ -336,7 +336,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		assertEquals(set(), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
 
 		ThreadContext.<Void, ParseException, RuntimeException> inSystemContext(TestTLScriptSecurity.class, () -> {
-			assertTrue(ThreadContext.isSecurityUnchecked());
+			assertTrue(ThreadContext.isSecurityBypassed());
 			assertEquals(set(_p1), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
 			return null;
 		});
@@ -1005,7 +1005,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 
 		// A bypassing super-user (system context) is unaffected by the attribute deny.
 		ThreadContext.inSystemContext(TestTLScriptSecurity.class, () -> {
-			assertTrue(ThreadContext.isSecurityUnchecked());
+			assertTrue(ThreadContext.isSecurityBypassed());
 			assertTrue("A system context bypasses the attribute deny.",
 				accessRights.isAllowed(null, _p1, secret, SimpleBoundCommandGroup.WRITE));
 		});

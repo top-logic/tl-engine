@@ -216,7 +216,7 @@ public class TestKnowledgeBase extends BasicTestCase {
      * Test creating of new Associations in special circumstances.
      */
     public void testNewAssoc() throws Exception  {
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			checkNewAssoc();
 			return null;
 		});
@@ -297,7 +297,7 @@ public class TestKnowledgeBase extends BasicTestCase {
      * (Time) testcase for getAllKnowledgeObjects
      */
     public void testGetAllKnowledgeObjects() throws Exception  {
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			checkGetAllKnowledgeObjects();
 			return null;
 		});
@@ -555,7 +555,7 @@ public class TestKnowledgeBase extends BasicTestCase {
       * Used to check perfomance improvement in commit-handling.
       */
      public void testMassData() throws Exception {
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			checkMassData();
 			return null;
 		});
@@ -632,7 +632,7 @@ public class TestKnowledgeBase extends BasicTestCase {
       * improvement is this special case.
       */
      public void testStupidDelete() throws Exception {
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			checkStupidDelete();
 			return null;
 		});

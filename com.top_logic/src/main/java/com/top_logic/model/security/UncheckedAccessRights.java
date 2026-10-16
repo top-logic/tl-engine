@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  *
  * <p>
  * Delivered by {@link ModelAccessRights#getInstance()} for code with
- * {@link ThreadContext#isSecurityUnchecked() unchecked security} that runs while the
+ * {@link ThreadContext#isSecurityBypassed() bypassed security checks} that runs while the
  * {@link SecurityConfigurationService} is not started.
  * </p>
  *
@@ -74,7 +74,7 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	}
 
 	/**
-	 * Every type is without security here: with unchecked security no object is access
+	 * Every type is without security here: with bypassed security checks no object is access
 	 * controlled, so a caller asking whether a type is (e.g. before deciding by its
 	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup) roles}, which are unknown here) learns that
 	 * access is granted independent of roles - consistent with the
@@ -89,7 +89,7 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	 * @implNote Without the security configuration, no roles are known. In contrast to the
 	 *           {@link #isAllowed(Person, TLObject, BoundCommandGroup) checks}, the empty result must
 	 *           not be mistaken for a granted access - a caller deciding access by roles cannot be
-	 *           served with unchecked security.
+	 *           served with bypassed security checks.
 	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup) {

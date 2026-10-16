@@ -62,7 +62,7 @@ public class MORepositoryImporter extends DispatchingHandler implements KBXMLCon
     public void doImport(InputStream is, String resourceName) {
         this.currentResourceName = resourceName;
 		try {
-			ThreadContext.uncheckedSecurity(() -> parse(is, resourceName));
+			ThreadContext.withoutSecurityChecks(() -> parse(is, resourceName));
 		} finally {
 			this.currentResourceName = null;
 		}
@@ -88,7 +88,7 @@ public class MORepositoryImporter extends DispatchingHandler implements KBXMLCon
      * @return true in case import was successful
      */
     public boolean doImport(File aFile) {
-		ThreadContext.uncheckedSecurity(() -> parse(aFile));
+		ThreadContext.withoutSecurityChecks(() -> parse(aFile));
 		return true;
     }
 

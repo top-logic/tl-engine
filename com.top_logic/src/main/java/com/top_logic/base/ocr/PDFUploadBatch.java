@@ -210,7 +210,7 @@ public abstract class PDFUploadBatch extends BatchImpl {
      * @return the created batch
      */
     public static synchronized PDFUploadBatch addUpload(Document aDocument, String aPersonName, boolean startBatch) {
-		return ThreadContext.uncheckedSecurity(() -> {
+		return ThreadContext.withoutSecurityChecks(() -> {
 			PDFUploadBatch theBatch = null;
 			TLContext ocrContext;
 			if (current != null && aPersonName.equals(current.ocrContext.getCurrentUserName())) {

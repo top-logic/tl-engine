@@ -128,7 +128,7 @@ public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends
 
 		InContext job;
 		if (this.workInSuperUserMode()) {
-			job = () -> ThreadContext.uncheckedSecurity(this);
+			job = () -> ThreadContext.withoutSecurityChecks(this);
 		} else {
 			job = this;
 		}

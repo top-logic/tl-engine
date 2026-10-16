@@ -88,7 +88,7 @@ public class TestCleanUpTask extends BasicTestCase {
      * @throws InterruptedException     if an Exception occurs during sleeping.
      */
     public void testRun() throws Exception {
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
             // Create the Files
             theFirstOne  = new File(PATH, "eins.txt") ;
             theSecondOne = new File(PATH, "zwei.txt") ;

@@ -139,7 +139,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	 * Check if the current person has one of the given roles at the given bound object.
 	 *
 	 * <p>
-	 * While the {@link ThreadContext#isSecurityUnchecked() security is unchecked}, access is
+	 * While the {@link ThreadContext#isSecurityBypassed() security checks are bypassed}, access is
 	 * granted regardless of the roles. Without a current person, access is denied.
 	 * </p>
 	 *
@@ -151,7 +151,7 @@ public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> 
 	 *         bound object, <code>false</code> otherwise
 	 */
 	public boolean hasRole(BoundObject aBO, Collection<? extends BoundRole> someRoles) {
-		if (ThreadContext.isSecurityUnchecked()) {
+		if (ThreadContext.isSecurityBypassed()) {
 			return true;
 		}
 		TLContext context = TLContext.getContext();

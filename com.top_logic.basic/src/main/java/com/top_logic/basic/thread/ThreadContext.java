@@ -12,7 +12,6 @@ import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.ThreadSafeSubSessionContext;
-import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleRuntimeException;
 import com.top_logic.basic.module.ModuleUtil;
@@ -95,14 +94,15 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 * Whether access checks are switched off for the current thread.
 	 *
 	 * <p>
-	 * While the security is unchecked, every access is allowed. Otherwise, access is decided for
-	 * the person of the current context.
+	 * While the security checks are bypassed, every access is allowed. Otherwise, access is decided
+	 * for the person of the current context.
 	 * </p>
 	 *
-	 * @see #uncheckedSecurity(InContext)
+	 * @see #withoutSecurityChecks(InContext)
+	 * @see #withSecurityChecks(boolean, InContext)
 	 * @see #inSystemContext(Class, InContext)
 	 */
-	public static boolean isSecurityUnchecked() {
+	public static boolean isSecurityBypassed() {
 		return SecurityState.current()._depth > 0;
 	}
 
@@ -117,10 +117,10 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 * @param job
 	 *        The job to execute.
 	 *
-	 * @see #isSecurityUnchecked()
+	 * @see #isSecurityBypassed()
 	 */
-	public static void uncheckedSecurity(InContext job) {
-		withSecurityUnchecked(true, job);
+	public static void withoutSecurityChecks(InContext job) {
+		withSecurityChecks(false, job);
 	}
 
 	/**
@@ -130,27 +130,33 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 *        The computation to evaluate.
 	 * @return The result of the given job.
 	 *
-	 * @see #uncheckedSecurity(InContext)
+	 * @see #withoutSecurityChecks(InContext)
 	 */
-	public static <T, E1 extends Throwable, E2 extends Throwable> T uncheckedSecurity(ComputationEx2<T, E1, E2> job)
-			throws E1, E2 {
-		return withSecurityUnchecked(true, job);
+	public static <T, E1 extends Throwable, E2 extends Throwable> T withoutSecurityChecks(
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		return withSecurityChecks(false, job);
 	}
 
 	/**
-	 * Executes the given job with {@link #isSecurityUnchecked()} set to the given value, restoring
-	 * the previous state afterwards.
+	 * Executes the given job with access checks switched on or off, restoring the previous state
+	 * afterwards.
 	 *
-	 * @param unchecked
-	 *        Whether access checks are switched off during the job.
+	 * <p>
+	 * Switching the checks on also takes effect within a job that runs
+	 * {@link #withoutSecurityChecks(InContext) without security checks}, e.g. to decide access for
+	 * the person of the current context there.
+	 * </p>
+	 *
+	 * @param enabled
+	 *        Whether access checks are performed during the job. If not, the security checks are
+	 *        {@link #isSecurityBypassed() bypassed}.
 	 * @param job
 	 *        The job to execute.
 	 */
-	@FrameworkInternal
-	public static void withSecurityUnchecked(boolean unchecked, InContext job) {
+	public static void withSecurityChecks(boolean enabled, InContext job) {
 		SecurityState state = SecurityState.current();
 		int before = state._depth;
-		state._depth = unchecked ? before + 1 : 0;
+		state._depth = enabled ? 0 : before + 1;
 		try {
 			job.inContext();
 		} finally {
@@ -159,21 +165,23 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	}
 
 	/**
-	 * Computes the given job with {@link #isSecurityUnchecked()} set to the given value, restoring
-	 * the previous state afterwards.
+	 * Computes the given job with access checks switched on or off, restoring the previous state
+	 * afterwards.
 	 *
-	 * @param unchecked
-	 *        Whether access checks are switched off during the job.
+	 * @param enabled
+	 *        Whether access checks are performed during the job. If not, the security checks are
+	 *        {@link #isSecurityBypassed() bypassed}.
 	 * @param job
 	 *        The computation to evaluate.
 	 * @return The result of the given job.
+	 *
+	 * @see #withSecurityChecks(boolean, InContext)
 	 */
-	@FrameworkInternal
-	public static <T, E1 extends Throwable, E2 extends Throwable> T withSecurityUnchecked(boolean unchecked,
+	public static <T, E1 extends Throwable, E2 extends Throwable> T withSecurityChecks(boolean enabled,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
 		SecurityState state = SecurityState.current();
 		int before = state._depth;
-		state._depth = unchecked ? before + 1 : 0;
+		state._depth = enabled ? 0 : before + 1;
 		try {
 			return job.run();
 		} finally {
@@ -185,12 +193,12 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 * Whether the current thread has administrative rights.
 	 *
 	 * <p>
-	 * This is the case while the {@link #isSecurityUnchecked() security is unchecked}, or if the
-	 * owner of the current context is an administrator.
+	 * This is the case while the {@link #isSecurityBypassed() security checks are bypassed}, or if
+	 * the owner of the current context is an administrator.
 	 * </p>
 	 */
 	public static boolean isAdmin() {
-		if (isSecurityUnchecked()) {
+		if (isSecurityBypassed()) {
 			return true;
 		}
 		ThreadContext context = getThreadContext();
@@ -222,7 +230,7 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 * <p>
 	 * The system context has no person, its {@link SubSessionContext#getContextId() context id} is
 	 * {@link ThreadContextManager#systemContextId(Class)}, and the
-	 * {@link #isSecurityUnchecked() security is unchecked} during the computation.
+	 * {@link #isSecurityBypassed() security checks are bypassed} during the computation.
 	 * </p>
 	 *
 	 * <p>
@@ -239,7 +247,7 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	 *        The computation to evaluate in system context.
 	 * @return the {@link ComputationEx2#run() result} of the given {@link ComputationEx2}.
 	 *
-	 * @see #uncheckedSecurity(ComputationEx2)
+	 * @see #withoutSecurityChecks(ComputationEx2)
 	 */
 	public static <T, E1 extends Throwable, E2 extends Throwable> T inSystemContext(final Class<?> caller,
 			final ComputationEx2<T, E1, E2> computation) throws E1, E2 {
@@ -370,7 +378,7 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	}
 
 	/**
-	 * Per-thread state of {@link #isSecurityUnchecked()}.
+	 * Per-thread state of {@link #isSecurityBypassed()}.
 	 */
 	private static final class SecurityState {
 

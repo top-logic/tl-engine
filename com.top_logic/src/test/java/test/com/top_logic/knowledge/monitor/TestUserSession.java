@@ -80,7 +80,7 @@ public class TestUserSession extends BasicTestCase {
         kb.commit();
         us.endSession(theEnd);
         try {
-			ThreadContext.uncheckedSecurity(() -> {
+			ThreadContext.withoutSecurityChecks(() -> {
             assertNotNull(us.toString());
             assertSame  (us, UserSession.getInstance(us.tHandle()));
             assertEquals ("guest_de"           , us.getUsername());

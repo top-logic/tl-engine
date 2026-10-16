@@ -373,22 +373,22 @@ public interface ModelAccessRights {
 	 *
 	 * <p>
 	 * The {@link SecurityConfigurationService} decides the access rights; while the
-	 * {@link ThreadContext#isSecurityUnchecked() security is unchecked}, it grants every access.
+	 * {@link ThreadContext#isSecurityBypassed() security checks are bypassed}, it grants every access.
 	 * </p>
 	 *
 	 * <p>
-	 * Code with unchecked security may run before the {@link SecurityConfigurationService} has been
+	 * Code with bypassed security checks may run before the {@link SecurityConfigurationService} has been
 	 * started: the service resolves the configured type and attribute names against the application
 	 * model and therefore depends on the {@link com.top_logic.util.model.ModelService}. Setting up the
 	 * model in turn touches the model itself - allocating the module singletons applies the default
 	 * values of their attributes, and a {@code default-by-expression} default that allocates objects
 	 * executes <i>TL-Script</i>. In this case, an implementation granting every access is delivered.
-	 * Without unchecked security, the {@link SecurityConfigurationService} must be started; asking
+	 * Without bypassed security checks, the {@link SecurityConfigurationService} must be started; asking
 	 * for access rights without a security configuration is an error and is reported as one.
 	 * </p>
 	 */
 	static ModelAccessRights getInstance() {
-		if (ThreadContext.isSecurityUnchecked() && !SecurityConfigurationService.Module.INSTANCE.isActive()) {
+		if (ThreadContext.isSecurityBypassed() && !SecurityConfigurationService.Module.INSTANCE.isActive()) {
 			return UncheckedAccessRights.INSTANCE;
 		}
 		return SecurityConfigurationService.Module.INSTANCE.getImplementationInstance();

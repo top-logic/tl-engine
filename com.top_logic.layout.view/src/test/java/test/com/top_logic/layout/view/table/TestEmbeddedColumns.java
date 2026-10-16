@@ -516,7 +516,7 @@ public class TestEmbeddedColumns extends TestCase {
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ThreadContext.<Void, Throwable, RuntimeException> uncheckedSecurity(() -> {
+		ThreadContext.<Void, Throwable, RuntimeException> withoutSecurityChecks(() -> {
 			super.runTest();
 			return null;
 		});

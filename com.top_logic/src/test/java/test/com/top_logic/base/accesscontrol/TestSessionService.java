@@ -80,7 +80,7 @@ public class TestSessionService extends BasicTestCase {
 
 		HttpServletRequest servletRequest = ic.getRequest();
 
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			HttpServletResponse response = ic.getResponse();
 			SessionService myService;
 			LoginCredentials login =

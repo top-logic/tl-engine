@@ -137,7 +137,7 @@ public class TestTLObjectOverlay extends TestCase {
 		overlay.tUpdate(namePart, "Bob");
 		overlay.tUpdate(agePart, Integer.valueOf(25));
 
-		ThreadContext.uncheckedSecurity(overlay::apply);
+		ThreadContext.withoutSecurityChecks(overlay::apply);
 
 		assertEquals("Bob", base.tValue(namePart));
 		assertEquals(Integer.valueOf(25), base.tValue(agePart));

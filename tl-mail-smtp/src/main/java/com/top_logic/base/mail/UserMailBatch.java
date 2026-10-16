@@ -108,7 +108,7 @@ public class UserMailBatch extends BatchImpl {
         Collection                  theNames       = this.createNameSet();
         Collection<UserInterface>  theRecipients   = new HashSet<>(theNames.size());
         Iterator                    theNameIter    = theNames.iterator();
-        return ThreadContext.uncheckedSecurity(() -> {
+        return ThreadContext.withoutSecurityChecks(() -> {
             while (theNameIter.hasNext()){
                 String        theName = (String) theNameIter.next();
                 Person account = Person.byName(theName);

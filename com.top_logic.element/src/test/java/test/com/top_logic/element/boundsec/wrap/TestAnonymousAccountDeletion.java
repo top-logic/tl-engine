@@ -40,7 +40,7 @@ public class TestAnonymousAccountDeletion extends BasicTestCase {
 		assertNotNull(anonymous);
 		assertEquals(Optional.of(I18NConstants.ERROR_ANONYMOUS_ACCOUNT_CANNOT_BE_DELETED), anonymous.tDeleteVeto());
 
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				anonymous.tDelete();
 				tx.commit();
@@ -59,7 +59,7 @@ public class TestAnonymousAccountDeletion extends BasicTestCase {
 	 */
 	public void testDeleteOrdinaryAccount() {
 		String name = "anonymousDeletionOrdinary";
-		Person person = ThreadContext.uncheckedSecurity(() -> {
+		Person person = ThreadContext.withoutSecurityChecks(() -> {
 			Person created;
 			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				created = Person.create(kb(), name,

@@ -93,7 +93,7 @@ public class TLContextManager extends ThreadContextManager {
 	 * 
 	 * <p>
 	 * The job runs with the given {@link Person} and with
-	 * {@link ThreadContext#isSecurityUnchecked() checked security}, so that access is decided
+	 * {@link ThreadContext#withSecurityChecks(boolean, ComputationEx2) security checks}, so that access is decided
 	 * for the given person. The person context is established in any case: If no interaction is
 	 * active, a new interaction is created for the job. Otherwise, the {@link TLSubSessionContext}
 	 * of the current interaction gets the given person for the job, keeping its session. After the
@@ -119,7 +119,7 @@ public class TLContextManager extends ThreadContextManager {
 	 */
 	protected <T, E1 extends Throwable, E2 extends Throwable> T inPersonContextInternal(Person p,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
-		return this.<T, E1, E2> inIdentity(subSession -> ((TLSubSessionContext) subSession).setPerson(p), false, job);
+		return this.<T, E1, E2> inIdentity(subSession -> ((TLSubSessionContext) subSession).setPerson(p), true, job);
 	}
 
 	/**

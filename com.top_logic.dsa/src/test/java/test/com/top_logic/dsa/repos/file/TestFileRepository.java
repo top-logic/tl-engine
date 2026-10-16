@@ -374,7 +374,7 @@ public class TestFileRepository extends BasicTestCase {
         assertEquals("Zisch~Knall", eInfo.getLocker());
         // Breaking the lock of another user is reserved to an administrator. The test runs in the
         // system context, so the denial is checked with security checks switched on.
-		assertFalse(ThreadContext.<Boolean, RepositoryException, RuntimeException> withSecurityUnchecked(false,
+		assertFalse(ThreadContext.<Boolean, RepositoryException, RuntimeException> withSecurityChecks(true,
 			() -> frep.unlock("Darf leider nicht", "äöü/--]/dada")));
         assertTrue(frep.unlock("Zisch~Knall",           "äöü/--]/dada"));
         eInfo =  (EntryInfo)frep.getInformation("äöü/--]/dada");

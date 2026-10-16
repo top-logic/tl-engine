@@ -29,11 +29,11 @@ of a comment need no definition of their own. See [Access parent](#access-parent
 
 The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, BoundCommandGroup)`:
 
-1. Bypasses: code running with unchecked security (`ThreadContext.isSecurityUnchecked()`), a
+1. Bypasses: code running with bypassed security checks (`ThreadContext.isSecurityBypassed()`), a
    system command group, and the technical admin (`ThreadContext.isAdmin()`) are allowed; a
-   restricted user is denied operations outside the restricted set. The security is unchecked in a
+   restricted user is denied operations outside the restricted set. The security checks are bypassed in a
    system context (`ThreadContext.inSystemContext(caller, job)`, no person) and within
-   `ThreadContext.uncheckedSecurity(job)`, which keeps the person of the current context, e.g. as
+   `ThreadContext.withoutSecurityChecks(job)`, which keeps the person of the current context, e.g. as
    author of the changes the job commits. `TLContextManager.inPersonContext(person, job)` runs a job
    for the given person with checked security; without a person, every access is denied. An object that is not yet committed is not checked (its
    roles are computed at commit time).

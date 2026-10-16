@@ -124,8 +124,8 @@ public class TestBoundComponent extends BasicTestCase {
 		cmp.setModel(guest);
 		assertNotNull("Must fail since PersBoundComp has no roles, yet", cmp.hideReason());
 
-		// Unchecked security allows everything.
-		ThreadContext.uncheckedSecurity(() -> assertNull(cmp.hideReason()));
+		// Bypassed security checks allow everything.
+		ThreadContext.withoutSecurityChecks(() -> assertNull(cmp.hideReason()));
 
 		cmp.setModel(null);
 		assertNull(cmp.hideReason()); // null model is allowed by default
@@ -146,7 +146,7 @@ public class TestBoundComponent extends BasicTestCase {
 			cmp.getPersBoundComp().addAccess(cmd.getCommandGroup(), role);
 
 			// Make guest a "Schuhzubinder" on itself.
-			ThreadContext.uncheckedSecurity(() -> BoundedRole.assignRole(guest, guest, role));
+			ThreadContext.withoutSecurityChecks(() -> BoundedRole.assignRole(guest, guest, role));
 			tx.commit();
 		}
 

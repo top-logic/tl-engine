@@ -176,7 +176,7 @@ public class TestRoleLookupPerInteraction extends BasicTestCase {
 			TLObject child = _children.get(0);
 			assertRoles(Set.of(), child, _other);
 
-			ThreadContext.uncheckedSecurity(() -> {
+			ThreadContext.withoutSecurityChecks(() -> {
 				try (Transaction tx =
 					kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					BoundedRole.assignRole(_parent, _other, _reader);
@@ -367,7 +367,7 @@ public class TestRoleLookupPerInteraction extends BasicTestCase {
 	}
 
 	private static void inTransaction(Runnable modification) {
-		ThreadContext.uncheckedSecurity(() -> {
+		ThreadContext.withoutSecurityChecks(() -> {
 			try (Transaction tx =
 				kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				modification.run();

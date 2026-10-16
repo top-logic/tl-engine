@@ -292,6 +292,72 @@
   display: flex;
 }
 
+/* --- bottom-bar/bottom-bar.css --- */
+/* BottomBar — Spec 2026-10-16 Welle 4b §5. Die Navigation am unteren Rand kleiner Bildschirme: Einträge mit Icon über
+   Label. Die aktuelle Seite (aria-current="page") trägt die Fläche der Auswahl hinter dem Icon; das Label wird
+   kräftig (tl-type-label-strong, im TSX). Höhe size-shell-bar wie die AppBar. */
+
+.tl-bottom-bar {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  box-sizing: border-box;
+  height: var(--tl-size-shell-bar);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-layer);
+}
+.tl-bottom-bar[hidden] { display: none; }
+
+/* Reset ohne Spezifität: die Typo-Klasse am Label gewinnt. */
+:where(.tl-bottom-bar__item) { font: inherit; }
+
+.tl-bottom-bar__item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  padding: 0 var(--tl-space-2xs);
+  border: 0;
+  background: transparent;
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+
+.tl-bottom-bar__item:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-bottom-bar__item:active {
+  background: var(--tl-surface-interactive-active);
+}
+
+/* Der Eintrag liegt bündig an der Kante der Leiste: der Ring innen. */
+.tl-bottom-bar__item:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-bottom-bar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--tl-space-sm);
+  border-radius: var(--tl-radius-full);
+}
+
+.tl-bottom-bar__item[aria-current="page"] .tl-bottom-bar__icon {
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-bottom-bar__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* --- breadcrumb/breadcrumb.css --- */
 /* Breadcrumb — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W4).
    nav > ol > li; die Einträge sind tl-button--link, die aktuelle Seite ein Text mit aria-current,
@@ -2421,6 +2487,159 @@ a.tl-field-value:hover {
 .tl-select__option[data-tl-state~="highlighted"] {
   background: var(--tl-surface-interactive-selected);
   box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-interactive);
+}
+
+/* --- sidebar/sidebar.css --- */
+/* Sidebar — Spec 2026-10-16 Welle 4b §4. Die Navigationsleiste: Einträge mit der Anatomie von tl-menu__item (Icon,
+   Label, Badge), Gruppen mit dem Chevron von tl-toggle, unten der Knopf zum Ein- und Ausklappen. Zustände sind
+   Attribute: data-tl-state~="collapsed" an der Wurzel, aria-current="page" an der aktuellen Seite,
+   data-tl-state~="contains-current" am Kopf einer zugeklappten Gruppe, die sie enthält, aria-expanded am Gruppenkopf.
+   Kompakt (data-tl-display="compact" an der AppShell) steht die Nav im modalen tl-drawer; dieses Stylesheet kennt
+   keinen Breakpoint. */
+
+.tl-sidebar {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.tl-sidebar[hidden] { display: none; }
+
+.tl-sidebar__nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: var(--tl-size-sidebar);
+  border-inline-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+  overflow-x: hidden;
+  transition: width var(--tl-duration-base) var(--tl-easing-standard);
+}
+
+/* Eingeklappt ist ein Eintrag ein Quadrat aus size-row, die Rail hat dazu space-2xs Rand je Seite — eine Rechnung aus
+   zwei Maßen, die der Dichte folgt, kein drittes Maß. */
+.tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__nav {
+  width: calc(var(--tl-size-row) + 2 * var(--tl-space-2xs));
+}
+
+/* Im modalen Drawer (kompakt) füllt die Nav die Schublade; Breite, Fläche und Schatten trägt tl-drawer. */
+.tl-drawer > .tl-sidebar__nav {
+  flex: 1 1 auto;
+  width: auto;
+  min-height: 0;
+  border-inline-end: 0;
+}
+
+.tl-sidebar__header,
+.tl-sidebar__footer {
+  flex: none;
+  padding: var(--tl-space-xs) var(--tl-space-control-x);
+}
+
+.tl-sidebar__header {
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-sidebar__footer {
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Eingeklappt ist die Rail so breit wie ein Icon-Eintrag: was im Kopf oder Fuß steht, sitzt mittig darunter. */
+.tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__header,
+.tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--tl-space-2xs);
+}
+
+/* Die Einträge rollen in sich; ein Wischen, das das Ende erreicht, läuft nicht in die Seite weiter. */
+.tl-sidebar__items {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--tl-space-2xs);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Der Eintrag ist ein tl-menu__item (Fläche, Zeigen, Ring innen, Deaktiviert); hier nur, was die Rail anders macht. */
+.tl-sidebar__item {
+  flex: none;
+}
+
+/* Die aktuelle Seite und der Kopf einer zugeklappten Gruppe, die sie enthält: die Fläche der Auswahl wie in Baum und
+   Tabelle, kein Balken. Das Gewicht der Seite trägt die Typo-Klasse (tl-type-body-strong), die das TSX setzt; der
+   Gruppenkopf bleibt im Grundgewicht. */
+.tl-sidebar__item[aria-current="page"],
+.tl-sidebar__item[data-tl-state~="contains-current"] {
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__item {
+  justify-content: center;
+  width: var(--tl-size-row);
+  padding: 0;
+}
+
+/* Kopfzeilen: die des Menüs, mit Icon in einer Reihe; eingeklappt nur das Icon, mittig. */
+.tl-sidebar .tl-menu__header {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+
+.tl-sidebar[data-tl-state~="collapsed"] .tl-menu__header {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* Trenner: die Linie zeichnet das Part Divider, den Abstand die Hülle tl-menu__separator. */
+.tl-sidebar__items .tl-menu__separator {
+  margin-block: var(--tl-space-2xs);
+}
+
+/* Der Chevron einer Gruppe folgt tl-toggle: rechts heißt zu, bei aria-expanded="true" dreht er nach unten. */
+.tl-sidebar__chevron {
+  flex: none;
+  margin-inline-start: auto;
+  transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-sidebar__item[aria-expanded="true"] > .tl-sidebar__chevron {
+  rotate: 90deg;
+}
+
+.tl-sidebar__children {
+  display: flex;
+  flex-direction: column;
+  padding-inline-start: var(--tl-space-md);
+}
+
+/* Die Leiste am Fuß der Rail mit dem Knopf zum Ein- und Ausklappen (Part DisclosureToggle). */
+.tl-sidebar__collapse {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tl-size-bar);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Der Inhalt: die aktive Ansicht füllt ihn und trägt ihren Abstand selbst (Abstandsmodell). */
+.tl-sidebar__content {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  overflow: auto;
+}
+
+.tl-sidebar__content > * {
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 /* --- skeleton/skeleton.css --- */

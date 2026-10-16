@@ -328,6 +328,7 @@ the commands the component sends. The controls a library replaces as a whole:
 | `TLAccordion` | `AccordionState` |
 | `TLWindow` | `WindowState` |
 | `TLDialog` | `DialogState` |
+| `TLPopover` | `PopoverState` |
 | `TLMenu` | `MenuState` |
 | `TLSnackbar` | `SnackbarState` |
 | `TLAlert` | `AlertState` |

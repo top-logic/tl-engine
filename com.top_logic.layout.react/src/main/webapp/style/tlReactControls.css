@@ -2163,6 +2163,14 @@ button.tlBottomBar__item:hover {
 	padding: var(--spacing-02) var(--spacing-05);
 }
 
+/* --- TLPopover ------------------------------------------------------------- */
+
+/* A popover of arbitrary content is a flush container like a panel or a dialog window: its content
+   brings its own breathing room (spacing model, <inset>), the surface adds none. */
+.tl-popover.tl-popover--content {
+	padding: 0;
+}
+
 /* --- TLAdaptiveDetail (responsive master-detail) --------------------------- */
 
 .tlAdaptiveDetail {

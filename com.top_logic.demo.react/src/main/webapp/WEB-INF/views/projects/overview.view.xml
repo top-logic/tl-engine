@@ -131,7 +131,7 @@
 								$formatDate($dueOf($milestoneOf($t))),
 								{
 									assignee = $t.get(`tl.demo.projectManagement:Ticket#assignee`);
-									if($assignee == null, "–", $assignee.get(`tl.demo.projectManagement:Contributor#name`));
+									if($assignee == null, "–", $assignee.get(`Contacts:PersonContact#fullName`));
 								},
 								$urgency($t)
 							]);

@@ -4,10 +4,10 @@
 	Second frame of the project drill-down: the cockpit of the project the frame was opened for.
 	
 	The cockpit is a dashboard of three tiles. The Project tile displays the project and nothing
-	else. The Milestones and Notes tiles are entry points: pressing one pushes the frame listing
-	that collection, announced by a label of its own. The engine marks such a tile only by how it
-	answers the user, so each of the two cards draws the chevron itself, in the header slot at the
-	right of its title.
+	else; it spans two rows, so all fields of the project fit without scrolling. The Milestones and
+	Notes tiles are entry points: pressing one pushes the frame listing that collection, announced
+	by a label of its own. The engine marks such a tile only by how it answers the user, so each of
+	the two cards draws the chevron itself, in the header slot at the right of its title.
 	
 	The Notes tile is refused while the project has no notes and gives that as its reason; creating
 	the first note through the card's own button lifts the refusal, because the action observes the
@@ -38,6 +38,7 @@
 		</title>
 		<dashboard id="project-cockpit">
 			<tile id="project"
+				row-span="2"
 				width="half"
 			>
 				<panel>

@@ -2,8 +2,8 @@
 
 <!--
 	Third frame of the project drill-down: the tickets of the milestone the frame was opened for.
-	The assignee cell is a link to the contributor, because the application declares a display
-	target for contributors. Activating a row - a double-click, Enter on the row carrying the
+	The assignee cell is a link to the person contact, because the application declares a display
+	target for person contacts. Activating a row - a double-click, Enter on the row carrying the
 	keyboard cursor, or its chevron button - pushes the ticket's detail, announced with the
 	ticket's title.
 	

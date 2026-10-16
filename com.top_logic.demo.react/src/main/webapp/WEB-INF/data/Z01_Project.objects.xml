@@ -1,6 +1,58 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <objects>
+	<object id="10"
+		type="Contacts:PersonContact"
+	>
+		<attribute name="firstname"
+			value="Clara"
+		/>
+		<attribute name="name"
+			value="Weber"
+		/>
+		<attribute name="email"
+			value="clara.weber@example.com"
+		/>
+	</object>
+	<object id="20"
+		type="Contacts:PersonContact"
+	>
+		<attribute name="firstname"
+			value="Christian"
+		/>
+		<attribute name="name"
+			value="Becker"
+		/>
+		<attribute name="email"
+			value="christian.becker@example.com"
+		/>
+	</object>
+	<object id="30"
+		type="Contacts:PersonContact"
+	>
+		<attribute name="firstname"
+			value="Anna"
+		/>
+		<attribute name="name"
+			value="Schmidt"
+		/>
+		<attribute name="email"
+			value="anna.schmidt@example.com"
+		/>
+	</object>
+	<object id="40"
+		type="Contacts:PersonContact"
+	>
+		<attribute name="firstname"
+			value="Bernd"
+		/>
+		<attribute name="name"
+			value="Hoffmann"
+		/>
+		<attribute name="email"
+			value="bernd.hoffmann@example.com"
+		/>
+	</object>
 	<object id="1"
 		type="tl.demo.projectManagement:ProjectScope"
 	>
@@ -38,6 +90,9 @@
 				<attribute name="milestone">
 					<ref id="6"/>
 				</attribute>
+				<attribute name="assignee">
+					<ref id="10"/>
+				</attribute>
 			</object>
 			<object id="8"
 				type="tl.demo.projectManagement:Ticket"
@@ -50,6 +105,9 @@
 				/>
 				<attribute name="milestone">
 					<ref id="6"/>
+				</attribute>
+				<attribute name="assignee">
+					<ref id="20"/>
 				</attribute>
 			</object>
 		</attribute>
@@ -105,6 +163,9 @@
 				<attribute name="milestone">
 					<ref id="3"/>
 				</attribute>
+				<attribute name="assignee">
+					<ref id="20"/>
+				</attribute>
 			</object>
 			<object id="11"
 				type="tl.demo.projectManagement:Ticket"
@@ -117,6 +178,9 @@
 				/>
 				<attribute name="milestone">
 					<ref id="3"/>
+				</attribute>
+				<attribute name="assignee">
+					<ref id="10"/>
 				</attribute>
 			</object>
 			<object id="12"
@@ -131,6 +195,9 @@
 				<attribute name="milestone">
 					<ref id="9"/>
 				</attribute>
+				<attribute name="assignee">
+					<ref id="20"/>
+				</attribute>
 			</object>
 		</attribute>
 		<attribute name="notes">
@@ -142,54 +209,5 @@
 				/>
 			</object>
 		</attribute>
-	</object>
-	<object id="10"
-		type="tl.demo.projectManagement:Contributor"
-	>
-		<attribute name="name"
-			value="C2"
-		/>
-		<attribute name="email"
-			value="c2@example.com"
-		/>
-		<attribute name="assignedTickets">
-			<ref id="11"/>
-			<ref id="7"/>
-		</attribute>
-	</object>
-	<object id="20"
-		type="tl.demo.projectManagement:Contributor"
-	>
-		<attribute name="name"
-			value="C1"
-		/>
-		<attribute name="email"
-			value="c1@example.com"
-		/>
-		<attribute name="assignedTickets">
-			<ref id="4"/>
-			<ref id="12"/>
-			<ref id="8"/>
-		</attribute>
-	</object>
-	<object id="30"
-		type="tl.demo.projectManagement:Contributor"
-	>
-		<attribute name="name"
-			value="A1"
-		/>
-		<attribute name="email"
-			value="a1@example.com"
-		/>
-	</object>
-	<object id="40"
-		type="tl.demo.projectManagement:Contributor"
-	>
-		<attribute name="name"
-			value="B1"
-		/>
-		<attribute name="email"
-			value="b1@example.com"
-		/>
 	</object>
 </objects>

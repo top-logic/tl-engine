@@ -104,6 +104,30 @@ html, body {
 	flex: 1;
 }
 
+/* An item of a selectable container (a list box): the whole item is the surface the user presses.
+   The item may draw a frame of its own (a card), so the wrapper marks hover, selection and focus by
+   a ring around it in the surface radius rather than by a border. */
+.tlItem--selectable {
+	border-radius: var(--border-radius-02);
+	cursor: pointer;
+	transition: box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.tlItem--selectable:hover {
+	box-shadow: 0 0 0 var(--tl-border-width-sm) var(--tl-border-interactive), var(--shadow-raised);
+}
+
+.tlItem--selected,
+.tlItem--selected:hover {
+	background: var(--tl-surface-brand-subtle);
+	box-shadow: 0 0 0 2px var(--tl-border-interactive);
+}
+
+.tlItem--selectable:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
 /* --- React mount point ------------------------------------------------- */
 
 [data-react-module] {

@@ -1330,6 +1330,17 @@
   transition-timing-function: var(--tl-easing-entrance);
 }
 
+/* Offen eingefügt (die mobile Sidebar rendert die Schublade erst beim Öffnen): der Übergang beginnt außerhalb des
+   Randes, sonst stünde sie ohne Bewegung da. Das Schließen nimmt sie mit dem Scrim aus dem DOM, ohne Bewegung — die
+   Bewegung im Ganzen kommt mit dem UI-Durchgang nach Welle 5. Ohne @starting-style erscheint sie wie bisher. */
+@starting-style {
+  .tl-drawer--start[data-tl-state~="open"] { transform: translateX(-100%); }
+  .tl-drawer--start[data-tl-state~="open"]:dir(rtl) { transform: translateX(100%); }
+  .tl-drawer--end[data-tl-state~="open"] { transform: translateX(100%); }
+  .tl-drawer--end[data-tl-state~="open"]:dir(rtl) { transform: translateX(-100%); }
+  .tl-drawer--bottom[data-tl-state~="open"] { transform: translateY(100%); }
+}
+
 .tl-drawer--narrow { width: var(--tl-size-drawer-narrow); }
 .tl-drawer--medium { width: var(--tl-size-drawer-medium); }
 .tl-drawer--wide { width: var(--tl-size-drawer-wide); }

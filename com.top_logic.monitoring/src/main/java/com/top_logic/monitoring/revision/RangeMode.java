@@ -5,6 +5,8 @@
  */
 package com.top_logic.monitoring.revision;
 
+import com.top_logic.basic.config.annotation.Label;
+
 /**
  * The kind of range in which the transaction monitor displays the revisions.
  * 
@@ -17,11 +19,13 @@ public enum RangeMode {
 	/**
 	 * The revisions created within a time range are displayed.
 	 */
+	@Label("Date")
 	TIME_RANGE,
 
 	/**
 	 * The revisions within a range of commit numbers are displayed.
 	 */
+	@Label("Revision")
 	REVISION_RANGE;
 
 }

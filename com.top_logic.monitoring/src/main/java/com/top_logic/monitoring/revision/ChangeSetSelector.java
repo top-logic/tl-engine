@@ -14,6 +14,8 @@ import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.knowledge.event.ChangeSet;
+import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.ComplexField;
@@ -108,8 +110,10 @@ public class ChangeSetSelector implements ModelBuilder {
 		SelectField rangeMode = FormFactory.newSelectField(RANGE_MODE_FIELD, Arrays.asList(RangeMode.values()),
 			!FormFactory.MULTIPLE, Collections.singletonList(RangeMode.TIME_RANGE), !FormFactory.IMMUTABLE);
 		rangeMode.setMandatory(true);
-		rangeMode.addValueListener((field, oldValue, newValue) -> updateVisibility(rangeMode, rangeStart, rangeEnd,
-			revisionStart, revisionEnd));
+		rangeMode.addValueListener((field, oldValue, newValue) -> {
+			convertRange(rangeMode, rangeStart, rangeEnd, revisionStart, revisionEnd);
+			updateVisibility(rangeMode, rangeStart, rangeEnd, revisionStart, revisionEnd);
+		});
 		updateVisibility(rangeMode, rangeStart, rangeEnd, revisionStart, revisionEnd);
 		BooleanField includeTechnicalObjects =
 			FormFactory.newBooleanField(SHOW_TECHNICAL_FIELD, Boolean.FALSE, !FormFactory.IMMUTABLE);
@@ -136,6 +140,43 @@ public class ChangeSetSelector implements ModelBuilder {
 		rangeEnd.setVisible(timeRange);
 		revisionStart.setVisible(!timeRange);
 		revisionEnd.setVisible(!timeRange);
+	}
+
+	/**
+	 * Fills the fields of the selected {@link RangeMode} with the range given in the fields of the
+	 * other mode.
+	 * 
+	 * <p>
+	 * A time range is converted into the revisions created within it, a revision range into the
+	 * points in time the bounding revisions were created at. A field with an invalid input is not
+	 * converted.
+	 * </p>
+	 */
+	static void convertRange(SelectField rangeMode, FormField rangeStart, FormField rangeEnd,
+			FormField revisionStart, FormField revisionEnd) {
+		HistoryManager hm = PersistencyLayer.getKnowledgeBase().getHistoryManager();
+		if (getRangeMode(rangeMode) == RangeMode.REVISION_RANGE) {
+			if (rangeStart.hasValue()) {
+				revisionStart.setValue(RevisionRanges.firstCommitAt(hm, (Date) rangeStart.getValue()));
+			}
+			if (rangeEnd.hasValue()) {
+				revisionEnd.setValue(RevisionRanges.firstCommitAt(hm, (Date) rangeEnd.getValue()));
+			}
+		} else {
+			if (revisionStart.hasValue()) {
+				rangeStart.setValue(RevisionRanges.dateOfCommit(hm, toLong(revisionStart.getValue()), true));
+			}
+			if (revisionEnd.hasValue()) {
+				rangeEnd.setValue(RevisionRanges.dateOfCommit(hm, toLong(revisionEnd.getValue()), false));
+			}
+		}
+	}
+
+	/**
+	 * The given value of a commit number field as {@link Long}.
+	 */
+	static Long toLong(Object value) {
+		return value == null ? null : Long.valueOf(((Number) value).longValue());
 	}
 
 	/**

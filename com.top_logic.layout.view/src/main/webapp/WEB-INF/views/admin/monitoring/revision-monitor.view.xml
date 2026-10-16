@@ -24,11 +24,20 @@
 	and their values are ignored. Changes committed by the system (no person as author) and change
 	sets that do not change a model object are only displayed on request.
 	
-	The table is not updated while the filter is edited: the "Refresh" button writes the current
-	filter values together with the current time as a query to queryInput, and the rows are computed
-	from the query alone. The time makes every query a new value, so that the button also displays
-	the commits made since the last refresh. Before the first refresh, the default query (today, no
-	system changes) is displayed.
+	Switching the range kind converts the bounds: a time range into the revisions created within it,
+	a revision range into the points in time its bounding revisions were created at. An end behind
+	the last revision becomes the begin of the day following the last revision.
+	
+	The table is not updated while the filter is edited. The filter channel holds the current filter
+	values, normalized so that the start of a range does not lie behind its end; shiftedFilters holds
+	the ranges of the same width directly before and after it (a range of whole days is moved by
+	calendar days). A revision range is not moved before the first revision or behind the revision
+	following the last one; a time range containing the current time is not moved forwards, and one
+	starting at or before the first revision is not moved backwards. The "Refresh" button writes the filter, the arrow buttons the previous or next
+	range, together with the current time as a query to queryInput, and write the displayed bounds
+	back to the inputs. The rows are computed from the query alone. The time makes every query a new
+	value, so that refreshing also displays the commits made since the last refresh. Before the
+	first refresh, the default query (today, no system changes) is displayed.
 -->
 <view>
 	<channels>
@@ -61,17 +70,72 @@
 		<channel name="toRevision"/>
 		<channel name="showSystemChanges"/>
 		<channel name="showTechnical"/>
+		<derived-channel name="filter"
+			inputs="revisionRange, from, to, fromRevision, toRevision, showSystemChanges, showTechnical"
+		>
+			<expr><![CDATA[byRevision -> from -> to -> fromRevision -> toRevision -> showSystemChanges -> showTechnical -> {
+	swapDates = $from != null && $to != null && toMillis($from) > toMillis($to);
+	swapRevisions = $fromRevision != null && $toRevision != null && $fromRevision > $toRevision;
+	{
+		"byRevision": $byRevision,
+		"from": if($swapDates, $to, $from),
+		"to": if($swapDates, $from, $to),
+		"fromRevision": if($swapRevisions, $toRevision, $fromRevision),
+		"toRevision": if($swapRevisions, $fromRevision, $toRevision),
+		"showSystemChanges": $showSystemChanges == true,
+		"showTechnical": $showTechnical == true
+	};
+}]]></expr>
+		</derived-channel>
+		<derived-channel name="shiftedFilters"
+			inputs="filter"
+		>
+			<expr><![CDATA[f -> {
+	with = from -> to -> fromRevision -> toRevision -> {
+		"byRevision": $f["byRevision"],
+		"from": $from,
+		"to": $to,
+		"fromRevision": $fromRevision,
+		"toRevision": $toRevision,
+		"showSystemChanges": $f["showSystemChanges"],
+		"showTechnical": $f["showTechnical"]
+	};
+	next = revisionAt(now()).get(`tl.core:Revision#revision`) + 1;
+	firstDate = revisionForCommit(1).get(`tl.core:Revision#date`);
+	shift = dir -> if($f["byRevision"],
+		if($f["fromRevision"] == null || $f["toRevision"] == null, null, {
+			from = $f["fromRevision"];
+			to = $f["toRevision"];
+			width = $to - $from;
+			start = if($dir < 0, max($from - $width, min($from, 1)), min($to + $width, max($to, $next)) - $width);
+			$with($f["from"], $f["to"], round($start), round($start + $width));
+		}),
+		if($f["from"] == null || $f["to"] == null, null, if(
+			if($dir > 0, toMillis($f["to"]) > toMillis(now()), $firstDate != null && toMillis($f["from"]) <= toMillis($firstDate)),
+			$f,
+			{
+				width = toMillis($f["to"]) - toMillis($f["from"]);
+				days = round($width / 86400000);
+				byDays = $days > 0 && $f["from"].toUserCalendar().withDayAdded($days).toDate() == $f["to"];
+				$with(
+					if($byDays, $f["from"].toUserCalendar().withDayAdded($dir * $days).toDate(), toDate(toMillis($f["from"]) + $dir * $width)),
+					if($byDays, $f["to"].toUserCalendar().withDayAdded($dir * $days).toDate(), toDate(toMillis($f["to"]) + $dir * $width)),
+					$f["fromRevision"], $f["toRevision"]);
+			})));
+	{"previous": $shift(-1), "next": $shift(1)};
+}]]></expr>
+		</derived-channel>
 		<channel name="queryInput"/>
 		<derived-channel name="query"
 			inputs="queryInput"
 		>
-			<expr><![CDATA[q -> if($q == null, {
+			<expr><![CDATA[q -> if($q == null, {"filter": {
 	"byRevision": false,
 	"from": now().toUserCalendar().withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(),
 	"to": now().toUserCalendar().withDayAdded(1).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(),
 	"showSystemChanges": false,
 	"showTechnical": false
-}, $q)]]></expr>
+}}, $q)]]></expr>
 		</derived-channel>
 	</channels>
 	<full-page>
@@ -95,6 +159,46 @@
 					<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
 						display="segmented"
 					/>
+					<on-submit>
+						<if test="byRevision -> x -> $byRevision">
+							<inputs>
+								<input channel="revisionRange"/>
+							</inputs>
+							<then>
+								<execute-script inputs="from">
+									<function><![CDATA[d -> x -> if($d == null, null, {
+	before = revisionAt(toDate(toMillis($d) - 1)).get(`tl.core:Revision#revision`);
+	if($before == null, 1, $before + 1);
+})]]></function>
+								</execute-script>
+								<write-channel name="fromRevision"/>
+								<execute-script inputs="to">
+									<function><![CDATA[d -> x -> if($d == null, null, {
+	before = revisionAt(toDate(toMillis($d) - 1)).get(`tl.core:Revision#revision`);
+	if($before == null, 1, $before + 1);
+})]]></function>
+								</execute-script>
+								<write-channel name="toRevision"/>
+							</then>
+							<else>
+								<execute-script inputs="fromRevision">
+									<function><![CDATA[c -> x -> if($c == null, null,
+	if($c > revisionAt(now()).get(`tl.core:Revision#revision`), now(),
+		revisionForCommit(max($c, 1)).get(`tl.core:Revision#date`)))]]></function>
+								</execute-script>
+								<write-channel name="from"/>
+								<execute-script inputs="toRevision">
+									<function><![CDATA[c -> x -> if($c == null, null, {
+	last = revisionAt(now());
+	if($c > $last.get(`tl.core:Revision#revision`),
+		$last.get(`tl.core:Revision#date`).toUserCalendar().withDayAdded(1).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(),
+		revisionForCommit(max($c, 1)).get(`tl.core:Revision#date`));
+})]]></function>
+								</execute-script>
+								<write-channel name="to"/>
+							</else>
+						</if>
+					</on-submit>
 				</value-input>
 				<visible-if
 					expr="r -> !$r"
@@ -178,29 +282,125 @@
 						</label>
 					</value-input>
 				</stack>
-				<button>
-					<action class="com.top_logic.layout.view.command.GenericViewCommand"
-						image="css:bi bi-arrow-clockwise"
-					>
-						<label>
-							<en>Refresh</en>
-							<de>Aktualisieren</de>
-						</label>
-						<execute-script inputs="revisionRange, from, to, fromRevision, toRevision, showSystemChanges, showTechnical">
-							<function><![CDATA[byRevision -> from -> to -> fromRevision -> toRevision -> showSystemChanges -> showTechnical -> x -> {
-	"byRevision": $byRevision,
-	"from": $from,
-	"to": $to,
-	"fromRevision": $fromRevision,
-	"toRevision": $toRevision,
-	"showSystemChanges": $showSystemChanges,
-	"showTechnical": $showTechnical,
-	"time": now()
-}]]></function>
-						</execute-script>
-						<write-channel name="queryInput"/>
-					</action>
-				</button>
+				<stack
+					align="center"
+					direction="row"
+					gap="compact"
+				>
+					<button>
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							display="icon-only"
+							image="css:bi bi-chevron-left"
+						>
+							<label>
+								<en>Previous range</en>
+								<de>Vorheriger Bereich</de>
+							</label>
+							<execute-script inputs="shiftedFilters">
+								<function><![CDATA[s -> x -> $s["previous"]]]></function>
+							</execute-script>
+							<if test="f -> $f == null">
+								<then>
+									<notify
+										expr="x -> #('A range can only be moved if both its start and its end are given.'@en, 'Ein Bereich kann nur verschoben werden, wenn sowohl sein Anfang als auch sein Ende angegeben sind.'@de)"
+										kind="error"
+										stop="true"
+									/>
+								</then>
+							</if>
+							<execute-script function="f -> {&quot;filter&quot;: $f, &quot;time&quot;: now()}"/>
+							<write-channel name="queryInput"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["from"]]]></function>
+							</execute-script>
+							<write-channel name="from"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["to"]]]></function>
+							</execute-script>
+							<write-channel name="to"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["fromRevision"]]]></function>
+							</execute-script>
+							<write-channel name="fromRevision"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["toRevision"]]]></function>
+							</execute-script>
+							<write-channel name="toRevision"/>
+						</action>
+					</button>
+					<button>
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							display="icon-only"
+							image="css:bi bi-arrow-clockwise"
+						>
+							<label>
+								<en>Refresh</en>
+								<de>Aktualisieren</de>
+							</label>
+							<execute-script inputs="filter">
+								<function><![CDATA[f -> x -> {"filter": $f, "time": now()}]]></function>
+							</execute-script>
+							<write-channel name="queryInput"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["from"]]]></function>
+							</execute-script>
+							<write-channel name="from"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["to"]]]></function>
+							</execute-script>
+							<write-channel name="to"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["fromRevision"]]]></function>
+							</execute-script>
+							<write-channel name="fromRevision"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["toRevision"]]]></function>
+							</execute-script>
+							<write-channel name="toRevision"/>
+						</action>
+					</button>
+					<button>
+						<action class="com.top_logic.layout.view.command.GenericViewCommand"
+							display="icon-only"
+							image="css:bi bi-chevron-right"
+						>
+							<label>
+								<en>Next range</en>
+								<de>Nächster Bereich</de>
+							</label>
+							<execute-script inputs="shiftedFilters">
+								<function><![CDATA[s -> x -> $s["next"]]]></function>
+							</execute-script>
+							<if test="f -> $f == null">
+								<then>
+									<notify
+										expr="x -> #('A range can only be moved if both its start and its end are given.'@en, 'Ein Bereich kann nur verschoben werden, wenn sowohl sein Anfang als auch sein Ende angegeben sind.'@de)"
+										kind="error"
+										stop="true"
+									/>
+								</then>
+							</if>
+							<execute-script function="f -> {&quot;filter&quot;: $f, &quot;time&quot;: now()}"/>
+							<write-channel name="queryInput"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["from"]]]></function>
+							</execute-script>
+							<write-channel name="from"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["to"]]]></function>
+							</execute-script>
+							<write-channel name="to"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["fromRevision"]]]></function>
+							</execute-script>
+							<write-channel name="fromRevision"/>
+							<execute-script inputs="query">
+								<function><![CDATA[q -> x -> $q["filter"]["toRevision"]]]></function>
+							</execute-script>
+							<write-channel name="toRevision"/>
+						</action>
+					</button>
+				</stack>
 			</stack>
 		</inset>
 		<table types="tl.changelog:ChangeSet">
@@ -228,21 +428,28 @@
 				<column attribute="message"/>
 			</columns>
 			<rows><![CDATA[q -> {
-	byRevision = $q["byRevision"];
-	from = $q["from"];
-	to = $q["to"];
-	fromRevision = $q["fromRevision"];
-	toRevision = $q["toRevision"];
+	f = $q["filter"];
+	byRevision = $f["byRevision"];
+	from = $f["from"];
+	to = $f["to"];
+	fromRevision = $f["fromRevision"];
+	toRevision = $f["toRevision"];
 	last = revisionAt(now()).get(`tl.core:Revision#revision`);
 	start = if($byRevision,
 		if($fromRevision == null, 1, $fromRevision),
-		if($from == null, 1, revisionAt(toDate(toMillis($from) - 1)).get(`tl.core:Revision#revision`) + 1));
+		if($from == null, 1, {
+			before = revisionAt(toDate(toMillis($from) - 1)).get(`tl.core:Revision#revision`);
+			if($before == null, 1, $before + 1);
+		}));
 	stop = if($byRevision,
 		if($toRevision == null, $last, $toRevision - 1),
-		if($to == null, $last, revisionAt(toDate(toMillis($to) - 1)).get(`tl.core:Revision#revision`)));
+		if($to == null, $last, {
+			before = revisionAt(toDate(toMillis($to) - 1)).get(`tl.core:Revision#revision`);
+			if($before == null, 0, $before);
+		}));
 	if($start > $stop || $start > $last, list(),
-		changeLog(null, 0, true, $start, $stop, null, $q["showTechnical"])
-			.filter(cs -> $q["showSystemChanges"] || $cs.get(`tl.changelog:ChangeSet#author`) != null));
+		changeLog(null, 0, true, $start, $stop, null, $f["showTechnical"])
+			.filter(cs -> $f["showSystemChanges"] || $cs.get(`tl.changelog:ChangeSet#author`) != null));
 }]]></rows>
 			<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
 				image="css:bi bi-list-ul"

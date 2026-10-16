@@ -12,6 +12,7 @@ import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.TrueFilter;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.CommitEvent;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -30,6 +31,10 @@ import com.top_logic.util.FormFieldHelper;
 /**
  * Computes the new selection for the filter component of the change set tree.
  * 
+ * @implNote A range whose start lies behind its end is normalized by exchanging the bounds. With a
+ *           {@link Config#getShift() shift}, the range is moved by its own width before it is
+ *           displayed. The filter fields are updated to the displayed range.
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class UpdateChangeSetTreeCommand extends AbstractFormCommandHandler {
@@ -45,6 +50,29 @@ public class UpdateChangeSetTreeCommand extends AbstractFormCommandHandler {
 			return commit.getAuthor().startsWith(SessionContext.PERSON_ID_PREFIX);
 		}
 	};
+
+	/**
+	 * Configuration options for {@link UpdateChangeSetTreeCommand}.
+	 */
+	public interface Config extends AbstractFormCommandHandler.Config {
+
+		/**
+		 * Configuration name for {@link #getShift()}.
+		 */
+		String SHIFT = "shift";
+
+		/**
+		 * By how many widths of the selected range it is moved before it is displayed.
+		 * 
+		 * <p>
+		 * <code>-1</code> displays the range before the selected one, <code>1</code> the range
+		 * after it, and <code>0</code> the selected range itself.
+		 * </p>
+		 */
+		@Name(SHIFT)
+		int getShift();
+
+	}
 
 	/**
 	 * Creates a new {@link UpdateChangeSetTreeCommand}.
@@ -66,6 +94,45 @@ public class UpdateChangeSetTreeCommand extends AbstractFormCommandHandler {
 			: revisionStart == null && revisionEnd == null;
 		if (noRange) {
 			return HandlerResult.error(I18NConstants.ERROR_NO_RANGE);
+		}
+
+		int shift = ((Config) getConfig()).getShift();
+		if (timeRange) {
+			if (rangeStart != null && rangeEnd != null && rangeStart.after(rangeEnd)) {
+				Date tmp = rangeStart;
+				rangeStart = rangeEnd;
+				rangeEnd = tmp;
+			}
+			if (shift != 0) {
+				if (rangeStart == null || rangeEnd == null) {
+					return HandlerResult.error(I18NConstants.ERROR_SHIFT_OPEN_RANGE);
+				}
+				Date[] shifted = RevisionRanges.shift(PersistencyLayer.getKnowledgeBase().getHistoryManager(),
+					rangeStart, rangeEnd, shift);
+				rangeStart = shifted[0];
+				rangeEnd = shifted[1];
+			}
+			formContext.getField(ChangeSetSelector.RANGE_START_FIELD).setValue(rangeStart);
+			formContext.getField(ChangeSetSelector.RANGE_END_FIELD).setValue(rangeEnd);
+		} else {
+			if (revisionStart != null && revisionEnd != null
+				&& revisionStart.longValue() > revisionEnd.longValue()) {
+				Number tmp = revisionStart;
+				revisionStart = revisionEnd;
+				revisionEnd = tmp;
+			}
+			if (shift != 0) {
+				if (revisionStart == null || revisionEnd == null) {
+					return HandlerResult.error(I18NConstants.ERROR_SHIFT_OPEN_RANGE);
+				}
+				long[] shifted = RevisionRanges.shift(PersistencyLayer.getKnowledgeBase().getHistoryManager(),
+					revisionStart.longValue(), revisionEnd.longValue(), shift);
+				revisionStart = Long.valueOf(shifted[0]);
+				revisionEnd = Long.valueOf(shifted[1]);
+			}
+			formContext.getField(ChangeSetSelector.REVISION_START_FIELD)
+				.setValue(ChangeSetSelector.toLong(revisionStart));
+			formContext.getField(ChangeSetSelector.REVISION_END_FIELD).setValue(ChangeSetSelector.toLong(revisionEnd));
 		}
 
 		boolean includeTechnicalObjects =

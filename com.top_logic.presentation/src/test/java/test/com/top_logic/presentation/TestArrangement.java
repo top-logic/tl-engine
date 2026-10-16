@@ -59,6 +59,12 @@ public class TestArrangement extends AbstractSearchExpressionTest {
 		+ "des Quartals, die offenen Risiken und die nächsten Schritte bis zum Ende des Jahres. "
 		+ "Jeder Abschnitt fasst die wichtigsten Kennzahlen zusammen und nennt die Verantwortlichen.";
 
+	/** A ticket description of about 300 characters. */
+	private static final String TICKET_DESCRIPTION = "Die Präsentation wird aus den Projektdaten erzeugt und "
+		+ "muss vor der Freigabe auf Vollständigkeit, korrekte Zahlen, lesbare Diagramme und die richtige "
+		+ "Firmenvorlage geprüft werden. Dabei sind auch die Sprechernotizen und die Fortsetzungsfolien für "
+		+ "lange Tabellen zu kontrollieren, bevor sie an die Geschäftsleitung geht.";
+
 	public void testRowWeightsAndWidths() throws Exception {
 		List<XSLFShape> shapes = contentShapes(deck("""
 			t -> pptDeck($t, pptSlide(title: "Zeile", content: pptRow([
@@ -267,6 +273,106 @@ public class TestArrangement extends AbstractSearchExpressionTest {
 			expected.add(Integer.toString(n));
 		}
 		assertEquals(expected, numbers);
+	}
+
+	/**
+	 * A table with a long description in one row and short rows otherwise, as the list of open
+	 * tickets of a status report: Each row is exactly as high as its cell texts, and each slide
+	 * shows as many rows as fit.
+	 */
+	public void testTableRowsPacked() throws Exception {
+		BinaryData data = (BinaryData) evalOnce("""
+			t -> long -> pptDeck($t, pptSlide(title: "Offene Tickets", content: pptTable(concat(
+				[["Ticket", "Beschreibung", "Meilenstein", "Fällig", "Bearbeiter", "Dringlichkeit"]
+					.map(h -> pptCell($h, fill: "accent1", color: "bg1", bold: true))],
+				[["T1 Kurz", "Kurz", "M1", "01.10.", "Anna", pptRating("high", "überfällig")],
+				 ["T2 Lang", $long, "M2", "–", "–", pptRating("none", "ohne Termin")]],
+				count(3, 13).map(n -> [toString("T", $n), "Kurz", "M3", "–", "Bert", pptRating("low", "im Plan")])),
+				headerRows: 1, columnWeights: [3, 5, 2, 1.6, 2, 2])), profile: {"continuationSuffix": "(Forts.)"})
+			""", template(), TICKET_DESCRIPTION);
+		writeDeck(data, "table-packing.pptx");
+		XMLSlideShow deck = open(data);
+
+		List<XSLFTable> tables = new ArrayList<>();
+		for (int n = 0; n < deck.getSlides().size(); n++) {
+			tables.add((XSLFTable) contentShapes(deck, n).get(0));
+		}
+		List<String> tickets = new ArrayList<>();
+		for (int n = 0; n < tables.size(); n++) {
+			XSLFTable table = tables.get(n);
+			double tableHeight = 0;
+			for (int row = 0; row < table.getNumberOfRows(); row++) {
+				double content = 0;
+				for (int column = 0; column < table.getNumberOfColumns(); column++) {
+					XSLFTableCell cell = table.getCell(row, column);
+					cell.setAnchor(new Rectangle2D.Double(0, 0, table.getColumnWidth(column), 0));
+					Insets2D insets = cell.getInsets();
+					content = Math.max(content, TextMeasure.measure(cell).height() + insets.top + insets.bottom);
+				}
+				assertEquals("Row " + row + " of slide " + n + " must be as high as its content.", content,
+					table.getRowHeight(row), DELTA);
+				tableHeight += table.getRowHeight(row);
+				if (row > 0) {
+					tickets.add(table.getCell(row, 0).getText());
+				}
+			}
+			assertEquals(tableHeight, table.getAnchor().getHeight(), DELTA);
+			assertTrue("Table must fit: " + tableHeight, tableHeight <= AREA.getHeight() + DELTA);
+			if (n + 1 < tables.size()) {
+				double nextRow = tables.get(n + 1).getRowHeight(1);
+				assertTrue("The first row of the next slide must not fit onto slide " + n + ": " + tableHeight + " + "
+					+ nextRow, tableHeight + nextRow > AREA.getHeight() + DELTA);
+			}
+		}
+		List<String> expected = new ArrayList<>(List.of("T1 Kurz", "T2 Lang"));
+		for (int n = 3; n <= 12; n++) {
+			expected.add("T" + n);
+		}
+		assertEquals(expected, tickets);
+
+		renderDeck(deck, "table-packing");
+	}
+
+	/**
+	 * Header cells with long words in narrow columns are shrunk until no word is broken at the
+	 * exact width of the cell.
+	 */
+	public void testHeaderWordsNotBroken() throws Exception {
+		BinaryData data = (BinaryData) evalOnce("""
+			t -> pptDeck($t, pptSlide(content: pptTable([
+				["Ticket", "Beschreibung", "Meilenstein", "Fällig", "Bearbeiter", "Dringlichkeit"],
+				["T1", "Erste Zeile\\nZweite Zeile\\nDritte Zeile", "M1", "–", "Anna", "hoch"]],
+				headerRows: 1, columnWeights: [3, 5, 2, 1.6, 2, 2])))
+			""", template());
+		writeDeck(data, "table-header.pptx");
+		XMLSlideShow deck = open(data);
+		XSLFTable table = (XSLFTable) contentShapes(deck, 0).get(0);
+		boolean shrunk = false;
+		for (int column = 0; column < table.getNumberOfColumns(); column++) {
+			XSLFTableCell cell = table.getCell(0, column);
+			double width = table.getColumnWidth(column);
+			cell.setAnchor(new Rectangle2D.Double(0, 0, width, 0));
+			Insets2D insets = cell.getInsets();
+			TextMetrics metrics = TextMeasure.measure(cell);
+			String text = cell.getText();
+			assertFalse("Word broken in header '" + text + "'.", metrics.wordBroken());
+			assertEquals("Single line header '" + text + "'.", 1, metrics.lines());
+			assertTrue("Header '" + text + "' wider than its cell: " + metrics.width(),
+				metrics.width() <= width - insets.left - insets.right + DELTA);
+			shrunk |= fontSize(cell) < 18;
+		}
+		assertTrue("Long header words must be shrunk.", shrunk);
+
+		renderDeck(deck, "table-header");
+	}
+
+	private static void renderDeck(XMLSlideShow deck, String prefix) throws Exception {
+		SlideRenderer renderer = new SlideRenderer();
+		List<BufferedImage> images = new ArrayList<>();
+		for (XSLFSlide slide : deck.getSlides()) {
+			images.add(renderer.render(slide, 1280));
+		}
+		writeImages(images, prefix);
 	}
 
 	public void testDefaultContinuationSuffix() throws Exception {

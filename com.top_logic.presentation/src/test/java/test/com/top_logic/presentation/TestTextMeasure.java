@@ -5,7 +5,11 @@
  */
 package test.com.top_logic.presentation;
 
+import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -62,7 +66,7 @@ public class TestTextMeasure extends AbstractSearchExpressionTest {
 
 		assertEquals(1.0, number(wide, PptTextFunctions.LINES));
 		assertTrue(number(narrow, PptTextFunctions.LINES) > 2);
-		assertTrue(number(narrow, PptTextFunctions.WIDTH) <= 150 + 1);
+		assertTrue(number(narrow, PptTextFunctions.WIDTH) <= 150 + 0.01);
 		assertTrue(number(narrow, PptTextFunctions.HEIGHT) > number(wide, PptTextFunctions.HEIGHT));
 		assertEquals(number(wide, PptTextFunctions.LINE_HEIGHT), number(narrow, PptTextFunctions.LINE_HEIGHT), 0.01);
 	}
@@ -99,6 +103,85 @@ public class TestTextMeasure extends AbstractSearchExpressionTest {
 		double lineAdvance = number(broken, PptTextFunctions.HEIGHT) - number(single, PptTextFunctions.HEIGHT);
 		double emptyLineAdvance = number(emptyLine, PptTextFunctions.HEIGHT) - number(broken, PptTextFunctions.HEIGHT);
 		assertEquals(lineAdvance, emptyLineAdvance, 0.01);
+	}
+
+	/**
+	 * A line at single line spacing is as high as the ascent, descent and leading of its font, the
+	 * first line of a paragraph is at the same distance from the last line of the previous
+	 * paragraph as two lines within a paragraph.
+	 */
+	public void testLineHeightOfFont() throws Exception {
+		for (double size : new double[] { 11, 18, 32 }) {
+			TextMetrics metrics = TextMeasure.measure("Agj", FONT, size, false, false, 0, false, null);
+			TextLayout layout = new TextLayout("Agj", new Font(FONT, Font.PLAIN, 1).deriveFont((float) size),
+				new FontRenderContext(null, true, true));
+			double expected = layout.getAscent() + layout.getDescent() + layout.getLeading();
+			assertEquals("Line height at " + size + "pt.", expected, metrics.lineHeight(), 0.01);
+			// POI places the text by the leading below the top of the text box.
+			double top = layout.getLeading();
+			assertEquals("Height of a single line at " + size + "pt.", top + expected, metrics.height(), 0.01);
+
+			TextMetrics paragraphs = TextMeasure.measure("Agj\nAgj", FONT, size, false, false, 0, false, null);
+			assertEquals("Height of two paragraphs at " + size + "pt.", top + 2 * expected, paragraphs.height(), 0.01);
+
+			TextMetrics lines = TextMeasure.measure("Agj Agj", FONT, size, false, false, 0, false,
+				Double.valueOf(metrics.width() * 1.5));
+			assertEquals(2, lines.lines());
+			assertEquals("Height of two lines at " + size + "pt.", top + 2 * expected, lines.height(), 0.01);
+		}
+	}
+
+	/**
+	 * Lines are broken at the exact width: A word that is wider than the width by half a point is
+	 * moved to the next line, or broken if it is alone.
+	 */
+	public void testExactWrappingWidth() throws Exception {
+		String word = "Dringlichkeit";
+		double width = TextMeasure.measure(word, FONT, 18, true, false, 0, false, null).width();
+
+		// Java's line breaking measures kerned text up to a fraction of a point wider than its layout.
+		TextMetrics fitting = TextMeasure.measure(word, FONT, 18, true, false, 0, false, Double.valueOf(width + 0.5));
+		assertEquals(1, fitting.lines());
+		assertFalse(fitting.wordBroken());
+
+		TextMetrics tooNarrow =
+			TextMeasure.measure(word, FONT, 18, true, false, 0, false, Double.valueOf(width - 0.5));
+		assertTrue("Word wider than the box must be broken.", tooNarrow.wordBroken());
+
+		String twoWords = "Ab " + word;
+		double twoWordsWidth = TextMeasure.measure(twoWords, FONT, 18, true, false, 0, false, null).width();
+		TextMetrics wrapped =
+			TextMeasure.measure(twoWords, FONT, 18, true, false, 0, false, Double.valueOf(twoWordsWidth - 0.5));
+		assertEquals("Word wider than the rest of the line must be moved to the next line.", 2, wrapped.lines());
+		assertFalse(wrapped.wordBroken());
+	}
+
+	/**
+	 * A run whose font size is at least its kerning size is kerned, others are not.
+	 */
+	public void testKerning() throws Exception {
+		String text = "AVATAR Tower Wave";
+		double size = 18;
+		FontRenderContext context = new FontRenderContext(null, true, true);
+		Font font = new Font(FONT, Font.PLAIN, 1).deriveFont((float) size);
+		double plain = new TextLayout(text, font, context).getVisibleAdvance();
+		double kerned = new TextLayout(text,
+			font.deriveFont(Map.of(TextAttribute.KERNING, TextAttribute.KERNING_ON)), context).getVisibleAdvance();
+
+		assertEquals("Kerning size reached.", kerned, kernedWidth(text, size, 1200), 0.01);
+		assertEquals("Kerning size not reached.", plain, kernedWidth(text, size, 2400), 0.01);
+		assertEquals("Kerning off.", plain, kernedWidth(text, size, 0), 0.01);
+	}
+
+	private static double kernedWidth(String text, double size, int kerningSize) throws Exception {
+		try (XMLSlideShow slideShow = new XMLSlideShow()) {
+			XSLFTextBox box = slideShow.createSlide().createTextBox();
+			box.setInsets(new Insets2D(0, 0, 0, 0));
+			box.setAnchor(new Rectangle2D.Double(0, 0, TextMeasure.UNBOUNDED_WIDTH, 0));
+			TextMeasure.setText(box, text, FONT, size, false, false, 0, false);
+			box.getTextParagraphs().get(0).getTextRuns().get(0).getRPr(true).setKern(kerningSize);
+			return TextMeasure.measure(box).width();
+		}
 	}
 
 	public void testBold() throws Exception {

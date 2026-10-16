@@ -51,6 +51,7 @@ import com.top_logic.presentation.model.TextBoxSpec;
 import com.top_logic.presentation.model.TextSpec;
 import com.top_logic.presentation.profile.TemplateProfile;
 import com.top_logic.presentation.template.ColorInfo;
+import com.top_logic.presentation.text.TableLayout;
 import com.top_logic.presentation.text.TextMeasure;
 
 /**
@@ -391,7 +392,8 @@ public final class ElementWriter {
 	 *
 	 * <p>
 	 * The table takes the width of the given bounds, each row the height of its highest cell
-	 * text, but at least the row height of the description.
+	 * text plus the cell insets, but at least the row height of the description, see
+	 * {@link TableLayout}.
 	 * </p>
 	 */
 	private XSLFTable createTable(TableSpec spec, List<Integer> rows, Rectangle2D bounds, String path) {
@@ -408,42 +410,23 @@ public final class ElementWriter {
 		}
 
 		String rowsPath = child(path, PresentationData.ROWS);
-		double height = 0;
+		double minHeight = spec.rowHeight() == null ? 0 : spec.rowHeight().doubleValue();
 		for (int row = 0; row < rows.size(); row++) {
 			int index = rows.get(row).intValue();
 			boolean header = index < spec.headerRows();
 			LineSpec rule = index == spec.headerRows() - 1 ? HEADER_RULE : ROW_RULE;
-			double rowHeight = spec.rowHeight() == null ? 0 : spec.rowHeight().doubleValue();
 			for (int column = 0; column < columnCount; column++) {
 				String cellPath = rowsPath + "[" + index + "][" + column + "]";
 				XSLFTableCell cell = table.getCell(row, column);
 				// The cell text is wrapped at the column width.
 				cell.setAnchor(new Rectangle2D.Double(0, 0, widths[column], 0));
 				writeCell(cell, spec.rows().get(index).get(column), header, rule, cellPath);
-				Insets2D insets = cell.getInsets();
-				rowHeight = Math.max(rowHeight, TextMeasure.measure(cell).height() + insets.top + insets.bottom);
 			}
-			table.setRowHeight(row, rowHeight);
-			height += rowHeight;
+			table.setRowHeight(row, minHeight);
 		}
 
-		table.setAnchor(new Rectangle2D.Double(bounds.getX(), bounds.getY(), totalWidth, height));
-		// Takes over rows that POI's own text layout makes higher.
-		table.updateCellAnchor();
-		double y = bounds.getY();
-		for (int row = 0; row < rows.size(); row++) {
-			double rowHeight = table.getCell(row, 0).getAnchor().getHeight();
-			table.setRowHeight(row, rowHeight);
-			// Places the cells without the border distance POI inserts between them, as PowerPoint
-			// does.
-			double x = bounds.getX();
-			for (int column = 0; column < columnCount; column++) {
-				table.getCell(row, column).setAnchor(new Rectangle2D.Double(x, y, widths[column], rowHeight));
-				x += widths[column];
-			}
-			y += rowHeight;
-		}
-		table.setAnchor(new Rectangle2D.Double(bounds.getX(), bounds.getY(), totalWidth, y - bounds.getY()));
+		table.setAnchor(new Rectangle2D.Double(bounds.getX(), bounds.getY(), totalWidth, 0));
+		TableLayout.layout(table);
 		return table;
 	}
 

@@ -36,14 +36,17 @@ import org.apache.poi.sl.usermodel.PictureShape;
 import org.apache.poi.sl.usermodel.Sheet;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFGraphicFrame;
+import org.apache.poi.xslf.usermodel.XSLFGroupShape;
 import org.apache.poi.xslf.usermodel.XSLFShape;
 import org.apache.poi.xslf.usermodel.XSLFSlide;
 import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
+import org.apache.poi.xslf.usermodel.XSLFTable;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.presentation.template.PlaceholderInfo;
+import com.top_logic.presentation.text.TableLayout;
 import com.top_logic.presentation.text.TextDrawFactory;
 import com.top_logic.presentation.text.TextMeasure;
 
@@ -58,6 +61,11 @@ import com.top_logic.presentation.text.TextMeasure;
  *
  * <p>
  * A chart is drawn by the {@link ChartRenderer}.
+ * </p>
+ *
+ * <p>
+ * The rows of a table are as high as their stored height or the measured height of their cell
+ * texts, whichever is larger, and its cells adjoin each other, see {@link TableLayout}.
  * </p>
  *
  * <p>
@@ -143,11 +151,22 @@ public final class SlideRenderer {
 			graphics.setRenderingHint(Drawable.DRAW_FACTORY, DRAW_FACTORY);
 
 			graphics.scale(width / pageSize.getWidth(), height / pageSize.getHeight());
+			layoutTables(sheet.getShapes());
 			sheet.draw(graphics);
 		} finally {
 			graphics.dispose();
 		}
 		return image;
+	}
+
+	private static void layoutTables(Iterable<?> shapes) {
+		for (Object shape : shapes) {
+			if (shape instanceof XSLFTable table) {
+				TableLayout.layout(table);
+			} else if (shape instanceof XSLFGroupShape group) {
+				layoutTables(group.getShapes());
+			}
+		}
 	}
 
 	/**

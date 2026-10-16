@@ -1,7 +1,7 @@
 import {
   React, useTLState, useTLCommand, TLChild, FillBarrier, createPortal, rootClassName, usePart, useButtonDefaults,
   usePopover, useMergeRefs, useCloseOnOutsidePress, pressClosedSurface, useStandaloneKeyboardScope, useFocusTrap,
-  anchoredOverlayProps, ANCHORED_OVERLAY_ATTR,
+  anchoredOverlayProps, ANCHORED_OVERLAY_ATTR, firstFocusable,
 } from 'tl-react-bridge';
 import type { TLCellProps, PopoverStateJson } from 'tl-react-bridge';
 
@@ -44,10 +44,19 @@ function focusVisible(element: Element): boolean {
  * focus is in the surface; the keyboard focus arriving at the trigger asks to open, and the focus
  * leaving trigger and surface asks to close; a click on the trigger opens.</p>
  *
- * <p>Opening by a click or the keyboard moves the focus into the surface, closing gives it back to
+ * <p>Opening by a click or the keyboard moves the focus into the surface - to its first form field,
+ * else to its first focusable element -, closing gives it back to
  * the trigger unless the user has put it elsewhere meanwhile. Opening by the pointer resting on the
  * trigger leaves the focus where it is.</p>
  */
+/**
+ * The element taking the focus when the popover opens: the first form field of the surface, not an
+ * incidental button before it (the help button of a field), else its first focusable element.
+ */
+function initialFocus(surface: HTMLElement): HTMLElement | null {
+  return firstFocusable(surface, true) ?? firstFocusable(surface, false);
+}
+
 const TLPopover: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<PopoverStateJson>>();
   const sendCommand = useTLCommand();
@@ -136,7 +145,7 @@ const TLPopover: React.FC<TLCellProps> = ({ controlId }) => {
 
   useStandaloneKeyboardScope(open, { ESCAPE: requestClose });
   useCloseOnOutsidePress(open, [triggerRef, surfaceRef], requestClose);
-  useFocusTrap(open && !pointerOpenRef.current, surfaceRef, 'first',
+  useFocusTrap(open && !pointerOpenRef.current, surfaceRef, initialFocus,
     { trap: false, preventScroll: true, restore: 'from-inside' });
 
   const handleFocusOut = useCallback((event: FocusEvent | React.FocusEvent) => {

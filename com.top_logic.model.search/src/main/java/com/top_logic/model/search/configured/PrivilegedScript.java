@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
@@ -47,6 +48,16 @@ public class PrivilegedScript extends ConfiguredScript {
 	 * Configuration of a {@link PrivilegedScript}.
 	 */
 	@TagName(Config.TAG_NAME)
+	@DisplayOrder({
+		Config.NAME_ATTRIBUTE,
+		Config.LABEL,
+		Config.DESCRIPTION,
+		Config.PARAMETERS,
+		Config.IMPLEMENTATION,
+		Config.COMMAND_GROUP,
+		Config.SECURITY_OBJECT,
+		Config.ON_DENIED,
+	})
 	public interface Config extends ConfiguredScript.Config {
 
 		/** Tag name of a {@link PrivilegedScript} in the configured scripts. */

@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.kanban;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.react.control.selection.SelectionModifiers;
 
 /**
  * Typed arguments of the {@link ReactKanbanBoardControl#CMD_SELECT_CARD} command: the card the user
@@ -21,7 +22,7 @@ import com.top_logic.basic.config.annotation.Name;
  * </p>
  */
 @Label("Select card {card}")
-public interface SelectCardArguments extends SelectCardModifiers {
+public interface SelectCardArguments extends SelectionModifiers {
 
 	/** @see #getCard() */
 	String CARD = "card";

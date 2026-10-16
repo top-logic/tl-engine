@@ -37,13 +37,12 @@ import com.top_logic.knowledge.service.db2.AssociationReference.CurrentDefault;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
 import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLAssociationEnd;
@@ -291,7 +290,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 		@Override
 		@ItemDefault(BackReferenceModel.class)
 		@DynamicMode(fun = GroupActiveIf.class, args = @Ref(CREATING))
-		@ControlProvider(GroupInlineControlProvider.class)
+		@Inline
 		PartModel getPartModel();
 
 	}

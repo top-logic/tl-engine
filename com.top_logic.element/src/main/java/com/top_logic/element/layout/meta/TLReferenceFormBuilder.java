@@ -28,10 +28,9 @@ import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.layout.meta.TLPropertyFormBuilder.PropertyModel;
 import com.top_logic.knowledge.service.db2.AssociationReference.CurrentDefault;
 import com.top_logic.layout.form.model.FieldMode;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
 import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.model.ModelKind;
@@ -294,7 +293,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		@Override
 		@ItemDefault(ReferenceModel.class)
 		@DynamicMode(fun = GroupActiveIf.class, args = @Ref(CREATING))
-		@ControlProvider(GroupInlineControlProvider.class)
+		@Inline
 		PartModel getPartModel();
 
 	}

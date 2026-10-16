@@ -26,6 +26,7 @@ import com.top_logic.layout.form.values.edit.annotation.Code;
 import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
 import com.top_logic.layout.form.values.edit.annotation.Html;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
@@ -35,8 +36,8 @@ import com.top_logic.layout.form.values.edit.annotation.MultiLine;
  *
  * <p>
  * Exercises a spread of property kinds (text, multi-line text, CommonMark text, JSON source code,
- * HTML text, number, boolean, enumeration, a date with its time of day, a nested item, a list of
- * items, an array of items, a map of items, a list of plain strings written as one comma separated
+ * HTML text, number, boolean, enumeration, a date with its time of day, a nested item, a nested
+ * item displayed without a group, a list of items, an array of items, a map of items, a list of plain strings written as one comma separated
  * text, a duration, and a {@link ResKey}) so the React configuration editor renders each editor
  * variant.
  * </p>
@@ -75,6 +76,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getAddress()}. */
 	String ADDRESS = "address";
+
+	/** Configuration name for the value of {@link #getBillingAddress()}. */
+	String BILLING_ADDRESS = "billingAddress";
 
 	/** Configuration name for the value of {@link #getItems()}. */
 	String ITEMS = "items";
@@ -213,12 +217,25 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	Date getDueDate();
 
 	/**
-	 * A nested address rendered inline as a monomorphic item.
+	 * A nested address rendered as a monomorphic item in a group of its own.
 	 */
 	@Name(ADDRESS)
 	@ItemDefault
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
 	Address getAddress();
+
+	/**
+	 * The address to send invoices to.
+	 *
+	 * <p>
+	 * The {@link Inline} annotation displays the street and city of this address as fields of the
+	 * form itself, unlike the group of {@link #getAddress()}.
+	 * </p>
+	 */
+	@Name(BILLING_ADDRESS)
+	@ItemDefault
+	@Inline
+	Address getBillingAddress();
 
 	/**
 	 * A list of named items with quantities.

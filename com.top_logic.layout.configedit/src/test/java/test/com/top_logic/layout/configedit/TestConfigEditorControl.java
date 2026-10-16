@@ -68,6 +68,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
@@ -693,6 +694,55 @@ public class TestConfigEditorControl extends TestCase {
 				return Boolean.TRUE.equals(lock) ? FieldMode.DISABLED : FieldMode.ACTIVE;
 			}
 		}
+	}
+
+	/**
+	 * A configuration with nested items displayed with and without a group of their own.
+	 */
+	public interface InlineConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getHide()}. */
+		String HIDE = "hide";
+
+		/** Property name for {@link #getInlined()}. */
+		String INLINED = "inlined";
+
+		/** Property name for {@link #getGrouped()}. */
+		String GROUPED = "grouped";
+
+		/** Property name for {@link #getHandler()}. */
+		String HANDLER = "handler";
+
+		/** Whether {@link #getInlined()} is hidden. */
+		@Name(HIDE)
+		boolean getHide();
+
+		/** @see #getHide() */
+		void setHide(boolean value);
+
+		/** An item displayed without a group. */
+		@Name(INLINED)
+		@Inline
+		@DynamicMode(fun = HideActiveIf.class, args = @Ref(HIDE))
+		InnerConfig getInlined();
+
+		/** @see #getInlined() */
+		void setInlined(InnerConfig value);
+
+		/** An item displayed in a group. */
+		@Name(GROUPED)
+		InnerConfig getGrouped();
+
+		/** @see #getGrouped() */
+		void setGrouped(InnerConfig value);
+
+		/** A polymorphic item displayed without a group. */
+		@Name(HANDLER)
+		@Inline
+		HandlerConfig getHandler();
+
+		/** @see #getHandler() */
+		void setHandler(HandlerConfig value);
 	}
 
 	static class TestableConfigEditorControl extends ConfigEditorControl {
@@ -1946,6 +1996,91 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * The fields of an {@link Inline} item are laid out among the fields of the surrounding form,
+	 * with no group around them, and are validated as any other field; an item without the
+	 * annotation keeps its group.
+	 */
+	public void testInlineItemHasNoGroup() {
+		InlineConfig config = TypedConfiguration.newConfigItem(InlineConfig.class);
+		InnerConfig inlined = TypedConfiguration.newConfigItem(InnerConfig.class);
+		config.setInlined(inlined);
+		config.setGrouped(TypedConfiguration.newConfigItem(InnerConfig.class));
+		ConfigFieldIndex index = new ConfigFieldIndex();
+
+		ReactControl inline = onlyField(config, InlineConfig.INLINED, index);
+		assertTrue("The item is displayed by an editor of its own: " + inline,
+			inline instanceof ConfigEditorControl);
+		assertEquals("The fields of the item are laid out in the surrounding form.",
+			Boolean.TRUE, inline.scriptingScalarState().get(ReactFormLayoutControl.INLINE));
+		assertEquals(List.of(InnerConfig.TITLE), fieldLabels(inline));
+		assertNotNull("The fields of the item are validated.",
+			index.lookup(inlined, inlined.descriptor().getProperty(InnerConfig.TITLE)));
+
+		ReactControl grouped = onlyField(config, InlineConfig.GROUPED, null);
+		assertTrue("An item without the annotation keeps its group: " + grouped,
+			grouped instanceof ReactFormGroupControl);
+	}
+
+	/**
+	 * A polymorphic {@link Inline} item is displayed with the type it has: there is no type
+	 * selector, only the fields of the item.
+	 */
+	public void testInlinePolymorphicItemHasNoTypeSelector() {
+		InlineConfig config = TypedConfiguration.newConfigItem(InlineConfig.class);
+		config.setHandler(TypedConfiguration.newConfigItem(HandlerAConfig.class));
+
+		ReactControl inline = onlyField(config, InlineConfig.HANDLER, null);
+		assertFalse("No type selector: " + inline, inline instanceof PolymorphicItemControl);
+		assertEquals(Boolean.TRUE, inline.scriptingScalarState().get(ReactFormLayoutControl.INLINE));
+		List<Object> labels = fieldLabels(inline);
+		assertTrue("The fields of the item are displayed: " + labels, labels.contains(HandlerAConfig.NAME_A));
+		for (ReactControl child : inline.scriptingChildren()) {
+			assertFalse("No type selector.", PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName()));
+		}
+	}
+
+	/**
+	 * An {@link Inline} property without item is displayed as without the annotation, so that the
+	 * item can be created.
+	 */
+	public void testInlinePropertyWithoutItemOffersItsCreation() {
+		InlineConfig config = TypedConfiguration.newConfigItem(InlineConfig.class);
+
+		assertTrue(onlyField(config, InlineConfig.INLINED, null) instanceof ReactFormGroupControl);
+		assertTrue(onlyField(config, InlineConfig.HANDLER, null) instanceof PolymorphicItemControl);
+	}
+
+	/**
+	 * The fields of an {@link Inline} item are hidden while the dynamic mode of its property says
+	 * so.
+	 */
+	public void testDynamicModeHidesAnInlineItem() {
+		InlineConfig config = TypedConfiguration.newConfigItem(InlineConfig.class);
+		config.setInlined(TypedConfiguration.newConfigItem(InnerConfig.class));
+		ReactControl inline = onlyField(config, InlineConfig.INLINED, null);
+		assertFalse(inline.isHidden());
+
+		config.setHide(true);
+		assertTrue("The item is hidden once its mode is invisible.", inline.isHidden());
+
+		config.setHide(false);
+		assertFalse("The item is shown again once its mode is active again.", inline.isHidden());
+	}
+
+	/**
+	 * The labels of the fields directly contained in the given control.
+	 */
+	private static List<Object> fieldLabels(ReactControl control) {
+		List<Object> labels = new ArrayList<>();
+		for (ReactControl child : control.scriptingChildren()) {
+			if (child instanceof ReactFormFieldChromeControl) {
+				labels.add(child.scriptingScalarState().get("label"));
+			}
+		}
+		return labels;
+	}
+
+	/**
 	 * The fields follow the {@link DisplayOrder} of the configuration, as in any other
 	 * configuration form, and a property it does not list is not displayed.
 	 */
@@ -2022,9 +2157,18 @@ public class TestConfigEditorControl extends TestCase {
 	 * The single control an editor showing only the given property of the given item consists of.
 	 */
 	private ReactControl onlyField(ConfigurationItem config, String propertyName) {
+		return onlyField(config, propertyName, null);
+	}
+
+	/**
+	 * The single control an editor showing only the given property of the given item consists of,
+	 * reporting its fields to the given index.
+	 */
+	private ReactControl onlyField(ConfigurationItem config, String propertyName, ConfigFieldIndex index) {
 		Set<PropertyDescriptor> others = new java.util.HashSet<>(config.descriptor().getProperties());
 		others.remove(config.descriptor().getProperty(propertyName));
-		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config, others);
+		TestableConfigEditorControl editor =
+			new TestableConfigEditorControl(createTestContext(), config, others, false, index);
 		assertEquals(1, editor.getChildCount());
 		return editor.getChildrenList().get(0);
 	}

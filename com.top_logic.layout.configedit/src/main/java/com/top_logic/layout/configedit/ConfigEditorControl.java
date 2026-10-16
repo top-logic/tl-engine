@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.basic.config.ConfigurationAccess;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -34,6 +33,7 @@ import com.top_logic.layout.form.values.ListenerBinding;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -62,6 +62,14 @@ import com.top_logic.util.Resources;
  * and MAP properties are rendered as collapsible sections containing nested editors for each
  * element - the same editor for all three, MAP differing only in the value's shape and in being
  * unordered. DERIVED and a COMPLEX property without a text form are skipped.
+ * </p>
+ *
+ * <p>
+ * An ITEM property annotated with {@link Inline} that holds an item is rendered without a group:
+ * a nested {@link ConfigEditorControl} for the item is laid out {@link #setInline(boolean) inline},
+ * so that the item's fields take their places in this form among the fields of this editor. It
+ * offers no type selector and no button to remove the item. An {@link Inline} property without an
+ * item is rendered as without the annotation, so that the item can be created.
  * </p>
  *
  * <p>
@@ -273,7 +281,16 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			// structured editor, the same as an item without a format at all.
 			if (property.kind() == PropertyKind.ITEM
 				&& !ConfigControlService.hasTextForm(config, property)) {
-				if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
+				ConfigurationItem nested = property.getConfigurationAccess().getConfig(config.value(property));
+				if (nested != null && isInline(property)) {
+					// The configuration of an instance that already exists cannot be changed.
+					ConfigEditorControl inline = newEditor(context, nested, Collections.emptySet(), false,
+						_index, groupEditable && !property.isInstanceValued(), _formModel);
+					inline.setInline(true);
+					addChild(inline);
+					followMode(config, property, inline, null);
+					disableIfDisabled(config, property, display);
+				} else if (PolymorphicConfiguration.class.isAssignableFrom(property.getType())) {
 					String label = resolveLabel(property);
 					PolymorphicItemControl polyGroup =
 						createPolymorphicGroup(context, label, config, property, groupEditable);
@@ -282,8 +299,6 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 					followMode(config, property, polyGroup, null);
 					disableIfDisabled(config, property, display);
 				} else {
-					ConfigurationAccess configAccess = property.getConfigurationAccess();
-					ConfigurationItem nested = configAccess.getConfig(config.value(property));
 					// A read-only form has nothing to show for an item without value; an editable
 					// one offers to create it, since the item could not be entered otherwise. The
 					// item is edited as a list of at most one entry, so that creating and removing
@@ -634,6 +649,14 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			}
 		}
 		return annotation != null && annotation.value();
+	}
+
+	/**
+	 * Whether the item of the given ITEM property is displayed without a group, see
+	 * {@link Inline}.
+	 */
+	private static boolean isInline(PropertyDescriptor property) {
+		return annotation(property, Inline.class) != null;
 	}
 
 	private static boolean isHidden(PropertyDescriptor property) {

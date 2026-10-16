@@ -28,12 +28,15 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
@@ -53,11 +56,13 @@ import com.top_logic.layout.form.values.edit.annotation.Code;
 import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
 import com.top_logic.layout.form.values.edit.annotation.Html;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
+import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
 import com.top_logic.layout.form.values.edit.editor.ValueEditor;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerUtil;
@@ -251,6 +256,22 @@ public class TestEditorFactoryControls extends TestCase {
 		String getPlain();
 	}
 
+	public interface Inner extends ConfigurationItem {
+		String getName();
+	}
+
+	public interface ItemProperties extends ConfigurationItem {
+		@Inline
+		@ItemDefault
+		Inner getInlined();
+
+		@ItemDefault
+		Inner getGrouped();
+
+		@Inline
+		List<Inner> getInlinedList();
+	}
+
 	@MultiLine(rows = 2)
 	public enum MultiLineValue {
 		A, B;
@@ -325,6 +346,47 @@ public class TestEditorFactoryControls extends TestCase {
 			inputs++;
 		}
 		assertTrue("No translation input.", inputs > 0);
+	}
+
+	/**
+	 * An {@link Inline} item is displayed without a group: Its editor takes the inlining template
+	 * instead of its default one, and the fields of the item are still created.
+	 */
+	public void testInline() {
+		FormGroup group = build(shippedConfig(), ItemProperties.class);
+
+		FormMember inlined = group.getMember("inlined");
+		assertTrue("Inlined item is displayed without group: " + inlined.getControlProvider(),
+			inlined.getControlProvider() instanceof GroupInlineControlProvider);
+		assertNotNull("The fields of the inlined item are created.", findField(inlined, "name"));
+
+		FormMember grouped = group.getMember("grouped");
+		assertNotNull(grouped.getControlProvider());
+		assertFalse("An item without annotation keeps its group.",
+			grouped.getControlProvider() instanceof GroupInlineControlProvider);
+	}
+
+	/** {@link Inline} does not apply to a list of items, whose entries keep their groups. */
+	public void testInlineIgnoredForList() {
+		FormGroup group = build(shippedConfig(), ItemProperties.class);
+
+		FormMember list = group.getMember("inlined-list");
+		assertFalse("A list is not inlined.", list.getControlProvider() instanceof GroupInlineControlProvider);
+	}
+
+	private static FormField findField(FormMember member, String name) {
+		if (member instanceof FormField field) {
+			return name.equals(field.getName()) ? field : null;
+		}
+		if (member instanceof FormContainer container) {
+			for (Iterator<? extends FormMember> it = container.getMembers(); it.hasNext();) {
+				FormField result = findField(it.next(), name);
+				if (result != null) {
+					return result;
+				}
+			}
+		}
+		return null;
 	}
 
 	public void testAnnotationControl() throws ConfigurationException {

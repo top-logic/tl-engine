@@ -43,7 +43,7 @@ public class ValueDisplay implements Editor {
 			field.setControlProvider(PasswordInputControlProvider.INSTANCE);
 		}
 
-		editorFactory.processControlProviderAnnotation(valueModel.getProperty(), field);
+		editorFactory.installControlProvider(valueModel.getProperty(), field);
 		return field;
 	}
 

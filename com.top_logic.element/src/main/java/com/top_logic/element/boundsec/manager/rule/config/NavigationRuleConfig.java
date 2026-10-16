@@ -18,8 +18,6 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.ValueInitializer;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
@@ -81,7 +79,6 @@ public interface NavigationRuleConfig extends ConfigurationItem {
 	@Nullable
 	@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 	@OptionLabels(TLPartScopedResourceProvider.class)
-	@ControlProvider(SelectionControlProvider.class)
 	String getMetaElement();
 
 	/** @see #getMetaElement() */

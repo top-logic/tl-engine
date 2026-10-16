@@ -461,7 +461,7 @@ public class InternationalizationEditor implements Editor {
 	 */
 	protected StringField createInternationalizationField(EditorFactory editorFactory, ValueModel model, String name) {
 		StringField result = FormFactory.newStringField(normalizeFieldName(name));
-		editorFactory.processControlProviderAnnotation(model.getProperty(), result);
+		editorFactory.installControlProvider(model.getProperty(), result);
 
 		return result;
 	}

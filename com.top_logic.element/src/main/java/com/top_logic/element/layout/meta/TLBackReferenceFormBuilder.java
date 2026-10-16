@@ -37,7 +37,6 @@ import com.top_logic.knowledge.service.db2.AssociationReference.CurrentDefault;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
-import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
@@ -100,7 +99,6 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 		 */
 		@Name(OTHER_END)
 		@Options(fun = AllForwardReferences.class, args = @Ref({ EDIT_MODEL, EditModel.CONTEXT_TYPE }))
-		@ControlProvider(SelectionControlProvider.class)
 		@InstanceFormat
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@OptionLabels(ReferenceNames.class)

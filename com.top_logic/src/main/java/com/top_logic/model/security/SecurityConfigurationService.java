@@ -37,8 +37,6 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
@@ -221,7 +219,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		String ACCESS_PARENT = "access-parent";
 
 		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -297,7 +294,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLSingletonAccessRights extends ModelAccessRights {
 
 		@Options(fun = AllSingletons.class, mapping = SingletonMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -316,7 +312,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLPartAccessRights extends ModelAccessRights {
 
 		@Options(fun = AllAttributes.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -337,7 +332,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLModuleAccessRights extends TypeBasedAccessRights {
 
 		@Options(fun = TLModelPartRef.AllModules.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 

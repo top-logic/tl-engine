@@ -193,7 +193,7 @@ public class ListEditor implements Editor {
 		}
 
 		BooleanField changeField = EditorUtils.addAdditionalChangedField(list, content, editorFactory, valueModel);
-		if (!editorFactory.processControlProviderAnnotation(property, list)) {
+		if (!editorFactory.installControlProvider(property, list)) {
 			template(list, listEditor(list, changeField, editorFactory, valueModel, polymorphicOptions, titleProperty));
 		}
 		return list;

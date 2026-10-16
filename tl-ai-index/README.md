@@ -29,7 +29,7 @@ Depend on `tl-ai-index`, switch the module on and configure the types:
 		<embedder class="com.top_logic.tl.ai.index.embed.OpenAiCompatibleEmbedder"
 			base-url="https://embed.example.eu"
 			model="Snowflake/snowflake-arctic-embed-m-v2.0"
-			api-key="%EMBED_API_KEY%"
+			api-key="unencrypted:%EMBED_API_KEY%"
 			dimensions="768"
 			query-prefix="query: "
 		/>
@@ -49,6 +49,12 @@ Depend on `tl-ai-index`, switch the module on and configure the types:
 	</instance>
 </config>
 ```
+
+`api-key` is an encrypted property: TopLogic decodes its value as an encrypted, base64-encoded text.
+A key in plain text, also one from an environment variable, needs the prefix `unencrypted:`. Write no
+space after the colon: the space becomes part of the key, and the server refuses it (401). Without the
+prefix, the decoded bytes go into the `Authorization` header and the request fails with
+`invalid header value`.
 
 Then give an agent the tools `index.search` and `index.similar`.
 

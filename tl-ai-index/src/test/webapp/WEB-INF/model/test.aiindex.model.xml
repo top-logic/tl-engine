@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A small project-knowledge model for the index tests: statements and materials belong to a
+	project (their scope), a statement has a kind (a keyword) and a secret attribute, and a material
+	has an extracted text with page markers.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.aiindex">
+		<enum name="Kind">
+			<classifier name="REQUIREMENT"/>
+			<classifier name="RISK"/>
+		</enum>
+		<class name="Project">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="Statement">
+			<attributes>
+				<property name="title"
+					type="tl.core:String"
+				/>
+				<property name="text"
+					type="tl.core:Text"
+				/>
+				<property name="secret"
+					type="tl.core:Text"
+				/>
+				<reference name="kind"
+					type="Kind"
+				/>
+				<reference name="project"
+					type="Project"
+				/>
+				<reference name="related"
+					multiple="true"
+					type="Project"
+				/>
+			</attributes>
+		</class>
+		<class name="Material">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="extractedText"
+					type="tl.core:Text"
+				/>
+				<reference name="project"
+					type="Project"
+				/>
+			</attributes>
+		</class>
+		<class name="Unindexed">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

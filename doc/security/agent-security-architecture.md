@@ -1268,6 +1268,40 @@ decision, not an implementer's - it is written up as a follow-up rather than sil
 Asserted against the fixture's real accounts by `SecDemoVectorIndexTest`; the store round trip stays
 behind `-Dtl.ai.vector.e2e=true` in `VectorIndexIntegrationTest`, because it needs an embedding key.
 
+#### 3.4.4 Hybrid index `tl-ai-index` · **implemented** (#902)
+
+`tl-ai-index` keeps its own Lucene index of chosen types: words and meaning per chunk of an object's
+text. Like the vector index it is written by a worker in a system interaction, so its contents are
+unrestricted; unlike it, the rights are applied **inside** the query and then once more per hit, in
+`IndexSearch`:
+
+1. **No reader, no search.** A call in a system context, or with no user, throws
+   `SearchRefusedException`. The engine answers every read check with "allowed" there
+   (`SecurityConfigurationService`), so a search would disclose every indexed text.
+2. **Scope in the query.** Each chunk carries the ids of its scope objects (the type's `scope`
+   script, e.g. the project). At query time the application's `readable-scopes` script runs in the
+   reader's own interaction and its result is filtered by the run's `ModelSecurity`; the remaining ids
+   are a filter of both the word and the vector search. A reader of one project of a thousand gets a
+   full page from that project, instead of the survivors of a global top-k. A scope id does not change
+   when a membership changes, so the index holds no rights, only ids the rights are asked about.
+3. **Per hit, in rank order:** `TidResolver.resolve` (the object read check) and
+   `canRead(object, attribute)` for **every attribute the chunk's text comes from** - an attribute
+   text part names its attribute, a script text part must declare what it `reads`, or it is shown to
+   nobody. A hit that fails is dropped with its text. Unlike `VectorIndexSearchTool`, a surviving hit
+   shows its chunk: the chunk is the text of named attributes, all just checked, not a dump of the
+   object. A search that filters by a keyword also checks `canRead` for every attribute the keyword
+   `reads`; a keyword must declare them. Otherwise a filter tells a reader the value of an attribute
+   the reader may not read, for example `salaryBand=HIGH` over readable objects.
+4. **Deeper, not wider.** An unfilled page searches again with twice the depth, up to
+   `max-candidates` chunks and as many checks; the answer says whether more is available, never how
+   many hits were dropped.
+5. `similar` starts only from the chunks of the start object the reader may read, so a hidden
+   attribute cannot steer what is found.
+
+What 3.4.3 says about the vector holds here too: it was computed from unfiltered text, and a dropped hit
+does not undo that. The stored chunk text is on disk in the index directory, which needs the protection
+of the database files. Asserted by `TestIndexSearchRights` and `TestBoundedSearch` in `tl-ai-index`.
+
 ### 3.5 L4 - Pre-commit action guard · **implemented**
 
 The highest-value layer, because it is the only one that catches tools that never had a check: MCP

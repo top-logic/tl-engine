@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-ai-parent</artifactId>
+		<version>2.1.2-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>tl-ai-index-onnx</artifactId>
+	<description>An in-process embedder for tl-ai-index: ONNX Runtime and the Hugging Face tokenizer on the CPU, no server needed.</description>
+
+	<licenses>
+	  <license>
+	    <name>LicenseRef-BOS-TopLogic-1.0</name>
+	    <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+	  </license>
+	</licenses>
+
+	<properties>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-index</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<!--
+			ONNX Runtime (MIT) and the Hugging Face tokenizers of DJL (Apache-2.0). Both jars carry their
+			native libraries for linux-x64, linux-aarch64, macOS aarch64 and Windows x64 - together about
+			73 MB, which is why they are a module of their own: an application that embeds through an
+			HTTP endpoint does not ship them.
+		-->
+		<dependency>
+			<groupId>com.microsoft.onnxruntime</groupId>
+			<artifactId>onnxruntime</artifactId>
+			<version>1.30.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ai.djl.huggingface</groupId>
+			<artifactId>tokenizers</artifactId>
+			<version>0.38.0</version>
+		</dependency>
+		<!-- Tests -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-core</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

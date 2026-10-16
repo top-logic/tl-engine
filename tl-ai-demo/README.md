@@ -126,6 +126,19 @@ engine, with the key in the environment variable `tl_brave_api_key` (prefix `une
 reaches no tool at all. The allowlist also bounds the scheduled task above. Turn the aspect off when
 you turn on the security test bed, whose allowlist keeps `egress` out on purpose.
 
+## Search by meaning
+
+Ask Albert "Gibt es eine Veranstaltung zur Kühlkette für Impfstoffe?". It calls `index.search` and
+finds the English *Cold Chain Logistics Forum 2027* (from `WEB-INF/data/events-en.objects.xml`),
+whose text shares no word with the question: the index compares meanings, not only words
+(`tl-ai-index/README.md`).
+
+`WEB-INF/conf/ai-index.config.xml`, on in `metaConf.txt`, indexes the names and descriptions of
+events and sessions and gives Albert the tools. The meaning side runs `snowflake-arctic-embed-m-v2.0`
+in the JVM; put `model_int8.onnx` and `tokenizer.json` into `tmp/app-data/var/models/snowflake-arctic-embed-m-v2.0`
+or into the directory named by the environment variable `tl_ai_index_model_dir`. Without them the demo
+starts all the same and the index searches words only.
+
 ## Layout of the module
 
 | Path | Contents |
@@ -133,7 +146,7 @@ you turn on the security test bed, whose allowlist keeps `egress` out on purpose
 | `WEB-INF/views/` | The React view layer: `app.view.xml` plus `tl-ai-demo/chat-grouped.view.xml`, `tl-ai-demo/rename-session.view.xml`, `tl-ai-demo/profile.view.xml` and the domain pages under `tl-ai-demo/events/`, `tl-ai-demo/venues/` and `tl-ai-demo/invoices/` |
 | `WEB-INF/layouts/` | The classic LayoutServlet UI |
 | `WEB-INF/model/` | The demo model `demo.events` (labels in `WEB-INF/conf/resources/model.demo.events.messages_*.properties`) and the security testbed's `pm` |
-| `WEB-INF/data/` | The demo data loaded on the first start (`events.objects.xml`) |
+| `WEB-INF/data/` | The demo data loaded on the first start (`events.objects.xml`, and one English event in `events-en.objects.xml`) |
 | `WEB-INF/conf/` | Application configuration, including the `ClientResources` declaration that loads the chat bundle |
 | `WEB-INF/autoconf/` | Service overlays: the agent definitions, the LLM providers, the agent runtime (default model) and application knowledge (application name), the MCP server - and the `Scheduler` with the disabled `AgentTask` above |
 | `doc/secdemo/` | A separate security testbed with its own personas; see `doc/secdemo/testbed.md` |

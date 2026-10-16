@@ -152,6 +152,11 @@
 				<form-definition>
 					<form>
 						<field
+							attribute="number"
+							fullQualifiedName="tl.demo.projectManagement:Ticket#number"
+							type="tl.core:Integer"
+						/>
+						<field
 							attribute="title"
 							fullQualifiedName="tl.demo.projectManagement:Ticket#title"
 							type="tl.core:String"
@@ -159,7 +164,7 @@
 						<field
 							attribute="description"
 							fullQualifiedName="tl.demo.projectManagement:Ticket#description"
-							type="tl.core:String"
+							type="tl.model.wysiwyg:Html"
 						/>
 						<field
 							attribute="milestone"
@@ -175,12 +180,27 @@
 				</form-definition>
 			</annotations>
 			<attributes>
+				<property name="number"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.element.structured.util.SequenceDefaultProvider"
+								sequence-name="tl.demo.projectManagement.Ticket"
+							>
+								<dynamic-sequence-name class="com.top_logic.element.structured.util.ContextAwareSequenceName"/>
+							</provider>
+						</default-value>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
 				<property name="title"
 					mandatory="true"
 					type="tl.core:String"
 				/>
 				<property name="description"
-					type="tl.core:String"
+					type="tl.model.wysiwyg:Html"
 				/>
 				<reference name="milestone"
 					inverse-reference="tickets"

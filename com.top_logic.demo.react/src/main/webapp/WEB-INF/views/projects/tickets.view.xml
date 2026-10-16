@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Third frame of the project drill-down: the tickets of the milestone the frame was opened for.
+	Third frame of the project drill-down: the tickets of the milestone the frame was opened for,
+	ordered by their number within the project.
 	The assignee cell is a link to the person contact, because the application declares a display
 	target for person contacts. Activating a row - a double-click, Enter on the row carrying the
 	keyboard cursor, or its chevron button - pushes the ticket's detail, announced with the
@@ -10,7 +11,8 @@
 	The toolbar creates a ticket in the project of the milestone and deletes the selected one. The
 	project is derived from the milestone, whose container it is. The draft of a created ticket
 	belongs to the milestone of the list, so the dialog shows it preset. The table observes tickets,
-	so both are reflected in the rows without a reload.
+	so both are reflected in the rows without a reload. A created ticket draws the next number of
+	its project, because it is created in the context of the project.
 -->
 <view>
 	<channels>
@@ -87,6 +89,11 @@
 			types="tl.demo.projectManagement:Ticket"
 		>
 			<columns>
+				<column
+					attribute="number"
+					sort="ASC"
+					width="100"
+				/>
 				<column attribute="title"/>
 				<column attribute="assignee"/>
 			</columns>

@@ -172,6 +172,21 @@ public class TestHtmlConfigProvider extends TestCase {
 		assertNull(model.getInputError());
 	}
 
+	/**
+	 * Markup the editor keeps without understanding it - custom data attributes, the width of a
+	 * resized column, line breaks and images written without closing slash - is stored.
+	 */
+	public void testKeptMarkupIsAccepted() {
+		ConfigFieldModel model = model(HtmlConfig.TEXT);
+		ReactWysiwygControl editor = editor(control(model));
+		String html = "<p class=\"lead\" data-foo=\"1\">a<br>b <span data-y=\"2\">c</span> <img src=\"x.png\"></p>"
+			+ "<table style=\"min-width: 75px\"><colgroup><col style=\"min-width: 25px\"></colgroup><tbody><tr>"
+			+ "<td colspan=\"1\" rowspan=\"1\" colwidth=\"120\"><p>x</p></td></tr></tbody></table>";
+		editor.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of(FieldState.VALUE__PROP, html));
+		assertNull("Unexpected problem: " + model.getInputError(), model.getInputError());
+		assertEquals(html, _config.getText());
+	}
+
 	/** An unsafe macro is rejected like an unsafe text, before it is parsed. */
 	public void testUnsafeMacroIsRejected() {
 		ConfigFieldModel model = model(HtmlConfig.MACRO);

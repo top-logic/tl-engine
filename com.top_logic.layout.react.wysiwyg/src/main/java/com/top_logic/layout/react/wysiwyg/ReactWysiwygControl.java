@@ -89,6 +89,11 @@ import com.top_logic.util.error.TopLogicException;
  * {@link #setSourceEditing(boolean) with source editing} offers switching between the formatted
  * text and its HTML source.
  * </p>
+ *
+ * <p>
+ * A text received from the client is stored only if it passes the application's HTML safety check
+ * ({@link SafeHTML}), see {@link #setCheckHtml(boolean)}.
+ * </p>
  */
 public class ReactWysiwygControl extends ReactFormFieldControl implements UploadHandler, DataProvider {
 
@@ -181,7 +186,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	private boolean _textOnly;
 
 	/** Whether the text received from the client is checked, see {@link #setCheckHtml(boolean)}. */
-	private boolean _checkHtml;
+	private boolean _checkHtml = true;
 
 	/**
 	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
@@ -197,7 +202,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 
 	/**
 	 * Creates a {@link ReactWysiwygControl} {@link #setTextOnly(boolean) for text only}, which
-	 * offers no commands of its own and {@link #setCheckHtml(boolean) stores only safe HTML}.
+	 * offers no commands of its own.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -211,7 +216,6 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		ReactWysiwygControl editor = new ReactWysiwygControl(context, model);
 		editor.setTextOnly(true);
 		editor.setSourceEditing(sourceEditing);
-		editor.setCheckHtml(true);
 		return editor;
 	}
 
@@ -374,6 +378,10 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * <p>
 	 * A text the check rejects is not stored: the field reports the problem the check finds and
 	 * keeps its last accepted value, while the editor still shows the rejected text.
+	 * </p>
+	 *
+	 * <p>
+	 * An editor checks the text unless told otherwise.
 	 * </p>
 	 */
 	public void setCheckHtml(boolean checkHtml) {

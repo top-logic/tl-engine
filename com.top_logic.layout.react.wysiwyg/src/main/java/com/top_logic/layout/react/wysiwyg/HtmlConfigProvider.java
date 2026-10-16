@@ -101,7 +101,6 @@ public class HtmlConfigProvider extends AbstractConfiguredInstance<HtmlConfigPro
 						new I18NWysiwygControl(context, new I18NLocalizedFieldModel(model, valueEditor));
 					inline.setTextOnly(true);
 					inline.setSourceEditing(sourceEditing);
-					inline.setCheckHtml(true);
 					return I18NEditorDialog.createEditor(context, model, inline, valueEditor, label);
 				},
 				ReactI18NStringInputControl::displayText, Function.identity());

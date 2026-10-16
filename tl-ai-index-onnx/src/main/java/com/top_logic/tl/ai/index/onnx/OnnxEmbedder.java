@@ -241,6 +241,9 @@ public class OnnxEmbedder extends AbstractEmbedder<OnnxEmbedder.Config<?>> {
 		} catch (IOException | OrtException ex) {
 			throw new IllegalArgumentException("Cannot load the embedding model from " + dir + ": " + ex.getMessage(),
 				ex);
+		} catch (LinkageError ex) {
+			throw new IllegalStateException("The native library of the embedding model does not load on this system"
+				+ " (ONNX Runtime and the DJL tokenizer need glibc, not musl/Alpine): " + ex.getMessage(), ex);
 		}
 	}
 
@@ -264,19 +267,36 @@ public class OnnxEmbedder extends AbstractEmbedder<OnnxEmbedder.Config<?>> {
 	 * </p>
 	 */
 	private static Loaded load(String modelFile, int threads) throws OrtException {
-		AtomicReference<Loaded> loaded = new AtomicReference<>();
+		return onLoaderThread(() -> {
+			OrtEnvironment environment = OrtEnvironment.getEnvironment();
+			try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {
+				options.setIntraOpNumThreads(threads);
+				options.setInterOpNumThreads(1);
+				options.addConfigEntry("session.intra_op.allow_spinning", "0");
+				options.addConfigEntry("session.inter_op.allow_spinning", "0");
+				return new Loaded(environment, environment.createSession(modelFile, options));
+			}
+		});
+	}
+
+	/** A step of {@link #onLoaderThread}. */
+	interface LoadStep<T> {
+		/** Does the step. */
+		T run() throws OrtException;
+	}
+
+	/**
+	 * Runs the step on a thread of its own with a stack of {@link #LOAD_STACK_BYTES}, and throws on
+	 * the calling thread what the step threw - an {@link Error} too: a native library that does not
+	 * load is an {@link UnsatisfiedLinkError}.
+	 */
+	static <T> T onLoaderThread(LoadStep<T> step) throws OrtException {
+		AtomicReference<T> result = new AtomicReference<>();
 		AtomicReference<Throwable> failure = new AtomicReference<>();
 		Thread loader = new Thread(null, () -> {
 			try {
-				OrtEnvironment environment = OrtEnvironment.getEnvironment();
-				try (OrtSession.SessionOptions options = new OrtSession.SessionOptions()) {
-					options.setIntraOpNumThreads(threads);
-					options.setInterOpNumThreads(1);
-					options.addConfigEntry("session.intra_op.allow_spinning", "0");
-					options.addConfigEntry("session.inter_op.allow_spinning", "0");
-					loaded.set(new Loaded(environment, environment.createSession(modelFile, options)));
-				}
-			} catch (OrtException | RuntimeException ex) {
+				result.set(step.run());
+			} catch (Throwable ex) {
 				failure.set(ex);
 			}
 		}, "tl-ai-index-onnx-load", LOAD_STACK_BYTES);
@@ -287,13 +307,17 @@ public class OnnxEmbedder extends AbstractEmbedder<OnnxEmbedder.Config<?>> {
 			Thread.currentThread().interrupt();
 			throw new IllegalStateException("Interrupted while the embedding model was loading.", ex);
 		}
-		if (failure.get() instanceof OrtException ex) {
+		Throwable problem = failure.get();
+		if (problem instanceof OrtException ex) {
 			throw ex;
 		}
-		if (failure.get() instanceof RuntimeException ex) {
+		if (problem instanceof RuntimeException ex) {
 			throw ex;
 		}
-		return loaded.get();
+		if (problem instanceof Error ex) {
+			throw ex;
+		}
+		return result.get();
 	}
 
 	/** The stack of the thread that loads the model, see {@link #load}. */

@@ -121,6 +121,8 @@ Operation:
   downloads a GPU build of itself when it finds a CUDA GPU and reports telemetry. The tokenizer's
   native library is extracted from the jar into `~/.djl.ai` (or `DJL_CACHE_DIR`), ONNX Runtime's into
   `java.io.tmpdir` (or `onnxruntime.native.path`) - both must be writable. Linux needs glibc 2.28.
+  On a musl image (Alpine) the native libraries do not load. The application then starts, logs one
+  error, and the index searches words only.
 - **CPU.** `threads` per inference, no thread spinning, on the index worker's low-priority thread. On a
   laptop CPU (4 threads, int8, passages of about 60 tokens): arctic-embed-m-v2.0 about 47 passages/s,
   e5-small about 140 (230 with `rows-per-inference="16"`); a first load of a million chunks wants a

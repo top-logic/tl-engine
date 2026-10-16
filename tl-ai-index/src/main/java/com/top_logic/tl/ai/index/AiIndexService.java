@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
@@ -53,9 +55,9 @@ public class AiIndexService extends ConfiguredManagedClass<AiIndexService.Config
 	 * Creates the service from configuration.
 	 *
 	 * <p>
-	 * An embedder that cannot be created - an in-process model whose files are not installed, say -
-	 * leaves the index searching words only, and says why in its status and in the log. The
-	 * application starts either way.
+	 * An embedder that cannot be created - an in-process model whose files are not installed, or
+	 * whose native library does not load on this system - leaves the index searching words only,
+	 * and says why in its status and in the log. The application starts either way.
 	 * </p>
 	 */
 	public AiIndexService(InstantiationContext context, Config<?> config) {
@@ -65,13 +67,27 @@ public class AiIndexService extends ConfiguredManagedClass<AiIndexService.Config
 		if (config.getEmbedder() != null) {
 			try {
 				embedder = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config.getEmbedder());
-			} catch (RuntimeException ex) {
-				problem = "The embedder cannot be created, the index searches words only: " + ex.getMessage();
+			} catch (RuntimeException | LinkageError ex) {
+				// A native library that does not load is a LinkageError, not an exception.
+				problem = "The embedder cannot be created, the index searches words only: " + reason(ex);
 				Logger.error(problem, ex, AiIndexService.class);
 			}
 		}
 		_embedder = embedder;
 		_embedderProblem = problem;
+	}
+
+	/**
+	 * The message of what the embedder's constructor threw: the instantiation wraps it into
+	 * configuration problems that only say that the instantiation failed.
+	 */
+	private static String reason(Throwable ex) {
+		Throwable reason = ex;
+		while ((reason instanceof ConfigurationError || reason instanceof ConfigurationException)
+			&& reason.getCause() != null) {
+			reason = reason.getCause();
+		}
+		return reason.getMessage();
 	}
 
 	/**

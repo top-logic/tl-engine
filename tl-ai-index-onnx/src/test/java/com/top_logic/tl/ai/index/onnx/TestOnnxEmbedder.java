@@ -156,6 +156,22 @@ public class TestOnnxEmbedder extends TestCase {
 		}
 	}
 
+	/**
+	 * A native library that does not load on the loader thread - ONNX Runtime on a musl image, say -
+	 * reaches the thread that creates the embedder.
+	 */
+	public void testNativeLibraryThatDoesNotLoad() throws Exception {
+		UnsatisfiedLinkError failure = new UnsatisfiedLinkError("libonnxruntime.so: Error loading shared library");
+		try {
+			OnnxEmbedder.onLoaderThread(() -> {
+				throw failure;
+			});
+			fail("The failure of the loader thread must reach the caller.");
+		} catch (UnsatisfiedLinkError ex) {
+			assertSame(failure, ex);
+		}
+	}
+
 	private static OnnxEmbedder embedder() {
 		String dir = System.getProperty("tl.ai.index.model.dir");
 		assertNotNull("Name the model directory with -Dtl.ai.index.model.dir=...", dir);

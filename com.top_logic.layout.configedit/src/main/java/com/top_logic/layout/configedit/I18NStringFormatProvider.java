@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.configedit;
 
+import java.util.function.Function;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -13,6 +15,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -35,9 +38,9 @@ import com.top_logic.layout.react.control.form.ReactRenderedTextControl;
  * </p>
  *
  * <p>
- * A text spanning several lines - a property annotated with {@link MultiLine} or
- * {@link CommonMark} - is edited in a multi-line input per language. A {@link CommonMark} text is
- * displayed formatted while it cannot be edited.
+ * A text spanning several lines - a property annotated with {@link MultiLine}, {@link CommonMark},
+ * or {@link Html} - is edited in a multi-line input per language. A {@link CommonMark} or
+ * {@link Html} text is displayed formatted while it cannot be edited.
  * </p>
  *
  * <p>
@@ -69,8 +72,8 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 		 *
 		 * <p>
 		 * Used for a property whose text is not stated to span several lines. The text of a
-		 * property annotated with {@link MultiLine} or {@link CommonMark} is edited in inputs with
-		 * the rows the annotation gives.
+		 * property annotated with {@link MultiLine}, {@link CommonMark}, or {@link Html} is edited
+		 * in inputs with the rows the annotation gives.
 		 * </p>
 		 */
 		@IntDefault(0)
@@ -98,6 +101,11 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 			return new ReactRenderedTextControl(context, model,
 				() -> ReactI18NStringInputControl.createEditor(context, model, editorRows, label),
 				ReactI18NStringInputControl::displayText, com.top_logic.layout.form.format.CommonMark::toHtml);
+		}
+		if (ConfigControlService.annotation(model.getProperty(), Html.class) != null) {
+			return new ReactRenderedTextControl(context, model,
+				() -> ReactI18NStringInputControl.createEditor(context, model, editorRows, label),
+				ReactI18NStringInputControl::displayText, Function.identity());
 		}
 		return ReactI18NStringInputControl.createEditor(context, model, rows, label);
 	}

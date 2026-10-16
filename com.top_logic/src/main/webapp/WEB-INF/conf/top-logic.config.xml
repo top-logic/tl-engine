@@ -2112,6 +2112,13 @@
 				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Code">
 					<impl class="com.top_logic.layout.form.values.CodeTextProvider"/>
 				</annotation-control>
+				<!--
+					Html: a WYSIWYG editor module overrides this entry with its editor. Without one,
+					the HTML source is edited as text, with the rows of a @MultiLine on the same property.
+				-->
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Html">
+					<impl class="com.top_logic.layout.form.values.HtmlTextProvider"/>
+				</annotation-control>
 				<!-- CommonMark before MultiLine: its text spans several lines, too, and a @MultiLine on the same property gives the rows. -->
 				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.CommonMark">
 					<impl class="com.top_logic.layout.form.values.CommonMarkTextProvider"/>

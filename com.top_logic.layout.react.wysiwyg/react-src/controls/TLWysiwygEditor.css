@@ -32,6 +32,22 @@
   outline: none;
 }
 
+/* The HTML source, shown in place of the formatted text. */
+.tlWysiwygEditor__source {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120px;
+  padding: 12px 16px;
+  border: none;
+  outline: none;
+  resize: vertical;
+  background: var(--field);
+  color: var(--text-primary);
+  font-family: var(--font-family-mono);
+  font-size: 0.9em;
+}
+
 /* The inner spacing belongs to the editable element itself, so that a click anywhere inside the
    visible field, close to its edge included, places the caret in the editor. */
 .tlWysiwygEditor__content .ProseMirror {

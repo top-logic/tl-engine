@@ -75,6 +75,7 @@ import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Code;
 import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -757,6 +758,12 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getEightLines()}. */
 		String EIGHT_LINES = "eightLines";
 
+		/** Property name for {@link #getHtmlText()}. */
+		String HTML_TEXT = "htmlText";
+
+		/** Property name for {@link #getHtmlLabel()}. */
+		String HTML_LABEL = "htmlLabel";
+
 		/** Property name for {@link #getMultiLineLabel()}. */
 		String MULTI_LINE_LABEL = "multiLineLabel";
 
@@ -959,6 +966,19 @@ public class TestConfigControlService extends TestCase {
 		@Name(COMMON_MARK_LABEL)
 		@CommonMark
 		ResKey getCommonMarkLabel();
+
+		/** An HTML text edited with the macro feature set. */
+		@Name(HTML_TEXT)
+		@Html(features = "macro")
+		String getHtmlText();
+
+		/** @see #getHtmlText() */
+		void setHtmlText(String value);
+
+		/** An internationalized text whose translations are HTML. */
+		@Name(HTML_LABEL)
+		@Html
+		ResKey getHtmlLabel();
 
 		/** One of the offered colours, annotated as multi-line text. */
 		@Name(MULTI_LINE_CHOICE)
@@ -1682,6 +1702,75 @@ public class TestConfigControlService extends TestCase {
 		String html = (String) state.get(ReactHtmlControl.HTML);
 		assertTrue("Unexpected HTML: " + html,
 			html.contains("<strong>English</strong>") || html.contains("<strong>deutscher</strong>"));
+	}
+
+	/**
+	 * Without a WYSIWYG editor, an editable {@link Html} text is edited as its source in a text
+	 * area with the default number of rows, whatever its feature set.
+	 */
+	public void testHtmlIsEditedInATextArea() {
+		ReactControl control = control(TestConfig.HTML_TEXT);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactControl input = ((ReactRenderedTextControl) control).getInput();
+		assertTrue(input instanceof ReactTextInputControl);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/** A read-only {@link Html} text is displayed formatted. */
+	public void testReadOnlyHtmlIsDisplayedFormatted() {
+		_config.setHtmlText("A <b>bold</b> word.");
+		Map<String, Object> state = readOnly(TestConfig.HTML_TEXT).getDisplay().scriptingScalarState();
+		assertNull("The text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		assertEquals("A <b>bold</b> word.", state.get(ReactHtmlControl.HTML));
+	}
+
+	/** An unsafe read-only {@link Html} text is not displayed. */
+	public void testReadOnlyUnsafeHtmlIsNotDisplayed() {
+		_config.setHtmlText("Text <script>alert(1)</script>");
+		Map<String, Object> state = readOnly(TestConfig.HTML_TEXT).getDisplay().scriptingScalarState();
+		assertNotNull("The HTML safety check must refuse the text.", state.get(ReactHtmlControl.ERROR));
+		Object html = state.get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html, html == null || !html.toString().contains("<script"));
+	}
+
+	/**
+	 * Without a WYSIWYG editor, an internationalized {@link Html} text is edited per language with
+	 * multi-line inputs for the source, and displayed formatted while it cannot be edited.
+	 */
+	public void testHtmlResKeyIsEditedPerLanguage() {
+		ReactControl control = control(TestConfig.HTML_LABEL);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactI18NStringInputControl input =
+			find(((ReactRenderedTextControl) control).getInput(), ReactI18NStringInputControl.class);
+		assertNotNull("The per-language editor must be used.", input);
+		assertEquals(Boolean.TRUE, input.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.HTML_LABEL);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		model.setEditable(false);
+		ReactControl readOnly = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(readOnly instanceof ReactRenderedTextControl);
+		model.setValue(ResKey.builder()
+			.add(Locale.ENGLISH, "An <b>English</b> text.")
+			.add(Locale.GERMAN, "Ein <b>deutscher</b> Text.")
+			.build());
+		Map<String, Object> state = ((ReactRenderedTextControl) readOnly).getDisplay().scriptingScalarState();
+		assertNull("The text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		String html = (String) state.get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html,
+			html.contains("<b>English</b>") || html.contains("<b>deutscher</b>"));
+	}
+
+	private ReactRenderedTextControl readOnly(String propertyName) {
+		PropertyDescriptor property = _config.descriptor().getProperty(propertyName);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		model.setEditable(false);
+		ReactControl control = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		assertEquals("A read-only text shows the display.", 1, ((ReactRenderedTextControl) control).getActiveIndex());
+		return (ReactRenderedTextControl) control;
 	}
 
 	private String readOnlyCommonMarkHtml() {

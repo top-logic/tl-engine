@@ -10,8 +10,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
-import com.top_logic.layout.wysiwyg.ui.MacroControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Html;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.search.expr.config.MacroFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -49,7 +49,7 @@ public interface MacroPart extends FormElement<MacroTemplateProvider> {
 	 */
 	@Mandatory
 	@Name(EXPR)
-	@ControlProvider(MacroControlProvider.class)
+	@Html(features = StructuredTextConfigService.FEATURE_SET_MACRO)
 	@Format(MacroFormat.class)
 	Expr getExpr();
 

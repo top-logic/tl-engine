@@ -12,6 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -29,14 +30,18 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Function0;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.CommonMarkText;
+import com.top_logic.layout.form.values.HtmlText;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.AnnotationControlProvider;
 import com.top_logic.layout.form.values.edit.EditorFactory;
@@ -47,6 +52,9 @@ import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Code;
 import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.Html;
+import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
+import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
@@ -229,6 +237,17 @@ public class TestEditorFactoryControls extends TestCase {
 
 		HTMLTemplate getHtml();
 
+		@Html
+		String getFormatted();
+
+		@Html(features = "macro")
+		@MultiLine(rows = 7)
+		String getSevenLineFormatted();
+
+		@Html
+		@ItemDisplay(ItemDisplayType.MONOMORPHIC)
+		ResKey getI18nFormatted();
+
 		String getPlain();
 	}
 
@@ -274,6 +293,38 @@ public class TestEditorFactoryControls extends TestCase {
 		FormGroup group = build(shippedConfig(), TextProperties.class);
 
 		assertMultiLine(MultiLineText.class, MultiLineText.DEFAULT_ROWS, group, "html");
+	}
+
+	/**
+	 * Without a WYSIWYG editor, the source of an {@link Html} text is edited as multi-line text,
+	 * with the rows of a {@link MultiLine} annotation of the same property, whatever its feature
+	 * set.
+	 */
+	public void testHtmlFallsBackToHtmlText() {
+		FormGroup group = build(shippedConfig(), TextProperties.class);
+
+		assertMultiLine(HtmlText.class, MultiLineText.DEFAULT_ROWS, group, "formatted");
+		assertMultiLine(HtmlText.class, 7, group, "seven-line-formatted");
+	}
+
+	/** Each translation of an internationalized {@link Html} text is edited as its source text. */
+	public void testInternationalizedHtmlFallsBackToHtmlText() {
+		FormGroup group = build(shippedConfig(), TextProperties.class);
+
+		FormGroup translations = (FormGroup) group.getMember("i18n-formatted");
+		int inputs = 0;
+		for (Iterator<FormField> it = translations.getFields(); it.hasNext();) {
+			FormField translation = it.next();
+			if (!(translation instanceof StringField) || translation.getName().contains("_")) {
+				// Not a translation, but e.g. the translation of a derived key such as a tooltip.
+				continue;
+			}
+			ControlProvider controlProvider = translation.getControlProvider();
+			assertEquals("Control for '" + translation.getName() + "'.", HtmlText.class,
+				controlProvider == null ? null : controlProvider.getClass());
+			inputs++;
+		}
+		assertTrue("No translation input.", inputs > 0);
 	}
 
 	public void testAnnotationControl() throws ConfigurationException {

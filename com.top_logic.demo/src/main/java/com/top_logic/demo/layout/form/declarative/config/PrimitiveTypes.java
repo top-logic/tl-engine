@@ -26,14 +26,13 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.annotation.AcceptedTypes;
 import com.top_logic.layout.form.values.edit.annotation.Code;
 import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.editor.BinaryDataEditor;
-import com.top_logic.layout.wysiwyg.ui.StructuredTextControlProvider;
 import com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint;
 
 /**
@@ -236,7 +235,7 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	 */
 	@Name(RESKEY_HTML_PRIMITIVE)
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
-	@ControlProvider(StructuredTextControlProvider.class)
+	@Html
 	ResKey getResKeyHtmlPrimitive();
 
 }

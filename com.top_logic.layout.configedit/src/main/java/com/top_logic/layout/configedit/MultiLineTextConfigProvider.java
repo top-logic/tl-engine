@@ -8,6 +8,7 @@ package com.top_logic.layout.configedit;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -46,7 +47,7 @@ public class MultiLineTextConfigProvider implements ConfigAnnotationControlProvi
 	 *
 	 * <p>
 	 * The rows of a {@link MultiLine} annotation of the property, or {@link MultiLineText#DEFAULT_ROWS}
-	 * for a {@link CommonMark} text without one - such a text spans several lines.
+	 * for a {@link CommonMark} or {@link Html} text without one - such a text spans several lines.
 	 * </p>
 	 *
 	 * @return The number of rows, or {@code 0} if the text of the property is a single line.
@@ -56,7 +57,8 @@ public class MultiLineTextConfigProvider implements ConfigAnnotationControlProvi
 		if (multiLine != null) {
 			return multiLine.rows();
 		}
-		if (ConfigControlService.annotation(property, CommonMark.class) != null) {
+		if (ConfigControlService.annotation(property, CommonMark.class) != null
+			|| ConfigControlService.annotation(property, Html.class) != null) {
 			return MultiLineText.DEFAULT_ROWS;
 		}
 		return 0;

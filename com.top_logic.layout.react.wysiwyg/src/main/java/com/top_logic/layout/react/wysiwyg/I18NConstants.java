@@ -129,6 +129,10 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.wysiwyg.redo")
 	public static ResKey JS_WYSIWYG_REDO;
 
+	/** @en Source code */
+	@CustomKey("js.wysiwyg.source")
+	public static ResKey JS_WYSIWYG_SOURCE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

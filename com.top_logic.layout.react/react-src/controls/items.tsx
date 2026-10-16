@@ -1,5 +1,4 @@
-import { React, TLChild, useTLCommand, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
-import { isInteractiveTarget } from './interactive';
+import { React, TLChild, useTLCommand, isInteractiveWithin, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
 import { useRovingFocus } from './useRovingFocus';
 
 /**
@@ -173,8 +172,9 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
   const content = children.map((child, i) => {
     const key = itemKeys[i];
     const isSelected = key !== undefined && selected.has(key);
-    const ownsEvent = (event: React.SyntheticEvent) =>
-      (event.target as Element).closest('[role="option"]') === event.currentTarget;
+    // A click on an interactive element inside the item - a button, a link, the option of a nested
+    // list - is that element's. The item is an option itself, so it is not counted.
+    const onInner = (event: React.SyntheticEvent) => isInteractiveWithin(event.target, event.currentTarget);
     return (
       <div
         key={i}
@@ -186,13 +186,13 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
         className={wrapperClass(wrapper, itemClass, ITEM_SELECTABLE_CLASS, isSelected && ITEM_SELECTED_CLASS)}
         style={wrapperStyle(wrapper, i)}
         onMouseDown={event => {
-          if (event.shiftKey && ownsEvent(event) && !isInteractiveTarget(event)) {
+          if (event.shiftKey && !onInner(event)) {
             // A Shift-click extends the selection, not a text selection.
             event.preventDefault();
           }
         }}
         onClick={event => {
-          if (key !== undefined && ownsEvent(event) && !isInteractiveTarget(event)) {
+          if (key !== undefined && !onInner(event)) {
             void select(key, event.ctrlKey || event.metaKey, event.shiftKey);
           }
         }}

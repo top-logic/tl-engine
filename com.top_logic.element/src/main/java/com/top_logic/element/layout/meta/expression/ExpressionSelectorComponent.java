@@ -20,6 +20,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.layout.meta.search.QueryUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
@@ -149,7 +150,7 @@ public abstract class ExpressionSelectorComponent<W extends Wrapper> extends For
 					// root or owner can modify published queries
 					if (WrapperHistoryUtils.getUnversionedIdentity(currentUser).equals(
 						WrapperHistoryUtils.getUnversionedIdentity(creator))
-						|| Person.isAdmin(currentUser)) {
+						|| ThreadContext.isAdmin()) {
 						boolean isPublished;
 						if (groupAssociations.isEmpty()) {
 							isPublished = false;

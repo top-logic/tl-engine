@@ -34,11 +34,14 @@ import com.top_logic.presentation.model.ElementSpec;
  * it is stretched to the size of the container, or in a row aligned other than
  * {@link CrossAlign#STRETCH stretched} it takes the height of its content, at most the height of
  * the row.</li>
+ * <li>A child of a column is at most as wide as the column.</li>
  * </ul>
  *
  * <p>
  * The result are the bounds of all elements that are written to the slide, the containers
- * themselves are not part of it.
+ * themselves are not part of it. Only a {@link ContainerSpec#split() split column} is part of the
+ * result as a whole, since its children are placed while writing it, see
+ * {@link ElementWriter}.
  * </p>
  */
 public final class Arrangement {
@@ -67,7 +70,8 @@ public final class Arrangement {
 	 * An element with its computed bounds.
 	 *
 	 * @param element
-	 *        The element, never a {@link ContainerSpec}.
+	 *        The element, a {@link ContainerSpec} only if it is a {@link ContainerSpec#split() split
+	 *        column}.
 	 * @param bounds
 	 *        The position and size of the element on the slide in points.
 	 * @param path
@@ -139,10 +143,6 @@ public final class Arrangement {
 		return slidePath + "." + PresentationData.CONTENT + "[" + index + "]";
 	}
 
-	private static String childPath(String containerPath, int index) {
-		return containerPath + "." + PresentationData.CHILDREN + "[" + index + "]";
-	}
-
 	private Rectangle2D positioned(ElementSpec element, Rectangle2D area, String path) {
 		Bounds bounds = element.bounds();
 		double x = bounds.x() != null ? bounds.x().doubleValue() : area.getX();
@@ -159,8 +159,25 @@ public final class Arrangement {
 		return new Rectangle2D.Double(x, y, width, height);
 	}
 
+	/**
+	 * Computes the bounds of the elements to write for the given element.
+	 *
+	 * @param element
+	 *        The element, e.g. a row or column.
+	 * @param bounds
+	 *        The position and size of the element.
+	 * @param path
+	 *        The path of the element in the description, for error messages.
+	 * @return The given element, or the elements of a container, with their bounds.
+	 */
+	public List<Placed> place(ElementSpec element, Rectangle2D bounds, String path) {
+		List<Placed> result = new ArrayList<>();
+		place(element, bounds, path, result);
+		return result;
+	}
+
 	private void place(ElementSpec element, Rectangle2D bounds, String path, List<Placed> result) {
-		if (element instanceof ContainerSpec container) {
+		if (element instanceof ContainerSpec container && !container.split()) {
 			List<String> paths = childPaths(container, path);
 			List<Rectangle2D> childBounds = arrangeChildren(container, bounds, paths);
 			for (int n = 0; n < childBounds.size(); n++) {
@@ -169,6 +186,13 @@ public final class Arrangement {
 		} else {
 			result.add(new Placed(element, bounds, path));
 		}
+	}
+
+	/**
+	 * The path of the child with the given index of a container.
+	 */
+	public static String childPath(String containerPath, int index) {
+		return containerPath + "." + PresentationData.CHILDREN + "[" + index + "]";
 	}
 
 	private static List<String> childPaths(ContainerSpec container, String path) {
@@ -334,11 +358,17 @@ public final class Arrangement {
 		return result;
 	}
 
-	private static double crossSize(Double own, double containerSize) {
-		return own != null ? own.doubleValue() : containerSize;
+	/**
+	 * The width of a child of a column: its own width, but at most the width of the column.
+	 */
+	static double crossSize(Double own, double containerSize) {
+		return own != null ? Math.min(own.doubleValue(), containerSize) : containerSize;
 	}
 
-	private static double crossOffset(CrossAlign align, double start, double containerSize, double size) {
+	/**
+	 * The position of a child across the direction of its container.
+	 */
+	static double crossOffset(CrossAlign align, double start, double containerSize, double size) {
 		switch (align) {
 			case CENTER:
 				return start + (containerSize - size) / 2;

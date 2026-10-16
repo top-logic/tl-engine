@@ -605,6 +605,16 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * Several content elements of a slide without position are arranged as in a column.
 	 * </p>
 	 *
+	 * <p>
+	 * With <code>split: true</code>, each child takes its own height or the height of its content,
+	 * and the children that do not fit continue on further slides: a table continues by rows, a
+	 * text with <code>split: true</code> by paragraphs, any other child moves to the next slide as
+	 * a whole. A child higher than the column on its own is reduced to the height of the column.
+	 * The continuation slides repeat the title of the slide extended by the
+	 * <code>continuationSuffix</code> of the template profile. Only one element of a slide can be
+	 * continued.
+	 * </p>
+	 *
 	 * @param children
 	 *        The elements of the column: shapes, text boxes, tables, images, rows and columns.
 	 * @param gap
@@ -628,6 +638,8 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param weight
 	 *        The share in the free space of an enclosing row or column, or of the content area.
 	 *        The default is 1.
+	 * @param split
+	 *        Whether the children that do not fit continue on further slides.
 	 * @return The dictionary describing the column.
 	 */
 	@Label("Describe a column")
@@ -641,8 +653,11 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 			Double y,
 			Double width,
 			Object height,
-			Double weight) {
-		return container(TYPE_COLUMN, children, gap, weights, align, x, y, width, height, weight);
+			Double weight,
+			Boolean split) {
+		Map<String, Object> result = container(TYPE_COLUMN, children, gap, weights, align, x, y, width, height, weight);
+		put(result, SPLIT, split);
+		return result;
 	}
 
 	private static Map<String, Object> container(String type, List<?> children, Double gap, List<?> weights,
@@ -675,7 +690,12 @@ public class PptDescriptionFunctions extends TLScriptFunctions {
 	 * @param bullet
 	 *        The bullet: <code>true</code> or <code>false</code> to switch the bullet of the
 	 *        placeholder on or off, <code>none</code>, the bullet character, or a dictionary with
-	 *        the entries <code>char</code> and <code>color</code>.
+	 *        the entries <code>char</code> or <code>autoNumber</code>, <code>start</code> and
+	 *        <code>color</code>. <code>autoNumber</code> numbers the paragraph automatically in a
+	 *        scheme such as <code>arabicPeriod</code> (1., 2., ...), <code>alphaLcPeriod</code>
+	 *        (a., b., ...) or <code>romanUcPeriod</code> (I., II., ...); <code>start</code> gives
+	 *        its number, without it the paragraph continues the numbering of the preceding
+	 *        one.
 	 * @param spaceBefore
 	 *        The space before the paragraph.
 	 * @param spaceAfter

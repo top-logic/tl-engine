@@ -366,7 +366,7 @@ public class TestArrangement extends AbstractSearchExpressionTest {
 		renderDeck(deck, "table-header");
 	}
 
-	private static void renderDeck(XMLSlideShow deck, String prefix) throws Exception {
+	static void renderDeck(XMLSlideShow deck, String prefix) throws Exception {
 		SlideRenderer renderer = new SlideRenderer();
 		List<BufferedImage> images = new ArrayList<>();
 		for (XSLFSlide slide : deck.getSlides()) {
@@ -466,7 +466,7 @@ public class TestArrangement extends AbstractSearchExpressionTest {
 	/**
 	 * The shapes of the slide with the given index that are no placeholders, in their order.
 	 */
-	private static List<XSLFShape> contentShapes(XMLSlideShow deck, int slide) {
+	static List<XSLFShape> contentShapes(XMLSlideShow deck, int slide) {
 		List<XSLFShape> result = new ArrayList<>();
 		for (XSLFShape shape : deck.getSlides().get(slide).getShapes()) {
 			if (PlaceholderInfo.typeOf(shape) == null) {
@@ -499,7 +499,7 @@ public class TestArrangement extends AbstractSearchExpressionTest {
 		return result.doubleValue();
 	}
 
-	private static void assertFits(XSLFTextShape shape) {
+	static void assertFits(XSLFTextShape shape) {
 		TextMetrics metrics = TextMeasure.measure(shape);
 		Insets2D insets = shape.getInsets();
 		double available = shape.getAnchor().getHeight() - insets.top - insets.bottom;

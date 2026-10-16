@@ -135,7 +135,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en A bullet: a truth value, "none", the bullet character, or a dictionary with the entries
-	 *     "char" and "color".
+	 *     "char" or "autoNumber" (a numbering scheme such as "arabicPeriod"), "start" and "color".
 	 */
 	public static ResKey EXPECTED_BULLET;
 

@@ -48,6 +48,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_NO_SUCH_LAYOUT__INDEX_COUNT;
 
 	/**
+	 * @en The value "{0}" is no HTML text: expected the value of an HTML attribute or a string of
+	 *     HTML.
+	 */
+	public static ResKey1 ERROR_NO_HTML__VALUE;
+
+	/**
 	 * @en Agenda
 	 */
 	public static ResKey AGENDA_TITLE;

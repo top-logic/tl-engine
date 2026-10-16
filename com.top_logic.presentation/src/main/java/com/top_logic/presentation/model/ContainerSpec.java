@@ -21,6 +21,14 @@ import java.util.List;
  * The children have no position of their own, they are placed by the container.
  * </p>
  *
+ * <p>
+ * A column with {@link #split()} gives each child its own height or the height of its content and
+ * continues on further slides child by child: The children that fit stay on the slide. A
+ * table or a text with {@link TextSpec#split()} that does not fit shows the rows or paragraphs
+ * that fit, any other child that does not fit moves to the next slide. A child that is higher than
+ * the whole column on its own is reduced to the height of the column.
+ * </p>
+ *
  * @param bounds
  *        See {@link ElementSpec#bounds()}.
  * @param direction
@@ -35,9 +43,20 @@ import java.util.List;
  * @param align
  *        The alignment of the children across the direction, <code>null</code> for
  *        {@link CrossAlign#STRETCH}.
+ * @param split
+ *        Whether the children of a column that do not fit continue on further slides. Always
+ *        <code>false</code> for a row.
  */
 public record ContainerSpec(Bounds bounds, Direction direction, List<ElementSpec> children, Double gap,
-		List<Double> weights, CrossAlign align) implements ElementSpec {
+		List<Double> weights, CrossAlign align, boolean split) implements ElementSpec {
+
+	/**
+	 * Creates a container whose children do not continue on further slides.
+	 */
+	public ContainerSpec(Bounds bounds, Direction direction, List<ElementSpec> children, Double gap,
+			List<Double> weights, CrossAlign align) {
+		this(bounds, direction, children, gap, weights, align, false);
+	}
 
 	/**
 	 * The direction in which a {@link ContainerSpec} arranges its children.

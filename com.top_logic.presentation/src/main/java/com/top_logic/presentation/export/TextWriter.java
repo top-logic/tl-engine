@@ -62,6 +62,12 @@ public final class TextWriter {
 	 */
 	public static final double BULLET_INDENT = 18;
 
+	/**
+	 * The distance in points between the number of a numbered paragraph and its text, if the
+	 * paragraph inherits no indentation; wide enough for a two-digit number with its period.
+	 */
+	public static final double NUMBER_INDENT = 27;
+
 	private static final String LINE_BREAK = "\\r\\n|\\r|\\n";
 
 	private final DrawingWriter _drawing;
@@ -206,6 +212,14 @@ public final class TextWriter {
 		if (!lastStyle.isInherit()) {
 			writeCharacterProperties(paragraph.getXmlObject().addNewEndParaRPr(), lastStyle, path);
 		}
+		if (spec.bullet() != null && spec.bullet().isNumbered() && !paragraph.getTextRuns().isEmpty()) {
+			// The number is shown in the font of the text. A paragraph without bullet font or
+			// character is not numbered when rendered by POI.
+			String font = paragraph.getTextRuns().get(0).getFontFamily();
+			if (font != null) {
+				(pPr.isSetBuFont() ? pPr.getBuFont() : pPr.addNewBuFont()).setTypeface(font);
+			}
+		}
 	}
 
 	private void writeBullet(XSLFTextParagraph paragraph, CTTextParagraphProperties pPr, BulletSpec bullet,
@@ -214,21 +228,38 @@ public final class TextWriter {
 			paragraph.setBullet(false);
 			return;
 		}
-		boolean inherited = paragraph.isBullet() && paragraph.getBulletCharacter() != null;
-		if (bullet.character() != null || !inherited) {
-			paragraph.setBullet(true);
-			paragraph.setBulletCharacter(bullet.character() != null ? bullet.character() : DEFAULT_BULLET);
-			Double indent = paragraph.getIndent();
-			if (indent == null || indent.doubleValue() == 0) {
-				Double margin = paragraph.getLeftMargin();
-				paragraph.setLeftMargin(Double.valueOf((margin == null ? 0 : margin.doubleValue()) + BULLET_INDENT));
-				paragraph.setIndent(Double.valueOf(-BULLET_INDENT));
+		if (bullet.isNumbered()) {
+			paragraph.setBulletAutoNumber(bullet.autoNumber(), bullet.start() == null ? 1 : bullet.start().intValue());
+			if (bullet.start() == null) {
+				// Continues the numbering of the preceding paragraph.
+				pPr.getBuAutoNum().unsetStartAt();
+			}
+			hangingIndent(paragraph, NUMBER_INDENT);
+		} else {
+			boolean inherited = paragraph.isBullet() && paragraph.getBulletCharacter() != null;
+			if (bullet.character() != null || !inherited) {
+				paragraph.setBullet(true);
+				paragraph.setBulletCharacter(bullet.character() != null ? bullet.character() : DEFAULT_BULLET);
+				hangingIndent(paragraph, BULLET_INDENT);
 			}
 		}
 		if (bullet.color() != null) {
 			CTColor color = pPr.isSetBuClr() ? pPr.getBuClr() : pPr.addNewBuClr();
 			_drawing.writeColor(new DrawingWriter.ColorTarget(color::addNewSchemeClr, color::addNewSrgbClr),
 				bullet.color(), path + "." + PresentationData.COLOR);
+		}
+	}
+
+	/**
+	 * Indents the paragraph by the given distance and moves its first line, which shows the bullet,
+	 * back by the same distance, unless the paragraph inherits a hanging indentation.
+	 */
+	private static void hangingIndent(XSLFTextParagraph paragraph, double distance) {
+		Double indent = paragraph.getIndent();
+		if (indent == null || indent.doubleValue() == 0) {
+			Double margin = paragraph.getLeftMargin();
+			paragraph.setLeftMargin(Double.valueOf((margin == null ? 0 : margin.doubleValue()) + distance));
+			paragraph.setIndent(Double.valueOf(-distance));
 		}
 	}
 

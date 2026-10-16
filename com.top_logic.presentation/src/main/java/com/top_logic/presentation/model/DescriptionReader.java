@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.poi.sl.usermodel.AutoNumberingScheme;
 import org.apache.poi.sl.usermodel.ShapeType;
 
 import com.top_logic.presentation.data.PresentationData;
@@ -62,6 +63,16 @@ public final class DescriptionReader {
 	private static final List<String> PAINT_TYPES = List.of(PaintInfo.Type.NONE.id(), PaintInfo.Type.SOLID.id(),
 		PaintInfo.Type.GRADIENT.id(), PaintInfo.Type.PICTURE.id());
 
+	/**
+	 * The names of the numbering schemes of numbered bullets.
+	 */
+	private static final List<String> AUTO_NUMBER_SCHEMES = autoNumberSchemes();
+
+	/**
+	 * The highest number of a numbered bullet PowerPoint accepts.
+	 */
+	private static final int MAX_AUTO_NUMBER = 32767;
+
 	private DescriptionReader() {
 		// Static utility.
 	}
@@ -80,6 +91,14 @@ public final class DescriptionReader {
 		BlockReader.register(result);
 		ChartReader.register(result);
 		return Collections.unmodifiableMap(result);
+	}
+
+	private static List<String> autoNumberSchemes() {
+		List<String> result = new ArrayList<>();
+		for (AutoNumberingScheme scheme : AutoNumberingScheme.values()) {
+			result.add(scheme.name());
+		}
+		return Collections.unmodifiableList(result);
 	}
 
 	private static Set<String> presets() {
@@ -426,8 +445,8 @@ public final class DescriptionReader {
 
 	/**
 	 * Reads a row or column from the entries {@link PresentationData#CHILDREN},
-	 * {@link PresentationData#GAP}, {@link PresentationData#WEIGHTS}, {@link PresentationData#ALIGN}
-	 * and the bounds of the container.
+	 * {@link PresentationData#GAP}, {@link PresentationData#WEIGHTS}, {@link PresentationData#ALIGN},
+	 * for a column {@link PresentationData#SPLIT}, and the bounds of the container.
 	 *
 	 * <p>
 	 * The children must not give a position, since the container places them.
@@ -446,7 +465,9 @@ public final class DescriptionReader {
 			throw weightsValue.invalid(I18NConstants.EXPECTED_WEIGHTS__COUNT.fill(children.size()));
 		}
 		CrossAlign align = entries.get(ALIGN).optEnum(CrossAlign.class);
-		return new ContainerSpec(bounds, direction, children, gap, weights, align);
+		Boolean split = direction == ContainerSpec.Direction.COLUMN ? entries.get(SPLIT).optBoolean() : null;
+		return new ContainerSpec(bounds, direction, children, gap, weights, align,
+			split != null && split.booleanValue());
 	}
 
 	/**
@@ -979,7 +1000,9 @@ public final class DescriptionReader {
 	/**
 	 * Reads a bullet: a truth value switching the default bullet on or off,
 	 * {@link PresentationData#NONE}, the bullet character, or a dictionary with the entries
-	 * {@link PresentationData#CHAR} and {@link PresentationData#COLOR}.
+	 * {@link PresentationData#CHAR} or {@link PresentationData#AUTO_NUMBER} (the name of an
+	 * {@link AutoNumberingScheme}), {@link PresentationData#START} (the number of a numbered
+	 * paragraph) and {@link PresentationData#COLOR}.
 	 *
 	 * @return The bullet, <code>null</code> if the value is missing.
 	 */
@@ -996,11 +1019,21 @@ public final class DescriptionReader {
 		if (bullet.isMap()) {
 			Entries entries = bullet.asEntries();
 			String character = entries.get(CHAR).optString();
+			AutoNumberingScheme autoNumber = readAutoNumber(entries.get(AUTO_NUMBER));
+			if (character != null && autoNumber != null) {
+				throw entries.exclusive(AUTO_NUMBER, CHAR);
+			}
+			Integer start = entries.get(START).optInteger(1, MAX_AUTO_NUMBER);
 			ColorSpec color = readColor(entries.get(COLOR));
 			entries.checkComplete();
-			return new BulletSpec(true, character, color);
+			return new BulletSpec(true, character, color, autoNumber, start);
 		}
 		throw bullet.invalid(I18NConstants.EXPECTED_BULLET);
+	}
+
+	private static AutoNumberingScheme readAutoNumber(Value autoNumber) {
+		String name = autoNumber.optOneOf(AUTO_NUMBER_SCHEMES);
+		return name == null ? null : AutoNumberingScheme.valueOf(name);
 	}
 
 	/**

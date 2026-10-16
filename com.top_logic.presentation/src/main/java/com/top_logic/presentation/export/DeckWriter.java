@@ -182,8 +182,8 @@ public final class DeckWriter {
 	 * Appends a slide.
 	 *
 	 * <p>
-	 * If an element of the slide does not fit, see {@link ElementWriter#write(ElementSpec, int,
-	 * Rectangle2D, String)}, its rest is shown on continuation slides following the slide. A
+	 * If an element of the slide does not fit, see {@link ElementWriter#write(ElementSpec,
+	 * ElementWriter.Position, Rectangle2D, String)}, its rest is shown on continuation slides following the slide. A
 	 * continuation slide repeats the placeholder texts of the slide, its title extended by the
 	 * {@link TemplateProfile#continuationSuffix()}, and shows the continued element in the whole
 	 * content area. The other content elements and the notes appear only on the first slide.
@@ -255,10 +255,10 @@ public final class DeckWriter {
 			XSLFSlide slide = createSlide(layout, texts, continuation != null, path);
 			ElementWriter elements = new ElementWriter(slide, _drawing, _text, _profile);
 			List<Arrangement.Placed> placed;
-			int start;
+			ElementWriter.Position start;
 			if (continuation == null) {
 				placed = new Arrangement(_profile.gap(), elements::naturalHeight).arrange(content, area, path);
-				start = 0;
+				start = ElementWriter.Position.START;
 			} else {
 				placed = List.of(new Arrangement.Placed(continuation.element(), area, continuation.path()));
 				start = continuation.start();
@@ -266,8 +266,8 @@ public final class DeckWriter {
 
 			Continuation next = null;
 			for (Arrangement.Placed element : placed) {
-				int rest = elements.write(element.element(), start, element.bounds(), element.path());
-				if (rest > 0) {
+				ElementWriter.Position rest = elements.write(element.element(), start, element.bounds(), element.path());
+				if (rest != null) {
 					if (next != null) {
 						throw new TopLogicException(
 							I18NConstants.ERROR_SEVERAL_CONTINUED__PATH_OTHER.fill(element.path(), next.path()));
@@ -303,11 +303,11 @@ public final class DeckWriter {
 	 * @param element
 	 *        The element.
 	 * @param start
-	 *        The first table row or paragraph of the rest.
+	 *        The first table row, paragraph or child of a split column of the rest.
 	 * @param path
 	 *        The path of the element in the description.
 	 */
-	private record Continuation(ElementSpec element, int start, String path) {
+	private record Continuation(ElementSpec element, ElementWriter.Position start, String path) {
 		// Pure data.
 	}
 

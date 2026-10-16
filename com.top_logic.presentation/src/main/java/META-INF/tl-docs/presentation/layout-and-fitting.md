@@ -1,5 +1,5 @@
 ---
-description: Read before arranging the content of a PowerPoint slide built with pptContent / pptSlide - pptRow and pptColumn with gap, weight, weights, align and height auto, positioned elements (x, y, width, height), the content area, text overflow (shrink, ellipsis, visible, error, minFontSize), and continuation slides for long tables (pptTable) and split texts (pptTextBox split, pptBullets split).
+description: Read before arranging the content of a PowerPoint slide built with pptContent / pptSlide - pptRow and pptColumn with gap, weight, weights, align and height auto, positioned elements (x, y, width, height), the content area, text overflow (shrink, ellipsis, visible, error, minFontSize), numbered paragraphs (bullet autoNumber, start), and continuation slides for long tables (pptTable), split texts (pptTextBox split, pptBullets split) and split columns (pptColumn split).
 order: 20
 ---
 
@@ -27,7 +27,8 @@ arbitrarily.
 - **Weights**: all other children share the remaining space by their `weight` (default 1), or by the `weights`
   list of the container. `pptRow([a, b], weights: [2, 1])` gives `a` two thirds of the width left over.
 - **Across the direction**: a child is stretched to the width of a column or the height of a row. In a row,
-  `align: "start" | "center" | "end"` gives the children the height of their content instead.
+  `align: "start" | "center" | "end"` gives the children the height of their content instead. A child of a
+  column is at most as wide as the column.
 - `gap` sets the distance between the children; without it, the profile's `gap` applies.
 
 If the children of a column with own or automatic height need more space than the column has, their automatic
@@ -62,15 +63,37 @@ measurement uses the fonts installed on the server, see
 [Analyzing and previewing a template](doc:presentation/template-analysis); `pptMeasureText()` measures a text in
 advance, e.g. to choose a width.
 
+## Numbered paragraphs
+
+A paragraph's `bullet` can be a number counted by PowerPoint: `pptParagraph("Step", bullet: {"autoNumber":
+"arabicPeriod", "start": 3})` shows "3.". `autoNumber` names a numbering scheme (`arabicPeriod` 1., 2., ...,
+`arabicParenRight` 1), 2), ..., `alphaLcPeriod` a., b., ..., `alphaUcPeriod`, `romanLcPeriod`, `romanUcPeriod`
+and the other schemes of PowerPoint), `start` the number of the paragraph. A paragraph without `start` continues
+the numbering of the preceding paragraph of the same scheme. `char` and `autoNumber` exclude each other;
+`color` colors the number.
+
+`pptHtml()` gives each item of an ordered list its number as `start`, so that the numbering stays correct when a
+list continues on a further slide.
+
 ## Continuation slides
 
-Two kinds of elements continue on further slides instead of being cut:
+Three kinds of elements continue on further slides instead of being cut:
 
 - A `pptTable()` whose rows do not fit into its height. The continuation slides repeat the header rows
   (`headerRows`) and the placeholder texts of the slide; the title gets the profile's `continuationSuffix`
   (default "(cont.)" in the user's language). On continuation slides the table fills the whole content area.
 - A text box or bullet list with `split: true` (`pptTextBox(..., split: true)`, `pptBullets(..., split: true)`),
   continued paragraph by paragraph.
+- A column with `split: true` (`pptColumn(children, split: true)`), continued child by child. Each child takes
+  its own height or the height of its content (weights do not apply). The children that fit stay on the slide;
+  the first child that does not fit
+  - shows the rows that fit if it is a table, the paragraphs that fit if it is a text with `split: true` - as
+    long as at least its first row or paragraph fits, otherwise it starts on the next slide;
+  - moves to the next slide as a whole otherwise (an image, a chart, a row, ...).
+
+  The first child on a slide is always shown; one that is higher than the whole content area on its own is
+  reduced to its height (an image keeps its aspect ratio). `pptHtml()` creates such a column.
 
 Only one element of a slide can be continued; the other content elements and the notes appear on the first slide
-only. A long table therefore belongs on a slide of its own or at the end of a column.
+only. A long table therefore belongs on a slide of its own or at the end of a column. Within a split column, the
+children themselves are the parts that continue: a table nested in a row of a split column cannot continue.

@@ -35,6 +35,8 @@ import com.top_logic.presentation.data.PresentationData;
 import com.top_logic.presentation.model.CellSpec;
 import com.top_logic.presentation.model.ChartSpec;
 import com.top_logic.presentation.model.ColorSpec;
+import com.top_logic.presentation.model.ContainerSpec;
+import com.top_logic.presentation.model.CrossAlign;
 import com.top_logic.presentation.model.ElementSpec;
 import com.top_logic.presentation.model.GeometrySpec;
 import com.top_logic.presentation.model.ImageSpec;
@@ -53,6 +55,7 @@ import com.top_logic.presentation.profile.TemplateProfile;
 import com.top_logic.presentation.template.ColorInfo;
 import com.top_logic.presentation.text.TableLayout;
 import com.top_logic.presentation.text.TextMeasure;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Creates the content elements of a slide.
@@ -70,6 +73,12 @@ import com.top_logic.presentation.text.TextMeasure;
  * header rows by a stronger line.</li>
  * <li>An {@link ImageSpec image} is fitted into its bounds as requested.</li>
  * <li>A {@link ChartSpec chart} fills its bounds, see {@link ChartWriter}.</li>
+ * <li>A {@link ContainerSpec#split() split column} places its children one below the other, each
+ * with its own height or the height of its content, as long as they fit. A table or a text with
+ * {@link TextSpec#split()} that does not fit shows the rows or paragraphs that fit, if at least
+ * one of them does; any other child that does not fit continues on a further slide as a whole.
+ * The first child on a slide is always shown, reduced to the height of the column if it is
+ * higher.</li>
  * </ul>
  *
  * <p>
@@ -168,29 +177,180 @@ public final class ElementWriter {
 	}
 
 	/**
+	 * The part of an element that is shown on a slide, starting at the given position.
+	 *
+	 * @param child
+	 *        The index of the first child of a {@link ContainerSpec#split() split column} to show,
+	 *        0 for any other element.
+	 * @param start
+	 *        The index of the first table row (after the header rows) or paragraph to show of the
+	 *        element, or of the first child of a split column; 0 for the whole element or child.
+	 */
+	record Position(int child, int start) {
+
+		/**
+		 * The position showing the whole element.
+		 */
+		static final Position START = new Position(0, 0);
+
+	}
+
+	/**
 	 * Creates the given element, or the part of it starting at the given position, on the slide.
 	 *
 	 * <p>
 	 * A table that is higher than its bounds shows its header rows and as many further rows as fit
 	 * (at least one), a text marked with {@link TextSpec#split()} as many paragraphs as fit (at
-	 * least one). The rest continues on a further slide.
+	 * least one), a {@link ContainerSpec#split() split column} as many children as fit. The rest
+	 * continues on a further slide.
 	 * </p>
 	 *
 	 * @param element
-	 *        The element description, no {@link com.top_logic.presentation.model.ContainerSpec}.
-	 * @param start
-	 *        The index of the first table row (after the header rows) or paragraph to show, 0 for
-	 *        the whole element.
+	 *        The element description, a {@link ContainerSpec} only if it is a split column.
+	 * @param from
+	 *        The part of the element to show, {@link Position#START} for the whole element.
 	 * @param bounds
 	 *        The position and size of the element on the slide, see {@link Arrangement}.
 	 * @param path
 	 *        The path of the element in the description, for error messages.
-	 * @return The index of the first row or paragraph that did not fit and continues on a further
-	 *         slide, 0 if the element is complete.
+	 * @return The position of the rest that did not fit and continues on a further slide,
+	 *         <code>null</code> if the element is complete.
 	 */
-	int write(ElementSpec element, int start, Rectangle2D bounds, String path) {
+	Position write(ElementSpec element, Position from, Rectangle2D bounds, String path) {
+		if (element instanceof ContainerSpec column) {
+			return writeSplitColumn(column, from, bounds, path);
+		}
 		ElementSpec resolved = resolve(element, path);
-		return forRole(resolved.role(), path).writeResolved(resolved, start, bounds, path);
+		int rest = forRole(resolved.role(), path).writeResolved(resolved, from.start(), bounds, path);
+		return rest > 0 ? new Position(0, rest) : null;
+	}
+
+	/**
+	 * Writes the children of a split column from the given position on, as far as they fit.
+	 *
+	 * @return The position of the first child or its part that did not fit, <code>null</code> if
+	 *         all children are written.
+	 */
+	private Position writeSplitColumn(ContainerSpec column, Position from, Rectangle2D bounds, String path) {
+		Arrangement arrangement = new Arrangement(_profile.gap(), this::naturalHeight);
+		List<ElementSpec> children = column.children();
+		double gap = column.gap() != null ? column.gap().doubleValue() : _profile.gap();
+		CrossAlign align = column.align() != null ? column.align() : CrossAlign.STRETCH;
+		double y = bounds.getY();
+		boolean first = true;
+		for (int index = from.child(); index < children.size(); index++) {
+			ElementSpec child = children.get(index);
+			String childPath = Arrangement.childPath(path, index);
+			int start = index == from.child() ? from.start() : 0;
+			double width = Arrangement.crossSize(child.bounds().width(), bounds.getWidth());
+			double x = Arrangement.crossOffset(align, bounds.getX(), bounds.getWidth(), width);
+			if (!first) {
+				y += gap;
+			}
+			double space = Math.max(0, bounds.getMaxY() - y);
+			Double ownHeight = child.bounds().height();
+			double height = ownHeight != null ? ownHeight.doubleValue()
+				: arrangement.naturalHeight(rest(child, start, false), width, childPath);
+			if (height <= space + TOLERANCE) {
+				Position rest = writeChild(arrangement, child, start, new Rectangle2D.Double(x, y, width, height),
+					childPath, path);
+				if (rest != null) {
+					return new Position(index, rest.start());
+				}
+				y += height;
+				first = false;
+				continue;
+			}
+			if (ownHeight == null && isSplittable(resolve(child, childPath))) {
+				if (!first && arrangement.naturalHeight(rest(child, start, true), width, childPath) > space + TOLERANCE) {
+					// Not even the first row or paragraph fits.
+					return new Position(index, start);
+				}
+				Position rest = writeChild(arrangement, child, start, new Rectangle2D.Double(x, y, width, space),
+					childPath, path);
+				if (rest != null) {
+					return new Position(index, rest.start());
+				}
+			} else if (first) {
+				// The child alone is higher than the column.
+				writeChild(arrangement, child, start, new Rectangle2D.Double(x, y, width, space), childPath, path);
+			} else {
+				return new Position(index, 0);
+			}
+			y = bounds.getMaxY();
+			first = false;
+		}
+		return null;
+	}
+
+	/**
+	 * Writes a child of a split column.
+	 *
+	 * @return The position of the rest of a table or a split text that did not fit,
+	 *         <code>null</code> if the child is complete.
+	 */
+	private Position writeChild(Arrangement arrangement, ElementSpec child, int start, Rectangle2D bounds,
+			String path, String columnPath) {
+		if (isSplittable(resolve(child, path))) {
+			return write(child, new Position(0, start), bounds, path);
+		}
+		for (Arrangement.Placed placed : arrangement.place(child, bounds, path)) {
+			if (write(placed.element(), Position.START, placed.bounds(), placed.path()) != null) {
+				throw new TopLogicException(
+					I18NConstants.ERROR_SEVERAL_CONTINUED__PATH_OTHER.fill(placed.path(), columnPath));
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Whether the given element can show a part of its content and continue with the rest on a
+	 * further slide.
+	 */
+	private static boolean isSplittable(ElementSpec element) {
+		if (element instanceof TableSpec table) {
+			return !table.rows().isEmpty() && table.columnCount() > 0;
+		}
+		TextSpec text = element instanceof TextBoxSpec textBox ? textBox.text()
+			: element instanceof ShapeSpec shape ? shape.text() : null;
+		return text != null && text.split();
+	}
+
+	/**
+	 * The part of the given element starting at the given row or paragraph, to measure its
+	 * height.
+	 *
+	 * @param unit
+	 *        Whether only the first row (with the header rows) or paragraph of the part is
+	 *        measured.
+	 */
+	private static ElementSpec rest(ElementSpec element, int start, boolean unit) {
+		if (start == 0 && !unit) {
+			return element;
+		}
+		if (element instanceof TableSpec table) {
+			List<List<CellSpec>> rows = new ArrayList<>();
+			for (int row : rowIndices(table, start, table.rows().size())) {
+				if (!unit || row < table.headerRows() || rows.size() == table.headerRows()) {
+					rows.add(table.rows().get(row));
+				}
+			}
+			return new TableSpec(table.bounds(), table.columnWeights(), table.columnWidths(), rows,
+				table.headerRows(), table.rowHeight());
+		} else if (element instanceof TextBoxSpec textBox) {
+			return new TextBoxSpec(textBox.bounds(), restText(textBox.text(), start, unit), textBox.role());
+		} else if (element instanceof ShapeSpec shape && shape.text() != null) {
+			return new ShapeSpec(shape.bounds(), shape.geometry(), shape.fill(), shape.line(), shape.shadow(),
+				restText(shape.text(), start, unit), shape.style(), shape.role());
+		}
+		return element;
+	}
+
+	private static TextSpec restText(TextSpec text, int start, boolean unit) {
+		List<ParagraphSpec> paragraphs = text.paragraphs();
+		int from = Math.min(start, paragraphs.size());
+		int end = unit ? Math.min(from + 1, paragraphs.size()) : paragraphs.size();
+		return text.withParagraphs(paragraphs.subList(from, end));
 	}
 
 	private int writeResolved(ElementSpec element, int start, Rectangle2D bounds, String path) {

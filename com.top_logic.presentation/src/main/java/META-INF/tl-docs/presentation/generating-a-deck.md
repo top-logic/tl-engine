@@ -1,5 +1,5 @@
 ---
-description: Read before writing a TL-Script that creates a PowerPoint presentation with pptDeck() - the workflow, units in points, pptTitle / pptAgenda / pptContent / pptSection / pptClosing slides with notes and footer, storing a description as JSON (toJson / parseJson), a complete example and offering the file as a download from a .view.xml command (<execute-script> plus <download/>).
+description: Read before writing a TL-Script that creates a PowerPoint presentation with pptDeck() - the workflow, units in points, pptTitle / pptAgenda / pptContent / pptSection / pptClosing slides with notes and footer, slide content from HTML / structured text with pptHtml (supported tags, images of a tl.model.wysiwyg:Html value), storing a description as JSON (toJson / parseJson), a complete example and offering the file as a download from a .view.xml command (<execute-script> plus <download/>).
 order: 10
 ---
 
@@ -39,6 +39,39 @@ first content element.
   profile (`topicA`, `risk`, `done`, `muted`, ...) or a `pptColor()` dictionary.
 - Every slide takes speaker notes (`notes:`), a text or a list of lines. `pptDeck(footer: ...)` fills the footer
   placeholder of every layout that has one.
+
+## Content from HTML
+
+`pptHtml(html)` turns structured text into slide content: the value of an HTML attribute
+(`tl.model.wysiwyg:Html`, with the images stored in it) or a string of HTML. The result is a column with
+`split: true` (see [Layout and fitting](doc:presentation/layout-and-fitting#continuation-slides)), so a long
+text continues on further slides:
+
+```
+pptContent("#3 Acceptance test", null, pptHtml($ticket.get(`my.module:Ticket#description`)))
+```
+
+The blocks of the text keep their order:
+
+| HTML | Slide content |
+|---|---|
+| `p`, `div`, `br`, `h1`-`h6` | Paragraphs of a text box; `br` breaks the line, headings are bold and larger (`h1` 1.6 times the base size). |
+| `b`/`strong`, `i`/`em`, `u`, `a href` | Bold, italic, underlined runs, hyperlinks. |
+| `code`, `pre` | Monospace font ("Courier New"); `pre` keeps its lines. |
+| `ul`, `ol`, `li` | Bullets and numbers (`start`, `type`, `value` respected), nested lists indented by level. |
+| `blockquote` | Paragraphs indented by one level. |
+| `table` | A `pptTable()`; leading rows in `thead` or of `th` cells are header rows, repeated on continuation slides. |
+| `img` | A `pptImage()` as wide as its `width` attribute or the image itself (a pixel is 3/4 point), at most as wide as the column. |
+
+- `src` of an image names an image of the structured text (as stored by the HTML editor, `ref:<name>`, or just
+  `<name>`), or is a `data:` URI. An image that cannot be found is left out with a warning in the log.
+- Text of other elements flows on as text; `script` and `style` are ignored. White space is collapsed as in a
+  browser.
+- A cell spanning several columns or rows (`colspan`, `rowspan`) is followed by empty cells; cells are not
+  merged. Images and tables inside a table cell contribute their text only.
+- `font`, `size` (default 16) and `color` set the base text style, `gap` the distance between text boxes,
+  tables and images.
+- `pptHtml(null)` and an empty text give a column without children, the slide shows no content.
 
 ## The description is data
 

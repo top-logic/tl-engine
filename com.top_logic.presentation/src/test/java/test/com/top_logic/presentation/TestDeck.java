@@ -555,7 +555,7 @@ public class TestDeck extends AbstractSearchExpressionTest {
 		}
 	}
 
-	private static BinaryData image(int width, int height) throws IOException {
+	static BinaryData image(int width, int height) throws IOException {
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		Graphics2D graphics = image.createGraphics();
 		graphics.setPaint(new GradientPaint(0, 0, Color.ORANGE, width, height, Color.BLUE));

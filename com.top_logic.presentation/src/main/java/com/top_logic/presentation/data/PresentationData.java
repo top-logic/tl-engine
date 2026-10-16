@@ -286,6 +286,15 @@ public final class PresentationData {
 	/** Key of the character of a bullet. */
 	public static final String CHAR = "char";
 
+	/**
+	 * Key of the numbering scheme of a numbered bullet, the name of an
+	 * {@link org.apache.poi.sl.usermodel.AutoNumberingScheme}, e.g. <code>arabicPeriod</code>.
+	 */
+	public static final String AUTO_NUMBER = "autoNumber";
+
+	/** Key of the number of a numbered bullet. */
+	public static final String START = "start";
+
 	/** Key of the space before a paragraph. */
 	public static final String SPACE_BEFORE = "spaceBefore";
 

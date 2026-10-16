@@ -49,7 +49,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * <li>{@code items} - serialized item list</li>
  * <li>{@code activeItemId} - the currently selected navigation item ID</li>
  * <li>{@code collapsed} - whether the desktop rail is collapsed (persisted user preference)</li>
- * <li>{@code drawerOpen} - whether the mobile off-canvas drawer is currently shown
+ * <li>{@code drawerOpen} - whether the drawer of the navigation is currently shown (only while the app shell is compact)
  * (transient, always starts {@code false} on page load)</li>
  * <li>{@code activeContent} - the active item's content as a child control descriptor</li>
  * <li>{@code headerContent} - optional header slot child control descriptor (expanded mode)</li>

@@ -141,7 +141,7 @@ public class SidebarElement implements UIElement {
 		 * {@code DrawerToggleControl} addressed to {@code <slot name="<this-value>"/>}. By
 		 * convention the placeholder is declared in the app bar's leading area (e.g.
 		 * {@code <leading><slot name="appbar-leading"/></leading>}), so the button surfaces in
-		 * the app bar at mobile breakpoints. Leave empty to suppress the contribution entirely
+		 * the app bar, rendered only while the app shell is compact. Leave empty to suppress the contribution entirely
 		 * — useful when the sidebar is used in a layout without an app bar or with a different
 		 * mobile entry point.
 		 * </p>

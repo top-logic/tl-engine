@@ -181,7 +181,11 @@ priority.
    quote it.
 
 The word side asks a German and an English field in one disjunction; German compounds are not split
-(no compound data with a permissive licence exists), the meaning side covers many of them. The vector
+(no compound data with a permissive licence exists), the meaning side covers many of them. Every text
+goes into both fields, so both remove the stop words of both languages: otherwise "at" in the German
+field or "die" in the English one finds every text that shares only that word. The English words
+"die", "war", "man", "hat", "den", "bin", "nun" and the German "Not" are therefore found by meaning
+only. A change of the analysis builds a new generation without embedding (above). The vector
 side asks the HNSW graph (7-bit quantized) for four times the depth and orders the candidates by the
 exact dot product of the raw vectors.
 

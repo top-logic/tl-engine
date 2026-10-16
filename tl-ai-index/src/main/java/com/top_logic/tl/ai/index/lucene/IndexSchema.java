@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.index.lucene;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.de.GermanAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
@@ -33,7 +34,7 @@ public final class IndexSchema {
 	 * that the index is built again rather than read with a layout it was not written with.
 	 * </p>
 	 */
-	public static final int SCHEMA_VERSION = 1;
+	public static final int SCHEMA_VERSION = 2;
 
 	/** The object a chunk belongs to, as {@code ObjectKey.asString()}. Term of replace and delete. */
 	public static final String OBJECT = "object";
@@ -96,15 +97,33 @@ public final class IndexSchema {
 	 * every other field.
 	 *
 	 * <p>
-	 * {@link GermanAnalyzer} is standard tokenizer, lower case, German stop words,
+	 * {@link GermanAnalyzer} is standard tokenizer, lower case, stop words,
 	 * {@code GermanNormalizationFilter} and {@code GermanLightStemFilter} - the chain the engine's
 	 * word index uses. It splits no compounds: no compound data with a licence this product can
 	 * ship exists, and the meaning side covers many compounds.
 	 * </p>
+	 *
+	 * <p>
+	 * Both fields remove the stop words of both languages ({@link #STOP_WORDS}). Every text goes
+	 * into both fields, whatever its language, so a field that knows only its own stop words matches
+	 * the other language's: the English "at" in the German field, the German "die" in the English
+	 * one. A query of function words and one rare word then finds every text that shares only a
+	 * function word. The price: the English words "die", "war", "man", "hat", "den", "bin", "nun" and
+	 * the German "Not" are not found by words; the meaning side still finds them.
+	 * </p>
 	 */
 	public static Analyzer analyzer() {
 		return new PerFieldAnalyzerWrapper(new KeywordAnalyzer(),
-			Map.of(TEXT_DE, new GermanAnalyzer(), TEXT_EN, new EnglishAnalyzer()));
+			Map.of(TEXT_DE, new GermanAnalyzer(STOP_WORDS), TEXT_EN, new EnglishAnalyzer(STOP_WORDS)));
+	}
+
+	/** The German and the English stop words of Lucene, see {@link #analyzer()}. */
+	static final CharArraySet STOP_WORDS;
+
+	static {
+		CharArraySet stopWords = new CharArraySet(GermanAnalyzer.getDefaultStopSet(), true);
+		stopWords.addAll(EnglishAnalyzer.ENGLISH_STOP_WORDS_SET);
+		STOP_WORDS = CharArraySet.unmodifiableSet(stopWords);
 	}
 
 	/**

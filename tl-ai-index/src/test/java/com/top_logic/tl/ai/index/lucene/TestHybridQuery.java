@@ -133,6 +133,18 @@ public class TestHybridQuery extends TestCase {
 	}
 
 	/**
+	 * A text that shares only a function word with the query is not found by words, whichever
+	 * language the function word is of: every text is in the German and in the English field.
+	 */
+	public void testStopWordsOfBothLanguagesFindNothing() throws IOException {
+		put("English:1", "A", "Bikes are rented at the station.", away());
+		put("German:1", "A", "Die Lieferzeit beträgt zwölf Wochen.", away());
+
+		assertTrue(search("When does the canteen close at lunchtime?", IndexFilter.NONE, null).isEmpty());
+		assertTrue(search("Wo ist die Messe?", IndexFilter.NONE, null).isEmpty());
+	}
+
+	/**
 	 * A replace exchanges all chunks of an object, a delete removes all of them, and the best chunk
 	 * of a hit carries its locator.
 	 */

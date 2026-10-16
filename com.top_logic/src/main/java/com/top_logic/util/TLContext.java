@@ -277,8 +277,13 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		throw new UnsupportedOperationException("Username must not be set. Set Person to SessionContext.");
     }
 
+	/**
+	 * Whether the {@link #getPerson() person} of this context is an administrator.
+	 *
+	 * @see Person#isAdmin(Person)
+	 */
 	@Override
-	protected boolean isAdminContext() {
+	protected boolean isUserAdministrator() {
 		return Person.isAdmin(getPerson());
 	}
 

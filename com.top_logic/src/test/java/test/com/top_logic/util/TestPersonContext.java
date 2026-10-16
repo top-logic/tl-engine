@@ -17,6 +17,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -171,6 +172,28 @@ public class TestPersonContext extends BasicTestCase {
 			assertFalse(ThreadContext.isAdmin());
 			assertFalse(AccessManager.getInstance().hasRole(_object, _roles));
 			assertEquals(Boolean.FALSE, BoundChecker.isAllowedBypass(null, SimpleBoundCommandGroup.READ));
+		});
+	}
+
+	/**
+	 * Tests that {@link ThreadContext#isAdmin()} holds while the security checks are bypassed, and
+	 * for a person context of an administrator also while the security checks are on.
+	 */
+	public void testAdminContext() {
+		TLContextManager.inPersonContext(_person, () -> {
+			assertFalse(ThreadContext.isAdmin());
+			ThreadContext.withoutSecurityChecks(() -> {
+				assertTrue("Bypassed security checks give administrative rights.", ThreadContext.isAdmin());
+				ThreadContext.withSecurityChecks(true, () -> assertFalse(ThreadContext.isAdmin()));
+			});
+			assertFalse(ThreadContext.isAdmin());
+		});
+
+		Person root = PersonManager.getManager().getRoot();
+		assertTrue(Person.isAdmin(root));
+		TLContextManager.inPersonContext(root, () -> {
+			assertFalse(ThreadContext.isSecurityBypassed());
+			assertTrue("An administrator has administrative rights.", ThreadContext.isAdmin());
 		});
 	}
 

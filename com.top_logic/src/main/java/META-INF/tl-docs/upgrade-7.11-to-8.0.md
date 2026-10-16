@@ -550,6 +550,7 @@ The ~2000 other removed lines in the diff are the UTF-8 re-encoding of `_de` bun
 | `ThreadContext.pushSuperUser()` / `popSuperUser()` / `resetSuperUser()` | `ThreadContext.withoutSecurityChecks(job)` (keeps the person), or `ThreadContext.inSystemContext(Class, job)` (no person) | #29798 |
 | `TLContextManager.inRootPersonContext(job)` | `ThreadContext.inSystemContext(Class, job)`, or `TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), job)` | #29798 |
 | `TLContext.setCurrentPerson(Person)` | `TLContextManager.inPersonContext(Person, job)` to act as a person; `TLSubSessionContext.setPerson(Person)` | #29798 |
+| `ThreadContext#isAdminContext()` (override in a context subclass) | `ThreadContext#isUserAdministrator()`; ask `ThreadContext.isAdmin()` whether the current context has administrative rights | #29798 |
 
 Deprecations are almost absent in the range (only `Environment.DEVELOPER_MODE` and `isJarFile()`):
 breaking changes were made by removal, so compile the app (including tests, see

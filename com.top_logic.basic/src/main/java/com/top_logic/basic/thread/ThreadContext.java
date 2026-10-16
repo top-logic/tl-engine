@@ -71,14 +71,19 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
         currentUserName = aName;
     }
 
-    /**
-	 * Whether the owner of this context has administrative rights.
-	 * 
-	 * @see #isAdmin()
+	/**
+	 * Whether the user of this context is an administrator.
+	 *
+	 * <p>
+	 * This is the extension point for {@link #isAdmin()}: a subclass whose context has a user
+	 * answers whether this user is an administrator. A context without a user has no administrator.
+	 * Callers ask {@link #isAdmin()}, not this method, since this method does not cover
+	 * {@link #isSecurityBypassed() bypassed security checks}.
+	 * </p>
 	 */
-	protected boolean isAdminContext() {
-        return false;
-    }
+	protected boolean isUserAdministrator() {
+		return false;
+	}
 
 	/**
 	 * Executes the given job in the given this {@link SubSessionContext}.
@@ -190,11 +195,16 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	}
 
 	/**
-	 * Whether the current thread has administrative rights.
+	 * Whether the current context has administrative rights.
 	 *
 	 * <p>
 	 * This is the case while the {@link #isSecurityBypassed() security checks are bypassed}, or if
-	 * the owner of the current context is an administrator.
+	 * the user of the current context is an administrator, see {@link #isUserAdministrator()}.
+	 * </p>
+	 *
+	 * <p>
+	 * This is the one check whether the current context has administrative rights. Whether some
+	 * given user is an administrator is a property of that user, not of the current context.
 	 * </p>
 	 */
 	public static boolean isAdmin() {
@@ -202,7 +212,7 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 			return true;
 		}
 		ThreadContext context = getThreadContext();
-		return context != null && context.isAdminContext();
+		return context != null && context.isUserAdministrator();
 	}
 
 	/**

@@ -114,6 +114,13 @@ function (like reading an attribute without the right), `throw(...)` with a mess
 a writing function (like writing an attribute without the right). Without it the call fails: a
 writing function whose denial was not configured must not silently do nothing.
 
+`on-denied` is evaluated secured because it runs exactly for a user who failed the check: evaluated
+unsecured, it would be a second unchecked computation, reachable without the command group. A
+denied call therefore behaves like a call of a plain configured function. Where a denied user
+should perform a weaker operation instead (e.g. request an approval instead of approving),
+`on-denied` calls a second privileged function with a command group of its own, for example
+`on-denied="requestApproval($milestone)"`; since `on-denied` is secured, that call is checked.
+
 ### P5 - `canCall` reports whether a function may be called
 
 The TL-Script function `canCall(call)` reports whether the current user may make the given call of

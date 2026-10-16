@@ -401,8 +401,9 @@ it generic and parameterized by configuration, not tailored to one view.
   takes its position from that first mention.
 - **Portals, focus, outside press.** Dialogs and popovers that portal into `document.body` must
   cooperate with the focus trap (`useFocusTrap`; a portaled popup anchored inside a modal surface
-  carries `anchoredOverlayProps`), with closing on an outside press (`useCloseOnOutsidePress`) and
-  with the window manager. Most integration defects are to be expected here.
+  carries `anchoredOverlayProps`), with closing on an outside press (`useCloseOnOutsidePress`; a
+  press in a popup carrying `anchoredOverlayProps` does not close the surfaces it was opened from)
+  and with the window manager. Most integration defects are to be expected here.
 
 ## Behaviour details and limits
 
@@ -531,7 +532,8 @@ Loading the bundle changes nothing on the page; `installMui` does. How it attach
   resizing, the focus trap, Escape and the stacking stay with TopLogic. MUI's `Modal` is not used,
   since every one of its mechanisms already has an owner. Menus are positioned with `usePopover`
   and close through `useCloseOnOutsidePress`, like `TLMenu`. Popups of selects and date pickers
-  carry `anchoredOverlayProps`, so the focus trap of a surrounding window accepts them.
+  carry `anchoredOverlayProps`, so the focus trap of a surrounding window accepts them and a press
+  in them does not close a popover they were opened from.
 - **Container context.** The form field frame reads `useFormLayout()`; the app bar and the window
   provide `ButtonDefaults` to their buttons, so the button controls resolve the same appearance as
   under the TopLogic components, and the part `Button` draws a menu entry with the attributes of

@@ -15,15 +15,29 @@ import { tokenPx } from './token-px';
  */
 export type PopoverAnchor = Element | { x: number; y: number; height?: number };
 
+/**
+ * The side of the anchor a surface stands on, and its alignment along that side: `start` and `end`
+ * align the surface with the start or end edge of the anchor, no alignment centers it. A surface
+ * that does not fit on its side flips to the opposite one and shifts along the side to stay inside
+ * the viewport.
+ */
+export type PopoverPlacement =
+  | 'top' | 'top-start' | 'top-end'
+  | 'bottom' | 'bottom-start' | 'bottom-end'
+  | 'left' | 'left-start' | 'left-end'
+  | 'right' | 'right-start' | 'right-end';
+
 export interface PopoverOptions {
   open: boolean;
   anchor: PopoverAnchor | null;
-  placement?: 'bottom-start' | 'bottom-end' | 'top-start';
+  /** Where the surface stands at its anchor, `bottom-start` if not given. */
+  placement?: PopoverPlacement;
 }
 
 /**
- * The gap between anchor and surface: --tl-space-xs as computed on the root element, converted to
- * pixels. Read once per opening (see usePopover), not on every render.
+ * The gap between anchor and surface, on whichever side of the anchor the surface stands:
+ * --tl-space-xs as computed on the root element, converted to pixels. Read once per opening (see
+ * usePopover), not on every render.
  */
 function gapPx(): number {
   return tokenPx(document.documentElement, '--tl-space-xs', 8);

@@ -276,32 +276,27 @@ public class SecurityDefinitionAction implements ViewAction {
 	}
 
 	/**
-	 * Drops the role parent rule with the given id from the stored configuration.
+	 * Removes the role parent rule with the given id, a stored one as well as one of the underlying
+	 * configuration layers, see {@link SecurityDefinitionEditor#removeRoleParentRule(String)}.
 	 */
 	private Object removeRoleParentRule(String id) {
-		remove(() -> editor().removeRoleParentRule(id), id);
+		remove(() -> editor().removeRoleParentRule(id), I18NConstants.ERROR_UNKNOWN_ROLE_PARENT_RULE__ID.fill(id));
 		return Boolean.TRUE;
 	}
 
 	/**
-	 * Drops the role rule with the given id from the stored configuration.
+	 * Removes the role rule with the given id, a stored one as well as one of the underlying
+	 * configuration layers, see {@link SecurityDefinitionEditor#removeRoleRule(String)}.
 	 */
 	private Object removeRoleRule(String id) {
-		remove(() -> editor().removeRoleRule(id), id);
+		remove(() -> editor().removeRoleRule(id), I18NConstants.ERROR_UNKNOWN_ROLE_RULE__ID.fill(id));
 		return Boolean.TRUE;
 	}
 
 	/**
-	 * Runs the given removal, reporting a rule the stored configuration does not define as one the
-	 * base configuration declares.
-	 *
-	 * <p>
-	 * Layering a file onto the configuration underneath can add a rule and replace one, but it
-	 * cannot take one away: a rule the application's own file does not define is removed where it
-	 * is declared, or overridden by an edited rule of the same id.
-	 * </p>
+	 * Runs the given removal, reporting a rule it did not find with the given message.
 	 */
-	private void remove(FileRemoval removal, String id) {
+	private void remove(FileRemoval removal, ResKey unknownRule) {
 		boolean removed;
 		try {
 			removed = removal.run();
@@ -309,7 +304,7 @@ public class SecurityDefinitionAction implements ViewAction {
 			throw new TopLogicException(errorWritingFile(editor().getAccessManagerFile()), ex);
 		}
 		if (!removed) {
-			throw new TopLogicException(I18NConstants.ERROR_BASE_RULE_NOT_REMOVABLE__ID.fill(id));
+			throw new TopLogicException(unknownRule);
 		}
 	}
 

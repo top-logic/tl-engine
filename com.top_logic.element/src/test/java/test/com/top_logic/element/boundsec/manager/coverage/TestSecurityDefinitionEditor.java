@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -237,12 +238,67 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 	}
 
 	public void testRemoveBaseRule() throws Exception {
-		assertFalse("A rule of the base configuration is not stored, so it cannot be removed.",
+		assertFalse("A rule of the base configuration is not stored.",
 			_editor.isStoredRoleParentRule(BASE_PARENT_ID));
-		assertFalse("A rule of the base configuration cannot be removed by layering.",
+		assertTrue("A rule of the base configuration is removed by a removal entry.",
 			_editor.removeRoleParentRule(BASE_PARENT_ID));
-		assertFalse("A rule of the base configuration cannot be removed by layering.",
-			_editor.removeRoleRule(BASE_ROLE_RULE_ID));
+		assertEquals(Set.of(BASE_PARENT_ID), _editor.removedRoleParentRules());
+		assertEquals("A removal entry is no stored rule.", Collections.emptyList(), parentIds());
+		assertFalse("A removed rule cannot be removed twice.", _editor.removeRoleParentRule(BASE_PARENT_ID));
+
+		assertTrue(_editor.removeRoleRule(BASE_ROLE_RULE_ID));
+		assertEquals(Set.of(BASE_ROLE_RULE_ID), _editor.removedRoleRules());
+		assertEquals(Collections.emptyList(), roleRuleIds());
+		assertEquals("The removal of the role rule keeps the one of the role parent rule.",
+			Set.of(BASE_PARENT_ID), _editor.removedRoleParentRules());
+
+		assertFalse("A rule neither stored nor defined by the base configuration cannot be removed.",
+			_editor.removeRoleRule("noSuchRule"));
+	}
+
+	/**
+	 * A removed rule of the base configuration is dropped when the written file is layered onto the
+	 * base configuration, also after another rule has been stored since.
+	 */
+	public void testRemovedBaseRuleIsDroppedByLayering() throws Exception {
+		_editor.removeRoleParentRule(BASE_PARENT_ID);
+		_editor.putRoleParentRule(newParentRule());
+
+		assertEquals("Storing another rule keeps the removal.", Set.of(BASE_PARENT_ID),
+			_editor.removedRoleParentRules());
+		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
+		assertEquals(List.of(PARENT_RULE_ID),
+			merged.getSecurityParents().getRules().stream().map(NavigationRuleConfig::getId).toList());
+	}
+
+	/**
+	 * An edited rule of the base configuration is dropped from the stored configuration and removed
+	 * from the base configuration.
+	 */
+	public void testRemoveEditedBaseRule() throws Exception {
+		_editor.putRoleParentRule(_editor.editableRoleParentRule(BASE_PARENT_ID));
+
+		assertTrue(_editor.removeRoleParentRule(BASE_PARENT_ID));
+		assertEquals(Collections.emptyList(), parentIds());
+		assertEquals(Set.of(BASE_PARENT_ID), _editor.removedRoleParentRules());
+		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
+		assertEquals(Collections.emptyList(), merged.getSecurityParents().getRules());
+	}
+
+	/**
+	 * Storing a rule under the id of a removed rule of the base configuration drops the removal, which
+	 * would remove the stored rule again.
+	 */
+	public void testStoringARemovedRuleDropsTheRemoval() throws Exception {
+		NavigationRuleConfig rule = _editor.editableRoleParentRule(BASE_PARENT_ID);
+		_editor.removeRoleParentRule(BASE_PARENT_ID);
+
+		_editor.putRoleParentRule(rule);
+
+		assertEquals(Collections.emptySet(), _editor.removedRoleParentRules());
+		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
+		assertEquals(List.of(BASE_PARENT_ID),
+			merged.getSecurityParents().getRules().stream().map(NavigationRuleConfig::getId).toList());
 	}
 
 	public void testEditBaseRoleParentRule() throws Exception {

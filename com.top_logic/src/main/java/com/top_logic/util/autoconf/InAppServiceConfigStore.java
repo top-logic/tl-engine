@@ -8,6 +8,7 @@ package com.top_logic.util.autoconf;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +23,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.FileUtilities;
@@ -145,10 +147,37 @@ public final class InAppServiceConfigStore {
 	 */
 	public static String toXml(String rootTag, ConfigurationItem config, Set<Class<?>> overrideTypes,
 			Set<Class<?>> replacedEntryTypes) {
+		return toXml(rootTag, config, overrideTypes, replacedEntryTypes, Collections.emptyMap());
+	}
+
+	/**
+	 * Serializes the given configuration, marking the entries of the given types as replacing the
+	 * entry of the same key of the underlying configuration layers and removing the entries of the
+	 * given keys from them.
+	 *
+	 * @param rootTag
+	 *        The tag name of the root element.
+	 * @param config
+	 *        The configuration to serialize.
+	 * @param overrideTypes
+	 *        The configuration types to mark with the override attribute, see
+	 *        {@link #OVERRIDE_SERVICE} and {@link #LAYER_ONTO_BASE}.
+	 * @param replacedEntryTypes
+	 *        The configuration types whose entries replace the entry of the same key of the
+	 *        underlying configuration layers, see
+	 *        {@link #toXml(String, ConfigurationItem, Set, Set)}.
+	 * @param removedEntries
+	 *        The keys of the entries to remove from the underlying configuration layers, by the
+	 *        keyed list they are removed from, see
+	 *        {@link OverrideConfigurationWriter#OverrideConfigurationWriter(java.io.Writer, java.util.Collection, java.util.Collection, Map)}.
+	 * @return The pretty printed XML.
+	 */
+	public static String toXml(String rootTag, ConfigurationItem config, Set<Class<?>> overrideTypes,
+			Set<Class<?>> replacedEntryTypes, Map<PropertyDescriptor, ? extends Collection<?>> removedEntries) {
 		String raw;
 		try (StringWriter buffer = new StringWriter()) {
 			try (OverrideConfigurationWriter writer =
-				new OverrideConfigurationWriter(buffer, overrideTypes, replacedEntryTypes)) {
+				new OverrideConfigurationWriter(buffer, overrideTypes, replacedEntryTypes, removedEntries)) {
 				TypedConfiguration.serialize(rootTag, config, writer);
 			}
 			raw = buffer.toString();
@@ -198,8 +227,39 @@ public final class InAppServiceConfigStore {
 	 */
 	public static void write(File file, ApplicationConfig.Config config, Set<Class<?>> overrideTypes,
 			Set<Class<?>> replacedEntryTypes) throws IOException {
+		write(file, config, overrideTypes, replacedEntryTypes, Collections.emptyMap());
+	}
+
+	/**
+	 * Writes the given application configuration to the given file, creating the folder of the file
+	 * when it does not exist, marking the entries of the given types as replacing the entry of the
+	 * same key of the underlying configuration layers and removing the entries of the given keys
+	 * from them.
+	 *
+	 * @param file
+	 *        The file to write.
+	 * @param config
+	 *        The configuration to store.
+	 * @param overrideTypes
+	 *        The configuration types to mark with the override attribute, see
+	 *        {@link #OVERRIDE_SERVICE} and {@link #LAYER_ONTO_BASE}.
+	 * @param replacedEntryTypes
+	 *        The configuration types whose entries replace the entry of the same key of the
+	 *        underlying configuration layers, see
+	 *        {@link #toXml(String, ConfigurationItem, Set, Set)}.
+	 * @param removedEntries
+	 *        The keys of the entries to remove from the underlying configuration layers, by the
+	 *        keyed list they are removed from, see
+	 *        {@link #toXml(String, ConfigurationItem, Set, Set, Map)}.
+	 * @throws IOException
+	 *         When the file cannot be written.
+	 */
+	public static void write(File file, ApplicationConfig.Config config, Set<Class<?>> overrideTypes,
+			Set<Class<?>> replacedEntryTypes, Map<PropertyDescriptor, ? extends Collection<?>> removedEntries)
+			throws IOException {
 		FileUtilities.enforceDirectory(file.getParentFile());
-		FileUtilities.writeStringToFile(toXml(APPLICATION_TAG, config, overrideTypes, replacedEntryTypes), file,
+		FileUtilities.writeStringToFile(
+			toXml(APPLICATION_TAG, config, overrideTypes, replacedEntryTypes, removedEntries), file,
 			StringServices.UTF8);
 	}
 

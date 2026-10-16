@@ -8,21 +8,47 @@ package com.top_logic.element.boundsec.manager.coverage;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.ConfigurationSchemaConstants;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.basic.io.binary.FileBasedBinaryData;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
+import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.element.boundsec.manager.ElementAccessManager;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
 import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
+import com.top_logic.element.boundsec.manager.rule.config.RoleRulesConfig;
 import com.top_logic.element.boundsec.manager.rule.config.SecurityParentsConfig;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.TLClass;
@@ -62,6 +88,12 @@ import com.top_logic.util.autoconf.InAppServiceConfigStore;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SecurityDefinitionEditor {
+
+	/**
+	 * Value of the list operation attribute of an entry removing the entry of the same key of the
+	 * underlying configuration layers.
+	 */
+	private static final String OPERATION_REMOVE = "remove";
 
 	private final File _accessManagerFile;
 
@@ -123,7 +155,7 @@ public class SecurityDefinitionEditor {
 	 *      rules of the underlying configuration layers.
 	 */
 	public List<NavigationRuleConfig> storedRoleParentRules() throws ConfigurationException {
-		ElementAccessManager.Config config = storedAccessManagerConfig(readAccessManagerFile());
+		ElementAccessManager.Config config = storedAccessManagerConfig(readAccessManagerFile().config());
 		return config == null ? Collections.emptyList() : List.copyOf(config.getSecurityParents().getRules());
 	}
 
@@ -139,7 +171,7 @@ public class SecurityDefinitionEditor {
 	 *      the underlying configuration layers.
 	 */
 	public List<RoleRuleConfig> storedRoleRules() throws ConfigurationException {
-		ElementAccessManager.Config config = storedAccessManagerConfig(readAccessManagerFile());
+		ElementAccessManager.Config config = storedAccessManagerConfig(readAccessManagerFile().config());
 		return config == null ? Collections.emptyList() : List.copyOf(config.getRoleRules().getRules());
 	}
 
@@ -151,7 +183,7 @@ public class SecurityDefinitionEditor {
 	 *         When the stored configuration cannot be parsed.
 	 */
 	public int storedRuleCount() throws ConfigurationException {
-		ElementAccessManager.Config config = storedAccessManagerConfig(readAccessManagerFile());
+		ElementAccessManager.Config config = storedAccessManagerConfig(readAccessManagerFile().config());
 		if (config == null) {
 			return 0;
 		}
@@ -197,9 +229,11 @@ public class SecurityDefinitionEditor {
 	 *         When the stored configuration cannot be parsed.
 	 */
 	public void putRoleParentRule(NavigationRuleConfig rule) throws IOException, ConfigurationException {
-		ApplicationConfig.Config appConfig = readAccessManagerFile();
-		putRule(accessManagerConfig(appConfig).getSecurityParents().getRules(), rule);
-		writeAccessManagerFile(appConfig);
+		StoredRules stored = readAccessManagerFile();
+		putRule(accessManagerConfig(stored.config()).getSecurityParents().getRules(), rule);
+		// A removal entry would remove the stored rule again.
+		stored.removedRoleParentRules().remove(rule.getId());
+		writeAccessManagerFile(stored);
 	}
 
 	/**
@@ -213,67 +247,99 @@ public class SecurityDefinitionEditor {
 	 *         When the stored configuration cannot be parsed.
 	 */
 	public void putRoleRule(RoleRuleConfig rule) throws IOException, ConfigurationException {
-		ApplicationConfig.Config appConfig = readAccessManagerFile();
-		putRule(accessManagerConfig(appConfig).getRoleRules().getRules(), rule);
-		writeAccessManagerFile(appConfig);
+		StoredRules stored = readAccessManagerFile();
+		putRule(accessManagerConfig(stored.config()).getRoleRules().getRules(), rule);
+		// A removal entry would remove the stored rule again.
+		stored.removedRoleRules().remove(rule.getId());
+		writeAccessManagerFile(stored);
 	}
 
 	/**
-	 * Removes the role parent rule with the given id from the stored configuration.
+	 * Removes the role parent rule with the given id.
 	 *
 	 * <p>
-	 * A rule of the underlying configuration layers cannot be removed by layering a file onto them,
-	 * so only a rule this editor stored before can be dropped again.
+	 * A rule stored before is dropped from the stored configuration. A rule of the underlying
+	 * configuration layers is removed by a removal entry in the stored configuration, see
+	 * {@link #removedRoleParentRules()}. A rule of the underlying layers that is stored in an edited
+	 * form is dropped from the stored configuration and removed from the underlying layers.
 	 * </p>
 	 *
 	 * @param id
 	 *        The {@link NavigationRuleConfig#getId()} of the rule to remove.
-	 * @return Whether the rule was removed, <code>false</code> when the stored configuration does
-	 *         not define it.
+	 * @return Whether the rule was removed, <code>false</code> when neither the stored
+	 *         configuration nor the underlying layers define it, or it is removed already.
 	 * @throws IOException
 	 *         When the file cannot be written.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
-	 *
-	 * @see #isStoredRoleParentRule(String)
 	 */
 	public boolean removeRoleParentRule(String id) throws IOException, ConfigurationException {
-		ApplicationConfig.Config appConfig = readAccessManagerFile();
-		ElementAccessManager.Config config = storedAccessManagerConfig(appConfig);
-		if (config == null || !removeRule(config.getSecurityParents().getRules(), id)) {
+		StoredRules stored = readAccessManagerFile();
+		ElementAccessManager.Config config = storedAccessManagerConfig(stored.config());
+		boolean dropped = config != null && removeRule(config.getSecurityParents().getRules(), id);
+		boolean removed = indexOf(baseConfig().getSecurityParents().getRules(), id) >= 0
+			&& stored.removedRoleParentRules().add(id);
+		if (!dropped && !removed) {
 			return false;
 		}
-		writeAccessManagerFile(appConfig);
+		writeAccessManagerFile(stored);
 		return true;
 	}
 
 	/**
-	 * Removes the role rule with the given id from the stored configuration.
+	 * Removes the role rule with the given id.
 	 *
 	 * <p>
-	 * A rule of the underlying configuration layers cannot be removed by layering a file onto them,
-	 * so only a rule this editor stored before can be dropped again.
+	 * A rule stored before is dropped from the stored configuration. A rule of the underlying
+	 * configuration layers is removed by a removal entry in the stored configuration, see
+	 * {@link #removedRoleRules()}. A rule of the underlying layers that is stored in an edited form
+	 * is dropped from the stored configuration and removed from the underlying layers.
 	 * </p>
 	 *
 	 * @param id
 	 *        The {@link NavigationRuleConfig#getId()} of the rule to remove.
-	 * @return Whether the rule was removed, <code>false</code> when the stored configuration does
-	 *         not define it.
+	 * @return Whether the rule was removed, <code>false</code> when neither the stored
+	 *         configuration nor the underlying layers define it, or it is removed already.
 	 * @throws IOException
 	 *         When the file cannot be written.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
-	 *
-	 * @see #isStoredRoleRule(String)
 	 */
 	public boolean removeRoleRule(String id) throws IOException, ConfigurationException {
-		ApplicationConfig.Config appConfig = readAccessManagerFile();
-		ElementAccessManager.Config config = storedAccessManagerConfig(appConfig);
-		if (config == null || !removeRule(config.getRoleRules().getRules(), id)) {
+		StoredRules stored = readAccessManagerFile();
+		ElementAccessManager.Config config = storedAccessManagerConfig(stored.config());
+		boolean dropped = config != null && removeRule(config.getRoleRules().getRules(), id);
+		boolean removed = indexOf(baseConfig().getRoleRules().getRules(), id) >= 0
+			&& stored.removedRoleRules().add(id);
+		if (!dropped && !removed) {
 			return false;
 		}
-		writeAccessManagerFile(appConfig);
+		writeAccessManagerFile(stored);
 		return true;
+	}
+
+	/**
+	 * The ids of the role parent rules of the underlying configuration layers the stored
+	 * configuration removes.
+	 *
+	 * @see #removeRoleParentRule(String)
+	 * @throws ConfigurationException
+	 *         When the stored configuration cannot be parsed.
+	 */
+	public Set<String> removedRoleParentRules() throws ConfigurationException {
+		return Collections.unmodifiableSet(readAccessManagerFile().removedRoleParentRules());
+	}
+
+	/**
+	 * The ids of the role rules of the underlying configuration layers the stored configuration
+	 * removes.
+	 *
+	 * @see #removeRoleRule(String)
+	 * @throws ConfigurationException
+	 *         When the stored configuration cannot be parsed.
+	 */
+	public Set<String> removedRoleRules() throws ConfigurationException {
+		return Collections.unmodifiableSet(readAccessManagerFile().removedRoleRules());
 	}
 
 	/**
@@ -565,8 +631,119 @@ public class SecurityDefinitionEditor {
 		return (ElementAccessManager.Config) manager.getConfig();
 	}
 
-	private ApplicationConfig.Config readAccessManagerFile() throws ConfigurationException {
-		return InAppServiceConfigStore.read(_accessManagerFile);
+	/**
+	 * The content of {@link #getAccessManagerFile()}: the stored rules and the ids of the rules of
+	 * the underlying configuration layers the file removes.
+	 *
+	 * @param config
+	 *        The stored configuration, without the removal entries.
+	 * @param removedRoleParentRules
+	 *        The ids of the removed role parent rules, modifiable.
+	 * @param removedRoleRules
+	 *        The ids of the removed role rules, modifiable.
+	 */
+	private record StoredRules(ApplicationConfig.Config config, Set<String> removedRoleParentRules,
+			Set<String> removedRoleRules) {
+		// Pure data.
+	}
+
+	/**
+	 * Reads {@link #getAccessManagerFile()}.
+	 *
+	 * <p>
+	 * A removal entry refers to a rule of the underlying configuration layers, so reading it
+	 * without these layers would fail. The removal entries are therefore taken out before the file
+	 * is read and kept by their ids, so that writing the file back keeps them.
+	 * </p>
+	 */
+	private StoredRules readAccessManagerFile() throws ConfigurationException {
+		Set<String> removedParents = new LinkedHashSet<>();
+		Set<String> removedRoleRules = new LinkedHashSet<>();
+		if (!_accessManagerFile.exists()) {
+			return new StoredRules(TypedConfiguration.newConfigItem(ApplicationConfig.Config.class),
+				removedParents, removedRoleRules);
+		}
+		Document document;
+		try {
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			factory.setNamespaceAware(true);
+			document = factory.newDocumentBuilder().parse(_accessManagerFile);
+		} catch (ParserConfigurationException | SAXException | IOException ex) {
+			throw new ConfigurationException("Cannot parse '" + _accessManagerFile + "'.", ex);
+		}
+		takeRemovals(document, ElementAccessManager.Config.SECURITY_PARENTS, removedParents);
+		takeRemovals(document, RoleRulesConfig.XML_TAG_ROLE_RULES, removedRoleRules);
+
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
+			InAppServiceConfigStore.APPLICATION_TAG,
+			TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class));
+		ConfigurationReader reader =
+			new ConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, descriptors);
+		reader.setSource(CharacterContents.newContent(DOMUtil.toString(document), _accessManagerFile.getPath()));
+		ApplicationConfig.Config config = (ApplicationConfig.Config) reader.read();
+		return new StoredRules(config, removedParents, removedRoleRules);
+	}
+
+	/**
+	 * Drops the removal entries from the elements of the given name and adds the ids they remove to
+	 * the given set.
+	 */
+	private static void takeRemovals(Document document, String containerTag, Set<String> removedIds) {
+		NodeList containers = document.getElementsByTagName(containerTag);
+		for (int n = 0, cnt = containers.getLength(); n < cnt; n++) {
+			Node child = containers.item(n).getFirstChild();
+			while (child != null) {
+				Node next = child.getNextSibling();
+				if (child instanceof Element entry && OPERATION_REMOVE.equals(
+					entry.getAttributeNS(ConfigurationSchemaConstants.CONFIG_NS,
+						ConfigurationSchemaConstants.LIST_OPERATION))) {
+					removedIds.add(entry.getAttribute(NavigationRuleConfig.ID));
+					entry.getParentNode().removeChild(entry);
+				}
+				child = next;
+			}
+		}
+	}
+
+	/**
+	 * The access manager configuration of the underlying configuration layers: the configuration of
+	 * the application without {@link #getAccessManagerFile()}.
+	 */
+	private ElementAccessManager.Config baseConfig() throws ConfigurationException {
+		List<BinaryContent> layers = new ArrayList<>();
+		for (BinaryContent layer : XMLProperties.Module.INSTANCE.config().getTypedConfigs()) {
+			if (!isAccessManagerFile(layer)) {
+				layers.add(layer);
+			}
+		}
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
+			InAppServiceConfigStore.APPLICATION_TAG,
+			TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class));
+		ConfigurationReader reader =
+			new ConfigurationReader(new DefaultInstantiationContext(new BufferingProtocol()), descriptors);
+		ApplicationConfig.Config config = (ApplicationConfig.Config) reader.setSources(layers)
+			.setVariableExpander(AliasManager.getInstance().getExpander())
+			.read();
+		ModuleConfiguration entry = config.getServices().get(AccessManager.class);
+		if (entry == null || !(entry.getInstance() instanceof ElementAccessManager.Config base)) {
+			// The underlying layers define no rules.
+			return TypedConfiguration.newConfigItem(ElementAccessManager.Config.class);
+		}
+		return base;
+	}
+
+	/**
+	 * Whether the given configuration layer is {@link #getAccessManagerFile()}.
+	 */
+	private boolean isAccessManagerFile(BinaryContent layer) {
+		if (!(layer instanceof FileBasedBinaryData file)) {
+			return false;
+		}
+		try {
+			return file.getFile().getCanonicalFile().equals(_accessManagerFile.getCanonicalFile());
+		} catch (IOException ex) {
+			return file.getFile().getAbsoluteFile().equals(_accessManagerFile.getAbsoluteFile());
+		}
 	}
 
 	/**
@@ -579,9 +756,34 @@ public class SecurityDefinitionEditor {
 	 * rule it was copied from.
 	 * </p>
 	 */
-	private void writeAccessManagerFile(ApplicationConfig.Config appConfig) throws IOException {
+	private void writeAccessManagerFile(StoredRules stored) throws IOException {
+		ApplicationConfig.Config appConfig = stored.config();
+		Map<PropertyDescriptor, Set<String>> removedEntries = new HashMap<>();
+		if (!stored.removedRoleParentRules().isEmpty() || !stored.removedRoleRules().isEmpty()) {
+			ElementAccessManager.Config config = accessManagerConfig(appConfig);
+			if (!stored.removedRoleParentRules().isEmpty()) {
+				removedEntries.put(markWritten(config.getSecurityParents(), SecurityParentsConfig.RULES),
+					stored.removedRoleParentRules());
+			}
+			if (!stored.removedRoleRules().isEmpty()) {
+				removedEntries.put(markWritten(config.getRoleRules(), RoleRulesConfig.XML_TAG_RULES),
+					stored.removedRoleRules());
+			}
+		}
 		InAppServiceConfigStore.write(_accessManagerFile, appConfig, InAppServiceConfigStore.LAYER_ONTO_BASE,
-			Set.of(NavigationRuleConfig.class));
+			Set.of(NavigationRuleConfig.class), removedEntries);
+	}
+
+	/**
+	 * Sets the value of the given list property of the given item, so that the list is written
+	 * even if it is empty: the removal entries are written into it.
+	 *
+	 * @return The list property.
+	 */
+	private static PropertyDescriptor markWritten(ConfigurationItem item, String listProperty) {
+		PropertyDescriptor property = item.descriptor().getProperty(listProperty);
+		item.update(property, new ArrayList<>((List<?>) item.value(property)));
+		return property;
 	}
 
 	private ApplicationConfig.Config readGrantsFile() throws ConfigurationException {

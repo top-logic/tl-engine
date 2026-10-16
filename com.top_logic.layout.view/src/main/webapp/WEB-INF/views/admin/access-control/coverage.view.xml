@@ -32,9 +32,8 @@
 	selectedRuleEntry channel. It holds every command on rules, so that a rule is created where it
 	is listed, edited and deleted: "Role parent…" and "Role rule…" open a dialog creating a rule of
 	the selected type, "Edit rule…" opens the dialog belonging to the kind of the picked entry with
-	the rule prefilled, and "Delete rule" drops it from the application configuration - it is
-	shown only for an entry that configuration defines, a rule of the layers underneath being
-	overridable but not removable.
+	the rule prefilled, and "Delete rule" drops it from the application configuration - a rule of
+	the layers underneath is removed by a removal entry there.
 	
 	All of these write to the application configuration rather than to the running application, so
 	the pending channel marks that the files and the running definition differ until "Apply
@@ -459,13 +458,13 @@
 											<de>Regel löschen</de>
 										</label>
 										<tooltip>
-											<en>Deletes the selected rule from the application configuration; a rule of the layers underneath cannot be deleted. The change takes effect with "Apply configuration".</en>
-											<de>Löscht die ausgewählte Regel aus der Anwendungskonfiguration; eine Regel der darunterliegenden Schichten kann nicht gelöscht werden. Die Änderung wird mit „Konfiguration anwenden“ wirksam.</de>
+											<en>Deletes the selected rule. A rule of the layers underneath is removed by an entry in the application configuration. The change takes effect with "Apply configuration".</en>
+											<de>Löscht die ausgewählte Regel. Eine Regel der darunterliegenden Schichten wird durch einen Eintrag in der Anwendungskonfiguration entfernt. Die Änderung wird mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<visible-if expr="entry -> $entry != null &amp;&amp; $entry['stored']"/>
+											<null-input-disabled/>
 										</executability>
-										<confirm expr="entry -> #('Delete the rule {0} from the application configuration?'@en, 'Die Regel {0} aus der Anwendungskonfiguration löschen?'@de).fill($entry['id'])"/>
+										<confirm expr="entry -> #('Delete the rule {0}?'@en, 'Die Regel {0} löschen?'@de).fill($entry['id'])"/>
 										<switch value="entry -> $entry['kind']">
 											<case match="'roleParent'">
 												<execute-script function="entry -> $entry['id']"/>

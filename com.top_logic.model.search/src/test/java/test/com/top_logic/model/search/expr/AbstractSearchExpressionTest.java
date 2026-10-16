@@ -10,6 +10,7 @@ import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -32,6 +33,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLClass;
@@ -66,6 +68,24 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 	 */
 	private final List<TLObject> _created = new ArrayList<>();
 
+	/** The person of the context before the test, restored afterwards. */
+	private Person _formerUser;
+
+	/** The id of the context before the test, restored afterwards if it had no person. */
+	private String _formerContextId;
+
+	/**
+	 * Remembers the user of the context, which {@link #tearDown()} restores after the test switched
+	 * to another one, see {@link #becomeUser(Person)}.
+	 */
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		TLContext context = TLContext.getContext();
+		_formerUser = context.getCurrentPersonWrapper();
+		_formerContextId = context.getContextId();
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
 		for (TLObject object : _created) {
@@ -74,6 +94,15 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 			}
 		}
 		_created.clear();
+
+		TLContext context = TLContext.getContext();
+		context.setCurrentPerson(_formerUser);
+		if (_formerUser == null) {
+			// Without a person, the context is identified by its explicit context id.
+			context.setContextId(_formerContextId);
+		}
+		_formerUser = null;
+		_formerContextId = null;
 		super.tearDown();
 	}
 
@@ -102,6 +131,18 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 	 */
 	protected static void becomeUser(Person person) {
 		TLContext.getContext().setCurrentPerson(person);
+	}
+
+	/**
+	 * Establishes a person context for the root user, see {@link #becomeUser(Person)}.
+	 *
+	 * <p>
+	 * Note that the root user bypasses every access check, also the check of the rights of another
+	 * person given explicitly: a test about access rights must not run as root.
+	 * </p>
+	 */
+	protected static void becomeRoot() {
+		becomeUser(PersonManager.getManager().getRoot());
 	}
 
 	/**
@@ -240,15 +281,18 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 	}
 
 	/**
-	 * The service modules a test of a {@link SearchExpression} needs, followed by the given ones.
+	 * The service modules a test of a {@link SearchExpression} needs, followed by the given ones not
+	 * yet among them.
 	 */
 	protected static BasicRuntimeModule<?>[] getModules(BasicRuntimeModule<?>... additionalModules) {
-		ArrayList<BasicRuntimeModule<?>> modules = new ArrayList<>();
+		LinkedHashSet<BasicRuntimeModule<?>> modules = new LinkedHashSet<>();
 
 		modules.add(SearchBuilder.Module.INSTANCE);
 		modules.add(ModelService.Module.INSTANCE);
 		modules.add(LabelProviderService.Module.INSTANCE);
-		
+		// Provides the root user, see becomeRoot().
+		modules.add(PersonManager.Module.INSTANCE);
+
 		modules.addAll(Arrays.asList(additionalModules));
 
 		return modules.toArray(new BasicRuntimeModule<?>[modules.size()]);

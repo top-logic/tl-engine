@@ -14,7 +14,6 @@ import java.util.Set;
 import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -69,7 +68,7 @@ public abstract class AbstractScriptTracerTest extends AbstractSearchExpressionT
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 	}
 
 	/**

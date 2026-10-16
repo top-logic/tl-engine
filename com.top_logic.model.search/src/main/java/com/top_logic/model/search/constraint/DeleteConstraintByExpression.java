@@ -21,6 +21,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.access.DeleteConstraint;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.providers.ConstraintCheckByExpression;
 import com.top_logic.util.TLResKeyUtil;
 
 /**
@@ -93,6 +94,9 @@ public class DeleteConstraintByExpression<C extends DeleteConstraintByExpression
 
 		ResKey errorKey = I18NConstants.NO_DELETION_POSSIBLE__OBJECT.fill(MetaLabelProvider.INSTANCE.getLabel(obj));
 
-		return Optional.of(TLResKeyUtil.toResKey(result, errorKey));
+		// The check is evaluated unsecured, the message must name only objects the user may
+		// discover (R12 of the Discover specification).
+		ResKey veto = TLResKeyUtil.toResKey(result, errorKey);
+		return Optional.of(ConstraintCheckByExpression.maskUndiscoverable(veto));
 	}
 }

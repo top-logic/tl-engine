@@ -7,6 +7,7 @@ $object.add(`$attr`, $index, $value)
 <p>Appends a <code class="hljs inlineCode">value</code> to a set attribute <code class="hljs inlineCode">attr</code> of an <code class="hljs inlineCode">object</code>.</p>
 <p>Can also be done with the <a class="tlObject" data-custom="true" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">set()</a> function by concatenating the old set of attributes with the new value:</p>
 <pre><code>$object.set(`$attr`, concat(object.get(`$attr`).subList(0, $index), $value, object.get(`$attr`).subList($index)))</code></pre>
+<p>Elements of the attribute the user may not discover are kept. The <code class="hljs inlineCode">index</code> refers to the list the user sees (without the elements the user may not discover). The added values must be objects the user may discover.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>

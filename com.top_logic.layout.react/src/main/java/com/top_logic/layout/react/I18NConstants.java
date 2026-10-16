@@ -513,6 +513,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey VALUE_NONE;
 
 	/**
+	 * @en *****
+	 */
+	public static ResKey MASKED_VALUE;
+
+	/**
 	 * @en Languages…
 	 */
 	public static ResKey I18N_EDITOR_OPEN_BUTTON;

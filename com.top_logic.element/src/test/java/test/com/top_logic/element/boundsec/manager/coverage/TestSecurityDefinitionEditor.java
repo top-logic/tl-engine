@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -237,12 +238,67 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 	}
 
 	public void testRemoveBaseRule() throws Exception {
-		assertFalse("A rule of the base configuration is not stored, so it cannot be removed.",
+		assertFalse("A rule of the base configuration is not stored.",
 			_editor.isStoredRoleParentRule(BASE_PARENT_ID));
-		assertFalse("A rule of the base configuration cannot be removed by layering.",
+		assertTrue("A rule of the base configuration is removed by a removal entry.",
 			_editor.removeRoleParentRule(BASE_PARENT_ID));
-		assertFalse("A rule of the base configuration cannot be removed by layering.",
-			_editor.removeRoleRule(BASE_ROLE_RULE_ID));
+		assertEquals(Set.of(BASE_PARENT_ID), _editor.removedRoleParentRules());
+		assertEquals("A removal entry is no stored rule.", Collections.emptyList(), parentIds());
+		assertFalse("A removed rule cannot be removed twice.", _editor.removeRoleParentRule(BASE_PARENT_ID));
+
+		assertTrue(_editor.removeRoleRule(BASE_ROLE_RULE_ID));
+		assertEquals(Set.of(BASE_ROLE_RULE_ID), _editor.removedRoleRules());
+		assertEquals(Collections.emptyList(), roleRuleIds());
+		assertEquals("The removal of the role rule keeps the one of the role parent rule.",
+			Set.of(BASE_PARENT_ID), _editor.removedRoleParentRules());
+
+		assertFalse("A rule neither stored nor defined by the base configuration cannot be removed.",
+			_editor.removeRoleRule("noSuchRule"));
+	}
+
+	/**
+	 * A removed rule of the base configuration is dropped when the written file is layered onto the
+	 * base configuration, also after another rule has been stored since.
+	 */
+	public void testRemovedBaseRuleIsDroppedByLayering() throws Exception {
+		_editor.removeRoleParentRule(BASE_PARENT_ID);
+		_editor.putRoleParentRule(newParentRule());
+
+		assertEquals("Storing another rule keeps the removal.", Set.of(BASE_PARENT_ID),
+			_editor.removedRoleParentRules());
+		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
+		assertEquals(List.of(PARENT_RULE_ID),
+			merged.getSecurityParents().getRules().stream().map(NavigationRuleConfig::getId).toList());
+	}
+
+	/**
+	 * An edited rule of the base configuration is dropped from the stored configuration and removed
+	 * from the base configuration.
+	 */
+	public void testRemoveEditedBaseRule() throws Exception {
+		_editor.putRoleParentRule(_editor.editableRoleParentRule(BASE_PARENT_ID));
+
+		assertTrue(_editor.removeRoleParentRule(BASE_PARENT_ID));
+		assertEquals(Collections.emptyList(), parentIds());
+		assertEquals(Set.of(BASE_PARENT_ID), _editor.removedRoleParentRules());
+		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
+		assertEquals(Collections.emptyList(), merged.getSecurityParents().getRules());
+	}
+
+	/**
+	 * Storing a rule under the id of a removed rule of the base configuration drops the removal, which
+	 * would remove the stored rule again.
+	 */
+	public void testStoringARemovedRuleDropsTheRemoval() throws Exception {
+		NavigationRuleConfig rule = _editor.editableRoleParentRule(BASE_PARENT_ID);
+		_editor.removeRoleParentRule(BASE_PARENT_ID);
+
+		_editor.putRoleParentRule(rule);
+
+		assertEquals(Collections.emptySet(), _editor.removedRoleParentRules());
+		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
+		assertEquals(List.of(BASE_PARENT_ID),
+			merged.getSecurityParents().getRules().stream().map(NavigationRuleConfig::getId).toList());
 	}
 
 	public void testEditBaseRoleParentRule() throws Exception {
@@ -258,6 +314,22 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		assertTrue("Now the rule is stored and can be removed again.",
 			_editor.isStoredRoleParentRule(BASE_PARENT_ID));
 		assertNull("An unknown rule has no editable copy.", _editor.editableRoleParentRule("noSuchRule"));
+	}
+
+	/**
+	 * A stored rule is edited in its stored form, not in the one in effect, which stays as it is
+	 * until the stored definition is applied.
+	 */
+	public void testEditStoredRuleEditsTheStoredForm() throws Exception {
+		NavigationRuleConfig rule = _editor.editableRoleParentRule(BASE_PARENT_ID);
+		assertTrue("The base rule applies to the sub types.", rule.isInherit());
+		rule.setInherit(false);
+		_editor.putRoleParentRule(rule);
+
+		assertFalse("The stored form is edited.", _editor.editableRoleParentRule(BASE_PARENT_ID).isInherit());
+		assertTrue("The rule in effect is unchanged until the stored definition is applied.",
+			_editor.effectiveRoleParentRule(BASE_PARENT_ID).isInherit());
+		assertNull(_editor.effectiveRoleParentRule("noSuchRule"));
 	}
 
 	public void testEditBaseRoleRule() throws Exception {
@@ -435,6 +507,21 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		assertEquals("The rules of both configuration layers are kept.",
 			List.of(BASE_PARENT_ID, PARENT_RULE_ID),
 			merged.getSecurityParents().getRules().stream().map(NavigationRuleConfig::getId).toList());
+	}
+
+	/**
+	 * An edited rule of the base configuration replaces the base rule when the written file is
+	 * layered onto the base configuration: its path is not appended to the one of the base rule.
+	 */
+	public void testEditedBaseRuleReplacesTheBaseRule() throws Exception {
+		NavigationRuleConfig rule = _editor.editableRoleParentRule(BASE_PARENT_ID);
+		_editor.putRoleParentRule(rule);
+
+		ElementAccessManager.Config merged = accessManagerConfig(overlay(BASE_CONFIG, _editor.getAccessManagerFile()));
+		List<NavigationRuleConfig> rules = merged.getSecurityParents().getRules();
+		assertEquals(List.of(BASE_PARENT_ID), rules.stream().map(NavigationRuleConfig::getId).toList());
+		assertEquals("The path of the stored rule replaces the path of the base rule.",
+			1, rules.get(0).getPathElements().size());
 	}
 
 	/**

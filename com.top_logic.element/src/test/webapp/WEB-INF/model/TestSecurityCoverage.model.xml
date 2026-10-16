@@ -123,6 +123,18 @@
 				<!-- Role source is a role parent rule pointing to the container. -->
 				<class name="ChildOfCovered"/>
 
+				<!-- Role rule, but no class grant: only an attribute grant implies Discover. -->
+				<class name="PartOnly">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<property name="label"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
 				<!-- Neither a role source nor a container. -->
 				<class name="Orphan"/>
 

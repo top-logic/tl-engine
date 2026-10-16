@@ -41,13 +41,18 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    relation leads nowhere (no container, an empty reference) is denied, as is one whose chain of
    access parents runs in a cycle.
 5. The roles granted the operation on the object's type are looked up (for a module singleton, the
-   singleton's own grants take precedence).
+   singleton's own grants take precedence; `Discover` on such a singleton is implied by its own
+   grants and by the rights on the attributes and compositions of its type).
 6. `AccessManager.hasRole(person, object, roles)` decides whether the user holds one of them on the
    object.
-7. For an attribute value there is a second step: if the attribute has its own `<part>` grants for
-   the operation, the user must also hold one of those roles, on the object or, for a delegating
-   object, on the end of its chain of access parents; without attribute-level grants the
-   class-level decision stands.
+7. For an attribute value: if the attribute has its own `<part>` grants for the operation, they
+   **replace** the class grant for this attribute - the user must hold one of those roles, on the
+   object or, for a delegating object, on the end of its chain of access parents; a grant without
+   roles denies everyone. Without attribute-level grants the class-level decision stands.
+
+`Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
+The classic layout UI does not check attribute rights; an application using model based security
+with `Discover`-only roles must use the React view layer for such types.
 
 ## Grants: which roles may do what on a type
 
@@ -73,7 +78,7 @@ instead of replacing them.
 			<singleton name="SecurityStructure#ROOT">
 				<grant operation="Read" roles="Viewer"/>
 			</singleton>
-			<!-- Grants on the values of one attribute, checked on top of the class grants. -->
+			<!-- Grants on the values of one attribute, replace the class grants for this attribute. -->
 			<part name="tl.accounts:Person#password">
 				<grant operation="Read" roles="Administrator"/>
 			</part>
@@ -107,7 +112,9 @@ instead of replacing them.
 ```
 
 - `operation` is a command group id: `Read`, `Write`, `Create`, `Delete`, `Export`, … (see
-  `SimpleBoundCommandGroup`).
+  `SimpleBoundCommandGroup`). The operation `Discover` is implied by every other right on the
+  object or one of its attributes, so it is rarely granted on its own; see
+  [the Discover specification](doc:access-discover-spec).
 - `roles` is a comma separated list of role names (`InitialRolesManager` declares roles).
 - `<grant>` adds roles, `<revoke>` takes them away again, in the order the rules appear.
 - `inherit="true"` passes the rule on to the specializations of the type. The rights of a type are

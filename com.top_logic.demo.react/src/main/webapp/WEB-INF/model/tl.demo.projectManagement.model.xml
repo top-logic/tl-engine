@@ -209,6 +209,11 @@
 							fullQualifiedName="tl.demo.projectManagement:Ticket#assignee"
 							type="tl.demo.projectManagement:Contributor"
 						/>
+						<field
+							attribute="watchers"
+							fullQualifiedName="tl.demo.projectManagement:Ticket#watchers"
+							type="tl.accounts:Person"
+						/>
 					</form>
 				</form-definition>
 			</annotations>
@@ -240,6 +245,10 @@
 						<change-subtree/>
 					</annotations>
 				</reference>
+				<reference name="watchers"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
 			</attributes>
 		</class>
 	</module>

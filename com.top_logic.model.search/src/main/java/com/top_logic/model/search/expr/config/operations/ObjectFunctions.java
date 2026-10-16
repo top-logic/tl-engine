@@ -179,7 +179,7 @@ public class ObjectFunctions extends TLScriptFunctions {
 			return null;
 		}
 		TLObject result = WrapperFactory.getWrapper(item);
-		if (usesSecurity && !ModelAccessRights.getInstance().isReadAllowed(result)) {
+		if (usesSecurity && !ModelAccessRights.getInstance().isDiscoverAllowed(result)) {
 			// Indistinguishable from a key that names nothing.
 			return null;
 		}
@@ -266,7 +266,7 @@ public class ObjectFunctions extends TLScriptFunctions {
 		if (result == null) {
 			return null;
 		}
-		if (usesSecurity && !ModelAccessRights.getInstance().isReadAllowed(result)) {
+		if (usesSecurity && !ModelAccessRights.getInstance().isDiscoverAllowed(result)) {
 			// Indistinguishable from an identifier that names nothing.
 			return null;
 		}

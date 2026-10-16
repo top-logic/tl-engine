@@ -312,8 +312,8 @@ public class TestEditorFactoryControls extends TestCase {
 
 		assertOrigin("Superclass entry wins over an interface entry.", "number", group, "number");
 		assertOrigin("Interface entry applies.", "comparable", group, "text");
-		assertNull("A property editor annotation excludes the type control.",
-			group.getField("text-with-editor").getControlProvider());
+		assertOrigin("The type control applies to a field created by an annotated property editor.",
+			"comparable", group, "text-with-editor");
 		assertOrigin("first:annotated", group, "annotated-text");
 	}
 

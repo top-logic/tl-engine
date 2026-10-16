@@ -19,7 +19,6 @@ import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.template.util.SpanGroup;
 import com.top_logic.layout.form.values.edit.EditorFactory;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.UseTemplate;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -50,7 +49,6 @@ public class ExpertSearchExpressionEditor extends FormComponent implements Searc
 		 * The search expression to execute.
 		 */
 		@Mandatory
-		@ControlProvider(TLScriptCodeEditorControl.CP.class)
 		@CssClass(CodeEditorControl.FULL_SIZE_CSS_CLASS)
 		@NumberOfRows(min = -1, max = -1)
 		Expr getSearchExpression();

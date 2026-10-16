@@ -190,8 +190,9 @@ public class EditorFactory implements AnnotationCustomizations {
 		 * </p>
 		 *
 		 * <p>
-		 * A control chosen here takes precedence over a {@link PropertyEditor} annotation of the
-		 * property and over {@link #getTypeControls()}.
+		 * A control chosen here takes precedence over {@link #getTypeControls()} and over the
+		 * control of the editor that creates the field, also one chosen with a
+		 * {@link PropertyEditor} annotation.
 		 * </p>
 		 */
 		@Name(ANNOTATION_CONTROLS)
@@ -212,9 +213,10 @@ public class EditorFactory implements AnnotationCustomizations {
 		 * </p>
 		 *
 		 * <p>
-		 * An entry here is only used for a property that is not displayed by an editor chosen with
-		 * a {@link PropertyEditor} annotation and has no control chosen by
-		 * {@link #getAnnotationControls()}.
+		 * An entry here is used for a property that has no control chosen by
+		 * {@link #getAnnotationControls()}. It also applies to a property whose field is created by
+		 * an editor chosen with a {@link PropertyEditor} annotation: the editor creates the field,
+		 * the entry chooses the control displaying it.
 		 * </p>
 		 */
 		@Name(TYPE_CONTROLS)
@@ -803,9 +805,8 @@ public class EditorFactory implements AnnotationCustomizations {
 	 * <li>a {@link ControlProvider} annotation of the property,</li>
 	 * <li>the first entry of {@link Config#getAnnotationControls()} whose annotation the property
 	 * carries and that chooses a control,</li>
-	 * <li>nothing, if the property is displayed by an editor chosen by a {@link PropertyEditor}
-	 * annotation,</li>
-	 * <li>the entry of {@link Config#getTypeControls()} for the property type.</li>
+	 * <li>the entry of {@link Config#getTypeControls()} for the property type, also if the field
+	 * is created by an editor chosen by a {@link PropertyEditor} annotation.</li>
 	 * </ol>
 	 * 
 	 * <p>
@@ -834,10 +835,6 @@ public class EditorFactory implements AnnotationCustomizations {
 			if (result != null) {
 				return result;
 			}
-		}
-
-		if (annotatedEditor(property) != null || annotatedEditor(property.getType()) != null) {
-			return null;
 		}
 
 		return _controls.byType(property.getType());

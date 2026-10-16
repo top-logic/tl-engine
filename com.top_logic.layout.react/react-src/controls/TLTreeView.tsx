@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, tooltipProps, ThemeIcon, ICON_EXPAND, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dragModes, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, usePart, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dragModes, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
-import { ProgressBar } from './TLProgress';
 import { NO_DRAG_IMAGE } from './drop-hint';
 import type { DropVerdict } from './drop-hint';
 import { DropHint } from './DropHint';
@@ -79,6 +78,8 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const DisclosureToggle = usePart('DisclosureToggle');
+  const ProgressBar = usePart('ProgressBar');
 
   const nodes = (state.nodes as NodeState[]) ?? [];
   const selectionMode = (state.selectionMode as string) ?? SINGLE_SELECTION;
@@ -535,24 +536,19 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
             onDragEnd={dragEnabled && node.draggable !== false ? () => setDropState(null) : undefined}
           >
             {node.expandable ? (
-              // The toggle expands its own node, so it points at no other element;
-              // pointing and pressing are the design system's veil.
-              <button
-                type="button"
-                className="tl-toggle"
+              // The toggle expands its own node, so it points at no other element. Loading children
+              // is shown by the status line below the node, not by the toggle.
+              <DisclosureToggle
+                expanded={node.expanded}
+                label={toggleLabel(i18n, node.expanded)}
+                tabIndex={-1}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleToggle(node.id, node.expanded);
                 }}
                 // A press on the toggle keeps the focus on the tree, so the keys and the ring stay with it.
                 onMouseDown={(e) => e.preventDefault()}
-                tabIndex={-1}
-                aria-expanded={node.expanded}
-                aria-label={toggleLabel(i18n, node.expanded)}
-                {...tooltipProps(toggleLabel(i18n, node.expanded))}
-              >
-                <ThemeIcon encoded={ICON_EXPAND} className="tl-icon-sm" />
-              </button>
+              />
             ) : (
               <span className="tl-tree__spacer" />
             )}
@@ -575,7 +571,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
               className="tl-status"
               style={{ paddingInlineStart: (node.depth + 1) * indent }}
             >
-              <ProgressBar fraction={null} ariaHidden />
+              <ProgressBar aria-hidden />
             </li>
           )}
         </React.Fragment>

@@ -75,6 +75,7 @@
 }
 
 .tl-alert__close {
+  display: flex;
   align-self: start;
 }
 
@@ -691,6 +692,12 @@
 }
 .tl-chip[hidden] { display: none; }
 
+/* Der leisere Text hinter der Beschriftung, etwa die Größe einer Datei (Part Chip, #29787): er kürzt nicht. */
+.tl-chip__detail {
+  flex-shrink: 0;
+  color: var(--tl-text-secondary);
+}
+
 /* Die Tönung trägt der Chip selbst (data-tl-role, 3b §11) — keine Pill in der Kapsel. Die Rollenregeln
    stehen vor Zeigen und Gewählt: beide schlagen die Tönung bei gleicher Spezifität. */
 .tl-chip[data-tl-role="brand"] { background: var(--tl-surface-brand-subtle); border-color: var(--tl-border-interactive); }
@@ -840,6 +847,146 @@
   max-width: 100%;
 }
 
+/* --- dialog/dialog.css --- */
+/* Dialog — Spec 2026-10-13 Welle 4a §3, docs/skalen.md „Scrim und Ebenen“, Konsolidierung Q1/Q2.
+   Ein Paketbaustein, zwei Controls: TLDialog rendert den Scrim (.tl-dialog), TLWindow die Fläche darin
+   (.tl-dialog__surface mit tl-titlebar, Körper, Fuß, Griffen). Der Scrim hat keinen Blur — die Skala kennt keinen.
+   Den Rand space-lg zum Viewport hält die Fläche selbst über ihre Höchstmaße am Viewport, nicht der Scrim. */
+
+.tl-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--tl-layer-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background: var(--tl-surface-scrim);
+}
+.tl-dialog[hidden] { display: none; }
+
+/* Die Standardbewegung (Spec §7). useKeyedTransition setzt die Wörter; eine Anwendung überschreibt sie auf denselben
+   Attributen. Bei reduzierter Bewegung setzt der Hook nichts. */
+.tl-dialog[data-tl-state~="entering"] {
+  animation: tl-dialog-in var(--tl-duration-base) var(--tl-easing-entrance);
+}
+
+/* Die Kopie eines geschlossenen Dialogs ist ein Bild über der Seite: sie lässt den Zeiger zur Seite und zu einem
+   Dialog darunter durch. */
+.tl-dialog[data-tl-state~="exiting"] {
+  animation: tl-dialog-out var(--tl-duration-base) var(--tl-easing-exit) forwards;
+  pointer-events: none;
+}
+
+@keyframes tl-dialog-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tl-dialog-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Die Fläche. Breite und Höhe setzt TLWindow inline (Server-Maß, vom Benutzer gezogen); nach dem ersten Ziehen liegt
+   sie absolut im Scrim (left/top inline). Rahmen und Schatten wie beim Popover (skalen.md: Dialog trägt beides). */
+.tl-dialog__surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  /* Die Grenze hängt am Viewport, nicht an einer Box darüber: zwischen Scrim und Fläche kann ein Behälter der
+     Anwendung liegen (Prozent liefen dann gegen dessen Inhaltshöhe), und absolut nach dem Ziehen wäre der Bezug
+     ein anderer als im Fluss. */
+  max-width: calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-lg));
+  max-height: calc(var(--tl-size-viewport-height) - 2 * var(--tl-space-lg));
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-overlay);
+  box-shadow: var(--tl-shadow-dialog);
+  color: var(--tl-text-primary);
+}
+
+.tl-dialog__surface[data-tl-state~="maximized"] {
+  position: absolute;
+  inset: 0;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+}
+
+/* Am Kopf wird das Fenster gezogen; maximiert nicht. */
+.tl-dialog__surface > .tl-titlebar {
+  cursor: grab;
+  user-select: none;
+}
+
+.tl-dialog__surface[data-tl-state~="maximized"] > .tl-titlebar {
+  cursor: default;
+}
+
+.tl-dialog__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Der Fuß hält eine Toolbar; ohne Befehl rendert sie nichts, dann verschwindet er. */
+.tl-dialog__footer {
+  display: flex;
+  justify-content: end;
+  gap: var(--tl-space-xs);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-dialog__footer:empty {
+  display: none;
+}
+
+/* Acht Griffe zum Ändern der Größe, halb über dem Rand. Kanten xs breit, Ecken sm groß. */
+.tl-dialog__resize {
+  position: absolute;
+}
+
+.tl-dialog__resize[data-tl-edge="n"],
+.tl-dialog__resize[data-tl-edge="s"] {
+  left: var(--tl-space-sm);
+  right: var(--tl-space-sm);
+  height: var(--tl-space-xs);
+  cursor: ns-resize;
+}
+
+.tl-dialog__resize[data-tl-edge="e"],
+.tl-dialog__resize[data-tl-edge="w"] {
+  top: var(--tl-space-sm);
+  bottom: var(--tl-space-sm);
+  width: var(--tl-space-xs);
+  cursor: ew-resize;
+}
+
+.tl-dialog__resize[data-tl-edge="n"] { top: calc(-1 * var(--tl-space-2xs)); }
+.tl-dialog__resize[data-tl-edge="s"] { bottom: calc(-1 * var(--tl-space-2xs)); }
+.tl-dialog__resize[data-tl-edge="e"] { right: calc(-1 * var(--tl-space-2xs)); }
+.tl-dialog__resize[data-tl-edge="w"] { left: calc(-1 * var(--tl-space-2xs)); }
+
+/* Die Ecken: je eine Regel mit Lage und Zeiger, dann die gemeinsame Größe (die Einzelregeln stehen zuerst — der
+   Test liest die erste Regel, die den Selektor nennt, und erwartet dort den Zeiger). */
+.tl-dialog__resize[data-tl-edge="ne"] { top: calc(-1 * var(--tl-space-2xs)); right: calc(-1 * var(--tl-space-2xs)); cursor: nesw-resize; }
+.tl-dialog__resize[data-tl-edge="se"] { bottom: calc(-1 * var(--tl-space-2xs)); right: calc(-1 * var(--tl-space-2xs)); cursor: nwse-resize; }
+.tl-dialog__resize[data-tl-edge="sw"] { bottom: calc(-1 * var(--tl-space-2xs)); left: calc(-1 * var(--tl-space-2xs)); cursor: nesw-resize; }
+.tl-dialog__resize[data-tl-edge="nw"] { top: calc(-1 * var(--tl-space-2xs)); left: calc(-1 * var(--tl-space-2xs)); cursor: nwse-resize; }
+
+.tl-dialog__resize[data-tl-edge="ne"],
+.tl-dialog__resize[data-tl-edge="se"],
+.tl-dialog__resize[data-tl-edge="sw"],
+.tl-dialog__resize[data-tl-edge="nw"] {
+  width: var(--tl-space-sm);
+  height: var(--tl-space-sm);
+}
+
 /* --- divider/divider.css --- */
 /* Divider — docs/skalen.md „Rahmen: vier Stufen“.
    Eine Trennlinie trennt nur und schuldet keinen Kontrast: border-separator. Horizontal ist die
@@ -924,6 +1071,81 @@
    hier einmal statt in jedem Block. */
 [data-tl-state~="dragging"] {
   opacity: 0.4;
+}
+
+/* --- drawer/drawer.css --- */
+/* Drawer — Spec 2026-10-13 Welle 4a §4. Eine Schublade vom Rand des Viewports oder des Behälters, in dem sie steht
+   (tl-drawer--container). Ohne Scrim ist sie nicht modal: Fokus hinein und zurück, keine Falle. Mit Scrim (die
+   Schublade steht dann in einem .tl-dialog) ist sie modal: Falle, role="dialog", aria-modal — die mobile Sidebar in
+   Welle 4b. Die Seiten heißen nach der Schreibrichtung (start, end), die Breiten sind Maße. */
+
+.tl-drawer {
+  position: fixed;
+  z-index: var(--tl-layer-overlay);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--tl-surface-overlay);
+  color: var(--tl-text-primary);
+  transition: transform var(--tl-duration-base) var(--tl-easing-exit);
+}
+.tl-drawer[hidden] { display: none; }
+
+.tl-drawer--start,
+.tl-drawer--end {
+  top: 0;
+  bottom: 0;
+  max-width: 100%;
+}
+
+.tl-drawer--start { inset-inline-start: 0; transform: translateX(-100%); }
+.tl-drawer--end { inset-inline-end: 0; transform: translateX(100%); }
+
+/* Rechts-nach-links: start liegt rechts, end links; geschlossen schiebt jede Seite zu ihrem eigenen Rand hinaus.
+   Muss vor der Offen-Regel stehen (gleiche Spezifität), damit offen gewinnt. */
+.tl-drawer--start:dir(rtl) { transform: translateX(100%); }
+.tl-drawer--end:dir(rtl) { transform: translateX(-100%); }
+
+.tl-drawer--bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 100%;
+  transform: translateY(100%);
+}
+
+/* Offen: an seinem Platz, kommend mit der Eingangskurve. Den Schatten trägt nur die offene Schublade: geschlossen
+   steht sie genau außerhalb des Randes, und ihr Schatten risse sonst in die Seite. */
+.tl-drawer[data-tl-state~="open"] {
+  transform: none;
+  box-shadow: var(--tl-shadow-dialog);
+  transition-timing-function: var(--tl-easing-entrance);
+}
+
+.tl-drawer--narrow { width: var(--tl-size-drawer-narrow); }
+.tl-drawer--medium { width: var(--tl-size-drawer-medium); }
+.tl-drawer--wide { width: var(--tl-size-drawer-wide); }
+.tl-drawer--bottom.tl-drawer--narrow { width: auto; height: var(--tl-size-drawer-narrow); }
+.tl-drawer--bottom.tl-drawer--medium { width: auto; height: var(--tl-size-drawer-medium); }
+.tl-drawer--bottom.tl-drawer--wide { width: auto; height: var(--tl-size-drawer-wide); }
+
+/* Im Behälter verankert: deckt nur ihn, liegt über seinem Inhalt und unter Dialog und Snackbar. Die Grenzen
+   (max-width/-height 100 %) gelten dann gegen den Behälter. */
+.tl-drawer--container {
+  position: absolute;
+  z-index: var(--tl-layer-raised);
+}
+
+.tl-drawer__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  /* Wischen im Drawer läuft nicht in die Seite weiter. Der Innenabstand bleibt wie bisher; ob der Drawer bündig wird
+     wie der Dialog-Körper, prüft 4b mit Panel und Card. */
+  overscroll-behavior: contain;
+  padding: var(--tl-space-md);
 }
 
 /* --- field/field.css --- */
@@ -1478,7 +1700,8 @@ a.tl-field-value:hover {
   color: var(--tl-text-secondary);
 }
 
-.tl-menu > .tl-divider {
+.tl-menu > .tl-divider,
+.tl-menu > .tl-menu__separator {
   margin-block: var(--tl-space-2xs);
 }
 
@@ -1490,6 +1713,62 @@ a.tl-field-value:hover {
   display: contents;
 }
 .tl-menu-region[hidden] { display: none; }
+
+/* --- notice-bar/notice-bar.css --- */
+/* NoticeBar — Spec 2026-10-13 Welle 4a §5, Konsolidierung Q7. Ein Alert als Balken über die volle Breite: ohne Ecke,
+   Linie unten und am Zeilenanfang (die Linie der Bedeutung). Farbe, Ansage und Text aus tl-alert. Klickbar ist der
+   Balken ein role="button"; den Ring gibt base.css jedem [tabindex]. */
+
+.tl-notice-bar {
+  border-radius: 0;
+  border-block-start-width: 0;
+  border-inline-end-width: 0;
+}
+
+.tl-notice-bar[role="button"] {
+  cursor: pointer;
+}
+
+/* Der Countdown springt nicht, weil seine Ziffern gleich breit sind (tl-nums im Markup). */
+.tl-notice-bar__countdown {
+  white-space: nowrap;
+}
+
+/* --- overlay/overlay.css --- */
+/* Overlay — Spec 2026-10-13 Welle 4a §8. Ein Stapel aus Basis und Ebenen, kein Overlay im Sinn eines Dialogs:
+   die Basis gibt die Höhe, das umgebende Layout die Breite; jede Ebene deckt genau diese Fläche und legt ihren
+   Inhalt an einen Rand, eine Ecke oder die Mitte. Wo eine Ebene nichts zeigt, geht der Zeiger zur Basis durch.
+   Keine Fläche, keine Ebene (z-index): das Aussehen gibt die Anwendung über die Klasse der Ebene. */
+
+.tl-overlay {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+.tl-overlay[hidden] { display: none; }
+
+.tl-overlay__layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+/* Was die Ebene zeigt, nimmt den Zeiger zurück. */
+.tl-overlay__layer > * {
+  pointer-events: auto;
+}
+
+.tl-overlay__layer--fill { align-items: stretch; justify-content: stretch; }
+.tl-overlay__layer--top-left { align-items: start; justify-content: start; }
+.tl-overlay__layer--top { align-items: start; justify-content: center; }
+.tl-overlay__layer--top-right { align-items: start; justify-content: end; }
+.tl-overlay__layer--left { align-items: center; justify-content: start; }
+.tl-overlay__layer--center { align-items: center; justify-content: center; }
+.tl-overlay__layer--right { align-items: center; justify-content: end; }
+.tl-overlay__layer--bottom-left { align-items: end; justify-content: start; }
+.tl-overlay__layer--bottom { align-items: end; justify-content: center; }
+.tl-overlay__layer--bottom-right { align-items: end; justify-content: end; }
 
 /* --- pill/pill.css --- */
 /* Pill — docs/skalen.md „Pill: Rolle statt Farbe“.
@@ -1619,11 +1898,41 @@ a.tl-field-value:hover {
   to { transform: translateX(calc(2.5 * 100%)); }
 }
 
+/* --- Spinner (Part Spinner, #29787) ----------------------------------------- */
+
+/* Ein Ring auf der Spur des Balkens, darauf ein Bogen in der Marke, der sich dreht: beschäftigt, ohne Anteil.
+   Klein (--sm) steht er statt eines kleinen Icons und dreht seinen Bogen in der Textfarbe. Dauer und Kurve sind
+   die Bewegungstokens der Schleife; der globale Reduced-Motion-Schalter hält ihn an. */
+.tl-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--tl-size-icon-lg);
+  height: var(--tl-size-icon-lg);
+  border: var(--tl-border-width-md) solid var(--tl-surface-interactive-selected);
+  border-top-color: var(--tl-surface-brand);
+  border-radius: var(--tl-radius-full);
+  animation: tl-spinner-turn var(--tl-duration-loop) var(--tl-easing-linear) infinite;
+}
+
+.tl-spinner[hidden] { display: none; }
+
+.tl-spinner--sm {
+  width: var(--tl-size-icon-sm);
+  height: var(--tl-size-icon-sm);
+  border-top-color: currentColor;
+}
+
+@keyframes tl-spinner-turn {
+  to { rotate: 360deg; }
+}
+
 /* --- reorder-list/reorder-list.css --- */
 /* Umsortierbare Liste — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W11), 3b §8.
    ul.tl-reorder-list > li.tl-reorder-list__item: vorn der Griff (tl-reorder-list__handle, ein
-   tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter, was der
-   Eintrag trägt (Gruppierungsknopf, label.tl-choice mit tl-checkbox). Die Ziehen-Optik zeichnet
+   tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter die
+   Beschriftung und rechts Schloss und Auge (tl-reorder-list__actions); Griff und Knöpfe erscheinen beim Zeigen
+   oder Fokus (Spec 2026-10-12, #29825). Die Ziehen-Optik zeichnet
    drag.css, den Ring base.css — am Griff innen, weil die Liste scrollt. Höchstens size-popover-max
    hoch; dann scrollt die Liste in sich. Steht die Suche davor, füllen beide ihren Behälter: die
    Suche bleibt stehen, nur die Liste scrollt, und die Höhe gibt der Behälter (Sichtprüfung 12.10.). */
@@ -1675,27 +1984,92 @@ a.tl-field-value:hover {
 .tl-reorder-list__handle {
   color: var(--tl-icon-secondary);
   cursor: grab;
+  opacity: 0;
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
 .tl-reorder-list__handle:active {
   cursor: grabbing;
 }
 
-.tl-reorder-list__handle:focus-visible {
+.tl-reorder-list__handle:focus-visible,
+.tl-reorder-list__actions > .tl-button:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
-/* Das Kästchen mit seiner Beschriftung nimmt den Rest der Zeile; die Beschriftung endet mit Ellipse. */
-.tl-reorder-list__item > .tl-choice {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
+/* Die Beschriftung nimmt den Rest der Zeile und endet mit Ellipse. */
 .tl-reorder-list__label {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Rechts am Ende der Zeile: Schloss (fixieren) und Auge (aus- und einblenden). Ihre Plätze sind immer reserviert,
+   damit die Zeile beim Zeigen nicht springt. */
+.tl-reorder-list__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  margin-inline-start: auto;
+}
+
+/* Die Knöpfe erscheinen beim Zeigen oder wenn ein Element der Zeile den Tastaturfokus hat (der Griff ebenso, seine opacity
+   steht in seiner Grundregel oben). opacity, nicht visibility: ein unsichtbarer Knopf bleibt mit Tab erreichbar und
+   erscheint, sobald er den Fokus hat. */
+.tl-reorder-list__actions > .tl-button {
+  opacity: 0;
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Fokus heißt hier Tastaturfokus (:focus-visible), nicht :focus-within: nach einem Mausklick bleibt der Fokus im Knopf,
+   und die Zeile hielte Auge und Schloss sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). */
+.tl-reorder-list__item:hover > .tl-reorder-list__handle,
+.tl-reorder-list__item:has(:focus-visible) > .tl-reorder-list__handle,
+.tl-reorder-list__item:hover > .tl-reorder-list__actions > .tl-button,
+.tl-reorder-list__item:has(:focus-visible) > .tl-reorder-list__actions > .tl-button {
+  opacity: 1;
+}
+
+/* Gesetzte Zustände bleiben zu sehen: das Auge einer ausgeblendeten, das Schloss einer fixierten Spalte. */
+.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
+.tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock {
+  opacity: 1;
+}
+
+/* Ohne Zeigen (Touch) gäbe es nie :hover — dort stehen Griff und Knöpfe immer. */
+@media (hover: none) {
+  .tl-reorder-list__handle,
+  .tl-reorder-list__actions > .tl-button {
+    opacity: 1;
+  }
+}
+
+/* Ausgeblendet: die Spalte behält ihren Platz, ihr Name tritt zurück. Der Eintrag bleibt bedienbar — die
+   WCAG-Ausnahme für text-disabled gilt nur für inaktive Elemente, darum text-secondary; das zugeklappte Auge trägt
+   den Zustand mit. */
+.tl-reorder-list__item[data-tl-state~="off"] > .tl-reorder-list__label {
+  color: var(--tl-text-secondary);
+}
+
+/* Der Block „Fixiert“: eine Überschrift davor, eine Linie unter seinem letzten Eintrag. */
+.tl-reorder-list__section {
+  padding: var(--tl-space-xs) var(--tl-space-control-x) var(--tl-space-2xs);
+  color: var(--tl-text-secondary);
+}
+
+.tl-reorder-list__item[data-tl-state~="section-end"] {
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 
 /* Die Suche ab elf Einträgen steht vor der Liste: eine tl-field-group mit Lupe; der Abstand sitzt an
@@ -1900,11 +2274,18 @@ a.tl-field-value:hover {
 /* Die Hervorhebung ist die Tastaturposition (aria-activedescendant), nicht die Wahl: Fläche und
    Akzentlinie. Die Akzentlinie ist der Indikator, die Tönung nur ein Zusatz: surface-interactive-selected
    ist auf surface-layer abgestimmt, nicht auf die gehobene Overlay-Fläche; gehobene Flächen bekommen
-   ihre eigenen Rollen in Welle 3. Die Liste führt nur ungewählte Optionen; Gewähltes steht als Wert
-   oder Chip in der Wurzel. */
+   ihre eigenen Rollen in Welle 3. */
 .tl-select__option[data-tl-state~="highlighted"] {
   background: var(--tl-surface-interactive-selected);
   box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-interactive);
+}
+
+/* Die Wahl ist ein Haken am Zeilenende (aria-selected), unabhängig von der Hervorhebung. Die Liste
+   einer Einfachauswahl führt alle Optionen, die gewählte mit Haken; die einer Mehrfachauswahl nur die
+   ungewählten, das Gewählte steht als Chip in der Wurzel. */
+.tl-select__option-check {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
 }
 
 /* --- skeleton/skeleton.css --- */
@@ -1928,6 +2309,53 @@ a.tl-field-value:hover {
 @keyframes tl-skeleton-pulse {
   from { opacity: 1; }
   to { opacity: 0.5; }
+}
+
+/* --- snackbar/snackbar.css --- */
+/* Snackbar — Spec 2026-10-13 Welle 4a §5, Konsolidierung Q7. Ein Alert mit eigener Hülle: Farbe, Linie, Titel, Text,
+   Schließen-Knopf und Ansage kommen aus tl-alert (data-tl-role, role="alert" nur bei error); hier stehen Lage,
+   Ebene, Schatten und Bewegung. Toast: Schatten und Rahmen (skalen.md) — der Rahmen ist die Linie der Bedeutung. */
+
+.tl-snackbar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: var(--tl-space-md);
+  z-index: var(--tl-layer-toast);
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: min(var(--tl-size-toast-max), calc(100% - 2 * var(--tl-space-md)));
+  margin-inline: auto;
+  box-shadow: var(--tl-shadow-drag);
+  animation: tl-snackbar-in var(--tl-duration-base) var(--tl-easing-entrance);
+}
+
+.tl-snackbar[data-tl-state~="exiting"] {
+  animation: tl-snackbar-out var(--tl-duration-base) var(--tl-easing-exit) forwards;
+}
+
+@keyframes tl-snackbar-in {
+  from { opacity: 0; transform: translateY(var(--tl-space-sm)); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tl-snackbar-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Die Meldung kann HTML sein (CommandErrors: Titel und eine Liste der Einzelmeldungen); deren Umbrüche stehen im
+   Markup, nicht im Text. */
+.tl-snackbar .tl-alert__message {
+  white-space: normal;
+}
+
+.tl-snackbar .tl-alert__message ul {
+  margin: var(--tl-space-2xs) 0 0;
+  padding-inline-start: var(--tl-space-lg);
+}
+
+.tl-snackbar .tl-alert__message li + li {
+  margin-top: var(--tl-space-2xs);
 }
 
 /* --- status/status.css --- */
@@ -2140,6 +2568,9 @@ a.tl-field-value:hover {
   position: absolute;
   top: 0;
   right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: var(--tl-size-bar);
   border-radius: 0;
   background: var(--tl-surface-layer);
@@ -2626,6 +3057,41 @@ a.tl-field-value:hover {
 }
 .tl-text--truncate[hidden] { display: none; }
 
+/* --- titlebar/titlebar.css --- */
+/* Titelleiste — Spec 2026-10-13 Welle 4a §3, Konsolidierung Q3. Der eine Kopf über einer Fläche: Titel links mit
+   Ellipse, Aktionen (Toolbar, Kopfknöpfe tl-button--icon --sm) rechts, eine Linie darunter. Dialog und Drawer
+   tragen ihn; Panel und Card folgen in 4b. Die Typo-Klasse des Titels (tl-type-heading-sm) setzt das Markup. */
+
+.tl-titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  box-sizing: border-box;
+  min-height: var(--tl-size-bar);
+  padding: var(--tl-space-2xs) var(--tl-space-xs) var(--tl-space-2xs) var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-titlebar[hidden] { display: none; }
+
+.tl-titlebar__title {
+  flex: 1 1 0; /* Basis 0: der Titel kürzt zuerst, die Aktionen behalten ihre Breite. */
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Alles außer dem Titel schrumpft nicht: Kopfknöpfe behalten ihre Maße bei langem Titel. */
+.tl-titlebar > .tl-button { flex: none; }
+
+.tl-titlebar__actions {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
 /* --- toggle/toggle.css --- */
 /* Toggle — docs/skalen.md „Gleiches wird zusammengelegt“ (W4).
    Ein Knopf, ein Glyph: der Chevron zeigt rechts (zu) und dreht bei aria-expanded auf unten (offen).
@@ -2673,11 +3139,18 @@ a.tl-field-value:hover {
   rotate: 90deg;
 }
 
+/* Öffnet der Inhalt zum Zeilenende hin (Seitenleiste, Part DisclosureToggle, #29787), dreht der Chevron offen
+   zurück zum Anfang. Eine Form des Toggles, kein Zustand: darum eine Variante. */
+.tl-toggle--end[aria-expanded="true"] > .tl-icon-sm {
+  rotate: 180deg;
+}
+
 /* --- toolbar/toolbar.css --- */
 /* Toolbar — docs/skalen.md „Gleiches wird zusammengelegt“ (W12).
    Die Einträge sind Button-Controls; die Toolbar gibt ihnen die Erscheinung (ButtonDefaults) und sagt
    ihnen, wann sie kompakt sind (iconOnly) — keine Regel hier liest tl-button__label. Trenner sind
-   tl-divider--vertical. Zustände sind Attribute: data-tl-overflow (kollabiert an diesem Ende),
+   tl-divider--vertical (Part Divider, #29787) und tragen die Marke tl-toolbar__separator, an der das Control
+   ihre Breite misst — ohne eigene Regel. Zustände sind Attribute: data-tl-overflow (kollabiert an diesem Ende),
    data-tl-compact (Icons statt Label). */
 
 .tl-toolbar {

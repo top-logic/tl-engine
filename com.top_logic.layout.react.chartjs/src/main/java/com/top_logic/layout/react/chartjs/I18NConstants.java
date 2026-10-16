@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.chartjs;
 
+import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
@@ -38,6 +39,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en No data available.
 	 */
 	public static ResKey NO_DATA;
+
+	// -- Client-side i18n keys --
+
+	/**
+	 * @en Reset zoom
+	 */
+	@CustomKey("js.chart.resetZoom")
+	public static ResKey JS_CHART_RESET_ZOOM;
 
 	static {
 		initConstants(I18NConstants.class);

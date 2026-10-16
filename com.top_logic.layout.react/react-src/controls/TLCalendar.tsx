@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, tooltipProps, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useState, useRef, useCallback, useMemo, useEffect } = React;
@@ -152,48 +152,58 @@ const GRANULARITIES: { key: Granularity; label: keyof typeof I18N_KEYS }[] = [
   { key: 'YEAR', label: 'js.calendar.year' },
 ];
 
+/** Icon of the button moving to the previous period. */
+const PREVIOUS_ICON = 'css:bi bi-chevron-left';
+
+/** Icon of the button moving to the next period. */
+const NEXT_ICON = 'css:bi bi-chevron-right';
+
 const Toolbar: React.FC<{
   title: string;
   granularity: Granularity;
   i18n: Record<string, string>;
   send: Ctx['send'];
-}> = ({ title, granularity, i18n, send }) => (
-  <div className="tlCalToolbar">
-    <div className="tlCalNav">
-      <button className="tlCalBtn" onClick={() => send('navigate', { direction: 'TODAY' })}>
-        {i18n['js.calendar.today']}
-      </button>
-      <button
-        className="tlCalBtn tlCalBtn--icon"
-        aria-label={i18n['js.calendar.previous']}
-        {...tooltipProps(i18n['js.calendar.previous'])}
-        onClick={() => send('navigate', { direction: 'PREV' })}
-      >
-        <span className="bi bi-chevron-left" />
-      </button>
-      <button
-        className="tlCalBtn tlCalBtn--icon"
-        aria-label={i18n['js.calendar.next']}
-        {...tooltipProps(i18n['js.calendar.next'])}
-        onClick={() => send('navigate', { direction: 'NEXT' })}
-      >
-        <span className="bi bi-chevron-right" />
-      </button>
+}> = ({ title, granularity, i18n, send }) => {
+  const Button = usePart('Button');
+  return (
+    <div className="tlCalToolbar">
+      <div className="tlCalNav">
+        <Button
+          label={i18n['js.calendar.today']}
+          display="label-only"
+          appearance="secondary"
+          onClick={() => send('navigate', { direction: 'TODAY' })}
+        />
+        <Button
+          label={i18n['js.calendar.previous']}
+          image={PREVIOUS_ICON}
+          display="icon-only"
+          appearance="secondary"
+          onClick={() => send('navigate', { direction: 'PREV' })}
+        />
+        <Button
+          label={i18n['js.calendar.next']}
+          image={NEXT_ICON}
+          display="icon-only"
+          appearance="secondary"
+          onClick={() => send('navigate', { direction: 'NEXT' })}
+        />
+      </div>
+      <div className="tlCalTitle">{title}</div>
+      <div className="tlCalGranularity">
+        {GRANULARITIES.map((g) => (
+          <button
+            key={g.key}
+            className={'tlCalBtn' + (g.key === granularity ? ' tlCalBtn--active' : '')}
+            onClick={() => send('switchGranularity', { granularity: g.key })}
+          >
+            {i18n[g.label]}
+          </button>
+        ))}
+      </div>
     </div>
-    <div className="tlCalTitle">{title}</div>
-    <div className="tlCalGranularity">
-      {GRANULARITIES.map((g) => (
-        <button
-          key={g.key}
-          className={'tlCalBtn' + (g.key === granularity ? ' tlCalBtn--active' : '')}
-          onClick={() => send('switchGranularity', { granularity: g.key })}
-        >
-          {i18n[g.label]}
-        </button>
-      ))}
-    </div>
-  </div>
-);
+  );
+};
 
 // --- Time grid (day / work week / week) --------------------------------
 

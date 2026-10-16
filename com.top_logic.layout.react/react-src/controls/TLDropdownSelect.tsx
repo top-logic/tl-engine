@@ -1,16 +1,12 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, tooltipProps, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, useFocusAfterRemove, ICON_HANDLE, ICON_REMOVE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED } from 'tl-react-bridge';
-import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
+import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps, ColorRole } from 'tl-react-bridge';
 import {
   ARG_OPTION,
   CMD_GOTO,
-  OptionImage,
   OptionLabel,
-  ReadonlyValues,
-  optionRoleAttr,
 } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
-import { buttonClassName } from './button/buttonClassName';
-import { ProgressBar } from './TLProgress';
+import { chipFocusTargets } from './chip/chipFocus';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
 
@@ -18,11 +14,21 @@ const { useState, useCallback, useRef, useEffect, useMemo } = React;
 
 // -- Sub-components --
 
+/** The attribute marking the chip of a chosen value, by which the focus finds a chip after a removal. */
+const VALUE_CHIP_ATTR = 'data-tl-value-chip';
+
+/** Whether the given element is a button, e.g. the remove button of a chip or the clear button. */
+function isButton(element: HTMLElement): boolean {
+  return element.tagName === 'BUTTON' || element.getAttribute('role') === 'button';
+}
+
 /**
- * Renders a selected value of a multi-valued field as a chip: a pill of the value's color role
- * (neutral without one) holding the drag handle, the label and the button removing the value.
+ * Renders a selected value of a multi-valued field as the part `Chip` of the value's color role
+ * (neutral without one), holding the drag handle - the part `Button` - and removable while the
+ * field is editable. The chip is the element that is dragged and carries the design system's state
+ * of the reordering in `data-tl-state`.
  */
-function Chip({
+function ValueChip({
   option,
   removable,
   onRemove,
@@ -41,8 +47,10 @@ function Chip({
   handleProps?: ReorderHandleProps;
   dragState?: string;
 }) {
+  const Chip = usePart('Chip');
+  const Button = usePart('Button');
   const handleRemove = useCallback(
-    (e: React.MouseEvent) => {
+    (e: React.SyntheticEvent<HTMLElement>) => {
       e.stopPropagation();
       onRemove(option.value, e.currentTarget);
     },
@@ -50,50 +58,43 @@ function Chip({
   );
 
   return (
-    <span
-      className="tl-pill tl-type-label tl-select__chip"
-      data-tl-role={optionRoleAttr(option)}
-      data-tl-state={dragState}
-      {...itemProps}
-    >
-      {reorderable && (
-        <button
-          type="button"
-          className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-select__drag-handle' })}
+    <Chip
+      label={option.label}
+      icon={option.image}
+      colorRole={(option.colorRole || undefined) as ColorRole | undefined}
+      onRemove={removable ? handleRemove : undefined}
+      removeLabel={removeLabel}
+      handle={reorderable && (
+        <Button
+          label={handleProps?.['aria-label']}
+          image={ICON_HANDLE}
+          display="icon-only"
+          appearance="ghost"
+          small
+          className="tl-select__drag-handle"
           onClick={(e) => e.stopPropagation()}
-          {...tooltipProps(handleProps?.['aria-label'])}
           {...handleProps}
-        >
-          <ThemeIcon encoded={ICON_HANDLE} className="tl-button__icon tl-icon-sm" />
-        </button>
+        />
       )}
-      <OptionImage image={option.image} inPill />
-      <span className="tl-pill__label">{option.label}</span>
-      {removable && (
-        <button
-          type="button"
-          className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
-          onClick={handleRemove}
-          aria-label={removeLabel}
-          {...tooltipProps(removeLabel)}
-        >
-          <ThemeIcon encoded={ICON_REMOVE} className="tl-button__icon tl-icon-sm" />
-        </button>
-      )}
-    </span>
+      dragSource={itemProps}
+      data-tl-state={dragState}
+      {...{ [VALUE_CHIP_ATTR]: true }}
+    />
   );
 }
 
 /**
  * Renders a single option row in the dropdown, with match highlighting.
  *
- * <p>The list only holds options that are not chosen, so every row is `aria-selected="false"`; the
- * keyboard position is `data-tl-state="highlighted"`, mirrored in the search field's
+ * <p>The chosen option of a single select is `aria-selected="true"` and carries a check mark at
+ * the end of the row; all other rows are `aria-selected="false"`. The keyboard position is
+ * independent of that: `data-tl-state="highlighted"`, mirrored in the search field's
  * `aria-activedescendant`. The match takes the strong variant of the type style it stands in: the
  * label style inside a pill, the body style otherwise.</p>
  */
 function OptionRow({
   option,
+  selected,
   highlighted,
   searchTerm,
   onSelect,
@@ -101,6 +102,7 @@ function OptionRow({
   id,
 }: {
   option: OptionDescriptor;
+  selected: boolean;
   highlighted: boolean;
   searchTerm: string;
   onSelect: (value: string) => void;
@@ -129,13 +131,14 @@ function OptionRow({
     <div
       id={id}
       role="option"
-      aria-selected={false}
+      aria-selected={selected}
       data-tl-state={highlighted ? 'highlighted' : undefined}
       className="tl-select__option"
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
     >
       <OptionLabel option={option} label={labelContent} />
+      {selected && <ThemeIcon encoded={ICON_CONFIRM} className="tl-icon-sm tl-select__option-check" />}
     </div>
   );
 }
@@ -147,13 +150,18 @@ function OptionRow({
  *
  * Design system: the field is `tl-field tl-select` with `role="combobox"`, its state carried as
  * attributes (see fieldStateAttrs), open as `aria-expanded`, switched off as `aria-disabled`. A
- * chosen value with a color role is a pill of that role; the values of a multi-valued field are
- * chips. The list floats in `tl-select__popup`, positioned from the field, its layer the design
+ * chosen value with a color role is the part `Chip` of that role; the values of a multi-valued field
+ * are chips (part `Chip`), removable while the field is editable. The list floats in `tl-select__popup`, positioned from the field, its layer the design
  * system's. The focus stays on the field or the search field; the keyboard highlight is
  * `data-tl-state="highlighted"` on the option and `aria-activedescendant` on the search field. A
  * read-only field shows its values in `tl-select__values`. A disabled field renders the field as
  * an inactive one (`aria-disabled`, out of the tab order) that opens no list and offers neither the
  * clear button nor the removal and reordering of chips (see showsValueOnly).
+ *
+ * The list of a single select holds all options, the chosen one checked; opening it puts the
+ * keyboard highlight on the chosen option and scrolls it into view, like a native select, and
+ * choosing the chosen option again just closes the list. The list of a multi select holds only the
+ * options not chosen, the chosen ones being chips in the field.
  *
  * Where the server asks for no filter (`noFilter`), the open list has no search field: the focus
  * stays on the field, which then carries the `aria-activedescendant`, and the list is operated by
@@ -192,6 +200,9 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   });
 
   const nothingFoundLabel = i18n['js.dropdownSelect.nothingFound'];
+  const Button = usePart('Button');
+  const TextInput = usePart('TextInput');
+  const ProgressBar = usePart('ProgressBar');
 
   /** Format remove-chip label by replacing {0} with the option label. */
   const removeChipLabel = useCallback(
@@ -226,21 +237,29 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [value]
   );
 
-  // Derived: the options not chosen, narrowed by the search (filterOptions, shared with the column
-  // selection).
+  // Derived: the options of the list, narrowed by the search (filterOptions, shared with the column
+  // selection). A single select lists all options, a multi select only those not chosen.
   const filteredOptions = useMemo(
-    () => filterOptions(allOptions.filter((o) => !selectedIds.has(o.value)), searchTerm),
-    [allOptions, selectedIds, searchTerm]
+    () => filterOptions(multiSelect ? allOptions.filter((o) => !selectedIds.has(o.value)) : allOptions, searchTerm),
+    [allOptions, multiSelect, selectedIds, searchTerm]
   );
 
-  // Auto-highlight single result when filtering, reset otherwise.
+  // Derived: the position of the chosen option of a single select in the list, -1 if not listed.
+  const chosenIndex = useMemo(
+    () => (multiSelect ? -1 : filteredOptions.findIndex((o) => selectedIds.has(o.value))),
+    [multiSelect, filteredOptions, selectedIds]
+  );
+
+  // The highlight a list starts with: while searching, the single result if there is exactly one;
+  // otherwise the chosen option of a single select (none in a multi select). Set on opening, once
+  // the options are there, and whenever the search changes.
   useEffect(() => {
-    if (searchTerm && filteredOptions.length === 1) {
-      setHighlightedIndex(0);
+    if (searchTerm) {
+      setHighlightedIndex(filteredOptions.length === 1 ? 0 : -1);
     } else {
-      setHighlightedIndex(-1);
+      setHighlightedIndex(chosenIndex);
     }
-  }, [filteredOptions.length, searchTerm]);
+  }, [isOpen, filteredOptions.length, searchTerm, chosenIndex]);
 
   // A prefix typed while the options were loading moves to its option once they are there.
   useEffect(() => {
@@ -260,10 +279,11 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   }, [isOpen, optionsLoaded, value]);
 
   // A chip vanishes with its focused remove button once the server has dropped its value: the focus
-  // goes to the neighbour's remove button (same place, else the one before), without any to the field.
+  // goes to the neighbour (same place, else the one before), see chipFocusTargets; without any to the
+  // field.
   const noteRemoval = useFocusAfterRemove(
     value,
-    () => containerRef.current?.querySelectorAll<HTMLElement>('.tl-select__chip > .tl-button:not(.tl-select__drag-handle)'),
+    () => chipFocusTargets(containerRef.current, VALUE_CHIP_ATTR),
     () => containerRef.current,
   );
 
@@ -314,6 +334,11 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
           return;
         }
       } else {
+        if (valueRef.current.length === 1 && valueRef.current[0].value === optionValue) {
+          // The chosen option again: nothing changes.
+          closeDropdown();
+          return;
+        }
         const opt = allOptions.find((o) => o.value === optionValue);
         if (opt) {
           newValue = [opt];
@@ -368,10 +393,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     [sendCommand, closeDropdown]
   );
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  }, []);
-
   /** Leads to the place the given option is displayed at. */
   const goto = useCallback(
     (optionValue: string) => {
@@ -400,7 +421,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (noFilter && isTypeAheadKey(e, typeAhead.typing()) && (e.target as HTMLElement).tagName !== 'BUTTON') {
+      if (noFilter && isTypeAheadKey(e, typeAhead.typing()) && !isButton(e.target as HTMLElement)) {
         e.preventDefault();
         e.stopPropagation();
         if (!disabled && editable) typeAheadKey(e.key);
@@ -410,7 +431,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       if (!isOpen) {
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
           // Let Enter/Space activate a focused child button (chip remove, clear).
-          if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+          if (isButton(e.target as HTMLElement)) return;
           e.preventDefault();
           e.stopPropagation();
           openDropdown();
@@ -527,7 +548,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   // affordance and would mislead in a read-only display) --
 
   if (showsValueOnly(state)) {
-    return <ReadonlyValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
+    return <OptionValues id={controlId} className={rootClassName(state)} value={value} onGoto={goto} />;
   }
 
   // -- Editable or disabled rendering --
@@ -546,16 +567,12 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
     >
       {/* Search field - shown when options are loaded, unless the field asks for none */}
       {!noFilter && (optionsLoaded || loadError) && (
-        <span className="tl-field-group tl-select__search-group">
-          <span className="tl-field-group__icon" aria-hidden="true">
-            <ThemeIcon encoded={ICON_SEARCH} className="tl-icon-sm" />
-          </span>
-          <input
+        <div className="tl-select__search-group">
+          <TextInput
             ref={searchRef}
-            type="text"
-            className="tl-field tl-select__search tl-type-body"
+            icon={ICON_SEARCH}
             value={searchTerm}
-            onChange={handleSearchChange}
+            onChange={setSearchTerm}
             onKeyDown={handleKeyDown}
             placeholder={i18n['js.dropdownSelect.filterPlaceholder']}
             aria-label={i18n['js.dropdownSelect.filterPlaceholder']}
@@ -566,20 +583,23 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
             }
             aria-controls={listboxId}
           />
-        </span>
+        </div>
       )}
 
       {/* Loading, error and empty states - a line of the popup, not an option of the list */}
       {!optionsLoaded && !loadError && (
         <div className="tl-status tl-type-body">
-          <ProgressBar fraction={null} label={i18n['js.dropdownSelect.loading']} />
+          <ProgressBar label={i18n['js.dropdownSelect.loading']} />
         </div>
       )}
       {loadError && (
         <div className="tl-status tl-type-body" role="alert">
-          <button type="button" className="tl-button tl-button--link tl-type-body" onClick={handleRetry}>
-            {i18n['js.dropdownSelect.error']}
-          </button>
+          <Button
+            label={i18n['js.dropdownSelect.error']}
+            display="label-only"
+            appearance="link"
+            onClick={handleRetry}
+          />
         </div>
       )}
       {optionsLoaded && filteredOptions.length === 0 && (
@@ -601,6 +621,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
               key={opt.value}
               id={`${controlId}-opt-${idx}`}
               option={opt}
+              selected={!multiSelect && selectedIds.has(opt.value)}
               highlighted={idx === highlightedIndex}
               searchTerm={searchTerm}
               onSelect={selectOption}
@@ -645,7 +666,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
             </span>
           ) : (
             value.map((v, idx) => (
-              <Chip
+              <ValueChip
                 key={v.value}
                 option={v}
                 removable={!disabled}
@@ -661,15 +682,14 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         </span>
         <span className="tl-select__controls">
           {showClearButton && (
-            <button
-              type="button"
-              className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
+            <Button
+              label={i18n['js.dropdownSelect.clear']}
+              image={ICON_CLEAR}
+              display="icon-only"
+              appearance="ghost"
+              small
               onClick={clearAll}
-              aria-label={i18n['js.dropdownSelect.clear']}
-              {...tooltipProps(i18n['js.dropdownSelect.clear'])}
-            >
-              <ThemeIcon encoded={ICON_CLEAR} className="tl-button__icon tl-icon-sm" />
-            </button>
+            />
           )}
           <span className="tl-select__arrow" aria-hidden="true">
             <ThemeIcon

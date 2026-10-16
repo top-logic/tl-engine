@@ -1,6 +1,5 @@
-import { React, useTLState, rootClassName } from 'tl-react-bridge';
-import type { TLCellProps, TextStateJson } from 'tl-react-bridge';
-import { roleAttr } from './pill/TLPill';
+import { React, useTLState, rootClassName, usePart } from 'tl-react-bridge';
+import type { TLCellProps, TextStateJson, ColorRole } from 'tl-react-bridge';
 
 /**
  * The type class of each variant (design system, base.css). Caption and label share the label size:
@@ -34,7 +33,7 @@ const TONE_ATTR: Record<string, string | undefined> = {
  * The pill role a text of the given tone takes when it is drawn as a pill without a role of its own:
  * the meanings keep their name, everything else is neutral.
  */
-function roleOfTone(tone: string): string {
+function roleOfTone(tone: string): ColorRole {
   switch (tone) {
     case 'success': case 'warning': case 'error': return tone;
     default: return 'neutral';
@@ -44,14 +43,15 @@ function roleOfTone(tone: string): string {
 /**
  * Read-only text (design system: tl-text). A `span` with the type class of its variant and its tone
  * as `data-tl-tone`; `overflow="ellipsis"` truncates it to one line (`tl-text--truncate`). Drawn as a
- * pill - `appearance="pill"` or a value with a color role - the root is the `span.tl-pill` itself,
- * carrying the role as `data-tl-role`.
+ * pill - `appearance="pill"` or a value with a color role - the text is the part `Chip` of that role
+ * inside a plain `span`.
  *
  * The state is described by TextStateJson. A strong text is the strong type class given as the
  * element's CSS class (`tl-type-body-strong`).
  */
 const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<TextStateJson>>();
+  const Chip = usePart('Chip');
   const text = state.text ?? '';
   const hasTooltip = state.hasTooltip === true;
   const role = state.role || undefined;
@@ -62,20 +62,16 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   const tooltip = hasTooltip ? 'key:tooltip' : undefined;
   // A pill is drawn around content only: a value without a label - an empty channel, a value not
   // yet chosen - shows nothing rather than an empty tinted box.
-  const pillRole = text === '' ? undefined : pill ? colorRole ?? roleOfTone(tone) : colorRole;
+  const pillRole = text === '' ? undefined : pill ? (colorRole as ColorRole | undefined) ?? roleOfTone(tone)
+    : colorRole as ColorRole | undefined;
 
   if (pillRole) {
-    // The pill is the root itself (3b §11, 07.10.): span.tl-pill with the role as data-tl-role and
-    // the attributes of the text; no tl-text around it. The pill takes the label type class from
-    // outside, as a button does (pill.contract.md).
+    // The pill is the part Chip; no tl-text around it. The element around it carries the id, the
+    // attributes of the text and its CSS classes, and sets no type: the chip takes its own.
     return (
-      <span
-        id={controlId}
-        className={rootClassName(state, 'tl-pill', 'tl-type-label')}
-        data-tl-role={roleAttr(pillRole)}
-        role={role}
-        data-tooltip={tooltip}
-      ><span className="tl-pill__label">{text}</span></span>
+      <span id={controlId} className={rootClassName(state) || undefined} role={role} data-tooltip={tooltip}>
+        <Chip colorRole={pillRole} label={text} />
+      </span>
     );
   }
 

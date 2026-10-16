@@ -1,4 +1,4 @@
-import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId, usePart } from 'tl-react-bridge';
 import type { TLCellProps, SliderStateJson } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
@@ -48,8 +48,8 @@ function fillFraction(value: number, min: number, max: number): number {
  * A field holding no value puts the handle at the lower bound and shows no text, so an empty value
  * is not read as the smallest one.
  *
- * A read-only field shows the text only; a disabled field renders the track with its handle as an
- * inactive input (native `disabled`, see showsValueOnly).
+ * A read-only field shows the text only, drawn by the part `FieldValue`; a disabled field renders
+ * the track with its handle as an inactive input (native `disabled`, see showsValueOnly).
  */
 const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<SliderStateJson>>();
@@ -58,6 +58,7 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
   const [value, setValue, flushValue] = useTLFieldValue({
     debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
   });
+  const FieldValue = usePart('FieldValue');
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,9 +80,7 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (showsValueOnly(state)) {
     return (
-      <span id={controlId} className={rootClassName(state, 'tlSlider tlSlider--immutable')}>
-        {label}
-      </span>
+      <FieldValue id={controlId} className={rootClassName(state) || undefined} text={label} />
     );
   }
 

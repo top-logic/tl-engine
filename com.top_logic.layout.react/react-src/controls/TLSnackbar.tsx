@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, usePart, tokenMs, ICON_CLOSE } from 'tl-react-bridge';
 import type { TLCellProps, SnackbarStateJson } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useEffect, useRef, useState } = React;
 
@@ -14,8 +13,11 @@ const DISMISS_COMMAND = 'dismiss';
 /** The argument of {@link DISMISS_COMMAND} naming the message dismissed. */
 const GENERATION_ARG = 'generation';
 
-/** Duration in ms of the fade-out animation (tlSnackbarFadeOut) before the dismiss is sent. */
-const FADEOUT_MS = 200;
+/** The fade-out before the dismiss is sent: the package animates it over --tl-duration-base. */
+const FADEOUT_TOKEN = '--tl-duration-base';
+
+/** The fade-out without the design system. */
+const FADEOUT_FALLBACK_MS = 150;
 
 /** Grace period in ms before the fade-out resumes once the mouse leaves the message. */
 const FADEOUT_AFTER_HOVER_MS = 250;
@@ -69,7 +71,7 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
     setTimeout(() => {
       sendCommand(DISMISS_COMMAND, { [GENERATION_ARG]: generation });
       setExiting(false);
-    }, FADEOUT_MS);
+    }, tokenMs(FADEOUT_TOKEN, FADEOUT_FALLBACK_MS));
   }, [sendCommand, generation]);
 
   // Auto-dismiss timer, suspended while the message is hovered.
@@ -79,27 +81,34 @@ const TLSnackbar: React.FC<TLCellProps> = ({ controlId }) => {
     return () => clearTimeout(timer);
   }, [visible, duration, hovered, handleDismiss]);
 
+  const Button = usePart('Button');
+
   if (!visible && !exiting) return null;
 
   return (
-    <div id={controlId} className={rootClassName(state, `tlSnackbar tlSnackbar--${variant}${exiting ? ' tlSnackbar--exiting' : ''}`)}
-      role="status" aria-live="polite"
+    <div id={controlId}
+      className={rootClassName(state, 'tl-alert tl-snackbar tl-type-body')}
+      data-tl-role={variant}
+      data-tl-state={exiting ? 'exiting' : undefined}
+      role={variant === 'error' ? 'alert' : 'status'}
       onMouseEnter={() => { wasHovered.current = true; setHovered(true); }}
       onMouseLeave={() => setHovered(false)}>
-      {content
-        ? <span className="tlSnackbar__message" dangerouslySetInnerHTML={{ __html: content }} />
-        : <span className="tlSnackbar__message">{message}</span>
-      }
-      <button type="button"
-        className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tlSnackbar__close' })}
-        onClick={handleDismiss}
-        aria-label={i18n['js.snackbar.dismiss']}
-        {...tooltipProps(i18n['js.snackbar.dismiss'])}>
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-          <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      </button>
+      <div className="tl-alert__body">
+        {content
+          ? <div className="tl-alert__message" dangerouslySetInnerHTML={{ __html: content }} />
+          : <div className="tl-alert__message">{message}</div>
+        }
+      </div>
+      <span className="tl-alert__close">
+        <Button
+          label={i18n['js.snackbar.dismiss']}
+          image={ICON_CLOSE}
+          display="icon-only"
+          appearance="ghost"
+          small
+          onClick={handleDismiss}
+        />
+      </span>
     </div>
   );
 };

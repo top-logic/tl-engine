@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N, useStandaloneKeyboardScope, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLUpload, useI18N, useStandaloneKeyboardScope, useFocusTrap, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -129,18 +129,8 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [localStatus]);
 
-  // Focus overlay and lock body scroll when overlay is open.
-  React.useEffect(() => {
-    if (localStatus !== 'overlayOpen') return;
-
-    overlayRef.current?.focus();
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [localStatus]);
+  // The camera is a modal surface: focus moves in, stays in, and returns to the camera button.
+  useFocusTrap(localStatus === 'overlayOpen', overlayRef, 'first');
 
   // Escape key closes overlay (via the shared keyboard dispatcher).
   useStandaloneKeyboardScope(localStatus === 'overlayOpen', { ESCAPE: closeOverlay });
@@ -199,15 +189,15 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
       {localStatus === 'overlayOpen' && (
-        <div
-          ref={overlayRef}
-          className="tlPhotoCapture__overlay"
-          role="dialog"
-          aria-modal="true"
-          tabIndex={-1}
-        >
-          <div className="tlPhotoCapture__overlayBackdrop" onClick={closeOverlay} />
-          <div className="tlPhotoCapture__overlayContent">
+        <div className="tl-dialog" onClick={(e) => { if (e.target === e.currentTarget) closeOverlay(); }}>
+          <div
+            ref={overlayRef}
+            className="tlPhotoCapture__overlayContent"
+            role="dialog"
+            aria-modal="true"
+            aria-label={cameraLabel}
+            tabIndex={-1}
+          >
             <video
               ref={videoRef}
               className={videoClasses.join(' ')}

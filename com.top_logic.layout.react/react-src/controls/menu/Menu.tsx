@@ -1,4 +1,4 @@
-import { React, useCloseOnOutsidePress, useFocusTrap, createPortal, usePopover, useMergeRefs, ThemeIcon, anchoredOverlayProps } from 'tl-react-bridge';
+import { React, usePart, useCloseOnOutsidePress, useFocusTrap, createPortal, usePopover, useMergeRefs, ThemeIcon, anchoredOverlayProps } from 'tl-react-bridge';
 import type { PopoverAnchor, PopoverOptions } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef } = React;
@@ -114,4 +114,19 @@ export const MenuHeader: React.FC<{ label: string }> = ({ label }) => (
   <div className="tl-menu__header tl-type-label" role="presentation">{label}</div>
 );
 
-export const MenuSeparator: React.FC = () => <hr className="tl-divider" />;
+/**
+ * The class of the element around the divider between the sections of a menu, which gives it the
+ * space around it.
+ */
+const SEPARATOR_CLASS = 'tl-menu__separator';
+
+/** The line between two sections of a menu, drawn by the part `Divider`. */
+export const MenuSeparator: React.FC = () => {
+  const Divider = usePart('Divider');
+  // No role of its own: the divider inside is the separator of the menu.
+  return (
+    <div className={SEPARATOR_CLASS} role="none">
+      <Divider />
+    </div>
+  );
+};

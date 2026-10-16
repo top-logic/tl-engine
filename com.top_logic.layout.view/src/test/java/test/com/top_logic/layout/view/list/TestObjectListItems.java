@@ -8,6 +8,8 @@ package test.com.top_logic.layout.view.list;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -16,6 +18,7 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -24,6 +27,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactLayoutControl;
+import com.top_logic.layout.react.control.layout.SelectItemArguments;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -42,7 +46,9 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Tests what an {@link ObjectListItems} displays for the values its inputs hold, and where it
@@ -52,6 +58,11 @@ import com.top_logic.model.util.TLModelUtil;
  * An element is composed to be attached somewhere, so the content for entering one is displayed
  * while every input holds a value, and what is entered is dropped as soon as the inputs hold
  * something else - a deleted object among them being no value at all.
+ * </p>
+ *
+ * <p>
+ * A list bound to a selection channel makes its elements selectable and keeps the selection in line
+ * with the channel; a list without one is display-only.
  * </p>
  *
  * <p>
@@ -94,8 +105,15 @@ public class TestObjectListItems extends TestCase {
 		_containerChannel = new DefaultViewChannel("container");
 		_containerChannel.set(_container);
 
+		// The elements are no objects others observe, so the window reports no model scope - which
+		// spares the test the knowledge base one is built from, when the client state is rendered.
 		_context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
-			new ReactWindowRegistry("test")));
+			new ReactWindowRegistry("test")) {
+			@Override
+			public ModelScope getModelScope() {
+				return null;
+			}
+		});
 		_itemTemplate = new Template(ELEMENT_CHANNEL);
 		_newElementTemplate = new Template(NEW_ELEMENT_CHANNEL);
 	}
@@ -240,6 +258,140 @@ public class TestObjectListItems extends TestCase {
 	}
 
 	/**
+	 * A list without a selection channel displays its elements without making them selectable.
+	 */
+	public void testNotSelectableWithoutSelection() {
+		ObjectListItems items = list(List.of(_containerChannel));
+		items.showElements(List.of("a", "b"));
+
+		assertFalse("A list without selection is display-only.", elements().isSelectable());
+		assertNull("A display-only list sends no selection state.",
+			clientState().get(ReactLayoutControl.SELECTABLE));
+	}
+
+	/**
+	 * The element of the object the selection channel holds is displayed as selected, also when the
+	 * channel is written later.
+	 */
+	public void testChannelSelectionDisplayed() {
+		DefaultViewChannel selection = new DefaultViewChannel("selection");
+		selection.set("b");
+		ObjectListItems items = list(List.of(_containerChannel));
+		items.bindSelection(SelectionMode.SINGLE, selection);
+		items.showElements(List.of("a", "b", "c"));
+
+		assertEquals("The list is selectable.", Boolean.TRUE, clientState().get(ReactLayoutControl.SELECTABLE));
+		assertEquals("The element the channel names is selected.", List.of(itemKey("b")), selectedKeys());
+
+		selection.set("c");
+		assertEquals("A value written from elsewhere is selected.", List.of(itemKey("c")), selectedKeys());
+
+		selection.set("unknown");
+		assertEquals("A value the list has no element for selects nothing.", List.of(), selectedKeys());
+		assertEquals("A foreign value stays in the channel.", "unknown", selection.get());
+	}
+
+	/**
+	 * Clicking an element writes its object to the selection channel.
+	 */
+	public void testUserSelectionWritesChannel() {
+		DefaultViewChannel selection = new DefaultViewChannel("selection");
+		ObjectListItems items = list(List.of(_containerChannel));
+		items.showElements(List.of("a", "b"));
+		items.bindSelection(SelectionMode.SINGLE, selection);
+
+		select("b", false, false);
+		assertEquals("The clicked element's object is written.", "b", selection.get());
+		assertEquals(List.of(itemKey("b")), selectedKeys());
+
+		select("b", true, false);
+		assertNull("A toggle of the selected element gives the selection up.", selection.get());
+	}
+
+	/**
+	 * In the selection mode {@link SelectionMode#MULTI}, the channel holds the set of the selected
+	 * objects while there are several.
+	 */
+	public void testMultiSelection() {
+		DefaultViewChannel selection = new DefaultViewChannel("selection");
+		ObjectListItems items = list(List.of(_containerChannel));
+		items.bindSelection(SelectionMode.MULTI, selection);
+		items.showElements(List.of("a", "b", "c"));
+
+		assertEquals(Boolean.TRUE, clientState().get(ReactLayoutControl.MULTI_SELECT));
+
+		select("a", false, false);
+		assertEquals("One selected element is written as its object.", "a", selection.get());
+
+		select("c", true, false);
+		assertEquals("Several selected elements are written as a set.", Set.of("a", "c"), selection.get());
+
+		select("a", false, false);
+		select("c", false, true);
+		assertEquals("A range adds the elements up to the clicked one.", Set.of("a", "b", "c"), selection.get());
+
+		selection.set(Set.of("b", "c"));
+		assertEquals("A set written from elsewhere is selected.", Set.of(itemKey("b"), itemKey("c")),
+			Set.copyOf(selectedKeys()));
+	}
+
+	/**
+	 * A selected element that leaves the list gives up the selection channel.
+	 */
+	public void testSelectedElementRemoved() {
+		DefaultViewChannel selection = new DefaultViewChannel("selection");
+		selection.set("b");
+		ObjectListItems items = list(List.of(_containerChannel));
+		items.bindSelection(SelectionMode.SINGLE, selection);
+		items.showElements(List.of("a", "b"));
+		assertEquals(List.of(itemKey("b")), selectedKeys());
+
+		items.showElements(List.of("a"));
+
+		assertNull("The selection names nothing displayed any more.", selection.get());
+		assertEquals(List.of(), selectedKeys());
+	}
+
+	private void select(Object element, boolean toggle, boolean range) {
+		elements().executeCommand(ReactLayoutControl.CMD_SELECT_ITEM, Map.of(
+			SelectItemArguments.KEY, itemKey(element),
+			SelectItemArguments.TOGGLE, Boolean.valueOf(toggle),
+			SelectItemArguments.RANGE, Boolean.valueOf(range)));
+	}
+
+	/**
+	 * The client key of the item of the given element.
+	 */
+	@SuppressWarnings("unchecked")
+	private String itemKey(Object element) {
+		List<Object> keys = (List<Object>) clientState().get(ReactLayoutControl.ITEM_KEYS);
+		List<ReactControl> arranged = arranged();
+		for (int n = 0; n < arranged.size(); n++) {
+			if (_itemTemplate.channelOf(arranged.get(n)).get() == element) {
+				return (String) keys.get(n);
+			}
+		}
+		throw new AssertionError("No item for: " + element);
+	}
+
+	@SuppressWarnings("unchecked")
+	private List<Object> selectedKeys() {
+		return (List<Object>) clientState().get(ReactLayoutControl.SELECTED);
+	}
+
+	/**
+	 * The state the element container hands to the client.
+	 */
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> clientState() {
+		try {
+			return (Map<String, Object>) JSON.fromString(elements().stateAsJSON());
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError(ex);
+		}
+	}
+
+	/**
 	 * The state the given control hands to the client.
 	 */
 	private static String state(ReactControl control) throws IOException {
@@ -313,6 +465,8 @@ public class TestObjectListItems extends TestCase {
 
 		private ViewChannel _channel;
 
+		private final List<ViewChannel> _channels = new ArrayList<>();
+
 		/**
 		 * Creates a {@link Template}.
 		 *
@@ -329,6 +483,7 @@ public class TestObjectListItems extends TestCase {
 
 			ReactControl control = new ReactControl(context, null, "TLPanel");
 			_created.add(control);
+			_channels.add(_channel);
 			return control;
 		}
 
@@ -337,6 +492,13 @@ public class TestObjectListItems extends TestCase {
 		 */
 		public List<IReactControl> created() {
 			return _created;
+		}
+
+		/**
+		 * The channel the given created control is bound to.
+		 */
+		public ViewChannel channelOf(ReactControl control) {
+			return _channels.get(_created.indexOf(control));
 		}
 
 		/**

@@ -3,10 +3,19 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CMD_VALUE_CHANGED, fieldLabel } from 'tl-react-bridge';
+import { CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import MuiChoiceGroupAdapter from './MuiChoiceGroupAdapter';
+import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiChipAdapter from './MuiChipAdapter';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+// The checkboxes of a group of several options are drawn by the part Checkbox.
+replacePart('Checkbox', MuiCheckboxAdapter);
+// The options with a color role and the chosen values of a field that is not editable.
+replacePart('Chip', MuiChipAdapter);
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** Argument of {@link CMD_VALUE_CHANGED}: the values of the chosen options. */
 const ARG_VALUE = 'value';
@@ -103,6 +112,11 @@ describe('TLChoiceGroup of several options as MUI checkboxes', () => {
     expect(group.id).toBe(CONTROL_ID);
     expect(group.getAttribute('aria-labelledby')).toBe(FIELD_ID + '-label');
     expect(screen.getAllByRole('checkbox').map(box => (box as HTMLInputElement).checked)).toEqual([true, false, true]);
+    // Each option is the label of an MUI checkbox drawn by the part.
+    const alpha = screen.getByRole('checkbox', { name: 'Alpha' });
+    expect(alpha.closest('.MuiCheckbox-root')).not.toBeNull();
+    expect(alpha.closest('label')!.classList).toContain('MuiFormControlLabel-root');
+    expect(group.contains(alpha)).toBe(true);
   });
 
   it('toggles the options, also before the server answers', async () => {
@@ -118,6 +132,29 @@ describe('TLChoiceGroup of several options as MUI checkboxes', () => {
   it('marks every checkbox of an invalid field', () => {
     mountGroup({ value: [], multiSelect: true, hasError: true });
 
-    expect(screen.getAllByRole('checkbox').every(box => box.getAttribute('aria-invalid') === 'true')).toBe(true);
+    const boxes = screen.getAllByRole('checkbox');
+    expect(boxes.every(box => box.getAttribute('aria-invalid') === 'true')).toBe(true);
+    expect(boxes.every(box => box.closest('.MuiCheckbox-root')!.classList.contains('MuiCheckbox-colorError'))).toBe(true);
+    // The group itself takes no aria-invalid.
+    expect(screen.getByRole('group').hasAttribute('aria-invalid')).toBe(false);
+  });
+
+  it('colors every checkbox of a questionable field, without marking it invalid', () => {
+    mountGroup({ value: [], multiSelect: true, hasWarnings: true });
+
+    const boxes = screen.getAllByRole('checkbox');
+    expect(boxes.some(box => box.hasAttribute('aria-invalid'))).toBe(false);
+    expect(boxes.every(box => box.closest('.MuiCheckbox-root')!.classList.contains('MuiCheckbox-colorWarning'))).toBe(true);
+  });
+
+  it('sends nothing while disabled', async () => {
+    const sent = mountGroup({ value: [ALPHA], multiSelect: true, editable: false, disabled: true });
+
+    const boxes = screen.getAllByRole('checkbox') as HTMLInputElement[];
+    expect(boxes.every(box => box.disabled)).toBe(true);
+    await userEvent.setup({ pointerEventsCheck: 0 }).click(boxes[1]);
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
   });
 });

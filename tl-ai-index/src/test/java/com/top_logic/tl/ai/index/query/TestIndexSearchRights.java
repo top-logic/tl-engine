@@ -127,6 +127,26 @@ public class TestIndexSearchRights extends BasicTestCase {
 		assertEquals("The query has no word to search for.", hits.notice());
 	}
 
+	/**
+	 * A filter by a keyword shows an object only to a reader of the attribute the keyword is computed
+	 * from: otherwise the filter tells the value of an attribute the reader may not read.
+	 */
+	public void testKeywordFilterNeedsItsAttribute() {
+		TLObject requirement = committed(() -> create(STATEMENT, Map.of("text", "The tau pump needs oil.", "kind",
+			kind("REQUIREMENT"), "project", aliceProject)));
+		SearchFixture.await(_index);
+		SearchRequest requirements =
+			SearchRequest.of("tau pump").withFilters(Map.of("kind", Set.of("REQUIREMENT")));
+		SearchFixture.Rights withKind = new SearchFixture.Rights().read(all).read(List.of(requirement));
+		SearchFixture.Rights withoutKind =
+			new SearchFixture.Rights().read(all).read(List.of(requirement)).hide("kind");
+
+		assertEquals(List.of(id(requirement)),
+			SearchFixture.ids(SearchFixture.asUser(alice, () -> _index.search(requirements, withKind))));
+		assertEquals(List.of(),
+			SearchFixture.ids(SearchFixture.asUser(alice, () -> _index.search(requirements, withoutKind))));
+	}
+
 	/** The rights of the run decide too: a scope the script answers but the reader may not read is out. */
 	public void testOnlyReadableScopes() {
 		SearchFixture.Rights noShared =

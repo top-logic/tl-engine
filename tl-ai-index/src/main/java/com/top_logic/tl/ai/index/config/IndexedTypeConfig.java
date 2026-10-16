@@ -27,7 +27,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *     &lt;text attribute="text"/&gt;
  *     &lt;text name="context" script="s -&gt; $s.get(`pietro:Statement#title`)" reads="title"/&gt;
  *     &lt;keywords&gt;
- *         &lt;keyword name="kind" script="s -&gt; $s.get(`pietro:Statement#kind`).get(`name`)"/&gt;
+ *         &lt;keyword name="kind" script="s -&gt; $s.get(`pietro:Statement#kind`)" reads="kind"/&gt;
  *     &lt;/keywords&gt;
  * &lt;/type&gt;
  * </pre>
@@ -186,6 +186,9 @@ public interface IndexedTypeConfig extends ConfigurationItem {
 		/** Configuration name of {@link #getScript()}. */
 		String SCRIPT = "script";
 
+		/** Configuration name of {@link #getReads()}. */
+		String READS = "reads";
+
 		/**
 		 * The name a search uses for the keyword.
 		 *
@@ -204,6 +207,21 @@ public interface IndexedTypeConfig extends ConfigurationItem {
 		@Name(SCRIPT)
 		@Mandatory
 		Expr getScript();
+
+		/**
+		 * The attributes of the object the {@link #getScript() script} reads.
+		 *
+		 * <p>
+		 * A search that filters by the keyword shows an object only to a reader who may read each of
+		 * these attributes. Otherwise a filter would tell a reader the value of an attribute the
+		 * reader may not read.
+		 * </p>
+		 *
+		 * @see #READS
+		 */
+		@Name(READS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getReads();
 	}
 
 }

@@ -417,7 +417,7 @@ public final class IndexSearch {
 					unchecked = true;
 					break;
 				} else {
-					hit = check(candidate, security);
+					hit = check(candidate, filter.keywords().keySet(), security);
 					checked.put(candidate.object(), hit);
 				}
 				if (hit != null) {
@@ -439,8 +439,12 @@ public final class IndexSearch {
 
 	/**
 	 * The hit for a candidate, or <code>null</code> when the reader may not see it.
+	 *
+	 * @param keywords
+	 *        The keywords the search filters by: the reader must be allowed to read what they are
+	 *        computed from.
 	 */
-	private Hit check(HybridSearch.ObjectHit candidate, ModelSecurity security) {
+	private Hit check(HybridSearch.ObjectHit candidate, Set<String> keywords, ModelSecurity security) {
 		TLObject object = _resolver.resolve(candidate.object(), security);
 		if (object == null) {
 			return null;
@@ -449,6 +453,11 @@ public final class IndexSearch {
 		StoredChunk chunk = candidate.chunk();
 		if (type == null || !mayRead(object, type, chunk.attribute(), security)) {
 			return null;
+		}
+		for (String keyword : keywords) {
+			if (!mayReadAll(object, type.keywordAttributes(keyword, object), security)) {
+				return null;
+			}
 		}
 		return new Hit(object, candidate.object(), MetaLabelProvider.INSTANCE.getLabel(object),
 			TLModelUtil.qualifiedName(object.tType()), chunk.attribute(), chunk.text(), chunk.locator(),
@@ -461,7 +470,11 @@ public final class IndexSearch {
 		if (text == null) {
 			return false;
 		}
-		List<TLStructuredTypePart> attributes = text.readAttributes(object);
+		return mayReadAll(object, text.readAttributes(object), security);
+	}
+
+	private static boolean mayReadAll(TLObject object, List<TLStructuredTypePart> attributes,
+			ModelSecurity security) {
 		if (attributes == null || attributes.isEmpty()) {
 			return false;
 		}

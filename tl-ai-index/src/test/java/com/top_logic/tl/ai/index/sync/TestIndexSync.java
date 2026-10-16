@@ -209,7 +209,7 @@ public class TestIndexSync extends BasicTestCase {
 		stop(first);
 
 		String withSecondKeyword = CONFIG.replace("<keyword name=\"kind\"",
-			"<keyword name=\"title\" script=\"s -> $s.get(`test.aiindex:Statement#title`)\"/>\n<keyword name=\"kind\"");
+			"<keyword name=\"title\" script=\"s -> $s.get(`test.aiindex:Statement#title`)\" reads=\"title\"/>\n<keyword name=\"kind\"");
 		HashingEmbedder embedder = HashingEmbedder.create(32);
 		AiIndex second = start(withSecondKeyword, embedder);
 		awaitSwitch(second);
@@ -294,7 +294,7 @@ public class TestIndexSync extends BasicTestCase {
 		stop(first);
 
 		String withKeyword = CONFIG.replace("<keyword name=\"kind\"",
-			"<keyword name=\"title\" script=\"s -> $s.get(`test.aiindex:Statement#title`)\"/>\n<keyword name=\"kind\"");
+			"<keyword name=\"title\" script=\"s -> $s.get(`test.aiindex:Statement#title`)\" reads=\"title\"/>\n<keyword name=\"kind\"");
 		AiIndex second = new AiIndex(config(withKeyword), HashingEmbedder.create(32), _dir,
 			PersistencyLayer.getKnowledgeBase());
 		AtomicInteger commits = new AtomicInteger();

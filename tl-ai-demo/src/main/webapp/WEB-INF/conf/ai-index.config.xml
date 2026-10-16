@@ -41,7 +41,7 @@
 						<text attribute="name"/>
 						<text attribute="description"/>
 						<keywords>
-							<keyword name="status" script="e -> $e.get(`demo.events:Event#status`)"/>
+							<keyword name="status" script="e -> $e.get(`demo.events:Event#status`)" reads="status"/>
 						</keywords>
 					</type>
 					<type name="demo.events:Session">

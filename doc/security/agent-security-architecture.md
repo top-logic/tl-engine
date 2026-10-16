@@ -1289,7 +1289,9 @@ unrestricted; unlike it, the rights are applied **inside** the query and then on
    text part names its attribute, a script text part must declare what it `reads`, or it is shown to
    nobody. A hit that fails is dropped with its text. Unlike `VectorIndexSearchTool`, a surviving hit
    shows its chunk: the chunk is the text of named attributes, all just checked, not a dump of the
-   object.
+   object. A search that filters by a keyword also checks `canRead` for every attribute the keyword
+   `reads`; a keyword must declare them. Otherwise a filter tells a reader the value of an attribute
+   the reader may not read, for example `salaryBand=HIGH` over readable objects.
 4. **Deeper, not wider.** An unfilled page searches again with twice the depth, up to
    `max-candidates` chunks and as many checks; the answer says whether more is available, never how
    many hits were dropped.

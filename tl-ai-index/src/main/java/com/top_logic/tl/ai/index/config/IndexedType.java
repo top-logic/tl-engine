@@ -65,17 +65,21 @@ public final class IndexedType {
 		 * text; <code>null</code> when one of them does not exist, so nobody may.
 		 */
 		public List<TLStructuredTypePart> readAttributes(TLObject object) {
-			List<TLStructuredTypePart> result = new ArrayList<>(reads.size());
-			TLStructuredType type = object.tType();
-			for (String name : reads) {
-				TLStructuredTypePart part = type.getPart(name);
-				if (part == null) {
-					return null;
-				}
-				result.add(part);
-			}
-			return result;
+			return attributes(object, reads);
 		}
+	}
+
+	/**
+	 * One keyword of an object.
+	 *
+	 * @param script
+	 *        The script deriving the values.
+	 * @param reads
+	 *        The attributes a reader must be allowed to read to see a hit of a search filtered by
+	 *        this keyword.
+	 */
+	private record Keyword(QueryExecutor script, List<String> reads) {
+		// A plain carrier.
 	}
 
 	/**
@@ -117,7 +121,7 @@ public final class IndexedType {
 
 	private final QueryExecutor _scope;
 
-	private final Map<String, QueryExecutor> _keywords;
+	private final Map<String, Keyword> _keywords;
 
 	private final boolean _labelPrefix;
 
@@ -147,7 +151,13 @@ public final class IndexedType {
 		_scope = config.getScope() == null ? null : unfiltered(config.getScope());
 		_keywords = new LinkedHashMap<>();
 		for (IndexedTypeConfig.Keyword keyword : config.getKeywords()) {
-			_keywords.put(keyword.getName(), unfiltered(keyword.getScript()));
+			if (keyword.getReads().isEmpty()) {
+				throw new IllegalArgumentException("The keyword '" + keyword.getName() + "' of '" + config.getName()
+					+ "' needs 'reads': the attributes its script reads.");
+			}
+			checkReads(clazz, keyword.getReads(), "keyword '" + keyword.getName() + "'");
+			_keywords.put(keyword.getName(),
+				new Keyword(unfiltered(keyword.getScript()), List.copyOf(keyword.getReads())));
 		}
 		_labelPrefix = config.getLabelPrefix();
 	}
@@ -170,13 +180,34 @@ public final class IndexedType {
 			throw new IllegalArgumentException("A script text of '" + TLModelUtil.qualifiedName(type)
 				+ "' needs a name.");
 		}
-		for (String read : part.getReads()) {
+		checkReads(type, part.getReads(), "text '" + part.getPartName() + "'");
+		return new Part(part.getPartName(), null, unfiltered(part.getScript()), List.copyOf(part.getReads()));
+	}
+
+	private static void checkReads(TLClass type, List<String> reads, String reader) {
+		for (String read : reads) {
 			if (type.getPart(read) == null) {
 				throw new IllegalArgumentException("Type '" + TLModelUtil.qualifiedName(type) + "' has no attribute '"
-					+ read + "' that the text '" + part.getPartName() + "' reads.");
+					+ read + "' that the " + reader + " reads.");
 			}
 		}
-		return new Part(part.getPartName(), null, unfiltered(part.getScript()), List.copyOf(part.getReads()));
+	}
+
+	/**
+	 * The attributes of the given names of the object's type; <code>null</code> when one of them
+	 * does not exist.
+	 */
+	private static List<TLStructuredTypePart> attributes(TLObject object, List<String> names) {
+		List<TLStructuredTypePart> result = new ArrayList<>(names.size());
+		TLStructuredType type = object.tType();
+		for (String name : names) {
+			TLStructuredTypePart part = type.getPart(name);
+			if (part == null) {
+				return null;
+			}
+			result.add(part);
+		}
+		return result;
 	}
 
 	/**
@@ -231,6 +262,16 @@ public final class IndexedType {
 	}
 
 	/**
+	 * The attributes of the given object a reader must be allowed to read to see it in a search
+	 * filtered by the given keyword; <code>null</code> when the type has no such keyword or one of
+	 * them does not exist, so nobody may.
+	 */
+	public List<TLStructuredTypePart> keywordAttributes(String keyword, TLObject object) {
+		Keyword compiled = _keywords.get(keyword);
+		return compiled == null ? null : attributes(object, compiled.reads());
+	}
+
+	/**
 	 * What the index holds of the given object.
 	 *
 	 * <p>
@@ -248,8 +289,8 @@ public final class IndexedType {
 			}
 		}
 		Map<String, List<String>> keywords = new LinkedHashMap<>();
-		for (Map.Entry<String, QueryExecutor> keyword : _keywords.entrySet()) {
-			keywords.put(keyword.getKey(), keywordValues(keyword.getValue().execute(object)));
+		for (Map.Entry<String, Keyword> keyword : _keywords.entrySet()) {
+			keywords.put(keyword.getKey(), keywordValues(keyword.getValue().script().execute(object)));
 		}
 		return new Content(typeNames(object), scopes(object), keywords, chunks);
 	}

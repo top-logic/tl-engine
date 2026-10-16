@@ -52,7 +52,7 @@ public final class IndexTestModel {
 			<text attribute="secret"/>
 			<text name="context" script="s -> $s.get(`test.aiindex:Statement#title`)" reads="title"/>
 			<keywords>
-				<keyword name="kind" script="s -> $s.get(`test.aiindex:Statement#kind`)"/>
+				<keyword name="kind" script="s -> $s.get(`test.aiindex:Statement#kind`)" reads="kind"/>
 			</keywords>
 		</type>
 		""";

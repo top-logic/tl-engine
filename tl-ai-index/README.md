@@ -38,7 +38,7 @@ Depend on `tl-ai-index`, switch the module on and configure the types:
 			<type name="my:Statement" scope="s -> $s.get(`my:Statement#project`)">
 				<text attribute="text"/>
 				<keywords>
-					<keyword name="kind" script="s -> $s.get(`my:Statement#kind`)"/>
+					<keyword name="kind" script="s -> $s.get(`my:Statement#kind`)" reads="kind"/>
 				</keywords>
 			</type>
 			<type name="my:Document" scope="d -> $d.get(`my:Document#project`)">
@@ -63,7 +63,7 @@ Then give an agent the tools `index.search` and `index.similar`.
 | `location` | Directory of the index, default `%VAR_PATH%/tl-ai-index`. Holds the text of every indexed object: protect it like the database files. |
 | `embedder` | How texts become vectors. None: the index searches words only. |
 | `chunking` | `max-chars` (default 1200), `overlap-sentences` (1), `page-marker` (a regex for a line that starts a page, the page number as group 1), `max-text-chars` (2,000,000 per text). |
-| `types/type` | `name` (qualified class; applies to sub classes without their own entry), `<text attribute=".."/>` or `<text name=".." script=".." reads="a,b"/>`, `scope` (script: object -> scope objects), `<keywords>`, `label-prefix` (default true: the object's label goes in front of each chunk when it is embedded). |
+| `types/type` | `name` (qualified class; applies to sub classes without their own entry), `<text attribute=".."/>` or `<text name=".." script=".." reads="a,b"/>`, `scope` (script: object -> scope objects), `<keywords>` (`<keyword name=".." script=".." reads="a,b"/>`: a search filtered by it shows an object only to a reader of these attributes), `label-prefix` (default true: the object's label goes in front of each chunk when it is embedded). |
 | `readable-scopes` | Script without arguments: every scope object a reader may search in. Run as the reader, filtered by the reader's rights. Without it, scoped types are filtered by type only. |
 | `min-similarity` | The lowest cosine to the query that finds a chunk by meaning (default 0: off). Without it, a query that nothing means still gets the nearest, unrelated chunks. Model-dependent: measure related and unrelated texts of the application and set it between. |
 | `max-candidates` | How deep a search goes when the reader may not read the best hits (2000). |

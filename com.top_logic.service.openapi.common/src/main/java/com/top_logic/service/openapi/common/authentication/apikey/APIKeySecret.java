@@ -9,8 +9,7 @@ import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.TokenEditor;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
@@ -42,7 +41,7 @@ public interface APIKeySecret extends SecretConfiguration {
 	 */
 	@Name(DESCRIPTION)
 	@Nullable
-	@ControlProvider(MultiLineText.class)
+	@MultiLine
 	String getDescription();
 
 }

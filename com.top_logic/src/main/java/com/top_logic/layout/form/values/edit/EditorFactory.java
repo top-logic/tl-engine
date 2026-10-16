@@ -851,7 +851,7 @@ public class EditorFactory implements AnnotationCustomizations {
 		}
 		@SuppressWarnings("unchecked")
 		AnnotationControlProvider<A> typedProvider = (AnnotationControlProvider<A>) provider;
-		return typedProvider.getControlProvider(property, annotation);
+		return typedProvider.getControlProvider(this, property, annotation);
 	}
 
 	/**

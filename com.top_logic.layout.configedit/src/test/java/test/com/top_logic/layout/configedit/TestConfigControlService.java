@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -50,9 +51,11 @@ import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
 import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
@@ -65,12 +68,11 @@ import com.top_logic.layout.configedit.I18NStringFormatProvider;
 import com.top_logic.layout.form.format.ColorConfigFormat;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
-import com.top_logic.layout.form.template.TextInputControlProvider;
-import com.top_logic.layout.form.values.CommonMarkText;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -86,6 +88,9 @@ import com.top_logic.layout.react.control.form.ReactIconSelectControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
+import com.top_logic.layout.react.control.form.ReactRenderedTextControl;
+import com.top_logic.layout.react.control.html.ReactHtmlControl;
 import com.top_logic.layout.react.state.DatePickerState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.TextInputState;
@@ -737,8 +742,17 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getMultiLineList()}. */
 		String MULTI_LINE_LIST = "multiLineList";
 
-		/** Property name for {@link #getUnmappedControlProvider()}. */
-		String UNMAPPED_CONTROL_PROVIDER = "unmappedControlProvider";
+		/** Property name for {@link #getEightLines()}. */
+		String EIGHT_LINES = "eightLines";
+
+		/** Property name for {@link #getMultiLineLabel()}. */
+		String MULTI_LINE_LABEL = "multiLineLabel";
+
+		/** Property name for {@link #getCommonMarkLabel()}. */
+		String COMMON_MARK_LABEL = "commonMarkLabel";
+
+		/** Property name for {@link #getMultiLineChoice()}. */
+		String MULTI_LINE_CHOICE = "multiLineChoice";
 
 		/** Property name for {@link #getIcon()}. */
 		String ICON = "icon";
@@ -885,29 +899,45 @@ public class TestConfigControlService extends TestCase {
 		@Name(TEXT)
 		String getText();
 
-		/** Free text the declarative form edits in a text area. */
+		/** Free text spanning several lines. */
 		@Name(MULTI_LINE_TEXT)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		String getMultiLineText();
 
-		/**
-		 * Free text annotated with {@link CommonMarkText}, a specialization of
-		 * {@link MultiLineText}.
-		 */
+		/** Free text in CommonMark syntax. */
 		@Name(COMMON_MARK_TEXT)
-		@ControlProvider(CommonMarkText.class)
+		@CommonMark
 		String getCommonMarkText();
 
-		/** A formatted value the declarative form edits as its text in a text area. */
+		/** @see #getCommonMarkText() */
+		void setCommonMarkText(String value);
+
+		/** A formatted value whose text spans several lines. */
 		@Name(MULTI_LINE_LIST)
 		@Format(CommaSeparatedStrings.class)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		List<String> getMultiLineList();
 
-		/** Free text annotated with a control provider of the declarative form nobody mapped. */
-		@Name(UNMAPPED_CONTROL_PROVIDER)
-		@ControlProvider(TextInputControlProvider.class)
-		String getUnmappedControlProvider();
+		/** Free text with a given number of visible rows. */
+		@Name(EIGHT_LINES)
+		@MultiLine(rows = 8)
+		String getEightLines();
+
+		/** An internationalized text whose translations span several lines. */
+		@Name(MULTI_LINE_LABEL)
+		@MultiLine(rows = 3)
+		ResKey getMultiLineLabel();
+
+		/** An internationalized text whose translations are written in CommonMark syntax. */
+		@Name(COMMON_MARK_LABEL)
+		@CommonMark
+		ResKey getCommonMarkLabel();
+
+		/** One of the offered colours, annotated as multi-line text. */
+		@Name(MULTI_LINE_CHOICE)
+		@Options(fun = Colors.class)
+		@MultiLine
+		String getMultiLineChoice();
 
 		/** An icon, the same value an icon-typed model attribute holds. */
 		@Name(ICON)
@@ -1467,8 +1497,8 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * A text property annotated with the declarative form's {@link MultiLineText} is edited in a
-	 * text area with that control's default number of rows.
+	 * A text property annotated with {@link MultiLine} is edited in a text area with the default
+	 * number of rows.
 	 */
 	public void testMultiLineTextAnnotation() {
 		ReactControl control = control(TestConfig.MULTI_LINE_TEXT);
@@ -1480,14 +1510,157 @@ public class TestConfigControlService extends TestCase {
 			state.get(TypingFieldState.SEND_VALUE_ON_BLUR__PROP));
 	}
 
-	/** The mapping for {@link MultiLineText} covers its specialization {@link CommonMarkText}. */
-	public void testMultiLineTextMappingCoversSubclasses() {
-		assertEquals(Boolean.TRUE,
-			control(TestConfig.COMMON_MARK_TEXT).scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+	/** The rows of a {@link MultiLine} annotation reach the text area. */
+	public void testMultiLineRows() {
+		Map<String, Object> state = control(TestConfig.EIGHT_LINES).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(8), state.get(TextInputState.ROWS__PROP));
 	}
 
 	/**
-	 * A formatted value annotated with {@link MultiLineText} is edited as its text in a text area,
+	 * An internationalized text annotated with {@link MultiLine} keeps its editor per language,
+	 * whose input spans the annotated number of rows: the annotation states something about the
+	 * text, it does not take the value away from the editor that handles its type.
+	 */
+	public void testMultiLineResKeyKeepsItsEditorPerLanguage() {
+		assertFalse("A resource key must not be edited as its encoded text.",
+			model(TestConfig.MULTI_LINE_LABEL) instanceof ConfigFormatFieldModel);
+
+		ReactControl control = control(TestConfig.MULTI_LINE_LABEL);
+		ReactI18NStringInputControl input = find(control, ReactI18NStringInputControl.class);
+		assertNotNull("The per-language editor must be used, got: " + control, input);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(3), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/** An internationalized text without the annotation keeps a single-line input. */
+	public void testResKeyIsSingleLine() {
+		ReactI18NStringInputControl input = find(control(TestConfig.LABEL), ReactI18NStringInputControl.class);
+		assertNotNull(input);
+		assertNull(input.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+	}
+
+	/**
+	 * A property edited by selecting stays a select, even when annotated with {@link MultiLine}: a
+	 * text area cannot edit a selection.
+	 */
+	public void testMultiLineSelectStaysASelect() {
+		assertTrue(control(TestConfig.MULTI_LINE_CHOICE) instanceof ReactDropdownSelectControl);
+	}
+
+	/**
+	 * An editable {@link CommonMark} text is edited as its source in a text area with the default
+	 * number of rows.
+	 */
+	public void testCommonMarkIsEditedInATextArea() {
+		ReactControl control = control(TestConfig.COMMON_MARK_TEXT);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactControl input = ((ReactRenderedTextControl) control).getInput();
+		assertTrue(input instanceof ReactTextInputControl);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/** A read-only {@link CommonMark} text is displayed as the HTML rendered from it. */
+	public void testReadOnlyCommonMarkIsDisplayedAsHtml() {
+		_config.setCommonMarkText("A **bold** word.");
+		String html = readOnlyCommonMarkHtml();
+		assertTrue("Unexpected HTML: " + html, html.contains("<strong>bold</strong>"));
+	}
+
+	/** HTML in a {@link CommonMark} text is not passed to the display. */
+	public void testReadOnlyCommonMarkEscapesHtml() {
+		_config.setCommonMarkText("Text <script>alert(1)</script> and [link](javascript:alert(2))");
+		String html = readOnlyCommonMarkHtml();
+		assertFalse("Unexpected HTML: " + html, html.contains("<script"));
+		assertFalse("Unexpected HTML: " + html, html.contains("javascript:"));
+	}
+
+	/** The display of a {@link CommonMark} text follows changes of the value. */
+	public void testReadOnlyCommonMarkFollowsTheValue() {
+		_config.setCommonMarkText("first");
+		ReactRenderedTextControl control = readOnlyCommonMark();
+		_config.setCommonMarkText("*second*");
+		String html = (String) control.getDisplay().scriptingScalarState().get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html, html.contains("<em>second</em>"));
+	}
+
+	/**
+	 * An editable internationalized {@link CommonMark} text keeps its editor per language, with
+	 * multi-line inputs.
+	 */
+	public void testCommonMarkResKeyIsEditedPerLanguage() {
+		ReactControl control = control(TestConfig.COMMON_MARK_LABEL);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactI18NStringInputControl input =
+			find(((ReactRenderedTextControl) control).getInput(), ReactI18NStringInputControl.class);
+		assertNotNull("The per-language editor must be used.", input);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/**
+	 * A read-only internationalized {@link CommonMark} text displays its translation rendered as
+	 * HTML, passing the HTML safety check.
+	 */
+	public void testReadOnlyCommonMarkResKeyIsDisplayedAsHtml() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.COMMON_MARK_LABEL);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		model.setEditable(false);
+		ReactControl control = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(control instanceof ReactRenderedTextControl);
+
+		// The translations a user enters with the editor per language: a literal key, which the
+		// field holds although its format would not write it as text.
+		model.setValue(ResKey.builder()
+			.add(Locale.ENGLISH, "An **English** text.")
+			.add(Locale.GERMAN, "Ein **deutscher** Text.")
+			.build());
+
+		Map<String, Object> state = ((ReactRenderedTextControl) control).getDisplay().scriptingScalarState();
+		assertNull("The rendered text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		String html = (String) state.get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html,
+			html.contains("<strong>English</strong>") || html.contains("<strong>deutscher</strong>"));
+	}
+
+	private String readOnlyCommonMarkHtml() {
+		Map<String, Object> state = readOnlyCommonMark().getDisplay().scriptingScalarState();
+		assertNull("The rendered text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		return (String) state.get(ReactHtmlControl.HTML);
+	}
+
+	private ReactRenderedTextControl readOnlyCommonMark() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.COMMON_MARK_TEXT);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		model.setEditable(false);
+		ReactControl control = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		assertEquals("A read-only text shows the display.", 1, ((ReactRenderedTextControl) control).getActiveIndex());
+		return (ReactRenderedTextControl) control;
+	}
+
+	/**
+	 * The given control, or the first control of the given type among its descendants.
+	 */
+	private static <T extends ReactControl> T find(ReactControl control, Class<T> type) {
+		if (type.isInstance(control)) {
+			return type.cast(control);
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			T result = find(child, type);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * A formatted value annotated with {@link MultiLine} is edited as its text in a text area,
 	 * sent when the field is left like every formatted text.
 	 */
 	public void testMultiLineFormattedText() {
@@ -1500,13 +1673,6 @@ public class TestConfigControlService extends TestCase {
 	/** A text property without the annotation stays a single line. */
 	public void testPlainTextIsSingleLine() {
 		ReactControl control = control(TestConfig.TEXT);
-		assertTrue(control instanceof ReactTextInputControl);
-		assertNull(control.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
-	}
-
-	/** A control provider of the declarative form nobody mapped leaves the property to the fallback. */
-	public void testUnmappedControlProviderKeepsFallback() {
-		ReactControl control = control(TestConfig.UNMAPPED_CONTROL_PROVIDER);
 		assertTrue(control instanceof ReactTextInputControl);
 		assertNull(control.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
 	}
@@ -2398,7 +2564,8 @@ public class TestConfigControlService extends TestCase {
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestConfigControlService.class,
-				TypeIndex.Module.INSTANCE, FormatterService.Module.INSTANCE, MimeTypesModule.Module.INSTANCE, ThemeFactory.Module.INSTANCE,
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE, FormatterService.Module.INSTANCE,
+				MimeTypesModule.Module.INSTANCE, ThemeFactory.Module.INSTANCE, SafeHTML.Module.INSTANCE,
 				ConfigControlService.Module.INSTANCE));
 	}
 }

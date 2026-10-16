@@ -17,9 +17,9 @@ import com.top_logic.basic.config.constraint.algorithm.ValueConstraint;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.scripting.template.gui.ScriptRecorderComponent;
 
 /**
@@ -57,7 +57,7 @@ public interface TemplateEditModel extends NamedConfigMandatory {
 	/**
 	 * The body of the template.
 	 */
-	@ControlProvider(MultiLineText.class)
+	@MultiLine
 	@CssClass(ScriptRecorderComponent.ACTION_FIELD_CSS_CLASS)
 	@Name(CONTENT)
 	String getContent();

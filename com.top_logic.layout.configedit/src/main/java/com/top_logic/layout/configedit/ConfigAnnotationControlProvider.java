@@ -39,7 +39,11 @@ public interface ConfigAnnotationControlProvider<A extends Annotation> {
 	 *        annotation.
 	 * @param annotation
 	 *        The annotation found for the property, on the property itself or on its value type.
-	 * @return The control for the field input widget, never <code>null</code>.
+	 * @return The control for the field input widget, or <code>null</code> if this provider cannot
+	 *         edit the value in the form the model holds it in (e.g. a text area for a value that
+	 *         is not {@link ConfigControlService#holdsText(ConfigFieldModel) held as text}). The
+	 *         {@link ConfigControlService} then chooses the control as if the property did not carry
+	 *         the annotation.
 	 */
 	ReactControl createControl(ReactContext context, ConfigFieldModel model, A annotation);
 

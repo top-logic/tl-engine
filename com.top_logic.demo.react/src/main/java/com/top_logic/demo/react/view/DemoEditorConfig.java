@@ -22,19 +22,19 @@ import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.CommonMark;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 
 /**
  * Self-contained sample configuration edited by the config-editor demo.
  *
  * <p>
- * Exercises a spread of property kinds (text, multi-line text, number, boolean, enumeration, a
- * date with its time of day, a nested item, a list of items, an array of items, a map of items, a
- * list of plain strings written as one comma separated text, a duration, and a {@link ResKey}) so
- * the React configuration editor renders each editor variant.
+ * Exercises a spread of property kinds (text, multi-line text, CommonMark text, number, boolean,
+ * enumeration, a date with its time of day, a nested item, a list of items, an array of items, a
+ * map of items, a list of plain strings written as one comma separated text, a duration, and a
+ * {@link ResKey}) so the React configuration editor renders each editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
@@ -44,6 +44,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getDescription()}. */
 	String DESCRIPTION = "description";
+
+	/** Configuration name for the value of {@link #getNotes()}. */
+	String NOTES = "notes";
 
 	/** Configuration name for the value of {@link #getCount()}. */
 	String COUNT = "count";
@@ -108,13 +111,26 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	 * A longer free-text description spanning several lines.
 	 *
 	 * <p>
-	 * The {@link MultiLineText} control provider makes the property a text area rather than the
-	 * single-line input of {@link #getTitle()}.
+	 * The {@link MultiLine} annotation makes the property a text area rather than the single-line
+	 * input of {@link #getTitle()}.
 	 * </p>
 	 */
 	@Name(DESCRIPTION)
-	@ControlProvider(MultiLineText.class)
+	@MultiLine
 	String getDescription();
+
+	/**
+	 * Notes written in <i>CommonMark</i> syntax.
+	 *
+	 * <p>
+	 * The {@link CommonMark} annotation makes the property a text area while the form is edited,
+	 * and displays the formatted text while it is not.
+	 * </p>
+	 */
+	@Name(NOTES)
+	@CommonMark
+	@MultiLine(rows = 4)
+	String getNotes();
 
 	/**
 	 * A bounded item count.

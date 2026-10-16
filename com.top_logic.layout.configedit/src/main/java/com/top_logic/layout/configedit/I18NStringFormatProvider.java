@@ -12,9 +12,12 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
+import com.top_logic.layout.react.control.form.ReactRenderedTextControl;
 
 /**
  * {@link ConfigControlProvider} that edits a {@link ResKey} property the way an
@@ -29,6 +32,12 @@ import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
  * single string carrying every language at once, in the framework's own encoding. Nobody edits a
  * translation that way; the same value in a model has an input per language and machine translation
  * between them, and a configured one should be no different.
+ * </p>
+ *
+ * <p>
+ * A text spanning several lines - a property annotated with {@link MultiLine} or
+ * {@link CommonMark} - is edited in a multi-line input per language. A {@link CommonMark} text is
+ * displayed formatted while it cannot be edited.
  * </p>
  *
  * <p>
@@ -57,6 +66,12 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 		/**
 		 * The number of visible rows of the inline input, or {@code 0} to render it as a single
 		 * line.
+		 *
+		 * <p>
+		 * Used for a property whose text is not stated to span several lines. The text of a
+		 * property annotated with {@link MultiLine} or {@link CommonMark} is edited in inputs with
+		 * the rows the annotation gives.
+		 * </p>
 		 */
 		@IntDefault(0)
 		int getRows();
@@ -74,7 +89,17 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
 		String label = Labels.propertyLabel(model.getProperty(), false);
-		return ReactI18NStringInputControl.createEditor(context, model, getConfig().getRows(), label);
+		int rows = MultiLineTextConfigProvider.rows(model.getProperty());
+		if (rows == 0) {
+			rows = getConfig().getRows();
+		}
+		int editorRows = rows;
+		if (ConfigControlService.annotation(model.getProperty(), CommonMark.class) != null) {
+			return new ReactRenderedTextControl(context, model,
+				() -> ReactI18NStringInputControl.createEditor(context, model, editorRows, label),
+				ReactI18NStringInputControl::displayText, com.top_logic.layout.form.format.CommonMark::toHtml);
+		}
+		return ReactI18NStringInputControl.createEditor(context, model, rows, label);
 	}
 
 }

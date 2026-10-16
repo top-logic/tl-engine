@@ -30,6 +30,10 @@ public interface AnnotationControlProvider<A extends Annotation> {
 	/**
 	 * The {@link ControlProvider} for a property annotated with the given annotation.
 	 *
+	 * @param editorFactory
+	 *        The {@link EditorFactory} building the form. Further annotations of the property are
+	 *        looked up through {@link EditorFactory#getAnnotation(PropertyDescriptor, Class)}, so
+	 *        that the customizations of the form are considered.
 	 * @param property
 	 *        The property for which a form field is displayed.
 	 * @param annotation
@@ -38,6 +42,6 @@ public interface AnnotationControlProvider<A extends Annotation> {
 	 * @return The {@link ControlProvider} to display the property's field with, or
 	 *         <code>null</code> if the annotation does not ask for a special control in this case.
 	 */
-	ControlProvider getControlProvider(PropertyDescriptor property, A annotation);
+	ControlProvider getControlProvider(EditorFactory editorFactory, PropertyDescriptor property, A annotation);
 
 }

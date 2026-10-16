@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -34,12 +35,16 @@ import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.CommonMarkText;
+import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.AnnotationControlProvider;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.EditorFactory.AnnotationControlMapping;
 import com.top_logic.layout.form.values.edit.EditorFactory.Config;
 import com.top_logic.layout.form.values.edit.EditorFactory.TypeControlMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.ValueEditor;
@@ -91,14 +96,14 @@ public class TestEditorFactoryControls extends TestCase {
 
 	public static class FirstProvider implements AnnotationControlProvider<First> {
 		@Override
-		public ControlProvider getControlProvider(PropertyDescriptor property, First annotation) {
+		public ControlProvider getControlProvider(EditorFactory editorFactory, PropertyDescriptor property, First annotation) {
 			return new TestControlProvider("first:" + annotation.value());
 		}
 	}
 
 	public static class SecondProvider implements AnnotationControlProvider<Second> {
 		@Override
-		public ControlProvider getControlProvider(PropertyDescriptor property, Second annotation) {
+		public ControlProvider getControlProvider(EditorFactory editorFactory, PropertyDescriptor property, Second annotation) {
 			return new TestControlProvider("second:" + annotation.value());
 		}
 	}
@@ -196,6 +201,51 @@ public class TestEditorFactoryControls extends TestCase {
 		String getTree();
 	}
 
+	public interface TextProperties extends ConfigurationItem {
+		@MultiLine(rows = 8)
+		String getEightLines();
+
+		@MultiLine
+		String getDefaultLines();
+
+		@CommonMark
+		String getMarkup();
+
+		@CommonMark
+		@MultiLine(rows = 3)
+		String getThreeLineMarkup();
+
+		MultiLineValue getTypeAnnotated();
+
+		String getPlain();
+	}
+
+	@MultiLine(rows = 2)
+	public enum MultiLineValue {
+		A, B;
+	}
+
+	public void testMultiLine() {
+		FormGroup group = build(shippedConfig(), TextProperties.class);
+
+		assertMultiLine(MultiLineText.class, 8, group, "eight-lines");
+		assertMultiLine(MultiLineText.class, MultiLineText.DEFAULT_ROWS, group, "default-lines");
+		assertNull(group.getField("plain").getControlProvider());
+	}
+
+	public void testCommonMark() {
+		FormGroup group = build(shippedConfig(), TextProperties.class);
+
+		assertMultiLine(CommonMarkText.class, MultiLineText.DEFAULT_ROWS, group, "markup");
+		assertMultiLine(CommonMarkText.class, 3, group, "three-line-markup");
+	}
+
+	public void testMultiLineOnValueType() {
+		FormGroup group = build(shippedConfig(), TextProperties.class);
+
+		assertMultiLine(MultiLineText.class, 2, group, "type-annotated");
+	}
+
 	public void testAnnotationControl() throws ConfigurationException {
 		FormGroup group = build(config(First.class, FirstProvider.class), AnnotatedProperties.class);
 
@@ -261,6 +311,17 @@ public class TestEditorFactoryControls extends TestCase {
 		assertNull(group.getField("large").getControlProvider());
 		assertSame("Tree options use the selection dialog.",
 			SelectionControlProvider.INSTANCE, group.getField("tree").getControlProvider());
+	}
+
+	private static void assertMultiLine(Class<?> expectedType, int expectedRows, FormGroup group, String field) {
+		ControlProvider controlProvider = group.getField(field).getControlProvider();
+		assertNotNull("No control for '" + field + "'.", controlProvider);
+		assertEquals("Control for '" + field + "'.", expectedType, controlProvider.getClass());
+		assertEquals("Rows of '" + field + "'.", expectedRows, ((MultiLineText) controlProvider).getRows());
+	}
+
+	private static Config shippedConfig() {
+		return ApplicationConfig.getInstance().getConfig(Config.class);
 	}
 
 	private static void assertOrigin(String expected, FormGroup group, String field) {

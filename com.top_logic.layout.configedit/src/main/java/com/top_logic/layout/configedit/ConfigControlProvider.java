@@ -13,8 +13,7 @@ import com.top_logic.layout.react.control.ReactControl;
  *
  * <p>
  * Implementations are registered in the configuration of the {@link ConfigControlService}: by the
- * Java type of the property value, by the class of the property's value provider, or by the control
- * provider the declarative form's annotation names.
+ * Java type of the property value, or by the class of the property's value provider.
  * </p>
  *
  * <p>

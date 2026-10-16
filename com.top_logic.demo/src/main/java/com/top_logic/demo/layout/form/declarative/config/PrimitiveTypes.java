@@ -23,11 +23,11 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.AcceptedTypes;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.editor.BinaryDataEditor;
@@ -215,7 +215,7 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	 */
 	@Name(RESKEY_MULTILINE_PRIMITIVE)
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
-	@ControlProvider(MultiLineText.class)
+	@MultiLine
 	ResKey getResKeyMultilinePrimitive();
 
 	/**

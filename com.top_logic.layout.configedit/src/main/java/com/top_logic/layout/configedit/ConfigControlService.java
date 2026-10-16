@@ -33,10 +33,8 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
-import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -75,7 +73,9 @@ import com.top_logic.mig.html.HTMLFormatter;
  * <li>The map from an annotation of the property or of its value type to a control of this
  * service ({@link Config#getAnnotationControls()}) - an annotation states what the value means
  * (e.g. that its text spans multiple lines), and the map decides how such a value is edited. The
- * first configured annotation the property carries wins.</li>
+ * first configured annotation the property carries whose provider creates a control wins; a
+ * provider may decline a property whose value it cannot edit in the form the remaining rules give
+ * it, which leaves the property to those rules.</li>
  * <li>A property edited by selecting from a fixed set of options gets a searchable dropdown - the
  * select model-based forms use - whether it takes one option or several.</li>
  * <li>The value-type-to-provider map configured in this service ({@link Config#getProviders()}).</li>
@@ -84,19 +84,14 @@ import com.top_logic.mig.html.HTMLFormatter;
  * its superclasses) is mapped, ahead of the generic format text field. This is what lets a
  * {@code Date} formatted as a time of day get a time picker instead of plain text: the Java-type
  * map above cannot separate it from a plain date, but the value provider's own class can.</li>
- * <li>The map from the control the declarative form's {@link ControlProvider} annotation names (on
- * the property or on its value type) to a control of this service
- * ({@link Config#getControlProviders()}) - e.g. a property annotated with {@link MultiLineText}
- * gets a multi-line text input. A provider class nobody mapped leaves the property to the
- * fallback.</li>
  * <li>The built-in fallback: the direct widget for the property's Java type - a {@code Date} gets
  * a picker for a date with a time of day, the form its value is stored in - or otherwise text
  * parsed and formatted through the property's own {@code ConfigurationValueProvider}.</li>
  * </ol>
  *
  * <p>
- * The two annotation maps ({@link Config#getAnnotationControls()} and
- * {@link Config#getControlProviders()}) choose a control, but not the form of the value it edits:
+ * The annotation map ({@link Config#getAnnotationControls()}) chooses a control, but not the form
+ * of the value it edits:
  * an annotation states something about the value, not that the value is held in a form other than
  * the one the property would otherwise be edited in. A value map, in contrast, claims the property
  * for a control that edits its typed value (an internationalized string in an editor per language,
@@ -107,8 +102,8 @@ import com.top_logic.mig.html.HTMLFormatter;
  * </p>
  *
  * <p>
- * The configured maps ({@link Config#getAnnotationControls()}, {@link Config#getProviders()},
- * {@link Config#getFormats()} and {@link Config#getControlProviders()}) are what let a module above
+ * The configured maps ({@link Config#getAnnotationControls()}, {@link Config#getProviders()} and
+ * {@link Config#getFormats()}) are what let a module above
  * this one contribute a control - the TL-Script editor, for instance, lives in
  * {@code tl-model-search-react}.
  * </p>
@@ -175,12 +170,16 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		 * A property that carries one of the configured annotations, on the property itself or on
 		 * its value type, is edited with the control the annotation's
 		 * {@link ConfigAnnotationControlProvider} creates. If a property carries several of the
-		 * configured annotations, the first entry in this list whose annotation is present wins.
+		 * configured annotations, the first entry in this list whose annotation is present and
+		 * whose provider creates a control wins.
 		 * </p>
 		 *
 		 * <p>
 		 * A control chosen here takes precedence over every other mapping of this service and over
 		 * a select. Only an encrypted property is never edited with a control chosen here.
+		 * A provider declines a property whose value it cannot edit in the form the other rules
+		 * give it - a text area declines a property edited by selecting, for instance - and leaves
+		 * it to those rules.
 		 * </p>
 		 */
 		@Name(ANNOTATION_CONTROLS)
@@ -208,24 +207,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		 */
 		@Key(FormatMapping.PROVIDER)
 		Map<Class<?>, FormatMapping> getFormats();
-
-		/** Property name of {@link #getControlProviders()}. */
-		String CONTROL_PROVIDERS = "control-providers";
-
-		/**
-		 * Mappings from the control a property names with the declarative form's
-		 * {@link ControlProvider} annotation to the control this service edits it with, keyed by
-		 * the annotation's control provider class.
-		 *
-		 * <p>
-		 * Looked up by the annotated class first, then by walking up its superclasses, so a mapping
-		 * registered for a base provider also covers its specializations. A property whose
-		 * annotated provider is not mapped is edited as if it carried no such annotation.
-		 * </p>
-		 */
-		@Name(CONTROL_PROVIDERS)
-		@Key(ControlProviderMapping.PROVIDER)
-		Map<Class<?>, ControlProviderMapping> getControlProviders();
 
 	}
 
@@ -309,31 +290,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	}
 
-	/**
-	 * A single mapping from a control provider of the declarative form to a
-	 * {@link ConfigControlProvider}.
-	 */
-	public interface ControlProviderMapping extends ConfigurationItem {
-
-		/** Property name of {@link #getProvider()}. */
-		String PROVIDER = "provider";
-
-		/**
-		 * The control provider class (or a superclass of it) a property's
-		 * {@link ControlProvider} annotation must name for this mapping to apply.
-		 */
-		@Name(PROVIDER)
-		@Mandatory
-		Class<? extends com.top_logic.layout.form.template.ControlProvider> getProvider();
-
-		/**
-		 * The control provider to use for a property whose annotation this mapping applies to.
-		 */
-		@Mandatory
-		PolymorphicConfiguration<? extends ConfigControlProvider> getImpl();
-
-	}
-
 	private final InstantiationContext _context;
 
 	private List<Map.Entry<Class<? extends Annotation>, ConfigAnnotationControlProvider<?>>> _providerByAnnotation;
@@ -341,8 +297,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	private Map<Class<?>, ConfigControlProvider> _providerByType;
 
 	private Map<Class<?>, ConfigControlProvider> _providerByFormat;
-
-	private Map<Class<?>, ConfigControlProvider> _providerByControlProvider;
 
 	/**
 	 * Creates a {@link ConfigControlService} from configuration.
@@ -370,11 +324,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		_providerByFormat = new HashMap<>();
 		for (FormatMapping mapping : getConfig().getFormats().values()) {
 			_providerByFormat.put(mapping.getProvider(), _context.getInstance(mapping.getImpl()));
-		}
-
-		_providerByControlProvider = new HashMap<>();
-		for (ControlProviderMapping mapping : getConfig().getControlProviders().values()) {
-			_providerByControlProvider.put(mapping.getProvider(), _context.getInstance(mapping.getImpl()));
 		}
 	}
 
@@ -517,7 +466,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 
 		// 2. Configured provider for an annotation on the property or on its value type. Edits the
-		// value in the domain createModel chose by the remaining rules - the mapping is no claim.
+		// value in the domain createModel chose by the remaining rules - the mapping is no claim. A
+		// provider that cannot edit the value in that domain declines, and the next steps decide.
 		for (Map.Entry<Class<? extends Annotation>, ConfigAnnotationControlProvider<?>> entry : _providerByAnnotation) {
 			ReactControl result = fromAnnotation(context, model, entry.getKey(), entry.getValue());
 			if (result != null) {
@@ -552,14 +502,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return formatProvider.createControl(context, model);
 		}
 
-		// 6. Configured provider for the control the declarative form's annotation names. Edits the
-		// value in the domain createModel chose by the rules above - the mapping is no claim.
-		ConfigControlProvider annotatedProvider = annotatedControlProvider(property);
-		if (annotatedProvider != null) {
-			return annotatedProvider.createControl(context, model);
-		}
-
-		// 7. Built-in fallback. formatProvider is known null here (the check above), passed on
+		// 6. Built-in fallback. formatProvider is known null here (the check above), passed on
 		// instead of resolving it a second time inside fallback's own isSpecialized check.
 		return fallback(context, model, property, formatProvider);
 	}
@@ -987,34 +930,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	}
 
 	/**
-	 * The configured {@link ConfigControlProvider} for the control the given property names with
-	 * the declarative form's {@link ControlProvider} annotation, or {@code null} if it carries none
-	 * or its provider class is not mapped.
-	 *
-	 * <p>
-	 * The annotation is looked up on the property, then on its value type - where the declarative
-	 * form looks for it, too. The mapping is looked up by the annotated class first, then by
-	 * walking up its superclasses - mirroring {@link Config#getControlProviders()}'s own contract.
-	 * </p>
-	 */
-	private ConfigControlProvider annotatedControlProvider(PropertyDescriptor property) {
-		ControlProvider annotation = property.getAnnotation(ControlProvider.class);
-		if (annotation == null) {
-			annotation = property.getType().getAnnotation(ControlProvider.class);
-			if (annotation == null) {
-				return null;
-			}
-		}
-		for (Class<?> type = annotation.value(); type != null; type = type.getSuperclass()) {
-			ConfigControlProvider provider = _providerByControlProvider.get(type);
-			if (provider != null) {
-				return provider;
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * Whether one of the built-in widgets handles the given Java type directly (bound to the raw
 	 * typed value), when the property is not {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider)}.
 	 */
@@ -1028,21 +943,62 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	/**
 	 * The control the given provider creates for the given model, or {@code null} if the model's
-	 * property carries no annotation of the given type, neither itself nor on its value type.
+	 * property carries no annotation of the given type, neither itself nor on its value type, or
+	 * the provider declines it.
 	 */
 	private static <A extends Annotation> ReactControl fromAnnotation(ReactContext context, ConfigFieldModel model,
 			Class<A> annotationType, ConfigAnnotationControlProvider<?> provider) {
-		PropertyDescriptor property = model.getProperty();
-		A annotation = property.getAnnotation(annotationType);
+		A annotation = annotation(model.getProperty(), annotationType);
 		if (annotation == null) {
-			annotation = property.getType().getAnnotation(annotationType);
-			if (annotation == null) {
-				return null;
-			}
+			return null;
 		}
 		@SuppressWarnings("unchecked")
 		ConfigAnnotationControlProvider<A> typedProvider = (ConfigAnnotationControlProvider<A>) provider;
 		return typedProvider.createControl(context, model, annotation);
+	}
+
+	/**
+	 * The annotation of the given type that the given property carries, on the property itself or
+	 * else on its value type.
+	 *
+	 * <p>
+	 * This is where the {@link Config#getAnnotationControls() annotation map} looks for an
+	 * annotation, so a provider looking up further annotations of the property finds them the same
+	 * way.
+	 * </p>
+	 *
+	 * @return The annotation, or {@code null} if neither the property nor its value type carries
+	 *         one.
+	 */
+	public static <A extends Annotation> A annotation(PropertyDescriptor property, Class<A> annotationType) {
+		A annotation = property.getAnnotation(annotationType);
+		if (annotation == null) {
+			annotation = property.getType().getAnnotation(annotationType);
+		}
+		return annotation;
+	}
+
+	/**
+	 * Whether the given model holds its value as text.
+	 *
+	 * <p>
+	 * True for a text property, and for every property edited as the text its format makes of the
+	 * value. False for a property edited by selecting, and for a property whose control edits the
+	 * typed value (a number, an internationalized text, a color, ...).
+	 * </p>
+	 *
+	 * <p>
+	 * A control for text - a text area, for instance - can edit exactly the values of such a model.
+	 * </p>
+	 */
+	public static boolean holdsText(ConfigFieldModel model) {
+		if (model instanceof ConfigFormatFieldModel) {
+			return true;
+		}
+		if (model instanceof ConfigSelectFieldModel) {
+			return false;
+		}
+		return model.getProperty().getType() == String.class;
 	}
 
 	/**

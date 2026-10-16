@@ -13,6 +13,19 @@
 
 		<config service-class="com.top_logic.layout.configedit.ConfigControlService">
 			<instance class="com.top_logic.layout.configedit.ConfigControlService">
+				<annotation-controls>
+					<!--
+						Controls for the meaning an annotation states about a property. The first
+						annotation the property carries whose provider creates a control decides;
+						CommonMark comes first, since a CommonMark text spans several lines, too.
+					-->
+					<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.CommonMark">
+						<impl class="com.top_logic.layout.configedit.CommonMarkConfigProvider"/>
+					</annotation-control>
+					<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.MultiLine">
+						<impl class="com.top_logic.layout.configedit.MultiLineTextConfigProvider"/>
+					</annotation-control>
+				</annotation-controls>
 				<providers>
 					<!--
 						Contribute additional value-type-to-provider mappings here - e.g. from a
@@ -41,17 +54,6 @@
 						<impl class="com.top_logic.layout.configedit.I18NStringFormatProvider"/>
 					</format>
 				</formats>
-				<control-providers>
-					<!--
-						Mappings for the control a property names with the declarative form's
-						@ControlProvider annotation, keyed by that annotation's provider class and
-						looked up walking up its superclasses. A provider class without a mapping
-						leaves the property to the built-in fallback.
-					-->
-					<control-provider provider="com.top_logic.layout.form.values.MultiLineText">
-						<impl class="com.top_logic.layout.configedit.MultiLineTextConfigProvider"/>
-					</control-provider>
-				</control-providers>
 			</instance>
 		</config>
 	</services>

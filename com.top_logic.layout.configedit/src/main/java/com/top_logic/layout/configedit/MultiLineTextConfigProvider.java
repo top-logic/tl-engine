@@ -5,66 +5,61 @@
  */
 package com.top_logic.layout.configedit;
 
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.layout.form.values.MultiLineText;
+import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 
 /**
- * {@link ConfigControlProvider} editing a text property in a multi-line text area.
+ * {@link ConfigAnnotationControlProvider} editing the text of a property annotated with
+ * {@link MultiLine} in a text area with the annotated number of rows.
  *
  * <p>
- * The {@code impl} for a {@link ConfigControlService.ControlProviderMapping} entry that maps the
- * declarative form's {@link MultiLineText} to this service: a property annotated with it is edited
- * in a {@link ReactTextInputControl} spanning several rows. The input behaves like the single-line
- * text input in every other respect - a formatted value is sent when the field is left, a plain
- * text while it is typed.
+ * The input behaves like the single-line text input in every other respect - a formatted value is
+ * sent when the field is left, a plain text while it is typed.
+ * </p>
+ *
+ * <p>
+ * Only a value {@link ConfigControlService#holdsText(ConfigFieldModel) held as text} is edited in
+ * a text area. Any other property is left to the control the {@link ConfigControlService} chooses
+ * without the annotation; a control that edits text of its own, such as the editor of an
+ * internationalized text, reads the number of rows from the annotation itself.
  * </p>
  */
-public class MultiLineTextConfigProvider extends AbstractConfiguredInstance<MultiLineTextConfigProvider.Config>
-		implements ConfigControlProvider {
-
-	/**
-	 * Configuration options for {@link MultiLineTextConfigProvider}.
-	 */
-	public interface Config extends PolymorphicConfiguration<MultiLineTextConfigProvider> {
-
-		/** Property name of {@link #getRows()}. */
-		String ROWS = "rows";
-
-		/**
-		 * The number of visible rows of the text area.
-		 *
-		 * <p>
-		 * The annotation of the declarative form names a control provider class only, which that
-		 * form instantiates with its default number of rows; this is the same default.
-		 * </p>
-		 */
-		@Name(ROWS)
-		@IntDefault(MultiLineText.DEFAULT_ROWS)
-		int getRows();
-
-	}
-
-	/**
-	 * Creates a {@link MultiLineTextConfigProvider}.
-	 */
-	@CalledByReflection
-	public MultiLineTextConfigProvider(InstantiationContext context, Config config) {
-		super(context, config);
-	}
+public class MultiLineTextConfigProvider implements ConfigAnnotationControlProvider<MultiLine> {
 
 	@Override
-	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
+	public ReactControl createControl(ReactContext context, ConfigFieldModel model, MultiLine annotation) {
+		if (!ConfigControlService.holdsText(model)) {
+			return null;
+		}
 		ReactTextInputControl input = ConfigControlService.createTextInput(context, model);
-		input.setMultiline(getConfig().getRows());
+		input.setMultiline(annotation.rows());
 		return input;
+	}
+
+	/**
+	 * The number of rows of a multi-line input for the text of the given property.
+	 *
+	 * <p>
+	 * The rows of a {@link MultiLine} annotation of the property, or {@link MultiLineText#DEFAULT_ROWS}
+	 * for a {@link CommonMark} text without one - such a text spans several lines.
+	 * </p>
+	 *
+	 * @return The number of rows, or {@code 0} if the text of the property is a single line.
+	 */
+	public static int rows(PropertyDescriptor property) {
+		MultiLine multiLine = ConfigControlService.annotation(property, MultiLine.class);
+		if (multiLine != null) {
+			return multiLine.rows();
+		}
+		if (ConfigControlService.annotation(property, CommonMark.class) != null) {
+			return MultiLineText.DEFAULT_ROWS;
+		}
+		return 0;
 	}
 
 }

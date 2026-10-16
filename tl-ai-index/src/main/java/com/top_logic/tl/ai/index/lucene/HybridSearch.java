@@ -199,9 +199,9 @@ public final class HybridSearch {
 		List<ScoreDoc> meaningChunks = List.of();
 		int knnRead = 0;
 		boolean farReached = false;
+		int k = Math.min(MAX_KNN, Math.max(depth, depth * request.overfetch()));
 		if (request.vector() != null) {
 			float[] vector = Vectors.normalized(request.vector());
-			int k = Math.min(MAX_KNN, Math.max(depth, depth * request.overfetch()));
 			TopDocs candidates = searcher.search(new KnnFloatVectorQuery(IndexSchema.VECTOR, vector, k, filter), k);
 			knnRead = candidates.scoreDocs.length;
 			meaningChunks = rescore(searcher, vector, candidates.scoreDocs, depth);
@@ -244,8 +244,7 @@ public final class HybridSearch {
 		List<ObjectHit> hits = new ArrayList<>(fused.values());
 		hits.sort(Comparator.comparingDouble(ObjectHit::score).reversed().thenComparing(ObjectHit::object));
 		boolean exhausted = wordChunks.size() < depth
-			&& (request.vector() == null || farReached
-				|| knnRead < Math.min(MAX_KNN, Math.max(depth, depth * request.overfetch())));
+			&& (request.vector() == null || farReached || knnRead < k);
 		return new Result(hits, wordChunks.size() + knnRead, exhausted);
 	}
 

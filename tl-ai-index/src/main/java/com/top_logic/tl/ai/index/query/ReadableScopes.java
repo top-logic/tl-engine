@@ -51,13 +51,6 @@ public final class ReadableScopes {
 	}
 
 	/**
-	 * Whether the application configured the script.
-	 */
-	public boolean configured() {
-		return _script != null;
-	}
-
-	/**
 	 * The identifiers of the scope objects the reader may read; <code>null</code> when no script is
 	 * configured.
 	 */

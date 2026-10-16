@@ -52,14 +52,7 @@ public record ChunkDocument(String object, String attribute, Locator locator, Co
 	 * The identifier of the chunk, unique in the index.
 	 */
 	public String chunkId() {
-		return chunkId(object, attribute, locator.chunk());
-	}
-
-	/**
-	 * The identifier of a chunk.
-	 */
-	public static String chunkId(String object, String attribute, int chunk) {
-		return object + "#" + attribute + "#" + chunk;
+		return object + "#" + attribute + "#" + locator.chunk();
 	}
 
 	/**

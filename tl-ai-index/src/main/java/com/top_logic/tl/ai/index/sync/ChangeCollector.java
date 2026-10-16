@@ -84,7 +84,7 @@ public final class ChangeCollector {
 	/**
 	 * The names of the tables this collector reads.
 	 */
-	public Set<String> tables() {
+	private Set<String> tables() {
 		Set<String> result = new HashSet<>(_ownTables);
 		result.addAll(_linkTables.keySet());
 		return result;

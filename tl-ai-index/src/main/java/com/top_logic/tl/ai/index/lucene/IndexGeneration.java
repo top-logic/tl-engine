@@ -226,8 +226,13 @@ public final class IndexGeneration implements Closeable {
 	 * The stored chunks of the given object in the given searcher, in chunk order.
 	 */
 	public static List<StoredChunk> chunksOf(IndexSearcher searcher, String object) throws IOException {
-		TopDocs docs = searcher.search(new TermQuery(new Term(IndexSchema.OBJECT, object)),
-			MAX_CHUNKS_PER_OBJECT, new Sort(SortField.FIELD_DOC));
+		TermQuery query = new TermQuery(new Term(IndexSchema.OBJECT, object));
+		// Sized by the count: a collector allocates its queue for the requested number of hits.
+		int count = Math.min(MAX_CHUNKS_PER_OBJECT, searcher.count(query));
+		if (count == 0) {
+			return new ArrayList<>();
+		}
+		TopDocs docs = searcher.search(query, count, new Sort(SortField.FIELD_DOC));
 		StoredFields fields = searcher.storedFields();
 		List<StoredChunk> result = new ArrayList<>(docs.scoreDocs.length);
 		for (ScoreDoc hit : docs.scoreDocs) {

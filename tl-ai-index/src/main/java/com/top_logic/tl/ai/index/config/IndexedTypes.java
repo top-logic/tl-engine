@@ -50,13 +50,6 @@ public final class IndexedTypes {
 	}
 
 	/**
-	 * Whether no type is configured.
-	 */
-	public boolean isEmpty() {
-		return _byType.isEmpty();
-	}
-
-	/**
 	 * The configuration that applies to the given object, or <code>null</code> when it is not
 	 * indexed.
 	 */

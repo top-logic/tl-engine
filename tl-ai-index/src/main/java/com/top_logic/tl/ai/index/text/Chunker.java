@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.index.text;
 
 import java.text.BreakIterator;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -159,22 +160,26 @@ public record Chunker(int maxChars, int overlapSentences, Pattern pageMarker) {
 	 */
 	private List<int[]> units(String text, int start, int end) {
 		List<int[]> result = new ArrayList<>();
+		BreakIterator sentences = BreakIterator.getSentenceInstance(Locale.ROOT);
 		Matcher paragraph = PARAGRAPH.matcher(text).region(start, end);
 		int from = start;
 		while (paragraph.find()) {
-			sentences(text, from, paragraph.start(), result);
+			sentences(sentences, text, from, paragraph.start(), result);
 			from = paragraph.end();
 		}
-		sentences(text, from, end, result);
+		sentences(sentences, text, from, end, result);
 		return result;
 	}
 
-	private void sentences(String text, int start, int end, List<int[]> result) {
-		BreakIterator sentences = BreakIterator.getSentenceInstance(Locale.ROOT);
-		sentences.setText(text.substring(start, end));
+	private void sentences(BreakIterator sentences, String text, int start, int end, List<int[]> result) {
+		if (start >= end) {
+			return;
+		}
+		// The iterator answers offsets in the text, without a copy of the paragraph.
+		sentences.setText(new StringCharacterIterator(text, start, end, start));
 		int from = sentences.first();
 		for (int to = sentences.next(); to != BreakIterator.DONE; from = to, to = sentences.next()) {
-			addTrimmed(text, start + from, start + to, result);
+			addTrimmed(text, from, to, result);
 		}
 	}
 

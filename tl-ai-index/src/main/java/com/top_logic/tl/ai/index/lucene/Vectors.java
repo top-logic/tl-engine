@@ -16,6 +16,7 @@ import org.apache.lucene.index.FloatVectorValues;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.ReaderUtil;
+import org.apache.lucene.util.VectorUtil;
 
 /**
  * Vector arithmetic and reading the raw vectors back from the index.
@@ -30,11 +31,7 @@ public final class Vectors {
 	 * The dot product of two vectors of the same length; their cosine when both are normalized.
 	 */
 	public static float dot(float[] a, float[] b) {
-		float sum = 0;
-		for (int i = 0; i < a.length; i++) {
-			sum += a[i] * b[i];
-		}
-		return sum;
+		return VectorUtil.dotProduct(a, b);
 	}
 
 	/**

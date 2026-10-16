@@ -45,13 +45,6 @@ public final class Generations {
 	}
 
 	/**
-	 * The directory below which the generations lie.
-	 */
-	public Path root() {
-		return _root;
-	}
-
-	/**
 	 * The numbers of the existing generations, oldest first.
 	 */
 	public List<Integer> numbers() {

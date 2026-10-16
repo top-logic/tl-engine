@@ -45,6 +45,7 @@
   --tl-size-drawer-narrow: var(--tl-size-12);
   --tl-size-drawer-medium: var(--tl-size-13);
   --tl-size-drawer-wide: var(--tl-size-14);
+  --tl-size-sidebar: var(--tl-size-12);
   --tl-size-toast-max: var(--tl-size-15);
   --tl-size-choice: var(--tl-size-4);
   --tl-size-switch: var(--tl-size-7);
@@ -156,6 +157,7 @@
   --tl-size-control-sm: var(--tl-height-1);
   --tl-size-row: var(--tl-height-4);
   --tl-size-bar: var(--tl-height-5);
+  --tl-size-shell-bar: var(--tl-size-8);
   --tl-space-control-x: var(--tl-size-3);
   --tl-space-control-y: var(--tl-size-2);
   --tl-space-control-gap: var(--tl-size-4);
@@ -251,6 +253,7 @@
   --tl-size-control-sm: var(--tl-height-1);
   --tl-size-row: var(--tl-height-3);
   --tl-size-bar: var(--tl-height-4);
+  --tl-size-shell-bar: var(--tl-height-5);
   --tl-space-control-x: var(--tl-size-2);
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);

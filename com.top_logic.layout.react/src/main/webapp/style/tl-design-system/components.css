@@ -150,6 +150,23 @@
 }
 .tl-badge[hidden] { display: none; }
 
+/* Ein Icon mit Zähler an der Ecke (eingeklappte Sidebar, BottomBar) — Spec 2026-10-16 Welle 4b §6. Die Lage gehört
+   dem Element um das Part Badge, nicht dem Badge: eine Komponentenbibliothek setzt die Position ihres Badges selbst
+   (view-layer/parts.md). Der Behälter umschließt Icon und Zähler; der Zähler steht über der Ecke oben am Ende. */
+.tl-icon-badge {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.tl-icon-badge[hidden] { display: none; }
+
+.tl-icon-badge__count {
+  position: absolute;
+  top: calc(-1 * var(--tl-space-2xs));
+  inset-inline-end: calc(-1 * var(--tl-space-xs));
+  display: flex;
+}
+
 /* --- breadcrumb/breadcrumb.css --- */
 /* Breadcrumb — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W4).
    nav > ol > li; die Einträge sind tl-button--link, die aktuelle Seite ein Text mit aria-current,

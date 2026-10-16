@@ -6,8 +6,7 @@
 package com.top_logic.layout.react.control.kanban;
 
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.react.control.selection.SelectByNameArguments;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 
 /**
@@ -22,19 +21,8 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
  * </p>
  */
 @Label("Select card {key}")
-public interface SelectCardByKeyArguments extends SelectCardModifiers {
+public interface SelectCardByKeyArguments extends SelectByNameArguments {
 
-	/** @see #getKey() */
-	String KEY = "key";
-
-	/**
-	 * The business identity of the object whose card is selected.
-	 */
-	@Name(KEY)
-	@Mandatory
-	ModelName getKey();
-
-	/** @see #getKey() */
-	void setKey(ModelName value);
+	// The card is named by the inherited key.
 
 }

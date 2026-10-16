@@ -1,6 +1,6 @@
 import { React, useTLState, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { renderItems } from './items';
+import { useItems } from './items';
 
 /**
  * A CSS Grid container with responsive column support.
@@ -14,6 +14,7 @@ import { renderItems } from './items';
  *   null - the width the container offers)
  * - itemClass: string  (CSS class of a wrapper around each child, default: null - no wrapper)
  * - children: ChildDescriptor[]
+ * - selectable, itemKeys, selected, multiSelect: the selection among the items (see items.tsx)
  */
 const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -23,8 +24,7 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   const maxColumns = state.maxColumns as number | null;
   const gap = (state.gap as string) ?? 'default';
   const maxWidth = (state.maxWidth as string) ?? null;
-  const itemClass = (state.itemClass as string) ?? null;
-  const children = (state.children as unknown[]) ?? [];
+  const items = useItems(state);
 
   const style: React.CSSProperties = {};
   if (minColumnWidth) {
@@ -51,8 +51,8 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
   const className = rootClassName(state, 'tlGrid', `tlGrid--gap-${gap}`, maxWidth && 'tlBounded');
 
   return (
-    <div id={controlId} className={className} style={style}>
-      {renderItems(children, itemClass)}
+    <div id={controlId} {...items.containerProps} className={className} style={style}>
+      {items.content}
     </div>
   );
 };

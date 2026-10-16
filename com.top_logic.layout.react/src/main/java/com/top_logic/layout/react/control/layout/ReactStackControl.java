@@ -227,11 +227,12 @@ public class ReactStackControl extends ReactLayoutControl {
 	}
 
 	/**
-	 * Structural: this control is a flex layout container and is elided from the headless projection.
+	 * Structural: this control is a flex layout container and is elided from the headless projection,
+	 * unless its items are {@link #isSelectable() selectable}: the selection is state of its own.
 	 */
 	@Override
 	public boolean scriptingTransparent() {
-		return true;
+		return !isSelectable();
 	}
 
 	/**

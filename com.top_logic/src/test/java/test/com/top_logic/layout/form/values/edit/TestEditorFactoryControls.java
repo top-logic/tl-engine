@@ -29,6 +29,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Function0;
+import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
@@ -43,6 +44,8 @@ import com.top_logic.layout.form.values.edit.EditorFactory.AnnotationControlMapp
 import com.top_logic.layout.form.values.edit.EditorFactory.Config;
 import com.top_logic.layout.form.values.edit.EditorFactory.TypeControlMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -217,6 +220,15 @@ public class TestEditorFactoryControls extends TestCase {
 
 		MultiLineValue getTypeAnnotated();
 
+		@Code(language = CodeLanguage.JSON)
+		String getJson();
+
+		@Code(language = CodeLanguage.XML)
+		@MultiLine(rows = 12)
+		String getTwelveLineXml();
+
+		HTMLTemplate getHtml();
+
 		String getPlain();
 	}
 
@@ -244,6 +256,24 @@ public class TestEditorFactoryControls extends TestCase {
 		FormGroup group = build(shippedConfig(), TextProperties.class);
 
 		assertMultiLine(MultiLineText.class, 2, group, "type-annotated");
+	}
+
+	/**
+	 * Without a code editor, a {@link Code} text is edited as multi-line text, with the rows of a
+	 * {@link MultiLine} annotation of the same property.
+	 */
+	public void testCodeFallsBackToMultiLineText() {
+		FormGroup group = build(shippedConfig(), TextProperties.class);
+
+		assertMultiLine(MultiLineText.class, MultiLineText.DEFAULT_ROWS, group, "json");
+		assertMultiLine(MultiLineText.class, 12, group, "twelve-line-xml");
+	}
+
+	/** An HTML template is source code by its value type. */
+	public void testHtmlTemplateIsCode() {
+		FormGroup group = build(shippedConfig(), TextProperties.class);
+
+		assertMultiLine(MultiLineText.class, MultiLineText.DEFAULT_ROWS, group, "html");
 	}
 
 	public void testAnnotationControl() throws ConfigurationException {

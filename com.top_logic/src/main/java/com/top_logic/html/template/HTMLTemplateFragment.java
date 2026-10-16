@@ -14,8 +14,9 @@ import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.html.template.config.HTMLTemplateFragmentFormat;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
-import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.model.annotate.LabelPosition;
@@ -30,7 +31,7 @@ import com.top_logic.model.annotate.LabelPosition;
 @RenderWholeLine
 @LabelPositioning(LabelPosition.ABOVE)
 @Format(HTMLTemplateFragmentFormat.class)
-@MultiLine
+@Code(language = CodeLanguage.HTML)
 public interface HTMLTemplateFragment extends Renderer<WithProperties> {
 
 	/**

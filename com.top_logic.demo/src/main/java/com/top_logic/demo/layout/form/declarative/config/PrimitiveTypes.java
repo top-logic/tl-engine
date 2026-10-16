@@ -24,6 +24,8 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.annotation.AcceptedTypes;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -54,6 +56,7 @@ import com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint;
 	PrimitiveTypes.LIST_PRIMITIVE,
 	PrimitiveTypes.MAP_PRIMITIVE,
 	PrimitiveTypes.XML_PRIMITIVE,
+	PrimitiveTypes.JSON_PRIMITIVE,
 	PrimitiveTypes.BINARY_PRIMITIVE,
 	PrimitiveTypes.BINARIES,
 	PrimitiveTypes.ICON_PRIMITIVE,
@@ -101,6 +104,9 @@ public interface PrimitiveTypes extends ConfigurationItem {
 
 	/** @see #getXmlPrimitive() */
 	String XML_PRIMITIVE = "xml-primitive";
+
+	/** @see #getJsonPrimitive() */
+	String JSON_PRIMITIVE = "json-primitive";
 
 	/** @see #getBinaryPrimitive() */
 	String BINARY_PRIMITIVE = "binary-primitive";
@@ -179,6 +185,13 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	@Name(XML_PRIMITIVE)
 	@Binding(XMLFragmentString.class)
 	String getXmlPrimitive();
+
+	/**
+	 * A JSON text edited as source code.
+	 */
+	@Name(JSON_PRIMITIVE)
+	@Code(language = CodeLanguage.JSON)
+	String getJsonPrimitive();
 
 	/**
 	 * A binary data upload.

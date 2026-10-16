@@ -2105,7 +2105,14 @@
 			<!-- This feature causes still too many problems and is therefore deactivated until they are solved. -->
 			<display-fields-as-text>false</display-fields-as-text>
 			<annotation-controls>
-				<!-- CommonMark first: its text spans several lines, too, and a @MultiLine on the same property gives the rows. -->
+				<!--
+					Code first: a code editor module overrides this entry with its editor, and a
+					@MultiLine on the same property gives the rows of the text input used without one.
+				-->
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Code">
+					<impl class="com.top_logic.layout.form.values.CodeTextProvider"/>
+				</annotation-control>
+				<!-- CommonMark before MultiLine: its text spans several lines, too, and a @MultiLine on the same property gives the rows. -->
 				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.CommonMark">
 					<impl class="com.top_logic.layout.form.values.CommonMarkTextProvider"/>
 				</annotation-control>

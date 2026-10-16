@@ -16,9 +16,15 @@
 				<annotation-controls>
 					<!--
 						Controls for the meaning an annotation states about a property. The first
-						annotation the property carries whose provider creates a control decides;
-						CommonMark comes first, since a CommonMark text spans several lines, too.
+						annotation the property carries whose provider creates a control decides.
+						Code comes first: a code editor module overrides this entry with its editor,
+						and a MultiLine annotation of the same property gives the rows of the text
+						area used without one. CommonMark comes before MultiLine, since a CommonMark
+						text spans several lines, too.
 					-->
+					<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Code">
+						<impl class="com.top_logic.layout.configedit.CodeTextConfigProvider"/>
+					</annotation-control>
 					<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.CommonMark">
 						<impl class="com.top_logic.layout.configedit.CommonMarkConfigProvider"/>
 					</annotation-control>

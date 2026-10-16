@@ -63,12 +63,10 @@ import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
-import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.formeditor.parts.I18NConstants;
@@ -178,7 +176,6 @@ public class HTMLTemplateFormProvider
 		 * </p>
 		 */
 		@Name(TEMPLATE)
-		@ControlProvider(CodeEditorControl.CPHtml.class)
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@Format(HTMLTagFormat.class)
 		@Mandatory

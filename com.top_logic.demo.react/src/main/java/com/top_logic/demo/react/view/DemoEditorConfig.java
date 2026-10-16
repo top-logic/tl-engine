@@ -22,6 +22,8 @@ import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -31,10 +33,10 @@ import com.top_logic.layout.form.values.edit.annotation.MultiLine;
  * Self-contained sample configuration edited by the config-editor demo.
  *
  * <p>
- * Exercises a spread of property kinds (text, multi-line text, CommonMark text, number, boolean,
- * enumeration, a date with its time of day, a nested item, a list of items, an array of items, a
- * map of items, a list of plain strings written as one comma separated text, a duration, and a
- * {@link ResKey}) so the React configuration editor renders each editor variant.
+ * Exercises a spread of property kinds (text, multi-line text, CommonMark text, JSON source code,
+ * number, boolean, enumeration, a date with its time of day, a nested item, a list of items, an
+ * array of items, a map of items, a list of plain strings written as one comma separated text, a
+ * duration, and a {@link ResKey}) so the React configuration editor renders each editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
@@ -47,6 +49,9 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getNotes()}. */
 	String NOTES = "notes";
+
+	/** Configuration name for the value of {@link #getSettings()}. */
+	String SETTINGS = "settings";
 
 	/** Configuration name for the value of {@link #getCount()}. */
 	String COUNT = "count";
@@ -131,6 +136,17 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	@CommonMark
 	@MultiLine(rows = 4)
 	String getNotes();
+
+	/**
+	 * Settings written as a <i>JSON</i> object.
+	 *
+	 * <p>
+	 * The {@link Code} annotation makes the property a code editor for <i>JSON</i>.
+	 * </p>
+	 */
+	@Name(SETTINGS)
+	@Code(language = CodeLanguage.JSON)
+	String getSettings();
 
 	/**
 	 * A bounded item count.

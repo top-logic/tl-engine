@@ -56,6 +56,7 @@ import com.top_logic.gui.ThemeFactory;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
 import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
@@ -71,6 +72,8 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -742,6 +745,15 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getMultiLineList()}. */
 		String MULTI_LINE_LIST = "multiLineList";
 
+		/** Property name for {@link #getJsonCode()}. */
+		String JSON_CODE = "jsonCode";
+
+		/** Property name for {@link #getFourLineCode()}. */
+		String FOUR_LINE_CODE = "fourLineCode";
+
+		/** Property name for {@link #getHtmlTemplate()}. */
+		String HTML_TEMPLATE = "htmlTemplate";
+
 		/** Property name for {@link #getEightLines()}. */
 		String EIGHT_LINES = "eightLines";
 
@@ -917,6 +929,21 @@ public class TestConfigControlService extends TestCase {
 		@Format(CommaSeparatedStrings.class)
 		@MultiLine
 		List<String> getMultiLineList();
+
+		/** Source code in JSON. */
+		@Name(JSON_CODE)
+		@Code(language = CodeLanguage.JSON)
+		String getJsonCode();
+
+		/** Source code with a given number of visible rows. */
+		@Name(FOUR_LINE_CODE)
+		@Code(language = CodeLanguage.XML)
+		@MultiLine(rows = 4)
+		String getFourLineCode();
+
+		/** An HTML template, source code by its value type. */
+		@Name(HTML_TEMPLATE)
+		HTMLTemplate getHtmlTemplate();
 
 		/** Free text with a given number of visible rows. */
 		@Name(EIGHT_LINES)
@@ -1508,6 +1535,36 @@ public class TestConfigControlService extends TestCase {
 		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
 		assertNotSame("A plain text is sent while it is typed.", Boolean.TRUE,
 			state.get(TypingFieldState.SEND_VALUE_ON_BLUR__PROP));
+	}
+
+	/**
+	 * Without a code editor, {@link Code} is edited in a text area with the default number of
+	 * rows, editable or not.
+	 */
+	public void testCodeFallsBackToATextArea() {
+		Map<String, Object> state = control(TestConfig.JSON_CODE).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+
+		ConfigFieldModel model = model(TestConfig.JSON_CODE);
+		model.setEditable(false);
+		ReactControl readOnly = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(readOnly instanceof ReactTextInputControl);
+		assertEquals(Boolean.TRUE, readOnly.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+	}
+
+	/** The rows of a {@link MultiLine} annotation reach the text area of {@link Code}. */
+	public void testCodeRows() {
+		Map<String, Object> state = control(TestConfig.FOUR_LINE_CODE).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(4), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/** An HTML template is edited as its source text in a text area. */
+	public void testHtmlTemplateIsCode() {
+		assertTrue(model(TestConfig.HTML_TEMPLATE) instanceof ConfigFormatFieldModel);
+		Map<String, Object> state = control(TestConfig.HTML_TEMPLATE).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
 	}
 
 	/** The rows of a {@link MultiLine} annotation reach the text area. */

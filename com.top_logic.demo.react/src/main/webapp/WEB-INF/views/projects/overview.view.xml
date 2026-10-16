@@ -74,7 +74,9 @@
 				pptDeck() on the project's report template (a blank 16:9 presentation if it has none);
 				<download/> hands the file to the browser. A ticket counts as done when its milestone is
 				approved; the urgency of an open ticket follows from the due date of its milestone. The open
-				tickets are listed in the order of their number within the project.
+				tickets are listed in the order of their number within the project; after the list, each open
+				ticket has a slide of its own with its description, converted from HTML with pptHtml() and
+				continued on further slides when it is long.
 			-->
 			<generic-command
 				image="css:bi bi-file-earmark-slides"
@@ -111,27 +113,34 @@
 							next = $milestones.filter(m -> !$isApproved($m)).firstElement();
 
 							// The urgency of an open ticket follows from the due date of its milestone.
-							urgency = t -> {
+							urgencyOf = t -> {
 								due = $dueOf($milestoneOf($t));
 								switch {
-									$due == null: pptRating("none", #('no date'@en, 'ohne Termin'@de).localize());
-									$due < today(): pptRating("high", #('overdue'@en, 'überfällig'@de).localize());
-									$due < today().toSystemCalendar().withDayAdded(14).toDate(): pptRating("medium", #('due soon'@en, 'bald fällig'@de).localize());
-									default: pptRating("low", #('on schedule'@en, 'im Plan'@de).localize());
+									$due == null: ["none", #('no date'@en, 'ohne Termin'@de).localize()];
+									$due < today(): ["high", #('overdue'@en, 'überfällig'@de).localize()];
+									$due < today().toSystemCalendar().withDayAdded(14).toDate(): ["medium", #('due soon'@en, 'bald fällig'@de).localize()];
+									default: ["low", #('on schedule'@en, 'im Plan'@de).localize()];
 								}
+							};
+							urgency = t -> {
+								level = $urgencyOf($t);
+								pptRating($level[0], $level[1]);
 							};
 
 							header = h -> pptCell($h, fill: "topicA", color: "inverse", bold: true);
 							numberOf = t -> $t.get(`tl.demo.projectManagement:Ticket#number`);
-							ticketRows = $open.sort(comparator(t -> $numberOf($t))).map(t -> [
-								if($numberOf($t) == null, "–", toString("#", $numberOf($t))),
+							labelOf = t -> if($numberOf($t) == null, "–", toString("#", $numberOf($t)));
+							assigneeOf = t -> {
+								assignee = $t.get(`tl.demo.projectManagement:Ticket#assignee`);
+								if($assignee == null, "–", $assignee.get(`Contacts:PersonContact#fullName`));
+							};
+							openByNumber = $open.sort(comparator(t -> $numberOf($t)));
+							ticketRows = $openByNumber.map(t -> [
+								$labelOf($t),
 								$t.get(`tl.demo.projectManagement:Ticket#title`),
 								$nameOf($milestoneOf($t)),
 								$formatDate($dueOf($milestoneOf($t))),
-								{
-									assignee = $t.get(`tl.demo.projectManagement:Ticket#assignee`);
-									if($assignee == null, "–", $assignee.get(`Contacts:PersonContact#fullName`));
-								},
+								$assigneeOf($t),
 								$urgency($t)
 							]);
 
@@ -211,8 +220,20 @@
 								notes: #('The open tickets with the due date of their milestone. A long list continues on further slides.'@en,
 									'Die offenen Tickets mit dem Fälligkeitsdatum ihres Meilensteins. Eine lange Liste wird auf weiteren Folien fortgesetzt.'@de).localize());
 
+							// One slide per open ticket with its description; a long description continues on further slides.
+							detailSlides = $openByNumber.map(t -> {
+								description = $t.get(`tl.demo.projectManagement:Ticket#description`);
+								pptContent(toString($labelOf($t), " ", $t.get(`tl.demo.projectManagement:Ticket#title`)),
+									toString($nameOf($milestoneOf($t)), " · ", $assigneeOf($t)),
+									if($description == null || toString($description).trim().isEmpty(),
+										pptTextBox(#('No description.'@en, 'Keine Beschreibung.'@de).localize(), color: "muted", italic: true),
+										pptHtml($description)),
+									notes: #('Due: {0}, {1}.'@en, 'Fällig: {0}, {1}.'@de)
+										.fill($formatDate($dueOf($milestoneOf($t))), $urgencyOf($t)[1]).localize());
+							});
+
 							pptDeck($p.get(`tl.demo.projectManagement:ProjectScope#reportTemplate`),
-								[$titleSlide, $agendaSlide, $figuresSlide, $scheduleSlide, $chartSlide, $ticketSlide],
+								concat([$titleSlide, $agendaSlide, $figuresSlide, $scheduleSlide, $chartSlide, $ticketSlide], $detailSlides),
 								footer: #('Status report {0}'@en, 'Statusbericht {0}'@de).fill($name).localize(),
 								name: toString($name, ".pptx"))
 						}

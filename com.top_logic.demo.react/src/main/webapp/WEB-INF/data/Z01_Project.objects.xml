@@ -88,7 +88,7 @@
 					<complex-value>
 						<contents>
 							<value>
-								<source-code><![CDATA[<p>Die Bestandsdaten aus dem Lagerverwaltungssystem <strong>stündlich</strong> übernehmen.</p>]]></source-code>
+								<source-code><![CDATA[<p>Die Bestandsdaten aus dem Lagerverwaltungssystem <strong>stündlich</strong> übernehmen. Die Felder werden wie folgt abgebildet:</p><table><thead><tr><th>Lagersystem</th><th>Anwendung</th><th>Hinweis</th></tr></thead><tbody><tr><td>ARTNR</td><td>Artikelnummer</td><td>führende Nullen entfernen</td></tr><tr><td>BESTAND</td><td>Menge</td><td>in Stück</td></tr><tr><td>LAGERORT</td><td>Lager</td><td>über Zuordnungstabelle</td></tr><tr><td>AENDDAT</td><td>Stand</td><td>Zeitzone UTC</td></tr></tbody></table><p>Fehlerhafte Sätze werden protokolliert und <em>nicht</em> übernommen.</p>]]></source-code>
 							</value>
 						</contents>
 					</complex-value>
@@ -217,7 +217,7 @@
 					<complex-value>
 						<contents>
 							<value>
-								<source-code><![CDATA[<p>Den Abnahmetest gemeinsam mit dem Kunden durchführen.</p><ul><li>Testfälle vorbereiten</li><li>Testdaten bereitstellen</li><li><strong>Abnahmeprotokoll</strong> unterschreiben lassen</li></ul>]]></source-code>
+								<source-code><![CDATA[<h2>Ziel</h2><p>Den Abnahmetest gemeinsam mit dem Kunden durchführen und die Abnahme des Releases <strong>schriftlich bestätigen</strong> lassen. Der Test deckt alle Anforderungen ab, die im ersten Meilenstein verbindlich vereinbart wurden.</p><h2>Vorbereitung</h2><ol><li>Testfälle aus den abgestimmten Anforderungen ableiten und mit dem Fachbereich durchgehen.</li><li>Testdaten bereitstellen: anonymisierte Kopie des Produktivbestands vom Monatsende.</li><li>Testumgebung mit dem Release-Kandidaten aufsetzen und die Zugänge der Tester einrichten.</li><li>Termin mit den Testern aus Vertrieb und Buchhaltung abstimmen.</li></ol><h2>Durchführung</h2><p>Jeder Testfall wird von einem Tester des Fachbereichs ausgeführt und im Testprotokoll mit <em>bestanden</em>, <em>bestanden mit Mängeln</em> oder <em>nicht bestanden</em> bewertet. Gefundene Mängel werden sofort als Ticket erfasst und nach ihrer Schwere eingestuft.</p><ul><li><strong>Kritisch:</strong> verhindert die Abnahme, muss vor dem Go-live behoben werden.</li><li><strong>Wesentlich:</strong> Abnahme unter Vorbehalt, Behebung innerhalb von zwei Wochen.</li><li><strong>Gering:</strong> wird im nächsten regulären Release behoben.</li></ul><h2>Abschluss</h2><p>Nach dem letzten Testfall werden die Ergebnisse im Abnahmegespräch vorgestellt. Sind alle kritischen Mängel behoben, unterschreibt der Kunde das <strong>Abnahmeprotokoll</strong>; damit ist der Meilenstein erreicht.</p>]]></source-code>
 							</value>
 						</contents>
 					</complex-value>

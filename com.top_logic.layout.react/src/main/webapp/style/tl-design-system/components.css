@@ -2663,6 +2663,15 @@ a.tl-field-value:hover {
   isolation: isolate;
 }
 
+/* Was bündig an der Kante von tl-table liegt, trägt den Ring innen — tl-table schneidet (overflow: hidden),
+   ein Ring außen wäre ganz oder halb weg (focus-clip.test.mjs): das Raster ohne Cursor (leer, kein
+   aria-activedescendant — es zeigt den Ring selbst), der Körper, die Spaltenwahl in der Ecke. */
+.tl-table__grid:focus-visible,
+.tl-table__body:focus-visible,
+.tl-table__columns:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
 .tl-table__canvas {
   position: relative;
 }

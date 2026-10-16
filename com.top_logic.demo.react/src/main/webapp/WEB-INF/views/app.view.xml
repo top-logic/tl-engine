@@ -376,6 +376,15 @@
 								<de>Drag and Drop</de>
 							</label>
 						</nav-item>
+						<nav-item id="temperature-demo"
+							icon="css:bi bi-thermometer-half"
+						>
+							<view-ref view="demo/temperature-demo.view.xml"/>
+							<label>
+								<en>Temperatures</en>
+								<de>Temperaturen</de>
+							</label>
+						</nav-item>
 						<nav-item id="styling-demo"
 							icon="css:bi bi-palette"
 						>

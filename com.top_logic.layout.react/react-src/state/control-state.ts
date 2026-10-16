@@ -6,21 +6,15 @@
  * The state contract between the server-side controls and the React components rendering them.
  *
  * Each message describes the state object a control sends to its component: the property names,
- * their types and their meaning. A component library replacing a TopLogic component (see
+ * their types and their meaning. A component library replacing a TopLogic control (see
  * "replace" of 'tl-react-bridge') renders the state described here.
  *
- * The message of a replaceable component, by the component name it is registered under:
+ * The message of a control a component library replaces as a whole with "replace", by the
+ * component name it is registered under:
  *
- *   TLButton          - ButtonState
- *   TLToggleButton    - ToggleButtonState
- *   TLCheckbox        - CheckboxState
- *   TLTextInput       - TextInputState
- *   TLPasswordInput   - PasswordInputState
- *   TLNumberInput     - NumberInputState
  *   TLDatePicker      - DatePickerState
  *   TLSelect          - SelectState
  *   TLDropdownSelect  - DropdownSelectState
- *   TLOptionChips     - DropdownSelectState
  *   TLSegmentedChoice - DropdownSelectState
  *   TLChoiceGroup     - DropdownSelectState
  *   TLTabBar          - TabBarState
@@ -35,9 +29,21 @@
  *   TLCard            - CardState
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
- *   TLProgress        - ProgressState
  *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
+ *
+ * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
+ * (see "replacePart" and the developer article view-layer/parts). A component library replaces
+ * these parts, not the controls:
+ *
+ *   TLButton          - ButtonState
+ *   TLToggleButton    - ToggleButtonState
+ *   TLCheckbox        - CheckboxState
+ *   TLTextInput       - TextInputState
+ *   TLPasswordInput   - PasswordInputState
+ *   TLNumberInput     - NumberInputState
+ *   TLOptionChips     - DropdownSelectState
+ *   TLProgress        - ProgressState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which

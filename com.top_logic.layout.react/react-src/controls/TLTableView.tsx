@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_EXPAND, ICON_REMOVE, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { NO_DRAG_IMAGE } from './drop-hint';
@@ -6,8 +6,8 @@ import { DropHint } from './DropHint';
 import type { HintAnchor } from './DropHint';
 import type { DropVerdict } from './drop-hint';
 import { Menu, MenuItem } from './menu/Menu';
-import { buttonClassName } from './button/buttonClassName';
 import { SearchField } from './SearchField';
+import { chipFocusTargets } from './chip/chipFocus';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -283,29 +283,39 @@ function editableInRow(
 }
 
 /**
+ * The attribute marking the chip of a named filter that can be deleted, by which the focus finds the
+ * neighbour of a deleted one.
+ */
+const FILTER_CHIP_ATTR = 'data-tl-filter-chip';
+
+/**
  * Opens the column selection. Rendered either over the right edge of the header, where it needs a
  * strip of the header kept clear of the columns, or inside the heading of the rightmost pinned
- * column — that heading carries no label, so the button takes no room from the columns there.
+ * column — that heading carries no label, so the button takes no room from the columns there. The
+ * strip (tl-table__columns) places the button, the part `Button` draws it.
  */
 const ColumnsButton: React.FC<{
   label: string;
   inCell?: boolean;
   onClick: (event: React.MouseEvent) => void;
-}> = ({ label, inCell, onClick }) => (
-  <button
-    type="button"
-    className={buttonClassName({ appearance: 'ghost', small: inCell, icon: true, extra: 'tl-table__columns' })}
-    {...tooltipProps(label)}
-    aria-label={label}
-    // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
-    // button's business.
-    onMouseDown={(e) => e.stopPropagation()}
-    onClick={onClick}
-  >
-    {/* Spec §12: icons are tl-icon-sm, also in a full-size icon button (Entscheidung 16). */}
-    <ThemeIcon encoded={ICON_COLUMNS} className="tl-button__icon tl-icon-sm" />
-  </button>
-);
+}> = ({ label, inCell, onClick }) => {
+  const Button = usePart('Button');
+  return (
+    <div className="tl-table__columns">
+      <Button
+        label={label}
+        image={ICON_COLUMNS}
+        display="icon-only"
+        appearance="ghost"
+        small={inCell}
+        // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
+        // button's business.
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={onClick}
+      />
+    </div>
+  );
+};
 
 /**
  * React table component with virtual scrolling, server-driven cell controls,
@@ -332,6 +342,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const fillClass = useFill(true);
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
+  const DisclosureToggle = usePart('DisclosureToggle');
+  const Checkbox = usePart('Checkbox');
+  const TextInput = usePart('TextInput');
+  const Chip = usePart('Chip');
   const rootRef = React.useRef<HTMLDivElement>(null);
   // The grid (role=grid) holds the keyboard focus and points at the cursor row with
   // aria-activedescendant; the body inside it only scrolls.
@@ -1121,8 +1136,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('select', { rowIndex: targetIndex, ctrlKey: false, shiftKey: false });
   }, [rows, totalRowCount, sendCommand]);
 
-  const handleCheckboxClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
-    event.stopPropagation();
+  const handleCheckboxClick = React.useCallback((rowIndex: number) => {
     // The box is no stop of its own (tabindex -1): the keyboard stays with the grid, whose cursor
     // follows the selection.
     gridRef.current?.focus({ preventScroll: true });
@@ -1313,11 +1327,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // to the search, else to the grid - the same hand-over as the select's chips.
   const noteFilterRemoval = useFocusAfterRemove(
     namedFilters,
-    () => filterBarRef.current?.querySelectorAll<HTMLElement>('.tl-chip__remove'),
+    () => chipFocusTargets(filterBarRef.current, FILTER_CHIP_ATTR),
     () => searchInputRef.current ?? gridRef.current,
   );
 
-  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.MouseEvent<HTMLElement>) => {
+  const handleDeleteNamedFilter = React.useCallback((id: string, event: React.SyntheticEvent<HTMLElement>) => {
     event.stopPropagation();
     const removable = namedFilters.filter((named) => named.deletable);
     noteFilterRemoval(removable.findIndex((named) => named.id === id), event.currentTarget);
@@ -1419,12 +1433,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const allSelected = selectAllState === 'all';
   const someSelected = selectAllState === 'some';
 
-  const headerCheckboxRef = React.useCallback((el: HTMLInputElement | null) => {
-    if (el) {
-      el.indeterminate = someSelected;
-    }
-  }, [someSelected]);
-
   // The cursor row as the grid's active descendant: only while it is rendered - the body renders
   // exactly the rows the server sent - and within the visible part of the body; otherwise the grid
   // keeps the ring itself (base.css). A reference to a row that is not there, or scrolled out of
@@ -1516,31 +1524,19 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             <span className="tl-chip-group">
               {namedFilters.map((named) => {
                 const isActive = named.id === activeNamedFilter;
+                // Only a filter of the user's own can be deleted; a declared one is part of the
+                // table and offers no remove affordance.
                 return (
-                  <span key={named.id} className="tl-chip tl-type-label">
-                    <button
-                      type="button"
-                      className="tl-chip__toggle"
-                      aria-pressed={isActive}
-                      {...tooltipProps(isActive ? i18n['js.table.clearFilter'] : named.label)}
-                      onClick={() => handleNamedFilter(named.id)}
-                    >
-                      <span className="tl-chip__label">{named.label}</span>
-                    </button>
-                    {/* Only a filter of the user's own can be deleted; a declared one is part of
-                        the table and offers no remove affordance. */}
-                    {named.deletable && (
-                      <button
-                        type="button"
-                        className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-chip__remove' })}
-                        {...tooltipProps(i18n['js.table.deleteFilter'])}
-                        aria-label={i18n['js.table.deleteFilter']}
-                        onClick={(e) => handleDeleteNamedFilter(named.id, e)}
-                      >
-                        <ThemeIcon encoded={ICON_REMOVE} className="tl-button__icon tl-icon-sm" />
-                      </button>
-                    )}
-                  </span>
+                  <Chip
+                    key={named.id}
+                    label={named.label}
+                    pressed={isActive}
+                    tooltip={isActive ? i18n['js.table.clearFilter'] : named.label}
+                    onClick={() => handleNamedFilter(named.id)}
+                    onRemove={named.deletable ? (e) => handleDeleteNamedFilter(named.id, e) : undefined}
+                    removeLabel={i18n['js.table.deleteFilter']}
+                    {...(named.deletable ? { [FILTER_CHIP_ATTR]: true } : {})}
+                  />
                 );
               })}
             </span>
@@ -1560,47 +1556,39 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             onKeyDown={handleSearchKeyDown}
           />
           {filterSaving && (saveName === null ? (
-            <button
+            <Button
               ref={saveButtonRef}
-              type="button"
-              className={buttonClassName({ appearance: 'ghost', icon: true })}
-              {...tooltipProps(i18n['js.table.saveFilter'])}
-              aria-label={i18n['js.table.saveFilter']}
+              label={i18n['js.table.saveFilter']}
+              image={ICON_SAVE}
+              display="icon-only"
+              appearance="ghost"
               onClick={() => setSaveName('')}
-            >
-              <ThemeIcon encoded={ICON_SAVE} className="tl-button__icon tl-icon-sm" />
-            </button>
+            />
           ) : (
             <span className="tl-table__save">
-              <input
-                type="text"
-                className="tl-field tl-type-body"
+              <TextInput
                 autoFocus
                 placeholder={i18n['js.table.filterName']}
                 aria-label={i18n['js.table.filterName']}
                 value={saveName}
-                onChange={(e) => setSaveName(e.target.value)}
+                onChange={setSaveName}
                 onKeyDown={handleSaveKeyDown}
               />
-              <button
-                type="button"
-                className={buttonClassName({ appearance: 'ghost', icon: true })}
-                {...tooltipProps(i18n['js.table.saveFilter'])}
-                aria-label={i18n['js.table.saveFilter']}
+              <Button
+                label={i18n['js.table.saveFilter']}
+                image={ICON_CONFIRM}
+                display="icon-only"
+                appearance="ghost"
                 disabled={!saveName.trim()}
                 onClick={handleSaveSubmit}
-              >
-                <ThemeIcon encoded={ICON_CONFIRM} className="tl-button__icon tl-icon-sm" />
-              </button>
-              <button
-                type="button"
-                className={buttonClassName({ appearance: 'ghost', icon: true })}
-                {...tooltipProps(i18n['js.table.cancelSave'])}
-                aria-label={i18n['js.table.cancelSave']}
+              />
+              <Button
+                label={i18n['js.table.cancelSave']}
+                image={ICON_CANCEL}
+                display="icon-only"
+                appearance="ghost"
                 onClick={closeSaveForm}
-              >
-                <ThemeIcon encoded={ICON_CANCEL} className="tl-button__icon tl-icon-sm" />
-              </button>
+              />
             </span>
           ))}
         </div>
@@ -1635,15 +1623,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               data-tl-state={stateAttr(frozenColumnCount > 0 && 'frozen')}
               style={{ width: checkboxWidth, minWidth: checkboxWidth, ...(frozenColumnCount > 0 ? { left: 0 } : {}) }}
             >
-              {/* "Some selected" is the box's indeterminate property (headerCheckboxRef), which the
-                  browser reports as mixed; a native checkbox carries no ARIA checked state of its
-                  own (ARIA in HTML, Entscheidung 22). */}
-              <input
-                type="checkbox"
-                ref={headerCheckboxRef}
-                className="tl-checkbox"
+              <Checkbox
+                small
                 aria-label={i18n['js.table.selectAll']}
                 checked={allSelected}
+                indeterminate={someSelected}
                 onChange={handleSelectAll}
               />
             </div>
@@ -1708,16 +1692,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 {col.filterable && (
                   // One glyph; an active filter is the column's state (data-tl-state~="filtered",
                   // icon-primary) and the button's name says so as well.
-                  <button
-                    type="button"
-                    className={buttonClassName({ appearance: 'ghost', small: true, icon: true, extra: 'tl-table__filter' })}
-                    {...tooltipProps(filterLabel)}
-                    aria-label={filterLabel}
+                  <Button
+                    label={filterLabel}
+                    image={ICON_FILTER}
+                    display="icon-only"
+                    appearance="ghost"
+                    small
+                    className="tl-table__filter"
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => handleOpenFilter(col.name, e)}
-                  >
-                    <ThemeIcon encoded={ICON_FILTER} className="tl-button__icon tl-icon-sm" />
-                  </button>
+                  />
                 )}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
                   <ColumnsButton label={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
@@ -1823,13 +1807,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   onClick={(e) => e.stopPropagation()}>
                   {row.groupCount == null && (
                     // Space at the cursor selects; the box is no stop of its own in the tab order.
-                    <input
-                      type="checkbox"
-                      className="tl-checkbox"
+                    <Checkbox
+                      small
                       aria-label={i18n['js.table.selectRow']}
                       checked={row.selected}
-                      onChange={() => {/* handled by onClick */}}
-                      onClick={(e) => handleCheckboxClick(row.index, e)}
+                      onChange={() => handleCheckboxClick(row.index)}
                       tabIndex={-1}
                     />
                   )}
@@ -1869,18 +1851,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                         {row.expandable ? (
                           // The toggle opens its own row, so it points at no other element. A press
                           // keeps the focus where it is - on the grid, whose ring stays at the cursor.
-                          <button
-                            type="button"
-                            className="tl-toggle"
+                          <DisclosureToggle
+                            expanded={!!row.expanded}
+                            label={toggleLabel}
                             tabIndex={-1}
-                            aria-expanded={!!row.expanded}
-                            aria-label={toggleLabel}
-                            {...tooltipProps(toggleLabel)}
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={(e) => handleExpand(row.index, !row.expanded, e)}
-                          >
-                            <ThemeIcon encoded={ICON_EXPAND} className="tl-icon-sm" />
-                          </button>
+                          />
                         ) : (
                           <span className="tl-table__spacer" />
                         )}

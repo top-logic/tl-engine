@@ -3,11 +3,17 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel } from 'tl-react-bridge';
+import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import { deDE } from '@mui/material/locale';
 import MuiDropdownSelectAdapter from './MuiDropdownSelectAdapter';
 import { CONTROL_ID, mountAdapter, patchState, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiChipAdapter from './MuiChipAdapter';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+// The chosen options, the options with a color role and the chosen values of a field that is not editable.
+replacePart('Chip', MuiChipAdapter);
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** Command asking the server for the options. */
 const CMD_LOAD_OPTIONS = 'loadOptions';
@@ -66,7 +72,7 @@ describe('TLDropdownSelect as MUI Autocomplete', () => {
     expect(document.getElementById(CONTROL_ID)!.querySelector('.MuiAutocomplete-root.my-class')).not.toBeNull();
   });
 
-  it('asks for its options when opened, shows the loading state, then the options not chosen', async () => {
+  it('asks for its options when opened, shows the loading state, then the options', async () => {
     const sent = mountDropdown({ value: [ALPHA] });
 
     await userEvent.click(screen.getByRole('button', { name: 'Open' }));
@@ -76,7 +82,7 @@ describe('TLDropdownSelect as MUI Autocomplete', () => {
 
     patchState({ optionsLoaded: true, options: OPTIONS });
     const list = await screen.findByRole('listbox');
-    expect(within(list).getAllByRole('option').map(option => option.textContent)).toEqual(['Beta', 'Gamma']);
+    expect(within(list).getAllByRole('option').map(option => option.textContent)).toEqual(['Alpha', 'Beta', 'Gamma']);
     expect(list.closest(`[${ANCHORED_OVERLAY_ATTR}]`)).not.toBeNull();
   });
 
@@ -97,6 +103,32 @@ describe('TLDropdownSelect as MUI Autocomplete', () => {
     await settle();
 
     expect(sent.mock.calls).toEqual([changedTo('c')]);
+  });
+
+  it('lists the chosen option of a single-valued field among the options, marked as selected', async () => {
+    mountDropdown({ value: [BETA], optionsLoaded: true, options: OPTIONS });
+
+    const list = await openList();
+    const options = within(list).getAllByRole('option');
+    expect(options.map(option => option.textContent)).toEqual(['Alpha', 'Beta', 'Gamma']);
+    expect(options.map(option => option.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
+  });
+
+  it('sends nothing when the chosen option of a single-valued field is chosen again', async () => {
+    const sent = mountDropdown({ value: [ALPHA], optionsLoaded: true, options: OPTIONS });
+
+    const list = await openList();
+    await userEvent.click(within(list).getByRole('option', { name: 'Alpha' }));
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('leaves the chosen options of a multi-valued field out of the list', async () => {
+    mountDropdown({ value: [BETA], multiSelect: true, optionsLoaded: true, options: OPTIONS });
+
+    const list = await openList();
+    expect(within(list).getAllByRole('option').map(option => option.textContent)).toEqual(['Alpha', 'Gamma']);
   });
 
   it('draws an option with a color role as a chip of that role with its icon', async () => {
@@ -144,6 +176,17 @@ describe('TLDropdownSelect as MUI Autocomplete', () => {
     await settle();
 
     expect(sent.mock.calls).toEqual([changedTo('b')]);
+  });
+
+  it('keeps the chips of the chosen options out of the tab order', async () => {
+    mountDropdown({ value: [ALPHA, BETA], multiSelect: true });
+
+    const chips = Array.from(document.getElementById(CONTROL_ID)!.querySelectorAll('.MuiChip-root'));
+    expect(chips).toHaveLength(2);
+    chips.forEach(chip => expect(chip.getAttribute('tabindex')).toBe('-1'));
+    await userEvent.tab();
+    expect(chips).not.toContain(document.activeElement);
+    expect(document.activeElement!.tagName).toBe('INPUT');
   });
 
   it('names its loading state in the page language', async () => {

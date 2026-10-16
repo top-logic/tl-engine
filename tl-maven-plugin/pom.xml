@@ -218,16 +218,6 @@
 				<configuration>
 					<!-- Allow debugging test cases. -->
 					<forkCount>0</forkCount>
-					<systemPropertyVariables>
-						<!-- Build environment of TestGenerateJavaIntegration. -->
-						<tl.it.mavenHome>${maven.home}</tl.it.mavenHome>
-						<tl.it.remoteRepository>${settings.localRepository}</tl.it.remoteRepository>
-						<tl.it.pluginVersion>${project.version}</tl.it.pluginVersion>
-						<tl.it.pluginPom>${project.basedir}/pom.xml</tl.it.pluginPom>
-						<tl.it.pluginClasses>${project.build.outputDirectory}</tl.it.pluginClasses>
-						<tl.it.projects>${project.basedir}/src/test/projects</tl.it.projects>
-						<tl.it.workDir>${project.build.directory}/it</tl.it.workDir>
-					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 			<plugin>

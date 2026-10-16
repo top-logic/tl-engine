@@ -39,6 +39,9 @@ public final class CommandCliques {
 	/** Clique for additional commands in an overflow menu. */
 	public static final String MORE = "more";
 
+	/** Clique for the commands adding a hidden tile to a dashboard again. */
+	public static final String DASHBOARD_TILES = "dashboardTiles";
+
 	private CommandCliques() {
 		// No instantiation.
 	}

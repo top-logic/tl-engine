@@ -25,14 +25,14 @@ const TLOverlay: React.FC<TLCellProps> = ({ controlId }) => {
   const layers = (state.layers as LayerDescriptor[]) ?? [];
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlOverlay')}>
-      <div className="tlOverlay__base">
+    <div id={controlId} className={rootClassName(state, 'tl-overlay')}>
+      <div className="tl-overlay__base">
         <TLChild control={base} />
       </div>
       {layers.map((layer, i) => (
         <div
           key={i}
-          className={['tlOverlay__layer', `tlOverlay__layer--${layer.anchor}`, layer.cssClass]
+          className={['tl-overlay__layer', `tl-overlay__layer--${layer.anchor}`, layer.cssClass]
             .filter(Boolean)
             .join(' ')}
         >

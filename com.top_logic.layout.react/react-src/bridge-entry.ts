@@ -75,6 +75,8 @@ export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-pre
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
 export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
+export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
+export type { DisplayClass } from './bridge/display-class';
 // A popover surface needs both its own ref and the hook's setFloating on one element; controls
 // must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
 export { useMergeRefs } from '@floating-ui/react';

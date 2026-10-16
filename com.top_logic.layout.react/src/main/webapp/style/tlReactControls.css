@@ -3521,7 +3521,7 @@ button.tlBottomBar__item:hover {
   border-radius: var(--border-radius-02);
   background: var(--layer-01);
 }
-.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction) {
+.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction, .tlDashboard__hide) {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
@@ -3562,6 +3562,18 @@ button.tlBottomBar__item:hover {
   background: transparent;
   cursor: move;
   z-index: 5;
+}
+/* The button removing a tile while the dashboard is rearranged: in the top trailing corner, above
+   the overlay, on the tile's own surface so that it stays readable over whatever the tile shows. */
+.tlDashboard__hide {
+  position: absolute;
+  top: var(--spacing-02);
+  inset-inline-end: var(--spacing-02);
+  z-index: 6;
+  display: flex;
+  background: var(--layer-01);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--shadow-raised);
 }
 .tlDashboard__tile--dropBefore::before,
 .tlDashboard__tile--dropAfter::after {

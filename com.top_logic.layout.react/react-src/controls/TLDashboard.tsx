@@ -1,8 +1,27 @@
-import { React, useTLState, useTLCommand, TLChild, FillBarrier, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild, FillBarrier, rootClassName, usePart, ICON_CLOSE } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { isInteractiveTarget } from './interactive';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
+
+const I18N_KEYS = {
+  'js.dashboard.hideTile': 'Hide tile',
+};
+
+/** The command sending the new order of the shown tiles after the user moved one. */
+const REORDER_COMMAND = 'reorder';
+
+/** The argument of {@link REORDER_COMMAND}: the ids of the shown tiles in their new order. */
+const ORDER_ARG = 'order';
+
+/** The command running the action of a tile. */
+const ACTIVATE_COMMAND = 'activate';
+
+/** The command removing a tile from the dashboard; it can be added again by the dashboard's menu. */
+const HIDE_COMMAND = 'hide';
+
+/** The argument of {@link ACTIVATE_COMMAND} and {@link HIDE_COMMAND} naming the tile. */
+const TILE_ID_ARG = 'tileId';
 
 /**
  * What activating a tile offers: the name the tile is announced under, whether the activation is
@@ -218,7 +237,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
     if (toBase < 0) { ids.splice(from, 0, draggedTileId); return; }
     const insertAt = before ? toBase : toBase + 1;
     ids.splice(insertAt, 0, draggedTileId);
-    sendCommand('reorder', { order: ids });
+    sendCommand(REORDER_COMMAND, { [ORDER_ARG]: ids });
   }, [tiles, sendCommand]);
 
   const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>, id: string) => {
@@ -239,8 +258,26 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
   // --- Activation ---
 
   const activateTile = useCallback((tileId: string) => {
-    sendCommand('activate', { tileId });
+    sendCommand(ACTIVATE_COMMAND, { [TILE_ID_ARG]: tileId });
   }, [sendCommand]);
+
+  // --- Hiding ---
+
+  const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
+
+  const hideTile = useCallback((tileId: string) => {
+    sendCommand(HIDE_COMMAND, { [TILE_ID_ARG]: tileId });
+  }, [sendCommand]);
+
+  /**
+   * A press on the hide button must not begin moving the tile it sits in: the tile is draggable in
+   * edit mode, and a drag would start from the button as from any other point of the tile.
+   */
+  const preventDrag = useCallback((e: React.DragEvent<HTMLSpanElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
 
   /**
    * A press anywhere on the tile activates it - except while the dashboard is rearranged, while
@@ -316,6 +353,24 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
                 <TLChild control={tile.control} />
               </FillBarrier>
               {editMode && <div className="tlDashboard__overlay" />}
+              {editMode && (
+                // Above the overlay, so that it is the one thing in a tile being rearranged that
+                // answers the pointer instead of starting a move.
+                <span
+                  className="tlDashboard__hide"
+                  draggable
+                  onDragStart={preventDrag}
+                >
+                  <Button
+                    label={i18n['js.dashboard.hideTile']}
+                    image={ICON_CLOSE}
+                    display="icon-only"
+                    appearance="ghost"
+                    small
+                    onClick={() => hideTile(tile.id)}
+                  />
+                </span>
+              )}
             </div>
           );
         })}

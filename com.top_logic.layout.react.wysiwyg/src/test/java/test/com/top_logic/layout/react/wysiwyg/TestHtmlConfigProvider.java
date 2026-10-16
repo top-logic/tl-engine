@@ -150,6 +150,49 @@ public class TestHtmlConfigProvider extends TestCase {
 		assertTrue("An emptied editor is no text: " + emptied, emptied == null || emptied.isEmpty());
 	}
 
+	/**
+	 * A text that does not pass the HTML safety check is not stored: the field reports the problem
+	 * and keeps its value, until a safe text is entered.
+	 */
+	public void testUnsafeTextIsRejected() {
+		_config.setText("<p>safe</p>");
+		ConfigFieldModel model = model(HtmlConfig.TEXT);
+		ReactWysiwygControl editor = editor(control(model));
+		assertTrue(editor.isCheckHtml());
+
+		editor.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldState.VALUE__PROP, "<p onclick=\"alert(1)\">unsafe</p>"));
+		assertEquals("<p>safe</p>", _config.getText());
+		assertNotNull("The problem is reported at the field.", model.getInputError());
+		assertTrue(model.hasError());
+
+		editor.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldState.VALUE__PROP, "<p class=\"note\">safe again</p>"));
+		assertEquals("<p class=\"note\">safe again</p>", _config.getText());
+		assertNull(model.getInputError());
+	}
+
+	/** An unsafe macro is rejected like an unsafe text, before it is parsed. */
+	public void testUnsafeMacroIsRejected() {
+		ConfigFieldModel model = model(HtmlConfig.MACRO);
+		ReactWysiwygControl editor = editor(control(model));
+		editor.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldState.VALUE__PROP, "<p>{$model}<script>alert(1)</script></p>"));
+		assertNull("Nothing is stored.", _config.getMacro());
+		assertNotNull("The problem is reported at the field.", model.getInputError());
+	}
+
+	/** An unsafe translation is rejected at the internationalized field. */
+	public void testUnsafeTranslationIsRejected() {
+		ConfigFieldModel model = model(HtmlConfig.I18N);
+		I18NWysiwygControl inline = find(rendered(control(model)).getInput(), I18NWysiwygControl.class);
+		assertTrue(inline.isCheckHtml());
+		inline.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldState.VALUE__PROP, "<img src=\"x\" onerror=\"alert(1)\">"));
+		assertNull("Nothing is stored.", _config.getI18n());
+		assertNotNull("The problem is reported at the field.", model.getInputError());
+	}
+
 	/** A text that cannot be edited is displayed formatted, if it passes the safety check. */
 	public void testReadOnly() {
 		_config.setText("A <b>bold</b> word.");

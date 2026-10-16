@@ -40,6 +40,11 @@ import com.top_logic.layout.react.control.form.ReactRenderedTextControl;
  * </p>
  *
  * <p>
+ * An edited text is stored only if it passes the application's HTML safety check. A text the check
+ * rejects is reported at the field, which keeps its last accepted value.
+ * </p>
+ *
+ * <p>
  * A value {@link ConfigControlService#holdsText(ConfigFieldModel) held as text} - a plain text,
  * or the text of a value with a format, such as a TL-Script expression written as HTML with
  * embedded expressions - is edited as one text. An internationalized text is edited per language:
@@ -96,6 +101,7 @@ public class HtmlConfigProvider extends AbstractConfiguredInstance<HtmlConfigPro
 						new I18NWysiwygControl(context, new I18NLocalizedFieldModel(model, valueEditor));
 					inline.setTextOnly(true);
 					inline.setSourceEditing(sourceEditing);
+					inline.setCheckHtml(true);
 					return I18NEditorDialog.createEditor(context, model, inline, valueEditor, label);
 				},
 				ReactI18NStringInputControl::displayText, Function.identity());

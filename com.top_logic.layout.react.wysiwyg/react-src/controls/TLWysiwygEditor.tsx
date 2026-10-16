@@ -9,6 +9,7 @@ import Image from '@tiptap/extension-image';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { TextStyle, Color } from '@tiptap/extension-text-style';
 import WysiwygToolbar from './WysiwygToolbar';
+import { HtmlPassthrough, restoreHtmlSources } from './HtmlPassthrough';
 import './TLWysiwygEditor.css';
 
 /** Command sent when the user follows an object link in displayed content. */
@@ -48,6 +49,11 @@ interface InsertRequest {
 
   /** The markup to insert. */
   html: string;
+}
+
+/** The text of the given editor, with the markup the editor keeps without understanding it. */
+function editorHtml(editor: Editor): string {
+  return restoreHtmlSources(editor.getHTML());
 }
 
 const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
@@ -112,11 +118,13 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       clearTimeout(debounceRef.current);
       debounceRef.current = null;
     }
-    reportValue(ed.getHTML());
+    reportValue(editorHtml(ed));
   }, [reportValue]);
 
   const editor = useEditor({
     extensions: [
+      // First, so that an element of unknown type encloses the formatting of its content.
+      HtmlPassthrough,
       StarterKit.configure({
         // The link extension carries the CSS class of an anchor, which is what tells an object
         // link from an ordinary one, through parsing and rendering alike.
@@ -143,7 +151,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       }
       debounceRef.current = setTimeout(() => {
         debounceRef.current = null;
-        reportValue(ed.getHTML());
+        reportValue(editorHtml(ed));
       }, REPORT_DELAY);
     },
     onBlur: ({ editor: ed }) => {
@@ -163,7 +171,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   React.useEffect(() => {
     currentHtmlRef.current = value;
     if (editor && !editor.isFocused) {
-      const currentHtml = editor.getHTML();
+      const currentHtml = editorHtml(editor);
       if (currentHtml !== value) {
         editor.commands.setContent(value, { emitUpdate: false });
       }

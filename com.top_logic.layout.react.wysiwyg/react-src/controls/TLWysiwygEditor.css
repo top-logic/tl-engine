@@ -32,6 +32,32 @@
   outline: none;
 }
 
+/* Markup the editor keeps without being able to edit it, shown as its source. */
+.tlWysiwygEditor .tlWysiwygEditor__htmlSource {
+  display: block;
+  margin: 0.4em 0;
+  padding: 4px 8px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--corner-radius);
+  background: var(--layer);
+  color: var(--text-secondary);
+  font-family: var(--font-family-mono);
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  word-break: break-all;
+  cursor: default;
+}
+
+.tlWysiwygEditor .tlWysiwygEditor__htmlSource--inline {
+  display: inline;
+  margin: 0;
+  padding: 0 4px;
+}
+
+.tlWysiwygEditor .tlWysiwygEditor__htmlSource.ProseMirror-selectednode {
+  outline: 2px solid var(--focus);
+}
+
 /* The HTML source, shown in place of the formatted text. */
 .tlWysiwygEditor__source {
   display: block;

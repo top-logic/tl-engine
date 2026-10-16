@@ -22,9 +22,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -33,6 +37,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.form.I18NLocalizedFieldModel;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.state.FieldState;
@@ -175,6 +180,9 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	/** Whether the model holds the HTML source as {@link String}, see {@link #setTextOnly(boolean)}. */
 	private boolean _textOnly;
 
+	/** Whether the text received from the client is checked, see {@link #setCheckHtml(boolean)}. */
+	private boolean _checkHtml;
+
 	/**
 	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
 	 *
@@ -189,7 +197,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 
 	/**
 	 * Creates a {@link ReactWysiwygControl} {@link #setTextOnly(boolean) for text only}, which
-	 * offers no commands of its own.
+	 * offers no commands of its own and {@link #setCheckHtml(boolean) stores only safe HTML}.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -203,6 +211,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		ReactWysiwygControl editor = new ReactWysiwygControl(context, model);
 		editor.setTextOnly(true);
 		editor.setSourceEditing(sourceEditing);
+		editor.setCheckHtml(true);
 		return editor;
 	}
 
@@ -348,6 +357,27 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	public void setSourceEditing(boolean sourceEditing) {
 		putState(SOURCE_EDITING, sourceEditing ? Boolean.TRUE : null);
+	}
+
+	/**
+	 * Whether a text received from the client is stored only if it passes the application's HTML
+	 * safety check ({@link SafeHTML}).
+	 */
+	public boolean isCheckHtml() {
+		return _checkHtml;
+	}
+
+	/**
+	 * Sets whether a text received from the client is stored only if it passes the application's
+	 * HTML safety check ({@link SafeHTML}).
+	 *
+	 * <p>
+	 * A text the check rejects is not stored: the field reports the problem the check finds and
+	 * keeps its last accepted value, while the editor still shows the rejected text.
+	 * </p>
+	 */
+	public void setCheckHtml(boolean checkHtml) {
+		_checkHtml = checkHtml;
 	}
 
 	private void initShadowCopy() {
@@ -537,12 +567,47 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	@Override
 	protected void applyRawClientValue(Object rawValue) {
-		super.applyRawClientValue(rawValue);
+		if (_checkHtml) {
+			ResKey problem = rawValue == null ? null : htmlProblem(stripImageUrls(rawValue.toString()));
+			setInputError(problem);
+			if (problem == null) {
+				super.applyRawClientValue(rawValue);
+			}
+		} else {
+			super.applyRawClientValue(rawValue);
+		}
 
 		if (getState(INSERT) == null) {
 			return;
 		}
 		putState(INSERT, null);
+	}
+
+	/**
+	 * The problem the application's HTML safety check ({@link SafeHTML}) finds in the given text,
+	 * {@code null} if it is safe.
+	 */
+	private static ResKey htmlProblem(String html) {
+		try {
+			SafeHTML.getInstance().check(html);
+			return null;
+		} catch (I18NException ex) {
+			return I18NConstants.ERROR_UNSAFE_HTML__PROBLEM.fill(ex.getErrorKey());
+		}
+	}
+
+	/**
+	 * Reports the given problem with the text received from the client on the model, so that the
+	 * field shows it, or clears a reported problem.
+	 */
+	private void setInputError(ResKey problem) {
+		FieldModel model = getFieldModel();
+		if (model instanceof I18NLocalizedFieldModel localized) {
+			model = localized.getDelegate();
+		}
+		if (model instanceof AbstractFieldModel abstractModel) {
+			abstractModel.setError(problem);
+		}
 	}
 
 	private String uniqueImageKey(String name) {

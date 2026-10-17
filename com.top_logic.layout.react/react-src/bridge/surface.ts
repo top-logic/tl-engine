@@ -34,11 +34,19 @@ export function useSurface(): Surface {
 }
 
 /**
+ * The level inside a component that paints a surface - a card, an accordion, a panel drawn as a card. On a floating
+ * surface the content stays on that surface's level: the nested step would lie below it in the dark mode and sink in.
+ */
+export function paintedLevel(outer: SurfaceLevel): SurfaceLevel {
+  return outer === 'overlay' ? 'overlay' : 'layer';
+}
+
+/**
  * What a panel tells the components inside. Only what paints a surface raises the level: a panel drawn as a card
  * does, a plain panel paints none and passes on the level it lies on. Its insets are those of a card or a panel.
  */
 export function panelSurface(outer: Surface, card: boolean): Surface {
-  return { level: card ? 'layer' : outer.level, inset: card ? 'card' : 'panel' };
+  return { level: card ? paintedLevel(outer.level) : outer.level, inset: card ? 'card' : 'panel' };
 }
 
 /** The class giving a card the surface of its level: none on the page. */

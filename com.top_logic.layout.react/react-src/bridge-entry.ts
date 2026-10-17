@@ -77,7 +77,7 @@ export { usePopover } from './bridge/popover';
 export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
 export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
 export type { DisplayClass } from './bridge/display-class';
-export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, panelSurface } from './bridge/surface';
+export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, paintedLevel, panelSurface } from './bridge/surface';
 export type { Surface, SurfaceLevel, InsetKind } from './bridge/surface';
 export { separatorMove, separatorStep, movedSize } from './bridge/separator';
 export type { SeparatorMove, SeparatorOrientation } from './bridge/separator';

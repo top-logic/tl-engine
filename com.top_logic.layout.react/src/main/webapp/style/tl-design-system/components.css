@@ -389,6 +389,26 @@
   color: var(--tl-text-primary);
 }
 
+/* --- button-bar/button-bar.css --- */
+/* Knopfleiste — Spec 2026-10-16 Welle 4c §3, Konsolidierung Q14. Die untere Befehlsleiste einer Fläche: Fuß des
+   Dialogs, Knopfleiste des Panels. Sie hält eine Toolbar; rechtsbündig, Linie oben. Hält sie keinen Knopf — eine
+   Toolbar ohne Befehl rendert nichts oder nur ihre Hülle —, verschwindet sie samt Linie. */
+
+.tl-button-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: end;
+  gap: var(--tl-space-xs);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-button-bar[hidden] { display: none; }
+
+.tl-button-bar:not(:has(button)) {
+  display: none;
+}
+
 /* --- button/button.css --- */
 /* Button — docs/skalen.md „Button: vier Erscheinungen, eine Tönung, keine Größe“.
    Vier Erscheinungen (--primary, --secondary, --ghost, --link), eine Tönung (--danger),
@@ -1139,19 +1159,6 @@
   flex-direction: column;
   min-height: 0;
   overflow: auto;
-}
-
-/* Der Fuß hält eine Toolbar; ohne Befehl rendert sie nichts, dann verschwindet er. */
-.tl-dialog__footer {
-  display: flex;
-  justify-content: end;
-  gap: var(--tl-space-xs);
-  padding: var(--tl-space-sm) var(--tl-space-md);
-  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
-}
-
-.tl-dialog__footer:empty {
-  display: none;
 }
 
 /* Acht Griffe zum Ändern der Größe, halb über dem Rand. Kanten xs breit, Ecken sm groß. */
@@ -3439,9 +3446,10 @@ a.tl-field-value:hover {
 .tl-text--truncate[hidden] { display: none; }
 
 /* --- titlebar/titlebar.css --- */
-/* Titelleiste — Spec 2026-10-13 Welle 4a §3, Konsolidierung Q3. Der eine Kopf über einer Fläche: Titel links mit
-   Ellipse, Aktionen (Toolbar, Kopfknöpfe tl-button--icon --sm) rechts, eine Linie darunter. Dialog und Drawer
-   tragen ihn; Panel und Card folgen in 4b. Die Typo-Klasse des Titels (tl-type-heading-sm) setzt das Markup. */
+/* Titelleiste — Spec 2026-10-13 Welle 4a §3 (Q3), Spec 2026-10-16 Welle 4c §3. Der eine Kopf über einer Fläche:
+   Titel links mit Ellipse, daneben frei gestalteter Inhalt, Aktionen (Toolbar) und Kopfknöpfe (tl-button--icon --sm)
+   am Ende, eine Linie darunter. Dialog, Drawer, Panel und Karte tragen ihn. Er ist size-bar hoch, mit und ohne
+   Toolbar; eine überlaufende Toolbar gibt vor dem Titel nach. Die Typo-Klasse des Titels setzt das Markup. */
 
 .tl-titlebar {
   display: flex;
@@ -3451,6 +3459,9 @@ a.tl-field-value:hover {
   min-height: var(--tl-size-bar);
   padding: var(--tl-space-2xs) var(--tl-space-xs) var(--tl-space-2xs) var(--tl-space-md);
   border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  /* Die Linie unten zählt zur Höhe (border-box): unten liegt space-2xs abzüglich der Linie, damit ein Control der
+     Toolbar (size-control) Platz hat und der Kopf size-bar misst, mit und ohne Toolbar. */
+  padding-bottom: calc(var(--tl-space-2xs) - var(--tl-border-width-sm));
 }
 .tl-titlebar[hidden] { display: none; }
 
@@ -3470,7 +3481,55 @@ a.tl-field-value:hover {
   display: flex;
   flex: 0 1 auto;
   align-items: center;
+  gap: var(--tl-space-2xs);
   min-width: 0;
+}
+
+/* Eine Toolbar im Kopf bringt keine eigene Leistenhöhe mit: der Kopf misst size-bar (Control plus space-2xs oben und
+   unten), ob er eine Toolbar trägt oder nicht — Köpfe nebeneinander stehen auf einer Linie. */
+.tl-titlebar__actions > .tl-toolbar {
+  min-height: 0;
+  padding-block: 0;
+}
+
+/* Frei gestalteter Inhalt neben dem Titel (Panel: titleContent). Steht er da, nimmt der Titel seine Breite und der
+   Inhalt den Rest. */
+.tl-titlebar__content {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+.tl-titlebar__content[hidden] { display: none; }
+
+.tl-titlebar__title:has(+ .tl-titlebar__content) {
+  flex: 0 1 auto;
+}
+
+/* Die Kopfknöpfe eines Behälters (Part Button: Minimieren, Maximieren, Lösen). Sie behalten ihre Maße; die Lage steht
+   an dieser Hülle, nicht am Part (view-layer/parts.md). */
+.tl-titlebar__buttons {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+.tl-titlebar__buttons[hidden] { display: none; }
+
+/* Ohne Titel stehen Aktionen und Knöpfe am Ende: das erste Kind schiebt alles dorthin. */
+.tl-titlebar > :first-child:not(.tl-titlebar__title, .tl-titlebar__content) {
+  margin-inline-start: auto;
+}
+
+/* Wer nachgibt (wie die AppBar, 4b): eine überlaufende Toolbar nimmt nur den Rest und hält an ihrem Überlaufknopf;
+   erst dann kürzt der Titel. */
+.tl-titlebar__actions:has(> .tl-toolbar[data-tl-overflow]) {
+  flex: 1 1 0;
+  min-width: var(--tl-size-control);
+}
+
+.tl-titlebar:has(> .tl-titlebar__actions > .tl-toolbar[data-tl-overflow]) > .tl-titlebar__title {
+  flex: 0 1 auto;
 }
 
 /* --- toggle/toggle.css --- */
@@ -3620,4 +3679,4 @@ a.tl-field-value:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* tl-design-system sha256:e428e7acf997a6bd492d568f67e6c11f694e55c9097bc073fe95664cea0efdd9 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:9e67f239000c576e6c456040322ef37ed3379c8608cd90af2f3cc4dc5f4a2fff — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

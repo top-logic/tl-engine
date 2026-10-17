@@ -1202,6 +1202,82 @@
   color: var(--tl-text-on-brand-active);
 }
 
+/* --- color-picker/color-picker.css --- */
+/* Farb-Picker — Spec 2026-10-17 Welle 5a §4. Der Inhalt des Farb-Popups (Hülle: tl-picker, Feldknopf und Zelle:
+   tl-swatch). Das CSS zeichnet nur Geometrie, Rahmen und Griffe aus Tokens; Datenfarben (Wert, reiner Farbton,
+   Verläufe, Farbtonspektrum) setzt das TSX inline. Palette und Mischer tragen einen Rand von space-2xs, sonst
+   schneidet ihr overflow den Fokusring der Randzellen. */
+
+.tl-color-picker__palette {
+  display: grid;
+  gap: var(--tl-space-2xs);
+  padding: var(--tl-space-2xs);
+}
+.tl-color-picker__palette[hidden] { display: none; }
+
+/* Die gewählte Option trägt einen Ring in der Auswahlfarbe, ein Rand statt outline: der Fokusring aus base.css
+   bleibt davon unterscheidbar. */
+.tl-color-picker__palette [aria-selected="true"] {
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+}
+
+.tl-color-picker__mixer {
+  display: flex;
+  gap: var(--tl-space-sm);
+  padding: var(--tl-space-2xs);
+}
+.tl-color-picker__mixer[hidden] { display: none; }
+
+.tl-color-picker__field {
+  inline-size: var(--tl-size-12);
+  block-size: var(--tl-size-12);
+}
+
+.tl-color-picker__hue {
+  inline-size: var(--tl-size-control-sm);
+  block-size: var(--tl-size-12);
+}
+
+/* Gemeinsam: der Rahmen der beiden Flächen. */
+.tl-color-picker__field,
+.tl-color-picker__hue {
+  position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-sm);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Der Griff liegt auf einer Datenfarbe: ein Doppelring aus den beiden Griff-Rollen (Rand und inset-Linie), von
+   denen auf jeder Farbe einer 3:1 erreicht. Kein outline: den verbietet das Gate den Komponenten. */
+.tl-color-picker__handle {
+  position: absolute;
+  box-sizing: border-box;
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: var(--tl-border-width-md) solid var(--tl-border-handle-light);
+  border-radius: var(--tl-radius-full);
+  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-handle-dark);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.tl-color-picker__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+}
+.tl-color-picker__preview[hidden] { display: none; }
+
+.tl-color-picker__inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+}
+.tl-color-picker__inputs[hidden] { display: none; }
+
 /* --- columns/columns.css --- */
 /* Spalten — 3b §12.
    Eine umbrechende Reihe von Spalten, jede wächst nach ihrem Gewicht. Die Flex-Basis einer Spalte setzt
@@ -1998,6 +2074,69 @@ a.tl-field-value:hover {
   color: var(--tl-status-error-text);
 }
 
+/* --- icon-picker/icon-picker.css --- */
+/* Icon-Picker — Spec 2026-10-17 Welle 5a §5. Der Inhalt des Icon-Popups (Hülle: tl-picker, Feldknopf: tl-swatch,
+   Laden, leer, Fehler: tl-status). Das Popup ist size-13 im Quadrat und lässt sich von Hand größer ziehen. */
+
+.tl-picker.tl-icon-picker {
+  inline-size: var(--tl-size-13);
+  block-size: var(--tl-size-13);
+  overflow: auto;
+  resize: both;
+}
+
+.tl-icon-picker__filter {
+  flex-shrink: 0;
+}
+
+/* Das Raster nimmt den Rest des Popups; der Rand von space-2xs hält den Fokusring der Randzellen im overflow. */
+.tl-icon-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--tl-size-control));
+  align-content: start;
+  flex: 1 1 auto;
+  gap: var(--tl-space-2xs);
+  min-block-size: 0;
+  padding: var(--tl-space-2xs);
+  overflow: auto;
+}
+.tl-icon-picker__grid[hidden] { display: none; }
+
+.tl-icon-picker__cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  inline-size: var(--tl-size-control);
+  block-size: var(--tl-size-control);
+  border-radius: var(--tl-radius-sm);
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+.tl-icon-picker__cell[hidden] { display: none; }
+
+.tl-icon-picker__cell:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-icon-picker__cell[aria-selected="true"] {
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-icon-picker__advanced {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-sm);
+}
+.tl-icon-picker__advanced[hidden] { display: none; }
+
+.tl-icon-picker__preview {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-sm);
+}
+.tl-icon-picker__preview[hidden] { display: none; }
+
 /* --- layout/layout.css --- */
 /* Reihen und Abstände — Spec 2026-10-16 Welle 4c §5 (Q16, Q22). Stack und Grid ordnen Kinder mit der einen
    Gap-Skala, die tl-columns seit 3b liest: compact space-sm, default space-md, loose space-lg. Inset ist der Abstand
@@ -2384,12 +2523,10 @@ a.tl-field-value:hover {
 .tl-picker__tabs {
   flex-shrink: 0;
 }
-.tl-picker__tabs[hidden] { display: none; }
 
 .tl-picker__actions {
   flex-shrink: 0;
 }
-.tl-picker__actions[hidden] { display: none; }
 
 /* --- pill/pill.css --- */
 /* Pill — docs/skalen.md „Pill: Rolle statt Farbe“.
@@ -3111,6 +3248,175 @@ a.tl-field-value:hover {
   to { opacity: 0; transform: translateX(var(--tl-space-md)); }
 }
 
+/* --- slider/slider.css --- */
+/* Slider — Spec 2026-10-17 Welle 5a §6. Ein natives range, mit dem Wert als Text daneben. Die Spur des range ist
+   durchsichtig; darunter liegen die Ruhespur und die Füllung (ein Element wie bei tl-progress, ihre Breite setzt
+   das Control als Anteil inline). Die Pseudo-Regeln zeichnen nur den Daumen. Den Fokusring um das ganze range
+   liefert base.css. Zustände sind Attribute (aria-invalid, data-tl-state), keine Klassen. */
+
+.tl-slider {
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--tl-space-sm);
+  inline-size: 100%;
+}
+.tl-slider[hidden] { display: none; }
+
+/* Spur und range teilen sich die erste Zelle; die Spur ist um den halben Daumen eingerückt, denn die Mitte des
+   Daumens wandert von einem halben Daumen nach dem Anfang bis einen halben Daumen vor das Ende. */
+.tl-slider__track {
+  grid-area: 1 / 1;
+  display: block;
+  margin-inline: calc(var(--tl-size-choice) / 2);
+  block-size: var(--tl-size-progress);
+  overflow: hidden;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-border-control);
+}
+.tl-slider__track[hidden] { display: none; }
+
+.tl-slider__fill {
+  display: block;
+  block-size: 100%;
+  background: var(--tl-surface-brand);
+}
+
+.tl-slider__input {
+  grid-area: 1 / 1;
+  appearance: none;
+  -webkit-appearance: none;
+  min-inline-size: 0;
+  block-size: var(--tl-size-choice);
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tl-slider__input:disabled {
+  cursor: default;
+}
+
+.tl-slider__input::-webkit-slider-runnable-track {
+  block-size: var(--tl-size-choice);
+  border: none;
+  background: transparent;
+}
+
+.tl-slider__input::-moz-range-track {
+  block-size: var(--tl-size-choice);
+  border: none;
+  background: transparent;
+}
+
+.tl-slider__input::-moz-range-progress {
+  background: transparent;
+}
+
+/* Der Daumen ist eine Marke: ein Kreis in der Markenfarbe. */
+.tl-slider__input::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: none;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-slider__input::-moz-range-thumb {
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: none;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Der Hof: beim Zeigen ein Ring um den Daumen, beim Drücken ein stärkerer, wie bei den Auswahlmarken. Ein Schatten
+   ohne Versatz und Unschärfe zeichnet nur außerhalb des Daumens; seine Ausbreitung füllt ihn bis zur Trefferfläche
+   eines Controls. Deaktiviert zeigt keinen. */
+.tl-slider__input:not(:disabled):hover::-webkit-slider-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-hover);
+}
+
+.tl-slider__input:not(:disabled):hover::-moz-range-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-hover);
+}
+
+.tl-slider__input:not(:disabled):active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-active);
+}
+
+.tl-slider__input:not(:disabled):active::-moz-range-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-active);
+}
+
+.tl-slider__input:disabled::-webkit-slider-thumb {
+  background: var(--tl-border-disabled);
+}
+
+.tl-slider__input:disabled::-moz-range-thumb {
+  background: var(--tl-border-disabled);
+}
+
+.tl-slider:has(.tl-slider__input:disabled) .tl-slider__track {
+  background: var(--tl-surface-disabled);
+}
+
+.tl-slider:has(.tl-slider__input:disabled) .tl-slider__fill {
+  background: var(--tl-border-disabled);
+}
+
+/* Der Wert als Text. Wert und beide Grenzen stehen in einer Gitterzelle, so ist der Kasten so breit wie die
+   breiteste und die Spur behält ihre Länge, während der Wert wechselt. */
+.tl-slider__value {
+  grid-area: 1 / 2;
+  display: inline-grid;
+  color: var(--tl-text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tl-slider__value[hidden] { display: none; }
+
+.tl-slider__text,
+.tl-slider__sizer {
+  grid-area: 1 / 1;
+  justify-self: end;
+}
+
+.tl-slider__sizer {
+  visibility: hidden;
+}
+
+/* Warnung vor Fehler: bei gleicher Spezifität gewinnt die spätere Regel, und der Fehler muss die Warnung
+   verdrängen. Der Daumen und der Text tragen den Zustand. */
+.tl-slider[data-tl-state~="warning"] .tl-slider__input::-webkit-slider-thumb {
+  background: var(--tl-status-warning-border);
+}
+
+.tl-slider[data-tl-state~="warning"] .tl-slider__input::-moz-range-thumb {
+  background: var(--tl-status-warning-border);
+}
+
+.tl-slider[data-tl-state~="warning"] .tl-slider__text {
+  color: var(--tl-status-warning-text);
+}
+
+.tl-slider__input[aria-invalid="true"]::-webkit-slider-thumb {
+  background: var(--tl-status-error-border);
+}
+
+.tl-slider__input[aria-invalid="true"]::-moz-range-thumb {
+  background: var(--tl-status-error-border);
+}
+
+.tl-slider__input[aria-invalid="true"] ~ .tl-slider__value .tl-slider__text {
+  color: var(--tl-status-error-text);
+}
+
 /* --- snackbar/snackbar.css --- */
 /* Snackbar — Spec 2026-10-13 Welle 4a §5, Konsolidierung Q7. Ein Alert mit eigener Hülle: Farbe, Linie, Titel, Text,
    Schließen-Knopf und Ansage kommen aus tl-alert (data-tl-role, role="alert" nur bei error); hier stehen Lage,
@@ -3310,12 +3616,19 @@ a.tl-field-value:hover {
   background-size: calc(2 * var(--tl-space-xs)) calc(2 * var(--tl-space-xs));
 }
 
+/* Die Warnung steht vor dem Fehler: bei gleicher Spezifität gewinnt die spätere Regel, und der Fehler
+   muss die Warnung verdrängen (wie in field.css). */
+.tl-swatch[data-tl-state~="warning"] {
+  border-color: var(--tl-status-warning-border);
+}
+
 .tl-swatch[aria-invalid="true"] {
   border-color: var(--tl-status-error-border);
 }
 
-.tl-swatch[data-tl-state~="warning"] {
-  border-color: var(--tl-status-warning-border);
+button.tl-swatch:disabled {
+  border-color: var(--tl-border-disabled);
+  cursor: default;
 }
 
 /* Ein Knopf oder eine Option zeigt beim Zeigen den Hof der Auswahlmarken. */
@@ -4438,4 +4751,4 @@ button.tl-swatch:not(:disabled):hover,
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:53efae7efaded6f098cdc8c5613519f49ad673fc86d33dade4fc98b9cd5c8325 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:688ffcaa11d871a9ac153530639158235c422e4bd1c5fb914444af2bf51aa11d — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -23,6 +23,7 @@
 			<field attribute="description"/>
 			<field attribute="milestone"/>
 			<field attribute="assignee"/>
+			<field attribute="watchers"/>
 		</form>
 	</panel>
 </view>

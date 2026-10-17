@@ -1,4 +1,4 @@
-import { React, useCloseOnOutsidePress, useFocusTrap, createPortal, usePopover, useMergeRefs, ThemeIcon, anchoredOverlayProps } from 'tl-react-bridge';
+import { React, usePart, useCloseOnOutsidePress, useFocusTrap, createPortal, usePopover, useMergeRefs, ThemeIcon, anchoredOverlayProps, tooltipProps } from 'tl-react-bridge';
 import type { PopoverAnchor, PopoverOptions } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef } = React;
@@ -93,20 +93,28 @@ export function menuItemClassName(current?: boolean, extra?: string, danger?: bo
     .filter(Boolean).join(' ');
 }
 
-export const MenuItem: React.FC<{ id?: string; icon?: string; label: string; disabled?: boolean; current?: boolean; danger?: boolean; className?: string; onSelect: () => void }> =
-  ({ id, icon, label, disabled, current, danger, className, onSelect }) => (
+/**
+ * An entry of a menu. `current` marks the entry in force (`true`, reported as aria-current="true") or the page the
+ * user is on (`'page'`, the flyout of a sidebar group). `trailing` stands after the label (the badge of a sidebar
+ * page); `tooltip` explains a disabled entry.
+ */
+export const MenuItem: React.FC<{ id?: string; icon?: string; label: string; disabled?: boolean; current?: boolean | 'page';
+  danger?: boolean; className?: string; trailing?: React.ReactNode; tooltip?: string; onSelect: () => void }> =
+  ({ id, icon, label, disabled, current, danger, className, trailing, tooltip, onSelect }) => (
     <button
       type="button"
       id={id}
-      className={menuItemClassName(current, className, danger)}
+      className={menuItemClassName(!!current, className, danger)}
       role="menuitem"
-      aria-current={current ? 'true' : undefined}
+      aria-current={current === 'page' ? 'page' : current ? 'true' : undefined}
       disabled={disabled}
       tabIndex={-1}
       onClick={onSelect}
+      {...tooltipProps(tooltip)}
     >
       {icon && <ThemeIcon encoded={icon} className="tl-menu__icon tl-icon-sm" />}
       <span className="tl-menu__label">{label}</span>
+      {trailing}
     </button>
   );
 
@@ -114,4 +122,19 @@ export const MenuHeader: React.FC<{ label: string }> = ({ label }) => (
   <div className="tl-menu__header tl-type-label" role="presentation">{label}</div>
 );
 
-export const MenuSeparator: React.FC = () => <hr className="tl-divider" />;
+/**
+ * The class of the element around the divider between the sections of a menu, which gives it the
+ * space around it.
+ */
+const SEPARATOR_CLASS = 'tl-menu__separator';
+
+/** The line between two sections of a menu, drawn by the part `Divider`. */
+export const MenuSeparator: React.FC = () => {
+  const Divider = usePart('Divider');
+  // No role of its own: the divider inside is the separator of the menu.
+  return (
+    <div className={SEPARATOR_CLASS} role="none">
+      <Divider />
+    </div>
+  );
+};

@@ -7,7 +7,19 @@
 //
 // Use:   import { React, useTLState, useTLCommand } from 'tl-react-bridge';
 //        React.useState(...)   React.useRef(...)   React.useCallback(...)
-import { register } from 'tl-react-bridge';
+import { register, registerPart } from 'tl-react-bridge';
+
+import ButtonPart from './controls/button/ButtonPart';
+import MenuTriggerPart from './controls/button/MenuTriggerPart';
+import DisclosureTogglePart from './controls/button/DisclosureTogglePart';
+import CheckboxPart from './controls/form/CheckboxPart';
+import TextInputPart from './controls/form/TextInputPart';
+import FieldValuePart from './controls/form/FieldValuePart';
+import ChipPart from './controls/chip/ChipPart';
+import BadgePart from './controls/chip/BadgePart';
+import DividerPart from './controls/divider/DividerPart';
+import ProgressBarPart from './controls/progress/ProgressBarPart';
+import SpinnerPart from './controls/progress/SpinnerPart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -90,6 +102,20 @@ import TLSlot from './controls/TLSlot';
 import TLSlotContent from './controls/TLSlotContent';
 import TLDrawerToggle from './controls/TLDrawerToggle';
 
+
+// The TopLogic drawing of the parts the controls draw themselves with; a component library
+// replaces them with replacePart.
+registerPart('Button', ButtonPart);
+registerPart('MenuTrigger', MenuTriggerPart);
+registerPart('DisclosureToggle', DisclosureTogglePart);
+registerPart('Checkbox', CheckboxPart);
+registerPart('TextInput', TextInputPart);
+registerPart('FieldValue', FieldValuePart);
+registerPart('Chip', ChipPart);
+registerPart('Badge', BadgePart);
+registerPart('Divider', DividerPart);
+registerPart('ProgressBar', ProgressBarPart);
+registerPart('Spinner', SpinnerPart);
 
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);

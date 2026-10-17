@@ -34,6 +34,12 @@ public class TestPurgeFunctions extends AbstractSearchExpressionTest {
 	 */
 	private static final String TYPE = "TestSearchExpression:A";
 
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		becomeRoot();
+	}
+
 	public void testAnalyzeDeletedObject() throws Exception {
 		TLObject obsolete = newObject("obsolete");
 		ObjectKey key = obsolete.tHandle().tId();

@@ -7,6 +7,7 @@ $object.add(`$attr`, $index, $value)
 <p>Hängt einen Wert <code class="hljs inlineCode">value</code> an ein mengenwertiges Attribut <code class="hljs inlineCode">attr</code> des Objekts <code class="hljs inlineCode">object</code> an.</p>
 <p>Kann auch mit der Funktion <a class="tlObject" data-custom="true" href="?page=set&amp;uuid=f4e10c43-7a04-45ba-b5b6-f20c8bc3b70e">set()</a> durchgeführt werden, indem die alte Menge der Attributs mit dem neuen Wert konkatiniert wird:</p>
 <pre><code>$object.set(`$attr`, concat(object.get(`$attr`).subList(0, $index), $value, object.get(`$attr`).subList($index)))</code></pre>
+<p>Elemente des Attributs, die der Benutzer nicht entdecken darf, bleiben erhalten. Der <code class="hljs inlineCode">index</code> bezieht sich auf die Liste, die der Benutzer sieht (ohne die Elemente, die er nicht entdecken darf). Die hinzugefügten Werte müssen Objekte sein, die der Benutzer entdecken darf.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>

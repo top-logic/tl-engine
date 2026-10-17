@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-all</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<artifactId>test-tl-maven-plugin</artifactId>
+
+	<name>${project.artifactId}</name>
+	<description>
+		Integration tests of the TopLogic Maven plugin: builds of test applications in a separate Maven process
+		against the engine of the running build. The module depends on the plugin and the engine modules the test
+		applications use, so that the reactor builds and installs them before the tests run.
+	</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.javadoc.skip>true</maven.javadoc.skip>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.13.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-maven-plugin</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- The engine of the test applications: only orders the reactor, not needed on the class path. -->
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-element</artifactId>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>*</groupId>
+					<artifactId>*</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<systemPropertyVariables>
+						<!-- Build environment of TestGenerateJavaIntegration. -->
+						<tl.it.mavenHome>${maven.home}</tl.it.mavenHome>
+						<tl.it.remoteRepository>${settings.localRepository}</tl.it.remoteRepository>
+						<tl.it.version>${project.version}</tl.it.version>
+						<tl.it.projects>${project.basedir}/src/test/projects</tl.it.projects>
+						<tl.it.workDir>${project.build.directory}/it</tl.it.workDir>
+					</systemPropertyVariables>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

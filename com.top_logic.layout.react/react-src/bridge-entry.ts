@@ -21,6 +21,7 @@ export {
   useKeyboardBinding,
   useStandaloneKeyboardScope,
   useFocusTrap,
+  EscapeToClose,
   VALUE_DEBOUNCE_MS,
 } from './bridge/tl-react-bridge';
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
@@ -34,6 +35,36 @@ export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
+export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
+export type {
+  PartProps,
+  PartName,
+  PartComponent,
+  PartAttributes,
+  PartRef,
+  ButtonPartProps,
+  ButtonDisplay,
+  MenuTriggerPartProps,
+  DisclosureTogglePartProps,
+  DisclosureDirection,
+  CheckboxPartProps,
+  CheckboxDisplay,
+  FieldValidation,
+  TextInputPartProps,
+  TextInputType,
+  TextInputMode,
+  FieldValuePartProps,
+  ChipPartProps,
+  ColorRole,
+  BadgePartProps,
+  DividerPartProps,
+  DividerOrientation,
+  ProgressBarPartProps,
+  SpinnerPartProps,
+  SpinnerSize,
+} from './bridge/parts';
+export { OptionValues } from './bridge/option-values';
+export type { OptionDescriptor } from './bridge/option-values';
 export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
@@ -44,6 +75,8 @@ export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-pre
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
 export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
+export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
+export type { DisplayClass } from './bridge/display-class';
 // A popover surface needs both its own ref and the hook's setFloating on one element; controls
 // must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
 export { useMergeRefs } from '@floating-ui/react';
@@ -100,7 +133,7 @@ export { scrollToAnchor } from './bridge/scroll';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
-export { tokenPx, useTokenPx } from './bridge/token-px';
+export { tokenPx, tokenMs, useTokenPx } from './bridge/token-px';
 export { isEditorTarget } from './bridge/editor-target';
 export { filterOptions } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';
@@ -113,6 +146,7 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
+export { useChildStates } from './bridge/child-states';
 
 // Re-export React so that control bundles use the SAME React instance.
 //

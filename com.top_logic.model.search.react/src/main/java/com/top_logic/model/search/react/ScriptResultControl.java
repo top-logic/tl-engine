@@ -243,7 +243,8 @@ public class ScriptResultControl extends ReactControl {
 	 * A column showing an object attribute with its type-derived display (see
 	 * {@link ColumnProviderService#displayContent}), sorted and text-filtered by the value's
 	 * display label. The value is empty for elements that are not {@link TLObject}s or whose type
-	 * lacks the attribute.
+	 * lacks the attribute. An attribute the user may not read on an element is shown by the
+	 * placeholder of {@link ColumnProviderService#UNREADABLE} and sorted after every value.
 	 */
 	private static Column<ScriptResultRow, Object> attributeColumn(TLStructuredTypePart part) {
 		String name = part.getName();
@@ -251,7 +252,7 @@ public class ScriptResultControl extends ReactControl {
 			.<ScriptResultRow, Object> builder(name, row -> ColumnProviderService.attributeValue(row.value(), name))
 			.label(TLModelNamingConvention.resourceKey(part))
 			.renderer(value -> ColumnProviderService.displayContent(ColumnType.of(part), value))
-			.sort(() -> Comparator.comparing(ColumnProviderService::label))
+			.sort(ColumnProviderService::labelOrder)
 			.filter(new TextColumnFilter<>(ColumnProviderService::label))
 			.build();
 	}

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.top-logic.it</groupId>
+  <artifactId>generate-java-it</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <description>
+    An application that was never installed generates the Java binding of its model in the
+    generate-sources phase and compiles it.
+  </description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>21</maven.compiler.release>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+      <version>@project.version@</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--
+        The versions of the build plugins are fixed: without, the Maven installation running the
+        build chooses them, and Maven 3.8 takes maven-compiler-plugin 3.1, which does not know the
+        release option and compiles with source and target 5.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.5.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.16.0</version>
+      </plugin>
+      <plugin>
+        <groupId>com.top-logic</groupId>
+        <artifactId>tl-maven-plugin</artifactId>
+        <version>@project.version@</version>
+        <executions>
+          <execution>
+            <id>generate-binding</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate-java</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <modules>it.app</modules>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

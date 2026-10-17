@@ -3,10 +3,16 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CMD_VALUE_CHANGED, fieldLabel } from 'tl-react-bridge';
+import { CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import MuiSegmentedChoiceAdapter from './MuiSegmentedChoiceAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
+import MuiChipAdapter from './MuiChipAdapter';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+
+// The options with a color role and the chosen values of a field that is not editable.
+replacePart('Chip', MuiChipAdapter);
+replacePart('FieldValue', MuiFieldValueAdapter);
 
 /** Argument of {@link CMD_VALUE_CHANGED}: the values of the chosen options. */
 const ARG_VALUE = 'value';

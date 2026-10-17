@@ -1,7 +1,6 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, tooltipProps, createPortal, ThemeIcon, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, tokenPx } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, createPortal, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, usePart, tokenPx, useChildStates } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
-import { useRovingMenu } from './menu/Menu';
+import { MenuSeparator, useRovingMenu } from './menu/Menu';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;
 
@@ -10,11 +9,14 @@ const I18N_KEYS = {
   'js.toolbar.overflow': 'More actions',
 };
 
+/**
+ * The class of the divider between two groups. The toolbar reads the width of a divider by it,
+ * whichever implementation of the part draws it.
+ */
+const SEPARATOR_CLASS = 'tl-toolbar__separator';
+
 /** Icon of the overflow menu trigger. */
 const OVERFLOW_ICON = 'css:bi bi-three-dots';
-
-/** Icon after the label of a labeled menu trigger. */
-const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
 
 /** The groups of a toolbar without any: one array, so that it is the same in every render. */
 const NO_GROUPS: CliqueGroup[] = [];
@@ -118,8 +120,8 @@ const InlineGroup: React.FC<{ units: PlacedUnit[] }> = ({ units }) => {
 };
 
 /**
- * Renders a clique group as a dropdown menu: a tl-button opening a tl-menu, whose entries are the
- * group's buttons, presented as menu items (ButtonDefaults `menu-item`).
+ * Renders a clique group as a dropdown menu: the part `MenuTrigger` opening a tl-menu, whose
+ * entries are the group's buttons, presented as menu items (ButtonDefaults `menu-item`).
  */
 const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitIndex?: number }> =
     ({ group, align = 'end', unitIndex }) => {
@@ -128,6 +130,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
   const menuRef = useRef<HTMLDivElement | null>(null);
   // The trigger looks like the buttons beside it.
   const inheritedAppearance = useButtonDefaults().appearance ?? 'ghost';
+  const MenuTrigger = usePart('MenuTrigger');
 
   const handleToggle = useCallback(() => {
     setOpen(prev => !prev);
@@ -176,32 +179,21 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
   // An icon (e.g. a burger "☰") renders as a compact icon-only trigger; the label is kept
   // as the accessible name instead of visible text (which would not be internationalized).
   const label = group.label ?? group.name;
-  const iconOnly = !!group.icon;
 
   return (
     <div className="tl-toolbar__group" data-tlunit={unitIndex}>
-      <button
+      <MenuTrigger
         ref={triggerRef}
-        type="button"
-        className={buttonClassName({ appearance: inheritedAppearance, icon: iconOnly })}
+        appearance={inheritedAppearance}
+        expanded={open}
+        label={label}
+        icon={group.icon}
         // Don't steal focus from the content (e.g. a table) on mouse-open: the menu acts on the
         // current selection, so focus should return there after a command's dialog closes. The
         // menu's own focus trap still moves focus into the dropdown while it is open.
         onMouseDown={(e) => e.preventDefault()}
         onClick={handleToggle}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        aria-label={iconOnly ? label : undefined}
-        {...tooltipProps(iconOnly ? label : undefined)}
-      >
-        {iconOnly
-          ? <ThemeIcon encoded={group.icon!} className="tl-button__icon tl-icon-md" />
-          : <>
-              <span className="tl-button__label">{label}</span>
-              <ThemeIcon encoded={CHEVRON_ICON} className="tl-button__icon tl-icon-sm" />
-            </>
-        }
-      </button>
+      />
       {/* The dropdown stays mounted (only hidden when closed) so its item controls keep
           their live SSE subscription. If items were mounted lazily on open, they would read
           the toolbar's build-time snapshot and miss any executability change (e.g. a row
@@ -224,7 +216,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
             {visibleItems.map((item, i) => <TLChild key={i} control={item} />)}
             {sections.map((items, si) => (
               <React.Fragment key={`sub-${si}`}>
-                {(visibleItems.length > 0 || si > 0) && <hr className="tl-divider" />}
+                {(visibleItems.length > 0 || si > 0) && <MenuSeparator />}
                 {items.map((item, i) => <TLChild key={i} control={item} />)}
               </React.Fragment>
             ))}
@@ -249,6 +241,9 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
  * that still do not fit - single items of an inline group, whole menu groups - into an overflow
  * menu at the collapsing end.
  *
+ * A menu group whose entries are all hidden offers nothing: it shows no trigger and takes no place,
+ * until one of its entries is shown again.
+ *
  * The buttons drop their labels themselves: the toolbar tells them through ButtonDefaults
  * (`iconOnly`). The widths of both presentations are therefore read in two passes, one render
  * each: first with labels, then compact. The toolbar measures again when the groups change, or when
@@ -262,6 +257,7 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const overflowEnd = (state.overflow as OverflowEnd) ?? 'none';
   const collapsible = overflowEnd !== 'none';
   const i18n = useI18N(I18N_KEYS);
+  const Divider = usePart('Divider');
 
   // The buttons of a toolbar are ghost unless the container the toolbar sits in has chosen
   // otherwise: a window footer or a panel button bar says secondary, an app bar says ghost.
@@ -282,9 +278,29 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const unitObserverRef = useRef<ResizeObserver | null>(null);
   const observedUnitsRef = useRef<Set<Element>>(new Set());
 
-  // Groups with at least one item, and the unit sequence they decompose into.
+  // The live states of the entries of the menu groups: a menu whose entries are all hidden offers
+  // nothing, so it shows no trigger. The entries render inside the closed dropdown only, so the
+  // toolbar reads their states itself.
+  const menuEntries = useMemo(
+    () => groups.filter(g => g.display === 'menu').flatMap(g => g.items.filter(item => item != null)),
+    [groups]);
+  const menuEntryStates = useChildStates(menuEntries);
+  // Keyed by which entries are hidden, so that another change of an entry (e.g. its enablement)
+  // leaves the groups shown - and with them the measurement - as they are.
+  const hiddenKey = menuEntryStates.map(entryState => (entryState.hidden === true ? '1' : '0')).join('');
+  const hiddenEntries = useMemo(() => {
+    const hidden = new Set<unknown>();
+    menuEntries.forEach((entry, i) => {
+      if (hiddenKey[i] === '1') hidden.add(entry);
+    });
+    return hidden;
+  }, [menuEntries, hiddenKey]);
+
+  // Groups with at least one item offered, and the unit sequence they decompose into. An inline
+  // group keeps its hidden buttons, which take no width (see widthOf).
   const { visibleGroups, units } = useMemo(() => {
-    const shown = groups.filter(g => g.items.some(item => item != null));
+    const shown = groups.filter(g => g.items.some(item => item != null
+      && !(g.display === 'menu' && hiddenEntries.has(item))));
     const sequence: ToolbarUnit[] = [];
     shown.forEach((group, groupIndex) => {
       if (group.display === 'menu') {
@@ -295,12 +311,12 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
       }
     });
     return { visibleGroups: shown, units: sequence };
-  }, [groups]);
+  }, [groups, hiddenEntries]);
 
   // The widths of the current groups are not known yet: this render lays everything out inline,
   // with labels (`full`) or compact, which is what the measuring effect below reads. The first
-  // render after a change of the groups is already the `full` pass.
-  const phase: MeasurePhase = collapsible && measuredRef.current !== groups
+  // render after a change of the groups shown is already the `full` pass.
+  const phase: MeasurePhase = collapsible && measuredRef.current !== visibleGroups
     ? (measurePhase ?? 'full')
     : null;
   const measuring = phase !== null;
@@ -353,19 +369,19 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
     }
 
     if (phase === 'full') {
-      fullRef.current = { groups, widths: readUnits(root, units.length) };
+      fullRef.current = { groups: visibleGroups, widths: readUnits(root, units.length) };
       setMeasurePhase('compact');
       return;
     }
     if (phase === 'compact') {
       const full = fullRef.current;
-      if (!full || full.groups !== groups) {
+      if (!full || full.groups !== visibleGroups) {
         // The groups changed between the passes: the widths read do not belong together.
         setMeasurePhase('full');
         return;
       }
       metricsRef.current = metricsOf(root, full.widths, readUnits(root, units.length));
-      measuredRef.current = groups;
+      measuredRef.current = visibleGroups;
       fullRef.current = null;
       setMeasurePhase(null);
     }
@@ -543,7 +559,7 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
         {overflowEnd === 'leading' && trigger}
         {shownGroups.map((shown, i) => (
           <React.Fragment key={shown.group.name}>
-            {i > 0 && <hr className="tl-divider tl-divider--vertical" aria-orientation="vertical" />}
+            {i > 0 && <Divider orientation="vertical" className={SEPARATOR_CLASS} />}
             {shown.group.display === 'menu'
               ? <MenuGroup group={shown.group} unitIndex={shown.units[0].index} />
               : <InlineGroup units={shown.units} />
@@ -580,7 +596,7 @@ function metricsOf(root: HTMLElement, full: number[], compact: number[]): Metric
   const gap = parseFloat(rootStyle.columnGap) || 0;
   const groupElement = root.querySelector('.tl-toolbar__group');
   const itemGap = groupElement ? (parseFloat(getComputedStyle(groupElement).columnGap) || gap) : gap;
-  const separatorElement = root.querySelector('.tl-divider--vertical');
+  const separatorElement = root.querySelector('.' + SEPARATOR_CLASS);
   const separator = separatorElement ? separatorElement.getBoundingClientRect().width : 1;
   // The trigger is rendered only once something overflows; it is an icon button, whose width is the
   // size-control token - read, not guessed.

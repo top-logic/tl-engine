@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
 import type { ChildControlJson } from '../state/control-state';
 import { createChildContext, unmount, TLControlContext } from './tl-react-bridge';
+import type { TLControlContextValue } from './tl-react-bridge';
 
 /**
  * Descriptor for a server-defined child control, as sent in the parent's state: a
@@ -15,6 +16,23 @@ export type ChildDescriptor = Omit<Partial<ChildControlJson>, 'state'>
  * The serialized descriptor state last applied to a child's store, by store.
  */
 const appliedDescriptors = new WeakMap<object, string>();
+
+/**
+ * Acquires the context of a child control for a holder other than {@link TLChild}, e.g. a container
+ * reading the live state of a child it does not render (see useChildStates). Released by
+ * {@code unmount(controlId)}.
+ *
+ * <p>The descriptor counts as applied to the child's store: the state it carries is the one the store
+ * starts with, or older than the patches the store has received since. A TLChild rendering the child
+ * later therefore does not turn the child back to the state of this descriptor.</p>
+ */
+export function acquireChildContext(descriptor: ChildDescriptor): TLControlContextValue {
+  const context = createChildContext(descriptor.controlId, descriptor.state);
+  if (!appliedDescriptors.has(context.store)) {
+    appliedDescriptors.set(context.store, JSON.stringify(descriptor.state));
+  }
+  return context;
+}
 
 /**
  * Generic component that renders a server-described child control.

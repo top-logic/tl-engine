@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, tooltipProps, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -7,9 +7,6 @@ const I18N_KEYS = {
   'js.formGroup.collapse': 'Collapse',
   'js.formGroup.expand': 'Expand',
 };
-
-/** Points right; the package's toggle rotates it when `aria-expanded` is true. */
-const CHEVRON = 'css:fa-solid fa-chevron-right';
 
 /** The class of the group's border: a subtle one is a separator line, an outlined one a frame. */
 const BORDER_CLASS: Record<string, string> = {
@@ -35,6 +32,7 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const DisclosureToggle = usePart('DisclosureToggle');
 
   const headerControl = (state.headerControl as unknown) ?? null;
   const headerActions = (state.headerActions as unknown[]) ?? [];
@@ -67,14 +65,8 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
       {hasHeader && (
         <div className="tl-form-group__header">
           {collapsible && (
-            <button type="button" className="tl-toggle"
-              onClick={handleToggle}
-              aria-expanded={!collapsed}
-              aria-controls={bodyId}
-              aria-label={toggleLabel}
-              {...tooltipProps(toggleLabel)}>
-              <ThemeIcon encoded={CHEVRON} className="tl-icon-sm" />
-            </button>
+            <DisclosureToggle expanded={!collapsed} label={toggleLabel} onClick={handleToggle}
+              aria-controls={bodyId} />
           )}
           {headerControl && (
             <span className="tl-form-group__title tl-type-heading-sm">

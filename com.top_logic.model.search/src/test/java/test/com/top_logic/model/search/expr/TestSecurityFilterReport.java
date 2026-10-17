@@ -27,13 +27,13 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SecurityFilterReport;
+import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -199,7 +199,11 @@ public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 	public void testExecutorFillsReport() throws Exception {
 		becomeUser(_user);
 
-		QueryExecutor query = QueryExecutor.compile(kb(), model(), search(ALL_EMPLOYEES));
+		// The source is unsecured, so that the executor's final filter removes (and records) the
+		// undiscoverable instances.
+		SearchExpression expr = search(ALL_EMPLOYEES);
+		UpdateSecurityVisitor.disableSecurity(expr);
+		QueryExecutor query = QueryExecutor.compile(kb(), model(), expr);
 		SecurityFilterReport report = new SecurityFilterReport();
 		EvalContext context = query.context();
 		context.setSecurityReport(report);
@@ -270,7 +274,6 @@ public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 		return suite(TestSecurityFilterReport.class,
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE);
 	}

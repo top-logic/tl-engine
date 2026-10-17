@@ -153,6 +153,7 @@
 		<module>../ext.org.requirejs</module>
 
 		<!-- Test modules -->
+		<module>../test.com.top_logic.build.maven</module>
 		<module>../test.com.top_logic.importer</module>
 		<module>../test.com.top_logic.kafka</module>
 		<module>../test.com.top_logic.migrate.tl</module>

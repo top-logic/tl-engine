@@ -3,16 +3,15 @@ import {
   useTLState,
   useTLTypingField,
   rootClassName,
-  tooltipProps,
   useFieldLabelProps,
   fieldInputId,
+  usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
-import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
-import { FieldValue } from './form/FieldValue';
+import { showsValueOnly, validationOf } from './form/fieldState';
 
 /**
- * A number input field rendered via React.
+ * A number input field rendered via React, drawn by the part `TextInput`.
  *
  * The value is text: the server sends the number formatted in the user's locale and with the digits
  * the field asks for, and receives back the text exactly as typed. All number handling - the decimal
@@ -39,38 +38,43 @@ import { FieldValue } from './form/FieldValue';
  * sent, defaulting to VALUE_DEBOUNCE_MS; state.sendValueOnBlur overrides it, and this field sets
  * it, so the span matters here only where the server turns the blur behaviour off.
  *
- * A read-only field shows the text as a tl-field-value; a disabled field renders the input as an
- * inactive one (native `disabled`, see showsValueOnly).
+ * The state of the value is the validation of the box (see validationOf), a mandatory field a
+ * required box, and the message of an error the tooltip of the input. A read-only field shows the
+ * text, drawn by the part `FieldValue`; a disabled field renders the input as an inactive one (see
+ * showsValueOnly). A hidden field renders nothing.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<NumberInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const { text, setText, onBlur, onKeyDown } = useTLTypingField({ emptyValue: null });
+  const TextInput = usePart('TextInput');
+  const FieldValue = usePart('FieldValue');
 
-  if (showsValueOnly(state)) {
-    return <FieldValue id={controlId} className={rootClassName(state)} text={text} />;
+  if (state.hidden === true) {
+    return null;
   }
-
-  const hasError = state.hasError === true;
-  const errorMessage = state.errorMessage;
+  if (showsValueOnly(state)) {
+    return <FieldValue id={controlId} className={rootClassName(state) || undefined} text={text} />;
+  }
 
   return (
     <span id={controlId}>
-      <input
+      <TextInput
+        id={inputId}
+        {...labelProps}
         type="text"
         inputMode={state.inputMode ?? 'numeric'}
         value={text}
-        onChange={e => setText(e.target.value)}
-        onBlur={onBlur}
-        onKeyDown={onKeyDown}
         placeholder={state.placeholder}
         disabled={state.disabled === true}
-        className={rootClassName(state, 'tl-field tl-type-body')}
-        {...fieldStateAttrs(state)}
-        {...tooltipProps(hasError ? errorMessage : undefined)}
-        id={inputId}
-        {...labelProps}
+        required={state.mandatory === true}
+        validation={validationOf(state)}
+        tooltip={state.hasError === true ? state.errorMessage : undefined}
+        className={rootClassName(state) || undefined}
+        onChange={setText}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
       />
     </span>
   );

@@ -30,6 +30,7 @@ import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.field.FieldSpec;
@@ -234,6 +235,36 @@ public class TestCompactCells extends TestCase {
 		multiLine.setRows(ROWS);
 		part.setAnnotation(multiLine);
 		return part;
+	}
+
+	/**
+	 * A value the user may not read ({@link ColumnProviderService#UNREADABLE}) is displayed by the
+	 * plain text of the placeholder, whatever its type: no checkbox, no selection, no composition
+	 * preview - also as an element of several values.
+	 */
+	public void testAnUnreadableValueIsDisplayedByThePlaceholder() throws ConfigurationException {
+		Object unreadable = ColumnProviderService.UNREADABLE;
+		TLStructuredTypePart text = multiLineText();
+		TLPrimitive flagType = TLModelUtil.addDatatype(_rowType.getModule(), _rowType.getModule(), "Flag",
+			Kind.BOOLEAN, directMapping(Boolean.class));
+		TLStructuredTypePart flag = TLModelUtil.addProperty(_rowType, "flag", flagType);
+
+		assertPlaceholder(_controls.createDisplayControl(_context, ColumnType.of(text), unreadable));
+		assertPlaceholder(_controls.createDisplayControl(_context, text, unreadable));
+		assertPlaceholder(_controls.createDisplayControl(_context, ColumnType.of(flag), unreadable));
+		assertPlaceholder(_controls.createDisplayControl(_context, flag, unreadable));
+		assertPlaceholder(_controls.createDisplayControl(_context, ColumnType.of(composition()), unreadable));
+		assertPlaceholder(_controls.createDisplayControl(_context, ColumnType.of(_textType, false), unreadable));
+
+		ReactControl several =
+			_controls.createDisplayControl(_context, ColumnType.of(_textType, true), List.of("a", unreadable));
+		assertEquals(ReactTextControl.class, several.getClass());
+		assertEquals("a, *****", ((ReactTextControl) several).getText());
+	}
+
+	private static void assertPlaceholder(ReactControl control) {
+		assertEquals(ReactTextControl.class, control.getClass());
+		assertEquals("*****", ((ReactTextControl) control).getText());
 	}
 
 	/** A composition of the row type holding several parts. */

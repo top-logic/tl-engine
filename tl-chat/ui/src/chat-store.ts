@@ -30,7 +30,7 @@ import {
   type ChatAddress,
   type SessionDetail,
 } from './api'
-import { openChatStream, type ChatStream, type StreamFrame } from './chat-stream'
+import { expectFrames, openChatStream, type ChatStream, type StreamFrame } from './chat-stream'
 import type { ComposerApi, PaneOpenOptions } from './extensions'
 import type { ReferenceToken } from './reference'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
@@ -2263,6 +2263,7 @@ export class ChatStore {
             effort: this.state.effort || undefined,
             facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
           })
+          expectFrames()
         } catch (err) {
           this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
           this.patch({ busy: false })
@@ -2355,6 +2356,7 @@ export class ChatStore {
             effort: this.state.effort || undefined,
             facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
           })
+          expectFrames()
           if (result.status === 'busy') {
             this.showNotice(labels.busyHint, '', { tone: 'info' })
             return

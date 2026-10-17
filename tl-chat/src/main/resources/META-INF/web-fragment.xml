@@ -26,4 +26,16 @@
 		<servlet-name>ChatServlet</servlet-name>
 		<url-pattern>/chat/*</url-pattern>
 	</servlet-mapping>
+
+	<!-- Temporary workaround (#940): the window's events by polling, where a proxy holds the event stream back. -->
+	<servlet>
+		<servlet-name>WindowPollServlet</servlet-name>
+		<servlet-class>com.top_logic.ai.chat.stream.WindowPollServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>WindowPollServlet</servlet-name>
+		<url-pattern>/window-poll</url-pattern>
+	</servlet-mapping>
 </web-fragment>

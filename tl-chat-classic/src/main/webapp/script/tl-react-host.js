@@ -274,7 +274,12 @@
 	 */
 	function loadScripts(nodes) {
 		var modules = [];
+		var classic = [];
 		nodes.forEach(function(node) {
+			var type = node.getAttribute('type');
+			if (node.getAttribute('src') && (!type || type === 'text/javascript')) {
+				classic.push(new URL(node.getAttribute('src'), document.baseURI).href);
+			}
 			if (node.getAttribute('type') === 'importmap') {
 				var map = document.createElement('script');
 				map.type = 'importmap';
@@ -287,9 +292,33 @@
 		var graph = modules.map(function(src) {
 			return 'import ' + JSON.stringify(src) + ';';
 		}).join('\n');
-		var url = URL.createObjectURL(new Blob([graph], { type: 'text/javascript' }));
-		return import(url).finally(function() {
-			URL.revokeObjectURL(url);
+		// Classic scripts first, as on a React page, where they come before the import map: one of
+		// them (tl-window-stream.js, #940) has to be in place before the bridge opens its stream.
+		return classic.reduce(function(previous, src) {
+			return previous.then(function() {
+				return loadClassicScript(src);
+			});
+		}, Promise.resolve()).then(function() {
+			var url = URL.createObjectURL(new Blob([graph], { type: 'text/javascript' }));
+			return import(url).finally(function() {
+				URL.revokeObjectURL(url);
+			});
+		});
+	}
+
+	/** Loads a classic script once per page; resolves when it has run, or failed. */
+	function loadClassicScript(src) {
+		if (document.querySelector('script[data-tl-react-host="' + src + '"]')) {
+			return Promise.resolve();
+		}
+		return new Promise(function(resolve) {
+			var script = document.createElement('script');
+			script.src = src;
+			script.setAttribute('data-tl-react-host', src);
+			script.onload = script.onerror = function() {
+				resolve();
+			};
+			document.head.appendChild(script);
 		});
 	}
 

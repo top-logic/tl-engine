@@ -28,10 +28,12 @@ const POP_OUT_ICON = 'css:fa-solid fa-arrow-up-right-from-square';
 /**
  * Whether a pointer gesture on the head of a panel is the head's: not on a button or another interactive element of
  * the head, and not anywhere in the toolbar's slot - its empty space included (spec §3: clicks on the toolbar stay
- * its own).
+ * its own). React events bubble through portals: a gesture whose target lies outside the head's DOM - a menu of the
+ * toolbar, opened on the page - is never the head's.
  */
 function ownedByHead(event: React.MouseEvent<HTMLElement>): boolean {
-  return !isInteractiveWithin(event.target, event.currentTarget)
+  return event.target instanceof Node && event.currentTarget.contains(event.target)
+    && !isInteractiveWithin(event.target, event.currentTarget)
     && !(event.target instanceof Element && event.target.closest('.tl-titlebar__actions'));
 }
 

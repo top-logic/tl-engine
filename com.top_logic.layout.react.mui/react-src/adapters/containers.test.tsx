@@ -5,7 +5,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { React, SurfaceProvider, panelSurface, replacePart } from 'tl-react-bridge';
+import { createPortal } from 'react-dom';
+import { React, SurfaceProvider, panelSurface, replacePart, register } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
 import TLCard from '../../../com.top_logic.layout.react/react-src/controls/TLCard';
@@ -29,6 +30,10 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
+
+// A control that draws into the page, not into its place: the overflow menu of a toolbar does so.
+register('ContainersPortaledChild', () => createPortal(<button type="button">Menueeintrag</button>, document.body));
+const portaled = { controlId: 'p', module: 'ContainersPortaledChild', state: {} } as ReturnType<typeof childControl>;
 
 const PANEL = { title: 'Kunden', showMinimize: true, showMaximize: true, child: childControl('x', 'Inhalt') };
 
@@ -91,6 +96,31 @@ describe('a panel handles like a window', () => {
     const sentOpen = mountAdapter(TLPanel, { ...withToolbar, expansionState: 'NORMALIZED' });
     await settle();
     await userEvent.dblClick(screen.getByText('Werkzeuge'));
+    await settle();
+    expect(sentOpen).not.toHaveBeenCalledWith('toggleMaximize', expect.anything());
+  });
+
+  it('opens on a click on its restore button once, not twice', async () => {
+    const sent = mountAdapter(TLPanel, { ...PANEL, expansionState: 'MINIMIZED' });
+    await settle();
+    await userEvent.click(screen.getByRole('button', { name: 'js.panel.restore' }));
+    await settle();
+    expect(sent.mock.calls.filter(call => call[0] === 'toggleMinimize')).toHaveLength(1);
+  });
+
+  // A portaled element lies outside the head in the DOM but inside it in React's event tree.
+  it('is not opened or maximized by a gesture in something portaled out of its head', async () => {
+    const withPortal = { ...PANEL, toolbar: portaled };
+    const sent = mountAdapter(TLPanel, { ...withPortal, expansionState: 'MINIMIZED' });
+    await settle();
+    await userEvent.click(screen.getByText('Menueeintrag'));
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('toggleMinimize', expect.anything());
+    cleanup();
+
+    const sentOpen = mountAdapter(TLPanel, { ...withPortal, expansionState: 'NORMALIZED' });
+    await settle();
+    await userEvent.dblClick(screen.getByText('Menueeintrag'));
     await settle();
     expect(sentOpen).not.toHaveBeenCalledWith('toggleMaximize', expect.anything());
   });

@@ -1100,6 +1100,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.snackbar.dismiss")
 	public static ResKey JS_SNACKBAR_DISMISS;
 
+	// -- Wizard client-side i18n keys --
+
+	/**
+	 * @en Steps
+	 */
+	@CustomKey("js.wizard.steps")
+	public static ResKey JS_WIZARD_STEPS;
+
 	// -- Window client-side i18n keys --
 
 	/**

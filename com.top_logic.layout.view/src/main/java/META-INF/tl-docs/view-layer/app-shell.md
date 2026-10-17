@@ -179,13 +179,13 @@ Leaving works the other way round: `<logout-command>` swaps the session back and
 
 ## Transitions: the state marks an application animates
 
-Three displays change what they show rather than only how it looks: a wizard moves to another step, a dialog opens and closes, a tile stack pushes and pops a frame. Each change is marked in the DOM with state marks (class names or `data-tl-state` words), and which animation runs — or whether one runs at all — is the application stylesheet's decision. The classes and states are the API. Each display animates by default on the motion tokens: the engine slides the wizard step and the tile frame (`tlReactControls.css`, `--tl-duration-slow`), and the design system package fades the dialog (`--tl-duration-base`). A theme changes or switches off the movement through the tokens (a zero duration ends the change at once); an application overrides it with rules on the same marks, and `animation: none` drops it.
+Three displays change what they show rather than only how it looks: a wizard moves to another step, a dialog opens and closes, a tile stack pushes and pops a frame. Each change is marked in the DOM with state marks (class names or `data-tl-state` words), and which animation runs — or whether one runs at all — is the application stylesheet's decision. The classes and states are the API. Each display animates by default on the motion tokens: the design system package slides the wizard step and the tile frame (`tl-slide-*`, `--tl-duration-slow`, offset `--tl-space-md`), and the design system package fades the dialog (`--tl-duration-base`). A theme changes or switches off the movement through the tokens (a zero duration ends the change at once); an application overrides it with rules on the same marks, and `animation: none` drops it.
 
 | Display | While it arrives | While it leaves | Direction on the root |
 | --- | --- | --- | --- |
-| `<wizard>` | `tlWizard__step--entering` | `tlWizard__step--exiting` | `tlWizard--forward` / `tlWizard--backward` |
+| `<wizard>` | `.tl-wizard__step[data-tl-state~="entering"]` | `.tl-wizard__step[data-tl-state~="exiting"]` | `.tl-wizard[data-tl-state~="backward"]` |
 | dialog | `.tl-dialog[data-tl-state~="entering"]` | `.tl-dialog[data-tl-state~="exiting"]` | — |
-| `<tile-stack>` | `tlTileStack__frame--entering` | `tlTileStack__frame--exiting` | `tlTileStack--forward` / `tlTileStack--backward` |
+| `<tile-stack>` | `.tl-tile-stack__frame[data-tl-state~="entering"]` | `.tl-tile-stack__frame[data-tl-state~="exiting"]` | `.tl-tile-stack[data-tl-state~="backward"]` |
 
 The wizard takes its direction from the server (state key `direction`); the tile stack derives it from the position it displays, deeper into the stack being forward.
 
@@ -195,4 +195,4 @@ The wizard takes its direction from the server (state key `direction`); the tile
 
 **One hook does this for all three.** `useKeyedTransition` (`com.top_logic.layout.react/react-src/bridge/transition.ts`, exported from `tl-react-bridge`) takes the keys of what is displayed now, a way to resolve the element of a key, the container the copies are shown in, and how to mark: two class names, or `state: true` for the words `entering` and `exiting` in `data-tl-state`; it notices which keys appeared and which disappeared, marks the DOM before the browser paints, and takes the marks away again. It writes the marks (class names, or the words `entering`/`exiting` in `data-tl-state`) onto the DOM rather than handing them back for rendering, so the element marked may be rendered anywhere below the component that notices the change — a dialog's scrim belongs to the dialog, while its opening and closing is the dialog manager's news. A display that newly wants a transition uses this hook rather than a mechanism of its own.
 
-**Restyling a change.** An application redefines the rules of the marks in its own stylesheet: for the tile frame `.tlTileStack__frame--entering` and `--exiting` (with `.tlTileStack--backward` for the other direction), for the dialog `.tl-dialog[data-tl-state~="entering"]` and `~="exiting"`.
+**Restyling a change.** An application redefines the rules of the marks in its own stylesheet: for the tile frame `.tl-tile-stack__frame[data-tl-state~="entering"]` and `~="exiting"` (with `.tl-tile-stack[data-tl-state~="backward"]` for the other direction), for the dialog `.tl-dialog[data-tl-state~="entering"]` and `~="exiting"`.

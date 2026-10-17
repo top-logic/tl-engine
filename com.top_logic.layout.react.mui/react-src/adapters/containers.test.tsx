@@ -289,7 +289,8 @@ describe('the items of a selectable container', () => {
     expect(options[0].getAttribute('aria-selected')).toBe('false');
     for (const option of options) {
       expect(option.classList).toContain('tl-item');
-      expect(option.className).not.toMatch(/--selectable|--selected|tlItem/);
+      // The old class name is barred everywhere by the package's engine gate (engine-classes.test.mjs, wave 4c).
+      expect(option.className).not.toMatch(/--selectable|--selected/);
     }
   });
 

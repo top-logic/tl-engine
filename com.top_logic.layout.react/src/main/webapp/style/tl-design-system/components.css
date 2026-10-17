@@ -1228,14 +1228,27 @@
 }
 .tl-color-picker__mixer[hidden] { display: none; }
 
+/* Der Mischer gibt in kurzen Popups nach: seine Höhe liegt zwischen size-11 und size-12 (size-12, wenn Platz ist),
+   das Feld bleibt quadratisch, der Farbtonstreifen ist so hoch wie das Feld. Den freien Platz gibt das Reiterfeld
+   über die Stapelzeile weiter (picker.css). */
+.tl-color-picker__mixer {
+  align-self: stretch;
+  min-block-size: var(--tl-size-11);
+}
+
+.tl-color-picker__field,
+.tl-color-picker__hue {
+  block-size: 100%;
+  min-block-size: var(--tl-size-11);
+  max-block-size: var(--tl-size-12);
+}
+
 .tl-color-picker__field {
-  inline-size: var(--tl-size-12);
-  block-size: var(--tl-size-12);
+  aspect-ratio: 1;
 }
 
 .tl-color-picker__hue {
   inline-size: var(--tl-size-control-sm);
-  block-size: var(--tl-size-12);
 }
 
 /* Gemeinsam: der Rahmen der beiden Flächen. */
@@ -2538,10 +2551,24 @@ a.tl-field-value:hover {
 .tl-picker__tabs > .tl-tabs__panel {
   padding: var(--tl-space-2xs);
   scroll-padding: var(--tl-space-xs);
+  scrollbar-gutter: stable;
 }
 
 .tl-picker__actions {
   flex-shrink: 0;
+}
+
+/* Zeigt das Reiterfeld den Mischer, ist seine Stapelzeile der Teil, der mit dem Popup schrumpft; der Mischer darin
+   nimmt ihre Höhe (color-picker.css). Die Spalte daneben (Vorschau, Eingaben) schrumpft nicht mit: sie behält ihre
+   Höhe samt Rand von space-2xs unten und scrollt im Reiterfeld, sodass der Fokusring der letzten Eingabe im
+   overflow bleibt. */
+.tl-picker__tabs > .tl-tabs__panel > .tl-stack:has(> .tl-color-picker__mixer:not([hidden])) {
+  flex: 0 1 calc(var(--tl-size-12) + 2 * var(--tl-space-2xs));
+  min-block-size: 0;
+}
+.tl-picker__tabs > .tl-tabs__panel > .tl-stack:has(> .tl-color-picker__mixer:not([hidden])) > :not(.tl-color-picker__mixer) {
+  min-block-size: min-content;
+  padding-block-end: var(--tl-space-2xs);
 }
 
 /* --- pill/pill.css --- */
@@ -4775,4 +4802,4 @@ button.tl-swatch:not(:disabled):hover,
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:cfe20c34073d6c4323f705294aff29a3261ee515d645365b3f809d5077fdbae1 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:fe29d6037ee691cb57035865415f98b5dd64491c484303f181dd4f46c5ee19f8 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

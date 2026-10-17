@@ -33,6 +33,8 @@ export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusF
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
 export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
+export { useTabList } from './bridge/tab-list';
+export type { TabProps, PanelProps, TabListOptions } from './bridge/tab-list';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';

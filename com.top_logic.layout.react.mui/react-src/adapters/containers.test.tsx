@@ -7,6 +7,7 @@ import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { React, createPortal, useStandaloneKeyboardScope, SurfaceProvider, panelSurface, replacePart, register } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import TLColumns from '../../../com.top_logic.layout.react/react-src/controls/TLColumns';
 import TLStack from '../../../com.top_logic.layout.react/react-src/controls/TLStack';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
 import TLWizard from '../../../com.top_logic.layout.react/react-src/controls/TLWizard';
@@ -371,6 +372,17 @@ describe('the items of a selectable container', () => {
     expect(checks[0].getAttribute('aria-hidden')).toBe('true');
     expect(checks[0].tagName).not.toBe('BUTTON');
     expect(checks[0].textContent).toBe('');
+  });
+
+  it('mark a selected column of a selectable columns row the same way', async () => {
+    mountAdapter(TLColumns, { ...LIST, weights: [1, 1] });
+    await settle();
+    const options = screen.getAllByRole('option');
+    expect(options[0].classList).toContain('tl-columns__column');
+    expect(options[0].querySelectorAll('.tl-item__check')).toHaveLength(0);
+    const checks = options[1].querySelectorAll('.tl-item__check');
+    expect(checks).toHaveLength(1);
+    expect(checks[0].getAttribute('aria-hidden')).toBe('true');
   });
 
   it('select an item on a click', async () => {

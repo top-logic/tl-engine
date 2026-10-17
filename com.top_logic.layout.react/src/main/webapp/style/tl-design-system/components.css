@@ -2107,31 +2107,31 @@ a.tl-field-value:hover {
 
 /* Ausgewählt heißt Ring und Haken (Nachtrag 4c, S2): die Marke ist ein dekoratives Element der Hülle, nur bei
    aria-selected="true" — ein Pseudo ginge nicht, ::after trägt den Ring und ein ::before läge unter der Karte.
-   Den Haken zeichnen zwei Schenkel aus Rand, gedreht. Der Unterschied zum Fokus liegt in der Form, nicht nur in der
+   Der Unterschied zum Fokus liegt in der Form, nicht nur in der
    Farbe (WCAG 1.4.1). */
 .tl-item__check {
   position: absolute;
   top: var(--tl-space-xs);
   inset-inline-end: var(--tl-space-xs);
-  z-index: var(--tl-layer-raised);
   width: var(--tl-size-icon-md);
   height: var(--tl-size-icon-md);
   border-radius: var(--tl-radius-round);
   background: var(--tl-surface-brand);
   pointer-events: none;
 }
+/* Derselbe Haken wie der des Kästchens (choice.css, .tl-checkbox:checked::after): rechter und unterer Rand eines
+   gedrehten Rechtecks, Anteile des Kreises; inset und margin zentrieren das Rechteck. Kein z-index: die Marke folgt
+   dem Kind im DOM und liegt so über der Karte, ohne ein Panel (Ebene raised) zu überdecken. */
 .tl-item__check::after {
   content: "";
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--tl-space-sm);
-  height: var(--tl-space-xs);
-  margin-top: calc(-1 * var(--tl-space-2xs));
-  border-style: solid;
-  border-color: var(--tl-text-on-brand);
-  border-width: 0 0 var(--tl-border-width-md) var(--tl-border-width-md);
-  transform: translate(-50%, -50%) rotate(-45deg);
+  inset: 0;
+  margin: auto;
+  width: calc(var(--tl-size-icon-md) * 0.3);
+  height: calc(var(--tl-size-icon-md) * 0.55);
+  border: solid var(--tl-text-on-brand);
+  border-width: 0 var(--tl-border-width-md) var(--tl-border-width-md) 0;
+  transform: translateY(calc(var(--tl-size-icon-md) * -0.06)) rotate(45deg);
 }
 
 /* Zeigt ein Kind zur Zeit und nimmt dessen Größe: neben einer Breadcrumb, in der AppBar so groß wie sein Inhalt. */
@@ -4370,4 +4370,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:2fa5496cdcba6b325f0439326c25b8ca3ced83fafadf385538aeaa5c7efe7c60 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:f2f6c016d219f0eff1a12f4dfa1c8ae39898296f3dcc2f2029eda5de2209772e — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

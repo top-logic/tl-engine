@@ -5,6 +5,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { React, useTabList, register, replacePart, fieldLabel } from 'tl-react-bridge';
+import { popoverMiddleware } from '../../../com.top_logic.layout.react/react-src/bridge/popover';
 import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
 import ColorMixer from '../../../com.top_logic.layout.react/react-src/controls/color/ColorMixer';
 import { PickerPopover } from '../../../com.top_logic.layout.react/react-src/controls/picker/PickerPopover';
@@ -846,5 +847,12 @@ describe('TLSlider', () => {
     expect(document.querySelector('.tl-slider')!.hasAttribute('data-tl-state')).toBe(false);
     expect(input().hasAttribute('aria-invalid')).toBe(false);
     expect(input().hasAttribute('aria-required')).toBe(false);
+  });
+});
+
+describe('popover placement', () => {
+  it('shifts along the main axis too, so a surface that fits neither below nor above stays on screen', () => {
+    const shift = popoverMiddleware(8).find(m => m.name === 'shift');
+    expect((shift?.options as unknown[])[0]).toMatchObject({ padding: 8, crossAxis: true });
   });
 });

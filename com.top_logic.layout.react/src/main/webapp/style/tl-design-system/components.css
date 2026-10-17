@@ -91,6 +91,38 @@
   border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 
+/* --- adaptive-detail/adaptive-detail.css --- */
+/* Responsives Master-Detail — Spec 2026-10-16 Welle 4c §7 (Q18). Den Wechsel zwischen Split, Auswahl mit Drawer und
+   Auswahl/Detail entscheidet der Server (DisplayClass der AppShell). Kompakt steht über dem Inhalt die Breadcrumb des
+   Pakets (tl-breadcrumb) in einer Leiste. Der Behälter ist der Anker des Detail-Drawers (tl-drawer--container) und
+   beschneidet ihn mit clip: der geparkte Drawer lässt sich nie in Sicht scrollen, auch nicht durch Fokus. */
+
+.tl-adaptive-detail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: clip;
+}
+.tl-adaptive-detail[hidden] { display: none; }
+
+.tl-adaptive-detail__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: var(--tl-size-bar);
+  padding-inline: var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-adaptive-detail__content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* --- alert/alert.css --- */
 /* Alert — docs/skalen.md „Status: vier Bedeutungen“.
    Eine Meldung, die im Fluss steht: Icon, Titel, Text. Die Bedeutung ist ein Attribut (data-tl-role) und Pflicht —
@@ -1481,6 +1513,11 @@
 .tl-drawer--container {
   position: absolute;
   z-index: var(--tl-layer-raised);
+}
+
+/* Der Behälter beschneidet (Master-Detail: overflow: clip); der Ring der Schublade liegt darum innen. */
+.tl-drawer--container:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 .tl-drawer__body {
@@ -2992,6 +3029,32 @@ a.tl-field-value:hover {
   to { opacity: 0.5; }
 }
 
+/* --- slide/slide.css --- */
+/* Gleiten — Spec 2026-10-16 Welle 4c §8 (Q21). Ein Versatz für jeden Wechsel, der vorwärts oder zurück führt:
+   Wizard-Schritt, Rahmen des Kachelstapels. Das Ankommende kommt von der Seite, zu der es geht, das Gehende blendet
+   zur anderen aus. Dauer und Kurve setzt die Regel, die die Keyframes nennt; in Schreibrichtung rechts-nach-links
+   nennt sie die gespiegelten. Mehr Bewegung im UI-Durchgang nach Welle 5. */
+
+@keyframes tl-slide-in-forward {
+  from { opacity: 0; transform: translateX(var(--tl-space-md)); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tl-slide-in-backward {
+  from { opacity: 0; transform: translateX(calc(-1 * var(--tl-space-md))); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tl-slide-out-forward {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(calc(-1 * var(--tl-space-md))); }
+}
+
+@keyframes tl-slide-out-backward {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(var(--tl-space-md)); }
+}
+
 /* --- snackbar/snackbar.css --- */
 /* Snackbar — Spec 2026-10-13 Welle 4a §5, Konsolidierung Q7. Ein Alert mit eigener Hülle: Farbe, Linie, Titel, Text,
    Schließen-Knopf und Ansage kommen aus tl-alert (data-tl-role, role="alert" nur bei error); hier stehen Lage,
@@ -3842,6 +3905,62 @@ a.tl-field-value:hover {
 }
 .tl-text--truncate[hidden] { display: none; }
 
+/* --- tile-stack/tile-stack.css --- */
+/* Kachelstapel — Spec 2026-10-16 Welle 4c §8. Rahmen übereinander, der aktive oben; verdeckte behalten ihren
+   Steuerbaum und ihre Box (Scroll- und Eingabezustand bleiben), unsichtbar und nicht fokussierbar. Der Wechsel
+   gleitet (slide.css): useKeyedTransition markiert den ankommenden Rahmen und eine Kopie des gehenden in
+   data-tl-state, die Wurzel die Richtung (backward; vorwärts ohne Marke). */
+
+.tl-tile-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.tl-tile-stack[hidden] { display: none; }
+
+.tl-tile-stack__frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-tile-stack__frame[data-tl-state~="covered"] {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+.tl-tile-stack__frame[data-tl-state~="entering"] {
+  animation: tl-slide-in-forward var(--tl-duration-slow) var(--tl-easing-entrance);
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="entering"],
+.tl-tile-stack__frame[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-backward;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-forward;
+}
+
+/* Ein Bild des gehenden Rahmens über dem Stapel: kein Platz im Layout, keine Eingabe. */
+.tl-tile-stack__frame[data-tl-state~="exiting"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: tl-slide-out-forward var(--tl-duration-slow) var(--tl-easing-exit) forwards;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="exiting"],
+.tl-tile-stack__frame[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-backward;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-forward;
+}
+
 /* --- titlebar/titlebar.css --- */
 /* Titelleiste — Spec 2026-10-13 Welle 4a §3 (Q3), Spec 2026-10-16 Welle 4c §3. Der eine Kopf über einer Fläche:
    Titel links mit Ellipse, daneben frei gestalteter Inhalt, Aktionen (Toolbar) und Kopfknöpfe (tl-button--icon --sm)
@@ -4076,4 +4195,139 @@ a.tl-field-value:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* tl-design-system sha256:d06ce70b45c7e742e960f0a9165162465ff27a560910a2dfaa9029bd8d9fc8b1 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+
+/* --- wizard/wizard.css --- */
+/* Wizard — Spec 2026-10-16 Welle 4c §8 (Q19: eigenes Muster, auf Tokens). Oben, was zeigt, wo man ist — Zähler,
+   Fortschritt, Schrittliste —, darunter der Schritt. Die Scheibe nennt die Position in drei Stufen: aktuell die
+   Marke, erledigt die schwächere Markenfläche, kommend eine Linie. Der Schritt gleitet beim Wechsel (slide.css). */
+
+.tl-wizard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+.tl-wizard[hidden] { display: none; }
+
+.tl-wizard__header {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--tl-space-sm);
+  padding: var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-wizard__counter {
+  color: var(--tl-text-secondary);
+}
+
+/* Der Balken steht für eine gegangene Strecke: er bekommt eine Länge, statt die Breite der Seite zu nehmen. */
+.tl-wizard__progress {
+  display: flex;
+  max-width: var(--tl-size-wizard-progress);
+}
+
+.tl-wizard__progress > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tl-wizard__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-xs) var(--tl-space-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tl-wizard__step-item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+
+.tl-wizard__disc {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-size-icon-lg);
+  height: var(--tl-size-icon-lg);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-layer-nested);
+  color: var(--tl-text-secondary);
+}
+
+.tl-wizard__step-item[data-tl-state~="done"] > .tl-wizard__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand-subtle);
+  color: var(--tl-text-primary);
+}
+
+.tl-wizard__step-item[aria-current="step"] > .tl-wizard__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-wizard__step-name {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+.tl-wizard__step-item[aria-current="step"] > .tl-wizard__step-name {
+  color: var(--tl-text-primary);
+}
+
+/* Der Bereich des Schritts: begrenzt, damit ein füllender Schritt hier seine Höhe auflöst; er positioniert die Kopie
+   des gehenden Schritts, die über dem ankommenden ausblendet. */
+.tl-wizard__body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-wizard__step {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-wizard__step[data-tl-state~="entering"] {
+  animation: tl-slide-in-forward var(--tl-duration-slow) var(--tl-easing-entrance);
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="entering"],
+.tl-wizard__step[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-backward;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-forward;
+}
+
+.tl-wizard__step[data-tl-state~="exiting"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: tl-slide-out-forward var(--tl-duration-slow) var(--tl-easing-exit) forwards;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"],
+.tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-backward;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-forward;
+}
+/* tl-design-system sha256:0e590de15bb7c330cc3f40c4280b4d20a68e9a202cdb3e9ffaedeb3ceeb613ff — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

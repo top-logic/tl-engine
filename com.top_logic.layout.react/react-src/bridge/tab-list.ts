@@ -50,10 +50,9 @@ export function useTabList({ idPrefix, ids, selected, onSelect }: TabListOptions
 
   const onListKeyDown = (e: React.KeyboardEvent) => {
     const origin = (e.target as HTMLElement).closest?.('[role="tab"]');
-    let index = ids.findIndex(id => tabId(id) === origin?.id);
-    if (index < 0) {
-      index = Math.max(0, ids.indexOf(stop));
-    }
+    const index = ids.findIndex(id => tabId(id) === origin?.id);
+    // A key from something else inside the list (a button next to the tabs) is not the list's.
+    if (index < 0) return;
     let next: number;
     if (e.key === 'ArrowRight') next = index + 1;
     else if (e.key === 'ArrowLeft') next = index - 1;

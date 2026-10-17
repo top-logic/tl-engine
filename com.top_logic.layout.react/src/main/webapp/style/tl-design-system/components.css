@@ -1961,6 +1961,122 @@ a.tl-field-value:hover {
   color: var(--tl-status-error-text);
 }
 
+/* --- layout/layout.css --- */
+/* Reihen und Abstände — Spec 2026-10-16 Welle 4c §5 (Q16, Q22). Stack und Grid ordnen Kinder mit der einen
+   Gap-Skala, die tl-columns seit 3b liest: compact space-sm, default space-md, loose space-lg. Inset ist der Abstand
+   eines Inhalts zum Rand; wie weit, sagt die nächste Fläche über React-Kontext (useSurface) als Modifier — ohne
+   Modifier die Seite. Bounded begrenzt die Breite und mittelt, Item umhüllt wiederholte Kinder, Deck zeigt eines zur
+   Zeit und nimmt seine Größe. Wer füllt, entscheidet der Fill-Vertrag (tlFill, bis Welle 5 im alten Stylesheet). */
+
+.tl-stack {
+  display: flex;
+}
+.tl-stack[hidden] { display: none; }
+
+.tl-stack--column { flex-direction: column; }
+.tl-stack--row { flex-direction: row; }
+
+.tl-stack--gap-compact, .tl-grid--gap-compact { gap: var(--tl-space-sm); }
+.tl-stack--gap-default, .tl-grid--gap-default { gap: var(--tl-space-md); }
+.tl-stack--gap-loose, .tl-grid--gap-loose { gap: var(--tl-space-lg); }
+
+.tl-stack--align-start { align-items: start; }
+.tl-stack--align-center { align-items: center; }
+.tl-stack--align-end { align-items: end; }
+.tl-stack--align-stretch { align-items: stretch; }
+
+/* Wie der freie Platz entlang der Richtung verteilt wird. */
+.tl-stack--justify-start { justify-content: start; }
+.tl-stack--justify-center { justify-content: center; }
+.tl-stack--justify-end { justify-content: end; }
+.tl-stack--justify-space-between { justify-content: space-between; }
+.tl-stack--justify-space-around { justify-content: space-around; }
+.tl-stack--justify-space-evenly { justify-content: space-evenly; }
+
+.tl-stack--wrap { flex-wrap: wrap; }
+
+/* Das erste Kind füllt die Hauptachse (Eingabe mit Knopf daneben). */
+.tl-stack--grow-first.tl-stack--row > :first-child { flex: 1 1 auto; min-width: 0; }
+.tl-stack--grow-first.tl-stack--column > :first-child { flex: 1 1 auto; min-height: 0; }
+
+/* Die Spaltenvorlage rechnet das TSX inline (sie hängt an Mindestbreite und Höchstzahl); den Abstand liest es aus
+   derselben Stufe wie die Regeln oben. */
+.tl-grid {
+  display: grid;
+}
+.tl-grid[hidden] { display: none; }
+
+/* Gibt den Platz, den es bekommt, an seinen Inhalt weiter: eine begrenzte Spalte, gegen die ein füllender Inhalt
+   seine Höhe auflöst. */
+.tl-inset {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: var(--tl-space-lg);
+}
+.tl-inset[hidden] { display: none; }
+
+.tl-inset--panel {
+  padding: var(--tl-space-md);
+}
+
+.tl-inset--card {
+  padding: var(--tl-space-xs) var(--tl-space-md);
+}
+
+/* Die Breite eines Stacks oder Grids, begrenzt durch ein Inline-max-width, in seinem Behälter mittig. Ohne die
+   Breite schrumpften die automatischen Ränder ihn auf seinen Inhalt. */
+.tl-bounded {
+  width: 100%;
+  margin-inline: auto;
+}
+
+/* Die Hülle eines wiederholten Kindes (useItems); sie gibt den Platz an das Kind weiter. Ihre Position trägt sie
+   als --item-index, ein Datum der Engine für Anwendungs-CSS. */
+.tl-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.tl-item[hidden] { display: none; }
+
+/* Auswählbar (Q24, #29755): ist der Behälter eine Listbox, ist jeder Eintrag eine Option, und die ganze Fläche nimmt
+   den Klick. Ein Eintrag schwebt nicht: beim Zeigen ein Hof, kein Schatten. Ausgewählt liegt ein Ring über dem Rand
+   des Eintrags — eine Auswahlfläche läge hinter einer Karte mit eigener Fläche —, der Zustand ist aria-selected; der
+   Fokus ist der Ring aus base.css. Die Spalte von tl-columns ist dieselbe Hülle (useItems) und trägt dieselbe Regel. */
+.tl-item[role="option"],
+.tl-columns__column[role="option"] {
+  position: relative;
+  border-radius: var(--tl-radius-md);
+  cursor: pointer;
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-item[role="option"]:hover,
+.tl-columns__column[role="option"]:hover {
+  box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover);
+}
+
+.tl-item[aria-selected="true"]::after,
+.tl-columns__column[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Zeigt ein Kind zur Zeit und nimmt dessen Größe: neben einer Breadcrumb, in der AppBar so groß wie sein Inhalt. */
+.tl-deck {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.tl-deck[hidden] { display: none; }
+
 /* --- menu/menu.css --- */
 /* Menu — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
    Ein Menü ist ein tl-popover mit Einträgen. Der Fokus ist echt (Roving-Tabindex): der Ring aus
@@ -2923,6 +3039,101 @@ a.tl-field-value:hover {
   margin-top: var(--tl-space-2xs);
 }
 
+/* --- split/split.css --- */
+/* Split — Spec 2026-10-16 Welle 4c §6 (Q17). Flächen nebeneinander oder untereinander, dazwischen ein Griff mit
+   role=separator: fokussierbar, Pfeiltasten, Home und End (bridge/separator.ts, derselbe wie der Spaltengriff der
+   Tabelle). In Ruhe eine Linie — Flächen brauchen eine Grenze —, unter dem Zeiger, beim Ziehen und mit Fokus kräftig.
+   Sind alle Flächen eingeklappt, kippt die Achse (data-tl-state~="all-collapsed"); eine eingeklappte Fläche im
+   waagrechten Split zeigt den Kopf ihres Panels als schmale Spalte mit senkrechtem Titel. */
+
+.tl-split {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.tl-split[hidden] { display: none; }
+
+.tl-split--horizontal { flex-direction: row; }
+.tl-split--vertical { flex-direction: column; }
+.tl-split--horizontal[data-tl-state~="all-collapsed"] { flex-direction: column; }
+.tl-split--vertical[data-tl-state~="all-collapsed"] { flex-direction: row; }
+
+.tl-split__handle {
+  position: relative;
+  flex: none;
+  touch-action: none;
+}
+
+.tl-split--horizontal > .tl-split__handle {
+  width: var(--tl-space-xs);
+  cursor: col-resize;
+}
+
+.tl-split--vertical > .tl-split__handle {
+  height: var(--tl-space-xs);
+  cursor: row-resize;
+}
+
+.tl-split__handle::after {
+  content: "";
+  position: absolute;
+  background: var(--tl-border-separator);
+}
+
+.tl-split--horizontal > .tl-split__handle::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--tl-border-width-sm);
+  translate: -50% 0;
+}
+
+.tl-split--vertical > .tl-split__handle::after {
+  right: 0;
+  left: 0;
+  top: 50%;
+  height: var(--tl-border-width-sm);
+  translate: 0 -50%;
+}
+
+.tl-split__handle:hover::after,
+.tl-split__handle:active::after,
+.tl-split__handle:focus-visible::after {
+  background: var(--tl-border-interactive);
+}
+
+.tl-split--horizontal > .tl-split__handle:is(:hover, :active, :focus-visible)::after {
+  width: var(--tl-border-width-md);
+}
+
+.tl-split--vertical > .tl-split__handle:is(:hover, :active, :focus-visible)::after {
+  height: var(--tl-border-width-md);
+}
+
+/* Der Ring liegt innen: der Griff ist space-xs breit, der Ring reicht nicht über ihn hinaus. */
+.tl-split__handle:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Eingeklappt im waagrechten Split: der Kopf als schmale Spalte, Knöpfe oben, Titel senkrecht darunter. */
+.tl-split__pane[data-tl-state~="collapsed"] .tl-titlebar {
+  flex-direction: column-reverse;
+  justify-content: start;
+  align-items: center;
+  height: 100%;
+  padding: var(--tl-space-xs);
+  border-bottom: 0;
+}
+
+.tl-split__pane[data-tl-state~="collapsed"] .tl-titlebar__title {
+  flex: 0 1 auto;
+  writing-mode: vertical-rl;
+}
+
+.tl-split__pane[data-tl-state~="collapsed"] :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+  flex-direction: column;
+}
+
 /* --- status/status.css --- */
 /* Status — docs/skalen.md „Gleiches wird zusammengelegt“ (W10), 3b §10.
    Eine Zeile, die sagt, was statt Inhalt da ist: lädt (immer ein unbestimmter tl-progress darin), leer
@@ -3865,4 +4076,4 @@ a.tl-field-value:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* tl-design-system sha256:2606a354abc337d836b8808811d2315625c0679ac940229d711432a75e8837cc — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:d06ce70b45c7e742e960f0a9165162465ff27a560910a2dfaa9029bd8d9fc8b1 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

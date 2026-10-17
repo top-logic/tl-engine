@@ -4,7 +4,7 @@
  * A draft reaches the host over a channel, and a channel write is a round trip to the server. A
  * keystroke is not worth one, so an ordinary report waits for the typing to stop. The two moments
  * that must not wait are the ones where the host is about to act on what it reads: the field losing
- * the focus, and the send itself.
+ * the focus, and the send itself - before it, and once it has emptied the field.
  */
 export interface DraftReporter {
   /** Reports the draft after the pause. A later report before the pause is over replaces it. */

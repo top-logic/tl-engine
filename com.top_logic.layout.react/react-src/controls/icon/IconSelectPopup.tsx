@@ -1,14 +1,19 @@
-import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart, tooltipProps, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
+import { React, useI18N, usePart, tooltipProps, useTabList, ThemeIcon, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
+import { PickerPopover } from '../picker/PickerPopover';
+import { useRovingFocus } from '../useRovingFocus';
 
-const { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } = React;
+const { useState, useCallback, useEffect, useRef, useMemo, useId } = React;
 
 const I18N_KEYS = {
+  'js.iconSelect.chooseIcon': 'Choose icon',
+  'js.iconSelect.icons': 'Icons',
   'js.iconSelect.simpleTab': 'Simple',
   'js.iconSelect.advancedTab': 'Advanced',
-  'js.iconSelect.filterPlaceholder': 'Filter icons\u2026',
+  'js.iconSelect.filterPlaceholder': 'Filter icons…',
   'js.iconSelect.noResults': 'No icons found',
-  'js.iconSelect.loading': 'Loading\u2026',
-  'js.iconSelect.loadError': 'Failed to load. Click to retry.',
+  'js.iconSelect.loading': 'Loading…',
+  'js.iconSelect.loadError': 'The icons could not be loaded.',
+  'js.iconSelect.retry': 'Load again',
   'js.iconSelect.classLabel': 'Class',
   'js.iconSelect.previewLabel': 'Preview',
   'js.iconSelect.cancel': 'Cancel',
@@ -32,20 +37,29 @@ export interface IconEntry {
 
 type Tab = 'simple' | 'advanced';
 
+const TABS: Tab[] = ['simple', 'advanced'];
+
 interface IconSelectPopupProps {
-  anchorRef: React.RefObject<HTMLButtonElement | null>;
+  /** The element the popup hangs under and gives the focus back to. */
+  anchorRef: React.RefObject<HTMLElement | null>;
   currentValue: string | null;
   icons: IconEntry[];
   iconsLoaded: boolean;
   onSelect: (encoded: string | null) => void;
+  /** Called on Cancel, Escape and a press outside. Must close the popup at once. */
   onCancel: () => void;
   onLoadIcons: () => Promise<void>;
 }
 
-// Re-export ThemeIcon as IconPreview for backwards compatibility.
-import { ThemeIcon as IconPreview } from 'tl-react-bridge';
-export { IconPreview };
+/** The focus starts in the filter. */
+function filterField(root: HTMLElement): HTMLElement | null {
+  return root.querySelector<HTMLElement>('input');
+}
 
+/**
+ * The icon chooser popup (the picker shell) with two tabs: Simple takes an icon from the grid at once, Advanced
+ * puts the class of an icon into a field that OK sends. The grid is one tab stop; arrows move within it.
+ */
 const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
   anchorRef,
   currentValue,
@@ -63,45 +77,25 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [advancedInput, setAdvancedInput] = useState(currentValue ?? '');
   const [loadError, setLoadError] = useState(false);
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
-  const popupRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const list = useTabList({ idPrefix: 'tl-icon-' + useId(), ids: TABS, selected: tab, onSelect: id => setTab(id as Tab) });
+  // One panel serves both tabs: the filter and the grid are the same for each.
+  const panel = list.panelProps(tab);
 
-  // Position popup relative to anchor
-  useLayoutEffect(() => {
-    if (!anchorRef.current || !popupRef.current) return;
-    const anchorRect = anchorRef.current.getBoundingClientRect();
-    const popupRect = popupRef.current.getBoundingClientRect();
-    let top = anchorRect.bottom + 4;
-    let left = anchorRect.left;
-    if (top + popupRect.height > window.innerHeight) {
-      top = anchorRect.top - popupRect.height - 4;
-    }
-    if (left + popupRect.width > window.innerWidth) {
-      left = Math.max(0, anchorRect.right - popupRect.width);
-    }
-    setPosition({ top, left });
-  }, [anchorRef]);
-
-  // Load icons if not loaded
+  // Load icons if not loaded; a failure shows the retry row, which clears the error and so loads again.
   useEffect(() => {
     if (!iconsLoaded && !loadError) {
       onLoadIcons().catch(() => setLoadError(true));
     }
   }, [iconsLoaded, loadError, onLoadIcons]);
 
-  // Focus search on open
+  // The filter is there from the start; once the icons have arrived the focus is in it again.
   useEffect(() => {
     if (iconsLoaded && searchRef.current) {
       searchRef.current.focus();
     }
   }, [iconsLoaded]);
-
-  // Close on Escape (via the shared keyboard dispatcher).
-  useStandaloneKeyboardScope(true, { ESCAPE: onCancel });
-
-  // Close on a press outside the popup.
-  useCloseOnOutsidePress(true, [popupRef], onCancel);
 
   // Filter icons by search term
   const filteredIcons = useMemo(() => {
@@ -115,22 +109,30 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
     );
   }, [icons, searchTerm]);
 
+  // The cells in grid order: one per variant of each icon.
+  const cells = useMemo(
+    () => filteredIcons.flatMap((icon) => icon.variants.map((variant) => ({ encoded: variant.encoded, label: icon.label }))),
+    [filteredIcons]
+  );
+  const selectedAt = cells.findIndex((cell) => cell.encoded === currentValue);
+  const roving = useRovingFocus(gridRef, '[role="option"]', cells.length, selectedAt);
+
   // Emptying the filter keeps the focus in it, so that the next filter can be typed right away.
   const handleClearSearch = useCallback(() => {
     setSearchTerm('');
     searchRef.current?.focus();
   }, []);
 
-  const handleSimpleSelect = useCallback(
+  const choose = useCallback(
     (encoded: string) => {
-      onSelect(encoded);
+      if (tab === 'simple') {
+        onSelect(encoded);
+      } else {
+        setAdvancedInput(encoded);
+      }
     },
-    [onSelect]
+    [tab, onSelect]
   );
-
-  const handleAdvancedIconClick = useCallback((encoded: string) => {
-    setAdvancedInput(encoded);
-  }, []);
 
   const handleOk = useCallback(() => {
     onSelect(advancedInput || null);
@@ -140,170 +142,128 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
     onSelect(null);
   }, [onSelect]);
 
-  const handleRetry = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleRetry = useCallback(() => {
     setLoadError(false);
-    try {
-      await onLoadIcons();
-    } catch {
-      setLoadError(true);
+  }, []);
+
+  const handleCellKey = (encoded: string) => (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      choose(encoded);
     }
-  }, [onLoadIcons]);
+  };
 
   return (
-    <div
-      className="tlIconSelect__popup"
-      ref={popupRef}
-      style={
-        position
-          ? { top: position.top, left: position.left, visibility: 'visible' }
-          : { visibility: 'hidden' }
-      }
+    <PickerPopover
+      anchorRef={anchorRef}
+      label={i18n['js.iconSelect.chooseIcon']}
+      className="tl-icon-picker"
+      initialFocus={filterField}
+      onClose={onCancel}
     >
-      {/* Tab bar */}
-      <div className="tlIconSelect__tabs">
-        <button
-          className={
-            'tlIconSelect__tab' + (tab === 'simple' ? ' tlIconSelect__tab--active' : '')
-          }
-          onClick={() => setTab('simple')}
-        >
-          {i18n['js.iconSelect.simpleTab']}
-        </button>
-        <button
-          className={
-            'tlIconSelect__tab' + (tab === 'advanced' ? ' tlIconSelect__tab--active' : '')
-          }
-          onClick={() => setTab('advanced')}
-        >
-          {i18n['js.iconSelect.advancedTab']}
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="tlIconSelect__searchWrapper">
-        <TextInput
-          ref={searchRef}
-          icon={ICON_SEARCH}
-          value={searchTerm}
-          onChange={setSearchTerm}
-          placeholder={i18n['js.iconSelect.filterPlaceholder']}
-          aria-label={i18n['js.iconSelect.filterPlaceholder']}
-          action={searchTerm && (
-            <Button
-              label={i18n['js.iconSelect.clearFilter']}
-              image={ICON_CLEAR}
-              display="icon-only"
-              appearance="ghost"
-              small
-              onClick={handleClearSearch}
-            />
-          )}
-        />
-      </div>
-
-      {/* Icon grid */}
-      <div
-        className="tlIconSelect__grid"
-        role="listbox"
-      >
-        {!iconsLoaded && !loadError && (
-          <div className="tlIconSelect__loading">
-            <Spinner label={i18n['js.iconSelect.loading']} />
-          </div>
-        )}
-        {loadError && (
-          <div className="tlIconSelect__noResults">
-            <a href="#" onClick={handleRetry}>
-              {i18n['js.iconSelect.loadError']}
-            </a>
-          </div>
-        )}
-        {iconsLoaded && filteredIcons.length === 0 && (
-          <div className="tlIconSelect__noResults">{i18n['js.iconSelect.noResults']}</div>
-        )}
-        {iconsLoaded &&
-          filteredIcons.map((icon) =>
-            icon.variants.map((variant) => (
-              <div
-                key={variant.encoded}
-                className={
-                  'tlIconSelect__iconCell' +
-                  (variant.encoded === currentValue
-                    ? ' tlIconSelect__iconCell--selected'
-                    : '')
-                }
-                role="option"
-                aria-selected={variant.encoded === currentValue}
-                tabIndex={0}
-                aria-label={icon.label}
-                {...tooltipProps(icon.label)}
-                onClick={() =>
-                  tab === 'simple'
-                    ? handleSimpleSelect(variant.encoded)
-                    : handleAdvancedIconClick(variant.encoded)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    tab === 'simple'
-                      ? handleSimpleSelect(variant.encoded)
-                      : handleAdvancedIconClick(variant.encoded);
-                  }
-                }}
-              >
-                <IconPreview encoded={variant.encoded} />
-              </div>
-            ))
-          )}
-      </div>
-
-      {/* Advanced: edit area */}
-      {tab === 'advanced' && (
-        <div className="tlIconSelect__advancedArea">
-          <div className="tlIconSelect__editRow">
-            <span className="tlIconSelect__editLabel">
-              {i18n['js.iconSelect.classLabel']}
-            </span>
+      <div className="tl-tabs tl-picker__tabs">
+        <div className="tl-tabs__list" role="tablist" onKeyDown={list.onListKeyDown}>
+          <button {...list.tabProps('simple', { controls: panel.id })} className="tl-tabs__tab tl-type-body">
+            {i18n['js.iconSelect.simpleTab']}
+          </button>
+          <button {...list.tabProps('advanced', { controls: panel.id })} className="tl-tabs__tab tl-type-body">
+            {i18n['js.iconSelect.advancedTab']}
+          </button>
+        </div>
+        <div {...panel} hidden={false} className="tl-tabs__panel">
+          <div className="tl-icon-picker__filter">
             <TextInput
-              aria-label={i18n['js.iconSelect.classLabel']}
-              value={advancedInput}
-              onChange={setAdvancedInput}
+              ref={searchRef}
+              icon={ICON_SEARCH}
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder={i18n['js.iconSelect.filterPlaceholder']}
+              aria-label={i18n['js.iconSelect.filterPlaceholder']}
+              action={searchTerm && (
+                <Button
+                  label={i18n['js.iconSelect.clearFilter']}
+                  image={ICON_CLEAR}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
+                  onClick={handleClearSearch}
+                />
+              )}
             />
           </div>
-          <div className="tlIconSelect__previewArea">
-            <span className="tlIconSelect__editLabel">
-              {i18n['js.iconSelect.previewLabel']}
-            </span>
-            <div className="tlIconSelect__previewIcon">
-              {advancedInput && <IconPreview encoded={advancedInput} />}
-            </div>
-            <span className="tlIconSelect__previewLabel">
-              {advancedInput
-                ? advancedInput.startsWith('css:')
-                  ? advancedInput.substring(4)
-                  : advancedInput
-                : ''}
-            </span>
-          </div>
-        </div>
-      )}
 
-      {/* Advanced: action buttons */}
+          {!iconsLoaded && !loadError && (
+            <div className="tl-status tl-type-body" role="status">
+              <Spinner label={i18n['js.iconSelect.loading']} />
+              <span>{i18n['js.iconSelect.loading']}</span>
+            </div>
+          )}
+          {loadError && (
+            <div className="tl-status tl-type-body" role="alert">
+              <span>{i18n['js.iconSelect.loadError']}</span>
+              <Button label={i18n['js.iconSelect.retry']} display="label-only" appearance="link" onClick={handleRetry} />
+            </div>
+          )}
+          {iconsLoaded && cells.length === 0 && (
+            <div className="tl-status tl-type-body" role="status">{i18n['js.iconSelect.noResults']}</div>
+          )}
+          {iconsLoaded && cells.length > 0 && (
+            <div
+              ref={gridRef}
+              className="tl-icon-picker__grid"
+              role="listbox"
+              aria-label={i18n['js.iconSelect.icons']}
+              onKeyDown={roving.onKeyDown}
+              onFocus={roving.onFocus}
+            >
+              {cells.map((cell, i) => (
+                <div
+                  key={cell.encoded}
+                  className="tl-icon-picker__cell"
+                  role="option"
+                  aria-selected={i === selectedAt}
+                  aria-label={cell.label}
+                  tabIndex={roving.tabIndexOf(i)}
+                  {...tooltipProps(cell.label)}
+                  onClick={() => choose(cell.encoded)}
+                  onKeyDown={handleCellKey(cell.encoded)}
+                >
+                  <ThemeIcon encoded={cell.encoded} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === 'advanced' && (
+            <div className="tl-icon-picker__advanced">
+              <label className="tl-type-label">
+                {i18n['js.iconSelect.classLabel']}
+                <TextInput
+                  aria-label={i18n['js.iconSelect.classLabel']}
+                  value={advancedInput}
+                  onChange={setAdvancedInput}
+                />
+              </label>
+              <div className="tl-icon-picker__preview">
+                <span className="tl-type-label">{i18n['js.iconSelect.previewLabel']}</span>
+                {advancedInput && <ThemeIcon encoded={advancedInput} />}
+                <span className="tl-type-body">
+                  {advancedInput.startsWith('css:') ? advancedInput.substring(4) : advancedInput}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {tab === 'advanced' && (
-        <div className="tlIconSelect__actions">
-          <button className="tlIconSelect__btn tlIconSelect__btn--cancel" onClick={onCancel}>
-            {i18n['js.iconSelect.cancel']}
-          </button>
-          <button className="tlIconSelect__btn tlIconSelect__btn--clear" onClick={handleClear}>
-            {i18n['js.iconSelect.clear']}
-          </button>
-          <button className="tlIconSelect__btn tlIconSelect__btn--ok" onClick={handleOk}>
-            {i18n['js.iconSelect.ok']}
-          </button>
+        <div className="tl-button-bar tl-picker__actions">
+          <Button label={i18n['js.iconSelect.clear']} display="label-only" appearance="ghost" danger onClick={handleClear} />
+          <Button label={i18n['js.iconSelect.cancel']} display="label-only" appearance="secondary" onClick={onCancel} />
+          <Button label={i18n['js.iconSelect.ok']} display="label-only" appearance="primary" onClick={handleOk} />
         </div>
       )}
-    </div>
+    </PickerPopover>
   );
 };
 

@@ -1061,7 +1061,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_ICON_SELECT_LOADING;
 
 	/**
-	 * @en Failed to load. Click to retry.
+	 * @en The icons could not be loaded.
 	 */
 	@CustomKey("js.iconSelect.loadError")
 	public static ResKey JS_ICON_SELECT_LOAD_ERROR;
@@ -1107,6 +1107,24 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.iconSelect.chooseIcon")
 	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
+
+	/**
+	 * @en Icons
+	 */
+	@CustomKey("js.iconSelect.icons")
+	public static ResKey JS_ICON_SELECT_ICONS;
+
+	/**
+	 * @en Load again
+	 */
+	@CustomKey("js.iconSelect.retry")
+	public static ResKey JS_ICON_SELECT_RETRY;
+
+	/**
+	 * @en No icon
+	 */
+	@CustomKey("js.iconSelect.noIcon")
+	public static ResKey JS_ICON_SELECT_NO_ICON;
 
 	// -- Alert client-side i18n keys --
 

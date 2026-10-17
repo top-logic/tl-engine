@@ -1,15 +1,22 @@
-import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, stateAttr, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon, ICON_CHOOSE_ICON } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { showsValueOnly } from './form/fieldState';
-import IconSelectPopup, { IconPreview } from './icon/IconSelectPopup';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import IconSelectPopup from './icon/IconSelectPopup';
 import type { IconEntry } from './icon/IconSelectPopup';
 
-const I18N_KEYS = { 'js.iconSelect.chooseIcon': 'Choose icon' };
+const I18N_KEYS = {
+  'js.iconSelect.noIcon': 'No icon',
+};
 
 const { useState, useCallback, useRef } = React;
 
 /**
  * An icon select field rendered via React.
+ *
+ * <p>The field is one swatch of the design system (tl-swatch): a button that opens the icon picker, a plain span
+ * while the field is read-only, an inactive button while it is disabled. It carries the field state like every
+ * other field (error, warning, mandatory) and the state word `empty` while it holds no icon, when it shows the
+ * glyph that says "choose an icon".</p>
  *
  * State from server:
  *  - value: string | null     - Encoded ThemeImage (e.g. "css:fa-solid fa-home")
@@ -33,6 +40,11 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const disabled = state.disabled === true;
   const icons = (state.icons as IconEntry[]) ?? [];
   const iconsLoaded = state.iconsLoaded === true;
+
+  // What the swatch says of itself: the label of its icon if the list knows it, else its class, or that it has
+  // none. That it opens a dialog is aria-haspopup's to say.
+  const known = value == null ? undefined : icons.find(icon => icon.variants.some(variant => variant.encoded === value));
+  const name = value == null ? i18n['js.iconSelect.noIcon'] : (known?.label ?? value.replace(/^css:/, ''));
 
   const handleClick = useCallback(() => {
     // The press of this click has closed the popup this swatch opens: leave it closed.
@@ -58,36 +70,44 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
     await sendCommand('loadIcons');
   }, [sendCommand]);
 
-  // Read-only rendering
+  // Read-only: the icon alone, as a swatch that is no button
   if (showsValueOnly(state)) {
     return (
-      <span id={controlId} className={rootClassName(state, 'tlIconSelect tlIconSelect--immutable')}>
-        <span className="tlIconSelect__swatch">
-          {value ? <IconPreview encoded={value} /> : null}
-        </span>
+      <span
+        id={controlId}
+        className={rootClassName(state, 'tl-swatch')}
+        data-tl-state={stateAttr(value == null && 'empty')}
+        role="img"
+        aria-label={name}
+        {...tooltipProps(name)}
+      >
+        <ThemeIcon encoded={value ?? undefined} />
       </span>
     );
   }
 
+  const fieldState = fieldStateAttrs(state);
+
   return (
-    <span id={controlId} className={rootClassName(state, 'tlIconSelect')}>
+    <span id={controlId} className={rootClassName(state) || undefined}>
       <button
         ref={swatchRef}
-        className={
-          'tlIconSelect__swatch' + (value == null ? ' tlIconSelect__swatch--empty' : '')
-        }
+        type="button"
+        className="tl-swatch"
         onClick={handleClick}
         disabled={disabled}
-        aria-label={i18n['js.iconSelect.chooseIcon']}
-        {...tooltipProps(value ?? i18n['js.iconSelect.chooseIcon'])}
+        aria-label={name}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        {...fieldState}
+        data-tl-state={stateAttr(value == null && 'empty', fieldState['data-tl-state'])}
+        {...tooltipProps(name)}
         id={inputId}
         {...labelProps}
+        // Inside a form field the label names the field; the swatch adds its own value (aria-label) to it.
+        aria-labelledby={labelProps['aria-labelledby'] === undefined ? undefined : `${labelProps['aria-labelledby']} ${inputId}`}
       >
-        {value ? (
-          <IconPreview encoded={value} />
-        ) : (
-          <i className="fa-solid fa-icons" />
-        )}
+        <ThemeIcon encoded={value ?? ICON_CHOOSE_ICON} />
       </button>
 
       {open && (

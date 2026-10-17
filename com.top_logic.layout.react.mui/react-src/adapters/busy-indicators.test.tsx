@@ -180,7 +180,7 @@ describe('the busy indicator of the icon popup as MUI spinner', () => {
     const spinner = screen.getByRole('progressbar', { name: LABEL_ICONS_LOADING });
     expect(spinner.classList).toContain('MuiCircularProgress-root');
     expect(spinner.style.width).toBe('24px');
-    expect(spinner.closest('.tlIconSelect__loading')).not.toBeNull();
+    expect(spinner.closest('.tl-status')).not.toBeNull();
     expect(document.querySelector('.tl-spinner')).toBeNull();
   });
 

@@ -76,3 +76,6 @@ export const ICON_MAXIMIZE = 'css:fa-regular fa-window-maximize';
 
 /** Gives a maximized window its size back. */
 export const ICON_RESTORE = 'css:fa-regular fa-window-restore';
+
+/** Chooses an icon (the icon field while it holds none). */
+export const ICON_CHOOSE_ICON = 'css:fa-solid fa-icons';

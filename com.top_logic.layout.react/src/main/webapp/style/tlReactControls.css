@@ -52,7 +52,7 @@ html, body {
 	height: 100%;
 }
 
-.is-control > .tlStack {
+.is-control > .tl-stack {
 	height: 100%;
 }
 
@@ -70,66 +70,12 @@ html, body {
 	min-height: 0;
 }
 
-/* --- Bounded width ------------------------------------------------------ */
-
-/* A layout container (a stack, a grid) limited to a maximum width, which travels as an inline
-   length because it is a value rather than a kind of layout. The container takes the width its
-   own container offers - without the explicit width, the auto margins would shrink it to its
-   content instead of stretching it - up to that maximum, and the space left over is split between
-   its two sides. Only the width is bounded: the container keeps taking part in the fill contract,
-   whose classes decide its height. */
-.tlBounded {
-	box-sizing: border-box;
-	width: 100%;
-	margin-inline: auto;
-}
-
 /* --- Repeated items ----------------------------------------------------- */
 
-/* Wrapper a container (a stack, a grid) puts around each of its children while it repeats them,
-   carrying the position of the item as --tl-item-index next to the class the container is
-   configured with. An application stylesheet composes a per-item value from that position, e.g. a
-   staggered entrance animation. The wrapper stays transparent for the layout of the container: it
-   passes the space it is given on to the item. */
-.tlItem {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-	min-height: 0;
-}
-
-/* A wrapper around a filling item fills in turn, so that the fill contract survives the wrapper
-   and the item's height still resolves against the container. */
-.tlItem:has(> .tlFill) {
+/* The wrapper of a repeated item (tl-item, design system package) fills while its item fills, so that the fill
+   contract survives the wrapper. Leaves with the fill contract in wave 5. */
+.tl-item:has(> .tlFill) {
 	flex: 1;
-}
-
-/* An item of a selectable container (a list box): the whole item is the surface the user presses.
-   Under the pointer it lifts off the page. The item may draw a frame of its own (a card), so the
-   wrapper marks the selection by a ring in the interactive colour around it, in the surface radius,
-   rather than by a border; the ring means "selected" only. */
-.tlItem--selectable {
-	border-radius: var(--border-radius-02);
-	cursor: pointer;
-	transition: box-shadow 120ms ease, background-color 120ms ease;
-}
-
-.tlItem--selectable:hover {
-	box-shadow: var(--shadow-raised);
-}
-
-.tlItem--selected {
-	background: var(--tl-surface-brand-subtle);
-	box-shadow: 0 0 0 2px var(--tl-border-interactive);
-}
-
-.tlItem--selected:hover {
-	box-shadow: 0 0 0 2px var(--tl-border-interactive), var(--shadow-raised);
-}
-
-.tlItem--selectable:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: 2px;
 }
 
 /* --- React mount point ------------------------------------------------- */
@@ -239,67 +185,6 @@ button.tlCounter__button:focus {
 	margin-top: var(--spacing-03);
 	color: var(--text-secondary);
 	font-size: var(--body-compact-01-font-size);
-}
-
-/* --- TLInset ---------------------------------------------------------- */
-
-/* ===========================================================================
-   Spacing model.
-
-   Containers never introduce padding - everything flushes to the container
-   border by default. Breathing room is explicit:
-
-     - The explicit <inset> element (.tlInset) is dropped into a view
-       wherever content would otherwise glue to the border (e.g. a form in a
-       tab or dialog, a stack/grid of cards, or explanatory text in a dialog).
-     - A <panel> whose body flows sets with-inset="true", which wraps the body
-       in the same .tlInset.
-     - A form grid (.tl-form-layout) is a plain layout and does not pad itself.
-       A form that needs room sets with-inset="true", which wraps it in the same
-       .tlInset, or sits in an inset panel or an <inset>.
-     - The dashboard layout pads itself (its outer inset == its tile gap).
-     - A card sets a reduced --page-inset, which every inset inside it picks up;
-       a panel sets it to the horizontal padding of its header.
-
-   Simple layouts (<stack>, <grid>) and chrome containers (sidebar content, tab
-   content, split panes, panel body, dialog body) do NOT pad. A <panel> (dark
-   toolbar) flushes unless it sets with-inset; a <card> (rounded border) must live
-   inside a dashboard or an inset so its border has room. No enforcement - build views per the
-   documented convention.
-   =========================================================================== */
-
-/* ===========================================================================
-   Overlay surfaces.
-
-   A popup floating above the page - a menu, a toolbar drop-down, a sidebar
-   group flyout, a field's option list - reads as elevated through three
-   themed tokens, never through literal colours:
-
-     - background: --layer-02, the elevated surface. It equals --layer-01 on a
-       light theme and is the lighter of the two on a dark one, where a popup
-       painted in the page's own colour disappears into it.
-     - border: --border-strong, so the edge stays visible where surface and
-       page are close in luminance.
-     - box-shadow: --shadow-menu, the theme's own popup shadow.
-
-   A field's option list keeps --field as its background instead, staying the
-   colour of the input it belongs to.
-   =========================================================================== */
-:root {
-	--page-inset: var(--spacing-04);
-}
-
-/* An inset passes the space it is given on to its content: a bounded flex column, so that content
-   which fills resolves its height against the inset - the inset then carries .tlFill and asks its
-   own container for that height (see the fill contract above). Around content of its own size the
-   inset is exactly as high as that content plus the padding, so it does not claim the height of a
-   container it shares with others. */
-.tlInset {
-	box-sizing: border-box;
-	display: flex;
-	flex-direction: column;
-	width: 100%;
-	padding: var(--page-inset);
 }
 
 /* --- TLAudioRecorder --------------------------------------------------- */
@@ -916,39 +801,6 @@ div.tlValueList {
 	cursor: grabbing;
 }
 
-/* --- TLStack --------------------------------------------------------------- */
-
-.tlStack {
-	display: flex;
-	font-family: var(--font-family);
-}
-
-.tlStack--column { flex-direction: column; }
-.tlStack--row    { flex-direction: row; }
-
-.tlStack--gap-compact { gap: var(--spacing-02); }
-.tlStack--gap-default { gap: var(--spacing-04); }
-.tlStack--gap-loose   { gap: var(--spacing-06); }
-
-.tlStack--align-start   { align-items: flex-start; }
-.tlStack--align-center  { align-items: center; }
-.tlStack--align-end     { align-items: flex-end; }
-.tlStack--align-stretch { align-items: stretch; }
-
-/* Distribution of the free space along the direction of the stack. */
-.tlStack--justify-start         { justify-content: flex-start; }
-.tlStack--justify-center        { justify-content: center; }
-.tlStack--justify-end           { justify-content: flex-end; }
-.tlStack--justify-space-between { justify-content: space-between; }
-.tlStack--justify-space-around  { justify-content: space-around; }
-.tlStack--justify-space-evenly  { justify-content: space-evenly; }
-
-.tlStack--wrap { flex-wrap: wrap; }
-
-/* First child fills the remaining main-axis space (input-with-adornment row). */
-.tlStack--grow-first.tlStack--row > *:first-child { flex: 1 1 auto; min-width: 0; }
-.tlStack--grow-first.tlStack--column > *:first-child { flex: 1 1 auto; min-height: 0; }
-
 /* --- Compact field (ReactCompactFieldControl) ------------------------------ */
 
 /* A row of the preview of a value and the button opening its editor. The preview takes the width
@@ -1270,33 +1122,6 @@ div.tlValueList {
 	to   { opacity: 0; transform: translateX(12px); }
 }
 
-/* --- TLGrid ---------------------------------------------------------------- */
-
-.tlGrid {
-	display: grid;
-	font-family: var(--font-family);
-}
-
-/* The gap is also published as a custom property, because the responsive column template has to
-   compute with it: bounding the number of auto-fit columns means raising the column minimum to the
-   width a row of that many columns leaves for one of them, gaps taken off. */
-.tlGrid--gap-compact { --tlGrid-gap: var(--spacing-02); gap: var(--tlGrid-gap); }
-.tlGrid--gap-default { --tlGrid-gap: var(--spacing-04); gap: var(--tlGrid-gap); }
-.tlGrid--gap-loose   { --tlGrid-gap: var(--spacing-06); gap: var(--tlGrid-gap); }
-
-/* --- TLDeckPane ------------------------------------------------------------ */
-
-/* Shows one child at a time and takes its size from that child: a column flex box that states no
-   size of its own, so a deck standing inline - in an app bar, beside a breadcrumb - is as wide and
-   as high as the content it shows. A deck showing a filling child carries .tlFill (see the fill
-   contract above) and is then a bounded flex container the child's height resolves against. */
-.tlDeckPane {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-	min-height: 0;
-}
-
 /* --- TLAdaptiveDetail (responsive master-detail) --------------------------- */
 
 .tlAdaptiveDetail {
@@ -1382,12 +1207,12 @@ div.tlValueList {
 /* Cell rules that read classes of controls not yet migrated: they read the design system's cell
    (tl-table__cell) and leave with their controls. A value beside an adornment - the language button
    of an internationalized text - sits in a row with it that follows the column width. */
-.tl-table__cell > .tlStack--row {
+.tl-table__cell > .tl-stack--row {
 	width: 100%;
 	min-width: 0;
 }
 
-.tl-table__cell > .tlStack--grow-first.tlStack--row > *:first-child {
+.tl-table__cell > .tl-stack--grow-first.tl-stack--row > *:first-child {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
@@ -1432,12 +1257,12 @@ div.tlValueList {
 	line-height: 1.5;
 	overflow-wrap: break-word;
 	/* Scrolled to its start, the content keeps the inset of the container it stands in. */
-	scroll-margin-top: var(--page-inset);
+	scroll-margin-top: var(--tl-space-lg);
 }
 
 /* A section scrolled to keeps a distance to the top edge. */
 .tlHtml--inline [id] {
-	scroll-margin-top: var(--page-inset);
+	scroll-margin-top: var(--tl-space-lg);
 }
 
 .tlHtml--inline > :first-child {
@@ -2638,7 +2463,7 @@ div.tlValueList {
   width: 100%;
   box-sizing: border-box;
   /* The dashboard layout pads itself - the outer inset matches the tile gap. */
-  padding: var(--page-inset);
+  padding: var(--tl-space-lg);
 }
 .tlDashboard__grid {
   width: 100%;

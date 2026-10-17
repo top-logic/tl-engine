@@ -8,6 +8,7 @@ import userEvent from '@testing-library/user-event';
 import { createPortal } from 'react-dom';
 import { React, SurfaceProvider, panelSurface, replacePart, register } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import TLStack from '../../../com.top_logic.layout.react/react-src/controls/TLStack';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
 import TLCard from '../../../com.top_logic.layout.react/react-src/controls/TLCard';
 import TLSplitPanel from '../../../com.top_logic.layout.react/react-src/controls/TLSplitPanel';
@@ -265,5 +266,37 @@ describe('the width handle of a table column takes the keyboard', () => {
     await settle();
     // jsdom measures no content: the fitted width is the minimum. What counts is that End reports the column at once.
     expect(sent).toHaveBeenCalledWith('columnResize', expect.objectContaining({ column: 'name' }));
+  });
+});
+
+// Q24 (#29755): a selectable stack is a list box; the state of an item is aria-selected, not a class.
+describe('the items of a selectable container', () => {
+  const LIST = {
+    children: [childControl('a', 'Altbau'), childControl('b', 'Loft')],
+    selectable: true,
+    itemKeys: ['ka', 'kb'],
+    selected: ['kb'],
+  };
+
+  it('are options of a list box, the selected one by aria-selected only', async () => {
+    mountAdapter(TLStack, LIST);
+    await settle();
+    expect(screen.getByRole('listbox')).toBeTruthy();
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(2);
+    expect(options[1].getAttribute('aria-selected')).toBe('true');
+    expect(options[0].getAttribute('aria-selected')).toBe('false');
+    for (const option of options) {
+      expect(option.classList).toContain('tl-item');
+      expect(option.className).not.toMatch(/--selectable|--selected|tlItem/);
+    }
+  });
+
+  it('select an item on a click', async () => {
+    const sent = mountAdapter(TLStack, LIST);
+    await settle();
+    await userEvent.click(screen.getByText('Altbau'));
+    await settle();
+    expect(sent).toHaveBeenCalledWith('selectItem', { key: 'ka', toggle: false, range: false });
   });
 });

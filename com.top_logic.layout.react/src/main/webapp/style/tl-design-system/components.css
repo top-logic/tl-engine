@@ -1228,11 +1228,13 @@
 }
 .tl-color-picker__mixer[hidden] { display: none; }
 
-/* Der Mischer gibt in kurzen Popups nach: seine Höhe liegt zwischen size-11 und size-12 (size-12, wenn Platz ist),
-   das Feld bleibt quadratisch, der Farbtonstreifen ist so hoch wie das Feld. Den freien Platz gibt das Reiterfeld
-   über die Stapelzeile weiter (picker.css). */
+/* Maß des Mischers: allein size-12 im Quadrat. In der Stapelzeile des Picker-Popups (picker.css) gibt er nach: dort
+   hat der Mischer keine eigene Höhe, sondern die der Zeile, und das Feld liegt zwischen size-11 und size-12 (size-12,
+   wenn Platz ist), quadratisch; der Farbtonstreifen ist so hoch wie das Feld. */
 .tl-color-picker__mixer {
+  box-sizing: content-box;
   align-self: stretch;
+  block-size: var(--tl-size-12);
   min-block-size: var(--tl-size-11);
 }
 
@@ -2551,6 +2553,11 @@ a.tl-field-value:hover {
 .tl-picker__tabs > .tl-tabs__panel {
   padding: var(--tl-space-2xs);
   scroll-padding: var(--tl-space-xs);
+}
+
+/* Ein Reiterfeld mit Mischer reserviert die Bahn des Scrollbalkens: erscheint er erst beim Schrumpfen, verengt er das
+   Feld, und das Popup scrollt auch seitlich. Das Raster des Icon-Pickers scrollt selbst und braucht das nicht. */
+.tl-picker__tabs > .tl-tabs__panel:has(.tl-color-picker__mixer) {
   scrollbar-gutter: stable;
 }
 
@@ -2558,13 +2565,16 @@ a.tl-field-value:hover {
   flex-shrink: 0;
 }
 
-/* Zeigt das Reiterfeld den Mischer, ist seine Stapelzeile der Teil, der mit dem Popup schrumpft; der Mischer darin
-   nimmt ihre Höhe (color-picker.css). Die Spalte daneben (Vorschau, Eingaben) schrumpft nicht mit: sie behält ihre
-   Höhe samt Rand von space-2xs unten und scrollt im Reiterfeld, sodass der Fokusring der letzten Eingabe im
-   overflow bleibt. */
+/* Zeigt das Reiterfeld den Mischer, ist seine Stapelzeile der Teil, der mit dem Popup schrumpft: die Höhe richtet
+   sich nach der Spalte daneben (Vorschau, Eingaben) und gibt erst unter einer Kappe nach. Der Mischer darin nimmt
+   die Höhe der Zeile (color-picker.css). Die Spalte schrumpft nicht mit: sie behält ihre Höhe samt Rand von
+   space-2xs unten und scrollt im Reiterfeld, sodass der Fokusring der letzten Eingabe im overflow bleibt. */
 .tl-picker__tabs > .tl-tabs__panel > .tl-stack:has(> .tl-color-picker__mixer:not([hidden])) {
-  flex: 0 1 calc(var(--tl-size-12) + 2 * var(--tl-space-2xs));
+  flex: 0 1 auto;
   min-block-size: 0;
+}
+.tl-picker__tabs > .tl-tabs__panel > .tl-stack:has(> .tl-color-picker__mixer:not([hidden])) > .tl-color-picker__mixer {
+  block-size: auto;
 }
 .tl-picker__tabs > .tl-tabs__panel > .tl-stack:has(> .tl-color-picker__mixer:not([hidden])) > :not(.tl-color-picker__mixer) {
   min-block-size: min-content;
@@ -4802,4 +4812,4 @@ button.tl-swatch:not(:disabled):hover,
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:fe29d6037ee691cb57035865415f98b5dd64491c484303f181dd4f46c5ee19f8 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:25183f45be7ba4a9dbc73d2c611d31d7db3c4c8dc875f7cc39c116d6586a21ed — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

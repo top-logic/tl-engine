@@ -108,6 +108,7 @@ const ColorPalette: React.FC<ColorPaletteProps> = ({
               key={i}
               className="tl-swatch tl-swatch--color"
               data-tl-state="empty"
+              aria-hidden="true"
               onDragOver={handleDragOver}
               onDrop={handleDrop(i)}
             />

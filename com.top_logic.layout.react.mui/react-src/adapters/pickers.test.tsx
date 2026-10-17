@@ -488,6 +488,10 @@ describe('TLColorInput', () => {
     expect(screen.queryAllByRole('option')).toHaveLength(0);
     const list = screen.getByRole('listbox', { name: 'js.colorInput.colors' });
     expect(list.querySelector('[tabindex="0"]')).toBeNull();
+    // The empty cells are only drop targets: hidden from assistive technology, not role-less listbox children.
+    const cells = list.querySelectorAll('.tl-swatch');
+    expect(cells).toHaveLength(3);
+    cells.forEach(cell => expect(cell.getAttribute('aria-hidden')).toBe('true'));
   });
 
   it('gives the mixer field a slider role whose arrows change the saturation by 1 %', async () => {
@@ -613,6 +617,7 @@ describe('TLIconSelect', () => {
     expect(field().getAttribute('data-tl-state')).toBeNull();
     expect(field().getAttribute('aria-haspopup')).toBe('dialog');
     expect(field().querySelector('i.fa-star')).not.toBeNull();
+    expect(field().querySelector('i.fa-star')!.classList.contains('tl-icon-md')).toBe(true);
     cleanup();
     mountAdapter(TLIconSelect, { ...STATE, value: null });
     await settle();
@@ -621,14 +626,22 @@ describe('TLIconSelect', () => {
     expect(screen.getByRole('button', { name: 'js.iconSelect.noIcon' })).toBe(field());
   });
 
-  it('names the swatch by the label of its icon, else by its class', async () => {
+  it('names the swatch by the label of its icon, else by a name made of its class', async () => {
     mountAdapter(TLIconSelect, STATE);
     await settle();
     expect(screen.getByRole('button', { name: 'Stern' })).toBe(field());
     cleanup();
     mountAdapter(TLIconSelect, { ...STATE, value: 'css:fa-solid fa-moon' });
     await settle();
-    expect(screen.getByRole('button', { name: 'fa-solid fa-moon' })).toBe(field());
+    expect(screen.getByRole('button', { name: 'moon' })).toBe(field());
+    cleanup();
+    mountAdapter(TLIconSelect, { ...STATE, value: 'css:fa-solid fa-arrow-left', icons: [], iconsLoaded: false });
+    await settle();
+    expect(screen.getByRole('button', { name: 'arrow left' })).toBe(field());
+    cleanup();
+    mountAdapter(TLIconSelect, { ...STATE, value: 'css:bi bi-star-fill', icons: [], iconsLoaded: false });
+    await settle();
+    expect(screen.getByRole('button', { name: 'star fill' })).toBe(field());
   });
 
   describe('in a form field', () => {
@@ -660,6 +673,7 @@ describe('TLIconSelect', () => {
     await settle();
     expect(document.querySelector('button')).toBeNull();
     expect(document.querySelector('span.tl-swatch i.fa-star')).not.toBeNull();
+    expect(document.querySelector('span.tl-swatch i.fa-star')!.classList.contains('tl-icon-md')).toBe(true);
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 

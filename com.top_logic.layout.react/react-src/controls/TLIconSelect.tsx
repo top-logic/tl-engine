@@ -10,6 +10,13 @@ const I18N_KEYS = {
 
 const { useState, useCallback, useRef } = React;
 
+/** A name for an icon the list does not know (yet): its last class without the font prefix, hyphens as spaces. */
+function classLabel(encoded: string): string {
+  const tokens = encoded.replace(/^(css|colored):/, '').trim().split(/\s+/);
+  const last = tokens[tokens.length - 1] ?? '';
+  return last.replace(/^(fa|bi)-/, '').replace(/-/g, ' ') || last;
+}
+
 /**
  * An icon select field rendered via React.
  *
@@ -41,10 +48,10 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   const icons = (state.icons as IconEntry[]) ?? [];
   const iconsLoaded = state.iconsLoaded === true;
 
-  // What the swatch says of itself: the label of its icon if the list knows it, else its class, or that it has
-  // none. That it opens a dialog is aria-haspopup's to say.
+  // What the swatch says of itself: the label of its icon if the list knows it, else a name made of its class
+  // (until the list has loaded), or that it has none. That it opens a dialog is aria-haspopup's to say.
   const known = value == null ? undefined : icons.find(icon => icon.variants.some(variant => variant.encoded === value));
-  const name = value == null ? i18n['js.iconSelect.noIcon'] : (known?.label ?? value.replace(/^css:/, ''));
+  const name = value == null ? i18n['js.iconSelect.noIcon'] : (known?.label ?? classLabel(value));
 
   const handleClick = useCallback(() => {
     // The press of this click has closed the popup this swatch opens: leave it closed.
@@ -81,7 +88,7 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         aria-label={name}
         {...tooltipProps(name)}
       >
-        <ThemeIcon encoded={value ?? undefined} />
+        <ThemeIcon encoded={value ?? undefined} className="tl-icon-md" />
       </span>
     );
   }
@@ -107,7 +114,7 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
         // Inside a form field the label names the field; the swatch adds its own value (aria-label) to it.
         aria-labelledby={labelProps['aria-labelledby'] === undefined ? undefined : `${labelProps['aria-labelledby']} ${inputId}`}
       >
-        <ThemeIcon encoded={value ?? ICON_CHOOSE_ICON} />
+        <ThemeIcon encoded={value ?? ICON_CHOOSE_ICON} className="tl-icon-md" />
       </button>
 
       {open && (

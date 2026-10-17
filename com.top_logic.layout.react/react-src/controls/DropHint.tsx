@@ -13,8 +13,9 @@ export interface HintAnchor {
 
 /**
  * Why the target under the running drag refuses it: a tl-popover at the pointer, below the drag image
- * or, where the viewport has no room there, above it - never on it, since the browser draws the drag
- * image over everything (a native tooltip is not shown while a drag runs). The target (table, tree)
+ * or, where the viewport has no room there, above it - not on it where either side has room, since the browser
+ * draws the drag image over everything (a native tooltip is not shown while a drag runs). A hint that fits
+ * neither side is shifted along the cross axis into the viewport and may then overlap the drag image. The target (table, tree)
  * moves it through `moveRef` on every dragover, so only the hint renders while the pointer moves, not
  * the target.
  */

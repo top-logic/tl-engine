@@ -1,10 +1,13 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope, FillBarrier,
-  rootClassName, useFocusTrap, usePart, ICON_CLOSE,
+  rootClassName, useFocusTrap, usePart, ICON_CLOSE, SurfaceProvider,
 } from 'tl-react-bridge';
-import type { TLCellProps } from 'tl-react-bridge';
+import type { TLCellProps, Surface } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
+
+/** What a drawer is for the components inside: a surface floating above the page, with the insets of a page. */
+const OVERLAY_SURFACE: Surface = { level: 'overlay', inset: 'page' };
 
 const I18N_KEYS = {
   'js.drawer.close': 'Close',
@@ -93,9 +96,11 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       <div className="tl-drawer__body">
-        <FillBarrier>
-          {!!child && <TLChild control={child} />}
-        </FillBarrier>
+        <SurfaceProvider value={OVERLAY_SURFACE}>
+          <FillBarrier>
+            {!!child && <TLChild control={child} />}
+          </FillBarrier>
+        </SurfaceProvider>
       </div>
     </aside>
   );

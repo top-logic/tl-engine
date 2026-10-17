@@ -11,6 +11,7 @@ import { PickerPopover } from '../../../com.top_logic.layout.react/react-src/con
 import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
 import TLTabBar from '../../../com.top_logic.layout.react/react-src/controls/TLTabBar';
 import TLColorInput from '../../../com.top_logic.layout.react/react-src/controls/TLColorInput';
+import TLSlider from '../../../com.top_logic.layout.react/react-src/controls/TLSlider';
 import TLIconSelect from '../../../com.top_logic.layout.react/react-src/controls/TLIconSelect';
 import IconSelectPopup from '../../../com.top_logic.layout.react/react-src/controls/icon/IconSelectPopup';
 import MuiButtonAdapter from './MuiButtonAdapter';
@@ -796,5 +797,45 @@ describe('TLIconSelect', () => {
       expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'js.iconSelect.filterPlaceholder' }));
       anchorRef.current.remove();
     });
+  });
+});
+
+describe('TLSlider', () => {
+  const STATE = { value: 25, min: 0, max: 100, step: 1, valueLabel: '25 %', minLabel: '0 %', maxLabel: '100 %', editable: true };
+
+  function input(): HTMLInputElement {
+    return document.querySelector('input.tl-slider__input')!;
+  }
+
+  it('draws the fill as an element sized inline, without a custom property', () => {
+    mountAdapter(TLSlider, STATE);
+    const root = document.querySelector('span.tl-slider')!;
+    const fill = root.querySelector('span.tl-slider__track > span.tl-slider__fill') as HTMLElement;
+    expect(fill.style.inlineSize).toBe('25%');
+    expect(input().getAttribute('style') ?? '').not.toContain('--tlSlider-fill');
+    expect(root.querySelector('output.tl-slider__value .tl-slider__text')!.textContent).toBe('25 %');
+    expect(root.querySelectorAll('.tl-slider__sizer')).toHaveLength(2);
+  });
+
+  it('carries an error as aria-invalid on the input and mandatory as aria-required, without a class', () => {
+    mountAdapter(TLSlider, { ...STATE, hasError: true, mandatory: true });
+    expect(input().getAttribute('aria-invalid')).toBe('true');
+    expect(input().getAttribute('aria-required')).toBe('true');
+    expect(document.querySelector('.tl-slider')!.hasAttribute('data-tl-state')).toBe(false);
+    expect(document.querySelector('.tlSlider--error')).toBeNull();
+  });
+
+  it('carries a warning as data-tl-state on the root', () => {
+    mountAdapter(TLSlider, { ...STATE, hasWarnings: true });
+    expect(document.querySelector('.tl-slider')!.getAttribute('data-tl-state')).toBe('warning');
+    expect(input().hasAttribute('aria-invalid')).toBe(false);
+    expect(document.querySelector('.tlSlider--warning')).toBeNull();
+  });
+
+  it('sets no state on a field without one', () => {
+    mountAdapter(TLSlider, STATE);
+    expect(document.querySelector('.tl-slider')!.hasAttribute('data-tl-state')).toBe(false);
+    expect(input().hasAttribute('aria-invalid')).toBe(false);
+    expect(input().hasAttribute('aria-required')).toBe(false);
   });
 });

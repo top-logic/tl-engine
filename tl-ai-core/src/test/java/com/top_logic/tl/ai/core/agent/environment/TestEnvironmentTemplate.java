@@ -67,6 +67,19 @@ public class TestEnvironmentTemplate extends TestCase {
 	}
 
 	/**
+	 * The language holds for every text the user sees, not only for the final answer. "Answer only
+	 * in this language" let a model write its notes between tool calls in English in a German
+	 * conversation: it read them as no part of the answer.
+	 */
+	public void testTheLanguageHoldsForTheNotesBetweenToolCalls() throws IOException {
+		assertTrue(EnvironmentTemplate.DEFAULT, EnvironmentTemplate.DEFAULT
+			.contains("Write every text the user sees in this language: the notes between tool calls"));
+		assertTrue(shippedTemplate("de"), shippedTemplate("de")
+			.contains("Schreiben Sie jeden Text, den der Benutzer sieht, in dieser Sprache: die Notizen"
+				+ " zwischen Werkzeugaufrufen"));
+	}
+
+	/**
 	 * The English text an installation gets is the one this class documents.
 	 *
 	 * <p>

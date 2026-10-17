@@ -1250,16 +1250,16 @@
   touch-action: none;
 }
 
-/* Der Griff liegt auf einer Datenfarbe: ein Doppelring aus den beiden Griff-Rollen (Rand und inset-Linie), von
+/* Der Griff liegt auf einer Datenfarbe: ein Doppelring aus den beiden Griff-Rollen, innen hell (inset-Linie), außen dunkel (Rand), von
    denen auf jeder Farbe einer 3:1 erreicht. Kein outline: den verbietet das Gate den Komponenten. */
 .tl-color-picker__handle {
   position: absolute;
   box-sizing: border-box;
   inline-size: var(--tl-size-choice);
   block-size: var(--tl-size-choice);
-  border: var(--tl-border-width-md) solid var(--tl-border-handle-light);
+  border: var(--tl-border-width-md) solid var(--tl-border-handle-dark);
   border-radius: var(--tl-radius-full);
-  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-handle-dark);
+  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-handle-light);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -2081,7 +2081,7 @@ a.tl-field-value:hover {
 .tl-picker.tl-icon-picker {
   inline-size: var(--tl-size-13);
   block-size: var(--tl-size-13);
-  overflow: auto;
+  overflow: hidden;
   resize: both;
 }
 
@@ -2098,6 +2098,7 @@ a.tl-field-value:hover {
   gap: var(--tl-space-2xs);
   min-block-size: 0;
   padding: var(--tl-space-2xs);
+  scroll-padding: var(--tl-space-xs); /* Fokus hält die Zelle samt Ring im Sichtfeld. */
   overflow: auto;
 }
 .tl-icon-picker__grid[hidden] { display: none; }
@@ -2520,8 +2521,18 @@ a.tl-field-value:hover {
 }
 .tl-picker[hidden] { display: none; }
 
+/* Die Reiter nehmen den Rest der Hülle und schrumpfen mit ihr: der Inhalt im Reiterfeld (Raster) scrollt selbst,
+   statt dass das Popup als Ganzes scrollt. */
 .tl-picker__tabs {
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* Der Rand von space-2xs im Reiterfeld hält den Fokusring der Randelemente (Filter, Eingaben, Zellen) im
+   overflow des Feldes. */
+.tl-picker__tabs > .tl-tabs__panel {
+  padding: var(--tl-space-2xs);
+  scroll-padding: var(--tl-space-xs);
 }
 
 .tl-picker__actions {
@@ -3391,30 +3402,35 @@ a.tl-field-value:hover {
   visibility: hidden;
 }
 
-/* Warnung vor Fehler: bei gleicher Spezifität gewinnt die spätere Regel, und der Fehler muss die Warnung
-   verdrängen. Der Daumen und der Text tragen den Zustand. */
-.tl-slider[data-tl-state~="warning"] .tl-slider__input::-webkit-slider-thumb {
+/* Vorrang über die Spezifität, nicht über die Reihenfolge: deaktiviert verdrängt jeden Zustand (:not(:disabled)),
+   und der Fehler verdrängt die Warnung (:not([aria-invalid="true"]) an den Warnregeln). Daumen und Text tragen
+   den Zustand. */
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"])::-webkit-slider-thumb {
   background: var(--tl-status-warning-border);
 }
 
-.tl-slider[data-tl-state~="warning"] .tl-slider__input::-moz-range-thumb {
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"])::-moz-range-thumb {
   background: var(--tl-status-warning-border);
 }
 
-.tl-slider[data-tl-state~="warning"] .tl-slider__text {
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"]) ~ .tl-slider__value .tl-slider__text {
   color: var(--tl-status-warning-text);
 }
 
-.tl-slider__input[aria-invalid="true"]::-webkit-slider-thumb {
+.tl-slider__input[aria-invalid="true"]:not(:disabled)::-webkit-slider-thumb {
   background: var(--tl-status-error-border);
 }
 
-.tl-slider__input[aria-invalid="true"]::-moz-range-thumb {
+.tl-slider__input[aria-invalid="true"]:not(:disabled)::-moz-range-thumb {
   background: var(--tl-status-error-border);
 }
 
-.tl-slider__input[aria-invalid="true"] ~ .tl-slider__value .tl-slider__text {
+.tl-slider__input[aria-invalid="true"]:not(:disabled) ~ .tl-slider__value .tl-slider__text {
   color: var(--tl-status-error-text);
+}
+
+.tl-slider__input:disabled ~ .tl-slider__value {
+  color: var(--tl-text-disabled);
 }
 
 /* --- snackbar/snackbar.css --- */
@@ -3628,6 +3644,8 @@ a.tl-field-value:hover {
 
 button.tl-swatch:disabled {
   border-color: var(--tl-border-disabled);
+  background-color: var(--tl-surface-disabled);
+  color: var(--tl-text-disabled);
   cursor: default;
 }
 
@@ -4751,4 +4769,4 @@ button.tl-swatch:not(:disabled):hover,
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:688ffcaa11d871a9ac153530639158235c422e4bd1c5fb914444af2bf51aa11d — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:a319bc196360d8d6a3007cef918a256099daf031d77247a301d3f9670caad901 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

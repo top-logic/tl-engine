@@ -234,7 +234,19 @@ describe('the width handle of a table column takes the keyboard', () => {
     await settle();
     const handle = screen.getByRole('separator', { name: 'js.table.columnWidth' });
     handle.focus();
-    await userEvent.keyboard('{ArrowRight}');
+    const seenAbove: string[] = [];
+    const record = (e: KeyboardEvent) => seenAbove.push(e.key);
+    document.addEventListener('keydown', record);
+    const width = Number(handle.getAttribute('aria-valuenow'));
+    const notPrevented = fireEvent.keyDown(handle, { key: 'ArrowRight' });
+    document.removeEventListener('keydown', record);
+    await settle();
+    // The key is taken: the table's own keyboard does not see it, and nothing is reported before it is released.
+    expect(notPrevented).toBe(false);
+    expect(seenAbove).toEqual([]);
+    expect(sent).not.toHaveBeenCalledWith('columnResize', expect.anything());
+    expect(Number(handle.getAttribute('aria-valuenow'))).toBe(width + 16);
+    fireEvent.keyUp(handle, { key: 'ArrowRight' });
     await settle();
     expect(sent).toHaveBeenCalledWith('columnResize', { column: 'name', width: 136 });
   });

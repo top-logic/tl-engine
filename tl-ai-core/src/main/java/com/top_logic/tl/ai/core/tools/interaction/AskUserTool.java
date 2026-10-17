@@ -93,22 +93,24 @@ public class AskUserTool {
 	 * What the model is told when nobody answered its question in time.
 	 *
 	 * <p>
-	 * A chat turn whose user stepped away is not a cancelled one. The answer used to say "write your
-	 * final answer and ask how they would like to proceed", and a model then either stopped with the
-	 * task half done or took a step nobody asked for: in one Pietro run it deleted the document it had
-	 * just made and built another one. The model is told to go on with the option it can stand
-	 * behind, to say which assumption it took - the person reads that and corrects it in the next
-	 * message - and not to undo work over an open question.
+	 * A question is asked because the decision is the user's, so an unanswered one is no consent.
+	 * The answer used to tell the model to go on with an option of its own choice and finish the work:
+	 * in one Pietro run it then created a methodology the person had not accepted. Before that, the
+	 * answer said "write your final answer and ask how they would like to proceed", and a model took a
+	 * step nobody asked for: it deleted the document it had just made and built another one. The model
+	 * is now told to write nothing the question was about, to delete or replace nothing, and to end the
+	 * turn with the question open in its answer - the person answers it with the next message.
 	 * </p>
 	 */
 	static String timedOut(Duration waited) {
 		long minutes = Math.max(1, waited.toMinutes());
 		return "Nobody answered within " + minutes + (minutes == 1 ? " minute" : " minutes")
-			+ ", and nobody will in this turn. Do not call askUser again. Go on with the task: choose the "
-			+ "option that keeps what exists and that a person can change most easily later, and finish "
-			+ "the work with it. In your final answer, say which assumption you took and why, so that the "
-			+ "user can correct it. Where the work rests on the assumption, record it where this "
-			+ "application keeps assumptions. Never delete or replace work because a question stayed open.";
+			+ ", and nobody will in this turn. The decision belongs to the user, and an unanswered "
+			+ "question is not consent. Do not call askUser again. Do not create, change or delete "
+			+ "anything that the question was about. Never delete or replace work because a question "
+			+ "stayed open. Write your final answer now and end the turn: say what you did, then ask the "
+			+ "open question again in the answer, with its options, so that the user can answer it in "
+			+ "the next message.";
 	}
 
 	/**

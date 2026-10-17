@@ -1007,6 +1007,30 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_COLOR_INPUT_CLEAR;
 
 	/**
+	 * @en Colors
+	 */
+	@CustomKey("js.colorInput.colors")
+	public static ResKey JS_COLOR_INPUT_COLORS;
+
+	/**
+	 * @en Saturation and brightness
+	 */
+	@CustomKey("js.colorInput.saturationBrightness")
+	public static ResKey JS_COLOR_INPUT_SATURATION_BRIGHTNESS;
+
+	/**
+	 * @en Saturation {0} %, brightness {1} %
+	 */
+	@CustomKey("js.colorInput.saturationBrightnessValue")
+	public static ResKey JS_COLOR_INPUT_SATURATION_BRIGHTNESS_VALUE;
+
+	/**
+	 * @en Hue
+	 */
+	@CustomKey("js.colorInput.hue")
+	public static ResKey JS_COLOR_INPUT_HUE;
+
+	/**
 	 * @en Simple
 	 */
 	@CustomKey("js.iconSelect.simpleTab")

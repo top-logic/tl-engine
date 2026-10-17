@@ -60,7 +60,6 @@ export function useTabList({ idPrefix, ids, selected, onSelect }: TabListOptions
     else if (e.key === 'End') next = ids.length - 1;
     else return;
     e.preventDefault();
-    if (ids.length === 0) return;
     const id = ids[(next + ids.length) % ids.length];
     (e.currentTarget as HTMLElement).ownerDocument.getElementById(tabId(id))?.focus();
     onSelect(id);

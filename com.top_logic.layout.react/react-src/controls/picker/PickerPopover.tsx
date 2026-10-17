@@ -22,7 +22,8 @@ export interface PickerPopoverProps {
 /**
  * The shell of the color and the icon picker: a `tl-popover` portaled to the body, placed under its anchor by
  * usePopover, with a focus trap that gives the focus back to the anchor, closed on Escape and on a press outside.
- * Mounted only while open. Its Escape scope is registered on mount, so inside a window it is the newer scope and
+ * Mounted only while open, and the anchor must be mounted before the picker opens: the position and the return of
+ * the focus read it on mount. Its Escape scope is registered on mount, so inside a window it is the newer scope and
  * closes the picker, not the window.
  */
 export const PickerPopover: React.FC<PickerPopoverProps> = ({ anchorRef, label, className, initialFocus, onClose, children }) => {

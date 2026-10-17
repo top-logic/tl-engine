@@ -5,8 +5,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createPortal } from 'react-dom';
-import { React, SurfaceProvider, panelSurface, replacePart, register } from 'tl-react-bridge';
+import { React, createPortal, SurfaceProvider, panelSurface, replacePart, register } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLStack from '../../../com.top_logic.layout.react/react-src/controls/TLStack';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
@@ -36,6 +35,8 @@ afterEach(() => {
 
 // A control that draws into the page, not into its place: the overflow menu of a toolbar does so.
 register('ContainersPortaledChild', () => createPortal(<button type="button">Menueeintrag</button>, document.body));
+register('ContainersItemButton', () => <button type="button">Oeffnen</button>);
+const withButton = { controlId: 'bt', module: 'ContainersItemButton', state: {} } as ReturnType<typeof childControl>;
 const portaled = { controlId: 'p', module: 'ContainersPortaledChild', state: {} } as ReturnType<typeof childControl>;
 
 const PANEL = { title: 'Kunden', showMinimize: true, showMaximize: true, child: childControl('x', 'Inhalt') };
@@ -298,5 +299,13 @@ describe('the items of a selectable container', () => {
     await userEvent.click(screen.getByText('Altbau'));
     await settle();
     expect(sent).toHaveBeenCalledWith('selectItem', { key: 'ka', toggle: false, range: false });
+  });
+
+  it('do not select on a click on a button inside the item', async () => {
+    const sent = mountAdapter(TLStack, { ...LIST, children: [withButton, childControl('b', 'Loft')] });
+    await settle();
+    await userEvent.click(screen.getByRole('button', { name: 'Oeffnen' }));
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('selectItem', expect.anything());
   });
 });

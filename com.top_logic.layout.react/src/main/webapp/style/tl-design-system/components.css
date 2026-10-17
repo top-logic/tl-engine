@@ -3622,8 +3622,8 @@ a.tl-field-value:hover {
 }
 
 /* --- swatch/swatch.css --- */
-/* Swatch — Spec 2026-10-17 Welle 5a §3. Ein Quadrat, das eine Auswahl zeigt: Feldknopf des Farb- und Icon-Pickers,
-   Zelle der Palette und des Icon-Rasters. Das CSS zeichnet nur Geometrie und Rahmen; die Datenfarbe setzt das TSX
+/* Swatch — Spec 2026-10-17 Welle 5a §3. Ein Quadrat, das eine Auswahl zeigt: Feldknopf des Farb- und Icon-Pickers
+   und Zelle der Palette (die Zelle des Icon-Rasters ist tl-icon-picker__cell). Das CSS zeichnet nur Geometrie und Rahmen; die Datenfarbe setzt das TSX
    inline. Leer, Fehler und Warnung sind Attribute (aria-invalid, data-tl-state), keine Klassen. Den Fokusring liefert
    base.css. */
 
@@ -3670,10 +3670,14 @@ button.tl-swatch:disabled {
   cursor: default;
 }
 
-/* Ein Knopf oder eine Option zeigt beim Zeigen den Hof der Auswahlmarken. */
-button.tl-swatch:not(:disabled):hover,
-.tl-swatch[role="option"]:hover {
+/* Der Feldknopf zeigt beim Zeigen den Hof der Auswahlmarken, die Option (Palettenzelle) den starken Hof der Fläche
+   einer Option (skalen 4c S3: der schwache ging als Saum verloren). */
+button.tl-swatch:not(:disabled):hover {
   box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover);
+}
+
+.tl-swatch[role="option"]:hover {
+  box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover-strong);
 }
 
 /* --- table/table.css --- */
@@ -4790,4 +4794,4 @@ button.tl-swatch:not(:disabled):hover,
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:567758da02a8a87e748b745d83d80bc50f810710e76a06ba0838bcd47b13e205 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:502a87693430f6b8665140bb954cc3fe59c3759b4aea5d384ae5a312aebf3c60 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

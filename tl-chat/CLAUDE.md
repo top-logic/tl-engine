@@ -669,6 +669,7 @@ into the chat state their own sentence, and both feed one `Composer` prop:
 | Path | How |
 |--|--|
 | `<chat-conversation>` | `<placeholder><en>…</en><de>…</de></placeholder>`, or the key of a text in the application's bundle. The control resolves it in the acting account's language (`ChatViewBinding.resolveText`) and pushes the words, never the key. |
+| `<chat-conversation>` on several pages | `<placeholder-by>` with `<inputs>` and a `<value>` TL-Script over them, like `<prompts>`. The control evaluates it again when an input changes; an empty result leaves `<placeholder>` in force. For one chat element whose subject the page decides - "this project" while one is open, everything else while none is. |
 | A host composing `App` | `extensions.composerAddons.placeholder`, already localised. |
 
 A configured `<chat-conversation placeholder>` wins over the seam: it is the installation's

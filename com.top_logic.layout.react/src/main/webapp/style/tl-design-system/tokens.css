@@ -101,6 +101,8 @@
   --tl-border-emphasis: var(--tl-gray-45);
   --tl-border-interactive: var(--tl-blue-49);
   --tl-border-disabled: var(--tl-gray-18);
+  --tl-border-handle-light: var(--tl-gray-0);
+  --tl-border-handle-dark: var(--tl-gray-77);
   --tl-focus-ring: var(--tl-blue-49);
   --tl-status-error-text: var(--tl-red-42);
   --tl-status-error-border: var(--tl-red-41);
@@ -196,6 +198,8 @@
   --tl-border-emphasis: var(--tl-gray-39);
   --tl-border-interactive: var(--tl-blue-32);
   --tl-border-disabled: var(--tl-gray-66);
+  --tl-border-handle-light: var(--tl-gray-0);
+  --tl-border-handle-dark: var(--tl-gray-77);
   --tl-focus-ring: var(--tl-blue-32);
   --tl-status-error-text: var(--tl-red-31);
   --tl-status-error-border: var(--tl-red-34);
@@ -261,4 +265,4 @@
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
-/* tl-design-system sha256:5a3115e962b94ac9bfeb85acc025e24db111492843aeffea64d99dd3d55c90be — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:2aef8218b7ceb5dcff30365cc1185c5f6b5850e9af53386e07a549d49dc04f78 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

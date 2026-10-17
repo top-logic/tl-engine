@@ -2291,6 +2291,11 @@ a.tl-field-value:hover {
   background: var(--tl-surface-base);
 }
 
+/* Ein Doppelklick auf den Kopf maximiert; er soll den Titel nicht markieren. */
+.tl-panel > .tl-titlebar {
+  user-select: none;
+}
+
 .tl-panel[data-tl-state~="minimized"] > .tl-titlebar {
   cursor: pointer;
 }
@@ -4336,4 +4341,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:e729e948b14c360afc8b1d9afaea410bd7b3f52c0f2a3e0fbc177d7f6c4b6e57 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:1f206638716076f786d7d2a9bbed3e8a14ebb74e7e81cc265ab8ab556b45b267 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

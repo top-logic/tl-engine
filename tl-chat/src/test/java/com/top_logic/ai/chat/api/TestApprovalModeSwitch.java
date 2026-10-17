@@ -15,6 +15,7 @@ import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +38,9 @@ import com.meterware.servletunit.ServletRunner;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
+import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
@@ -177,6 +180,35 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 		assertEquals(HttpServletResponse.SC_OK, opened.status());
 		assertTrue("The chat is opened with the mode it stores: " + opened.body(),
 			opened.body().contains("\"approvalMode\":\"AUTO_APPROVE\""));
+	}
+
+	/**
+	 * A run of the chat that works right now reads the switch at every approval, from the chat it
+	 * was started with - which is another window's copy when another window started it (#943).
+	 */
+	public void testARunStartedInAnotherWindowTakesTheSwitch() throws Exception {
+		TaskProgressTracker runWindow = new TaskProgressTracker();
+		runWindow.setActiveSessionId(id(), anna);
+		AIProcessingState run = new AIProcessingState();
+		String taskId = UUID.randomUUID().toString();
+		run.setCurrentTaskId(taskId);
+		run.setSessionId(id());
+		run.setChatState(runWindow.activeChat());
+		run.startProcessing();
+		PendingInteractionRegistry.register(taskId, anna, runWindow, run);
+		try {
+			assertEquals(ApprovalMode.AUTO_APPROVE, run.getChatState().approvalMode());
+
+			switchTo(ApprovalMode.MANUAL, anna);
+			assertEquals("Switched off in this window, the run in the other one asks again.",
+				ApprovalMode.MANUAL, run.getChatState().approvalMode());
+
+			switchTo(ApprovalMode.AUTO_APPROVE, anna);
+			assertEquals("Switched on again, it stops asking.",
+				ApprovalMode.AUTO_APPROVE, run.getChatState().approvalMode());
+		} finally {
+			PendingInteractionRegistry.unregister(taskId);
+		}
 	}
 
 	/** Somebody else's chat is not switched, and the answer says nothing about it existing. */

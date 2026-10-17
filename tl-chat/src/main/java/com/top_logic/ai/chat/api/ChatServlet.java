@@ -1161,6 +1161,11 @@ public class ChatServlet extends TopLogicServlet {
 	 * </p>
 	 *
 	 * <p>
+	 * A run of the chat that is working right now takes the new mode with its next approval, in
+	 * both directions, whichever window of the account started it (#943).
+	 * </p>
+	 *
+	 * <p>
 	 * A body without {@code sessionId} is refused. A conversation that has no chat yet keeps the
 	 * mode in the browser and names it when it creates the chat (POST /chat/sessions), because a
 	 * chat that stores no mode runs with {@link ApprovalMode#MANUAL} (#808).
@@ -1206,6 +1211,11 @@ public class ChatServlet extends TopLogicServlet {
 		ChatState held = tracker.getSessionManager().getChatState(sessionId);
 		if (held != null) {
 			held.setApprovalMode(approvalMode);
+		}
+		// A run of the chat reads the switch at every approval, from the copy it was started with,
+		// which is another window's when another window started it (#943).
+		for (ChatState running : PendingInteractionRegistry.chatsOf(person, sessionId)) {
+			running.setApprovalMode(approvalMode);
 		}
 		// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
 		// stored mode, so that no window writes back the one it opened the chat with.

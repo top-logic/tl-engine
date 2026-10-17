@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.layout;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -382,6 +383,44 @@ public final class PendingInteractionRegistry {
 			}
 		}
 		return stores == null ? List.of() : stores;
+	}
+
+	/**
+	 * The copies of the given chat that this account's runs and subagents decide by, whichever
+	 * window started them.
+	 *
+	 * <p>
+	 * What {@code POST /chat/approval-mode} brings in line besides the copies the windows hold: a run
+	 * reads the switch of its own chat at every approval (#943), and the run may have been started
+	 * in a window other than the one the switch is changed in.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The account; may be <code>null</code>, which finds nothing.
+	 * @param sessionId
+	 *        The chat; may be <code>null</code>, which finds nothing.
+	 */
+	public static Set<ChatState> chatsOf(Person owner, String sessionId) {
+		if (owner == null || sessionId == null) {
+			return Set.of();
+		}
+		Set<ChatState> chats = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (PendingRun run : runsOf(owner)) {
+			ChatState chat = run.state().getChatState();
+			if (chat != null && sessionId.equals(run.state().getSessionId())) {
+				chats.add(chat);
+			}
+		}
+		for (PendingSubagent subagent : subagentsOf(owner)) {
+			TaskProgressTracker window = subagent.tracker();
+			if (window != null && sessionId.equals(subagent.sessionId())) {
+				ChatState chat = window.getSessionManager().getChatState(sessionId);
+				if (chat != null) {
+					chats.add(chat);
+				}
+			}
+		}
+		return chats;
 	}
 
 	/**

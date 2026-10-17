@@ -152,9 +152,23 @@ no window sets it - today, the task, and it sets it for `AUTO_APPROVE` only. A t
 `approval-mode="MANUAL"` declares that a person will answer, which since #393 any window of that
 account can, and is therefore an ordinary attended run started by a clock.
 
-Approval prompts never blocked in `AUTO_APPROVE` - the callback is `ApprovalCallback.AUTO_APPROVE`,
-which answers on the calling thread - so `askUser` was the one thing that could park an unattended
-run. See `doc/scheduled-agent.md`.
+Approval prompts never blocked in `AUTO_APPROVE` - the callback answers on the calling thread - so
+`askUser` was the one thing that could park an unattended run. See `doc/scheduled-agent.md`.
+
+### The switch reaches the running turn, and no answer is lost (#943, #944)
+
+`ChatApprovalCallback` is the approval callback of every chat run. It reads the chat's
+`approvalMode()` at **every** call, not when the run starts: a person who switches auto-approve on
+during a turn is not asked for the next write of that turn, one who switches it off is.
+`POST /chat/approval-mode` therefore sets the mode on the window's copy of the chat **and** on the
+copies the account's running runs and subagents hold (`PendingInteractionRegistry.chatsOf`), because
+the run may have been started in another window. A card already open when the switch goes on is
+answered by the browser, as before.
+
+The callback registers its wait in `ApprovalCallback.open`, which `AgentLoop` calls **before** it
+emits `ApprovalRequired`: an answer can come the moment the card is shown, and an answer that found
+no wait was dropped ("no run of this account is waiting for it") while the run waited 30 minutes.
+`TestChatApprovalDuringTurn` and `TestApprovalModeSwitch` pin both.
 
 ### Key Classes
 

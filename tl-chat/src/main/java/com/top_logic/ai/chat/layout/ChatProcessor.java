@@ -15,12 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
@@ -39,16 +34,12 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
-import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
 import com.top_logic.tl.ai.core.agent.environment.UserMemories;
@@ -936,52 +927,9 @@ public class ChatProcessor {
 	 */
 	static ToolContext buildToolContext(UserInteractionStore interactionStore,
 			TaskProgressTracker taskTracker, ChatState chat, CancellationToken cancellationToken) {
-		ApprovalCallback approvalCallback;
-		// The run's own chat decides, not the one the window shows by the time the run starts.
-		if (chat.approvalMode() == ApprovalMode.AUTO_APPROVE) {
-			approvalCallback = ApprovalCallback.AUTO_APPROVE;
-		} else {
-			approvalCallback = request -> {
-				Logger.info("Approval requested for tool '" + request.toolName()
-					+ "' (mode=" + request.mode() + ", approvalRequestId="
-					+ request.approvalRequestId() + "). Blocking until user responds.",
-					ChatProcessor.class);
-				// The store bound on the asking thread, not the one this run was started with: a
-				// background subagent inherits this callback, and it asks through its job's own store,
-				// which outlives this run's turn. On the run's own thread both are the same.
-				UserInteractionStore bound = UserInteractionStoreBinding.getStore();
-				UserInteractionStore store = bound != null ? bound : interactionStore;
-				CompletableFuture<String> future = store.registerApproval(request);
-				try {
-					// Stopping the asking run ends this wait - the lead, or the background subagent
-					// that asks on its own thread with its own token.
-					String response = RunCancellationBinding.await(future,
-						request.timeout().toMillis(), TimeUnit.MILLISECONDS);
-					Logger.info("Approval response for '" + request.toolName()
-						+ "': " + response, ChatProcessor.class);
-					return mapApprovalResponse(response);
-				} catch (TimeoutException e) {
-					Logger.warn("Approval timed out for tool '" + request.toolName() + "'.",
-						ChatProcessor.class);
-					return new ApprovalResult.TimedOut();
-				} catch (CancellationException e) {
-					// The run was stopped; the loop sees its token and ends the turn.
-					return new ApprovalResult.TimedOut();
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					return new ApprovalResult.TimedOut();
-				} catch (ExecutionException e) {
-					Logger.error("Approval future failed for tool '" + request.toolName()
-						+ "': " + e.getMessage(), e, ChatProcessor.class);
-					return new ApprovalResult.TimedOut();
-				} finally {
-					// Nobody waits on this future any more. Answering removes the registration
-					// already, this drops it on every other exit so that a timed-out approval
-					// does not linger as a phantom in getPendingApprovals().
-					store.discardApproval(request.approvalRequestId());
-				}
-			};
-		}
+		// The run's own chat decides, not the one the window shows by the time the run starts - and
+		// it decides at every call, so the switch reaches the turn that is running (#943).
+		ApprovalCallback approvalCallback = new ChatApprovalCallback(interactionStore, chat);
 		// The one token of the run is shared between context and transaction scope so lock-retry
 		// waits also end promptly when the user cancels the run.
 		// The chat user is the run's principal: their roles decide which tools the agent may use, and
@@ -1001,28 +949,6 @@ public class ChatProcessor {
 			security, approvalCallback, new TransactionScope(cancellationToken),
 			chat.approvedTools(), cancellationToken);
 		return unattended ? context.unattended() : context;
-	}
-
-	/**
-	 * Maps the raw response string from the UI to an {@link ApprovalResult}.
-	 */
-	private static ApprovalResult mapApprovalResponse(String response) {
-		if (response == null) {
-			return new ApprovalResult.TimedOut();
-		}
-		return switch (response) {
-			case "APPROVED" -> new ApprovalResult.Approved();
-			case "APPROVED_FOR_SESSION" -> new ApprovalResult.ApprovedForSession();
-			default -> {
-				if (response.startsWith("REJECTED")) {
-					String comment = response.length() > "REJECTED".length()
-						? response.substring("REJECTED:".length()).trim()
-						: "";
-					yield new ApprovalResult.Rejected(comment);
-				}
-				yield new ApprovalResult.Rejected(response);
-			}
-		};
 	}
 
 	/** Returns a human-readable error description, never null. */

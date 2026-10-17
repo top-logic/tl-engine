@@ -19,7 +19,7 @@ import com.top_logic.layout.react.control.kanban.ReactKanbanBoardControl.Column;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.model.KanbanSelectionBinding;
+import com.top_logic.layout.view.model.ItemSelectionBinding;
 
 /**
  * What a {@link KanbanBoardElement} displays: the objects of the board distributed into its
@@ -46,7 +46,7 @@ public class KanbanBoardCards {
 
 	private final ReactKanbanBoardControl _board;
 
-	private KanbanSelectionBinding _selectionBinding;
+	private ItemSelectionBinding _selectionBinding;
 
 	/**
 	 * Creates {@link KanbanBoardCards}.
@@ -86,7 +86,7 @@ public class KanbanBoardCards {
 	 *        The channel holding the selection.
 	 */
 	public void bindSelection(ViewChannel channel) {
-		_selectionBinding = new KanbanSelectionBinding(_board, channel);
+		_selectionBinding = new ItemSelectionBinding(_board, channel);
 		_board.addCleanupAction(_selectionBinding::dispose);
 	}
 

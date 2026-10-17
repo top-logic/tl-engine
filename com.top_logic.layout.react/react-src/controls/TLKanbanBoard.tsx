@@ -10,10 +10,10 @@ const CMD_SELECT_CARD = 'selectCard';
 /** The argument of {@link CMD_SELECT_CARD} naming the card (SelectCardArguments.CARD). */
 const ARG_CARD = 'card';
 
-/** The argument of {@link CMD_SELECT_CARD} toggling the card (SelectCardModifiers.TOGGLE). */
+/** The argument of {@link CMD_SELECT_CARD} toggling the card (SelectionModifiers.TOGGLE). */
 const ARG_TOGGLE = 'toggle';
 
-/** The argument of {@link CMD_SELECT_CARD} extending the selection (SelectCardModifiers.RANGE). */
+/** The argument of {@link CMD_SELECT_CARD} extending the selection (SelectionModifiers.RANGE). */
 const ARG_RANGE = 'range';
 
 /** The command applying a drop (DropSupport.CMD_DROP). */

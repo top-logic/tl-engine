@@ -7,17 +7,21 @@ package com.top_logic.layout.react.control.layout;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
-import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -29,6 +33,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * The client-side layout engine packs tiles left-to-right, stretches the last
  * tile in each row to remove horizontal gaps and extends neighbors vertically
  * to fill gaps left by row-spanning tiles.
+ * </p>
+ *
+ * <p>
+ * A tile is either shown or hidden. Only shown tiles are published to the client. A hidden tile
+ * keeps its position in the order of all tiles, so that it reappears where it was when it is
+ * {@link #showTile(String) shown} again. The content of a tile is created when the tile is shown
+ * for the first time; a tile that is never shown creates none.
  * </p>
  */
 public class ReactDashboardControl extends ReactControl {
@@ -54,6 +65,13 @@ public class ReactDashboardControl extends ReactControl {
 	 * @see ActivateTileArguments
 	 */
 	public static final String ACTIVATE_COMMAND = "activate";
+
+	/**
+	 * The {@link ReactCommandHandler} that hides the tile the user removed from the dashboard.
+	 *
+	 * @see HideTileArguments
+	 */
+	public static final String HIDE_COMMAND = "hide";
 
 	/** Descriptor key holding a tile's {@link Tile#getId() id}. */
 	private static final String TILE_ID = "id";
@@ -95,6 +113,19 @@ public class ReactDashboardControl extends ReactControl {
 	}
 
 	/**
+	 * What a tile displays and runs, created when the tile is shown for the first time.
+	 *
+	 * @param control
+	 *        The control rendered inside the tile. It is attached exactly while the tile is
+	 *        displayed, so that it can follow what it shows only while it is on screen.
+	 * @param action
+	 *        What activating the tile runs, {@code null} for a tile that only displays its content.
+	 */
+	public record TileContent(ReactControl control, TileAction action) {
+		// Pure data.
+	}
+
+	/**
 	 * A single tile of the dashboard.
 	 */
 	public static final class Tile {
@@ -105,41 +136,33 @@ public class ReactDashboardControl extends ReactControl {
 
 		private final int _rowSpan;
 
-		private final ReactControl _control;
+		private final Supplier<TileContent> _contentFactory;
 
-		private final TileAction _action;
+		private TileContent _content;
+
+		private boolean _visible;
 
 		/**
-		 * Creates a {@link Tile} that only displays its content.
+		 * Creates a {@link Tile}.
 		 *
 		 * @param id
-		 *        Stable tile id, used as persistence key for reordering.
+		 *        Stable tile id, used as persistence key for reordering and hiding.
 		 * @param width
 		 *        The tile's relative width.
 		 * @param rowSpan
 		 *        Number of rows the tile occupies (>= 1).
-		 * @param control
-		 *        The control rendered inside the tile.
+		 * @param visible
+		 *        Whether the tile is shown initially.
+		 * @param content
+		 *        Creates the {@link TileContent content} of the tile. Called at most once, when the
+		 *        tile is shown for the first time.
 		 */
-		public Tile(String id, TileWidth width, int rowSpan, ReactControl control) {
-			this(id, width, rowSpan, control, null);
-		}
-
-		/**
-		 * Creates a {@link Tile} the user can activate.
-		 *
-		 * @param action
-		 *        What activating the tile runs, {@code null} for a tile that only displays its
-		 *        content.
-		 *
-		 * @see #Tile(String, TileWidth, int, ReactControl)
-		 */
-		public Tile(String id, TileWidth width, int rowSpan, ReactControl control, TileAction action) {
+		public Tile(String id, TileWidth width, int rowSpan, boolean visible, Supplier<TileContent> content) {
 			_id = id;
 			_width = width;
 			_rowSpan = Math.max(1, rowSpan);
-			_control = control;
-			_action = action;
+			_visible = visible;
+			_contentFactory = content;
 		}
 
 		/** The stable id of this tile. */
@@ -147,14 +170,9 @@ public class ReactDashboardControl extends ReactControl {
 			return _id;
 		}
 
-		/** The inner control. */
-		public ReactControl getControl() {
-			return _control;
-		}
-
-		/** What activating this tile runs, {@code null} for a tile that only displays content. */
-		public TileAction getAction() {
-			return _action;
+		/** Whether this tile is currently shown. */
+		public boolean isVisible() {
+			return _visible;
 		}
 	}
 
@@ -162,9 +180,11 @@ public class ReactDashboardControl extends ReactControl {
 
 	private final Consumer<List<String>> _onReorder;
 
+	private final BiConsumer<String, Boolean> _onVisibilityChange;
+
 	private boolean _editMode;
 
-	private final List<Runnable> _editModeListeners = new CopyOnWriteArrayList<>();
+	private final List<Runnable> _stateChangeListeners = new CopyOnWriteArrayList<>();
 
 	private final Runnable _actionChangeHandler = this::handleActionChange;
 
@@ -177,40 +197,62 @@ public class ReactDashboardControl extends ReactControl {
 	 *        CSS length of a single grid row (e.g. {@code "16rem"}). A tile is
 	 *        as tall as the rows it spans, plus the gaps between them.
 	 * @param tiles
-	 *        Tiles in the order they should appear initially.
+	 *        All tiles, shown or hidden, in the order they should appear initially.
 	 * @param onReorder
-	 *        Callback invoked with the new tile-id order after the user
-	 *        reordered tiles. May be {@code null}.
+	 *        Callback invoked with the ids of all tiles, shown or hidden, in their new order after
+	 *        the user reordered tiles. May be {@code null}.
+	 * @param onVisibilityChange
+	 *        Callback invoked with a tile id and whether the tile is now shown, after the user
+	 *        hid a tile or a tile was {@link #showTile(String) shown} again. {@code null} for a
+	 *        dashboard whose tiles cannot be hidden: its {@link #HIDE_COMMAND} does nothing.
 	 */
 	public ReactDashboardControl(ReactContext context, String minColWidth, String rowHeight, List<Tile> tiles,
-			Consumer<List<String>> onReorder) {
+			Consumer<List<String>> onReorder, BiConsumer<String, Boolean> onVisibilityChange) {
 		super(context, null, REACT_MODULE);
 		_tiles = new ArrayList<>(tiles);
 		_onReorder = onReorder;
-		for (Tile tile : _tiles) {
-			TileAction action = tile.getAction();
-			if (action != null) {
-				action.model().addStateChangeListener(_actionChangeHandler);
-			}
-		}
+		_onVisibilityChange = onVisibilityChange;
 		putState(MIN_COL_WIDTH, minColWidth);
 		putState(ROW_HEIGHT, rowHeight);
 		putState(CHILDREN, buildDescriptors());
 		putState(EDIT_MODE, Boolean.FALSE);
 	}
 
+	/**
+	 * The descriptors of the shown tiles. Creates the content of a shown tile that has none yet.
+	 */
 	private List<Map<String, Object>> buildDescriptors() {
 		List<Map<String, Object>> list = new ArrayList<>(_tiles.size());
 		for (Tile t : _tiles) {
+			if (!t._visible) {
+				continue;
+			}
+			TileContent content = contentOf(t);
 			Map<String, Object> d = new LinkedHashMap<>();
 			d.put(TILE_ID, t._id);
 			d.put(TILE_WIDTH, t._width.getExternalName());
 			d.put(TILE_ROW_SPAN, Integer.valueOf(t._rowSpan));
-			d.put(TILE_CONTROL, t._control);
-			d.put(TILE_ACTION, actionDescriptor(t.getAction()));
+			d.put(TILE_CONTROL, content.control());
+			d.put(TILE_ACTION, actionDescriptor(content.action()));
 			list.add(d);
 		}
 		return list;
+	}
+
+	/**
+	 * The content of the given tile, created on first access.
+	 */
+	private TileContent contentOf(Tile tile) {
+		TileContent content = tile._content;
+		if (content == null) {
+			content = tile._contentFactory.get();
+			tile._content = content;
+			TileAction action = content.action();
+			if (action != null) {
+				action.model().addStateChangeListener(_actionChangeHandler);
+			}
+		}
+		return content;
 	}
 
 	/**
@@ -246,12 +288,26 @@ public class ReactDashboardControl extends ReactControl {
 		putState(CHILDREN, buildDescriptors());
 	}
 
+	/**
+	 * Disposes the content of the hidden tiles as well, which the state of this control does not
+	 * show.
+	 */
+	@Override
+	protected void cleanupChildren() {
+		super.cleanupChildren();
+		for (Tile tile : _tiles) {
+			if (tile._content != null) {
+				tile._content.control().cleanupTree();
+			}
+		}
+	}
+
 	@Override
 	protected void onCleanup() {
 		for (Tile tile : _tiles) {
-			TileAction action = tile.getAction();
-			if (action != null) {
-				action.model().removeStateChangeListener(_actionChangeHandler);
+			TileContent content = tile._content;
+			if (content != null && content.action() != null) {
+				content.action().model().removeStateChangeListener(_actionChangeHandler);
 			}
 		}
 	}
@@ -265,7 +321,7 @@ public class ReactDashboardControl extends ReactControl {
 
 	/**
 	 * Switches edit mode on. Notifies listeners registered via
-	 * {@link #addEditModeListener(Runnable)}.
+	 * {@link #addStateChangeListener(Runnable)}.
 	 */
 	public void enterEditMode() {
 		setEditMode(true);
@@ -284,33 +340,94 @@ public class ReactDashboardControl extends ReactControl {
 		}
 		_editMode = value;
 		putState(EDIT_MODE, Boolean.valueOf(value));
-		for (Runnable l : _editModeListeners) {
+		fireStateChange();
+	}
+
+	/**
+	 * Whether the tile with the given id is currently shown.
+	 *
+	 * @return {@code false} for an unknown id.
+	 */
+	public boolean isTileVisible(String tileId) {
+		Tile tile = tile(tileId);
+		return tile != null && tile._visible;
+	}
+
+	/**
+	 * Shows the tile with the given id again, at its position in the order of all tiles.
+	 *
+	 * <p>
+	 * Notifies the visibility callback and the listeners registered via
+	 * {@link #addStateChangeListener(Runnable)}. Does nothing for a tile that is shown already or an
+	 * unknown id.
+	 * </p>
+	 */
+	public void showTile(String tileId) {
+		setTileVisible(tileId, true);
+	}
+
+	private void setTileVisible(String tileId, boolean visible) {
+		Tile tile = tile(tileId);
+		if (tile == null || tile._visible == visible) {
+			return;
+		}
+		tile._visible = visible;
+		if (!visible && tile._content != null) {
+			// The content is kept for a later show, but is no longer displayed.
+			tile._content.control().detach();
+		}
+		putState(CHILDREN, buildDescriptors());
+		if (visible && isAttached()) {
+			tile._content.control().attach();
+		}
+		if (_onVisibilityChange != null) {
+			_onVisibilityChange.accept(tileId, Boolean.valueOf(visible));
+		}
+		fireStateChange();
+	}
+
+	private Tile tile(String tileId) {
+		for (Tile tile : _tiles) {
+			if (tile._id.equals(tileId)) {
+				return tile;
+			}
+		}
+		return null;
+	}
+
+	private void fireStateChange() {
+		for (Runnable l : _stateChangeListeners) {
 			l.run();
 		}
 	}
 
 	/**
-	 * Registers a listener that fires when {@link #isEditMode()} changes.
+	 * Registers a listener that fires when {@link #isEditMode()} or
+	 * {@link #isTileVisible(String)} changes.
 	 */
-	public void addEditModeListener(Runnable listener) {
-		_editModeListeners.add(listener);
+	public void addStateChangeListener(Runnable listener) {
+		_stateChangeListeners.add(listener);
 	}
 
 	/**
-	 * Unregisters a previously added edit-mode listener.
+	 * Unregisters a previously added state change listener.
 	 */
-	public void removeEditModeListener(Runnable listener) {
-		_editModeListeners.remove(listener);
+	public void removeStateChangeListener(Runnable listener) {
+		_stateChangeListeners.remove(listener);
 	}
 
 	/**
-	 * Handles the {@code reorder} command sent by the React client after a
-	 * drag-and-drop reorder.
+	 * Handles the {@link #REORDER_COMMAND} sent by the React client after a drag-and-drop reorder.
+	 *
+	 * <p>
+	 * The client sends the order of the shown tiles. The hidden tiles keep their positions in the
+	 * order of all tiles.
+	 * </p>
 	 */
 	// Argument is a string array (ordered tile ids). The config-JSON binding does not support a List
 	// of primitives, so this command keeps a raw Map with a lightweight @ReactParam schema.
 	@ReactCommandHandler(value = REORDER_COMMAND, params = @ReactParam(name = ORDER_ARG, type = "string[]",
-		required = true, description = "The tile ids in their new order."))
+		required = true, description = "The ids of the shown tiles in their new order."))
 	@FrameworkInternal
 	void handleReorder(Map<String, Object> arguments) {
 		@SuppressWarnings("unchecked")
@@ -318,17 +435,22 @@ public class ReactDashboardControl extends ReactControl {
 		reorderTiles(newOrder);
 		putState(CHILDREN, buildDescriptors());
 		if (_onReorder != null) {
-			_onReorder.accept(Collections.unmodifiableList(new ArrayList<>(newOrder)));
+			List<String> allIds = new ArrayList<>(_tiles.size());
+			for (Tile tile : _tiles) {
+				allIds.add(tile._id);
+			}
+			_onReorder.accept(Collections.unmodifiableList(allIds));
 		}
 	}
 
 	/**
-	 * Handles the {@code activate} command the React client sends when the user opens a tile.
+	 * Handles the {@link #ACTIVATE_COMMAND} the React client sends when the user opens a tile.
 	 *
 	 * <p>
 	 * The tile's command runs through {@link CommandModel#executeCommand(ReactContext)}: a command
 	 * that currently refuses to run is not executed, and its refusal is the result of the
-	 * activation. An activation of a tile without an action, or of an unknown tile, does nothing.
+	 * activation. An activation of a tile without an action, of a hidden tile, or of an unknown tile
+	 * does nothing.
 	 * </p>
 	 *
 	 * @param args
@@ -337,35 +459,60 @@ public class ReactDashboardControl extends ReactControl {
 	@ReactCommandHandler(ACTIVATE_COMMAND)
 	@FrameworkInternal
 	HandlerResult handleActivate(ActivateTileArguments args) {
-		String tileId = args.getTileId();
-		for (Tile tile : _tiles) {
-			if (!tile.getId().equals(tileId)) {
-				continue;
-			}
-			TileAction action = tile.getAction();
-			if (action == null) {
-				return HandlerResult.DEFAULT_RESULT;
-			}
-			return action.model().executeCommand(getReactContext());
+		Tile tile = tile(args.getTileId());
+		if (tile == null || !tile._visible) {
+			return HandlerResult.DEFAULT_RESULT;
 		}
-		return HandlerResult.DEFAULT_RESULT;
+		TileAction action = contentOf(tile).action();
+		if (action == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return action.model().executeCommand(getReactContext());
 	}
 
+	/**
+	 * Handles the {@link #HIDE_COMMAND} the React client sends when the user removes a tile from the
+	 * dashboard.
+	 *
+	 * <p>
+	 * The tile is no longer published and its content is no longer displayed. A dashboard created
+	 * without a visibility callback, a hidden tile and an unknown tile ignore the command.
+	 * </p>
+	 *
+	 * @param args
+	 *        Names the tile the user hid, see {@link HideTileArguments#getTileId()}.
+	 */
+	@ReactCommandHandler(HIDE_COMMAND)
+	@FrameworkInternal
+	void handleHide(HideTileArguments args) {
+		if (_onVisibilityChange == null) {
+			return;
+		}
+		setTileVisible(args.getTileId(), false);
+	}
+
+	/**
+	 * Applies the given order of tiles: the positions of the mentioned tiles are filled with them in
+	 * the given order, all other tiles keep their positions.
+	 */
 	private void reorderTiles(List<String> newOrder) {
 		Map<String, Tile> byId = new LinkedHashMap<>();
 		for (Tile t : _tiles) {
 			byId.put(t._id, t);
 		}
-		List<Tile> reordered = new ArrayList<>(_tiles.size());
+		List<Tile> mentioned = new ArrayList<>(newOrder.size());
+		Set<String> mentionedIds = new HashSet<>();
 		for (String id : newOrder) {
-			Tile t = byId.remove(id);
-			if (t != null) {
-				reordered.add(t);
+			Tile t = byId.get(id);
+			if (t != null && mentionedIds.add(id)) {
+				mentioned.add(t);
 			}
 		}
-		// Append any tiles that weren't mentioned in the new order.
-		reordered.addAll(byId.values());
-		_tiles.clear();
-		_tiles.addAll(reordered);
+		int next = 0;
+		for (int n = 0, cnt = _tiles.size(); n < cnt; n++) {
+			if (mentionedIds.contains(_tiles.get(n)._id)) {
+				_tiles.set(n, mentioned.get(next++));
+			}
+		}
 	}
 }

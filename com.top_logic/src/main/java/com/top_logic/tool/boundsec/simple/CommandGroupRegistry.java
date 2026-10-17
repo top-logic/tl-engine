@@ -81,6 +81,7 @@ public class CommandGroupRegistry extends ConfiguredManagedClass<CommandGroupReg
 				.map(group -> new SimpleBoundCommandGroup(group.getName(), group.getType()))
 				.collect(Collectors.toMap(BoundCommandGroup::getID, Function.identity()));
 		addProgrammatic(groups, SimpleBoundCommandGroup.READ);
+		addProgrammatic(groups, SimpleBoundCommandGroup.DISCOVER);
 		addProgrammatic(groups, SimpleBoundCommandGroup.WRITE);
 		addProgrammatic(groups, SimpleBoundCommandGroup.CREATE);
 		addProgrammatic(groups, SimpleBoundCommandGroup.DELETE);

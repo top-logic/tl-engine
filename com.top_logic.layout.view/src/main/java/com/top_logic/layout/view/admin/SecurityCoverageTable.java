@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
@@ -40,6 +41,8 @@ import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.element.boundsec.manager.rule.PathNavigation;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider;
 import com.top_logic.element.boundsec.manager.rule.config.NavigationRuleConfig;
+import com.top_logic.element.boundsec.manager.rule.config.RoleRuleConfig;
+import com.top_logic.element.boundsec.manager.rule.config.SingletonRuleConfig;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -148,6 +151,28 @@ public class SecurityCoverageTable implements UIElement {
 	public static final String RULE_STORED = "stored";
 
 	/**
+	 * Key of the change of a rule entry that is stored but not yet applied, one of
+	 * {@link #STATE_NEW}, {@link #STATE_CHANGED}, {@link #STATE_DELETED}, or the empty string for a
+	 * rule in effect as stored.
+	 */
+	public static final String RULE_STATE = "state";
+
+	/** Key of the localized name of the {@link #RULE_STATE state} of a rule entry. */
+	public static final String RULE_STATE_LABEL = "stateLabel";
+
+	/** {@link #RULE_STATE} of a stored rule that is not yet in effect. */
+	public static final String STATE_NEW = "new";
+
+	/** {@link #RULE_STATE} of a rule in effect whose stored form differs from the one in effect. */
+	public static final String STATE_CHANGED = "changed";
+
+	/** {@link #RULE_STATE} of a rule in effect that the stored configuration deletes. */
+	public static final String STATE_DELETED = "deleted";
+
+	/** {@link #RULE_STATE} of a rule in effect as stored. */
+	public static final String STATE_APPLIED = "";
+
+	/**
 	 * Renders a {@link CoverageStatus} with its icon and label through the default
 	 * {@link MetaResourceControlProvider} configuration.
 	 */
@@ -209,6 +234,9 @@ public class SecurityCoverageTable implements UIElement {
 
 		/** Configuration name for {@link #getSelectedModule()}. */
 		String SELECTED_MODULE = "selected-module";
+
+		/** Configuration name for {@link #getPending()}. */
+		String PENDING = "pending";
 
 		@Override
 		@ClassDefault(SecurityCoverageTable.class)
@@ -287,9 +315,16 @@ public class SecurityCoverageTable implements UIElement {
 		 * <p>
 		 * An entry is a dictionary keyed by {@link SecurityCoverageTable#RULE_KIND},
 		 * {@link SecurityCoverageTable#RULE_KIND_LABEL}, {@link SecurityCoverageTable#RULE_ID},
-		 * {@link SecurityCoverageTable#RULE_DESCRIPTION} and
-		 * {@link SecurityCoverageTable#RULE_STORED}, so a display shows the entries in a table of
-		 * computed columns and a command works on the entry the user picks.
+		 * {@link SecurityCoverageTable#RULE_DESCRIPTION}, {@link SecurityCoverageTable#RULE_STORED},
+		 * {@link SecurityCoverageTable#RULE_STATE} and {@link SecurityCoverageTable#RULE_STATE_LABEL},
+		 * so a display shows the entries in a table of computed columns and a command works on the
+		 * entry the user picks.
+		 * </p>
+		 *
+		 * <p>
+		 * Besides the rules in effect, the entries show the stored changes that are not yet applied:
+		 * a stored rule that is not yet in effect is listed as new, a rule in effect is marked as
+		 * changed or deleted by the stored configuration.
 		 * </p>
 		 */
 		@Name(SELECTED_RULES)
@@ -306,6 +341,20 @@ public class SecurityCoverageTable implements UIElement {
 		@Nullable
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelectedModule();
+
+		/**
+		 * Channel marking the stored changes of the access definition that are not yet applied.
+		 *
+		 * <p>
+		 * Whenever its value changes, the {@link #getSelectedRules() rules} of the selected type are
+		 * written again, so that a stored change shows in them right away, see
+		 * {@link SecurityCoverageTable#RULE_STATE}.
+		 * </p>
+		 */
+		@Name(PENDING)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getPending();
 	}
 
 	private final ChannelRef _inputRef;
@@ -324,6 +373,8 @@ public class SecurityCoverageTable implements UIElement {
 
 	private final ChannelRef _selectedModuleRef;
 
+	private final ChannelRef _pendingRef;
+
 	/**
 	 * Creates a new {@link SecurityCoverageTable} from configuration.
 	 */
@@ -337,6 +388,7 @@ public class SecurityCoverageTable implements UIElement {
 		_selectedFindingsRef = config.getSelectedFindings();
 		_selectedModuleRef = config.getSelectedModule();
 		_selectedRulesRef = config.getSelectedRules();
+		_pendingRef = config.getPending();
 	}
 
 	@Override
@@ -396,6 +448,13 @@ public class SecurityCoverageTable implements UIElement {
 				}
 			};
 			Registration registration = dataChannel.addListener(listener);
+			control.addCleanupAction(registration::dispose);
+		}
+		if (_pendingRef != null && detail.isBound()) {
+			// A stored change does not change the analysis, but the rules of the selected type show
+			// the stored changes, see ruleEntries().
+			ChannelListener listener = (sender, oldValue, newValue) -> detail.show(detail.getNode(), tree::coverage);
+			Registration registration = context.resolveChannel(_pendingRef).addListener(listener);
 			control.addCleanupAction(registration::dispose);
 		}
 		return control;
@@ -599,14 +658,17 @@ public class SecurityCoverageTable implements UIElement {
 
 	/**
 	 * The rules in effect for the given type, the role parent rules first, each as the
-	 * dictionary a display shows and a command works on.
+	 * dictionary a display shows and a command works on, followed by the stored rules for the type
+	 * that are not yet in effect.
 	 *
 	 * @see Config#getSelectedRules()
 	 */
 	private static List<Map<String, Object>> ruleEntries(TypeCoverage coverage) {
 		SecurityDefinitionEditor editor = new SecurityDefinitionEditor();
-		Set<String> storedParents = storedIds(editor::storedRoleParentRules);
-		Set<String> storedRoleRules = storedIds(editor::storedRoleRules);
+		List<? extends NavigationRuleConfig> storedParents = stored(editor::storedRoleParentRules);
+		List<? extends RoleRuleConfig> storedRoleRules = stored(editor::storedRoleRules);
+		Set<String> removedParents = removed(editor::removedRoleParentRules);
+		Set<String> removedRoleRules = removed(editor::removedRoleRules);
 		Resources resources = Resources.getInstance();
 		String parentKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_ROLE_PARENT);
 		String roleKind = resources.getString(I18NConstants.COVERAGE_RULE_KIND_ROLE_RULE);
@@ -614,48 +676,140 @@ public class SecurityCoverageTable implements UIElement {
 		List<Map<String, Object>> result = new ArrayList<>();
 		for (NavigationRule rule : coverage.roleParentRules()) {
 			String id = rule.getId();
-			result.add(ruleEntry(KIND_ROLE_PARENT, parentKind, id, path(rule.getPath()),
-				storedParents.contains(id)));
+			NavigationRuleConfig stored = find(storedParents, id);
+			result.add(ruleEntry(KIND_ROLE_PARENT, parentKind, id, path(rule.getPath()), stored != null,
+				state(stored, editor.effectiveRoleParentRule(id), removedParents.contains(id))));
 		}
 		for (Map.Entry<String, List<RoleProvider>> group : roleRulesByConfigId(coverage).entrySet()) {
 			String id = group.getKey();
+			RoleRuleConfig stored = find(storedRoleRules, id);
 			result.add(ruleEntry(KIND_ROLE_RULE, roleKind, id, roleRuleDescription(group.getValue()),
-				storedRoleRules.contains(id)));
+				stored != null, state(stored, editor.effectiveRoleRule(id), removedRoleRules.contains(id))));
+		}
+		for (NavigationRuleConfig rule : storedParents) {
+			if (editor.effectiveRoleParentRule(rule.getId()) == null && appliesTo(rule, coverage.type())) {
+				result.add(ruleEntry(KIND_ROLE_PARENT, parentKind, rule.getId(), "", true, STATE_NEW));
+			}
+		}
+		for (RoleRuleConfig rule : storedRoleRules) {
+			if (editor.effectiveRoleRule(rule.getId()) == null && appliesTo(rule, coverage.type())) {
+				result.add(ruleEntry(KIND_ROLE_RULE, roleKind, rule.getId(),
+					String.join(VALUE_SEPARATOR, rule.getRole()), true, STATE_NEW));
+			}
 		}
 		return result;
+	}
+
+	/**
+	 * The {@link #RULE_STATE} of a rule in effect.
+	 *
+	 * @param stored
+	 *        The stored form of the rule, <code>null</code> when it is not stored.
+	 * @param effective
+	 *        The rule as it is in effect.
+	 * @param removed
+	 *        Whether the stored configuration removes the rule.
+	 */
+	private static String state(NavigationRuleConfig stored, NavigationRuleConfig effective, boolean removed) {
+		if (removed) {
+			return STATE_DELETED;
+		}
+		if (stored != null && effective != null && !ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(stored, effective)) {
+			return STATE_CHANGED;
+		}
+		return STATE_APPLIED;
+	}
+
+	/**
+	 * Whether the given stored rule applies to the given type: it is configured for the type, for a
+	 * generalization of it including its sub types, or for a singleton of the type.
+	 */
+	private static boolean appliesTo(NavigationRuleConfig rule, TLClass type) {
+		try {
+			if (rule instanceof SingletonRuleConfig singletonRule) {
+				return TLModelUtil.resolveQualifiedName(singletonRule.getTarget()).tType() == type;
+			}
+			String typeName = rule.getMetaElement();
+			if (typeName == null || typeName.isBlank()) {
+				return false;
+			}
+			TLType ruleType = TLModelUtil.findType(typeName);
+			if (ruleType == type) {
+				return true;
+			}
+			return rule.isInherit() && ruleType instanceof TLClass ruleClass
+				&& TLModelUtil.isGeneralization(ruleClass, type);
+		} catch (RuntimeException ex) {
+			// A rule referring to a model element that does not exist applies nowhere.
+			return false;
+		}
+	}
+
+	/**
+	 * The rule with the given id of the given rules, or <code>null</code>.
+	 */
+	private static <R extends NavigationRuleConfig> R find(List<? extends R> rules, String id) {
+		for (R rule : rules) {
+			if (id.equals(rule.getId())) {
+				return rule;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The rules the given query of the stored configuration answers, empty when that configuration
+	 * cannot be read.
+	 */
+	private static <R extends NavigationRuleConfig> List<? extends R> stored(StoredRulesQuery<R> query) {
+		try {
+			return query.run();
+		} catch (ConfigurationException ex) {
+			Logger.error("Cannot read the stored access definition.", ex, SecurityCoverageTable.class);
+			return List.of();
+		}
+	}
+
+	/**
+	 * The ids of the removed rules the given query of the stored configuration answers, empty when
+	 * that configuration cannot be read.
+	 */
+	private static Set<String> removed(RemovedRulesQuery query) {
+		try {
+			return query.run();
+		} catch (ConfigurationException ex) {
+			Logger.error("Cannot read the stored access definition.", ex, SecurityCoverageTable.class);
+			return Set.of();
+		}
 	}
 
 	/**
 	 * One entry of {@link Config#getSelectedRules()}.
 	 */
 	private static Map<String, Object> ruleEntry(String kind, String kindLabel, String id, String description,
-			boolean stored) {
+			boolean stored, String state) {
 		Map<String, Object> entry = new LinkedHashMap<>();
 		entry.put(RULE_KIND, kind);
 		entry.put(RULE_KIND_LABEL, kindLabel);
 		entry.put(RULE_ID, id);
 		entry.put(RULE_DESCRIPTION, description);
 		entry.put(RULE_STORED, Boolean.valueOf(stored));
+		entry.put(RULE_STATE, state);
+		entry.put(RULE_STATE_LABEL, stateLabel(state));
 		return entry;
 	}
 
 	/**
-	 * The ids of the rules the given query of the stored configuration answers, empty when that
-	 * configuration cannot be read.
-	 *
-	 * <p>
-	 * A configuration that cannot be read means that no rule can be shown as stored, hence that
-	 * none is offered for deletion - which is the safe answer, the file being the only place a rule
-	 * can be deleted from.
-	 * </p>
+	 * The localized name of the given {@link #RULE_STATE}.
 	 */
-	private static Set<String> storedIds(StoredRulesQuery query) {
-		try {
-			return query.run().stream().map(NavigationRuleConfig::getId).collect(Collectors.toSet());
-		} catch (ConfigurationException ex) {
-			Logger.error("Cannot read the stored access definition.", ex, SecurityCoverageTable.class);
-			return Set.of();
-		}
+	private static String stateLabel(String state) {
+		ResKey label = switch (state) {
+			case STATE_NEW -> I18NConstants.COVERAGE_RULE_STATE_NEW;
+			case STATE_CHANGED -> I18NConstants.COVERAGE_RULE_STATE_CHANGED;
+			case STATE_DELETED -> I18NConstants.COVERAGE_RULE_STATE_DELETED;
+			default -> null;
+		};
+		return label == null ? "" : Resources.getInstance().getString(label);
 	}
 
 	/**
@@ -691,12 +845,23 @@ public class SecurityCoverageTable implements UIElement {
 	/**
 	 * A query for the rules the stored configuration defines.
 	 */
-	private interface StoredRulesQuery {
+	private interface StoredRulesQuery<R extends NavigationRuleConfig> {
 
 		/**
 		 * Answers the query.
 		 */
-		List<? extends NavigationRuleConfig> run() throws ConfigurationException;
+		List<? extends R> run() throws ConfigurationException;
+	}
+
+	/**
+	 * A query for the ids of the rules the stored configuration removes.
+	 */
+	private interface RemovedRulesQuery {
+
+		/**
+		 * Answers the query.
+		 */
+		Set<String> run() throws ConfigurationException;
 	}
 
 	/**

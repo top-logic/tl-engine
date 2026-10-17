@@ -29,6 +29,10 @@
 		<derived-channel name="purchaseTotal"
 			expr="all(`demo.charts:Einkauf`).map(t -> $t.get(`demo.charts:Transaktion#wert`)).sum()"
 		/>
+		<derived-channel name="result"
+			expr="revenue -> costs -> $revenue - $costs"
+			inputs="salesTotal,purchaseTotal"
+		/>
 	</channels>
 	<app-shell>
 		<header>
@@ -98,6 +102,19 @@
 											<de>Kosten</de>
 										</title>
 										<text input="purchaseTotal"/>
+									</card>
+								</tile>
+								<!-- Not shown until the user adds it through the "Add tile" menu of the panel. -->
+								<tile id="result"
+									optional="true"
+									width="quarter"
+								>
+									<card>
+										<title>
+											<en>Result</en>
+											<de>Ergebnis</de>
+										</title>
+										<text input="result"/>
 									</card>
 								</tile>
 							</dashboard>

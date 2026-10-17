@@ -134,16 +134,16 @@ public class SidebarElement implements UIElement {
 
 		/**
 		 * Name of the slot into which the sidebar contributes a hamburger button that opens the
-		 * mobile drawer.
+		 * drawer while the app shell is compact.
 		 *
 		 * <p>
 		 * If non-empty, the sidebar emits a {@code SlotContentControl} carrying a
 		 * {@code DrawerToggleControl} addressed to {@code <slot name="<this-value>"/>}. By
 		 * convention the placeholder is declared in the app bar's leading area (e.g.
 		 * {@code <leading><slot name="appbar-leading"/></leading>}), so the button surfaces in
-		 * the app bar at mobile breakpoints. Leave empty to suppress the contribution entirely
-		 * — useful when the sidebar is used in a layout without an app bar or with a different
-		 * mobile entry point.
+		 * the app bar, rendered only while the app shell is compact. Leave empty to suppress the
+		 * contribution entirely — useful when the sidebar is used in a layout without an app bar or
+		 * with a different entry point for the compact drawer.
 		 * </p>
 		 */
 		@Name(DRAWER_OPEN_SLOT_NAME)
@@ -692,9 +692,10 @@ public class SidebarElement implements UIElement {
 			binding.accept(sidebar);
 		}
 
-		// If a slot name is configured, contribute a hamburger button that toggles the mobile
-		// drawer. The placeholder must be declared elsewhere in the view tree (typically the app
-		// bar's leading area). Empty/missing -> no contribution, no drawer entry point on mobile.
+		// If a slot name is configured, contribute a hamburger button that toggles the drawer while
+		// the app shell is compact. The placeholder must be declared elsewhere in the view tree
+		// (typically the app bar's leading area). Empty/missing -> no contribution, no drawer entry
+		// point while the app shell is compact.
 		if (_drawerOpenSlotName != null && !_drawerOpenSlotName.isEmpty()) {
 			DrawerToggleControl toggleButton = new DrawerToggleControl(context, sidebar);
 			SlotContentControl drawerToggleSlot = new SlotContentControl(context, _drawerOpenSlotName,

@@ -26,7 +26,6 @@ import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
@@ -87,8 +86,6 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 		}
 	};
 
-	private Person _root;
-
 	/** Non-administrative user without any role. */
 	private Person _user;
 
@@ -100,7 +97,6 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		kb().addUpdateListener(_creationListener);
-		_root = PersonManager.getManager().getRoot();
 
 		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			_user = TestPerson.createPerson("objectFunctionsUser");
@@ -113,7 +109,7 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 
 			tx.commit();
 		}
-		TLContext.getContext().setCurrentPerson(_root);
+		becomeRoot();
 	}
 
 	@Override
@@ -343,7 +339,6 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 		return suite(TestObjectFunctions.class,
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE);
 	}

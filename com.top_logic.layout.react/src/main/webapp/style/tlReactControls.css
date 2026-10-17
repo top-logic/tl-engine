@@ -104,6 +104,34 @@ html, body {
 	flex: 1;
 }
 
+/* An item of a selectable container (a list box): the whole item is the surface the user presses.
+   Under the pointer it lifts off the page. The item may draw a frame of its own (a card), so the
+   wrapper marks the selection by a ring in the interactive colour around it, in the surface radius,
+   rather than by a border; the ring means "selected" only. */
+.tlItem--selectable {
+	border-radius: var(--border-radius-02);
+	cursor: pointer;
+	transition: box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.tlItem--selectable:hover {
+	box-shadow: var(--shadow-raised);
+}
+
+.tlItem--selected {
+	background: var(--tl-surface-brand-subtle);
+	box-shadow: 0 0 0 2px var(--tl-border-interactive);
+}
+
+.tlItem--selected:hover {
+	box-shadow: 0 0 0 2px var(--tl-border-interactive), var(--shadow-raised);
+}
+
+.tlItem--selectable:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
 /* --- React mount point ------------------------------------------------- */
 
 [data-react-module] {
@@ -1177,372 +1205,6 @@ div.tlValueList {
 	flex-direction: column;
 }
 
-/* --- TLSidebar --------------------------------------------------------- */
-
-.tlSidebar {
-	display: flex;
-	flex-direction: row;
-	width: 100%;
-	height: 100%;
-	font-family: var(--font-family);
-}
-
-.tlSidebar__nav {
-	display: flex;
-	flex-direction: column;
-	width: 16rem;
-	flex-shrink: 0;
-	border-right: 1px solid var(--border-subtle);
-	background: var(--layer-01);
-	overflow-y: auto;
-	overflow-x: hidden;
-	transition: width 0.2s ease;
-}
-
-.tlSidebar--collapsed .tlSidebar__nav {
-	width: 2.5rem;
-}
-
-.tlSidebar__content {
-	flex: 1;
-	overflow: auto;
-	position: relative;
-	/* Flush: the active view's content owns its inset (see spacing model). */
-	display: flex;
-	flex-direction: column;
-}
-
-.tlSidebar__content > * {
-	flex: 1 1 0%;
-	min-height: 0;
-}
-
-.tlSidebar__headerSlot,
-.tlSidebar__footerSlot {
-	flex-shrink: 0;
-	/* Inset like the items below, so the rail chrome lines up with the item labels
-	   instead of sitting against the rail edge. */
-	padding: var(--spacing-03) var(--spacing-04);
-	border-bottom: 1px solid var(--border-subtle);
-	overflow: hidden;
-}
-
-.tlSidebar__footerSlot {
-	border-bottom: none;
-	border-top: 1px solid var(--border-subtle);
-}
-
-.tlSidebar__headerSlot--collapsed,
-.tlSidebar__footerSlot--collapsed {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	/* The rail is icon width: a child that takes the full width centres its own content
-	   as well, so the chrome sits under the item icons whatever control fills the slot. */
-	text-align: center;
-	padding: var(--spacing-02);
-	overflow: hidden;
-}
-
-.tlSidebar__items {
-	flex: 1;
-	overflow-y: auto;
-	overflow-x: hidden;
-	/* Keep a swipe that reaches the end of the item list from chaining into an outer
-	   scroll region (page panning in mobile drawer mode). */
-	overscroll-behavior: contain;
-	padding: var(--spacing-02) 0;
-}
-
-/* Shared base for interactive sidebar items */
-.tlSidebar__item {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	width: 100%;
-	padding: var(--spacing-03) var(--spacing-04);
-	border: none;
-	border-left: 3px solid transparent;
-	background: transparent;
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	font-family: var(--font-family);
-	cursor: pointer;
-	text-align: left;
-}
-
-button.tlSidebar__item:hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-button.tlSidebar__item:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-/* An item offered, but out of reach: greyed out and unresponsive to the pointer. */
-.tlSidebar__item--disabled,
-button.tlSidebar__item:disabled,
-button.tlSidebar__item:disabled:hover,
-button.tlSidebar__flyoutItem:disabled,
-button.tlSidebar__flyoutItem:disabled:hover {
-	background: transparent;
-	color: var(--text-disabled);
-	cursor: default;
-}
-
-/* Navigation item */
-.tlSidebar__navItem--active {
-	background: var(--layer-selected);
-	border-left-color: var(--button-primary);
-	color: var(--text-primary);
-	font-weight: 600;
-}
-
-button.tlSidebar__navItem--active:hover {
-	background: var(--layer-selected-hover);
-}
-
-/* Header item */
-.tlSidebar__headerItem {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	padding: var(--spacing-03) var(--spacing-04);
-	border-left: 3px solid transparent;
-	color: var(--text-primary);
-	font-size: var(--label-01-font-size);
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-}
-
-/* The element around the divider between two items (part Divider): the line is the part's, the
-   space around it the sidebar's. */
-.tlSidebar__separator {
-	margin: var(--spacing-02) var(--spacing-04);
-}
-
-.tlSidebar__chevron {
-	margin-left: auto;
-	flex-shrink: 0;
-	transition: transform 0.2s ease;
-}
-
-.tlSidebar__chevron--open {
-	transform: rotate(180deg);
-}
-
-.tlSidebar__groupChildren {
-	padding-left: var(--spacing-04);
-}
-
-/* Icon */
-.tlSidebar__icon {
-	flex-shrink: 0;
-	width: 1rem;
-	text-align: center;
-	font-size: 1rem;
-}
-
-/* Label */
-.tlSidebar__label {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-/* The element around the badge of an item (part Badge), at the end of the item beside the label. */
-.tlSidebar__badge {
-	display: flex;
-	margin-left: auto;
-	flex-shrink: 0;
-}
-
-.tlSidebar__iconWrap {
-	position: relative;
-	display: inline-flex;
-}
-
-/* Over the corner of the icon of a collapsed sidebar: the element around the badge. */
-.tlSidebar__cornerBadge {
-	position: absolute;
-	top: -0.375rem;
-	right: -0.5rem;
-	display: flex;
-}
-
-/* --- Collapsed mode: center icon-only items --- */
-
-.tlSidebar--collapsed .tlSidebar__item,
-.tlSidebar--collapsed .tlSidebar__headerItem {
-	justify-content: center;
-	padding: var(--spacing-03) 0;
-	border-left: 3px solid transparent;
-	gap: 0;
-}
-
-.tlSidebar--collapsed .tlSidebar__navItem--active {
-	background: var(--layer-selected);
-	border-left-color: var(--button-primary);
-}
-
-.tlSidebar--collapsed .tlSidebar__separator {
-	margin: var(--spacing-02) var(--spacing-02);
-}
-
-/* The bar at the foot of the rail holding the toggle that collapses and expands the sidebar. */
-.tlSidebar__collapseBar {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 2.5rem;
-	border-top: 1px solid var(--border-subtle);
-	flex-shrink: 0;
-}
-
-/* Group flyout (collapsed-mode popover) */
-.tlSidebar__group {
-	position: relative;
-}
-
-.tlSidebar__flyout {
-	position: fixed;
-	z-index: 1000;
-	min-width: 12rem;
-	background: var(--layer-02);
-	border: 1px solid var(--border-strong);
-	border-radius: var(--border-radius-02);
-	box-shadow: var(--shadow-menu);
-	padding: var(--spacing-02) 0;
-	overflow-y: auto;
-	max-height: 20rem;
-}
-
-.tlSidebar__flyoutHeader {
-	padding: var(--spacing-03) var(--spacing-04);
-	color: var(--text-primary);
-	font-size: var(--label-01-font-size);
-	font-weight: 600;
-	border-bottom: 1px solid var(--border-subtle);
-	margin-bottom: var(--spacing-02);
-}
-
-.tlSidebar__flyoutItem {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-03);
-	width: 100%;
-	padding: var(--spacing-03) var(--spacing-04);
-	border: none;
-	background: transparent;
-	color: var(--text-secondary);
-	font-size: var(--body-compact-01-font-size);
-	font-family: var(--font-family);
-	cursor: pointer;
-	text-align: left;
-}
-
-button.tlSidebar__flyoutItem:hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-button.tlSidebar__flyoutItem:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-.tlSidebar__flyoutItem--active {
-	color: var(--text-primary);
-	font-weight: 600;
-}
-
-.tlSidebar__flyoutSectionHeader {
-	padding: var(--spacing-02) var(--spacing-04);
-	color: var(--text-primary);
-	font-size: var(--label-01-font-size);
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-}
-
-/* --- Drawer backdrop (only used in mobile drawer mode; hidden on desktop). ---------- */
-
-.tlSidebar__backdrop {
-	display: none;
-}
-
-/* --- Drawer toggle (mobile hamburger contributed via the sidebar's drawer-open-slot-name) -- */
-
-/* The element around the button (part Button), which keeps the display any implementation of the
-   part gives its own root. */
-.tlDrawerToggle {
-	display: none; /* desktop: hidden; mobile @media rules below override */
-}
-
-/* --- Responsive: sidebar becomes an off-canvas drawer on small viewports ---- */
-
-@media (max-width: 768px) {
-	.tlDrawerToggle {
-		display: inline-flex;
-	}
-
-	/* Turn the nav rail into a fixed off-canvas panel that slides in from the left.
-	 * Width is intentionally NOT set here: it inherits from the desktop base rules
-	 * (.tlSidebar--collapsed gives 2.5rem, default gives 16rem). That way crossing the
-	 * @media boundary from a collapsed desktop rail does NOT change the width — the
-	 * rail just slides off-canvas at its current 2.5rem width, instead of first
-	 * expanding to 16rem and then animating. Width is overridden to 16rem only when
-	 * the drawer is explicitly open (below). Both width and transform are in the
-	 * transition list so opening from a collapsed-preference state grows + slides
-	 * smoothly, and closing shrinks + slides back.
-	 */
-	.tlSidebar__nav {
-		position: fixed;
-		top: 3.5rem; /* below the app bar */
-		left: 0;
-		bottom: 0;
-		transform: translateX(-100%);
-		transition: transform 0.2s ease, width 0.2s ease;
-		z-index: 50;
-		box-shadow: none;
-		/* Touch scrolling inside the drawer must not chain into page panning. */
-		overscroll-behavior: contain;
-		touch-action: pan-y;
-	}
-
-	.tlSidebar.tlSidebar--drawerOpen .tlSidebar__nav {
-		transform: translateX(0);
-		width: 16rem; /* full drawer regardless of desktop collapsed preference */
-		box-shadow: var(--shadow-dialog);
-	}
-
-	/* Backdrop only when drawer is open. Clicking closes the drawer (handled in TLSidebar.tsx). */
-	.tlSidebar--drawerOpen .tlSidebar__backdrop {
-		display: block;
-		position: fixed;
-		top: 3.5rem;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: var(--overlay);
-		z-index: 49;
-		cursor: pointer;
-	}
-
-	/* In-rail collapse arrow is meaningless on mobile; the AppBar hamburger replaces it. */
-	.tlSidebar__collapseBar {
-		display: none;
-	}
-
-	/* Content takes full width regardless of nav state. */
-	.tlSidebar__content {
-		width: 100%;
-	}
-}
-
 /* --- TLStack --------------------------------------------------------------- */
 
 .tlStack {
@@ -1975,193 +1637,6 @@ button.tlSidebar__flyoutItem:focus-visible {
 .tlCard__body--pad-none    { padding: 0; }
 .tlCard__body--pad-compact { padding: var(--spacing-03); }
 .tlCard__body--pad-default { padding: var(--spacing-04); }
-
-/* --- TLAppBar -------------------------------------------------------------- */
-
-.tlAppBar {
-	display: flex;
-	align-items: center;
-	height: 3.5rem;
-	padding: 0 var(--spacing-03);
-	gap: var(--spacing-02);
-	font-family: var(--font-family);
-	flex-shrink: 0;
-	box-sizing: border-box;
-}
-
-/* Übergang bis Welle 4 (Shell): die AppBar ist keine Markenfläche, sie liest die Flächen des Design Systems. */
-.tlAppBar--primary { background: var(--tl-surface-layer); color: var(--tl-text-primary); }
-
-.tlAppBar--elevated {
-	box-shadow: var(--shadow-raised);
-}
-
-.tlAppBar__leading {
-	flex-shrink: 0;
-}
-
-.tlAppBar__title {
-	flex: 0 1 auto;
-	margin: 0;
-	font-weight: bold;
-	font-size: var(--heading-compact-02-font-size);
-	line-height: var(--heading-compact-02-line-height);
-	letter-spacing: var(--heading-compact-02-letter-spacing);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.tlAppBar__children {
-	display: flex;
-	align-items: center;
-	flex: 1 1 auto;
-	min-width: 0;
-	gap: var(--spacing-02);
-	overflow: hidden;
-}
-
-.tlAppBar__actions {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-01);
-	flex-shrink: 0;
-	margin-left: auto;
-}
-
-/* Without a command the actions toolbar renders nothing. The wrapper then leaves the bar alone
-   instead of contributing a gap between the content and the bar's trailing end. */
-.tlAppBar__actions:empty {
-	display: none;
-}
-
-/* Who gives way when the bar is too narrow: a toolbar that can collapse absorbs the shrink (it
-   drops button labels and folds commands into its overflow menu), and the title truncates only
-   once the toolbar is down to its overflow trigger. */
-.tlAppBar__actions:has(> .tl-toolbar[data-tl-overflow]) {
-	/* Übergang bis Welle 4 (AppBar). */
-	flex-shrink: 100000;
-	min-width: var(--tl-size-control);
-}
-
-.tlAppBar__trailing {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	flex-shrink: 0;
-	margin-left: auto;
-}
-
-/* An actions area ahead of the trailing one has already claimed the free space; a second automatic
-   margin would split it between the two and strand the actions mid-bar. A wrapper showing nothing
-   claims nothing, so the trailing area keeps its own margin then. */
-.tlAppBar__actions:not(:empty) + .tlAppBar__trailing {
-	margin-left: 0;
-}
-
-/* --- TLBottomBar ----------------------------------------------------------- */
-
-.tlBottomBar {
-	display: flex;
-	align-items: stretch;
-	height: 3.5rem;
-	border-top: 1px solid var(--border-subtle);
-	background: var(--layer-01);
-	font-family: var(--font-family);
-	flex-shrink: 0;
-}
-
-.tlBottomBar__item {
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 0.125rem;
-	border: none;
-	background: transparent;
-	color: var(--text-secondary);
-	cursor: pointer;
-	padding: var(--spacing-02) 0;
-	font-family: var(--font-family);
-	min-width: 0;
-}
-
-.tlBottomBar__item:focus-visible {
-	outline: 2px solid var(--focus);
-	outline-offset: -2px;
-}
-
-button.tlBottomBar__item:hover {
-	background: var(--layer-hover);
-	color: var(--text-primary);
-}
-
-.tlBottomBar__item--active {
-	color: var(--button-primary);
-}
-
-.tlBottomBar__iconWrap {
-	position: relative;
-	display: inline-flex;
-}
-
-.tlBottomBar__icon {
-	font-size: 1.25rem;
-}
-
-/* The element around the badge (part Badge), over the corner of the icon. */
-.tlBottomBar__badge {
-	position: absolute;
-	top: -0.375rem;
-	right: -0.5rem;
-	display: flex;
-}
-
-.tlBottomBar__label {
-	font-size: 0.6875rem;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	max-width: 100%;
-}
-
-/* --- TLAppShell ------------------------------------------------------------ */
-
-.tlAppShell {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-}
-
-/* Bounded flex column: the content control resolves its height against this region, so a filling
-   one spans it and scrolls internally while the app bar stays put. */
-.tlAppShell__content {
-	flex: 1;
-	min-height: 0;
-	overflow: hidden;
-	display: flex;
-	flex-direction: column;
-}
-
-/* Notice area between header and content. Carries neither padding nor border of its own, so it
-   collapses to zero height while every notice inside it is hidden (a hidden TLNoticeBar renders
-   nothing at all). */
-.tlAppShell__notices {
-	display: flex;
-	flex-direction: column;
-	flex: 0 0 auto;
-}
-
-/* Several notices stack flush: they are full-width bars, and the gap a stack puts between its
-   children would show the page through as a stripe between two announcements. */
-.tlAppShell__notices .tlStack {
-	gap: 0;
-}
-
-.tlAppShell .tl-breadcrumb { /* Übergang bis Welle 4 (Shell): liest die Paketklasse. */
-	padding: var(--spacing-02) var(--spacing-05);
-}
 
 /* --- TLPopover ------------------------------------------------------------- */
 
@@ -3531,7 +3006,7 @@ button.tlBottomBar__item:hover {
   border-radius: var(--border-radius-02);
   background: var(--layer-01);
 }
-.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction) {
+.tlDashboard__tile > *:not(.tlDashboard__overlay, .tlDashboard__tileAction, .tlDashboard__hide) {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
@@ -3572,6 +3047,18 @@ button.tlBottomBar__item:hover {
   background: transparent;
   cursor: move;
   z-index: 5;
+}
+/* The button removing a tile while the dashboard is rearranged: in the top trailing corner, above
+   the overlay, on the tile's own surface so that it stays readable over whatever the tile shows. */
+.tlDashboard__hide {
+  position: absolute;
+  top: var(--spacing-02);
+  inset-inline-end: var(--spacing-02);
+  z-index: 6;
+  display: flex;
+  background: var(--layer-01);
+  border-radius: var(--corner-radius);
+  box-shadow: var(--shadow-raised);
 }
 .tlDashboard__tile--dropBefore::before,
 .tlDashboard__tile--dropAfter::after {

@@ -103,8 +103,8 @@
 					<!--
 						Mobile drawer-toggle target. The sidebar above is configured with
 						drawer-open-slot-name="appbar-leading", which makes it contribute a
-						hamburger button into this slot via the slot-content registry; CSS makes
-						it visible only at small viewports. The two names must match.
+						hamburger button into this slot via the slot-content registry; it renders
+						only while the app shell is compact (below its breakpoint). The two names must match.
 					-->
 					<slot name="appbar-leading"/>
 				</leading>

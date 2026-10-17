@@ -31,10 +31,12 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.layout.ActivateTileArguments;
+import com.top_logic.layout.react.control.layout.HideTileArguments;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -44,6 +46,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandCliques;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.DashboardCommandModel;
@@ -56,13 +59,15 @@ import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Tests the action a {@code <tile>} of a {@code <dashboard>} is activated by: what the dashboard
- * tells the client about it, and what activating a tile runs.
+ * Tests the {@code <tile>}s of a {@code <dashboard>}: the action a tile is activated by - what the
+ * dashboard tells the client about it, and what activating a tile runs - and hiding a tile and
+ * adding it again.
  *
  * <p>
- * Everything is observed through the seam the client sees - the tile descriptors the dashboard
- * publishes and the {@code activate} command it answers - so that what is tested is the contract
- * the tile is rendered from.
+ * Everything is observed through the seams the client and the user see - the tile descriptors the
+ * dashboard publishes, the commands it answers, the commands it contributes to the surrounding
+ * toolbar, and what it stores in the personal configuration - so that what is tested is the
+ * contract the dashboard is rendered and personalized from.
  * </p>
  */
 public class TestDashboardElement extends BasicTestCase {
@@ -102,6 +107,18 @@ public class TestDashboardElement extends BasicTestCase {
 
 	/** Id of the tile whose content has no title to name its action after. */
 	private static final String UNTITLED_TILE = "untitled";
+
+	/** Id of the optional tile, hidden until the user adds it. */
+	private static final String OPTIONAL_TILE = "extra";
+
+	/** The name the {@link #OPTIONAL_TILE} is configured with. */
+	private static final String OPTIONAL_TILE_LABEL = "Extras";
+
+	/** Id of the dashboard in {@code test-dashboard.view.xml}. */
+	private static final String DASHBOARD_ID = "test-dashboard";
+
+	/** The personal configuration key holding the tile visibilities of the test dashboard. */
+	private static final String VISIBILITY_KEY = DashboardElement.PC_VISIBILITY_KEY_PREFIX + DASHBOARD_ID;
 
 	/**
 	 * The command the tiles of {@code test-dashboard.view.xml} are activated by.
@@ -260,9 +277,161 @@ public class TestDashboardElement extends BasicTestCase {
 		assertEquals("The anonymous session is offered no layout editing.", List.of(),
 			layoutCommands(new CommandScope(List.of())));
 
-		List<CommandModel> offered = new ArrayList<>();
-		TLContextManager.inRootPersonContext(() -> offered.addAll(layoutCommands(new CommandScope(List.of()))));
-		assertEquals("A logged-in user is offered to edit the layout and to finish editing.", 2, offered.size());
+		List<String> offered = new ArrayList<>();
+		TLContextManager.inRootPersonContext(() -> {
+			for (CommandModel command : layoutCommands(new CommandScope(List.of()))) {
+				offered.add(command.getName());
+			}
+		});
+		assertTrue("A logged-in user is offered to edit the layout.",
+			offered.contains(DashboardCommandModel.EDIT_COMMAND));
+		assertTrue("A logged-in user is offered to finish editing.",
+			offered.contains(DashboardCommandModel.DONE_COMMAND));
+	}
+
+	/**
+	 * Tests that the anonymous session can neither hide a tile nor add one: it is offered no
+	 * command to add a tile, and a hide command sent anyway leaves the tile in place.
+	 */
+	public void testAnonymousSessionCannotHideOrAddTiles() {
+		assertTrue("Precondition: the test runs without a logged-in user.", TLContext.isAnonymous());
+		CommandScope scope = new CommandScope(List.of());
+		ReactDashboardControl dashboard = createDashboard(_context.withScope(CommandScope.class, scope));
+		dashboard.attach();
+
+		assertEquals("The anonymous session is offered no tile to add.", List.of(), tileCommands(scope));
+		assertFalse("An optional tile stays hidden for the anonymous session.",
+			tileIds(dashboard).contains(OPTIONAL_TILE));
+
+		hide(dashboard, DISPLAY_TILE);
+		assertTrue("The anonymous session cannot hide a tile.", tileIds(dashboard).contains(DISPLAY_TILE));
+	}
+
+	/**
+	 * Tests that hiding a tile drops it from what the client is told and stores the deviation from
+	 * the default in the personal configuration.
+	 */
+	public void testHideTile() {
+		inUserContext(() -> {
+			CommandScope scope = new CommandScope(List.of());
+			ReactDashboardControl dashboard = createDashboard(_context.withScope(CommandScope.class, scope));
+			dashboard.attach();
+			dashboard.enterEditMode();
+
+			hide(dashboard, DISPLAY_TILE);
+
+			assertEquals("The hidden tile is no longer published, the others keep their order.",
+				List.of(OPENING_TILE, LABELED_TILE, UNTITLED_TILE), tileIds(dashboard));
+			assertEquals("Only the deviation from the default is stored.",
+				Map.of(DISPLAY_TILE, Boolean.FALSE), storedVisibility());
+
+			ReactDashboardControl reopened = createDashboard(_context.withScope(CommandScope.class,
+				new CommandScope(List.of())));
+			assertFalse("A tile hidden once stays hidden when the dashboard is displayed again.",
+				tileIds(reopened).contains(DISPLAY_TILE));
+		});
+	}
+
+	/**
+	 * Tests the command adding a hidden tile again: offered only while the layout is edited and the
+	 * tile is hidden, and adding the tile shows it at its former position.
+	 */
+	public void testAddHiddenTileAgain() {
+		inUserContext(() -> {
+			CommandScope scope = new CommandScope(List.of());
+			ReactDashboardControl dashboard = createDashboard(_context.withScope(CommandScope.class, scope));
+			dashboard.attach();
+
+			CommandModel add = tileCommand(scope, DISPLAY_TILE);
+			assertEquals("The command is grouped with the other tiles to add.", CommandCliques.DASHBOARD_TILES,
+				add.getClique());
+			assertEquals("The command is named after the tile.", "Revenue", add.getLabel());
+			assertFalse("A shown tile is not offered to be added.", add.isVisible());
+
+			dashboard.enterEditMode();
+			assertFalse("A shown tile is not offered to be added, also while editing.", add.isVisible());
+
+			hide(dashboard, DISPLAY_TILE);
+			assertTrue("A hidden tile is offered to be added while editing.", add.isVisible());
+
+			dashboard.exitEditMode();
+			assertFalse("A tile is offered to be added only while editing.", add.isVisible());
+
+			dashboard.enterEditMode();
+			assertTrue(add.executeCommand(_context).isSuccess());
+
+			assertEquals("The tile is shown again at its former position.",
+				List.of(DISPLAY_TILE, OPENING_TILE, LABELED_TILE, UNTITLED_TILE), tileIds(dashboard));
+			assertFalse("A tile shown again is no longer offered to be added.", add.isVisible());
+			assertNull("A tile back at its default leaves nothing stored.",
+				PersonalConfiguration.getPersonalConfiguration().getJSONValue(VISIBILITY_KEY));
+		});
+	}
+
+	/**
+	 * Tests that the action of a tile follows its input again once a hidden tile is shown again.
+	 */
+	public void testActionFollowsItsInputAfterAddingAgain() {
+		inUserContext(() -> {
+			CommandScope scope = new CommandScope(List.of());
+			ReactDashboardControl dashboard = createDashboard(_context.withScope(CommandScope.class, scope));
+			dashboard.attach();
+			dashboard.enterEditMode();
+
+			hide(dashboard, OPENING_TILE);
+			_input.set(TICKET);
+			tileCommand(scope, OPENING_TILE).executeCommand(_context);
+
+			assertEquals("The action of the tile shown again is offered for the selected input.", Boolean.FALSE,
+				action(dashboard, OPENING_TILE).get(ACTION_DISABLED));
+			_input.set(null);
+			assertEquals("The action of the tile shown again follows its input.", Boolean.TRUE,
+				action(dashboard, OPENING_TILE).get(ACTION_DISABLED));
+		});
+	}
+
+	/**
+	 * Tests that an optional tile starts hidden, is offered under its configured name, and is
+	 * stored as shown once the user adds it.
+	 */
+	public void testOptionalTile() {
+		inUserContext(() -> {
+			CommandScope scope = new CommandScope(List.of());
+			ReactDashboardControl dashboard = createDashboard(_context.withScope(CommandScope.class, scope));
+			dashboard.attach();
+
+			assertFalse("An optional tile is hidden by default.", tileIds(dashboard).contains(OPTIONAL_TILE));
+
+			dashboard.enterEditMode();
+			CommandModel add = tileCommand(scope, OPTIONAL_TILE);
+			assertTrue("An optional tile is offered to be added while editing.", add.isVisible());
+			assertEquals("The command is named by the label of the tile.", OPTIONAL_TILE_LABEL, add.getLabel());
+
+			add.executeCommand(_context);
+
+			assertEquals("The added tile is shown at its configured position.",
+				List.of(DISPLAY_TILE, OPENING_TILE, LABELED_TILE, UNTITLED_TILE, OPTIONAL_TILE), tileIds(dashboard));
+			assertEquals("Showing an optional tile is a deviation from its default.",
+				Map.of(OPTIONAL_TILE, Boolean.TRUE), storedVisibility());
+		});
+	}
+
+	/**
+	 * Tests that stored visibilities of tiles the dashboard no longer has are ignored, and that a
+	 * tile without a stored visibility - e.g. one configured after the user personalized the
+	 * dashboard - is shown.
+	 */
+	public void testStoredVisibilityOfUnknownAndNewTiles() {
+		inUserContext(() -> {
+			PersonalConfiguration.getPersonalConfiguration().setJSONValue(VISIBILITY_KEY,
+				Map.of("removed", Boolean.TRUE, OPENING_TILE, Boolean.FALSE));
+
+			ReactDashboardControl dashboard = createDashboard(_context.withScope(CommandScope.class,
+				new CommandScope(List.of())));
+
+			assertEquals("A tile without a stored visibility is shown, a stored unknown tile is ignored.",
+				List.of(DISPLAY_TILE, LABELED_TILE, UNTITLED_TILE), tileIds(dashboard));
+		});
 	}
 
 	/**
@@ -276,6 +445,60 @@ public class TestDashboardElement extends BasicTestCase {
 			if (command instanceof DashboardCommandModel) {
 				result.add(command);
 			}
+		}
+		return result;
+	}
+
+	/**
+	 * Runs the given test code for a logged-in user whose dashboard is not yet personalized.
+	 */
+	private static void inUserContext(Runnable test) {
+		TLContextManager.inRootPersonContext(() -> {
+			PersonalConfiguration.getPersonalConfiguration().setJSONValue(VISIBILITY_KEY, null);
+			test.run();
+		});
+	}
+
+	/** The tile visibilities stored in the personal configuration. */
+	private static Map<?, ?> storedVisibility() {
+		Object value = PersonalConfiguration.getPersonalConfiguration().getJSONValue(VISIBILITY_KEY);
+		assertTrue("Tile visibilities are stored as JSON object: " + value, value instanceof Map);
+		return (Map<?, ?>) value;
+	}
+
+	/** The commands adding a tile that a dashboard contributed to the given scope. */
+	private static List<CommandModel> tileCommands(CommandScope scope) {
+		List<CommandModel> result = new ArrayList<>();
+		for (CommandModel command : scope.getAllCommands()) {
+			if (CommandCliques.DASHBOARD_TILES.equals(command.getClique())) {
+				result.add(command);
+			}
+		}
+		return result;
+	}
+
+	/** The command adding the tile with the given id. */
+	private static CommandModel tileCommand(CommandScope scope, String tileId) {
+		for (CommandModel command : tileCommands(scope)) {
+			if ((DashboardCommandModel.SHOW_TILE_COMMAND_PREFIX + tileId).equals(command.getName())) {
+				return command;
+			}
+		}
+		throw new AssertionError("No command to add tile '" + tileId + "'.");
+	}
+
+	/** Sends the client's hide command for the tile with the given id. */
+	private static void hide(ReactDashboardControl dashboard, String tileId) {
+		HandlerResult result = dashboard.executeClientCommand(ReactDashboardControl.HIDE_COMMAND,
+			Map.of(HideTileArguments.TILE_ID, tileId));
+		assertTrue("Hiding a tile succeeds.", result.isSuccess());
+	}
+
+	/** The ids of the tiles the dashboard currently publishes, in their order. */
+	private static List<String> tileIds(ReactDashboardControl dashboard) {
+		List<String> result = new ArrayList<>();
+		for (Object child : children(dashboard)) {
+			result.add((String) ((Map<?, ?>) child).get(TILE_ID));
 		}
 		return result;
 	}

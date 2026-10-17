@@ -7,15 +7,15 @@ filterSecurity($base)
 
 <h2>Beschreibung</h2>
 
-<p>Wendet die Lese-Berechtigungen des angemeldeten Nutzers auf einen Wert an und entfernt alle Fachobjekte, die der Nutzer nicht sehen darf.</p>
+<p>Wendet das Entdecken-Recht des angemeldeten Nutzers auf einen Wert an und entfernt alle Fachobjekte, die der Nutzer nicht entdecken darf.</p>
 
-<p>Beim Zugriff auf Modellelemente werden referenzierte Objekte in TL-Script grunds&auml;tzlich <strong>ungefiltert</strong> zur&uuml;ckgegeben &ndash; konsistent zur Oberfl&auml;che, die ein referenziertes Objekt immer mit seiner Beschriftung anzeigt und nur die Navigation in das Objekt absichert. Lediglich der Zugriff auf die <em>Attribute</em> eines Objektes wird verweigert, wenn der Nutzer das Objekt nicht lesen darf. Ein Zwischenergebnis einer Auswertung kann daher Objekte enthalten, die der Nutzer nicht lesen darf. Mit <code class="hljs inlineCode">filterSecurity</code> kann ein solcher Wert explizit so abgesichert werden, dass er nur noch lesbare Objekte enth&auml;lt.</p>
+<p>Jede Objektquelle in einem abgesicherten TL-Script (Referenzen, Referrer, Container, Objektfunktionen) liefert bereits nur Objekte, die der Nutzer entdecken darf. <code class="hljs inlineCode">filterSecurity</code> bleibt als Sicherheitsnetz f&uuml;r Werte, die aus ungesicherten Quellen zusammengesetzt werden.</p>
 
 <p>Die Pr&uuml;fung erfolgt rekursiv:</p>
 
 <ul>
-	<li>Ein einzelnes Fachobjekt, das der Nutzer nicht lesen darf, wird zu <code class="hljs inlineCode">null</code>.</li>
-	<li>Aus einer Sammlung werden die nicht lesbaren Elemente entfernt; die Art der Sammlung (Liste bzw. Menge) bleibt erhalten.</li>
+	<li>Ein einzelnes Fachobjekt, das der Nutzer nicht entdecken darf, wird zu <code class="hljs inlineCode">null</code>.</li>
+	<li>Aus einer Sammlung werden die nicht entdeckbaren Elemente entfernt; die Art der Sammlung (Liste bzw. Menge) bleibt erhalten.</li>
 	<li>Werte, die keine Fachobjekte sind (z.&nbsp;B. Zahlen oder Zeichenketten), bleiben unver&auml;ndert.</li>
 </ul>
 
@@ -23,7 +23,7 @@ filterSecurity($base)
 
 <p>Das <strong>Gesamtergebnis</strong> eines Skriptes muss nicht abgesichert werden: Es wird von der Anwendung beim Ausf&uuml;hren des Skriptes automatisch gefiltert, sofern die Security f&uuml;r das Skript nicht ausdr&uuml;cklich abgeschaltet ist. Ein <code class="hljs inlineCode">filterSecurity</code> am Ende eines Skriptes ist damit &uuml;berfl&uuml;ssig.</p>
 
-<p>Die Funktion wird gebraucht, um einen Wert <em>innerhalb</em> einer Auswertung abzusichern &ndash; etwa ein Teilergebnis, das das Skript selbst ausgibt oder an einen anderen Kontext weitergibt. Sie sollte dabei nicht auf jeden Zwischenschritt angewendet werden: Wird sie zu fr&uuml;h eingesetzt, k&ouml;nnen nachfolgende Schritte Objekte verlieren, die zur Berechnung ben&ouml;tigt werden (z.&nbsp;B. f&uuml;r einen Filter), obwohl das Endergebnis selbst lesbar w&auml;re.</p>
+<p>Die Funktion wird gebraucht, um einen Wert <em>innerhalb</em> einer Auswertung abzusichern &ndash; etwa ein Teilergebnis, das das Skript selbst ausgibt oder an einen anderen Kontext weitergibt. Sie sollte dabei nicht auf jeden Zwischenschritt angewendet werden: Wird sie zu fr&uuml;h eingesetzt, k&ouml;nnen nachfolgende Schritte Objekte verlieren, die zur Berechnung ben&ouml;tigt werden (z.&nbsp;B. f&uuml;r einen Filter), obwohl das Endergebnis selbst entdeckbar w&auml;re.</p>
 
 <h2>Parameter</h2>
 
@@ -52,7 +52,7 @@ filterSecurity($base)
 
 <p><span style="color:#3498db"><strong>Typ:</strong></span> Gleicher Typ wie das Argument</p>
 
-<p>Der gegebene Wert, der nur noch die f&uuml;r den angemeldeten Nutzer lesbaren Fachobjekte enth&auml;lt.</p>
+<p>Der gegebene Wert, der nur noch die f&uuml;r den angemeldeten Nutzer entdeckbaren Fachobjekte enth&auml;lt.</p>
 
 <h2>Beispiele</h2>
 
@@ -60,16 +60,16 @@ filterSecurity($base)
 
 <pre><code>all(`myModule:Contract`).map(c -&gt; $c.get(`owner`)).filterSecurity()</code></pre>
 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Die Owner aller Vertr&auml;ge, beschr&auml;nkt auf die Personen, die der angemeldete Nutzer lesen darf.</p>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Die Owner aller Vertr&auml;ge, beschr&auml;nkt auf die Personen, die der angemeldete Nutzer entdecken darf. In einem abgesicherten Skript liefert bereits der Referenzzugriff nur entdeckbare Owner, der Aufruf &auml;ndert das Ergebnis dort nicht.</p>
 
 <h3>Beispiel 2</h3>
 
 <pre><code>$contract.get(`owner`).filterSecurity()</code></pre>
 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Der Owner des Vertrags, falls der angemeldete Nutzer ihn lesen darf, andernfalls <code class="hljs inlineCode">null</code>.</p>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Der Owner des Vertrags, falls der angemeldete Nutzer ihn entdecken darf, andernfalls <code class="hljs inlineCode">null</code>.</p>
 
 <h3>Beispiel 3</h3>
 
 <pre><code>all(`myModule:Contract`).filter(c -&gt; $c.get(`owner`) != null).filterSecurity()</code></pre>
 
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Alle Vertr&auml;ge mit gesetztem Owner &ndash; der Filter wertet den (ungefilterten) Owner aus, das <code class="hljs inlineCode">filterSecurity</code> am Ende beschr&auml;nkt das Ergebnis dann auf die Vertr&auml;ge, die der angemeldete Nutzer sehen darf.</p>
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Die Vertr&auml;ge mit einem Owner, die der angemeldete Nutzer entdecken darf. In einem abgesicherten Skript liefern bereits <code class="hljs inlineCode">all</code> und der Referenzzugriff nur entdeckbare Objekte, das <code class="hljs inlineCode">filterSecurity</code> am Ende ist dort &uuml;berfl&uuml;ssig. Ein Objekt entdecken zu d&uuml;rfen, erlaubt nicht, seine Attribute zu lesen.</p>

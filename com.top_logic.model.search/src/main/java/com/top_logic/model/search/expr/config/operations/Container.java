@@ -49,12 +49,11 @@ public class Container extends GenericMethodWithSecurity {
 			return null;
 		}
 		if (usesSecurity() && !ModelAccessRights.getInstance().isReadAllowed(object)) {
-			// No read access to the base object - cannot navigate to its container. The container
-			// itself is returned unfiltered; the final result of a script must be secured by the
-			// caller.
+			// No read access to the base object - cannot navigate to its container.
 			return null;
 		}
-		return object.tContainer();
+		// Only a discoverable container is delivered (R4 of the Discover specification).
+		return discoverable(object.tContainer(), usesSecurity());
 	}
 
 	/**

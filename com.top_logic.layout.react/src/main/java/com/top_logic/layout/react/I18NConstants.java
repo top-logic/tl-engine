@@ -192,6 +192,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.sidebar.openDrawer")
 	public static ResKey JS_SIDEBAR_OPEN_DRAWER;
 
+	/**
+	 * @en Bottom navigation
+	 */
+	@CustomKey("js.bottomBar.ariaLabel")
+	public static ResKey JS_BOTTOM_BAR_ARIA_LABEL;
+
 	// -- Dialog client-side i18n keys --
 
 	/**
@@ -412,6 +418,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.toolbar.overflow")
 	public static ResKey JS_TOOLBAR_OVERFLOW;
 
+	// -- Dashboard client-side i18n keys --
+
+	/**
+	 * @en Hide tile
+	 */
+	@CustomKey("js.dashboard.hideTile")
+	public static ResKey JS_DASHBOARD_HIDE_TILE;
+
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 */
@@ -503,6 +517,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en No value
 	 */
 	public static ResKey VALUE_NONE;
+
+	/**
+	 * @en *****
+	 */
+	public static ResKey MASKED_VALUE;
 
 	/**
 	 * @en Languages…
@@ -1108,6 +1127,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Cannot select card: the business key no longer resolves to a card on this board: {0}
 	 */
 	public static ResKey1 ERROR_CARD_KEY_UNRESOLVED__KEY;
+
+	/**
+	 * @en Cannot select item: the business key no longer resolves to an item of this list: {0}
+	 */
+	public static ResKey1 ERROR_ITEM_KEY_UNRESOLVED__KEY;
 
 	/**
 	 * @en Cannot drop here: this table does not accept the dragged objects.

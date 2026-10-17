@@ -55,6 +55,7 @@ public class DynamicSet extends GenericMethodWithSecurity {
 
 		if (usesSecurity()) {
 			Update.checkWritePermission(obj, part);
+			Update.checkNewTargets(obj, part, value);
 		}
 
 		obj.tUpdate(part, value);

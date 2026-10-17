@@ -9,7 +9,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,6 +21,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -59,6 +65,23 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * early. Without the heartbeat, intermediaries (proxies, load balancers) may silently drop idle
  * connections, leaving half-open connections that neither the server nor the client can detect.
  * </p>
+ *
+ * <p>
+ * <b>Polling where the stream does not arrive.</b> A corporate proxy that inspects content
+ * (Zscaler, Netskope and others) may hold a {@code text/event-stream} response back until it ends,
+ * forward it only in large blocks, or refuse it. Every event a window receives arrives on this
+ * queue - each command's result, the login dialog, a navigation - so behind such a proxy the page
+ * does not react at all. The queue therefore numbers every event it writes, sends the number as
+ * the event's {@code id}, and keeps what it wrote until the client has read it (at most
+ * {@link #MAX_RETAINED_CHARS} characters, since the last {@link #setConnection(AsyncContext)
+ * connection} or {@link #discardPendingEvents() rendering}). A client whose stream brings nothing
+ * changes to {@link #poll(AsyncContext, long, boolean) polling} and continues after the last number
+ * it saw. Its first poll asks for the full state of the controls, because the state the connection
+ * sent may not have arrived either; the events written since the connection that address no
+ * displayed control - a reload, a frame of a listener that is not a control - follow it. A poll
+ * waits up to {@link #POLL_HOLD_MILLIS} for an event, so an event is delivered as soon as it
+ * exists, and every poll ends before a proxy's idle timeout.
+ * </p>
  */
 public class SSEUpdateQueue {
 
@@ -70,8 +93,72 @@ public class SSEUpdateQueue {
 	 */
 	private static final String HEARTBEAT_MESSAGE = "data: [\"Heartbeat\",{}]\n\n";
 
-	/** Interval between heartbeat messages in seconds. */
-	private static final long HEARTBEAT_INTERVAL_SECONDS = 30;
+	/**
+	 * Interval between heartbeat messages in seconds.
+	 *
+	 * <p>
+	 * Below the 30 seconds after which many proxies close a connection without traffic.
+	 * </p>
+	 */
+	private static final long HEARTBEAT_INTERVAL_SECONDS = 15;
+
+	/** How long a poll waits for an event before it answers with none. */
+	public static final long POLL_HOLD_MILLIS = 10_000;
+
+	/**
+	 * How long the queue keeps serving a polling client after its last poll: one that polls asks
+	 * again at once, so a longer silence means the page is gone.
+	 */
+	private static final long POLL_ORPHAN_MILLIS = 60_000;
+
+	/** How much the queue keeps of what it wrote, in characters of serialized events. */
+	static final int MAX_RETAINED_CHARS = 1_000_000;
+
+	private static final SecureRandom RANDOM = new SecureRandom();
+
+	/** The queues by the token their polls carry instead of the session cookie. */
+	private static final Map<String, SSEUpdateQueue> QUEUES_BY_POLL_TOKEN = new ConcurrentHashMap<>();
+
+	/** Ends a poll that found no event within {@link #POLL_HOLD_MILLIS}. */
+	private static final ScheduledExecutorService POLL_TIMER = Executors.newSingleThreadScheduledExecutor(r -> {
+		Thread thread = new Thread(r, "SSE-Poll-Timer");
+		thread.setDaemon(true);
+		return thread;
+	});
+
+	/** An event as it was written, with its number. */
+	private record Written(long seq, SSEEvent event, String json) {
+		// Pure data.
+	}
+
+	/** A poll held open until an event arrives or its time is up. */
+	private record WaitingPoll(AsyncContext context, long after, ScheduledFuture<?> timeout) {
+		// Pure data.
+	}
+
+	/** What the queue wrote since the last connection or rendering, oldest first. Guarded by {@code this}. */
+	private final Deque<Written> _written = new ArrayDeque<>();
+
+	/** The characters {@link #_written} holds. Guarded by {@code this}. */
+	private int _writtenChars;
+
+	/** The number of the last event written. Guarded by {@code this}. */
+	private long _lastSeq;
+
+	/** The highest number that was dropped from {@link #_written} before a poll read it. Guarded by {@code this}. */
+	private long _droppedUnread;
+
+	/** Whether the client polls instead of reading a stream. Guarded by {@code this}. */
+	private boolean _polling;
+
+	/** When the client last polled. Guarded by {@code this}. */
+	private long _lastPoll;
+
+	/** The poll waiting for the next event, {@code null} if none. Guarded by {@code this}. */
+	private WaitingPoll _waitingPoll;
+
+	/** The token polls carry instead of the session cookie, created with the first poll. */
+	private volatile String _pollToken;
 
 	private final ConcurrentLinkedQueue<SSEEvent> _pendingEvents = new ConcurrentLinkedQueue<>();
 
@@ -465,7 +552,14 @@ public class SSEUpdateQueue {
 	public void setConnection(AsyncContext asyncContext) {
 		SSEConnection old = _connection;
 		SSEConnection newConn = new SSEConnection(asyncContext);
-		_connection = newConn;
+		synchronized (this) {
+			_connection = newConn;
+			// The client starts again from the state this connection sends; what was written before
+			// is not to be replayed to it.
+			forgetWritten();
+			_polling = false;
+			answerWaitingPoll();
+		}
 		if (old != null) {
 			// Diagnostic for "controls don't react": a second event stream for the SAME window
 			// replaces the first, so the previously connected browser tab stops receiving state
@@ -484,6 +578,9 @@ public class SSEUpdateQueue {
 				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 		}
 		sendFullState(newConn);
+		// A first event at once, also for a window without controls: what tells the client that its
+		// stream arrives.
+		writeOrDisconnect(newConn, HEARTBEAT_MESSAGE);
 		// Flush any events that were enqueued before the SSE connection was
 		// established (e.g. RouteChangeEvent from initial RoutingParticipant
 		// registration during control tree construction).
@@ -497,7 +594,11 @@ public class SSEUpdateQueue {
 	public void clearConnection(AsyncContext asyncContext) {
 		SSEConnection current = _connection;
 		if (current != null && current.getContext() == asyncContext) {
-			_connection = null;
+			synchronized (this) {
+				if (_connection == current) {
+					_connection = null;
+				}
+			}
 			Logger.info("SSE connection cleared for queue@" + System.identityHashCode(this),
 				SSEUpdateQueue.class);
 		}
@@ -546,6 +647,9 @@ public class SSEUpdateQueue {
 	 */
 	public void discardPendingEvents() {
 		_pendingEvents.clear();
+		synchronized (this) {
+			forgetWritten();
+		}
 	}
 
 	/**
@@ -650,26 +754,270 @@ public class SSEUpdateQueue {
 	 */
 	public synchronized void flush() {
 		SSEConnection conn = _connection;
-		if (conn == null) {
+		if (conn == null && !_polling) {
 			return;
 		}
 		SSEEvent event;
 		while ((event = _pendingEvents.peek()) != null) {
-			String message = toDataMessage(toJson(event));
-			if (message == null) {
+			String json = toJson(event);
+			if (json == null) {
 				// Unserializable event: discard it, keeping it would block the queue forever.
 				_pendingEvents.poll();
 				continue;
 			}
-			if (!writeOrDisconnect(conn, message)) {
+			long seq = _lastSeq + 1;
+			if (conn != null && !writeOrDisconnect(conn, "id: " + seq + "\n" + toDataMessage(json))) {
 				// Keep the event queued for retry on the next (re)connection.
 				return;
 			}
-			// Written successfully: now remove it from the queue.
+			// Written successfully - or, while the client polls, ready to be read: now remove it.
 			_pendingEvents.poll();
+			_lastSeq = seq;
+			remember(new Written(seq, event, json));
+		}
+		answerWaitingPoll();
+	}
+
+	/**
+	 * Answers a poll of the client: the events after {@code after}, or - for the first poll, and
+	 * whenever events after {@code after} were dropped unread - the full state of the displayed
+	 * controls, followed by the events written since the connection that address none of them.
+	 *
+	 * <p>
+	 * A poll means the client has given up its stream: the connection is closed, and from now on
+	 * events wait here until a poll reads them. With nothing to read, the poll is held open for up
+	 * to {@link #POLL_HOLD_MILLIS} and answered by the next event.
+	 * </p>
+	 *
+	 * <p>
+	 * The answer is <code>{"last":n,"token":"...","events":[...]}</code>: the number to send as
+	 * {@code after} next time, the {@link #getPollToken() token} to send instead of the session
+	 * cookie, and the events in the format of the stream.
+	 * </p>
+	 *
+	 * <p>
+	 * A full answer reads the state of every displayed control, so the caller holds the window's
+	 * interaction and its sub-session context for it, as for a {@link #setConnection(AsyncContext)
+	 * connection}.
+	 * </p>
+	 *
+	 * @param context
+	 *        The poll request, in asynchronous mode.
+	 * @param after
+	 *        The number of the last event the client has.
+	 * @param full
+	 *        Whether the client asks for the full state.
+	 */
+	public void poll(AsyncContext context, long after, boolean full) {
+		SSEConnection abandoned;
+		synchronized (this) {
+			abandoned = _connection;
+			_connection = null;
+			_polling = true;
+			_lastPoll = System.currentTimeMillis();
+			// Only one poll per window waits: a second one means the client gave up the first.
+			answerWaitingPoll(true);
+			// What waited for a connection - a stream a proxy refuses never reaches the server - is
+			// read by the poll.
+			flush();
+			acknowledge(after);
+			if (full || _droppedUnread > after) {
+				answer(context, fullAnswer(after));
+			} else if (_lastSeq > after || _shutdown) {
+				answer(context, answerAfter(after));
+			} else {
+				ScheduledFuture<?> timeout =
+					POLL_TIMER.schedule(() -> expire(context), POLL_HOLD_MILLIS, TimeUnit.MILLISECONDS);
+				_waitingPoll = new WaitingPoll(context, after, timeout);
+			}
+		}
+		if (abandoned != null) {
+			Logger.info("Window '" + _windowName + "' polls; its event stream is closed.", SSEUpdateQueue.class);
+			try {
+				abandoned.getContext().complete();
+			} catch (Exception ex) {
+				// Already closed.
+			}
+		}
+		ensureHeartbeat();
+	}
+
+	/**
+	 * The number of the last event written to the client, 0 if none yet.
+	 */
+	public synchronized long lastSeq() {
+		return _lastSeq;
+	}
+
+	/**
+	 * Whether a poll after the given number can only be answered with the full state: events after
+	 * it were dropped before the client read them.
+	 */
+	public synchronized boolean needsFullState(long after) {
+		return _droppedUnread > after;
+	}
+
+	/**
+	 * Whether the client of this window polls instead of reading a stream.
+	 */
+	public synchronized boolean isPolling() {
+		return _polling;
+	}
+
+	/**
+	 * The token a poll of this window carries instead of the session cookie.
+	 *
+	 * <p>
+	 * A poll that sends the cookie restarts the session's inactivity timeout, like every request: a
+	 * page that polls would keep its session alive for as long as it is open. Polls therefore carry
+	 * this token, which names the window, and leave the cookie out.
+	 * </p>
+	 */
+	public String getPollToken() {
+		String token = _pollToken;
+		if (token == null) {
+			synchronized (this) {
+				token = _pollToken;
+				if (token == null && !_shutdown) {
+					byte[] bytes = new byte[16];
+					RANDOM.nextBytes(bytes);
+					token = HexFormat.of().formatHex(bytes);
+					QUEUES_BY_POLL_TOKEN.put(token, this);
+					_pollToken = token;
+				}
+			}
+		}
+		return token;
+	}
+
+	/**
+	 * The queue the given poll token belongs to, {@code null} if none: the window or its session has
+	 * ended.
+	 *
+	 * @see #getPollToken()
+	 */
+	public static SSEUpdateQueue forPollToken(String token) {
+		return token == null ? null : QUEUES_BY_POLL_TOKEN.get(token);
+	}
+
+	/** Answers the waiting poll when its time is up and no event came. */
+	private synchronized void expire(AsyncContext context) {
+		if (_waitingPoll != null && _waitingPoll.context() == context) {
+			answerWaitingPoll(true);
 		}
 	}
 
+	/** Answers the waiting poll if there is something for it. Called while holding the lock. */
+	private void answerWaitingPoll() {
+		answerWaitingPoll(!_polling || _shutdown);
+	}
+
+	/** Called while holding the lock. */
+	private void answerWaitingPoll(boolean evenIfEmpty) {
+		WaitingPoll poll = _waitingPoll;
+		if (poll == null || (!evenIfEmpty && _lastSeq <= poll.after())) {
+			return;
+		}
+		_waitingPoll = null;
+		poll.timeout().cancel(false);
+		answer(poll.context(), answerAfter(poll.after()));
+	}
+
+	/** Called while holding the lock. */
+	private String answerAfter(long after) {
+		List<String> events = new ArrayList<>();
+		for (Written written : _written) {
+			if (written.seq() > after) {
+				events.add(written.json());
+			}
+		}
+		return pollAnswer(events);
+	}
+
+	/** Called while holding the lock. */
+	private String fullAnswer(long after) {
+		List<String> events = new ArrayList<>();
+		for (ReactCommandTarget control : _controls.values()) {
+			if (control instanceof ReactControl rc) {
+				String json = toJson(StateEvent.create().setControlId(rc.getID()).setState(rc.stateAsJSON()));
+				if (json != null) {
+					events.add(json);
+				}
+			}
+		}
+		for (Written written : _written) {
+			// The full state is newer than every update written before it.
+			if (written.seq() > after && !addressesDisplayedControl(written.event())) {
+				events.add(written.json());
+			}
+		}
+		return pollAnswer(events);
+	}
+
+	/** Called while holding the lock. */
+	private String pollAnswer(List<String> events) {
+		String token = _pollToken;
+		return "{\"last\":" + _lastSeq + ",\"token\":\"" + (token == null ? "" : token) + "\",\"events\":["
+			+ String.join(",", events) + "]}";
+	}
+
+	private void answer(AsyncContext context, String body) {
+		try {
+			PrintWriter writer = context.getResponse().getWriter();
+			writer.write(body);
+			writer.flush();
+		} catch (IOException | RuntimeException ex) {
+			Logger.info("A poll answer of window '" + _windowName + "' was not delivered: " + ex.getMessage(),
+				SSEUpdateQueue.class);
+		}
+		try {
+			context.complete();
+		} catch (RuntimeException ex) {
+			// Already completed.
+		}
+	}
+
+	/** Called while holding the lock. */
+	private void remember(Written written) {
+		_written.addLast(written);
+		_writtenChars += written.json().length();
+		while (_writtenChars > MAX_RETAINED_CHARS && _written.size() > 1) {
+			Written dropped = _written.removeFirst();
+			_writtenChars -= dropped.json().length();
+			_droppedUnread = dropped.seq();
+		}
+	}
+
+	/** Called while holding the lock. */
+	private void acknowledge(long upTo) {
+		while (!_written.isEmpty() && _written.peekFirst().seq() <= upTo) {
+			_writtenChars -= _written.removeFirst().json().length();
+		}
+	}
+
+	/**
+	 * Forgets what was written: the client starts from a state that contains it. Called while
+	 * holding the lock.
+	 */
+	private void forgetWritten() {
+		_written.clear();
+		_writtenChars = 0;
+		_droppedUnread = 0;
+	}
+
+	/**
+	 * Whether the given event updates a control this window displays, whose full state therefore
+	 * supersedes it.
+	 */
+	private boolean addressesDisplayedControl(SSEEvent event) {
+		if (event instanceof StateEvent state) {
+			return _controls.containsKey(state.getControlId());
+		}
+		if (event instanceof PatchEvent patch) {
+			return _controls.containsKey(patch.getControlId());
+		}
+		return false;
+	}
 	/**
 	 * Shuts down this queue, cancelling the heartbeat, closing the connection, and clearing all
 	 * state.
@@ -681,6 +1029,14 @@ public class SSEUpdateQueue {
 				_heartbeatTask.cancel(false);
 				_heartbeatTask = null;
 			}
+			// A waiting poll ends now; the next one finds the token gone and reloads the page.
+			answerWaitingPoll(true);
+			String token = _pollToken;
+			if (token != null) {
+				QUEUES_BY_POLL_TOKEN.remove(token, this);
+			}
+			_written.clear();
+			_writtenChars = 0;
 		}
 		SSEConnection conn = _connection;
 		_connection = null;
@@ -719,6 +1075,10 @@ public class SSEUpdateQueue {
 	}
 
 	private synchronized void ensureHeartbeat() {
+		if (!SchedulerService.Module.INSTANCE.isActive()) {
+			// No scheduler outside a running application, e.g. in a test of the queue alone.
+			return;
+		}
 		if (_heartbeatTask == null || _heartbeatTask.isDone()) {
 			_heartbeatTask = SchedulerService.getInstance().scheduleAtFixedRate(
 				this::sendHeartbeat, HEARTBEAT_INTERVAL_SECONDS, HEARTBEAT_INTERVAL_SECONDS, TimeUnit.SECONDS);
@@ -726,18 +1086,33 @@ public class SSEUpdateQueue {
 	}
 
 	private synchronized void cancelHeartbeatIfEmpty() {
-		if (_connection == null && _heartbeatTask != null) {
+		if (_connection == null && !isPollingClientAlive() && _heartbeatTask != null) {
 			_heartbeatTask.cancel(false);
 			_heartbeatTask = null;
 		}
 	}
 
+	/** Whether a client polls and was heard of recently. Called while holding the lock. */
+	private boolean isPollingClientAlive() {
+		return _polling
+			&& (_waitingPoll != null || System.currentTimeMillis() - _lastPoll < POLL_ORPHAN_MILLIS);
+	}
+
 	private void sendHeartbeat() {
 		expireDownloads(System.currentTimeMillis());
 		SSEConnection conn = _connection;
+		boolean polled;
+		synchronized (this) {
+			polled = isPollingClientAlive();
+		}
 		if (conn != null) {
 			synthesizeModelEventsIfPossible();
 			writeOrDisconnect(conn, HEARTBEAT_MESSAGE);
+			flush();
+		} else if (polled) {
+			// No heartbeat for a polling client - a poll ends by itself - but the model events of
+			// the window are synthesized as for a stream.
+			synthesizeModelEventsIfPossible();
 			flush();
 		}
 		cancelHeartbeatIfEmpty();

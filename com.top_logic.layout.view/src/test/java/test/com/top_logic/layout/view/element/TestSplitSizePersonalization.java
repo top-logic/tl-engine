@@ -167,4 +167,18 @@ public class TestSplitSizePersonalization extends TestCase {
 		assertConstraint(configured.get(0), reread.constraint(0));
 		assertFalse(reread.isCollapsed(0));
 	}
+
+	/**
+	 * Forgetting the sizes gives the configured constraints back, also to a personalization created later.
+	 */
+	public void testForgetSizes() {
+		List<ChildConstraint> configured = configured(32);
+		SplitSizePersonalization personalization = create(configured);
+		personalization.saveSizes(dragged(400, 600));
+
+		personalization.forgetSizes();
+
+		assertConstraint(configured.get(0), personalization.constraint(0));
+		assertConstraint(configured.get(0), create(configured).constraint(0));
+	}
 }

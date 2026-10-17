@@ -10,6 +10,8 @@ import { React, SurfaceProvider, panelSurface, replacePart, register } from 'tl-
 import type { TLCellProps } from 'tl-react-bridge';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
 import TLCard from '../../../com.top_logic.layout.react/react-src/controls/TLCard';
+import TLSplitPanel from '../../../com.top_logic.layout.react/react-src/controls/TLSplitPanel';
+import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
@@ -179,5 +181,77 @@ describe('a card takes its surface from where it lies', () => {
     expect(panelSurface(dialog, false)).toEqual({ level: 'overlay', inset: 'panel' });
     expect(panelSurface(page, true)).toEqual({ level: 'layer', inset: 'card' });
     expect(panelSurface(dialog, true)).toEqual({ level: 'overlay', inset: 'card' });
+  });
+});
+
+class NoResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+describe('a split handle is a separator', () => {
+  const SPLIT = {
+    orientation: 'horizontal', resizable: true,
+    children: [
+      { control: childControl('a', 'A'), size: 30, unit: '%', minSize: 0, scrolling: 'auto', collapsed: false },
+      { control: childControl('b', 'B'), size: 70, unit: '%', minSize: 0, scrolling: 'auto', collapsed: false },
+    ],
+  };
+
+  it('is focusable, says its share and the pane it controls', async () => {
+    mountAdapter(TLSplitPanel, SPLIT);
+    await settle();
+    const handle = screen.getByRole('separator', { name: 'js.splitPanel.handle' });
+    expect(handle.getAttribute('tabindex')).toBe('0');
+    expect(handle.getAttribute('aria-valuenow')).toBe('30');
+    expect(handle.getAttribute('aria-orientation')).toBe('vertical');
+    expect(document.getElementById(handle.getAttribute('aria-controls')!)?.classList).toContain('tl-split__pane');
+  });
+
+  it('sends the sizes when a key is released, and resets on a double click', async () => {
+    const sent = mountAdapter(TLSplitPanel, SPLIT);
+    await settle();
+    const handle = screen.getByRole('separator', { name: 'js.splitPanel.handle' });
+    handle.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('updateSizes', expect.objectContaining({ sizes: expect.any(Object) }));
+    fireEvent.doubleClick(handle);
+    await settle();
+    expect(sent).toHaveBeenCalledWith('resetSizes', expect.anything());
+  });
+});
+
+describe('the width handle of a table column takes the keyboard', () => {
+  it('widens the column by one step and reports it when the key is released', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    const sent = mountAdapter(TLTableView, {
+      columns: [{ name: 'name', label: 'Name', width: 120, sortable: false }],
+      rows: [],
+      totalRowCount: 0,
+    });
+    await settle();
+    const handle = screen.getByRole('separator', { name: 'js.table.columnWidth' });
+    handle.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('columnResize', { column: 'name', width: 136 });
+  });
+
+  it('fits the column to its content on End, at once', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    const sent = mountAdapter(TLTableView, {
+      columns: [{ name: 'name', label: 'Name', width: 120, sortable: false }],
+      rows: [],
+      totalRowCount: 0,
+    });
+    await settle();
+    const handle = screen.getByRole('separator', { name: 'js.table.columnWidth' });
+    handle.focus();
+    await userEvent.keyboard('{End}');
+    await settle();
+    // jsdom measures no content: the fitted width is the minimum. What counts is that End reports the column at once.
+    expect(sent).toHaveBeenCalledWith('columnResize', expect.objectContaining({ column: 'name' }));
   });
 });

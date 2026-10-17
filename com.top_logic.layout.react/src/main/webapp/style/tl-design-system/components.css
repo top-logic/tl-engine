@@ -3479,8 +3479,14 @@ a.tl-field-value:hover {
   left: 0;
 }
 
+/* Der Ring liegt innen: der Griff ist space-xs breit und die Kopfzelle schneidet, was über sie hinausragt. */
+.tl-table__resize:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
 .tl-table__resize:hover::after,
 .tl-table__resize:active::after,
+.tl-table__resize:focus-visible::after,
 .tl-table__freeze:hover::after,
 .tl-table__freeze:active::after {
   background: var(--tl-border-interactive);
@@ -4330,4 +4336,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:0e590de15bb7c330cc3f40c4280b4d20a68e9a202cdb3e9ffaedeb3ceeb613ff — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:e729e948b14c360afc8b1d9afaea410bd7b3f52c0f2a3e0fbc177d7f6c4b6e57 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

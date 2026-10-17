@@ -396,6 +396,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Split panel client-side i18n keys --
+
+	/**
+	 * @en Change the size of the areas
+	 */
+	@CustomKey("js.splitPanel.handle")
+	public static ResKey JS_SPLIT_PANEL_HANDLE;
+
 	// -- Breadcrumb client-side i18n keys --
 
 	/**

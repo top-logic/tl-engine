@@ -159,12 +159,11 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     if (els[index + 1]) els[index + 1].style.flex = `0 0 ${total - size}px`;
     if (total > 0) {
       handle.setAttribute('aria-valuenow', String(Math.round((100 * size) / total)));
-      handle.setAttribute('aria-valuemin', String(Math.round((100 * minBefore) / total)));
-      handle.setAttribute('aria-valuemax', String(Math.round((100 * maxBefore) / total)));
     }
   }, [isHorizontal, measure, panes, children]);
 
-  const handleKeyUp = useCallback(() => {
+  /** Sends the sizes moved by keys; a lost key-up (focus left the handle) must not leave them behind. */
+  const flushKeySizes = useCallback(() => {
     const sizes = keySizes.current;
     keySizes.current = null;
     if (sizes) {
@@ -206,7 +205,8 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
           aria-label={i18n['js.splitPanel.handle']}
           onPointerDown={e => handlePointerDown(e, i)}
           onKeyDown={e => handleKeyDown(e, i)}
-          onKeyUp={handleKeyUp}
+          onKeyUp={flushKeySizes}
+          onBlur={flushKeySizes}
           onDoubleClick={handleReset}
         />
       );

@@ -56,8 +56,7 @@ function stepState(position: number, activeIndex: number): string {
  *
  * The step change is a transition the stylesheet owns: this component only says what is happening -
  * the direction as `data-tl-state~="backward"` on the root - and leaves the marking of the step arriving and the
- * copy of the step left behind to {@link useKeyedTransition}, which the engine draws a default
- * animation for.
+ * copy of the step left behind to {@link useKeyedTransition}. The design system package draws the default slide.
  *
  * Takes part in the fill contract as a container: a wizard whose step content fills fills its own
  * container, so the content spans the available height instead of the wizard collapsing to it.

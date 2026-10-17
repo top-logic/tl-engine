@@ -223,6 +223,28 @@ describe('a split handle is a separator', () => {
     await settle();
     expect(sent).toHaveBeenCalledWith('resetSizes', expect.anything());
   });
+
+  it('keeps the percent scale on the handle after a key', async () => {
+    const width = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get: () => 200 });
+    try {
+      // A minimum size would have moved the bounds to 25 and 75 if they were written in pixel shares.
+      mountAdapter(TLSplitPanel, {
+        ...SPLIT,
+        children: SPLIT.children.map(c => ({ ...c, minSize: 100 })),
+      });
+      await settle();
+      const handle = screen.getByRole('separator', { name: 'js.splitPanel.handle' });
+      handle.focus();
+      await userEvent.keyboard('{ArrowRight}');
+      expect(handle.getAttribute('aria-valuemin')).toBe('0');
+      expect(handle.getAttribute('aria-valuemax')).toBe('100');
+      expect(handle.getAttribute('aria-valuenow')).not.toBe('30');
+    } finally {
+      if (width) Object.defineProperty(HTMLElement.prototype, 'offsetWidth', width);
+      else delete (HTMLElement.prototype as unknown as Record<string, unknown>).offsetWidth;
+    }
+  });
 });
 
 describe('the width handle of a table column takes the keyboard', () => {

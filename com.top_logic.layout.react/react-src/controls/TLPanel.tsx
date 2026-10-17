@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, stateAttr,
-  ThemeIcon, ButtonDefaults, usePart, SurfaceProvider, useSurface, cardSurfaceClass, panelSurface, isInteractiveWithin,
+  ThemeIcon, ButtonDefaults, useStandaloneKeyboardScope, usePart, SurfaceProvider, useSurface, cardSurfaceClass, panelSurface, isInteractiveWithin,
 } from 'tl-react-bridge';
 import type { TLCellProps, Surface } from 'tl-react-bridge';
 
@@ -61,8 +61,9 @@ function ownedByHead(event: React.MouseEvent<HTMLElement>): boolean {
  * - errorMessage: string (validation error displayed below the content, may be absent)
  * - errorIcon: string (encoded theme icon displayed in front of the error message)
  *
- * Handles like a window: a double click on the head maximizes and restores, Escape restores a maximized panel, a
- * click anywhere on the head of a minimized panel opens it. The buttons stay the way for the keyboard.
+ * Handles like a window: a double click on the head maximizes and restores, Escape restores a maximized panel (through
+ * the keyboard dispatcher, so a popup inside it closes first), a click anywhere on the head of a minimized panel opens
+ * it. The buttons stay the way for the keyboard.
  */
 const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -119,15 +120,10 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     handleMinimize();
   }, [showMinimize, isMinimized, handleMinimize]);
 
-  // Escape restores a maximized panel - unless something inside used the key already, a popup closing, say.
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key !== 'Escape' || !isMaximized || event.defaultPrevented) {
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    handleMaximize();
-  }, [isMaximized, handleMaximize]);
+  // Escape restores a maximized panel. It goes through the keyboard dispatcher, not through this panel's own key
+  // handler: the newest scope wins, so a popup opened inside the maximized panel closes first, and the dispatcher
+  // stands down for an Escape an inner element has used already.
+  useStandaloneKeyboardScope(isMaximized, { ESCAPE: handleMaximize });
 
   // The panel takes part in the fill contract as a container: it fills while it is configured to,
   // or while its content fills - a table, a split - which can only resolve its height against a
@@ -163,7 +159,6 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
         fullLine && 'tl-panel--full-line', hoverActions && 'tl-panel--hover-actions', fillClass)}
       data-tl-state={stateAttr(isMinimized && 'minimized', isMaximized && 'maximized')}
       style={panelStyle}
-      onKeyDown={handleKeyDown}
     >
       {hasHeader && (
         <div className="tl-titlebar" onDoubleClick={handleHeadDoubleClick} onClick={handleHeadClick}>

@@ -114,8 +114,9 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
         {hasHeader && (
           <div className="tl-wizard__header">
             {showCounter && (
-              // The list says with aria-current where the user is; the counter repeats it for the eye only.
-              <span className="tl-wizard__counter tl-type-label tl-nums" aria-hidden="true">
+              // While the list stands, it says with aria-current where the user is and the counter repeats it for the
+              // eye only; without the list the counter is the only place that says it, so it is read.
+              <span className="tl-wizard__counter tl-type-label tl-nums" aria-hidden={showStepList ? 'true' : undefined}>
                 {counterText(activeIndex, steps.length)}
               </span>
             )}

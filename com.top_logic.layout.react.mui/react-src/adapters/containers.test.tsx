@@ -5,10 +5,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { React, createPortal, SurfaceProvider, panelSurface, replacePart, register } from 'tl-react-bridge';
+import { React, createPortal, useStandaloneKeyboardScope, SurfaceProvider, panelSurface, replacePart, register } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLStack from '../../../com.top_logic.layout.react/react-src/controls/TLStack';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
+import TLWizard from '../../../com.top_logic.layout.react/react-src/controls/TLWizard';
 import TLCard from '../../../com.top_logic.layout.react/react-src/controls/TLCard';
 import TLSplitPanel from '../../../com.top_logic.layout.react/react-src/controls/TLSplitPanel';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
@@ -62,18 +63,62 @@ describe('a panel handles like a window', () => {
     expect(sent).not.toHaveBeenCalledWith('toggleMaximize', expect.anything());
   });
 
-  it('restores on Escape while maximized, unless something inside used the key', async () => {
+  // Escape runs through the keyboard dispatcher, so a popup that opened later - and registered its scope later -
+  // gets the key before the panel does.
+  function pressEscape(target: HTMLElement, prevented = false) {
+    const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    if (prevented) {
+      event.preventDefault();
+    }
+    target.dispatchEvent(event);
+  }
+
+  function escapes(sent: ReturnType<typeof mountAdapter>) {
+    return sent.mock.calls.filter(call => call[0] === 'toggleMaximize').length;
+  }
+
+  it('restores on Escape while maximized', async () => {
     const sent = mountAdapter(TLPanel, { ...PANEL, expansionState: 'MAXIMIZED' });
     await settle();
-    const used = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
-    used.preventDefault();
-    screen.getByText('Inhalt').dispatchEvent(used);
+    pressEscape(screen.getByText('Inhalt'));
     await settle();
-    expect(sent).not.toHaveBeenCalledWith('toggleMaximize', expect.anything());
+    expect(escapes(sent)).toBe(1);
+  });
 
-    fireEvent.keyDown(screen.getByText('Inhalt'), { key: 'Escape' });
+  it('leaves Escape to a popup opened inside it, which closes first', async () => {
+    const onEscape = vi.fn();
+    // Opens on a click, as a real popup does: its scope is registered after the one of the maximized panel.
+    const Popup: React.FC = () => {
+      const [open, setOpen] = React.useState(false);
+      useStandaloneKeyboardScope(open, { ESCAPE: onEscape });
+      return <button type="button" onClick={() => setOpen(true)}>Popup</button>;
+    };
+    register('ContainersEscapePopup', Popup);
+    const popup = { controlId: 'pp', module: 'ContainersEscapePopup', state: {} } as ReturnType<typeof childControl>;
+    const sent = mountAdapter(TLPanel, { ...PANEL, child: popup, expansionState: 'MAXIMIZED' });
     await settle();
-    expect(sent).toHaveBeenCalledWith('toggleMaximize', expect.anything());
+    await userEvent.click(screen.getByText('Popup'));
+    await settle();
+    pressEscape(screen.getByText('Popup'));
+    await settle();
+    expect(onEscape).toHaveBeenCalledTimes(1);
+    expect(escapes(sent)).toBe(0);
+  });
+
+  it('does not restore on an Escape something inside used already', async () => {
+    const sent = mountAdapter(TLPanel, { ...PANEL, expansionState: 'MAXIMIZED' });
+    await settle();
+    pressEscape(screen.getByText('Inhalt'), true);
+    await settle();
+    expect(escapes(sent)).toBe(0);
+  });
+
+  it('sends nothing on Escape while not maximized', async () => {
+    const sent = mountAdapter(TLPanel, { ...PANEL, expansionState: 'NORMALIZED' });
+    await settle();
+    pressEscape(screen.getByText('Inhalt'));
+    await settle();
+    expect(escapes(sent)).toBe(0);
   });
 
   it('opens when minimized on a click anywhere on its head, and reports the state at its button', async () => {
@@ -330,5 +375,25 @@ describe('the items of a selectable container', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Oeffnen' }));
     await settle();
     expect(sent).not.toHaveBeenCalledWith('selectItem', expect.anything());
+  });
+});
+
+describe('the step counter of a wizard', () => {
+  const WIZARD = {
+    steps: [{ key: 'a', label: 'Eins' }, { key: 'b', label: 'Zwei' }], activeIndex: 0, counter: true,
+    activeChild: childControl('x', 'Schritt'),
+  };
+  const counter = () => document.querySelector('.tl-wizard__counter')!;
+
+  it('is hidden from assistive technology while the step list says where the user is', async () => {
+    mountAdapter(TLWizard, { ...WIZARD, stepList: true });
+    await settle();
+    expect(counter().getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('is read when there is no step list', async () => {
+    mountAdapter(TLWizard, { ...WIZARD, stepList: false });
+    await settle();
+    expect(counter().hasAttribute('aria-hidden')).toBe(false);
   });
 });

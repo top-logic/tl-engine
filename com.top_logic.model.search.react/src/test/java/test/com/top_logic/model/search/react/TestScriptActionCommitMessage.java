@@ -172,8 +172,7 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 			ServiceTestSetup.createStarterFactoryForModules(getModules(
 				TypeIndex.Module.INSTANCE,
 				AccessManager.Module.INSTANCE,
-				TLSecurityDeviceManager.Module.INSTANCE,
-				PersonManager.Module.INSTANCE))));
+				TLSecurityDeviceManager.Module.INSTANCE))));
 	}
 
 }

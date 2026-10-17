@@ -58,7 +58,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
@@ -3262,8 +3261,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public static Test suite() {
 		return suite(TestSearchExpression.class,
-			SafeHTML.Module.INSTANCE,
-			PersonManager.Module.INSTANCE);
+			SafeHTML.Module.INSTANCE);
 	}
 
 }

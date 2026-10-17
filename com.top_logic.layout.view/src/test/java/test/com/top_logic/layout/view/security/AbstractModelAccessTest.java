@@ -57,9 +57,9 @@ import com.top_logic.util.error.TopLogicException;
  * {@value #SECRET} is denied for every role. The {@link CommandApprovalService} refuses writing a
  * project named {@value #FROZEN} (disabled, with a reason) and deleting it (hidden). The account in
  * {@value #VIEWER} holds the role {@value #ROLE_VIEWER} on the project, which grants read only.
- * Reading {@value #BUDGET} is granted to {@value #ROLE_RESPONSIBLE} only, reading
- * {@value #CLASSIFIED} to no role, reading the reference {@value #SPONSOR} to {@value #ROLE_RESPONSIBLE}
- * only. Writing {@value #RATING} is granted to {@value #ROLE_VIEWER} only.
+ * Reading {@value #BUDGET} and the boolean {@value #APPROVED} are granted to
+ * {@value #ROLE_RESPONSIBLE} only, reading {@value #CLASSIFIED} to no role, reading the reference
+ * {@value #SPONSOR} to {@value #ROLE_RESPONSIBLE} only. Writing {@value #RATING} is granted to {@value #ROLE_VIEWER} only.
  * The attribute {@value #CODE} is read-only by its display annotation, and writing it is granted to
  * {@value #ROLE_VIEWER} only.</li>
  * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
@@ -73,8 +73,10 @@ import com.top_logic.util.error.TopLogicException;
  * role. Writing its composition {@value #LOCKED_ITEMS} is granted to no role either.</li>
  * <li>{@value #ITEM}: the type of the compositions {@value #ITEMS} and {@value #LOCKED_ITEMS} of a
  * step, with a mandatory {@value #NAME}. An item has its container as access parent.</li>
- * <li>{@value #CATEGORY}: the type of the reference {@value #CATEGORY_REF} of a project. The account
- * in {@value #READER} holds the role {@value #ROLE_READER}, which grants read only.</li>
+ * <li>{@value #CATEGORY}: the type of the references {@value #CATEGORY_REF} and {@value #CATEGORIES}
+ * (multiple, unordered) of a project. The account in {@value #READER} holds the role
+ * {@value #ROLE_READER}, which grants read on the category and, by a grant of the attribute, writing
+ * its {@value #NAME}.</li>
  * </ul>
  *
  * <p>
@@ -111,6 +113,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #PROJECT} attribute only {@link #ROLE_RESPONSIBLE} may read. */
 	protected static final String BUDGET = "budget";
+
+	/** Name of the boolean {@link #PROJECT} attribute only {@link #ROLE_RESPONSIBLE} may read. */
+	protected static final String APPROVED = "approved";
 
 	/** Name of the {@link #PROJECT} attribute nobody but a super-user may read. */
 	protected static final String CLASSIFIED = "classified";
@@ -159,6 +164,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the {@link #PROJECT} reference to a {@link #CATEGORY}. */
 	protected static final String CATEGORY_REF = "category";
+
+	/** Name of the unordered {@link #PROJECT} reference to several {@link #CATEGORY}s. */
+	protected static final String CATEGORIES = "categories";
 
 	/** Name of the {@link #PROJECT} composition of {@link #TASK}s. */
 	protected static final String TASKS = "tasks";
@@ -305,7 +313,6 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 		List<BasicRuntimeModule<?>> modules = new ArrayList<>(List.of(
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE,
 			CommandApprovalService.Module.INSTANCE));

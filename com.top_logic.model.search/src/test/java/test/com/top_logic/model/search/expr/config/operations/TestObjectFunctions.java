@@ -86,8 +86,6 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 		}
 	};
 
-	private Person _root;
-
 	/** Non-administrative user without any role. */
 	private Person _user;
 
@@ -99,7 +97,6 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		kb().addUpdateListener(_creationListener);
-		_root = PersonManager.getManager().getRoot();
 
 		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			_user = TestPerson.createPerson("objectFunctionsUser");
@@ -121,7 +118,7 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 
 	@Override
 	protected Person initialUser() {
-		return _root;
+		return PersonManager.getManager().getRoot();
 	}
 
 	@Override
@@ -351,7 +348,6 @@ public class TestObjectFunctions extends AbstractSearchExpressionTest {
 		return suite(TestObjectFunctions.class,
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
-			PersonManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
 			SecurityConfigurationService.Module.INSTANCE);
 	}

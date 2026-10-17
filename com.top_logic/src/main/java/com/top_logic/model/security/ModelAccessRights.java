@@ -136,23 +136,39 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * Returns the roles of which the user must hold at least one <em>in addition</em> to the
-	 * object-level rights to perform the given command group on the given attribute. Relevant for
-	 * READ and WRITE command groups to implement attribute-level access restrictions.
+	 * Whether a singleton of the given type or of one of its specializations has rights of its own.
 	 *
 	 * <p>
-	 * The returned roles further restrict access on top of the {@link #getAllowedRoles(TLClass,
-	 * BoundCommandGroup) object-level rights}: the user may perform the command group on the
-	 * attribute only if he is allowed to perform it on the object <em>and</em> holds one of the
-	 * returned roles.
+	 * The rights of such a singleton take precedence over the rights of its type, therefore
+	 * {@link #getAllowedRoles(TLClass, BoundCommandGroup)} does not describe the access to all
+	 * instances of the type.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to check.
+	 * @implSpec An implementation without a notion of singleton rights answers <code>false</code>
+	 *           for every type.
+	 */
+	default boolean hasSingletonRights(TLClass type) {
+		return false;
+	}
+
+	/**
+	 * Returns the roles granted the given command group on the given attribute. Relevant for READ
+	 * and WRITE command groups to implement attribute-level access rights.
+	 *
+	 * <p>
+	 * If the attribute has a grant for the command group (see
+	 * {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}), the returned roles
+	 * <b>replace</b> the {@link #getAllowedRoles(TLClass, BoundCommandGroup) object-level grant}
+	 * for this attribute: the user may perform the command group on the attribute if he holds one
+	 * of the returned roles, no matter whether the class grants him the command group on the object
+	 * as a whole. A grant listing no role at all denies the command group to everyone.
 	 * </p>
 	 *
 	 * <p>
-	 * An empty set has two meanings, which {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}
-	 * tells apart: without an attribute-level grant for the command group, there is no additional
-	 * restriction, the user may perform the command group on the attribute whenever he has the
-	 * corresponding rights on the object. With an attribute-level grant, an empty set means that no
-	 * role may perform the command group on the attribute.
+	 * Without a grant for the command group, the result is empty and the decision on the object
+	 * applies to the attribute.
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
@@ -161,8 +177,10 @@ public interface ModelAccessRights {
 	 * Whether the given attribute has an attribute-level grant for the given command group.
 	 *
 	 * <p>
-	 * Only an attribute with such a grant restricts the command group beyond the rights on the
-	 * object, to the roles {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)} lists.
+	 * An attribute with such a grant decides the command group by its own roles instead of the
+	 * rights on the object: the user needs one of the roles
+	 * {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)} lists, no matter whether the
+	 * class grants him the command group on the object as a whole.
 	 * A grant listing no role at all denies the command group on the attribute to every user except
 	 * one bypassing the model security, independent of the object the attribute is accessed on.
 	 * </p>
@@ -264,6 +282,33 @@ public interface ModelAccessRights {
 	 */
 	default boolean isReadAllowed(Person person, TLObject instance) {
 		return isAllowed(person, instance, SimpleBoundCommandGroup.READ);
+	}
+
+	/**
+	 * Checks whether the current person may discover the given instance.
+	 *
+	 * @implSpec Just calls {@link #isDiscoverAllowed(Person, TLObject)} with the current user.
+	 */
+	default boolean isDiscoverAllowed(TLObject instance) {
+		return isDiscoverAllowed(TLContext.currentUser(), instance);
+	}
+
+	/**
+	 * Checks whether the given person may discover the given instance.
+	 *
+	 * <p>
+	 * A discoverable object appears in references, enumerations and option lists and shows its
+	 * label; its attributes are readable only by their own read right. A person holds
+	 * {@link SimpleBoundCommandGroup#DISCOVER} on an object if they hold a role on it that is granted
+	 * {@link SimpleBoundCommandGroup#DISCOVER}, any other operation on the object's type, any right on
+	 * one of its attributes, or the right to create objects in one of its compositions.
+	 * </p>
+	 *
+	 * @implSpec Just calls {@link #isAllowed(Person, TLObject, BoundCommandGroup)} with
+	 *           {@link SimpleBoundCommandGroup#DISCOVER}.
+	 */
+	default boolean isDiscoverAllowed(Person person, TLObject instance) {
+		return isAllowed(person, instance, SimpleBoundCommandGroup.DISCOVER);
 	}
 
 	/**

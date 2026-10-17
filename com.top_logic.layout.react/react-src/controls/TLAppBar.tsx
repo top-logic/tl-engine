@@ -6,6 +6,9 @@ import type { TLCellProps, AppBarStateJson, ChildControlJson } from 'tl-react-br
  *
  * The state is described by AppBarStateJson. The bar renders the buttons of its actions ghost; the
  * toolbar collapses them to their icons when short of room.
+ *
+ * When the bar is short of room, a collapsing toolbar gives way first, down to its overflow button;
+ * the title truncates last (design system, app-bar.css).
  */
 const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<AppBarStateJson>>();
@@ -17,22 +20,18 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
   const actions = state.actions;
   const variant = state.variant ?? 'flat';
 
-  const className = [
-    'tlAppBar',
-    'tlAppBar--primary',
-    variant === 'elevated' ? 'tlAppBar--elevated' : '',
-  ].filter(Boolean).join(' ');
+  const className = ['tl-app-bar', variant === 'elevated' ? 'tl-app-bar--elevated' : ''].filter(Boolean).join(' ');
 
   return (
     <header id={controlId} className={rootClassName(state, className)}>
       {!!leading && (
-        <div className="tlAppBar__leading">
+        <div className="tl-app-bar__leading">
           <TLChild control={leading} />
         </div>
       )}
-      <h1 className="tlAppBar__title">{title}</h1>
+      <h1 className="tl-app-bar__title tl-type-heading-sm">{title}</h1>
       {children.length > 0 && (
-        <div className="tlAppBar__children">
+        <div className="tl-app-bar__children">
           {children.map((child, i) => (
             <TLChild key={i} control={child} />
           ))}
@@ -40,13 +39,13 @@ const TLAppBar: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {actions != null && (
         <ButtonDefaults appearance="ghost">
-          <div className="tlAppBar__actions">
+          <div className="tl-app-bar__actions">
             <TLChild control={actions} />
           </div>
         </ButtonDefaults>
       )}
       {!!trailing && (
-        <div className="tlAppBar__trailing">
+        <div className="tl-app-bar__trailing">
           <TLChild control={trailing} />
         </div>
       )}

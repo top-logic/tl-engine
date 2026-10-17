@@ -3,6 +3,16 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<modules>
 		<module name="TestTLScriptSecurity">
+			<annotations>
+				<singletons>
+					<singleton name="HOME"
+						type="PathHome"
+					/>
+					<singleton name="OFFICE"
+						type="PathOffice"
+					/>
+				</singletons>
+			</annotations>
 			<types>
 				<interface name="Record"/>
 
@@ -172,6 +182,139 @@
 								</storage-algorithm>
 							</annotations>
 						</reference>
+					</attributes>
+				</class>
+
+				<class name="PathNode">
+					<annotations>
+						<table name="TLSecPathNode"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="PathRoot">
+					<generalizations>
+						<generalization type="PathNode"/>
+					</generalizations>
+					<attributes>
+						<reference name="as"
+							multiple="true"
+							ordered="true"
+							type="PathA"
+						/>
+					</attributes>
+				</class>
+
+				<class name="PathA">
+					<generalizations>
+						<generalization type="PathNode"/>
+					</generalizations>
+					<attributes>
+						<reference name="bs"
+							multiple="true"
+							ordered="true"
+							type="PathB"
+						/>
+					</attributes>
+				</class>
+
+				<class name="PathB">
+					<generalizations>
+						<generalization type="PathNode"/>
+					</generalizations>
+					<attributes>
+						<reference name="cs"
+							multiple="true"
+							ordered="true"
+							type="PathC"
+						/>
+						<reference name="notes"
+							composite="true"
+							multiple="true"
+							type="PathNote"
+						/>
+						<reference name="writers"
+							multiple="true"
+							type="Employee"
+						/>
+						<reference name="editors"
+							multiple="true"
+							type="Employee"
+						/>
+					</attributes>
+				</class>
+
+				<class name="PathC">
+					<generalizations>
+						<generalization type="PathNode"/>
+					</generalizations>
+					<attributes>
+						<reference name="readers"
+							multiple="true"
+							type="Employee"
+						/>
+					</attributes>
+				</class>
+
+				<class name="PathNote">
+					<generalizations>
+						<generalization type="PathNode"/>
+					</generalizations>
+				</class>
+
+				<!--
+					Singleton type whose class rights let a discoverable object read its attributes,
+					while the rights of its singleton grant Write without Read.
+				-->
+				<class name="PathHome">
+					<annotations>
+						<!-- A table of its own, so that a filter on the title is compiled into SQL. -->
+						<table name="TLSecPathHome"/>
+					</annotations>
+					<attributes>
+						<property name="title"
+							type="tl.core:String"
+						/>
+						<reference name="readers"
+							multiple="true"
+							type="Employee"
+						/>
+						<reference name="editors"
+							multiple="true"
+							type="Employee"
+						/>
+					</attributes>
+				</class>
+
+				<!--
+					Singleton type with an attribute grant and a composition: both imply Discover on
+					the singleton, besides the rights of the singleton.
+				-->
+				<class name="PathOffice">
+					<generalizations>
+						<generalization type="PathNode"/>
+					</generalizations>
+					<attributes>
+						<property name="title"
+							type="tl.core:String"
+						/>
+						<reference name="notes"
+							composite="true"
+							multiple="true"
+							type="PathNote"
+						/>
+						<reference name="viewers"
+							multiple="true"
+							type="Employee"
+						/>
+						<reference name="writers"
+							multiple="true"
+							type="Employee"
+						/>
 					</attributes>
 				</class>
 			</types>

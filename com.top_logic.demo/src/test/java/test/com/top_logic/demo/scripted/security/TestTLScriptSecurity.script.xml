@@ -557,7 +557,7 @@ demoNewA(name: "newChild", parent: $p);
 								/>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="all(`DemoTypes:A`).delete()"
+								value="all(`DemoTypes:BNotUnderA`).delete()"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
@@ -566,8 +566,8 @@ demoNewA(name: "newChild", parent: $p);
 						>
 							<failure-action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 								command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-								command-label="Script ausführen"
-								command-name="executeSearchConsole"
+								command-label="Script ausführen und Änderungen speichern"
+								command-name="updateSearchConsole"
 								component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 								component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 							>

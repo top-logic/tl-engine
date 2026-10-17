@@ -39,6 +39,7 @@ import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.view.form.DatePickerControlProvider;
 import com.top_logic.layout.view.form.FieldControlService;
@@ -62,6 +63,7 @@ import com.top_logic.table.FilterPushdown;
 import com.top_logic.table.FilterState;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.Resources;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BoundCodec;
@@ -311,7 +313,13 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		if (valueType != null) {
 			ColumnProvider mapped = _providerByQualifiedType.get(TLModelUtil.qualifiedName(valueType));
 			if (mapped != null) {
-				return mapped.createColumn(name, label, type, value);
+				// A provider of its own knows nothing of unreadable cells: it is given the readable
+				// values only, and the unreadable cells are shown by the placeholder around it.
+				Function<Object, Object> readable = row -> {
+					Object cellValue = value.apply(row);
+					return isUnreadable(cellValue) ? null : cellValue;
+				};
+				return new UnreadableAwareColumn<>(mapped.createColumn(name, label, type, readable), value);
 			}
 		}
 		return defaultColumn(name, label, type, value);
@@ -327,7 +335,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			ColumnFilter<String> customFilter) {
 		Function<Object, String> text = displayText(type);
 		return valueColumn(name, label, type, defaultWidth(type), value)
-			.sort(() -> Comparator.comparing(text))
+			.sort(() -> unreadableLast(Comparator.comparing(text)))
 			.filter(byText(customFilter, text))
 			.build();
 	}
@@ -414,18 +422,18 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 				Format numberFormat = numberFormat(type);
 				return typedColumn(name, label, type, width, value, Number.class,
 					Comparator.comparingDouble(Number::doubleValue),
-					new ComparableColumnFilter<>(Comparator.comparingDouble(Number::doubleValue),
+					comparableFilter(Comparator.comparingDouble(Number::doubleValue),
 						BoundCodec.numbers(numberFormat)));
 			case DATE:
 				// A bound is typed the way the column writes its values: in the annotated format
 				// of the attribute, or the default one for the part of a point in time it holds.
 				return typedColumn(name, label, type, width, value, Date.class,
 					Comparator.<Date> naturalOrder(),
-					new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(),
+					comparableFilter(Comparator.<Date> naturalOrder(),
 						BoundCodec.dates(dateInputFormats(type), temporalKind(type).parsePatterns())));
 			case STRING:
 				return typedColumn(name, label, type, width, value, String.class,
-					Comparator.<String> naturalOrder(), TextColumnFilter.forStrings());
+					Comparator.<String> naturalOrder(), stringFilter());
 			case ENUMERATION:
 				return optionsColumn(name, label, type, width, value, (TLEnumeration) type.type());
 			default:
@@ -601,10 +609,96 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * @param nullable
 	 *        Whether the values have a no-value state (a tri-state boolean).
 	 */
-	private static Column<Object, Boolean> booleanColumn(String name, ResKey label, ColumnType type, int width,
+	private static Column<Object, Object> booleanColumn(String name, ResKey label, ColumnType type, int width,
 			Function<Object, Object> value, boolean nullable) {
 		return typedColumn(name, label, type, width, value, Boolean.class, Comparator.<Boolean> naturalOrder(),
-			new BooleanColumnFilter(ResKey.text(label(Boolean.TRUE)), ResKey.text(label(Boolean.FALSE)), nullable));
+			booleanFilter(ResKey.text(label(Boolean.TRUE)), ResKey.text(label(Boolean.FALSE)), nullable));
+	}
+
+	/*
+	 * The filters of the built-in columns. Each excludes the {@link #UNREADABLE} marker before its
+	 * own criterion sees a value: an unreadable cell matches no criterion on a value and offers no
+	 * facet, so a filter tells nothing about the value it stands for. They stay instances of the
+	 * filter they extend, whose kind decides the editor a user enters the criterion in.
+	 *
+	 * Facets are counted by a filter reporting countsMatches() only. A filter over a fixed value
+	 * type (Boolean, String) does not override facetKeys(): the bridge method of such an override
+	 * would cast the marker to the value type.
+	 */
+
+	private static BooleanColumnFilter booleanFilter(ResKey trueLabel, ResKey falseLabel, boolean nullable) {
+		return new BooleanColumnFilter(trueLabel, falseLabel, nullable) {
+			@Override
+			public Predicate<Boolean> predicate(FilterState state) {
+				return excludingUnreadable(super.predicate(state));
+			}
+
+			@Override
+			public FilterState stateFor(Object value) {
+				return isUnreadable(value) ? null : super.stateFor(value);
+			}
+		};
+	}
+
+	private static <V> ComparableColumnFilter<V> comparableFilter(Comparator<? super V> comparator,
+			BoundCodec<V> codec) {
+		return new ComparableColumnFilter<>(comparator, codec) {
+			@Override
+			public Predicate<V> predicate(FilterState state) {
+				return excludingUnreadable(super.predicate(state));
+			}
+
+			@Override
+			public FilterState stateFor(Object value) {
+				return isUnreadable(value) ? null : super.stateFor(value);
+			}
+
+			@Override
+			public Collection<Object> facetKeys(V value) {
+				return isUnreadable(value) ? List.of() : super.facetKeys(value);
+			}
+		};
+	}
+
+	private static TextColumnFilter<String> stringFilter() {
+		return new TextColumnFilter<>(Function.identity()) {
+			@Override
+			public Predicate<String> predicate(FilterState state) {
+				return excludingUnreadable(super.predicate(state));
+			}
+
+			@Override
+			public FilterState stateFor(Object value) {
+				return isUnreadable(value) ? null : super.stateFor(value);
+			}
+		};
+	}
+
+	private static <V> OptionsColumnFilter<V> optionsFilter(List<Option> options) {
+		return new OptionsColumnFilter<>(options) {
+			@Override
+			public Predicate<V> predicate(FilterState state) {
+				return excludingUnreadable(super.predicate(state));
+			}
+
+			@Override
+			public FilterState stateFor(Object value) {
+				return isUnreadable(value) ? null : super.stateFor(value);
+			}
+
+			@Override
+			public Collection<Object> facetKeys(V value) {
+				return isUnreadable(value) ? List.of() : super.facetKeys(value);
+			}
+		};
+	}
+
+	/**
+	 * The given predicate over cell values, rejecting the {@link #UNREADABLE} marker before the
+	 * predicate sees it.
+	 */
+	private static <V> Predicate<V> excludingUnreadable(Predicate<V> predicate) {
+		return value -> !isUnreadable(value) && predicate.test(value);
 	}
 
 	/**
@@ -612,17 +706,66 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * that is not an instance of the expected type (a data / model-kind mismatch) yields
 	 * {@code null} rather than a {@link ClassCastException}, so one stray cell cannot break the
 	 * whole table render.
+	 *
+	 * <p>
+	 * An {@link #UNREADABLE} cell keeps its marker, so that it is shown by the placeholder rather
+	 * than as an empty value; the comparator never sees it, see {@link #unreadableLast(Comparator)},
+	 * and the filter must exclude it before its own criterion, as the filters of the built-in
+	 * columns do.
+	 * </p>
 	 */
-	private static <V> Column<Object, V> typedColumn(String name, ResKey label, ColumnType type, int width,
+	private static <V> Column<Object, Object> typedColumn(String name, ResKey label, ColumnType type, int width,
 			Function<Object, Object> value, Class<V> valueType, Comparator<V> comparator, ColumnFilter<V> filter) {
+		@SuppressWarnings("unchecked")
+		ColumnFilter<Object> markerAware = (ColumnFilter<Object>) filter;
 		return valueColumn(name, label, type, width, row -> typedValue(value.apply(row), valueType))
-			.sort(() -> comparator)
-			.filter(filter)
+			.sort(() -> unreadableLast(comparator))
+			.filter(markerAware)
 			.build();
 	}
 
-	private static <V> V typedValue(Object value, Class<V> valueType) {
-		return valueType.isInstance(value) ? valueType.cast(value) : null;
+	private static Object typedValue(Object value, Class<?> valueType) {
+		return isUnreadable(value) || valueType.isInstance(value) ? value : null;
+	}
+
+	/**
+	 * The given comparator of cell values, extended to the {@link #UNREADABLE} marker: an
+	 * unreadable cell sorts after every value, as a masked element sorts at a fixed position - its
+	 * place must not depend on the value it stands for.
+	 *
+	 * <p>
+	 * A {@code null} value is not passed to the result: the table orders empty cells itself.
+	 * </p>
+	 *
+	 * @param comparator
+	 *        The comparator of the column's values, which never receives the marker.
+	 */
+	public static <V> Comparator<Object> unreadableLast(Comparator<V> comparator) {
+		return (left, right) -> {
+			boolean leftUnreadable = isUnreadable(left);
+			boolean rightUnreadable = isUnreadable(right);
+			if (leftUnreadable || rightUnreadable) {
+				return Boolean.compare(leftUnreadable, rightUnreadable);
+			}
+			@SuppressWarnings("unchecked")
+			V leftValue = (V) left;
+			@SuppressWarnings("unchecked")
+			V rightValue = (V) right;
+			return comparator.compare(leftValue, rightValue);
+		};
+	}
+
+	/**
+	 * The order of cell values by their {@link #label(Object) display labels}, an
+	 * {@link #UNREADABLE} cell after every value, see {@link #unreadableLast(Comparator)}.
+	 *
+	 * <p>
+	 * The order of a column sorting by labels: the placeholder of an unreadable cell must not sort
+	 * by its own text, which comes before every letter.
+	 * </p>
+	 */
+	public static Comparator<Object> labelOrder() {
+		return unreadableLast(Comparator.comparing(ColumnProviderService::label));
 	}
 
 	/**
@@ -641,9 +784,10 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
 		}
 		return valueColumn(name, label, type, width, value)
-			.sort(() -> Comparator.comparing(cellValue -> typedValue(cellValue, TLClassifier.class),
-				Comparator.nullsLast(new FastListElementComparator(new TLCollator()))))
-			.filter(new OptionsColumnFilter<>(options))
+			.sort(() -> unreadableLast(
+				Comparator.comparing((Object cellValue) -> cellValue instanceof TLClassifier classifier ? classifier : null,
+					Comparator.nullsLast(new FastListElementComparator(new TLCollator())))))
+			.filter(optionsFilter(options))
 			.build();
 	}
 
@@ -654,8 +798,9 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	private static Column<Object, Object> labelColumn(String name, ResKey label, ColumnType type, int width,
 			Function<Object, Object> value) {
 		Function<Object, String> text = displayText(type);
+		// An unreadable cell is searched by the placeholder it shows, which reveals nothing.
 		return valueColumn(name, label, type, width, value)
-			.sort(() -> Comparator.comparing(text))
+			.sort(() -> unreadableLast(Comparator.comparing(text)))
 			.filter(new TextColumnFilter<>(text))
 			.build();
 	}
@@ -735,17 +880,59 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * (see {@link FieldControlService#createDisplayControl(ReactContext, ColumnType, Object)}), or
 	 * the value's display label as plain text when nothing is known about its type.
 	 *
+	 * <p>
+	 * An {@link #UNREADABLE} value - also as element of a collection of values - is shown as the
+	 * plain text of its placeholder, whatever the type of the column, see {@link #label(Object)}.
+	 * </p>
+	 *
 	 * @param type
 	 *        What the column's values are, see {@link ColumnType}.
 	 * @param value
 	 *        The value to display, may be {@code null}.
 	 */
 	public static CellContent displayContent(ColumnType type, Object value) {
-		if (!type.resolved()) {
+		if (!type.resolved() || hasUnreadable(value)) {
 			return CellContent.text(label(value));
 		}
 		return new CellContent.Raw((CellControlFactory) context -> FieldControlService.getInstance()
 			.createDisplayControl(context, type, value));
+	}
+
+	/**
+	 * The value of a table cell whose attribute the current user may not read on its row.
+	 *
+	 * <p>
+	 * Stands in for the attribute's value, which is never read: the cell shows the placeholder
+	 * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} instead of the empty value of
+	 * the attribute, so that a value that may not be read is told apart from no value - an
+	 * unchecked checkbox, an empty text. The cell is not edited, and sorting, filtering and
+	 * exporting the column see only the placeholder, see {@link #attributeValue(Object, String)}.
+	 * </p>
+	 *
+	 * @see #isUnreadable(Object)
+	 */
+	public static final Object UNREADABLE = new Object() {
+		@Override
+		public String toString() {
+			return "<unreadable>";
+		}
+	};
+
+	/**
+	 * Whether the given cell value is the {@link #UNREADABLE} marker of a value the current user
+	 * may not read.
+	 */
+	public static boolean isUnreadable(Object value) {
+		return value == UNREADABLE;
+	}
+
+	/**
+	 * Whether the given cell value is or contains the {@link #UNREADABLE} marker.
+	 */
+	public static boolean hasUnreadable(Object value) {
+		return isUnreadable(value)
+			|| value instanceof Collection<?> collection
+				&& collection.stream().anyMatch(ColumnProviderService::isUnreadable);
 	}
 
 	/**
@@ -754,8 +941,10 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * <p>
 	 * The value function of a column over a model attribute. A value the current user may not read
 	 * on the row (see {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)})
-	 * is the empty value of the attribute, as a TL-Script access yields it: the cell is empty, and
-	 * sorting, filtering and exporting the column see nothing else.
+	 * is not read at all: the cell holds the {@link #UNREADABLE} marker, which every type of column
+	 * displays by the placeholder {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} - so
+	 * that a value the user may not read is told apart from no value. Such a cell is not edited,
+	 * and sorting, filtering and exporting the column see only the placeholder.
 	 * </p>
 	 */
 	public static Object attributeValue(Object row, String attribute) {
@@ -766,16 +955,44 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		TLStructuredTypePart part = type == null ? null : type.getPart(attribute);
 		if (part != null
 			&& !ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()) {
-			return TLModelUtil.getEmptyValue(part);
+			return UNREADABLE;
 		}
 		return object.tValueByName(attribute);
 	}
 
 	/**
 	 * The localized display label of a value (empty for {@code null}).
+	 *
+	 * <p>
+	 * An object the current user may not discover is labelled by the placeholder of a
+	 * {@link ReactDropdownSelectControl#isMasked(Object) masked} value, also as element of a
+	 * collection: displaying, sorting, filtering and exporting a cell never see its label. The
+	 * {@link #UNREADABLE} marker of a value the user may not read is labelled by the same
+	 * placeholder.
+	 * </p>
 	 */
 	public static String label(Object value) {
-		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
+		if (value == null) {
+			return "";
+		}
+		if (isPlaceholder(value)) {
+			return Resources.getInstance().getString(com.top_logic.layout.react.I18NConstants.MASKED_VALUE);
+		}
+		if (value instanceof Collection<?> collection
+			&& collection.stream().anyMatch(ColumnProviderService::isPlaceholder)) {
+			return new CollectionLabelProvider(ColumnProviderService::label, VALUE_SEPARATOR).getLabel(value);
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(value);
+	}
+
+	/**
+	 * Whether the given value is shown by the placeholder
+	 * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE}: a value the user may not read
+	 * ({@link #UNREADABLE}) or an object the user may not discover
+	 * ({@link ReactDropdownSelectControl#isMasked(Object) masked}).
+	 */
+	private static boolean isPlaceholder(Object value) {
+		return isUnreadable(value) || ReactDropdownSelectControl.isMasked(value);
 	}
 
 	/**

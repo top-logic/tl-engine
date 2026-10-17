@@ -11,7 +11,6 @@ import java.util.List;
 import junit.framework.Test;
 
 import com.top_logic.element.model.copy.CopyOperation;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -132,7 +131,7 @@ public class TestCopyTransactionDefaults extends AbstractSearchExpressionTest {
 	}
 
 	public static Test suite() {
-		return suite(TestCopyTransactionDefaults.class, PersonManager.Module.INSTANCE);
+		return suite(TestCopyTransactionDefaults.class);
 	}
 
 }

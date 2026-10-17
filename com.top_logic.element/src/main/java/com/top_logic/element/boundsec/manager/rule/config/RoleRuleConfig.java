@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -74,9 +75,14 @@ public interface RoleRuleConfig extends NavigationRuleConfig {
 
 	/**
 	 * The roles a user gets on an object of the {@link #getMetaElement() type}.
+	 *
+	 * <p>
+	 * A rule without a role grants nothing, so at least one is required.
+	 * </p>
 	 */
 	@Format(CommaSeparatedStrings.class)
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_ROLE)
+	@Mandatory
 	@Label("Granted roles")
 	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
 	@ControlProvider(SelectionControlProvider.class)

@@ -96,10 +96,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_RULE_KIND_ROLE_RULE;
 
 	/**
-	 * @en The rule "{0}" is defined by the base configuration. It can be overridden by a rule of
-	 *     the same id, but not removed.
+	 * @en New
 	 */
-	public static ResKey1 ERROR_BASE_RULE_NOT_REMOVABLE__ID;
+	public static ResKey COVERAGE_RULE_STATE_NEW;
+
+	/**
+	 * @en Changed
+	 */
+	public static ResKey COVERAGE_RULE_STATE_CHANGED;
+
+	/**
+	 * @en Deleted
+	 */
+	public static ResKey COVERAGE_RULE_STATE_DELETED;
 
 	/**
 	 * @en Please select the type to edit the access definition of.
@@ -127,24 +136,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_UNKNOWN_ROLE_RULE__ID;
 
 	/**
-	 * @en Please enter an id naming the rule.
-	 */
-	public static ResKey ERROR_MISSING_RULE_ID;
-
-	/**
-	 * @en Please select the type the rule applies to.
-	 */
-	public static ResKey ERROR_MISSING_RULE_TYPE;
-
-	/**
 	 * @en Please enter at least one step leading to the role parent.
 	 */
 	public static ResKey ERROR_MISSING_RULE_PATH;
-
-	/**
-	 * @en Please select at least one role the rule grants.
-	 */
-	public static ResKey ERROR_MISSING_RULE_ROLE;
 
 	/**
 	 * @en There are no access rights to store.
@@ -174,8 +168,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 
 	/**
-	 * @en No read grant: no role is granted the read operation on the type, so its objects are
-	 *     inaccessible to every user.
+	 * @en No read grant: no role is granted any operation on the type or on one of its attributes,
+	 *     so its objects are inaccessible to every user.
 	 */
 	public static ResKey COVERAGE_PROBLEM_NO_READ_GRANT;
 
@@ -210,8 +204,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_SOLUTION_MARK_INTERNAL;
 
 	/**
-	 * @en Grant the read operation to a role on the type or on its module ("Access rights…",
-	 *     "Module access rights…").
+	 * @en Grant the read operation to a role on the type or one of its attributes, or on its module
+	 *     ("Access rights…", "Module access rights…").
 	 */
 	public static ResKey COVERAGE_SOLUTION_READ_GRANT;
 

@@ -53,6 +53,8 @@ public class LabelProviderByExpression<C extends LabelProviderByExpression.Confi
 	public LabelProviderByExpression(InstantiationContext context, C config) {
 		super(context, config);
 		_labelExpr = QueryExecutor.compile(config.getLabel());
+		// Labels belong to Discover (R1/R12 of the Discover specification) and are computed unsecured.
+		_labelExpr.disableSecurity();
 	}
 
 	/**

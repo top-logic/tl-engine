@@ -481,7 +481,14 @@
 						<grant
 							inherit="true"
 							operation="Read"
-							roles="DemoTypes.Administrator, DemoTypes.Responsible, navigation"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible"
+						/>
+						<!-- The navigation role makes an object visible in the structure tree - the objects
+							a user holds a role on and their containers - without releasing its attributes. -->
+						<grant
+							inherit="true"
+							operation="Discover"
+							roles="navigation"
 						/>
 						<grant
 							inherit="true"
@@ -504,6 +511,59 @@
 							roles="DemoTypes.Administrator, DemoTypes.Responsible"
 						/>
 					</module>
+					<!-- Attribute rights of the attribute administrators. An attribute grant replaces the
+						module grant for its attribute, so the administrators and responsibles are listed as
+						well. -->
+					<part name="DemoTypes:DemoTypes.A#booleanWithAttributeSecurity">
+						<grant
+							operation="Read"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.BooleanAdministrator"
+						/>
+						<grant
+							operation="Write"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.BooleanAdministrator"
+						/>
+					</part>
+					<part name="DemoTypes:DemoTypes.A#stringWithAttributeSecurity">
+						<grant
+							operation="Read"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.BooleanAdministrator, DemoTypes.StringAdministrator"
+						/>
+						<grant
+							operation="Write"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.StringAdministrator"
+						/>
+					</part>
+					<part name="DemoTypes:DemoTypes.X#booleanWithAttributeSecurity">
+						<grant
+							operation="Read"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.BooleanAdministrator"
+						/>
+						<grant
+							operation="Write"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.BooleanAdministrator"
+						/>
+					</part>
+					<part name="DemoTypes:DemoTypes.X#stringWithAttributeSecurity">
+						<grant
+							operation="Read"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.BooleanAdministrator, DemoTypes.StringAdministrator"
+						/>
+						<grant
+							operation="Write"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.StringAdministrator"
+						/>
+					</part>
+					<part name="DemoTypes:DemoTypes.A#date">
+						<grant
+							operation="Read"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.DateAdministrator"
+						/>
+						<grant
+							operation="Write"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.DateAdministrator"
+						/>
+					</part>
 					<module name="DemoSecurity">
 						<grant
 							inherit="true"

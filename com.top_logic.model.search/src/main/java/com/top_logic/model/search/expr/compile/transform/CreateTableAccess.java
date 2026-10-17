@@ -61,7 +61,7 @@ public class CreateTableAccess extends Rewriter<Void> {
 					MOClass tableType = (MOClass) _typeContext.getType(tableName);
 					SetExpression tableQuery = AttributeOperations.tableQuery(tableType, types);
 					result = union(result,
-						query(classType, tableQuery, Collections.emptyList()));
+						query(classType, tableQuery, Collections.emptyList(), expr.usesSecurity()));
 				} catch (UnknownTypeException ex) {
 					throw new IllegalArgumentException("Reference to undefined table type '" + tableName + "'.", ex);
 				}

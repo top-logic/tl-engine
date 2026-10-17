@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { openChatStream, type StreamFrame } from './chat-stream'
-import { emitPatch, isSubscribed, resetTLBridge } from '../test/tl-react-bridge'
+import { emitPatch, expectEventsCalls, isSubscribed, resetTLBridge } from '../test/tl-react-bridge'
 
 /**
  * The chat's frames on the window's event stream: the browser half of `ChatSSEHandler`.
@@ -44,6 +44,27 @@ afterEach(() => {
 })
 
 describe('the chat stream', () => {
+  it('asks the window to check that the first frames arrive once the server has started them', async () => {
+    // A proxy that forwards the window's stream in blocks of kilobytes holds back the small chat
+    // frames; the window changes to polling only when it is told that events are due.
+    openChatStream(AT)
+    expect(expectEventsCalls()).toBe(0)
+
+    await settle()
+
+    expect(expectEventsCalls()).toBe(1)
+  })
+
+  it('asks for no check when the server refused the attach', async () => {
+    attachAnswer = async () => ({ ok: false, status: 500, json: async () => ({}) })
+    const stream = openChatStream(AT)
+    stream.onerror = () => undefined
+
+    await settle()
+
+    expect(expectEventsCalls()).toBe(0)
+  })
+
   it('asks for the frames of its window and conversation, under a listener id of its own', async () => {
     const stream = openChatStream(AT)
     await settle()

@@ -30,6 +30,13 @@
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
 				<resources>
+					<!--
+						Temporary workaround (#940): a classic script, so that it runs before the bridge
+						opens the window's event stream. See WindowPollServlet.
+					-->
+					<script name="tl-window-stream"
+						resource="/script/tl-window-stream.js"
+					/>
 					<module-script name="tl-react-agent-chat"
 						requires="tl-react-bridge"
 						resource="/script/tl-chat-ui.js"

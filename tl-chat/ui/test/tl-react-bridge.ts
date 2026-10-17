@@ -36,6 +36,20 @@ export function resetTLBridge(): void {
   controlState = {}
   dispatched = []
   patchListeners.clear()
+  expectedEvents = 0
+}
+
+/** How often the chat told the window's stream to check that its events arrive. */
+let expectedEvents = 0
+
+/** See `expectEvents` of the real bridge. */
+export function expectEvents(): void {
+  expectedEvents++
+}
+
+/** How often `expectEvents` was called since the last reset. */
+export function expectEventsCalls(): number {
+  return expectedEvents
 }
 
 /** The listeners `subscribe` added, by the id the window's stream addresses its patches to. */

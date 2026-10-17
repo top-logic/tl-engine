@@ -1,5 +1,6 @@
-import { subscribe, unsubscribe } from 'tl-react-bridge'
+import * as bridge from 'tl-react-bridge'
 import { attachChatStream, detachChatStream, type ChatAddress } from './api'
+import { randomId } from './ids'
 
 /**
  * One frame as the store's handlers read it: its payload as the window's stream delivered it,
@@ -37,10 +38,28 @@ export function openChatStream(at: ChatAddress): ChatStream {
   return new WindowChatStream(at)
 }
 
+/**
+ * Tells the window's event stream that the server is writing frames for this chat now, so that it
+ * checks they arrive.
+ *
+ * A proxy that forwards the window's stream only in blocks of some kilobytes lets the start through
+ * and holds back the small patches that follow; the stream then changes to polling, but only when
+ * it learns that events are due. A React command tells it that by itself; a chat message goes
+ * through `/chat/send` instead. An engine that polls by itself offers `expectEvents`; for one that
+ * does not, `script/tl-window-stream.js` puts `TLWindowStream` in place (#940, temporary).
+ */
+export function expectFrames(): void {
+  if (bridge.expectEvents) {
+    bridge.expectEvents()
+  } else {
+    ;(window as unknown as { TLWindowStream?: { expect(): void } }).TLWindowStream?.expect()
+  }
+}
+
 class WindowChatStream implements ChatStream {
   onerror: ((error: unknown) => void) | null = null
 
-  private readonly token = crypto.randomUUID()
+  private readonly token = randomId()
 
   private readonly listenerId = LISTENER_PREFIX + this.token
 
@@ -51,7 +70,7 @@ class WindowChatStream implements ChatStream {
   private attached = false
 
   constructor(private readonly at: ChatAddress) {
-    subscribe(this.listenerId, this.receive)
+    bridge.subscribe(this.listenerId, this.receive)
     void this.attach()
   }
 
@@ -64,7 +83,7 @@ class WindowChatStream implements ChatStream {
   close(): void {
     if (this.closed) return
     this.closed = true
-    unsubscribe(this.listenerId, this.receive)
+    bridge.unsubscribe(this.listenerId, this.receive)
     if (this.attached) detachChatStream(this.at, this.token)
   }
 
@@ -84,6 +103,8 @@ class WindowChatStream implements ChatStream {
     }
     this.attached = true
     this.dispatch('open', {})
+    // The server has just written this stream's first frames to the window.
+    expectFrames()
   }
 
   /** A patch of the window's stream: the frames of one flush on the server, in order. */

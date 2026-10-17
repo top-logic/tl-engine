@@ -33,6 +33,13 @@ declare module 'tl-react-bridge' {
    */
   export function subscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void
 
+  /**
+   * Tells the window's event stream that the server is writing events now, so that it checks they
+   * arrive and changes to polling when a proxy holds them back. Absent in an engine without that
+   * fallback.
+   */
+  export const expectEvents: ((serverLast?: number) => void) | undefined
+
   /** Stops a listener `subscribe` added. */
   export function unsubscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void
 

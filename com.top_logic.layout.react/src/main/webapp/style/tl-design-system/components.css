@@ -3,6 +3,94 @@
    https://git.top-logic.com/TopLogic/tl-design-system/wiki */
 /* Components, one section per file under src/components/. */
 
+/* --- accordion/accordion.css --- */
+/* Accordion — Spec 2026-10-16 Welle 4c §4 (Q20). Bernhards Accordion (#29651) aus dem alten Stylesheet ins Paket;
+   Anatomie und Tastatur (WAI-ARIA Accordion) bleiben. Die Fläche ist tl-card an der Wurzel — sie beschneidet am
+   Radius, darum keine Eckregeln am Kopf. Hier steht, was die Abschnitte anders machen: Linien dazwischen, Kopf auf
+   size-bar, Körper space-md. Der Ring liegt innen im Auslöser, weil der Kopf die ganze Breite spannt. */
+
+.tl-accordion__section + .tl-accordion__section {
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-accordion__header {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-bar);
+}
+
+.tl-accordion__header:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-accordion__heading {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+}
+
+/* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
+:where(.tl-accordion__trigger) { font: inherit; }
+
+.tl-accordion__trigger {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+  padding: 0 var(--tl-space-md);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.tl-accordion__trigger:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-accordion__chevron {
+  flex: none;
+  color: var(--tl-icon-primary);
+  transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-accordion__trigger[aria-expanded="true"] > .tl-accordion__chevron {
+  rotate: 90deg;
+}
+
+.tl-accordion__icon {
+  flex: none;
+  color: var(--tl-icon-primary);
+}
+
+.tl-accordion__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-accordion__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-inline-end: var(--tl-space-sm);
+}
+
+/* Ein Abschnitt ohne Befehle rendert eine leere Toolbar: kein Platz dafür. */
+.tl-accordion__actions:empty {
+  display: none;
+}
+
+.tl-accordion__panel {
+  padding: var(--tl-space-md);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
 /* --- alert/alert.css --- */
 /* Alert — docs/skalen.md „Status: vier Bedeutungen“.
    Eine Meldung, die im Fluss steht: Icon, Titel, Text. Die Bedeutung ist ein Attribut (data-tl-role) und Pflicht —
@@ -606,6 +694,39 @@
 @keyframes tl-button-busy {
   from { opacity: 1; }
   to { opacity: 0.4; }
+}
+
+/* --- card/card.css --- */
+/* Karte — Spec 2026-10-16 Welle 4c §4 (Q15), Weg B. Die eine Kartenfläche: Karte, Panel als Karte, Accordion. Die
+   Fläche folgt der Verschachtelung — auf der Seite surface-layer, in einer Fläche (Karte, Accordion, Panel als Karte;
+   ein schlichtes Panel malt keine und hebt nicht) surface-layer-nested, im Dialog die Fläche des Dialogs (nested läge dunkel unter surface-overlay und sänke ein).
+   Hell sind layer und nested weiß; dort trennt die Linie (skalen.md „Elevation“). Kein Schatten: eine Karte liegt in
+   der Oberfläche, darum zeichnet elevated wie outlined. Den Modifier der Stufe setzt das TSX aus useSurface(). */
+
+.tl-card {
+  min-height: min-content;
+  overflow: clip;
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+}
+
+.tl-card--nested {
+  background: var(--tl-surface-layer-nested);
+}
+
+.tl-card--overlay {
+  background: var(--tl-surface-overlay);
+}
+
+/* Der Inhalt beginnt, wo der Titel beginnt: der Kopf rückt den Titel um space-md ein, der Körper ebenso. */
+.tl-card__body--pad-default {
+  padding: var(--tl-space-md);
+}
+
+.tl-card__body--pad-compact {
+  padding: var(--tl-space-xs);
 }
 
 /* --- choice/choice.css --- */
@@ -1995,6 +2116,71 @@ a.tl-field-value:hover {
 .tl-overlay__layer--bottom-left { align-items: end; justify-content: start; }
 .tl-overlay__layer--bottom { align-items: end; justify-content: center; }
 .tl-overlay__layer--bottom-right { align-items: end; justify-content: end; }
+
+/* --- panel/panel.css --- */
+/* Panel — Spec 2026-10-16 Welle 4c §3 (Q3, Q8, Q13, Q14). Eine Fläche mit Kopf (tl-titlebar), Körper und
+   Knopfleiste (tl-button-bar). Minimiert und maximiert sind Zustände in data-tl-state; als Karte trägt die Wurzel
+   zusätzlich tl-card. Bedienung wie ein Fenster (U1, U3): Doppelklick auf den Kopf maximiert, Escape stellt wieder
+   her, ein minimiertes Panel öffnet ein Klick auf den ganzen Kopf — das TSX; hier steht nur der Zeiger. */
+
+.tl-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tl-panel[hidden] { display: none; }
+
+/* Maximiert deckt das Panel den Behälter, der es maximiert, über dessen Inhalt. */
+.tl-panel[data-tl-state~="maximized"] {
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-raised);
+  background: var(--tl-surface-base);
+}
+
+.tl-panel[data-tl-state~="minimized"] > .tl-titlebar {
+  cursor: pointer;
+}
+
+/* Der Körper ist die Box, gegen die ein füllendes Kind seine Höhe auflöst: er nimmt, was das Panel übrig lässt, und
+   scrollt, was nicht hineinpasst. Ein Kind, das nicht füllt, behält die Höhe seines Inhalts, statt gestaucht zu
+   werden; ein füllendes (flex 1 1 0) braucht kein Schrumpfen. */
+.tl-panel__body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tl-panel__body > * {
+  flex-shrink: 0;
+}
+
+/* Über die ganze Zeile eines Formular-Rasters: eine Variante, kein Zustand. */
+.tl-panel--full-line {
+  grid-column: 1 / -1;
+}
+
+/* Knöpfe beim Zeigen: die Regel der Ebenen-Liste (reorder-list.css) — unsichtbar, sichtbar beim Zeigen auf das Panel
+   und bei Tastaturfokus darin (:focus-visible, nicht :focus-within: nach einem Mausklick bliebe der Fokus sonst
+   stehen), auf Touch-Geräten immer. */
+.tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+  opacity: 0;
+  transition: opacity var(--tl-duration-base) var(--tl-easing-standard);
+}
+
+.tl-panel--hover-actions:hover > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons),
+.tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons):has(:focus-visible) {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+    opacity: 1;
+  }
+}
 
 /* --- pill/pill.css --- */
 /* Pill — docs/skalen.md „Pill: Rolle statt Farbe“.
@@ -3679,4 +3865,4 @@ a.tl-field-value:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* tl-design-system sha256:9e67f239000c576e6c456040322ef37ed3379c8608cd90af2f3cc4dc5f4a2fff — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:2606a354abc337d836b8808811d2315625c0679ac940229d711432a75e8837cc — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -1228,29 +1228,23 @@
 }
 .tl-color-picker__mixer[hidden] { display: none; }
 
-/* Maß des Mischers: allein size-12 im Quadrat. In der Stapelzeile des Picker-Popups (picker.css) gibt er nach: dort
-   hat der Mischer keine eigene Höhe, sondern die der Zeile, und das Feld liegt zwischen size-11 und size-12 (size-12,
-   wenn Platz ist), quadratisch; der Farbtonstreifen ist so hoch wie das Feld. */
+/* Maß des Mischers: ein festes Quadrat. Das Feld ist size-12 breit und hoch, der Farbtonstreifen size-control-sm breit
+   und size-12 hoch; der Mischer schrumpft nicht (flex: none), damit die Stapelzeile seine Breite einrechnet und er die
+   Spalte daneben (Vorschau, Eingaben) nicht überlagert. Ist das Popup niedriger, scrollt das Reiterfeld. */
 .tl-color-picker__mixer {
+  flex: none;
   box-sizing: content-box;
-  align-self: stretch;
   block-size: var(--tl-size-12);
-  min-block-size: var(--tl-size-11);
-}
-
-.tl-color-picker__field,
-.tl-color-picker__hue {
-  block-size: 100%;
-  min-block-size: var(--tl-size-11);
-  max-block-size: var(--tl-size-12);
 }
 
 .tl-color-picker__field {
-  aspect-ratio: 1;
+  inline-size: var(--tl-size-12);
+  block-size: var(--tl-size-12);
 }
 
 .tl-color-picker__hue {
   inline-size: var(--tl-size-control-sm);
+  block-size: var(--tl-size-12);
 }
 
 /* Gemeinsam: der Rahmen der beiden Flächen. */
@@ -2563,22 +2557,6 @@ a.tl-field-value:hover {
 
 .tl-picker__actions {
   flex-shrink: 0;
-}
-
-/* Zeigt das Reiterfeld den Mischer, ist seine Stapelzeile der Teil, der mit dem Popup schrumpft: die Höhe richtet
-   sich nach der Spalte daneben (Vorschau, Eingaben) und gibt erst unter einer Kappe nach. Der Mischer darin nimmt
-   die Höhe der Zeile (color-picker.css). Die Spalte schrumpft nicht mit: sie behält ihre Höhe samt Rand von
-   space-2xs unten und scrollt im Reiterfeld, sodass der Fokusring der letzten Eingabe im overflow bleibt. */
-.tl-picker__tabs > .tl-tabs__panel > .tl-stack:has(> .tl-color-picker__mixer:not([hidden])) {
-  flex: 0 1 auto;
-  min-block-size: 0;
-}
-.tl-picker__tabs > .tl-tabs__panel > .tl-stack:has(> .tl-color-picker__mixer:not([hidden])) > .tl-color-picker__mixer {
-  block-size: auto;
-}
-.tl-picker__tabs > .tl-tabs__panel > .tl-stack:has(> .tl-color-picker__mixer:not([hidden])) > :not(.tl-color-picker__mixer) {
-  min-block-size: min-content;
-  padding-block-end: var(--tl-space-2xs);
 }
 
 /* --- pill/pill.css --- */
@@ -4812,4 +4790,4 @@ button.tl-swatch:not(:disabled):hover,
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:25183f45be7ba4a9dbc73d2c611d31d7db3c4c8dc875f7cc39c116d6586a21ed — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:567758da02a8a87e748b745d83d80bc50f810710e76a06ba0838bcd47b13e205 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

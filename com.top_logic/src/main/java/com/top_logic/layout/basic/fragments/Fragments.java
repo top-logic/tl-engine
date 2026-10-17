@@ -1240,6 +1240,306 @@ public class Fragments {
 		return genericTag(HTMLConstants.NAV, attributes, content);
 	}
 
+	/** Renders a {@link HTMLConstants#SECTION} tag. */
+	public static Tag section(HTMLFragment... content) {
+		return plainTag(HTMLConstants.SECTION, content);
+	}
+
+	/** Renders a {@link HTMLConstants#SECTION} tag using a custom CSS class. */
+	public static Tag section(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.SECTION, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#SECTION} tag using a custom attributes. */
+	public static Tag section(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.SECTION, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#ARTICLE} tag. */
+	public static Tag article(HTMLFragment... content) {
+		return plainTag(HTMLConstants.ARTICLE, content);
+	}
+
+	/** Renders a {@link HTMLConstants#ARTICLE} tag using a custom CSS class. */
+	public static Tag article(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.ARTICLE, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#ARTICLE} tag using a custom attributes. */
+	public static Tag article(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.ARTICLE, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#HEADER} tag. */
+	public static Tag header(HTMLFragment... content) {
+		return plainTag(HTMLConstants.HEADER, content);
+	}
+
+	/** Renders a {@link HTMLConstants#HEADER} tag using a custom CSS class. */
+	public static Tag header(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.HEADER, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#HEADER} tag using a custom attributes. */
+	public static Tag header(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.HEADER, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FOOTER} tag. */
+	public static Tag footer(HTMLFragment... content) {
+		return plainTag(HTMLConstants.FOOTER, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FOOTER} tag using a custom CSS class. */
+	public static Tag footer(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.FOOTER, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FOOTER} tag using a custom attributes. */
+	public static Tag footer(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.FOOTER, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#MAIN} tag. */
+	public static Tag main(HTMLFragment... content) {
+		return plainTag(HTMLConstants.MAIN, content);
+	}
+
+	/** Renders a {@link HTMLConstants#MAIN} tag using a custom CSS class. */
+	public static Tag main(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.MAIN, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#MAIN} tag using a custom attributes. */
+	public static Tag main(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.MAIN, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#ASIDE} tag. */
+	public static Tag aside(HTMLFragment... content) {
+		return plainTag(HTMLConstants.ASIDE, content);
+	}
+
+	/** Renders a {@link HTMLConstants#ASIDE} tag using a custom CSS class. */
+	public static Tag aside(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.ASIDE, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#ASIDE} tag using a custom attributes. */
+	public static Tag aside(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.ASIDE, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FIGURE} tag. */
+	public static Tag figure(HTMLFragment... content) {
+		return plainTag(HTMLConstants.FIGURE, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FIGURE} tag using a custom CSS class. */
+	public static Tag figure(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.FIGURE, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FIGURE} tag using a custom attributes. */
+	public static Tag figure(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.FIGURE, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FIGCAPTION} tag. */
+	public static Tag figcaption(HTMLFragment... content) {
+		return plainTag(HTMLConstants.FIGCAPTION, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FIGCAPTION} tag using a custom CSS class. */
+	public static Tag figcaption(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.FIGCAPTION, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#FIGCAPTION} tag using a custom attributes. */
+	public static Tag figcaption(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.FIGCAPTION, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#CENTER} tag. */
+	public static Tag center(HTMLFragment... content) {
+		return plainTag(HTMLConstants.CENTER, content);
+	}
+
+	/** Renders a {@link HTMLConstants#CENTER} tag using a custom CSS class. */
+	public static Tag center(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.CENTER, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#CENTER} tag using a custom attributes. */
+	public static Tag center(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.CENTER, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#DETAILS} tag. */
+	public static Tag details(HTMLFragment... content) {
+		return plainTag(HTMLConstants.DETAILS, content);
+	}
+
+	/** Renders a {@link HTMLConstants#DETAILS} tag using a custom CSS class. */
+	public static Tag details(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.DETAILS, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#DETAILS} tag using a custom attributes. */
+	public static Tag details(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.DETAILS, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#SUMMARY} tag. */
+	public static Tag summary(HTMLFragment... content) {
+		return plainTag(HTMLConstants.SUMMARY, content);
+	}
+
+	/** Renders a {@link HTMLConstants#SUMMARY} tag using a custom CSS class. */
+	public static Tag summary(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.SUMMARY, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#SUMMARY} tag using a custom attributes. */
+	public static Tag summary(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.SUMMARY, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#TEMPLATE} tag. */
+	public static Tag template(HTMLFragment... content) {
+		return plainTag(HTMLConstants.TEMPLATE, content);
+	}
+
+	/** Renders a {@link HTMLConstants#TEMPLATE} tag using a custom CSS class. */
+	public static Tag template(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.TEMPLATE, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#TEMPLATE} tag using a custom attributes. */
+	public static Tag template(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.TEMPLATE, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#NOSCRIPT} tag. */
+	public static Tag noscript(HTMLFragment... content) {
+		return plainTag(HTMLConstants.NOSCRIPT, content);
+	}
+
+	/** Renders a {@link HTMLConstants#NOSCRIPT} tag using a custom CSS class. */
+	public static Tag noscript(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.NOSCRIPT, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#NOSCRIPT} tag using a custom attributes. */
+	public static Tag noscript(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.NOSCRIPT, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#KBD} tag. */
+	public static Tag kbd(HTMLFragment... content) {
+		return plainTag(HTMLConstants.KBD, content);
+	}
+
+	/** Renders a {@link HTMLConstants#KBD} tag using a custom CSS class. */
+	public static Tag kbd(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.KBD, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#KBD} tag using a custom attributes. */
+	public static Tag kbd(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.KBD, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#SAMP} tag. */
+	public static Tag samp(HTMLFragment... content) {
+		return plainTag(HTMLConstants.SAMP, content);
+	}
+
+	/** Renders a {@link HTMLConstants#SAMP} tag using a custom CSS class. */
+	public static Tag samp(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.SAMP, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#SAMP} tag using a custom attributes. */
+	public static Tag samp(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.SAMP, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#TT} tag. */
+	public static Tag tt(HTMLFragment... content) {
+		return plainTag(HTMLConstants.TT, content);
+	}
+
+	/** Renders a {@link HTMLConstants#TT} tag using a custom CSS class. */
+	public static Tag tt(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.TT, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#TT} tag using a custom attributes. */
+	public static Tag tt(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.TT, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#INS} tag. */
+	public static Tag ins(HTMLFragment... content) {
+		return plainTag(HTMLConstants.INS, content);
+	}
+
+	/** Renders a {@link HTMLConstants#INS} tag using a custom CSS class. */
+	public static Tag ins(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.INS, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#INS} tag using a custom attributes. */
+	public static Tag ins(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.INS, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#CITE} tag. */
+	public static Tag cite(HTMLFragment... content) {
+		return plainTag(HTMLConstants.CITE, content);
+	}
+
+	/** Renders a {@link HTMLConstants#CITE} tag using a custom CSS class. */
+	public static Tag cite(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.CITE, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#CITE} tag using a custom attributes. */
+	public static Tag cite(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.CITE, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#VAR} tag. */
+	public static Tag var(HTMLFragment... content) {
+		return plainTag(HTMLConstants.VAR, content);
+	}
+
+	/** Renders a {@link HTMLConstants#VAR} tag using a custom CSS class. */
+	public static Tag var(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.VAR, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#VAR} tag using a custom attributes. */
+	public static Tag var(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.VAR, attributes, content);
+	}
+
+	/** Renders a {@link HTMLConstants#DFN} tag. */
+	public static Tag dfn(HTMLFragment... content) {
+		return plainTag(HTMLConstants.DFN, content);
+	}
+
+	/** Renders a {@link HTMLConstants#DFN} tag using a custom CSS class. */
+	public static Tag dfn(String cssClass, HTMLFragment... content) {
+		return cssTag(HTMLConstants.DFN, cssClass, content);
+	}
+
+	/** Renders a {@link HTMLConstants#DFN} tag using a custom attributes. */
+	public static Tag dfn(Attributes attributes, HTMLFragment... content) {
+		return genericTag(HTMLConstants.DFN, attributes, content);
+	}
+
 	/** Renders a {@link HTMLConstants#BASE} tag. */
 	public static Tag base() {
 		return tagEmpty(HTMLConstants.BASE);
@@ -2135,6 +2435,13 @@ public class Fragments {
 	 */
 	public static Attribute value(String value) {
 		return attribute(HTMLConstants.VALUE_ATTR, value);
+	}
+
+	/**
+	 * Creates an {@link Attribute} with name {@link HTMLConstants#START_ATTR}.
+	 */
+	public static Attribute start(String value) {
+		return attribute(HTMLConstants.START_ATTR, value);
 	}
 
 	/**

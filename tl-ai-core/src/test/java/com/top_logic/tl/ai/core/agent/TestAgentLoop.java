@@ -1136,6 +1136,60 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
+	 * The wait for an approval is open before the approval is announced, and closed once it ended:
+	 * whoever hears the announcement may answer at once (#944).
+	 */
+	public void testApprovalWaitIsOpenBeforeItIsAnnounced() {
+		Conversation conv = new Conversation();
+		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
+
+		ToolSchema toolSpec = new ToolSchema("edit", "Edits", "{}");
+		LLMProvider provider = mockProvider(
+			List.of(new ToolCall("tc1", "edit", "{}")),
+			List.of(new TextContent("Done")));
+
+		ToolCatalog registry = new ToolCatalog();
+		registry.register(globalTool("edit", toolSpec));
+		registry.freeze();
+
+		List<String> order = new ArrayList<>();
+		ApprovalCallback opensFirst = new ApprovalCallback() {
+			@Override
+			public ApprovalResult requestApproval(ApprovalRequest request) {
+				throw new AssertionError("The loop opens the wait, it does not ask in one step.");
+			}
+
+			@Override
+			public ApprovalWait open(ApprovalRequest request) {
+				order.add("open");
+				return new ApprovalWait() {
+					@Override
+					public ApprovalResult await() {
+						order.add("await");
+						return new ApprovalResult.Approved();
+					}
+
+					@Override
+					public void close() {
+						order.add("close");
+					}
+				};
+			}
+		};
+		AgentEventListener announcements = event -> {
+			if (event instanceof AgentEvent.ApprovalRequired) {
+				order.add("announced");
+			}
+		};
+
+		AgentResult result = new AgentLoop(config(), provider, registry)
+			.run(conv, new ToolContext(developmentSecurity(), opensFirst), announcements);
+
+		assertEquals(StopReason.COMPLETE, result.stopReason());
+		assertEquals(List.of("open", "announced", "await", "close"), order);
+	}
+
+	/**
 	 * TimedOut approval is treated as rejection.
 	 */
 	public void testApprovalTimedOutTreatedAsRejection() {

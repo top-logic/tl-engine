@@ -84,8 +84,9 @@ A scheduled run has no browser window. Two things follow, and the task sets both
    roles, when a scheduled agent needs a tool it is refused.
 
 **Approval prompts do not block in this mode.** With `approval-mode="AUTO_APPROVE"`,
-`ChatProcessor` gives the run `ApprovalCallback.AUTO_APPROVE`, which answers "approved" on the calling
-thread - no future, no wait, no timeout. So the only thing that could have parked an unattended run
+the run's approval callback (`ChatApprovalCallback`) answers "approved" on the calling thread - no
+future, no wait, no timeout. It reads the chat's mode at every call (#943), and a scheduled run's chat
+keeps the mode the task gave it. So the only thing that could have parked an unattended run
 was `askUser`, which is why that is the one tool this change touches.
 
 `approval-mode="MANUAL"` is a deliberate exception rather than an oversight. It declares that a

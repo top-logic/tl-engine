@@ -38,6 +38,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
@@ -1948,16 +1949,22 @@ public class AgentLoop {
 						parsedArgs, callMode,
 						needsApproval.displayReason(),
 						InteractionTimeoutService.approvalTimeout());
-					emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
-						toolCall.id(), approvalRequestId, toolCall.name(),
-						toolCall.arguments(), request.displayReason(), callMode, request.timeout()));
-					// Durable record of the pending approval, carrying the tool call's actual
-					// argument JSON (not the possibly-empty parsed copy shown above).
-					String interactionId = InteractionRecorder.begin(
-						context.executionHandle(),
-						AgentExecutionStore.InteractionType.APPROVAL, approvalRequestId,
-						tool.name(), needsApproval.displayReason(), toolCall.arguments());
-					ApprovalResult approvalResult = context.approval().requestApproval(request);
+					String interactionId;
+					ApprovalResult approvalResult;
+					// The wait is open before the request is announced: whoever hears of it may answer
+					// at once, and an answer that finds no wait registered is lost (#944).
+					try (ApprovalCallback.ApprovalWait wait = context.approval().open(request)) {
+						emit(listener, new AgentEvent.ApprovalRequired(runId, turn, now(),
+							toolCall.id(), approvalRequestId, toolCall.name(),
+							toolCall.arguments(), request.displayReason(), callMode, request.timeout()));
+						// Durable record of the pending approval, carrying the tool call's actual
+						// argument JSON (not the possibly-empty parsed copy shown above).
+						interactionId = InteractionRecorder.begin(
+							context.executionHandle(),
+							AgentExecutionStore.InteractionType.APPROVAL, approvalRequestId,
+							tool.name(), needsApproval.displayReason(), toolCall.arguments());
+						approvalResult = wait.await();
+					}
 					if (approvalResult instanceof ApprovalResult.Approved) {
 						InteractionRecorder.resolve(interactionId,
 							AgentExecutionStore.InteractionState.RESOLVED, ApprovalOutcome.APPROVED.name());

@@ -25,8 +25,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 NO_ROLE_SOURCE__TYPE;
 
 	/**
-	 * @en No role is granted the read operation on the type "{0}". Its objects are inaccessible to
-	 *     every user. If the type is used by the application's code only, declare it internal in
+	 * @en No role is granted an operation on the type "{0}" or on one of its attributes. Its objects
+	 *     are inaccessible to every user. If the type is used by the application's code only, declare it internal in
 	 *     the access rights configuration.
 	 */
 	public static ResKey1 NO_READ_GRANT__TYPE;

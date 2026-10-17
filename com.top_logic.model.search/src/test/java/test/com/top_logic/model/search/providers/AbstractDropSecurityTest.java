@@ -34,7 +34,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeModel;
 import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -156,7 +155,7 @@ public abstract class AbstractDropSecurityTest<C extends BoundComponent> extends
 
 	@Override
 	protected void tearDown() throws Exception {
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 		_kb.removeUpdateListener(_creationListener);
 		try (Transaction tx = _kb.beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 			KBUtils.deleteAllKI(_toDelete.values().iterator());
@@ -234,7 +233,6 @@ public abstract class AbstractDropSecurityTest<C extends BoundComponent> extends
 			ServiceTestSetup.createStarterFactoryForModules(getModules(
 				AccessManager.Module.INSTANCE,
 				TLSecurityDeviceManager.Module.INSTANCE,
-				PersonManager.Module.INSTANCE,
 				LayoutStorage.Module.INSTANCE,
 				SecurityObjectProviderManager.Module.INSTANCE,
 				BoundHelper.Module.INSTANCE,

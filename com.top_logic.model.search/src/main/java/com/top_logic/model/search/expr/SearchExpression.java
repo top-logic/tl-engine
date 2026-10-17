@@ -49,6 +49,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.search.WithSecurityCheck;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.interpreter.SearchExpressionPart;
 import com.top_logic.model.search.expr.query.Args;
@@ -253,17 +254,32 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 
 	/**
 	 * Creates a {@link Predicate} that accepts only {@link TLObject} that the current user is
-	 * allowed to see.
+	 * allowed to discover, see {@link ModelAccessRights#isDiscoverAllowed(Person, TLObject)}.
 	 */
 	public static Predicate<TLObject> securityFilter() {
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
 		Person user = TLContext.currentUser();
-		return input -> accessRights.isReadAllowed(user, input);
+		return input -> accessRights.isDiscoverAllowed(user, input);
+	}
+
+	/**
+	 * Restricts a value delivered by an object source to the objects the current user may discover.
+	 *
+	 * @param value
+	 *        The value delivered by the source.
+	 * @param usesSecurity
+	 *        Whether the delivering expression is evaluated with security, see
+	 *        {@link WithSecurityCheck#usesSecurity()}.
+	 * @return The value without undiscoverable objects (see {@link #filterSecurity(Object)}), or
+	 *         the given value if security is not used.
+	 */
+	public static Object discoverable(Object value, boolean usesSecurity) {
+		return usesSecurity ? filterSecurity(value) : value;
 	}
 
 	/**
 	 * Filters the given value such that the result contains only elements that the current user is
-	 * allowed to see.
+	 * allowed to discover (removes the business objects the user must not discover).
 	 *
 	 * @see #filterSecurity(Person, Object)
 	 */
@@ -273,7 +289,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 
 	/**
 	 * Filters the given value such that the result contains only elements that the current user is
-	 * allowed to see, recording the removed objects in the given report.
+	 * allowed to discover, recording the removed objects in the given report.
 	 *
 	 * @param value
 	 *        The value to filter for security. May be null.
@@ -289,7 +305,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 
 	/**
 	 * Filters the given value such that the result contains only elements that the given user is
-	 * allowed to see.
+	 * allowed to discover.
 	 *
 	 * <p>
 	 * Only <em>business objects</em> are filtered. A {@link TLModelPart model element} (a type, an
@@ -307,7 +323,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * cannot take the place of the original - filtering it would destroy the value instead of
 	 * protecting data. A business object that a script stores in such a value is therefore
 	 * <em>not</em> filtered: whoever passes that object on to the user is responsible for checking
-	 * the read rights, see {@link ModelAccessRights#isReadAllowed(Person, TLObject)}.
+	 * the discover right, see {@link ModelAccessRights#isDiscoverAllowed(Person, TLObject)}.
 	 * </p>
 	 *
 	 * @param value
@@ -322,7 +338,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 
 	/**
 	 * Filters the given value such that the result contains only elements that the given user is
-	 * allowed to see, recording the removed objects in the given report.
+	 * allowed to discover, recording the removed objects in the given report.
 	 *
 	 * <p>
 	 * Which values are filtered and which are kept is described at
@@ -330,7 +346,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * </p>
 	 *
 	 * @param user
-	 *        The user whose read rights decide.
+	 *        The user whose discover right decides.
 	 * @param value
 	 *        The value to filter for security. May be null.
 	 * @param report
@@ -365,7 +381,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	}
 
 	private static Object filterSecurityTLObject(Person user, TLObject value, SecurityFilterReport report) {
-		if (ModelAccessRights.getInstance().isReadAllowed(user, value)) {
+		if (ModelAccessRights.getInstance().isDiscoverAllowed(user, value)) {
 			return value;
 		} else {
 			if (report != null) {

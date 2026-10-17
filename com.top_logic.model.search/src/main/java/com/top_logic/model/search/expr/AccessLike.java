@@ -65,12 +65,11 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, 
 	 * </p>
 	 *
 	 * <p>
-	 * The looked-up value itself is returned unfiltered: a reference is not a query, so the
-	 * referenced object is delivered even if the user must not read it, consistent with the GUI,
-	 * which shows the label of a referenced object and only gates the navigation into it. Reading
-	 * the attributes of such an object is denied by the access check of that attribute access. The
-	 * result of a whole script execution is a different matter: it is filtered for the read rights
-	 * of the user, see {@link SearchExpression#filterSecurity(Object, SecurityFilterReport)}, and a
+	 * A secured lookup delivers only the objects the user may discover (R4 of the Discover
+	 * specification), see {@link SearchExpression#discoverable(Object, boolean)}. A discoverable
+	 * object can be shown by its label; reading its attributes is denied by the access check of that
+	 * attribute access. The result of a whole script execution is filtered in the same way, see
+	 * {@link SearchExpression#filterSecurity(Object, SecurityFilterReport)}, and a
 	 * {@link SecurityFilterReport} tells the caller what that filter removed.
 	 * </p>
 	 *
@@ -102,12 +101,8 @@ public interface AccessLike extends WithFlatMapSemantics<TLStructuredTypePart>, 
 		} else {
 			value = self.tValue(part);
 		}
-		// Note: The looked-up value is returned unfiltered. Security is enforced on the base object
-		// (the access above is denied if the user must not read the attribute), not on the
-		// referenced value - consistent with the GUI, which always shows a referenced object (its
-		// label) and only gates navigation into it. The final result of a script must be secured by
-		// the caller.
-		return SearchExpression.normalizeValue(value);
+		// References deliver only discoverable objects (R4 of the Discover specification).
+		return SearchExpression.discoverable(SearchExpression.normalizeValue(value), withSecurity);
 	}
 
 }

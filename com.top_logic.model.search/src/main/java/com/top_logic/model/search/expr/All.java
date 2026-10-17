@@ -21,9 +21,14 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * {@link SearchExpression} conceptually looking up all instances of a certain {@link #getInstanceType()}.
  * 
+ * <p>
+ * When the expression {@link #usesSecurity() uses security}, only instances the current user may
+ * discover are delivered.
+ * </p>
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class All extends SearchExpression {
+public class All extends SearchExpressionWithSecurity {
 
 	private TLStructuredType _type;
 
@@ -32,8 +37,11 @@ public class All extends SearchExpression {
 	 * 
 	 * @param type
 	 *        See {@link #getInstanceType()}
+	 * @param usesSecurity
+	 *        See {@link #usesSecurity()}.
 	 */
-	All(TLStructuredType type) {
+	All(TLStructuredType type, boolean usesSecurity) {
+		super(usesSecurity);
 		_type = type;
 	}
 
@@ -58,18 +66,21 @@ public class All extends SearchExpression {
 
 	@Override
 	public Object internalEval(EvalContext definitions, Args args) {
-		return all(this, _type);
+		return all(this, _type, usesSecurity());
 	}
 
 	/**
 	 * Retrieves all instances of the given type.
 	 *
 	 * <p>
-	 * The result is not filtered for security: access to the individual objects' data is secured
-	 * when their attributes are accessed, and the final result of a script is secured by the caller.
+	 * The classifiers of a {@link TLEnumeration} are model elements and are delivered unfiltered.
 	 * </p>
+	 * 
+	 * @param usesSecurity
+	 *        Whether to deliver only the instances the current user may discover.
 	 */
-	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type) {
+	public static List<? extends TLObject> all(SearchExpression self, TLStructuredType type,
+			boolean usesSecurity) {
 		switch (type.getModelKind()) {
 			case CLASS: {
 				ArrayList<TLObject> result = new ArrayList<>();
@@ -80,7 +91,7 @@ public class All extends SearchExpression {
 						result.add(instance);
 					}
 				}
-				return result;
+				return usesSecurity ? filterDiscoverable(result) : result;
 			}
 
 			case ENUMERATION: {
@@ -91,6 +102,11 @@ public class All extends SearchExpression {
 				throw new TopLogicException(I18NConstants.ERROR_NEITHER_CLASS_NOR_ENUM__TYPE_EXPR.fill(type, self));
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	static List<TLObject> filterDiscoverable(List<TLObject> instances) {
+		return (List<TLObject>) filterSecurity(instances);
 	}
 
 }

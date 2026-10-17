@@ -32,9 +32,13 @@
 	selectedRuleEntry channel. It holds every command on rules, so that a rule is created where it
 	is listed, edited and deleted: "Role parent…" and "Role rule…" open a dialog creating a rule of
 	the selected type, "Edit rule…" opens the dialog belonging to the kind of the picked entry with
-	the rule prefilled, and "Delete rule" drops it from the application configuration - it is
-	shown only for an entry that configuration defines, a rule of the layers underneath being
-	overridable but not removable.
+	the rule prefilled, and "Delete rule" drops it from the application configuration - a rule of
+	the layers underneath is removed by a removal entry there.
+	
+	Changes stored but not yet applied are shown in the rules panel already: a stored rule that is
+	not yet in effect is listed as new, a rule in effect as changed or deleted, while the coverage
+	table and the findings keep showing the definition in effect. A deleted rule is not offered for
+	deletion again.
 	
 	All of these write to the application configuration rather than to the running application, so
 	the pending channel marks that the files and the running definition differ until "Apply
@@ -114,6 +118,7 @@
 					</commands>
 					<child class="com.top_logic.layout.view.admin.SecurityCoverageTable"
 						input="rows"
+						pending="pending"
 						selected-findings="selectedFindings"
 						selected-internal="selectedInternal"
 						selected-module="selectedModule"
@@ -474,13 +479,13 @@
 											<de>Regel löschen</de>
 										</label>
 										<tooltip>
-											<en>Deletes the selected rule from the application configuration; a rule of the layers underneath cannot be deleted. The change takes effect with "Apply configuration".</en>
-											<de>Löscht die ausgewählte Regel aus der Anwendungskonfiguration; eine Regel der darunterliegenden Schichten kann nicht gelöscht werden. Die Änderung wird mit „Konfiguration anwenden“ wirksam.</de>
+											<en>Deletes the selected rule. A rule of the layers underneath is removed by an entry in the application configuration. The change takes effect with "Apply configuration".</en>
+											<de>Löscht die ausgewählte Regel. Eine Regel der darunterliegenden Schichten wird durch einen Eintrag in der Anwendungskonfiguration entfernt. Die Änderung wird mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<visible-if expr="entry -> $entry != null &amp;&amp; $entry['stored']"/>
+											<visible-if expr="entry -> $entry != null &amp;&amp; $entry['state'] != 'deleted'"/>
 										</executability>
-										<confirm expr="#('Delete the rule {0} from the application configuration?'@en, 'Die Regel {0} aus der Anwendungskonfiguration löschen?'@de).fill($selectedRuleEntry['id'])"/>
+										<confirm expr="#('Delete the rule {0}?'@en, 'Die Regel {0} löschen?'@de).fill($selectedRuleEntry['id'])"/>
 										<switch value="$selectedRuleEntry['kind']">
 											<case match="'roleParent'">
 												<execute-script function="$selectedRuleEntry['id']">
@@ -528,6 +533,20 @@
 											</label>
 											<value><![CDATA[row -> $row["id"]]]></value>
 										</computed-column>
+										<computed-column name="state"
+											type="tl.core:String"
+											width="140"
+										>
+											<label>
+												<en>Pending change</en>
+												<de>Ausstehende Änderung</de>
+												<tooltip>
+													<en>A change of the rule that is stored but takes effect only with "Apply configuration": the rule is new, changed or deleted. Empty for a rule in effect as it is stored.</en>
+													<de>Eine Änderung der Regel, die gespeichert ist, aber erst mit „Konfiguration anwenden“ wirksam wird: Die Regel ist neu, geändert oder gelöscht. Leer für eine Regel, die so gilt, wie sie gespeichert ist.</de>
+												</tooltip>
+											</label>
+											<value><![CDATA[row -> $row["stateLabel"]]]></value>
+										</computed-column>
 										<computed-column name="description"
 											type="tl.core:String"
 											width="320"
@@ -545,6 +564,10 @@
 											<label>
 												<en>Stored</en>
 												<de>Gespeichert</de>
+												<tooltip>
+													<en>Whether the rule is stored in the application configuration, because it was created or edited in this view. A rule without the mark is taken unchanged from the configuration of the layers underneath.</en>
+													<de>Ob die Regel in der Anwendungskonfiguration gespeichert ist, weil sie in dieser Ansicht angelegt oder bearbeitet wurde. Eine Regel ohne Haken stammt unverändert aus der Konfiguration der darunterliegenden Schichten.</de>
+												</tooltip>
 											</label>
 											<value><![CDATA[row -> $row["stored"]]]></value>
 										</computed-column>

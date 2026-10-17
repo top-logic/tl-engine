@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -131,7 +132,9 @@ public class Zipper implements Closeable {
     /**
      * Add the given folder to this ZIP file.
      * 
-     * This method will add all files in this folder and also all sub folders.
+     * This method will add all files in this folder and also all sub folders. The entries of a
+     * folder are added in the order of their names, so that the ZIP file does not depend on the
+     * order in which the file system lists them.
      * 
      * @param    aDir       The folder to be added.
      * @param    aParent    The name of the parent folder to be used in the ZIP file.
@@ -150,6 +153,7 @@ public class Zipper implements Closeable {
         String theName;
         File   theChild;
 		File theFiles[] = FileUtilities.listFiles(aDir);
+		Arrays.sort(theFiles);
 
 		if (theFiles.length > 0) {
 			for (int thePos = 0; thePos < theFiles.length; thePos++) {

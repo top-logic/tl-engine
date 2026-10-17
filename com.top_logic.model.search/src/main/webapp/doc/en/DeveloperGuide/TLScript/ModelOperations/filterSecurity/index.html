@@ -7,15 +7,15 @@ filterSecurity($base)
 
 <h2>Description</h2>
 
-<p>Applies the read permissions of the logged-in user to a value and removes all business objects that the user is not allowed to see.</p>
+<p>Applies the discover right of the logged-in user to a value and removes all business objects that the user is not allowed to discover.</p>
 
-<p>When accessing model elements, referenced objects are returned <strong>unfiltered</strong> in TL-Script &ndash; consistent with the user interface, which always shows a referenced object by its label and only secures the navigation into the object. Only access to the <em>attributes</em> of an object is denied if the user must not read the object. An intermediate result of an evaluation may therefore contain objects that the user must not read. With <code class="hljs inlineCode">filterSecurity</code>, such a value can be explicitly secured so that it only contains objects the user may read.</p>
+<p>Every object source in a secured TL-Script (references, referers, container, object functions) already delivers only objects the user may discover. <code class="hljs inlineCode">filterSecurity</code> remains as a safety net for values assembled from unsecured sources.</p>
 
 <p>The check is applied recursively:</p>
 
 <ul>
-	<li>A single business object that the user must not read becomes <code class="hljs inlineCode">null</code>.</li>
-	<li>From a collection, the elements that must not be read are removed; the kind of collection (list or set) is preserved.</li>
+	<li>A single business object that the user must not discover becomes <code class="hljs inlineCode">null</code>.</li>
+	<li>From a collection, the elements that must not be discovered are removed; the kind of collection (list or set) is preserved.</li>
 	<li>Values that are not business objects (e.g. numbers or strings) remain unchanged.</li>
 </ul>
 
@@ -23,7 +23,7 @@ filterSecurity($base)
 
 <p>The <strong>overall result</strong> of a script does not have to be secured: it is filtered automatically when the application executes the script, unless security was explicitly switched off for that script. A trailing <code class="hljs inlineCode">filterSecurity</code> at the end of a script is therefore redundant.</p>
 
-<p>The function is needed to secure a value <em>within</em> an evaluation &ndash; e.g. a partial result that the script itself renders or passes on to another context. It should not be applied to every intermediate step: if used too early, subsequent steps may lose objects that are needed for the computation (e.g. for a filter), even though the final result itself would be readable.</p>
+<p>The function is needed to secure a value <em>within</em> an evaluation &ndash; e.g. a partial result that the script itself renders or passes on to another context. It should not be applied to every intermediate step: if used too early, subsequent steps may lose objects that are needed for the computation (e.g. for a filter), even though the final result itself would be discoverable.</p>
 
 <h2>Parameters</h2>
 
@@ -52,7 +52,7 @@ filterSecurity($base)
 
 <p><span style="color:#3498db"><strong>Type:</strong></span> Same type as the argument</p>
 
-<p>The given value, containing only the business objects that the logged-in user is allowed to read.</p>
+<p>The given value, containing only the business objects that the logged-in user is allowed to discover.</p>
 
 <h2>Examples</h2>
 
@@ -60,16 +60,16 @@ filterSecurity($base)
 
 <pre><code>all(`myModule:Contract`).map(c -&gt; $c.get(`owner`)).filterSecurity()</code></pre>
 
-<p><span style="color:#3498db"><strong>Output:</strong></span> The owners of all contracts, restricted to the persons that the logged-in user is allowed to read.</p>
+<p><span style="color:#3498db"><strong>Output:</strong></span> The owners of all contracts, restricted to the persons that the logged-in user is allowed to discover. In a secured script, the reference access already delivers only discoverable owners, so the call does not change the result there.</p>
 
 <h3>Example 2</h3>
 
 <pre><code>$contract.get(`owner`).filterSecurity()</code></pre>
 
-<p><span style="color:#3498db"><strong>Output:</strong></span> The owner of the contract if the logged-in user is allowed to read it, otherwise <code class="hljs inlineCode">null</code>.</p>
+<p><span style="color:#3498db"><strong>Output:</strong></span> The owner of the contract if the logged-in user is allowed to discover it, otherwise <code class="hljs inlineCode">null</code>.</p>
 
 <h3>Example 3</h3>
 
 <pre><code>all(`myModule:Contract`).filter(c -&gt; $c.get(`owner`) != null).filterSecurity()</code></pre>
 
-<p><span style="color:#3498db"><strong>Output:</strong></span> All contracts that have an owner set &ndash; the filter evaluates the (unfiltered) owner, and the trailing <code class="hljs inlineCode">filterSecurity</code> then restricts the result to the contracts that the logged-in user is allowed to see.</p>
+<p><span style="color:#3498db"><strong>Output:</strong></span> The contracts with an owner that the logged-in user is allowed to discover. In a secured script, <code class="hljs inlineCode">all</code> and the reference access already deliver only discoverable objects, so the trailing <code class="hljs inlineCode">filterSecurity</code> is redundant there. Note that discovering an object does not allow reading its attributes.</p>

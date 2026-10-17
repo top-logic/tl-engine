@@ -30,17 +30,19 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * A {@link QueryExecutor} is the interface through which an application executes a
  * <i>TL-Script</i>. It therefore secures the result of an execution: unless the security is
- * {@link #disableSecurity() switched off}, objects that the current user is not allowed to read are
- * removed from the result, see {@link #executeWith(EvalContext, Args)}. A
+ * {@link #disableSecurity() switched off}, objects that the current user is not allowed to discover
+ * are removed from the arguments and the result, see {@link #executeWith(EvalContext, Args)}. A
  * {@link SecurityFilterReport} attached to the {@link EvalContext} of the execution tells the caller
  * what that filter removed.
  * </p>
  *
  * <p>
- * Only the result of an execution is filtered. The value of a reference access ({@code get()},
- * attribute navigation) inside the expression is not, because a reference is not a query: reading
- * the attributes of an object the user must not read is denied by the access check of the attribute
- * access itself, see {@link com.top_logic.model.search.expr.AccessLike}.
+ * Within a secured expression, every object source delivers only discoverable objects as well: the
+ * value of a reference access ({@code get()}, attribute navigation, see
+ * {@link com.top_logic.model.search.expr.AccessLike}), the referers of an object, the instances of
+ * a type and the results of functions. Discovering an object does not make its attributes
+ * readable: reading an attribute is denied by the access check of the attribute access itself,
+ * unless the user holds the read right on it.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -342,9 +344,9 @@ public abstract class QueryExecutor {
 	 *
 	 * <p>
 	 * By default, every executed expression applies security, i.e. elements that the current user
-	 * is not allowed to see are removed from the (intermediate) results, modifying operations
+	 * is not allowed to discover are removed from the (intermediate) results, modifying operations
 	 * require the corresponding write permission, and the {@link #executeWith(EvalContext, Args)
-	 * result} of an execution is filtered for the current user's read rights. Calling this method
+	 * result} of an execution is filtered for the current user's Discover right. Calling this method
 	 * permanently switches security off for this {@link QueryExecutor}. It must therefore only be
 	 * used for internal queries that must not be subject to the user's access rights.
 	 * </p>
@@ -425,10 +427,10 @@ public abstract class QueryExecutor {
 	 *
 	 * <p>
 	 * Unless the security is {@link #disableSecurity() disabled}, the result is filtered for the
-	 * current user's read rights, see {@link SearchExpression#filterSecurity(Object)}. A
+	 * current user's Discover right, see {@link SearchExpression#filterSecurity(Object)}. A
 	 * {@link QueryExecutor} is the interface through which an application executes a
 	 * <i>TL-Script</i>, therefore its result must not contain objects that the current user is not
-	 * allowed to read - the caller does not have to remember to secure it.
+	 * allowed to discover - the caller does not have to remember to secure it.
 	 * </p>
 	 *
 	 * <p>
@@ -440,6 +442,11 @@ public abstract class QueryExecutor {
 	 * therefore nothing is recorded.
 	 * </p>
 	 *
+	 * <p>
+	 * The arguments are filtered the same way before the evaluation, so that a script only ever sees
+	 * discoverable objects, also those handed in by the caller.
+	 * </p>
+	 *
 	 * @param args
 	 *        The arguments to pass to the expression evaluation.
 	 * @return The result of the expression.
@@ -448,6 +455,11 @@ public abstract class QueryExecutor {
 	 *      Execution from within an ongoing evaluation, whose result is an intermediate one.
 	 */
 	public final Object executeWith(EvalContext definitions, Args args) {
+		if (_securityEnabled) {
+			// The inputs of a secured script are restricted to discoverable objects, like every
+			// other object source.
+			args = args.map(SearchExpression::filterSecurity);
+		}
 		Object result = internalExecuteWith(definitions, args);
 		if (_securityEnabled) {
 			return SearchExpression.filterSecurity(result, definitions.getSecurityReport());
@@ -457,14 +469,14 @@ public abstract class QueryExecutor {
 
 	/**
 	 * Executes the expression with the given arguments <em>without</em> filtering the result for the
-	 * current user's read rights.
+	 * current user's Discover right.
 	 *
 	 * <p>
 	 * This is the execution of an expression whose result is an <em>intermediate</em> value of a
 	 * larger operation and is not handed to the user: a configured function called from another
 	 * script, or a step of a technical pipeline such as the XML importer resolving the object to link
 	 * to. Such a result must not be filtered, since an object that the operation navigates through,
-	 * links to, or only counts must not be dropped just because the user may not read it. Securing
+	 * links to, or only counts must not be dropped just because the user may not discover it. Securing
 	 * the value that the operation finally delivers is the job of that operation - for a script, of
 	 * the {@link #executeWith(EvalContext, Args) execution} that started it.
 	 * </p>
@@ -487,7 +499,7 @@ public abstract class QueryExecutor {
 
 	/**
 	 * Executes the expression with the given arguments <em>without</em> filtering the result for the
-	 * current user's read rights.
+	 * current user's Discover right.
 	 * <p>
 	 * Uses the {@link QueryExecutor#context() evaluation context}.
 	 * </p>

@@ -6,7 +6,6 @@
 package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,6 +15,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.SearchExpression;
 
 /**
  * {@link RowSetBinding} anchored at a reference attribute of the form object.
@@ -76,24 +76,25 @@ public class AttributeRowSetBinding implements RowSetBinding {
 		return _part;
 	}
 
+	/**
+	 * The rows of the given object the current user may discover.
+	 *
+	 * <p>
+	 * The rows are displayed in a table, which shows no object the user may not discover. Writing
+	 * the rows back keeps the ones left out here, see {@link #updateMembership(TLObject, List)}.
+	 * </p>
+	 */
 	@Override
 	public List<TLObject> readRows(TLObject object) {
 		if (_part == null || object == null) {
 			return new ArrayList<>();
 		}
-		Object value = object.tValue(_part);
-		if (value instanceof Collection<?> collection) {
-			List<TLObject> result = new ArrayList<>(collection.size());
-			for (Object entry : collection) {
-				if (entry instanceof TLObject row) {
-					result.add(row);
-				}
+		List<?> values = SearchExpression.asList(SearchExpression.filterSecurity(object.tValue(_part)));
+		List<TLObject> result = new ArrayList<>(values.size());
+		for (Object entry : values) {
+			if (entry instanceof TLObject row) {
+				result.add(row);
 			}
-			return result;
-		}
-		List<TLObject> result = new ArrayList<>();
-		if (value instanceof TLObject row) {
-			result.add(row);
 		}
 		return result;
 	}
@@ -109,16 +110,25 @@ public class AttributeRowSetBinding implements RowSetBinding {
 		return isComposite() ? RemoveMode.DELETE : RemoveMode.UNLINK;
 	}
 
+	/**
+	 * Writes the given rows to the given owner, together with the stored rows the current user may
+	 * not discover.
+	 *
+	 * <p>
+	 * The rows the user may not discover are not {@link #readRows(TLObject) displayed}, so the user
+	 * cannot have removed them: they stay at their stored positions.
+	 * </p>
+	 */
 	@Override
 	public void updateMembership(TLObject owner, List<TLObject> currentRows) {
-		owner.tUpdate(_part, currentRows);
+		owner.tUpdate(_part, withHiddenRows(owner, currentRows));
 	}
 
 	@Override
 	public void commit(TLObject owner, List<TLObject> persistedRows, List<TLObject> originalRows) {
 		// Update the reference in the editing buffer of the owner, so that applying the buffer
 		// writes the persisted row list to the owner.
-		owner.tUpdate(_part, persistedRows);
+		owner.tUpdate(_part, withHiddenRows(owner, persistedRows));
 
 		if (getRemoveMode() == RemoveMode.DELETE) {
 			// Delete objects taken out of a composition (present originally, absent now).
@@ -129,6 +139,26 @@ public class AttributeRowSetBinding implements RowSetBinding {
 				}
 			}
 		}
+	}
+
+	/**
+	 * The given rows, with the rows the given owner stores but the current user may not discover
+	 * inserted at their stored positions.
+	 */
+	private List<TLObject> withHiddenRows(TLObject owner, List<TLObject> rows) {
+		List<?> stored = SearchExpression.asList(baseObject(owner).tValue(_part));
+		List<?> discoverable = SearchExpression.asList(SearchExpression.filterSecurity(stored));
+		if (discoverable.size() == stored.size()) {
+			return rows;
+		}
+		Set<?> visible = new HashSet<>(discoverable);
+		List<TLObject> result = new ArrayList<>(rows);
+		for (int index = 0, cnt = stored.size(); index < cnt; index++) {
+			if (stored.get(index) instanceof TLObject hidden && !visible.contains(hidden) && !result.contains(hidden)) {
+				result.add(Math.min(index, result.size()), hidden);
+			}
+		}
+		return result;
 	}
 
 	private boolean isComposite() {

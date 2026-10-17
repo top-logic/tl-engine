@@ -1,9 +1,10 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope,
-  useCloseOnOutsidePress, FillBarrier, rootClassName, tooltipProps,
-  ThemeIcon, usePart,
+  FillBarrier, rootClassName, tooltipProps, ThemeIcon, usePart,
+  useDisplayClass, useFocusTrap, pressClosedSurface, ICON_EXPAND,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { Menu, MenuItem, MenuHeader, MenuSeparator, menuItemClassName } from './menu/Menu';
 
 const { useCallback, useState, useEffect, useRef } = React;
 
@@ -93,8 +94,14 @@ function collectFocusable(
 
 const SidebarIcon: React.FC<{ icon?: string }> = ({ icon }) => {
   if (!icon) return null;
-  return <ThemeIcon encoded={icon} className="tlSidebar__icon" />;
+  return <ThemeIcon encoded={icon} className="tl-menu__icon tl-icon-sm" />;
 };
+
+/** Whether the page the user is on lies in the given group, at any depth. */
+function containsCurrent(item: GroupItemInfo, activeItemId: string): boolean {
+  return item.children.some(child => (child.type === 'nav' && child.id === activeItemId)
+    || (child.type === 'group' && containsCurrent(child as GroupItemInfo, activeItemId)));
+}
 
 const SidebarNavItem: React.FC<{
   item: NavItem;
@@ -108,7 +115,9 @@ const SidebarNavItem: React.FC<{
   const Badge = usePart('Badge');
   return (
     <button
-      className={'tlSidebar__item tlSidebar__navItem' + (active ? ' tlSidebar__navItem--active' : '')}
+      type="button"
+      className={menuItemClassName(active, 'tl-sidebar__item')}
+      aria-current={active ? 'page' : undefined}
       onClick={() => onSelect(item.id)}
       aria-label={collapsed ? item.label : undefined}
       {...tooltipProps(collapsed ? item.label : undefined)}
@@ -117,23 +126,18 @@ const SidebarNavItem: React.FC<{
       onFocus={() => onFocus(item.id)}
     >
       {collapsed && item.badge ? (
-        <span className="tlSidebar__iconWrap">
+        // The count over the corner of the icon: the element around the part places it (view-layer/parts.md).
+        <span className="tl-icon-badge">
           <SidebarIcon icon={item.icon} />
-          {/* Over the corner of the icon, placed by the element around the badge: the root of
-              the part keeps the position its implementation gives it. */}
-          <span className="tlSidebar__cornerBadge">
+          <span className="tl-icon-badge__count">
             <Badge content={item.badge} />
           </span>
         </span>
       ) : (
         <SidebarIcon icon={item.icon} />
       )}
-      {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
-      {!collapsed && item.badge && (
-        <span className="tlSidebar__badge">
-          <Badge content={item.badge} />
-        </span>
-      )}
+      {!collapsed && <span className="tl-menu__label">{item.label}</span>}
+      {!collapsed && item.badge && <Badge content={item.badge} />}
     </button>
   );
 };
@@ -147,7 +151,8 @@ const SidebarCommandItem: React.FC<{
   onFocus: (id: string) => void;
 }> = ({ item, collapsed, onExecute, tabIndex, itemRef, onFocus }) => (
   <button
-    className={'tlSidebar__item tlSidebar__commandItem' + (item.disabled ? ' tlSidebar__item--disabled' : '')}
+    type="button"
+    className={menuItemClassName(false, 'tl-sidebar__item')}
     onClick={() => onExecute(item.id)}
     disabled={item.disabled}
     aria-label={collapsed ? item.label : undefined}
@@ -157,7 +162,7 @@ const SidebarCommandItem: React.FC<{
     onFocus={() => onFocus(item.id)}
   >
     <SidebarIcon icon={item.icon} />
-    {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
+    {!collapsed && <span className="tl-menu__label">{item.label}</span>}
   </button>
 );
 
@@ -167,107 +172,53 @@ const SidebarHeaderItem: React.FC<{
 }> = ({ item, collapsed }) => {
   if (collapsed && !item.icon) return null;
   return (
-    <div className="tlSidebar__headerItem" {...tooltipProps(collapsed ? item.label : undefined)}>
+    <div className="tl-menu__header tl-type-label" role="presentation" {...tooltipProps(collapsed ? item.label : undefined)}>
       <SidebarIcon icon={item.icon} />
-      {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
-    </div>
-  );
-};
-
-/** The class of the element around the divider between two items, which gives it the space around it. */
-const SEPARATOR_CLASS = 'tlSidebar__separator';
-
-/** The line between two items of the sidebar or of its flyout, drawn by the part `Divider`. */
-const SidebarSeparator: React.FC = () => {
-  const Divider = usePart('Divider');
-  return (
-    <div className={SEPARATOR_CLASS}>
-      <Divider />
+      {!collapsed && item.label}
     </div>
   );
 };
 
 /* ---------- Group flyout (collapsed mode) ---------- */
 
+/** The entries of a group in its flyout: the menu at the group's button, right of the collapsed rail. */
 const SidebarGroupFlyout: React.FC<{
   item: GroupItemInfo;
   activeItemId: string;
-  anchorRect: DOMRect | null;
-  triggerRef: React.RefObject<HTMLButtonElement | null>;
+  anchor: HTMLElement | null;
   onSelect: (id: string) => void;
   onExecute: (id: string) => void;
   onClose: () => void;
-}> = ({ item, activeItemId, anchorRect, triggerRef, onSelect, onExecute, onClose }) => {
-  const flyoutRef = useRef<HTMLDivElement>(null);
+}> = ({ item, activeItemId, anchor, onSelect, onExecute, onClose }) => {
   const Badge = usePart('Badge');
-
-  // Close on a press outside the flyout. A press on the group icon the flyout hangs off is left to
-  // that icon, which toggles the flyout on its click.
-  useCloseOnOutsidePress(true, [flyoutRef, triggerRef], onClose);
-
-  // Close on Escape (via the shared keyboard dispatcher).
-  useStandaloneKeyboardScope(true, { ESCAPE: onClose });
-
-  const handleChildClick = useCallback((child: SidebarItemData) => {
-    if (child.type === 'nav') {
-      onSelect(child.id);
-      onClose();
-    } else if (child.type === 'command') {
-      onExecute(child.id);
-      onClose();
-    }
-  }, [onSelect, onExecute, onClose]);
-
-  // Position fixed relative to the anchor button's bounding rect.
-  const style: React.CSSProperties = {};
-  if (anchorRect) {
-    style.left = anchorRect.right;
-    style.top = anchorRect.top;
-  }
-
   return (
-    <div className="tlSidebar__flyout" ref={flyoutRef} role="menu" style={style}>
-      <div className="tlSidebar__flyoutHeader">{item.label}</div>
+    <Menu open anchor={anchor} placement="right-start" onClose={onClose}>
+      <MenuHeader label={item.label ?? ''} />
       {item.children.map(child => {
-        if (child.type === 'nav' && (child as NavItem).hidden) return null;
-        if (child.type === 'command' && (child as CommandItemInfo).hidden) return null;
-        if (child.type === 'nav' || child.type === 'command') {
-          const isActive = child.type === 'nav' && child.id === activeItemId;
-          const isDisabled = child.type === 'command' && !!(child as CommandItemInfo).disabled;
-          const tooltip = child.type === 'command' ? (child as CommandItemInfo).tooltip : undefined;
+        if (child.type === 'nav') {
+          const nav = child as NavItem;
+          if (nav.hidden) return null;
           return (
-            <button
-              key={child.id}
-              className={'tlSidebar__flyoutItem' + (isActive ? ' tlSidebar__flyoutItem--active' : '')
-                + (isDisabled ? ' tlSidebar__item--disabled' : '')}
-              role="menuitem"
-              disabled={isDisabled}
-              {...tooltipProps(tooltip)}
-              onClick={() => handleChildClick(child)}
-            >
-              <SidebarIcon icon={child.icon} />
-              <span className="tlSidebar__label">{child.label}</span>
-              {child.type === 'nav' && (child as NavItem).badge && (
-                <span className="tlSidebar__badge">
-                  <Badge content={(child as NavItem).badge!} />
-                </span>
-              )}
-            </button>
+            <MenuItem key={nav.id} icon={nav.icon} label={nav.label ?? ''}
+              current={nav.id === activeItemId ? 'page' : false}
+              trailing={nav.badge ? <Badge content={nav.badge} /> : undefined}
+              onSelect={() => { onSelect(nav.id); onClose(); }} />
           );
         }
-        if (child.type === 'header') {
+        if (child.type === 'command') {
+          const command = child as CommandItemInfo;
+          if (command.hidden) return null;
           return (
-            <div key={child.id} className="tlSidebar__flyoutSectionHeader">
-              {child.label}
-            </div>
+            <MenuItem key={command.id} icon={command.icon} label={command.label ?? ''}
+              disabled={command.disabled} tooltip={command.tooltip}
+              onSelect={() => { onExecute(command.id); onClose(); }} />
           );
         }
-        if (child.type === 'separator') {
-          return <SidebarSeparator key={child.id} />;
-        }
+        if (child.type === 'header') return <MenuHeader key={child.id} label={child.label ?? ''} />;
+        if (child.type === 'separator') return <MenuSeparator key={child.id} />;
         return null;
       })}
-    </div>
+    </Menu>
   );
 };
 
@@ -295,17 +246,13 @@ const SidebarGroup: React.FC<{
        flyoutGroupId, onOpenFlyout, onCloseFlyout }) => {
 
   const headerBtnRef = useRef<HTMLButtonElement>(null);
-  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
   const handleClick = useCallback(() => {
     if (collapsed) {
-      // In collapsed mode, toggle flyout instead of inline expand.
       if (flyoutGroupId === item.id) {
         onCloseFlyout();
-      } else {
-        if (headerBtnRef.current) {
-          setAnchorRect(headerBtnRef.current.getBoundingClientRect());
-        }
+      } else if (!pressClosedSurface()) {
+        // The press of this click may just have closed the flyout from outside; it must not reopen it.
         onOpenFlyout(item.id);
       }
     } else {
@@ -320,13 +267,18 @@ const SidebarGroup: React.FC<{
   }, [itemRef]);
 
   const showFlyout = collapsed && flyoutGroupId === item.id;
+  // Where the page the user is on hides in a closed group, the group's head shows it.
+  const marked = containsCurrent(item, activeItemId) && (collapsed || !expanded);
 
   return (
-    <div className={'tlSidebar__group' + (showFlyout ? ' tlSidebar__group--flyoutOpen' : '')}>
+    <div className="tl-sidebar__group">
       <button
-        className="tlSidebar__item tlSidebar__groupHeader"
+        type="button"
+        className={menuItemClassName(false, 'tl-sidebar__item')}
+        data-tl-state={marked ? 'contains-current' : undefined}
         onClick={handleClick}
         aria-label={collapsed ? item.label : undefined}
+        aria-haspopup={collapsed ? 'menu' : undefined}
         {...tooltipProps(collapsed ? item.label : undefined)}
         aria-expanded={collapsed ? showFlyout : expanded}
         tabIndex={tabIndex}
@@ -334,28 +286,15 @@ const SidebarGroup: React.FC<{
         onFocus={() => onFocus(item.id)}
       >
         <SidebarIcon icon={item.icon} />
-        {!collapsed && <span className="tlSidebar__label">{item.label}</span>}
-        {!collapsed && (
-          <svg className={'tlSidebar__chevron' + (expanded ? ' tlSidebar__chevron--open' : '')}
-            viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-            <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
+        {!collapsed && <span className="tl-menu__label">{item.label}</span>}
+        {!collapsed && <ThemeIcon encoded={ICON_EXPAND} className="tl-sidebar__chevron tl-icon-sm" />}
       </button>
       {showFlyout && (
-        <SidebarGroupFlyout
-          item={item}
-          activeItemId={activeItemId}
-          anchorRect={anchorRect}
-          triggerRef={headerBtnRef}
-          onSelect={onSelect}
-          onExecute={onExecute}
-          onClose={onCloseFlyout}
-        />
+        <SidebarGroupFlyout item={item} activeItemId={activeItemId} anchor={headerBtnRef.current}
+          onSelect={onSelect} onExecute={onExecute} onClose={onCloseFlyout} />
       )}
       {expanded && !collapsed && (
-        <div className="tlSidebar__groupChildren">
+        <div className="tl-sidebar__children">
           {item.children.map(child => (
             <SidebarItemRenderer
               key={child.id}
@@ -412,7 +351,7 @@ const SidebarItemRenderer: React.FC<{
     case 'header':
       return <SidebarHeaderItem item={item} collapsed={collapsed} />;
     case 'separator':
-      return <SidebarSeparator />;
+      return <MenuSeparator />;
     case 'group': {
       const expanded = groupStates ? (groupStates.get(item.id) ?? item.expanded) : item.expanded;
       return <SidebarGroup item={item} expanded={expanded} activeItemId={activeItemId} collapsed={collapsed}
@@ -434,16 +373,22 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
   const DisclosureToggle = usePart('DisclosureToggle');
+  const compact = useDisplayClass() === 'compact';
 
   const items = (state.items as SidebarItemData[]) ?? [];
   const activeItemId = state.activeItemId as string;
   const persistedCollapsed = state.collapsed as boolean;
   const drawerOpen = state.drawerOpen as boolean;
 
-  // When the mobile drawer is open, render the nav fully expanded (labels visible) regardless
-  // of the desktop "collapsed" preference; the user just opened the drawer to navigate. On
-  // desktop drawerOpen is always false, so this collapses back to the persisted preference.
-  const collapsed = drawerOpen ? false : persistedCollapsed;
+  // Compact, the navigation is a drawer showing labels whatever the rail preference; the preference stays for the
+  // wide screen.
+  const collapsed = compact ? false : persistedCollapsed;
+  const drawerVisible = compact && drawerOpen;
+  const drawerRef = useRef<HTMLElement | null>(null);
+
+  // The drawer is modal: focus moves in and is kept there; closing - Escape, the scrim, choosing an entry - gives it
+  // back to the hamburger it came from.
+  useFocusTrap(drawerVisible, drawerRef, 'first');
 
   // Lift group expanded state into parent.
   const [groupStates, setGroupStates] = useState<Map<string, boolean>>(() => {
@@ -487,6 +432,16 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   const handleToggleDrawer = useCallback(() => {
     sendCommand('toggleDrawer', {});
   }, [sendCommand]);
+
+  useStandaloneKeyboardScope(drawerVisible, { ESCAPE: handleToggleDrawer });
+
+  // Wide again with the drawer open: there is no drawer to show, and the next narrowing must not find it open
+  // without anyone asking. The server keeps drawerOpen until told.
+  useEffect(() => {
+    if (!compact && drawerOpen) {
+      handleToggleDrawer();
+    }
+  }, [compact, drawerOpen, handleToggleDrawer]);
 
   // Flyout state (collapsed-mode group popover).
   const [flyoutGroupId, setFlyoutGroupId] = useState<string | null>(null);
@@ -541,12 +496,8 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Keyboard handler on the items container.
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    // Escape closes flyout if open.
-    if (e.key === 'Escape' && flyoutGroupId !== null) {
-      e.preventDefault();
-      handleCloseFlyout();
-      return;
-    }
+    // Keys from the flyout bubble up the React tree from its portal; the menu handles them, the rail does not.
+    if (!(e.currentTarget as HTMLElement).contains(e.target as Node)) return;
 
     const focusable = collectFocusable(items, collapsed, groupStates);
     if (focusable.length === 0) return;
@@ -610,9 +561,11 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
         break;
       }
       case 'ArrowRight': {
-        if (current.type === 'group' && !collapsed) {
-          const expanded = groupStates.get(current.id) ?? false;
-          if (!expanded) {
+        if (current.type === 'group') {
+          if (collapsed) {
+            e.preventDefault();
+            handleOpenFlyout(current.id);
+          } else if (!(groupStates.get(current.id) ?? false)) {
             e.preventDefault();
             handleToggleGroup(current.id);
           }
@@ -636,83 +589,99 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
   const collapseLabel = collapsed ? i18n['js.sidebar.expand'] : i18n['js.sidebar.collapse'];
   const navId = `${controlId}-nav`;
 
-  const rootClass = 'tlSidebar'
-    + (collapsed ? ' tlSidebar--collapsed' : '')
-    + (drawerOpen ? ' tlSidebar--drawerOpen' : '');
-
-  return (
-    <div id={controlId} className={rootClassName(state, rootClass)}>
-      {!!state.drawerToggleContribution && (
-        <TLChild control={state.drawerToggleContribution} />
+  const nav = (
+    <nav id={navId} className="tl-sidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
+      {collapsed ? (
+        !!state.headerCollapsedContent && (
+          <div className="tl-sidebar__header">
+            <TLChild control={state.headerCollapsedContent} />
+          </div>
+        )
+      ) : (
+        !!state.headerContent && (
+          <div className="tl-sidebar__header">
+            <TLChild control={state.headerContent} />
+          </div>
+        )
       )}
-      {drawerOpen && (
-        <div className="tlSidebar__backdrop" onClick={handleToggleDrawer} aria-hidden="true" />
+
+      <div className="tl-sidebar__items" onKeyDown={handleKeyDown}>
+        {items.map(item => (
+          <SidebarItemRenderer
+            key={item.id}
+            item={item}
+            activeItemId={activeItemId}
+            collapsed={collapsed}
+            onSelect={handleSelect}
+            onExecute={handleExecute}
+            onToggleGroup={handleToggleGroup}
+            focusedId={focusedId}
+            setItemRef={setItemRef}
+            onItemFocus={onItemFocus}
+            groupStates={groupStates}
+            flyoutGroupId={flyoutGroupId}
+            onOpenFlyout={handleOpenFlyout}
+            onCloseFlyout={handleCloseFlyout}
+          />
+        ))}
+      </div>
+
+      {collapsed ? (
+        !!state.footerCollapsedContent && (
+          <div className="tl-sidebar__footer">
+            <TLChild control={state.footerCollapsedContent} />
+          </div>
+        )
+      ) : (
+        !!state.footerContent && (
+          <div className="tl-sidebar__footer">
+            <TLChild control={state.footerContent} />
+          </div>
+        )
       )}
-      <nav id={navId} className="tlSidebar__nav" aria-label={i18n['js.sidebar.ariaLabel']}>
-        {collapsed ? (
-          !!state.headerCollapsedContent && (
-            <div className="tlSidebar__headerSlot tlSidebar__headerSlot--collapsed">
-              <TLChild control={state.headerCollapsedContent} />
-            </div>
-          )
-        ) : (
-          !!state.headerContent && (
-            <div className="tlSidebar__headerSlot">
-              <TLChild control={state.headerContent} />
-            </div>
-          )
-        )}
 
-        <div className="tlSidebar__items" onKeyDown={handleKeyDown}>
-          {items.map(item => (
-            <SidebarItemRenderer
-              key={item.id}
-              item={item}
-              activeItemId={activeItemId}
-              collapsed={collapsed}
-              onSelect={handleSelect}
-              onExecute={handleExecute}
-              onToggleGroup={handleToggleGroup}
-              focusedId={focusedId}
-              setItemRef={setItemRef}
-              onItemFocus={onItemFocus}
-              groupStates={groupStates}
-              flyoutGroupId={flyoutGroupId}
-              onOpenFlyout={handleOpenFlyout}
-              onCloseFlyout={handleCloseFlyout}
-            />
-          ))}
-        </div>
-
-        {collapsed ? (
-          !!state.footerCollapsedContent && (
-            <div className="tlSidebar__footerSlot tlSidebar__footerSlot--collapsed">
-              <TLChild control={state.footerCollapsedContent} />
-            </div>
-          )
-        ) : (
-          !!state.footerContent && (
-            <div className="tlSidebar__footerSlot">
-              <TLChild control={state.footerContent} />
-            </div>
-          )
-        )}
-
-        <div className="tlSidebar__collapseBar">
+      {/* Collapsing is a preference of the wide screen; a drawer has nothing to collapse. */}
+      {!compact && (
+        <div className="tl-sidebar__collapse">
           <DisclosureToggle expanded={!collapsed} opens="end" label={collapseLabel} onClick={handleToggleCollapse}
             aria-controls={navId} />
         </div>
-      </nav>
+      )}
+    </nav>
+  );
 
-      {/* The region stretches the active view to its own bounded height either way, which ends
-          the fill chain here. */}
-      <div className="tlSidebar__content">
+  return (
+    <div id={controlId} className={rootClassName(state, 'tl-sidebar')} data-tl-state={collapsed ? 'collapsed' : undefined}>
+      {!!state.drawerToggleContribution && (
+        <TLChild control={state.drawerToggleContribution} />
+      )}
+      {!compact && nav}
+      {drawerVisible && (
+        // The modal drawer of the design system (wave 4a): the scrim closes it, the drawer holds the navigation.
+        <div className="tl-dialog" onClick={(e) => { if (e.target === e.currentTarget) handleToggleDrawer(); }}>
+          <aside
+            ref={drawerRef}
+            className="tl-drawer tl-drawer--start tl-drawer--narrow"
+            data-tl-state="open"
+            role="dialog"
+            aria-modal="true"
+            aria-label={i18n['js.sidebar.ariaLabel']}
+            tabIndex={-1}
+          >
+            {nav}
+          </aside>
+        </div>
+      )}
+
+      {/* The region stretches the active view to its own bounded height either way, which ends the fill chain here. */}
+      <div className="tl-sidebar__content">
         <FillBarrier>
           {!!state.activeContent && <TLChild control={state.activeContent} />}
         </FillBarrier>
       </div>
     </div>
   );
+
 };
 
 export default TLSidebar;

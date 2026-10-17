@@ -33,9 +33,10 @@
 			give to the members of the "users" group; the project member and project administrator
 			roles that the role rules below give to the members and the administrators of a project,
 			on that project only; the project manager role that a role rule below gives to the members
-			of the "DemoProjectManagers" group on the security root; and the chart reader role that
+			of the "DemoProjectManagers" group on the security root; the chart reader role that
 			makes the sales and purchases of the chart demo visible to a visitor without an account,
-			granted by a role rule below as well.
+			granted by a role rule below as well; and the ticket watcher and project path viewer
+			roles of the ticket-watcher scenario, see the grants and role rules below.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
@@ -47,6 +48,8 @@
 					<role name="demo.react.ProjectAdmin"/>
 					<role name="demo.react.ProjectManager"/>
 					<role name="demo.react.ChartReader"/>
+					<role name="demo.react.TicketWatcher"/>
+					<role name="demo.react.ProjectPathViewer"/>
 				</roles>
 			</instance>
 		</config>
@@ -247,6 +250,61 @@
 							<container reference="tl.demo.projectManagement:ProjectScope#notes"/>
 						</access-parent>
 					</class>
+					<!--
+						The ticket-watcher scenario, showing the Discover right: an account whose person
+						is listed in the watchers of a ticket - a ticket watcher, by the role rules below -
+						reads that ticket, and nothing else of its project. To show the ticket in the tree
+						demo, it must see the path to the ticket: the project and the milestone, with
+						their labels.
+						
+						For that, a ticket watcher is a project path viewer on the project containing
+						the ticket. A project path viewer reads the names and the milestones of the
+						project and the names and tickets of its milestones, but no other attribute of
+						the project or a milestone: not its description, its budget, its members. Reading an attribute of an object
+						implies discovering the object, so the project and its milestones appear in the
+						tree with their labels. The tickets of a milestone are filtered: the watcher
+						discovers the ticket it watches, not the other tickets of the milestone, and not
+						the projects in which it watches no ticket.
+						
+						The grant on an attribute replaces the grant on its type for this attribute, so
+						the project members and administrators, who read these attributes through the
+						module grant, are listed here as well. The roles on a milestone are the roles on
+						its project, its access parent, so the grant on the tickets of a milestone names
+						the project path viewer, which a ticket watcher holds on the project.
+					-->
+					<class name="tl.demo.projectManagement:Ticket">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.TicketWatcher"
+						/>
+					</class>
+					<part name="tl.demo.projectManagement:ProjectScope#milestones">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:Milestone#tickets">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<!-- The project path viewer also reads the names of the project and its milestones, so
+						that a table or a form shows which object a discovered row is. -->
+					<part name="tl.demo.projectManagement:ProjectScope#name">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:Milestone#name">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
 					<class name="tl.demo.projectManagement:Contributor">
 						<grant
 							inherit="true"
@@ -374,6 +432,32 @@
 									attribute="tl.demo.projectManagement:ProjectScope#tickets"
 									inverse="true"
 								/>
+							</path>
+						</inheritance-rule>
+						<!--
+							The ticket-watcher scenario, see the grants above: an account listed in the
+							watchers of a ticket is a ticket watcher on that ticket, and a ticket watcher on
+							a ticket of a project is a project path viewer on that project. The project
+							path viewer is passed on to nothing below the project: it would make the other
+							tickets of the project discoverable.
+						-->
+						<rule id="WatchersOfTickets"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Ticket"
+							role="demo.react.TicketWatcher"
+						>
+							<path>
+								<step attribute="tl.demo.projectManagement:Ticket#watchers"/>
+							</path>
+						</rule>
+						<inheritance-rule id="PathViewersOfProjects"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:ProjectScope"
+							role="demo.react.ProjectPathViewer"
+							source-role="demo.react.TicketWatcher"
+						>
+							<path>
+								<step attribute="tl.demo.projectManagement:ProjectScope#tickets"/>
 							</path>
 						</inheritance-rule>
 						<!--

@@ -18,7 +18,7 @@ export type PopoverAnchor = Element | { x: number; y: number; height?: number };
 export interface PopoverOptions {
   open: boolean;
   anchor: PopoverAnchor | null;
-  placement?: 'bottom-start' | 'bottom-end' | 'top-start';
+  placement?: 'bottom-start' | 'bottom-end' | 'top-start' | 'right-start';
 }
 
 /**

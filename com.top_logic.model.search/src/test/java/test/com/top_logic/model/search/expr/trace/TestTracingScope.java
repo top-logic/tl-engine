@@ -12,7 +12,6 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -183,7 +182,7 @@ public class TestTracingScope extends AbstractScriptTracerTest {
 	}
 
 	public static Test suite() {
-		return suite(TestTracingScope.class, PersonManager.Module.INSTANCE);
+		return suite(TestTracingScope.class);
 	}
 
 }

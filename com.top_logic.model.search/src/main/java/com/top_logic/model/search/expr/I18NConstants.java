@@ -100,6 +100,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE;
 
 	/**
+	 * @en The value of "{1}" of "{0}" cannot be set to an object you may not discover.
+	 */
+	public static ResKey2 ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE;
+
+	/**
 	 * @en The user is not allowed to create elements of type {0}.
 	 */
 	public static ResKey1 CREATE_PERMISSION_DENIED__TYPE;

@@ -15,6 +15,10 @@
 				<roles>
 					<role name="TestTLScriptSecurity.ProjectReader"/>
 					<role name="TestTLScriptSecurity.ProjectResponsible"/>
+					<role name="TestTLScriptSecurity.PathReader"/>
+					<role name="TestTLScriptSecurity.PathViewer"/>
+					<role name="TestTLScriptSecurity.NoteWriter"/>
+					<role name="TestTLScriptSecurity.PathWriter"/>
 				</roles>
 			</instance>
 		</config>
@@ -75,6 +79,74 @@
 						<grant operation="Read"/>
 						<grant operation="Write"/>
 					</part>
+					<class name="TestTLScriptSecurity:PathC">
+						<!-- The reader of a C reads it completely. -->
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathReader"
+						/>
+					</class>
+					<class name="TestTLScriptSecurity:PathNote">
+						<!-- A note writer may create notes in a B (Create implies Discover on the container B). -->
+						<grant
+							operation="Create"
+							roles="TestTLScriptSecurity.NoteWriter"
+						/>
+					</class>
+					<!-- The path role reads only the structure attributes; by R2 that implies Discover. -->
+					<part name="TestTLScriptSecurity:PathRoot#as">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathViewer"
+						/>
+					</part>
+					<part name="TestTLScriptSecurity:PathA#bs">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathViewer"
+						/>
+					</part>
+					<part name="TestTLScriptSecurity:PathB#cs">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathViewer"
+						/>
+						<!-- The path writer may replace the cs of a B. -->
+						<grant
+							operation="Write"
+							roles="TestTLScriptSecurity.PathWriter"
+						/>
+					</part>
+					<class name="TestTLScriptSecurity:PathHome">
+						<!-- By the class rights alone, whoever discovers a home may read it. -->
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathReader"
+						/>
+					</class>
+					<singleton name="TestTLScriptSecurity#HOME">
+						<!-- The singleton additionally grants Write without Read. -->
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathReader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestTLScriptSecurity.PathWriter"
+						/>
+					</singleton>
+					<singleton name="TestTLScriptSecurity#OFFICE">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.ProjectReader"
+						/>
+					</singleton>
+					<part name="TestTLScriptSecurity:PathOffice#title">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathViewer"
+						/>
+					</part>
 				</security-config>
 			</instance>
 		</config>
@@ -103,6 +175,109 @@
 								<step attribute="TestTLScriptSecurity:Employee#account"/>
 							</path>
 						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c01"
+							meta-element="TestTLScriptSecurity:PathC"
+							role="TestTLScriptSecurity.PathReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathC#readers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c02"
+							meta-element="TestTLScriptSecurity:PathB"
+							role="TestTLScriptSecurity.NoteWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathB#writers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c06"
+							meta-element="TestTLScriptSecurity:PathB"
+							role="TestTLScriptSecurity.PathWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathB#editors"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c07"
+							meta-element="TestTLScriptSecurity:PathHome"
+							role="TestTLScriptSecurity.PathReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathHome#readers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c08"
+							meta-element="TestTLScriptSecurity:PathHome"
+							role="TestTLScriptSecurity.PathWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathHome#editors"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c09"
+							meta-element="TestTLScriptSecurity:PathOffice"
+							role="TestTLScriptSecurity.PathViewer"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathOffice#viewers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c0a"
+							meta-element="TestTLScriptSecurity:PathOffice"
+							role="TestTLScriptSecurity.NoteWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathOffice#writers"/>
+								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<inheritance-rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c03"
+							meta-element="TestTLScriptSecurity:PathB"
+							role="TestTLScriptSecurity.PathViewer"
+							source-role="TestTLScriptSecurity.PathReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathB#cs"/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c04"
+							meta-element="TestTLScriptSecurity:PathA"
+							role="TestTLScriptSecurity.PathViewer"
+							source-role="TestTLScriptSecurity.PathReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathA#bs"/>
+								<step attribute="TestTLScriptSecurity:PathB#cs"/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="3c1f5e0a-9a77-4f0e-9a51-1b7e6a2d4c05"
+							meta-element="TestTLScriptSecurity:PathRoot"
+							role="TestTLScriptSecurity.PathViewer"
+							source-role="TestTLScriptSecurity.PathReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:PathRoot#as"/>
+								<step attribute="TestTLScriptSecurity:PathA#bs"/>
+								<step attribute="TestTLScriptSecurity:PathB#cs"/>
+							</path>
+						</inheritance-rule>
 					</rules>
 				</role-rules>
 			</instance>

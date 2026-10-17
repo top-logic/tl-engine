@@ -29,6 +29,7 @@ import type {
   SubagentLive,
   TraceMode,
 } from './types'
+import { randomId } from './ids'
 
 const { useEffect, useImperativeHandle, useMemo, useRef, useState } = React
 
@@ -614,7 +615,7 @@ export const Composer = React.memo(
   const runImprove = async () => {
     const draft = text.trim()
     if (draftIsEmpty(text) || improving) return
-    const requestId = crypto.randomUUID()
+    const requestId = randomId()
     improveId.current = requestId
     abort.current?.abort()
     abort.current = new AbortController()

@@ -93,6 +93,7 @@ import {
   type TraceMode,
   type WokenSubagent,
 } from './types'
+import { randomId } from './ids'
 
 const { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } = React
 
@@ -1425,7 +1426,7 @@ export class ChatStore {
         // A run this window sees start is one it sees whole.
         this.streamMark = null
         this.watching = false
-        this.runId = data.runId ?? crypto.randomUUID()
+        this.runId = data.runId ?? randomId()
         this.dispatch({ type: 'START_RUN', runId: this.runId })
         this.setRun((s) => ({
           ...s,
@@ -1443,7 +1444,7 @@ export class ChatStore {
           contextWindow: data.contextWindow || s.contextWindow,
         }))
         if (this.assistantId) this.dispatch({ type: 'FINALIZE_TEXT', id: this.assistantId })
-        this.assistantId = crypto.randomUUID()
+        this.assistantId = randomId()
         this.lastAssistantId = this.assistantId
         this.dispatch({ type: 'ADD_ASSISTANT', id: this.assistantId, text: '', isStreaming: true })
       })
@@ -1924,7 +1925,7 @@ export class ChatStore {
       // A window that saw the run start has a message from `turn_started`. One that joined it from
       // a snapshot taken between a step and the next piece of text has none to write into yet.
       if (!this.watching) return
-      this.assistantId = crypto.randomUUID()
+      this.assistantId = randomId()
       this.lastAssistantId = this.assistantId
       this.dispatch({ type: 'ADD_ASSISTANT', id: this.assistantId, text: '', isStreaming: true })
     }
@@ -2241,7 +2242,7 @@ export class ChatStore {
         // moment it accepts the message, and an await here would let the first assistant event
         // reach the reducer first - on a new chat the answer then appeared above the question.
         // A refused send takes the message back out again.
-        const messageId = crypto.randomUUID()
+        const messageId = randomId()
         this.dispatch({
           type: 'ADD_USER',
           id: messageId,
@@ -2365,7 +2366,7 @@ export class ChatStore {
           // The turn is gone server side; drop it here too and let the run rebuild it.
           this.dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
           this.patch({ feedback: this.state.feedback.filter((entry) => entry.turnIndex !== turnIndex) })
-          this.dispatch({ type: 'ADD_USER', id: crypto.randomUUID(), text: result.text ?? '' })
+          this.dispatch({ type: 'ADD_USER', id: randomId(), text: result.text ?? '' })
           this.patch({ busy: true })
           this.setRun((snapshot) => ({ ...snapshot, busy: true, measuredTokens: 0 }))
         } catch (err) {

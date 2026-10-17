@@ -1,5 +1,6 @@
 import { subscribe, unsubscribe } from 'tl-react-bridge'
 import { attachChatStream, detachChatStream, type ChatAddress } from './api'
+import { randomId } from './ids'
 
 /**
  * One frame as the store's handlers read it: its payload as the window's stream delivered it,
@@ -40,7 +41,7 @@ export function openChatStream(at: ChatAddress): ChatStream {
 class WindowChatStream implements ChatStream {
   onerror: ((error: unknown) => void) | null = null
 
-  private readonly token = crypto.randomUUID()
+  private readonly token = randomId()
 
   private readonly listenerId = LISTENER_PREFIX + this.token
 

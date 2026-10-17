@@ -248,7 +248,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
               </label>
               <div className="tl-icon-picker__preview">
                 <span className="tl-type-label">{i18n['js.iconSelect.previewLabel']}</span>
-                {advancedInput && <ThemeIcon encoded={advancedInput} />}
+                {advancedInput && <ThemeIcon encoded={advancedInput} className="tl-icon-lg" />}
                 <span className="tl-type-body">
                   {advancedInput.startsWith('css:') ? advancedInput.substring(4) : advancedInput}
                 </span>

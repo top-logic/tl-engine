@@ -812,9 +812,18 @@ describe('TLSlider', () => {
     const root = document.querySelector('span.tl-slider')!;
     const fill = root.querySelector('span.tl-slider__track > span.tl-slider__fill') as HTMLElement;
     expect(fill.style.inlineSize).toBe('25%');
-    expect(input().getAttribute('style') ?? '').not.toContain('--tlSlider-fill');
+    expect(input().getAttribute('style') ?? '').not.toContain('fill');
     expect(root.querySelector('output.tl-slider__value .tl-slider__text')!.textContent).toBe('25 %');
     expect(root.querySelectorAll('.tl-slider__sizer')).toHaveLength(2);
+  });
+
+  it('sizes the fill by the position of the value within min and max, and not at all without a value', () => {
+    mountAdapter(TLSlider, { ...STATE, min: 10, max: 30, value: 20 });
+    const fill = () => document.querySelector('span.tl-slider__fill') as HTMLElement;
+    expect(fill().style.inlineSize).toBe('50%');
+    cleanup();
+    mountAdapter(TLSlider, { ...STATE, min: 10, max: 30, value: null });
+    expect(fill().style.inlineSize).toBe('0%');
   });
 
   it('carries an error as aria-invalid on the input and mandatory as aria-required, without a class', () => {
@@ -822,14 +831,14 @@ describe('TLSlider', () => {
     expect(input().getAttribute('aria-invalid')).toBe('true');
     expect(input().getAttribute('aria-required')).toBe('true');
     expect(document.querySelector('.tl-slider')!.hasAttribute('data-tl-state')).toBe(false);
-    expect(document.querySelector('.tlSlider--error')).toBeNull();
+    expect(document.querySelector('.tl-slider')!.className).toBe('tl-slider');
   });
 
   it('carries a warning as data-tl-state on the root', () => {
     mountAdapter(TLSlider, { ...STATE, hasWarnings: true });
     expect(document.querySelector('.tl-slider')!.getAttribute('data-tl-state')).toBe('warning');
     expect(input().hasAttribute('aria-invalid')).toBe(false);
-    expect(document.querySelector('.tlSlider--warning')).toBeNull();
+    expect(document.querySelector('.tl-slider')!.className).toBe('tl-slider');
   });
 
   it('sets no state on a field without one', () => {

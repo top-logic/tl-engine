@@ -3582,9 +3582,9 @@ a.tl-field-value:hover {
 
 /* --- status/status.css --- */
 /* Status — docs/skalen.md „Gleiches wird zusammengelegt“ (W10), 3b §10.
-   Eine Zeile, die sagt, was statt Inhalt da ist: lädt (immer ein unbestimmter tl-progress darin), leer
+   Eine Zeile, die sagt, was statt Inhalt da ist: lädt (ein unbestimmter tl-progress oder der Spinner darin), leer
    („Keine Einträge“, „Nichts gefunden“), Fehler (role=alert). Herausgelöst aus tl-select__status; Leser:
-   Select-Popup, Baum, Tabelle. Die Schrift setzt der Ort (tl-type-body). */
+   Select-Popup, Baum, Tabelle, Icon-Picker. Die Schrift setzt der Ort (tl-type-body). */
 
 .tl-status {
   display: flex;
@@ -3600,7 +3600,8 @@ a.tl-field-value:hover {
   color: var(--tl-status-error-text);
 }
 
-/* Der Fortschritt füllt die Zeile; seine Beschriftung sagt, was lädt. */
+/* Der Fortschritt füllt die Zeile; seine Beschriftung sagt, was lädt. Der Spinner behält seine Größe und steht als
+   Flex-Kind am Zeilenanfang, daneben der Text; er braucht keine eigene Regel. */
 .tl-status > .tl-progress {
   flex: 1 1 auto;
 }
@@ -4774,4 +4775,4 @@ button.tl-swatch:not(:disabled):hover,
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:c7711b527386eddb954814245e5f0d780a79b0a4adf6409aeb28dd5c376a0248 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:cfe20c34073d6c4323f705294aff29a3261ee515d645365b3f809d5077fdbae1 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

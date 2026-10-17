@@ -323,6 +323,8 @@ export interface ChatBootstrap {
   badgeSeen: number
   /** Per section name, whether the user left it open. A section never toggled is absent. */
   sectionChoices: Record<string, boolean>
+  /** The person's last position of the auto-approve switch; a new chat starts with it. */
+  autoApprove: boolean
   /**
    * Section ids that start collapsed. Omitted keeps today's App default ({@code context} closed).
    * Set by {@code <chat-rail/>} from each section's {@code open} flag (D3).
@@ -349,6 +351,7 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     paneWidthDefault: configuredPaneWidth(state),
     badgeSeen: prefs.badgeSeen,
     sectionChoices: prefs.sections,
+    autoApprove: state.approvalMode === 'AUTO_APPROVE',
     collapsedSections: Array.isArray(state.collapsedSections)
       ? state.collapsedSections.map((id) => String(id))
       : undefined,
@@ -897,6 +900,14 @@ export class ChatStore {
   private choice = 0
 
   /**
+   * The person's last position of the auto-approve switch, in whichever chat they set it.
+   *
+   * A new chat starts with it. A chat that exists shows the mode stored with it instead, so opening
+   * one does not change this.
+   */
+  private approvalChoice: boolean
+
+  /**
    * This chat's run snapshot: what the context ring reads.
    *
    * One per chat rather than the module-level {@link runStore}, which a window holding two
@@ -1009,6 +1020,7 @@ export class ChatStore {
   constructor(chatId: string, boot: ChatBootstrap) {
     this.chatId = chatId
     this.remembered = readActiveSession(chatId)
+    this.approvalChoice = boot.autoApprove
     this.layoutKey = boot.layoutKey
     this.paneWidthDefault = boot.paneWidthDefault
     this.paneWidthStored = boot.paneWidth
@@ -1038,7 +1050,7 @@ export class ChatStore {
       mcp: [],
       mcpDirty: false,
       effort: readEffort() ?? '',
-      autoApprove: false,
+      autoApprove: boot.autoApprove,
       // The stored choice wins over the configured default: the element's trace-mode is what a new
       // user starts with, not a setting that overrules what this user picked.
       traceMode: readTraceMode() ?? boot.traceMode,
@@ -1529,6 +1541,9 @@ export class ChatStore {
         this.patch({ tasks: parseTasksJson(data.tasksJson) })
       })
       on('approval_mode', (e) => {
+        // The frame names the mode of the chat the server holds open for this window. A new chat
+        // that has no chat on the server yet is not that chat: it keeps the person's choice.
+        if (!this.state.sessionId) return
         const data = frameData<{ mode?: string }>(e.data, {})
         this.patch({ autoApprove: data.mode === 'AUTO_APPROVE' })
       })
@@ -2167,8 +2182,9 @@ export class ChatStore {
         this.noticeSticky = false
         this.patch({
           sessionId: null,
-          // Auto-approve is a setting of one chat, and a new chat starts with it off (#808).
-          autoApprove: false,
+          // A new chat starts with the person's last choice, never with a reset: a person who has
+          // switched auto-approve on is not asked again because they started another chat.
+          autoApprove: this.approvalChoice,
           ...EMPTY_CONVERSATION,
           messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           busy: false,
@@ -2182,7 +2198,7 @@ export class ChatStore {
           this.noticeSticky = false
           this.patch({
             sessionId: null,
-            autoApprove: false,
+            autoApprove: this.approvalChoice,
             ...EMPTY_CONVERSATION,
             messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           })
@@ -2262,6 +2278,8 @@ export class ChatStore {
             attachments,
             effort: this.state.effort || undefined,
             facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
+            // The turn runs with what the switch shows now, not with what reached the server.
+            approvalMode: this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
           })
           expectFrames()
         } catch (err) {
@@ -2437,17 +2455,17 @@ export class ChatStore {
       toggleAutoApprove: async () => {
         const at = this.at
         const next = !this.state.autoApprove
+        const previous = this.approvalChoice
         this.patch({ autoApprove: next })
-        const sessionId = this.state.sessionId
-        // A conversation that has no chat yet keeps the mode here; the send that creates the chat
-        // names it.
-        if (sessionId) {
-          try {
-            await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL', sessionId)
-          } catch {
-            this.patch({ autoApprove: !next })
-            return
-          }
+        this.approvalChoice = next
+        // The server stores the switch as the person's choice, and with the open chat. A
+        // conversation that has no chat yet names the mode with the send that creates the chat.
+        try {
+          await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL', this.state.sessionId)
+        } catch {
+          this.patch({ autoApprove: !next })
+          this.approvalChoice = previous
+          return
         }
         if (!next) return
         for (const message of this.state.messages) {

@@ -42,6 +42,9 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	/** @see #getFacts() */
 	public static final String FACTS__PROP = "facts";
 
+	/** @see #getApprovalMode() */
+	public static final String APPROVAL_MODE__PROP = "approvalMode";
+
 	private String _text = "";
 
 	private String _sessionId = "";
@@ -59,6 +62,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 	private String _effort = "";
 
 	private final java.util.List<com.top_logic.ai.chat.api.messages.FactDto> _facts = new java.util.ArrayList<>();
+
+	private String _approvalMode = "";
 
 	/**
 	 * Creates a {@link ChatSendRequest} instance.
@@ -324,6 +329,27 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 		_facts.remove(value);
 	}
 
+	/**
+	 * The position of the auto-approve switch at the send, <code>AUTO_APPROVE</code> or
+	 * <code>MANUAL</code>. The turn runs with it. Empty keeps the chat's stored mode.
+	 */
+	public final String getApprovalMode() {
+		return _approvalMode;
+	}
+
+	/**
+	 * @see #getApprovalMode()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendRequest setApprovalMode(String value) {
+		internalSetApprovalMode(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getApprovalMode()} without chain call utility. */
+	protected final void internalSetApprovalMode(String value) {
+		_approvalMode = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SEND_REQUEST__TYPE;
@@ -340,7 +366,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			MCP_OVERRIDE__PROP, 
 			MCP_SERVERS__PROP, 
 			EFFORT__PROP, 
-			FACTS__PROP);
+			FACTS__PROP, 
+			APPROVAL_MODE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -374,6 +401,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			case MCP_SERVERS__PROP: return getMcpServers();
 			case EFFORT__PROP: return getEffort();
 			case FACTS__PROP: return getFacts();
+			case APPROVAL_MODE__PROP: return getApprovalMode();
 			default: return null;
 		}
 	}
@@ -390,6 +418,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			case MCP_SERVERS__PROP: internalSetMcpServers(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
 			case EFFORT__PROP: internalSetEffort((String) value); break;
 			case FACTS__PROP: internalSetFacts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.FactDto.class, value)); break;
+			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
 		}
 	}
 
@@ -438,6 +467,8 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(APPROVAL_MODE__PROP);
+		out.value(getApprovalMode());
 	}
 
 	@Override
@@ -479,6 +510,7 @@ public class ChatSendRequest extends de.haumacher.msgbuf.data.AbstractDataObject
 				setFacts(newValue);
 			}
 			break;
+			case APPROVAL_MODE__PROP: setApprovalMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

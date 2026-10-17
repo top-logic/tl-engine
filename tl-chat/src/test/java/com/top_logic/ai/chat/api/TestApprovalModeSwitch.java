@@ -219,8 +219,8 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	}
 
 	/**
-	 * Auto-approve is a setting of one chat (#808): a window that ran a chat with it on and then
-	 * opens a new chat runs that chat manual, and the new chat's first save stores it manual.
+	 * A chat the server opens without a mode runs manual (#808); the browser names the person's
+	 * choice when it creates a chat (see {@link #testAChatIsCreatedWithTheModeItNames()}).
 	 */
 	public void testANewChatStartsManual() throws Exception {
 		assertEquals(ApprovalMode.AUTO_APPROVE, _window.getApprovalMode());
@@ -257,11 +257,35 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 		assertEquals(ApprovalMode.AUTO_APPROVE, fresh.getApprovalMode());
 	}
 
-	/** A switch that names no chat has nothing to store the mode with, and is refused. */
-	public void testASwitchWithoutAChatIsRefused() throws Exception {
+	/**
+	 * The switch belongs to the person: a switch in a conversation that has no chat yet is stored as
+	 * the person's choice, which a new chat starts with.
+	 */
+	public void testASwitchWithoutAChatStoresThePersonsChoice() throws Exception {
 		Answer answer = call(post("{\"mode\":\"AUTO_APPROVE\"}"), anna, false);
 
-		assertEquals(HttpServletResponse.SC_BAD_REQUEST, answer.status());
+		assertEquals(HttpServletResponse.SC_OK, answer.status());
+		assertEquals(ApprovalMode.AUTO_APPROVE, ApprovalChoice.load());
+
+		switchTo(ApprovalMode.MANUAL, anna);
+		assertEquals("A switch in a chat is the person's choice as well.", ApprovalMode.MANUAL,
+			ApprovalChoice.load());
+	}
+
+	/**
+	 * A turn runs with the position the switch shows at the send. A switch request still on its way
+	 * - or one that failed - left the server on the old mode: the turn then waited for a click while
+	 * the browser answered by itself.
+	 */
+	public void testASendTakesTheModeTheSwitchShows() throws Exception {
+		Answer answer = call(new PostMethodWebRequest("http://localhost/chat/send",
+			new ByteArrayInputStream(("{\"text\":\"Hallo\",\"sessionId\":\"" + id()
+				+ "\",\"approvalMode\":\"MANUAL\"}").getBytes(StandardCharsets.UTF_8)), "application/json"),
+			anna, false);
+
+		assertEquals(answer.body(), HttpServletResponse.SC_OK, answer.status());
+		assertEquals(ApprovalMode.MANUAL, _window.getApprovalMode());
+		assertEquals(ApprovalMode.MANUAL, modeANewWindowOpens());
 	}
 
 	// --- Fixture ---

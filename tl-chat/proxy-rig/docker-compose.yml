@@ -1,0 +1,17 @@
+# The hostile proxy. The browser reaches the application only through it: the application's host
+# name "tlapp" resolves inside this container and nowhere else, so a direct request from the
+# browser fails at name resolution. Host networking, because the proxy must reach the application
+# on the host; it listens on the loopback interface only.
+services:
+  proxy:
+    image: python:3.13-alpine
+    command: ["python3", "-u", "/rig/proxy.py"]
+    network_mode: host
+    environment:
+      PROFILE: ${PROFILE:-pass}
+      LISTEN_HOST: "127.0.0.1"
+      LISTEN_PORT: ${RIG_PROXY_PORT:-8232}
+    volumes:
+      - ./proxy.py:/rig/proxy.py:ro
+    extra_hosts:
+      - "tlapp:127.0.0.1"

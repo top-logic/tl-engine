@@ -750,6 +750,28 @@ describe('TLIconSelect', () => {
     expect(document.activeElement).toBe(field());
   });
 
+  it('puts the focus into the filter when the icons arrive after the popup opened', async () => {
+    let arrive: () => void = () => {};
+    const anchorRef = { current: document.createElement('button') };
+    document.body.appendChild(anchorRef.current);
+    mountAdapter(() => {
+      const [loaded, setLoaded] = React.useState(false);
+      arrive = () => setLoaded(true);
+      return (
+        <IconSelectPopup anchorRef={anchorRef} currentValue={null} icons={loaded ? ICONS : []} iconsLoaded={loaded}
+          onSelect={() => {}} onCancel={() => {}} onLoadIcons={async () => {}} />
+      );
+    }, {});
+    await settle();
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    (document.activeElement as HTMLElement).blur();
+    arrive();
+    await settle();
+    expect(screen.getAllByRole('option')).toHaveLength(3);
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'js.iconSelect.filterPlaceholder' }));
+    anchorRef.current.remove();
+  });
+
   describe('the popup, when the loading failed', () => {
     it('shows an alert row with a retry button that loads again', async () => {
       const onLoadIcons = vi.fn<() => Promise<void>>().mockRejectedValueOnce(new Error('down')).mockResolvedValue(undefined);
@@ -771,6 +793,7 @@ describe('TLIconSelect', () => {
       await settle();
       expect(onLoadIcons).toHaveBeenCalledTimes(2);
       expect(screen.queryByRole('alert')).toBeNull();
+      expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'js.iconSelect.filterPlaceholder' }));
       anchorRef.current.remove();
     });
   });

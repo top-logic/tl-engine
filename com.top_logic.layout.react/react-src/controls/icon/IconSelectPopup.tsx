@@ -144,6 +144,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
 
   const handleRetry = useCallback(() => {
     setLoadError(false);
+    // The retry button leaves with the error; the focus goes to the filter, not to the page.
+    searchRef.current?.focus();
   }, []);
 
   const handleCellKey = (encoded: string) => (e: React.KeyboardEvent) => {
@@ -195,7 +197,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
           {!iconsLoaded && !loadError && (
             <div className="tl-status tl-type-body" role="status">
               <Spinner label={i18n['js.iconSelect.loading']} />
-              <span>{i18n['js.iconSelect.loading']}</span>
+              <span aria-hidden="true">{i18n['js.iconSelect.loading']}</span>
             </div>
           )}
           {loadError && (
@@ -228,7 +230,7 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
                   onClick={() => choose(cell.encoded)}
                   onKeyDown={handleCellKey(cell.encoded)}
                 >
-                  <ThemeIcon encoded={cell.encoded} />
+                  <ThemeIcon encoded={cell.encoded} className="tl-icon-md" />
                 </div>
               ))}
             </div>

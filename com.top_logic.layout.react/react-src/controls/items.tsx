@@ -202,6 +202,7 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
         }}
       >
         <TLChild control={child} />
+        {isSelected && <span className="tl-item__check" aria-hidden="true" />}
       </div>
     );
   });

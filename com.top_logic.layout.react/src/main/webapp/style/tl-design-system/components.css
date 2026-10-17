@@ -2092,7 +2092,7 @@ a.tl-field-value:hover {
 
 .tl-item[role="option"]:hover,
 .tl-columns__column[role="option"]:hover {
-  box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover);
+  box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover-strong);
 }
 
 .tl-item[aria-selected="true"]::after,
@@ -2103,6 +2103,35 @@ a.tl-field-value:hover {
   border: var(--tl-border-width-md) solid var(--tl-border-interactive);
   border-radius: inherit;
   pointer-events: none;
+}
+
+/* Ausgewählt heißt Ring und Haken (Nachtrag 4c, S2): die Marke ist ein dekoratives Element der Hülle, nur bei
+   aria-selected="true" — ein Pseudo ginge nicht, ::after trägt den Ring und ein ::before läge unter der Karte.
+   Den Haken zeichnen zwei Schenkel aus Rand, gedreht. Der Unterschied zum Fokus liegt in der Form, nicht nur in der
+   Farbe (WCAG 1.4.1). */
+.tl-item__check {
+  position: absolute;
+  top: var(--tl-space-xs);
+  inset-inline-end: var(--tl-space-xs);
+  z-index: var(--tl-layer-raised);
+  width: var(--tl-size-icon-md);
+  height: var(--tl-size-icon-md);
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-surface-brand);
+  pointer-events: none;
+}
+.tl-item__check::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--tl-space-sm);
+  height: var(--tl-space-xs);
+  margin-top: calc(-1 * var(--tl-space-2xs));
+  border-style: solid;
+  border-color: var(--tl-text-on-brand);
+  border-width: 0 0 var(--tl-border-width-md) var(--tl-border-width-md);
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 /* Zeigt ein Kind zur Zeit und nimmt dessen Größe: neben einer Breadcrumb, in der AppBar so groß wie sein Inhalt. */
@@ -4341,4 +4370,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:1f206638716076f786d7d2a9bbed3e8a14ebb74e7e81cc265ab8ab556b45b267 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:2fa5496cdcba6b325f0439326c25b8ca3ced83fafadf385538aeaa5c7efe7c60 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

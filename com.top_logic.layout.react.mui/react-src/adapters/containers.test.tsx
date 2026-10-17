@@ -361,6 +361,18 @@ describe('the items of a selectable container', () => {
     }
   });
 
+  it('mark only the selected option with one decorative check', async () => {
+    mountAdapter(TLStack, LIST);
+    await settle();
+    const options = screen.getAllByRole('option');
+    expect(options[0].querySelectorAll('.tl-item__check')).toHaveLength(0);
+    const checks = options[1].querySelectorAll('.tl-item__check');
+    expect(checks).toHaveLength(1);
+    expect(checks[0].getAttribute('aria-hidden')).toBe('true');
+    expect(checks[0].tagName).not.toBe('BUTTON');
+    expect(checks[0].textContent).toBe('');
+  });
+
   it('select an item on a click', async () => {
     const sent = mountAdapter(TLStack, LIST);
     await settle();

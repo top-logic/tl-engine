@@ -152,6 +152,7 @@
   --tl-shadow-drag: var(--tl-shadow-3);
   --tl-surface-scrim: var(--tl-scrim-1);
   --tl-surface-state-hover: var(--tl-veil-1);
+  --tl-surface-state-hover-strong: var(--tl-veil-5);
   --tl-surface-state-active: var(--tl-veil-2);
 
   --tl-size-control: var(--tl-height-3);
@@ -246,6 +247,7 @@
   --tl-shadow-drag: var(--tl-shadow-6);
   --tl-surface-scrim: var(--tl-scrim-2);
   --tl-surface-state-hover: var(--tl-veil-3);
+  --tl-surface-state-hover-strong: var(--tl-veil-6);
   --tl-surface-state-active: var(--tl-veil-4);
 }
 
@@ -259,4 +261,4 @@
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
-/* tl-design-system sha256:540fe0ba4ef27b3c8a38fed5f69e2b5f583e3a1bc93ba5baa8baa216acf9cc05 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:5a3115e962b94ac9bfeb85acc025e24db111492843aeffea64d99dd3d55c90be — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

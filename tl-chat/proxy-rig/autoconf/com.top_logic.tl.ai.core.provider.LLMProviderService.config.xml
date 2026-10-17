@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<!-- The rig's models: the scripted stub for the matrix, OpenAI for one real smoke run. -->
+<!-- The rig's models: the scripted stub for the matrix, Anthropic and OpenAI for real runs. -->
 <application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
@@ -14,6 +14,11 @@
 						base-url="http://127.0.0.1:8233"
 						models="scripted"
 						name="scripted"
+					/>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						api-key="%ANTHROPIC_API_KEY%"
+						models="claude-sonnet-4-6"
+						name="anthropic"
 					/>
 					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
 						api-key="%OPENAI_API_KEY%"

@@ -13,3 +13,8 @@ through `pass` (engine 8 has only the React login), then turns the proxy hostile
 `chat-check.mjs` signs in, sends "ping <token>", waits for "pong <token>" (the stub's answer), sends a
 second message and checks a navigation. Screenshots and logs go to the out-dir. The rig runs over
 plain HTTP, which is no secure context: the chat has to work there too.
+
+`./demo.sh` is the live try-out: it starts the apps named by `DEMO_*_DIR` (fixed and before, React
+and classic 7.11) behind the proxy (`buffer-full` by default, `./demo.sh profile <name>` to switch),
+answers with Anthropic (`--mode real`, key from `tl_anthropic_api_key` or `DEMO_ANTHROPIC_KEY_FILE`)
+or the stub (`--mode stub`), and opens a Chromium whose only route is the proxy. See its header.

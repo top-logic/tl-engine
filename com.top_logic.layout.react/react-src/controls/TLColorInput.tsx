@@ -4,7 +4,6 @@ import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import ColorPopup from './color/ColorPopup';
 
 const I18N_KEYS = {
-  'js.colorInput.chooseColor': 'Choose color',
   'js.colorInput.noColor': 'No color',
 };
 
@@ -41,7 +40,8 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
   const palette = (state.palette as (string | null)[]) ?? [];
   const paletteColumns = (state.paletteColumns as number) ?? 6;
   const defaultPalette = (state.defaultPalette as (string | null)[]) ?? palette;
-  const name = value == null ? i18n['js.colorInput.noColor'] : i18n['js.colorInput.chooseColor'];
+  // What the swatch says of itself: its color, or that it has none. That it opens a dialog is aria-haspopup's to say.
+  const name = value == null ? i18n['js.colorInput.noColor'] : value.toUpperCase();
 
   const handleClick = useCallback(() => {
     // The press of this click has closed the popup this swatch opens: leave it closed.
@@ -79,7 +79,7 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         data-tl-state={stateAttr(value == null && 'empty')}
         style={value != null ? { backgroundColor: value } : undefined}
         role="img"
-        aria-label={value ?? name}
+        aria-label={name}
         {...tooltipProps(value ?? name)}
       />
     );
@@ -104,6 +104,8 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
         {...tooltipProps(value ?? name)}
         id={inputId}
         {...labelProps}
+        // Inside a form field the label names the field; the swatch adds its own value (aria-label) to it.
+        aria-labelledby={labelProps['aria-labelledby'] === undefined ? undefined : `${labelProps['aria-labelledby']} ${inputId}`}
       />
 
       {open && (

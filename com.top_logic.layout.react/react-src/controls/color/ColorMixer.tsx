@@ -9,8 +9,8 @@ const I18N_KEYS = {
   'js.colorInput.hue': 'Hue',
 };
 
-/** The hues of the spectrum, top to bottom; a datum of the drawing, not a design value. */
-const SPECTRUM = 'linear-gradient(to bottom, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)';
+/** The hues of the spectrum, bottom to top; a datum of the drawing, not a design value. */
+const SPECTRUM = 'linear-gradient(to top, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)';
 
 /** Hue, saturation and brightness: [0, 360], [0, 1], [0, 1]. */
 type Hsv = [number, number, number];
@@ -39,8 +39,8 @@ function unit(fraction: number): number {
  *
  * <p>Both are `role="slider"`s. At the field the arrows change saturation (left, right) and brightness (up, down)
  * by 1 %, Page up and Page down the brightness by 10 %, Home and End set the saturation to 0 and 100 %. At the hue
- * slider the arrows move the handle by 1 degree in the direction they point (down and right: further along the
- * spectrum, which is drawn from the top), Page up and Page down by 10, Home and End to 0 and 360.</p>
+ * slider (hue 0 at the bottom, 360 at the top) up and right raise the hue by 1 degree, down and left lower it,
+ * Page up and Page down by 10, Home and End set 0 and 360.</p>
  *
  * <p>The mixer remembers the hue over black and grey, and the saturation over black: a color that carries no hue
  * does not lose the one the user chose, so lifting black brightens in the hue shown at the slider. Its colors are
@@ -119,7 +119,7 @@ const ColorMixer: React.FC<ColorMixerProps> = ({ color, onColorChange, hidden })
     (clientY: number) => {
       const rect = hueRef.current?.getBoundingClientRect();
       if (!rect) return;
-      apply([unit((clientY - rect.top) / rect.height) * 360, s, v]);
+      apply([unit(1 - (clientY - rect.top) / rect.height) * 360, s, v]);
     },
     [s, v, apply]
   );
@@ -140,12 +140,12 @@ const ColorMixer: React.FC<ColorMixerProps> = ({ color, onColorChange, hidden })
     const now = Math.round(h);
     let next: number;
     switch (e.key) {
-      case 'ArrowDown':
-      case 'ArrowRight': next = now + 1; break;
       case 'ArrowUp':
+      case 'ArrowRight': next = now + 1; break;
+      case 'ArrowDown':
       case 'ArrowLeft': next = now - 1; break;
-      case 'PageDown': next = now + 10; break;
-      case 'PageUp': next = now - 10; break;
+      case 'PageUp': next = now + 10; break;
+      case 'PageDown': next = now - 10; break;
       case 'Home': next = 0; break;
       case 'End': next = 360; break;
       default: return;
@@ -198,7 +198,7 @@ const ColorMixer: React.FC<ColorMixerProps> = ({ color, onColorChange, hidden })
       >
         <div
           className="tl-color-picker__handle"
-          style={{ left: '50%', top: `${(h / 360) * 100}%` }}
+          style={{ top: `${(1 - h / 360) * 100}%` }}
         />
       </div>
     </div>

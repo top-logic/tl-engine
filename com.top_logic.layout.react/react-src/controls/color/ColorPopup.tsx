@@ -200,9 +200,9 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     (e: React.KeyboardEvent) => {
       if (e.key !== 'Enter' || !isValidHex(hexInput)) return;
       e.preventDefault();
-      confirmColor(hexInput);
+      confirmColor(draft);
     },
-    [hexInput, confirmColor]
+    [hexInput, draft, confirmColor]
   );
 
   const noColor = i18n['js.colorInput.noColor'];
@@ -254,7 +254,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
                 <div
                   className="tl-swatch tl-swatch--color tl-swatch--wide"
                   role="img"
-                  aria-label={i18n['js.colorInput.current']}
+                  aria-label={`${i18n['js.colorInput.current']}: ${currentColor?.toUpperCase() ?? noColor}`}
                   data-tl-state={currentColor == null ? 'empty' : undefined}
                   style={currentColor != null ? { backgroundColor: currentColor } : undefined}
                   {...tooltipProps(currentColor ?? noColor)}
@@ -263,7 +263,7 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
                 <div
                   className="tl-swatch tl-swatch--color tl-swatch--wide"
                   role="img"
-                  aria-label={i18n['js.colorInput.new']}
+                  aria-label={`${i18n['js.colorInput.new']}: ${draft?.toUpperCase() ?? noColor}`}
                   data-tl-state={!hasColor ? 'empty' : undefined}
                   style={hasColor ? { backgroundColor: draft } : undefined}
                   {...tooltipProps(draft ?? noColor)}

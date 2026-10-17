@@ -4,7 +4,9 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { React, useTabList, register, replacePart } from 'tl-react-bridge';
+import { React, useTabList, register, replacePart, fieldLabel } from 'tl-react-bridge';
+import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
+import ColorMixer from '../../../com.top_logic.layout.react/react-src/controls/color/ColorMixer';
 import { PickerPopover } from '../../../com.top_logic.layout.react/react-src/controls/picker/PickerPopover';
 import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
 import TLTabBar from '../../../com.top_logic.layout.react/react-src/controls/TLTabBar';
@@ -360,7 +362,7 @@ describe('TLColorInput', () => {
   }
 
   function neu(): HTMLElement {
-    return screen.getByRole('img', { name: 'js.colorInput.new' });
+    return screen.getByRole('img', { name: /^js\.colorInput\.new: / });
   }
 
   /** The channels of a color the way jsdom reports an inline background. */
@@ -386,7 +388,37 @@ describe('TLColorInput', () => {
     mountAdapter(TLColorInput, { ...STATE, value: null });
     await settle();
     expect(field().getAttribute('data-tl-state')).toBe('empty');
-    expect(screen.getByRole('button', { name: /js\.colorInput\.noColor/ })).toBe(field());
+    expect(screen.getByRole('button', { name: 'js.colorInput.noColor' })).toBe(field());
+  });
+
+  it('names the swatch by its value without a field label', async () => {
+    mountAdapter(TLColorInput, STATE);
+    await settle();
+    expect(screen.getByRole('button', { name: '#FB8C00' })).toBe(field());
+    expect(field().getAttribute('aria-haspopup')).toBe('dialog');
+  });
+
+  describe('in a form field', () => {
+    let label: HTMLElement;
+    beforeEach(() => {
+      label = document.createElement('span');
+      label.id = 'f1-label';
+      label.textContent = 'Akzent';
+      document.body.appendChild(label);
+    });
+    afterEach(() => label.remove());
+
+    it('is named by the field label and its own value', async () => {
+      mountAdapter(TLColorInput, STATE, { fieldLabel: fieldLabel('f1', 'c1', vi.fn()) });
+      await settle();
+      expect(screen.getByRole('button', { name: 'Akzent #FB8C00' })).toBe(field());
+    });
+
+    it('is named by the field label and that it holds no color', async () => {
+      mountAdapter(TLColorInput, { ...STATE, value: null }, { fieldLabel: fieldLabel('f1', 'c1', vi.fn()) });
+      await settle();
+      expect(screen.getByRole('button', { name: 'Akzent js.colorInput.noColor' })).toBe(field());
+    });
   });
 
   it('carries the field state as attributes', async () => {
@@ -447,7 +479,7 @@ describe('TLColorInput', () => {
     expect(document.activeElement).toBe(field());
   });
 
-  it('has no tab stop and no error for a palette without a filled cell (review focus 3)', async () => {
+  it('has no tab stop and does not throw for a palette without a filled cell (review focus 3)', async () => {
     await open({ ...STATE, value: null, palette: [null, null, null] });
     expect(screen.queryAllByRole('option')).toHaveLength(0);
     const list = screen.getByRole('listbox', { name: 'js.colorInput.colors' });
@@ -466,11 +498,17 @@ describe('TLColorInput', () => {
     expect(sb.getAttribute('aria-valuenow')).toBe('49');
   });
 
+  it('names the previews with their color', async () => {
+    await open({ ...STATE, value: null });
+    expect(screen.getByRole('img', { name: 'js.colorInput.current: js.colorInput.noColor' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'js.colorInput.new: js.colorInput.noColor' })).toBeTruthy();
+  });
+
   it('keeps the hue over black, so that lifting the brightness is not red (review focus 4)', async () => {
     await openMixer({ ...STATE, value: '#000000' });
     const hue = slider('js.colorInput.hue');
     hue.focus();
-    press(hue, 'PageDown', 12);
+    press(hue, 'PageUp', 12);
     expect(hue.getAttribute('aria-valuenow')).toBe('120');
     const sb = slider('js.colorInput.saturationBrightness');
     sb.focus();
@@ -506,9 +544,8 @@ describe('TLColorInput', () => {
     await userEvent.clear(hex);
     await userEvent.type(hex, '#43a047{Enter}');
     await settle();
-    // The field shows the color in capitals once it is valid; Enter confirms it like OK, which also files it
-    // into the first free cell of the palette.
-    expect(sent).toHaveBeenCalledWith('valueChanged', { value: '#43A047' });
+    // Enter confirms the draft like OK does, which also files it into the first free cell of the palette.
+    expect(sent).toHaveBeenCalledWith('valueChanged', { value: '#43a047' });
     expect(sent).toHaveBeenCalledWith('paletteChanged', { palette: ['#e53935', '#fb8c00', '#fdd835', '#43A047'] });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
@@ -521,5 +558,22 @@ describe('TLColorInput', () => {
     await settle();
     expect(sent).not.toHaveBeenCalledWith('valueChanged', expect.anything());
     expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+});
+
+describe('ColorMixer texts', () => {
+  afterEach(() => clearI18NCache());
+
+  it('puts the percentages into the value text of the field', async () => {
+    clearI18NCache();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      'js.colorInput.saturationBrightness': 'Saettigung und Helligkeit',
+      'js.colorInput.saturationBrightnessValue': 'Saettigung {0} %, Helligkeit {1} %',
+      'js.colorInput.hue': 'Farbton',
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+    render(<ColorMixer color="#cc6666" onColorChange={() => {}} />);
+    await settle();
+    expect(screen.getByRole('slider', { name: 'Saettigung und Helligkeit' }).getAttribute('aria-valuetext'))
+      .toBe('Saettigung 50 %, Helligkeit 80 %');
   });
 });

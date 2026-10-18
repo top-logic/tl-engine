@@ -2129,6 +2129,10 @@
 				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Inline">
 					<impl class="com.top_logic.layout.form.values.edit.editor.InlineItemProvider"/>
 				</annotation-control>
+				<!-- The value of a property that cannot be set is displayed with the labels of its options. -->
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.OptionLabels">
+					<impl class="com.top_logic.layout.form.values.edit.editor.OptionLabelsDisplayProvider"/>
+				</annotation-control>
 			</annotation-controls>
 			<customizations>
 				<type name="com.top_logic.basic.util.ResKey">

@@ -27,16 +27,22 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Function0;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.control.ValueDisplayControl;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
@@ -60,6 +66,7 @@ import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
@@ -272,6 +279,39 @@ public class TestEditorFactoryControls extends TestCase {
 		List<Inner> getInlinedList();
 	}
 
+	/**
+	 * Labels a class by its simple name.
+	 */
+	public static class SimpleNames implements LabelProvider {
+		@Override
+		public String getLabel(Object object) {
+			return object instanceof Class<?> type ? type.getSimpleName() : String.valueOf(object);
+		}
+	}
+
+	public static class SameText extends Function1<String, String> {
+		@Override
+		public String apply(String arg) {
+			return arg;
+		}
+	}
+
+	public interface LabeledProperties extends ConfigurationItem {
+		@Override
+		@Hidden(false)
+		@OptionLabels(SimpleNames.class)
+		Class<?> getConfigurationInterface();
+
+		String getName();
+
+		@Derived(fun = SameText.class, args = @Ref("name"))
+		@OptionLabels(SimpleNames.class)
+		String getDerivedName();
+
+		@OptionLabels(SimpleNames.class)
+		String getSettable();
+	}
+
 	@MultiLine(rows = 2)
 	public enum MultiLineValue {
 		A, B;
@@ -372,6 +412,22 @@ public class TestEditorFactoryControls extends TestCase {
 
 		FormMember list = group.getMember("inlined-list");
 		assertFalse("A list is not inlined.", list.getControlProvider() instanceof GroupInlineControlProvider);
+	}
+
+	/**
+	 * The value of a property that cannot be set is displayed with the labels of its
+	 * {@link OptionLabels} annotation, a property that can be set keeps its input.
+	 */
+	public void testOptionLabelsDisplayValueThatCannotBeSet() {
+		FormGroup group = build(shippedConfig(), LabeledProperties.class);
+
+		assertTrue("The configuration interface is displayed with its labels.",
+			group.getField(ConfigurationItem.CONFIGURATION_INTERFACE_NAME)
+				.getControlProvider() instanceof ValueDisplayControl.ValueDisplay);
+		assertTrue("A derived value is displayed with its labels.",
+			group.getField("derived-name").getControlProvider() instanceof ValueDisplayControl.ValueDisplay);
+		assertNull("A property that can be set keeps its input.",
+			group.getField("settable").getControlProvider());
 	}
 
 	private static FormField findField(FormMember member, String name) {

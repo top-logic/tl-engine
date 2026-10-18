@@ -17,7 +17,6 @@ import com.top_logic.basic.config.constraint.algorithm.ValueConstraint;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.annotation.RegexpConstraint;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.scripting.template.gui.ScriptRecorderComponent;
@@ -50,7 +49,7 @@ public interface TemplateEditModel extends NamedConfigMandatory {
 	/**
 	 * The parameters of the template.
 	 */
-	@ControlProvider(TabularParameterDisplay.class)
+	@ScriptTemplateParameters
 	@Name(PARAMETERS)
 	List<TemplateEditModel.Parameter> getParameters();
 

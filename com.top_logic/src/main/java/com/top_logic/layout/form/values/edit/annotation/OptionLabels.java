@@ -28,6 +28,12 @@ import com.top_logic.layout.LabelProvider;
  * specified), the label provider specified for the property must deal with both, the option type
  * and the selection type.
  * </p>
+ *
+ * <p>
+ * A property that cannot be set (a derived property, or the configuration interface of an item)
+ * has no options to choose from. Its value is displayed read-only with the annotated
+ * {@link LabelProvider}.
+ * </p>
  * 
  * @see Options
  * 

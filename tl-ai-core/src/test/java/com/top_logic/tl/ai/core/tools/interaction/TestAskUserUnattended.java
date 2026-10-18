@@ -101,11 +101,12 @@ public class TestAskUserUnattended extends TestCase {
 	}
 
 	/**
-	 * A question nobody answers in time ends the wait, and the model is told to go on with an
-	 * assumption it names, not to stop or undo (Openium/Pietro#744: a chat turn waited 30 minutes,
-	 * then the agent deleted the document it had made).
+	 * A question nobody answers in time ends the wait, and the model is told that this is no consent:
+	 * it writes nothing the question was about and ends the turn with the question open. Told to go
+	 * on with an option of its own, a Pietro run created a methodology nobody had accepted; told to
+	 * stop and ask, an earlier one deleted the document it had made (Openium/Pietro#744).
 	 */
-	public void testAQuestionNobodyAnswersLetsTheRunGoOn() throws Exception {
+	public void testAQuestionNobodyAnswersEndsTheTurnWithTheQuestionOpen() throws Exception {
 		UserInteractionStore store = new UserInteractionStore();
 		AskUserTool tool = new AskUserTool(() -> Duration.ofMillis(200));
 		String answer;
@@ -115,8 +116,11 @@ public class TestAskUserUnattended extends TestCase {
 		}
 
 		assertTrue(answer, answer.startsWith("Nobody answered within 1 minute"));
-		assertTrue(answer, answer.contains("Go on with the task"));
-		assertTrue(answer, answer.contains("say which assumption you took"));
+		assertTrue(answer, answer.contains("not consent"));
+		assertTrue(answer, answer.contains("Do not create, change or delete anything that the question was about"));
+		assertTrue(answer, answer.contains("end the turn"));
+		assertTrue(answer, answer.contains("ask the open question again in the answer"));
+		assertFalse(answer, answer.contains("Go on with the task"));
 		assertTrue(answer, answer.contains("Never delete or replace work"));
 		assertTrue("The question must not stay pending.", store.getPendingRequests().isEmpty());
 	}

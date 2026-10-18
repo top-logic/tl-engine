@@ -298,6 +298,7 @@ public class TestMcpServerProtocol extends TestCase {
 			case "getRequestURI" -> "/mcp";
 			case "getCharacterEncoding" -> "UTF-8";
 			case "getContentLengthLong" -> Long.valueOf(bytes.length);
+			case "getContentType" -> header(exchange.requestHeaders, "Content-Type");
 			case "getHeader" -> header(exchange.requestHeaders, (String) args[0]);
 			case "getHeaderNames" -> Collections.enumeration(exchange.requestHeaders.keySet());
 			case "getHeaders" -> {

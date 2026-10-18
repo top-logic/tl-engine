@@ -43,6 +43,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
@@ -73,18 +74,19 @@ import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.model.AbstractFormContainer;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.model.AbstractMember;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.Values;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
@@ -192,7 +194,8 @@ public class EditorFactory implements AnnotationCustomizations {
 		 * <p>
 		 * A control chosen here takes precedence over {@link #getTypeControls()} and over the
 		 * control of the editor that creates the field, also one chosen with a
-		 * {@link PropertyEditor} annotation.
+		 * {@link PropertyEditor} annotation. Only an {@link Encrypted} property is never displayed
+		 * with a control chosen here: it always gets the password input.
 		 * </p>
 		 */
 		@Name(ANNOTATION_CONTROLS)
@@ -216,7 +219,8 @@ public class EditorFactory implements AnnotationCustomizations {
 		 * An entry here is used for a property that has no control chosen by
 		 * {@link #getAnnotationControls()}. It also applies to a property whose field is created by
 		 * an editor chosen with a {@link PropertyEditor} annotation: the editor creates the field,
-		 * the entry chooses the control displaying it.
+		 * the entry chooses the control displaying it. An {@link Encrypted} property always gets
+		 * the password input instead.
 		 * </p>
 		 */
 		@Name(TYPE_CONTROLS)
@@ -297,7 +301,7 @@ public class EditorFactory implements AnnotationCustomizations {
 		 */
 		@Name(IMPL)
 		@Mandatory
-		PolymorphicConfiguration<? extends com.top_logic.layout.form.template.ControlProvider> getImpl();
+		PolymorphicConfiguration<? extends ControlProvider> getImpl();
 
 	}
 
@@ -308,7 +312,7 @@ public class EditorFactory implements AnnotationCustomizations {
 
 		private final List<Map.Entry<Class<? extends Annotation>, AnnotationControlProvider<?>>> _byAnnotation;
 
-		private final Map<Class<?>, com.top_logic.layout.form.template.ControlProvider> _byType;
+		private final Map<Class<?>, ControlProvider> _byType;
 
 		ConfiguredControls(Config config) {
 			InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
@@ -319,7 +323,7 @@ public class EditorFactory implements AnnotationCustomizations {
 			}
 			_byAnnotation = byAnnotation;
 
-			Map<Class<?>, com.top_logic.layout.form.template.ControlProvider> byType = new HashMap<>();
+			Map<Class<?>, ControlProvider> byType = new HashMap<>();
 			for (TypeControlMapping mapping : config.getTypeControls().values()) {
 				byType.put(mapping.getType(), context.getInstance(mapping.getImpl()));
 			}
@@ -330,12 +334,12 @@ public class EditorFactory implements AnnotationCustomizations {
 			return _byAnnotation;
 		}
 
-		com.top_logic.layout.form.template.ControlProvider byType(Class<?> type) {
+		ControlProvider byType(Class<?> type) {
 			if (_byType.isEmpty()) {
 				return null;
 			}
 			for (Class<?> current = type; current != null; current = current.getSuperclass()) {
-				com.top_logic.layout.form.template.ControlProvider result = _byType.get(current);
+				ControlProvider result = _byType.get(current);
 				if (result != null) {
 					return result;
 				}
@@ -351,7 +355,7 @@ public class EditorFactory implements AnnotationCustomizations {
 				if (!seen.add(current)) {
 					continue;
 				}
-				com.top_logic.layout.form.template.ControlProvider result = _byType.get(current);
+				ControlProvider result = _byType.get(current);
 				if (result != null) {
 					return result;
 				}
@@ -780,14 +784,14 @@ public class EditorFactory implements AnnotationCustomizations {
 	 *        The {@link PropertyDescriptor} for which the given field was created.
 	 * @param field
 	 *        The field to set the control provider,
-	 *        {@link FormMember#setControlProvider(com.top_logic.layout.form.template.ControlProvider)}
+	 *        {@link FormMember#setControlProvider(ControlProvider)}
 	 * @return Whether a control was chosen for the property. If not, the field keeps its control
 	 *         provider.
 	 * 
 	 * @see #resolveControlProvider(PropertyDescriptor)
 	 */
 	public boolean installControlProvider(PropertyDescriptor property, FormMember field) {
-		com.top_logic.layout.form.template.ControlProvider controlProvider = resolveControlProvider(property);
+		ControlProvider controlProvider = resolveControlProvider(property);
 		if (controlProvider == null) {
 			return false;
 		}
@@ -796,17 +800,20 @@ public class EditorFactory implements AnnotationCustomizations {
 	}
 
 	/**
-	 * The control chosen for the given property by its annotations or the configuration.
+	 * The control chosen for the given property by its annotations or its value type.
 	 * 
 	 * <p>
 	 * The control is chosen by the first of:
 	 * </p>
 	 * <ol>
-	 * <li>a {@link ControlProvider} annotation of the property,</li>
+	 * <li>the password input for an {@link Encrypted} property, ahead of every configured control,
+	 * so that no configuration can display a secret in the clear,</li>
 	 * <li>the first entry of {@link Config#getAnnotationControls()} whose annotation the property
 	 * carries and that chooses a control,</li>
 	 * <li>the entry of {@link Config#getTypeControls()} for the property type, also if the field
-	 * is created by an editor chosen by a {@link PropertyEditor} annotation.</li>
+	 * is created by an editor chosen by a {@link PropertyEditor} annotation,</li>
+	 * <li>the control of the editor that creates the field (signaled by a <code>null</code>
+	 * result).</li>
 	 * </ol>
 	 * 
 	 * <p>
@@ -819,18 +826,13 @@ public class EditorFactory implements AnnotationCustomizations {
 	 * @return The chosen control, or <code>null</code>, if neither annotations nor configuration
 	 *         choose one, and the editor's built-in control is used.
 	 */
-	public com.top_logic.layout.form.template.ControlProvider resolveControlProvider(PropertyDescriptor property) {
-		ControlProvider annotation = getAnnotation(property, ControlProvider.class);
-		if (annotation != null) {
-			try {
-				return ConfigUtil.getInstance(annotation.value());
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError("Control provider annotation for '" + property + "' is invalid.", ex);
-			}
+	public ControlProvider resolveControlProvider(PropertyDescriptor property) {
+		if (getAnnotation(property, Encrypted.class) != null) {
+			return PasswordInputControlProvider.INSTANCE;
 		}
 
 		for (Map.Entry<Class<? extends Annotation>, AnnotationControlProvider<?>> entry : _controls.byAnnotation()) {
-			com.top_logic.layout.form.template.ControlProvider result =
+			ControlProvider result =
 				fromAnnotation(property, entry.getKey(), entry.getValue());
 			if (result != null) {
 				return result;
@@ -840,7 +842,7 @@ public class EditorFactory implements AnnotationCustomizations {
 		return _controls.byType(property.getType());
 	}
 
-	private <A extends Annotation> com.top_logic.layout.form.template.ControlProvider fromAnnotation(
+	private <A extends Annotation> ControlProvider fromAnnotation(
 			PropertyDescriptor property, Class<A> annotationType, AnnotationControlProvider<?> provider) {
 		A annotation = getAnnotation(property, annotationType);
 		if (annotation == null) {

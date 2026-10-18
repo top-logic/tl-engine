@@ -11,6 +11,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -25,9 +26,12 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
+import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Ref;
@@ -35,6 +39,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.Control;
@@ -42,6 +47,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.control.ValueDisplayControl;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.StringField;
@@ -121,6 +127,13 @@ public class TestEditorFactoryControls extends TestCase {
 		@Override
 		public ControlProvider getControlProvider(EditorFactory editorFactory, PropertyDescriptor property, First annotation) {
 			return new TestControlProvider("first:" + annotation.value());
+		}
+	}
+
+	public static class OtherFirstProvider implements AnnotationControlProvider<First> {
+		@Override
+		public ControlProvider getControlProvider(EditorFactory editorFactory, PropertyDescriptor property, First annotation) {
+			return new TestControlProvider("other-first:" + annotation.value());
 		}
 	}
 
@@ -208,6 +221,15 @@ public class TestEditorFactoryControls extends TestCase {
 
 		@First("annotated")
 		String getAnnotatedText();
+	}
+
+	public interface EncryptedProperties extends ConfigurationItem {
+		@Encrypted
+		@First("secret")
+		String getAnnotatedSecret();
+
+		@Encrypted
+		Integer getNumberSecret();
 	}
 
 	public interface SelectProperties extends ConfigurationItem {
@@ -484,6 +506,58 @@ public class TestEditorFactoryControls extends TestCase {
 		assertOrigin("The type control applies to a field created by an annotated property editor.",
 			"comparable", group, "text-with-editor");
 		assertOrigin("first:annotated", group, "annotated-text");
+	}
+
+	public void testEncryptedBeforeConfiguredControls() throws ConfigurationException {
+		Config config = TypedConfiguration.newConfigItem(Config.class);
+		Map<Class<?>, TypeControlMapping> typeControls = new HashMap<>();
+		typeControls.put(Number.class, typeControl(Number.class, NumberControl.class));
+		TypedConfigUtil.setProperty(config, Config.TYPE_CONTROLS, typeControls);
+		addAnnotationControl(config, First.class, FirstProvider.class);
+
+		FormGroup group = build(config, EncryptedProperties.class);
+
+		assertSame("An encrypted property with a mapped annotation gets the password input.",
+			PasswordInputControlProvider.INSTANCE, group.getField("annotated-secret").getControlProvider());
+		assertSame("An encrypted property of a mapped value type gets the password input.",
+			PasswordInputControlProvider.INSTANCE, group.getField("number-secret").getControlProvider());
+	}
+
+	/**
+	 * A later configuration fragment replaces the entry of an annotation in place and appends the
+	 * entry of an annotation not configured before.
+	 */
+	public void testAnnotationControlsMerge() throws ConfigurationException {
+		String first = "<config>"
+			+ "<annotation-controls>"
+			+ annotationControl(First.class, FirstProvider.class)
+			+ annotationControl(Second.class, SecondProvider.class)
+			+ "</annotation-controls>"
+			+ "</config>";
+		String second = "<config>"
+			+ "<annotation-controls>"
+			+ annotationControl(First.class, OtherFirstProvider.class)
+			+ annotationControl(Deprecated.class, FirstProvider.class)
+			+ "</annotation-controls>"
+			+ "</config>";
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestEditorFactoryControls.class);
+		Config config = (Config) new ConfigurationReader(context,
+			Collections.singletonMap("config", TypedConfiguration.getConfigurationDescriptor(Config.class)))
+				.setSources(CharacterContents.newContent(first), CharacterContents.newContent(second))
+				.read();
+		context.checkErrors();
+
+		List<AnnotationControlMapping> entries = config.getAnnotationControls();
+		assertEquals(Arrays.asList(First.class, Second.class, Deprecated.class),
+			entries.stream().map(AnnotationControlMapping::getAnnotation).toList());
+		assertEquals(Arrays.asList(OtherFirstProvider.class, SecondProvider.class, FirstProvider.class),
+			entries.stream().map(entry -> entry.getImpl().getImplementationClass()).toList());
+	}
+
+	private static String annotationControl(Class<? extends Annotation> annotation, Class<?> impl) {
+		return "<annotation-control annotation=\"" + annotation.getName() + "\">"
+			+ "<impl class=\"" + impl.getName() + "\"/>"
+			+ "</annotation-control>";
 	}
 
 	public void testSelectionDialogThreshold() {

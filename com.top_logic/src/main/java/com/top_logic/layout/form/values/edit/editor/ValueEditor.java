@@ -22,7 +22,6 @@ import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
-import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.func.Identity;
 import com.top_logic.basic.util.ResKey;
@@ -30,7 +29,6 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.ColorControlProvider;
-import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
@@ -179,10 +177,6 @@ public class ValueEditor extends AbstractEditor {
 				}
 				return plainField;
 			}
-		}
-
-		if (editorFactory.getAnnotation(property, Encrypted.class) != null) {
-			field.setControlProvider(PasswordInputControlProvider.INSTANCE);
 		}
 
 		init(editorFactory, model, field, uiConversion, storageConversion);

@@ -9,11 +9,9 @@ import static com.top_logic.layout.form.values.Fields.*;
 import static com.top_logic.layout.form.values.Values.*;
 
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
 
@@ -38,10 +36,6 @@ public class ValueDisplay implements Editor {
 		PropertyDescriptor property = valueModel.getProperty();
 		FormField field = immutable(field(container, property.getPropertyName()));
 		bindValue(field, configurationValue(valueModel.getModel(), property));
-
-		if (editorFactory.getAnnotation(property, Encrypted.class) != null) {
-			field.setControlProvider(PasswordInputControlProvider.INSTANCE);
-		}
 
 		editorFactory.installControlProvider(valueModel.getProperty(), field);
 		return field;

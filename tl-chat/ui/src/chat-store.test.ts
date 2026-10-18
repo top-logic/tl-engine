@@ -84,6 +84,7 @@ const BOOT: ChatBootstrap = {
   paneWidthDefault: 0,
   badgeSeen: 0,
   sectionChoices: {},
+  autoApprove: false,
 }
 
 /** Lets every scheduled microtask and the pending `await`s of the bootstrap run. */
@@ -1455,6 +1456,7 @@ describe('the bootstrap', () => {
         paneWidth: 480,
         badgeSeen: 3,
         sectionChoices: { progress: false },
+        approvalMode: 'AUTO_APPROVE',
       }),
     ).toEqual({
       windowId: 'w9',
@@ -1470,6 +1472,7 @@ describe('the bootstrap', () => {
       paneWidthDefault: 0,
       badgeSeen: 3,
       sectionChoices: { progress: false },
+      autoApprove: true,
       collapsedSections: undefined,
     })
   })
@@ -1489,6 +1492,7 @@ describe('the bootstrap', () => {
       paneWidthDefault: 0,
       badgeSeen: 0,
       sectionChoices: {},
+      autoApprove: false,
       collapsedSections: undefined,
     })
   })
@@ -2870,21 +2874,24 @@ describe('choosing a chat while another one loads', () => {
 })
 
 /**
- * The auto-approve switch is a setting of the chat (#658): the server stores it with the chat the
- * switch names, and the switch shows what the server runs the opened chat with. A new chat starts
- * with it off (#808).
+ * The auto-approve switch: the server stores it with the chat the switch names (#658), and the
+ * switch shows what the server runs the opened chat with. A new chat starts with the person's last
+ * choice, and a send names the position the switch shows.
  */
 describe('the auto-approve switch', () => {
   /** The body of every `POST /chat/approval-mode`, in order. */
   let modeBodies: Record<string, unknown>[]
   /** The body of every `POST /chat/sessions`, in order. */
   let createBodies: Record<string, unknown>[]
+  /** The body of every `POST /chat/send`, in order. */
+  let sendBodies: Record<string, unknown>[]
   /** What `GET /chat/sessions/{id}` says about the chat's mode. */
   let storedMode: string
 
   beforeEach(() => {
     modeBodies = []
     createBodies = []
+    sendBodies = []
     storedMode = 'AUTO_APPROVE'
     const globals = globalThis as unknown as Record<string, unknown>
     const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
@@ -2895,6 +2902,9 @@ describe('the auto-approve switch', () => {
       }
       if (init?.method === 'POST' && /\/chat\/sessions(\?|$)/.test(url)) {
         createBodies.push(JSON.parse(init.body ?? '{}'))
+      }
+      if (url.includes('/chat/send')) {
+        sendBodies.push(JSON.parse(init?.body ?? '{}'))
       }
       if (/\/chat\/sessions\/[^/?]/.test(url)) {
         return { ok: true, status: 200, json: async () => ({ id: 's1', turnsJson: '', approvalMode: storedMode }) }
@@ -2930,8 +2940,31 @@ describe('the auto-approve switch', () => {
     release()
   })
 
-  /** Auto-approve in one chat does not carry over into the next new chat (#808). */
-  it('starts a new chat with auto-approve off', async () => {
+  /**
+   * A person who switched auto-approve on is not asked again because they started another chat:
+   * the switch did not survive "new chat", and a turn then asked while the person believed it on.
+   */
+  it('starts a new chat with the position the person chose last', async () => {
+    storedMode = 'MANUAL'
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+    await store.actions.toggleAutoApprove()
+
+    store.actions.newChat()
+    expect(store.getState().autoApprove).toBe(true)
+
+    await store.actions.send('Erste Frage', [])
+    expect(createBodies).toHaveLength(1)
+    expect(createBodies[0].approvalMode).toBe('AUTO_APPROVE')
+    await settle()
+    release()
+  })
+
+  /** Opening a chat shows its own mode; it is no choice of the person's. */
+  it('starts a new chat off after opening a chat that is on', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
     store.attach(BOOT)
@@ -2940,12 +2973,38 @@ describe('the auto-approve switch', () => {
     expect(store.getState().autoApprove).toBe(true)
 
     store.actions.newChat()
-    expect(store.getState().autoApprove).toBe(false)
 
-    await store.actions.send('Erste Frage', [])
-    expect(createBodies).toHaveLength(1)
-    expect(createBodies[0].approvalMode).toBe('MANUAL')
+    expect(store.getState().autoApprove).toBe(false)
+    release()
+  })
+
+  /** The choice is the person's, stored on the server: a reload or a new login keeps it. */
+  it('starts with the choice the page boots with', async () => {
+    const boot = { ...BOOT, autoApprove: true }
+    const store = chatStore('alpha', boot)
+    const release = store.subscribe(() => undefined)
+    store.attach(boot)
     await settle()
+
+    expect(store.getState().autoApprove).toBe(true)
+    release()
+  })
+
+  /** The turn runs with what the person sees, even when a switch request has not arrived. */
+  it('names the position of the switch with every send', async () => {
+    storedMode = 'MANUAL'
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.attach(BOOT)
+    await settle()
+    await store.actions.selectSession('s1')
+    await store.actions.send('Erste Frage', [])
+    await settle()
+    await store.actions.toggleAutoApprove()
+    await store.actions.send('Zweite Frage', [])
+    await settle()
+
+    expect(sendBodies.map((body) => body.approvalMode)).toEqual(['MANUAL', 'AUTO_APPROVE'])
     release()
   })
 
@@ -2965,8 +3024,8 @@ describe('the auto-approve switch', () => {
   })
 
   /**
-   * A conversation that has no chat yet has nothing to store the mode with, so it keeps it and the
-   * send that creates the chat names it.
+   * A conversation that has no chat yet stores the switch only as the person's choice, and the send
+   * that creates the chat names it.
    */
   it('stores a mode set before the first send with the chat that send creates', async () => {
     const store = chatStore('alpha', BOOT)
@@ -2975,7 +3034,7 @@ describe('the auto-approve switch', () => {
     await settle()
 
     await store.actions.toggleAutoApprove()
-    expect(modeBodies).toEqual([])
+    expect(modeBodies).toEqual([{ mode: 'AUTO_APPROVE' }])
     expect(store.getState().autoApprove).toBe(true)
 
     await store.actions.send('Erste Frage', [])

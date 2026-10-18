@@ -418,6 +418,28 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 
+		// The turn runs with the mode the switch shows at the send, whatever reached the server
+		// before: a switch request still on its way, or one that failed, must not make the turn ask
+		// while the browser answers by itself, or approve while the person sees the switch off.
+		String shownMode = blankToNull(body.getApprovalMode());
+		if (shownMode != null) {
+			ApprovalMode shown;
+			try {
+				shown = ApprovalMode.valueOf(shownMode);
+			} catch (IllegalArgumentException e) {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid approvalMode: " + shownMode);
+				return;
+			}
+			if (tracker.getApprovalMode() != shown) {
+				if (activeSessionId != null) {
+					applyApprovalMode(tracker, person, activeSessionId, shown);
+				} else {
+					tracker.setApprovalMode(shown);
+				}
+			}
+			ApprovalChoice.save(shown);
+		}
+
 		String storedName = tracker.getUserName();
 		if (storedName == null) {
 			if (person != null) {
@@ -1166,9 +1188,9 @@ public class ChatServlet extends TopLogicServlet {
 	 * </p>
 	 *
 	 * <p>
-	 * A body without {@code sessionId} is refused. A conversation that has no chat yet keeps the
-	 * mode in the browser and names it when it creates the chat (POST /chat/sessions), because a
-	 * chat that stores no mode runs with {@link ApprovalMode#MANUAL} (#808).
+	 * Every switch is also the person's last choice ({@link ApprovalChoice}), which a new chat starts
+	 * with. A body without {@code sessionId} comes from a conversation that has no chat yet: it only
+	 * stores that choice, and the send that creates the chat names the mode (POST /chat/sessions).
 	 * </p>
 	 */
 	private void handleApprovalMode(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -1199,12 +1221,26 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 
-		TaskProgressTracker tracker = currentTracker();
-		String sessionId = ownedSessionId(req, resp, requestedSession);
-		if (sessionId == null) {
-			return;
+		if (requestedSession != null) {
+			String sessionId = ownedSessionId(req, resp, requestedSession);
+			if (sessionId == null) {
+				return;
+			}
+			applyApprovalMode(currentTracker(), resolveCurrentPerson(req), sessionId, approvalMode);
 		}
-		Person person = resolveCurrentPerson(req);
+		ApprovalChoice.save(approvalMode);
+
+		resp.setContentType("application/json");
+		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
+	}
+
+	/**
+	 * Sets the approval mode of the chat {@code sessionId}: on this window's copy, on the copies its
+	 * running runs hold, in its stored metadata, and on the account's other windows showing it.
+	 */
+	private static void applyApprovalMode(TaskProgressTracker tracker, Person person, String sessionId,
+			ApprovalMode approvalMode) {
 		// The chat named, not the one the window shows, and without switching to it. The mode is
 		// stored below; a copy of the chat this window holds is brought in line here, and one it does
 		// not hold reads the stored mode when it is loaded.
@@ -1234,10 +1270,6 @@ public class ChatServlet extends TopLogicServlet {
 					+ " changed: " + ex.getMessage(), ChatServlet.class);
 			}
 		}
-
-		resp.setContentType("application/json");
-		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
-		resp.getWriter().write("{\"status\":\"ok\",\"mode\":\"" + approvalMode.name() + "\"}");
 	}
 
 	/**

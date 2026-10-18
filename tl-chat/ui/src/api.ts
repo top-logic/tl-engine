@@ -440,20 +440,21 @@ export async function improvePrompt(
 }
 
 /**
- * Turns "auto-approve" on or off for one chat. The mode is a setting of the chat: the server stores
- * it with that chat at once and tells the account's other windows showing it (#658). A conversation
- * that has no chat yet does not call this; it names the mode in `createSession`.
+ * Turns "auto-approve" on or off. The server stores the mode as the person's last choice, which a
+ * new chat starts with, and with the chat `sessionId` names; it tells the account's other windows
+ * showing that chat (#658). A conversation that has no chat yet passes `null` and names the mode in
+ * `createSession`.
  */
 export async function setApprovalMode(
   at: ChatAddress,
   mode: 'AUTO_APPROVE' | 'MANUAL',
-  sessionId: string,
+  sessionId: string | null,
 ): Promise<void> {
   const res = await chatFetch(withWindow('/chat/approval-mode', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ mode, sessionId }),
+    body: JSON.stringify(sessionId ? { mode, sessionId } : { mode }),
   })
   if (!res.ok) throw new Error(`approval-mode failed (${res.status})`)
 }

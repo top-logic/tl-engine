@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import com.top_logic.ai.chat.api.ApprovalChoice;
 import com.top_logic.ai.chat.api.ChatPreferencesStore;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
@@ -400,7 +401,7 @@ public final class ChatViewBinding {
 
 	/**
 	 * Writes what has to be read again on every render into the control's state: the user's stored
-	 * layout and the session's language.
+	 * layout and auto-approve choice, and the session's language.
 	 *
 	 * <p>
 	 * Every chat control calls this from its {@code onBeforeWrite} hook, because that is the one
@@ -425,6 +426,8 @@ public final class ChatViewBinding {
 		put.accept("paneWidth", Integer.valueOf(preferences.getPaneWidth()));
 		put.accept("badgeSeen", Integer.valueOf(preferences.getBadgeSeen()));
 		put.accept("sectionChoices", new LinkedHashMap<>(preferences.getSections()));
+		// The person's last position of the auto-approve switch, which a new chat starts with.
+		put.accept("approvalMode", ApprovalChoice.load().name());
 	}
 
 	private static TaskProgressTracker bindTracker(TLSubSessionContext subSession, String windowName,

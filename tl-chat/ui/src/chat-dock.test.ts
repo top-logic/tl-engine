@@ -54,6 +54,7 @@ function seedChat(chatId: string, boot: Partial<ChatBootstrap> = {}) {
     paneWidthDefault: 0,
     badgeSeen: 0,
     sectionChoices: {},
+    autoApprove: false,
     ...boot,
   })
   const release = store.subscribe(() => undefined)

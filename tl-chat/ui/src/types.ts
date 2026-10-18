@@ -550,6 +550,8 @@ export interface SendPayload {
   effort?: string
   /** What the page states about the situation this message is asked in. */
   facts?: ContextFact[]
+  /** The position of the auto-approve switch at the send; the turn runs with it. */
+  approvalMode?: 'AUTO_APPROVE' | 'MANUAL'
 }
 
 export interface TokenUsage {

@@ -155,6 +155,12 @@ message ChatSendRequest {
 	 * </p>
 	 */
 	repeated FactDto facts;
+
+	/**
+	 * The position of the auto-approve switch at the send, <code>AUTO_APPROVE</code> or
+	 * <code>MANUAL</code>. The turn runs with it. Empty keeps the chat's stored mode.
+	 */
+	string approvalMode;
 }
 
 /**

@@ -35,11 +35,11 @@ import com.top_logic.layout.form.values.edit.annotation.MultiLine;
  * Self-contained sample configuration edited by the config-editor demo.
  *
  * <p>
- * Exercises a spread of property kinds (text, multi-line text, CommonMark text, JSON source code,
- * HTML text, number, boolean, enumeration, a date with its time of day, a nested item, a nested
- * item displayed without a group, a list of items, an array of items, a map of items, a list of plain strings written as one comma separated
- * text, a duration, and a {@link ResKey}) so the React configuration editor renders each editor
- * variant.
+ * Exercises a spread of property kinds (text, multi-line text, {@link CommonMark} text, JSON
+ * source code, HTML text, number, boolean, enumeration, a date with its time of day, a nested
+ * item, a nested item displayed without a group, a list of items, an array of items, a map of
+ * items, a list of plain strings written as one comma separated text, a duration, and a
+ * {@link ResKey}) so the React configuration editor renders each editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {

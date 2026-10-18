@@ -248,6 +248,13 @@ public class ChatConversationElement implements UIElement {
 		String PLACEHOLDER = "placeholder";
 
 		/**
+		 * Configuration property name for {@link #getPlaceholderBy()}.
+		 *
+		 * @see #getPlaceholderBy()
+		 */
+		String PLACEHOLDER_BY = "placeholder-by";
+
+		/**
 		 * Configuration property name for {@link #getWorkingIndicator()}.
 		 *
 		 * @see #getWorkingIndicator()
@@ -639,6 +646,22 @@ public class ChatConversationElement implements UIElement {
 		@Label("Placeholder")
 		@Nullable
 		ResKey getPlaceholder();
+
+		/**
+		 * The invitation standing in the empty prompt field, computed from the page.
+		 *
+		 * <p>
+		 * For a chat whose subject the page decides: one chat element on every page of an
+		 * application asks about the open project while there is one, and about everything else
+		 * while there is none. A fixed {@link #getPlaceholder() placeholder} then names a scope the
+		 * conversation does not have. The text follows its inputs. When it is empty, the
+		 * {@link #getPlaceholder() placeholder} applies.
+		 * </p>
+		 */
+		@Name(PLACEHOLDER_BY)
+		@Label("Placeholder by")
+		@Nullable
+		PlaceholderBy getPlaceholderBy();
 
 		/**
 		 * What stands where the answer will appear while the agent works and has not written
@@ -1199,6 +1222,46 @@ public class ChatConversationElement implements UIElement {
 		@DefaultContainer
 		@EntryTag("prompt")
 		List<Prompt> getCards();
+	}
+
+	/**
+	 * The placeholder of the prompt field as a TL-Script over the page's channels.
+	 *
+	 * @see Config#getPlaceholderBy()
+	 */
+	public interface PlaceholderBy extends ConfigurationItem {
+
+		/**
+		 * Configuration property name for {@link #getInputs()}.
+		 *
+		 * @see #getInputs()
+		 */
+		String INPUTS = "inputs";
+
+		/**
+		 * Configuration property name for {@link #getValue()}.
+		 *
+		 * @see #getValue()
+		 */
+		String VALUE = "value";
+
+		/**
+		 * References to channels whose values become the positional arguments of the
+		 * {@link #getValue() value}, in the order they are listed.
+		 */
+		@Name(INPUTS)
+		@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
+		List<ChannelRef> getInputs();
+
+		/**
+		 * TL-Script computing the text, in the user's language, e.g. with
+		 * {@code #("..."@en, "..."@de)}. An empty result leaves the fixed placeholder in force.
+		 */
+		@Name(VALUE)
+		@Label("Value")
+		@Mandatory
+		@NonNullable
+		Expr getValue();
 	}
 
 	/**

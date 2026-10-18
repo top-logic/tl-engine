@@ -208,7 +208,7 @@ public class ChatConversationControl extends ReactControl {
 
 		// Composer.
 		putState("promptImprovementEnabled", Boolean.valueOf(configuredImprover != null));
-		putState("placeholder", ChatViewBinding.resolveText(config.getPlaceholder()));
+		setupPlaceholder(context, config);
 		putState("workingIndicator", ChatIcons.encode(context, config.getWorkingIndicator()));
 		String referenceSource = blankToNull(config.getReferenceSource());
 		putState("referenceSource", referenceSource == null ? "" : referenceSource);
@@ -837,6 +837,46 @@ public class ChatConversationControl extends ReactControl {
 		// A channel written while this control was detached notified nobody, the same reason the
 		// facts and the mention candidates are read again on the way back.
 		addAttachListener(this::serializePrompts);
+	}
+
+	/**
+	 * Pushes the placeholder of the prompt field, and keeps it current when it is computed from the
+	 * page - see {@link ChatConversationElement.Config#getPlaceholderBy()}.
+	 */
+	private void setupPlaceholder(ViewContext context, ChatConversationElement.Config config) {
+		String fixed = ChatViewBinding.resolveText(config.getPlaceholder());
+		ChatConversationElement.PlaceholderBy by = config.getPlaceholderBy();
+		if (by == null) {
+			putState("placeholder", fixed);
+			return;
+		}
+		QueryExecutor value = QueryExecutor.compile(by.getValue());
+		List<ViewChannel> inputs = new ArrayList<>();
+		Runnable publish = () -> {
+			Object[] arguments = new Object[inputs.size()];
+			for (int n = 0; n < arguments.length; n++) {
+				arguments[n] = inputs.get(n).get();
+			}
+			String computed;
+			try {
+				computed = label(value.execute(arguments));
+			} catch (RuntimeException ex) {
+				Logger.warn("Chat placeholder could not be evaluated: " + ex.getMessage(), ex,
+					ChatConversationControl.class);
+				computed = "";
+			}
+			putState("placeholder", computed.isBlank() ? fixed : computed);
+		};
+		for (ChannelRef ref : by.getInputs()) {
+			ViewChannel channel = context.resolveChannel(ref);
+			inputs.add(channel);
+			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> publish.run();
+			channel.addListener(listener);
+			addCleanupAction(() -> channel.removeListener(listener));
+		}
+		publish.run();
+		// A channel written while this control was detached notified nobody, as for the cards.
+		addAttachListener(publish);
 	}
 
 	/** Evaluates every card's text and pushes the set to the browser. */

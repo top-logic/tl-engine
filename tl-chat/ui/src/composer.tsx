@@ -579,7 +579,8 @@ export const Composer = React.memo(
   useImperativeHandle(handle, () => composerApi, [composerApi])
 
   // Whatever changed the text - a keystroke, an inserted reference, an improved prompt, a host's
-  // own write - the host hears the same thing. Blur and send report it again, settled.
+  // own write - the host hears the same thing. Blur, the send and the field the send empties report
+  // it again, settled.
   useEffect(() => {
     onDraft?.(text, false)
   }, [text, onDraft])
@@ -605,6 +606,9 @@ export const Composer = React.memo(
     const sentFiles = files
     void onSend(trimmed, sentFiles).then((sent) => {
       if (!sent) return
+      // The emptied field is settled too: a host that goes away right after the send - the window
+      // following to a page the run opened - must not keep the sent sentence as its draft.
+      onDraft?.('', true)
       setText('')
       setFiles([])
       setUndoDraft(null)

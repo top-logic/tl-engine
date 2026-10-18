@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { Composer } from './composer'
 import { bundle } from './i18n'
 import type { ReferenceCandidate } from './extensions'
+import { createDraftReporter } from './draft'
 
 /**
  * The composer under input that arrives faster than React commits (#419).
@@ -416,5 +417,42 @@ describe('the chips above the composer', () => {
   it('says nothing while no subagent waits', async () => {
     await mount()
     expect(mounted!.container.querySelector('.overlay-chip.is-waiting')).toBeNull()
+  })
+})
+
+/**
+ * The draft a host holds once the message has gone (#946).
+ *
+ * A conversation can go away right after a send: when the run opens a document, the window follows
+ * to the document page and the dock's conversation unmounts, dropping whatever report is still
+ * waiting for the pause. If the empty field after the send were only an ordinary report, the host
+ * would keep the sent sentence as the draft and put it into the next page's composer.
+ */
+describe('the draft after a send', () => {
+  it('reaches the host at once, so a conversation that goes away keeps no sent text', async () => {
+    const published: string[] = []
+    // Wired as `chat-conversation.tsx` wires it, including the cancel on unmount.
+    const reporter = createDraftReporter((text) => published.push(text))
+    let sent = ''
+    const { field } = await mount({
+      onDraft: (text: string, settled: boolean) =>
+        settled ? reporter.flush(text) : reporter.report(text),
+      onSend: async (text: string) => {
+        sent = text
+        return true
+      },
+    })
+
+    await burst(field, 'Lege das Dokument an.')
+    field.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    // The send has answered and React has committed the empty field; the pause has not run out.
+    await settle()
+    reporter.cancel()
+    mounted?.root.unmount()
+    mounted = null
+    await new Promise((resolve) => setTimeout(resolve, 400))
+
+    expect(sent).toBe('Lege das Dokument an.')
+    expect(published[published.length - 1]).toBe('')
   })
 })

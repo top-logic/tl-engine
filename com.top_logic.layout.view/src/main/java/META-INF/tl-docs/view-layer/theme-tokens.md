@@ -26,9 +26,11 @@ between the sheet and the browser, so what is written there is what the browser 
 
 **Write `var(--name)` without a fallback.** A `var(--name, 0.5rem)` hides the fact that the theme is
 missing the token: the page renders, silently ignoring the theme. A token the theme does not declare
-is a defect to fix in the theme. The only custom properties that carry a fallback are the ones a
-stylesheet declares itself (`--cal-ev-bg`, …), where the fallback is the value of the
-default case rather than a stand-in for a missing token.
+is a defect to fix in the theme. No stylesheet declares a custom property of its own to vary a value
+per element: such a value is either a role the element selects (a calendar event without a color of
+its own takes the surface of its category, `data-tl-role="category-N"` reading
+`--tl-category-N-surface`) or data set inline (a color the server sends for an event, with its text
+color chosen by `textOn`).
 
 ## Cascade layers
 

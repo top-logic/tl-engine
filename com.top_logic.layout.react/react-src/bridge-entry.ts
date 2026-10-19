@@ -2,7 +2,7 @@
 export { register, replace, getComponent } from './bridge/registry';
 export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-wrapper';
 export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
-export { connect, subscribe, unsubscribe } from './bridge/sse-client';
+export { connect, expectEvents, subscribe, unsubscribe } from './bridge/sse-client';
 export {
   mount,
   mountField,

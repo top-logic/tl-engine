@@ -38,6 +38,13 @@ import com.top_logic.util.TLContextManager;
  */
 public class SSEServlet extends HttpServlet {
 
+	/**
+	 * The comment that opens a stream, padded to 2 KB: a proxy that forwards a response only once
+	 * it holds a few kilobytes releases the start of the stream at once. A proxy that holds back
+	 * more than that is answered by polling, see {@link PollServlet}.
+	 */
+	private static final String CONNECTED_COMMENT = ": connected" + " ".repeat(2048) + "\n\n";
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		HttpSession session = request.getSession(false);
@@ -116,7 +123,7 @@ public class SSEServlet extends HttpServlet {
 
 		try {
 			PrintWriter writer = response.getWriter();
-			writer.write(": connected\n\n");
+			writer.write(CONNECTED_COMMENT);
 			writer.flush();
 		} catch (IOException ex) {
 			Logger.warn("Failed to write SSE connection comment.", ex, SSEServlet.class);

@@ -108,6 +108,19 @@ import com.top_logic.util.TopLogicServlet;
 public class ReactServlet extends TopLogicServlet {
 
 	/**
+	 * Header of a command's answer naming the number of the last event the server has written for
+	 * the window, the command's own events included.
+	 *
+	 * <p>
+	 * A proxy that forwards the event stream only in blocks of some kilobytes lets its start through
+	 * and holds back each small event that follows. The client compares the number with the last
+	 * event its stream brought and changes to polling when the stream stays behind, see
+	 * {@link SSEUpdateQueue#poll(jakarta.servlet.AsyncContext, long, boolean)}.
+	 * </p>
+	 */
+	public static final String LAST_EVENT_HEADER = "X-TL-Last-Event";
+
+	/**
 	 * Machine-readable error code signaling that the server-side UI state for the requesting page
 	 * no longer exists: the request has no session, or the session does not know the page's
 	 * window (e.g. the session was replaced underneath the open page by a login or logout, or the
@@ -678,14 +691,15 @@ public class ReactServlet extends TopLogicServlet {
 			// from this command before the interaction delivers its updates.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
-			if (result.isSuccess()) {
-				sendSuccess(response);
-			} else {
+			if (!result.isSuccess()) {
 				// Show error in snackbar instead of returning HTTP 500.
 				CommandErrors.show(errorSink(control), result);
-				sendSuccess(response);
 			}
 		}
+		// Answered once the interaction has delivered its events, so that the answer can name the
+		// last of them: the client checks that its stream brings them (see LAST_EVENT_HEADER).
+		response.setHeader(LAST_EVENT_HEADER, Long.toString(queue.lastSeq()));
+		sendSuccess(response);
 	}
 
 	/**

@@ -11,7 +11,8 @@ import { React } from 'tl-react-bridge';
  * - ArrowUp / ArrowDown: the item in the row above / below, nearest by its horizontal center,
  *   determined from the rendered positions of the items - so the keys follow a wrapping row or a
  *   grid as it is laid out at the moment. In a container whose items all stand in one row, they
- *   move to the previous / next item like ArrowLeft / ArrowRight.
+ *   move to the previous / next item like ArrowLeft / ArrowRight. In a {@link RovingFocusOptions.linear
+ *   linear} container they always do, whatever the layout.
  * - Home / End: the first / last item.
  *
  * Only a key pressed on an item itself moves the focus; a key pressed in an element inside an item
@@ -26,6 +27,15 @@ export interface RovingFocus {
 
   /** Focus handler of the container, tracking the item that has the focus. */
   onFocus(event: React.FocusEvent): void;
+}
+
+/** Options of {@link useRovingFocus}. */
+export interface RovingFocusOptions {
+  /**
+   * Whether the items form one sequence, whatever their layout - e.g. the events of a day, placed by
+   * their time: ArrowUp / ArrowDown move to the previous / next item like ArrowLeft / ArrowRight.
+   */
+  linear?: boolean;
 }
 
 /** Distance in pixels below which two item edges count as one row. */
@@ -44,13 +54,17 @@ const ROW_TOLERANCE_PX = 1;
  * @param preferred
  *        The position of the item in the tab order while none was focused, e.g. the selected one;
  *        `-1` for the first. A change of it moves the tab stop to it.
+ * @param options
+ *        See {@link RovingFocusOptions}.
  */
 export function useRovingFocus(
   containerRef: React.RefObject<HTMLElement | null>,
   itemSelector: string,
   count: number,
   preferred: number,
+  options: RovingFocusOptions = {},
 ): RovingFocus {
+  const linear = options.linear === true;
   const [focused, setFocused] = React.useState<number>(-1);
 
   React.useEffect(() => {
@@ -90,10 +104,10 @@ export function useRovingFocus(
         next = current + 1;
         break;
       case 'ArrowUp':
-        next = verticalNeighbor(all, current, -1);
+        next = linear ? current - 1 : verticalNeighbor(all, current, -1);
         break;
       case 'ArrowDown':
-        next = verticalNeighbor(all, current, 1);
+        next = linear ? current + 1 : verticalNeighbor(all, current, 1);
         break;
       case 'Home':
         next = 0;
@@ -109,7 +123,7 @@ export function useRovingFocus(
       all[next].focus();
       setFocused(next);
     }
-  }, [items]);
+  }, [items, linear]);
 
   const tabIndexOf = React.useCallback((index: number) => (index === tabStop ? 0 : -1), [tabStop]);
 

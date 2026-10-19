@@ -1,8 +1,7 @@
-import { React, useTLState, useTLCommand, TLChild, FillBarrier, useFill, rootClassName, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, createPortal, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, FillBarrier, useFill, rootClassName, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, createPortal, ATTR_LONG_PRESS, LONG_PRESS_EVENT, isInteractiveTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone } from 'tl-react-bridge';
-import { isInteractiveTarget } from './interactive';
-import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
-import type { DropVerdict } from './drop-hint';
+import { placeDropHint, NO_DRAG_IMAGE } from './DropHint';
+import type { DropVerdict } from './DropHint';
 
 /** The command selecting a card (ReactKanbanBoardControl.CMD_SELECT_CARD). */
 const CMD_SELECT_CARD = 'selectCard';
@@ -180,7 +179,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   const handleCardDragStart = React.useCallback((card: CardDescriptor, event: React.DragEvent) => {
-    if (isInteractiveTarget(event)) {
+    if (isInteractiveTarget(event.target)) {
       // A drag begun on an input inside the card belongs to that input.
       event.preventDefault();
       return;
@@ -360,13 +359,13 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
                       onDragStart={draggable ? (event) => handleCardDragStart(card, event) : undefined}
                       onDragEnd={draggable ? () => setDropState(null) : undefined}
                       onMouseDown={event => {
-                        if (event.shiftKey && !isInteractiveTarget(event)) {
+                        if (event.shiftKey && !isInteractiveTarget(event.target)) {
                           // A Shift-click extends the selection, not a text selection.
                           event.preventDefault();
                         }
                       }}
                       onClick={event => {
-                        if (!isInteractiveTarget(event)) {
+                        if (!isInteractiveTarget(event.target)) {
                           select(card.key, event.ctrlKey || event.metaKey, event.shiftKey);
                         }
                       }}

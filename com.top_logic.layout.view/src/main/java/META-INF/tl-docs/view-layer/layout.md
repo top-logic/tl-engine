@@ -199,7 +199,7 @@ The `<card>` content is instantiated per object with the object on `element-chan
 
 With `on-reorder`, the client draws an insertion line before or after the card under the pointer, or at the end of the column; without it, a drop is made on the column as a whole.
 
-The shared server half of the drop protocol (wire names, resolving the dragged objects, probe verdicts, recording) is `com.top_logic.layout.react.control.dnd.DropSupport`, used by `TableViewControl` and `ReactKanbanBoardControl` alike; the refusal hint of both clients is `react-src/controls/drop-hint.ts`.
+The shared server half of the drop protocol (wire names, resolving the dragged objects, probe verdicts, recording) is `com.top_logic.layout.react.control.dnd.DropSupport`, used by `TableViewControl` and `ReactKanbanBoardControl` alike; the refusal hint of both clients is `react-src/controls/DropHint.tsx`.
 
 The demo is `com.top_logic.demo.react`'s `WEB-INF/views/board.view.xml` (nav item "Board"): dragging a ticket to another column sets its status, a closed ticket cannot be dropped on "Open", and `on-reorder` numbers the tickets in the `order` attribute.
 

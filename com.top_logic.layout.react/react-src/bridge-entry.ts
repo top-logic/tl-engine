@@ -71,7 +71,7 @@ export type { OptionDescriptor } from './bridge/option-values';
 export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
-export { INTERACTIVE_SELECTOR, isInteractiveWithin } from './bridge/interactive';
+export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget } from './bridge/interactive';
 export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
@@ -104,7 +104,9 @@ export { useImageSrc } from './bridge/image-source';
 export { useUpload } from './bridge/upload';
 export type { UploadState, UploadPart } from './bridge/upload';
 export { downloadBlob } from './bridge/download-blob';
-export { avatarInitials, avatarCategory } from './bridge/avatar';
+export { avatarInitials } from './bridge/avatar';
+export { categoryOf } from './bridge/category';
+export { textOn } from './bridge/text-on';
 // The state contract of the replaceable components, generated from state.proto: one message per
 // component (e.g. ButtonStateJson for TLButton), read with useTLState<Partial<ButtonStateJson>>().
 export type {

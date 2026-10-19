@@ -1,6 +1,5 @@
-import { React, useTLState, useTLCommand, useI18N, TLChild, FillBarrier, rootClassName, usePart, ICON_CLOSE } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild, FillBarrier, rootClassName, usePart, ICON_CLOSE, isInteractiveTarget } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { isInteractiveTarget } from './interactive';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
 
@@ -287,7 +286,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
    */
   const onTileClick = useCallback((e: React.MouseEvent<HTMLDivElement>, tile: TileDescriptor) => {
     const action = tile.action;
-    if (!action || editMode || action.disabled || isInteractiveTarget(e)) return;
+    if (!action || editMode || action.disabled || isInteractiveTarget(e.target)) return;
     activateTile(tile.id);
   }, [editMode, activateTile]);
 

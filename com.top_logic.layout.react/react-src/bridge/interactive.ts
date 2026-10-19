@@ -19,3 +19,34 @@ export function isInteractiveWithin(target: EventTarget | null, surface: Element
   const hit = target instanceof Element ? target.closest(INTERACTIVE_SELECTOR) : null;
   return hit !== null && hit !== surface && surface.contains(hit);
 }
+
+/**
+ * Whether the given target lies on an interactive element (see {@link INTERACTIVE_SELECTOR}), the
+ * target itself counted. A gesture of the surrounding element must leave such a target alone:
+ * neither steal its focus, nor suppress its default mouse handling (e.g. double-click word selection
+ * in a text input), nor read the click as one on the surface around it.
+ *
+ * Unlike {@link isInteractiveWithin}, every interactive ancestor counts - also the surface itself,
+ * where it carries an interactive role (an option, a button).
+ */
+export function isInteractiveTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(INTERACTIVE_SELECTOR) !== null;
+}
+
+/**
+ * Whether the given target lies on an interactive element the user can operate: the nearest
+ * {@link INTERACTIVE_SELECTOR interactive} element around the target is neither disabled nor
+ * read-only (`:disabled`, `[readonly]`, `aria-disabled="true"`, `aria-readonly="true"`).
+ *
+ * A click on an element that cannot be operated - a read-only checkbox displaying a value, for
+ * one - does nothing for that element, so a surrounding element may read it as a click on itself,
+ * e.g. a table row selecting itself.
+ */
+export function isOperableTarget(target: EventTarget | null): boolean {
+  const interactive = target instanceof Element ? target.closest(INTERACTIVE_SELECTOR) : null;
+  return interactive !== null && !interactive.matches(INOPERABLE_SELECTOR);
+}
+
+/** Interactive elements that currently accept no input. */
+const INOPERABLE_SELECTOR =
+  ':disabled, [readonly], [aria-disabled="true"], [aria-readonly="true"]';

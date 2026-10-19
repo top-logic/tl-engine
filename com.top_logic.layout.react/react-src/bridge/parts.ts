@@ -155,25 +155,37 @@ export interface ButtonPartProps extends PartAttributes {
 }
 
 /**
- * The props of the part {@link PartProps.MenuTrigger}: the button that opens a menu.
+ * The kind of surface a {@link MenuTriggerPartProps menu trigger} opens, the value of its
+ * `aria-haspopup`: a menu, a list of options to choose from (`listbox`), a tree, a grid, or a
+ * dialog-like surface of arbitrary content (`dialog`), e.g. a popover.
+ */
+export type MenuTriggerPopup = 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog';
+
+/**
+ * The props of the part {@link PartProps.MenuTrigger}: the button that opens a menu or another
+ * surface anchored to it.
  *
  * <p>Its content is, in this order of precedence: the given {@link children}; the {@link icon}
  * alone, with the label as accessible name and tooltip; or the {@link label} followed by a chevron
- * pointing at the menu. Every implementation marks the trigger as opening a menu
- * (`aria-haspopup`) and whether that menu is open ({@link expanded}, `aria-expanded`).</p>
+ * pointing at the surface. Every implementation marks the trigger with the kind of surface it opens
+ * ({@link haspopup}, `aria-haspopup`) and whether that surface is open ({@link expanded},
+ * `aria-expanded`).</p>
  */
 export interface MenuTriggerPartProps extends PartAttributes {
   /** The ID of the drawn element. */
   id?: string;
 
-  /** Receives the drawn element, the anchor of the menu and the inside of its outside press. */
+  /** Receives the drawn element, the anchor of the surface and the inside of its outside press. */
   ref?: PartRef<HTMLButtonElement>;
 
   /** How the trigger is drawn, like the buttons beside it. */
   appearance: ButtonAppearance;
 
-  /** Whether the menu of the trigger is open. */
+  /** Whether the surface of the trigger is open. */
   expanded: boolean;
+
+  /** The kind of surface the trigger opens, `menu` if not given. */
+  haspopup?: MenuTriggerPopup;
 
   /** The label; the accessible name of an icon-only trigger. */
   label?: string;
@@ -817,7 +829,7 @@ export interface PartProps {
   /** A button, or an entry of a menu: {@link ButtonPartProps}. */
   Button: ButtonPartProps;
 
-  /** The button that opens a menu: {@link MenuTriggerPartProps}. */
+  /** The button that opens a menu or another anchored surface: {@link MenuTriggerPartProps}. */
   MenuTrigger: MenuTriggerPartProps;
 
   /** The button that shows or hides content: {@link DisclosureTogglePartProps}. */

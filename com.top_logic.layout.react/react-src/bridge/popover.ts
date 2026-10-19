@@ -2,11 +2,14 @@
  * The one way a transient surface - a menu, a select popup, a toolbar overflow - is placed: at an
  * anchor element or a viewport point, flipped when it does not fit, shifted to stay inside the
  * viewport, following scroll and resize while open. Surface, layer and shadow are the design
- * system's (tl-popover); this hook only yields the position. Closing is the caller's.
+ * system's (tl-popover); this hook only yields the position, and - for a surface opened by hovering
+ * its anchor - the moments the pointer asks for it to open and close. Opening and closing are the
+ * caller's.
  */
 import React from 'react';
-import { useFloating, autoUpdate, offset, flip, shift } from '@floating-ui/react';
+import { useFloating, useHover, safePolygon, autoUpdate, offset, flip, shift } from '@floating-ui/react';
 import { tokenPx } from './token-px';
+import { HOVER_DELAY_MS, CLOSE_DELAY_MS_INTERACTIVE } from './tooltip-host';
 
 /**
  * Where a surface stands: at an element, or at a viewport point. A point with a `height` is a vertical
@@ -15,15 +18,44 @@ import { tokenPx } from './token-px';
  */
 export type PopoverAnchor = Element | { x: number; y: number; height?: number };
 
+/**
+ * The side of the anchor a surface stands on, and its alignment along that side: `start` and `end`
+ * align the surface with the start or end edge of the anchor, no alignment centers it. A surface
+ * that does not fit on its side flips to the opposite one and shifts along the side to stay inside
+ * the viewport.
+ */
+export type PopoverPlacement =
+  | 'top' | 'top-start' | 'top-end'
+  | 'bottom' | 'bottom-start' | 'bottom-end'
+  | 'left' | 'left-start' | 'left-end'
+  | 'right' | 'right-start' | 'right-end';
+
+/**
+ * A surface opened by hovering its anchor element.
+ *
+ * <p>The pointer resting on the anchor asks for the surface to open, after the delay a tooltip
+ * waits. While the surface is open, the pointer may travel from the anchor into the surface along
+ * the triangle between the pointer and the near edge of the surface without the surface closing;
+ * the pointer leaving both asks for it to close, after the delay an interactive tooltip waits.</p>
+ */
+export interface PopoverHover {
+  /** Asks for the surface to open ({@code true}) or close ({@code false}). */
+  onOpenChange: (open: boolean) => void;
+}
+
 export interface PopoverOptions {
   open: boolean;
   anchor: PopoverAnchor | null;
-  placement?: 'bottom-start' | 'bottom-end' | 'top-start' | 'right-start';
+  /** Where the surface stands at its anchor, `bottom-start` if not given. */
+  placement?: PopoverPlacement;
+  /** Opens and closes the surface on hovering its anchor, which must then be an element. */
+  hover?: PopoverHover;
 }
 
 /**
- * The gap between anchor and surface: --tl-space-xs as computed on the root element, converted to
- * pixels. Read once per opening (see usePopover), not on every render.
+ * The gap between anchor and surface, on whichever side of the anchor the surface stands:
+ * --tl-space-xs as computed on the root element, converted to pixels. Read once per opening (see
+ * usePopover), not on every render.
  */
 function gapPx(): number {
   return tokenPx(document.documentElement, '--tl-space-xs', 8);
@@ -39,16 +71,30 @@ export function popoverMiddleware(gap: number) {
 }
 
 export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElement | null) => void; style: React.CSSProperties } {
-  const { open, anchor, placement = 'bottom-start' } = opts;
+  const { open, anchor, placement = 'bottom-start', hover } = opts;
   // Two getComputedStyle calls per render would run per keystroke in a select: read on opening only.
   const gap = React.useMemo(gapPx, [open]);
-  const { refs, floatingStyles } = useFloating({
+  const hoverRef = React.useRef(hover);
+  hoverRef.current = hover;
+  const { refs, floatingStyles, context } = useFloating({
     open,
+    onOpenChange: next => hoverRef.current?.onOpenChange(next),
     placement,
     strategy: 'fixed',
     middleware: popoverMiddleware(gap),
     whileElementsMounted: open ? autoUpdate : undefined,
   });
+  useHover(context, {
+    enabled: hover != null,
+    delay: { open: HOVER_DELAY_MS, close: CLOSE_DELAY_MS_INTERACTIVE },
+    handleClose: safePolygon(),
+  });
+  // The hover listeners go to the element floating-ui knows as the reference; the position is set
+  // separately below, as for every anchor.
+  const hoverAnchor = hover != null && anchor instanceof Element ? anchor : null;
+  React.useLayoutEffect(() => {
+    if (hoverAnchor) refs.setReference(hoverAnchor);
+  }, [hoverAnchor, refs]);
   // floating-ui keeps the position reference as state: set it on every change, element or point,
   // or a menu once opened at a point stays there when it is next opened at an element.
   const x = anchor && !(anchor instanceof Element) ? anchor.x : null;

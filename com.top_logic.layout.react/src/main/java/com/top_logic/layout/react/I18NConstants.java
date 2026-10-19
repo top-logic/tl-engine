@@ -440,6 +440,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.dashboard.tile")
 	public static ResKey JS_DASHBOARD_TILE;
 
+	// -- Kanban board client-side i18n keys --
+
+	/**
+	 * @en Moved to {0}, position {1} of {2}.
+	 */
+	@CustomKey("js.kanbanBoard.moved")
+	public static ResKey JS_KANBAN_BOARD_MOVED;
+
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 */

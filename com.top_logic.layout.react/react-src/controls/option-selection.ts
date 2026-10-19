@@ -16,7 +16,7 @@ import { React, isInteractiveWithin, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 't
  */
 
 /** Attribute of an option holding the key of the object it displays. */
-const ATTR_OPTION_KEY = 'data-tl-item';
+export const ATTR_OPTION_KEY = 'data-tl-item';
 
 /** Attributes and handlers an option spreads onto its element. */
 export interface OptionProps {

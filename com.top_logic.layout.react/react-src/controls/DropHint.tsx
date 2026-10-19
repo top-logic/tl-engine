@@ -19,7 +19,7 @@ export interface HintAnchor {
  * Why the target under the running drag refuses it: a tl-popover at the pointer, below the drag image
  * or, where the viewport has no room there, above it - not on it where either side has room, since the browser
  * draws the drag image over everything (a native tooltip is not shown while a drag runs). A hint that fits
- * neither side is shifted along the cross axis into the viewport and may then overlap the drag image. The target (table, tree)
+ * neither side is shifted along the cross axis into the viewport and may then overlap the drag image. The target (table, tree, Kanban board)
  * moves it through `moveRef` on every dragover, so only the hint renders while the pointer moves, not
  * the target.
  */
@@ -50,31 +50,6 @@ export interface DropVerdict {
   marker?: TLDropMarker;
   /** Key of the item the marker is drawn at; absent for a marker of the control as a whole. */
   markerKey?: string;
-}
-
-/** Distance in pixels between the hint on a refused drop target and the pointer or drag image. */
-const DROP_HINT_GAP = 8;
-
-/**
- * Places the hint on a refused drop target right of the pointer at viewport position (`x`, `y`)
- * and below the drag image, or on the other side where the viewport has no room for it there.
- *
- * @param image Vertical extent of the drag image relative to the pointer, see
- *        {@link TLRunningDrag.image}.
- */
-export function placeDropHint(hint: HTMLElement, x: number, y: number, image: TLRunningDrag['image']): void {
-  const width = hint.offsetWidth;
-  const height = hint.offsetHeight;
-  let left = x + DROP_HINT_GAP;
-  if (left + width > window.innerWidth) {
-    left = x - DROP_HINT_GAP - width;
-  }
-  let top = y + image.bottom + DROP_HINT_GAP;
-  if (top + height > window.innerHeight) {
-    top = y + image.top - DROP_HINT_GAP - height;
-  }
-  hint.style.left = Math.max(0, left) + 'px';
-  hint.style.top = Math.max(0, top) + 'px';
 }
 
 /** Drag image extent for a drag of unknown origin: none. */

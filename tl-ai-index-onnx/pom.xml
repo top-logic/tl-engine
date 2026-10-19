@@ -37,7 +37,7 @@
 		<dependency>
 			<groupId>com.microsoft.onnxruntime</groupId>
 			<artifactId>onnxruntime</artifactId>
-			<version>1.30.0</version>
+			<version>1.31.0</version>
 		</dependency>
 		<dependency>
 			<groupId>ai.djl.huggingface</groupId>

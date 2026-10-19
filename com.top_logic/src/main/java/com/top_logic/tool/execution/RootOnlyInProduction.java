@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.top_logic.base.operation.OperationMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link ExecutabilityRule} for a developer command that is reserved for administrators in a
@@ -36,10 +37,19 @@ public class RootOnlyInProduction implements ExecutabilityRule {
 
 	@Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-		if (IDEOnly.effectiveMode() != OperationMode.PRODUCTION) {
-			return ExecutableState.EXECUTABLE;
-		}
-		return RootOnlyExecutabilityRule.INSTANCE.isExecutable(aComponent, model, someValues);
+		return isAllowed() ? ExecutableState.EXECUTABLE : ExecutableState.NOT_EXEC_HIDDEN;
+	}
+
+	/**
+	 * Whether the current user may execute a command guarded by this rule.
+	 *
+	 * <p>
+	 * Every user outside {@link OperationMode#PRODUCTION production} mode, only administrators in
+	 * production mode.
+	 * </p>
+	 */
+	public static boolean isAllowed() {
+		return IDEOnly.effectiveMode() != OperationMode.PRODUCTION || TLContext.isAdmin();
 	}
 
 }

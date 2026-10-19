@@ -31,7 +31,7 @@ export const DropHint: React.FC<{
   }, [moveRef]);
   const { setFloating, style } = usePopover({ open: true, anchor: at, placement: 'bottom-start' });
   return createPortal(
-    <div ref={setFloating} className="tl-popover tl-table__hint tl-type-body" role="status" style={style}>
+    <div ref={setFloating} className="tl-popover tl-drop-hint tl-type-body" role="status" style={style}>
       {reason}
     </div>,
     document.body);

@@ -412,6 +412,82 @@
   display: flex;
 }
 
+/* --- board/board.css --- */
+/* Board — Spec 5c §5 (V23, V5, V6, V29), Vertrag board.contract.md. Leser ist TLKanbanBoard.
+   Spalten nebeneinander, in jeder eine Auswahlliste von Karten. Eine Karte ist ein tl-item mit role="option": Zeigen
+   (Hof), Ring und Haken der Auswahl zeichnet layout.css, den Fokusring base.css. Einfügelinie, Ablegen in die
+   Spalte, Ablehnung und die gezogene Karte zeichnet allein drag.css über data-tl-state; der Grund einer Ablehnung
+   ist tl-drop-hint (drag.css). Der Zähler ist tl-badge. Die Schrift setzen die Typo-Klassen am Element. */
+
+.tl-board {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--tl-space-md);
+  padding: var(--tl-space-sm);
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 0;
+}
+.tl-board[hidden] { display: none; }
+
+/* Eine Spalte wächst von size-12 bis size-13; mehr Spalten, als passen, rollen waagerecht. */
+.tl-board__column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 var(--tl-size-12);
+  min-width: var(--tl-size-12);
+  max-width: var(--tl-size-13);
+  min-height: 0;
+  background: var(--tl-surface-layer-nested);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+}
+.tl-board__column[hidden] { display: none; }
+
+.tl-board__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tl-space-xs);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  color: var(--tl-text-primary);
+}
+.tl-board__header[hidden] { display: none; }
+
+.tl-board__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Karten-Liste rollt senkrecht; ihr Innenabstand hält den Fokusring der Karten in der Liste. */
+.tl-board__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-sm);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--tl-space-sm);
+  overflow-y: auto;
+}
+.tl-board__cards[hidden] { display: none; }
+
+/* Die Fläche der Karte; Ecke, Zeiger und Lage (position) gibt tl-item[role="option"]. */
+.tl-board__card {
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  background: var(--tl-surface-layer);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Eine Karte, die sich ziehen lässt, zeigt das Greifen; das Attribut role hebt die Regel über den Zeiger von
+   tl-item (layout.css steht im Bundle danach). */
+.tl-board__card[role="option"][draggable="true"] {
+  cursor: grab;
+}
+
 /* --- bottom-bar/bottom-bar.css --- */
 /* BottomBar — Spec 2026-10-16 Welle 4b §5. Die Navigation am unteren Rand kleiner Bildschirme: Einträge mit Icon über
    Label. Die aktuelle Seite (aria-current="page") trägt die Fläche der Auswahl hinter dem Icon; das Label wird
@@ -1942,6 +2018,56 @@
   max-width: 100%;
 }
 
+/* --- dashboard/dashboard.css --- */
+/* Dashboard — Spec 5c §6 (V5, V6, V12, V20), Vertrag dashboard.contract.md. Leser ist TLDashboard.
+   Kacheln in einem Raster, das die Engine packt (Spalten, Zeilen und Lage der Kacheln inline). Eine Kachel ist eine
+   Karte (tl-card: Fläche, Rand, Ecke, kein Schatten) und ein Overlay (tl-overlay tl-overlay--fill): der Inhalt ist
+   die Basis, im Bearbeiten liegen darüber die Abdeckung und der Ausblenden-Knopf (tl-overlay__action). Die Aktion
+   einer Kachel ist ein verborgener Knopf (tl-visually-hidden); hat er den Tastaturfokus, trägt die Kachel den Ring
+   (base.css). Bearbeiten ist data-tl-state~="edit" an der Wurzel; Einfügemarke und gezogene Kachel zeichnet drag.css
+   (das Raster trägt data-tl-axis="horizontal"). Den Innenabstand der Wurzel gibt tl-inset, den Abstand der Kacheln
+   liest das TSX aus --tl-space-md (useTokenPx) für Packung und Raster zugleich. */
+
+.tl-dashboard {
+  min-width: 0;
+}
+
+.tl-dashboard__grid {
+  inline-size: 100%;
+}
+
+/* Die Kachel hat eine feste Höhe (Zeilen des Rasters); was nicht passt, rollt. */
+.tl-dashboard__tile {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Die ganze Kachel nimmt den Klick der Aktion; eine deaktivierte Aktion lässt die Kachel, wie sie ist. */
+.tl-dashboard__tile:has(> .tl-dashboard__action:not(:disabled, [aria-disabled="true"])) {
+  cursor: pointer;
+}
+
+.tl-dashboard:not([data-tl-state~="edit"]) .tl-dashboard__tile:has(> .tl-dashboard__action:not(:disabled, [aria-disabled="true"])):hover {
+  border-color: var(--tl-border-interactive);
+}
+
+/* Der Name und die Tastatur-Bedienung der Kachel: außer Sicht (tl-visually-hidden), mit Abstand space-sm zur
+   Kachelkante, damit sein Ring nicht an der rollenden Kachel endet. Sichtbar ist der Ring der Kachel. */
+.tl-dashboard__action {
+  position: absolute;
+  inset-block-start: var(--tl-space-sm);
+  inset-inline-start: var(--tl-space-sm);
+}
+
+/* Im Bearbeiten deckt sie die Kachel (in tl-overlay__layer--fill) und nimmt den Zeiger: ein Klick erreicht den
+   Inhalt nicht, die Kachel lässt sich ziehen. Sie steht im DOM vor der Ebene mit dem Ausblenden-Knopf, der so
+   oben liegt — ohne z-index. */
+.tl-dashboard__cover {
+  flex: 1 1 auto;
+  cursor: move;
+}
+
 /* --- dialog/dialog.css --- */
 /* Dialog — Spec 2026-10-13 Welle 4a §3, docs/skalen.md „Scrim und Ebenen“, Konsolidierung Q1/Q2.
    Ein Paketbaustein, zwei Controls: TLDialog rendert den Scrim (.tl-dialog), TLWindow die Fläche darin
@@ -2153,6 +2279,15 @@
    hier einmal statt in jedem Block. */
 [data-tl-state~="dragging"] {
   opacity: 0.4;
+}
+
+/* Warum das Ziel unter dem Zeiger ablehnt (Spec 5c §8): ein tl-popover (Lage aus bridge/popover.ts) an Tabelle, Baum
+   und Board, Text und Rand in Fehlerfarbe; der Zeiger geht hindurch. Vorher tl-table__hint. Am tl-popover, weil
+   popover.css im Bundle nach drag.css steht und seinen Rand sonst über diesen legte. */
+.tl-popover.tl-drop-hint {
+  border-color: var(--tl-status-error-border);
+  color: var(--tl-status-error-text);
+  pointer-events: none;
 }
 
 /* --- drawer/drawer.css --- */
@@ -5006,6 +5141,14 @@ button.tl-swatch:not(:disabled):hover {
   padding: 0;
 }
 
+/* Eine Spalte mit einem Befehl je Zeile (RowCommandColumn): der Knopf ist ghost und klein und trägt seinen Rahmen
+   selbst, die Zelle keinen Innenabstand, mittig. Die Java-Klasse landet an Kopf- und Datenzelle. */
+.tl-table__cell--command,
+.tl-table__header-cell.tl-table__cell--command {
+  padding: 0;
+  justify-content: center;
+}
+
 /* Lage, kein Zustand der Bedienung: fixierte und angeheftete Zellen haften (Versatz inline), liegen mit
    layer-raised über den scrollenden und erben die Fläche ihrer Zeile. Die Kante zur scrollenden Fläche
    ist eine Linie border-emphasis, kein Schatten. */
@@ -5103,6 +5246,38 @@ button.tl-swatch:not(:disabled):hover {
 
 .tl-table__cell .tl-field-value--multiline {
   flex-direction: row;
+  white-space: nowrap;
+}
+
+/* Eine Liste von Werten (tl-value-list, lesend ein span) ist ein Lesewert wie ein Text: sie füllt die Zelle und endet
+   mit Ellipse, wo die Spalte endet. :where hält die Spezifität bei (0,2,0), [hidden] unten gewinnt. Die bearbeitende
+   Liste (div, role="group") bleibt eine Spalte von Zeilen. */
+.tl-table__cell > .tl-value-list:where(span) {
+  display: block;
+  inline-size: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* In der Zelle liest sich die Variante untereinander als die eine Zeile, die die Zeile hoch ist: Einträge und Trenner
+   stehen im Fluss. */
+.tl-table__cell .tl-value-list--block > .tl-value-list__item,
+.tl-table__cell .tl-value-list--block > .tl-select__separator {
+  display: inline;
+}
+
+/* Ein Wert mit Zusatzknopf daneben (der Sprachknopf eines mehrsprachigen Texts): eine Reihe in Spaltenbreite, der Wert
+   nimmt den Platz (tl-stack--grow-first) und endet mit Ellipse. */
+.tl-table__cell > .tl-stack--row {
+  inline-size: 100%;
+  min-width: 0;
+}
+
+.tl-table__cell > .tl-stack--grow-first.tl-stack--row > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -5228,16 +5403,6 @@ button.tl-swatch:not(:disabled):hover {
 .tl-table__body > [role="row"]:has(> .tl-status) {
   position: sticky;
   inset-inline-start: 0;
-}
-
-/* --- Ablehnung beim Ziehen ------------------------------------------------------- */
-
-/* Warum das Ziel unter dem Zeiger ablehnt: ein tl-popover (Lage aus bridge/popover.ts), Text und Rand
-   in Fehlerfarbe; der Zeiger geht hindurch. */
-.tl-table__hint {
-  border-color: var(--tl-status-error-border);
-  color: var(--tl-status-error-text);
-  pointer-events: none;
 }
 
 /* --- tabs/tabs.css --- */
@@ -5623,6 +5788,59 @@ button.tl-swatch:not(:disabled):hover {
   white-space: nowrap;
 }
 
+/* --- value-list/value-list.css --- */
+/* Werteliste — Spec 5c §7 (V28), Vertrag value-list.contract.md. Leser ist TLValueList.
+   Die Werte eines mehrwertigen Felds. Lesend (span) sind sie ein Text in einer Zeile, getrennt durch „, “
+   (tl-select__separator, ausgeschrieben, damit kopiert wird, was zu sehen ist); die Variante --block stellt sie
+   untereinander, dann trennt der Zeilenumbruch und der Trenner fällt aus dem Bild. Bearbeitend (div, role="group")
+   steht jeder Wert in einer Zeile mit Griff und Entfernen-Knopf (Part Button), darunter der Hinzufügen-Knopf.
+   Gezogen, Einfügemarke: drag.css über data-tl-state an der Zeile. In der Tabellenzelle füllt table.css. */
+
+.tl-value-list {
+  min-width: 0;
+  color: var(--tl-text-primary);
+}
+
+.tl-value-list > .tl-select__separator {
+  color: var(--tl-text-secondary);
+  white-space: pre;
+}
+
+.tl-value-list--block {
+  display: flex;
+  flex-direction: column;
+}
+
+.tl-value-list--block > .tl-select__separator {
+  display: none;
+}
+
+/* Bearbeitend: die Zeilen und der Hinzufügen-Knopf folgen untereinander. */
+.tl-value-list[role="group"] {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: var(--tl-space-2xs);
+  inline-size: 100%;
+}
+
+.tl-value-list[hidden] { display: none; }
+
+.tl-value-list__row {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  inline-size: 100%;
+  min-width: 0;
+}
+.tl-value-list__row[hidden] { display: none; }
+
+.tl-value-list__row > .tl-value-list__item {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* --- wizard/wizard.css --- */
 /* Wizard — Spec 2026-10-16 Welle 4c §8 (Q19: eigenes Muster, auf Tokens). Oben, was zeigt, wo man ist — Zähler,
    Fortschritt, Schrittliste —, darunter der Schritt. Die Schrittliste ist der Block tl-steps (steps.css, Spec 5b §7);
@@ -5705,4 +5923,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:f51afb9c980eaae809694e8b5a8a966610d094e00f05f0d2a7c0e9b26dfda845 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:0848a928f0b6a72967ef781adb0e85bfac126a9587975004717ea8fc9592f706 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

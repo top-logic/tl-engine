@@ -154,8 +154,8 @@
 					</title>
 					<!--
 						The assignee's name is shown as a column of the ticket: the embedding names the
-						reference, the nested declaration resolves against the contributor type, and the
-						header reads "Assignee / Name". The remaining attributes of the contributor are
+						reference, the nested declaration resolves against the person contact type, and the
+						header reads "Assignee / Name". The remaining attributes of the contact are
 						offered in the column selection, hidden until the user picks one. The second
 						embedding walks two references, the last of them holding several objects, so its
 						cells collect the titles of all tickets of the ticket's milestone. The computed
@@ -210,7 +210,7 @@
 					</title>
 					<!--
 						Which columns there are is decided by the data: one per milestone, each showing how
-						many tickets of the contributor belong to it. The table starts grouped by the
+						many tickets assigned to the contact belong to it. The table starts grouped by the
 						computed initial column, so the sum every milestone column aggregates over the rows
 						of a group is visible in its header row. The column-visible function hides the
 						column of milestone M3 at the start (M1 and M2 are shown); it is offered in the
@@ -218,9 +218,9 @@
 					-->
 					<table
 						group-by="initial"
-						observed-types="tl.demo.projectManagement:Contributor"
+						observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
 						personalization-key="table-columns-dynamic"
-						types="tl.demo.projectManagement:Contributor"
+						types="Contacts:PersonContact"
 					>
 						<columns>
 							<column
@@ -235,7 +235,7 @@
 									<en>Initial</en>
 									<de>Anfangsbuchstabe</de>
 								</label>
-								<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#name`).subString(0, 1)]]></value>
+								<value><![CDATA[c -> $c.get(`Contacts:PersonContact#name`).subString(0, 1)]]></value>
 							</computed-column>
 							<dynamic-columns name="milestones"
 								readonly="true"
@@ -246,17 +246,17 @@
 								<column-name><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
 								<column-label><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
 								<column-visible><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`) != "M3"]]></column-visible>
-								<value><![CDATA[c -> m -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`)
+								<value><![CDATA[c -> m -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`)
 	.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
 	.size()]]></value>
 								<aggregate><![CDATA[rows -> m -> $rows
-	.map(c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`)
+	.map(c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`)
 		.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
 		.size())
 	.sum()]]></aggregate>
 							</dynamic-columns>
 						</columns>
-						<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+						<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
 					</table>
 				</panel>
 			</tab>
@@ -273,16 +273,16 @@
 						<de>Gruppen in deklarierter Reihenfolge</de>
 					</title>
 					<!--
-						The table starts grouped by the computed load column, which classifies a contributor
+						The table starts grouped by the computed load column, which classifies a contact
 						by the number of assigned tickets. Its comparator orders the classes none, few, many -
 						alphabetically they would read few, many, none. The ticket column sums the tickets
 						of a group in its header row.
 					-->
 					<table
 						group-by="load"
-						observed-types="tl.demo.projectManagement:Contributor"
+						observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
 						personalization-key="table-columns-group-order"
-						types="tl.demo.projectManagement:Contributor"
+						types="Contacts:PersonContact"
 					>
 						<columns>
 							<column
@@ -298,7 +298,7 @@
 									<de>Auslastung</de>
 								</label>
 								<value><![CDATA[c -> {
-	count = $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size();
+	count = $c.referers(`tl.demo.projectManagement:Ticket#assignee`).size();
 	switch {
 		$count == 0: "none";
 		$count <= 2: "few";
@@ -319,13 +319,13 @@
 									<en>Tickets</en>
 									<de>Tickets</de>
 								</label>
-								<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size()]]></value>
+								<value><![CDATA[c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`).size()]]></value>
 								<aggregate><![CDATA[rows -> $rows
-	.map(c -> $c.get(`tl.demo.projectManagement:Contributor#assignedTickets`).size())
+	.map(c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`).size())
 	.sum()]]></aggregate>
 							</computed-column>
 						</columns>
-						<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+						<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
 					</table>
 				</panel>
 			</tab>
@@ -342,16 +342,16 @@
 						<de>Bearbeiten einer berechneten Spalte</de>
 					</title>
 					<!--
-						The mail column computes its value from the contributor and writes an edited one back
+						The mail column computes its value from the contact and writes an edited one back
 						through its update function. The control the value is entered with follows from the
 						declared type; the edit is buffered on the row and applied when the form is saved.
 					-->
 					<form input="editAnchor">
 						<table
-							observed-types="tl.demo.projectManagement:Contributor"
+							observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
 							personalization-key="table-columns-editable"
 							row-edit="ALL"
-							types="tl.demo.projectManagement:Contributor"
+							types="Contacts:PersonContact"
 						>
 							<columns>
 								<column
@@ -365,12 +365,12 @@
 										<en>Mail</en>
 										<de>Mail</de>
 									</label>
-									<value><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#email`)]]></value>
-									<update><![CDATA[c -> v -> $c.set(`tl.demo.projectManagement:Contributor#email`, $v)]]></update>
-									<can-update><![CDATA[c -> $c.get(`tl.demo.projectManagement:Contributor#name`) != null]]></can-update>
+									<value><![CDATA[c -> $c.get(`Contacts:PersonContact#email`)]]></value>
+									<update><![CDATA[c -> v -> $c.set(`Contacts:PersonContact#email`, $v)]]></update>
+									<can-update><![CDATA[c -> $c.get(`Contacts:PersonContact#name`) != null]]></can-update>
 								</computed-column>
 							</columns>
-							<rows><![CDATA[all(`tl.demo.projectManagement:Contributor`)]]></rows>
+							<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
 						</table>
 					</form>
 				</panel>

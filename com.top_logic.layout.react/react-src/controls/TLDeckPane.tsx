@@ -20,7 +20,7 @@ const TLDeckPane: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={rootClassName(state, fillClass ? 'tlDeckPane ' + fillClass : 'tlDeckPane')}>
+      <div id={controlId} className={rootClassName(state, 'tl-deck', fillClass)}>
         {!!state.activeChild && <TLChild control={state.activeChild} />}
       </div>
     </FillProvider>

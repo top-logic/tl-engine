@@ -368,7 +368,7 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 
 	/**
 	 * Wraps each child in an element of the given CSS class, carrying the 0-based position of the
-	 * child as the CSS custom property {@code --tl-item-index}.
+	 * child as the CSS custom property {@code --item-index}.
 	 *
 	 * <p>
 	 * A stylesheet composes a per-item value from that position, a staggered entrance animation

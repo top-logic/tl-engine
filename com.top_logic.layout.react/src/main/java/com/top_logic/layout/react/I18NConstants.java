@@ -396,6 +396,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Split panel client-side i18n keys --
+
+	/**
+	 * @en Change the size of the areas
+	 */
+	@CustomKey("js.splitPanel.handle")
+	public static ResKey JS_SPLIT_PANEL_HANDLE;
+
 	// -- Breadcrumb client-side i18n keys --
 
 	/**
@@ -1091,6 +1099,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.snackbar.dismiss")
 	public static ResKey JS_SNACKBAR_DISMISS;
+
+	// -- Wizard client-side i18n keys --
+
+	/**
+	 * @en Steps
+	 */
+	@CustomKey("js.wizard.steps")
+	public static ResKey JS_WIZARD_STEPS;
 
 	// -- Window client-side i18n keys --
 

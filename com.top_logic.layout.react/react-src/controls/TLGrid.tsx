@@ -3,6 +3,16 @@ import type { TLCellProps } from 'tl-react-bridge';
 import { useItems } from './items';
 
 /**
+ * The gap of each step, the same as the rules of tl-grid in the design system read (layout.css); the column template
+ * computes with it. Kept equal to the stylesheet by a test of the package (engine-classes.test.mjs).
+ */
+const GAP_TOKEN: Record<string, string> = {
+  compact: 'var(--tl-space-sm)',
+  default: 'var(--tl-space-md)',
+  loose: 'var(--tl-space-lg)',
+};
+
+/**
  * A CSS Grid container with responsive column support.
  *
  * State:
@@ -35,7 +45,7 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
       // Raise the column minimum to the width a row of maxColumns columns leaves for one of them
       // (the gaps between them taken off the container width), so that auto-fit never places more
       // than maxColumns columns while it still drops columns as the container narrows.
-      const maxColumnsMin = `calc((100% - ${maxColumns - 1} * var(--tlGrid-gap)) / ${maxColumns})`;
+      const maxColumnsMin = `calc((100% - ${maxColumns - 1} * ${GAP_TOKEN[gap] ?? GAP_TOKEN.default}) / ${maxColumns})`;
       style.gridTemplateColumns = `repeat(auto-fit, minmax(max(${cappedMin}, ${maxColumnsMin}), 1fr))`;
     } else {
       style.gridTemplateColumns = `repeat(auto-fit, minmax(${cappedMin}, 1fr))`;
@@ -48,7 +58,7 @@ const TLGrid: React.FC<TLCellProps> = ({ controlId }) => {
     style.maxWidth = maxWidth;
   }
 
-  const className = rootClassName(state, 'tlGrid', `tlGrid--gap-${gap}`, maxWidth && 'tlBounded');
+  const className = rootClassName(state, 'tl-grid', `tl-grid--gap-${gap}`, maxWidth && 'tl-bounded');
 
   return (
     <div id={controlId} {...items.containerProps} className={className} style={style}>

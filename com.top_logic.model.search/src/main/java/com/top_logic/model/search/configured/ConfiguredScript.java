@@ -86,8 +86,18 @@ public class ConfiguredScript extends AbstractConfiguredInstance<ConfiguredScrip
 	}
 
 	private Expr createBaseExpression() {
+		return withParameters(getConfig().getImplementation());
+	}
+
+	/**
+	 * Wraps the given expression into a function of the configured
+	 * {@link ScriptConfiguration#getParameters() parameters}, so that it is executed with the
+	 * arguments of a call in the same way as the {@link ScriptConfiguration#getImplementation()
+	 * implementation}.
+	 */
+	protected Expr withParameters(Expr body) {
 		List<String> names = getConfig().getParameters().stream().map(ScriptParameter::getName).toList();
-		return Define.withVariables(names, getConfig().getImplementation());
+		return Define.withVariables(names, body);
 	}
 
 	@Override

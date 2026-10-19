@@ -248,8 +248,8 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         id={controlId}
         ref={boxRef}
-        className={rootClassName(state, 'tl-media', 'tl-media--document')}
-        style={{ aspectRatio: `${thumbnailWidth} / ${thumbnailHeight}`, overflow: 'hidden' }}
+        className={rootClassName(state, 'tl-media', 'tl-media--document', 'tl-media--preview')}
+        style={{ aspectRatio: `${thumbnailWidth} / ${thumbnailHeight}` }}
       >
         <iframe
           className="tl-media__frame"
@@ -261,18 +261,12 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
           title={t['js.html.document']}
           tabIndex={-1}
           aria-hidden="true"
-          // The page keeps the size it is written for, out of the flow of the box, and is scaled from its top left
-          // corner to the width the box measures. It is looked at rather than used, so a click reaches whatever
-          // carries the preview.
+          // The page keeps the size it is written for and is scaled to the width the box measures; the design system
+          // (tl-media--preview) takes it out of the flow, scales it from its top left corner and lets clicks pass.
           style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            pointerEvents: 'none',
             width: thumbnailWidth + 'px',
             height: thumbnailHeight + 'px',
             transform: `scale(${boxWidth > 0 ? boxWidth / thumbnailWidth : 0})`,
-            transformOrigin: 'top left',
           }}
         />
       </div>

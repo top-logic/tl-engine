@@ -848,18 +848,24 @@ describe('the HTML (TLHtml)', () => {
     }
   });
 
-  it('shows a preview as a tl-media document, laid out at its page size and scaled', async () => {
+  it('shows a preview as a tl-media document preview, laid out at its page size and scaled', async () => {
     vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
     mountAdapter(TLHtml, { display: 'thumbnail', dataRevision: 1, thumbnailWidth: 800, thumbnailHeight: 1000 });
     await settle();
 
     expect(root().classList).toContain('tl-media');
     expect(root().classList).toContain('tl-media--document');
+    expect(root().classList).toContain('tl-media--preview');
     expect(root().style.aspectRatio).toBe('800 / 1000');
+    expect(root().style.overflow).toBe('');
     const frame = root().querySelector<HTMLIFrameElement>(':scope > iframe.tl-media__frame')!;
     expect(frame.style.width).toBe('800px');
     expect(frame.style.height).toBe('1000px');
     expect(frame.style.transform).toMatch(/^scale\(/);
+    // Only data stands inline; how the page lies in the box is the design system's (tl-media--preview).
+    for (const property of ['position', 'top', 'left', 'pointerEvents', 'transformOrigin'] as const) {
+      expect(frame.style[property]).toBe('');
+    }
   });
 
   it('inserts embedded HTML as tl-prose', async () => {

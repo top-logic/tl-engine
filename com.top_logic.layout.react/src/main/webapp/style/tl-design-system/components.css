@@ -2401,12 +2401,34 @@ a.tl-field-value:hover {
   border-radius: var(--tl-radius-sm);
 }
 
+/* Ein Bild ist so breit wie das Bild, solange keine Größe es anders sagt (die gibt der Server inline); nur Bilder
+   tragen eine Einpassung, das Dokument füllt weiter. */
+.tl-media--cover,
+.tl-media--contain {
+  inline-size: fit-content;
+}
+
 .tl-media--cover .tl-media__frame { object-fit: cover; }
 .tl-media--contain .tl-media__frame { object-fit: contain; }
 
 /* Fremdes HTML (Dokument und Vorschau) setzt Weiß voraus: das Papier ist in beiden Modi weiß. */
 .tl-media--document .tl-media__frame {
   background: var(--tl-surface-document);
+}
+
+/* Vorschau eines Dokuments: ein Bild einer Seite. Die Seite behält die Größe, für die sie geschrieben ist (inline),
+   liegt außerhalb des Flusses und wird von links oben verkleinert (transform inline); was übersteht, ist abgeschnitten
+   wie Papier. Sie wird angesehen, nicht benutzt: der Zeiger geht an das, was die Vorschau trägt. */
+.tl-media--preview {
+  overflow: hidden;
+}
+
+.tl-media--preview > .tl-media__frame {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
 }
 
 /* Kamera-Video (Spec 5b §4): gespiegelt ist ein Zustand am Video. */
@@ -2908,6 +2930,17 @@ a.tl-field-value:hover {
 .tl-prose table,
 .tl-prose blockquote {
   margin-block: var(--tl-space-sm) 0;
+}
+
+/* Lange Wörter und Adressen brechen um, statt die Seite seitwärts zu schieben. Ein Abschnitt, zu dem gesprungen wird,
+   hält Abstand zur Oberkante (#29765) — ebenso der Inhalt selbst, wenn er an seinen Anfang gescrollt wird. */
+.tl-prose {
+  overflow-wrap: break-word;
+  scroll-margin-block-start: var(--tl-space-lg);
+}
+
+.tl-prose [id] {
+  scroll-margin-block-start: var(--tl-space-lg);
 }
 
 /* Das erste Kind schließt bündig an den Behälter an. */
@@ -5066,4 +5099,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:eb5977fe3894721bcc5f4365b999d06c8f230c58f9235bbc21e2a8d2167c250f — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:fd75e429cbe64d363558abf8d58505dbc6b6c53dd78da1466f360c613cb4108f — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The popover: a button opening a non-modal surface of arbitrary content beside it.
+	
+	The first section filters with inputs inside a popover. The inputs write the channels
+	"filterText" and "filterPriority" of the view; the text beside the popover reads them, so what is
+	entered in the popover shows outside of it at once. "Apply" closes the popover with
+	<close-popover/>; the content is kept, so reopening shows the entered values again.
+	
+	The second section opens an explanation while the pointer rests on an info icon. The third
+	shows the four sides a surface stands at, the last one a popover inside a dialog.
+-->
+<view>
+	<channels>
+		<channel name="filterText"/>
+		<channel name="filterPriority"/>
+		<derived-channel name="filterSummary"
+			expr="t -> p -> #('Filter: text {0}, priority {1}'@en, 'Filter: Text {0}, Priorität {1}'@de).fill(if($t == null, '-', $t), if($p == null, '-', $p))"
+			inputs="filterText, filterPriority"
+		/>
+	</channels>
+
+	<panel with-inset="true">
+		<title>
+			<en>Popover</en>
+			<de>Popover</de>
+		</title>
+
+		<text variant="title">
+			<label>
+				<en>Inputs in a popover</en>
+				<de>Eingaben in einem Popover</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>The filter inputs live in the popover but write channels of the surrounding view: the text beside the button reads the same channels. Choosing a value in the dropdown keeps the popover open; "Apply", Escape or a click outside closes it, and reopening shows the values entered before.</en>
+				<de>Die Filtereingaben stehen im Popover, schreiben aber Kanäle der umgebenden Ansicht: Der Text neben dem Knopf liest dieselben Kanäle. Die Auswahl eines Werts im Dropdown lässt das Popover offen; "Anwenden", Escape oder ein Klick daneben schließen es, und erneutes Öffnen zeigt die zuvor eingegebenen Werte.</de>
+			</label>
+		</text>
+		<stack
+			align="center"
+			direction="row"
+			gap="default"
+		>
+			<popover
+				image="css:bi bi-funnel"
+				placement="bottom-start"
+			>
+				<label>
+					<en>Filter</en>
+					<de>Filter</de>
+				</label>
+				<trigger>
+					<theme-icon image="css:bi bi-funnel"/>
+					<text>
+						<label>
+							<en>Filter</en>
+							<de>Filter</de>
+						</label>
+					</text>
+				</trigger>
+				<content>
+					<inset>
+						<fields>
+							<value-input
+								type="tl.core:String"
+								value="filterText"
+							>
+								<label>
+									<en>Text</en>
+									<de>Text</de>
+								</label>
+							</value-input>
+							<value-input
+								type="demo.react:Priority"
+								value="filterPriority"
+							>
+								<label>
+									<en>Priority</en>
+									<de>Priorität</de>
+								</label>
+							</value-input>
+						</fields>
+						<button>
+							<action class="com.top_logic.layout.view.command.GenericViewCommand">
+								<label>
+									<en>Apply</en>
+									<de>Anwenden</de>
+								</label>
+								<close-popover/>
+							</action>
+						</button>
+					</inset>
+				</content>
+			</popover>
+			<text
+				input="filterSummary"
+				tone="secondary"
+			/>
+		</stack>
+
+		<text variant="title">
+			<label>
+				<en>Details on hover</en>
+				<de>Details beim Überfahren</de>
+			</label>
+		</text>
+		<stack
+			align="center"
+			direction="row"
+			gap="compact"
+		>
+			<text>
+				<label>
+					<en>Response time</en>
+					<de>Antwortzeit</de>
+				</label>
+			</text>
+			<popover
+				open-on="hover"
+				placement="right"
+			>
+				<label>
+					<en>About the response time</en>
+					<de>Zur Antwortzeit</de>
+				</label>
+				<trigger>
+					<theme-icon image="css:bi bi-info-circle"/>
+				</trigger>
+				<content>
+					<inset>
+						<text>
+							<label>
+								<en>The response time is measured from the arrival of a request at the server until its answer is sent. It does not include the network time to and from the browser.</en>
+								<de>Die Antwortzeit wird vom Eintreffen einer Anfrage beim Server bis zum Versand ihrer Antwort gemessen. Die Netzwerkzeit zum und vom Browser ist nicht enthalten.</de>
+							</label>
+						</text>
+					</inset>
+				</content>
+			</popover>
+		</stack>
+
+		<text variant="title">
+			<label>
+				<en>Placements</en>
+				<de>Platzierungen</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>A surface stands on the side of the button its placement names. One that does not fit there flips to the opposite side.</en>
+				<de>Eine Fläche steht auf der Seite des Knopfs, die ihre Platzierung nennt. Passt sie dort nicht hin, wechselt sie auf die gegenüberliegende Seite.</de>
+			</label>
+		</text>
+		<stack
+			direction="row"
+			gap="default"
+			wrap="true"
+		>
+			<popover placement="top">
+				<label>
+					<en>Top</en>
+					<de>Oben</de>
+				</label>
+				<content>
+					<inset>
+						<text>
+							<label>
+								<en>Above the button.</en>
+								<de>Über dem Knopf.</de>
+							</label>
+						</text>
+					</inset>
+				</content>
+			</popover>
+			<popover placement="right">
+				<label>
+					<en>Right</en>
+					<de>Rechts</de>
+				</label>
+				<content>
+					<inset>
+						<text>
+							<label>
+								<en>Right of the button.</en>
+								<de>Rechts vom Knopf.</de>
+							</label>
+						</text>
+					</inset>
+				</content>
+			</popover>
+			<popover placement="bottom">
+				<label>
+					<en>Bottom</en>
+					<de>Unten</de>
+				</label>
+				<content>
+					<inset>
+						<text>
+							<label>
+								<en>Below the button.</en>
+								<de>Unter dem Knopf.</de>
+							</label>
+						</text>
+					</inset>
+				</content>
+			</popover>
+			<popover placement="left">
+				<label>
+					<en>Left</en>
+					<de>Links</de>
+				</label>
+				<content>
+					<inset>
+						<text>
+							<label>
+								<en>Left of the button.</en>
+								<de>Links vom Knopf.</de>
+							</label>
+						</text>
+					</inset>
+				</content>
+			</popover>
+		</stack>
+
+		<text variant="title">
+			<label>
+				<en>In a dialog</en>
+				<de>In einem Dialog</de>
+			</label>
+		</text>
+		<stack direction="row">
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-window-stack"
+				>
+					<label>
+						<en>Open dialog</en>
+						<de>Dialog öffnen</de>
+					</label>
+					<open-dialog dialog-view="demo/popover-dialog.view.xml"/>
+				</action>
+			</button>
+		</stack>
+	</panel>
+</view>

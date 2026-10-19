@@ -45,6 +45,7 @@ export type {
   ButtonPartProps,
   ButtonDisplay,
   MenuTriggerPartProps,
+  MenuTriggerPopup,
   DisclosureTogglePartProps,
   DisclosureDirection,
   CheckboxPartProps,
@@ -74,7 +75,7 @@ export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
-export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
+export type { PopoverAnchor, PopoverOptions, PopoverPlacement, PopoverHover } from './bridge/popover';
 export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
 export type { DisplayClass } from './bridge/display-class';
 // A popover surface needs both its own ref and the hook's setFloating on one element; controls
@@ -115,6 +116,7 @@ export type {
   AccordionStateJson,
   WindowStateJson,
   DialogStateJson,
+  PopoverStateJson,
   MenuStateJson,
   SnackbarStateJson,
   AlertStateJson,

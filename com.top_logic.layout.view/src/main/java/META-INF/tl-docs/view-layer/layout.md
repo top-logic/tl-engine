@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list>, <kanban-board>, <visible-if> or <accordion>.
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list>, <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>).
 order: 20
 ---
 
@@ -273,3 +273,34 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 - **Lazy content.** The content of a section is created when the section is first expanded and kept while it is collapsed — what the user entered there survives collapsing, and collapsing asks nothing about unsaved changes. A section's content gets the personalization segment `section` and the slot path segment of the section `id`; it shares the channels of the enclosing view.
 - **Personalization key.** The expansion is stored as a JSON map from section `id` to `true`/`false`, under the element's `personalization-key` if one is written, else under the view context's personalization key plus `.accordion`. A remembered entry overrides the written `expanded`. A change writes only the entry of the changed section back, so two accordions sharing one key keep each other's entries as long as their section ids differ — two personalized accordions in the same view context therefore need **distinct section ids or a `personalization-key` each**, otherwise they share their expansion.
 - **Reveal.** The accordion is a container of the reveal protocol, keyed by section `id`: revealing something inside a collapsed section expands it (and, in an exclusive accordion, collapses the others).
+
+## Content at a button: `<popover>`
+
+`<popover>` (`PopoverElement`, control `ReactPopoverControl`) is a button that opens a surface of arbitrary content beside it. The surface is non-modal: it has no backdrop, the page around it stays usable, and Escape or a press outside of button and surface closes it. It suits content that belongs to one place of the page but would crowd it when shown permanently - the filter of a list, the details of a value, a small settings form. A choice between commands is a `<menu>` instead, and a task the user has to finish or cancel before going on is a dialog (`<open-dialog>`).
+
+```xml
+<popover
+	image="css:fa-solid fa-filter"
+	label="Filter"
+	placement="bottom-end"
+>
+	<content>
+		<form input="filter">
+			<field attribute="status"/>
+		</form>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				label="Done"
+			>
+				<close-popover/>
+			</action>
+		</button>
+	</content>
+</popover>
+```
+
+- **Attributes.** `label` is the text of the button and, in every case, the name assistive technology announces button and surface by. `image` is the icon of the button, shown alone when given. `placement` (default `bottom-start`) says where the surface stands: `top`, `bottom`, `left` or `right` of the button, centered or aligned with its `-start` or `-end` edge (`top-end`, `left-start`, …); a surface that does not fit on its side flips to the opposite one. `open-on` (default `click`) is the gesture opening it: `click` toggles the surface by clicking the button, `hover` opens it while the pointer rests on the button or the surface (a click opens it as well). `css-class` as for every element.
+- **Button content.** `<trigger>` holds elements the button shows instead of label and icon - a text, an icon, a badge, several of them side by side. They are presentational only: the button is what the user operates, so a `<button>`, an input or a link inside `<trigger>` would be a control inside a control. The `label` remains the accessible name.
+- **Lazy content.** `<content>` holds any elements. The wrapper is required, since the `image` property of the popover and the `<image>` element share a tag name. The content is created when the popover opens for the first time and kept while it is closed, so what the user entered there survives closing. It gets the personalization segment `popover` and is part of the view the popover is written in: it shares that view's channels - a form in the content edits the object of a view channel, a `<write-channel>` in it is seen by the rest of the view. A popover needing channels of its own holds a `<view-ref>`.
+- **Closing from the content.** The action `<close-popover/>` (`ClosePopoverAction`) in a command of the content closes the popover, of nested popovers the innermost one, and passes its input on, so "apply what was entered, then close" is one command. Outside a popover it does nothing, like `<close-dialog/>` outside a dialog.
+- **Reveal.** The popover is a container of the reveal protocol with its content under the key `content`: displaying something that lives inside the content of a closed popover (see [Navigation](doc:view-layer/navigation)) opens it.

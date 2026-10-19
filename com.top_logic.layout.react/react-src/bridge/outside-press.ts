@@ -14,6 +14,18 @@
  * the trigger it hangs off where that trigger toggles it - the toggle then decides on the
  * following click, instead of the press closing the surface and the click reopening it.</p>
  *
+ * <p>A surface may open a sub-surface of its own - a select popup, a menu, a date picker - that is
+ * portaled to the document body and is therefore no descendant of the surface's element. Such a
+ * sub-surface marks its root as an anchored overlay ({@link ANCHORED_OVERLAY_ATTR}), as it does for
+ * the focus trap of the surface. A press inside an anchored overlay counts as outside only for the
+ * surfaces stacked above the overlay: the surfaces active while an overlay stands are ordered by
+ * the time they became active, and the overlay stands at the position of the most recently
+ * activated surface the press lands in; a surface rendered open together with the surface it sits
+ * in counts as activated after it. An overlay that is no surface of this hook - a popup a
+ * component library closes on its own - stands above every surface, like the topmost one. A press
+ * in a select popup opened inside a popover thus keeps both open, a press in a menu below an open
+ * popover closes the popover, and a press beside both closes both.</p>
+ *
  * <p>A trigger that opens a surface on the click following the press cannot see the surface it
  * opens - a menu placed by the server at viewport coordinates, a swatch popup whose open state
  * lives elsewhere - and so cannot tell whether the press of that very gesture has closed it. It
@@ -23,6 +35,7 @@
  */
 
 import { useEffect, useRef } from 'react';
+import { ANCHORED_OVERLAY_ATTR } from './focus-trap';
 
 let _installed = false;
 
@@ -70,6 +83,36 @@ export function pressClosedSurface(): boolean {
   return _pressClosedSurface;
 }
 
+/** An active surface: the order of its activation and the elements a press may land in. */
+interface Surface {
+  /** Higher is more recently activated, i.e. stacked higher. */
+  readonly id: number;
+  readonly contains: (target: Node) => boolean;
+}
+
+/** The surfaces currently active, in no particular order. */
+const _surfaces: Surface[] = [];
+
+let _nextSurfaceId = 1;
+
+/**
+ * Whether a press on {@code target}, which lies outside of {@code surface}, lands in an anchored
+ * overlay that stands above {@code surface}.
+ */
+function inOverlayAbove(surface: Surface, target: Node): boolean {
+  const element = target instanceof Element ? target : target.parentElement;
+  if (element == null || element.closest(`[${ANCHORED_OVERLAY_ATTR}]`) == null) {
+    return false;
+  }
+  let owner: Surface | null = null;
+  for (const other of _surfaces) {
+    if (other.contains(target) && (owner == null || other.id > owner.id)) {
+      owner = other;
+    }
+  }
+  return owner == null || owner.id > surface.id;
+}
+
 /**
  * An element the press may land in, held by the ref of the component that renders it.
  *
@@ -79,7 +122,8 @@ export type InsideRef = { readonly current: HTMLElement | null };
 
 /**
  * Calls {@link onClose} for every press outside all of the {@link inside} elements, while
- * {@code active}.
+ * {@code active}. A press in an anchored overlay standing above the surface is no press outside
+ * (see the module description).
  *
  * <p>Both the elements and the callback are read at the time of the press, so a caller may pass
  * freshly built arrays and closures.</p>
@@ -101,20 +145,40 @@ export function useCloseOnOutsidePress(
   insideRef.current = inside;
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  // The stacking position is taken when the surface renders active, not when its effect runs: a
+  // parent renders before its children, but runs its effects after theirs, and a sub-surface
+  // mounted open together with its surface must stand above it.
+  const stackRef = useRef(0);
+  if (!active) {
+    stackRef.current = 0;
+  } else if (stackRef.current === 0) {
+    stackRef.current = _nextSurfaceId++;
+  }
 
   useEffect(() => {
     if (!active) {
       return;
     }
+    const surface: Surface = {
+      id: stackRef.current,
+      contains: target => insideRef.current.some(ref => ref.current?.contains(target) === true),
+    };
+    _surfaces.push(surface);
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Node | null;
-      if (target != null && insideRef.current.some(ref => ref.current?.contains(target))) {
+      if (target != null && (surface.contains(target) || inOverlayAbove(surface, target))) {
         return;
       }
       _pressClosedSurface = true;
       onCloseRef.current();
     };
     document.addEventListener('pointerdown', handlePointerDown, { capture: true });
-    return () => document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, { capture: true });
+      const index = _surfaces.indexOf(surface);
+      if (index >= 0) {
+        _surfaces.splice(index, 1);
+      }
+    };
   }, [active]);
 }

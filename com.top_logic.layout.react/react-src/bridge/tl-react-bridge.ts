@@ -819,12 +819,15 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  *        {@code trap: false} moves focus in and gives it back, but does not confine it - a surface that
  *        is not modal (a drawer without scrim). {@code preventScroll: true} moves focus in without
  *        scrolling, for a surface that slides in from outside the clipped box of its area.
+ *        {@code restore: 'from-inside'} gives the focus back only when it is still inside the
+ *        surface or was dropped with it, not when the user has put it elsewhere meanwhile - a surface
+ *        that is not modal and closes on a press outside, which may be a press into another field.
  */
 function useFocusTrap(
   active: boolean,
   ref: { current: HTMLElement | null },
   mode: 'field' | 'first' | 'container' | ((container: HTMLElement) => HTMLElement | null) = 'container',
-  options: { trap?: boolean; preventScroll?: boolean } = {}
+  options: { trap?: boolean; preventScroll?: boolean; restore?: 'always' | 'from-inside' } = {}
 ): void {
   React.useEffect(() => {
     if (!active) {
@@ -864,6 +867,14 @@ function useFocusTrap(
 
     return () => {
       unpush();
+      if (options.restore === 'from-inside') {
+        // The surface may already be gone, its focus then fell to the document body.
+        const current = document.activeElement;
+        const inside = current == null || current === document.body || el.contains(current);
+        if (!inside) {
+          return;
+        }
+      }
       if (previous && previous.isConnected && typeof previous.focus === 'function') {
         previous.focus();
       }

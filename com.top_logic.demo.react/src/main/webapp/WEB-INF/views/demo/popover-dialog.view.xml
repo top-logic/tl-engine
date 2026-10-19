@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A popover inside a dialog: the surface stands above the dialog, and Escape or a click outside
+	closes the popover alone, while the dialog stays open.
+-->
+<view>
+	<window width="480px">
+		<title>
+			<en>Popover in a dialog</en>
+			<de>Popover in einem Dialog</de>
+		</title>
+
+		<inset>
+			<text>
+				<label>
+					<en>The button below opens a popover above the dialog.</en>
+					<de>Der Knopf unten öffnet ein Popover über dem Dialog.</de>
+				</label>
+			</text>
+			<popover
+				image="css:bi bi-question-circle"
+				placement="bottom-start"
+			>
+				<label>
+					<en>Help</en>
+					<de>Hilfe</de>
+				</label>
+				<content>
+					<inset>
+						<text>
+							<label>
+								<en>A popover in a dialog closes on Escape before the dialog does.</en>
+								<de>Ein Popover in einem Dialog schließt bei Escape vor dem Dialog.</de>
+							</label>
+						</text>
+					</inset>
+				</content>
+			</popover>
+		</inset>
+
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

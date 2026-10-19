@@ -16,8 +16,8 @@
   <properties>
 		<!-- GWT supports only Java 8 syntax. -->
 		<maven.compiler.source>1.8</maven.compiler.source>
-		<!-- It will be used in a Java 17 JVM. -->
-		<maven.compiler.target>17</maven.compiler.target>
+		<!-- It will be used in a Java 21 JVM. -->
+		<maven.compiler.target>21</maven.compiler.target>
   </properties>
 
   <dependencies>

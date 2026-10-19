@@ -33,21 +33,9 @@ public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 	 */
 	private static final List<String> DESIGN_SYSTEM_TOKENS = List.of("/style/tl-design-system/tokens.css");
 
-	/**
-	 * Selectors rounding for a reason of their own: an icon is drawn out of a box whose corners
-	 * belong to the glyph, not to a control.
-	 */
-	private static final Set<String> ICON_GLYPHS =
-		Set.of(".tlAudioRecorder__icon--stop", ".tlPhotoCapture__cameraIcon");
-
 	@Override
 	protected List<String> stylesheets() {
 		return STYLESHEETS;
-	}
-
-	@Override
-	protected Set<String> allowedLiteralSelectors() {
-		return ICON_GLYPHS;
 	}
 
 	@Override

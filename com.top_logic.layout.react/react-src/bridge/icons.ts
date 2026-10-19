@@ -91,3 +91,21 @@ export const ICON_FILE = 'css:fa-regular fa-file';
 
 /** Attaches files (the add button of the file chips). */
 export const ICON_ATTACH = 'css:fa-solid fa-paperclip';
+
+/** Starts a recording (the audio recorder). */
+export const ICON_RECORD = 'css:fa-solid fa-circle';
+
+/** Stops a recording (the audio recorder while it records). */
+export const ICON_STOP = 'css:fa-solid fa-stop';
+
+/** Plays audio (the audio player). */
+export const ICON_PLAY = 'css:fa-solid fa-play';
+
+/** Pauses audio (the audio player while it plays). */
+export const ICON_PAUSE = 'css:fa-solid fa-pause';
+
+/** Takes a photo (the camera button and the capture button of the camera dialog). */
+export const ICON_CAMERA = 'css:fa-solid fa-camera';
+
+/** Mirrors the camera picture (the camera dialog). */
+export const ICON_MIRROR = 'css:fa-solid fa-left-right';

@@ -2,18 +2,27 @@
 // by the file upload, the binary field, the file chips and the download. The test registry has no parts of its own,
 // so the parts the controls look up are the MUI ones, as in containers.test.tsx; what is tested here is the behaviour
 // of the hook, the function and the controls, not the drawing of the parts.
+//
+// The recorder, the player and the camera (spec §3, §4) follow: their buttons are the part Button, drawn here by the
+// TopLogic drawing of the part, since what is tested of them includes the classes of the design system.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { React, replacePart, useUpload, downloadBlob } from 'tl-react-bridge';
+import { React, replacePart, register, useUpload, downloadBlob, TOOLTIP_ATTR } from 'tl-react-bridge';
+import type { ButtonPartProps } from 'tl-react-bridge';
 import TLDownload from '../../../com.top_logic.layout.react/react-src/controls/TLDownload';
 import TLBinaryField from '../../../com.top_logic.layout.react/react-src/controls/TLBinaryField';
 import TLFileChips from '../../../com.top_logic.layout.react/react-src/controls/TLFileChips';
+import TLAudioRecorder from '../../../com.top_logic.layout.react/react-src/controls/TLAudioRecorder';
+import TLAudioPlayer from '../../../com.top_logic.layout.react/react-src/controls/TLAudioPlayer';
+import TLPhotoCapture from '../../../com.top_logic.layout.react/react-src/controls/TLPhotoCapture';
+import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
+import ButtonPart from '../../../com.top_logic.layout.react/react-src/controls/button/ButtonPart';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
-import { CONTROL_ID, mountAdapter, patchState, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
 
 // The download and the binary field draw their buttons, the file chips their chips and their add button. Without the
 // parts a control throws ("No component registered for the part …") instead of failing an expectation.
@@ -313,5 +322,420 @@ describe('the file chips (TLFileChips) as a drop zone', () => {
     const alert = screen.getByRole('alert');
     expect(alert.textContent).toBe('Datei zu groß');
     expect(alert.classList).toContain('tl-file-upload__status');
+  });
+});
+
+/**
+ * Draws the part Button with the given component for the tests of a block. The registry warns about a second
+ * replacement; that is the point here, so the warning is kept out of the output.
+ */
+function drawButtonsWith(component: React.FC<ButtonPartProps>) {
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  replacePart('Button', component);
+}
+
+/** Draws the part Button as TopLogic does, for the tests of a block, and gives the MUI drawing back afterwards. */
+function withTopLogicButtons() {
+  beforeEach(() => drawButtonsWith(ButtonPart));
+  afterEach(() => drawButtonsWith(MuiButtonAdapter));
+}
+
+/** A microphone or camera stream: its tracks record whether they were stopped. */
+interface FakeStream {
+  stream: MediaStream;
+  tracks: { stop: ReturnType<typeof vi.fn> }[];
+}
+
+function fakeStream(): FakeStream {
+  const tracks = [{ stop: vi.fn() }];
+  return { stream: { getTracks: () => tracks } as unknown as MediaStream, tracks };
+}
+
+/** Makes the page a secure context with the given getUserMedia. */
+function stubMediaDevices(getUserMedia: () => Promise<MediaStream>) {
+  vi.stubGlobal('isSecureContext', true);
+  Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: vi.fn(getUserMedia) } });
+}
+
+afterEach(() => {
+  delete (navigator as { mediaDevices?: unknown }).mediaDevices;
+});
+
+/** The recorders created by the control: a fake MediaRecorder handing over one chunk when stopped. */
+const recorders: FakeRecorder[] = [];
+
+class FakeRecorder {
+  static isTypeSupported = () => true;
+  state: 'inactive' | 'recording' = 'inactive';
+  mimeType = 'audio/webm';
+  ondataavailable: ((event: { data: Blob }) => void) | null = null;
+  onstop: (() => void) | null = null;
+  constructor(public stream: MediaStream) {
+    recorders.push(this);
+  }
+  start() {
+    this.state = 'recording';
+  }
+  stop() {
+    this.state = 'inactive';
+    this.ondataavailable?.({ data: new Blob(['sound']) });
+    this.onstop?.();
+  }
+}
+
+describe('the audio recorder (TLAudioRecorder)', () => {
+  withTopLogicButtons();
+
+  const LABEL_RECORD = 'js.audioRecorder.record';
+
+  beforeEach(() => {
+    recorders.length = 0;
+    vi.stubGlobal('MediaRecorder', FakeRecorder);
+  });
+
+  function recordButton() {
+    return screen.getByRole('button', { name: LABEL_RECORD });
+  }
+
+  it('is a secondary icon button in the danger tone, in the upload wrapper, not pressed', async () => {
+    stubMediaDevices(async () => fakeStream().stream);
+    mountAdapter(TLAudioRecorder, { status: 'idle' });
+    await settle();
+
+    const button = recordButton();
+    expect(button.matches('button.tl-button--icon.tl-button--secondary.tl-button--danger')).toBe(true);
+    expect(button.getAttribute('aria-pressed')).toBe('false');
+    expect(document.getElementById(CONTROL_ID)!.classList).toContain('tl-upload');
+    expect(document.querySelector('[class*="tlAudioRecorder"]')).toBeNull();
+  });
+
+  it('is pressed while recording, keeps its name and says stop in its tooltip; stopping uploads the recording', async () => {
+    const { stream } = fakeStream();
+    stubMediaDevices(async () => stream);
+    mountAdapter(TLAudioRecorder, { status: 'idle' });
+    await settle();
+    const pending = pendingAnswer();
+    const uploads = recordUploads(pending.answer);
+
+    await userEvent.click(recordButton());
+    await settle();
+
+    expect(recordButton().getAttribute('aria-pressed')).toBe('true');
+    expect(recordButton().getAttribute(TOOLTIP_ATTR)).toBe('text:js.audioRecorder.stop');
+
+    await userEvent.click(recordButton());
+    await settle();
+
+    expect(uploads).toHaveLength(1);
+    expect(fileNames(uploads[0], 'audio')).toEqual(['recording.webm']);
+    expect(recordButton().getAttribute('aria-busy')).toBe('true');
+    expect((recordButton() as HTMLButtonElement).disabled).toBe(true);
+    expect(recordButton().getAttribute('aria-pressed')).toBe('false');
+
+    pending.release();
+    await settle();
+    expect(recordButton().hasAttribute('aria-busy')).toBe(false);
+    expect((recordButton() as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('stands ready again and announces the denial when the microphone is refused', async () => {
+    stubMediaDevices(async () => { throw new DOMException('denied', 'NotAllowedError'); });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mountAdapter(TLAudioRecorder, { status: 'idle' });
+    await settle();
+
+    await userEvent.click(recordButton());
+    await settle();
+
+    expect(recordButton().getAttribute('aria-pressed')).toBe('false');
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toBe('js.audioRecorder.error.denied');
+    expect(alert.classList).toContain('tl-file-upload__status');
+  });
+
+  it('stops the microphone and sends nothing when unmounted while recording', async () => {
+    const { stream, tracks } = fakeStream();
+    stubMediaDevices(async () => stream);
+    mountAdapter(TLAudioRecorder, { status: 'idle' });
+    await settle();
+    const uploads = recordUploads();
+
+    await userEvent.click(recordButton());
+    await settle();
+    expect(recordButton().getAttribute('aria-pressed')).toBe('true');
+
+    cleanup();
+    await settle();
+
+    expect(tracks[0].stop).toHaveBeenCalled();
+    expect(recorders[0].state).toBe('inactive');
+    expect(uploads).toHaveLength(0);
+  });
+
+  it('announces the error of the server', async () => {
+    mountAdapter(TLAudioRecorder, { status: 'idle', error: 'Datei zu groß' });
+    await settle();
+
+    expect(screen.getByRole('alert').textContent).toBe('Datei zu groß');
+  });
+});
+
+describe('the audio player (TLAudioPlayer)', () => {
+  withTopLogicButtons();
+
+  const LABEL_PLAY = 'js.audioPlayer.play';
+  const LABEL_PAUSE = 'js.audioPlayer.pause';
+
+  /** The audio elements created by the control. */
+  const played: { play: ReturnType<typeof vi.fn>; pause: ReturnType<typeof vi.fn> }[] = [];
+
+  beforeEach(() => {
+    played.length = 0;
+    class StubURL extends URL {
+      static createObjectURL = () => 'blob:audio';
+      static revokeObjectURL = () => {};
+    }
+    vi.stubGlobal('URL', StubURL);
+  });
+
+  function stubAudio(play: () => Promise<void>) {
+    vi.stubGlobal('Audio', class {
+      play = vi.fn(play);
+      pause = vi.fn();
+      onended: (() => void) | null = null;
+      constructor(public src: string) {
+        played.push(this);
+      }
+    });
+  }
+
+  /** Answers the request for the audio data later. */
+  function holdAudioData(): PendingAnswer {
+    const stub = vi.mocked(fetch).getMockImplementation()!;
+    const pending = pendingAnswer();
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) =>
+      String(url).includes('react-api/data') ? pending.answer : stub(url, init)));
+    return pending;
+  }
+
+  it('is a secondary icon button that is no toggle', async () => {
+    mountAdapter(TLAudioPlayer, { hasAudio: true, dataRevision: 0 });
+    await settle();
+
+    const button = screen.getByRole('button', { name: LABEL_PLAY });
+    expect(button.matches('button.tl-button--icon.tl-button--secondary')).toBe(true);
+    expect(button.classList).not.toContain('tl-button--danger');
+    expect(button.hasAttribute('aria-pressed')).toBe(false);
+    expect(document.querySelector('[class*="tlAudioPlayer"]')).toBeNull();
+  });
+
+  it('is busy while loading, then plays and is named pause', async () => {
+    stubAudio(async () => {});
+    mountAdapter(TLAudioPlayer, { hasAudio: true, dataRevision: 0 });
+    await settle();
+    const pending = holdAudioData();
+
+    await userEvent.click(screen.getByRole('button', { name: LABEL_PLAY }));
+    await settle();
+    expect(screen.getByRole('button', { name: LABEL_PLAY }).getAttribute('aria-busy')).toBe('true');
+
+    pending.release();
+    await settle();
+
+    const button = screen.getByRole('button', { name: LABEL_PAUSE });
+    expect(button.hasAttribute('aria-busy')).toBe(false);
+    expect(button.hasAttribute('aria-pressed')).toBe(false);
+    expect(played).toHaveLength(1);
+    expect(played[0].play).toHaveBeenCalledTimes(1);
+  });
+
+  it('stands ready again when the audio refuses to play', async () => {
+    stubAudio(async () => { throw new DOMException('refused', 'NotAllowedError'); });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mountAdapter(TLAudioPlayer, { hasAudio: true, dataRevision: 0 });
+    await settle();
+
+    await userEvent.click(screen.getByRole('button', { name: LABEL_PLAY }));
+    await settle();
+
+    expect(screen.getByRole('button', { name: LABEL_PLAY }).hasAttribute('aria-busy')).toBe(false);
+  });
+
+  it('is disabled without audio and says so in its tooltip', async () => {
+    mountAdapter(TLAudioPlayer, { hasAudio: false, dataRevision: 0 });
+    await settle();
+
+    const button = screen.getByRole('button', { name: LABEL_PLAY }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute(TOOLTIP_ATTR)).toBe('text:js.audioPlayer.noAudio');
+  });
+});
+
+describe('the camera (TLPhotoCapture)', () => {
+  withTopLogicButtons();
+
+  const LABEL_OPEN = 'js.photoCapture.open';
+  const LABEL_CAPTURE = 'js.photoCapture.capture';
+  const LABEL_MIRROR = 'js.photoCapture.mirror';
+  const LABEL_CLOSE = 'js.photoCapture.close';
+
+  beforeEach(() => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      { drawImage: () => {} } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(callback => callback(new Blob(['bild'])));
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined);
+  });
+
+  function cameraButton() {
+    return screen.getByRole('button', { name: LABEL_OPEN });
+  }
+
+  /** The surface of the camera dialog, found by its name: inside a window there are two dialogs. */
+  function cameraDialog() {
+    return screen.queryByRole('dialog', { name: LABEL_OPEN });
+  }
+
+  async function openCamera() {
+    await userEvent.click(cameraButton());
+    await settle();
+  }
+
+  it('is a secondary icon button in the upload wrapper', async () => {
+    stubMediaDevices(async () => fakeStream().stream);
+    mountAdapter(TLPhotoCapture, {});
+    await settle();
+
+    expect(cameraButton().matches('button.tl-button--icon.tl-button--secondary')).toBe(true);
+    expect(document.getElementById(CONTROL_ID)!.classList).toContain('tl-upload');
+    expect(document.querySelector('[class*="tlPhotoCapture"]')).toBeNull();
+  });
+
+  it('opens a dialog of the design system under the body, titled and with the focus on capture', async () => {
+    stubMediaDevices(async () => fakeStream().stream);
+    mountAdapter(TLPhotoCapture, {});
+    await settle();
+
+    await openCamera();
+
+    const surface = cameraDialog()!;
+    expect(surface).not.toBeNull();
+    expect(surface.classList).toContain('tl-dialog__surface');
+    expect(surface.getAttribute('aria-modal')).toBe('true');
+    const scrim = surface.parentElement!;
+    expect(scrim.matches('div.tl-dialog')).toBe(true);
+    expect(scrim.parentElement).toBe(document.body);
+    expect(scrim.getAttribute('data-tl-state')).toBe('entering');
+    const title = document.getElementById(surface.getAttribute('aria-labelledby')!)!;
+    expect(title.classList).toContain('tl-titlebar__title');
+    expect(title.textContent).toBe(LABEL_OPEN);
+    expect(surface.querySelector('.tl-titlebar button[aria-label="' + LABEL_CLOSE + '"]')).not.toBeNull();
+    expect(surface.querySelector('.tl-dialog__body > video.tl-media__frame')).not.toBeNull();
+
+    const capture = screen.getByRole('button', { name: LABEL_CAPTURE });
+    expect(capture.classList).toContain('tl-button--primary');
+    expect(capture.closest('.tl-button-bar')).not.toBeNull();
+    expect(document.activeElement).toBe(capture);
+  });
+
+  it('mirrors the video by a pressed button and a state of the video', async () => {
+    stubMediaDevices(async () => fakeStream().stream);
+    mountAdapter(TLPhotoCapture, {});
+    await settle();
+    await openCamera();
+
+    const mirror = screen.getByRole('button', { name: LABEL_MIRROR });
+    const video = cameraDialog()!.querySelector('video')!;
+    expect(mirror.getAttribute('aria-pressed')).toBe('false');
+    expect(video.hasAttribute('data-tl-state')).toBe(false);
+
+    await userEvent.click(mirror);
+
+    expect(mirror.getAttribute('aria-pressed')).toBe('true');
+    expect(video.getAttribute('data-tl-state')).toBe('mirrored');
+  });
+
+  it('closes on Escape, stops the camera and gives the focus back to the camera button', async () => {
+    const { stream, tracks } = fakeStream();
+    stubMediaDevices(async () => stream);
+    mountAdapter(TLPhotoCapture, {});
+    await settle();
+    await openCamera();
+
+    await userEvent.keyboard('{Escape}');
+    await settle();
+
+    expect(cameraDialog()).toBeNull();
+    expect(tracks[0].stop).toHaveBeenCalled();
+    expect(document.activeElement).toBe(cameraButton());
+  });
+
+  it('closes on a click on the scrim, not on a click on the surface', async () => {
+    stubMediaDevices(async () => fakeStream().stream);
+    mountAdapter(TLPhotoCapture, {});
+    await settle();
+    await openCamera();
+
+    fireEvent.click(cameraDialog()!);
+    expect(cameraDialog()).not.toBeNull();
+    fireEvent.click(cameraDialog()!.parentElement!);
+    expect(cameraDialog()).toBeNull();
+  });
+
+  it('uploads the captured photo as part photo and is busy meanwhile', async () => {
+    stubMediaDevices(async () => fakeStream().stream);
+    mountAdapter(TLPhotoCapture, {});
+    await settle();
+    const pending = pendingAnswer();
+    const uploads = recordUploads(pending.answer);
+    await openCamera();
+
+    await userEvent.click(screen.getByRole('button', { name: LABEL_CAPTURE }));
+    await settle();
+
+    expect(cameraDialog()).toBeNull();
+    expect(uploads).toHaveLength(1);
+    expect(fileNames(uploads[0], 'photo')).toEqual(['capture.jpg']);
+    expect(cameraButton().getAttribute('aria-busy')).toBe('true');
+
+    pending.release();
+    await settle();
+    expect(cameraButton().hasAttribute('aria-busy')).toBe(false);
+  });
+
+  it('announces the denial when the camera is refused', async () => {
+    stubMediaDevices(async () => { throw new DOMException('denied', 'NotAllowedError'); });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mountAdapter(TLPhotoCapture, {});
+    await settle();
+
+    await openCamera();
+
+    expect(cameraDialog()).toBeNull();
+    const alert = screen.getByRole('alert');
+    expect(alert.textContent).toBe('js.photoCapture.error.denied');
+    expect(alert.classList).toContain('tl-file-upload__status');
+  });
+
+  it('closes only the camera dialog on Escape inside a window, and the focus returns to the camera button', async () => {
+    stubMediaDevices(async () => fakeStream().stream);
+    register('MediaTestPhotoCapture', TLPhotoCapture);
+    const camera = { controlId: 'pc', module: 'MediaTestPhotoCapture', state: {} } as ReturnType<typeof childControl>;
+    const sent = mountAdapter(TLWindow, { title: 'Fenster', child: camera, closable: true });
+    await settle();
+    await openCamera();
+    expect(cameraDialog()).not.toBeNull();
+
+    await userEvent.keyboard('{Escape}');
+    await settle();
+
+    expect(cameraDialog()).toBeNull();
+    expect(sent).not.toHaveBeenCalledWith('close', expect.anything());
+    expect(screen.getByRole('dialog', { name: 'Fenster' })).toBeTruthy();
+    expect(document.activeElement).toBe(cameraButton());
+
+    // Positive control: with the camera dialog gone, the same key reaches the window.
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('close', {});
   });
 });

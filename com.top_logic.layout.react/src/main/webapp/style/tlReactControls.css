@@ -861,16 +861,6 @@ div.tlValueList {
 	}
 }
 
-/* --- TLPopover ------------------------------------------------------------- */
-
-/* A popover of arbitrary content is a flush container like a panel or a dialog window: its content
-   brings its own breathing room (spacing model, <inset>), the surface adds none. Its width is
-   bounded, so that running text wraps instead of spanning the viewport. */
-.tl-popover.tl-popover--content {
-	padding: 0;
-	max-width: min(36rem, calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-xs)));
-}
-
 /* --- Table cells holding legacy controls (until waves 4 and 5) ------------ */
 
 /* Cell rules that read classes of controls not yet migrated: they read the design system's cell

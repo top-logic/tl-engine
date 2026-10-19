@@ -40,6 +40,7 @@
   --tl-size-field-label-max: var(--tl-size-11);
   --tl-size-popover-min: var(--tl-size-11);
   --tl-size-popover-max: var(--tl-view-1);
+  --tl-size-popover-content-max: var(--tl-size-14);
   --tl-size-viewport-width: var(--tl-view-2);
   --tl-size-viewport-height: var(--tl-view-3);
   --tl-size-drawer-narrow: var(--tl-size-12);
@@ -261,4 +262,4 @@
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
-/* tl-design-system sha256:5a3115e962b94ac9bfeb85acc025e24db111492843aeffea64d99dd3d55c90be — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:ba2dfddee96ebc78d2e09933787cd63debca8ee4566699aae5dc777af77c70f2 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

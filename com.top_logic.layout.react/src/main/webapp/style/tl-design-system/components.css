@@ -2441,6 +2441,14 @@ a.tl-field-value:hover {
 }
 .tl-popover[hidden] { display: none; }
 
+/* Inhalts-Popover (#29659, View-Element <popover>): beliebiger Inhalt ist ein bündiger Behälter wie Panel oder
+   Dialogfenster — der Inhalt bringt seinen Abstand mit (<inset>), die Fläche keinen. Die Breite ist begrenzt, damit
+   Fließtext umbricht, statt über den Viewport zu laufen. */
+.tl-popover--content {
+  max-width: min(var(--tl-size-popover-content-max), calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-xs)));
+  padding: 0;
+}
+
 /* --- progress/progress.css --- */
 /* Progress — docs/skalen.md „Progress: ein Anteil, kein Urteil“.
    Ein Anteil zwischen 0 und 1 als Balken, daneben optional eine Beschriftung. Die Spur ist die
@@ -4370,4 +4378,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:f2f6c016d219f0eff1a12f4dfa1c8ae39898296f3dcc2f2029eda5de2209772e — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:436053dc142e033b0406d3049020e9fe79c2d359b98122a4e323acdef83a609c — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

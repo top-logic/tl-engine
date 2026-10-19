@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.util.ResourceCleaner;
 import com.top_logic.knowledge.service.UpdateEvent;
 
 
@@ -69,19 +70,17 @@ public class UpdateChainLink {
 	void registerForCleanup(CleanupOldValues cleanupAction) {
 		synchronized (this) {
 			if (_cleanupActions == null) {
-				_cleanupActions = new ArrayList<>();
+				List<CleanupOldValues> cleanupActions = new ArrayList<>();
+				_cleanupActions = cleanupActions;
+				ResourceCleaner.register(this, () -> cleanup(cleanupActions));
 			}
 			_cleanupActions.add(cleanupAction);
 		}
 		
 	}
 
-	@Override
-	protected void finalize() throws Throwable {
-		if (_cleanupActions == null) {
-			return;
-		}
-		for (CleanupOldValues action : _cleanupActions) {
+	private static void cleanup(List<CleanupOldValues> cleanupActions) {
+		for (CleanupOldValues action : cleanupActions) {
 			action.cleanup();
 		}
 	}

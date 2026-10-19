@@ -14,13 +14,14 @@ import {
   React, replacePart, register, isInteractiveTarget, isInteractiveWithin, isOperableTarget, categoryOf, textOn,
 } from 'tl-react-bridge';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
+import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/TLValueList';
 import { useRovingFocus } from '../../../com.top_logic.layout.react/react-src/controls/useRovingFocus';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
-import { mountAdapter, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 
 // The table looks up the toggle of its tree rows, the selection boxes of its rows, the box of its search, the chips of
 // its named filters and its buttons. Without them it throws ("No component registered for the part …") instead of
@@ -270,5 +271,79 @@ describe('the linear roving focus', () => {
     await userEvent.keyboard('{ArrowDown}');
 
     expect(document.activeElement).toBe(screen.getByText('Eintrag 2'));
+  });
+});
+
+describe('the value list (spec §7: tl-value-list)', () => {
+  /** The name of the handle: the key, as the test stub translates each key to itself. */
+  const LABEL_MOVE = 'js.valueList.move';
+  const CMD_MOVE_ELEMENT = 'moveElement';
+
+  function values() {
+    return [childControl('v1', 'Eins', true), childControl('v2', 'Zwei', true)];
+  }
+
+  /** Whether any element of the page still carries a class of the old style sheet. */
+  function legacyClasses() {
+    return Array.from(document.querySelectorAll('*'))
+      .flatMap(element => Array.from(element.classList))
+      .filter(name => name.startsWith('tlValueList'));
+  }
+
+  it('reads as one text with the separator written out', async () => {
+    mountAdapter(TLValueList, { elements: values(), editable: false, cssClass: 'kunde' });
+    await settle();
+
+    const root = document.getElementById(CONTROL_ID)!;
+    expect(root.tagName).toBe('SPAN');
+    expect(root.className).toBe('tl-value-list kunde');
+    const separators = root.querySelectorAll(':scope > span.tl-select__separator');
+    expect(separators).toHaveLength(1);
+    expect(separators[0].textContent).toBe(', ');
+    expect(root.querySelectorAll(':scope > span.tl-value-list__item')).toHaveLength(2);
+    expect(legacyClasses()).toEqual([]);
+  });
+
+  it('marks the values on lines of their own as block', async () => {
+    mountAdapter(TLValueList, { elements: values(), editable: false, layout: 'block' });
+    await settle();
+
+    const root = document.getElementById(CONTROL_ID)!;
+    expect(root.className).toBe('tl-value-list tl-value-list--block');
+    expect(root.querySelector(':scope > span.tl-select__separator')!.textContent).toBe(', ');
+    expect(legacyClasses()).toEqual([]);
+  });
+
+  it('is a group of rows while edited, each ordered row with the handle as the part Button', async () => {
+    mountAdapter(TLValueList, { elements: values(), editable: true, ordered: true });
+    await settle();
+
+    const root = document.getElementById(CONTROL_ID)!;
+    expect(root.tagName).toBe('DIV');
+    expect(root.getAttribute('role')).toBe('group');
+    expect(root.className).toBe('tl-value-list');
+    expect(root.querySelectorAll(':scope > .tl-value-list__row')).toHaveLength(2);
+
+    const handles = screen.getAllByRole('button', { name: LABEL_MOVE });
+    expect(handles).toHaveLength(2);
+    // The MUI part draws it: small, icon-only, no button of the control's own.
+    handles.forEach(handle => {
+      expect(handle.classList).toContain('MuiIconButton-root');
+      expect(handle.closest('.tl-value-list__row')).not.toBeNull();
+      expect(handle.getAttribute('aria-describedby')).toBeTruthy();
+    });
+    expect(legacyClasses()).toEqual([]);
+  });
+
+  it('moves a value down by Alt + arrow down on its handle', async () => {
+    const sent = mountAdapter(TLValueList, { elements: values(), editable: true, ordered: true });
+    await settle();
+
+    const [first] = screen.getAllByRole('button', { name: LABEL_MOVE });
+    first.focus();
+    await userEvent.keyboard('{Alt>}{ArrowDown}{/Alt}');
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_MOVE_ELEMENT, { index: 0, targetIndex: 1 });
   });
 });

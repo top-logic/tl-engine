@@ -33,6 +33,7 @@ import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -40,6 +41,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link ConfiguredManagedClass} holding additional TL-Script functions that can be defined within
@@ -86,9 +88,9 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 
 	}
 
-	private Map<String, ConfiguredScript> _builders = Collections.emptyMap();
+	private volatile Map<String, ConfiguredScript> _builders = Collections.emptyMap();
 
-	private Map<String, QueryExecutor> _executors = Collections.emptyMap();
+	private volatile Map<String, QueryExecutor> _executors = Collections.emptyMap();
 
 	/**
 	 * Lazily filled map holding the security-disabled variant of the configured scripts.
@@ -102,7 +104,22 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 */
 	private final ConcurrentHashMap<String, QueryExecutor> _executorsNoSecurity = new ConcurrentHashMap<>();
 
-	private Map<String, Factory> _factories = Collections.emptyMap();
+	private volatile Map<String, Factory> _factories = Collections.emptyMap();
+
+	/**
+	 * The application model the {@link #_builders scripts} and {@link #_executors executors} were
+	 * compiled against, <code>null</code> before the first call.
+	 *
+	 * <p>
+	 * A compiled script refers to the model elements (types, attributes) it names. When the model is
+	 * reloaded (e.g. after a model change was applied), the model service and the persistency layer
+	 * are restarted and the model elements are new objects, but this service is not restarted: the
+	 * model itself uses configured functions, so this service starts before the model service and
+	 * can not depend on it. Instead, the scripts are compiled again on the first call after the
+	 * model was reloaded, see {@link #checkModel()}.
+	 * </p>
+	 */
+	private volatile TLModel _model;
 
 	/**
 	 * Creates a {@link ConfiguredTLScriptFunctions}.
@@ -114,13 +131,44 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	@Override
 	protected void startUp() {
 		super.startUp();
-		_builders = TypedConfigUtil.createInstanceMap(getConfig().getScripts());
-		initFactoriesFromMethodBuilders();
+		_model = null;
+		initScripts();
+	}
+
+	private void initScripts() {
+		Map<String, ConfiguredScript> builders = TypedConfigUtil.createInstanceMap(getConfig().getScripts());
 		Map<String, QueryExecutor> executors = new HashMap<>();
-		for (Entry<String, ConfiguredScript> builder : _builders.entrySet()) {
+		for (Entry<String, ConfiguredScript> builder : builders.entrySet()) {
 			executors.put(builder.getKey(), createExecutor(builder.getKey(), builder.getValue()));
 		}
+		_executorsNoSecurity.clear();
+		_builders = builders;
+		_factories = createFactories(builders);
 		_executors = executors;
+	}
+
+	/**
+	 * Compiles the scripts again, if the application model was reloaded since they were compiled.
+	 *
+	 * @see #_model
+	 */
+	private void checkModel() {
+		if (!ModelService.Module.INSTANCE.isActive()) {
+			return;
+		}
+		TLModel current = ModelService.getApplicationModel();
+		if (_model == current) {
+			return;
+		}
+		synchronized (this) {
+			if (_model == current) {
+				return;
+			}
+			if (_model != null) {
+				initScripts();
+			}
+			_model = current;
+		}
 	}
 
 	private QueryExecutor createExecutor(String scriptName, ConfiguredScript script) {
@@ -131,8 +179,8 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		}
 	}
 
-	private void initFactoriesFromMethodBuilders() {
-		_factories = _builders.entrySet()
+	private static Map<String, Factory> createFactories(Map<String, ConfiguredScript> builders) {
+		return builders.entrySet()
 			.stream()
 			.collect(Collectors.toMap(Entry::getKey, e -> new SearchBuilder.BuilderFactory(e.getValue())));
 	}
@@ -211,6 +259,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 */
 	public Object call(String scriptName, boolean usesSecurity, Object[] arguments,
 			Function<Boolean, Object> execution) {
+		checkModel();
 		if (usesSecurity && _builders.get(scriptName) instanceof PrivilegedScript privileged) {
 			if (!privileged.isAllowed(arguments)) {
 				return privileged.denied(arguments);
@@ -228,6 +277,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 *         iff there is no function with the given name.
 	 */
 	public boolean isCallAllowed(String scriptName, Object[] arguments) {
+		checkModel();
 		ConfiguredScript script = _builders.get(scriptName);
 		if (script == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(scriptName));
@@ -245,6 +295,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 *         iff there is no executor for the given name.
 	 */
 	QueryExecutor getExecutor(String scriptName, boolean usesSecurity) {
+		checkModel();
 		if (usesSecurity) {
 			QueryExecutor queryExecutor = _executors.get(scriptName);
 			if (queryExecutor == null) {

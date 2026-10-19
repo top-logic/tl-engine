@@ -980,7 +980,7 @@
 			<dependency>
 				<groupId>jakarta.servlet.jsp</groupId>
 				<artifactId>jakarta.servlet.jsp-api</artifactId>
-				<version>3.1.1</version>
+				<version>4.0.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -1361,27 +1361,18 @@
 			    <version>2.11</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty.ee10</groupId>
-				<artifactId>jetty-ee10-webapp</artifactId>
+				<groupId>org.eclipse.jetty.ee11</groupId>
+				<artifactId>jetty-ee11-webapp</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty.ee10</groupId>
-				<artifactId>jetty-ee10-apache-jsp</artifactId>
+				<groupId>org.eclipse.jetty.ee11</groupId>
+				<artifactId>jetty-ee11-apache-jsp</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<!--
-					Compiler Jasper uses for JSPs. The version Jasper brings along does not know the
-					Java 21 language level JSPs are compiled for.
-				-->
-				<groupId>org.eclipse.jdt</groupId>
-				<artifactId>ecj</artifactId>
-				<version>3.45.0</version>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.jetty.ee10</groupId>
-				<artifactId>jetty-ee10-servlet</artifactId>
+				<groupId>org.eclipse.jetty.ee11</groupId>
+				<artifactId>jetty-ee11-servlet</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
@@ -1918,7 +1909,7 @@
 								</ignoreVersions>
 							</rule>
 							<rule>
-								<groupId>org.eclipse.jetty.ee10</groupId>
+								<groupId>org.eclipse.jetty.ee11</groupId>
 								
 								<!-- Limit to Jetty 10 to avoid updating jakarta.servlet -->
 								<ignoreVersions>

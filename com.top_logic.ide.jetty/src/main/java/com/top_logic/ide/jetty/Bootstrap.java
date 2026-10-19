@@ -29,11 +29,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.jasper.servlet.TldScanner;
 import org.apache.tomcat.util.scan.StandardJarScanner;
-import org.eclipse.jetty.ee10.apache.jsp.JettyJasperInitializer;
-import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
-import org.eclipse.jetty.ee10.servlet.ServletHandler;
-import org.eclipse.jetty.ee10.servlet.ServletHolder;
-import org.eclipse.jetty.ee10.webapp.WebAppContext;
+import org.eclipse.jetty.ee11.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee11.servlet.ServletHandler;
+import org.eclipse.jetty.ee11.servlet.ServletHolder;
+import org.eclipse.jetty.ee11.webapp.WebAppContext;
 import org.eclipse.jetty.http.UriCompliance;
 import org.eclipse.jetty.http.UriCompliance.Violation;
 import org.eclipse.jetty.server.HttpConfiguration;

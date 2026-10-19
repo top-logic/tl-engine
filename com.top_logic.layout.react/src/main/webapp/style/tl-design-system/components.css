@@ -2197,6 +2197,40 @@ a.tl-field-value:hover {
 }
 .tl-icon-picker__preview[hidden] { display: none; }
 
+/* --- job-status/job-status.css --- */
+/* JobStatus — Spec 2026-10-19 Welle 5b §7: was ein langer Auftrag meldet. Kopf mit Zustand, Laufzeit und Abbrechen;
+   darunter die Live-Zeile (nur sie trägt role="status"), die Schritte als tl-steps--vertical, der Balken (Part
+   ProgressBar), die Meldung und der Fehler als eigene Zeile mit role="alert". */
+
+.tl-job-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+}
+.tl-job-status[hidden] { display: none; }
+
+.tl-job-status__header {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-sm);
+}
+
+.tl-job-status__elapsed {
+  color: var(--tl-text-secondary);
+}
+
+.tl-job-status__cancel {
+  margin-inline-start: auto;
+}
+
+.tl-job-status__message {
+  color: var(--tl-text-secondary);
+}
+
+.tl-job-status__error {
+  color: var(--tl-status-error-text);
+}
+
 /* --- layout/layout.css --- */
 /* Reihen und Abstände — Spec 2026-10-16 Welle 4c §5 (Q16, Q22). Stack und Grid ordnen Kinder mit der einen
    Gap-Skala, die tl-columns seit 3b liest: compact space-sm, default space-md, loose space-lg. Inset ist der Abstand
@@ -3827,6 +3861,85 @@ a.tl-field-value:hover {
   flex: 1 1 auto;
 }
 
+/* --- steps/steps.css --- */
+/* Steps — Spec 2026-10-19 Welle 5b §7 (V22): eine Schrittliste für Wizard und JobStatus. Die Scheibe nennt die
+   Position in drei Stufen: aktuell die Marke, erledigt die schwächere Markenfläche, kommend eine Linie. Die Ausrichtung
+   ändert nur die Anordnung, nicht die Farben — sonst wären es wieder zwei Formen. Waagrecht (Wizard) ruht die Scheibe;
+   senkrecht (JobStatus) pulsiert die des aktuellen Schritts, solange er läuft. Der globale Reduced-Motion-Schalter aus
+   base.css beendet den Puls; `alternate` endet bei Deckkraft 0,4, darum setzt nichts einen Fill-Mode. */
+
+.tl-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-xs) var(--tl-space-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tl-steps[hidden] { display: none; }
+
+.tl-steps--vertical {
+  flex-direction: column;
+  gap: var(--tl-space-2xs);
+}
+
+.tl-steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+
+.tl-steps__disc {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-size-icon-lg);
+  height: var(--tl-size-icon-lg);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-layer-nested);
+  color: var(--tl-text-secondary);
+}
+
+.tl-steps--vertical .tl-steps__disc {
+  width: var(--tl-size-icon-md);
+  height: var(--tl-size-icon-md);
+}
+
+.tl-steps__item[data-tl-state~="done"] > .tl-steps__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand-subtle);
+  color: var(--tl-text-primary);
+}
+
+.tl-steps__item[aria-current="step"] > .tl-steps__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-steps--vertical .tl-steps__item[aria-current="step"] > .tl-steps__disc {
+  animation: tl-steps-pulse var(--tl-duration-loop) var(--tl-easing-standard) infinite alternate;
+}
+
+.tl-steps__name {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+.tl-steps__item[aria-current="step"] > .tl-steps__name {
+  color: var(--tl-text-primary);
+}
+
+@keyframes tl-steps-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+
 /* --- swatch/swatch.css --- */
 /* Swatch — Spec 2026-10-17 Welle 5a §3. Ein Quadrat, das eine Auswahl zeigt: Feldknopf des Farb- und Icon-Pickers
    und Zelle der Palette (die Zelle des Icon-Rasters ist tl-icon-picker__cell). Das CSS zeichnet nur Geometrie und Rahmen; die Datenfarbe setzt das TSX
@@ -4868,8 +4981,8 @@ button.tl-swatch:not(:disabled):hover {
 
 /* --- wizard/wizard.css --- */
 /* Wizard — Spec 2026-10-16 Welle 4c §8 (Q19: eigenes Muster, auf Tokens). Oben, was zeigt, wo man ist — Zähler,
-   Fortschritt, Schrittliste —, darunter der Schritt. Die Scheibe nennt die Position in drei Stufen: aktuell die
-   Marke, erledigt die schwächere Markenfläche, kommend eine Linie. Der Schritt gleitet beim Wechsel (slide.css). */
+   Fortschritt, Schrittliste —, darunter der Schritt. Die Schrittliste ist der Block tl-steps (steps.css, Spec 5b §7);
+   der Wizard zeigt ihn waagrecht. Der Schritt gleitet beim Wechsel (slide.css). */
 
 .tl-wizard {
   display: flex;
@@ -4901,58 +5014,6 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard__progress > * {
   flex: 1 1 auto;
   min-width: 0;
-}
-
-.tl-wizard__steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--tl-space-xs) var(--tl-space-xl);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tl-wizard__step-item {
-  display: flex;
-  align-items: center;
-  gap: var(--tl-space-xs);
-}
-
-.tl-wizard__disc {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: var(--tl-size-icon-lg);
-  height: var(--tl-size-icon-lg);
-  border: var(--tl-border-width-sm) solid var(--tl-border-control);
-  border-radius: var(--tl-radius-full);
-  background: var(--tl-surface-layer-nested);
-  color: var(--tl-text-secondary);
-}
-
-.tl-wizard__step-item[data-tl-state~="done"] > .tl-wizard__disc {
-  border-color: transparent;
-  background: var(--tl-surface-brand-subtle);
-  color: var(--tl-text-primary);
-}
-
-.tl-wizard__step-item[aria-current="step"] > .tl-wizard__disc {
-  border-color: transparent;
-  background: var(--tl-surface-brand);
-  color: var(--tl-text-on-brand);
-}
-
-.tl-wizard__step-name {
-  display: flex;
-  align-items: center;
-  gap: var(--tl-space-xs);
-  color: var(--tl-text-secondary);
-  white-space: nowrap;
-}
-
-.tl-wizard__step-item[aria-current="step"] > .tl-wizard__step-name {
-  color: var(--tl-text-primary);
 }
 
 /* Der Bereich des Schritts: begrenzt, damit ein füllender Schritt hier seine Höhe auflöst; er positioniert die Kopie
@@ -5000,4 +5061,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:89379dd3e59d74e47522ce546d0bdc9e95603a6f1acc8e1542d9c108200c07f0 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:8e52572839578f988f05ee25b27ff167dec68313bb92443456af2884e4876cf2 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

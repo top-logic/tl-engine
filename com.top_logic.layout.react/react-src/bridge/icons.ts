@@ -112,3 +112,9 @@ export const ICON_MIRROR = 'css:fa-solid fa-left-right';
 
 /** Prints the document (the print button over an HTML document). */
 export const ICON_PRINT = 'css:fa-solid fa-print';
+
+/** The button moving to the previous period, e.g. of a calendar. */
+export const ICON_PREVIOUS = 'css:fa-solid fa-chevron-left';
+
+/** The button moving to the next period, e.g. of a calendar. */
+export const ICON_NEXT = 'css:fa-solid fa-chevron-right';

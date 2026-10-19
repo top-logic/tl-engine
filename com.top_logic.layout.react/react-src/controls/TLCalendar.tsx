@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, stateAttr, tooltipProps, usePart,
-  useStandaloneKeyboardScope, categoryOf, textOn, isInteractiveWithin,
+  useStandaloneKeyboardScope, categoryOf, textOn, isInteractiveWithin, ICON_PREVIOUS, ICON_NEXT,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useRovingFocus } from './useRovingFocus';
@@ -230,12 +230,6 @@ const GRANULARITIES: { key: Granularity; label: keyof typeof I18N_KEYS }[] = [
   { key: 'YEAR', label: 'js.calendar.year' },
 ];
 
-/** Icon of the button moving to the previous period. */
-const PREVIOUS_ICON = 'css:bi bi-chevron-left';
-
-/** Icon of the button moving to the next period. */
-const NEXT_ICON = 'css:bi bi-chevron-right';
-
 /**
  * The choice of the view: a radio group of segments. Exactly the chosen segment is in the tab
  * order; the arrows choose the next or previous view, as in every radio group (TLSegmentedChoice).
@@ -307,14 +301,14 @@ const Toolbar: React.FC<{
         />
         <Button
           label={i18n['js.calendar.previous']}
-          image={PREVIOUS_ICON}
+          image={ICON_PREVIOUS}
           display="icon-only"
           appearance="secondary"
           onClick={() => send('navigate', { direction: 'PREV' })}
         />
         <Button
           label={i18n['js.calendar.next']}
-          image={NEXT_ICON}
+          image={ICON_NEXT}
           display="icon-only"
           appearance="secondary"
           onClick={() => send('navigate', { direction: 'NEXT' })}

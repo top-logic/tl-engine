@@ -1371,6 +1371,15 @@
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
+				<!--
+					Compiler Jasper uses for JSPs. The version Jasper brings along does not know the
+					Java 21 language level JSPs are compiled for.
+				-->
+				<groupId>org.eclipse.jdt</groupId>
+				<artifactId>ecj</artifactId>
+				<version>3.45.0</version>
+			</dependency>
+			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-servlet</artifactId>
 				<version>${jetty.version}</version>

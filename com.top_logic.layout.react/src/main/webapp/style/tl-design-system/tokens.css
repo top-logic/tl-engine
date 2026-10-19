@@ -140,6 +140,16 @@
   --tl-category-7-border: var(--tl-magenta-33);
   --tl-category-8-subtle: var(--tl-magenta-4);
   --tl-category-8-border: var(--tl-magenta-34);
+  --tl-category-1-surface: var(--tl-red-46);
+  --tl-category-2-surface: var(--tl-amber-47);
+  --tl-category-3-surface: var(--tl-green-48);
+  --tl-category-4-surface: var(--tl-teal-48);
+  --tl-category-5-surface: var(--tl-blue-48);
+  --tl-category-6-surface: var(--tl-blue-46);
+  --tl-category-7-surface: var(--tl-magenta-46);
+  --tl-category-8-surface: var(--tl-magenta-47);
+  --tl-text-contrast-light: var(--tl-gray-0);
+  --tl-text-contrast-dark: var(--tl-gray-77);
   --tl-text-on-brand: #FFFFFF;
   --tl-text-on-brand-hover: #FFFFFF;
   --tl-text-on-brand-active: #FFFFFF;
@@ -150,6 +160,14 @@
   --tl-text-on-status-warning: #1B1D21;
   --tl-text-on-status-success: #1B1D21;
   --tl-text-on-status-info: #1B1D21;
+  --tl-text-on-category-1: #FFFFFF;
+  --tl-text-on-category-2: #FFFFFF;
+  --tl-text-on-category-3: #FFFFFF;
+  --tl-text-on-category-4: #FFFFFF;
+  --tl-text-on-category-5: #FFFFFF;
+  --tl-text-on-category-6: #FFFFFF;
+  --tl-text-on-category-7: #FFFFFF;
+  --tl-text-on-category-8: #FFFFFF;
 
   --tl-shadow-popover: var(--tl-shadow-1);
   --tl-shadow-dialog: var(--tl-shadow-2);
@@ -238,6 +256,16 @@
   --tl-category-7-border: var(--tl-magenta-46);
   --tl-category-8-subtle: var(--tl-magenta-74);
   --tl-category-8-border: var(--tl-magenta-47);
+  --tl-category-1-surface: var(--tl-red-46);
+  --tl-category-2-surface: var(--tl-amber-47);
+  --tl-category-3-surface: var(--tl-green-48);
+  --tl-category-4-surface: var(--tl-teal-48);
+  --tl-category-5-surface: var(--tl-blue-48);
+  --tl-category-6-surface: var(--tl-blue-46);
+  --tl-category-7-surface: var(--tl-magenta-46);
+  --tl-category-8-surface: var(--tl-magenta-47);
+  --tl-text-contrast-light: var(--tl-gray-0);
+  --tl-text-contrast-dark: var(--tl-gray-77);
   --tl-text-on-brand: #1B1D21;
   --tl-text-on-brand-hover: #1B1D21;
   --tl-text-on-brand-active: #FFFFFF;
@@ -248,6 +276,14 @@
   --tl-text-on-status-warning: #1B1D21;
   --tl-text-on-status-success: #1B1D21;
   --tl-text-on-status-info: #1B1D21;
+  --tl-text-on-category-1: #FFFFFF;
+  --tl-text-on-category-2: #FFFFFF;
+  --tl-text-on-category-3: #FFFFFF;
+  --tl-text-on-category-4: #FFFFFF;
+  --tl-text-on-category-5: #FFFFFF;
+  --tl-text-on-category-6: #FFFFFF;
+  --tl-text-on-category-7: #FFFFFF;
+  --tl-text-on-category-8: #FFFFFF;
 
   --tl-shadow-popover: var(--tl-shadow-4);
   --tl-shadow-dialog: var(--tl-shadow-5);
@@ -268,4 +304,4 @@
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
-/* tl-design-system sha256:13f6213a9737d907c66ac604e5999fa726999a3d7f89baf7aa977ecb4083a208 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:cd3dc50aa0e7855d7e917a436a8e552760b1be6a5c9aae44a14b96310ea469bd — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

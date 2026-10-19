@@ -435,6 +435,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_DASHBOARD_HIDE_TILE;
 
 	/**
+	 * @en Tile {0}
+	 */
+	@CustomKey("js.dashboard.tile")
+	public static ResKey JS_DASHBOARD_TILE;
+
+	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 */
 	@CustomKey("js.audioRecorder.error.insecure")

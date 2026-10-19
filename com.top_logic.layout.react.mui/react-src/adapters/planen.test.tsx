@@ -12,16 +12,19 @@ import { screen, cleanup, fireEvent, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   React, replacePart, register, isInteractiveTarget, isInteractiveWithin, isOperableTarget, categoryOf, textOn,
+  TOOLTIP_ATTR,
 } from 'tl-react-bridge';
+import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/TLValueList';
+import TLDashboard from '../../../com.top_logic.layout.react/react-src/controls/TLDashboard';
 import { useRovingFocus } from '../../../com.top_logic.layout.react/react-src/controls/useRovingFocus';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
-import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
 
 // The table looks up the toggle of its tree rows, the selection boxes of its rows, the box of its search, the chips of
 // its named filters and its buttons. Without them it throws ("No component registered for the part …") instead of
@@ -345,5 +348,268 @@ describe('the value list (spec §7: tl-value-list)', () => {
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_MOVE_ELEMENT, { index: 0, targetIndex: 1 });
+  });
+});
+
+describe('the dashboard (spec §6: tl-dashboard)', () => {
+  const CMD_ACTIVATE = 'activate';
+  const CMD_HIDE = 'hide';
+  const CMD_REORDER = 'reorder';
+  /** The name of the hide button: the key, as the test stub translates each key to itself. */
+  const LABEL_HIDE = 'js.dashboard.hideTile';
+
+  /** The style sheets a test added, removed after it. */
+  const sheets: HTMLStyleElement[] = [];
+
+  afterEach(() => {
+    sheets.splice(0).forEach(sheet => sheet.remove());
+    // The English texts of a test must not reach the next one; the dashboard is unmounted first, so that no hook of it
+    // answers the cleared cache.
+    cleanup();
+    clearI18NCache();
+  });
+
+  /** Three tiles: one with an action, one without, one whose action is refused. */
+  function tiles(order = ['t1', 't2', 't3']) {
+    const all: Record<string, unknown> = {
+      t1: {
+        id: 't1', width: 'half', rowSpan: 1, control: childControl('c-t1', 'Projekte'),
+        action: { label: 'Projekte öffnen', disabled: false, tooltip: 'Zu den Projekten' },
+      },
+      t2: { id: 't2', width: 'half', rowSpan: 1, control: childControl('c-t2', 'Notizen') },
+      t3: {
+        id: 't3', width: 'half', rowSpan: 1, control: childControl('c-t3', 'Berichte'),
+        action: { label: 'Berichte öffnen', disabled: true },
+      },
+    };
+    return order.map(id => all[id]);
+  }
+
+  function mountDashboard(editMode: boolean) {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    return mountAdapter(TLDashboard, { children: tiles(), editMode });
+  }
+
+  /**
+   * Answers the given keys of the next translation requests with English texts instead of the keys themselves, so that
+   * an announcement composed from them can be read.
+   */
+  function englishTexts(texts: Record<string, string>) {
+    const answer = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      const response = await answer(url, init);
+      if (!/react-api\/i18n/.test(url)) {
+        return response;
+      }
+      const data = await response.json() as Record<string, string>;
+      Object.keys(data).filter(key => key in texts).forEach(key => { data[key] = texts[key]; });
+      return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    });
+  }
+
+  function root() {
+    return document.getElementById(CONTROL_ID)!;
+  }
+
+  function grid() {
+    return root().querySelector<HTMLElement>(':scope > .tl-dashboard__grid')!;
+  }
+
+  function tileElements() {
+    return Array.from(grid().querySelectorAll<HTMLElement>(':scope > .tl-dashboard__tile'));
+  }
+
+  /** The tile showing the control with the given ID. */
+  function tileOf(controlId: string) {
+    return document.getElementById(controlId)!.closest<HTMLElement>('.tl-dashboard__tile')!;
+  }
+
+  function sentOf(sent: ReturnType<typeof mountDashboard>, command: string) {
+    return sent.mock.calls.filter(([name]) => name === command);
+  }
+
+  /** Whether any element of the page still carries a class of the old style sheet. */
+  function legacyClasses() {
+    return Array.from(document.querySelectorAll('*'))
+      .flatMap(element => Array.from(element.classList))
+      .filter(name => name.startsWith('tlDashboard'));
+  }
+
+  it('shows the tiles as cards with their content as the base of an overlay', async () => {
+    mountDashboard(false);
+    await settle();
+
+    expect(root().classList).toContain('tl-dashboard');
+    expect(root().classList).toContain('tl-inset');
+    expect(root().hasAttribute('data-tl-state')).toBe(false);
+    expect(grid().getAttribute('data-tl-axis')).toBe('horizontal');
+
+    const shown = tileElements();
+    expect(shown).toHaveLength(3);
+    shown.forEach(tile => {
+      expect(tile.tagName).toBe('DIV');
+      ['tl-card', 'tl-dashboard__tile', 'tl-overlay', 'tl-overlay--fill'].forEach(name => expect(tile.classList).toContain(name));
+      expect(tile.querySelector(':scope > .tl-overlay__base')).not.toBeNull();
+      expect(tile.getAttribute('draggable')).not.toBe('true');
+      expect(tile.hasAttribute('tabindex')).toBe(false);
+      // No cover and no hide button outside of editing.
+      expect(tile.querySelector('.tl-overlay__layer')).toBeNull();
+    });
+    expect(shown[0].querySelector(':scope > .tl-overlay__base #c-t1')).not.toBeNull();
+    // The tooltip of the action is the one of the tile, which the pointer reaches.
+    expect(shown[0].getAttribute(TOOLTIP_ATTR)).toBe('text:Zu den Projekten');
+    expect(legacyClasses()).toEqual([]);
+  });
+
+  it('spaces the tiles by the token space-md, not by a fixed length', async () => {
+    // jsdom inherits no custom property, so the token is declared where the dashboard reads it.
+    const sheet = document.createElement('style');
+    sheet.textContent = '.tl-dashboard { --tl-space-md: 20px; }';
+    document.head.appendChild(sheet);
+    sheets.push(sheet);
+    mountDashboard(false);
+    await settle();
+
+    expect(grid().style.gap).toBe('20px');
+  });
+
+  it('names the action of a tile by a hidden button directly in the tile, which Enter activates', async () => {
+    const sent = mountDashboard(false);
+    await settle();
+
+    const action = screen.getByRole('button', { name: 'Projekte öffnen' });
+    expect(action.classList).toContain('tl-dashboard__action');
+    expect(action.classList).toContain('tl-visually-hidden');
+    // The ring of the tile is drawn for a focused button that is a direct child of the tile (base.css).
+    expect(action.parentElement).toBe(tileOf('c-t1'));
+
+    action.focus();
+    await userEvent.keyboard('{Enter}');
+    await settle();
+
+    expect(sentOf(sent, CMD_ACTIVATE)).toEqual([[CMD_ACTIVATE, { tileId: 't1' }]]);
+  });
+
+  it('activates a tile by a click on its content', async () => {
+    const sent = mountDashboard(false);
+    await settle();
+
+    await userEvent.click(screen.getByText('Projekte'));
+    await settle();
+
+    expect(sentOf(sent, CMD_ACTIVATE)).toEqual([[CMD_ACTIVATE, { tileId: 't1' }]]);
+  });
+
+  it('does not activate a tile whose action is refused', async () => {
+    const sent = mountDashboard(false);
+    await settle();
+
+    const action = screen.getByRole('button', { name: 'Berichte öffnen' });
+    expect((action as HTMLButtonElement).disabled).toBe(true);
+    expect(action.parentElement).toBe(tileOf('c-t3'));
+
+    fireEvent.click(screen.getByText('Berichte'));
+    fireEvent.click(action);
+    await settle();
+
+    expect(sentOf(sent, CMD_ACTIVATE)).toEqual([]);
+  });
+
+  it('moves no tile by Alt + arrow outside of editing', async () => {
+    const sent = mountDashboard(false);
+    await settle();
+
+    const second = tileOf('c-t2');
+    fireEvent.keyDown(second, { key: 'ArrowRight', altKey: true });
+    await settle();
+
+    expect(sentOf(sent, CMD_REORDER)).toEqual([]);
+  });
+
+  it('marks the root while edited, makes each tile focusable and covers its content', async () => {
+    mountDashboard(true);
+    await settle();
+
+    expect(root().getAttribute('data-tl-state')).toBe('edit');
+    expect(grid().getAttribute('data-tl-axis')).toBe('horizontal');
+    tileElements().forEach(tile => {
+      expect(tile.tabIndex).toBe(0);
+      expect(tile.getAttribute('draggable')).toBe('true');
+      expect(tile.getAttribute('aria-describedby')).toBeTruthy();
+      const layers = Array.from(tile.querySelectorAll(':scope > .tl-overlay__layer'));
+      expect(layers).toHaveLength(2);
+      // The cover lies below the layer of the hide button: it comes first.
+      expect(layers[0].classList).toContain('tl-overlay__layer--fill');
+      expect(layers[0].querySelector(':scope > .tl-dashboard__cover')).not.toBeNull();
+      expect(layers[1].classList).toContain('tl-overlay__layer--top-right');
+    });
+    // The action steps out of the tab order while the tiles are arranged.
+    expect(screen.getByRole('button', { name: 'Projekte öffnen' }).tabIndex).toBe(-1);
+    expect(legacyClasses()).toEqual([]);
+  });
+
+  it('hides a tile by the part Button in the action surface over the tile', async () => {
+    const sent = mountDashboard(true);
+    await settle();
+
+    const hide = screen.getAllByRole('button', { name: LABEL_HIDE });
+    expect(hide).toHaveLength(3);
+    const second = hide[1];
+    expect(second.classList).toContain('MuiIconButton-root');
+    expect(second.parentElement!.classList).toContain('tl-overlay__action');
+    expect(second.parentElement!.parentElement!.classList).toContain('tl-overlay__layer--top-right');
+    expect(second.closest('.tl-dashboard__tile')).toBe(tileOf('c-t2'));
+
+    await userEvent.click(second);
+    await settle();
+
+    expect(sentOf(sent, CMD_HIDE)).toEqual([[CMD_HIDE, { tileId: 't2' }]]);
+    expect(sentOf(sent, CMD_ACTIVATE)).toEqual([]);
+  });
+
+  it('moves a tile one place on by Alt + arrow right, announces its position and keeps its focus', async () => {
+    clearI18NCache();
+    const sent = mountDashboard(true);
+    englishTexts({ 'js.reorder.moved': '{0}, position {1} of {2}', 'js.dashboard.tile': 'Tile {0}' });
+    await settle();
+
+    tileOf('c-t2').focus();
+    await userEvent.keyboard('{Alt>}{ArrowRight}{/Alt}');
+    await settle();
+
+    expect(sentOf(sent, CMD_REORDER)).toEqual([[CMD_REORDER, { order: ['t1', 't3', 't2'] }]]);
+    expect(root().querySelector('[role="status"]')!.textContent).toBe('Tile 2, position 3 of 3');
+
+    patchState({ children: tiles(['t1', 't3', 't2']) });
+    await settle();
+
+    expect(tileElements()[2]).toBe(tileOf('c-t2'));
+    expect(document.activeElement).toBe(tileOf('c-t2'));
+  });
+
+  it('announces a tile with an action by the name of its action', async () => {
+    clearI18NCache();
+    const sent = mountDashboard(true);
+    englishTexts({ 'js.reorder.moved': '{0}, position {1} of {2}', 'js.dashboard.tile': 'Tile {0}' });
+    await settle();
+
+    tileOf('c-t1').focus();
+    await userEvent.keyboard('{Alt>}{ArrowRight}{/Alt}');
+    await settle();
+
+    expect(sentOf(sent, CMD_REORDER)).toEqual([[CMD_REORDER, { order: ['t2', 't1', 't3'] }]]);
+    expect(root().querySelector('[role="status"]')!.textContent).toBe('Projekte öffnen, position 2 of 3');
+  });
+
+  it('moves no tile past the start of the dashboard', async () => {
+    const sent = mountDashboard(true);
+    await settle();
+
+    tileOf('c-t1').focus();
+    await userEvent.keyboard('{Alt>}{ArrowLeft}{/Alt}');
+    await settle();
+
+    expect(sentOf(sent, CMD_REORDER)).toEqual([]);
+    expect(document.activeElement).toBe(tileOf('c-t1'));
   });
 });

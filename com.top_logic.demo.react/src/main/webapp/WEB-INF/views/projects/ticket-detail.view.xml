@@ -18,6 +18,7 @@
 			input="ticket"
 			with-inset="true"
 		>
+			<field attribute="number"/>
 			<field attribute="title"/>
 			<field attribute="description"/>
 			<field attribute="milestone"/>

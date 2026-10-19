@@ -110,6 +110,21 @@ public interface HTMLConstants {
 	/** Constant for the HTML attribute "value". */
     public static final String VALUE_ATTR = "value";
 
+	/** Constant for the HTML attribute "start" of an {@link #OL}. */
+	public static final String START_ATTR = "start";
+
+	/** {@link #TYPE_ATTR} of an {@link #OL} numbered with lower case letters. */
+	public static final String OL_TYPE_LOWER_ALPHA_VALUE = "a";
+
+	/** {@link #TYPE_ATTR} of an {@link #OL} numbered with upper case letters. */
+	public static final String OL_TYPE_UPPER_ALPHA_VALUE = "A";
+
+	/** {@link #TYPE_ATTR} of an {@link #OL} numbered with lower case roman numbers. */
+	public static final String OL_TYPE_LOWER_ROMAN_VALUE = "i";
+
+	/** {@link #TYPE_ATTR} of an {@link #OL} numbered with upper case roman numbers. */
+	public static final String OL_TYPE_UPPER_ROMAN_VALUE = "I";
+
 	/** Constant for the HTML attribute "accept". */
 	public static final String ACCEPT_ATTR = "accept";
 
@@ -744,6 +759,45 @@ public interface HTMLConstants {
 	/** Constant for the HTML-tag "nav". */
 	public static final String NAV = "nav";
 
+	/** Constant for the HTML-tag "section". */
+	public static final String SECTION = "section";
+
+	/** Constant for the HTML-tag "article". */
+	public static final String ARTICLE = "article";
+
+	/** Constant for the HTML-tag "header". */
+	public static final String HEADER = "header";
+
+	/** Constant for the HTML-tag "footer". */
+	public static final String FOOTER = "footer";
+
+	/** Constant for the HTML-tag "main". */
+	public static final String MAIN = "main";
+
+	/** Constant for the HTML-tag "aside". */
+	public static final String ASIDE = "aside";
+
+	/** Constant for the HTML-tag "figure". */
+	public static final String FIGURE = "figure";
+
+	/** Constant for the HTML-tag "figcaption". */
+	public static final String FIGCAPTION = "figcaption";
+
+	/** Constant for the HTML-tag "center". */
+	public static final String CENTER = "center";
+
+	/** Constant for the HTML-tag "details". */
+	public static final String DETAILS = "details";
+
+	/** Constant for the HTML-tag "summary". */
+	public static final String SUMMARY = "summary";
+
+	/** Constant for the HTML-tag "template". */
+	public static final String TEMPLATE = "template";
+
+	/** Constant for the HTML-tag "noscript". */
+	public static final String NOSCRIPT = "noscript";
+
 	/** Constant for the HTML-tag "base". */
 	public static final String BASE = "base";
 
@@ -773,6 +827,15 @@ public interface HTMLConstants {
 
 	/** Constant for the HTML-tag "code". */
 	public static final String CODE = "code";
+
+	/** Constant for the HTML-tag "kbd" for keyboard input. */
+	public static final String KBD = "kbd";
+
+	/** Constant for the HTML-tag "samp" for sample output. */
+	public static final String SAMP = "samp";
+
+	/** Constant for the HTML-tag "tt" for teletype text. */
+	public static final String TT = "tt";
 
 	/** Constant for the HTML-tag "span". */
     public static final String SPAN = "span";
@@ -948,6 +1011,18 @@ public interface HTMLConstants {
 
 	/** Constant for the HTML-tag "u" for bold font. */
 	public static final String U = "u";
+
+	/** Constant for the HTML-tag "ins" for inserted text. */
+	public static final String INS = "ins";
+
+	/** Constant for the HTML-tag "cite" for the title of a work. */
+	public static final String CITE = "cite";
+
+	/** Constant for the HTML-tag "var" for a variable. */
+	public static final String VAR = "var";
+
+	/** Constant for the HTML-tag "dfn" for a defined term. */
+	public static final String DFN = "dfn";
 
 	/** Constant for the HTML-tag "u" for bold font. */
 	public static final String SUB = "sub";

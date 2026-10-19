@@ -122,9 +122,10 @@
 			</generic-command>
 			<!--
 				The ticket is created without a dialog, so the script gets the milestone as the
-				command's input. A ticket hangs in the scope's composition and names its milestone;
-				the milestone's ticket list is the backwards side of that reference and is not
-				written to.
+				command's input. The ticket is created in the context of its scope, which numbers the
+				tickets of a project continuously. A ticket hangs in the scope's composition and names
+				its milestone; the milestone's ticket list is the backwards side of that reference and
+				is not written to.
 			-->
 			<generic-command
 				image="css:bi bi-ticket-perforated"
@@ -147,7 +148,7 @@
 						<en>Created a ticket in milestone {0}.</en>
 						<de>Ticket in Meilenstein {0} angelegt.</de>
 					</commitMessage>
-					<execute-script function="milestone -> { scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
+					<execute-script function="milestone -> { scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, context: $scope, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
 				</with-transaction>
 				<write-channel name="selected"/>
 			</generic-command>

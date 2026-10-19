@@ -188,8 +188,9 @@
 						the rights of a project are given by its members and administrators, which a
 						project being created does not have yet.
 						
-						A user - every member of the "users" group - reads the contributors, which
-						belong to no project, and the tickets of the ticket demo.
+						A user - every member of the "users" group - reads the person contacts, which
+						belong to no project and are the assignees of the project tickets, and the
+						tickets of the ticket demo.
 						
 						The views follow these rights: for an account that is a member of P1 but not
 						of P2 and no project manager, the project list shows P1 only; "New Project" is
@@ -340,7 +341,7 @@
 							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
 						/>
 					</part>
-					<class name="tl.demo.projectManagement:Contributor">
+					<class name="Contacts:PersonContact">
 						<grant
 							inherit="true"
 							operation="Read"
@@ -496,12 +497,12 @@
 							</path>
 						</inheritance-rule>
 						<!--
-							Every member of the "users" group is a user on the contributors and on every
+							Every member of the "users" group is a user on the person contacts and on every
 							object of the ticket demo.
 						-->
-						<rule id="ContributorsOfUsers"
+						<rule id="PersonContactsOfUsers"
 							inherit="true"
-							meta-element="tl.demo.projectManagement:Contributor"
+							meta-element="Contacts:PersonContact"
 							role="demo.react.User"
 						>
 							<group-with-name name="users"/>
@@ -650,12 +651,12 @@
 							<bind channel="ticket"/>
 						</show>
 					</target>
-					<target type="tl.demo.projectManagement:Contributor">
+					<target type="Contacts:PersonContact">
 						<show
 							dialog="true"
-							view="projects/contributor-dialog.view.xml"
+							view="projects/contact-dialog.view.xml"
 						>
-							<bind channel="contributor"/>
+							<bind channel="contact"/>
 						</show>
 					</target>
 					<target type="tl.accounts:Person">

@@ -108,6 +108,7 @@
 		<module>../com.top_logic.model.wysiwyg</module>
 		<module>../com.top_logic.monitoring</module>
 		<module>../com.top_logic.office</module>
+		<module>../com.top_logic.presentation</module>
 		<module>../com.top_logic.reporting</module>
 		<module>../com.top_logic.reporting.common</module>
 		<module>../com.top_logic.reporting.flex</module>

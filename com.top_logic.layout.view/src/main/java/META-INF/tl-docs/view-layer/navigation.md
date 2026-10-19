@@ -92,8 +92,8 @@ The hiding sits on a wrapper element the stack renders itself: a frame's content
   <show view="projects/milestone-list.view.xml"><bind channel="milestone" expr="t -> $t.get(`…:Ticket#milestone`)"/></show>
   <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
 </target>
-<target type="tl.demo.projectManagement:Contributor">
-  <show view="projects/contributor-dialog.view.xml" dialog="true"><bind channel="contributor"/></show>
+<target type="Contacts:PersonContact">
+  <show view="projects/contact-dialog.view.xml" dialog="true"><bind channel="contact"/></show>
 </target>
 ```
 
@@ -161,7 +161,7 @@ Every control that shows one of several children implements `com.top_logic.layou
 
   The dialog picks whatever it likes in whatever way it likes (a table, a search, a tree) and publishes the markup on its result channel: `<generic-command input="ticket"><execute-script function="t -> htmlObjectLink($t)"/><write-channel name="result"/><close-dialog/></generic-command>` is the whole contract, and `context` gives it the object the text is written for. Nothing about the editor knows what an object link is: it inserts the markup it is handed.
 
-The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contributor dialog target, `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor offers a "Reference ticket…" command opening `tickets/reference-ticket.view.xml`. The drill-down's second frame is the project home, a tab bar over the project's own data and its milestones; the milestone tab holds `projects/milestone-list.view.xml`, and a milestone target names that file to have the tab revealed inside the frame it pushed.
+The demo (`com.top_logic.demo.react`): the *Projects* drill-down (project → milestone → ticket → detail) with targets for its types in `demoReactConf.config.xml`, the contact dialog target for `Contacts:PersonContact` (the ticket assignees), `tl.accounts:Person` shown in the tiles demo, and the object-list comments, whose editor offers a "Reference ticket…" command opening `tickets/reference-ticket.view.xml`. The drill-down's second frame is the project home, a tab bar over the project's own data and its milestones; the milestone tab holds `projects/milestone-list.view.xml`, and a milestone target names that file to have the tab revealed inside the frame it pushed.
 
 ## URL routing: what ends up in the address bar
 

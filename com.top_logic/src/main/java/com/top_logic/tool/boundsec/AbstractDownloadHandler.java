@@ -15,6 +15,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.io.binary.BinaryDataSourceProxy;
+import com.top_logic.basic.util.ResourceCleaner;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.WindowScope;
@@ -128,13 +129,8 @@ public abstract class AbstractDownloadHandler extends AbstractCommandHandler {
 			public String getContentType() {
 				return contentType;
 			}
-
-			@Override
-			protected void finalize() throws Throwable {
-				super.finalize();
-				cleanupDownload(componentModel, download);
-			}
 		};
+		ResourceCleaner.register(dataItem, () -> cleanupDownload(componentModel, download));
 
 		return dataItem;
 	}

@@ -1448,6 +1448,22 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!sentIndexes.has(i)) missing.push(i);
   }
 
+  // The server keeps the window of the body that showed the table last: after a reload of the page
+  // (or a remount of the table) the body starts at the top again, while the server still sends the
+  // rows it scrolled to before. No scroll event reports the new position, so the window is requested
+  // once the body has measured it, if the rows sent do not cover it.
+  const windowReportedRef = React.useRef(false);
+  const windowIncomplete = missing.length > 0;
+  React.useEffect(() => {
+    if (windowReportedRef.current || windowRange.last < windowRange.first) {
+      return;
+    }
+    windowReportedRef.current = true;
+    if (windowIncomplete) {
+      handleScroll();
+    }
+  }, [windowRange, windowIncomplete, handleScroll]);
+
   // Where a cell sits relative to the scrolling area: frozen at the start, pinned at the end. A state
   // of its location (data-tl-state), not of the user's handling of it.
   const placeOf = (colIdx: number) => {

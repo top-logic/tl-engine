@@ -60,7 +60,6 @@ body {
 .tl-prose p,
 .tl-prose li,
 .tl-prose td,
-.tl-prose th,
 .tl-prose blockquote,
 .tl-type-body {
   font-family: var(--tl-font-family-sans);
@@ -70,6 +69,7 @@ body {
   letter-spacing: 0;
 }
 
+.tl-prose th,
 .tl-type-body-strong {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-body);
@@ -208,4 +208,4 @@ body {
     font-variant-numeric: tabular-nums;
   }
 }
-/* tl-design-system sha256:d8f3d1278ab486cf08f5f2562cae6fd4ec9db7de56fc9c24091ba4b6bd8fdd87 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:912405bb1509ee7509ad12b00657ad1cac55a7fdcb7b246f6c6091fc9b6d8ca3 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

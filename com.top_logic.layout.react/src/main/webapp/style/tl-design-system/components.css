@@ -687,6 +687,25 @@
   background: var(--tl-surface-brand-subtle-hover);
 }
 
+/* Gedrückt in Tönung danger ist gefüllt rot (Welle 5b §3): der aufnehmende Recorder. Dieselben Rollen wie
+   danger + primary; der Rand folgt der Fläche, sonst bliebe die Markenlinie des gedrückten Zustands auf Rot.
+   Steht vor :disabled — dahinter schlüge Rot den deaktivierten Zustand. */
+.tl-button--danger[aria-pressed="true"] {
+  background: var(--tl-status-error-surface);
+  border-color: var(--tl-status-error-surface);
+  color: var(--tl-text-on-status-error);
+}
+.tl-button--danger[aria-pressed="true"]:hover {
+  background: var(--tl-status-error-surface-hover);
+  border-color: var(--tl-status-error-surface-hover);
+  color: var(--tl-text-on-status-error-hover);
+}
+.tl-button--danger[aria-pressed="true"]:active {
+  background: var(--tl-status-error-surface-active);
+  border-color: var(--tl-status-error-surface-active);
+  color: var(--tl-text-on-status-error-active);
+}
+
 /* Deaktiviert bleibt die Schaltfläche für den Zeiger erreichbar: ihr Tooltip nennt den Grund, warum
    sie nicht ausführbar ist (#29675). Den Klick verschluckt der native disabled-Zustand; Zeigen und
    Drücken ändern ihr Aussehen nicht, auch nicht bei Tönung oder Link. Der Zeiger steht mit :hover in
@@ -1815,6 +1834,30 @@ a.tl-field-value:hover {
   color: var(--tl-text-link-hover);
 }
 
+/* --- file/file.css --- */
+/* File — Spec 2026-10-19 Welle 5b §6. Die Dateizeile von TLDownload und TLBinaryField: der Name mit Ellipse und
+   Höchstbreite, die Knöpfe daneben (Part Button). Leer ist ein Zustand: der Hinweis steht in text-secondary, nicht
+   kursiv und nicht in der Deaktiviert-Farbe — er ist lesbarer Text. */
+
+.tl-file {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-control-gap);
+  min-block-size: var(--tl-size-control);
+}
+.tl-file[hidden] { display: none; }
+
+.tl-file__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: var(--tl-size-13);
+}
+
+.tl-file[data-tl-state~="empty"] {
+  color: var(--tl-text-secondary);
+}
+
 /* --- form/form.css --- */
 /* Formular — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“, Spec Welle 2 §6.
    Der Feldrahmen (tl-form-field) legt Label, Eingabe und Meldungen in ein Raster; die Label-Lage ist
@@ -2075,7 +2118,9 @@ a.tl-field-value:hover {
 }
 .tl-file-upload[hidden] { display: none; }
 
-.tl-file-upload[data-tl-state~="dragover"] {
+/* Eine Regel für beide Drop-Zonen (Welle 5b §6): das Datei-Feld und die Chip-Gruppe von TLFileChips. */
+.tl-file-upload[data-tl-state~="dragover"],
+.tl-chip-group[data-tl-state~="dragover"] {
   outline: var(--tl-border-width-md) dashed var(--tl-border-interactive);
   outline-offset: var(--tl-focus-offset);
 }
@@ -2484,6 +2529,14 @@ a.tl-field-value:hover {
 }
 
 .tl-overlay--fill > .tl-overlay__base {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* Die Basis gibt ihrem Kind die volle Höhe: ein tl-media mit iframe bliebe sonst 150 px hoch. */
+.tl-overlay--fill > .tl-overlay__base > * {
   flex: 1 1 auto;
   min-block-size: 0;
 }
@@ -4947,4 +5000,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:74c11de686033215b74fdbd3c42435fd2011c56db8f9105373c6e504add827b6 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:89379dd3e59d74e47522ce546d0bdc9e95603a6f1acc8e1542d9c108200c07f0 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

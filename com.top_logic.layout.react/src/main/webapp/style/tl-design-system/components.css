@@ -2629,6 +2629,7 @@ a.tl-field-value:hover {
    Part Button ghost, icon-only. Ohne sie stünde im Dunkelmodus helle Schrift auf dem weißen Dokument. */
 .tl-overlay__action {
   display: flex;
+  margin: var(--tl-space-xs); /* schwebt mit Abstand zur Ecke, der Schatten bleibt sichtbar (Sichtprüfung 19.10.) */
   padding: var(--tl-space-2xs);
   background: var(--tl-surface-overlay);
   border: var(--tl-border-width-sm) solid var(--tl-border-separator);
@@ -5099,4 +5100,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:fd75e429cbe64d363558abf8d58505dbc6b6c53dd78da1466f360c613cb4108f — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:7333633a28f95d39cefa3e5643e3a92be5f1f1d3f592600eb46081533b4f74be — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

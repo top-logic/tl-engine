@@ -40,7 +40,17 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-const FIELD = 'input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled])';
+/**
+ * Form fields: the native ones, and the widgets drawn as an element with a field role that takes
+ * the focus itself (a dropdown select is a focusable `role="combobox"` element, not an input).
+ */
+const FIELD = [
+  'input:not([disabled]):not([type=hidden])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  ...['combobox', 'textbox', 'searchbox', 'spinbutton', 'slider', 'switch', 'checkbox', 'listbox']
+    .map(role => `[role=${role}][tabindex]:not([tabindex="-1"])`),
+].join(',');
 
 /** Returns the first visible focusable (or, when {@code fieldsOnly}, the first form field) in the container. */
 export function firstFocusable(container: HTMLElement, fieldsOnly = false): HTMLElement | null {

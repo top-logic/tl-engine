@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selection"/>
+	</channels>
+	<stack>
+		<popover
+			css-class="my-popover"
+			image="css:fa-solid fa-filter"
+			open-on="hover"
+			placement="top-end"
+		>
+			<label>
+				<en>Filter</en>
+			</label>
+			<trigger>
+				<text label="Filter"/>
+			</trigger>
+			<content>
+				<child class="test.com.top_logic.layout.view.element.TestPopoverElement$ContextProbe"/>
+				<button>
+					<action class="com.top_logic.layout.view.command.GenericViewCommand"
+						label="Done"
+					>
+						<close-popover/>
+					</action>
+				</button>
+			</content>
+		</popover>
+		<popover label="Plain">
+			<content>
+				<child class="test.com.top_logic.layout.view.element.TestPopoverElement$ContextProbe"/>
+			</content>
+		</popover>
+	</stack>
+</view>

@@ -33,6 +33,28 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey CHANGE_TYPE_UPDATE;
 
+	/**
+	 * @en Neither a start nor an end of the range is given. Enter at least one of them.
+	 */
+	public static ResKey ERROR_NO_RANGE;
+
+	/**
+	 * @en A range can only be moved if both its start and its end are given.
+	 */
+	public static ResKey ERROR_SHIFT_OPEN_RANGE;
+
+	/**
+	 * @en Previous range
+	 * @tooltip Displays the range of the same width directly before the selected range.
+	 */
+	public static ResKey PREVIOUS_RANGE;
+
+	/**
+	 * @en Next range
+	 * @tooltip Displays the range of the same width directly after the selected range.
+	 */
+	public static ResKey NEXT_RANGE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

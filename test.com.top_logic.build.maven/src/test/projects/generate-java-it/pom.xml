@@ -27,6 +27,21 @@
 
   <build>
     <plugins>
+      <!--
+        The versions of the build plugins are fixed: without, the Maven installation running the
+        build chooses them, and Maven 3.8 takes maven-compiler-plugin 3.1, which does not know the
+        release option and compiles with source and target 5.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.5.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.16.0</version>
+      </plugin>
       <plugin>
         <groupId>com.top-logic</groupId>
         <artifactId>tl-maven-plugin</artifactId>

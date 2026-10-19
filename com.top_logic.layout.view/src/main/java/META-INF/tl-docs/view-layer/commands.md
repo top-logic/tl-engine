@@ -42,7 +42,7 @@ The result of an action does not reach the actions *following* it. An action wit
 ```
 
 - **Actions with a result**: `<execute-script>` and `<evaluate-script>` (the value of the script), `<create-transient>`, `<persist-transient>`, `<read-form-object>`, `<store-form-state>`, `<link-element>`, `<remove-element>`, `<start-job>`, `<issue-access-token>`, `<create-account>`, `<set-password>` and the load actions of the administration views. Chains of producers nest: `<store-form-state><persist-transient><write-channel name="selection"/></persist-transient></store-form-state>`.
-- **Actions without a result**: `<open-dialog>` (the chain goes on once the dialog is open), `<write-channel>`, `<close-dialog>`, `<delete-object>`, and the containers `<with-transaction>`, `<if>` and `<switch>`. The actions inside a container run with the arguments the container sees; a sibling following the container does not see what happened inside, so an action working with a result produced inside a transaction or a branch is nested there too: `<with-transaction><persist-transient><write-channel name="selection"/></persist-transient></with-transaction>`.
+- **Actions without a result**: `<open-dialog>` (the chain goes on once the dialog is open), `<write-channel>`, `<close-dialog>`, `<close-popover>`, `<delete-object>`, and the containers `<with-transaction>`, `<if>` and `<switch>`. The actions inside a container run with the arguments the container sees; a sibling following the container does not see what happened inside, so an action working with a result produced inside a transaction or a branch is nested there too: `<with-transaction><persist-transient><write-channel name="selection"/></persist-transient></with-transaction>`.
 
 ## Actions processing one value: `value`
 

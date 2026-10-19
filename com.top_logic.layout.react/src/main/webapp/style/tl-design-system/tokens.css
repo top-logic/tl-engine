@@ -78,6 +78,7 @@
   --tl-surface-layer-nested: var(--tl-gray-0);
   --tl-surface-overlay: var(--tl-gray-0);
   --tl-surface-field: var(--tl-gray-3);
+  --tl-surface-document: var(--tl-gray-0);
   --tl-surface-interactive-hover: var(--tl-gray-4);
   --tl-surface-interactive-selected: var(--tl-gray-7);
   --tl-surface-interactive-active: var(--tl-gray-10);
@@ -175,6 +176,7 @@
   --tl-surface-layer-nested: var(--tl-gray-74);
   --tl-surface-overlay: var(--tl-gray-70);
   --tl-surface-field: var(--tl-gray-72);
+  --tl-surface-document: var(--tl-gray-0);
   --tl-surface-interactive-hover: var(--tl-gray-67);
   --tl-surface-interactive-selected: var(--tl-gray-64);
   --tl-surface-interactive-active: var(--tl-gray-60);
@@ -266,4 +268,4 @@
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
-/* tl-design-system sha256:c3a044bf4f3d2d6cefe888ecff54f8cf51e73e9abef52039bf597dc342e66fba — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:13f6213a9737d907c66ac604e5999fa726999a3d7f89baf7aa977ecb4083a208 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

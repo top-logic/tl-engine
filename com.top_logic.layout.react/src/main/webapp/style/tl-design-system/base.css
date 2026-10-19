@@ -27,6 +27,7 @@ body {
   letter-spacing: -0.01em;
 }
 
+.tl-prose h1,
 .tl-type-heading-lg {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-heading-lg);
@@ -35,6 +36,7 @@ body {
   letter-spacing: -0.005em;
 }
 
+.tl-prose h2,
 .tl-type-heading-md {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-heading-md);
@@ -43,6 +45,10 @@ body {
   letter-spacing: 0;
 }
 
+.tl-prose h3,
+.tl-prose h4,
+.tl-prose h5,
+.tl-prose h6,
 .tl-type-heading-sm {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-heading-sm);
@@ -51,6 +57,11 @@ body {
   letter-spacing: 0;
 }
 
+.tl-prose p,
+.tl-prose li,
+.tl-prose td,
+.tl-prose th,
+.tl-prose blockquote,
 .tl-type-body {
   font-family: var(--tl-font-family-sans);
   font-size: var(--tl-font-size-body);
@@ -83,6 +94,8 @@ body {
   letter-spacing: 0.01em;
 }
 
+.tl-prose code,
+.tl-prose pre,
 .tl-type-code {
   font-family: var(--tl-font-family-mono);
   font-size: var(--tl-font-size-body);
@@ -195,4 +208,4 @@ body {
     font-variant-numeric: tabular-nums;
   }
 }
-/* tl-design-system sha256:507c9a42ddbc612050054d489f2da6f60c128393002b8275d0d084b716b4e466 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:d8f3d1278ab486cf08f5f2562cae6fd4ec9db7de56fc9c24091ba4b6bd8fdd87 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

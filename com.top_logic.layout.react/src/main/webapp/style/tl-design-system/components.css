@@ -2297,6 +2297,45 @@ a.tl-field-value:hover {
 }
 .tl-deck[hidden] { display: none; }
 
+/* --- media/media.css --- */
+/* Media — Spec 2026-10-19 Welle 5b §5. Ein Block für eingebettete Inhalte: Bild, PDF, HTML-Dokument und -Vorschau,
+   Kamera-Video. Der Rahmen (img, iframe, video) füllt die Wurzel; die Größe gibt der Server inline. Die Einpassung
+   ist eine Variante, Spiegeln ein Zustand. */
+
+.tl-media {
+  display: block;
+  max-inline-size: 100%;
+  position: relative;
+}
+.tl-media[hidden] { display: none; }
+
+.tl-media__frame {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+  border-radius: var(--tl-radius-sm);
+}
+
+.tl-media--cover .tl-media__frame { object-fit: cover; }
+.tl-media--contain .tl-media__frame { object-fit: contain; }
+
+/* Fremdes HTML (Dokument und Vorschau) setzt Weiß voraus: das Papier ist in beiden Modi weiß. */
+.tl-media--document .tl-media__frame {
+  background: var(--tl-surface-document);
+}
+
+/* Kamera-Video (Spec 5b §4): gespiegelt ist ein Zustand am Video. */
+.tl-media__frame[data-tl-state~="mirrored"] {
+  transform: scaleX(-1);
+}
+
+/* Reservierter Platz ohne Bild. */
+.tl-media__placeholder {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
 /* --- menu/menu.css --- */
 /* Menu — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
    Ein Menü ist ein tl-popover mit Einträgen. Der Fokus ist echt (Roving-Tabindex): der Ring aus
@@ -2421,7 +2460,8 @@ a.tl-field-value:hover {
 /* Overlay — Spec 2026-10-13 Welle 4a §8. Ein Stapel aus Basis und Ebenen, kein Overlay im Sinn eines Dialogs:
    die Basis gibt die Höhe, das umgebende Layout die Breite; jede Ebene deckt genau diese Fläche und legt ihren
    Inhalt an einen Rand, eine Ecke oder die Mitte. Wo eine Ebene nichts zeigt, geht der Zeiger zur Basis durch.
-   Keine Fläche, keine Ebene (z-index): das Aussehen gibt die Anwendung über die Klasse der Ebene. */
+   Keine Fläche, keine Ebene (z-index): das Aussehen gibt die Anwendung über die Klasse der Ebene. Einzige Fläche
+   ist tl-overlay__action (Welle 5b §4): der Knopf über einer Fläche, die in beiden Modi weiß sein kann. */
 
 .tl-overlay {
   position: relative;
@@ -2429,6 +2469,24 @@ a.tl-field-value:hover {
   max-width: 100%;
 }
 .tl-overlay[hidden] { display: none; }
+
+/* Füllt den Behälter (Welle 5b §4): das HTML-Dokument nimmt seinen Platz, nicht die Höhe der Basis. Die Basis
+   füllt das Overlay. */
+.tl-overlay--fill {
+  display: flex;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.tl-overlay__base {
+  display: block;
+}
+
+.tl-overlay--fill > .tl-overlay__base {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
 
 .tl-overlay__layer {
   position: absolute;
@@ -2452,6 +2510,18 @@ a.tl-field-value:hover {
 .tl-overlay__layer--bottom-left { align-items: end; justify-content: start; }
 .tl-overlay__layer--bottom { align-items: end; justify-content: center; }
 .tl-overlay__layer--bottom-right { align-items: end; justify-content: end; }
+
+/* Der Knopf über einer Fläche (Welle 5b §4): eine kleine schwebende Fläche wie ein Popover, ohne Portal. Darin ein
+   Part Button ghost, icon-only. Ohne sie stünde im Dunkelmodus helle Schrift auf dem weißen Dokument. */
+.tl-overlay__action {
+  display: flex;
+  padding: var(--tl-space-2xs);
+  background: var(--tl-surface-overlay);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  box-shadow: var(--tl-shadow-popover);
+}
+.tl-overlay__action[hidden] { display: none; }
 
 /* --- panel/panel.css --- */
 /* Panel — Spec 2026-10-16 Welle 4c §3 (Q3, Q8, Q13, Q14). Eine Fläche mit Kopf (tl-titlebar), Körper und
@@ -2722,6 +2792,81 @@ a.tl-field-value:hover {
 
 @keyframes tl-spinner-turn {
   to { rotate: 360deg; }
+}
+
+/* --- prose/prose.css --- */
+/* Prose — Spec 2026-10-19 Welle 5b §5. Fließtext vom Server (TLHtml eingebettet): Überschriften, Absätze, Listen,
+   Links, Code, Tabellen, Zitate in fremdem HTML. Keine eigenen Größen: die Schrift kommt aus den Typo-Klassen, an
+   die der Generator die Selektoren `.tl-prose <element>` hängt (tokens.json „prose“, base.css). Hier stehen nur
+   Abstände und Farben. */
+
+.tl-prose h1,
+.tl-prose h2,
+.tl-prose h3,
+.tl-prose h4,
+.tl-prose h5,
+.tl-prose h6 {
+  margin-block: var(--tl-space-md) 0;
+}
+
+.tl-prose p,
+.tl-prose ul,
+.tl-prose ol,
+.tl-prose pre,
+.tl-prose table,
+.tl-prose blockquote {
+  margin-block: var(--tl-space-sm) 0;
+}
+
+/* Das erste Kind schließt bündig an den Behälter an. */
+.tl-prose > :first-child {
+  margin-block-start: 0;
+}
+
+.tl-prose a {
+  color: var(--tl-text-link);
+}
+
+.tl-prose a:hover {
+  color: var(--tl-text-link-hover);
+}
+
+/* Code ist leicht abgesetzt: die verschachtelte Fläche, die kleine Ecke. */
+.tl-prose code,
+.tl-prose pre {
+  background: var(--tl-surface-layer-nested);
+  border-radius: var(--tl-radius-sm);
+}
+
+.tl-prose code {
+  padding-inline: var(--tl-space-2xs);
+}
+
+.tl-prose pre {
+  padding: var(--tl-space-xs) var(--tl-space-sm);
+  overflow: auto;
+}
+
+/* Code im Block trägt die Fläche des Blocks, keine zweite. */
+.tl-prose pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.tl-prose table {
+  border-collapse: collapse;
+}
+
+.tl-prose th,
+.tl-prose td {
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+}
+
+.tl-prose blockquote {
+  margin-inline: 0;
+  border-inline-start: var(--tl-border-width-md) solid var(--tl-border-separator);
+  padding-inline-start: var(--tl-space-sm);
 }
 
 /* --- reorder-list/reorder-list.css --- */
@@ -4802,4 +4947,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:9a6ca4ee0f124e81b1a5e29cf9c465608c1c5a5ca182ef4fd9f57b2b7555efc6 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:74c11de686033215b74fdbd3c42435fd2011c56db8f9105373c6e504add827b6 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

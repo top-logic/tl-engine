@@ -118,10 +118,11 @@ p -> {
 ## Download from a view
 
 In a `.view.xml`, a command runs the script with `<execute-script>` and hands the resulting file to the browser
-with `<download/>` (`DownloadAction`):
+with `<download/>` (`DownloadAction`), nested into `<execute-script>` as the follow-up action of its result.
+The script uses the command's input as the variable `$project`:
 
 ```xml
-<generic-command image="css:bi bi-file-earmark-slides" input="project" placement="TOOLBAR">
+<generic-command image="css:bi bi-file-earmark-slides" inputs="project" placement="TOOLBAR">
 	<label>
 		<en>Status report (PowerPoint)</en>
 		<de>Statusbericht (PowerPoint)</de>
@@ -130,9 +131,9 @@ with `<download/>` (`DownloadAction`):
 		<null-input-disabled/>
 	</executability>
 	<execute-script>
-		<function><![CDATA[ p -> pptDeck(...) ]]></function>
+		<function><![CDATA[ pptDeck(...) ]]></function>
+		<download/>
 	</execute-script>
-	<download/>
 </generic-command>
 ```
 

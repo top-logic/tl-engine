@@ -42,13 +42,13 @@
 					</label>
 					<store-form-state/>
 					<with-transaction>
-						<execute-script function="site -> sensor -> { created = $sensor.copy(transient: false); $site.add(`demo.temperature:DemoSite#sensors`, $created); $created; }">
+						<execute-script function="{ created = $model.copy(transient: false); $container.add(`demo.temperature:DemoSite#sensors`, $created); $created; }">
 							<inputs>
 								<input channel="container"/>
 							</inputs>
+							<write-channel name="selection"/>
 						</execute-script>
 					</with-transaction>
-					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>
 			</commands>

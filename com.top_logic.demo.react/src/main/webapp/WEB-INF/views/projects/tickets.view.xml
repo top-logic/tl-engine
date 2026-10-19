@@ -32,7 +32,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-plus-lg"
-				input="project"
+				inputs="project, milestone"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -43,32 +43,30 @@
 					<null-input-disabled/>
 				</executability>
 				<create-transient
+					as="draft"
 					container="project"
 					reference="tickets"
 					type="tl.demo.projectManagement:Ticket"
-				/>
-				<execute-script function="m -> t -> { $t.set(`tl.demo.projectManagement:Ticket#milestone`, $m); $t; }">
-					<inputs>
-						<input channel="milestone"/>
-					</inputs>
-				</execute-script>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="demo/create-ticket.view.xml"
 				>
-					<bind
-						channel="container"
-						to="project"
-					/>
-					<bind
-						channel="selection"
-						to="ticket"
-					/>
-				</open-dialog>
+					<execute-script function="$draft.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone)"/>
+					<open-dialog
+						bind-input-to="model"
+						dialog-view="demo/create-ticket.view.xml"
+					>
+						<bind
+							channel="container"
+							to="project"
+						/>
+						<bind
+							channel="selection"
+							to="ticket"
+						/>
+					</open-dialog>
+				</create-transient>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-trash"
-				input="ticket"
+				inputs="ticket"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -78,9 +76,11 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="t -> #('Delete ticket {0}?'@en, 'Ticket {0} löschen?'@de).fill($t.get(`tl.demo.projectManagement:Ticket#title`))"/>
+				<confirm expr="#('Delete ticket {0}?'@en, 'Ticket {0} löschen?'@de).fill($ticket.get(`tl.demo.projectManagement:Ticket#title`))"/>
 				<delete-object/>
-				<write-channel name="ticket"/>
+				<write-channel name="ticket"
+					clear="true"
+				/>
 			</generic-command>
 		</commands>
 		<table

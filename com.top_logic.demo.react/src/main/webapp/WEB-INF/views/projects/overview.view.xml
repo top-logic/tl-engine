@@ -86,7 +86,7 @@
 			-->
 			<generic-command
 				image="css:bi bi-file-earmark-slides"
-				input="project"
+				inputs="project as p"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -102,7 +102,7 @@
 				</executability>
 				<execute-script>
 					<function><![CDATA[
-						p -> {
+						{
 							name = $p.get(`tl.demo.projectManagement:ProjectScope#name`);
 							milestones = $p.get(`tl.demo.projectManagement:ProjectScope#milestones`);
 							tickets = $p.get(`tl.demo.projectManagement:ProjectScope#tickets`);
@@ -244,8 +244,8 @@
 								name: toString($name, ".pptx"))
 						}
 					]]></function>
+					<download/>
 				</execute-script>
-				<download/>
 			</generic-command>
 		</commands>
 		<stack direction="column">

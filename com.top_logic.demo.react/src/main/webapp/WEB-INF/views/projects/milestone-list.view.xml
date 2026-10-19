@@ -77,7 +77,7 @@
 			</generic-command>
 			<generic-command
 				image="css:bi bi-patch-check"
-				input="milestone"
+				inputs="milestone"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -89,7 +89,7 @@
 					<disabled-if expr="m -> if(canCall(approveMilestone($m)), null, #('You may not approve this milestone.'@en, 'Sie dürfen diesen Meilenstein nicht freigeben.'@de))"/>
 				</executability>
 				<with-transaction>
-					<execute-script function="m -> approveMilestone($m)"/>
+					<execute-script function="approveMilestone($milestone)"/>
 				</with-transaction>
 			</generic-command>
 		</commands>

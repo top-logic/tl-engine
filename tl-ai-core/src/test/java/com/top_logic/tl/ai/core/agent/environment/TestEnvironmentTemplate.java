@@ -76,7 +76,7 @@ public class TestEnvironmentTemplate extends TestCase {
 			.contains("Write every text the user sees in this language: the notes between tool calls"));
 		assertTrue(shippedTemplate("de"), shippedTemplate("de")
 			.contains("Schreiben Sie jeden Text, den der Benutzer sieht, in dieser Sprache: die Notizen"
-				+ " zwischen Werkzeugaufrufen"));
+				+ " zwischen Tool-Aufrufen"));
 	}
 
 	/**

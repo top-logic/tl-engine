@@ -17,10 +17,11 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
  * <li>otherwise → a `Button` showing the label, with a chevron as `endIcon`.</li>
  * </ul>
  *
- * <p>Every trigger carries `aria-haspopup` `menu` and `aria-expanded` while its menu is open.</p>
+ * <p>Every trigger carries `aria-haspopup` with the kind of surface it opens (`menu` unless given)
+ * and `aria-expanded` while that surface is open.</p>
  */
 const MuiMenuTriggerAdapter: React.FC<MenuTriggerPartProps> = ({
-  id, ref, appearance, expanded, label, icon, children, className, style, onClick, onMouseDown, ...attributes
+  id, ref, appearance, expanded, haspopup = 'menu', label, icon, children, className, style, onClick, onMouseDown, ...attributes
 }) => {
   const common = {
     id,
@@ -30,7 +31,7 @@ const MuiMenuTriggerAdapter: React.FC<MenuTriggerPartProps> = ({
     onClick,
     onMouseDown,
     'aria-expanded': expanded,
-    'aria-haspopup': 'menu' as const,
+    'aria-haspopup': haspopup,
   };
 
   if (children === undefined && icon) {

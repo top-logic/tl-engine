@@ -103,6 +103,20 @@ describe('the menu trigger of a toolbar group as MUI button', () => {
   });
 });
 
+describe('the kind of surface a MUI menu trigger opens', () => {
+  it('names a menu unless told otherwise, and the given kind otherwise', () => {
+    render(<>
+      <MuiMenuTriggerAdapter appearance="ghost" expanded={false} label="Menü" />
+      <MuiMenuTriggerAdapter appearance="ghost" expanded={true} haspopup="dialog" label="Details" />
+    </>);
+
+    expect(screen.getByRole('button', { name: 'Menü' }).getAttribute('aria-haspopup')).toBe('menu');
+    const dialogTrigger = screen.getByRole('button', { name: 'Details' });
+    expect(dialogTrigger.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(dialogTrigger.getAttribute('aria-expanded')).toBe('true');
+  });
+});
+
 describe('the drop-down trigger of a menu region as MUI button', () => {
   it('wraps the child control and reports whether its menu is open', () => {
     mountAdapter(TLMenuRegion, {

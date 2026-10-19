@@ -91,6 +91,32 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 
 The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tl-overlay` / `.tl-overlay__layer` / `.tl-overlay__layer--<anchor>` (design system, `overlay.css`) and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar[data-tl-role="category-<n>"]` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
 
+## Recording, playback and download
+
+Four elements work on `BinaryData` held by a [channel](doc:view-layer/channels), each through its `input` attribute:
+
+- **`<audio-recorder input="ch">`** (`AudioRecorderElement`) records from the user's microphone; the recording is uploaded and written to the channel.
+- **`<audio-player input="ch">`** (`AudioPlayerElement`) plays back the audio the channel holds.
+- **`<photo-capture input="ch">`** (`PhotoCaptureElement`) takes a photo with the user's camera; the photo is uploaded and written to the channel.
+- **`<download input="ch">`** (`DownloadElement`) shows the file name of the data the channel holds and downloads it on request.
+
+All four are bound to their channel in both directions (`BinaryChannelBinding`): a new value of the channel reaches the element, and what the element produces is written to the channel. Elements that share a channel therefore share the data — a recorder, a player and a download on one channel play and offer the latest recording, and an `<image>` on the channel of a `<photo-capture>` shows the latest photo. A value that is no `BinaryData` counts as no data.
+
+```xml
+<view>
+	<channels>
+		<channel name="recording"/>
+	</channels>
+	<stack>
+		<audio-recorder input="recording"/>
+		<audio-player input="recording"/>
+		<download input="recording"/>
+	</stack>
+</view>
+```
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/media-demo.view.xml`.
+
 ## Ready-made HTML: `<html>`
 
 `<html input="ch">` (`HtmlElement`) displays HTML the application did not compose itself — the answer of an agent, a generated exposé, an imported page. The channel carries that content in one of three shapes, and `HtmlValues` reduces all of them to the source text to display:

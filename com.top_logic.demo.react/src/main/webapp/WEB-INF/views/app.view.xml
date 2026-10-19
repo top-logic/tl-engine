@@ -169,6 +169,15 @@
 								<de>Dokumentanzeige</de>
 							</label>
 						</nav-item>
+						<nav-item id="media"
+							icon="css:bi bi-camera-reels"
+						>
+							<view-ref view="demo/media-demo.view.xml"/>
+							<label>
+								<en>Media</en>
+								<de>Medien</de>
+							</label>
+						</nav-item>
 						<nav-item id="html"
 							icon="css:bi bi-filetype-html"
 						>

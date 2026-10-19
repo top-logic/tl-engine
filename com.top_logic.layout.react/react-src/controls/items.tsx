@@ -22,23 +22,20 @@ import { useRovingFocus } from './useRovingFocus';
  * container.
  *
  * An application stylesheet composes a per-item value from it, e.g.
- * `animation-delay: calc(var(--tl-item-index) * 60ms)`.
+ * `animation-delay: calc(var(--item-index) * 60ms)`.
+ *
+ * Outside the design system's namespace (the `tl` prefix of its custom properties): it is data of the
+ * engine for an application stylesheet, not a word of the package.
  */
-export const ITEM_INDEX_PROPERTY = '--tl-item-index';
+export const ITEM_INDEX_PROPERTY = '--item-index';
 
 /**
  * CSS class every item wrapper carries, next to the class the container is configured with.
  *
- * The layout stylesheet uses it to keep the wrapper transparent for the layout of the container:
- * the wrapper passes the space it is given on to the item, and it fills while the item fills.
+ * The design system draws it (layout.css): the wrapper passes the space it is given on to the item, and in a
+ * selectable container it is the option the user presses.
  */
-export const ITEM_CLASS = 'tlItem';
-
-/** Modifier of an item wrapper in a selectable container. */
-const ITEM_SELECTABLE_CLASS = `${ITEM_CLASS}--selectable`;
-
-/** Modifier of the wrapper of a selected item. */
-const ITEM_SELECTED_CLASS = `${ITEM_CLASS}--selected`;
+export const ITEM_CLASS = 'tl-item';
 
 /** Attribute of an item wrapper in a selectable container holding the client key of its object. */
 const ATTR_ITEM_KEY = 'data-tl-item';
@@ -183,7 +180,7 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
         tabIndex={roving.tabIndexOf(i)}
         {...{ [ATTR_ITEM_KEY]: key }}
         {...(multiSelect ? { [ATTR_LONG_PRESS]: '' } : {})}
-        className={wrapperClass(wrapper, itemClass, ITEM_SELECTABLE_CLASS, isSelected && ITEM_SELECTED_CLASS)}
+        className={wrapperClass(wrapper, itemClass)}
         style={wrapperStyle(wrapper, i)}
         onMouseDown={event => {
           if (event.shiftKey && !onInner(event)) {
@@ -205,6 +202,7 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
         }}
       >
         <TLChild control={child} />
+        {isSelected && <span className="tl-item__check" aria-hidden="true" />}
       </div>
     );
   });

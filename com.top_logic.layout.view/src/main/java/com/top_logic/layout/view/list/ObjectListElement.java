@@ -138,7 +138,7 @@ public class ObjectListElement implements UIElement {
 
 	/**
 	 * CSS class of the element the client places around each item, carrying its 0-based position as
-	 * the CSS custom property {@code --tl-item-index}.
+	 * the CSS custom property {@code --item-index}.
 	 *
 	 * <p>
 	 * An application styles the items of every list through this class, a staggered entrance

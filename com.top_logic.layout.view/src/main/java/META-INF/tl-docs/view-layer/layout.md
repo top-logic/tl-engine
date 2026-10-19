@@ -71,7 +71,7 @@ further lines where the screen is too narrow for them:
 space left over is split between its two sides, so the content sits in the middle of the page rather
 than against its left edge. Below the bound nothing changes, so the same element still fills a phone
 screen. The bound travels as an inline `max-width` — it is a value, not a kind of layout — while the
-centering is the shared class `tlBounded` (`width: 100%; margin-inline: auto`), which a stack and a
+centering is the shared class `tl-bounded` (`width: 100%; margin-inline: auto`), which a stack and a
 grid carry alike. The explicit width is what keeps the auto margins from shrinking the container to
 its content.
 
@@ -139,8 +139,8 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 - **Inputs.** `inputs` names the channels the functions read, either as the comma-separated attribute `inputs="catalogue, term"` or as nested `<inputs><input channel="catalogue"/></inputs>` (`Inputs`, the same notation every `inputs` property of the view layer takes). Their values are the leading positional arguments, in declaration order: `items` is `...inputs -> elements`, `link` and `remove` are `...inputs -> element -> ...`, the element coming last. A list with no inputs is a repeater over a plain query — `items="all(\`test.flowchart:FlowNode\`)"` — and follows the model through its `observed-types`.
 - **With and without a container.** A read-only list configures `items` alone. A list that composes objects adds `element-type` plus the `<new-element>` content bound to `new-element-channel`, whose command chain persists the draft with `<link-element>`, and `<remove-element>` inside the `<item>` content detaches one. The composer appears only while *every* input holds a value, because an element is composed to be attached somewhere; `link` is what attaches it, so any containment style works — a composite reference, a back-reference, an association.
 - **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns`, `gap` and `max-width` — the same options `<grid>` takes (see [Layout: stack and grid](#layout-stack-and-grid)). `gap` and `max-width` apply to either arrangement, the column options to a grid.
-- **Selection.** `selection="ch"` makes the elements selectable like the entries of a list box: a click on an element writes its object to the channel, and the element of the object the channel holds is marked as selected (`ItemSelectionBinding`, a `SelectionChannelBinding`; the arrangement container receives the elements together with their objects through `ReactLayoutControl.setItems`). `selection-mode="multi"` selects several elements with `Ctrl` and `Shift`; the channel then holds the set while several are selected. An element that leaves the list gives up the selection. Without `selection`, the list is display-only. A selection is recorded as `selectItemByKey` naming the object.
-- **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tlItem tlObjectList__item" style="--tl-item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tlGrid`, a list into a `.tlStack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
+- **Selection.** `selection="ch"` makes the elements selectable like the entries of a list box: a click on an element writes its object to the channel, and the element of the object the channel holds is marked as selected (`aria-selected`; the design system draws a ring over the element, `layout.css`; `ItemSelectionBinding`, a `SelectionChannelBinding`; the arrangement container receives the elements together with their objects through `ReactLayoutControl.setItems`). `selection-mode="multi"` selects several elements with `Ctrl` and `Shift`; the channel then holds the set while several are selected. An element that leaves the list gives up the selection. Without `selection`, the list is display-only. A selection is recorded as `selectItemByKey` naming the object.
+- **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tl-item tlObjectList__item" style="--item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tl-grid`, a list into a `.tl-stack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
 
 ```xml
 <object-list
@@ -169,14 +169,14 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 	to { opacity: 1; transform: none; }
 }
 
-/* The items of a grid arrangement; a list arranges its items in a `.tlStack` instead. */
-.tlGrid > .tlObjectList__item {
+/* The items of a grid arrangement; a list arranges its items in a `.tl-stack` instead. */
+.tl-grid > .tlObjectList__item {
 	animation: tlDemoRepeaterFadeUp 300ms ease-out both;
-	animation-delay: calc(var(--tl-item-index) * 60ms);
+	animation-delay: calc(var(--item-index) * 60ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.tlGrid > .tlObjectList__item {
+	.tl-grid > .tlObjectList__item {
 		animation: none;
 	}
 }
@@ -211,7 +211,7 @@ The demo is `com.top_logic.demo.react`'s `WEB-INF/views/board.view.xml` (nav ite
 - Content that is hidden is disposed rather than kept alive, so it leaves no contributions - a form's edit / save / cancel commands, a slot contribution - behind in the enclosing scope. While the condition keeps holding, the content stays as it is and follows its own channels.
 - Not to be confused with the `<visible-if>` inside a command's `<executability>` (`com.top_logic.layout.view.command.VisibleIf`), which carries the same tag name and decides whether a *command* is offered for its input.
 
-**Conditional content takes the size of what it shows.** A `<switch>` and a `<visible-if>` render through the deck pane (`TLDeckPane`, `.tlDeckPane`), a column flex box that states no size of its own: a deck showing content of its own size is exactly as wide and as high as that content, so conditional content stands inline - in an app bar, beside a breadcrumb, in a row of buttons - instead of claiming the box around it. A deck whose content fills takes part in the fill contract as a container (see below) and is then the bounded box the child's height resolves against.
+**Conditional content takes the size of what it shows.** A `<switch>` and a `<visible-if>` render through the deck pane (`TLDeckPane`, `.tl-deck`), a column flex box that states no size of its own: a deck showing content of its own size is exactly as wide and as high as that content, so conditional content stands inline - in an app bar, beside a breadcrumb, in a row of buttons - instead of claiming the box around it. A deck whose content fills takes part in the fill contract as a container (see below) and is then the bounded box the child's height resolves against.
 
 The app bar of `com.top_logic.demo.react` shows both this and the two ways an unlabelled input says what it is for. `WEB-INF/views/tickets.view.xml` raises its jump-to box into the shell's app bar with `<slot-content to="appbar-content">` - the contribution belongs to the view that owns the `ticket` channel, and the shell knows nothing of it - and puts the name of the selected ticket beside it, shown only while a ticket is selected:
 

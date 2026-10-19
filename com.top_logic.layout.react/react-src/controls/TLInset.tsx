@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useFillHost, FillProvider, rootClassName } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useFillHost, FillProvider, rootClassName, useSurface, insetClass } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -12,11 +12,12 @@ import type { TLCellProps } from 'tl-react-bridge';
  */
 const TLInset: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const surface = useSurface();
   const [fillClass, fillHost] = useFillHost();
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={rootClassName(state, fillClass ? 'tlInset ' + fillClass : 'tlInset')}>
+      <div id={controlId} className={rootClassName(state, 'tl-inset', insetClass(surface.inset), fillClass)}>
         {!!state.child && <TLChild control={state.child} />}
       </div>
     </FillProvider>

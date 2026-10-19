@@ -45,14 +45,14 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
 
   const className = rootClassName(
     state,
-    'tlStack',
-    `tlStack--${direction}`,
-    `tlStack--gap-${gap}`,
-    `tlStack--align-${align}`,
-    `tlStack--justify-${justify}`,
-    wrap && 'tlStack--wrap',
-    growFirst && 'tlStack--grow-first',
-    maxWidth && 'tlBounded',
+    'tl-stack',
+    `tl-stack--${direction}`,
+    `tl-stack--gap-${gap}`,
+    `tl-stack--align-${align}`,
+    `tl-stack--justify-${justify}`,
+    wrap && 'tl-stack--wrap',
+    growFirst && 'tl-stack--grow-first',
+    maxWidth && 'tl-bounded',
     fillClass,
   );
 

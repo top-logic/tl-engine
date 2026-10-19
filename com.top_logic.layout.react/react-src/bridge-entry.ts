@@ -78,6 +78,10 @@ export { usePopover } from './bridge/popover';
 export type { PopoverAnchor, PopoverOptions, PopoverPlacement, PopoverHover } from './bridge/popover';
 export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
 export type { DisplayClass } from './bridge/display-class';
+export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, paintedLevel, panelSurface } from './bridge/surface';
+export type { Surface, SurfaceLevel, InsetKind } from './bridge/surface';
+export { separatorMove, separatorStep, movedSize } from './bridge/separator';
+export type { SeparatorMove, SeparatorOrientation } from './bridge/separator';
 // A popover surface needs both its own ref and the hook's setFloating on one element; controls
 // must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
 export { useMergeRefs } from '@floating-ui/react';

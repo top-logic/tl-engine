@@ -27,7 +27,7 @@ between the sheet and the browser, so what is written there is what the browser 
 **Write `var(--name)` without a fallback.** A `var(--name, 0.5rem)` hides the fact that the theme is
 missing the token: the page renders, silently ignoring the theme. A token the theme does not declare
 is a defect to fix in the theme. The only custom properties that carry a fallback are the ones a
-stylesheet declares itself (`--page-inset`, `--cal-ev-bg`, …), where the fallback is the value of the
+stylesheet declares itself (`--cal-ev-bg`, …), where the fallback is the value of the
 default case rather than a stand-in for a missing token.
 
 ## Cascade layers
@@ -233,6 +233,11 @@ a selector that rounds for a reason of its own is passed in the audit's allow-li
 Besides the theme tokens, the audit accepts the tokens the design system's token sheet declares
 (`/style/tl-design-system/tokens.css`, the `--tl-*` namespace), which a module's test names in
 `tokenStylesheets()`. A sheet audited here reads those tokens; it never declares them.
+
+The four sheets under `/style/tl-design-system/` are generated in the repository `TopLogic/tl-design-system` and copied
+here; never edit them in this repository. Each ends with a seal (the SHA-256 of everything before it), and
+`TestDesignSystemCopy` in `tl-layout-react` fails the build when a copy was changed by hand. A change goes into the
+package sources (`design-system/src`), followed by `node tools/generate.mjs` and `node tools/publish-to-worktree.mjs`.
 
 The audit is written against a theme configuration and a stylesheet handed to it, both loaded from
 web application resources (`ThemeTokenAudit.themeTokens`, `ThemeTokenAudit.stylesheet`), so an

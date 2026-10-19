@@ -27,8 +27,6 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryManager;
-import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -37,7 +35,6 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.search.react.EvaluateDynamicScriptAction;
 import com.top_logic.model.search.react.EvaluateScriptAction;
 import com.top_logic.tool.boundsec.manager.AccessManager;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.Resources;
 
 /**
@@ -76,17 +73,10 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 
 	private TLObject _item;
 
-	private Person _formerUser;
-
-	private String _formerContextId;
-
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		TLContext context = TLContext.getContext();
-		_formerUser = context.getCurrentPersonWrapper();
-		_formerContextId = context.getContextId();
-		becomeUser(PersonManager.getManager().getRoot());
+		becomeRoot();
 
 		_context = new DefaultViewContext(null);
 		_item = newObject(ITEM, ORIGINAL);
@@ -97,13 +87,6 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 		_item = null;
 		_context = null;
 		super.tearDown();
-
-		TLContext context = TLContext.getContext();
-		context.setCurrentPerson(_formerUser);
-		if (_formerUser == null) {
-			// Without a person, the context is identified by its explicit context id.
-			context.setContextId(_formerContextId);
-		}
 	}
 
 	/**
@@ -179,8 +162,7 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 			ServiceTestSetup.createStarterFactoryForModules(getModules(
 				TypeIndex.Module.INSTANCE,
 				AccessManager.Module.INSTANCE,
-				TLSecurityDeviceManager.Module.INSTANCE,
-				PersonManager.Module.INSTANCE))));
+				TLSecurityDeviceManager.Module.INSTANCE))));
 	}
 
 }

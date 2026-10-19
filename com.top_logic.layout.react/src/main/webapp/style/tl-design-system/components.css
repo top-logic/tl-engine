@@ -3,6 +3,126 @@
    https://git.top-logic.com/TopLogic/tl-design-system/wiki */
 /* Components, one section per file under src/components/. */
 
+/* --- accordion/accordion.css --- */
+/* Accordion — Spec 2026-10-16 Welle 4c §4 (Q20). Bernhards Accordion (#29651) aus dem alten Stylesheet ins Paket;
+   Anatomie und Tastatur (WAI-ARIA Accordion) bleiben. Die Fläche ist tl-card an der Wurzel — sie beschneidet am
+   Radius, darum keine Eckregeln am Kopf. Hier steht, was die Abschnitte anders machen: Linien dazwischen, Kopf auf
+   size-bar, Körper space-md. Der Ring liegt innen im Auslöser, weil der Kopf die ganze Breite spannt. */
+
+.tl-accordion__section + .tl-accordion__section {
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-accordion__header {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-bar);
+}
+
+.tl-accordion__header:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-accordion__heading {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+}
+
+/* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
+:where(.tl-accordion__trigger) { font: inherit; }
+
+.tl-accordion__trigger {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+  padding: 0 var(--tl-space-md);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.tl-accordion__trigger:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-accordion__chevron {
+  flex: none;
+  color: var(--tl-icon-primary);
+  transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-accordion__trigger[aria-expanded="true"] > .tl-accordion__chevron {
+  rotate: 90deg;
+}
+
+.tl-accordion__icon {
+  flex: none;
+  color: var(--tl-icon-primary);
+}
+
+.tl-accordion__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-accordion__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-inline-end: var(--tl-space-sm);
+}
+
+/* Ein Abschnitt ohne Befehle rendert eine leere Toolbar: kein Platz dafür. */
+.tl-accordion__actions:empty {
+  display: none;
+}
+
+.tl-accordion__panel {
+  padding: var(--tl-space-md);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* --- adaptive-detail/adaptive-detail.css --- */
+/* Responsives Master-Detail — Spec 2026-10-16 Welle 4c §7 (Q18). Den Wechsel zwischen Split, Auswahl mit Drawer und
+   Auswahl/Detail entscheidet der Server (DisplayClass der AppShell). Kompakt steht über dem Inhalt die Breadcrumb des
+   Pakets (tl-breadcrumb) in einer Leiste. Der Behälter ist der Anker des Detail-Drawers (tl-drawer--container) und
+   beschneidet ihn mit clip: der geparkte Drawer lässt sich nie in Sicht scrollen, auch nicht durch Fokus. */
+
+.tl-adaptive-detail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: clip;
+}
+.tl-adaptive-detail[hidden] { display: none; }
+
+.tl-adaptive-detail__bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: var(--tl-size-bar);
+  padding-inline: var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-adaptive-detail__content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* --- alert/alert.css --- */
 /* Alert — docs/skalen.md „Status: vier Bedeutungen“.
    Eine Meldung, die im Fluss steht: Icon, Titel, Text. Die Bedeutung ist ein Attribut (data-tl-role) und Pflicht —
@@ -79,6 +199,131 @@
   align-self: start;
 }
 
+/* --- app-bar/app-bar.css --- */
+/* AppBar — Spec 2026-10-16 Welle 4b §5. Die Leiste am oberen Rand: Anfang (Hamburger), Titel, Kinder (Breadcrumb),
+   Aktionen (tl-toolbar), Ende (Benutzermenü). Höhe size-shell-bar, Fläche surface-layer. Die Variante --elevated
+   trennt mit einer Linie, nicht mit einem Schatten: die Leiste schwebt nicht (docs/skalen.md „Welle 4b“). */
+
+.tl-app-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  box-sizing: border-box;
+  height: var(--tl-size-shell-bar);
+  padding: 0 var(--tl-space-sm);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+}
+.tl-app-bar[hidden] { display: none; }
+
+.tl-app-bar--elevated {
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-app-bar__leading {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+.tl-app-bar__title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Kinder (Breadcrumb) wachsen nicht: den Rest der Leiste nehmen die Aktionen. */
+.tl-app-bar__children {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+}
+
+.tl-app-bar__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: end;
+  margin-inline-start: auto;
+}
+
+/* Ohne Befehl rendert die Toolbar nichts; dann trägt die Hülle keine Lücke zur Leiste bei. */
+.tl-app-bar__actions:empty {
+  display: none;
+}
+
+/* Wer nachgibt, wenn die Leiste zu schmal wird: eine Toolbar, die überlaufen kann, nimmt nur den Platz, der übrig ist
+   (Basis 0, sie wächst in den Rest) und misst daran, was sie zeigt — erst fallen die Labels, dann wandern Befehle ins
+   Überlaufmenü. Bei ihrem Überlaufknopf (min-width) hält sie; erst dann schrumpfen Titel und Kinder
+   (app-bar-shrink.test.mjs). Ohne die Zahl 100000 des Altbestands. */
+.tl-app-bar__actions:has(> .tl-toolbar[data-tl-overflow]) {
+  flex: 1 1 0;
+  min-width: var(--tl-size-control);
+}
+
+.tl-app-bar__trailing {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  margin-inline-start: auto;
+}
+
+/* Aktionen vor dem Ende haben den freien Platz schon genommen; ein zweiter automatischer Rand teilte ihn und ließe die
+   Aktionen in der Mitte stehen. Eine leere Hülle nimmt nichts, dann behält das Ende seinen Rand. */
+.tl-app-bar__actions:not(:empty) + .tl-app-bar__trailing {
+  margin-inline-start: 0;
+}
+
+/* --- app-shell/app-shell.css --- */
+/* AppShell — Spec 2026-10-16 Welle 4b §3. Der Rahmen der Anwendung: Kopf, Hinweise, Inhalt (main), Fuß. Den Breakpoint
+   misst nur TLAppShell (matchMedia) und setzt data-tl-display="compact" | "regular" an dieser Wurzel; keine
+   Komponentendatei enthält eine Breiten-Media-Query (navigation.test.mjs). Eine Regel für schmale Bildschirme liest
+   [data-tl-display~="compact"]. */
+
+.tl-app-shell {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+}
+.tl-app-shell[hidden] { display: none; }
+
+.tl-app-shell__header,
+.tl-app-shell__footer {
+  flex: none;
+}
+
+/* Hinweise zwischen Kopf und Inhalt: ohne eigenen Rand und Abstand, damit der Bereich verschwindet, wenn kein Hinweis
+   sichtbar ist. */
+.tl-app-shell__notices {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+}
+
+/* Mehrere Hinweise stehen bündig: Balken über die volle Breite; die Lücke eines Stapels zeigte die Seite als Streifen
+   zwischen zwei Ansagen. Zwei Klassen, damit die Regel die Lücke des Stapels schlägt, wo immer er steht. */
+.tl-app-shell .tl-app-shell__notices > * {
+  gap: 0;
+}
+
+/* Begrenzte Spalte: die aktive Ansicht löst ihre Höhe gegen diesen Bereich auf, füllt ihn und rollt in sich, die
+   AppBar bleibt stehen. Bündig: die Ansicht trägt ihren Abstand selbst (Abstandsmodell). */
+.tl-app-shell__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* --- avatar/avatar.css --- */
 /* Avatar — docs/skalen.md „Avatar: die Farbe ist eine Kategorie“.
    Ein Kreis für eine Person oder ein Objekt: das Bild, wo es eines gibt; sonst die Initialen auf
@@ -150,6 +395,89 @@
 }
 .tl-badge[hidden] { display: none; }
 
+/* Ein Icon mit Zähler an der Ecke (eingeklappte Sidebar, BottomBar) — Spec 2026-10-16 Welle 4b §6. Die Lage gehört
+   dem Element um das Part Badge, nicht dem Badge: eine Komponentenbibliothek setzt die Position ihres Badges selbst
+   (view-layer/parts.md). Der Behälter umschließt Icon und Zähler; der Zähler steht über der Ecke oben am Ende. */
+.tl-icon-badge {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.tl-icon-badge[hidden] { display: none; }
+
+.tl-icon-badge__count {
+  position: absolute;
+  top: calc(-1 * var(--tl-space-2xs));
+  inset-inline-end: calc(-1 * var(--tl-space-xs));
+  display: flex;
+}
+
+/* --- bottom-bar/bottom-bar.css --- */
+/* BottomBar — Spec 2026-10-16 Welle 4b §5. Die Navigation am unteren Rand kleiner Bildschirme: Einträge mit Icon über
+   Label. Die aktuelle Seite (aria-current="page") trägt die Fläche der Auswahl hinter dem Icon; das Label wird
+   kräftig (tl-type-label-strong, im TSX). Höhe size-shell-bar wie die AppBar. */
+
+.tl-bottom-bar {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  box-sizing: border-box;
+  height: var(--tl-size-shell-bar);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-layer);
+}
+.tl-bottom-bar[hidden] { display: none; }
+
+/* Reset ohne Spezifität: die Typo-Klasse am Label gewinnt. */
+:where(.tl-bottom-bar__item) { font: inherit; }
+
+.tl-bottom-bar__item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  padding: 0 var(--tl-space-2xs);
+  border: 0;
+  background: transparent;
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+
+.tl-bottom-bar__item:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-bottom-bar__item:active {
+  background: var(--tl-surface-interactive-active);
+}
+
+/* Der Eintrag liegt bündig an der Kante der Leiste: der Ring innen. */
+.tl-bottom-bar__item:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-bottom-bar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--tl-space-sm);
+  border-radius: var(--tl-radius-full);
+}
+
+.tl-bottom-bar__item[aria-current="page"] .tl-bottom-bar__icon {
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-bottom-bar__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* --- breadcrumb/breadcrumb.css --- */
 /* Breadcrumb — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W4).
    nav > ol > li; die Einträge sind tl-button--link, die aktuelle Seite ein Text mit aria-current,
@@ -179,6 +507,26 @@
 
 .tl-breadcrumb__current {
   color: var(--tl-text-primary);
+}
+
+/* --- button-bar/button-bar.css --- */
+/* Knopfleiste — Spec 2026-10-16 Welle 4c §3, Konsolidierung Q14. Die untere Befehlsleiste einer Fläche: Fuß des
+   Dialogs, Knopfleiste des Panels. Sie hält eine Toolbar; rechtsbündig, Linie oben. Hält sie keinen Knopf — eine
+   Toolbar ohne Befehl rendert nichts oder nur ihre Hülle —, verschwindet sie samt Linie. */
+
+.tl-button-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: end;
+  gap: var(--tl-space-xs);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-button-bar[hidden] { display: none; }
+
+.tl-button-bar:not(:has(button)) {
+  display: none;
 }
 
 /* --- button/button.css --- */
@@ -378,6 +726,39 @@
 @keyframes tl-button-busy {
   from { opacity: 1; }
   to { opacity: 0.4; }
+}
+
+/* --- card/card.css --- */
+/* Karte — Spec 2026-10-16 Welle 4c §4 (Q15), Weg B. Die eine Kartenfläche: Karte, Panel als Karte, Accordion. Die
+   Fläche folgt der Verschachtelung — auf der Seite surface-layer, in einer Fläche (Karte, Accordion, Panel als Karte;
+   ein schlichtes Panel malt keine und hebt nicht) surface-layer-nested, im Dialog die Fläche des Dialogs (nested läge dunkel unter surface-overlay und sänke ein).
+   Hell sind layer und nested weiß; dort trennt die Linie (skalen.md „Elevation“). Kein Schatten: eine Karte liegt in
+   der Oberfläche, darum zeichnet elevated wie outlined. Den Modifier der Stufe setzt das TSX aus useSurface(). */
+
+.tl-card {
+  min-height: min-content;
+  overflow: clip;
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+}
+
+.tl-card--nested {
+  background: var(--tl-surface-layer-nested);
+}
+
+.tl-card--overlay {
+  background: var(--tl-surface-overlay);
+}
+
+/* Der Inhalt beginnt, wo der Titel beginnt: der Kopf rückt den Titel um space-md ein, der Körper ebenso. */
+.tl-card__body--pad-default {
+  padding: var(--tl-space-md);
+}
+
+.tl-card__body--pad-compact {
+  padding: var(--tl-space-xs);
 }
 
 /* --- choice/choice.css --- */
@@ -933,19 +1314,6 @@
   overflow: auto;
 }
 
-/* Der Fuß hält eine Toolbar; ohne Befehl rendert sie nichts, dann verschwindet er. */
-.tl-dialog__footer {
-  display: flex;
-  justify-content: end;
-  gap: var(--tl-space-xs);
-  padding: var(--tl-space-sm) var(--tl-space-md);
-  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
-}
-
-.tl-dialog__footer:empty {
-  display: none;
-}
-
 /* Acht Griffe zum Ändern der Größe, halb über dem Rand. Kanten xs breit, Ecken sm groß. */
 .tl-dialog__resize {
   position: absolute;
@@ -1122,6 +1490,17 @@
   transition-timing-function: var(--tl-easing-entrance);
 }
 
+/* Offen eingefügt (die mobile Sidebar rendert die Schublade erst beim Öffnen): der Übergang beginnt außerhalb des
+   Randes, sonst stünde sie ohne Bewegung da. Das Schließen nimmt sie mit dem Scrim aus dem DOM, ohne Bewegung — die
+   Bewegung im Ganzen kommt mit dem UI-Durchgang nach Welle 5. Ohne @starting-style erscheint sie wie bisher. */
+@starting-style {
+  .tl-drawer--start[data-tl-state~="open"] { transform: translateX(-100%); }
+  .tl-drawer--start[data-tl-state~="open"]:dir(rtl) { transform: translateX(100%); }
+  .tl-drawer--end[data-tl-state~="open"] { transform: translateX(100%); }
+  .tl-drawer--end[data-tl-state~="open"]:dir(rtl) { transform: translateX(-100%); }
+  .tl-drawer--bottom[data-tl-state~="open"] { transform: translateY(100%); }
+}
+
 .tl-drawer--narrow { width: var(--tl-size-drawer-narrow); }
 .tl-drawer--medium { width: var(--tl-size-drawer-medium); }
 .tl-drawer--wide { width: var(--tl-size-drawer-wide); }
@@ -1134,6 +1513,11 @@
 .tl-drawer--container {
   position: absolute;
   z-index: var(--tl-layer-raised);
+}
+
+/* Der Behälter beschneidet (Master-Detail: overflow: clip); der Ring der Schublade liegt darum innen. */
+.tl-drawer--container:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 .tl-drawer__body {
@@ -1614,6 +1998,151 @@ a.tl-field-value:hover {
   color: var(--tl-status-error-text);
 }
 
+/* --- layout/layout.css --- */
+/* Reihen und Abstände — Spec 2026-10-16 Welle 4c §5 (Q16, Q22). Stack und Grid ordnen Kinder mit der einen
+   Gap-Skala, die tl-columns seit 3b liest: compact space-sm, default space-md, loose space-lg. Inset ist der Abstand
+   eines Inhalts zum Rand; wie weit, sagt die nächste Fläche über React-Kontext (useSurface) als Modifier — ohne
+   Modifier die Seite. Bounded begrenzt die Breite und mittelt, Item umhüllt wiederholte Kinder, Deck zeigt eines zur
+   Zeit und nimmt seine Größe. Wer füllt, entscheidet der Fill-Vertrag (tlFill, bis Welle 5 im alten Stylesheet). */
+
+.tl-stack {
+  display: flex;
+}
+.tl-stack[hidden] { display: none; }
+
+.tl-stack--column { flex-direction: column; }
+.tl-stack--row { flex-direction: row; }
+
+.tl-stack--gap-compact, .tl-grid--gap-compact { gap: var(--tl-space-sm); }
+.tl-stack--gap-default, .tl-grid--gap-default { gap: var(--tl-space-md); }
+.tl-stack--gap-loose, .tl-grid--gap-loose { gap: var(--tl-space-lg); }
+
+.tl-stack--align-start { align-items: start; }
+.tl-stack--align-center { align-items: center; }
+.tl-stack--align-end { align-items: end; }
+.tl-stack--align-stretch { align-items: stretch; }
+
+/* Wie der freie Platz entlang der Richtung verteilt wird. */
+.tl-stack--justify-start { justify-content: start; }
+.tl-stack--justify-center { justify-content: center; }
+.tl-stack--justify-end { justify-content: end; }
+.tl-stack--justify-space-between { justify-content: space-between; }
+.tl-stack--justify-space-around { justify-content: space-around; }
+.tl-stack--justify-space-evenly { justify-content: space-evenly; }
+
+.tl-stack--wrap { flex-wrap: wrap; }
+
+/* Das erste Kind füllt die Hauptachse (Eingabe mit Knopf daneben). */
+.tl-stack--grow-first.tl-stack--row > :first-child { flex: 1 1 auto; min-width: 0; }
+.tl-stack--grow-first.tl-stack--column > :first-child { flex: 1 1 auto; min-height: 0; }
+
+/* Die Spaltenvorlage rechnet das TSX inline (sie hängt an Mindestbreite und Höchstzahl); den Abstand liest es aus
+   derselben Stufe wie die Regeln oben. */
+.tl-grid {
+  display: grid;
+}
+.tl-grid[hidden] { display: none; }
+
+/* Gibt den Platz, den es bekommt, an seinen Inhalt weiter: eine begrenzte Spalte, gegen die ein füllender Inhalt
+   seine Höhe auflöst. */
+.tl-inset {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: var(--tl-space-lg);
+}
+.tl-inset[hidden] { display: none; }
+
+.tl-inset--panel {
+  padding: var(--tl-space-md);
+}
+
+.tl-inset--card {
+  padding: var(--tl-space-xs) var(--tl-space-md);
+}
+
+/* Die Breite eines Stacks oder Grids, begrenzt durch ein Inline-max-width, in seinem Behälter mittig. Ohne die
+   Breite schrumpften die automatischen Ränder ihn auf seinen Inhalt. */
+.tl-bounded {
+  width: 100%;
+  margin-inline: auto;
+}
+
+/* Die Hülle eines wiederholten Kindes (useItems); sie gibt den Platz an das Kind weiter. Ihre Position trägt sie
+   als --item-index, ein Datum der Engine für Anwendungs-CSS. */
+.tl-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.tl-item[hidden] { display: none; }
+
+/* Auswählbar (Q24, #29755): ist der Behälter eine Listbox, ist jeder Eintrag eine Option, und die ganze Fläche nimmt
+   den Klick. Ein Eintrag schwebt nicht: beim Zeigen ein Hof, kein Schatten. Ausgewählt liegt ein Ring über dem Rand
+   des Eintrags — eine Auswahlfläche läge hinter einer Karte mit eigener Fläche —, der Zustand ist aria-selected; der
+   Fokus ist der Ring aus base.css. Die Spalte von tl-columns ist dieselbe Hülle (useItems) und trägt dieselbe Regel. */
+.tl-item[role="option"],
+.tl-columns__column[role="option"] {
+  position: relative;
+  border-radius: var(--tl-radius-md);
+  cursor: pointer;
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-item[role="option"]:hover,
+.tl-columns__column[role="option"]:hover {
+  box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover-strong);
+}
+
+.tl-item[aria-selected="true"]::after,
+.tl-columns__column[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Ausgewählt heißt Ring und Haken (Nachtrag 4c, S2): die Marke ist ein dekoratives Element der Hülle, nur bei
+   aria-selected="true" — ein Pseudo ginge nicht, ::after trägt den Ring und ein ::before läge unter der Karte.
+   Der Unterschied zum Fokus liegt in der Form, nicht nur in der
+   Farbe (WCAG 1.4.1). */
+.tl-item__check {
+  position: absolute;
+  top: var(--tl-space-xs);
+  inset-inline-end: var(--tl-space-xs);
+  width: var(--tl-size-icon-md);
+  height: var(--tl-size-icon-md);
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-surface-brand);
+  pointer-events: none;
+}
+/* Derselbe Haken wie der des Kästchens (choice.css, .tl-checkbox:checked::after): rechter und unterer Rand eines
+   gedrehten Rechtecks, Anteile des Kreises; inset und margin zentrieren das Rechteck. Kein z-index: die Marke folgt
+   dem Kind im DOM und liegt so über der Karte, ohne ein Panel (Ebene raised) zu überdecken. */
+.tl-item__check::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: calc(var(--tl-size-icon-md) * 0.3);
+  height: calc(var(--tl-size-icon-md) * 0.55);
+  border: solid var(--tl-text-on-brand);
+  border-width: 0 var(--tl-border-width-md) var(--tl-border-width-md) 0;
+  transform: translateY(calc(var(--tl-size-icon-md) * -0.06)) rotate(45deg);
+}
+
+/* Zeigt ein Kind zur Zeit und nimmt dessen Größe: neben einer Breadcrumb, in der AppBar so groß wie sein Inhalt. */
+.tl-deck {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.tl-deck[hidden] { display: none; }
+
 /* --- menu/menu.css --- */
 /* Menu — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
    Ein Menü ist ein tl-popover mit Einträgen. Der Fokus ist echt (Roving-Tabindex): der Ring aus
@@ -1770,6 +2299,76 @@ a.tl-field-value:hover {
 .tl-overlay__layer--bottom { align-items: end; justify-content: center; }
 .tl-overlay__layer--bottom-right { align-items: end; justify-content: end; }
 
+/* --- panel/panel.css --- */
+/* Panel — Spec 2026-10-16 Welle 4c §3 (Q3, Q8, Q13, Q14). Eine Fläche mit Kopf (tl-titlebar), Körper und
+   Knopfleiste (tl-button-bar). Minimiert und maximiert sind Zustände in data-tl-state; als Karte trägt die Wurzel
+   zusätzlich tl-card. Bedienung wie ein Fenster (U1, U3): Doppelklick auf den Kopf maximiert, Escape stellt wieder
+   her, ein minimiertes Panel öffnet ein Klick auf den ganzen Kopf — das TSX; hier steht nur der Zeiger. */
+
+.tl-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tl-panel[hidden] { display: none; }
+
+/* Maximiert deckt das Panel den Behälter, der es maximiert, über dessen Inhalt. */
+.tl-panel[data-tl-state~="maximized"] {
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-raised);
+  background: var(--tl-surface-base);
+}
+
+/* Ein Doppelklick auf den Kopf maximiert; er soll den Titel nicht markieren. */
+.tl-panel > .tl-titlebar {
+  user-select: none;
+}
+
+.tl-panel[data-tl-state~="minimized"] > .tl-titlebar {
+  cursor: pointer;
+}
+
+/* Der Körper ist die Box, gegen die ein füllendes Kind seine Höhe auflöst: er nimmt, was das Panel übrig lässt, und
+   scrollt, was nicht hineinpasst. Ein Kind, das nicht füllt, behält die Höhe seines Inhalts, statt gestaucht zu
+   werden; ein füllendes (flex 1 1 0) braucht kein Schrumpfen. */
+.tl-panel__body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tl-panel__body > * {
+  flex-shrink: 0;
+}
+
+/* Über die ganze Zeile eines Formular-Rasters: eine Variante, kein Zustand. */
+.tl-panel--full-line {
+  grid-column: 1 / -1;
+}
+
+/* Knöpfe beim Zeigen: die Regel der Ebenen-Liste (reorder-list.css) — unsichtbar, sichtbar beim Zeigen auf das Panel
+   und bei Tastaturfokus darin (:focus-visible, nicht :focus-within: nach einem Mausklick bliebe der Fokus sonst
+   stehen), auf Touch-Geräten immer. */
+.tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+  opacity: 0;
+  transition: opacity var(--tl-duration-base) var(--tl-easing-standard);
+}
+
+.tl-panel--hover-actions:hover > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons),
+.tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons):has(:focus-visible) {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+    opacity: 1;
+  }
+}
+
 /* --- pill/pill.css --- */
 /* Pill — docs/skalen.md „Pill: Rolle statt Farbe“.
    Ein Wert, der sich von anderen abheben soll, als getönte Kapsel. Die Farbe ist eine Rolle aus
@@ -1841,6 +2440,14 @@ a.tl-field-value:hover {
   color: var(--tl-text-primary);
 }
 .tl-popover[hidden] { display: none; }
+
+/* Inhalts-Popover (#29659, View-Element <popover>): beliebiger Inhalt ist ein bündiger Behälter wie Panel oder
+   Dialogfenster — der Inhalt bringt seinen Abstand mit (<inset>), die Fläche keinen. Die Breite ist begrenzt, damit
+   Fließtext umbricht, statt über den Viewport zu laufen. */
+.tl-popover--content {
+  max-width: min(var(--tl-size-popover-content-max), calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-xs)));
+  padding: 0;
+}
 
 /* --- progress/progress.css --- */
 /* Progress — docs/skalen.md „Progress: ein Anteil, kein Urteil“.
@@ -2288,6 +2895,159 @@ a.tl-field-value:hover {
   margin-inline-start: auto;
 }
 
+/* --- sidebar/sidebar.css --- */
+/* Sidebar — Spec 2026-10-16 Welle 4b §4. Die Navigationsleiste: Einträge mit der Anatomie von tl-menu__item (Icon,
+   Label, Badge), Gruppen mit dem Chevron von tl-toggle, unten der Knopf zum Ein- und Ausklappen. Zustände sind
+   Attribute: data-tl-state~="collapsed" an der Wurzel, aria-current="page" an der aktuellen Seite,
+   data-tl-state~="contains-current" am Kopf einer zugeklappten Gruppe, die sie enthält, aria-expanded am Gruppenkopf.
+   Kompakt (data-tl-display="compact" an der AppShell) steht die Nav im modalen tl-drawer; dieses Stylesheet kennt
+   keinen Breakpoint. */
+
+.tl-sidebar {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.tl-sidebar[hidden] { display: none; }
+
+.tl-sidebar__nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: var(--tl-size-sidebar);
+  border-inline-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+  overflow-x: hidden;
+  transition: width var(--tl-duration-base) var(--tl-easing-standard);
+}
+
+/* Eingeklappt ist ein Eintrag ein Quadrat aus size-row, die Rail hat dazu space-2xs Rand je Seite — eine Rechnung aus
+   zwei Maßen, die der Dichte folgt, kein drittes Maß. */
+.tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__nav {
+  width: calc(var(--tl-size-row) + 2 * var(--tl-space-2xs));
+}
+
+/* Im modalen Drawer (kompakt) füllt die Nav die Schublade; Breite, Fläche und Schatten trägt tl-drawer. */
+.tl-drawer > .tl-sidebar__nav {
+  flex: 1 1 auto;
+  width: auto;
+  min-height: 0;
+  border-inline-end: 0;
+}
+
+.tl-sidebar__header,
+.tl-sidebar__footer {
+  flex: none;
+  padding: var(--tl-space-xs) var(--tl-space-control-x);
+}
+
+.tl-sidebar__header {
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-sidebar__footer {
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Eingeklappt ist die Rail so breit wie ein Icon-Eintrag: was im Kopf oder Fuß steht, sitzt mittig darunter. */
+.tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__header,
+.tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--tl-space-2xs);
+}
+
+/* Die Einträge rollen in sich; ein Wischen, das das Ende erreicht, läuft nicht in die Seite weiter. */
+.tl-sidebar__items {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--tl-space-2xs);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Der Eintrag ist ein tl-menu__item (Fläche, Zeigen, Ring innen, Deaktiviert); hier nur, was die Rail anders macht. */
+.tl-sidebar__item {
+  flex: none;
+}
+
+/* Die aktuelle Seite und der Kopf einer zugeklappten Gruppe, die sie enthält: die Fläche der Auswahl wie in Baum und
+   Tabelle, kein Balken. Das Gewicht der Seite trägt die Typo-Klasse (tl-type-body-strong), die das TSX setzt; der
+   Gruppenkopf bleibt im Grundgewicht. */
+.tl-sidebar__item[aria-current="page"],
+.tl-sidebar__item[data-tl-state~="contains-current"] {
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__item {
+  justify-content: center;
+  width: var(--tl-size-row);
+  padding: 0;
+}
+
+/* Kopfzeilen: die des Menüs, mit Icon in einer Reihe; eingeklappt nur das Icon, mittig. */
+.tl-sidebar .tl-menu__header {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+
+.tl-sidebar[data-tl-state~="collapsed"] .tl-menu__header {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* Trenner: die Linie zeichnet das Part Divider, den Abstand die Hülle tl-menu__separator. */
+.tl-sidebar__items .tl-menu__separator {
+  margin-block: var(--tl-space-2xs);
+}
+
+/* Der Chevron einer Gruppe folgt tl-toggle: rechts heißt zu, bei aria-expanded="true" dreht er nach unten. */
+.tl-sidebar__chevron {
+  flex: none;
+  margin-inline-start: auto;
+  transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-sidebar__item[aria-expanded="true"] > .tl-sidebar__chevron {
+  rotate: 90deg;
+}
+
+.tl-sidebar__children {
+  display: flex;
+  flex-direction: column;
+  padding-inline-start: var(--tl-space-md);
+}
+
+/* Die Leiste am Fuß der Rail mit dem Knopf zum Ein- und Ausklappen (Part DisclosureToggle). */
+.tl-sidebar__collapse {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tl-size-bar);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Der Inhalt: die aktive Ansicht füllt ihn und trägt ihren Abstand selbst (Abstandsmodell). */
+.tl-sidebar__content {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  overflow: auto;
+}
+
+.tl-sidebar__content > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
 /* --- skeleton/skeleton.css --- */
 /* Skeleton — docs/skalen.md „Progress: ein Anteil, kein Urteil“ (die vertiefte Fläche).
    Platzhalter für Inhalt, der lädt: die neutrale, vertiefte Fläche, die auch die Spur des Progress
@@ -2309,6 +3069,32 @@ a.tl-field-value:hover {
 @keyframes tl-skeleton-pulse {
   from { opacity: 1; }
   to { opacity: 0.5; }
+}
+
+/* --- slide/slide.css --- */
+/* Gleiten — Spec 2026-10-16 Welle 4c §8 (Q21). Ein Versatz für jeden Wechsel, der vorwärts oder zurück führt:
+   Wizard-Schritt, Rahmen des Kachelstapels. Das Ankommende kommt von der Seite, zu der es geht, das Gehende blendet
+   zur anderen aus. Dauer und Kurve setzt die Regel, die die Keyframes nennt; in Schreibrichtung rechts-nach-links
+   nennt sie die gespiegelten. Mehr Bewegung im UI-Durchgang nach Welle 5. */
+
+@keyframes tl-slide-in-forward {
+  from { opacity: 0; transform: translateX(var(--tl-space-md)); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tl-slide-in-backward {
+  from { opacity: 0; transform: translateX(calc(-1 * var(--tl-space-md))); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes tl-slide-out-forward {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(calc(-1 * var(--tl-space-md))); }
+}
+
+@keyframes tl-slide-out-backward {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(var(--tl-space-md)); }
 }
 
 /* --- snackbar/snackbar.css --- */
@@ -2356,6 +3142,101 @@ a.tl-field-value:hover {
 
 .tl-snackbar .tl-alert__message li + li {
   margin-top: var(--tl-space-2xs);
+}
+
+/* --- split/split.css --- */
+/* Split — Spec 2026-10-16 Welle 4c §6 (Q17). Flächen nebeneinander oder untereinander, dazwischen ein Griff mit
+   role=separator: fokussierbar, Pfeiltasten, Home und End (bridge/separator.ts, derselbe wie der Spaltengriff der
+   Tabelle). In Ruhe eine Linie — Flächen brauchen eine Grenze —, unter dem Zeiger, beim Ziehen und mit Fokus kräftig.
+   Sind alle Flächen eingeklappt, kippt die Achse (data-tl-state~="all-collapsed"); eine eingeklappte Fläche im
+   waagrechten Split zeigt den Kopf ihres Panels als schmale Spalte mit senkrechtem Titel. */
+
+.tl-split {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.tl-split[hidden] { display: none; }
+
+.tl-split--horizontal { flex-direction: row; }
+.tl-split--vertical { flex-direction: column; }
+.tl-split--horizontal[data-tl-state~="all-collapsed"] { flex-direction: column; }
+.tl-split--vertical[data-tl-state~="all-collapsed"] { flex-direction: row; }
+
+.tl-split__handle {
+  position: relative;
+  flex: none;
+  touch-action: none;
+}
+
+.tl-split--horizontal > .tl-split__handle {
+  width: var(--tl-space-xs);
+  cursor: col-resize;
+}
+
+.tl-split--vertical > .tl-split__handle {
+  height: var(--tl-space-xs);
+  cursor: row-resize;
+}
+
+.tl-split__handle::after {
+  content: "";
+  position: absolute;
+  background: var(--tl-border-separator);
+}
+
+.tl-split--horizontal > .tl-split__handle::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--tl-border-width-sm);
+  translate: -50% 0;
+}
+
+.tl-split--vertical > .tl-split__handle::after {
+  right: 0;
+  left: 0;
+  top: 50%;
+  height: var(--tl-border-width-sm);
+  translate: 0 -50%;
+}
+
+.tl-split__handle:hover::after,
+.tl-split__handle:active::after,
+.tl-split__handle:focus-visible::after {
+  background: var(--tl-border-interactive);
+}
+
+.tl-split--horizontal > .tl-split__handle:is(:hover, :active, :focus-visible)::after {
+  width: var(--tl-border-width-md);
+}
+
+.tl-split--vertical > .tl-split__handle:is(:hover, :active, :focus-visible)::after {
+  height: var(--tl-border-width-md);
+}
+
+/* Der Ring liegt innen: der Griff ist space-xs breit, der Ring reicht nicht über ihn hinaus. */
+.tl-split__handle:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Eingeklappt im waagrechten Split: der Kopf als schmale Spalte, Knöpfe oben, Titel senkrecht darunter. */
+.tl-split__pane[data-tl-state~="collapsed"] .tl-titlebar {
+  flex-direction: column-reverse;
+  justify-content: start;
+  align-items: center;
+  height: 100%;
+  padding: var(--tl-space-xs);
+  border-bottom: 0;
+}
+
+.tl-split__pane[data-tl-state~="collapsed"] .tl-titlebar__title {
+  flex: 0 1 auto;
+  writing-mode: vertical-rl;
+}
+
+.tl-split__pane[data-tl-state~="collapsed"] :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
+  flex-direction: column;
 }
 
 /* --- status/status.css --- */
@@ -2640,8 +3521,14 @@ a.tl-field-value:hover {
   left: 0;
 }
 
+/* Der Ring liegt innen: der Griff ist space-xs breit und die Kopfzelle schneidet, was über sie hinausragt. */
+.tl-table__resize:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
 .tl-table__resize:hover::after,
 .tl-table__resize:active::after,
+.tl-table__resize:focus-visible::after,
 .tl-table__freeze:hover::after,
 .tl-table__freeze:active::after {
   background: var(--tl-border-interactive);
@@ -2668,6 +3555,15 @@ a.tl-field-value:hover {
   min-height: 0;
   overflow: auto;
   isolation: isolate;
+}
+
+/* Was bündig an der Kante von tl-table liegt, trägt den Ring innen — tl-table schneidet (overflow: hidden),
+   ein Ring außen wäre ganz oder halb weg (focus-clip.test.mjs): das Raster ohne Cursor (leer, kein
+   aria-activedescendant — es zeigt den Ring selbst), der Körper, die Spaltenwahl in der Ecke. */
+.tl-table__grid:focus-visible,
+.tl-table__body:focus-visible,
+.tl-table__columns:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 .tl-table__canvas {
@@ -3057,10 +3953,67 @@ a.tl-field-value:hover {
 }
 .tl-text--truncate[hidden] { display: none; }
 
+/* --- tile-stack/tile-stack.css --- */
+/* Kachelstapel — Spec 2026-10-16 Welle 4c §8. Rahmen übereinander, der aktive oben; verdeckte behalten ihren
+   Steuerbaum und ihre Box (Scroll- und Eingabezustand bleiben), unsichtbar und nicht fokussierbar. Der Wechsel
+   gleitet (slide.css): useKeyedTransition markiert den ankommenden Rahmen und eine Kopie des gehenden in
+   data-tl-state, die Wurzel die Richtung (backward; vorwärts ohne Marke). */
+
+.tl-tile-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.tl-tile-stack[hidden] { display: none; }
+
+.tl-tile-stack__frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-tile-stack__frame[data-tl-state~="covered"] {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+.tl-tile-stack__frame[data-tl-state~="entering"] {
+  animation: tl-slide-in-forward var(--tl-duration-slow) var(--tl-easing-entrance);
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="entering"],
+.tl-tile-stack__frame[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-backward;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-forward;
+}
+
+/* Ein Bild des gehenden Rahmens über dem Stapel: kein Platz im Layout, keine Eingabe. */
+.tl-tile-stack__frame[data-tl-state~="exiting"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: tl-slide-out-forward var(--tl-duration-slow) var(--tl-easing-exit) forwards;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="exiting"],
+.tl-tile-stack__frame[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-backward;
+}
+
+.tl-tile-stack[data-tl-state~="backward"] > .tl-tile-stack__frame[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-forward;
+}
+
 /* --- titlebar/titlebar.css --- */
-/* Titelleiste — Spec 2026-10-13 Welle 4a §3, Konsolidierung Q3. Der eine Kopf über einer Fläche: Titel links mit
-   Ellipse, Aktionen (Toolbar, Kopfknöpfe tl-button--icon --sm) rechts, eine Linie darunter. Dialog und Drawer
-   tragen ihn; Panel und Card folgen in 4b. Die Typo-Klasse des Titels (tl-type-heading-sm) setzt das Markup. */
+/* Titelleiste — Spec 2026-10-13 Welle 4a §3 (Q3), Spec 2026-10-16 Welle 4c §3. Der eine Kopf über einer Fläche:
+   Titel links mit Ellipse, daneben frei gestalteter Inhalt, Aktionen (Toolbar) und Kopfknöpfe (tl-button--icon --sm)
+   am Ende, eine Linie darunter. Dialog, Drawer, Panel und Karte tragen ihn. Er ist size-bar hoch, mit und ohne
+   Toolbar; eine überlaufende Toolbar gibt vor dem Titel nach. Die Typo-Klasse des Titels setzt das Markup. */
 
 .tl-titlebar {
   display: flex;
@@ -3070,6 +4023,9 @@ a.tl-field-value:hover {
   min-height: var(--tl-size-bar);
   padding: var(--tl-space-2xs) var(--tl-space-xs) var(--tl-space-2xs) var(--tl-space-md);
   border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  /* Die Linie unten zählt zur Höhe (border-box): unten liegt space-2xs abzüglich der Linie, damit ein Control der
+     Toolbar (size-control) Platz hat und der Kopf size-bar misst, mit und ohne Toolbar. */
+  padding-bottom: calc(var(--tl-space-2xs) - var(--tl-border-width-sm));
 }
 .tl-titlebar[hidden] { display: none; }
 
@@ -3089,7 +4045,55 @@ a.tl-field-value:hover {
   display: flex;
   flex: 0 1 auto;
   align-items: center;
+  gap: var(--tl-space-2xs);
   min-width: 0;
+}
+
+/* Eine Toolbar im Kopf bringt keine eigene Leistenhöhe mit: der Kopf misst size-bar (Control plus space-2xs oben und
+   unten), ob er eine Toolbar trägt oder nicht — Köpfe nebeneinander stehen auf einer Linie. */
+.tl-titlebar__actions > .tl-toolbar {
+  min-height: 0;
+  padding-block: 0;
+}
+
+/* Frei gestalteter Inhalt neben dem Titel (Panel: titleContent). Steht er da, nimmt der Titel seine Breite und der
+   Inhalt den Rest. */
+.tl-titlebar__content {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+.tl-titlebar__content[hidden] { display: none; }
+
+.tl-titlebar__title:has(+ .tl-titlebar__content) {
+  flex: 0 1 auto;
+}
+
+/* Die Kopfknöpfe eines Behälters (Part Button: Minimieren, Maximieren, Lösen). Sie behalten ihre Maße; die Lage steht
+   an dieser Hülle, nicht am Part (view-layer/parts.md). */
+.tl-titlebar__buttons {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+.tl-titlebar__buttons[hidden] { display: none; }
+
+/* Ohne Titel stehen Aktionen und Knöpfe am Ende: das erste Kind schiebt alles dorthin. */
+.tl-titlebar > :first-child:not(.tl-titlebar__title, .tl-titlebar__content) {
+  margin-inline-start: auto;
+}
+
+/* Wer nachgibt (wie die AppBar, 4b): eine überlaufende Toolbar nimmt nur den Rest und hält an ihrem Überlaufknopf;
+   erst dann kürzt der Titel. */
+.tl-titlebar__actions:has(> .tl-toolbar[data-tl-overflow]) {
+  flex: 1 1 0;
+  min-width: var(--tl-size-control);
+}
+
+.tl-titlebar:has(> .tl-titlebar__actions > .tl-toolbar[data-tl-overflow]) > .tl-titlebar__title {
+  flex: 0 1 auto;
 }
 
 /* --- toggle/toggle.css --- */
@@ -3239,3 +4243,139 @@ a.tl-field-value:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* --- wizard/wizard.css --- */
+/* Wizard — Spec 2026-10-16 Welle 4c §8 (Q19: eigenes Muster, auf Tokens). Oben, was zeigt, wo man ist — Zähler,
+   Fortschritt, Schrittliste —, darunter der Schritt. Die Scheibe nennt die Position in drei Stufen: aktuell die
+   Marke, erledigt die schwächere Markenfläche, kommend eine Linie. Der Schritt gleitet beim Wechsel (slide.css). */
+
+.tl-wizard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+.tl-wizard[hidden] { display: none; }
+
+.tl-wizard__header {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--tl-space-sm);
+  padding: var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-wizard__counter {
+  color: var(--tl-text-secondary);
+}
+
+/* Der Balken steht für eine gegangene Strecke: er bekommt eine Länge, statt die Breite der Seite zu nehmen. */
+.tl-wizard__progress {
+  display: flex;
+  max-width: var(--tl-size-wizard-progress);
+}
+
+.tl-wizard__progress > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tl-wizard__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-xs) var(--tl-space-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tl-wizard__step-item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+
+.tl-wizard__disc {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-size-icon-lg);
+  height: var(--tl-size-icon-lg);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-layer-nested);
+  color: var(--tl-text-secondary);
+}
+
+.tl-wizard__step-item[data-tl-state~="done"] > .tl-wizard__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand-subtle);
+  color: var(--tl-text-primary);
+}
+
+.tl-wizard__step-item[aria-current="step"] > .tl-wizard__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-wizard__step-name {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+.tl-wizard__step-item[aria-current="step"] > .tl-wizard__step-name {
+  color: var(--tl-text-primary);
+}
+
+/* Der Bereich des Schritts: begrenzt, damit ein füllender Schritt hier seine Höhe auflöst; er positioniert die Kopie
+   des gehenden Schritts, die über dem ankommenden ausblendet. */
+.tl-wizard__body {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-wizard__step {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tl-wizard__step[data-tl-state~="entering"] {
+  animation: tl-slide-in-forward var(--tl-duration-slow) var(--tl-easing-entrance);
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="entering"],
+.tl-wizard__step[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-backward;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="entering"]:dir(rtl) {
+  animation-name: tl-slide-in-forward;
+}
+
+.tl-wizard__step[data-tl-state~="exiting"] {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: tl-slide-out-forward var(--tl-duration-slow) var(--tl-easing-exit) forwards;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"],
+.tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-backward;
+}
+
+.tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
+  animation-name: tl-slide-out-forward;
+}
+/* tl-design-system sha256:436053dc142e033b0406d3049020e9fe79c2d359b98122a4e323acdef83a609c — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

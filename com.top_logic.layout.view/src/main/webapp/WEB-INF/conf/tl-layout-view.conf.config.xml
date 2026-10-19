@@ -83,6 +83,15 @@
 							<de>Export</de>
 						</label>
 					</clique>
+					<clique name="dashboardTiles"
+						display="menu"
+						icon="css:bi bi-plus-lg"
+					>
+						<label>
+							<en>Add tile</en>
+							<de>Kachel hinzufügen</de>
+						</label>
+					</clique>
 					<clique name="more"
 						display="menu"
 						icon="css:bi bi-list"

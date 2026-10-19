@@ -24,15 +24,12 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import com.top_logic.basic.io.StreamUtilities;
-import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.server.script.FlowFactory;
-import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.util.model.ModelService;
 
 /**
  * Test case for embedding a flow diagram into a PDF.
@@ -146,8 +143,7 @@ public class TestFlowPdf extends AbstractSearchExpressionTest {
 	 * </p>
 	 */
 	public static Test suite() {
-		return KBSetup.getSingleKBTest(ServiceTestSetup.createSetup(TestFlowPdf.class,
-			SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE,
-			LabelProviderService.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(
+			ServiceTestSetup.createSetup(TestFlowPdf.class, getModules()));
 	}
 }

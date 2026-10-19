@@ -64,6 +64,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 RESIZED_CALENDAR_ENTRY__ENTRY;
 
+	/**
+	 * @en Overview
+	 */
+	public static ResKey ADAPTIVE_DETAIL_HOME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -80,9 +80,8 @@ describe('the header buttons of a panel as MUI icon buttons', () => {
     for (const label of [LABEL_MINIMIZE, LABEL_MAXIMIZE, LABEL_POP_OUT]) {
       const button = screen.getByRole('button', { name: label });
       expectMuiIconButton(button);
-      // The class marks the button; the element around the buttons places them.
-      expect(button.classList).toContain('tlPanel__actionButton');
-      expect(button.parentElement!.classList).toContain('tlPanel__actions');
+      // The element around the buttons places them; the buttons carry no class of their own.
+      expect(button.parentElement!.classList).toContain('tl-titlebar__buttons');
     }
   });
 
@@ -232,21 +231,25 @@ describe('the button opening the drawer of the sidebar as MUI icon button', () =
   /** The command the button sends to the sidebar. */
   const CMD_TOGGLE = 'toggle';
 
-  it('is shown and hidden by the element around it, and toggles the drawer', async () => {
-    const sent = mountAdapter(TLDrawerToggle, {});
+  it('is a button on a compact screen that reports whether the drawer is open, and toggles the drawer', async () => {
+    const sent = mountAdapter(TLDrawerToggle, { open: false, controls: 'nav' }, { displayClass: 'compact' });
     await settle();
 
     const button = screen.getByRole('button', { name: LABEL_OPEN_DRAWER });
     expectMuiIconButton(button);
-    // MUI sets the display of its button, which wins against the stylesheets of TopLogic: the
-    // breakpoints of the sidebar show and hide the element around it.
-    expect(button.classList).not.toContain('tlDrawerToggle');
-    expect(button.parentElement!.classList).toContain('tlDrawerToggle');
-    expect(button.parentElement!.id).toBe(CONTROL_ID);
+    expect(button.id).toBe(CONTROL_ID);
+    expect(button.getAttribute('aria-expanded')).toBe('false');
 
     await userEvent.click(button);
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_TOGGLE, {});
+  });
+
+  it('renders nothing on a wide screen', async () => {
+    mountAdapter(TLDrawerToggle, { open: false });
+    await settle();
+
+    expect(screen.queryByRole('button', { name: LABEL_OPEN_DRAWER })).toBeNull();
   });
 });

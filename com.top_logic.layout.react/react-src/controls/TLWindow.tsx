@@ -1,12 +1,15 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
   firstFocusable, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults, ThemeIcon, useTokenPx,
-  ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE,
+  ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE, SurfaceProvider,
 } from 'tl-react-bridge';
-import type { TLCellProps, WindowStateJson } from 'tl-react-bridge';
+import type { TLCellProps, WindowStateJson, Surface } from 'tl-react-bridge';
 import { buttonClassName } from './button/buttonClassName';
 
 const { useCallback, useEffect, useRef, useState } = React;
+
+/** What a window is for the components inside: a surface floating above the page, with the insets of a page. */
+const OVERLAY_SURFACE: Surface = { level: 'overlay', inset: 'page' };
 
 /**
  * Where focus starts when a window opens: its first field; without one, the primary button of the
@@ -22,7 +25,7 @@ function initialFocus(surface: HTMLElement): HTMLElement | null {
   if (field) {
     return field;
   }
-  const footer = surface.querySelector<HTMLElement>('.tl-dialog__footer');
+  const footer = surface.querySelector<HTMLElement>(':scope > .tl-button-bar');
   const primary = footer && firstShown(footer, '.tl-button--primary:not([disabled])');
   if (primary) {
     return primary;
@@ -451,13 +454,15 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           </button>
         </div>
         <div className="tl-dialog__body">
-          <FillBarrier>
-            <TLChild control={child} />
-          </FillBarrier>
+          <SurfaceProvider value={OVERLAY_SURFACE}>
+            <FillBarrier>
+              <TLChild control={child} />
+            </FillBarrier>
+          </SurfaceProvider>
         </div>
         {!!footer && (
           <ButtonDefaults appearance="secondary">
-            <div className="tl-dialog__footer">
+            <div className="tl-button-bar">
               <TLChild control={footer} />
             </div>
           </ButtonDefaults>

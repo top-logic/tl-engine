@@ -151,7 +151,7 @@ public class AdaptiveDetailElement implements UIElement {
 		List<ChannelRef> getResetOn();
 
 		/**
-		 * Label of the breadcrumb's home crumb (the one that returns to the empty selector).
+		 * Label of the breadcrumb's home crumb (the one that returns to the empty selector). Without one, the first crumb reads "Overview".
 		 *
 		 * <p>
 		 * Only meaningful on the outermost {@code <adaptive-detail>}: in compact mode it renders a

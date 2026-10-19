@@ -67,15 +67,15 @@ describe('TLAppBar as MUI AppBar', () => {
     });
 
     const toolbar = root().querySelector('.MuiToolbar-root')!;
-    const slots = Array.from(toolbar.children).map(slot => slot.className.split(' ')[0]);
-    expect(slots[0]).toBe('tlAppBar__leading');
-    expect(slots[2]).toBe('tlAppBar__children');
-    expect(slots[3]).toBe('tlAppBar__actions');
-    expect(slots[4]).toBe('tlAppBar__trailing');
-    expect(toolbar.querySelector('.tlAppBar__leading > #menu')).not.toBeNull();
-    expect(toolbar.querySelector('.tlAppBar__children > #search')).not.toBeNull();
-    expect(toolbar.querySelector('.tlAppBar__actions > #toolbar')).not.toBeNull();
-    expect(toolbar.querySelector('.tlAppBar__trailing > #user')).not.toBeNull();
+    const slots = Array.from(toolbar.children).map(slot => slot.getAttribute('data-slot'));
+    expect(slots[0]).toBe('leading');
+    expect(slots[2]).toBe('children');
+    expect(slots[3]).toBe('actions');
+    expect(slots[4]).toBe('trailing');
+    expect(toolbar.querySelector('[data-slot="leading"] > #menu')).not.toBeNull();
+    expect(toolbar.querySelector('[data-slot="children"] > #search')).not.toBeNull();
+    expect(toolbar.querySelector('[data-slot="actions"] > #toolbar')).not.toBeNull();
+    expect(toolbar.querySelector('[data-slot="trailing"] > #user')).not.toBeNull();
   });
 
   it('renders no slot for a part the state does not have', () => {

@@ -19,11 +19,8 @@ import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
-import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.wysiwyg.ui.HtmlFunctions;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
-import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.util.model.ModelService;
 
 /**
  * Test for calling {@link HtmlFunctions#text(String, Object)} and
@@ -87,9 +84,8 @@ public class TestHtmlFunctionsScript extends AbstractSearchExpressionTest {
 	 * </p>
 	 */
 	public static Test suite() {
-		return KBSetup.getSingleKBTest(ServiceTestSetup.createSetup(TestHtmlFunctionsScript.class,
-			SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE,
-			LabelProviderService.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(
+			ServiceTestSetup.createSetup(TestHtmlFunctionsScript.class, getModules()));
 	}
 
 }

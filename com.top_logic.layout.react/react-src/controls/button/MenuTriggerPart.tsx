@@ -11,10 +11,11 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
  * beside it.
  *
  * <p>An icon-only trigger is a square icon button named by its label, which is also its tooltip. A
- * labeled trigger shows its label followed by a small chevron.</p>
+ * labeled trigger shows its label followed by a small chevron. The button names the kind of surface
+ * it opens in `aria-haspopup`.</p>
  */
 const MenuTriggerPart: React.FC<MenuTriggerPartProps> = ({
-  id, ref, appearance, expanded, label, icon, children, className, style, onClick, onMouseDown, ...attributes
+  id, ref, appearance, expanded, haspopup = 'menu', label, icon, children, className, style, onClick, onMouseDown, ...attributes
 }) => {
   const iconOnly = children === undefined && !!icon;
   let content: React.ReactNode;
@@ -41,7 +42,7 @@ const MenuTriggerPart: React.FC<MenuTriggerPartProps> = ({
       onClick={onClick}
       onMouseDown={onMouseDown}
       aria-expanded={expanded}
-      aria-haspopup="menu"
+      aria-haspopup={haspopup}
       aria-label={iconOnly ? label : undefined}
       {...tooltipProps(iconOnly ? label : undefined)}
       {...attributes}

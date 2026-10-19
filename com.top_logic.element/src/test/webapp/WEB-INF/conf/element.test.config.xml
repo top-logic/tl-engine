@@ -90,6 +90,14 @@
 								<step attribute="TestSecurityCoverage:DeadGrant#owner"/>
 							</path>
 						</rule>
+						<rule id="TestSecurityCoverage_partOnly"
+							meta-element="TestSecurityCoverage:PartOnly"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:PartOnly#owner"/>
+							</path>
+						</rule>
 						<!-- Shadowed by the access parent of the type. -->
 						<rule id="TestSecurityCoverage_explicitPart"
 							meta-element="TestSecurityCoverage:ExplicitPart"
@@ -207,6 +215,13 @@
 							roles="TestSecurityCoverage.Direct"
 						/>
 					</class>
+					<!-- No class grant: only the attribute grant implies Discover. -->
+					<part name="TestSecurityCoverage:PartOnly#label">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</part>
 					<class name="TestSecurityCoverage:Unsecured"
 						without-security="true"
 					/>

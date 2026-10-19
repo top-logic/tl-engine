@@ -4,6 +4,7 @@
 </pre>
 <h2>Description</h2>
 <p>Updates the value of the <code class="hljs inlineCode">attribute</code> of the <code class="hljs inlineCode">object</code> to <code class="hljs inlineCode">value</code>.</p>
+<p>The value is replaced as a whole, including elements the user may not discover; these are removed as well. To change single elements, use <code class="hljs inlineCode">add</code> and <code class="hljs inlineCode">remove</code>, which keep all other elements. For example, <code class="hljs inlineCode">$o.set(`$attr`, $o.get(`$attr`).concat($x))</code> removes all elements the user cannot discover, since they are not part of the value the script sees. A reference can only be set to objects the user may discover (or that are already referenced).</p>
 <h2>Parameters</h2>
 <table class="tlDocTable">
  <thead>

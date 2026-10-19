@@ -1,10 +1,13 @@
-import { React, useTLState, useTLCommand, TLChild, FillBarrier, rootClassName, ThemeIcon } from 'tl-react-bridge';
-import type { TLCellProps, AccordionStateJson } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, TLChild, FillBarrier, rootClassName, ThemeIcon, useSurface, SurfaceProvider,
+  cardSurfaceClass, paintedLevel,
+} from 'tl-react-bridge';
+import type { TLCellProps, AccordionStateJson, Surface } from 'tl-react-bridge';
 
 /** A section as the server describes it, always with its ID and label. */
 type SectionInfo = Partial<AccordionStateJson.Section> & Required<Pick<AccordionStateJson.Section, 'id' | 'label'>>;
 
-const { useCallback, useRef } = React;
+const { useCallback, useMemo, useRef } = React;
 
 /** The command expanding or collapsing a section. */
 const TOGGLE_SECTION = 'toggleSection';
@@ -44,6 +47,10 @@ const TLAccordion: React.FC<TLCellProps> = ({ controlId }) => {
   const sendCommand = useTLCommand();
   const sections = (state.sections ?? []) as SectionInfo[];
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
+  const surface = useSurface();
+  // The accordion is a surface; its sections keep the insets of where it stands, and on a floating surface its level.
+  const inner = useMemo<Surface>(
+    () => ({ level: paintedLevel(surface.level), inset: surface.inset }), [surface.level, surface.inset]);
 
   const triggerId = (sectionId: string) => `${controlId}-header-${idFragment(sectionId)}`;
   const panelId = (sectionId: string) => `${controlId}-panel-${idFragment(sectionId)}`;
@@ -70,13 +77,13 @@ const TLAccordion: React.FC<TLCellProps> = ({ controlId }) => {
   triggers.current.length = sections.length;
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tl-accordion')}>
+    <div id={controlId} className={rootClassName(state, 'tl-card', cardSurfaceClass(surface.level), 'tl-accordion')}>
       {sections.map((section, index) => {
         const expanded = section.expanded === true;
         return (
           <div
             key={section.id}
-            className={'tl-accordion__section' + (expanded ? ' tl-accordion__section--expanded' : '')}
+            className="tl-accordion__section"
           >
             <div className="tl-accordion__header">
               <div className="tl-accordion__heading" role="heading" aria-level={3}>
@@ -109,9 +116,11 @@ const TLAccordion: React.FC<TLCellProps> = ({ controlId }) => {
               hidden={!expanded}
             >
               {section.content && (
-                <FillBarrier>
-                  <TLChild control={section.content} />
-                </FillBarrier>
+                <SurfaceProvider value={inner}>
+                  <FillBarrier>
+                    <TLChild control={section.content} />
+                  </FillBarrier>
+                </SurfaceProvider>
               )}
             </div>
           </div>

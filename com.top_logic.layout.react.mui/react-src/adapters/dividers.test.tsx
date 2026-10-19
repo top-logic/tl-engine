@@ -171,8 +171,8 @@ describe('the dividers of the sidebar (TLSidebar) as MUI dividers', () => {
     const dividers = document.querySelectorAll('hr');
     expect(dividers).toHaveLength(1);
     expectMuiDivider(dividers[0]);
-    expect(dividers[0].classList).not.toContain('tlSidebar__separator');
-    expect(dividers[0].parentElement!.classList).toContain('tlSidebar__separator');
+    expect(dividers[0].classList).not.toContain('tl-menu__separator');
+    expect(dividers[0].parentElement!.classList).toContain('tl-menu__separator');
   });
 
   it('draws no divider for a sidebar without separator items', async () => {

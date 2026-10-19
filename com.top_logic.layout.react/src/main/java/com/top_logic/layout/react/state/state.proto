@@ -17,6 +17,7 @@
  *   TLAccordion       - AccordionState
  *   TLWindow          - WindowState
  *   TLDialog          - DialogState
+ *   TLPopover         - PopoverState
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
  *   TLAlert           - AlertState
@@ -911,6 +912,144 @@ message DialogState extends ControlState {
 	 * The content of the dialog.
 	 */
 	ChildControl child;
+}
+
+/**
+ * State of a non-modal surface of arbitrary content anchored to the trigger that opens it, the
+ * component {@code TLPopover}.
+ *
+ * The component renders a trigger button in place and, while the popover is {@link #open}, the
+ * {@link #content} on a surface portaled to the document body and placed at the trigger as
+ * {@link #placement} says. The trigger button shows the {@link #trigger} content if there is one,
+ * else the {@link #icon} alone (with the {@link #label} as its accessible name) or the
+ * {@link #label}. The surface is a dialog labelled by the trigger.
+ *
+ * The client asks for the popover to open with the command {@code open} and for it to close with
+ * the command {@code close}, both without arguments. It sends {@code close} on Escape, on a press
+ * outside of trigger and surface, and on a click on the trigger of an open popover in mode
+ * {@code click}. In mode {@code hover}, it sends {@code open} after the pointer has rested on the
+ * trigger for a moment or when the trigger receives the keyboard focus, and {@code close} after the
+ * pointer has left trigger and surface for a moment or when the focus leaves both. The server may
+ * open and close the popover on its own as well.
+ */
+message PopoverState extends ControlState {
+
+	/**
+	 * The side of the trigger the surface stands on, and its alignment along that side: {@code start}
+	 * and {@code end} align the surface with the start or end edge of the trigger, no alignment
+	 * centers it. A surface that does not fit on its side flips to the opposite one.
+	 */
+	enum Placement {
+		/** Above the trigger, centered. */
+		@Name("top")
+		TOP;
+
+		/** Above the trigger, aligned with its start edge. */
+		@Name("top-start")
+		TOP_START;
+
+		/** Above the trigger, aligned with its end edge. */
+		@Name("top-end")
+		TOP_END;
+
+		/** Below the trigger, centered. */
+		@Name("bottom")
+		BOTTOM;
+
+		/** Below the trigger, aligned with its start edge. */
+		@Name("bottom-start")
+		BOTTOM_START;
+
+		/** Below the trigger, aligned with its end edge. */
+		@Name("bottom-end")
+		BOTTOM_END;
+
+		/** Left of the trigger, centered. */
+		@Name("left")
+		LEFT;
+
+		/** Left of the trigger, aligned with its top edge. */
+		@Name("left-start")
+		LEFT_START;
+
+		/** Left of the trigger, aligned with its bottom edge. */
+		@Name("left-end")
+		LEFT_END;
+
+		/** Right of the trigger, centered. */
+		@Name("right")
+		RIGHT;
+
+		/** Right of the trigger, aligned with its top edge. */
+		@Name("right-start")
+		RIGHT_START;
+
+		/** Right of the trigger, aligned with its bottom edge. */
+		@Name("right-end")
+		RIGHT_END;
+	}
+
+	/**
+	 * The gesture opening the popover.
+	 */
+	enum Mode {
+		/**
+		 * A click on the trigger opens the popover and a further click closes it. Opening moves the
+		 * keyboard focus into the surface, closing returns it to the trigger.
+		 */
+		@Name("click")
+		CLICK;
+
+		/**
+		 * Resting the pointer on the trigger opens the popover, and it stays open while the pointer
+		 * moves on into the surface. Opening by the pointer leaves the keyboard focus where it is;
+		 * opening by the keyboard focus on the trigger moves it into the surface. A click on the
+		 * trigger opens the popover, too.
+		 */
+		@Name("hover")
+		HOVER;
+	}
+
+	/**
+	 * Whether the surface is shown.
+	 */
+	bool open;
+
+	/**
+	 * Where the surface stands at the trigger. Absent: {@code bottom-start}.
+	 */
+	Placement placement;
+
+	/**
+	 * The gesture opening the popover. Absent: {@code click}.
+	 */
+	Mode mode;
+
+	/**
+	 * The label of the trigger button, its accessible name when it shows an {@link #icon} alone or
+	 * {@link #trigger} content, and with it the name of the surface. Absent: none.
+	 */
+	string label;
+
+	/**
+	 * The icon of the trigger button, the encoded form of a theme image. Absent: none.
+	 */
+	string icon;
+
+	/**
+	 * Content shown inside the trigger button instead of {@link #label} and {@link #icon}: text, an
+	 * icon, a badge. The trigger button is the interactive element, so the content holds no
+	 * interactive controls of its own. Absent: the trigger button shows {@link #label} and
+	 * {@link #icon}.
+	 */
+	ChildControl trigger;
+
+	/**
+	 * The content of the surface. Present while the popover is {@link #open}: the content is created
+	 * when the popover opens for the first time and kept on the server while it is closed, so that
+	 * it shows what the user left there when it opens again.
+	 */
+	ChildControl content;
 }
 
 /**

@@ -14,11 +14,25 @@
 			securityObject="securityRoot"
 			toolbar="false"
 		>
-			<layoutInfo size="50px"/>
+			<layoutInfo size="100px"/>
 			<buttons>
+				<button id="previousRevisionRange"
+					class="com.top_logic.monitoring.revision.UpdateChangeSetTreeCommand"
+					clique="refresh"
+					image="css:fas fa-chevron-left"
+					resourceKey="class.com.top_logic.monitoring.revision.I18NConstants.PREVIOUS_RANGE"
+					shift="-1"
+				/>
 				<button id="refreshRevisionTable"
 					class="com.top_logic.monitoring.revision.UpdateChangeSetTreeCommand"
 					clique="refresh"
+				/>
+				<button id="nextRevisionRange"
+					class="com.top_logic.monitoring.revision.UpdateChangeSetTreeCommand"
+					clique="refresh"
+					image="css:fas fa-chevron-right"
+					resourceKey="class.com.top_logic.monitoring.revision.I18NConstants.NEXT_RANGE"
+					shift="1"
 				/>
 			</buttons>
 		</component>

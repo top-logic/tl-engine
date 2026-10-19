@@ -34,7 +34,7 @@ const TLDeckPane: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} className={rootClassName(state, fillClass ? 'tlDeckPane ' + fillClass : 'tlDeckPane')}>
+      <div id={controlId} className={rootClassName(state, 'tl-deck', fillClass)}>
         <FieldLabelContext.Provider value={childLabel}>
           {!!activeChild && <TLChild control={activeChild} />}
         </FieldLabelContext.Provider>

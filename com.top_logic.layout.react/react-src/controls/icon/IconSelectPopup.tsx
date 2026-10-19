@@ -1,4 +1,4 @@
-import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart, tooltipProps, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart, createPortal, anchoredOverlayProps, tooltipProps, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
 
 const { useState, useCallback, useEffect, useRef, useLayoutEffect, useMemo } = React;
 
@@ -150,10 +150,14 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
     }
   }, [onLoadIcons]);
 
-  return (
+  // Portaled to the document body, so that no clipping or transformed ancestor - a popover, a
+  // scrolling panel - confines the fixed popup; the anchored-overlay mark keeps it part of the
+  // surface around the field for focus trap and outside press.
+  return createPortal(
     <div
       className="tlIconSelect__popup"
       ref={popupRef}
+      {...anchoredOverlayProps}
       style={
         position
           ? { top: position.top, left: position.left, visibility: 'visible' }
@@ -303,7 +307,8 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
           </button>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
@@ -38,6 +39,8 @@ import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.GridOptions;
@@ -48,6 +51,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.table.SelectionMode;
 
 /**
  * Declarative {@link UIElement} repeating a content template over a computed list of model objects
@@ -105,6 +109,25 @@ import com.top_logic.model.util.TLModelPartRef;
  * </pre>
  *
  * <p>
+ * With a {@link Config#getSelection() selection channel}, the elements are selectable like the
+ * entries of a list box: clicking an element writes its object to the channel, and the element of
+ * the object the channel holds is displayed as selected. Without one, the list only displays its
+ * elements.
+ * </p>
+ *
+ * <pre>
+ * &lt;object-list
+ *   inputs="catalogue"
+ *   items="catalogue -&gt; $catalogue.get(`demo:Catalogue#products`)"
+ *   selection="product"
+ * &gt;
+ *   &lt;item&gt;
+ *     &lt;text input="element"/&gt;
+ *   &lt;/item&gt;
+ * &lt;/object-list&gt;
+ * </pre>
+ *
+ * <p>
  * The displayed list follows the model: changes to an input, to displayed elements, or to objects of
  * the {@link Config#getObservedTypes() observed types} re-run the element lookup; unchanged elements
  * keep their controls (including edit state).
@@ -115,7 +138,7 @@ public class ObjectListElement implements UIElement {
 
 	/**
 	 * CSS class of the element the client places around each item, carrying its 0-based position as
-	 * the CSS custom property {@code --tl-item-index}.
+	 * the CSS custom property {@code --item-index}.
 	 *
 	 * <p>
 	 * An application styles the items of every list through this class, a staggered entrance
@@ -213,6 +236,12 @@ public class ObjectListElement implements UIElement {
 
 		/** Configuration name for {@link #getEmptyText()}. */
 		String EMPTY_TEXT = "empty-text";
+
+		/** Configuration name for {@link #getSelection()}. */
+		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
 
 		@Override
 		@ClassDefault(ObjectListElement.class)
@@ -336,6 +365,42 @@ public class ObjectListElement implements UIElement {
 		 */
 		@Name(EMPTY_TEXT)
 		ResKey getEmptyText();
+
+		/**
+		 * Optional {@link ViewChannel} the object of the selected element is written to.
+		 *
+		 * <p>
+		 * The element of the object the channel holds is displayed as selected. Without a selection
+		 * channel, the elements are not selectable.
+		 * </p>
+		 */
+		@Name(SELECTION)
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelection();
+
+		/**
+		 * Whether the user may select one element at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and a
+		 * click on the selected element with {@code Ctrl} gives it up again.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} adds an element to the selection, or takes it out again, by a
+		 * click with {@code Ctrl} or a long press on a touch screen; a click with {@code Shift} adds the elements from the one clicked
+		 * last up to the clicked one.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getSelection() selection channel} holds the object of the selected element
+		 * while exactly one is selected, the set of the selected objects while there are several,
+		 * and nothing while there is none.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
 	}
 
 	private final Config _config;
@@ -391,6 +456,11 @@ public class ObjectListElement implements UIElement {
 			_itemContent, _newElementContent,
 			_config.getElementChannel(), _config.getNewElementChannel(),
 			resolveElementType(), _config.getEmptyText());
+
+		ChannelRef selection = _config.getSelection();
+		if (selection != null) {
+			items.bindSelection(_config.getSelectionMode(), context.resolveChannel(selection));
+		}
 
 		QueryExecutor itemsExecutor = _itemsExecutor;
 		List<Object> initialElements = computeElements(itemsExecutor, ChannelInputs.arguments(inputs));

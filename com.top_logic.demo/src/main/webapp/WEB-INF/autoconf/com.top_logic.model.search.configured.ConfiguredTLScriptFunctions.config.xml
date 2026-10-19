@@ -121,6 +121,45 @@
 							</parameter>
 						</parameters>
 					</configured-script>
+					<privileged-script name="makeResponsibleAdmin"
+						command-group="PromoteAdmin"
+						on-denied="throw(#('Only a DemoTypes administrator may make the responsible person of {0} an administrator.'@en, 'Nur ein DemoTypes-Administrator darf den Verantwortlichen von {0} zum Administrator machen.'@de).fill($a))"
+						security-object="if($a.instanceOf(`DemoTypes:DemoTypes.A`), $a, null)"
+					>
+						<label key="dynamic.6f1d2c3e-8b4a-4f0e-9a51-2d7c0e9b3a14">
+							<en>Make responsible an administrator</en>
+							<de>Verantwortlichen zum Administrator machen</de>
+						</label>
+						<description key="dynamic.0b8e5a71-3c2d-4e6f-8a9b-7c1d2e3f4a5b">
+							<en><![CDATA[<p>Adds the responsible person of a DemoTypes A to the group "Demo administrators".</p>
+
+<p>The function is privileged: a user holding the operation "Promote to administrator" on the A (an administrator of the DemoTypes) may call it, although the user holds no right to change the group membership.</p>
+]]></en>
+							<de><![CDATA[<p>Nimmt den Verantwortlichen eines DemoTypes-A in die Gruppe "Demo-Administratoren" auf.</p>
+
+<p>Die Funktion ist privilegiert: Ein Nutzer mit der Operation "Zum Admin machen" auf dem A (ein Administrator der DemoTypes) darf sie aufrufen, obwohl er kein Recht hat, die Gruppenmitgliedschaft zu ändern.</p>
+]]></de>
+						</description>
+						<parameters>
+							<parameter name="a"
+								mandatory="true"
+								type="DemoTypes:DemoTypes.A"
+							>
+								<description key="dynamic.9c4b2a1d-5e6f-4a7b-8c9d-0e1f2a3b4c5d">
+									<en>The A whose responsible person becomes an administrator.</en>
+									<de>Das A, dessen Verantwortlicher Administrator wird.</de>
+								</description>
+							</parameter>
+						</parameters>
+						<implementation><![CDATA[{
+  person = $a.get(`DemoTypes:DemoTypes.A#responsible`);
+  group = all(`tl.accounts:Group`)
+    .filter(g -> $g.get(`tl.accounts:Group#name`) == "demoTypeAdministrators")
+    .firstElement();
+  $group.add(`tl.accounts:Group#members`, $person);
+  $person;
+}]]></implementation>
+					</privileged-script>
 				</scripts>
 			</instance>
 		</config>

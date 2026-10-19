@@ -19,6 +19,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.security.ModelAccessRights;
 
 /**
  * {@link GenericMethod} to add a value to a collection-valued property.
@@ -66,6 +67,14 @@ public class Add extends GenericMethodWithSecurity {
 		} else {
 			index = asInt(secondArg);
 			insertion = asCollection(arguments[3]);
+			if (usesSecurity()) {
+				// The script sees only the discoverable elements, the index refers to that list.
+				index = storedIndex(oldValue, index);
+			}
+		}
+
+		if (usesSecurity()) {
+			Update.checkNewTargets(obj, part, insertion);
 		}
 
 		int insertLength = insertion.size();
@@ -109,6 +118,31 @@ public class Add extends GenericMethodWithSecurity {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Translates an index into the list of discoverable elements to the index in the stored list.
+	 *
+	 * @param stored
+	 *        The stored value including elements the current user cannot discover.
+	 * @param visibleIndex
+	 *        The insertion index in the list of discoverable elements.
+	 * @return The insertion index in the stored list.
+	 */
+	private static int storedIndex(List<?> stored, int visibleIndex) {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		int visible = 0;
+		for (int n = 0; n < stored.size(); n++) {
+			Object element = stored.get(n);
+			boolean discoverable = !(element instanceof TLObject object) || rights.isDiscoverAllowed(object);
+			if (discoverable) {
+				if (visible == visibleIndex) {
+					return n;
+				}
+				visible++;
+			}
+		}
+		return stored.size();
 	}
 
 	@Override

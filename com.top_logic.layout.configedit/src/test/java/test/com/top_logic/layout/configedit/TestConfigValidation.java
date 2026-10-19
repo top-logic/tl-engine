@@ -16,6 +16,7 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -107,6 +108,24 @@ public class TestConfigValidation extends TestCase {
 
 		/** @see #getName() */
 		void setName(String value);
+	}
+
+	/**
+	 * Test configuration interface with a mandatory list in a text format, edited in a single
+	 * field like a selection of several options.
+	 */
+	public interface MandatoryTextListConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getNames()}. */
+		String NAMES = "names";
+
+		@Name(NAMES)
+		@Format(CommaSeparatedStrings.class)
+		@Mandatory
+		List<String> getNames();
+
+		/** @see #getNames() */
+		void setNames(List<String> value);
 	}
 
 	/** Test configuration interface nesting a {@link MandatoryConfig}. */
@@ -318,6 +337,29 @@ public class TestConfigValidation extends TestCase {
 	public void testAFilledMandatoryPropertyIsNoViolation() {
 		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
 		config.setName("given");
+
+		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
+	}
+
+	/**
+	 * A mandatory list in a text format whose field the user cleared holds an empty list, which is
+	 * no value either.
+	 */
+	public void testAClearedMandatoryTextListIsAViolation() {
+		MandatoryTextListConfig config = TypedConfiguration.newConfigItem(MandatoryTextListConfig.class);
+		config.setNames(List.of("given"));
+		config.setNames(Collections.emptyList());
+
+		List<Violation> violations = ConfigValidation.check(config).violations();
+
+		assertEquals(1, violations.size());
+		assertEquals(MandatoryTextListConfig.NAMES, violations.get(0).property().getPropertyName());
+	}
+
+	/** Once it holds an entry it is not. */
+	public void testAFilledMandatoryTextListIsNoViolation() {
+		MandatoryTextListConfig config = TypedConfiguration.newConfigItem(MandatoryTextListConfig.class);
+		config.setNames(List.of("given"));
 
 		assertEquals(Collections.emptyList(), ConfigValidation.check(config).violations());
 	}

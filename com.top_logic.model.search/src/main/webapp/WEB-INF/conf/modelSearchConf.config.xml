@@ -440,6 +440,7 @@
 					<method name="canWriteAttribute" class="com.top_logic.model.search.expr.config.operations.CanAccessAttribute$Builder" command-group="Write"/>
 					<method name="canCreate" class="com.top_logic.model.search.expr.config.operations.CanCreate$Builder"/>
 					<method name="canExecute" class="com.top_logic.model.search.expr.config.operations.CanExecute$Builder"/>
+					<method name="canCall" class="com.top_logic.model.search.configured.CanCall$Builder"/>
 					<method name="fill" class="com.top_logic.model.search.expr.Fill$Builder"/>
 					<method name="associationNavigation" class="com.top_logic.model.search.expr.config.operations.AssociationNavigationBuilder"/>
 					<method name="all" class="com.top_logic.model.search.expr.config.operations.AllBuilder"/>

@@ -856,6 +856,7 @@
 							<rule class="com.top_logic.tool.execution.RootOnlyExecutabilityRule"/>
 						</executability>
 					</definition>
+					<definition id="RootOnlyInProduction" executability="com.top_logic.tool.execution.RootOnlyInProduction"/>
 					<definition id="ComponentIsVisible" executability="com.top_logic.tool.execution.ComponentIsVisibleRule" />
 					<definition id="InDesignModeExecutable" executability="com.top_logic.tool.execution.InDesignModeExecutable" />
 				</definitions>
@@ -1382,13 +1383,13 @@
 					<handler id="reloadI18N"
 						class="com.top_logic.layout.debug.ReloadI18NCommand"
 						clique="debugButtons"
-						executability="DebugOnly, RootOnly"
+						executability="DebugOnly, RootOnlyInProduction"
 						image="theme:IMAGE_BUTTONS_I18N_RELOAD22"
 					/>
 					<handler id="reloadTheme"
 						class="com.top_logic.layout.debug.ReloadThemeCommand"
 						clique="debugButtons"
-						executability="DebugOnly, RootOnly"
+						executability="DebugOnly, RootOnlyInProduction"
 						image="theme:IMAGE_BUTTONS_THEME_RELOAD22"
 						resourceKey="debug.button.reloadTheme"
 					/>
@@ -1397,7 +1398,7 @@
 						activeImage="theme:IMAGE_BUTTONS_I18N_DEBUG_ACTIVE22"
 						class="com.top_logic.layout.debug.ToggleShowKeyCommand"
 						clique="debugButtons"
-						executability="DebugOnly, RootOnly"
+						executability="DebugOnly, RootOnlyInProduction"
 						image="theme:IMAGE_BUTTONS_I18N_DEBUG22"
 						resourceKey="debug.button.toggleAlwaysShowKeys"
 					/>
@@ -1406,7 +1407,7 @@
 						activeImage="theme:IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS_ACTIVE"
 						class="com.top_logic.layout.debug.ToggleShowAllCommands"
 						clique="debugButtons"
-						executability="DebugOnly, RootOnly"
+						executability="DebugOnly, RootOnlyInProduction"
 						image="theme:IMAGE_BUTTONS_TOGGLE_SHOW_ALL_COMMANDS"
 						resourceKey="debug.button.toggleShowAllCommands"
 					/>
@@ -1440,7 +1441,7 @@
 					<handler id="exportLayout" class="com.top_logic.layout.editor.commands.ExportLayoutCommandHandler"
 						image="theme:layouts.themes.default.toolrow.ExportLayout"
 						clique="layout-editor-reset"
-						executability="IDEOnly, RootOnly"
+						executability="IDEOnly, RootOnlyInProduction"
 					/>
 					<handler id="resetLayoutConfig" class="com.top_logic.layout.editor.commands.ResetLayoutConfiguration"
 						group="System"

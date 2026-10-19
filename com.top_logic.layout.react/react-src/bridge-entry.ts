@@ -2,7 +2,7 @@
 export { register, replace, getComponent } from './bridge/registry';
 export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-wrapper';
 export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
-export { connect, subscribe, unsubscribe } from './bridge/sse-client';
+export { connect, expectEvents, subscribe, unsubscribe } from './bridge/sse-client';
 export {
   mount,
   mountField,
@@ -45,6 +45,7 @@ export type {
   ButtonPartProps,
   ButtonDisplay,
   MenuTriggerPartProps,
+  MenuTriggerPopup,
   DisclosureTogglePartProps,
   DisclosureDirection,
   CheckboxPartProps,
@@ -74,7 +75,13 @@ export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
-export type { PopoverAnchor, PopoverOptions } from './bridge/popover';
+export type { PopoverAnchor, PopoverOptions, PopoverPlacement, PopoverHover } from './bridge/popover';
+export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
+export type { DisplayClass } from './bridge/display-class';
+export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, paintedLevel, panelSurface } from './bridge/surface';
+export type { Surface, SurfaceLevel, InsetKind } from './bridge/surface';
+export { separatorMove, separatorStep, movedSize } from './bridge/separator';
+export type { SeparatorMove, SeparatorOrientation } from './bridge/separator';
 // A popover surface needs both its own ref and the hook's setFloating on one element; controls
 // must not import floating-ui themselves (it would bundle a second React), so the merge comes from here.
 export { useMergeRefs } from '@floating-ui/react';
@@ -113,6 +120,7 @@ export type {
   AccordionStateJson,
   WindowStateJson,
   DialogStateJson,
+  PopoverStateJson,
   MenuStateJson,
   SnackbarStateJson,
   AlertStateJson,
@@ -144,6 +152,7 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
+export { useChildStates } from './bridge/child-states';
 
 // Re-export React so that control bundles use the SAME React instance.
 //

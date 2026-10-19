@@ -40,11 +40,14 @@
   --tl-size-field-label-max: var(--tl-size-11);
   --tl-size-popover-min: var(--tl-size-11);
   --tl-size-popover-max: var(--tl-view-1);
+  --tl-size-popover-content-max: var(--tl-size-14);
   --tl-size-viewport-width: var(--tl-view-2);
   --tl-size-viewport-height: var(--tl-view-3);
   --tl-size-drawer-narrow: var(--tl-size-12);
   --tl-size-drawer-medium: var(--tl-size-13);
   --tl-size-drawer-wide: var(--tl-size-14);
+  --tl-size-sidebar: var(--tl-size-12);
+  --tl-size-wizard-progress: var(--tl-size-13);
   --tl-size-toast-max: var(--tl-size-15);
   --tl-size-choice: var(--tl-size-4);
   --tl-size-switch: var(--tl-size-7);
@@ -150,12 +153,14 @@
   --tl-shadow-drag: var(--tl-shadow-3);
   --tl-surface-scrim: var(--tl-scrim-1);
   --tl-surface-state-hover: var(--tl-veil-1);
+  --tl-surface-state-hover-strong: var(--tl-veil-5);
   --tl-surface-state-active: var(--tl-veil-2);
 
   --tl-size-control: var(--tl-height-3);
   --tl-size-control-sm: var(--tl-height-1);
   --tl-size-row: var(--tl-height-4);
   --tl-size-bar: var(--tl-height-5);
+  --tl-size-shell-bar: var(--tl-size-8);
   --tl-space-control-x: var(--tl-size-3);
   --tl-space-control-y: var(--tl-size-2);
   --tl-space-control-gap: var(--tl-size-4);
@@ -243,6 +248,7 @@
   --tl-shadow-drag: var(--tl-shadow-6);
   --tl-surface-scrim: var(--tl-scrim-2);
   --tl-surface-state-hover: var(--tl-veil-3);
+  --tl-surface-state-hover-strong: var(--tl-veil-6);
   --tl-surface-state-active: var(--tl-veil-4);
 }
 
@@ -251,7 +257,9 @@
   --tl-size-control-sm: var(--tl-height-1);
   --tl-size-row: var(--tl-height-3);
   --tl-size-bar: var(--tl-height-4);
+  --tl-size-shell-bar: var(--tl-height-5);
   --tl-space-control-x: var(--tl-size-2);
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
+/* tl-design-system sha256:ba2dfddee96ebc78d2e09933787cd63debca8ee4566699aae5dc777af77c70f2 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

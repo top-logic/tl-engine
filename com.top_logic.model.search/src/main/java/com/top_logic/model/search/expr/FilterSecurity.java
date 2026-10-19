@@ -17,16 +17,14 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 /**
- * {@link GenericMethodWithSecurity} that secures a value by applying the current user's read
- * permissions, removing all business objects the user must not see.
+ * {@link GenericMethodWithSecurity} that secures a value by applying the current user's Discover
+ * right, removing all business objects the user must not discover.
  *
  * <p>
- * Access operations in TL-Script return referenced objects <em>unfiltered</em> (consistent with the
- * user interface, which always shows a referenced object by its label and only secures navigation
- * into it); only the access to the <em>attributes</em> of an object is denied if the user must not
- * read the object. As a consequence, an intermediate result of a search expression may well contain
- * objects the user must not read. This expression applies
- * {@link SearchExpression#filterSecurity(Object)} to its argument and thereby removes them
+ * Every object source in a secured TL-Script delivers only discoverable objects (see the Discover
+ * specification); this function remains as a safety net for values assembled from unsecured
+ * sources. It applies {@link SearchExpression#filterSecurity(Object)} to its argument and thereby
+ * removes the objects the user must not discover
  * (recursively: a single forbidden object becomes <code>null</code>, forbidden elements are dropped
  * from collections, primitive values are kept).
  * </p>
@@ -38,7 +36,7 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  * This expression secures a value <em>within</em> a script, e.g. a partial result that is rendered
  * or handed to another context during the evaluation. It must not be applied to an intermediate
  * result that the script still computes with, since that could drop objects the computation needs
- * (e.g. for a filter) even though the final result would be readable.
+ * (e.g. for a filter) even though the final result would be discoverable.
  * </p>
  *
  * <p>

@@ -13,6 +13,7 @@
 					<locale name="es"/>
 				</supported-locales>
 				<bundles>
+					<bundle name="demoReactMessages"/>
 					<bundle name="model.demo.react.messages"/>
 					<bundle name="model.demo.tickets.messages"/>
 					<bundle name="model.demo.charts.messages"/>
@@ -33,9 +34,10 @@
 			give to the members of the "users" group; the project member and project administrator
 			roles that the role rules below give to the members and the administrators of a project,
 			on that project only; the project manager role that a role rule below gives to the members
-			of the "DemoProjectManagers" group on the security root; and the chart reader role that
+			of the "DemoProjectManagers" group on the security root; the chart reader role that
 			makes the sales and purchases of the chart demo visible to a visitor without an account,
-			granted by a role rule below as well.
+			granted by a role rule below as well; and the ticket watcher and project path viewer
+			roles of the ticket-watcher scenario, see the grants and role rules below.
 		-->
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
@@ -47,7 +49,36 @@
 					<role name="demo.react.ProjectAdmin"/>
 					<role name="demo.react.ProjectManager"/>
 					<role name="demo.react.ChartReader"/>
+					<role name="demo.react.TicketWatcher"/>
+					<role name="demo.react.ProjectPathViewer"/>
 				</roles>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+				<group name="Approve" type="write"/>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+				<scripts>
+					<!--
+						A member of a project approves a milestone of it, although only an
+						administrator may write Milestone#approved (see the security-config).
+					-->
+					<privileged-script name="approveMilestone"
+						command-group="Approve"
+						security-object="$milestone.container()"
+					>
+						<parameters>
+							<parameter name="milestone"/>
+						</parameters>
+						<implementation>{
+							$milestone.set(`tl.demo.projectManagement:Milestone#approved`, true);
+							$milestone;
+						}</implementation>
+					</privileged-script>
+				</scripts>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.util.model.ModelService">
@@ -157,8 +188,9 @@
 						the rights of a project are given by its members and administrators, which a
 						project being created does not have yet.
 						
-						A user - every member of the "users" group - reads the contributors, which
-						belong to no project, and the tickets of the ticket demo.
+						A user - every member of the "users" group - reads the person contacts, which
+						belong to no project and are the assignees of the project tickets, and the
+						tickets of the ticket demo.
 						
 						The views follow these rights: for an account that is a member of P1 but not
 						of P2 and no project manager, the project list shows P1 only; "New Project" is
@@ -174,6 +206,9 @@
 						in the "New Milestone" dialog and when editing the milestone; a member creates a
 						milestone that is not approved. The ticket demo shows its tickets, but neither
 						creates nor deletes nor edits one.
+
+						A member approves a milestone of P1 with the "Approve" command of the milestone list
+						(the privileged script approveMilestone), a ticket watcher cannot.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant
@@ -201,6 +236,10 @@
 						<grant
 							inherit="true"
 							operation="Write"
+							roles="demo.react.ProjectMember"
+						/>
+						<grant
+							operation="Approve"
 							roles="demo.react.ProjectMember"
 						/>
 						<grant
@@ -247,7 +286,62 @@
 							<container reference="tl.demo.projectManagement:ProjectScope#notes"/>
 						</access-parent>
 					</class>
-					<class name="tl.demo.projectManagement:Contributor">
+					<!--
+						The ticket-watcher scenario, showing the Discover right: an account whose person
+						is listed in the watchers of a ticket - a ticket watcher, by the role rules below -
+						reads that ticket, and nothing else of its project. To show the ticket in the tree
+						demo, it must see the path to the ticket: the project and the milestone, with
+						their labels.
+						
+						For that, a ticket watcher is a project path viewer on the project containing
+						the ticket. A project path viewer reads the names and the milestones of the
+						project and the names and tickets of its milestones, but no other attribute of
+						the project or a milestone: not its description, its budget, its members. Reading an attribute of an object
+						implies discovering the object, so the project and its milestones appear in the
+						tree with their labels. The tickets of a milestone are filtered: the watcher
+						discovers the ticket it watches, not the other tickets of the milestone, and not
+						the projects in which it watches no ticket.
+						
+						The grant on an attribute replaces the grant on its type for this attribute, so
+						the project members and administrators, who read these attributes through the
+						module grant, are listed here as well. The roles on a milestone are the roles on
+						its project, its access parent, so the grant on the tickets of a milestone names
+						the project path viewer, which a ticket watcher holds on the project.
+					-->
+					<class name="tl.demo.projectManagement:Ticket">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.TicketWatcher"
+						/>
+					</class>
+					<part name="tl.demo.projectManagement:ProjectScope#milestones">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:Milestone#tickets">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<!-- The project path viewer also reads the names of the project and its milestones, so
+						that a table or a form shows which object a discovered row is. -->
+					<part name="tl.demo.projectManagement:ProjectScope#name">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<part name="tl.demo.projectManagement:Milestone#name">
+						<grant
+							operation="Read"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
+						/>
+					</part>
+					<class name="Contacts:PersonContact">
 						<grant
 							inherit="true"
 							operation="Read"
@@ -377,12 +471,38 @@
 							</path>
 						</inheritance-rule>
 						<!--
-							Every member of the "users" group is a user on the contributors and on every
+							The ticket-watcher scenario, see the grants above: an account listed in the
+							watchers of a ticket is a ticket watcher on that ticket, and a ticket watcher on
+							a ticket of a project is a project path viewer on that project. The project
+							path viewer is passed on to nothing below the project: it would make the other
+							tickets of the project discoverable.
+						-->
+						<rule id="WatchersOfTickets"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Ticket"
+							role="demo.react.TicketWatcher"
+						>
+							<path>
+								<step attribute="tl.demo.projectManagement:Ticket#watchers"/>
+							</path>
+						</rule>
+						<inheritance-rule id="PathViewersOfProjects"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:ProjectScope"
+							role="demo.react.ProjectPathViewer"
+							source-role="demo.react.TicketWatcher"
+						>
+							<path>
+								<step attribute="tl.demo.projectManagement:ProjectScope#tickets"/>
+							</path>
+						</inheritance-rule>
+						<!--
+							Every member of the "users" group is a user on the person contacts and on every
 							object of the ticket demo.
 						-->
-						<rule id="ContributorsOfUsers"
+						<rule id="PersonContactsOfUsers"
 							inherit="true"
-							meta-element="tl.demo.projectManagement:Contributor"
+							meta-element="Contacts:PersonContact"
 							role="demo.react.User"
 						>
 							<group-with-name name="users"/>
@@ -531,12 +651,12 @@
 							<bind channel="ticket"/>
 						</show>
 					</target>
-					<target type="tl.demo.projectManagement:Contributor">
+					<target type="Contacts:PersonContact">
 						<show
 							dialog="true"
-							view="projects/contributor-dialog.view.xml"
+							view="projects/contact-dialog.view.xml"
 						>
-							<bind channel="contributor"/>
+							<bind channel="contact"/>
 						</show>
 					</target>
 					<target type="tl.accounts:Person">

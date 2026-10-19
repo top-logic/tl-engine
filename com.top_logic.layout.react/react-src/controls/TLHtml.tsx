@@ -210,8 +210,11 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   const Button = usePart('Button');
 
   if (error) {
+    // A fragment that is not shown says why in its place, as an error message of the design system.
     return (
-      <div id={controlId} {...labelled} className={rootClassName(state, 'tlHtml tlHtml__error')} role="alert">{error}</div>
+      <div id={controlId} {...labelled} className={rootClassName(state, 'tl-alert')} data-tl-role="error" role="alert">
+        <div className="tl-alert__body"><div className="tl-alert__message tl-type-body">{error}</div></div>
+      </div>
     );
   }
 

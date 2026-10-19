@@ -1122,6 +1122,11 @@
   color: var(--tl-text-on-brand);
   opacity: 0.4;
 }
+/* Trägt der Platzhalter das Anlegen-Feld, ist er keine Vorschau mehr, sondern die Eingabe: voll deckend, damit der
+   getippte Titel das Paar text-on-brand auf surface-brand hält (blass fiel er unter 4,5:1, Sichtprüfung 5c). */
+.tl-calendar__event[data-tl-state~="preview"]:has(.tl-calendar__create) {
+  opacity: 1;
+}
 
 .tl-calendar__event[aria-selected="true"],
 .tl-calendar__event:focus-visible,
@@ -5927,4 +5932,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:1542933fc6c05371ddd4ea7d20c7912bf83c4794d289901cb45b55f6b522c168 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:e6b0e122e638a8571cf23c6bb5354dfd0cca7cf6dc69cee7e40fa0f4d37332d7 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

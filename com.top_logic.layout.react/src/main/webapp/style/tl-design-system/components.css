@@ -2133,6 +2133,11 @@ a.tl-field-value:hover {
   color: var(--tl-status-error-text);
 }
 
+/* In der umbrechenden Chip-Gruppe von TLFileChips bricht die Fehlerzeile unter die Chips (Spec 5b §6.5). */
+.tl-chip-group > .tl-file-upload__status {
+  flex-basis: 100%;
+}
+
 /* --- icon-picker/icon-picker.css --- */
 /* Icon-Picker — Spec 2026-10-17 Welle 5a §5. Der Inhalt des Icon-Popups (Hülle: tl-picker, Feldknopf: tl-swatch,
    Laden, leer, Fehler: tl-status). Das Popup ist size-13 im Quadrat und lässt sich von Hand größer ziehen. */
@@ -5061,4 +5066,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:8e52572839578f988f05ee25b27ff167dec68313bb92443456af2884e4876cf2 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:eb5977fe3894721bcc5f4365b999d06c8f230c58f9235bbc21e2a8d2167c250f — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

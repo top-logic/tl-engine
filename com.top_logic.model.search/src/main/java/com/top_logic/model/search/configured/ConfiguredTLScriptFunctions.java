@@ -137,13 +137,17 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 
 	private void initScripts() {
 		Map<String, ConfiguredScript> builders = TypedConfigUtil.createInstanceMap(getConfig().getScripts());
+
+		// The builders must be published before the scripts are compiled: a script may call
+		// configured functions, itself included (recursion), which are resolved through them.
+		_executorsNoSecurity.clear();
+		_builders = builders;
+		_factories = createFactories(builders);
+
 		Map<String, QueryExecutor> executors = new HashMap<>();
 		for (Entry<String, ConfiguredScript> builder : builders.entrySet()) {
 			executors.put(builder.getKey(), createExecutor(builder.getKey(), builder.getValue()));
 		}
-		_executorsNoSecurity.clear();
-		_builders = builders;
-		_factories = createFactories(builders);
 		_executors = executors;
 	}
 

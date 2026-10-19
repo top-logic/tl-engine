@@ -1293,6 +1293,24 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.calendar.more")
 	public static ResKey JS_CALENDAR_MORE;
 
+	/**
+	 * @en Calendar
+	 */
+	@CustomKey("js.calendar.toolbar")
+	public static ResKey JS_CALENDAR_TOOLBAR;
+
+	/**
+	 * @en View
+	 */
+	@CustomKey("js.calendar.view")
+	public static ResKey JS_CALENDAR_VIEW;
+
+	/**
+	 * @en Events
+	 */
+	@CustomKey("js.calendar.events")
+	public static ResKey JS_CALENDAR_EVENTS;
+
 	// -- Job status client-side i18n keys --
 
 	/**

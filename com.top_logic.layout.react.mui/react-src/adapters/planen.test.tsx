@@ -19,6 +19,8 @@ import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/
 import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/TLValueList';
 import TLDashboard from '../../../com.top_logic.layout.react/react-src/controls/TLDashboard';
 import TLKanbanBoard from '../../../com.top_logic.layout.react/react-src/controls/TLKanbanBoard';
+import TLCalendar from '../../../com.top_logic.layout.react/react-src/controls/TLCalendar';
+import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
 import BadgePart from '../../../com.top_logic.layout.react/react-src/controls/chip/BadgePart';
 import { useRovingFocus } from '../../../com.top_logic.layout.react/react-src/controls/useRovingFocus';
 import MuiButtonAdapter from './MuiButtonAdapter';
@@ -1261,5 +1263,497 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     expect(hint).not.toBeNull();
     expect(hint.getAttribute('role')).toBe('status');
     expect(hint.textContent).toBe('Nicht in diese Spalte');
+  });
+});
+
+// The calendar (spec §3): one block tl-calendar for all its views. The toolbar is a tl-toolbar with the view choice as a
+// tl-segmented; the events of a grid are one list box with one tab stop, painted in their category or in the colour of
+// the server with the text readable on it; the days are buttons named by their full date, today marked alike in every
+// view; the field of a new event discards it by Escape through the dispatcher, also inside a window.
+describe('the calendar (spec §3: tl-calendar)', () => {
+  const CMD_SELECT_EVENT = 'selectEvent';
+  const CMD_GOTO = 'goto';
+  const CMD_SWITCH_GRANULARITY = 'switchGranularity';
+  const CMD_MOVE_EVENT = 'moveEvent';
+  const CMD_CREATE_SLOT = 'createSlot';
+  const MS_DAY = 86400000;
+
+  afterEach(() => {
+    // The texts of a test must not reach the next one; the calendar is unmounted first, so that no hook of it answers
+    // the cleared cache.
+    cleanup();
+    clearI18NCache();
+  });
+
+  /** Monday 19 October 2026 plus the given days, at the given time of the day (local time, as the calendar reads it). */
+  function at(day: number, hour = 0, minute = 0) {
+    return new Date(2026, 9, 19 + day, hour, minute).getTime();
+  }
+
+  /** An event as the server describes it, its title its ID. */
+  function event(id: string, start: number, end: number, extra: Record<string, unknown> = {}) {
+    return { id, start, end, allDay: false, title: id, movable: true, resizable: true, selected: false, ...extra };
+  }
+
+  /** The state of a calendar in the given view, today Wednesday 21 October 2026, at the week of 19 October. */
+  function calendar(granularity: string, events: unknown[], extra: Record<string, unknown> = {}) {
+    return {
+      granularity, title: 'Zeitraum', rangeStart: at(0), rangeEnd: at(7), anchor: at(2), now: at(2, 12),
+      firstDayOfWeek: 1, dayStartHour: 8, dayEndHour: 18, nonWorkingDays: [0, 6], locale: 'de-DE', editable: true,
+      events, ...extra,
+    };
+  }
+
+  /** The events of a week: two on Monday, one on Tuesday, one on Wednesday, one all day on Friday. */
+  const WEEK = [
+    event('daily', at(0, 9), at(0, 10), { title: 'Daily', category: 'Team' }),
+    event('review', at(0, 13), at(0, 14, 30), { title: 'Review', category: null }),
+    event('planning', at(1, 10), at(1, 11, 30), { title: 'Planung', category: '' }),
+    event('workshop', at(2, 9), at(2, 12), { title: 'Workshop' }),
+    event('holiday', at(4), at(5), { title: 'Urlaub', allDay: true, category: 'Frei' }),
+  ];
+
+  function root() {
+    return document.getElementById(CONTROL_ID)!;
+  }
+
+  function sentOf(sent: ReturnType<typeof mountAdapter>, command: string) {
+    return sent.mock.calls.filter(([name]) => name === command);
+  }
+
+  /** The option of the event with the given title. */
+  function optionOf(title: string) {
+    return Array.from(document.querySelectorAll<HTMLElement>('[role="option"]'))
+      .find(option => option.getAttribute('aria-label')!.includes(title))!;
+  }
+
+  /** The list box of the time grid. */
+  function timedList() {
+    return root().querySelector<HTMLElement>('.tl-calendar__time-grid .tl-calendar__columns > .tl-calendar__events')!;
+  }
+
+  /** The tile of the month showing the day of the given name. */
+  function cellOf(name: string) {
+    return screen.getByRole('button', { name }).closest<HTMLElement>('.tl-calendar__day')!;
+  }
+
+  /** What is left of the old style sheet: its classes, and the custom property it painted the events with. */
+  function legacy() {
+    const elements = Array.from(document.querySelectorAll('*'));
+    return [
+      ...elements.flatMap(element => Array.from(element.classList)).filter(name => name.startsWith('tlCal')),
+      ...elements.map(element => element.getAttribute('style') ?? '').filter(style => style.includes('--cal-ev-bg')),
+    ];
+  }
+
+  /** A data transfer as the browser hands it to the events of one drag (jsdom has none). */
+  function transfer() {
+    const data = new Map<string, string>();
+    return {
+      types: [] as string[],
+      effectAllowed: 'all',
+      dropEffect: 'none',
+      setData(type: string, value: string) {
+        data.set(type, value);
+        this.types.push(type);
+      },
+      getData(type: string) {
+        return data.get(type) ?? '';
+      },
+      setDragImage() {},
+    };
+  }
+
+  /** The commands the control with the given ID sent, also one embedded in the control under test. */
+  function commandsOf(controlId: string) {
+    return vi.mocked(globalThis.fetch).mock.calls
+      .map(([, init]) => JSON.parse(String((init as RequestInit | undefined)?.body ?? '{}')))
+      .filter(body => body.controlId === controlId)
+      .map(body => [body.command, body.arguments]);
+  }
+
+  it('is the block tl-calendar with a toolbar holding the view choice as a segmented radio group', async () => {
+    const sent = mountAdapter(TLCalendar, calendar('WEEK', WEEK, { cssClass: 'kalender-der-anwendung' }));
+    await settle();
+
+    expect(Array.from(root().classList)).toEqual(['tl-calendar', 'kalender-der-anwendung']);
+    const toolbar = root().querySelector<HTMLElement>(':scope > .tl-toolbar')!;
+    expect(toolbar.tagName).toBe('DIV');
+    expect(toolbar.classList).toContain('tl-calendar__toolbar');
+    expect(toolbar.getAttribute('role')).toBe('toolbar');
+    expect(toolbar.getAttribute('aria-label')).toBe('js.calendar.toolbar');
+    expect(toolbar.querySelectorAll(':scope > .tl-toolbar__group button')).toHaveLength(3);
+    const title = toolbar.querySelector(':scope > .tl-calendar__title')!;
+    expect(title.classList).toContain('tl-type-heading-sm');
+    expect(title.textContent).toBe('Zeitraum');
+
+    const views = toolbar.querySelector<HTMLElement>(':scope > div.tl-segmented')!;
+    expect(views.getAttribute('role')).toBe('radiogroup');
+    expect(views.getAttribute('aria-label')).toBe('js.calendar.view');
+    const segments = Array.from(views.querySelectorAll<HTMLElement>(':scope > button.tl-segmented__segment'));
+    expect(segments.map(segment => segment.getAttribute('role'))).toEqual(['radio', 'radio', 'radio', 'radio', 'radio']);
+    expect(segments.map(segment => segment.getAttribute('aria-checked'))).toEqual(['false', 'false', 'true', 'false', 'false']);
+    expect(segments.map(segment => segment.tabIndex)).toEqual([-1, -1, 0, -1, -1]);
+    segments.forEach(segment => {
+      expect(segment.classList).toContain('tl-type-label');
+      expect(segment.querySelector(':scope > .tl-segmented__label')).not.toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole('radio', { name: 'js.calendar.month' }));
+    await settle();
+
+    expect(sentOf(sent, CMD_SWITCH_GRANULARITY)).toEqual([[CMD_SWITCH_GRANULARITY, { granularity: 'MONTH' }]]);
+    expect(legacy()).toEqual([]);
+  });
+
+  it('switches the view by the arrows in the view choice, as a radio group does', async () => {
+    const sent = mountAdapter(TLCalendar, calendar('WEEK', WEEK));
+    await settle();
+
+    screen.getByRole('radio', { name: 'js.calendar.week' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await settle();
+
+    expect(document.activeElement).toBe(screen.getByRole('radio', { name: 'js.calendar.month' }));
+    expect(sentOf(sent, CMD_SWITCH_GRANULARITY)).toEqual([[CMD_SWITCH_GRANULARITY, { granularity: 'MONTH' }]]);
+  });
+
+  it('lists the events of the time grid in one list box with one tab stop, the arrows following the time', async () => {
+    const sent = mountAdapter(TLCalendar, calendar('WEEK', WEEK));
+    await settle();
+
+    const list = timedList();
+    expect(list.getAttribute('role')).toBe('listbox');
+    expect(list.getAttribute('aria-label')).toBe('js.calendar.events');
+    const options = Array.from(list.querySelectorAll<HTMLElement>(':scope > .tl-calendar__column > [role="option"]'));
+    expect(options.map(option => option.getAttribute('aria-label')!.split(', ')[1]))
+      .toEqual(['Daily', 'Review', 'Planung', 'Workshop']);
+    expect(options.map(option => option.tabIndex)).toEqual([0, -1, -1, -1]);
+    options.forEach(option => {
+      expect(option.tagName).toBe('DIV');
+      expect(option.classList).toContain('tl-calendar__event');
+      expect(option.classList).toContain('tl-type-label');
+      expect(option.getAttribute('aria-selected')).toBe('false');
+      expect(option.querySelector(':scope > .tl-calendar__event-time')!.classList).toContain('tl-type-label');
+      expect(option.querySelector(':scope > .tl-calendar__event-title')!.classList).toContain('tl-type-label-strong');
+    });
+    // The name tells the time and the title.
+    expect(optionOf('Daily').getAttribute('aria-label')).toMatch(/^9:00.*10:00, Daily$/);
+    expect(optionOf('Daily').getAttribute('data-tl-role')).toBe('category-' + categoryOf('Team'));
+
+    optionOf('Daily').focus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(optionOf('Review'));
+    await userEvent.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(optionOf('Planung'));
+    expect(optionOf('Planung').tabIndex).toBe(0);
+    await userEvent.keyboard('{Enter}');
+    await settle();
+
+    expect(sentOf(sent, CMD_SELECT_EVENT)).toEqual([[CMD_SELECT_EVENT, { eventId: 'planning' }]]);
+  });
+
+  it('lists the events of the whole day in a list box of their own, named by their title and all day', async () => {
+    mountAdapter(TLCalendar, calendar('WEEK', WEEK));
+    await settle();
+
+    const list = root().querySelector<HTMLElement>('.tl-calendar__all-day > .tl-calendar__events')!;
+    expect(list.getAttribute('role')).toBe('listbox');
+    expect(list.getAttribute('aria-label')).toBe('js.calendar.events, js.calendar.allDay');
+    const options = Array.from(list.querySelectorAll<HTMLElement>(':scope > .tl-calendar__all-day-cell > [role="option"]'));
+    expect(options).toHaveLength(1);
+    expect(options[0].getAttribute('aria-label')).toBe('Urlaub, js.calendar.allDay');
+    expect(options[0].classList).toContain('tl-calendar__event');
+    expect(options[0].tabIndex).toBe(0);
+    const label = root().querySelector('.tl-calendar__all-day > .tl-calendar__all-day-label')!;
+    expect(label.classList).toContain('tl-calendar__gutter');
+    expect(label.classList).toContain('tl-type-label');
+  });
+
+  it('marks the selected event and makes it the tab stop of its list', async () => {
+    mountAdapter(TLCalendar, calendar('WEEK', WEEK.map(e => e.id === 'planning' ? { ...e, selected: true } : e)));
+    await settle();
+
+    expect(optionOf('Planung').getAttribute('aria-selected')).toBe('true');
+    expect(optionOf('Planung').tabIndex).toBe(0);
+    expect(optionOf('Daily').getAttribute('aria-selected')).toBe('false');
+    expect(optionOf('Daily').tabIndex).toBe(-1);
+  });
+
+  it('paints an event without category and colour as the brand, a server colour inline with readable text, an unreadable colour by its category (review focus 3)', async () => {
+    document.documentElement.style.setProperty('--tl-text-contrast-light', '#ffffff');
+    document.documentElement.style.setProperty('--tl-text-contrast-dark', '#000000');
+    mountAdapter(TLCalendar, calendar('WEEK', [
+      event('none', at(0, 9), at(0, 10), { title: 'Ohne', category: null, color: null }),
+      event('empty', at(0, 11), at(0, 12), { title: 'Leer', category: '' }),
+      event('blue', at(1, 9), at(1, 10), { title: 'Blau', category: 'Team', color: 'rgb(0, 51, 102)' }),
+      event('broken', at(2, 9), at(2, 10), { title: 'Kaputt', category: 'Kunde', color: 'kein-farbwert' }),
+      event('broken-plain', at(3, 9), at(3, 10), { title: 'Schlicht', color: 'kein-farbwert' }),
+    ]));
+    await settle();
+
+    for (const title of ['Ohne', 'Leer', 'Schlicht']) {
+      const option = optionOf(title);
+      expect(option.hasAttribute('data-tl-role')).toBe(false);
+      expect(option.style.background).toBe('');
+      expect(option.style.color).toBe('');
+    }
+    const blue = optionOf('Blau');
+    expect(blue.style.background).toBe('rgb(0, 51, 102)');
+    expect(blue.style.color).toBe('var(--tl-text-contrast-light)');
+    expect(blue.hasAttribute('data-tl-role')).toBe(false);
+    const broken = optionOf('Kaputt');
+    expect(broken.getAttribute('data-tl-role')).toBe('category-' + categoryOf('Kunde'));
+    expect(broken.style.background).toBe('');
+    expect(broken.style.color).toBe('');
+  });
+
+  it('makes the day heads buttons named by the full date, today marked, non-working days in their state', async () => {
+    const sent = mountAdapter(TLCalendar, calendar('WEEK', WEEK));
+    await settle();
+
+    const heads = Array.from(root().querySelectorAll<HTMLElement>('.tl-calendar__head > .tl-calendar__day-head'));
+    expect(heads).toHaveLength(7);
+    heads.forEach(head => expect(head.tagName).toBe('BUTTON'));
+    expect(heads[0].getAttribute('aria-label')).toBe('Montag, 19. Oktober 2026');
+    expect(heads.map(head => head.getAttribute('aria-current'))).toEqual([null, null, 'date', null, null, null, null]);
+    expect(heads.map(head => head.getAttribute('data-tl-state')))
+      .toEqual([null, null, null, null, null, 'nonworking', 'nonworking']);
+    expect(heads[0].querySelector(':scope > .tl-calendar__weekday')!.classList).toContain('tl-type-label');
+    const number = heads[0].querySelector(':scope > .tl-calendar__day-number')!;
+    expect(number.classList).toContain('tl-type-heading-sm');
+    expect(number.textContent).toBe('19');
+
+    // The columns: non-working in their state, the working time drawn on working days only, before the hour lines.
+    const columns = Array.from(timedList().querySelectorAll<HTMLElement>(':scope > .tl-calendar__column'));
+    expect(columns.map(column => column.getAttribute('data-tl-state')))
+      .toEqual([null, null, null, null, null, 'nonworking', 'nonworking']);
+    columns.slice(0, 5).forEach(column => {
+      expect(column.firstElementChild!.classList).toContain('tl-calendar__work');
+      expect(column.children[1].classList).toContain('tl-calendar__hour-line');
+    });
+    columns.slice(5).forEach(column => expect(column.querySelector('.tl-calendar__work')).toBeNull());
+
+    fireEvent.click(heads[1]);
+    await settle();
+
+    expect(sentOf(sent, CMD_GOTO)).toEqual([[CMD_GOTO, { date: at(1), granularity: 'DAY' }]]);
+  });
+
+  describe('in the month view', () => {
+    /** Thursday 1 October 2026 plus the given days, at the given time of the day. */
+    function oct(day: number, hour = 0, minute = 0) {
+      return new Date(2026, 9, day, hour, minute).getTime();
+    }
+
+    const MONTH = [
+      event('fair', oct(1), oct(3), { title: 'Messe', allDay: true, category: 'Messe' }),
+      event('daily', oct(6, 9), oct(6, 10), { title: 'Daily', category: 'Team' }),
+      event('call', oct(7, 15), oct(7, 15, 30), { title: 'Telefonat', color: 'rgb(0, 51, 102)' }),
+    ];
+
+    function month() {
+      return calendar('MONTH', MONTH, {
+        rangeStart: new Date(2026, 8, 28).getTime(), rangeEnd: new Date(2026, 10, 9).getTime(), anchor: oct(15),
+      });
+    }
+
+    it('makes the day numbers buttons and the events a list box: all-day ones filled, timed ones as chips', async () => {
+      document.documentElement.style.setProperty('--tl-text-contrast-light', '#ffffff');
+      document.documentElement.style.setProperty('--tl-text-contrast-dark', '#000000');
+      const sent = mountAdapter(TLCalendar, month());
+      await settle();
+
+      const list = root().querySelector<HTMLElement>('.tl-calendar__month-body > .tl-calendar__events')!;
+      expect(list.getAttribute('role')).toBe('listbox');
+      expect(list.getAttribute('aria-label')).toBe('js.calendar.events');
+      expect(list.querySelectorAll(':scope > .tl-calendar__week')).toHaveLength(6);
+
+      const first = screen.getByRole('button', { name: 'Donnerstag, 1. Oktober 2026' });
+      expect(first.classList).toContain('tl-calendar__day-number');
+      expect(first.classList).toContain('tl-type-heading-sm');
+      expect(cellOf('Montag, 28. September 2026').getAttribute('data-tl-state')).toBe('other');
+      expect(cellOf('Samstag, 3. Oktober 2026').getAttribute('data-tl-state')).toBe('nonworking');
+      expect(cellOf('Donnerstag, 1. Oktober 2026').hasAttribute('data-tl-state')).toBe(false);
+      expect(cellOf('Mittwoch, 21. Oktober 2026').getAttribute('aria-current')).toBe('date');
+      expect(cellOf('Donnerstag, 22. Oktober 2026').hasAttribute('aria-current')).toBe(false);
+
+      const fair = optionOf('Messe');
+      expect(fair.classList).toContain('tl-calendar__event');
+      expect(fair.parentElement!.classList).toContain('tl-calendar__overlay');
+      expect(fair.getAttribute('aria-label')).toBe('Messe, js.calendar.allDay');
+      expect(fair.getAttribute('data-tl-role')).toBe('category-' + categoryOf('Messe'));
+
+      const daily = optionOf('Daily');
+      expect(daily.classList).toContain('tl-calendar__chip');
+      expect(daily.classList).toContain('tl-type-label');
+      expect(daily.classList).not.toContain('tl-calendar__event');
+      expect(daily.getAttribute('aria-label')).toMatch(/^9:00.*10:00, Daily$/);
+      const dot = daily.querySelector<HTMLElement>(':scope > .tl-calendar__chip-dot')!;
+      expect(dot.getAttribute('data-tl-role')).toBe('category-' + categoryOf('Team'));
+      expect(daily.querySelector(':scope > .tl-calendar__event-time')).not.toBeNull();
+      expect(daily.querySelector(':scope > .tl-calendar__event-title')).not.toBeNull();
+
+      // A server colour paints the dot; the chip itself stays unfilled.
+      const call = optionOf('Telefonat');
+      expect(call.querySelector<HTMLElement>(':scope > .tl-calendar__chip-dot')!.style.background).toBe('rgb(0, 51, 102)');
+      expect(call.style.background).toBe('');
+      expect(call.style.color).toBe('');
+
+      const options = Array.from(list.querySelectorAll<HTMLElement>('[role="option"]'));
+      expect(options.filter(option => option.tabIndex === 0)).toHaveLength(1);
+
+      fireEvent.click(first);
+      await settle();
+      expect(sentOf(sent, CMD_GOTO)).toEqual([[CMD_GOTO, { date: oct(1), granularity: 'DAY' }]]);
+      expect(legacy()).toEqual([]);
+    });
+
+    it('marks the day an event is dragged over and moves the event there on the drop', async () => {
+      const sent = mountAdapter(TLCalendar, month());
+      await settle();
+
+      const data = transfer();
+      fireEvent.dragStart(optionOf('Daily'), { dataTransfer: data });
+      await settle();
+      expect(optionOf('Daily').getAttribute('data-tl-state')).toBe('dragging');
+
+      const target = cellOf('Donnerstag, 8. Oktober 2026');
+      fireEvent.dragOver(target, { dataTransfer: data });
+      await settle();
+      expect(target.getAttribute('data-tl-state')).toBe('drop-onto');
+      expect(cellOf('Freitag, 9. Oktober 2026').hasAttribute('data-tl-state')).toBe(false);
+
+      fireEvent.drop(target, { dataTransfer: data });
+      fireEvent.dragEnd(optionOf('Daily'));
+      await settle();
+
+      expect(sentOf(sent, CMD_MOVE_EVENT)).toEqual([[CMD_MOVE_EVENT, { eventId: 'daily', start: oct(8, 9), end: oct(8, 10) }]]);
+      expect(target.hasAttribute('data-tl-state')).toBe(false);
+      expect(optionOf('Daily').hasAttribute('data-tl-state')).toBe(false);
+    });
+  });
+
+  describe('in the year view', () => {
+    function year() {
+      return calendar('YEAR', [
+        event('today', at(2, 9), at(2, 10), { title: 'Heute' }),
+        event('early', new Date(2026, 9, 6, 9).getTime(), new Date(2026, 9, 6, 10).getTime(), { title: 'Früh' }),
+      ], { rangeStart: new Date(2026, 0, 1).getTime(), rangeEnd: new Date(2027, 0, 1).getTime() });
+    }
+
+    /** The days of the mini month of the given name. */
+    function daysOf(name: string) {
+      const grid = root().querySelector<HTMLElement>(`.tl-calendar__mini-grid[aria-label="${name}"]`)!;
+      return Array.from(grid.querySelectorAll<HTMLElement>(':scope > .tl-calendar__mini-day'));
+    }
+
+    it('shows each month as a grid of day buttons with one tab stop, today and the days with events marked', async () => {
+      const sent = mountAdapter(TLCalendar, year());
+      await settle();
+
+      expect(root().querySelectorAll('.tl-calendar__year > .tl-calendar__mini')).toHaveLength(12);
+      const title = screen.getByRole('button', { name: 'Oktober 2026' });
+      expect(title.classList).toContain('tl-calendar__mini-title');
+      expect(title.classList).toContain('tl-type-label-strong');
+      expect(title.textContent).toBe('Oktober');
+
+      const october = daysOf('Oktober 2026');
+      expect(october).toHaveLength(42);
+      october.forEach(day => expect(day.tagName).toBe('BUTTON'));
+      expect(october.filter(day => day.tabIndex === 0).map(day => day.getAttribute('aria-label')))
+        .toEqual(['Mittwoch, 21. Oktober 2026']);
+      const today = october.find(day => day.getAttribute('aria-label') === 'Mittwoch, 21. Oktober 2026')!;
+      expect(today.getAttribute('aria-current')).toBe('date');
+      expect(today.getAttribute('data-tl-state')).toBe('event');
+      expect(today.classList).toContain('tl-type-label-strong');
+      const plain = october.find(day => day.getAttribute('aria-label') === 'Dienstag, 20. Oktober 2026')!;
+      expect(plain.hasAttribute('data-tl-state')).toBe(false);
+      expect(plain.classList).toContain('tl-type-label');
+      expect(october[0].getAttribute('aria-label')).toBe('Montag, 28. September 2026');
+      expect(october[0].getAttribute('data-tl-state')).toBe('other');
+      const saturday = october.find(day => day.getAttribute('aria-label') === 'Samstag, 3. Oktober 2026')!;
+      expect(saturday.getAttribute('data-tl-state')).toBe('nonworking');
+
+      // A month without today has its first day as the tab stop.
+      expect(daysOf('September 2026').filter(day => day.tabIndex === 0).map(day => day.getAttribute('aria-label')))
+        .toEqual(['Dienstag, 1. September 2026']);
+
+      fireEvent.click(title);
+      await settle();
+      expect(sentOf(sent, CMD_GOTO)).toEqual([[CMD_GOTO, { date: new Date(2026, 9, 1).getTime(), granularity: 'MONTH' }]]);
+      expect(legacy()).toEqual([]);
+    });
+
+    it('moves to the next day by arrow right and opens it by Enter', async () => {
+      const sent = mountAdapter(TLCalendar, year());
+      await settle();
+
+      const october = daysOf('Oktober 2026');
+      october.find(day => day.getAttribute('aria-label') === 'Mittwoch, 21. Oktober 2026')!.focus();
+      await userEvent.keyboard('{ArrowRight}');
+
+      const next = daysOf('Oktober 2026').find(day => day.getAttribute('aria-label') === 'Donnerstag, 22. Oktober 2026')!;
+      expect(document.activeElement).toBe(next);
+      expect(next.tabIndex).toBe(0);
+
+      await userEvent.keyboard('{Enter}');
+      await settle();
+      expect(sentOf(sent, CMD_GOTO)).toEqual([[CMD_GOTO, { date: new Date(2026, 9, 22).getTime(), granularity: 'DAY' }]]);
+    });
+  });
+
+  describe('creating an event', () => {
+    /** The cell of the row of whole days showing the given day of the week. */
+    function allDayCell(day: number) {
+      return document.querySelectorAll<HTMLElement>('.tl-calendar__all-day .tl-calendar__all-day-cell')[day];
+    }
+
+    it('focuses the field of the new event and creates it by Enter with the title entered', async () => {
+      const sent = mountAdapter(TLCalendar, calendar('WEEK', WEEK));
+      await settle();
+
+      await userEvent.click(allDayCell(0));
+      await settle();
+
+      const field = document.activeElement as HTMLInputElement;
+      expect(field.tagName).toBe('INPUT');
+      expect(field.classList).toContain('tl-field');
+      expect(field.classList).toContain('tl-calendar__create');
+      expect(field.getAttribute('aria-label')).toBe('js.calendar.newEventTitle');
+      const stub = field.parentElement!;
+      expect(stub.classList).toContain('tl-calendar__event');
+      expect(stub.getAttribute('data-tl-state')).toBe('preview');
+
+      await userEvent.keyboard('Neu{Enter}');
+      await settle();
+
+      expect(sentOf(sent, CMD_CREATE_SLOT))
+        .toEqual([[CMD_CREATE_SLOT, { start: at(0), end: at(0) + MS_DAY, allDay: true, title: 'Neu' }]]);
+    });
+
+    it('discards only the new event by Escape inside a window, which stays open (review focus 4)', async () => {
+      register('PlanenTestCalendar', TLCalendar);
+      const child = { controlId: 'cal', module: 'PlanenTestCalendar', state: calendar('WEEK', WEEK) };
+      const sent = mountAdapter(TLWindow, { title: 'Fenster', child, closable: true });
+      await settle();
+
+      await userEvent.click(allDayCell(0));
+      await settle();
+      expect((document.activeElement as HTMLElement).classList).toContain('tl-calendar__create');
+
+      await userEvent.keyboard('Neu{Escape}');
+      await settle();
+
+      expect(document.querySelector('.tl-calendar__create')).toBeNull();
+      expect(commandsOf('cal').filter(([command]) => command === CMD_CREATE_SLOT)).toEqual([]);
+      expect(sent).not.toHaveBeenCalledWith('close', expect.anything());
+      expect(screen.getByRole('dialog', { name: 'Fenster' })).toBeTruthy();
+
+      // Positive control: with the new event gone, the same key reaches the window.
+      await userEvent.keyboard('{Escape}');
+      await settle();
+      expect(sent).toHaveBeenCalledWith('close', {});
+    });
   });
 });

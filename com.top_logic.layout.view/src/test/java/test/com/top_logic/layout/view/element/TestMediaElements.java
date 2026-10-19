@@ -121,6 +121,20 @@ public class TestMediaElements extends TestCase {
 		assertNull("Clearing the model clears the channel.", channel.get());
 	}
 
+	/** A value of the channel that is no binary data clears the model but stays on the channel. */
+	public void testChannelKeepsOtherValue() {
+		ViewChannel channel = new DefaultViewChannel(INPUT);
+		SimpleBinaryDataValue model = new SimpleBinaryDataValue();
+		BinaryChannelBinding.bind(channel, model);
+		model.setData(data("recorded"));
+
+		String address = "https://example/x.png";
+		channel.set(address);
+
+		assertNull("The model holds no binary data.", model.getData());
+		assertEquals("A change that came from the channel is not written back.", address, channel.get());
+	}
+
 	/** Data with the same content as the channel's value leaves the channel alone. */
 	public void testEqualContentKeepsChannel() {
 		ViewChannel channel = new DefaultViewChannel(INPUT);

@@ -23,9 +23,10 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
  * </p>
  *
  * <p>
- * The two directions do not echo each other endlessly: a {@link BinaryDataValue} ignores the
- * identical data it already holds, and a {@link ViewChannel} ignores a value equal to the one it
- * already holds (for {@link BinaryData}, one of the same content).
+ * A change that comes from the channel is never written back to it: a channel value that is no
+ * {@link BinaryData}, e.g. the address of a picture, clears the model and stays on the channel.
+ * What the control writes reaches the channel once; the channel ignores a value equal to the one
+ * it already holds (for {@link BinaryData}, one of the same content).
  * </p>
  *
  * @see AudioRecorderElement
@@ -53,19 +54,62 @@ public final class BinaryChannelBinding {
 	 * @return The {@link Registration} that ends the binding in both directions.
 	 */
 	public static Registration bind(ViewChannel channel, BinaryDataValue model) {
-		model.setData(binary(channel.get()));
-		ChannelListener channelListener = (sender, oldValue, newValue) -> model.setData(binary(newValue));
-		Registration channelRegistration = channel.addListener(channelListener);
-		Listener<BinaryData> modelListener = channel::set;
-		model.addListener(modelListener);
-		return Registration.onDispose(() -> {
-			channelRegistration.dispose();
-			model.removeListener(modelListener);
-		});
+		return new Binding(channel, model).start();
 	}
 
 	private static BinaryData binary(Object value) {
 		return value instanceof BinaryData ? (BinaryData) value : null;
+	}
+
+	/**
+	 * State of one binding: whether the model is being updated from the channel, so that the
+	 * resulting notification of the model is not written back to the channel.
+	 */
+	private static final class Binding implements ChannelListener, Listener<BinaryData> {
+
+		private final ViewChannel _channel;
+
+		private final BinaryDataValue _model;
+
+		private boolean _updating;
+
+		Binding(ViewChannel channel, BinaryDataValue model) {
+			_channel = channel;
+			_model = model;
+		}
+
+		Registration start() {
+			updateModel(_channel.get());
+			Registration channelRegistration = _channel.addListener(this);
+			_model.addListener(this);
+			return Registration.onDispose(() -> {
+				channelRegistration.dispose();
+				_model.removeListener(this);
+			});
+		}
+
+		@Override
+		public void handleNewValue(ViewChannel sender, Object oldValue, Object newValue) {
+			updateModel(newValue);
+		}
+
+		@Override
+		public void notify(BinaryData data) {
+			if (_updating) {
+				return;
+			}
+			_channel.set(data);
+		}
+
+		private void updateModel(Object value) {
+			_updating = true;
+			try {
+				_model.setData(binary(value));
+			} finally {
+				_updating = false;
+			}
+		}
+
 	}
 
 }

@@ -12,7 +12,7 @@ const I18N_KEYS = {
   'js.jobStatus.elapsed': 'Elapsed time',
   'js.jobStatus.cancel': 'Cancel',
   'js.jobStatus.currentStep': 'Step: {0}',
-  'js.wizard.steps': 'Steps',
+  'js.jobStatus.steps': 'Steps',
 };
 
 /** One of the steps the job goes through, and where it stands. */
@@ -154,7 +154,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
         {message !== null && message !== '' && <div className="tl-job-status__message tl-type-body">{message}</div>}
       </div>
       {phases.length > 0 && (
-        <ol className="tl-steps tl-steps--vertical" aria-label={i18n['js.wizard.steps']}>
+        <ol className="tl-steps tl-steps--vertical" aria-label={i18n['js.jobStatus.steps']}>
           {phases.map((phase, index) => (
             <li key={index} className="tl-steps__item" {...STEP_ATTRIBUTES[phase.status]}>
               <span className="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">{index + 1}</span>

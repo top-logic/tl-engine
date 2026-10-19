@@ -955,6 +955,7 @@ describe('the job status (TLJobStatus)', () => {
 
     const list = root().querySelector('ol.tl-steps.tl-steps--vertical')!;
     expect(list).not.toBeNull();
+    expect(list.getAttribute('aria-label')).toBe('js.jobStatus.steps');
     expect(list.closest('[role="status"]')).toBeNull();
     const items = list.querySelectorAll(':scope > li.tl-steps__item');
     expect(items).toHaveLength(3);

@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { React, replacePart, register, useUpload, downloadBlob, TOOLTIP_ATTR } from 'tl-react-bridge';
+import { React, replacePart, register, useUpload, downloadBlob, TOOLTIP_ATTR, ICON_PRINT } from 'tl-react-bridge';
 import type { ButtonPartProps } from 'tl-react-bridge';
 import TLDownload from '../../../com.top_logic.layout.react/react-src/controls/TLDownload';
 import TLBinaryField from '../../../com.top_logic.layout.react/react-src/controls/TLBinaryField';
@@ -18,6 +18,9 @@ import TLAudioRecorder from '../../../com.top_logic.layout.react/react-src/contr
 import TLAudioPlayer from '../../../com.top_logic.layout.react/react-src/controls/TLAudioPlayer';
 import TLPhotoCapture from '../../../com.top_logic.layout.react/react-src/controls/TLPhotoCapture';
 import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
+import TLImage from '../../../com.top_logic.layout.react/react-src/controls/TLImage';
+import TLPdfViewer from '../../../com.top_logic.layout.react/react-src/controls/TLPdfViewer';
+import TLHtml from '../../../com.top_logic.layout.react/react-src/controls/TLHtml';
 import ButtonPart from '../../../com.top_logic.layout.react/react-src/controls/button/ButtonPart';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
@@ -737,5 +740,142 @@ describe('the camera (TLPhotoCapture)', () => {
     await userEvent.keyboard('{Escape}');
     await settle();
     expect(sent).toHaveBeenCalledWith('close', {});
+  });
+});
+
+// Picture, PDF and HTML (spec §5): one block tl-media for embedded content, the HTML document on the white paper of
+// the design system with its print button over it, embedded HTML as tl-prose.
+
+/** The class the server configures for a control (state cssClass). */
+const SERVER_CLASS = 'appClass';
+
+/** The root element of the mounted control. */
+function root(): HTMLElement {
+  return document.getElementById(CONTROL_ID)!;
+}
+
+/** How often the class configured by the server stands at the root. */
+function serverClassCount(): number {
+  return root().className.split(/\s+/).filter(name => name === SERVER_CLASS).length;
+}
+
+describe('the picture (TLImage)', () => {
+  it('is a tl-media covering its box by default, the picture its frame, the server class once', async () => {
+    mountAdapter(TLImage, { url: 'picture.png', cssClass: SERVER_CLASS, width: '120px' });
+    await settle();
+
+    expect(root().classList).toContain('tl-media');
+    expect(root().classList).toContain('tl-media--cover');
+    expect(root().style.width).toBe('120px');
+    expect(root().querySelector(':scope > img.tl-media__frame')!.getAttribute('src')).toBe('picture.png');
+    expect(serverClassCount()).toBe(1);
+    expect(document.querySelector('[class*="tlImage"]')).toBeNull();
+  });
+
+  it('fits the picture into its box with fit contain', async () => {
+    mountAdapter(TLImage, { url: 'picture.png', fit: 'contain' });
+    await settle();
+
+    expect(root().classList).toContain('tl-media--contain');
+    expect(root().classList).not.toContain('tl-media--cover');
+  });
+
+  it('keeps the space by an empty placeholder while there is no picture', async () => {
+    mountAdapter(TLImage, { url: null, height: '80px' });
+    await settle();
+
+    const placeholder = root().querySelector(':scope > div.tl-media__placeholder')!;
+    expect(placeholder).not.toBeNull();
+    expect(placeholder.childNodes).toHaveLength(0);
+    expect(root().querySelector('img')).toBeNull();
+  });
+});
+
+describe('the PDF viewer (TLPdfViewer)', () => {
+  it('shows the document in a frame of a tl-media', async () => {
+    mountAdapter(TLPdfViewer, { hasPdf: true, dataRevision: 2, cssClass: SERVER_CLASS });
+    await settle();
+
+    expect(root().classList).toContain('tl-media');
+    const frame = root().querySelector(':scope > iframe.tl-media__frame')!;
+    expect(frame.getAttribute('title')).toBe('js.pdfViewer.title');
+    expect(serverClassCount()).toBe(1);
+    expect(document.querySelector('[class*="tlPdfViewer"]')).toBeNull();
+  });
+
+  it('says that there is no document in a status line', async () => {
+    mountAdapter(TLPdfViewer, { hasPdf: false });
+    await settle();
+
+    const status = root().querySelector('div.tl-status')!;
+    expect(status.textContent).toBe('js.pdfViewer.noDocument');
+    expect(root().querySelector('iframe')).toBeNull();
+  });
+});
+
+describe('the HTML (TLHtml)', () => {
+  withTopLogicButtons();
+
+  it('shows a document as the base of a filling overlay, on the paper of the design system', async () => {
+    mountAdapter(TLHtml, { display: 'document', dataRevision: 1, cssClass: SERVER_CLASS });
+    await settle();
+
+    expect(root().classList).toContain('tl-overlay');
+    expect(root().classList).toContain('tl-overlay--fill');
+    expect(root().classList).toContain('tlFill');
+    expect(serverClassCount()).toBe(1);
+    const media = root().querySelector(':scope > div.tl-overlay__base > div.tl-media.tl-media--document')!;
+    expect(media).not.toBeNull();
+    expect(media.querySelector(':scope > iframe.tl-media__frame')).not.toBeNull();
+    expect(root().querySelector('.tl-overlay__layer')).toBeNull();
+    expect(document.querySelector('[class*="tlHtml"]')).toBeNull();
+  });
+
+  it('puts the print button in an action at the top right over the document', async () => {
+    mountAdapter(TLHtml, { display: 'document', dataRevision: 1, print: true });
+    await settle();
+
+    const button = screen.getByRole('button', { name: 'js.html.print' });
+    expect(button.matches('button.tl-button--ghost.tl-button--icon')).toBe(true);
+    const action = button.parentElement!;
+    expect(action.matches('div.tl-overlay__action')).toBe(true);
+    const layer = action.parentElement!;
+    expect(layer.matches('div.tl-overlay__layer.tl-overlay__layer--top-right')).toBe(true);
+    expect(layer.parentElement).toBe(root());
+    const glyph = button.querySelector('.tl-button__icon')!;
+    for (const name of ICON_PRINT.substring('css:'.length).split(' ')) {
+      expect(glyph.classList).toContain(name);
+    }
+  });
+
+  it('shows a preview as a tl-media document, laid out at its page size and scaled', async () => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+    mountAdapter(TLHtml, { display: 'thumbnail', dataRevision: 1, thumbnailWidth: 800, thumbnailHeight: 1000 });
+    await settle();
+
+    expect(root().classList).toContain('tl-media');
+    expect(root().classList).toContain('tl-media--document');
+    expect(root().style.aspectRatio).toBe('800 / 1000');
+    const frame = root().querySelector<HTMLIFrameElement>(':scope > iframe.tl-media__frame')!;
+    expect(frame.style.width).toBe('800px');
+    expect(frame.style.height).toBe('1000px');
+    expect(frame.style.transform).toMatch(/^scale\(/);
+  });
+
+  it('inserts embedded HTML as tl-prose', async () => {
+    mountAdapter(TLHtml, { display: 'inline', html: '<p>Text</p>', cssClass: SERVER_CLASS });
+    await settle();
+
+    expect(root().classList).toContain('tl-prose');
+    expect(serverClassCount()).toBe(1);
+    expect(root().innerHTML).toBe('<p>Text</p>');
+  });
+
+  it('shows an error as an alert of the design system', async () => {
+    mountAdapter(TLHtml, { display: 'inline', error: 'Nicht erlaubt' });
+    await settle();
+
+    expect(root().classList).toContain('tl-alert');
+    expect(screen.getByRole('alert').textContent).toBe('Nicht erlaubt');
   });
 });

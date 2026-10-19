@@ -109,3 +109,6 @@ export const ICON_CAMERA = 'css:fa-solid fa-camera';
 
 /** Mirrors the camera picture (the camera dialog). */
 export const ICON_MIRROR = 'css:fa-solid fa-left-right';
+
+/** Prints the document (the print button over an HTML document). */
+export const ICON_PRINT = 'css:fa-solid fa-print';

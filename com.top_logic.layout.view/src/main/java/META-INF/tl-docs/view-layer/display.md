@@ -89,7 +89,7 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 </overlay>
 ```
 
-The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tl-overlay` / `.tl-overlay__layer` / `.tl-overlay__layer--<anchor>` (design system, `overlay.css`) and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar[data-tl-role="category-<n>"]` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+The client classes an application styles against are `.tl-media` / `.tl-media--cover` / `.tl-media--contain` / `.tl-media__frame` (design system, `media.css`), `.tl-overlay` / `.tl-overlay__layer` / `.tl-overlay__layer--<anchor>` (design system, `overlay.css`) and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar[data-tl-role="category-<n>"]` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
 
 ## Recording, playback and download
 
@@ -129,7 +129,7 @@ A value of any other type has no HTML representation; the element reports that i
 
 `display` decides how the content is shown, and with it what stands between it and the reader.
 
-**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the stylesheet gives `.tlHtml--inline` the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
+**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the design system's `.tl-prose` (`prose.css`) gives it the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
 
 ```xml
 <html input="answer"/>

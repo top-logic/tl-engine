@@ -747,6 +747,603 @@
   to { opacity: 0.4; }
 }
 
+/* --- calendar/calendar.css --- */
+/* Kalender — Spec 5c §3 (V8, V24–V27), Vertrag calendar.contract.md. Leser ist TLCalendar.
+   Leiste (tl-toolbar mit tl-segmented), Zeitraster (Tag, Arbeitswoche, Woche), Monat, Jahr. Die Schrift setzen
+   die Typo-Klassen am Element (tl-type-*), dieser Block setzt keine. Zustände sind Attribute: aria-current="date"
+   (heute), aria-selected (gewählter Termin), data-tl-state~="nonworking" / "other" / "event" / "preview";
+   die Kategorie ist data-tl-role="category-N". Ziehen (dragging, drop-onto) zeichnet allein drag.css.
+   Inline stehen nur Daten: Stundenhöhe, Lage und Größe der Termine, Spaltenzahl des Zeitrasters, Serverfarbe. */
+
+.tl-calendar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--tl-text-primary);
+  background: var(--tl-surface-layer);
+}
+.tl-calendar[hidden] { display: none; }
+
+/* --- Leiste ------------------------------------------------------------------------------------------ */
+
+/* Am tl-toolbar: die Leiste gibt Anordnung und Abstand oben und unten (toolbar.css), hier nur Rand und Seiten. */
+.tl-calendar__toolbar {
+  flex: none;
+  padding-inline: var(--tl-space-sm);
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-calendar__title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-calendar__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.tl-calendar__body[hidden] { display: none; }
+
+/* Die Termine eines Rasters sind eine Auswahlliste (role="listbox"). Die Liste ist nur Semantik: sie umschließt
+   die Spalten, Zellen oder Wochen, ohne selbst eine Box zu sein — die Lage der Termine bleibt die ihres Rasters. */
+.tl-calendar__events {
+  display: contents;
+}
+.tl-calendar__events[hidden] { display: none; }
+
+/* --- Zeitraster -------------------------------------------------------------------------------------- */
+
+.tl-calendar__time-grid {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  user-select: none;
+}
+.tl-calendar__time-grid[hidden] { display: none; }
+
+/* Die Stundenspalte in size-9: „ganztägig“ in tl-type-label passt hinein (size-8 schnitte es ab), „23:00“ ohnehin. */
+.tl-calendar__gutter {
+  box-sizing: border-box;
+  flex: none;
+  inline-size: var(--tl-size-9);
+}
+
+.tl-calendar__head {
+  display: flex;
+  flex: none;
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-calendar__head[hidden] { display: none; }
+
+/* Der Tageskopf ist ein Knopf (Name: das volle Datum); Wochentag und Tageszahl tragen ihre Typo-Klasse. */
+.tl-calendar__day-head {
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  margin: 0;
+  padding: var(--tl-space-2xs);
+  border: 0;
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.tl-calendar__day-head[hidden] { display: none; }
+
+.tl-calendar__weekday,
+.tl-calendar__month-weekday {
+  color: var(--tl-text-secondary);
+  text-transform: uppercase;
+}
+
+/* Die Tageszahl: im Tageskopf ein span, im Monat ein Knopf. Ein Kreis in size-icon-lg, den „heute“ füllt. */
+.tl-calendar__day-number {
+  appearance: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--tl-size-icon-lg);
+  block-size: var(--tl-size-icon-lg);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--tl-radius-full);
+  background: transparent;
+  color: inherit;
+}
+.tl-calendar__day-number[hidden] { display: none; }
+
+.tl-calendar__all-day {
+  display: flex;
+  flex: none;
+  min-height: var(--tl-size-6);
+  max-height: var(--tl-size-10);
+  overflow-y: auto;
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-calendar__all-day[hidden] { display: none; }
+
+.tl-calendar__all-day-label {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  padding-inline-end: var(--tl-space-2xs);
+  color: var(--tl-text-secondary);
+}
+.tl-calendar__all-day-label[hidden] { display: none; }
+
+.tl-calendar__all-day-cell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-2xs);
+  padding: var(--tl-space-2xs);
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-calendar__all-day-cell[hidden] { display: none; }
+
+.tl-calendar__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Die Höhe (24 Stunden zu je einer Stundenhöhe) steht inline: Daten. */
+.tl-calendar__time-body {
+  position: relative;
+  display: flex;
+}
+.tl-calendar__time-body[hidden] { display: none; }
+
+.tl-calendar__hours {
+  position: relative;
+  flex: none;
+  inline-size: var(--tl-size-9);
+}
+
+.tl-calendar__hour {
+  position: absolute;
+  inset-inline-end: var(--tl-space-xs);
+  transform: translateY(-50%);
+  color: var(--tl-text-secondary);
+}
+
+/* Die Spaltenzahl (grid-template-columns) steht inline: Daten. */
+.tl-calendar__columns {
+  position: relative;
+  flex: 1;
+  display: grid;
+}
+.tl-calendar__columns[hidden] { display: none; }
+
+/* Eine Tagesspalte auf surface-base, die Arbeitszeit darin auf surface-layer. Im Stapel der Spalte liegen in
+   Quellreihenfolge: Arbeitszeit, Stundenlinien, Termine; die Jetzt-Linie, der gewählte und der fokussierte
+   Termin und die Vorschau liegen darüber (layer-raised). */
+.tl-calendar__column {
+  position: relative;
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-base);
+}
+
+.tl-calendar__work {
+  position: absolute;
+  inset-inline: 0;
+  background: var(--tl-surface-layer);
+  pointer-events: none;
+}
+
+.tl-calendar__hour-line {
+  position: absolute;
+  inset-inline: 0;
+  border-block-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  pointer-events: none;
+}
+
+/* Die Jetzt-Linie in der Linie der Fehler-Bedeutung, mit einem Punkt an ihrem Anfang. */
+.tl-calendar__now {
+  position: absolute;
+  inset-inline: 0;
+  z-index: var(--tl-layer-raised);
+  block-size: var(--tl-border-width-md);
+  background: var(--tl-status-error-border);
+  pointer-events: none;
+}
+
+.tl-calendar__now::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--tl-space-2xs));
+  top: calc(-1 * (var(--tl-space-2xs) - var(--tl-border-width-sm)));
+  inline-size: var(--tl-size-2);
+  block-size: var(--tl-size-2);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-status-error-border);
+}
+
+/* --- Termine ----------------------------------------------------------------------------------------- */
+
+/* Gefüllt: ohne Kategorie und ohne Serverfarbe die Marke; mit Kategorie deren gefüllte Fläche und die gerechnete
+   Schrift (Regeln unten aus dem Generator); eine Serverfarbe steht inline als Fläche mit der Schrift aus textOn.
+   Derselbe Termin im Zeitraster (absolut, Lage inline), in der Ganztagszeile und als Balken im Monat. */
+.tl-calendar__event {
+  box-sizing: border-box;
+  position: relative;
+  min-width: 0;
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tl-calendar__event[data-tl-role="category-1"] { background: var(--tl-category-1-surface); color: var(--tl-text-on-category-1); }
+.tl-calendar__event[data-tl-role="category-2"] { background: var(--tl-category-2-surface); color: var(--tl-text-on-category-2); }
+.tl-calendar__event[data-tl-role="category-3"] { background: var(--tl-category-3-surface); color: var(--tl-text-on-category-3); }
+.tl-calendar__event[data-tl-role="category-4"] { background: var(--tl-category-4-surface); color: var(--tl-text-on-category-4); }
+.tl-calendar__event[data-tl-role="category-5"] { background: var(--tl-category-5-surface); color: var(--tl-text-on-category-5); }
+.tl-calendar__event[data-tl-role="category-6"] { background: var(--tl-category-6-surface); color: var(--tl-text-on-category-6); }
+.tl-calendar__event[data-tl-role="category-7"] { background: var(--tl-category-7-surface); color: var(--tl-text-on-category-7); }
+.tl-calendar__event[data-tl-role="category-8"] { background: var(--tl-category-8-surface); color: var(--tl-text-on-category-8); }
+
+.tl-calendar__column .tl-calendar__event {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  white-space: normal;
+}
+
+.tl-calendar__column .tl-calendar__event[hidden] { display: none; }
+
+.tl-calendar__overlay .tl-calendar__event {
+  align-self: center;
+  pointer-events: auto;
+}
+
+/* Ausgewählt ist ein Ring wie tl-item[aria-selected] (layout.css); die Fläche bleibt die Kategorie. */
+.tl-calendar__event[aria-selected="true"]::after,
+.tl-calendar__chip[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Die Vorschau am Zielort (Ziehen, Länge ändern, Anlegen) und der Platzhalter beim Anlegen: die Marke, blass. */
+.tl-calendar__event[data-tl-state~="preview"] {
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+  opacity: 0.4;
+}
+
+.tl-calendar__event[aria-selected="true"],
+.tl-calendar__event:focus-visible,
+.tl-calendar__event[data-tl-state~="preview"] {
+  z-index: var(--tl-layer-raised);
+}
+
+.tl-calendar__event-time,
+.tl-calendar__event-title {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-calendar__resize {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  block-size: var(--tl-space-xs);
+  cursor: ns-resize;
+}
+
+/* Das Feld beim Anlegen (input.tl-field): randlos auf der Fläche des Platzhalters wie der Zelleditor der Tabelle. */
+.tl-calendar__event .tl-calendar__create {
+  inline-size: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  user-select: text;
+}
+
+.tl-calendar__event .tl-calendar__create::placeholder {
+  color: inherit;
+  opacity: 0.7;
+}
+
+/* Was in einem schneidenden Behälter bündig liegt (Rollbereich, Woche, Ganztagszeile, Körper), trägt den Ring
+   aus base.css innen — außen wäre er halb weg (focus-clip.test.mjs). */
+.tl-calendar__day-head:focus-visible,
+.tl-calendar__day-number:focus-visible,
+.tl-calendar__event:focus-visible,
+.tl-calendar__chip:focus-visible,
+.tl-calendar__more:focus-visible,
+.tl-calendar__event .tl-calendar__create:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* --- Monat ------------------------------------------------------------------------------------------- */
+
+.tl-calendar__month {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  user-select: none;
+}
+.tl-calendar__month[hidden] { display: none; }
+
+.tl-calendar__month-head {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex: none;
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-calendar__month-head[hidden] { display: none; }
+
+.tl-calendar__month-weekday {
+  padding: var(--tl-space-2xs);
+  text-align: center;
+}
+
+.tl-calendar__month-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tl-calendar__month-body[hidden] { display: none; }
+
+.tl-calendar__week {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Die untere Schicht einer Woche: sieben Tageszellen mit Rand, Fläche und Tageszahl. */
+.tl-calendar__days {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.tl-calendar__days[hidden] { display: none; }
+
+.tl-calendar__day {
+  min-width: 0;
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-block-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  cursor: pointer;
+}
+
+.tl-calendar__day > .tl-calendar__day-number {
+  margin-inline-start: var(--tl-space-2xs);
+  cursor: pointer;
+}
+
+/* Die obere Schicht: mehrtägige Balken, dann Termine mit Uhrzeit je Tag, ausdrücklich platziert (Zeile und Spalte
+   inline). Sie beginnt unter der Tageszahl; nur ihre Termine nehmen Zeiger an. */
+.tl-calendar__overlay {
+  position: absolute;
+  inset-inline: 0;
+  top: var(--tl-size-6);
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--tl-size-5);
+  gap: var(--tl-space-2xs);
+  padding-inline: var(--tl-space-2xs);
+  pointer-events: none;
+}
+.tl-calendar__overlay[hidden] { display: none; }
+
+/* Ein Termin mit Uhrzeit im Monat ist nicht gefüllt: Punkt in der Farbe des Termins, Text auf der Tageszelle. */
+.tl-calendar__chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  padding-inline: var(--tl-space-2xs);
+  border-radius: var(--tl-radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.tl-calendar__chip[hidden] { display: none; }
+
+.tl-calendar__chip:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-calendar__chip .tl-calendar__event-time {
+  flex: none;
+  color: var(--tl-text-secondary);
+}
+
+.tl-calendar__chip-dot {
+  flex: none;
+  inline-size: var(--tl-size-2);
+  block-size: var(--tl-size-2);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+}
+
+.tl-calendar__chip-dot[data-tl-role="category-1"] { background: var(--tl-category-1-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-2"] { background: var(--tl-category-2-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-3"] { background: var(--tl-category-3-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-4"] { background: var(--tl-category-4-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-5"] { background: var(--tl-category-5-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-6"] { background: var(--tl-category-6-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-7"] { background: var(--tl-category-7-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-8"] { background: var(--tl-category-8-surface); }
+
+/* „+n weitere“: ein Knopf in der Farbe eines Links. */
+.tl-calendar__more {
+  appearance: none;
+  margin: 0;
+  padding: 0 var(--tl-space-2xs);
+  border: 0;
+  background: transparent;
+  color: var(--tl-text-link);
+  text-align: start;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tl-calendar__more:hover {
+  color: var(--tl-text-link-hover);
+}
+
+/* --- Jahr -------------------------------------------------------------------------------------------- */
+
+.tl-calendar__year {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tl-size-12), 1fr));
+  gap: var(--tl-space-md);
+  padding: var(--tl-space-md);
+  align-content: start;
+}
+.tl-calendar__year[hidden] { display: none; }
+
+.tl-calendar__mini {
+  padding: var(--tl-space-xs);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+}
+
+/* Der Monatsname ist ein Knopf zur Monatsansicht. */
+.tl-calendar__mini-title {
+  appearance: none;
+  display: block;
+  inline-size: 100%;
+  margin: 0 0 var(--tl-space-xs);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.tl-calendar__mini-title[hidden] { display: none; }
+
+.tl-calendar__mini-title:hover {
+  color: var(--tl-text-link);
+}
+
+.tl-calendar__mini-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--tl-space-2xs);
+  justify-items: center;
+}
+.tl-calendar__mini-grid[hidden] { display: none; }
+
+.tl-calendar__mini-weekday {
+  color: var(--tl-text-secondary);
+  text-align: center;
+}
+
+/* Ein Tag des Mini-Monats ist ein Knopf und ein Kreis wie die Tageszahl. */
+.tl-calendar__mini-day {
+  appearance: none;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--tl-size-icon-lg);
+  block-size: var(--tl-size-icon-lg);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--tl-radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.tl-calendar__mini-day[hidden] { display: none; }
+
+/* Termintage: eine Markierung unter der Zahl. */
+.tl-calendar__mini-day[data-tl-state~="event"]::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 50%;
+  bottom: var(--tl-border-width-sm);
+  transform: translateX(-50%);
+  inline-size: var(--tl-size-1);
+  block-size: var(--tl-size-1);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+}
+
+/* --- Eine Tageszelle (V26): Zeitraster-Kopf, Monat und Mini-Monat zeichnen gleich -------------------- */
+
+.tl-calendar__day-head[data-tl-state~="nonworking"],
+.tl-calendar__column[data-tl-state~="nonworking"],
+.tl-calendar__mini-day[data-tl-state~="nonworking"] {
+  background: var(--tl-surface-base);
+}
+
+/* Die Tageszelle des Monats ist ein Ablageziel: ihre Fläche steht ohne Spezifität, damit drop-onto (drag.css)
+   sie übermalt (drag.contract.md „Bild“). */
+:where(.tl-calendar__day[data-tl-state~="nonworking"]) {
+  background: var(--tl-surface-base);
+}
+
+.tl-calendar__day[data-tl-state~="other"],
+.tl-calendar__mini-day[data-tl-state~="other"] {
+  color: var(--tl-text-secondary);
+}
+
+/* Zeigen nach arbeitsfrei, damit es dort sichtbar bleibt; heute steht danach und bleibt die Marke. */
+.tl-calendar__day-head:hover,
+.tl-calendar__mini-day:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+/* Heute: ein Kreis auf der Marke um die Tageszahl, in jeder Ansicht derselbe. */
+.tl-calendar__day-head[aria-current="date"] .tl-calendar__day-number,
+.tl-calendar__day[aria-current="date"] .tl-calendar__day-number,
+.tl-calendar__mini-day[aria-current="date"] {
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-calendar__mini-day[aria-current="date"][data-tl-state~="event"]::after {
+  background: var(--tl-text-on-brand);
+}
+
 /* --- card/card.css --- */
 /* Karte — Spec 2026-10-16 Welle 4c §4 (Q15), Weg B. Die eine Kartenfläche: Karte, Panel als Karte, Accordion. Die
    Fläche folgt der Verschachtelung — auf der Seite surface-layer, in einer Fläche (Karte, Accordion, Panel als Karte;
@@ -5100,4 +5697,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:7333633a28f95d39cefa3e5643e3a92be5f1f1d3f592600eb46081533b4f74be — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:bce19410c953ad2f3e5bc4dd763368c048f430faa10e78bdb706d7e898f10417 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

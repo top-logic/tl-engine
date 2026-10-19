@@ -84,20 +84,21 @@
 									<executability>
 										<null-input-disabled/>
 									</executability>
-									<create-transient type="demo.temperature:DemoSensor"/>
-									<open-dialog
-										bind-input-to="model"
-										dialog-view="demo/create-sensor.view.xml"
-									>
-										<bind
-											channel="container"
-											to="site"
-										/>
-										<bind
-											channel="selection"
-											to="sensor"
-										/>
-									</open-dialog>
+									<create-transient type="demo.temperature:DemoSensor">
+										<open-dialog
+											bind-input-to="model"
+											dialog-view="demo/create-sensor.view.xml"
+										>
+											<bind
+												channel="container"
+												to="site"
+											/>
+											<bind
+												channel="selection"
+												to="sensor"
+											/>
+										</open-dialog>
+									</create-transient>
 								</generic-command>
 							</commands>
 							<form

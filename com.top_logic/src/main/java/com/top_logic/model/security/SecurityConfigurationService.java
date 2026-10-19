@@ -1006,7 +1006,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				// a write of the container checked in its own right.
 				return true;
 			}
-			current = editedObject(next);
+			current = TLFormObjectBase.editedObject(next);
 		}
 		// The roles the person holds on the object deciding for the committed access parent are
 		// checked, as for an attribute of a persistent object delegating its access decision.
@@ -1030,18 +1030,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return draft.tContainer();
 		}
 		return parent.resolve(draft);
-	}
-
-	/**
-	 * The object a {@link TLFormObjectBase form object} editing an object stands for, the given
-	 * object otherwise.
-	 */
-	private static TLObject editedObject(TLObject object) {
-		TLObject result = object;
-		while (result instanceof TLFormObjectBase form && !form.isCreate() && form.getEditedObject() != null) {
-			result = form.getEditedObject();
-		}
-		return result;
 	}
 
 	@Override

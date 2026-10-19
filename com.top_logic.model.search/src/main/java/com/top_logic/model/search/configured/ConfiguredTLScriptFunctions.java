@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -25,17 +26,22 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
+import com.top_logic.model.TLModel;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link ConfiguredManagedClass} holding additional TL-Script functions that can be defined within
@@ -45,6 +51,9 @@ import com.top_logic.util.error.TopLogicException;
  *        Type of the configuration.
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@ServiceDependencies({
+	CommandGroupRegistry.Module.class
+})
 @ServiceExtensionPoint(SearchBuilder.Module.class)
 @Label("Configured TL-Script functions")
 public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.Config<?>>
@@ -79,9 +88,9 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 
 	}
 
-	private Map<String, ConfiguredScript> _builders = Collections.emptyMap();
+	private volatile Map<String, ConfiguredScript> _builders = Collections.emptyMap();
 
-	private Map<String, QueryExecutor> _executors = Collections.emptyMap();
+	private volatile Map<String, QueryExecutor> _executors = Collections.emptyMap();
 
 	/**
 	 * Lazily filled map holding the security-disabled variant of the configured scripts.
@@ -95,7 +104,22 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 */
 	private final ConcurrentHashMap<String, QueryExecutor> _executorsNoSecurity = new ConcurrentHashMap<>();
 
-	private Map<String, Factory> _factories = Collections.emptyMap();
+	private volatile Map<String, Factory> _factories = Collections.emptyMap();
+
+	/**
+	 * The application model the {@link #_builders scripts} and {@link #_executors executors} were
+	 * compiled against, <code>null</code> before the first call.
+	 *
+	 * <p>
+	 * A compiled script refers to the model elements (types, attributes) it names. When the model is
+	 * reloaded (e.g. after a model change was applied), the model service and the persistency layer
+	 * are restarted and the model elements are new objects, but this service is not restarted: the
+	 * model itself uses configured functions, so this service starts before the model service and
+	 * can not depend on it. Instead, the scripts are compiled again on the first call after the
+	 * model was reloaded, see {@link #checkModel()}.
+	 * </p>
+	 */
+	private volatile TLModel _model;
 
 	/**
 	 * Creates a {@link ConfiguredTLScriptFunctions}.
@@ -107,13 +131,48 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	@Override
 	protected void startUp() {
 		super.startUp();
-		_builders = TypedConfigUtil.createInstanceMap(getConfig().getScripts());
-		initFactoriesFromMethodBuilders();
+		_model = null;
+		initScripts();
+	}
+
+	private void initScripts() {
+		Map<String, ConfiguredScript> builders = TypedConfigUtil.createInstanceMap(getConfig().getScripts());
+
+		// The builders must be published before the scripts are compiled: a script may call
+		// configured functions, itself included (recursion), which are resolved through them.
+		_executorsNoSecurity.clear();
+		_builders = builders;
+		_factories = createFactories(builders);
+
 		Map<String, QueryExecutor> executors = new HashMap<>();
-		for (Entry<String, ConfiguredScript> builder : _builders.entrySet()) {
+		for (Entry<String, ConfiguredScript> builder : builders.entrySet()) {
 			executors.put(builder.getKey(), createExecutor(builder.getKey(), builder.getValue()));
 		}
 		_executors = executors;
+	}
+
+	/**
+	 * Compiles the scripts again, if the application model was reloaded since they were compiled.
+	 *
+	 * @see #_model
+	 */
+	private void checkModel() {
+		if (!ModelService.Module.INSTANCE.isActive()) {
+			return;
+		}
+		TLModel current = ModelService.getApplicationModel();
+		if (_model == current) {
+			return;
+		}
+		synchronized (this) {
+			if (_model == current) {
+				return;
+			}
+			if (_model != null) {
+				initScripts();
+			}
+			_model = current;
+		}
 	}
 
 	private QueryExecutor createExecutor(String scriptName, ConfiguredScript script) {
@@ -124,8 +183,8 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		}
 	}
 
-	private void initFactoriesFromMethodBuilders() {
-		_factories = _builders.entrySet()
+	private static Map<String, Factory> createFactories(Map<String, ConfiguredScript> builders) {
+		return builders.entrySet()
 			.stream()
 			.collect(Collectors.toMap(Entry::getKey, e -> new SearchBuilder.BuilderFactory(e.getValue())));
 	}
@@ -174,6 +233,63 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	}
 
 	/**
+	 * Calls the configured function.
+	 *
+	 * <p>
+	 * A secured call of a {@link PrivilegedScript} is checked once: if the current user is
+	 * {@link PrivilegedScript#isAllowed(Object[]) allowed}, the function is executed without
+	 * security and its result is filtered for the Discover right, since the calling script
+	 * continues secured; otherwise the {@link PrivilegedScript#denied(Object[]) denied result} is
+	 * returned. Every other call executes the function with the given security setting.
+	 * </p>
+	 *
+	 * <p>
+	 * A traced evaluation (e.g. a computation in a form) calls the function through the same
+	 * {@link QueryExecutorMethod} and is checked alike. The check is made on the persistent object
+	 * (see {@link PrivilegedScript#isAllowed(Object[])}). An overlay passed as argument, however, is
+	 * the argument itself: a security object expression navigating from it reads its not yet stored
+	 * values.
+	 * </p>
+	 *
+	 * @param scriptName
+	 *        The name of the function.
+	 * @param usesSecurity
+	 *        Whether the calling expression is evaluated with security.
+	 * @param arguments
+	 *        The arguments of the call.
+	 * @param execution
+	 *        Executes the function with the given security setting.
+	 * @return The result of the call.
+	 */
+	public Object call(String scriptName, boolean usesSecurity, Object[] arguments,
+			Function<Boolean, Object> execution) {
+		checkModel();
+		if (usesSecurity && _builders.get(scriptName) instanceof PrivilegedScript privileged) {
+			if (!privileged.isAllowed(arguments)) {
+				return privileged.denied(arguments);
+			}
+			return SearchExpression.filterSecurity(execution.apply(Boolean.FALSE));
+		}
+		return execution.apply(Boolean.valueOf(usesSecurity));
+	}
+
+	/**
+	 * Whether the current user may call the configured function with the given arguments.
+	 *
+	 * @return <code>true</code> for a function that is no {@link PrivilegedScript}.
+	 * @throws TopLogicException
+	 *         iff there is no function with the given name.
+	 */
+	public boolean isCallAllowed(String scriptName, Object[] arguments) {
+		checkModel();
+		ConfiguredScript script = _builders.get(scriptName);
+		if (script == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(scriptName));
+		}
+		return !(script instanceof PrivilegedScript privileged) || privileged.isAllowed(arguments);
+	}
+
+	/**
 	 * Determines the {@link QueryExecutor} for the configured function.
 	 *
 	 * @param usesSecurity
@@ -183,6 +299,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 *         iff there is no executor for the given name.
 	 */
 	QueryExecutor getExecutor(String scriptName, boolean usesSecurity) {
+		checkModel();
 		if (usesSecurity) {
 			QueryExecutor queryExecutor = _executors.get(scriptName);
 			if (queryExecutor == null) {

@@ -21,6 +21,7 @@ import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLW
 import TLImage from '../../../com.top_logic.layout.react/react-src/controls/TLImage';
 import TLPdfViewer from '../../../com.top_logic.layout.react/react-src/controls/TLPdfViewer';
 import TLHtml from '../../../com.top_logic.layout.react/react-src/controls/TLHtml';
+import TLJobStatus from '../../../com.top_logic.layout.react/react-src/controls/TLJobStatus';
 import ButtonPart from '../../../com.top_logic.layout.react/react-src/controls/button/ButtonPart';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
@@ -883,5 +884,112 @@ describe('the HTML (TLHtml)', () => {
 
     expect(root().classList).toContain('tl-alert');
     expect(screen.getByRole('alert').textContent).toBe('Nicht erlaubt');
+  });
+});
+
+describe('the job status (TLJobStatus)', () => {
+  /** A running job in its second of three steps. */
+  const RUNNING = {
+    status: 'running',
+    phases: [
+      { label: 'Daten lesen', status: 'done' },
+      { label: 'Prüfen', status: 'active' },
+      { label: 'Bericht schreiben', status: 'pending' },
+    ],
+    fraction: 0.45,
+    message: '1204 von 2680 geprüft',
+    startedAt: 1000,
+    finishedAt: null,
+    serverNow: 43000,
+    cancelable: true,
+  };
+
+  function liveLine(): HTMLElement {
+    const lines = root().querySelectorAll<HTMLElement>('[role="status"]');
+    expect(lines).toHaveLength(1);
+    return lines[0];
+  }
+
+  it('is a tl-job-status announcing nothing itself, with one live line for state, current step and message', async () => {
+    mountAdapter(TLJobStatus, RUNNING);
+    await settle();
+
+    expect(root().matches('div.tl-job-status')).toBe(true);
+    expect(root().hasAttribute('role')).toBe(false);
+    expect(root().hasAttribute('aria-live')).toBe(false);
+    const live = liveLine();
+    expect(live.classList).toContain('tl-job-status__live');
+    expect(live.textContent).toContain('js.jobStatus.running');
+    expect(live.textContent).toContain('js.jobStatus.currentStep');
+    expect(live.textContent).toContain('Prüfen');
+    expect(live.textContent).toContain('1204 von 2680 geprüft');
+    expect(live.querySelector('.tl-visually-hidden')!.textContent).toContain('js.jobStatus.currentStep');
+    expect(document.querySelector('[class*="tlJobStatus"]')).toBeNull();
+  });
+
+  it('keeps the elapsed time out of every live region, and a change of step changes the text of the live line', async () => {
+    mountAdapter(TLJobStatus, RUNNING);
+    await settle();
+
+    const elapsed = root().querySelector('.tl-job-status__elapsed')!;
+    expect(elapsed.classList).toContain('tl-nums');
+    expect(elapsed.closest('[role="status"], [aria-live]')).toBeNull();
+
+    const before = liveLine().textContent;
+    patchState({
+      phases: [
+        { label: 'Daten lesen', status: 'done' },
+        { label: 'Prüfen', status: 'done' },
+        { label: 'Bericht schreiben', status: 'active' },
+      ],
+    });
+    const after = liveLine().textContent;
+    expect(after).not.toBe(before);
+    expect(after).toContain('Bericht schreiben');
+    expect(after).not.toContain('Prüfen');
+  });
+
+  it('lists the steps as vertical tl-steps, done and current as attributes', async () => {
+    mountAdapter(TLJobStatus, RUNNING);
+    await settle();
+
+    const list = root().querySelector('ol.tl-steps.tl-steps--vertical')!;
+    expect(list).not.toBeNull();
+    expect(list.closest('[role="status"]')).toBeNull();
+    const items = list.querySelectorAll(':scope > li.tl-steps__item');
+    expect(items).toHaveLength(3);
+    expect(items[0].getAttribute('data-tl-state')).toBe('done');
+    expect(items[0].hasAttribute('aria-current')).toBe(false);
+    expect(items[1].getAttribute('aria-current')).toBe('step');
+    expect(items[1].hasAttribute('data-tl-state')).toBe(false);
+    expect(items[2].hasAttribute('data-tl-state')).toBe(false);
+    expect(items[2].hasAttribute('aria-current')).toBe(false);
+    const disc = items[1].querySelector('.tl-steps__disc')!;
+    expect(disc.getAttribute('aria-hidden')).toBe('true');
+    expect(disc.textContent).toBe('2');
+    expect(items[1].querySelector('.tl-steps__name')!.textContent).toBe('Prüfen');
+  });
+
+  it('shows an error as an alert outside the live line', async () => {
+    mountAdapter(TLJobStatus, { ...RUNNING, status: 'failed', finishedAt: 5000, error: 'Vorlage fehlt' });
+    await settle();
+
+    const error = root().querySelector('div.tl-job-status__error')!;
+    expect(error.getAttribute('role')).toBe('alert');
+    expect(error.textContent).toBe('Vorlage fehlt');
+    expect(error.closest('[role="status"]')).toBeNull();
+    expect(liveLine().textContent).not.toContain('Vorlage fehlt');
+  });
+
+  it('wraps the part ProgressBar in tl-job-status__bar, without a class on the part', async () => {
+    mountAdapter(TLJobStatus, RUNNING);
+    await settle();
+
+    const bar = screen.getByRole('progressbar');
+    const wrapper = bar.closest('div.tl-job-status__bar')!;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper.parentElement).toBe(root());
+    expect(bar.classList).not.toContain('tl-job-status__bar');
+    expect(bar.closest('[role="status"]')).toBeNull();
   });
 });

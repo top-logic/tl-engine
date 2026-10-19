@@ -1317,6 +1317,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.jobStatus.cancel")
 	public static ResKey JS_JOB_STATUS_CANCEL;
 
+	/**
+	 * @en Step: {0}
+	 */
+	@CustomKey("js.jobStatus.currentStep")
+	public static ResKey JS_JOB_STATUS_CURRENT_STEP;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

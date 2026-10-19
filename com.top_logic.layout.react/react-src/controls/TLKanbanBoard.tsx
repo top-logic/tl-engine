@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, usePart, TLChild, FillBarrier, useFill, rootClassName, stateAttr, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, boundaryAt, isInteractiveWithin } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, usePart, TLChild, FillBarrier, useFill, rootClassName, stateAttr, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, boundaryAt, isInteractiveWithin, kindAccepted } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { DropVerdict, HintAnchor } from './DropHint';
@@ -162,23 +162,6 @@ function keyboardDrop(
       return card ? { target: card.key, position: 'before' } : { target: neighbour.key, position: 'none' };
     }
   }
-}
-
-/**
- * Whether a board accepts a drop of the board's own drag of the given kind - the decision
- * dragKindAccepted takes for the pointer from the type names of the running drag: any drag where the
- * board accepts any, otherwise one whose kind is among the accepted ones (the type names carry the
- * kind in lower case), a drag without a kind then never.
- */
-function kindAccepted(kind: string | undefined, acceptsAny: boolean, acceptedKinds: readonly string[]): boolean {
-  if (acceptsAny) {
-    return true;
-  }
-  if (!kind) {
-    return false;
-  }
-  const name = kind.toLowerCase();
-  return acceptedKinds.some((accepted) => accepted.toLowerCase() === name);
 }
 
 /** Fills the placeholders {0}, {1}, ... of a translated text. */

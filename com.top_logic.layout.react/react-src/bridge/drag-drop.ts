@@ -255,6 +255,25 @@ export function dragKindAccepted(
 }
 
 /**
+ * The decision of {@link dragKindAccepted} for a drag not started yet, from the kind of the dragged
+ * object itself: a keyboard move offers only the drop a pointer drag of that object could make.
+ *
+ * @param kind The drag kind of the dragged object, if any.
+ * @param acceptsAny Whether the target accepts every drag, with any kind or none.
+ * @param acceptedKinds The kinds the target accepts where it does not accept any drag.
+ */
+export function kindAccepted(kind: string | undefined, acceptsAny: boolean, acceptedKinds: readonly string[]): boolean {
+  if (acceptsAny) {
+    return true;
+  }
+  if (!kind) {
+    return false;
+  }
+  const name = kind.toLowerCase();
+  return acceptedKinds.some((accepted) => accepted.toLowerCase() === name);
+}
+
+/**
  * The drop modes that apply to the drag a transfer carries: the modes the target announces for the
  * dragged kind, or all its modes where the kind is not listed - a target accepting any kind lists
  * none. The split of an item follows these modes, so a target inserting one kind among its items and

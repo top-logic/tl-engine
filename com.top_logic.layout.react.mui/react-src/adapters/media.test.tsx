@@ -87,6 +87,16 @@ function fileNames(upload: FormData, part: string): string[] {
   return upload.getAll(part).map(entry => (entry as File).name);
 }
 
+/**
+ * The classes on the page that are neither design system classes (`tl-…`), nor drawn by MUI (`Mui…`, `mui-…`), nor
+ * glyphs (`fa-…`, from `bridge/icons.ts`), nor named in `allowed` — empty when a control draws only package classes.
+ */
+function nonPackageClasses(...allowed: string[]): string[] {
+  return [...document.body.querySelectorAll('[class]')]
+    .flatMap(element => [...element.classList])
+    .filter(name => !/^(tl-|Mui|mui-|fa-)/.test(name) && !allowed.includes(name));
+}
+
 /** A control using the upload hook: a button uploading one recording, the state of the hook as text. */
 function UploadProbe() {
   const { uploading, error, upload } = useUpload();
@@ -225,7 +235,7 @@ describe('the binary field (TLBinaryField)', () => {
     expect(root.classList).toContain('tl-file');
     expect(root.getAttribute('data-tl-state')).toBe('empty');
     expect(root.textContent).toBe(LABEL_NO_FILE);
-    expect(document.querySelector('.tlDownload, .tlBinaryField')).toBeNull();
+    expect(nonPackageClasses()).toEqual([]);
   });
 
   it('shows the name of a file in the file row while read-only', async () => {
@@ -233,7 +243,7 @@ describe('the binary field (TLBinaryField)', () => {
     await settle();
 
     expect(document.querySelector('.tl-file .tl-file__name')!.textContent).toBe('bericht.pdf');
-    expect(document.querySelector('.tlDownload, .tlBinaryField')).toBeNull();
+    expect(nonPackageClasses()).toEqual([]);
   });
 });
 
@@ -410,7 +420,7 @@ describe('the audio recorder (TLAudioRecorder)', () => {
     expect(button.matches('button.tl-button--icon.tl-button--secondary.tl-button--danger')).toBe(true);
     expect(button.getAttribute('aria-pressed')).toBe('false');
     expect(document.getElementById(CONTROL_ID)!.classList).toContain('tl-upload');
-    expect(document.querySelector('[class*="tlAudioRecorder"]')).toBeNull();
+    expect(nonPackageClasses()).toEqual([]);
   });
 
   it('is pressed while recording, keeps its name and says stop in its tooltip; stopping uploads the recording', async () => {
@@ -530,7 +540,7 @@ describe('the audio player (TLAudioPlayer)', () => {
     expect(button.matches('button.tl-button--icon.tl-button--secondary')).toBe(true);
     expect(button.classList).not.toContain('tl-button--danger');
     expect(button.hasAttribute('aria-pressed')).toBe(false);
-    expect(document.querySelector('[class*="tlAudioPlayer"]')).toBeNull();
+    expect(nonPackageClasses()).toEqual([]);
   });
 
   it('is busy while loading, then plays and is named pause', async () => {
@@ -611,7 +621,7 @@ describe('the camera (TLPhotoCapture)', () => {
 
     expect(cameraButton().matches('button.tl-button--icon.tl-button--secondary')).toBe(true);
     expect(document.getElementById(CONTROL_ID)!.classList).toContain('tl-upload');
-    expect(document.querySelector('[class*="tlPhotoCapture"]')).toBeNull();
+    expect(nonPackageClasses()).toEqual([]);
   });
 
   it('opens a dialog of the design system under the body, titled and with the focus on capture', async () => {
@@ -770,7 +780,7 @@ describe('the picture (TLImage)', () => {
     expect(root().style.width).toBe('120px');
     expect(root().querySelector(':scope > img.tl-media__frame')!.getAttribute('src')).toBe('picture.png');
     expect(serverClassCount()).toBe(1);
-    expect(document.querySelector('[class*="tlImage"]')).toBeNull();
+    expect(nonPackageClasses(SERVER_CLASS)).toEqual([]);
   });
 
   it('fits the picture into its box with fit contain', async () => {
@@ -801,7 +811,7 @@ describe('the PDF viewer (TLPdfViewer)', () => {
     const frame = root().querySelector(':scope > iframe.tl-media__frame')!;
     expect(frame.getAttribute('title')).toBe('js.pdfViewer.title');
     expect(serverClassCount()).toBe(1);
-    expect(document.querySelector('[class*="tlPdfViewer"]')).toBeNull();
+    expect(nonPackageClasses(SERVER_CLASS, 'tlFill')).toEqual([]);
   });
 
   it('says that there is no document in a status line', async () => {
@@ -829,7 +839,7 @@ describe('the HTML (TLHtml)', () => {
     expect(media).not.toBeNull();
     expect(media.querySelector(':scope > iframe.tl-media__frame')).not.toBeNull();
     expect(root().querySelector('.tl-overlay__layer')).toBeNull();
-    expect(document.querySelector('[class*="tlHtml"]')).toBeNull();
+    expect(nonPackageClasses(SERVER_CLASS, 'tlFill')).toEqual([]);
   });
 
   it('puts the print button in an action at the top right over the document', async () => {
@@ -924,7 +934,7 @@ describe('the job status (TLJobStatus)', () => {
     expect(live.textContent).toContain('Prüfen');
     expect(live.textContent).toContain('1204 von 2680 geprüft');
     expect(live.querySelector('.tl-visually-hidden')!.textContent).toContain('js.jobStatus.currentStep');
-    expect(document.querySelector('[class*="tlJobStatus"]')).toBeNull();
+    expect(nonPackageClasses()).toEqual([]);
   });
 
   it('keeps the elapsed time out of every live region, and a change of step changes the text of the live line', async () => {

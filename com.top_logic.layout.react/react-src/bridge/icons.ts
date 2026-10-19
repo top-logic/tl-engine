@@ -79,3 +79,15 @@ export const ICON_RESTORE = 'css:fa-regular fa-window-restore';
 
 /** Chooses an icon (the icon field while it holds none). */
 export const ICON_CHOOSE_ICON = 'css:fa-solid fa-icons';
+
+/** Uploads a file (the file upload, the binary field). */
+export const ICON_UPLOAD = 'css:fa-solid fa-upload';
+
+/** Downloads a file (the download, the binary field). */
+export const ICON_DOWNLOAD = 'css:fa-solid fa-download';
+
+/** A file (the chip of an attached file). */
+export const ICON_FILE = 'css:fa-regular fa-file';
+
+/** Attaches files (the add button of the file chips). */
+export const ICON_ATTACH = 'css:fa-solid fa-paperclip';

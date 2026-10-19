@@ -399,35 +399,6 @@ button.tlAudioPlayer__button--playing:hover .tlAudioPlayer__icon--pause {
 	to { transform: rotate(360deg); }
 }
 
-/* --- TLDownload -------------------------------------------------------- */
-
-.tlDownload {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--spacing-02);
-	font-family: var(--font-family);
-	height: 2rem;
-}
-
-.tlDownload--empty {
-	color: var(--text-disabled);
-}
-
-/* File name label */
-.tlDownload__fileName {
-	font-size: var(--body-compact-01-font-size);
-	color: var(--text-primary);
-	max-width: 20rem;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.tlDownload__fileName--empty {
-	color: var(--text-disabled);
-	font-style: italic;
-}
-
 /* --- TLPhotoCapture ---------------------------------------------------- */
 
 .tlPhotoCapture {
@@ -1183,27 +1154,6 @@ div.tlValueList {
 
 .tlJobStatus__error {
 	color: var(--text-error);
-}
-
-/* --- TLFileChips ------------------------------------------------------- */
-
-.tlFileChips {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--spacing-03);
-	align-items: center;
-	min-height: 1.75rem;
-	border-radius: var(--corner-radius);
-	font-family: var(--font-family);
-}
-
-.tlFileChips--dragover {
-	outline: 2px dashed var(--interactive);
-	outline-offset: 2px;
-}
-
-.tlFileChips__add--uploading {
-	cursor: progress;
 }
 
 /* --- Tooltip ------------------------------------------------------------ */

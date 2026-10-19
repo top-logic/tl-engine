@@ -17,13 +17,13 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -50,6 +50,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * binary-typed property of the composition target type is used. A chip's name is the composed
  * object's label.
  * </p>
+ *
+ * <p>
+ * The control publishes the {@link UploadSupport#maxUploadSize() upload limit} to its client, which
+ * refuses a larger selection before transmitting it, and reports a failed upload under
+ * {@value #ERROR} until the next upload succeeds.
+ * </p>
  */
 public class FileListControl extends AbstractCompositionControl implements UploadHandler, DataProvider {
 
@@ -72,6 +78,9 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 
 	/** Chip property for the download availability. */
 	private static final String CHIP_HAS_DATA = "hasData";
+
+	/** State key for the error message of the last upload; absent after a successful one. */
+	public static final String ERROR = "error";
 
 	/** Command name for {@link #handleRemoveChip(Map)}. */
 	private static final String CMD_REMOVE_CHIP = "removeChip";
@@ -112,6 +121,7 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 			String compositionAttributeName, String dataAttributeName) {
 		super(context, formControl, compositionAttributeName, REACT_MODULE);
 		_dataAttributeName = dataAttributeName;
+		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
 	}
 
 	/**
@@ -257,16 +267,7 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 				if (!PART_FILE.equals(filePart.getName())) {
 					continue;
 				}
-				byte[] fileData = filePart.getInputStream().readAllBytes();
-				String contentType = filePart.getContentType();
-				if (contentType == null) {
-					contentType = "application/octet-stream";
-				}
-				String fileName = filePart.getSubmittedFileName();
-				if (fileName == null) {
-					fileName = "upload.bin";
-				}
-				BinaryData data = BinaryDataFactory.createBinaryData(fileData, contentType, fileName);
+				BinaryData data = UploadSupport.toBinaryData(filePart);
 
 				addRow(row -> {
 					TLStructuredTypePart dataPart = dataPart(row);
@@ -275,8 +276,10 @@ public class FileListControl extends AbstractCompositionControl implements Uploa
 					}
 				});
 			}
+			putState(ERROR, null);
 		} catch (IOException ex) {
 			Logger.error("Failed to process file upload.", ex, FileListControl.class);
+			putState(ERROR, ex.getMessage());
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}

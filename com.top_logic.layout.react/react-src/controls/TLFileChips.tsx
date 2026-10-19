@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useI18N, rootClassName, useFieldLabelProps, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, rootClassName, stateAttr, useFieldLabelProps, usePart, downloadBlob, ICON_FILE, ICON_ATTACH } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /** Command removing a file from the collection. */
@@ -7,11 +7,8 @@ const CMD_REMOVE_CHIP = 'removeChip';
 /** Argument of {@link CMD_REMOVE_CHIP}: the key of the file to remove. */
 const ARG_KEY = 'key';
 
-/** The icon of a file. */
-const FILE_ICON = 'css:fa-regular fa-file';
-
-/** The icon of the button adding files. */
-const ADD_ICON = 'css:fa-solid fa-paperclip';
+/** The name of the multipart part carrying a file. */
+const PART_FILE = 'file';
 
 const I18N_KEYS = {
   'js.fileChips.add': 'Add file',
@@ -39,20 +36,23 @@ function formatSize(size: number): string {
 }
 
 /**
- * Renders a collection of files as chips (part `Chip`): file icon, name, size as detail, pressed to
- * download where the file has data. In edit mode, each chip offers to remove its file, and files can
- * be added via the add button (part `Button`) or by dropping them onto the control; uploads go to the
- * server control's upload endpoint.
+ * Renders a collection of files as chips (part `Chip`) in a chip group: file icon, name, size as
+ * detail, pressed to download where the file has data. In edit mode, each chip offers to remove its
+ * file, and files can be added via the add button (part `Button`) or by dropping them onto the group;
+ * uploads go to the server control's upload endpoint, the error of the last one is announced below
+ * the chips.
  *
  * State:
  * - chips: [{ key, name, size, hasData }]
  * - editable: boolean
+ * - error: string, the error of the last upload; absent: none
+ * - maxUploadSize: number, the upload limit (read by the upload channel)
  */
 const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
   const state = useTLState();
   const sendCommand = useTLCommand();
-  const upload = useTLUpload();
+  const { uploading, error, upload } = useUpload();
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
   const Chip = usePart('Chip');
@@ -61,51 +61,18 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const chips = (state.chips as FileChip[] | null) ?? [];
   const editable = state.editable === true;
 
-  const [uploading, setUploading] = React.useState(false);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  const doUpload = React.useCallback(async (files: FileList | File[]) => {
-    const list = Array.from(files);
-    if (list.length === 0) {
-      return;
-    }
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      for (const file of list) {
-        formData.append('file', file, file.name);
-      }
-      await upload(formData);
-    } finally {
-      setUploading(false);
-    }
+  const doUpload = React.useCallback((files: FileList | File[]) => {
+    upload(Array.from(files, file => ({ name: PART_FILE, file, fileName: file.name })));
   }, [upload]);
 
-  const doDownload = React.useCallback(async (chip: FileChip) => {
+  const doDownload = React.useCallback((chip: FileChip) => {
     if (!chip.hasData) {
       return;
     }
-    try {
-      const url = dataUrl + '&key=' + encodeURIComponent(chip.key);
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        console.error('[TLFileChips] Failed to fetch data:', resp.status);
-        return;
-      }
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = chip.name;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-      console.error('[TLFileChips] Fetch error:', e);
-    }
+    downloadBlob(dataUrl + '&key=' + encodeURIComponent(chip.key), chip.name);
   }, [dataUrl]);
 
   const handleFileChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,18 +113,13 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [editable, uploading, doUpload]);
 
-  const className = [
-    'tlFileChips',
-    editable ? 'tlFileChips--editable' : '',
-    isDragOver ? 'tlFileChips--dragover' : '',
-  ].filter(Boolean).join(' ');
-
   return (
     <div
       id={controlId}
       {...labelProps}
       role="group"
-      className={rootClassName(state, className)}
+      className={rootClassName(state, 'tl-chip-group')}
+      data-tl-state={stateAttr(isDragOver && 'dragover')}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -165,7 +127,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
       {chips.map(chip => (
         <Chip
           key={chip.key}
-          icon={FILE_ICON}
+          icon={ICON_FILE}
           label={chip.name}
           detail={chip.size != null ? formatSize(chip.size) : undefined}
           tooltip={chip.hasData ? t['js.download.file'].replace('{0}', chip.name) : chip.name}
@@ -185,14 +147,17 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
           />
           <Button
             label={uploading ? t['js.uploading'] : t['js.fileChips.add']}
-            image={ADD_ICON}
+            image={ICON_ATTACH}
             display="icon-label"
             appearance="secondary"
             disabled={uploading}
-            className={uploading ? 'tlFileChips__add tlFileChips__add--uploading' : 'tlFileChips__add'}
+            aria-busy={uploading ? true : undefined}
             onClick={handleAddClick}
           />
         </>
+      )}
+      {error && (
+        <span className="tl-file-upload__status tl-type-label" role="alert">{error}</span>
       )}
     </div>
   );

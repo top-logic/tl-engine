@@ -301,6 +301,8 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
               style={style}
               data-tl-state={reorderState(reorder.itemState(index))}
               tabIndex={editMode ? 0 : undefined}
+              // A group, so that the name the reorder gesture gives it is allowed (a generic div takes none).
+              role={editMode ? 'group' : undefined}
               onClick={action ? e => onTileClick(e, tile) : undefined}
               {...tooltipProps(action?.tooltip)}
               {...reorder.itemProps(index)}

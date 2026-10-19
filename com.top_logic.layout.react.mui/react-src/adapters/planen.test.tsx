@@ -452,6 +452,7 @@ describe('the dashboard (spec §6: tl-dashboard)', () => {
       expect(tile.querySelector(':scope > .tl-overlay__base')).not.toBeNull();
       expect(tile.getAttribute('draggable')).not.toBe('true');
       expect(tile.hasAttribute('tabindex')).toBe(false);
+      expect(tile.hasAttribute('role')).toBe(false);
       // No cover and no hide button outside of editing.
       expect(tile.querySelector('.tl-overlay__layer')).toBeNull();
     });
@@ -534,6 +535,8 @@ describe('the dashboard (spec §6: tl-dashboard)', () => {
     expect(grid().getAttribute('data-tl-axis')).toBe('horizontal');
     tileElements().forEach(tile => {
       expect(tile.tabIndex).toBe(0);
+      expect(tile.getAttribute('role')).toBe('group');
+      expect(tile.getAttribute('aria-label')).toBeTruthy();
       expect(tile.getAttribute('draggable')).toBe('true');
       expect(tile.getAttribute('aria-describedby')).toBeTruthy();
       const layers = Array.from(tile.querySelectorAll(':scope > .tl-overlay__layer'));

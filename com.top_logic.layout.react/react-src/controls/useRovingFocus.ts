@@ -5,7 +5,8 @@ import { React } from 'tl-react-bridge';
  *
  * Exactly one item is in the tab order ({@link RovingFocus.tabIndexOf} gives it `0`, every other
  * item `-1`): the item focused last while it is displayed, otherwise the preferred one (e.g. the
- * selected item), otherwise the first. Within the container the arrow keys move the focus:
+ * selected item), otherwise the first. The item holding the focus stays the tab stop when it moves to
+ * another position. Within the container the arrow keys move the focus:
  *
  * - ArrowLeft / ArrowRight: the previous / next item in document order.
  * - ArrowUp / ArrowDown: the item in the row above / below, nearest by its horizontal center,
@@ -88,6 +89,21 @@ export function useRovingFocus(
       setFocused(index);
     }
   }, [items]);
+
+  // A keyed item that React moves to another position keeps the focus without a focus event: React
+  // gives the focus back to a node it moves while committing, with its own events switched off. After
+  // every commit the tab stop therefore follows the item holding the focus to its position (an
+  // unchanged position updates nothing).
+  React.useLayoutEffect(() => {
+    const active = document.activeElement;
+    if (active === null) {
+      return;
+    }
+    const index = items().findIndex(item => item.contains(active));
+    if (index >= 0) {
+      setFocused(index);
+    }
+  });
 
   const onKeyDown = React.useCallback((event: React.KeyboardEvent) => {
     const all = items();

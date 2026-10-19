@@ -124,13 +124,15 @@ function moveOf(key: string): MoveDirection | null {
  * - the server resolves it like any drop (ReactKanbanBoardControl.placeOf): down after the card
  * following the last of them, up before the card preceding the first of them, left and right into
  * the neighbouring column, before the card standing there at the position of the moved card, or at
- * the column's end where there is none.
+ * the column's end where there is none. A board that does not reorder its columns takes a drop on a
+ * column as a whole only, as the pointer makes it: left and right then name the column.
  *
  * @param columns The columns of the board.
  * @param columnIndex The position of the column the cards are in.
  * @param cardIndex The position of the card the key was pressed on, within its column.
  * @param moved The keys of the moved cards, in display order.
  * @param direction The direction of the move.
+ * @param reorder Whether the board reorders its columns.
  * @returns The drop target, `null` where the cards cannot move in that direction.
  */
 function keyboardDrop(
@@ -139,6 +141,7 @@ function keyboardDrop(
   cardIndex: number,
   moved: readonly string[],
   direction: MoveDirection,
+  reorder: boolean,
 ): DropTarget | null {
   const cards = columns[columnIndex].cards;
   switch (direction) {
@@ -155,10 +158,27 @@ function keyboardDrop(
       if (!neighbour) {
         return null;
       }
-      const card = neighbour.cards[cardIndex];
+      const card = reorder ? neighbour.cards[cardIndex] : undefined;
       return card ? { target: card.key, position: 'before' } : { target: neighbour.key, position: 'none' };
     }
   }
+}
+
+/**
+ * Whether a board accepts a drop of the board's own drag of the given kind - the decision
+ * dragKindAccepted takes for the pointer from the type names of the running drag: any drag where the
+ * board accepts any, otherwise one whose kind is among the accepted ones (the type names carry the
+ * kind in lower case), a drag without a kind then never.
+ */
+function kindAccepted(kind: string | undefined, acceptsAny: boolean, acceptedKinds: readonly string[]): boolean {
+  if (acceptsAny) {
+    return true;
+  }
+  if (!kind) {
+    return false;
+  }
+  const name = kind.toLowerCase();
+  return acceptedKinds.some((accepted) => accepted.toLowerCase() === name);
 }
 
 /** Fills the placeholders {0}, {1}, ... of a translated text. */
@@ -222,17 +242,6 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
   const firstSelected = cards.findIndex((card) => selected.has(card.key));
   const roving = useRovingFocus(listRef, CARD_SELECTOR, cards.length, firstSelected, { linear: true });
   const selection = useOptionSelection(listRef, select, multiSelect);
-
-  // A focused card moved within the column keeps its focus without a focus event: React gives the
-  // focus back to a node it moves while committing, with its own events switched off. The tab stop
-  // would stay at the card's old position; it follows the card here.
-  const trackFocus = roving.onFocus;
-  useLayoutEffect(() => {
-    const active = document.activeElement;
-    if (active !== null && active.parentElement === listRef.current) {
-      trackFocus({ target: active } as unknown as React.FocusEvent);
-    }
-  }, [cards, trackFocus]);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     // Alt + arrow moves the card instead of the focus.
@@ -310,10 +319,12 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
  * column the server refuses a drop on shows the reason next to the pointer.
  *
  * Alt + arrow moves the focused card - with the other selected cards of its column, where it is
- * selected - by the drop a drag would make: up and down by one place within its column, while the
- * board reorders its columns; left and right into the neighbouring column, at the same position or
- * at its end. Once the new state shows the card at its new place, it has the focus, and its place
- * is announced; a move the server refuses leaves the focus where it is.
+ * selected - by the drop a drag would make, and only where the pointer could drag the card and drop
+ * it on the board: up and down by one place within its column, while the board reorders its
+ * columns; left and right into the neighbouring column, at the same position or at its end - on a
+ * board not reordering its columns onto the column as a whole, as a drop there is made. Once the new
+ * state shows the card at its new place, it has the focus, and its place is announced; a move the
+ * server refuses leaves the focus where it is.
  *
  * The board always fills the height its container offers, and each card list is a fill barrier.
  */
@@ -551,15 +562,19 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     if (index < 0 || !dragEnabled || (vertical && !reorder) || event.ctrlKey || event.metaKey || event.shiftKey) {
       return true;
     }
+    const card = column.cards[index];
+    // The keyboard moves a card only where the pointer could: drag the card, and drop it on this board.
+    if (card.draggable === false || !kindAccepted(dragKind, dropAcceptsAny, dropAccepts)) {
+      return true;
+    }
     // The board takes Alt + arrow over from the page: no scrolling, no step in the browser history.
     event.preventDefault();
     event.stopPropagation();
-    const card = column.cards[index];
     // A selected card takes the other selected cards of its column along, in display order.
     const moved = selected.has(card.key)
       ? column.cards.map((c) => c.key).filter((key) => selected.has(key))
       : [card.key];
-    const drop = keyboardDrop(columns, columns.indexOf(column), index, moved, direction);
+    const drop = keyboardDrop(columns, columns.indexOf(column), index, moved, direction, reorder);
     if (drop === null) {
       return true;
     }
@@ -573,7 +588,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
       zone: ZONE_OF_POSITION[drop.position],
     });
     return true;
-  }, [columns, controlId, dragEnabled, reorder, selected, sendCommand]);
+  }, [columns, controlId, dragEnabled, dragKind, dropAcceptsAny, dropAccepts, reorder, selected, sendCommand]);
 
   return (
     <div id={controlId} ref={rootRef} className={rootClassName(state, 'tl-board', fillClass)}

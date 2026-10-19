@@ -297,6 +297,33 @@ describe('the linear roving focus', () => {
 
     expect(document.activeElement).toBe(screen.getByText('Eintrag 2'));
   });
+
+  /** Items keyed by their names, in the given order. */
+  function Keyed({ order }: { order: string[] }) {
+    const ref = React.useRef<HTMLDivElement | null>(null);
+    const roving = useRovingFocus(ref, ':scope > [role="option"]', order.length, -1);
+    return (
+      <div ref={ref} role="listbox" onKeyDown={roving.onKeyDown} onFocus={roving.onFocus}>
+        {order.map((name, i) => (
+          <div key={name} role="option" aria-selected={false} tabIndex={roving.tabIndexOf(i)}>{name}</div>
+        ))}
+      </div>
+    );
+  }
+
+  it('keeps the tab stop on the focused item when React moves it to another position', () => {
+    const { rerender } = render(<Keyed order={['A', 'B', 'C']} />);
+    screen.getByText('A').focus();
+    expect(screen.getByText('A').tabIndex).toBe(0);
+
+    // React moves the node of A behind C and gives it the focus back, without a focus event.
+    rerender(<Keyed order={['B', 'C', 'A']} />);
+
+    expect(document.activeElement).toBe(screen.getByText('A'));
+    expect(screen.getByText('A').tabIndex).toBe(0);
+    expect(screen.getByText('B').tabIndex).toBe(-1);
+    expect(screen.getByText('C').tabIndex).toBe(-1);
+  });
 });
 
 describe('the value list (spec §7: tl-value-list)', () => {
@@ -1075,9 +1102,63 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     expect(document.activeElement).toBe(cardOf('a2'));
     expect(sentOf(sent, CMD_DROP)).toEqual([]);
 
+    // What a pointer drop on the column sends: the column itself, no place beside a card.
     await altArrow('a1', 'ArrowRight');
     expect(sentOf(sent, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a1', selection: false, targetKey: 'b1', zone: 'upper' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: 'a1', selection: false, targetKey: 'B', zone: 'none' }],
+    ]);
+  });
+
+  it('sends nothing by Alt + arrow on a card that may not be dragged, and keeps the focus (review focus 2)', async () => {
+    clearI18NCache();
+    const state = board({ A: ['a1', 'a2'], B: ['b1'] });
+    state.columns[0].cards[0].draggable = false;
+    const sent = mountAdapter(TLKanbanBoard, state);
+    englishTexts({ 'js.kanbanBoard.moved': MOVED });
+    await settle();
+
+    expect(cardOf('a1').getAttribute('draggable')).toBe('false');
+    await altArrow('a1', 'ArrowDown');
+    expect(document.activeElement).toBe(cardOf('a1'));
+    await altArrow('a1', 'ArrowRight');
+    expect(document.activeElement).toBe(cardOf('a1'));
+
+    expect(sentOf(sent, CMD_DROP)).toEqual([]);
+    expect(live().textContent).toBe('');
+  });
+
+  it('sends nothing by Alt + arrow where the board does not accept the kind of its own cards (review focus 2)', async () => {
+    clearI18NCache();
+    const sent = mountAdapter(TLKanbanBoard,
+      board({ A: ['a1', 'a2'], B: ['b1'] }, { reorder: false, dropAccepts: ['anderes'] }));
+    englishTexts({ 'js.kanbanBoard.moved': MOVED });
+    await settle();
+
+    await altArrow('a1', 'ArrowRight');
+    expect(document.activeElement).toBe(cardOf('a1'));
+    await altArrow('b1', 'ArrowLeft');
+    expect(document.activeElement).toBe(cardOf('b1'));
+
+    expect(sentOf(sent, CMD_DROP)).toEqual([]);
+    expect(live().textContent).toBe('');
+  });
+
+  it('moves cards without a kind only on a board accepting any drag', async () => {
+    const sent = mountAdapter(TLKanbanBoard,
+      board({ A: ['a1'], B: ['b1'] }, { reorder: false, dragKind: null, dropAccepts: [] }));
+    await settle();
+
+    await altArrow('a1', 'ArrowRight');
+    expect(sentOf(sent, CMD_DROP)).toEqual([]);
+    cleanup();
+
+    const accepting = mountAdapter(TLKanbanBoard,
+      board({ A: ['a1'], B: ['b1'] }, { reorder: false, dragKind: null, dropAccepts: [], dropAcceptsAny: true }));
+    await settle();
+
+    await altArrow('a1', 'ArrowRight');
+    expect(sentOf(accepting, CMD_DROP)).toEqual([
+      [CMD_DROP, { source: CONTROL_ID, keys: 'a1', selection: false, targetKey: 'B', zone: 'none' }],
     ]);
   });
 

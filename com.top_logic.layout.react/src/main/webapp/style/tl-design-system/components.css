@@ -431,7 +431,9 @@
 }
 .tl-board[hidden] { display: none; }
 
-/* Eine Spalte wächst von size-12 bis size-13; mehr Spalten, als passen, rollen waagerecht. */
+/* Eine Spalte wächst von size-12 bis size-13; mehr Spalten, als passen, rollen waagerecht. Die Spalte ist eine Mulde
+   auf surface-base, die Karte liegt darauf in surface-layer — in beiden Modi heller als die Spalte (layer-nested wäre
+   hell gleich der Karte und dunkel heller als sie: die Karte läge versenkt). */
 .tl-board__column {
   display: flex;
   flex-direction: column;
@@ -439,7 +441,7 @@
   min-width: var(--tl-size-12);
   max-width: var(--tl-size-13);
   min-height: 0;
-  background: var(--tl-surface-layer-nested);
+  background: var(--tl-surface-base);
   border: var(--tl-border-width-sm) solid var(--tl-border-separator);
   border-radius: var(--tl-radius-md);
 }
@@ -476,8 +478,10 @@
 .tl-board__cards[hidden] { display: none; }
 
 /* Die Fläche der Karte; Ecke, Zeiger und Lage (position) gibt tl-item[role="option"]. */
+/* Rechts hält die Karte die Ecke des Auswahlhakens frei (tl-item__check: Abstand xs, Breite icon-md, dazu xs Luft) —
+   immer, nicht erst gewählt: sonst deckt der Haken einen Knopf der Kartenansicht, oder der Inhalt springt beim Wählen. */
 .tl-board__card {
-  padding: var(--tl-space-sm) var(--tl-space-md);
+  padding: var(--tl-space-sm) calc(var(--tl-space-xs) + var(--tl-size-icon-md) + var(--tl-space-xs)) var(--tl-space-sm) var(--tl-space-md);
   background: var(--tl-surface-layer);
   border: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
@@ -5801,8 +5805,8 @@ button.tl-swatch:not(:disabled):hover {
   color: var(--tl-text-primary);
 }
 
+/* Der Trenner in der Schriftfarbe wie im Select (select.css): derselbe Trenner, dasselbe Bild. */
 .tl-value-list > .tl-select__separator {
-  color: var(--tl-text-secondary);
   white-space: pre;
 }
 
@@ -5923,4 +5927,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:0848a928f0b6a72967ef781adb0e85bfac126a9587975004717ea8fc9592f706 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:1542933fc6c05371ddd4ea7d20c7912bf83c4794d289901cb45b55f6b522c168 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

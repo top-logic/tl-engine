@@ -1189,7 +1189,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     // The upper half of a2.
     dragAt('dragOver', cardOf('a2'), 55, data);
     expect(cardOf('a2').getAttribute('data-tl-state')).toBe('drop-before');
-    expect(column.hasAttribute('data-tl-state')).toBe(false);
+    expect(column.getAttribute('data-tl-state')).toBe('drop-onto');
 
     // The lower half of a1: the boundary before a2, as before.
     dragAt('dragOver', cardOf('a1'), 30, data);
@@ -1204,7 +1204,8 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     // Below the last card.
     dragAt('dragOver', listOf(column), 200, data);
     expect(cardOf('a3').getAttribute('data-tl-state')).toBe('drop-after');
-    expect(column.hasAttribute('data-tl-state')).toBe(false);
+    // The column is marked as the target in addition to the line (Hendrik 19.10.).
+    expect(column.getAttribute('data-tl-state')).toBe('drop-onto');
   });
 
   it('drops at the boundary it marks', async () => {
@@ -1221,7 +1222,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     ]);
   });
 
-  it('marks a column a drop goes to the end of: an empty one, or any one without reordering', async () => {
+  it('marks the column under the drag: an empty one, or any one without reordering, without a line', async () => {
     mountAdapter(TLKanbanBoard, board({ A: ['a1'], B: [] }));
     await settle();
     let data = await startDrag('a1');

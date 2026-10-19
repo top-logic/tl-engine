@@ -583,11 +583,12 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
       )}
       {columns.map((column) => {
         const hovered = dropState !== null && dropState.column === column.key ? dropState : null;
-        // The column refuses the drop, or receives it at its end; a drop beside a card is shown by
-        // the insertion line at that card.
+        // The column under the drag is marked as the target whenever it takes the drop (as the old
+        // board did), or as refusing it; where the card lands beside another one, the insertion line
+        // at that card shows it in addition.
         const columnState = hovered === null
           ? undefined
-          : (dropRefused ? 'drop-refused' : (hovered.position === 'none' ? 'drop-onto' : undefined));
+          : (dropRefused ? 'drop-refused' : 'drop-onto');
         const line = hovered !== null && !dropRefused && hovered.position !== 'none' ? hovered : null;
         return (
           <BoardColumn

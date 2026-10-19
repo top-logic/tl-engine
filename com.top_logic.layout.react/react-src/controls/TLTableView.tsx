@@ -100,6 +100,13 @@ const I18N_KEYS = {
  */
 const SEARCH_DEBOUNCE_MS = 300;
 
+/**
+ * How long a mounted table waits for its body to be able to scroll back to the window it showed
+ * last. The containers fill within a few renders; a body that still cannot scroll that far then has
+ * a shorter scroll range than before.
+ */
+const RESTORE_TIMEOUT_MS = 1000;
+
 interface ColumnState {
   name: string;
   label: string;
@@ -365,6 +372,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const columns = (state.columns as ColumnState[]) ?? [];
   const totalRowCount = (state.totalRowCount as number) ?? 0;
   const rows = (state.rows as RowState[]) ?? [];
+  /** The first row of the window the body showed last, unlike the start of the rows sent. */
+  const scrollStart = (state.scrollStart as number) ?? 0;
   // The client measures what the design system says (3b §3): a row is size-row high, so the table
   // follows the density (36 px normal, 32 px compact). The server knows no height. The grid is
   // rendered from the first layout on, so the token is read where the rows inherit it.
@@ -1448,21 +1457,69 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!sentIndexes.has(i)) missing.push(i);
   }
 
-  // The server keeps the window of the body that showed the table last: after a reload of the page
-  // (or a remount of the table) the body starts at the top again, while the server still sends the
-  // rows it scrolled to before. No scroll event reports the new position, so the window is requested
-  // once the body has measured it, if the rows sent do not cover it.
-  const windowReportedRef = React.useRef(false);
-  const windowIncomplete = missing.length > 0;
-  React.useEffect(() => {
-    if (windowReportedRef.current || windowRange.last < windowRange.first) {
+  // The server keeps the window of the body that showed the table last, also when the page is
+  // reloaded or the table mounted again: the body then starts at the top, while the server sends the
+  // rows it scrolled to before. The body scrolls back to the first row of that window once the row
+  // height is the token's (see the density switch above) and the body can scroll that far: the
+  // containers fill only a render after the table reports filling (fill.ts), so on its first layout
+  // the body is as high as its rows and cannot scroll at all. A body that does not get there within
+  // RESTORE_TIMEOUT_MS - the scroll range has shrunk - scrolls as far as it can. Should the rows sent
+  // still not cover what the body shows, the body reports its window, which no scroll event does when
+  // the position stays.
+  const scrollRestoredRef = React.useRef(false);
+  const restoreTimedOutRef = React.useRef(false);
+  const restoreScrollRef = React.useRef<() => void>(() => {});
+  restoreScrollRef.current = () => {
+    const body = scrollContainerRef.current;
+    if (scrollRestoredRef.current) {
+      // The body changed its height: the window measured before is stale.
+      measureWindow();
       return;
     }
-    windowReportedRef.current = true;
-    if (windowIncomplete) {
-      handleScroll();
+    if (!body || rowHeight !== tokenPx(gridRef.current, '--tl-size-row', 36)) {
+      return;
     }
-  }, [windowRange, windowIncomplete, handleScroll]);
+    const target = Math.min(scrollStart, Math.max(0, totalRowCount - 1)) * rowHeight;
+    const range = body.scrollHeight - body.clientHeight;
+    if (target > range && !restoreTimedOutRef.current) {
+      return;
+    }
+    scrollRestoredRef.current = true;
+    if (target > 0) {
+      body.scrollTop = Math.min(target, Math.max(0, range));
+    }
+    measureWindow();
+    const first = Math.floor(body.scrollTop / rowHeight);
+    const last = Math.min(totalRowCount - 1, Math.ceil((body.scrollTop + body.clientHeight) / rowHeight) - 1);
+    for (let i = first; i <= last; i++) {
+      if (!sentIndexes.has(i)) {
+        handleScroll();
+        break;
+      }
+    }
+  };
+  React.useLayoutEffect(() => {
+    if (!scrollRestoredRef.current) {
+      restoreScrollRef.current();
+    }
+  });
+  React.useEffect(() => {
+    const body = scrollContainerRef.current;
+    if (!body) {
+      return;
+    }
+    // The body gets its height from the containers filling, without a render of the table.
+    const observer = new ResizeObserver(() => restoreScrollRef.current());
+    observer.observe(body);
+    const timeout = window.setTimeout(() => {
+      restoreTimedOutRef.current = true;
+      restoreScrollRef.current();
+    }, RESTORE_TIMEOUT_MS);
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeout);
+    };
+  }, []);
 
   // Where a cell sits relative to the scrolling area: frozen at the start, pinned at the end. A state
   // of its location (data-tl-state), not of the user's handling of it.

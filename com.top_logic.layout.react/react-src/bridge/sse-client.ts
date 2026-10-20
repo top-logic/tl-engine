@@ -322,6 +322,9 @@ function reloadForLostSession(): void {
   console.warn('[TLReact] Session lost. Reloading page' + (wait ? ' in ' + wait + ' ms.' : '.'));
   setTimeout(() => {
     writeStorage(RELOAD_GUARD_KEY, String(Date.now()));
+    // The server itself answered that the session or the window is gone, so no proxy held the
+    // stream back: a tab reloaded for a lost session or window tries the stream first again.
+    removeStorage(POLLING_KEY);
     window.location.reload();
   }, wait);
 }
@@ -341,6 +344,15 @@ function writeStorage(key: string, value: string): void {
     sessionStorage.setItem(key, value);
   } catch {
     // No storage: the next page finds out again.
+  }
+}
+
+/** Removes a value from the tab's session storage, where there is one. */
+function removeStorage(key: string): void {
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    // No storage: there is nothing to remove.
   }
 }
 

@@ -3941,6 +3941,11 @@ a.tl-field-value:hover {
    stehen, bevor seine Meldung kommt. */
 .tl-text:empty:not([role]) { display: none; }
 
+/* Der Text behält die Zeilenumbrüche seines Werts: ein \n vom Server ist ein Umbruch (#29886). Folgen von
+   Leerzeichen fallen zusammen, und der Text bricht an der verfügbaren Breite um. --truncate
+   (unten) und die Tabellenzelle bleiben einzeilig. */
+.tl-text { white-space: pre-line; }
+
 /* Eine Zeile, die mit Ellipse endet: als Block, sonst schneidet ein Inline-Element nicht ab. Den vollen
    Text als Tooltip bietet der Tooltip-Host der Engine von selbst an (text-overflow: ellipsis, master
    #29752) — keine Deklaration nötig. */
@@ -4041,10 +4046,13 @@ a.tl-field-value:hover {
 /* Alles außer dem Titel schrumpft nicht: Kopfknöpfe behalten ihre Maße bei langem Titel. */
 .tl-titlebar > .tl-button { flex: none; }
 
+/* Die Aktionen stehen am Ende des Kopfes, wie in der AppBar — auch wenn sie beim Nachgeben (unten) den ganzen Rest
+   nehmen (#29918). */
 .tl-titlebar__actions {
   display: flex;
   flex: 0 1 auto;
   align-items: center;
+  justify-content: end;
   gap: var(--tl-space-2xs);
   min-width: 0;
 }
@@ -4378,4 +4386,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:436053dc142e033b0406d3049020e9fe79c2d359b98122a4e323acdef83a609c — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:c6f208acafec80a32e3326df90cac14b8091518905dd1454b5df0d0ce209f950 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

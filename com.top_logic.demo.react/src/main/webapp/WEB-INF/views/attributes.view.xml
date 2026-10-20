@@ -315,6 +315,9 @@
 							</column>
 							<column attribute="date"/>
 							<column attribute="dateTimeShort"/>
+							<column attribute="dateTimeSeconds"/>
+							<column attribute="time"/>
+							<column attribute="timeSeconds"/>
 							<column attribute="aliases"/>
 							<column attribute="notes"/>
 							<column attribute="scores"/>
@@ -489,7 +492,9 @@
 									<field attribute="date"/>
 									<field attribute="dateTime"/>
 									<field attribute="dateTimeShort"/>
+									<field attribute="dateTimeSeconds"/>
 									<field attribute="time"/>
+									<field attribute="timeSeconds"/>
 									<field attribute="duration"/>
 									<field attribute="deadlines"/>
 									<field attribute="icon"/>

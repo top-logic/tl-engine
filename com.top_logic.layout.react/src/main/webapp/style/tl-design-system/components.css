@@ -2340,15 +2340,22 @@
 }
 
 /* Element-Picker (element-picker.ts, ein Entwicklerwerkzeug): die Markierung über dem Element unter dem Zeiger, in
-   beiden Modi aus dem Theme. Sie liegt über dem Element, die Deckkraft lässt es durchscheinen — ein Anteil, kein Maß.
-   Der Zeiger „Fadenkreuz“ ist ein Zustand am body. */
+   beiden Modi aus dem Theme. Der Rand ist deckend; nur die Fläche auf ::before ist durchscheinend und lässt das Element
+   durchscheinen — die Deckkraft ist ein Anteil, kein Maß. Der Zeiger „Fadenkreuz“ ist ein Zustand am body. */
 .tl-pick-highlight {
   position: fixed;
   pointer-events: none;
   z-index: var(--tl-layer-drag);
   border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+}
+
+.tl-pick-highlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: var(--tl-surface-brand-subtle);
   opacity: 0.5;
+  pointer-events: none;
 }
 
 body[data-tl-state~="picking"],
@@ -6002,4 +6009,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:894d1d45dbc45dabf8b0b19c4ba554b0de70a6c22fae0300f51ea7a83d7c46be — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:7699d2c189b7d33eb401891fca20360802d18a6ef0a8251e1d91d82458471b4b — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

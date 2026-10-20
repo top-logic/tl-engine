@@ -8,6 +8,7 @@ package com.top_logic.layout.view.model;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +38,29 @@ import com.top_logic.table.impl.ListRowSource;
  * notification simply means "re-evaluate".
  * </p>
  *
+ * <p>
+ * What an input change triggers depends on the channel:
+ * </p>
+ * <ul>
+ * <li>A change of a {@link #withRowIndependentInputs(Collection) row-independent input} - a channel
+ * the element function receives but whose value cannot change the elements, such as the selection of
+ * the very table displaying them - re-evaluates nothing; it only runs the
+ * {@link #onInputsChanged(Collection, Runnable) inputs-changed handler}.</li>
+ * <li>A change of an input {@link #onInputsChanged(Collection, Runnable) declared to the handler}
+ * re-evaluates the elements; elements equal to the ones at hand are not delivered, the handler runs
+ * instead.</li>
+ * <li>A change of any other input re-evaluates the elements and delivers them to the sink, even
+ * where they equal the ones at hand: what the display builds from the elements may read that
+ * input.</li>
+ * <li>A model change re-evaluates the elements and delivers them in any case, even where they equal
+ * the ones at hand: the displayed objects themselves may have changed.</li>
+ * </ul>
+ *
+ * <p>
+ * The element function receives the values of all input channels in their declared order, the
+ * row-independent ones included.
+ * </p>
+ *
  * @param <R>
  *        The element business object type.
  */
@@ -49,6 +73,15 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	private final List<ViewChannel> _inputChannels;
 
 	private final Consumer<List<R>> _sink;
+
+	/** @see #withRowIndependentInputs(Collection) */
+	private Set<ViewChannel> _rowIndependentInputs = Set.of();
+
+	/** @see #onInputsChanged(Collection, Runnable) */
+	private Set<ViewChannel> _handledInputs = Set.of();
+
+	/** @see #onInputsChanged(Collection, Runnable) */
+	private Runnable _onInputsChanged;
 
 	/**
 	 * The registrations observing the persistent objects among {@link #_elements}, one per object.
@@ -118,6 +151,52 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	}
 
 	/**
+	 * Declares input channels whose changes cannot change the elements.
+	 *
+	 * <p>
+	 * A change of such a channel does not re-evaluate the element function and leaves the elements
+	 * as they are; it only runs the {@link #onInputsChanged(Collection, Runnable) inputs-changed
+	 * handler}, so it counts among the channels declared to the handler in any case. The
+	 * element function still receives the channel's value at its declared position. A channel that
+	 * is not among the input channels is ignored.
+	 * </p>
+	 *
+	 * @param channels
+	 *        Input channels the elements do not depend on, e.g. the selection channel of the table
+	 *        displaying the elements.
+	 * @return This instance, for call chaining.
+	 */
+	public RowSourceObserver<R> withRowIndependentInputs(Collection<? extends ViewChannel> channels) {
+		_rowIndependentInputs = new HashSet<>(channels);
+		return this;
+	}
+
+	/**
+	 * Sets what to run when one of the given inputs changed but the elements did not.
+	 *
+	 * <p>
+	 * The handler runs after a change of a {@link #withRowIndependentInputs(Collection)
+	 * row-independent input}, and after a change of one of the given channels that yields elements
+	 * equal to the ones at hand - which are then not delivered to the sink. It takes up what
+	 * depends on the inputs apart from the elements themselves, e.g. criteria of filters or CSS
+	 * classes of rows. A change of any other input delivers the elements in any case, equal or not:
+	 * the given channels are the ones nothing the display builds from the elements reads.
+	 * </p>
+	 *
+	 * @param channels
+	 *        The input channels whose change with equal elements only runs the handler. A channel
+	 *        that is not among the input channels is ignored.
+	 * @param handler
+	 *        What to run, {@code null} for nothing.
+	 * @return This instance, for call chaining.
+	 */
+	public RowSourceObserver<R> onInputsChanged(Collection<? extends ViewChannel> channels, Runnable handler) {
+		_handledInputs = new HashSet<>(channels);
+		_onInputsChanged = handler;
+		return this;
+	}
+
+	/**
 	 * Begins observing on the given {@link ModelScope}, and re-reads the elements.
 	 *
 	 * <p>
@@ -173,7 +252,26 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 
 	@Override
 	public void handleNewValue(ViewChannel sender, Object oldValue, Object newValue) {
-		reEvaluate();
+		if (_rowIndependentInputs.contains(sender)) {
+			inputsChanged();
+			return;
+		}
+		List<R> elements = readElements();
+		if (_handledInputs.contains(sender) && elements.equals(_elements)) {
+			inputsChanged();
+			return;
+		}
+		replaceElements(elements);
+		_sink.accept(elements);
+	}
+
+	/**
+	 * Runs the {@link #onInputsChanged(Collection, Runnable) inputs-changed handler}, if any.
+	 */
+	private void inputsChanged() {
+		if (_onInputsChanged != null) {
+			_onInputsChanged.run();
+		}
 	}
 
 	private void reEvaluate() {

@@ -1470,6 +1470,50 @@
   padding: var(--tl-space-xs);
 }
 
+/* --- chart/chart.css --- */
+/* Chart — Spec 2026-10-20 Welle 5d §8 (Plan-Review K12, Ruling R3). Das Diagramm (Chart.js, TLChart) zeichnet seine
+   Reihen, Gitter und Beschriftung auf ein Canvas; die Farben liest das Control im Browser aus den Kategorien
+   (--tl-category-N-surface), --tl-border-separator und --tl-text-secondary. Hier steht, was im DOM um das Canvas
+   liegt: die Wurzel, der Tooltip am Datenpunkt, der Knopf zum Zurücksetzen des Zooms, und leer oder Fehler als
+   tl-status. Die Schrift tragen die Typo-Klassen am Element. */
+
+.tl-chart {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: var(--tl-size-12);
+}
+.tl-chart[hidden] { display: none; }
+
+/* Leer und Fehler sind eine tl-status-Zeile (role="status" bzw. role="alert") in der Mitte der Fläche. */
+.tl-chart:has(> .tl-status) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Der Tooltip hat die Fläche von tl-popover (Klasse am Element: Fläche, Rand, Schatten, Innenabstand). Hier nur Lage und
+   Ebene: absolut am Datenpunkt statt fest am Viewport, ohne Mindestbreite, und der Zeiger geht hindurch. Beide Klassen
+   im Selektor, weil components.css chart vor popover ordnet und ein einzelner Klassenselektor gegen
+   `.tl-popover { position: fixed }` verlöre. Die Ebene sticky: über dem Canvas und dem Knopf, unter allem, was sich
+   über die Seite legt. */
+.tl-chart__tooltip.tl-popover {
+  position: absolute;
+  z-index: var(--tl-layer-sticky);
+  min-width: 0;
+  pointer-events: none;
+}
+
+/* Der Knopf schwebt über der Zeichnung; eine Fläche für sich hält ihn dort lesbar. */
+.tl-chart__zoom-reset {
+  position: absolute;
+  top: var(--tl-space-xs);
+  inset-inline-end: var(--tl-space-xs);
+  z-index: var(--tl-layer-raised);
+  background: var(--tl-surface-layer);
+  border-radius: var(--tl-radius-md);
+}
+
 /* --- choice/choice.css --- */
 /* Auswahl — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“.
    Checkbox, Radio und Schalter zeichnen sich aus Tokens (appearance: none), nicht aus Browser-
@@ -6184,4 +6228,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:6deb47d5bb87d2ead2d70db4848a88d284603934dcb7b0dd1ed10747d74b9d6e — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:2627ecf4da9c45022de600144a8beb4eed49c322927daebb90aa95a4d2a785e1 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -1,0 +1,58 @@
+/*
+ * The application shell of the tl-ai demo: what the React view layer draws around the chat.
+ *
+ * Everything here is written in the TopLogic design tokens, so the shell follows whichever theme
+ * the user menu selects - which is the point of the file. The shipped themes leave
+ * --layer-accent undefined in dark mode, so the framework's accent app bar stays the same grey
+ * whatever theme is active, and the bar ends up looking like a different product from the chat
+ * below it. These rules are the demo's own skin on the framework's markup; the framework is
+ * untouched.
+ */
+
+/* --- The app bar belongs to the page, not on top of it --------------------- */
+
+.tlAppBar--primary {
+	background: var(--layer-01);
+	color: var(--text-primary);
+	border-bottom: 1px solid var(--border-subtle);
+	height: 3rem;
+}
+
+.tlAppBar--primary .tlAppBar__title {
+	font-size: var(--heading-compact-01-font-size, 0.875rem);
+	line-height: var(--heading-compact-01-line-height, 1.25rem);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--text-primary);
+}
+
+/*
+ * Bar buttons are icons, not outlined pills: the ring only existed to hold them apart from the
+ * accent background they no longer sit on.
+ */
+.tlAppBar--primary .tl-button {
+	color: var(--icon-primary);
+	box-shadow: none;
+	border-radius: var(--corner-radius, 0.25rem);
+}
+
+.tlAppBar--primary button.tl-button:not(:disabled):hover {
+	background: var(--layer-hover);
+	color: var(--icon-primary);
+}
+
+.tlAppBar--primary button.tl-button:not(:disabled):active {
+	background: var(--layer-active);
+	color: var(--icon-primary);
+	box-shadow: none;
+}
+
+.tlAppBar--primary button.tl-button:disabled {
+	background: none;
+	color: var(--icon-disabled);
+	box-shadow: none;
+}
+
+.tlAppBar--primary .tl-button--link {
+	color: var(--icon-primary);
+}

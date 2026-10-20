@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The Venues page as a tile stack: the list of venues, and a venue opened over it as a frame of
+	its own (a double-click on a row). The breadcrumb leads back.
+
+	A frame gets a new channel context from the stack, so no <bind> reaches it. The frame says what
+	it has open to the chat with the <page-selection> in venue-detail.view.xml (Issue #928).
+-->
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+
+	<stack>
+		<tile-breadcrumb path="navPath">
+			<home-label>
+				<en>Venues</en>
+				<de>Veranstaltungsorte</de>
+			</home-label>
+		</tile-breadcrumb>
+		<tile-stack
+			initial="tl-ai-demo/venues/venues.view.xml"
+			path="navPath"
+		>
+			<frame
+				route="venue/:venue"
+				view="tl-ai-demo/venues/venue-detail.view.xml"
+			>
+				<param name="venue"
+					expr="v -> objectId($v)"
+					reverse="id -> $id.objectResolve(`demo.events:Venue`)"
+				/>
+				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="v -> $v.get(`demo.events:Named#name`)"
+					inputs="venue"
+				/>
+			</frame>
+		</tile-stack>
+	</stack>
+</view>

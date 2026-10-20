@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-ai-parent</artifactId>
+    <version>2.1.4-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-ai-vector-index</artifactId>
+  <licenses>
+    <license>
+      <name>LicenseRef-BOS-TopLogic-1.0</name>
+      <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+    </license>
+  </licenses>
+  <description>Integration of the Vector full-text search engine.</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+	
+  <properties>
+	  <!-- Use the latest version whenever possible. -->
+	  <jackson.version>2.19.0</jackson.version>
+	  <langchain4j.version>1.22.0</langchain4j.version>
+	</properties>
+
+	<dependencyManagement>
+	    <dependencies>
+	        <dependency>
+	            <groupId>org.testcontainers</groupId>
+	            <artifactId>testcontainers-bom</artifactId>
+	            <version>2.0.5</version>
+	            <type>pom</type>
+	            <scope>import</scope>
+	        </dependency>
+	    </dependencies>
+	</dependencyManagement>
+  <dependencies>
+  	<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-contact</artifactId>
+		</dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-search-base</artifactId>
+    </dependency>
+	<dependency>
+	  <groupId>com.top-logic</groupId>
+	  <artifactId>tl-ai-tool-api</artifactId>
+	  <version>${project.version}</version>
+	</dependency>
+	<!--
+	  For ReadFilter / ModelSecurity: what a search hit may disclose is decided by the same
+	  chokepoint the data tools go through, not by a second filter written here (issue #295).
+	-->
+	<dependency>
+	  <groupId>com.top-logic</groupId>
+	  <artifactId>tl-ai-core</artifactId>
+	  <version>${project.version}</version>
+	</dependency>
+	<dependency>
+	  <groupId>io.qdrant</groupId>
+	  <artifactId>client</artifactId>
+	  <version>1.19.0</version>
+	</dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
+    <dependency>
+	  <groupId>com.googlecode.json-simple</groupId>
+	  <artifactId>json-simple</artifactId>
+	  <version>1.1.1</version>
+	</dependency>
+	<dependency>
+        <groupId>io.grpc</groupId>
+        <artifactId>grpc-protobuf</artifactId>
+        <version>1.85.0</version>
+    </dependency>
+	<dependency>
+	    <groupId>com.fasterxml.jackson.core</groupId>
+	    <artifactId>jackson-databind</artifactId>
+	    
+	</dependency>
+	
+	<!-- LangChain4j Mistral integration -->
+	<dependency>
+		<groupId>dev.langchain4j</groupId>
+		<artifactId>langchain4j-mistral-ai</artifactId>
+		<version>${langchain4j.version}</version>
+	</dependency>
+	<dependency>
+	    <groupId>dev.langchain4j</groupId>
+	    <artifactId>langchain4j-qdrant</artifactId>
+	    <version>1.22.0-beta32</version>
+	</dependency>
+	<dependency>
+	    <groupId>dev.langchain4j</groupId>
+	    <artifactId>langchain4j-community-jvector</artifactId>
+	    <version>1.22.0-beta32</version>
+	</dependency>
+  </dependencies>
+  
+</project>

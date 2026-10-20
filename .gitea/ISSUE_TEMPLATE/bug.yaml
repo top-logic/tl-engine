@@ -1,0 +1,79 @@
+name: Bug
+about: Something behaves wrong against its own contract
+labels: ["type/bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Wrong behaviour that is not yet agreed to be wrong? That is an **Idea**, not a bug.
+        Something that simply does not exist yet is a **Feature**.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: >-
+        Pick every part this touches. Gitea cannot turn this answer into a label, so a
+        maintainer still has to set the matching `area/*` label by hand - this field is
+        what tells them which one.
+      multiple: true
+      options:
+        - area/agent-core
+        - area/browser
+        - area/security
+        - area/model
+        - area/ui
+        - area/mcp
+        - area/docs
+        - area/build
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-is-wrong
+    attributes:
+      label: What is wrong
+      description: >-
+        What happened, what you expected instead, and the concrete evidence: the message,
+        the log line, the JSON, the failing assertion. Quote it rather than describing it.
+      placeholder: |
+        Observed: ...
+        Expected: ...
+
+        ```
+        <the actual output>
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: >-
+        The shortest path to see it: a test class and method, a tool call, a click path in
+        the app. If it was hit in passing and you cannot reproduce it on demand, say so -
+        that is useful too.
+    validations:
+      required: true
+
+  - type: textarea
+    id: where-it-lives
+    attributes:
+      label: Where it lives in the code
+      description: >-
+        Optional, but it is what makes a report actionable: files, classes, `path:line`,
+        and the root cause if you already found it. Name the branch or commit your line
+        numbers refer to.
+    validations:
+      required: false
+
+  - type: textarea
+    id: fix-must-satisfy
+    attributes:
+      label: What a fix has to satisfy
+      description: >-
+        Optional. Constraints a fix must respect, approaches already ruled out, and how
+        anyone would verify the fix actually works.
+    validations:
+      required: false

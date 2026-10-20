@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.core">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.core.model.impl"
+				interface-package="com.top_logic.tl.ai.core.model"
+			/>
+		</annotations>
+		<class name="Agent">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="AIAgent"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.ai.core:Agent#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="displayName"
+							fullQualifiedName="tl.ai.core:Agent#displayName"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="description"
+							fullQualifiedName="tl.ai.core:Agent#description"
+							type="tl.core:String"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="summary"
+							fullQualifiedName="tl.ai.core:Agent#summary"
+							type="tl.core:String"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="infrastructure"
+							fullQualifiedName="tl.ai.core:Agent#infrastructure"
+							type="tl.core:Boolean"
+						/>
+						<field
+							attribute="systemPrompt"
+							fullQualifiedName="tl.ai.core:Agent#systemPrompt"
+							type="tl.core:Text"
+						>
+							<annotations>
+								<label-position value="above-value"/>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="tools"
+							fullQualifiedName="tl.ai.core:Agent#tools"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="mcpServers"
+							fullQualifiedName="tl.ai.core:Agent#mcpServers"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="skills"
+							fullQualifiedName="tl.ai.core:Agent#skills"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="delegations"
+							fullQualifiedName="tl.ai.core:Agent#delegations"
+							type="tl.core:String"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint class="com.top_logic.tl.ai.core.agent.ReservedPrefixConstraint"/>
+							<constraint class="com.top_logic.tl.ai.core.agent.UniqueNameConstraint"/>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="displayName"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:String"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="summary"
+					type="tl.core:String"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<!--
+					An agent the application runs *for* a user rather than letting them talk to it -
+					the chat's prompt improver is one. Such an agent is offered by no menu and is
+					refused wherever a user's own run names it, whatever <agent-access> grants; the
+					product's own call path says so in code instead. See
+					doc/security/tool-access-configuration.md.
+				-->
+				<property name="infrastructure"
+					type="tl.core:Boolean"
+				/>
+				<property name="systemPrompt"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+						<constraints>
+							<!--
+								A {{placeholder}} the harness cannot fill would reach the model verbatim
+								and read as an instruction the harness failed to honour, so an unknown one
+								is refused where it is typed rather than sent.
+							-->
+							<constraint class="com.top_logic.tl.ai.core.agent.environment.PlaceholderConstraint"/>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="tools"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-tool-names/>
+						</options>
+					</annotations>
+				</property>
+				<property name="mcpServers"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-mcp-server-names/>
+						</options>
+					</annotations>
+				</property>
+				<property name="skills"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-skill-names/>
+						</options>
+					</annotations>
+				</property>
+				<property name="delegations"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-agent-names/>
+						</options>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Skill">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="AISkill"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="tl.ai.core:Skill#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="description"
+							fullQualifiedName="tl.ai.core:Skill#description"
+							type="tl.core:String"
+						>
+							<annotations>
+								<render-whole-line/>
+								<label-position value="above-value"/>
+							</annotations>
+						</field>
+						<field
+							attribute="content"
+							fullQualifiedName="tl.ai.core:Skill#content"
+							type="tl.core:Text"
+						>
+							<annotations>
+								<render-whole-line/>
+								<label-position value="above-value"/>
+							</annotations>
+						</field>
+						<field
+							attribute="tools"
+							fullQualifiedName="tl.ai.core:Skill#tools"
+							type="tl.core:String"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<constraints>
+							<constraint class="com.top_logic.tl.ai.core.agent.ReservedPrefixConstraint"/>
+							<constraint class="com.top_logic.tl.ai.core.agent.UniqueNameConstraint"/>
+						</constraints>
+					</annotations>
+				</property>
+				<property name="description"
+					type="tl.core:String"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="content"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<multi-line/>
+						<size-constraint/>
+					</annotations>
+				</property>
+				<property name="tools"
+					multiple="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<all-tool-names/>
+						</options>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

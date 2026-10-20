@@ -1,0 +1,206 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-ai-parent</artifactId>
+		<version>2.1.4-SNAPSHOT</version>
+	</parent>
+	
+	<artifactId>tl-ai-core</artifactId>
+
+	<licenses>
+	  <license>
+	    <name>LicenseRef-BOS-TopLogic-1.0</name>
+	    <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+	  </license>
+	</licenses>
+	
+	<properties>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+		<msgbuf.version>1.3.0</msgbuf.version>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+		<!-- Using TopLogic OpenSource Edition. AGPL license conditions apply. -->
+		<!-- To switch to TopLogic Professional Edition, uncomment the following dependency: -->
+		
+		<dependency>
+		    <groupId>com.top-logic</groupId>
+		    <artifactId>tl-license-professional</artifactId>
+		</dependency>
+		
+
+		<!-- TopLogic -->
+
+		<!-- msgbuf JSON streaming (JsonWriter/JsonReader) -->
+		<dependency>
+			<groupId>de.haumacher.msgbuf</groupId>
+			<artifactId>msgbuf-api</artifactId>
+			</dependency>
+
+		<!-- TopLogic kernel (KB transactions, locking, security) -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-tool-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-contact</artifactId>
+		</dependency>
+
+		<!-- TL-Script: AttributeByExpression backs the derived attributes of the
+		     tl.ai.execution model, and 12 classes compile against
+		     com.top_logic.model.search. Declared explicitly rather than relying on
+		     the transitive path through tl-contact. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-search</artifactId>
+		</dependency>
+
+		<!-- The authentication of the agent endpoints (EndpointAuthentication, personal access
+		     tokens): the engine's pluggable, Person-resolving HTTP authentication framework. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-service-openapi-server</artifactId>
+		</dependency>
+		<!-- The views that create, list and revoke personal access tokens extend the engine's
+		     settings dialog and administration by same-path overlays, which the ViewLoader merges in
+		     dependency order - so this module has to come after the one that declares them. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-element</artifactId>
+		</dependency>
+
+		<!-- Chart.js component: the four charts of the agent activity monitor
+		     (admin/agentActivity) are the one panel that answers "is this getting
+		     worse" rather than "how much now". Declared explicitly rather than
+		     relying on tl-ai-demo pulling it in: the layouts ship inside this
+		     module, so an application that depends on tl-ai-core alone would
+		     otherwise get a view that cannot render. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chart-chartjs</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.vladsch.flexmark</groupId>
+			<artifactId>flexmark-html2md-converter</artifactId>
+			<version>0.64.8</version>
+		</dependency>
+
+		<!-- HTML parsing / text extraction for web_fetch (version managed by parent) -->
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+		</dependency>
+
+		<!-- PDF text extraction for webFetch (Apache-2.0, version managed by parent). The parent
+		     excludes commons-logging from pdfbox, so its logging goes through jcl-over-slf4j. -->
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+		</dependency>
+
+		<!-- MCP SDK (client for connecting to external MCP servers) -->
+		<dependency>
+			<groupId>io.modelcontextprotocol.sdk</groupId>
+			<artifactId>mcp-core</artifactId>
+			<version>1.1.5</version>
+		</dependency>
+
+		<!-- Headless-browser web tool: drives a real Chromium so the agent can read
+		     JavaScript-rendered pages that the static webFetch cannot. Pinned version;
+		     the Chromium binary is installed separately (see module README / spike report). -->
+		<dependency>
+			<groupId>com.microsoft.playwright</groupId>
+			<artifactId>playwright</artifactId>
+			<version>1.63.0</version>
+		</dependency>
+
+		<!-- Tests -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<parameters>true</parameters>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>de.haumacher.msgbuf</groupId>
+				<artifactId>msgbuf-generator-maven-plugin</artifactId>
+				<version>${msgbuf.version}</version>
+
+				<executions>
+					<execution>
+						<id>generate-protocols</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>generate-binding</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.top-logic</groupId>
+						<artifactId>tl-maven-plugin</artifactId>
+						<version>${tl.version}</version>
+						<executions>
+							<execution>
+								<id>generate-binding</id>
+								<phase>generate-sources</phase>
+								<goals>
+									<goal>generate-java</goal>
+								</goals>
+								<configuration>
+									<modules>tl.ai.core,tl.ai.htmlpages,tl.ai.execution,tl.ai.screenshots,tl.ai.cookiepool,tl.ai.access</modules>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+</project>

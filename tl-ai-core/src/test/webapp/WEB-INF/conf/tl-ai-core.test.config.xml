@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- 
+	Configuration options for testing tl-ai-core with JUnit.
+ -->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			Objects made of parts, which tl-ai-core's own model does not have: TestObjectEditTool
+			creates them with createObject.
+		-->
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/test.objectedit.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<!--
+			Install a real AES encryption key for tests via the platform EncryptionService, so
+			CookiePoolService (which encrypts cookie pools at rest via EncryptionService.getEncryption())
+			round-trips in TestCookiePoolService. DummyEncryptionService boots unattended with the
+			config-embedded key; test-only.
+		-->
+		<config service-class="com.top_logic.basic.encryption.EncryptionService">
+			<instance class="com.top_logic.basic.encryption.DummyEncryptionService"
+				algorithm="AES"
+				key="b8eb777bb2b74f111aa1d65f881a8c1d"
+			/>
+		</config>
+
+		<!--
+			Deliberately neither the shipped 30-minute default nor two equal values, so that
+			TestInteractionTimeoutService proves the configuration is really what the agent loop and
+			the askUser tool read.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
+			<instance class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService"
+				approval-timeout-minutes="7"
+				question-timeout-minutes="11"
+			/>
+		</config>
+	</services>
+	<configs>
+		<!-- The table of test.objectedit:Book, whose shelf is a column of its own row. -->
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/test.objecteditMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+
+		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"
+			test-comment="false"
+			test-layouts-normalized="true"
+			test-jsp-content="true"
+		/>
+
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+			<ignore>
+				<entry value="com.top_logic.tl.ai.core.jsonschema.model"/>
+				<entry value="com.top_logic.tl.ai.core.tools.model.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.script.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.script.messages" />
+				<entry value="com.top_logic.tl.ai.core.agent.handoff" />
+				<entry value="com.top_logic.tl.ai.core.tools.config.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.interaction.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.integration.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.web.messages" />
+				<entry value="com.top_logic.tl.ai.core.session.persist.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.web.WebSearchHit" />
+				<entry value="com.top_logic.tl.ai.core.tools.web.WebSearchResults" />
+				<entry value="com.top_logic.tl.ai.core.agent.skills.Skill" />
+				<entry value="com.top_logic.tl.ai.core.memory.CompactionResult" />
+				<entry value="com.top_logic.tl.ai.core.agent.subagent.SubagentResult" />
+				<entry value="com.top_logic.tl.ai.core.message.SystemMessage" />
+				<entry value="com.top_logic.tl.ai.core.message.TextContent" />
+				<entry value="com.top_logic.tl.ai.core.message.ToolResultMessage" />
+				<entry value="com.top_logic.tl.ai.core.message.ToolCall" />
+				<entry value="com.top_logic.tl.ai.core.message.CompactionMarker" />
+				<entry value="com.top_logic.tl.ai.core.message.TokenUsage" />
+				<entry value="com.top_logic.tl.ai.core.message.AssistantMessage" />
+				<entry value="com.top_logic.tl.ai.core.message.ThinkingContent" />
+				<entry value="com.top_logic.tl.ai.core.message.ImageContent" />
+				<entry value="com.top_logic.tl.ai.core.message.UserMessage" />
+				<entry value="com.top_logic.tl.ai.core.message.PdfContent" />
+				<entry value="com.top_logic.tl.ai.core.provider.ProviderRequest" />
+				<entry value="com.top_logic.tl.ai.core.agent.AgentParams" />
+				<entry value="com.top_logic.tl.ai.core.agent.AgentResult" />
+				<entry value="com.top_logic.tl.ai.core.agent.approval.ApprovalRequest" />
+				<entry value="com.top_logic.tl.ai.core.provider.anthropic.messages" />
+				<entry value="com.top_logic.tl.ai.core.provider.openai.messages" />
+				<entry value="com.top_logic.tl.ai.core.provider.chatcompletions.messages" />
+				<entry value="com.top_logic.tl.ai.core.provider.catalog.ModelInfo" />
+				<entry value="com.top_logic.tl.ai.core.provider.AgentModelAssignment" />
+				<entry value="com.top_logic.tl.ai.core.agent.AgentDefinition" />
+				<entry value="com.top_logic.tl.ai.core.agent.SkillDefinition" />
+				<entry value="com.top_logic.tl.ai.core.tools.authoring.messages" />
+			</ignore>
+		</config>
+	</configs>
+</application>

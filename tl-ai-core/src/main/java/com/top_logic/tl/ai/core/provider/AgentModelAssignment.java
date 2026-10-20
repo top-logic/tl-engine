@@ -1,0 +1,94 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.provider;
+
+/**
+ * All tuning parameters for an agent's model assignment, resolved from
+ * {@link com.top_logic.tl.ai.core.agent.AgentRuntimeService}.
+ *
+ * <p>
+ * Every field except {@link #model()} is nullable — {@code null} means "use default". The agent
+ * definition only carries identity and capabilities; all operational tuning lives here.
+ * </p>
+ *
+ * @param model              the resolved model identifier (never {@code null})
+ * @param provider           the name of the provider serving the model, or {@code null} to let the
+ *                           model's only provider serve it
+ * @param maxTokens          max output tokens per LLM call, or {@code null} for catalog default
+ * @param contextWindow      context window size override, or {@code null} for catalog default
+ * @param maxTurns           max agent loop turns, or {@code null} for default
+ * @param temperature        temperature, or {@code null} for default
+ * @param topP               top-p sampling, or {@code null} for default
+ * @param thinkingEffort     Anthropic thinking effort (low/medium/high/max), or {@code null}
+ * @param topK               Anthropic top-k, or {@code null}
+ * @param reasoningEffort    <code>OpenAI</code>/<code>xAI</code> reasoning effort (low/medium/high), or {@code null}
+ * @param reasoningSummary   <code>OpenAI</code>/<code>xAI</code> reasoning summary (auto/detailed), or {@code null}
+ * @param toolChoice         tool choice (AUTO/REQUIRED/NONE), or {@code null} for provider default
+ * @param timeoutSeconds     request timeout, or {@code null} for default
+ * @param maxRetries         max retries on transient errors, or {@code null} for default
+ * @param maxToolResultChars max chars per tool result, or {@code null} for default
+ *
+ * @see com.top_logic.tl.ai.core.agent.AgentRuntimeService#resolveModelAssignment(String)
+ */
+public record AgentModelAssignment(
+		String model,
+		String provider,
+		Integer maxTokens,
+		Integer contextWindow,
+		Integer maxTurns,
+		Double temperature,
+		Double topP,
+		String thinkingEffort,
+		Integer topK,
+		String reasoningEffort,
+		String reasoningSummary,
+		String toolChoice,
+		Integer timeoutSeconds,
+		Integer maxRetries,
+		Integer maxToolResultChars) {
+
+	/**
+	 * Returns a copy of this assignment using a different model, keeping all tuning parameters.
+	 */
+	public AgentModelAssignment withModel(String newModel) {
+		return new AgentModelAssignment(newModel, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
+			thinkingEffort, topK, reasoningEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
+			maxToolResultChars);
+	}
+
+	/**
+	 * Returns a copy of this assignment with a different Anthropic thinking effort.
+	 *
+	 * @param newEffort
+	 *        one of {@link EffortLevels#THINKING}, or {@code null} for the catalog default
+	 */
+	public AgentModelAssignment withThinkingEffort(String newEffort) {
+		return new AgentModelAssignment(model, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
+			newEffort, topK, reasoningEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
+			maxToolResultChars);
+	}
+
+	/**
+	 * Returns a copy of this assignment with a different {@code OpenAI}/{@code xAI} reasoning effort.
+	 *
+	 * @param newEffort
+	 *        one of {@link EffortLevels#REASONING}, or {@code null} for the catalog default
+	 */
+	public AgentModelAssignment withReasoningEffort(String newEffort) {
+		return new AgentModelAssignment(model, provider, maxTokens, contextWindow, maxTurns, temperature, topP,
+			thinkingEffort, topK, newEffort, reasoningSummary, toolChoice, timeoutSeconds, maxRetries,
+			maxToolResultChars);
+	}
+
+	/**
+	 * The effort actually in force, whichever of the two fields carries it.
+	 *
+	 * @return {@code null} when neither is set
+	 */
+	public String effectiveEffort() {
+		return thinkingEffort != null ? thinkingEffort : reasoningEffort;
+	}
+}

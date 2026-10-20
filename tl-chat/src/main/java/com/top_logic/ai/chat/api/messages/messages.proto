@@ -1,0 +1,1510 @@
+package com.top_logic.ai.chat.api.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * One message in the chat.
+ */
+message MessageDto {
+	/**
+	 * Message ID.
+	 */
+	string id;
+
+	/**
+	 * "user", "agent", or "system".
+	 */
+	string role;
+
+	/**
+	 * Display name of the user who sent this message.
+	 */
+	string userName;
+
+	/**
+	 * Message text content.
+	 */
+	string content;
+
+	/**
+	 * Pre-rendered HTML for the message content (agent messages only; null for user/system).
+	 */
+	string contentHtml;
+
+	/**
+	 * Formatted timestamp string.
+	 */
+	string time;
+
+	/**
+	 * Attachment metadata (file name, type, size). Binary data is NOT persisted.
+	 */
+	repeated AttachmentDto attachments;
+}
+
+/**
+ * Response body for GET /chat/updates.
+ */
+message ChatUpdatesResponse {
+	/**
+	 * Whether an AI task is currently in progress.
+	 */
+	boolean processing;
+
+	/**
+	 * All messages in the chat.
+	 */
+	repeated MessageDto messages;
+
+	/**
+	 * The open session's task list as JSON, in the format the <code>task_update</code> SSE frame
+	 * carries (<code>TaskStore.toJson()</code>).
+	 *
+	 * <p>
+	 * The stream replays nothing, so this is how a page that was reloaded in mid-run gets the
+	 * progress it was showing back.
+	 * </p>
+	 */
+	string tasksJson;
+}
+
+/**
+ * File attachment metadata and optional binary data.
+ */
+message AttachmentDto {
+	/**
+	 * Original file name.
+	 */
+	string fileName;
+
+	/**
+	 * MIME type (e.g. "image/png", "application/pdf").
+	 */
+	string mimeType;
+
+	/**
+	 * Base64-encoded file content. Present in ChatSendRequest (upload); null in persisted MessageDto.
+	 */
+	string base64Data;
+
+	/**
+	 * File size in bytes.
+	 */
+	int size;
+}
+
+/**
+ * Request body for POST /chat/send.
+ */
+message ChatSendRequest {
+	/**
+	 * User message text.
+	 */
+	string text;
+
+	/**
+	 * Active session ID; if set, messages will be persisted to this session.
+	 */
+	string sessionId;
+
+	/**
+	 * File attachments (images, PDFs). Max 5, each max 10 MB.
+	 */
+	repeated AttachmentDto attachments;
+
+	/**
+	 * Agent to run for this turn. Empty uses the configured chat entry-point agent.
+	 */
+	string agent;
+
+	/**
+	 * Model override for this turn. Empty keeps the agent's assigned model.
+	 */
+	string model;
+
+	/**
+	 * When true, {@link #mcpServers} replaces the agent's configured MCP servers for this turn
+	 * (an empty list means no MCP tools). When false, the agent's defaults are used.
+	 */
+	boolean mcpOverride;
+
+	/**
+	 * MCP servers to attach when {@link #mcpOverride} is true.
+	 */
+	repeated string mcpServers;
+
+	/**
+	 * How hard the model may think for this turn, one of the selected model's
+	 * <code>effortLevels</code>. Empty keeps the agent's assignment; a level the model does not
+	 * offer is ignored with a logged warning rather than failing the run.
+	 */
+	string effort;
+
+	/**
+	 * What the page states about the situation this message is asked in.
+	 *
+	 * <p>
+	 * Computed on the server from the chat element's <code>&lt;context&gt;</code> configuration and
+	 * echoed back here by the browser, because the run happens on a background thread long after the
+	 * page's channels were read. The harness renders the stable ones into the system prompt; the
+	 * message text is never touched.
+	 * </p>
+	 */
+	repeated FactDto facts;
+
+	/**
+	 * The position of the auto-approve switch at the send, <code>AUTO_APPROVE</code> or
+	 * <code>MANUAL</code>. The turn runs with it. Empty keeps the chat's stored mode.
+	 */
+	string approvalMode;
+}
+
+/**
+ * One fact a page states about the situation a message is sent in.
+ */
+message FactDto {
+	/**
+	 * What the fact is called in front of the model, e.g. "Project".
+	 */
+	string name;
+
+	/**
+	 * The rendered value.
+	 */
+	string value;
+
+	/**
+	 * Whether the value holds for the whole conversation.
+	 *
+	 * <p>
+	 * Only a stable fact reaches the system prompt, which has to stay byte-identical across the turns
+	 * of one conversation or the provider's prompt cache misses on every one of them. A fact that is
+	 * not stable goes into the per-turn context block, which travels in the turn itself, beside the
+	 * user's text.
+	 * </p>
+	 */
+	boolean stable;
+}
+
+/**
+ * Response body for POST /chat/send.
+ */
+message ChatSendResponse {
+	/**
+	 * Task ID for polling updates.
+	 */
+	string taskId;
+
+	/**
+	 * e.g. "processing", or "forbidden" for a request the acting account may not make.
+	 */
+	string status;
+
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	string reason;
+}
+
+/**
+ * Request body for POST /chat/improve-prompt.
+ */
+message ImprovePromptRequest {
+	/**
+	 * Draft text to improve.
+	 */
+	string draft;
+
+	/**
+	 * Browser-generated correlation ID.
+	 */
+	string requestId;
+}
+
+/**
+ * Response body for POST /chat/improve-prompt.
+ */
+message ImprovePromptResponse {
+	/**
+	 * Correlation ID from the request.
+	 */
+	string requestId;
+
+	/**
+	 * Improved draft text. Empty unless {@link #status} is "completed".
+	 */
+	string improvedText;
+
+	/**
+	 * Result status: "completed", "cancelled", "stale", or "forbidden" for a request the acting
+	 * account may not make.
+	 */
+	string status;
+
+	/**
+	 * Why the request was refused, in the acting user's language; empty unless it was.
+	 */
+	string reason;
+}
+
+/**
+ * Request body for POST /chat/improve-prompt/cancel.
+ */
+message CancelPromptImprovementRequest {
+	/**
+	 * Correlation ID of the request to cancel.
+	 */
+	string requestId;
+}
+
+/**
+ * Request body for POST /chat/regenerate: answer the same message again.
+ */
+message RegenerateRequest {
+	/** Session whose last turn is to be answered again. */
+	string sessionId;
+
+	/** Agent for the new run; empty keeps the chat entry point. */
+	string agent;
+
+	/** Model for the new run; empty keeps the agent's assignment. */
+	string model;
+
+	/** Whether the named MCP servers replace the agent's configured ones. */
+	boolean mcpOverride;
+
+	/** MCP servers for the new run. */
+	repeated string mcpServers;
+
+	/** How hard the model may think for the new run. */
+	string effort;
+
+	/**
+	 * What the page states about the situation, as for POST /chat/send.
+	 *
+	 * <p>
+	 * Carried here too because a regenerated turn is a new run with a new system prompt: without the
+	 * facts it would be answered with less context than the turn it replaces.
+	 * </p>
+	 */
+	repeated FactDto facts;
+}
+
+/**
+ * Request body for POST /chat/truncate: drop a turn and everything after it.
+ */
+message TruncateRequest {
+	/** Session to truncate. */
+	string sessionId;
+
+	/**
+	 * Zero-based index of the first turn to remove. Everything from it to the end goes with it,
+	 * because a conversation is a sequence: what followed was said in reply to what is being
+	 * removed and cannot stand without it.
+	 */
+	int fromTurn;
+}
+
+/**
+ * Response body for POST /chat/truncate and POST /chat/regenerate.
+ */
+message TruncateResponse {
+	/** "ok", "busy", "error", or "forbidden" for a request the acting account may not make. */
+	string status;
+
+	/** Why the request was refused, in the acting user's language; empty unless it was. */
+	string reason;
+
+	/** Number of turns removed. */
+	int removedTurns;
+
+	/** The user text of the first removed turn, so the client can offer it for editing. */
+	string text;
+
+	/** Task ID of the run started by a regenerate; empty for a plain truncate. */
+	string taskId;
+}
+
+/**
+ * One answer the user rated.
+ */
+message MessageFeedbackDto {
+	/** Zero-based index of the turn whose answer was rated. */
+	int turnIndex;
+
+	/** "up" or "down". */
+	string rating;
+
+	/** Free text the user added; empty when they added none. */
+	string note;
+
+	/** ISO-8601 timestamp of when the rating was given. */
+	string recordedAt;
+}
+
+/**
+ * Request body for POST /chat/feedback.
+ */
+message MessageFeedbackRequest {
+	/** Session the rated answer belongs to. */
+	string sessionId;
+
+	/** Zero-based index of the turn whose answer was rated. */
+	int turnIndex;
+
+	/** "up", "down", or empty to withdraw an earlier rating. */
+	string rating;
+
+	/** Free text the user added; optional. */
+	string note;
+}
+
+/**
+ * SSE connected event payload.
+ */
+message ConnectedEvent {
+	/**
+	 * Current message sequence number.
+	 */
+	int messageSeq;
+
+	/**
+	 * Current timeline sequence number.
+	 */
+	int timelineSeq;
+
+	/**
+	 * Whether an AI task is currently in progress.
+	 */
+	boolean processing;
+
+	/**
+	 * Current task ID, or null if none.
+	 */
+	string taskId;
+}
+
+/**
+ * SSE heartbeat event payload.
+ */
+message HeartbeatEvent {
+	/**
+	 * Current server timestamp in milliseconds.
+	 */
+	long ts;
+}
+
+/**
+ * Summary of a chat session for the history panel.
+ */
+message ChatSessionDto {
+	/**
+	 * Session ID (KnowledgeObject ID).
+	 */
+	string id;
+
+	/**
+	 * User-editable session title.
+	 */
+	string title;
+
+	/**
+	 * ISO-8601 timestamp of last update.
+	 */
+	string lastUpdated;
+}
+
+/**
+ * Response body for GET /chat/sessions.
+ */
+message ChatSessionListResponse {
+	/**
+	 * All sessions for the current user, sorted by lastUpdated descending.
+	 */
+	repeated ChatSessionDto sessions;
+}
+
+/**
+ * A pending human-in-the-loop request (approval/question/choice) awaiting the current user,
+ * with the chat session it belongs to so the client can link to it.
+ */
+message PendingInteractionDto {
+	/**
+	 * Correlation ID of the underlying <code>InteractionRequest</code> (used for /chat/respond).
+	 */
+	string requestId;
+
+	/**
+	 * Request kind: "approval", "question", or "choice".
+	 */
+	string type;
+
+	/**
+	 * Short label (e.g. "Approval").
+	 */
+	string header;
+
+	/**
+	 * The prompt presented to the responder (raw markdown). For approvals this is the display
+	 * reason.
+	 */
+	string prompt;
+
+	/**
+	 * Structured request data. For approvals this is the tool call's argument JSON, so the client
+	 * can rebuild the approval prompt when the user re-opens the chat.
+	 */
+	string payload;
+
+	/**
+	 * ID of the chat session that raised this request.
+	 */
+	string sessionId;
+
+	/**
+	 * Title of the chat session that raised this request.
+	 */
+	string sessionTitle;
+
+	/**
+	 * ISO-8601 timestamp of when the request was created.
+	 */
+	string createdAt;
+
+	/**
+	 * Milliseconds left for the user to respond, counted from the moment this response was
+	 * written. Zero when the request's deadline has already passed, so a client can tell a
+	 * request it can still answer from one that is only waiting to be cleaned up.
+	 */
+	long remainingMs;
+
+	/**
+	 * For an approval, the tool's mode ("USER_SCOPED", "DATA_WRITE", "STRUCTURAL", "EXTERNAL"), so a
+	 * client can phrase the question in the reader's language rather than repeat the server's
+	 * English reason. Empty when the run that asked is no longer waiting, or for a question.
+	 */
+	string toolMode;
+
+	/**
+	 * For a question of type "choice", whether it takes more than one answer, so a rebuilt card
+	 * offers the checkboxes the live one offered rather than silently asking a different question.
+	 * Read off the run that is still waiting; never <code>true</code> for an approval.
+	 */
+	boolean multiSelect;
+
+	/**
+	 * For a question of type "choice", the options to offer, in the order the agent gave them.
+	 *
+	 * <p>
+	 * The same options {@link #payload} holds as the raw JSON the model wrote, parsed here so that
+	 * a client rebuilding the card does not have to know the two element shapes that JSON may
+	 * have. Empty for an approval and for a free-text question.
+	 * </p>
+	 */
+	repeated InteractionOptionDto options;
+
+	/**
+	 * The id of the background subagent that asks, read off the store it is still waiting in;
+	 * empty when the agent the user talks to asks, or when nothing waits any more.
+	 */
+	string askedBySubagentId;
+
+	/** The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is. */
+	string askedByAgent;
+}
+
+/**
+ * Response body for GET /chat/interactions: pending requests across all of the current
+ * user's chat sessions, oldest first.
+ */
+message PendingInteractionsResponse {
+	/**
+	 * All pending requests awaiting the current user.
+	 */
+	repeated PendingInteractionDto interactions;
+}
+
+/**
+ * Request body for POST /chat/sessions.
+ */
+message CreateSessionRequest {
+	/**
+	 * Title for the new session.
+	 */
+	string title;
+
+	/**
+	 * The approval mode the new session starts with, as the user set it before the session existed:
+	 * AUTO_APPROVE or MANUAL. Empty starts the session with MANUAL.
+	 */
+	string approvalMode;
+}
+
+/**
+ * Request body for PUT /chat/sessions/{id}/title.
+ */
+message UpdateTitleRequest {
+	/**
+	 * New title for the session.
+	 */
+	string title;
+}
+
+/**
+ * Response body for GET /chat/sessions/{id} (full session load).
+ */
+message ChatSessionDetailResponse {
+	/**
+	 * Session ID.
+	 */
+	string id;
+
+	/**
+	 * Session title.
+	 */
+	string title;
+
+	/**
+	 * Messages JSON blob (raw string, parsed by client).
+	 */
+	string messagesJson;
+
+	/**
+	 * Turn-based entries (V2 format) as a JSON array of <code>PersistedTurn</code> objects
+	 * (see <code>com.top_logic.tl.ai.core.session.persist</code>). When present, takes
+	 * precedence over entries.
+	 */
+	string turnsJson;
+
+	/**
+	 * Token usage of the last agent-loop iteration of the session's last turn.
+	 *
+	 * <p>
+	 * Its prompt size (input + cache read + cache write) is the exact context the model saw when
+	 * the session was last active, so re-opening a session restores the context ring to a measured
+	 * number rather than an estimate. Absent for a session whose transcript predates the field, and
+	 * for a session that has not run a turn yet.
+	 * </p>
+	 */
+	TokenUsageDto lastPromptUsage;
+
+	/**
+	 * Context window in tokens of the model that ran the session's last turn, or zero when that
+	 * model is no longer configured.
+	 */
+	int contextWindow;
+
+	/**
+	 * Model that ran the session's last turn, empty when the session has not run one.
+	 */
+	string lastModel;
+
+	/** Answer ratings recorded in this session, so a reopened chat shows them again. */
+	repeated MessageFeedbackDto feedback;
+
+	/** Effort level last used in this session; empty when none was chosen. */
+	string lastEffort;
+
+	/**
+	 * Whether this chat approves tools by itself: <code>AUTO_APPROVE</code> or <code>MANUAL</code>,
+	 * as the server now holds it for the window that loaded the chat. The chat's switch shows
+	 * this, so it never claims a mode the runs of this chat do not have (#658).
+	 */
+	string approvalMode;
+
+	/**
+	 * What the prompt of the session's last request was made of, so a re-opened chat shows the same
+	 * breakdown a live one does. Absent for a session whose transcript predates the field.
+	 */
+	ContextCompositionEvent lastComposition;
+
+	/**
+	 * The run this conversation is in the middle of, as of this snapshot. Absent when no run was
+	 * in flight.
+	 */
+	InFlightRunDto inFlight;
+}
+
+/**
+ * Where the run a snapshot was taken of had got to.
+ */
+message InFlightRunDto {
+	/**
+	 * How many characters of text the run had streamed, recorded or not, when the snapshot was
+	 * taken. A text delta whose <code>end</code> is not beyond this is already in the snapshot.
+	 */
+	long streamedChars;
+}
+
+/**
+ * SSE user interaction event payload.
+ */
+message UserInteractionEvent {
+	/**
+	 * Unique interaction request identifier (e.g. "interaction-1").
+	 */
+	string requestId;
+
+	/**
+	 * The question to present to the user (raw markdown).
+	 */
+	string question;
+
+	/**
+	 * Pre-rendered HTML for the question.
+	 */
+	string questionHtml;
+
+	/**
+	 * Short label (e.g. "Approval", "Clarify", "Choose").
+	 */
+	string header;
+
+	/**
+	 * Interaction type: "approval", "text", or "choice".
+	 */
+	string type;
+
+	/**
+	 * Available options for "choice" interactions.
+	 */
+	repeated InteractionOptionDto options;
+
+	/**
+	 * Whether multiple selections are allowed (for "choice" type).
+	 */
+	boolean multiSelect;
+
+	/**
+	 * Milliseconds left for the user to answer, counted from the moment this event was sent.
+	 * Zero when the request has no time left. A re-emitted question (the chat was reopened)
+	 * carries what is left of its deadline, not the full one.
+	 */
+	long remainingMs;
+
+	/**
+	 * The id of the background subagent that asks (e.g. "sa-2"), or empty when the agent the user
+	 * talks to asks. A subagent asks while its lead may be resting, and the card has to say whose
+	 * question it is.
+	 */
+	string askedBySubagentId;
+
+	/**
+	 * The name of the agent the asking subagent runs; empty when {@link #askedBySubagentId} is.
+	 */
+	string askedByAgent;
+}
+
+/**
+ * One selectable option in a user interaction.
+ */
+message InteractionOptionDto {
+	/**
+	 * Display label for the option.
+	 */
+	string label;
+
+	/**
+	 * Optional description / tooltip text.
+	 */
+	string description;
+}
+
+/** SSE event for streaming text delta. */
+message TextDeltaEvent {
+	/** The text chunk. */
+	string text;
+
+	/**
+	 * How many characters of text the run has streamed, this chunk included; zero where the
+	 * position is not known, as for a delegated agent's text.
+	 */
+	long end;
+
+	/**
+	 * The chat the run writes into, so a window that is opening another chat meanwhile does not
+	 * take it for that chat's text. Empty when it is not known.
+	 */
+	string sessionId;
+}
+
+/** SSE event for streaming thinking delta. */
+message ThinkingDeltaEvent {
+	/** The thinking text chunk. */
+	string text;
+}
+
+/** SSE event for run started. */
+message RunStartedEvent {
+	/** The run ID. */
+	string runId;
+
+	/** The model being used. */
+	string model;
+
+	/** Estimated tokens already in the conversation. */
+	int usedTokens;
+
+	/** Model context window in tokens. */
+	int contextWindow;
+}
+
+/** SSE event for run completed. */
+message RunCompletedEvent {
+	/** The run ID. */
+	string runId;
+
+	/** Stop reason: COMPLETE, MAX_TURNS, ERROR, ABORTED. */
+	string reason;
+
+	/** Total token usage for the run. */
+	TokenUsageDto totalUsage;
+
+	/** What the run cost, in {@link #getCurrency()}; 0 when no price was known. */
+	double totalCost;
+
+	/** The ISO 4217 code of {@link #getTotalCost()}; empty when the run reported no cost. */
+	string currency;
+}
+
+/** SSE event for turn started. */
+message TurnStartedEvent {
+	/** 1-based turn number. */
+	int turnNumber;
+
+	/** Estimated tokens already in the conversation. */
+	int usedTokens;
+
+	/** Model context window in tokens. */
+	int contextWindow;
+}
+
+/** SSE event for turn completed. */
+message TurnCompletedEvent {
+	/** 1-based turn number. */
+	int turnNumber;
+
+	/** Token usage for this turn. */
+	TokenUsageDto turnUsage;
+
+	/**
+	 * Model context window in tokens, repeated here so the client can size the context ring from
+	 * the same event that carries the provider-reported prompt size.
+	 */
+	int contextWindow;
+}
+
+/**
+ * SSE event describing what the prompt of the request just sent is made of.
+ *
+ * <p>
+ * Every figure is an estimate produced by the agent loop's token estimator, not a provider count:
+ * the provider reports one prompt total and never splits it. A client showing these next to the
+ * measured total must mark them as estimated.
+ * </p>
+ */
+message ContextCompositionEvent {
+	/** Estimated tokens of the system prompt. */
+	int systemPromptTokens;
+
+	/** Estimated tokens of the tool schemas sent with the request. */
+	int toolDefinitionTokens;
+
+	/** Estimated tokens of the conversation messages, tool results included. */
+	int messageTokens;
+
+	/** Estimated tokens of the tool results within {@link #messageTokens}. */
+	int toolResultTokens;
+
+	/** Number of tool schemas sent with the request. */
+	int toolCount;
+
+	/**
+	 * The skills whose tools this request carried, in the order they were loaded.
+	 *
+	 * <p>
+	 * The part of {@link #toolDefinitionTokens} a {@code loadSkill} added, and the only part of the
+	 * tool array that can still change within a conversation.
+	 * </p>
+	 */
+	repeated string loadedSkills;
+}
+
+/** SSE event for tool call started. */
+message ToolStartedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Tool name. */
+	string toolName;
+
+	/** Arguments as JSON string. */
+	string argsJson;
+}
+
+/** SSE event for tool call completed. */
+message ToolCompletedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Tool name. */
+	string toolName;
+
+	/** Result text. */
+	string result;
+
+	/** Duration in milliseconds. */
+	long durationMs;
+}
+
+/** SSE event for tool call failed. */
+message ToolFailedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Tool name. */
+	string toolName;
+
+	/** Error message. */
+	string errorMessage;
+
+	/** Duration in milliseconds. */
+	long durationMs;
+}
+
+/** SSE event for tool call denied. */
+message ToolDeniedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Tool name. */
+	string toolName;
+
+	/** Denial reason. */
+	string reason;
+}
+
+/** SSE event for approval required. */
+message ApprovalRequiredEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Approval request ID for responding. */
+	string approvalRequestId;
+
+	/** Tool name needing approval. */
+	string toolName;
+
+	/** Arguments as JSON string. */
+	string argsJson;
+
+	/** Human-readable reason for approval. */
+	string displayReason;
+
+	/**
+	 * Milliseconds left for the user to decide, counted from the moment this event was sent.
+	 * Zero when the request has no time left; the client shows the remaining time so the user
+	 * knows there is a clock.
+	 */
+	long remainingMs;
+
+	/**
+	 * What kind of change the tool makes: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL or EXTERNAL.
+	 *
+	 * <p>
+	 * Why approval is being asked, in a form a UI can phrase in the user's own language;
+	 * {@link #displayReason} is the same thing written once, in English. Empty for an event from
+	 * before the mode was carried.
+	 * </p>
+	 */
+	string toolMode;
+}
+
+/** SSE event for approval resolved. */
+message ApprovalResolvedEvent {
+	/** Unique tool call ID. */
+	string toolCallId;
+
+	/** Approval request ID. */
+	string approvalRequestId;
+
+	/** Outcome: APPROVED, APPROVED_FOR_SESSION, REJECTED, TIMED_OUT. */
+	string outcome;
+}
+
+/**
+ * SSE event telling a chat UI that a human-in-the-loop request it may be showing has been answered.
+ *
+ * <p>
+ * Sent to the other windows of the responder's account when one of them answers an approval or a
+ * question. The window the run belongs to learns the same thing from the run's own
+ * {@code approval_resolved} frame; a window that only listed the request - a second tab, a reloaded
+ * page - has no run to hear it from, and would keep showing a card nobody is waiting on.
+ * </p>
+ */
+message InteractionResolvedEvent {
+	/** Correlation id of the approval or question that was answered. */
+	string requestId;
+
+	/**
+	 * What the responder decided: "APPROVED", "APPROVED_FOR_SESSION", "REJECTED", or the answer of
+	 * a question.
+	 */
+	string outcome;
+}
+
+/**
+ * SSE wrapper for child-agent events forwarded during delegation.
+ *
+ * <p>
+ * Carries the parent delegation's tool call ID so the browser can route child events
+ * (tool calls, text deltas, token usage) to the correct delegation container.
+ * </p>
+ */
+message DelegationEventWrapper {
+	/** The subagent job id (empty for synchronous delegation). */
+	string subagentId;
+
+	/** The parent agent's tool call ID for the delegate_to_* tool. */
+	string delegationToolCallId;
+
+	/** The inner SSE event type (e.g. "tool_started", "text_delta", "run_completed"). */
+	string eventType;
+
+	/** The inner event data as JSON string. */
+	string eventData;
+}
+
+/**
+ * SSE event carrying subagent lifecycle status.
+ *
+ * <p>
+ * Emitted for {@code subagent_started}, {@code subagent_running}, {@code subagent_completed},
+ * {@code subagent_failed}, and {@code subagent_cancelled} events.
+ * </p>
+ */
+message SubagentStatusEvent {
+	/** The subagent job id within the session. */
+	string subagentId;
+
+	/** The delegated-to agent name. */
+	string targetAgentName;
+
+	/** The task brief (on start) or final text / error summary (on completion/failure). */
+	string detail;
+
+	/** Total tokens the subagent used (0 until completion). */
+	int32 totalTokens;
+
+	/** Run duration in milliseconds (0 until completion). */
+	int64 durationMs;
+
+	/**
+	 * The id of the lead's tool call that started the subagent, so the chat can show its card at that
+	 * call; sent on start, on leaving the queue and on the end, so that a window which did not see the
+	 * start finds the card.
+	 */
+	string parentToolCallId;
+
+	/**
+	 * Whether the subagent waits in the queue for a free slot rather than working; sent on start. A
+	 * {@code subagent_running} event says when it has started.
+	 */
+	boolean queued;
+
+	/** The subagent's own run id, its transcript's key; sent on the end, empty if unknown. */
+	string childRunId;
+
+	/** On completion: why the subagent's run stopped, a {@code StopReason} name; empty otherwise. */
+	string stopReason;
+}
+
+/**
+ * Request body for POST /chat/subagents/{id}/message: the user writes to one running background
+ * subagent from its card.
+ */
+message SubagentMessageRequest {
+	/** The chat whose lead started the subagent; empty means the chat this window shows. */
+	string sessionId;
+
+	/** The id of the lead's tool call that started the subagent, which tells it from a namesake. */
+	string parentToolCallId;
+
+	/** What the user writes. */
+	string text;
+}
+
+/** Answer of GET /chat/subagents: the subagents of this window's chat, and what they spend from. */
+message SubagentListResponse {
+	/** Every subagent the chat's registry knows, whatever its status. */
+	repeated SubagentJobDto subagents;
+
+	/** The budget the subagents share; absent when no subagent's run is bounded. */
+	SubagentBudgetDto budget;
+}
+
+/** One background subagent, as GET /chat/subagents lists it. */
+message SubagentJobDto {
+	/** The subagent's id. */
+	string subagentId;
+
+	/** The name of the agent it runs. */
+	string targetAgentName;
+
+	/** The name of its {@code SubagentJobStatus}. */
+	string status;
+
+	/** Tokens its run used; 0 until it has ended. */
+	long totalTokens;
+
+	/** How long its run took; 0 until it has ended. */
+	long durationMs;
+
+	/**
+	 * Whether its recorded run is available, so that the client offers a "view transcript"
+	 * affordance only where GET /chat/subagents/{id}/transcript has something to answer.
+	 */
+	bool hasTranscript;
+
+	/** The id of the lead's tool call that started it. */
+	string parentToolCallId;
+
+	/** The task brief it was given. */
+	string task;
+
+	/** Its own run id; empty while unknown. */
+	string childRunId;
+
+	/** What its run cost, in {@link #getCurrency()}; absent while its run has not reported one. */
+	@Nullable
+	double cost;
+
+	/** The ISO 4217 code of {@link #getCost()}; absent with it. */
+	@Nullable
+	string currency;
+
+	/** Why its run stopped, a {@code StopReason} name; empty until it has ended. */
+	string stopReason;
+
+	/**
+	 * Its final text once it has ended - the error summary for a failed one - and its task while it
+	 * runs, so that the client can rebuild a finished row after a reload.
+	 */
+	string detail;
+}
+
+/**
+ * The budget a turn's subagents spend from: the allowance of the run that started them, which they
+ * share, as its headroom when that run started.
+ */
+message SubagentBudgetDto {
+	/** Token headroom; -1 when the run bounds no tokens. */
+	long tokens;
+
+	/** Money headroom, in {@link #getCurrency()}; -1 when the run bounds no money. */
+	double money;
+
+	/** The ISO 4217 code of {@link #getMoney()}; empty when the run bounds no money. */
+	string currency;
+}
+
+/** Answer of POST /chat/subagents/{id}/message. */
+message SubagentMessageResponse {
+	/**
+	 * {@code sent} - the subagent reads it at the start of its next turn; {@code ended} - the
+	 * subagent has ended and reads no more messages; {@code unknown} - no such subagent of this
+	 * account; {@code empty} - there is no text.
+	 */
+	string status;
+
+	/** The id of the message sent; the frame that says it was read names it. */
+	string messageId;
+}
+
+/** One message the user wrote to a subagent. */
+message SubagentMessageDto {
+	/** The message's id, as the answer to the request named it. */
+	string id;
+
+	/** What the user wrote. */
+	string text;
+}
+
+/**
+ * Inner data of the {@code user_message_read} frame of a background subagent: it has read these
+ * messages of the user at the start of a turn.
+ */
+message SubagentMessagesReadEvent {
+	/** The messages read, in the order they were sent. */
+	repeated SubagentMessageDto messages;
+}
+
+/**
+ * SSE event for a lead turn that starts without a message of the user, because subagents finished
+ * or asked the lead something while no turn of it ran. Precedes the turn's {@code run_started}.
+ */
+message LeadWokenEvent {
+	/** How many subagents' results the turn opens with. */
+	int32 finished;
+
+	/** How many subagents' questions it opens with. */
+	int32 asking;
+
+	/** Which subagents reported back, and why, in the order the lead is told. */
+	repeated WokenSubagent subagents;
+}
+
+/** One subagent whose news a lead turn opens with. */
+message WokenSubagent {
+	/** The subagent's id within its chat, e.g. {@code sa-2}. */
+	string subagentId;
+
+	/** The agent it runs. */
+	string agentName;
+
+	/** Why it reported back: {@code FINISHED}, {@code FAILED}, {@code CANCELLED} or {@code ASKS}. */
+	string reason;
+
+	/** The id of the lead's tool call that started it, where its card stands; empty if unknown. */
+	string parentToolCallId;
+
+	/** For {@code ASKS}, the start of what it asks; empty otherwise. */
+	string question;
+}
+
+/**
+ * SSE event saying that subagents' news waits for the user's next message, because the lead has been
+ * started for such news as often as it may between two messages of the user.
+ */
+message LeadWakesExhaustedEvent {
+	/** How many turns were started for subagents' news since the user's last message. */
+	int32 wakes;
+}
+
+/** SSE event for transaction committed. */
+message TransactionCommittedEvent {
+	/** Revision number, -1 if no changes. */
+	long revisionNumber;
+}
+
+/** SSE event for transaction rolled back. */
+message TransactionRolledBackEvent {
+	/** Rollback reason. */
+	string reason;
+}
+
+/** SSE event for provider error. */
+message ProviderErrorEvent {
+	/** Machine-readable error kind: RATE_LIMITED, OVERLOADED, CONTEXT_WINDOW_EXCEEDED, AUTHENTICATION, INVALID_REQUEST, UNKNOWN. */
+	string kind;
+
+	/** Human-readable error message. */
+	string errorMessage;
+}
+
+/** SSE event for a run that continues on another model. */
+message ModelSwitchedEvent {
+	/** The model the run was using, qualified by its provider where one was named. */
+	string fromModel;
+
+	/** The model the run continues with, qualified the same way. */
+	string toModel;
+
+	/** Why the previous model was left, in one line. */
+	string reason;
+}
+
+/**
+ * SSE event for a model call that is asked again after a pause, because the model was rate limited
+ * or overloaded.
+ */
+message RetryScheduledEvent {
+	/** Why the call is repeated: RATE_LIMITED or OVERLOADED. */
+	string kind;
+
+	/** Which retry this is, 1 for the first. */
+	int attempt;
+
+	/** How long the run waits before it asks again, in milliseconds. */
+	long waitMs;
+}
+
+/** SSE event for compaction started. */
+message CompactionStartedEvent {
+	/** Token count before compaction. */
+	int tokensBefore;
+
+	/** Trigger: reactive or proactive. */
+	string trigger;
+
+	/** Model context window in tokens. */
+	int contextWindow;
+}
+
+/** SSE event for task list update. Carries the full task list snapshot. */
+message TaskUpdateEvent {
+	/** Full task list as JSON (<code>PersistedTaskStore</code> format from <code>TaskStore.toJson()</code>). */
+	string tasksJson;
+}
+
+/**
+ * One source a {@code [n]} marker in an answer points to.
+ *
+ * Mirrors the persist {@code CitationDto}. The server drops any citation whose id or url did not
+ * appear in this turn's tool results.
+ */
+message CitationDto {
+	/** 1-based marker index shown in the answer. */
+	int index;
+
+	/** Tool that produced the cited id or URL. */
+	string toolName;
+
+	/** Tool call id of that tool, when known. */
+	string toolCallId;
+
+	/** Host kind, e.g. {@code web} or {@code invoice}, as the application declared it. */
+	string kind;
+
+	/**
+	 * What to call that kind in front of a reader, in the reader's language.
+	 *
+	 * Empty when the host declared no label for the kind; the {@code kind} is then shown instead.
+	 */
+	string kindLabel;
+
+	/** Id the tool returned (a URL, a TID, …). */
+	string id;
+
+	/** Human label for the chip popover. */
+	string label;
+
+	/** Link for a web source; empty otherwise. */
+	string url;
+	/** The sentence of the source the fact rests on, as the model read it; empty when none. */
+	string passage;
+
+	/** A window of the source around {@link #passage}, for the marker's popover. */
+	string excerpt;
+
+	/** Where the copy of a web page archived when it was read can be looked at; empty without one. */
+	string archiveUrl;
+
+	/** When that copy was taken, ISO-8601; empty without one. */
+	string archivedAt;
+}
+
+/** SSE event for completed assistant message with server-rendered HTML. */
+message MessageCompleteEvent {
+	/** Server-rendered markdown-to-HTML content. */
+	string contentHtml;
+
+	/** Raw markdown text for persistence. */
+	string contentText;
+
+	/** Citations the validator kept, in marker order. */
+	repeated CitationDto citations;
+}
+
+/**
+ * Per-user layout of the right rail and artefact pane, for one chat.
+ *
+ * <p>
+ * This is what the user decided, not what the page currently shows. A fact the user never touched
+ * is absent, and the element's configured default applies to it - so a rail configured
+ * <code>open="true"</code> opens for a new user and stays closed for one who closed it (#423).
+ * </p>
+ */
+message ChatPreferencesDto {
+	/** Whether the right rail is open, or null while the user has not decided. */
+	@Nullable
+	bool railOpen;
+
+	/** Width of the artefact pane in pixels; 0 means the configured or built-in default. */
+	int paneWidth;
+
+	/** Sum of section badges last stored when the rail was opened. */
+	int badgeSeen;
+
+	/**
+	 * Per section name, whether the user left that section open.
+	 *
+	 * <p>
+	 * A section the user never toggled is absent and follows the <code>open</code> flag its
+	 * configuration gives it.
+	 * </p>
+	 */
+	map<string, bool> sections;
+}
+
+/** Token usage breakdown. */
+message TokenUsageDto {
+	/** Input tokens. */
+	int inputTokens;
+
+	/** Output tokens. */
+	int outputTokens;
+
+	/** Thinking tokens. */
+	int thinkingTokens;
+
+	/** Cache read tokens. */
+	int cacheReadTokens;
+
+	/** Cache write tokens. */
+	int cacheWriteTokens;
+}
+
+/** Session metadata for persistence. */
+message SessionMetadata {
+	/** Tool names approved for this session. */
+	repeated string approvedTools;
+
+	/** Cumulative token usage. */
+	TokenUsageDto cumulativeUsage;
+
+	/** Last model used. */
+	string lastModel;
+
+	/** Current approval mode (e.g. AUTO_APPROVE, ALWAYS_ASK). */
+	string approvalMode;
+
+	/** Serialized <code>TaskStore</code> JSON (<code>PersistedTaskStore</code> format). */
+	string tasksJson;
+
+	/** Skill IDs loaded in this session, for replay on restore. */
+	repeated string loadedSkills;
+
+	/**
+	 * Answer ratings the user gave in this session.
+	 *
+	 * <p>
+	 * Kept here rather than in the transcript because a transcript is written per run and a rating
+	 * arrives after it: this bag is the session's own, is rewritten whole, and is therefore also
+	 * where an evaluation reads the ratings back from.
+	 * </p>
+	 */
+	repeated MessageFeedbackDto feedback;
+
+	/** Effort level last chosen in this session. */
+	string lastEffort;
+
+	/**
+	 * When a window of the owner last showed this chat, in milliseconds since the epoch; 0 if never.
+	 *
+	 * <p>
+	 * What tells a subagent's result the user has not looked at yet from one they have: the chat
+	 * list marks a chat whose subagent ended after this.
+	 * </p>
+	 */
+	int64 lastSeen;
+}
+
+/** Catalog of agents, models and MCP servers the chat UI can offer. */
+message ChatCapabilitiesResponse {
+	/** Configured chat entry-point agent name. */
+	string entryPointAgent;
+
+	/** Agents the current user may start a chat with. */
+	repeated AgentOptionDto agents;
+
+	/** Models configured on LLM providers. */
+	repeated ModelOptionDto models;
+
+	/** MCP servers known to the registry. */
+	repeated McpServerOptionDto mcpServers;
+
+	/**
+	 * Whether the prompt improver would run for this account.
+	 *
+	 * <p>
+	 * False when the model it runs on, or a server it declares, is forbidden to a role of this
+	 * account: the improver is outside the agent allowlist - the product chose it, not the user - but
+	 * the other two sections still decide, so its run would be refused. A client that offers the
+	 * button anyway offers a refusal.
+	 * </p>
+	 */
+	bool promptImproverAvailable;
+}
+
+/** One selectable agent. */
+message AgentOptionDto {
+	/**
+	 * Unique agent name - the identifier, not a label.
+	 *
+	 * What a request names, what a persisted session holds, and what other configuration references.
+	 */
+	string name;
+
+	/**
+	 * What to call this agent in front of the user, in their language.
+	 *
+	 * Empty when the agent has no display name; the client then shows the identifier above.
+	 */
+	string label;
+
+	/**
+	 * One localised line saying what this agent is for, written for the person choosing it.
+	 *
+	 * Empty when the agent has none; the picker then offers it by name alone. The agent's own
+	 * description is a delegation instruction addressed to a model and is never sent here.
+	 */
+	string summary;
+
+	/** MCP servers bound on the agent definition. */
+	repeated string mcpServers;
+
+	/** Resolved default model for this agent. */
+	string model;
+}
+
+/** One selectable model. */
+message ModelOptionDto {
+	/** Model identifier. */
+	string id;
+
+	/**
+	 * Whether the caller may choose this model whatever agent they run.
+	 *
+	 * False for a model that is listed only because an agent the caller may run is assigned it: that
+	 * one is usable with *that* agent and refused with another. A client offering a model list has to
+	 * narrow it to this flag plus the selected agent's own model, or it offers a turn that comes back
+	 * refused.
+	 */
+	boolean grantedToRole;
+
+	/** Provider key (anthropic, openai, ...). */
+	string provider;
+
+	/** Context window in tokens. */
+	int contextWindow;
+
+	/** Maximum output tokens. */
+	int maxOutput;
+
+	/**
+	 * How hard this model may be asked to think, in increasing order.
+	 *
+	 * <p>
+	 * Empty when the model offers no such setting, which is what a UI must check before offering
+	 * one: the providers reject a level their model does not know.
+	 * </p>
+	 */
+	repeated string effortLevels;
+
+	/** The level in force when the caller names none; empty when the model has no levels. */
+	string defaultEffort;
+}
+
+/** One selectable MCP server. */
+message McpServerOptionDto {
+	/** Configured server name. */
+	string name;
+
+	/** "connected" or "disconnected". */
+	string status;
+}

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.screenshots">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.core.screenshots.model.impl"
+				interface-package="com.top_logic.tl.ai.core.screenshots.model"
+			/>
+		</annotations>
+		<types>
+			<class name="Screenshot">
+				<annotations>
+					<table name="Screenshot"/>
+				</annotations>
+				<attributes>
+					<!--
+						The unguessable handle the /screenshot/{id} route addresses this object by.
+						Not mandatory, because screenshots captured before the route existed have
+						none; those are reachable through the object, not through a URL.
+						Generic (flex) storage on purpose: the attribute was added to a type that
+						already ships, and a flex attribute needs no table migration.
+					-->
+					<property name="id"
+						type="tl.core:String"
+					/>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="image"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+					<property name="sourceUrl"
+						type="tl.core:String"
+					/>
+					<property name="capturedAt"
+						type="tl.core:DateTime"
+					/>
+					<property name="contentType"
+						type="tl.core:String"
+					/>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					/>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

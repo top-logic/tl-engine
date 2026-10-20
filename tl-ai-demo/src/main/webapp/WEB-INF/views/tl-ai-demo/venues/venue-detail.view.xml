@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	One venue: its contact data and rooms, and below it its address.
+
+	The address is a composition of exactly one object. A <field> on it would show the object
+	rather than its street and city, so it gets a <form> of its own over a derived channel; the
+	rooms are a <composition-table> edited in place with the venue.
+-->
+<view>
+	<channels>
+		<channel name="venue"/>
+		<derived-channel name="address"
+			inputs="venue"
+		>
+			<expr><![CDATA[v -> ifElse(isEmpty($v), null, $v.get(`demo.events:Venue#address`))]]></expr>
+		</derived-channel>
+	</channels>
+
+	<stack>
+		<!--
+			What this page has open, for the chat (Issue #928). It draws nothing, and the chat states
+			"none" again when the page leaves the screen. See app.view.xml, <chat-channels>.
+		-->
+		<page-selection to="pageSelection">
+			<inputs>
+				<input channel="venue"/>
+			</inputs>
+		</page-selection>
+		<panel>
+			<title>
+				<en>Venue</en>
+				<de>Veranstaltungsort</de>
+			</title>
+			<form input="venue" with-inset="true">
+				<field attribute="name"/>
+				<field attribute="capacity"/>
+				<field attribute="website"/>
+				<field attribute="email"/>
+				<field attribute="phone"/>
+				<field attribute="description"/>
+				<composition-table attribute="rooms">
+					<columns>
+						<column attribute="name"/>
+						<column attribute="capacity"/>
+						<column attribute="hasProjector"/>
+					</columns>
+				</composition-table>
+			</form>
+		</panel>
+		<panel>
+			<title>
+				<en>Address</en>
+				<de>Adresse</de>
+			</title>
+			<form input="address" with-inset="true">
+				<field attribute="street"/>
+				<field attribute="postalCode"/>
+				<field attribute="city"/>
+				<field attribute="country"/>
+			</form>
+		</panel>
+	</stack>
+</view>

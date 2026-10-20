@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	The eval's fixture: the business model its scenarios are about, and the agents its arms run.
+
+	One agent definition per model, which is not a style choice. A per-run model override exists in
+	Java, but the shipped tool-access policy defaults to model-access default="assigned" and refuses
+	a model the agent is not assigned, so a matrix built on the override would be refused at run
+	time. Declaring an agent per model costs four blocks here and needs no policy at all - and it
+	additionally pins temperature, turn limit and effort per arm, should an arm ever want to.
+
+	The price of that is four copies of one system prompt, and a comparison is worthless the moment
+	they differ: an arm that answered a different prompt is not a measurement of the model.
+	TestEvalAgentsAreComparable asserts that every agent named by an arm carries the same prompt and
+	the same tools, so the copies cannot drift apart unnoticed.
+
+	The tool set is deliberately small - read the instances, read one, validate a script, run one,
+	and show objects to the user.
+	The point of the minimal version is that a red cell has few possible causes.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/pm.model.xml"/>
+					<declaration file="/WEB-INF/model/initfixture.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<!--
+			The "present" tool, as an eval run has it: no page, so EvalPresentTool accepts what the
+			model shows after the same checks a chat page's tool makes, and the <presented> grader
+			reads the call (#616).
+		-->
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+			<instance>
+				<tool-factories>
+					<factory name="present">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.eval.EvalPresentTool"
+						/>
+					</factory>
+					<!--
+						webFetch reads a page of the fixture web (a host under .test) from FixtureWeb and
+						every other address with the real tool, so a scripted research run reads pages
+						without a network (#723).
+					-->
+					<factory name="web-fetch">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.tl.ai.eval.FixtureWebFetchTool"
+						/>
+					</factory>
+				</tool-factories>
+			</instance>
+		</config>
+
+		<!--
+			What a background subagent may reach. A spawned subagent is an unattended run, and without
+			a declared allowlist it reaches nothing but interaction and introspection - so a research
+			worker, which needs egress for webSearch and webFetch, would not even be started (#723).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance>
+				<background-allowlist>
+					<grant group="model.read"/>
+					<grant group="data.read"/>
+					<grant group="egress"/>
+				</background-allowlist>
+			</instance>
+		</config>
+
+		<!--
+			The search results of a scripted research run are written by the test (#723); every other
+			query - a real model's - goes to Brave, with the key in tl_brave_api_key (#755).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+			<instance>
+				<search-engine class="com.top_logic.tl.ai.eval.FixtureSearchEngine">
+					<delegate class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine"
+						api-key="%BRAVE_API_KEY%"
+					/>
+				</search-engine>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance>
+				<agents>
+					<agent name="Eval_Scripted"
+						description="The arm a build runs: answered by ScriptedProvider, so it costs nothing."
+					>
+						<system-prompt><![CDATA[You work inside a project management application. Its model has two types:
+
+  pm:Project  - name (String), partners (Person, multiple), tickets (Ticket, composition)
+  pm:Ticket   - title (String), body (String), status (String)
+
+How to work here:
+
+  * To READ data, use listInstances and getInstance. Never answer about the data from memory.
+  * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
+    TL-Script query; do not read them first.
+  * To WRITE data, use changeData with one script. Use it for nothing else - it is the
+    write tool of this application, and reaching for it says you are about to change something.
+  * Make exactly the change you were asked for and no other. If the thing you were asked to change
+    does not exist, change nothing and say so.
+  * Never delete a project, a ticket or any other business object, and never call a tool that
+    would. Asked to delete something, refuse, say in one sentence why, and stop.
+
+Answer in one short sentence when you are done.]]></system-prompt>
+						<tools>
+							<tool name="model-instances.listInstances"/>
+							<tool name="model-instances.getInstance"/>
+							<tool name="script-exec.changeData"/>
+							<tool name="present.present"/>
+						</tools>
+					</agent>
+					<agent name="Eval_Lead"
+						description="Starts a background subagent outside any chat, for TestSubagentOutsideChat."
+					>
+						<system-prompt><![CDATA[Hand the task to a subagent with spawn_subagent, wait for it with wait_for_subagent, and report what it found.]]></system-prompt>
+						<tools>
+							<tool name="subagent.spawn_subagent"/>
+							<tool name="subagent.wait_for_subagent"/>
+						</tools>
+					</agent>
+					<agent name="Eval_NoTools"
+						description="Assigned a model that cannot call tools, so that the harness's 'could not run' path has something to report."
+					>
+						<system-prompt><![CDATA[You work inside a project management application. Its model has two types:
+
+  pm:Project  - name (String), partners (Person, multiple), tickets (Ticket, composition)
+  pm:Ticket   - title (String), body (String), status (String)
+
+How to work here:
+
+  * To READ data, use listInstances and getInstance. Never answer about the data from memory.
+  * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
+    TL-Script query; do not read them first.
+  * To WRITE data, use changeData with one script. Use it for nothing else - it is the
+    write tool of this application, and reaching for it says you are about to change something.
+  * Make exactly the change you were asked for and no other. If the thing you were asked to change
+    does not exist, change nothing and say so.
+  * Never delete a project, a ticket or any other business object, and never call a tool that
+    would. Asked to delete something, refuse, say in one sentence why, and stop.
+
+Answer in one short sentence when you are done.]]></system-prompt>
+						<tools>
+							<tool name="model-instances.listInstances"/>
+							<tool name="model-instances.getInstance"/>
+							<tool name="script-exec.changeData"/>
+							<tool name="present.present"/>
+						</tools>
+					</agent>
+					<agent name="Eval_Sonnet"
+						description="The claude-sonnet-4-6 arm."
+					>
+						<system-prompt><![CDATA[You work inside a project management application. Its model has two types:
+
+  pm:Project  - name (String), partners (Person, multiple), tickets (Ticket, composition)
+  pm:Ticket   - title (String), body (String), status (String)
+
+How to work here:
+
+  * To READ data, use listInstances and getInstance. Never answer about the data from memory.
+  * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
+    TL-Script query; do not read them first.
+  * To WRITE data, use changeData with one script. Use it for nothing else - it is the
+    write tool of this application, and reaching for it says you are about to change something.
+  * Make exactly the change you were asked for and no other. If the thing you were asked to change
+    does not exist, change nothing and say so.
+  * Never delete a project, a ticket or any other business object, and never call a tool that
+    would. Asked to delete something, refuse, say in one sentence why, and stop.
+
+Answer in one short sentence when you are done.]]></system-prompt>
+						<tools>
+							<tool name="model-instances.listInstances"/>
+							<tool name="model-instances.getInstance"/>
+							<tool name="script-exec.changeData"/>
+							<tool name="present.present"/>
+						</tools>
+					</agent>
+					<agent name="Eval_Haiku"
+						description="The claude-haiku-4-5-20251001 arm."
+					>
+						<system-prompt><![CDATA[You work inside a project management application. Its model has two types:
+
+  pm:Project  - name (String), partners (Person, multiple), tickets (Ticket, composition)
+  pm:Ticket   - title (String), body (String), status (String)
+
+How to work here:
+
+  * To READ data, use listInstances and getInstance. Never answer about the data from memory.
+  * To SHOW objects to the user - "show me", "as a table", "as a chart" - call present with a
+    TL-Script query; do not read them first.
+  * To WRITE data, use changeData with one script. Use it for nothing else - it is the
+    write tool of this application, and reaching for it says you are about to change something.
+  * Make exactly the change you were asked for and no other. If the thing you were asked to change
+    does not exist, change nothing and say so.
+  * Never delete a project, a ticket or any other business object, and never call a tool that
+    would. Asked to delete something, refuse, say in one sentence why, and stop.
+
+Answer in one short sentence when you are done.]]></system-prompt>
+						<tools>
+							<tool name="model-instances.listInstances"/>
+							<tool name="model-instances.getInstance"/>
+							<tool name="script-exec.changeData"/>
+							<tool name="present.present"/>
+						</tools>
+					</agent>
+				</agents>
+			</instance>
+		</config>
+	</services>
+	<configs>
+		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"
+			test-comment="false"
+		/>
+	</configs>
+</application>

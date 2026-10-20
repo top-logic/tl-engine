@@ -1,0 +1,15 @@
+/.apt_generated
+/.apt_generated_tests
+/target
+/tmp
+/war
+/src/main/webapp/script/top-logic.js
+/.settings/com.gwtplugins.gwt.eclipse.core.prefs
+/**/*~
+/ui/node
+/ui/node_modules
+/src/main/webapp/script/tl-chat-ui.js
+/src/main/webapp/script/tl-chat-ui.css
+/src/main/webapp/script/tl-chat-seams.js
+/src/main/webapp/script/tl-chat-shared.js
+/src/main/webapp/script/assets/

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<instance name="demo.events">
+		<class name="Event">
+			<indexing>
+				<full-text>
+					<property name="demo.events:Named#name"/>
+					<property name="demo.events:Named#description"/>
+					<property name="demo.events:Event#ticketPrice"/>
+				</full-text>
+			</indexing>
+		</class>
+	</instance>
+</model>

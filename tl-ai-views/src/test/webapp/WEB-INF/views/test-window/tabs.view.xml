@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Two tabs, the first one open; TestWindowPage changes the second. -->
+<view>
+	<tab-bar active-tab="first">
+		<tab id="first">
+			<label>
+				<en>First</en>
+			</label>
+			<text>
+				<label>
+					<en>first tab</en>
+				</label>
+			</text>
+		</tab>
+		<tab id="second">
+			<label>
+				<en>Second</en>
+			</label>
+			<text>
+				<label>
+					<en>second tab</en>
+				</label>
+			</text>
+		</tab>
+	</tab-bar>
+</view>

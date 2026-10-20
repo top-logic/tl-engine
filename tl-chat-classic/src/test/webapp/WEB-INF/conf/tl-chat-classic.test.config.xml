@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Configuration options for testing tl-chat-classic with JUnit.
+
+	Like every other module of this repository, the engine's copyright-comment check is switched off:
+	its default pattern expects the dual AGPL/BOS license line, and the sources here carry the BOS
+	license line only, as they did in tl-chat before the move.
+ -->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<configs>
+		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"
+			test-comment="false"
+		/>
+	</configs>
+</application>

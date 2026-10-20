@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Kosten nach Konto", what each account's runs cost over the period the tab's control names - the
+	figure a money budget is enforced against (#722), summed from what every run cost in the system
+	currency at the rate of USD valid on its day (displayCost).
+	
+	One data set per currency. A run no rate converts is shown in US dollars, the currency it records,
+	so a period with such runs has amounts in two currencies; they are drawn as two bars, never added. The ten accounts that cost most are shown, ranked by the plain sum of their
+	amounts, which is exact in the common case of one currency. A run without a cost - recorded before
+	costs were - is not counted; a model without a price contributes 0.
+-->
+<chartjs name="aiCostByAccountChart"
+	model="model(aiUsagePeriod)"
+	securityObject="securityRoot"
+	titleKey="admin.ai.agentActivity.charts.costByAccount"
+	toolbar="true"
+>
+	<data><![CDATA[
+		model -> {
+			period = ifElse(isEmpty($model),
+				new(`tl.ai.monitor:Period`, transient: true)
+					..set(`tl.ai.monitor:Period#preset`, 30),
+				$model);
+			executions = all(`tl.ai.execution:AgentExecution`);
+			startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+			cost = e -> $e.get(`tl.ai.execution:AgentExecution#displayCost`);
+			start = $period.get(`tl.ai.monitor:Period#windowStart`);
+			end = $period.get(`tl.ai.monitor:Period#windowEnd`);
+			recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
+				&& (isEmpty($end) || $startedAt($e) < $end));
+			priced = $recent.filter(e -> !isEmpty($cost($e)));
+			owner = e -> toString($e.get(`tl.ai.execution:AgentExecution#session`)
+				.get(`tl.ai.execution:AgentSession#owner`));
+			byOwner = $priced.groupBy(e -> $owner($e));
+			ranked = $byOwner.keySet().toList().sort(desc(comparator(o -> $byOwner[$o].map(e -> $cost($e)).sum())));
+			names = ifElse($ranked.size() > 10, $ranked.subList(0, 10), $ranked);
+			currencies = $priced.map(e -> $e.get(`tl.ai.execution:AgentExecution#displayCurrency`)).toSet().toList().sort();
+			// Dollars, the currency of runs no rate converts, in a colour of their own: told apart from
+			// the system currency at a glance.
+			colorOf = c -> ifElse($c == 'USD', '#8a3ffc', '#2968c8');
+			{
+				'type': 'bar',
+				'data': {
+					'labels': $names,
+					'datasets': $currencies.map(c -> {
+						dataset = {
+							'label': $c,
+							'data': $names.map(o -> $byOwner[$o]
+								.filter(e -> $e.get(`tl.ai.execution:AgentExecution#displayCurrency`) == $c)
+								.map(e -> $cost($e)).sum()),
+							'backgroundColor': $colorOf($c),
+							'maxBarThickness': 26
+						};
+						$dataset;
+					})
+				},
+				'options': {
+					'indexAxis': 'y',
+					'maintainAspectRatio': false,
+					'plugins': {
+						// The currency is the legend: with one currency it names the unit of the axis.
+						'legend': { 'display': !isEmpty($currencies) },
+						// See the note in topAgentsChart.xml: an empty plot area has to say why it
+						// is empty, because "no data" and "no consumption" look the same.
+						'title': {
+							'display': isEmpty($priced),
+							'text': ifElse(!isEmpty($start) && $start > now(),
+								#('The selected period lies in the future.'@en,
+									'Der gewählte Zeitraum liegt in der Zukunft.'@de).localize(),
+								#('No runs with a recorded cost in the selected period.'@en,
+									'Keine Läufe mit erfassten Kosten im gewählten Zeitraum.'@de).localize()),
+							'color': '#8a8a8a'
+						}
+					},
+					'scales': { 'x': { 'beginAtZero': true } }
+				}
+			};
+		}
+	]]></data>
+</chartjs>

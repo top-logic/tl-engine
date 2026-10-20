@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The business model of the agent security test bed: projects with tickets.
+
+	It is the model of doc/security/role-model-worked-example.md, built so that the document and the
+	fixture cannot disagree. Two types are enough to cover every mechanism the role model has:
+
+	  * "Project" carries "partners", an ordinary business attribute that a declarative role rule
+	    reads to derive the "projectPartner" role ON THAT PROJECT. Security is derived from the data,
+	    not maintained beside it.
+	  * "Ticket" carries no security attribute at all. A <security-parents> rule makes its project its
+	    security parent, so a partner's scope reaches the project's tickets without a second rule.
+
+	"Ticket#body" exists to be the attribute a role may not read while it may read the ticket:
+	<security-config> grants Read on it to "projectPartner" only, so "ticketReader" sees a ticket's
+	title and not its body. That is the per-attribute half of the read filtering of issue #289, and it
+	needs an attribute whose grant differs from its class's.
+
+	The model is only declared when the "secdemo.config.xml" aspect is enabled; see
+	"WEB-INF/conf/metaConf.txt" and tl-ai-demo/doc/secdemo/testbed.md.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="pm">
+		<class name="Project">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<!--
+					The input of the scope rule. Whoever is listed here holds "projectPartner" on this
+					project - see the <rule type="reference"> in "secdemo.config.xml".
+				-->
+				<reference name="partners"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.accounts:Person"
+				/>
+				<!--
+					A composition, so that a ticket has a container to navigate back to. The
+					<security-parents> rule navigates this reference inverse="true".
+				-->
+				<reference name="tickets"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Ticket"
+				/>
+			</attributes>
+		</class>
+		<class name="Ticket">
+			<attributes>
+				<property name="title"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<!--
+					Readable by "projectPartner" only, through a <part> grant. A ticket reader sees the
+					ticket and its title, and this attribute is absent from what a tool reports.
+				-->
+				<property name="body"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,99 @@
+package com.top_logic.tl.ai.core.tools.web.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Request payload for the Tavily Search API ({@code POST /search}).
+ */
+message TavilySearchRequest {
+	/** The natural-language search query. */
+	string query [Name = "query"];
+
+	/** Maximum number of results to return. */
+	int max_results [Name = "max_results"];
+
+	/** Search depth, either {@code basic} or {@code advanced}. */
+	string search_depth [Name = "search_depth"];
+
+	/** Whether Tavily should include a synthesized answer. */
+	bool include_answer [Name = "include_answer"];
+
+	/** Whether each result should include the full raw page content. */
+	bool include_raw_content [Name = "include_raw_content"];
+
+	/** Restrict results to these domains (empty means no restriction). */
+	repeated string include_domains [Name = "include_domains"];
+
+	/** Exclude results from these domains. */
+	repeated string exclude_domains [Name = "exclude_domains"];
+
+	/** Only results published within this range: {@code day}, {@code week}, {@code month} or {@code year}; absent for any time. */
+	@Nullable
+	string time_range [Name = "time_range"];
+}
+
+/**
+ * Response payload from the Tavily Search API.
+ */
+message TavilySearchResponse {
+	/** Synthesized answer, present when {@code include_answer} was requested. */
+	string answer [Name = "answer"];
+
+	/** The organic search results. */
+	repeated TavilySearchResult results [Name = "results"];
+}
+
+/**
+ * A single organic result within a {@link TavilySearchResponse}.
+ */
+message TavilySearchResult {
+	/** The result title. */
+	string title [Name = "title"];
+
+	/** The result URL. */
+	string url [Name = "url"];
+
+	/** A short, query-relevant content extract (snippet). */
+	string content [Name = "content"];
+
+	/** The full raw page content, present when {@code include_raw_content} was requested. */
+	string raw_content [Name = "raw_content"];
+}
+
+/**
+ * Response payload from the Brave Web Search API ({@code GET /res/v1/web/search}).
+ *
+ * <p>
+ * The request is sent as URL query parameters, so no request message is modelled.
+ * </p>
+ */
+message BraveSearchResponse {
+	/** The web results section; absent when the response carries no web results. */
+	BraveWebResults web [Name = "web"];
+}
+
+/**
+ * The {@code web} section of a {@link BraveSearchResponse}.
+ */
+message BraveWebResults {
+	/** The organic web results. */
+	repeated BraveSearchResult results [Name = "results"];
+}
+
+/**
+ * A single organic result within a {@link BraveWebResults}.
+ */
+message BraveSearchResult {
+	/** The result title. */
+	string title [Name = "title"];
+
+	/** The result URL. */
+	string url [Name = "url"];
+
+	/** A short, query-relevant extract (may contain inline highlight markup). */
+	string description [Name = "description"];
+}

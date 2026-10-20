@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-ai-parent</artifactId>
+		<version>2.1.4-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>tl-chat-classic</artifactId>
+
+	<licenses>
+	  <license>
+	    <name>LicenseRef-BOS-TopLogic-1.0</name>
+	    <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+	  </license>
+	</licenses>
+
+	<properties>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<!-- TopLogic -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+		</dependency>
+		<!--
+			The React view layer: ReactViewComponent builds a view's control tree and registers it as
+			the React window of the classic window. tl-chat brings both in already; they are named
+			here because this module's code uses them directly.
+		-->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-react</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
+		<!--
+			The chat this module's tab displays: the view elements of chat.view.xml, the /chat/* API
+			they talk to, and ChatSessionRegistry, which names the classic window.
+		-->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chat</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<!-- Tests -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

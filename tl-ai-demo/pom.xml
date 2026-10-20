@@ -1,0 +1,200 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-app</artifactId>
+		<version>8.0.0-alpha10</version>
+		<relativePath />
+	</parent>
+	
+	<artifactId>tl-ai-demo</artifactId>
+
+	<licenses>
+	  <license>
+	    <name>LicenseRef-BOS-TopLogic-1.0</name>
+	    <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+	  </license>
+	</licenses>
+	
+	<version>8.0.0-alpha10</version>
+  	
+	<properties>
+		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+		<msgbuf.version>1.3.0</msgbuf.version>
+	</properties>
+
+	<dependencies>
+		<!-- TopLogic -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-mcp-server</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-a2a</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chat</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<!-- The "Albert" tab of the classic LayoutServlet UI, hosting the React chat (#618). -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chat-classic</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<!-- Living Views: agents build and change the demo's views; see views-demo.config.xml. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-views</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-core</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-vector-index</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<!-- Hybrid search over the demo's events and sessions; see ai-index.config.xml. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-index</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-index-onnx</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-themes-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-bpe-app</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-scripting-template</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-formeditor</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-themeedit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-graph-diagramjs-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-monitoring</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-doc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-search</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-contact</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chart-chartjs</artifactId>
+		</dependency>
+		<!-- Allow to integrate REST services through OpenAPI interface definitions. -->
+        <dependency>
+                <groupId>com.top-logic</groupId>
+                <artifactId>tl-service-openapi-client</artifactId>
+        </dependency>
+		<!-- Provide REST services through OpenAPI interface definitions. -->
+        <dependency>
+                <groupId>com.top-logic</groupId>
+                <artifactId>tl-service-openapi-server</artifactId>
+        </dependency>
+
+		<!-- Tests -->
+		<!--
+			The junit gates of tl-ai-core - AssumptionAwareRunner and the switches beside it - so that
+			a test here which needs something the build may not have (an embedding key) reports as
+			skipped rather than failing in its setup. Test scope, and surefire's dependenciesToScan
+			names tl-basic only, so nothing of tl-ai-core's own test suite runs here.
+		-->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-core</artifactId>
+			<version>2.1.4-SNAPSHOT</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!--
+				This module's parent is tl-parent-app, not tl-ai-parent, so it does not inherit the
+				aggregator's surefire includes and repeats them here. Keep the two in step - see the
+				comment in the aggregator pom for what the regexes are for and why each accepts two
+				spellings of a class, and TestSuiteReachability for what asserts that they still reach
+				every test.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>%regex[test[/.]TestAll(\.class)?]</include>
+						<include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
+					</includes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>de.haumacher.msgbuf</groupId>
+				<artifactId>msgbuf-generator-maven-plugin</artifactId>
+				<version>${msgbuf.version}</version>
+
+				<executions>
+					<execution>
+						<id>generate-protocols</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

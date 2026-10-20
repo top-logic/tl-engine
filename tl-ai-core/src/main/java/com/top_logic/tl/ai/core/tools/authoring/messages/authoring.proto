@@ -1,0 +1,215 @@
+package com.top_logic.tl.ai.core.tools.authoring.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Result of a create/update/delete authoring operation.
+ */
+message OperationResult {
+	/** Whether the operation succeeded. */
+	bool success;
+
+	/** Human-readable result message. */
+	string resultMessage;
+
+	/** Non-fatal warnings (e.g. references to not-yet-existing skills or agents). */
+	repeated string warnings;
+}
+
+/**
+ * Short agent entry for listings.
+ */
+message AgentSummary {
+	/** Agent name. */
+	string name;
+
+	/** Agent description. */
+	string description;
+}
+
+/**
+ * Result of listing knowledge-base agents.
+ */
+message AgentListResult {
+	/** The knowledge-base agents. */
+	repeated AgentSummary agents;
+}
+
+/**
+ * Full detail of a single knowledge-base agent.
+ */
+message AgentDetail {
+	/** Whether an agent with this name exists in the knowledge base. */
+	bool exists;
+
+	/** Agent name. */
+	string name;
+
+	/** Agent description. */
+	string description;
+
+	/** System prompt. */
+	string systemPrompt;
+
+	/** Qualified tool names. */
+	repeated string tools;
+
+	/** MCP server names. */
+	repeated string mcpServers;
+
+	/** Skill names. */
+	repeated string skills;
+
+	/** Names of agents this agent may delegate to. */
+	repeated string delegations;
+}
+
+/**
+ * Short skill entry for listings.
+ */
+message SkillSummary {
+	/** Skill name. */
+	string name;
+
+	/** Skill description. */
+	string description;
+
+	/** Qualified tool names assigned to this skill. */
+	repeated string tools;
+}
+
+/**
+ * Result of listing knowledge-base skills.
+ */
+message SkillListResult {
+	/** The knowledge-base skills. */
+	repeated SkillSummary skills;
+}
+
+/**
+ * Full detail of a single knowledge-base skill.
+ */
+message SkillDetail {
+	/** Whether a skill with this name exists in the knowledge base. */
+	bool exists;
+
+	/** Skill name. */
+	string name;
+
+	/** Skill description. */
+	string description;
+
+	/** Skill instruction content. */
+	string content;
+
+	/** Qualified tool names assigned to this skill. */
+	repeated string tools;
+}
+
+/**
+ * Short entry describing an available tool.
+ */
+message ToolSummary {
+	/** Qualified tool name ({factory}.{tool}). */
+	string name;
+
+	/** Tool description. */
+	string description;
+
+	/** Tool mode: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL, or EXTERNAL. */
+	string mode;
+}
+
+/**
+ * Result of listing available tools that an agent can be given.
+ */
+message ToolListResult {
+	/** The available tools. */
+	repeated ToolSummary tools;
+}
+
+/**
+ * One declared parameter of a TL-Script tool.
+ */
+message ScriptToolParamInfo {
+	/** Parameter name (the binding name used as $name in the script body). */
+	string name;
+
+	/** Qualified TL type, e.g. tl.core:String. */
+	string type;
+
+	/** Parameter description. */
+	string description;
+
+	/** Whether the parameter must be supplied. */
+	bool mandatory;
+
+	/** Whether the parameter accepts a list of values. */
+	bool multiple;
+
+	/** Optional TL-Script default expression used when an optional parameter is omitted. */
+	string defaultValue;
+}
+
+/**
+ * Short TL-Script tool entry for listings.
+ */
+message ScriptToolSummary {
+	/** Tool name (unqualified; referenced as custom.{name}). */
+	string name;
+
+	/** Tool description. */
+	string description;
+
+	/** Tool mode: READ, USER_SCOPED, DATA_WRITE, STRUCTURAL, or EXTERNAL. */
+	string mode;
+}
+
+/**
+ * Result of listing the agent-created TL-Script tools.
+ */
+message ScriptToolListResult {
+	/** The TL-Script tools in the 'custom' factory. */
+	repeated ScriptToolSummary tools;
+}
+
+/**
+ * Result of listing the factories that hold registered TL-Script tools.
+ */
+message ScriptToolFactoryListResult {
+	/** Distinct factory names that contain at least one registered TL-Script tool. */
+	repeated string factoryNames;
+}
+
+/**
+ * Full detail of a single TL-Script tool.
+ */
+message ScriptToolDetail {
+	/** Whether a tool with this name exists in the 'custom' factory. */
+	bool exists;
+
+	/** Tool name. */
+	string name;
+
+	/** Human-readable label. */
+	string label;
+
+	/** Tool description. */
+	string description;
+
+	/** TL-Script implementation source. */
+	string implementation;
+
+	/** Tool mode. */
+	string mode;
+
+	/** Whether the tool may run in parallel with other concurrency-safe tools. */
+	bool concurrencySafe;
+
+	/** Declared parameters. */
+	repeated ScriptToolParamInfo parameters;
+}

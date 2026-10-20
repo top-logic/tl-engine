@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Objects made of parts, for TestObjectEditTool.
+
+	tl-ai-core's own model has no composition, and createObject has to be tested on the shapes one
+	takes: a mandatory one (an order does not exist without its lines), an optional one, one that
+	holds a single part, one whose parts come in several kinds (an abstract target type), and one that
+	nests without end (folders in folders).
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.objectedit">
+		<class name="Order">
+			<attributes>
+				<property name="number"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="lines"
+					composite="true"
+					kind="forwards"
+					mandatory="true"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="OrderLine"
+				/>
+			</attributes>
+		</class>
+		<class name="OrderLine">
+			<attributes>
+				<property name="product"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="quantity"
+					type="tl.core:Integer"
+				/>
+			</attributes>
+		</class>
+		<class name="Folder">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="documents"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Document"
+				/>
+				<reference name="cover"
+					composite="true"
+					kind="forwards"
+					navigate="true"
+					type="Cover"
+				/>
+				<reference name="folders"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Folder"
+				/>
+			</attributes>
+		</class>
+		<interface name="Document">
+			<attributes>
+				<property name="title"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</interface>
+		<class name="Letter">
+			<generalizations>
+				<generalization type="Document"/>
+			</generalizations>
+		</class>
+		<class name="Memo">
+			<generalizations>
+				<generalization type="Document"/>
+			</generalizations>
+		</class>
+		<class name="Cover">
+			<attributes>
+				<property name="text"
+					type="tl.core:String"
+				/>
+				<property name="caption"
+					type="tl.model.i18n:I18NString"
+				/>
+			</attributes>
+		</class>
+		<!--
+			Parts the engine stores in their own rows: the container is a column of the part's row
+			(an inline storage, test.objecteditMeta.xml), as tl.doc stores the children of a page.
+			A shelf keeps its books in order, a box keeps its pamphlets in no order. Books and
+			pamphlets share a table, but are parts of one composition each: the engine names the
+			composition of a part kept in its own row by the first such composition of the part's
+			type, whether or not the part is in it.
+		-->
+		<class name="Shelf">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="books"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Book"
+				>
+					<annotations>
+						<storage-algorithm>
+							<inline-list-storage
+								container-column="shelf"
+								order-column="shelfOrder"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Box">
+			<attributes>
+				<reference name="pamphlets"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Pamphlet"
+				>
+					<annotations>
+						<storage-algorithm>
+							<inline-set-storage
+								container-column="box"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Book">
+			<annotations>
+				<table name="TestObjectEditBook"/>
+			</annotations>
+			<attributes>
+				<property name="title"
+					type="tl.core:String"
+				/>
+				<reference name="shelf"
+					inverse-reference="books"
+					kind="backwards"
+					type="Shelf"
+				/>
+			</attributes>
+		</class>
+		<!--
+			An object with a value the model gives it, for the initial values the pre-commit guard asks
+			about (#683): a status that starts as "open", and a subject nothing presets.
+		-->
+		<class name="Note">
+			<attributes>
+				<property name="subject"
+					type="tl.core:String"
+				/>
+				<property name="status"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="open"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<!--
+			An object whose defaults the pre-commit guard cannot take for "not given" by emptiness alone:
+			a flag that starts as true, a flag with no default, and three defaults that differ every time
+			they are computed - the current time, a UUID and a sequence number drawn in the transaction.
+		-->
+		<class name="Permit">
+			<attributes>
+				<property name="subject"
+					type="tl.core:String"
+				/>
+				<property name="active"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<default-value>
+							<boolean value="true"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="archived"
+					type="tl.core:Boolean"
+				/>
+				<property name="validFrom"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression value="context -> now()"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="code"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.model.provider.UuidDefaultProvider"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="number"
+					type="tl.core:Long"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.element.structured.util.SequenceDefaultProvider"
+								sequence-name="test_objectedit_permit_number"
+							/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Pamphlet">
+			<annotations>
+				<table name="TestObjectEditBook"/>
+			</annotations>
+			<attributes>
+				<property name="title"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

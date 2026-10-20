@@ -160,11 +160,14 @@ public class SidebarElement implements UIElement {
 		 *
 		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
 		 *           its header content.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(HEADER)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getHeader();
+		List<UIElement.Config> getHeader();
 
 		/**
 		 * What the rail shows above its items while it is folded to a narrow strip.
@@ -176,11 +179,14 @@ public class SidebarElement implements UIElement {
 		 *
 		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
 		 *           its collapsed header content.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(HEADER_COLLAPSED)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getHeaderCollapsed();
+		List<UIElement.Config> getHeaderCollapsed();
 
 		/**
 		 * What the rail shows below its items: the account area, a version note, a help link.
@@ -192,11 +198,14 @@ public class SidebarElement implements UIElement {
 		 *
 		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
 		 *           its footer content.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(FOOTER)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getFooter();
+		List<UIElement.Config> getFooter();
 
 		/**
 		 * What the rail shows below its items while it is folded to a narrow strip.
@@ -208,11 +217,14 @@ public class SidebarElement implements UIElement {
 		 *
 		 * @implNote Created eagerly with the sidebar and handed to {@link ReactSidebarControl} as
 		 *           its collapsed footer content.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(FOOTER_COLLAPSED)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getFooterCollapsed();
+		List<UIElement.Config> getFooterCollapsed();
 	}
 
 	/**
@@ -289,9 +301,8 @@ public class SidebarElement implements UIElement {
 	 *
 	 * @implNote {@link #getId()} is the merge key of the items list: a configuration fragment in
 	 *           another module positions ({@code config:position}) or overrides an item by
-	 *           referencing this id. A {@code <separator>} usually leaves it empty; at most one
-	 *           anonymous entry (empty id) may occur, so give separators an explicit id when more
-	 *           than one is needed.
+	 *           referencing this id. A {@code <separator>} usually leaves it empty: an entry
+	 *           without id is anonymous, appended in order and addressed by no fragment.
 	 */
 	public interface SidebarItemConfig extends PolymorphicConfiguration<SidebarItemElement> {
 
@@ -388,12 +399,16 @@ public class SidebarElement implements UIElement {
 
 		/**
 		 * The content elements shown when this item is selected.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+		List<UIElement.Config> getChildren();
 	}
 
 	/**
@@ -595,7 +610,7 @@ public class SidebarElement implements UIElement {
 	}
 
 	private static List<UIElement> createElements(InstantiationContext context,
-			List<PolymorphicConfiguration<? extends UIElement>> configs) {
+			List<UIElement.Config> configs) {
 		List<UIElement> result = new ArrayList<>(configs.size());
 		for (PolymorphicConfiguration<? extends UIElement> elementConfig : configs) {
 			result.add(context.getInstance(elementConfig));

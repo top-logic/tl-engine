@@ -11,6 +11,7 @@ import java.util.List;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -52,8 +53,11 @@ public class BottomBarElement implements UIElement {
 
 		/**
 		 * The navigation items.
+		 *
+		 * @implNote Keyed by {@link ItemConfig#ID} so that a same-path overlay can address an item.
 		 */
 		@Name(ITEMS)
+		@Key(ItemConfig.ID)
 		@TreeProperty
 		List<ItemConfig> getItems();
 

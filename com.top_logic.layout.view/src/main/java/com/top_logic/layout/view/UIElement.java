@@ -32,6 +32,9 @@ public interface UIElement {
 	 */
 	interface Config extends PolymorphicConfiguration<UIElement> {
 
+		/** Configuration name for {@link #getId()}. */
+		String ID = "id";
+
 		/** Configuration name for {@link #getPersonalizationKey()}. */
 		String PERSONALIZATION_KEY = "personalization-key";
 
@@ -50,6 +53,27 @@ public interface UIElement {
 		 */
 		@com.top_logic.basic.config.annotation.Name(PERSONALIZATION_KEY)
 		String getPersonalizationKey();
+
+		/**
+		 * The name an overlay of the view addresses this element by.
+		 *
+		 * <p>
+		 * A view is extended by a view of the same path in another module. Such an overlay names
+		 * the elements it descends into, updates, replaces, removes or places another element
+		 * beside by their ids. An element without id is anonymous: an overlay adds elements beside
+		 * it, but cannot address the element itself.
+		 * </p>
+		 *
+		 * <p>
+		 * The id is unique among the elements of the same list.
+		 * </p>
+		 *
+		 * @implNote The element lists of the view elements are keyed by this property. An
+		 *           anonymous element is appended in order and matched by no overlay entry; an
+		 *           overlay reaches it only by its position with {@code config:index}.
+		 */
+		@com.top_logic.basic.config.annotation.Name(ID)
+		String getId();
 
 		/**
 		 * CSS class the element is displayed with, beside the classes its kind brings itself.

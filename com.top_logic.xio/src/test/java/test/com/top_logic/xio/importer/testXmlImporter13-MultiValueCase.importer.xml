@@ -1,0 +1,26 @@
+<handler>
+	<tag name="data">
+		<dispatch>
+			<tag name="item">
+				<object model-type="test.com.top_logic.xio.importer.test13:Item">
+					<property name="name" xml-attribute="name"/>
+					<linking>
+						<list-linking name="test.com.top_logic.xio.importer.test13:Container#elements"/>
+					</linking>
+					<switch xml-attribute="flag">
+						<case value="1, true">
+							<assign property="state" value="x -> 'on'"/>
+						</case>
+						<case value="0,false">
+							<assign property="state" value="x -> 'off'"/>
+						</case>
+						<default>
+							<assign property="state" value="x -> 'unknown'"/>
+						</default>
+					</switch>
+					<dispatch/>
+				</object>
+			</tag>
+		</dispatch>
+	</tag>
+</handler>

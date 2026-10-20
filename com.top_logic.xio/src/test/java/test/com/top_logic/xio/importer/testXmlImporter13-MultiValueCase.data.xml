@@ -1,0 +1,7 @@
+<data>
+	<item name="i1" flag="1"/>
+	<item name="i2" flag="true"/>
+	<item name="i3" flag="0"/>
+	<item name="i4" flag="false"/>
+	<item name="i5" flag="maybe"/>
+</data>

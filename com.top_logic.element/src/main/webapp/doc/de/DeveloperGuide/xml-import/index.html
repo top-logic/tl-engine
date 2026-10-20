@@ -11,6 +11,16 @@
   &lt;/tag&gt;
 &lt;/dispatch&gt;
 </code></pre>
+<p>Ein Element, für das kein <code class="hljs inlineCode">&lt;tag&gt;</code>-Eintrag existiert, geht an den <code class="hljs inlineCode">&lt;default&gt;</code>-Handler des Dispatch, sofern einer konfiguriert ist. Andernfalls wird das Element samt seinem Inhalt übersprungen. Mit der Option <code class="hljs inlineCode">unknown</code> lässt sich steuern, ob solche unbekannten Elemente gemeldet werden: <code class="hljs inlineCode">skip</code> (Standard) überspringt sie stillschweigend, <code class="hljs inlineCode">warn</code> meldet eine Warnung mit dem Tag-Namen und der Position im Dokument, <code class="hljs inlineCode">error</code> meldet einen Fehler. Die Einstellung gilt für alle geschachtelten <code class="hljs inlineCode">&lt;dispatch&gt;</code>-Handler, bis einer von ihnen sie selbst wieder setzt. Eine Angabe am äußersten Handler gilt damit für die gesamte Import-Definition:</p>
+<pre><code class="language-xml">&lt;handler unknown="warn"&gt;
+  &lt;tag name="data"&gt;
+    &lt;dispatch&gt;
+      &lt;tag name="item"&gt;
+        ...
+      &lt;/tag&gt;
+    &lt;/dispatch&gt;
+  &lt;/tag&gt;
+&lt;/handler&gt;</code></pre>
 <h2>Objekt-Anlage</h2>
 <p>Es gibt Handler für die Anlage von Fachobjekten. Diese greifen nicht auf die XML-Eingabe zu, sondern werden im Kontext von anderen Handlern (z.B. dem Dispatch) aufgerufen.</p>
 <p>Der <code class="hljs inlineCode">&lt;object&gt;</code>-Handler legt ein Fachobjekt von einem bestimmter Modell-Typ an. Das Füllen von Eigenschaften und die Verknüpfung mit anderen Fachobjekten übernehmen Handler, die im Kontext des <code class="hljs inlineCode">&lt;object&gt;</code>-Handlers definiert sind.</p>
@@ -27,6 +37,21 @@
 <pre><code class="language-xml">&lt;text-content name="myProp"/&gt;</code></pre>
 <p>In beiden Fällen können keine Handler im Kontext der Zusweisungshandler spezifiziert werden.</p>
 <p>Siehe: <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.handlers.TextContentImport$Config" target="_blank">Konfiguration</a>.</p>
+<h2>Fallunterscheidung</h2>
+<p>Der <code class="hljs inlineCode">&lt;switch&gt;</code>-Handler wählt abhängig vom Wert eines XML-Attributs des aktuellen Elements den auszuführenden Handler. Das Attribut wird mit <code class="hljs inlineCode">xml-attribute</code> angegeben. Jeder <code class="hljs inlineCode">&lt;case&gt;</code> enthält den Handler für die in seinem Attribut <code class="hljs inlineCode">value</code> angegebenen Werte. Dort können auch mehrere, durch Kommas getrennte Werte stehen, die alle denselben Fall auswählen. Ein Wert darf in höchstens einem Fall desselben <code class="hljs inlineCode">&lt;switch&gt;</code> vorkommen. Passt der Wert zu keinem Fall, wird der Handler im <code class="hljs inlineCode">&lt;default&gt;</code> ausgeführt. Fehlt das Attribut am Element, wird kein Handler ausgeführt.</p>
+<pre><code class="language-xml">&lt;switch xml-attribute="flag"&gt;
+  &lt;case value="1, true"&gt;
+    &lt;assign property="state" value="x -&gt; 'on'"/&gt;
+  &lt;/case&gt;
+  &lt;case value="0, false"&gt;
+    &lt;assign property="state" value="x -&gt; 'off'"/&gt;
+  &lt;/case&gt;
+  &lt;default&gt;
+    &lt;assign property="state" value="x -&gt; 'unknown'"/&gt;
+  &lt;/default&gt;
+&lt;/switch&gt;</code></pre>
+<p>Für beliebige Bedingungen gibt es den <code class="hljs inlineCode">&lt;switch-block&gt;</code>-Handler: Er führt die Handler des ersten <code class="hljs inlineCode">&lt;if&gt;</code>-Falls aus, dessen TL-Script-Prädikat über dem Kontext-Objekt zutrifft, und andernfalls die Handler in <code class="hljs inlineCode">&lt;else&gt;</code>.</p>
+<p>Siehe: <a href="https://dev.top-logic.com/doc/TL-7-latest/javadoc/#com.top_logic.xio.importer.handlers.PropertySwitch$Config" target="_blank">Konfiguration</a>.</p>
 <h2>Verknüpfung von Objekten</h2>
 <p>Objekte, die während des Imports angelegt werden, können gesteuert durch die XML-Eingabe untereinander verknüpft werden. Hierdurch werden Referenzen, die in der XML-Eingabe durch Identifier realisiert sind, in echte Modell-Verknüpfungen übersetzt.</p>
 <pre><code class="language-xml">&lt;linking&gt;

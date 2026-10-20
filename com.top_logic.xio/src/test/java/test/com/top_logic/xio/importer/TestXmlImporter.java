@@ -426,6 +426,32 @@ public class TestXmlImporter extends TestCase {
 		return log.getInfos().stream().filter(message -> message.contains("Unknown element")).toList();
 	}
 
+	public void testMultiValueCase() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter13-MultiValueCase.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter13-MultiValueCase.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test13");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter13-MultiValueCase.data.xml").getStream()), container);
+
+		// Each value of a case selects that case, other values select the default.
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(5, elements.size());
+		assertEquals(List.of("i1", "i2", "i3", "i4", "i5"),
+			elements.stream().map(item -> item.tValueByName("name")).toList());
+		assertEquals(List.of("on", "on", "off", "off", "unknown"),
+			elements.stream().map(item -> item.tValueByName("state")).toList());
+	}
+
+	public void testMultiValueCaseDuplicate() {
+		String errors = assertInvalidImporter("testXmlImporter13-MultiValueCase-duplicate.importer.xml");
+		assertTrue(errors, errors.contains("Duplicate case value 'true'"));
+	}
+
 	public void testLanguageFromInput() throws XMLStreamException, IOException {
 		assertEquals("Test expects English as fallback language.", Locale.ENGLISH,
 			ResourcesModule.getInstance().getFallbackLocale());
@@ -466,20 +492,24 @@ public class TestXmlImporter extends TestCase {
 	}
 
 	public void testLanguageOptionsExclusive() {
-		assertInvalidImporter("testXmlImporter10-Language-none.importer.xml");
-		assertInvalidImporter("testXmlImporter10-Language-two.importer.xml");
+		assertLanguageOptionsInvalid("testXmlImporter10-Language-none.importer.xml");
+		assertLanguageOptionsInvalid("testXmlImporter10-Language-two.importer.xml");
 	}
 
-	private void assertInvalidImporter(String importerResource) {
+	private void assertLanguageOptionsInvalid(String importerResource) {
+		String errors = assertInvalidImporter(importerResource);
+		assertTrue(errors, errors.contains("Exactly one of"));
+	}
+
+	private String assertInvalidImporter(String importerResource) {
 		BufferingProtocol log = new BufferingProtocol();
 		try {
 			XmlImporter.readImportConfig(new DefaultInstantiationContext(log), resource(importerResource));
-			fail("Invalid language options not detected: " + importerResource);
+			fail("Invalid importer configuration not detected: " + importerResource);
 		} catch (AbortExecutionException | ConfigurationError ex) {
 			// Expected.
 		}
-		String errors = String.join("\n", log.getErrors());
-		assertTrue(errors, errors.contains("Exactly one of"));
+		return String.join("\n", log.getErrors());
 	}
 
 	private TLObject existingItem(TLObject container, TLClass itemType, String extId) {

@@ -1,0 +1,11 @@
+<data>
+	<item name="i1">
+		<note>
+			<unknown-nested/>
+		</note>
+	</item>
+	<unknown-top/>
+	<strict name="s1">
+		<child name="c1"/>
+	</strict>
+</data>

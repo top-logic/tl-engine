@@ -364,6 +364,68 @@ public class TestXmlImporter extends TestCase {
 		assertSame(parent2, child2.tContainer());
 	}
 
+	public void testUnknownElementsWarned() throws XMLStreamException, IOException {
+		BufferingProtocol importLog = new BufferingProtocol();
+		TLObject container = importUnknownElements(importLog, "testXmlImporter12-UnknownElements.data.xml");
+
+		// An unknown element at the top level and one inside a leaf element without own content
+		// handlers are both reported with their location, the import continues.
+		assertEquals(String.join("\n", importLog.getErrors()), 0, importLog.getErrors().size());
+		List<String> warnings = unknownElementMessages(importLog);
+		assertEquals(warnings.toString(), 2, warnings.size());
+		assertEquals("In line 4 column 21: Unknown element \"unknown-nested\" skipped.", warnings.get(0));
+		assertEquals("In line 7 column 16: Unknown element \"unknown-top\" skipped.", warnings.get(1));
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(2, elements.size());
+		assertEquals("i1", elements.get(0).tValueByName("name"));
+		TLObject s1 = elements.get(1);
+		assertEquals("s1", s1.tValueByName("name"));
+		List<? extends TLObject> children = list(s1.tValueByName("children"));
+		assertEquals(1, children.size());
+		assertEquals("c1", children.get(0).tValueByName("name"));
+	}
+
+	public void testUnknownElementsNestedSetting() throws XMLStreamException, IOException {
+		BufferingProtocol importLog = new BufferingProtocol();
+		TLObject container = importUnknownElements(importLog, "testXmlImporter12-UnknownElements-error.data.xml");
+
+		// The inner setting applies to its subtree, the outer setting applies again after it.
+		List<String> errors = importLog.getErrors();
+		assertEquals(String.join("\n", errors), 1, errors.size());
+		assertEquals("In line 4 column 20: Unknown element \"unknown-strict\".", errors.get(0));
+		List<String> warnings = unknownElementMessages(importLog);
+		assertEquals(warnings.toString(), 1, warnings.size());
+		assertEquals("In line 6 column 18: Unknown element \"unknown-after\" skipped.", warnings.get(0));
+
+		// A configured default handler takes every element without a tag entry.
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(2, elements.size());
+		TLObject l1 = elements.get(1);
+		assertEquals("l1", l1.tValueByName("name"));
+		List<? extends TLObject> children = list(l1.tValueByName("children"));
+		assertEquals(1, children.size());
+		assertEquals("d1", children.get(0).tValueByName("name"));
+	}
+
+	private TLObject importUnknownElements(BufferingProtocol importLog, String dataResource)
+			throws XMLStreamException, IOException {
+		XmlImporter importer = XmlImporter.newInstance(importLog.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter12-UnknownElements.importer.xml"));
+		TLModel model = loadModel(new AssertProtocol(), "testXmlImporter12-UnknownElements.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test12");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource(dataResource).getStream()), container);
+		return container;
+	}
+
+	private static List<String> unknownElementMessages(BufferingProtocol log) {
+		return log.getInfos().stream().filter(message -> message.contains("Unknown element")).toList();
+	}
+
 	public void testLanguageFromInput() throws XMLStreamException, IOException {
 		assertEquals("Test expects English as fallback language.", Locale.ENGLISH,
 			ResourcesModule.getInstance().getFallbackLocale());

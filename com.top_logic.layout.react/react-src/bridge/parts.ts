@@ -120,6 +120,9 @@ export interface ButtonPartProps extends PartAttributes {
   /** The pressed state of a toggle; absent for a button that is no toggle. */
   checked?: boolean;
 
+  /** Inside a menu: the toggle is one alternative of a choice ({@link ButtonDefaultsValue.radio}), a radio entry. */
+  radio?: boolean;
+
   /** Whether the button cannot be pressed. */
   disabled?: boolean;
 
@@ -950,17 +953,17 @@ export function buttonLinkAttributes(props: ButtonPartProps): {
  * <li>the label as `aria-label` for a button with an icon or one showing its icon alone;</li>
  * <li>outside a menu `aria-pressed` for an active button or a checked toggle;</li>
  * <li>inside a menu the role and roving tabindex of an entry ({@link menuItemProps}),
- *     `aria-current` for the active entry and `aria-checked` for a toggle;</li>
+ *     `aria-current` for the active entry and `aria-checked` for a toggle (a checkbox entry, or a radio entry, {@link ButtonPartProps.radio});</li>
  * <li>the tooltip: the explicit one, else the label - always for a button showing its icon alone,
  *     otherwise only while the label is clipped.</li>
  * </ul>
  */
 export function buttonPartAttributes(props: ButtonPartProps): Record<string, string | number | boolean | undefined> {
-  const { label, image, display, appearance, active, checked, tooltip } = props;
+  const { label, image, display, appearance, active, checked, radio, tooltip } = props;
   const asMenuItem = appearance === 'menu-item';
   const iconOnly = display === 'icon-only';
   const result: Record<string, string | number | boolean | undefined> = {
-    ...menuItemProps({ appearance }, checked),
+    ...menuItemProps({ appearance, radio }, checked),
     // A toggle states its state either way; a button marked active only while it is.
     'aria-pressed': asMenuItem ? undefined : checked !== undefined ? checked : active ? true : undefined,
     'aria-current': asMenuItem && active ? 'true' : undefined,

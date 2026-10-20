@@ -2,7 +2,7 @@ import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvide
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
-import { Menu, MenuItem } from './menu/Menu';
+import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
 

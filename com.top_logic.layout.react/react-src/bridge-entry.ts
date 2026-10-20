@@ -35,6 +35,8 @@ export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { useTabList } from './bridge/tab-list';
 export type { TabProps, PanelProps, TabListOptions } from './bridge/tab-list';
+export { Menu, MenuItem, MenuHeader, MenuSeparator, useRovingMenu, menuItemClassName } from './bridge/menu';
+export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';

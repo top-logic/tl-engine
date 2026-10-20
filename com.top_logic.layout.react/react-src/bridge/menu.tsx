@@ -1,9 +1,18 @@
-import { React, usePart, useCloseOnOutsidePress, useFocusTrap, createPortal, usePopover, useMergeRefs, ThemeIcon, anchoredOverlayProps, tooltipProps } from 'tl-react-bridge';
-import type { PopoverAnchor, PopoverOptions } from 'tl-react-bridge';
+import React from 'react';
+import { createPortal } from 'react-dom';
+import { useMergeRefs } from '@floating-ui/react';
+import { usePart } from './parts';
+import { useCloseOnOutsidePress } from './outside-press';
+import { useFocusTrap } from './tl-react-bridge';
+import { anchoredOverlayProps } from './focus-trap';
+import { usePopover } from './popover';
+import type { PopoverAnchor, PopoverOptions } from './popover';
+import { ThemeIcon } from './ThemeIcon';
+import { tooltipProps } from './tooltip-host';
 
 const { useCallback, useEffect, useRef } = React;
 
-const ITEM = '[role="menuitem"]:not([disabled]), [role="menuitemcheckbox"]:not([disabled])';
+const ITEM = '[role="menuitem"]:not([disabled]), [role="menuitemcheckbox"]:not([disabled]), [role="menuitemradio"]:not([disabled])';
 
 /**
  * Roving tabindex over the entries of a menu: exactly one entry is in the tab order, the one that

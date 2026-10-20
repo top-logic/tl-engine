@@ -9,13 +9,14 @@
 // Review focus 4: the density chosen in the user menu reaches the page without a reload - the page script's
 // `tlTheme.density(value)` sets `data-tl-density` on <html>, and what the controls read through useTokenPx follows.
 
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach, beforeAll } from 'vitest';
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
-import { React, useFill, useTokenPx, KeyboardScopeProvider, EscapeToClose, startPointerDrag, TOOLTIP_ATTR } from 'tl-react-bridge';
+import { React, useFill, useTokenPx, KeyboardScopeProvider, EscapeToClose, startPointerDrag, TOOLTIP_ATTR, Menu, MenuItem, ButtonDefaults, useButtonDefaults, usePart, registerPart } from 'tl-react-bridge';
 import { scrollToAnchor } from '../../../com.top_logic.layout.react/react-src/bridge/scroll';
 import { handlePick } from '../../../com.top_logic.layout.react/react-src/bridge/element-picker';
 import { initKeyboardDispatcher } from '../../../com.top_logic.layout.react/react-src/bridge/keyboard-dispatcher';
 import { installTouchDrag } from '../../../com.top_logic.layout.react/react-src/bridge/touch-drag';
+import ButtonPart from '../../../com.top_logic.layout.react/react-src/controls/button/ButtonPart';
 import { DropHint } from '../../../com.top_logic.layout.react/react-src/controls/DropHint';
 import type { HintAnchor } from '../../../com.top_logic.layout.react/react-src/controls/DropHint';
 import { HOVER_DELAY_MS } from '../../../com.top_logic.layout.react/react-src/bridge/tooltip-host';
@@ -505,5 +506,85 @@ describe('density', () => {
     const { result } = renderHook(() => useTokenPx(ref, '--tl-size-row', 40));
 
     expect(result.current).toBe(28);
+  });
+});
+
+describe('menu', () => {
+  beforeAll(() => registerPart('Button', ButtonPart));
+
+  /** An anchor for the menu; jsdom lays nothing out, the popover only needs an element. */
+  function anchorElement(): HTMLElement {
+    const anchor = document.createElement('button');
+    document.body.appendChild(anchor);
+    return anchor;
+  }
+
+  it('the menu of the bridge moves focus with the arrows and closes on Escape', () => {
+    // jsdom has no layout; the menu roves over the entries that have a box.
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    const onClose = vi.fn();
+    render(
+      <Menu open anchor={anchorElement()} onClose={onClose}>
+        <MenuItem label="Cut" onSelect={() => {}} />
+        <MenuItem label="Copy" onSelect={() => {}} />
+        <MenuItem label="Paste" onSelect={() => {}} />
+      </Menu>,
+    );
+    const menu = screen.getByRole('menu');
+    const entries = screen.getAllByRole('menuitem');
+    expect(entries).toHaveLength(3);
+    expect(entries.map(e => e.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
+
+    entries[0].focus();
+    fireEvent.keyDown(entries[0], { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(entries[1]);
+    fireEvent.keyDown(entries[1], { key: 'End' });
+    expect(document.activeElement).toBe(entries[2]);
+    fireEvent.keyDown(entries[2], { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(entries[0]);
+    expect(menu.contains(document.activeElement)).toBe(true);
+
+    fireEvent.keyDown(entries[0], { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  /** A toggle entry as `TLToggleButton` draws it: the part `Button` with a pressed state. */
+  const Entry: React.FC<{ label: string; checked: boolean }> = ({ label, checked }) => {
+    const Button = usePart('Button');
+    const defaults = useButtonDefaults();
+    return <Button label={label} display="label-only" appearance="menu-item" checked={checked} radio={defaults.radio} onClick={() => {}} />;
+  };
+
+  it('under ButtonDefaults radio, the entries are menuitemradio and exactly one is checked', () => {
+    vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([{}] as unknown as DOMRectList);
+    render(
+      <Menu open anchor={anchorElement()} onClose={() => {}}>
+        <ButtonDefaults appearance="menu-item" radio>
+          <Entry label="Paragraph" checked={false} />
+          <Entry label="Heading 1" checked />
+          <Entry label="Heading 2" checked={false} />
+        </ButtonDefaults>
+      </Menu>,
+    );
+    const radios = screen.getAllByRole('menuitemradio');
+    expect(radios).toHaveLength(3);
+    expect(radios.filter(r => r.getAttribute('aria-checked') === 'true').map(r => r.textContent)).toEqual(['Heading 1']);
+    expect(radios.filter(r => r.getAttribute('aria-checked') === 'false')).toHaveLength(2);
+    // The checked entry is marked visibly: it reads strong; the others do not.
+    expect(radios.map(r => r.classList.contains('tl-type-body-strong'))).toEqual([false, true, false]);
+    // The roving finds the radio entries.
+    expect(radios.map(r => r.getAttribute('tabindex'))).toEqual(['0', '-1', '-1']);
+    fireEvent.keyDown(radios[0], { key: 'ArrowDown' });
+    expect(document.activeElement).toBe(radios[1]);
+  });
+
+  it('without radio the toggle entries stay checkbox entries', () => {
+    render(
+      <ButtonDefaults appearance="menu-item">
+        <Entry label="Bold" checked />
+      </ButtonDefaults>,
+    );
+    expect(screen.getByRole('menuitemcheckbox').getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByRole('menuitemradio')).toBeNull();
   });
 });

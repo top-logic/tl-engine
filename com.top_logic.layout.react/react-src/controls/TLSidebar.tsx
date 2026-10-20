@@ -4,7 +4,7 @@ import {
   useDisplayClass, useFocusTrap, pressClosedSurface, ICON_EXPAND,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { Menu, MenuItem, MenuHeader, MenuSeparator, menuItemClassName } from './menu/Menu';
+import { Menu, MenuItem, MenuHeader, MenuSeparator, menuItemClassName } from 'tl-react-bridge';
 
 const { useCallback, useState, useEffect, useRef } = React;
 

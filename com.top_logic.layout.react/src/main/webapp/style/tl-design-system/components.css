@@ -2027,6 +2027,46 @@
   max-width: 100%;
 }
 
+/* --- compact-field/compact-field.css --- */
+/* Compact field — Spec 2026-10-20 Welle 5d §6. Die Vorschau eines Werts und der Knopf, der seinen Editor im Dialog
+   öffnet (ReactCompactFieldControl). Die Wurzel ist eine Reihe (tl-stack); die Vorschau nimmt die Breite, die der
+   Knopf lässt, und endet mit Ellipse, der Knopf behält seine Größe. Bearbeitbar ist die Wurzel ein Feld (tl-field,
+   data-tl-state~="edit") und sieht aus wie ein Select: der Knopf sitzt im Rahmen am Ende und zeigt Zeigen und
+   Drücken eine Stufe kräftiger — mit derselben Regel wie die Knöpfe im Select (select.css). Lesend erscheint der
+   Knopf erst beim Zeigen: er trägt tl-reveal-on-hover (layout.css), dieser Block blendet nichts selbst ein. */
+
+.tl-compact-field {
+  min-width: 0;
+}
+
+.tl-compact-field > .tl-compact-field__preview {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Der Knopf (tl-button--icon --sm --ghost, Icon tl-icon-sm) liest sich wie der Chevron eines Select: klein, gedämpft. */
+.tl-compact-field > .tl-compact-field__opener {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  color: var(--tl-icon-secondary);
+}
+
+/* Der Ring des Öffners liegt innen: in der Tabellenzelle schneidet die Zelle, was über sie hinausragt (kompakte
+   Dichte), im Feld läge er außen auf dem Rahmen. Wie die Knöpfe der Liste (reorder-list.css). */
+.tl-compact-field > .tl-compact-field__opener:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Bearbeitbar: ein Feld, in der Tabellenzelle das zellfüllende randlose Feld der anderen Zelleditoren; der Knopf
+   steht space-2xs vom Rand wie die Knöpfe im Select. */
+.tl-compact-field[data-tl-state~="edit"] {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  padding-inline-end: var(--tl-space-2xs);
+}
+.tl-compact-field[hidden] { display: none; }
+
 /* --- dashboard/dashboard.css --- */
 /* Dashboard — Spec 5c §6 (V5, V6, V12, V20), Vertrag dashboard.contract.md. Leser ist TLDashboard.
    Kacheln in einem Raster, das die Engine packt (Spalten, Zeilen und Lage der Kacheln inline). Eine Kachel ist eine
@@ -3972,6 +4012,52 @@ a.tl-field-value:hover {
   margin-bottom: var(--tl-space-xs);
 }
 
+/* --- rich-text/rich-text.css --- */
+/* Rich Text — Spec 2026-10-20 Welle 5d §7. Der Wysiwyg-Editor (TLWysiwygEditor, Tiptap): der Rahmen ist ein Feld
+   (tl-field: Rand, Zeigen, Fehler über aria-invalid), darin die Leiste (tl-toolbar tl-toolbar--wrap) und die
+   Schreibfläche mit tl-prose (Überschriften, Listen, Code, Zitat, Link, Tabelle aus prose.css). Hier steht nur, was
+   allein der Editor braucht: Innenabstand und Mindesthöhe der Schreibfläche, die Kopfzelle, die Trennung von Leiste
+   und Text. Klassen der Bibliothek (.ProseMirror, Bildauswahl, Spaltengriff) stehen nicht im Paket, sondern im
+   Engine-Sheet des Editors (Plan-Review K3). Die Ansicht (nicht bearbeitbar) trägt tl-prose ohne diesen Block. */
+
+/* Leiste und Schreibfläche untereinander; den Innenabstand tragen sie selbst, nicht der Rahmen. Kein overflow am
+   Rahmen: er schnitte den Fokusring der Knöpfe am Rand ab. */
+.tl-rich-text {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.tl-rich-text[hidden] { display: none; }
+
+/* Die Leiste rückt um space-xs vom Rand ein und trennt sich mit der Linie des Rahmens vom Text. */
+.tl-rich-text > .tl-toolbar {
+  padding-inline: var(--tl-space-xs);
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Der Innenabstand gehört der Schreibfläche selbst: ein Klick bis an den Rand setzt die Schreibmarke in den Text. */
+.tl-rich-text .tl-prose {
+  min-height: var(--tl-size-10);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+}
+
+/* Die Schreibfläche reicht bis an den Rand des Rahmens und an die Linie der Leiste: der Ring aus base.css liegt
+   darum innen, außen läge er auf dem Rand. */
+.tl-rich-text .tl-prose:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Die Kopfzelle einer Tabelle hebt sich im Editor ab; Schrift und Linie kommen aus prose.css. */
+.tl-rich-text .tl-prose th {
+  background: var(--tl-surface-layer-nested);
+}
+
+/* Bilder passen in die Breite der Schreibfläche. */
+.tl-rich-text .tl-prose img {
+  max-width: 100%;
+  height: auto;
+}
+
 /* --- select/select.css --- */
 /* Select — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“.
    Die Wurzel ist div.tl-field.tl-select[role="combobox"]: Rahmen, Fehler, Warnung, Zeigen und
@@ -4094,11 +4180,14 @@ a.tl-field-value:hover {
 
 /* Löschen und Chevron sind Knöpfe im Feld wie die Aktion der tl-field-group (field.css): quadratisch
    size-control-sm, am Ende space-2xs vom Rand (padding-inline-end von .tl-select), Zeigen surface-interactive-selected, Drücken
-   surface-interactive-active — auf surface-field ist die Zeigen-Stufe des Ghost-Knopfs hell nicht zu sehen. */
-.tl-select__controls > .tl-button--ghost:not(:disabled):hover {
+   surface-interactive-active — auf surface-field ist die Zeigen-Stufe des Ghost-Knopfs hell nicht zu sehen.
+   Der Öffner des bearbeitbaren Compact field (compact-field.css) ist derselbe Knopf im Feld: eine Regel, zwei Leser. */
+.tl-select__controls > .tl-button--ghost:not(:disabled):hover,
+.tl-compact-field[data-tl-state~="edit"] > .tl-compact-field__opener.tl-button--ghost:not(:disabled):hover {
   background: var(--tl-surface-interactive-selected);
 }
-.tl-select__controls > .tl-button--ghost:not(:disabled):active {
+.tl-select__controls > .tl-button--ghost:not(:disabled):active,
+.tl-compact-field[data-tl-state~="edit"] > .tl-compact-field__opener.tl-button--ghost:not(:disabled):active {
   background: var(--tl-surface-interactive-active);
 }
 
@@ -5809,6 +5898,12 @@ button.tl-swatch:not(:disabled):hover {
   justify-content: flex-start;
 }
 
+/* Eine Leiste, die nicht kollabiert, sondern umbricht (Wysiwyg-Editor, tl-rich-text): die Gruppen gehen ganz in die
+   nächste Zeile; der Abstand zwischen den Zeilen ist der zwischen den Einträgen. */
+.tl-toolbar--wrap {
+  flex-wrap: wrap;
+}
+
 .tl-toolbar__group {
   display: flex;
   align-items: center;
@@ -5818,6 +5913,77 @@ button.tl-swatch:not(:disabled):hover {
 
 .tl-toolbar__group > :empty {
   display: none;
+}
+
+/* --- tooltip/tooltip.css --- */
+/* Tooltip — Spec 2026-10-20 Welle 5d §5. Der Hinweis an einem Element (bridge/tooltip-host.ts, TooltipPopover.tsx):
+   die einzige invertierte Fläche des Pakets — ein Hinweis, kein Menü. Die Lage setzt floating-ui inline; hier
+   stehen Fläche, Ebene, Grenzen und Abstände. Die Schrift tragen die Typo-Klassen an Überschrift und Text.
+   Der Schatten steht am Tooltip (box-shadow aus shadow-popover, Plan-Review K4), der Pfeil hat keinen:
+   drop-shadow() nimmt die zweischichtige Schattenliste nicht. Ebene layer-tooltip: über dem Popover, in dem das
+   erklärte Element liegen kann (Menüeintrag, Option), und über dem Toast. */
+
+@keyframes tl-tooltip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tl-tooltip {
+  z-index: var(--tl-layer-tooltip);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-width: var(--tl-size-13);
+  margin: 0;
+  padding: 0;
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-inverse);
+  box-shadow: var(--tl-shadow-popover);
+  color: var(--tl-text-inverse);
+  pointer-events: none;
+  animation: tl-tooltip-in var(--tl-duration-fast) var(--tl-easing-entrance);
+}
+.tl-tooltip[hidden] { display: none; }
+
+/* Interaktiv (Text mit Link, Text zum Kopieren): der Zeiger darf hinein, der Text ist auswählbar. */
+.tl-tooltip[data-tl-state~="interactive"] {
+  pointer-events: auto;
+  cursor: text;
+  user-select: text;
+}
+
+/* Die Überschrift schließt oben an, der Text darunter trägt den Abstand zu ihr. */
+.tl-tooltip__caption {
+  padding: var(--tl-space-2xs) var(--tl-space-sm) 0;
+}
+
+/* Lange Wörter und Adressen brechen um, statt die Breite zu sprengen. */
+.tl-tooltip__body {
+  padding: var(--tl-space-2xs) var(--tl-space-sm);
+  overflow-wrap: break-word;
+  white-space: normal;
+  text-align: start;
+}
+
+/* Erlaubtes HTML vom Server erbt Farbe und Schrift des Tooltips; der erste und letzte Block schließen bündig an. */
+.tl-tooltip__body * {
+  color: inherit;
+}
+
+.tl-tooltip__body > :first-child {
+  margin-block-start: 0;
+}
+
+.tl-tooltip__body > :last-child {
+  margin-block-end: 0;
+}
+
+.tl-tooltip__body :is(ol, ul) {
+  padding-inline-start: var(--tl-space-sm);
+}
+
+.tl-tooltip__arrow {
+  fill: var(--tl-surface-inverse);
 }
 
 /* --- tree/tree.css --- */
@@ -6009,4 +6175,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:7699d2c189b7d33eb401891fca20360802d18a6ef0a8251e1d91d82458471b4b — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:ca7e71390c4cb99c1c0ac4fdbbc6d97181c399f9f12d3f518571f968e5f7ac10 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

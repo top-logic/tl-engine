@@ -25,6 +25,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
+import com.top_logic.layout.react.control.form.SliderRange;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
@@ -45,12 +46,6 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * </p>
  */
 public class NumberInputControlProvider implements ReactFieldControlProvider {
-
-	/**
-	 * The {@link Config#getStep() step} of a slider that states none: the value moves by whole
-	 * numbers.
-	 */
-	private static final double DEFAULT_STEP = 1.0;
 
 	/**
 	 * Configuration options for {@link NumberInputControlProvider}.
@@ -176,8 +171,7 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		Format format = FieldControlRegistry.numberFormat(field);
 		if (_display == NumberDisplay.SLIDER) {
-			return new ReactSliderControl(context, model, format, _min.doubleValue(), _max.doubleValue(),
-				_step == null ? DEFAULT_STEP : _step.doubleValue());
+			return new ReactSliderControl(context, model, format, new SliderRange(_min, _max, _step, null));
 		}
 		return new ReactNumberInputControl(context, model, format);
 	}

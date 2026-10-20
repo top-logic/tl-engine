@@ -57,7 +57,7 @@ public class IDEOnly implements ExecutabilityRule {
 	 * "packaged / non-development", which for a bare setup maps to production vs. development).
 	 * </p>
 	 */
-	private static OperationMode effectiveMode() {
+	static OperationMode effectiveMode() {
 		if (OperationModeService.Module.INSTANCE.isActive()) {
 			return OperationModeService.getInstance().getMode();
 		}

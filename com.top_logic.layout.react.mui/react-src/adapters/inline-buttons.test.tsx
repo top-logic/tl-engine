@@ -80,9 +80,8 @@ describe('the header buttons of a panel as MUI icon buttons', () => {
     for (const label of [LABEL_MINIMIZE, LABEL_MAXIMIZE, LABEL_POP_OUT]) {
       const button = screen.getByRole('button', { name: label });
       expectMuiIconButton(button);
-      // The class marks the button; the element around the buttons places them.
-      expect(button.classList).toContain('tlPanel__actionButton');
-      expect(button.parentElement!.classList).toContain('tlPanel__actions');
+      // The element around the buttons places them; the buttons carry no class of their own.
+      expect(button.parentElement!.classList).toContain('tl-titlebar__buttons');
     }
   });
 

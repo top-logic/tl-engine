@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.top-logic</groupId>
+        <artifactId>tl-parent-core-internal</artifactId>
+        <version>8.0.0-SNAPSHOT</version>
+        <relativePath>../tl-parent-core/internal</relativePath>
+    </parent>
+
+    <artifactId>tl-presentation</artifactId>
+    <name>${project.artifactId}</name>
+    <description>TL-Script functions creating PowerPoint presentations.</description>
+    <url>https://github.com/top-logic/tl-engine/</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-model-search</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-layout-wysiwyg</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml-full</artifactId>
+        </dependency>
+
+        <!-- Required so Surefire (configured in tl-parent-core to scan tl-basic's test-jar for
+             test/TestAll.class) finds and runs the module's tests. -->
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-basic</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-core</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-model-search</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>-Djava.awt.headless=true</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

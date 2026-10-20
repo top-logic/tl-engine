@@ -27,7 +27,7 @@ between the sheet and the browser, so what is written there is what the browser 
 **Write `var(--name)` without a fallback.** A `var(--name, 0.5rem)` hides the fact that the theme is
 missing the token: the page renders, silently ignoring the theme. A token the theme does not declare
 is a defect to fix in the theme. The only custom properties that carry a fallback are the ones a
-stylesheet declares itself (`--page-inset`, `--cal-ev-bg`, …), where the fallback is the value of the
+stylesheet declares itself (`--cal-ev-bg`, …), where the fallback is the value of the
 default case rather than a stand-in for a missing token.
 
 ## Cascade layers

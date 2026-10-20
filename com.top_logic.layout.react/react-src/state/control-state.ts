@@ -21,6 +21,7 @@
  *   TLAccordion       - AccordionState
  *   TLWindow          - WindowState
  *   TLDialog          - DialogState
+ *   TLPopover         - PopoverState
  *   TLMenu            - MenuState
  *   TLSnackbar        - SnackbarState
  *   TLAlert           - AlertState
@@ -513,13 +514,23 @@ export namespace NumberInputStateJson {
  * State of a field for a date, a time of day, or both, the component `TLDatePicker`.
  *
  * The {@link FieldStateJson.value} is the ISO form of the value for the HTML input of the {@link DatePickerStateJson.inputType}, a
- * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`).
+ * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`). A time of day is
+ * written with its seconds when the field has the {@link DatePickerStateJson.precision} of seconds (e.g.
+ * `14:30:15`, `2026-06-01T14:30:15`).
  */
 export interface DatePickerStateJson extends FieldStateJson {
 	/**
 	 * The part of a point in time the field edits.
 	 */
 	inputType: DatePickerStateJson.InputType;
+
+	/**
+	 * The smallest unit of a time of day the field edits, the one its display format writes.
+	 *
+	 * A field with the precision of seconds lets the seconds be entered and writes them in the ISO
+	 * {@link FieldStateJson.value}. A date without a time of day has the precision of minutes.
+	 */
+	precision: DatePickerStateJson.Precision;
 
 	/**
 	 * The value written in the display format of the current user, shown while the field is not
@@ -545,6 +556,19 @@ export namespace DatePickerStateJson {
 		 * A date with a time of day.
 		 */
 		| 'datetime-local';
+
+	/**
+	 * The smallest unit of a time of day a field edits.
+	 */
+	export type Precision =
+		/**
+		 * A time of day is edited in hours and minutes.
+		 */
+		| 'minutes'
+		/**
+		 * A time of day is edited in hours, minutes and seconds.
+		 */
+		| 'seconds';
 }
 
 /**
@@ -915,6 +939,141 @@ export interface DialogStateJson extends ControlStateJson {
 	 * The content of the dialog.
 	 */
 	child?: ChildControlJson;
+}
+
+/**
+ * State of a non-modal surface of arbitrary content anchored to the trigger that opens it, the
+ * component `TLPopover`.
+ *
+ * The component renders a trigger button in place and, while the popover is {@link PopoverStateJson.open}, the
+ * {@link PopoverStateJson.content} on a surface portaled to the document body and placed at the trigger as
+ * {@link PopoverStateJson.placement} says. The trigger button shows the {@link PopoverStateJson.trigger} content if there is one,
+ * else the {@link PopoverStateJson.icon} alone (with the {@link PopoverStateJson.label} as its accessible name) or the
+ * {@link PopoverStateJson.label}. The surface is a dialog labelled by the trigger.
+ *
+ * The client asks for the popover to open with the command `open` and for it to close with
+ * the command `close`, both without arguments. It sends `close` on Escape, on a press
+ * outside of trigger and surface, and on a click on the trigger of an open popover in mode
+ * `click`. In mode `hover`, it sends `open` after the pointer has rested on the
+ * trigger for a moment or when the trigger receives the keyboard focus, and `close` after the
+ * pointer has left trigger and surface for a moment or when the focus leaves both. The server may
+ * open and close the popover on its own as well.
+ */
+export interface PopoverStateJson extends ControlStateJson {
+	/**
+	 * Whether the surface is shown.
+	 */
+	open: boolean;
+
+	/**
+	 * Where the surface stands at the trigger. Absent: `bottom-start`.
+	 */
+	placement: PopoverStateJson.Placement;
+
+	/**
+	 * The gesture opening the popover. Absent: `click`.
+	 */
+	mode: PopoverStateJson.Mode;
+
+	/**
+	 * The label of the trigger button, its accessible name when it shows an {@link PopoverStateJson.icon} alone or
+	 * {@link PopoverStateJson.trigger} content, and with it the name of the surface. Absent: none.
+	 */
+	label: string;
+
+	/**
+	 * The icon of the trigger button, the encoded form of a theme image. Absent: none.
+	 */
+	icon: string;
+
+	/**
+	 * Content shown inside the trigger button instead of {@link PopoverStateJson.label} and {@link PopoverStateJson.icon}: text, an
+	 * icon, a badge. The trigger button is the interactive element, so the content holds no
+	 * interactive controls of its own. Absent: the trigger button shows {@link PopoverStateJson.label} and
+	 * {@link PopoverStateJson.icon}.
+	 */
+	trigger?: ChildControlJson;
+
+	/**
+	 * The content of the surface. Present while the popover is {@link PopoverStateJson.open}: the content is created
+	 * when the popover opens for the first time and kept on the server while it is closed, so that
+	 * it shows what the user left there when it opens again.
+	 */
+	content?: ChildControlJson;
+}
+
+export namespace PopoverStateJson {
+	/**
+	 * The side of the trigger the surface stands on, and its alignment along that side: `start`
+	 * and `end` align the surface with the start or end edge of the trigger, no alignment
+	 * centers it. A surface that does not fit on its side flips to the opposite one.
+	 */
+	export type Placement =
+		/**
+		 * Above the trigger, centered.
+		 */
+		| 'top'
+		/**
+		 * Above the trigger, aligned with its start edge.
+		 */
+		| 'top-start'
+		/**
+		 * Above the trigger, aligned with its end edge.
+		 */
+		| 'top-end'
+		/**
+		 * Below the trigger, centered.
+		 */
+		| 'bottom'
+		/**
+		 * Below the trigger, aligned with its start edge.
+		 */
+		| 'bottom-start'
+		/**
+		 * Below the trigger, aligned with its end edge.
+		 */
+		| 'bottom-end'
+		/**
+		 * Left of the trigger, centered.
+		 */
+		| 'left'
+		/**
+		 * Left of the trigger, aligned with its top edge.
+		 */
+		| 'left-start'
+		/**
+		 * Left of the trigger, aligned with its bottom edge.
+		 */
+		| 'left-end'
+		/**
+		 * Right of the trigger, centered.
+		 */
+		| 'right'
+		/**
+		 * Right of the trigger, aligned with its top edge.
+		 */
+		| 'right-start'
+		/**
+		 * Right of the trigger, aligned with its bottom edge.
+		 */
+		| 'right-end';
+
+	/**
+	 * The gesture opening the popover.
+	 */
+	export type Mode =
+		/**
+		 * A click on the trigger opens the popover and a further click closes it. Opening moves the
+		 * keyboard focus into the surface, closing returns it to the trigger.
+		 */
+		| 'click'
+		/**
+		 * Resting the pointer on the trigger opens the popover, and it stays open while the pointer
+		 * moves on into the surface. Opening by the pointer leaves the keyboard focus where it is;
+		 * opening by the keyboard focus on the trigger moves it into the surface. A click on the
+		 * trigger opens the popover, too.
+		 */
+		| 'hover';
 }
 
 /**

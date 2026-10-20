@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { NO_DRAG_IMAGE } from './drop-hint';
@@ -715,6 +715,39 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     const width = Math.max(MIN_COL_WIDTH, measureColumnContentWidth(root, columnName));
     setColumnWidthOverrides((prev) => ({ ...prev, [columnName]: width }));
     sendCommand('columnResize', { column: columnName, width });
+  }, [sendCommand]);
+
+  // The width handle takes the keyboard like any separator (bridge/separator.ts): the arrows widen and narrow the
+  // column by one step, Home narrows it to the minimum. A column has no maximum, so End fits it to its content - what a
+  // double click on the handle does - and reports it at once. The arrows reach the server when the key is released.
+  const keyResizeRef = React.useRef<{ column: string; width: number } | null>(null);
+
+  const handleResizeKeyDown = React.useCallback((columnName: string, colWidth: number, event: React.KeyboardEvent<HTMLElement>) => {
+    const handle = event.currentTarget;
+    const move = separatorMove(event.key, 'vertical', handle);
+    if (!move) {
+      return;
+    }
+    // The table's own keyboard (cursor, selection) does not see the key.
+    event.preventDefault();
+    event.stopPropagation();
+    if (move.to === 'max') {
+      keyResizeRef.current = null;
+      fitColumnToContent(columnName);
+      return;
+    }
+    const from = keyResizeRef.current?.column === columnName ? keyResizeRef.current.width : colWidth;
+    const width = movedSize(from, move, MIN_COL_WIDTH, Number.MAX_SAFE_INTEGER, separatorStep(handle));
+    keyResizeRef.current = { column: columnName, width };
+    setColumnWidthOverrides((prev) => ({ ...prev, [columnName]: width }));
+  }, [fitColumnToContent]);
+
+  const handleResizeKeyUp = React.useCallback(() => {
+    const info = keyResizeRef.current;
+    keyResizeRef.current = null;
+    if (info) {
+      sendCommand('columnResize', { column: info.column, width: info.width });
+    }
   }, [sendCommand]);
 
   // -- The rows the body shows right now, by index: what the server has not sent of them yet is drawn
@@ -1712,6 +1745,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     role="separator"
                     aria-orientation="vertical"
                     aria-label={i18n['js.table.columnWidth'].replace('{0}', col.label)}
+                    tabIndex={0}
+                    aria-valuenow={w}
+                    aria-valuemin={MIN_COL_WIDTH}
+                    aria-valuemax={Math.max(w, scrollContainerRef.current?.clientWidth ?? w)}
+                    onKeyDown={(e) => handleResizeKeyDown(col.name, w, e)}
+                    onKeyUp={handleResizeKeyUp}
                     onPointerDown={(e) => handleResizeStart(col.name, w, e)}
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => {

@@ -260,6 +260,26 @@
 					</attributes>
 				</class>
 
+				<!--
+					Type of the privileged script tests (ticket #29858): a reader reads it, an approver
+					reads it and may additionally approve it.
+				-->
+				<class name="Proposal">
+					<generalizations>
+						<generalization type="PathNode"/>
+					</generalizations>
+					<attributes>
+						<reference name="readers"
+							multiple="true"
+							type="Employee"
+						/>
+						<reference name="approvers"
+							multiple="true"
+							type="Employee"
+						/>
+					</attributes>
+				</class>
+
 				<class name="PathNote">
 					<generalizations>
 						<generalization type="PathNode"/>

@@ -86,7 +86,17 @@ public class ConfiguredScript extends AbstractConfiguredInstance<ConfiguredScrip
 	}
 
 	private Expr createBaseExpression() {
-		Expr expr = getConfig().getImplementation();
+		return withParameters(getConfig().getImplementation());
+	}
+
+	/**
+	 * Wraps the given expression into a function of the configured
+	 * {@link ScriptConfiguration#getParameters() parameters}, so that it is executed with the
+	 * arguments of a call in the same way as the {@link ScriptConfiguration#getImplementation()
+	 * implementation}.
+	 */
+	protected Expr withParameters(Expr body) {
+		Expr expr = body;
 
 		// Note: The last argument is passed to the innermost function. Therefore, the lambdas must
 		// be constructed in reverse order.

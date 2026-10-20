@@ -35,7 +35,10 @@
 					<format provider="com.top_logic.basic.time.TimeOfDayAsDateValueProvider">
 						<impl class="com.top_logic.layout.configedit.DatePickerFormatProvider"
 							kind="TIME"
-						/>
+						>
+							<!-- The value provider writes hours and minutes only. -->
+							<time style="short"/>
+						</impl>
 					</format>
 					<format provider="com.top_logic.basic.util.ResKey$ValueFormat">
 						<impl class="com.top_logic.layout.configedit.I18NStringFormatProvider"/>

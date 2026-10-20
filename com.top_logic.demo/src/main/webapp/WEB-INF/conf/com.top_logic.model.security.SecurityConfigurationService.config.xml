@@ -564,6 +564,18 @@
 							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.DateAdministrator"
 						/>
 					</part>
+					<class name="DemoTypes:DemoTypes.A">
+						<!--
+							Only an administrator may promote the responsible person of an A to an administrator
+							(privileged script makeResponsibleAdmin). The operation must not be granted to
+							DemoTypes.Responsible: the responsible person could promote themselves.
+						-->
+						<grant
+							inherit="true"
+							operation="PromoteAdmin"
+							roles="DemoTypes.Administrator"
+						/>
+					</class>
 					<module name="DemoSecurity">
 						<grant
 							inherit="true"
@@ -1105,6 +1117,12 @@
 							roles="SecurityStructure.superuser"
 						/>
 					</module>
+					<class name="tl.accounts:Person">
+						<grant
+							operation="Discover"
+							roles="DemoTypes.Administrator, DemoTypes.Responsible"
+						/>
+					</class>
 					<module name="test.defaultValue"
 						without-security="true"
 					/>

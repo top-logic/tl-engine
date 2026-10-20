@@ -1,0 +1,35 @@
+<h2>Syntax</h2>
+
+<pre><code>canCall($call)
+</code></pre>
+
+<h2>Beschreibung</h2>
+
+<p>Pr&uuml;ft, ob der aktuell angemeldete Nutzer den angegebenen Aufruf einer konfigurierten TL-Script-Funktion ausf&uuml;hren darf, ohne ihn auszuf&uuml;hren. Ausgewertet werden nur die Argumente des Aufrufs.</p>
+
+<p>Bei einem privilegierten Skript wird das Sicherheitsobjekt berechnet und die Kommandogruppe darauf gepr&uuml;ft. Eine einfache konfigurierte Funktion darf immer aufgerufen werden. Typische Verwendung: die Ausf&uuml;hrbarkeit eines Kommandos, das eine privilegierte Funktion aufruft.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr><th>Name</th><th>Typ</th><th>Typbeschreibung</th><th>Pflicht</th><th>Standardwert</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>call</td><td>Funktionsaufruf</td><td>Ein Aufruf einer konfigurierten TL-Script-Funktion. Alles andere ist ein Compilerfehler.</td><td>ja</td><td> </td></tr>
+	</tbody>
+</table>
+
+<h2>R&uuml;ckgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Wahrheitswert</p>
+
+<p><code class="hljs inlineCode">true</code>, wenn der aktuelle Nutzer den Aufruf ausf&uuml;hren darf, sonst <code class="hljs inlineCode">false</code>.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre><code>canCall(approveMilestone($milestone))</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Ob der angemeldete Nutzer die Funktion <code class="hljs inlineCode">approveMilestone</code> mit dem angegebenen Meilenstein aufrufen darf.</p>

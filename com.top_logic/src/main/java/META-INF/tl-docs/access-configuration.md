@@ -126,6 +126,9 @@ instead of replacing them.
   computed as: what its generalizations pass on, plus the module rules of its module, plus its own
   rules.
 
+A custom operation can also authorize a configured TL-Script function as a whole, see
+[privileged TL-Script functions](doc:access-privileged-scripts).
+
 ### The two marks
 
 `<class>` and `<module>` entries carry two boolean marks. They exclude each other: a configuration

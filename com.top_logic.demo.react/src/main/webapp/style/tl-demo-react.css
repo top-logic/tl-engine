@@ -24,7 +24,7 @@
  * Staggered entrance of the cards of a repeater grid.
  *
  * <object-list> wraps every element in an item carrying its 0-based position as the custom
- * property --tl-item-index; the delay of the animation is composed from that position, so each
+ * property --item-index; the delay of the animation is composed from that position, so each
  * card starts 60ms after the one before it. Items are reused by key, so a card that survives a
  * change of the inputs keeps its element and does not animate again.
  *
@@ -33,16 +33,16 @@
  * instead, where an entrance per item would read as the page assembling itself, so those items
  * are left alone.
  */
-.tlGrid > .tlObjectList__item {
+.tl-grid > .tlObjectList__item {
 	animation: tlDemoRepeaterFadeUp 300ms ease-out both;
-	animation-delay: calc(var(--tl-item-index) * 60ms);
+	animation-delay: calc(var(--item-index) * 60ms);
 }
 
 /*
  * A viewer who asked for reduced motion sees the items in place.
  */
 @media (prefers-reduced-motion: reduce) {
-	.tlGrid > .tlObjectList__item {
+	.tl-grid > .tlObjectList__item {
 		animation: none;
 	}
 }

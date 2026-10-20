@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
 import org.apache.poi.sl.usermodel.PictureData.PictureType;
@@ -60,6 +59,7 @@ import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.layout.image.util.ImageUtils;
 import com.top_logic.tool.export.ExportUtil;
 import com.top_logic.util.Utils;
 
@@ -1115,14 +1115,13 @@ public class POIPowerpointXUtil {
 		}
 
 		try {
-			ImageInputStream theIOS = getImageInputStream(image);
-			Iterator<ImageReader> theIter  = ImageIO.getImageReaders(theIOS);
-			
-			if (theIter.hasNext()) {
-				ImageReader theReader = theIter.next();
-				theReader.setInput(theIOS);
-				
-				float aspectRatio = theReader.getAspectRatio(0);
+			Dimension imageSize;
+			try (ImageInputStream theIOS = getImageInputStream(image)) {
+				imageSize = ImageUtils.getImageSize(theIOS);
+			}
+
+			if (imageSize != null) {
+				float aspectRatio = (float) imageSize.width / imageSize.height;
 				
 				Dimension inputDim = getInputDimension(theCell, aBox);
 				Dimension outDim = Utils.getImageDimension(inputDim, aspectRatio);

@@ -89,6 +89,8 @@ public class ReactSplitPanelControl extends ReactControl {
 
 	private final BiConsumer<Integer, Boolean> _onChildCollapsed;
 
+	private final Runnable _onSizesReset;
+
 	/**
 	 * Creates a new {@link ReactSplitPanelControl} with persistence callbacks.
 	 *
@@ -106,10 +108,34 @@ public class ReactSplitPanelControl extends ReactControl {
 	public ReactSplitPanelControl(ReactContext context, Orientation orientation, boolean resizable,
 			Consumer<Map<String, Float>> onSizesChanged,
 			BiConsumer<Integer, Boolean> onChildCollapsed) {
+		this(context, orientation, resizable, onSizesChanged, onChildCollapsed, null);
+	}
+
+	/**
+	 * Creates a new {@link ReactSplitPanelControl} with persistence callbacks.
+	 *
+	 * @param orientation
+	 *        The layout orientation (horizontal or vertical).
+	 * @param resizable
+	 *        Whether draggable splitters are shown between children.
+	 * @param onSizesChanged
+	 *        Called after a drag-resize with a map of control ID to new pixel size. May be
+	 *        {@code null}.
+	 * @param onChildCollapsed
+	 *        Called when a child collapses or expands, with ({@code childIndex}, collapsed). May be
+	 *        {@code null}.
+	 * @param onSizesReset
+	 *        Called after the user reset the panes to their default sizes, so that remembered sizes
+	 *        are forgotten. May be {@code null}.
+	 */
+	public ReactSplitPanelControl(ReactContext context, Orientation orientation, boolean resizable,
+			Consumer<Map<String, Float>> onSizesChanged,
+			BiConsumer<Integer, Boolean> onChildCollapsed, Runnable onSizesReset) {
 		super(context, null, REACT_MODULE);
 		_resizable = resizable;
 		_onSizesChanged = onSizesChanged;
 		_onChildCollapsed = onChildCollapsed;
+		_onSizesReset = onSizesReset;
 
 		putState(ORIENTATION, orientation == Orientation.HORIZONTAL ? "horizontal" : "vertical");
 		putState(RESIZABLE, Boolean.valueOf(resizable));
@@ -212,6 +238,25 @@ public class ReactSplitPanelControl extends ReactControl {
 				((ReactSplitPanelControl) c).setParentSplitPanel(this, i);
 			}
 		}
+	}
+
+	/**
+	 * Sets the size the given child returns to when the user resets the panes.
+	 *
+	 * <p>
+	 * By default it is the size the child was added with. A child added with a size the user dragged it to earlier is
+	 * given its configured size here.
+	 * </p>
+	 */
+	public void setDefaultSize(ReactControl child, float size, DisplayUnit unit) {
+		for (ChildEntry entry : _children) {
+			if (entry._control == child) {
+				entry._defaultSize = size;
+				entry._defaultUnit = unit;
+				return;
+			}
+		}
+		throw new IllegalArgumentException("Not a child of this split panel: " + child.getID());
 	}
 
 	/**
@@ -427,9 +472,15 @@ public class ReactSplitPanelControl extends ReactControl {
 
 		DisplayUnit _savedUnit;
 
+		float _defaultSize;
+
+		DisplayUnit _defaultUnit;
+
 		ChildEntry(ReactControl control, ChildConstraint constraint) {
 			_control = control;
 			_constraint = constraint;
+			_defaultSize = constraint._size;
+			_defaultUnit = constraint._unit;
 		}
 
 		/**
@@ -481,6 +532,31 @@ public class ReactSplitPanelControl extends ReactControl {
 				}
 				_onSizesChanged.accept(sizeMap);
 			}
+		}
+	}
+
+	/**
+	 * Handles the resetSizes command sent by the React client on a double click on a splitter: every pane gets its
+	 * default size back, a collapsed one the size it expands to.
+	 */
+	@ReactCommandHandler(value = "resetSizes")
+	void handleResetSizes() {
+		for (ChildEntry entry : _children) {
+			if (entry._collapsed) {
+				entry._savedSize = entry._defaultSize;
+				entry._savedUnit = entry._defaultUnit;
+			} else {
+				entry._constraint._size = entry._defaultSize;
+				entry._constraint._unit = entry._defaultUnit;
+			}
+		}
+		_childDescriptors.clear();
+		for (ChildEntry entry : _children) {
+			_childDescriptors.add(entry.toDescriptor());
+		}
+		patchChildren();
+		if (_onSizesReset != null) {
+			_onSizesReset.run();
 		}
 	}
 

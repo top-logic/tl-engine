@@ -1096,6 +1096,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			discardEditSession();
 		}
 		deregisterModelListener();
+		// A disposed form observes nothing; it must not keep the window's model scope alive.
+		_modelScope = null;
 		_inputRegistration.dispose();
 		_editModeRegistration.dispose();
 	}

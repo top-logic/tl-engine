@@ -5,6 +5,8 @@
  */
 package com.top_logic.basic.config;
 
+import com.top_logic.basic.config.annotation.GlobalKey;
+
 /**
  * Constants for serializing {@link ConfigurationItem} to XML.
  * 
@@ -16,6 +18,8 @@ package com.top_logic.basic.config;
  * entry without key value is anonymous: It is added, matches no existing entry, and cannot be
  * referenced; any number of anonymous entries may occur. {@link #LIST_INDEX} addresses an entry
  * by its position, also in lists without key property and for anonymous entries.
+ * {@link #CONFIG_REF} addresses an entry of a list keyed by a {@link GlobalKey} property from
+ * anywhere above it, without naming the path to it.
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -133,6 +137,40 @@ public interface ConfigurationSchemaConstants {
 	 * </p>
 	 */
 	public static final String LIST_INDEX = "index";
+
+	/**
+	 * Name of the attribute which addresses an entry of a list keyed by a {@link GlobalKey}
+	 * property by its key value, without naming the path to it.
+	 * 
+	 * <p>
+	 * An element with this attribute is a referencing element. It stands in the content of an
+	 * element and is not an entry of a property of that element: The reader resolves the key among
+	 * the entries of all lists with {@link GlobalKey} key property below the element it is written
+	 * in, in the configuration as read so far, and updates the entry found as by a
+	 * {@link ListOperation#UPDATE} of an entry addressed by its key. The properties of the entry
+	 * are merged with the contents of the referencing element, or the entry is replaced if
+	 * {@link #CONFIG_OVERLOADING_OVERRIDE} is set; {@link #LIST_OPERATION}
+	 * {@link ListOperation#REMOVE} removes the entry; {@link #LIST_POSITION} and
+	 * {@link #LIST_REFERENCE_ATTR_NAME} move it within its list. The entry keeps its key: the
+	 * referencing element may repeat it, but not change it.
+	 * </p>
+	 * 
+	 * <p>
+	 * The element the referencing element is written in is the root element, an element on the
+	 * path to the entry written as usual, or another referencing element; it bounds the search,
+	 * so a referencing element can be nested in another one that addresses an entry above it. The
+	 * tag of the referencing element determines the configuration type of the entry, as the tag of
+	 * a list entry does.
+	 * </p>
+	 * 
+	 * <p>
+	 * It is an error if no entry with the key is found below the enclosing element, if the
+	 * attribute is written on the root element or on an entry of a list property, if it is
+	 * combined with {@link #LIST_INDEX} or with the {@link #LIST_OPERATION}
+	 * {@link ListOperation#ADD}, or if the referencing element writes another key value.
+	 * </p>
+	 */
+	public static final String CONFIG_REF = "ref";
 
 	/**
 	 * Name of the attribute which describes the operation to execute when a map

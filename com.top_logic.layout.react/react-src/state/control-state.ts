@@ -514,13 +514,23 @@ export namespace NumberInputStateJson {
  * State of a field for a date, a time of day, or both, the component `TLDatePicker`.
  *
  * The {@link FieldStateJson.value} is the ISO form of the value for the HTML input of the {@link DatePickerStateJson.inputType}, a
- * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`).
+ * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`). A time of day is
+ * written with its seconds when the field has the {@link DatePickerStateJson.precision} of seconds (e.g.
+ * `14:30:15`, `2026-06-01T14:30:15`).
  */
 export interface DatePickerStateJson extends FieldStateJson {
 	/**
 	 * The part of a point in time the field edits.
 	 */
 	inputType: DatePickerStateJson.InputType;
+
+	/**
+	 * The smallest unit of a time of day the field edits, the one its display format writes.
+	 *
+	 * A field with the precision of seconds lets the seconds be entered and writes them in the ISO
+	 * {@link FieldStateJson.value}. A date without a time of day has the precision of minutes.
+	 */
+	precision: DatePickerStateJson.Precision;
 
 	/**
 	 * The value written in the display format of the current user, shown while the field is not
@@ -546,6 +556,19 @@ export namespace DatePickerStateJson {
 		 * A date with a time of day.
 		 */
 		| 'datetime-local';
+
+	/**
+	 * The smallest unit of a time of day a field edits.
+	 */
+	export type Precision =
+		/**
+		 * A time of day is edited in hours and minutes.
+		 */
+		| 'minutes'
+		/**
+		 * A time of day is edited in hours, minutes and seconds.
+		 */
+		| 'seconds';
 }
 
 /**

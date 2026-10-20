@@ -6,7 +6,7 @@
 package com.top_logic.layout.react.control.form;
 
 import java.text.DateFormat;
-import java.text.ParseException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +20,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.state.DatePickerState;
+import com.top_logic.layout.react.state.DatePickerState.Precision;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.mig.html.HTMLFormatter;
 
@@ -46,6 +47,12 @@ import com.top_logic.mig.html.HTMLFormatter;
  * the raw Java {@link Date#toString()}. Both forms speak of the same moment: the ISO conversion uses
  * the user's time zone as well, so the value in the input is the one the view mode shows.
  * </p>
+ *
+ * <p>
+ * The display format also decides the {@link DatePickerState#PRECISION__PROP precision} of a time
+ * of day: a field whose display format writes seconds edits seconds, exchanges its value in the ISO
+ * form with seconds and tells the client so, see {@link #precision(Kind, DateFormat)}.
+ * </p>
  */
 public class ReactDatePickerControl extends ReactFormFieldControl {
 
@@ -61,7 +68,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 	public enum Kind {
 
 		/** A date without a time of day. */
-		DATE("date", "yyyy-MM-dd"),
+		DATE("date", "yyyy-MM-dd", "yyyy-MM-dd"),
 
 		/** A time of day without a date. */
 		TIME("time", "HH:mm", "HH:mm:ss"),
@@ -71,11 +78,14 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 
 		private final String _inputType;
 
-		private final List<String> _patterns;
+		private final String _minutesPattern;
 
-		private Kind(String inputType, String... patterns) {
+		private final String _secondsPattern;
+
+		private Kind(String inputType, String minutesPattern, String secondsPattern) {
 			_inputType = inputType;
-			_patterns = List.of(patterns);
+			_minutesPattern = minutesPattern;
+			_secondsPattern = secondsPattern;
 		}
 
 		/** The {@code type} attribute of the HTML input editing such a value. */
@@ -83,21 +93,40 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 			return _inputType;
 		}
 
-		/** The ISO pattern the value is written in. */
-		public String isoPattern() {
-			return _patterns.get(0);
+		/**
+		 * Whether a value of this kind has a time of day, and therefore a {@link Precision}.
+		 */
+		public boolean hasTime() {
+			return this != DATE;
 		}
 
 		/**
-		 * The patterns accepted when reading a value back, {@link #isoPattern()} first.
+		 * The ISO pattern a value is written in for a field of the given precision.
 		 *
 		 * <p>
-		 * More than the ISO pattern alone: a browser adds the seconds to a time whose seconds are
-		 * not zero, and it is the same value either way.
+		 * A time of day is written with its seconds for {@link Precision#SECONDS}, without them for
+		 * {@link Precision#MINUTES}. A date without a time of day is written the same for both.
+		 * </p>
+		 */
+		public String isoPattern(Precision precision) {
+			return precision == Precision.SECONDS ? _secondsPattern : _minutesPattern;
+		}
+
+		/**
+		 * The patterns accepted when reading a value back, the {@link #isoPattern(Precision) ISO
+		 * pattern} of {@link Precision#MINUTES} first.
+		 *
+		 * <p>
+		 * A time of day is read with and without seconds, whatever the precision of the field: a
+		 * browser adds the seconds to a time whose seconds are not zero and may drop zero seconds,
+		 * and it is the same value either way.
 		 * </p>
 		 */
 		public List<String> parsePatterns() {
-			return _patterns;
+			if (_minutesPattern.equals(_secondsPattern)) {
+				return List.of(_minutesPattern);
+			}
+			return List.of(_minutesPattern, _secondsPattern);
 		}
 
 		/** The format the value is shown in when the field is read-only. */
@@ -125,9 +154,17 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 
 	}
 
+	/**
+	 * A moment at second 10 of a minute in every time zone whose offset is a whole number of
+	 * minutes (2026-06-01T12:00:10Z).
+	 */
+	private static final long PROBE_MOMENT = 1780315210000L;
+
 	private final Kind _kind;
 
 	private final DateFormat _displayFormat;
+
+	private final Precision _precision;
 
 	/**
 	 * Creates a {@link ReactDatePickerControl} for a date without a time of day.
@@ -164,12 +201,51 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		super(context, model, "TLDatePicker");
 		_kind = kind;
 		_displayFormat = displayFormat == null ? kind.displayFormat() : displayFormat;
+		_precision = precision(kind, _displayFormat);
 		putState(DatePickerState.INPUT_TYPE__PROP, kind.inputType());
+		putState(DatePickerState.PRECISION__PROP, _precision.protocolName());
 		// The base constructor seeded the raw Date into the value state; re-emit it as an ISO
 		// string so the input can display the initial value, plus a localized string for the
 		// read-only (view-mode) display.
 		putState(FieldState.VALUE__PROP, formatIso(model.getValue()));
 		putState(DatePickerState.DISPLAY_VALUE__PROP, formatLocalized(model.getValue()));
+	}
+
+	/**
+	 * The smallest unit of a time of day a field of the given kind edits when its value is shown in
+	 * the given format.
+	 *
+	 * <p>
+	 * {@link Precision#SECONDS} if the format writes seconds, {@link Precision#MINUTES} otherwise
+	 * and for a {@link Kind kind} without a time of day. Whether the format writes seconds is
+	 * decided by formatting two moments of the same minute one second apart: the format writes
+	 * seconds if it writes them differently. This holds for every {@link DateFormat}, not only one
+	 * given by a pattern.
+	 * </p>
+	 *
+	 * @param kind
+	 *        Which part of a point in time the field edits.
+	 * @param displayFormat
+	 *        The format the value is shown in.
+	 */
+	public static Precision precision(Kind kind, DateFormat displayFormat) {
+		if (!kind.hasTime()) {
+			return Precision.MINUTES;
+		}
+		// Each copy is formatted from one thread only, a shared format may not be.
+		DateFormat format = (DateFormat) displayFormat.clone();
+		String first = format.format(new Date(PROBE_MOMENT));
+		String second = format.format(new Date(PROBE_MOMENT + 1000));
+		return first.equals(second) ? Precision.MINUTES : Precision.SECONDS;
+	}
+
+	/**
+	 * The smallest unit of a time of day this field edits.
+	 *
+	 * @see #precision(Kind, DateFormat)
+	 */
+	public Precision getPrecision() {
+		return _precision;
 	}
 
 	@Override
@@ -222,7 +298,7 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 
 	private String formatIso(Object value) {
 		if (value instanceof Date) {
-			return isoFormat(_kind.isoPattern()).format((Date) value);
+			return isoFormat(_kind.isoPattern(_precision)).format((Date) value);
 		}
 		return null;
 	}
@@ -239,11 +315,14 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		for (String pattern : _kind.parsePatterns()) {
 			SimpleDateFormat format = isoFormat(pattern);
 			format.setLenient(false);
-			try {
-				return format.parse(trimmed);
-			} catch (ParseException ex) {
-				// Try the next accepted pattern; reported as an error when none matches.
+			// The whole text must be the value: a pattern without seconds would otherwise read the
+			// start of a time with seconds, and a time of 14:03 from the text 14:3x.
+			ParsePosition position = new ParsePosition(0);
+			Date result = format.parse(trimmed, position);
+			if (result != null && position.getIndex() == trimmed.length()) {
+				return result;
 			}
+			// Try the next accepted pattern; reported as an error when none matches.
 		}
 		return null;
 	}

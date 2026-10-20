@@ -79,6 +79,32 @@ is a switch everywhere says so once:
 A value that may also be unknown (`tl.core:Tristate`, a tri-state field) stays a checkbox even where
 a switch is asked for: a switch has no third position for "no value".
 
+**A point in time** — `DatePickerControlProvider`: a date, a time of day or both
+(`tl.core:Date`, `tl.core:Time`, `tl.core:DateTime`) are each edited in the browser's own input for
+that part. All three are stored as a `Date`; the `ConfigType` annotation of the type says which part
+a value holds (`ReactDatePickerControl.Kind`). The field exchanges its value in ISO form, so no
+locale format reads it. The display format of the field decides both how a value reads in view mode
+and the precision of the input: a format that writes seconds gives an input editing seconds, a
+format without seconds an input editing minutes. The display format is the `<format>` annotation of
+the attribute, else the default the engine gives attributes of that type - `short-time` for
+`tl.core:Time` (attribute settings) and `medium-date-time` for `tl.core:DateTime` (the type's own
+annotation). Neither writes seconds, so an attribute edits minutes unless its format writes them:
+
+```xml
+<property name="timeSeconds"
+	type="tl.core:Time"
+>
+	<annotations>
+		<format>
+			<time style="medium"/>
+		</format>
+	</annotations>
+</property>
+```
+
+A `<value-input type="tl.core:Time">` without a `<format>` takes the type's `short-time` format as
+well and edits minutes; a `<format>` inside the `<value-input>` sets display and precision there.
+
 **Three ways to choose the provider**, in the order `FieldControlService` tries them:
 
 1. `<input-control class="…Provider" …/>` inside a `<field>` (`FieldElement.Config.getInputControl()`)

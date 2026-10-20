@@ -7,6 +7,7 @@ package test.com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 
@@ -17,17 +18,22 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.TLValueNormalizer;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.search.expr.config.ExprFormat;
@@ -199,6 +205,48 @@ public class TestValueNormalizer extends AbstractTicketFormTest {
 	public void testNormalizedFieldSendsValueOnBlur() {
 		assertTrue(spec(CODE).isSendValueOnBlur());
 		assertFalse(spec(TITLE).isSendValueOnBlur());
+	}
+
+	/**
+	 * The input a form creates for a text attribute with a normalizer holds a typed value back
+	 * until the field is left; the input of an attribute without normalizer sends it while typing.
+	 */
+	public void testNormalizedTextInputSendsValueOnBlur() {
+		assertEquals(Boolean.TRUE, sendValueOnBlur(
+			FieldControlService.getInstance().createFieldControl(_context, part(CODE), new AbstractFieldModel(null))));
+		assertNotEquals(Boolean.TRUE, sendValueOnBlur(
+			FieldControlService.getInstance().createFieldControl(_context, part(TITLE), new AbstractFieldModel(null))));
+	}
+
+	/**
+	 * The input of a value not bound to an attribute, as a {@code <value-input>} creates it, holds
+	 * a typed value back until the field is left when its annotations carry a normalizer.
+	 */
+	public void testNormalizedValueInputSendsValueOnBlur() throws ConfigurationException {
+		AnnotationContainer annotations =
+			AnnotationContainer.EMPTY.with(normalizerAnnotation(scriptNormalizer("value -> obj -> $value.trim()")));
+		TLType type = part(CODE).getType();
+		AbstractFieldModel model = new AbstractFieldModel(null);
+		FieldSpec spec = FieldControlService.fieldSpec(type, annotations, "value", false, model);
+
+		ReactControl input =
+			FieldControlService.getInstance().createFieldControl(_context, type, annotations, spec, model, null);
+
+		assertEquals(Boolean.TRUE, sendValueOnBlur(input));
+	}
+
+	/**
+	 * The {@link TypingFieldState#SEND_VALUE_ON_BLUR__PROP} the client state of the given control
+	 * holds.
+	 */
+	@SuppressWarnings("unchecked")
+	private static Object sendValueOnBlur(ReactControl control) {
+		String json = control.stateAsJSON();
+		try {
+			return ((Map<String, Object>) JSON.fromString(json)).get(TypingFieldState.SEND_VALUE_ON_BLUR__PROP);
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("The state of a control is JSON, but is: " + json, ex);
+		}
 	}
 
 	private FieldSpec spec(String attribute) {

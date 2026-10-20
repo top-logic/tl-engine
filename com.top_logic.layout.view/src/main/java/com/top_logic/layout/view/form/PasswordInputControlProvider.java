@@ -35,9 +35,6 @@ public class PasswordInputControlProvider implements ReactFieldControlProvider {
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		ReactPasswordInputControl control = new ReactPasswordInputControl(context, model);
-		if (field.isSendValueOnBlur()) {
-			control.setSendValueOnBlur(true);
-		}
 		return control;
 	}
 

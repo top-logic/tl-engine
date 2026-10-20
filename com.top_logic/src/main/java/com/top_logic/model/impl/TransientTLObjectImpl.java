@@ -56,7 +56,9 @@ public class TransientTLObjectImpl extends TransientObject {
 	 * @param type
 	 *        The type of this object.
 	 * @param context
-	 *        The container of this object, see {@link #tContainer()}.
+	 *        The container this object is created in, or <code>null</code>. A given context is
+	 *        the {@link #tContainer() container} of this object for its whole life time, see
+	 *        {@link #tContainer()}.
 	 * 
 	 * @see TransientObjectFactory
 	 */
@@ -70,15 +72,67 @@ public class TransientTLObjectImpl extends TransientObject {
 		return _type;
 	}
 
+	/**
+	 * The container this object was created in, if one was given; otherwise the object that holds
+	 * this object in a {@link TLReference#isComposite() composite} reference, or <code>null</code>
+	 * if there is none.
+	 * 
+	 * <p>
+	 * If several objects hold this object in a composite reference, the first one found is
+	 * returned.
+	 * </p>
+	 * 
+	 * @see #tContainerReference()
+	 */
 	@Override
 	public TLObject tContainer() {
-		return _context;
+		if (_context != null) {
+			return _context;
+		}
+		Map.Entry<TLStructuredTypePart, TLObject> composition = compositeReferer();
+		return composition == null ? null : composition.getValue();
 	}
 
 	/**
-	 * A transient object is part of the {@link #tContainer() container} it was created in and
-	 * dies with it: it is valid while that container is valid, or while it has no container at
-	 * all.
+	 * The {@link TLReference#isComposite() composite} reference through which the
+	 * {@link #tContainer() container} holds this object, or <code>null</code> if this object has
+	 * no container or its container is the one it was created in.
+	 */
+	@Override
+	public TLReference tContainerReference() {
+		if (_context != null) {
+			return null;
+		}
+		Map.Entry<TLStructuredTypePart, TLObject> composition = compositeReferer();
+		return composition == null ? null : (TLReference) composition.getKey();
+	}
+
+	/**
+	 * The first object that holds this object in a {@link TLReference#isComposite() composite}
+	 * reference, together with that reference, or <code>null</code> if there is none.
+	 * 
+	 * <p>
+	 * An invalid referer is a container as well: this object dies with it.
+	 * </p>
+	 */
+	private Map.Entry<TLStructuredTypePart, TLObject> compositeReferer() {
+		for (Map.Entry<TLStructuredTypePart, Set<TLObject>> entry : _referers.entrySet()) {
+			TLStructuredTypePart part = entry.getKey();
+			if (part.getModelKind() != ModelKind.REFERENCE || !((TLReference) part).isComposite()) {
+				continue;
+			}
+			for (TLObject referer : entry.getValue()) {
+				return Map.entry(part, referer);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * A transient object is part of its {@link #tContainer() container} - the container it was
+	 * created in or the object that holds it in a {@link TLReference#isComposite() composite}
+	 * reference - and dies with it: it is valid while that container is valid, or while it has no
+	 * container at all.
 	 * 
 	 * @implNote A transient container that itself was created in a container chains the check up
 	 *           to the first object that has none.

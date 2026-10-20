@@ -35,7 +35,7 @@
 									<de>Gruppe {0} angelegt.</de>
 								</commitMessage>
 								<execute-script function="$result.copy(transient: false)"/>
-								<with-result as="created">
+								<with-result>
 									<write-channel name="selection"/>
 								</with-result>
 							</with-transaction>

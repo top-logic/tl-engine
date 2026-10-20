@@ -36,7 +36,7 @@ The result of an action does not reach the actions *following* it. An action wit
 <generic-command inputs="model" placement="BUTTON_BAR">
   <store-form-state/>
   <persist-transient container="container" reference="milestones">
-    <with-result as="created">
+    <with-result>
       <write-channel name="selection"/>
       <close-dialog/>
     </with-result>
@@ -64,7 +64,7 @@ The actions in the transaction only read and modify the model. An action that ch
         <execute-script function="$created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
       </with-result>
     </persist-transient>
-    <with-result as="created">
+    <with-result>
       <write-channel name="selection"/>
     </with-result>
   </with-transaction>

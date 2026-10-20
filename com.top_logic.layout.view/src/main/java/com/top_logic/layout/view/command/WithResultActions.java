@@ -27,7 +27,7 @@ import com.top_logic.basic.config.container.ConfigPart;
  *
  * <pre>
  * &lt;persist-transient&gt;
- *   &lt;with-result as="created"&gt;
+ *   &lt;with-result&gt;
  *     &lt;write-channel name="selection"/&gt;
  *     &lt;close-dialog/&gt;
  *   &lt;/with-result&gt;

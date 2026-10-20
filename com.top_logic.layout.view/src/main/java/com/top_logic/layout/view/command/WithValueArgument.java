@@ -19,7 +19,7 @@ import com.top_logic.basic.config.annotation.Nullable;
  *
  * <pre>
  * &lt;execute-script function="$ticket.get(`demo.tickets:Ticket#assignee`)"&gt;
- *   &lt;with-result as="assignee"&gt;
+ *   &lt;with-result&gt;
  *     &lt;write-channel name="person"/&gt;
  *     &lt;write-channel name="ticket" value="selection"/&gt;
  *   &lt;/with-result&gt;

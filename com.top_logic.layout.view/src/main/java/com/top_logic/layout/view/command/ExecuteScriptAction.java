@@ -35,7 +35,7 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  *
  * <pre>
  * &lt;execute-script function="$draft.copy(transient: false)"&gt;
- *   &lt;with-result as="created"&gt;
+ *   &lt;with-result&gt;
  *     &lt;write-channel name="selection"/&gt;
  *     &lt;close-dialog/&gt;
  *   &lt;/with-result&gt;

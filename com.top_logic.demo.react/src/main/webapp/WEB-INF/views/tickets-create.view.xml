@@ -37,7 +37,7 @@
 								<execute-script function="$created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
 							</with-result>
 						</persist-transient>
-						<with-result as="created">
+						<with-result>
 							<write-channel name="selection"/>
 						</with-result>
 					</with-transaction>

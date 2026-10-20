@@ -51,7 +51,7 @@
 									container="container"
 									mode="CREATE_TYPE"
 								/>
-								<with-result as="created">
+								<with-result>
 									<write-channel name="selection"/>
 								</with-result>
 							</with-transaction>

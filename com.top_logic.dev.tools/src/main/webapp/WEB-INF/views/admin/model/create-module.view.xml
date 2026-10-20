@@ -45,7 +45,7 @@
 								<action class="com.top_logic.dev.tools.model.ModelEditAction"
 									mode="CREATE_MODULE"
 								/>
-								<with-result as="created">
+								<with-result>
 									<write-channel name="selection"/>
 								</with-result>
 							</with-transaction>

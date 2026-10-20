@@ -38,7 +38,7 @@
 									<de>Konto {0} angelegt.</de>
 								</commitMessage>
 								<create-account/>
-								<with-result as="created">
+								<with-result>
 									<write-channel name="selection"/>
 								</with-result>
 							</with-transaction>

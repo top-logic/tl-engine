@@ -72,7 +72,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * &lt;generic-command inputs="model"&gt;
  *   &lt;store-form-state/&gt;
  *   &lt;persist-transient container="container" reference="milestones"&gt;
- *     &lt;with-result as="created"&gt;
+ *     &lt;with-result&gt;
  *       &lt;write-channel name="selection"/&gt;
  *       &lt;close-dialog/&gt;
  *     &lt;/with-result&gt;

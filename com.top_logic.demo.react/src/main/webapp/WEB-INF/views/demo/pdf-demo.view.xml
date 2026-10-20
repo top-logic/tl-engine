@@ -63,9 +63,9 @@
 									<de>Dokument {0} hochgeladen.</de>
 								</commitMessage>
 								<execute-script function="{ doc = new(`demo.documents:Document`); $doc.set(`demo.documents:Document#name`, label($file)); $doc.set(`demo.documents:Document#data`, $file); $doc; }"/>
-								<after-commit with-result="created">
+								<with-result as="created">
 									<write-channel name="document"/>
-								</after-commit>
+								</with-result>
 							</with-transaction>
 						</upload-command>
 						<generic-command

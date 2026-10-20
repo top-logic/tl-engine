@@ -34,10 +34,14 @@
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="START"
 				>
-					<write-channel name="sqlStats"/>
+					<with-result>
+						<write-channel name="sqlStats"/>
+					</with-result>
 				</action>
 				<execute-script function="true">
-					<write-channel name="monitoring"/>
+					<with-result>
+						<write-channel name="monitoring"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -55,7 +59,9 @@
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="REFRESH"
 				>
-					<write-channel name="sqlStats"/>
+					<with-result>
+						<write-channel name="sqlStats"/>
+					</with-result>
 				</action>
 			</generic-command>
 			<generic-command
@@ -73,10 +79,14 @@
 				<action class="com.top_logic.layout.view.admin.monitor.SqlMonitorAction"
 					mode="STOP"
 				>
-					<write-channel name="sqlStats"/>
+					<with-result>
+						<write-channel name="sqlStats"/>
+					</with-result>
 				</action>
 				<execute-script function="false">
-					<write-channel name="monitoring"/>
+					<with-result>
+						<write-channel name="monitoring"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 		</commands>

@@ -91,7 +91,9 @@
 				<html input="docHtml">
 					<on-link class="com.top_logic.layout.view.command.GenericViewCommand">
 						<execute-script function="devDocsGet($link)">
-							<write-channel name="doc"/>
+							<with-result>
+								<write-channel name="doc"/>
+							</with-result>
 						</execute-script>
 					</on-link>
 				</html>

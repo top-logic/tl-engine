@@ -38,13 +38,17 @@
 						<de>Token ausstellen</de>
 					</label>
 					<store-form-state>
-						<issue-access-token>
-							<close-dialog/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="agent-access-token.view.xml"
-							/>
-						</issue-access-token>
+						<with-result>
+							<issue-access-token>
+								<with-result>
+									<close-dialog/>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="agent-access-token.view.xml"
+									/>
+								</with-result>
+							</issue-access-token>
+						</with-result>
 					</store-form-state>
 				</generic-command>
 			</commands>

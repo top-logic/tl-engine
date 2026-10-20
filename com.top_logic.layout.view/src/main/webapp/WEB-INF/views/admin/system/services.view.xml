@@ -38,10 +38,14 @@
 					mode="START"
 					selection="selection"
 				>
-					<write-channel name="services"/>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
 				</action>
 				<execute-script function="'ACTIVE'">
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -60,10 +64,14 @@
 					mode="STOP"
 					selection="selection"
 				>
-					<write-channel name="services"/>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
 				</action>
 				<execute-script function="'INACTIVE'">
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -82,10 +90,14 @@
 					mode="RESTART"
 					selection="selection"
 				>
-					<write-channel name="services"/>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
 				</action>
 				<execute-script function="'ACTIVE'">
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -99,7 +111,9 @@
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="REFRESH"
 				>
-					<write-channel name="services"/>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
 				</action>
 			</generic-command>
 		</commands>

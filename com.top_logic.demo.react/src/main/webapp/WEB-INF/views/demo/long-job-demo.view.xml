@@ -124,7 +124,9 @@
 	});
 	#('5 records processed.'@en, '5 Datensätze verarbeitet.'@de);
 }]]></function>
-					<write-channel name="report"/>
+					<with-result>
+						<write-channel name="report"/>
+					</with-result>
 				</start-job>
 			</action>
 		</button>
@@ -172,7 +174,9 @@
 	sleep(800);
 	throw(#('The source could not be read.'@en, 'Die Quelle konnte nicht gelesen werden.'@de));
 }]]></function>
-					<write-channel name="report"/>
+					<with-result>
+						<write-channel name="report"/>
+					</with-result>
 				</start-job>
 			</action>
 		</button>
@@ -262,7 +266,9 @@
 	#('{0} tickets carry the name "{1}".'@en, '{0} Tickets tragen den Namen „{1}“.'@de).fill($imported, $state['prefix']);
 }]]></finish>
 					</body>
-					<write-channel name="report"/>
+					<with-result>
+						<write-channel name="report"/>
+					</with-result>
 				</start-job>
 			</action>
 		</button>
@@ -306,7 +312,9 @@
 							</step>
 						</steps>
 					</body>
-					<write-channel name="report"/>
+					<with-result>
+						<write-channel name="report"/>
+					</with-result>
 				</start-job>
 			</action>
 		</button>

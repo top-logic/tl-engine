@@ -118,7 +118,8 @@ report (PowerPoint)" command in `com.top_logic.demo.react`, `projects/overview.v
 ## Download from a view
 
 In a `.view.xml`, a command runs the script with `<execute-script>` and hands the resulting file to the browser
-with `<download/>` (`DownloadAction`), nested into `<execute-script>` as the follow-up action of its result.
+with `<download/>` (`DownloadAction`), placed into the `<with-result>` of `<execute-script>` as the follow-up action of its
+result.
 The script uses the command's input as the variable `$project`:
 
 ```xml
@@ -132,7 +133,9 @@ The script uses the command's input as the variable `$project`:
 	</executability>
 	<execute-script>
 		<function><![CDATA[ pptDeck(...) ]]></function>
-		<download/>
+		<with-result>
+			<download/>
+		</with-result>
 	</execute-script>
 </generic-command>
 ```

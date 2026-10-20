@@ -34,15 +34,17 @@
 					<visible-if expr="$state == 'NORMAL'"/>
 				</executability>
 				<execute-script function="new(`tl.admin:MaintenanceMode`, transient: true)">
-					<open-dialog
-						bind-input-to="model"
-						dialog-view="admin/system/enter-maintenance.view.xml"
-					>
-						<bind
-							channel="state"
-							to="state"
-						/>
-					</open-dialog>
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="admin/system/enter-maintenance.view.xml"
+						>
+							<bind
+								channel="state"
+								to="state"
+							/>
+						</open-dialog>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -61,7 +63,9 @@
 				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
 					mode="ABORT"
 				>
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</action>
 			</generic-command>
 			<generic-command
@@ -80,7 +84,9 @@
 				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
 					mode="LEAVE"
 				>
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</action>
 			</generic-command>
 			<generic-command
@@ -94,7 +100,9 @@
 				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
 					mode="REFRESH"
 				>
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</action>
 			</generic-command>
 		</commands>

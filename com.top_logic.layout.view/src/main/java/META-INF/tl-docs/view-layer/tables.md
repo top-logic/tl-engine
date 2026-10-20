@@ -218,7 +218,9 @@ Such a page is linkable: `/view/tickets?filter=discussed` opens the list filtere
 <generic-command clique="export" placement="TOOLBAR">
   <label><en>Priority summary (Excel)</en></label>
   <execute-script function="excelFile(name: 'summary', content: [excelSheet(content: [['Priority', 'Objects']])])">
-    <download/>
+    <with-result>
+      <download/>
+    </with-result>
   </execute-script>
 </generic-command>
 ```

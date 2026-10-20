@@ -20,10 +20,12 @@
 							<de>Passwort vergessen?</de>
 						</label>
 						<execute-script function="new(`tl.login:ForgotPassword`, transient: true)">
-							<open-dialog dialog-view="forgot-password.view.xml"
-								bind-input-to="model"
-								close-on-backdrop="false"
-							/>
+							<with-result>
+								<open-dialog dialog-view="forgot-password.view.xml"
+									bind-input-to="model"
+									close-on-backdrop="false"
+								/>
+							</with-result>
 						</execute-script>
 					</action>
 				</button>

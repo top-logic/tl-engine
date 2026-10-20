@@ -35,7 +35,7 @@ import com.top_logic.util.error.TopLogicException;
  * when a password is given (and the device supports password change) it is set, so the account is
  * immediately usable for login. Must run inside a transaction (wrap the action in
  * {@code <with-transaction>}); the created {@link Person} is the result of the action, which its
- * nested follow-up actions see (e.g. to select the new account).
+ * follow-up actions see (e.g. to select the new account).
  * </p>
  */
 @InApp

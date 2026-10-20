@@ -16,7 +16,7 @@ import com.top_logic.layout.react.control.button.ButtonTone;
  * executability, or other presentation concerns. It is purely functional: takes an input, produces
  * a result. Actions are chained in a {@link GenericViewCommand}; all actions of a chain run with
  * the same {@link ActionArguments arguments}, supplied by what triggered the chain. The result of
- * an action does not reach the actions following it, but the follow-up actions nested into it (see
+ * an action does not reach the actions following it, but its follow-up actions (see
  * {@link WithResultActions}).
  * </p>
  *
@@ -157,7 +157,7 @@ public interface ViewAction {
 	 * the commit fails, the model changes are rolled back, but the view would keep what the action
 	 * did - e.g. a channel holding an object that does not exist. Configuring it there is reported
 	 * as an error; it belongs to the actions run after the commit (see
-	 * {@link WithTransactionAction.Config#getAfterCommit()}).
+	 * {@link WithTransactionAction.Config#getWithResult()}).
 	 * </p>
 	 *
 	 * @return {@code false} for an action that only reads or modifies the model, which is the

@@ -151,10 +151,12 @@
 									<visible-if expr="$account.accountPasswordChangeAllowed()"/>
 								</executability>
 								<execute-script function="new(`tl.login:PasswordChange`, transient: true)">
-									<open-dialog
-										bind-input-to="model"
-										dialog-view="change-password.view.xml"
-									/>
+									<with-result>
+										<open-dialog
+											bind-input-to="model"
+											dialog-view="change-password.view.xml"
+										/>
+									</with-result>
 								</execute-script>
 							</action>
 						</button>

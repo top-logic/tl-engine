@@ -84,7 +84,9 @@ order: 10
       <value-input value="jump">
         <on-submit>
           <execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
-            <write-channel name="ticket"/>
+            <with-result>
+              <write-channel name="ticket"/>
+            </with-result>
           </execute-script>
         </on-submit>
       </value-input>

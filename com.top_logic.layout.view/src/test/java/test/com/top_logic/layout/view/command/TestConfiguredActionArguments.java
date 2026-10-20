@@ -90,9 +90,9 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 	public void testRunConfiguredFollowUps() throws Exception {
 		GenericViewCommand command = command(
 			"<generic-command>"
-				+ "<execute-script function='$input + 1' as='next'>"
+				+ "<execute-script function='$input + 1'><with-result as='next'>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
-				+ "</execute-script>"
+				+ "</with-result></execute-script>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
 				+ "</generic-command>");
 
@@ -117,9 +117,9 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 		GenericViewCommand command = command(
 			"<generic-command inputs='" + SELECTION + " as ticket, " + OTHER + "'>"
 				+ "<confirm expr=\"if($ticket == 't', null, 'Really?')\"/>"
-				+ "<execute-script function=\"$ticket + '-' + $other\" as='joined'>"
+				+ "<execute-script function=\"$ticket + '-' + $other\"><with-result as='joined'>"
 				+ PROBE
-				+ "</execute-script>"
+				+ "</with-result></execute-script>"
 				+ "<if test=\"$ticket == 't'\"><then><with-transaction>" + PROBE + "</with-transaction></then></if>"
 				+ "<switch value='$other' as='current'>"
 				+ "<case test=\"$current == 'o' &amp;&amp; $ticket == 't'\">" + PROBE + "</case>"
@@ -144,9 +144,9 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 		DefaultViewContext context = context(Map.of(OTHER, "o"));
 		GenericViewCommand command = command(
 			"<generic-command>"
-				+ "<execute-script function=\"$extra + $" + OTHER + "\" as='result' inputs='" + OTHER + " as extra, "
+				+ "<execute-script function=\"$extra + $" + OTHER + "\" inputs='" + OTHER + " as extra, "
 				+ OTHER + "'>"
-				+ PROBE
+				+ "<with-result>" + PROBE + "</with-result>"
 				+ "</execute-script>"
 				+ "</generic-command>");
 
@@ -201,7 +201,9 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 		reader.setSource(CharacterContents.newContent(
 			"<html input='" + OTHER + "'" + nameAttribute + ">"
 				+ "<on-link class='" + GenericViewCommand.class.getName() + "' inputs='" + OTHER + "'>"
-				+ "<execute-script function='$" + expectedName + "' as='seen'>" + PROBE + "</execute-script>"
+				+ "<execute-script function='$" + expectedName + "'>"
+				+ "<with-result as='seen'>" + PROBE + "</with-result>"
+				+ "</execute-script>"
 				+ "</on-link>"
 				+ "</html>"));
 		HtmlElement.Config config = (HtmlElement.Config) reader.read();
@@ -256,7 +258,7 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 				+ "</generic-command>");
 		assertInstantiationError(
 			"<generic-command inputs='" + SELECTION + "'>"
-				+ "<execute-script function='$" + SELECTION + "' as='first'/>"
+				+ "<execute-script function='$" + SELECTION + "'><with-result as='first'/></execute-script>"
 				+ "<execute-script function='$first'/>"
 				+ "</generic-command>");
 	}

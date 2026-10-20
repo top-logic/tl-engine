@@ -234,7 +234,9 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 			</placeholder>
 			<on-submit>
 				<execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
-					<write-channel name="ticket"/>
+					<with-result>
+						<write-channel name="ticket"/>
+					</with-result>
 				</execute-script>
 			</on-submit>
 		</value-input>

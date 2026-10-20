@@ -47,9 +47,9 @@
 								<input channel="container"/>
 							</inputs>
 						</execute-script>
-						<after-commit with-result="created">
+						<with-result as="created">
 							<write-channel name="selection"/>
-						</after-commit>
+						</with-result>
 					</with-transaction>
 					<close-dialog/>
 				</generic-command>

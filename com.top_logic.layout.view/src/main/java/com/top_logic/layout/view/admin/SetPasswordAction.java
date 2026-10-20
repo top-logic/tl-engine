@@ -32,7 +32,7 @@ import com.top_logic.util.error.TopLogicException;
  * {@code <form>} as the result of an enclosing {@code <store-form-state>}). The password is set through the default
  * {@link AuthenticationDevice}. Must run inside a transaction (wrap the action in
  * {@code <with-transaction>}); the updated {@link Person} is the result of the action, which its
- * nested follow-up actions see.
+ * follow-up actions see.
  * </p>
  */
 @InApp

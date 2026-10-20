@@ -41,7 +41,8 @@ import com.top_logic.model.util.TLModelPartRef;
  * a default. With a {@link Config#getContainer() container}, the object is created in the context
  * of the container and, with a {@link Config#getReference() reference}, added to that reference of
  * the container, the way {@code $container.add(reference, $created)} adds it. The action results in
- * the persistent object.
+ * the persistent object; its follow-up actions (see {@link WithResultActions}) see it only after the
+ * creation is committed.
  * </p>
  *
  * <p>
@@ -71,8 +72,10 @@ import com.top_logic.model.util.TLModelPartRef;
  * &lt;generic-command inputs="model"&gt;
  *   &lt;store-form-state/&gt;
  *   &lt;persist-transient container="container" reference="milestones"&gt;
- *     &lt;write-channel name="selection"/&gt;
- *     &lt;close-dialog/&gt;
+ *     &lt;with-result as="created"&gt;
+ *       &lt;write-channel name="selection"/&gt;
+ *       &lt;close-dialog/&gt;
+ *     &lt;/with-result&gt;
  *   &lt;/persist-transient&gt;
  * &lt;/generic-command&gt;
  * </pre>

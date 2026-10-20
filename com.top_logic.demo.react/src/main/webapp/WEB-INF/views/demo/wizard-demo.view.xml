@@ -92,13 +92,17 @@
 										function="if($profile == null, new(`demo.react:Demo`, transient: true), $profile)"
 										inputs="profile"
 									>
-										<write-channel name="profile"/>
+										<with-result>
+											<write-channel name="profile"/>
+										</with-result>
 									</execute-script>
 									<execute-script
 										function="if($questions == null || $questions.isEmpty(), ['role'], $questions)"
 										inputs="questions"
 									>
-										<write-channel name="questions"/>
+										<with-result>
+											<write-channel name="questions"/>
+										</with-result>
 									</execute-script>
 									<wizard-next/>
 								</action>
@@ -227,7 +231,9 @@
 											function="if($questions.size() == 1, ['role', 'phone'], if($questions.size() == 2, ['role', 'phone', 'notes'], $questions))"
 											inputs="questions"
 										>
-											<write-channel name="questions"/>
+											<with-result>
+												<write-channel name="questions"/>
+											</with-result>
 										</execute-script>
 										<wizard-next/>
 									</action>

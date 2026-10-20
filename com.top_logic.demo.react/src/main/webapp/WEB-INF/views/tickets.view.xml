@@ -154,7 +154,9 @@
 								<if test="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement() != null">
 									<then>
 										<execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
-											<write-channel name="ticket"/>
+											<with-result>
+												<write-channel name="ticket"/>
+											</with-result>
 										</execute-script>
 									</then>
 									<else>
@@ -228,15 +230,17 @@
 									<de>Neu</de>
 								</label>
 								<create-transient type="demo.tickets:Ticket">
-									<open-dialog
-										bind-input-to="model"
-										dialog-view="tickets-create.view.xml"
-									>
-										<bind
-											channel="selection"
-											to="ticket"
-										/>
-									</open-dialog>
+									<with-result>
+										<open-dialog
+											bind-input-to="model"
+											dialog-view="tickets-create.view.xml"
+										>
+											<bind
+												channel="selection"
+												to="ticket"
+											/>
+										</open-dialog>
+									</with-result>
 								</create-transient>
 							</generic-command>
 							<generic-command

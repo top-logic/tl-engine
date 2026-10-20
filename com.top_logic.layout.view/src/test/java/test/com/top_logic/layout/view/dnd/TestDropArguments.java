@@ -103,9 +103,9 @@ public class TestDropArguments extends AbstractModelAccessTest {
 	public void testActionsSeeReferences() throws Exception {
 		List<TreeDropConfig> drops = drops(
 			"<drop target='ordered' parent-as='folder'>"
-				+ "<execute-script function=\"[$folder, $before]\" as='places'>"
+				+ "<execute-script function=\"[$folder, $before]\"><with-result as='places'>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
-				+ "</execute-script>"
+				+ "</with-result></execute-script>"
 				+ "</drop>");
 		TreeDropConfig config = drops.get(0);
 		DeclaredDrop drop = compile(config, DropSignature.ORDERED_TREE);

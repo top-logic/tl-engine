@@ -16,6 +16,7 @@ import junit.framework.Test;
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -29,18 +30,36 @@ import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.layout.view.command.ArgumentsViewAction;
 import com.top_logic.layout.view.command.Continuation;
+import com.top_logic.layout.view.command.ExecuteScriptAction;
 import com.top_logic.layout.view.command.GenericViewCommand;
+import com.top_logic.layout.view.command.PersistTransientAction;
+import com.top_logic.layout.view.command.WithResult;
 import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.layout.view.command.WithTransactionAction;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 
 /**
- * Tests the actions a {@link WithTransactionAction} runs after its commit, and the refusal of actions
- * changing the state of the view inside the transaction.
+ * Tests the follow-up actions of an action with a result, configured in its {@link WithResult}
+ * element, for actions committing by themselves and for a {@link WithTransactionAction}, and the
+ * refusal of actions changing the state of the view inside a transaction.
  */
-public class TestAfterCommit extends AbstractModelAccessTest {
+public class TestWithResult extends AbstractModelAccessTest {
 
 	/** An action recording the last revision of the knowledge base when it runs. */
 	private static final String REVISION_PROBE = "<action class='" + RevisionProbe.class.getName() + "'/>";
+
+	/** Opening tag of a {@link WithResult} naming the result {@code created}. */
+	private static final String WITH_CREATED =
+		"<" + WithResultActions.WITH_RESULT + " " + WithResult.AS + "='created'>";
+
+	/** Opening tag of a {@link WithResult} with the default result name. */
+	private static final String WITH_RESULT = "<" + WithResultActions.WITH_RESULT + ">";
+
+	/** Closing tag of a {@link WithResult}. */
+	private static final String END_WITH_RESULT = "</" + WithResultActions.WITH_RESULT + ">";
+
+	private static final String WRITE_OTHER = "<write-channel name='" + OTHER + "'/>";
 
 	@Override
 	protected void setUp() throws Exception {
@@ -58,22 +77,79 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * Tests that the actions after the commit run once the changes are committed, with the
-	 * arguments of the chain and the result of the transaction under the configured name.
+	 * Tests that the follow-up actions of an {@code <execute-script>} see its result under the
+	 * configured name, as their default value.
 	 */
-	public void testAfterCommitSeesResult() throws Exception {
+	public void testExecuteScriptFollowUps() throws Exception {
+		DefaultViewContext context = context(Map.of(SELECTION, "s", OTHER, "o"));
+		GenericViewCommand command = command(
+			"<generic-command inputs='" + SELECTION + "'>"
+				+ "<execute-script function=\"$" + SELECTION + " + '-created'\">"
+				+ WITH_CREATED + PROBE + WRITE_OTHER + END_WITH_RESULT
+				+ "</execute-script>"
+				+ PROBE
+				+ "</generic-command>");
+
+		command.execute(context, "s");
+
+		assertEquals(2, ArgumentsProbe.SEEN.size());
+		ActionArguments seen = ArgumentsProbe.SEEN.get(0);
+		assertEquals(List.of(SELECTION, "created"), seen.names());
+		assertEquals("s-created", seen.value());
+		assertEquals("s-created", context.resolveChannel(new ChannelRef(OTHER)).get());
+
+		assertEquals("The result does not reach the actions following the action.", List.of(SELECTION),
+			ArgumentsProbe.SEEN.get(1).names());
+	}
+
+	/**
+	 * Tests that the follow-up actions of a {@code <persist-transient>} run once the object is
+	 * committed, with the persistent object as result.
+	 */
+	public void testPersistTransientFollowUps() throws Exception {
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(PROJECT));
+		draft.tUpdateByName(NAME, "draft");
+		DefaultViewContext context = context(Map.of(SELECTION, draft));
+		GenericViewCommand command = command(
+			"<generic-command inputs='" + SELECTION + "'>"
+				+ "<" + PersistTransientAction.Config.TAG_NAME + ">"
+				+ WITH_CREATED + REVISION_PROBE + PROBE + END_WITH_RESULT
+				+ "</" + PersistTransientAction.Config.TAG_NAME + ">"
+				+ "</generic-command>");
+
+		long before = lastRevision();
+		command.execute(context, draft);
+
+		ActionArguments seen = ArgumentsProbe.SEEN.get(0);
+		TLObject created = (TLObject) seen.get("created");
+		try {
+			assertEquals(List.of(SELECTION, "created"), seen.names());
+			assertSame(created, seen.value());
+			assertFalse(created.tTransient());
+			assertEquals("draft", created.tValueByName(NAME));
+			assertEquals("The follow-up actions run after the commit.", 1, RevisionProbe.REVISIONS.size());
+			assertTrue("The follow-up actions run after the commit.", RevisionProbe.REVISIONS.get(0) > before);
+		} finally {
+			delete(created);
+		}
+	}
+
+	/**
+	 * Tests that the actions after the commit of a transaction run once the changes are committed,
+	 * with the arguments of the chain and the result of the transaction under the configured name.
+	 */
+	public void testTransactionFollowUpsAfterCommit() throws Exception {
 		DefaultViewContext context = context(Map.of(SELECTION, _project, OTHER, "o"));
 		GenericViewCommand command = command(
 			"<generic-command inputs='" + SELECTION + "'>"
 				+ "<with-transaction>"
 				+ "<execute-script function=\"{ $" + SELECTION + ".set(`" + qualified(PROJECT) + "#" + NAME
 				+ "`, 'renamed'); 'created'; }\"/>"
-				+ "<" + WithTransactionAction.Config.AFTER_COMMIT + " "
-				+ WithTransactionAction.AfterCommit.WITH_RESULT + "='created'>"
+				+ WITH_CREATED
 				+ REVISION_PROBE
 				+ PROBE
-				+ "<write-channel name='" + OTHER + "'/>"
-				+ "</" + WithTransactionAction.Config.AFTER_COMMIT + ">"
+				+ WRITE_OTHER
+				+ END_WITH_RESULT
 				+ "</with-transaction>"
 				+ "</generic-command>");
 
@@ -92,17 +168,16 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * Tests that the result of the transaction is called {@value WithResultActions#RESULT} without a
-	 * configured name.
+	 * Tests that the result is called {@value WithResultActions#RESULT} without a configured name.
 	 */
 	public void testDefaultResultName() throws Exception {
 		GenericViewCommand command = command(
 			"<generic-command inputs='" + SELECTION + "'>"
 				+ "<with-transaction>"
 				+ "<execute-script function=\"'created'\"/>"
-				+ "<" + WithTransactionAction.Config.AFTER_COMMIT + ">" + PROBE
-				+ "</" + WithTransactionAction.Config.AFTER_COMMIT + ">"
+				+ WITH_RESULT + PROBE + END_WITH_RESULT
 				+ "</with-transaction>"
+				+ "<execute-script function=\"'other'\">" + WITH_RESULT + PROBE + END_WITH_RESULT + "</execute-script>"
 				+ "</generic-command>");
 
 		command.execute(context(Map.of()), "s");
@@ -110,23 +185,26 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 		ActionArguments seen = ArgumentsProbe.SEEN.get(0);
 		assertEquals(List.of(SELECTION, WithResultActions.RESULT), seen.names());
 		assertEquals("created", seen.value());
+		ActionArguments script = ArgumentsProbe.SEEN.get(1);
+		assertEquals(List.of(SELECTION, WithResultActions.RESULT), script.names());
+		assertEquals("other", script.value());
 	}
 
 	/**
 	 * Tests that the actions after the commit do not run when the transaction fails, so that the
 	 * channel keeps its value and the changes are rolled back.
 	 */
-	public void testNoAfterCommitOnRollback() throws Exception {
+	public void testNoFollowUpsOnRollback() throws Exception {
 		DefaultViewContext context = context(Map.of(SELECTION, _project, OTHER, "o"));
 		GenericViewCommand command = command(
 			"<generic-command inputs='" + SELECTION + "'>"
 				+ "<with-transaction>"
 				+ "<execute-script function=\"{ $" + SELECTION + ".set(`" + qualified(PROJECT) + "#" + NAME
 				+ "`, 'renamed'); throw('failed'); }\"/>"
-				+ "<" + WithTransactionAction.Config.AFTER_COMMIT + ">"
+				+ WITH_RESULT
 				+ PROBE
-				+ "<write-channel name='" + OTHER + "'/>"
-				+ "</" + WithTransactionAction.Config.AFTER_COMMIT + ">"
+				+ WRITE_OTHER
+				+ END_WITH_RESULT
 				+ "</with-transaction>"
 				+ "</generic-command>");
 
@@ -148,14 +226,14 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 	 * commit of a transaction nested in another one - but not after the commit.
 	 */
 	public void testViewStateInTransactionIsError() throws Exception {
-		String write = "<write-channel name='" + OTHER + "'/>";
 		assertInstantiationError(
 			"<generic-command inputs='" + SELECTION + "'>"
-				+ "<with-transaction>" + write + "</with-transaction>"
+				+ "<with-transaction>" + WRITE_OTHER + "</with-transaction>"
 				+ "</generic-command>");
 		assertInstantiationError(
 			"<generic-command inputs='" + SELECTION + "'>"
-				+ "<with-transaction><execute-script function='1'>" + write + "</execute-script></with-transaction>"
+				+ "<with-transaction><execute-script function='1'>" + WITH_RESULT + WRITE_OTHER + END_WITH_RESULT
+				+ "</execute-script></with-transaction>"
 				+ "</generic-command>");
 		assertInstantiationError(
 			"<generic-command inputs='" + SELECTION + "'>"
@@ -164,18 +242,37 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 		assertInstantiationError(
 			"<generic-command inputs='" + SELECTION + "'>"
 				+ "<with-transaction><with-transaction>"
-				+ "<" + WithTransactionAction.Config.AFTER_COMMIT + ">" + write
-				+ "</" + WithTransactionAction.Config.AFTER_COMMIT + ">"
+				+ WITH_RESULT + WRITE_OTHER + END_WITH_RESULT
 				+ "</with-transaction></with-transaction>"
 				+ "</generic-command>");
 
 		command(
 			"<generic-command inputs='" + SELECTION + "'>"
 				+ "<with-transaction>"
-				+ "<" + WithTransactionAction.Config.AFTER_COMMIT + ">" + write + "<close-dialog/>"
-				+ "</" + WithTransactionAction.Config.AFTER_COMMIT + ">"
+				+ WITH_RESULT + WRITE_OTHER + "<close-dialog/>" + END_WITH_RESULT
 				+ "</with-transaction>"
-				+ write
+				+ "<execute-script function='1'>" + WITH_RESULT + WRITE_OTHER + END_WITH_RESULT + "</execute-script>"
+				+ WRITE_OTHER
+				+ "</generic-command>");
+	}
+
+	/**
+	 * Tests that an action written directly into an action with a result, outside of its
+	 * {@link WithResult}, is a configuration error.
+	 */
+	public void testPlainFollowUpIsError() throws Exception {
+		assertParseError(
+			"<generic-command inputs='" + SELECTION + "'>"
+				+ "<execute-script function='1'>" + WRITE_OTHER + "</execute-script>"
+				+ "</generic-command>");
+		assertParseError(
+			"<generic-command inputs='" + SELECTION + "'>"
+				+ "<" + PersistTransientAction.Config.TAG_NAME + ">" + WRITE_OTHER
+				+ "</" + PersistTransientAction.Config.TAG_NAME + ">"
+				+ "</generic-command>");
+		assertParseError(
+			"<generic-command inputs='" + SELECTION + "'>"
+				+ "<execute-script function='1' " + WithResult.AS + "='created'/>"
 				+ "</generic-command>");
 	}
 
@@ -184,15 +281,17 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 	 * transaction and after the commit with, and agrees about the transaction.
 	 */
 	public void testEditorScope() throws Exception {
-		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestAfterCommit.class);
+		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestWithResult.class);
 		GenericViewCommand.Config config = TestConfiguredActionArguments.parse(instantiation,
 			"<generic-command inputs='" + SELECTION + " as ticket'>"
 				+ "<with-transaction>"
 				+ PROBE
-				+ "<" + WithTransactionAction.Config.AFTER_COMMIT + " "
-				+ WithTransactionAction.AfterCommit.WITH_RESULT + "='created'>"
+				+ "<execute-script function='1'>"
+				+ "<" + WithResultActions.WITH_RESULT + " " + WithResult.AS + "='inner'>" + PROBE + END_WITH_RESULT
+				+ "</execute-script>"
+				+ WITH_CREATED
 				+ PROBE
-				+ "</" + WithTransactionAction.Config.AFTER_COMMIT + ">"
+				+ END_WITH_RESULT
 				+ "</with-transaction>"
 				+ "</generic-command>");
 		instantiation.getInstance(config);
@@ -200,16 +299,25 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 
 		WithTransactionAction.Config transaction = (WithTransactionAction.Config) config.getActions().get(0);
 		ActionScope body = ActionScopes.scopeAt(transaction.getActions().get(0));
-		ActionScope afterCommit = ActionScopes.scopeAt(transaction.getAfterCommit().getActions().get(0));
+		ExecuteScriptAction.Config innerAction = (ExecuteScriptAction.Config) transaction.getActions().get(1);
+		ActionScope inner = ActionScopes.scopeAt(innerAction.getWithResult().getActions().get(0));
+		ActionScope afterCommit = ActionScopes.scopeAt(transaction.getWithResult().getActions().get(0));
 
-		assertEquals(2, ArgumentsProbe.SCOPES.size());
+		assertEquals(3, ArgumentsProbe.SCOPES.size());
 		ActionScope runtimeBody = ArgumentsProbe.SCOPES.get(0);
-		ActionScope runtimeAfterCommit = ArgumentsProbe.SCOPES.get(1);
+		ActionScope runtimeInner = ArgumentsProbe.SCOPES.get(1);
+		ActionScope runtimeAfterCommit = ArgumentsProbe.SCOPES.get(2);
 
 		assertEquals(List.of("ticket"), body.names());
 		assertEquals(runtimeBody.names(), body.names());
 		assertTrue(body.isTransactional());
 		assertTrue(runtimeBody.isTransactional());
+
+		assertEquals(List.of("ticket", "inner"), inner.names());
+		assertEquals(runtimeInner.names(), inner.names());
+		assertEquals(runtimeInner.defaultName(), inner.defaultName());
+		assertTrue("A follow-up action inside the transaction runs before the commit.", inner.isTransactional());
+		assertTrue(runtimeInner.isTransactional());
 
 		assertEquals(List.of("ticket", "created"), afterCommit.names());
 		assertEquals("created", afterCommit.defaultName());
@@ -217,6 +325,16 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 		assertEquals(runtimeAfterCommit.defaultName(), afterCommit.defaultName());
 		assertFalse(afterCommit.isTransactional());
 		assertFalse(runtimeAfterCommit.isTransactional());
+	}
+
+	private static void assertParseError(String xml) {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestWithResult.class);
+		try {
+			TestConfiguredActionArguments.parse(context, xml);
+		} catch (ConfigurationException ex) {
+			return;
+		}
+		fail("Parsing is refused: " + xml);
 	}
 
 	private static long lastRevision() {
@@ -260,6 +378,6 @@ public class TestAfterCommit extends AbstractModelAccessTest {
 	 * The test suite.
 	 */
 	public static Test suite() {
-		return suite(TestAfterCommit.class);
+		return suite(TestWithResult.class);
 	}
 }

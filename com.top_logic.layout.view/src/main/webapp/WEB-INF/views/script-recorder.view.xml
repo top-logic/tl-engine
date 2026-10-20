@@ -37,7 +37,9 @@
 					mode="START"
 				/>
 				<execute-script function="true">
-					<write-channel name="recording"/>
+					<with-result>
+						<write-channel name="recording"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -56,7 +58,9 @@
 					mode="STOP"
 				/>
 				<execute-script function="false">
-					<write-channel name="recording"/>
+					<with-result>
+						<write-channel name="recording"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -69,7 +73,9 @@
 					<de>Schritt</de>
 				</label>
 				<action class="com.top_logic.layout.view.recorder.StepReplayAction">
-					<write-channel name="selection"/>
+					<with-result>
+						<write-channel name="selection"/>
+					</with-result>
 				</action>
 			</generic-command>
 		</commands>

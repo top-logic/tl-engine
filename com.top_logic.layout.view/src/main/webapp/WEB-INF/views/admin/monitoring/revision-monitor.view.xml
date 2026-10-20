@@ -170,14 +170,18 @@
 	before = revisionAt(toDate(toMillis($from) - 1)).get(`tl.core:Revision#revision`);
 	if($before == null, 1, $before + 1);
 })]]></function>
-									<write-channel name="fromRevision"/>
+									<with-result>
+										<write-channel name="fromRevision"/>
+									</with-result>
 								</execute-script>
 								<execute-script inputs="to">
 									<function><![CDATA[if($to == null, null, {
 	before = revisionAt(toDate(toMillis($to) - 1)).get(`tl.core:Revision#revision`);
 	if($before == null, 1, $before + 1);
 })]]></function>
-									<write-channel name="toRevision"/>
+									<with-result>
+										<write-channel name="toRevision"/>
+									</with-result>
 								</execute-script>
 							</then>
 							<else>
@@ -185,7 +189,9 @@
 									<function><![CDATA[if($fromRevision == null, null,
 	if($fromRevision > revisionAt(now()).get(`tl.core:Revision#revision`), now(),
 		revisionForCommit(max($fromRevision, 1)).get(`tl.core:Revision#date`)))]]></function>
-									<write-channel name="from"/>
+									<with-result>
+										<write-channel name="from"/>
+									</with-result>
 								</execute-script>
 								<execute-script inputs="toRevision">
 									<function><![CDATA[if($toRevision == null, null, {
@@ -194,7 +200,9 @@
 		$last.get(`tl.core:Revision#date`).toUserCalendar().withDayAdded(1).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(),
 		revisionForCommit(max($toRevision, 1)).get(`tl.core:Revision#date`));
 })]]></function>
-									<write-channel name="to"/>
+									<with-result>
+										<write-channel name="to"/>
+									</with-result>
 								</execute-script>
 							</else>
 						</if>
@@ -298,34 +306,46 @@
 							</label>
 							<execute-script inputs="shiftedFilters">
 								<function><![CDATA[$shiftedFilters["previous"]]]></function>
-								<if test="$result == null">
-									<then>
-										<notify
-											expr="#('A range can only be moved if both its start and its end are given.'@en, 'Ein Bereich kann nur verschoben werden, wenn sowohl sein Anfang als auch sein Ende angegeben sind.'@de)"
-											kind="error"
-											stop="true"
-										/>
-									</then>
-								</if>
-								<execute-script function="{&quot;filter&quot;: $result, &quot;time&quot;: now()}">
-									<write-channel name="queryInput"/>
-								</execute-script>
-								<execute-script inputs="query">
-									<function><![CDATA[$query["filter"]["from"]]]></function>
-									<write-channel name="from"/>
-								</execute-script>
-								<execute-script inputs="query">
-									<function><![CDATA[$query["filter"]["to"]]]></function>
-									<write-channel name="to"/>
-								</execute-script>
-								<execute-script inputs="query">
-									<function><![CDATA[$query["filter"]["fromRevision"]]]></function>
-									<write-channel name="fromRevision"/>
-								</execute-script>
-								<execute-script inputs="query">
-									<function><![CDATA[$query["filter"]["toRevision"]]]></function>
-									<write-channel name="toRevision"/>
-								</execute-script>
+								<with-result>
+									<if test="$result == null">
+										<then>
+											<notify
+												expr="#('A range can only be moved if both its start and its end are given.'@en, 'Ein Bereich kann nur verschoben werden, wenn sowohl sein Anfang als auch sein Ende angegeben sind.'@de)"
+												kind="error"
+												stop="true"
+											/>
+										</then>
+									</if>
+									<execute-script function="{&quot;filter&quot;: $result, &quot;time&quot;: now()}">
+										<with-result>
+											<write-channel name="queryInput"/>
+										</with-result>
+									</execute-script>
+									<execute-script inputs="query">
+										<function><![CDATA[$query["filter"]["from"]]]></function>
+										<with-result>
+											<write-channel name="from"/>
+										</with-result>
+									</execute-script>
+									<execute-script inputs="query">
+										<function><![CDATA[$query["filter"]["to"]]]></function>
+										<with-result>
+											<write-channel name="to"/>
+										</with-result>
+									</execute-script>
+									<execute-script inputs="query">
+										<function><![CDATA[$query["filter"]["fromRevision"]]]></function>
+										<with-result>
+											<write-channel name="fromRevision"/>
+										</with-result>
+									</execute-script>
+									<execute-script inputs="query">
+										<function><![CDATA[$query["filter"]["toRevision"]]]></function>
+										<with-result>
+											<write-channel name="toRevision"/>
+										</with-result>
+									</execute-script>
+								</with-result>
 							</execute-script>
 						</action>
 					</button>
@@ -340,23 +360,33 @@
 							</label>
 							<execute-script inputs="filter">
 								<function><![CDATA[{"filter": $filter, "time": now()}]]></function>
-								<write-channel name="queryInput"/>
+								<with-result>
+									<write-channel name="queryInput"/>
+								</with-result>
 							</execute-script>
 							<execute-script inputs="query">
 								<function><![CDATA[$query["filter"]["from"]]]></function>
-								<write-channel name="from"/>
+								<with-result>
+									<write-channel name="from"/>
+								</with-result>
 							</execute-script>
 							<execute-script inputs="query">
 								<function><![CDATA[$query["filter"]["to"]]]></function>
-								<write-channel name="to"/>
+								<with-result>
+									<write-channel name="to"/>
+								</with-result>
 							</execute-script>
 							<execute-script inputs="query">
 								<function><![CDATA[$query["filter"]["fromRevision"]]]></function>
-								<write-channel name="fromRevision"/>
+								<with-result>
+									<write-channel name="fromRevision"/>
+								</with-result>
 							</execute-script>
 							<execute-script inputs="query">
 								<function><![CDATA[$query["filter"]["toRevision"]]]></function>
-								<write-channel name="toRevision"/>
+								<with-result>
+									<write-channel name="toRevision"/>
+								</with-result>
 							</execute-script>
 						</action>
 					</button>
@@ -371,34 +401,46 @@
 							</label>
 							<execute-script inputs="shiftedFilters">
 								<function><![CDATA[$shiftedFilters["next"]]]></function>
-								<if test="$result == null">
-									<then>
-										<notify
-											expr="#('A range can only be moved if both its start and its end are given.'@en, 'Ein Bereich kann nur verschoben werden, wenn sowohl sein Anfang als auch sein Ende angegeben sind.'@de)"
-											kind="error"
-											stop="true"
-										/>
-									</then>
-								</if>
-								<execute-script function="{&quot;filter&quot;: $result, &quot;time&quot;: now()}">
-									<write-channel name="queryInput"/>
-								</execute-script>
-								<execute-script inputs="query">
-									<function><![CDATA[$query["filter"]["from"]]]></function>
-									<write-channel name="from"/>
-								</execute-script>
-								<execute-script inputs="query">
-									<function><![CDATA[$query["filter"]["to"]]]></function>
-									<write-channel name="to"/>
-								</execute-script>
-								<execute-script inputs="query">
-									<function><![CDATA[$query["filter"]["fromRevision"]]]></function>
-									<write-channel name="fromRevision"/>
-								</execute-script>
-								<execute-script inputs="query">
-									<function><![CDATA[$query["filter"]["toRevision"]]]></function>
-									<write-channel name="toRevision"/>
-								</execute-script>
+								<with-result>
+									<if test="$result == null">
+										<then>
+											<notify
+												expr="#('A range can only be moved if both its start and its end are given.'@en, 'Ein Bereich kann nur verschoben werden, wenn sowohl sein Anfang als auch sein Ende angegeben sind.'@de)"
+												kind="error"
+												stop="true"
+											/>
+										</then>
+									</if>
+									<execute-script function="{&quot;filter&quot;: $result, &quot;time&quot;: now()}">
+										<with-result>
+											<write-channel name="queryInput"/>
+										</with-result>
+									</execute-script>
+									<execute-script inputs="query">
+										<function><![CDATA[$query["filter"]["from"]]]></function>
+										<with-result>
+											<write-channel name="from"/>
+										</with-result>
+									</execute-script>
+									<execute-script inputs="query">
+										<function><![CDATA[$query["filter"]["to"]]]></function>
+										<with-result>
+											<write-channel name="to"/>
+										</with-result>
+									</execute-script>
+									<execute-script inputs="query">
+										<function><![CDATA[$query["filter"]["fromRevision"]]]></function>
+										<with-result>
+											<write-channel name="fromRevision"/>
+										</with-result>
+									</execute-script>
+									<execute-script inputs="query">
+										<function><![CDATA[$query["filter"]["toRevision"]]]></function>
+										<with-result>
+											<write-channel name="toRevision"/>
+										</with-result>
+									</execute-script>
+								</with-result>
 							</execute-script>
 						</action>
 					</button>

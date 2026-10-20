@@ -42,6 +42,7 @@ import com.top_logic.layout.view.command.IfAction;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
+import com.top_logic.layout.view.command.WithResult;
 import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.layout.view.command.WriteChannelAction;
 
@@ -119,7 +120,7 @@ public class TestActionArguments extends TestCase {
 
 	/**
 	 * Tests that the follow-up actions see the result under the name given with
-	 * {@link WithResultActions#AS}.
+	 * {@link WithResult#AS}.
 	 */
 	public void testFollowUpsSeeResultUnderGivenName() {
 		run(List.of(step(result("first", "produced"), "created", seeArguments())));
@@ -262,39 +263,42 @@ public class TestActionArguments extends TestCase {
 	}
 
 	/**
-	 * Tests that an action with a result accepts follow-up actions as children next to a further
-	 * property element, and that every action is instantiated in the scope of its position.
+	 * Tests that an action with a result accepts follow-up actions in its {@link WithResult} element
+	 * next to a further property element, and that every action is instantiated in the scope of its
+	 * position.
 	 */
 	public void testParseFollowUps() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestActionArguments.class);
 		GenericViewCommand.Config config = parse(context,
 			"<generic-command inputs='draft'>"
-				+ "<execute-script function='$draft' as='created'>"
+				+ "<execute-script function='$draft'><with-result as='created'>"
 				+ "<write-channel name='selection'/>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
 				+ "<with-transaction>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
 				+ "</with-transaction>"
-				+ "</execute-script>"
+				+ "</with-result></execute-script>"
 				+ "<execute-script function='$a'>"
 				+ "<inputs><input channel='a'/></inputs>"
+				+ "<with-result>"
 				+ "<write-channel name='selection'/>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
+				+ "</with-result>"
 				+ "</execute-script>"
 				+ "<write-channel name='other' value='draft'/>"
 				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
 				+ "</generic-command>");
 
 		ExecuteScriptAction.Config named = (ExecuteScriptAction.Config) config.getActions().get(0);
-		assertEquals("created", named.getAs());
-		assertEquals(3, named.getActions().size());
-		assertTrue(named.getActions().get(0) instanceof WriteChannelAction.Config);
+		assertEquals("created", named.getWithResult().getAs());
+		assertEquals(3, named.getWithResult().getActions().size());
+		assertTrue(named.getWithResult().getActions().get(0) instanceof WriteChannelAction.Config);
 
 		ExecuteScriptAction.Config withInputs = (ExecuteScriptAction.Config) config.getActions().get(1);
-		assertNull(withInputs.getAs());
+		assertNull(withInputs.getWithResult().getAs());
 		assertEquals(1, withInputs.getInputs().size());
 		assertEquals("a", withInputs.getInputs().get(0).getName());
-		assertEquals(2, withInputs.getActions().size());
+		assertEquals(2, withInputs.getWithResult().getActions().size());
 
 		assertEquals("draft", ((WriteChannelAction.Config) config.getActions().get(2)).getValue());
 
@@ -342,20 +346,20 @@ public class TestActionArguments extends TestCase {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestActionArguments.class);
 		GenericViewCommand.Config config = parse(context,
 			"<generic-command inputs='selection as ticket'>"
-				+ "<execute-script function='$ticket' as='created'>"
+				+ "<execute-script function='$ticket'><with-result as='created'>"
 				+ "<with-transaction>"
 				+ "<if test='true'><then>"
 				+ "<execute-script function='$created' inputs='other'/>"
 				+ "<switch as='current'><case test='$current'/></switch>"
 				+ "</then></if>"
 				+ "</with-transaction>"
-				+ "</execute-script>"
+				+ "</with-result></execute-script>"
 				+ "</generic-command>");
 
 		ExecuteScriptAction.Config outer = (ExecuteScriptAction.Config) config.getActions().get(0);
 		assertEquals(List.of("ticket"), ActionScriptVariables.variables(outer, List.of()));
 
-		WithTransactionAction.Config transaction = (WithTransactionAction.Config) outer.getActions().get(0);
+		WithTransactionAction.Config transaction = (WithTransactionAction.Config) outer.getWithResult().getActions().get(0);
 		IfAction.Config branch = (IfAction.Config) transaction.getActions().get(0);
 		ExecuteScriptAction.Config inner = (ExecuteScriptAction.Config) branch.getThen().get(0);
 		assertEquals(List.of("ticket", "created", "other"), ActionScriptVariables.variables(inner, List.of()));

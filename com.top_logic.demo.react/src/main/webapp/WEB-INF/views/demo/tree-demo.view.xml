@@ -106,19 +106,21 @@
 					reference="milestones"
 					type="tl.demo.projectManagement:Milestone"
 				>
-					<open-dialog
-						bind-input-to="model"
-						dialog-view="demo/create-milestone.view.xml"
-					>
-						<bind
-							channel="container"
-							to="selectedScope"
-						/>
-						<bind
-							channel="selection"
-							to="selected"
-						/>
-					</open-dialog>
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-milestone.view.xml"
+						>
+							<bind
+								channel="container"
+								to="selectedScope"
+							/>
+							<bind
+								channel="selection"
+								to="selected"
+							/>
+						</open-dialog>
+					</with-result>
 				</create-transient>
 			</generic-command>
 			<!--
@@ -150,9 +152,9 @@
 						<de>Ticket in Meilenstein {0} angelegt.</de>
 					</commitMessage>
 					<execute-script function="{ scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, context: $scope, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
-					<after-commit with-result="created">
+					<with-result as="created">
 						<write-channel name="selected"/>
-					</after-commit>
+					</with-result>
 				</with-transaction>
 			</generic-command>
 			<generic-command
@@ -198,9 +200,9 @@
 						<de>Ticket an Meilenstein {0} angehängt.</de>
 					</commitMessage>
 					<execute-script function="{ ticket = $milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).firstElement(); if($ticket == null, $milestone, { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }); }"/>
-					<after-commit with-result="ticket">
+					<with-result as="ticket">
 						<write-channel name="selected"/>
-					</after-commit>
+					</with-result>
 				</with-transaction>
 			</generic-command>
 			<!-- <delete-object/> deletes a single object as well as a set of them. -->

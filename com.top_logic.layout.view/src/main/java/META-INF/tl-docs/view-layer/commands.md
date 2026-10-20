@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their nested follow-up actions (result, as), value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), <create-transient>, <persist-transient>, <delete-object>, and long-running jobs with <start-job> / <job-status>.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), <create-transient>, <persist-transient>, <delete-object>, and long-running jobs with <start-job> / <job-status>.
 order: 50
 ---
 
@@ -28,48 +28,54 @@ order: 50
 
 An action that has to wait — `<confirm>`, which opens a dialog — suspends the chain and resumes it from the dialog's answer, or aborts it on cancel; `<verify-identity>` (`VerifyIdentityAction`) is the same shape with the answer being the proof that the person at the keyboard still is the holder of the session's own account, given the way the session was established: a session established at an external identity provider re-authenticates there in a second browser window — the provider's answer returns to the authentication servlet, which completes the pending `IdentityVerifications` entry and resumes the chain in the window that asked (a failure of the resumed chain is shown in that window like any other command failure, through `CommandErrors`, and leaves the confirmed identity itself standing) — while every other session is asked for its password, which the account's `AuthenticationDevice` checks. It fails closed: a cancelled prompt, an account that neither a provider nor a device can confirm, or a context without a dialog all abort; an abort skips the remaining actions and runs the compensations the executed actions registered, newest first, as does a failure.
 
-## Actions with a result run nested follow-up actions
+## Actions with a result: `<with-result>`
 
-The result of an action does not reach the actions *following* it. An action with a useful result takes **follow-up actions as its children** (`WithResultActions`); they run after it with the arguments of the chain, extended by the result under the name `result`, or the name its `as` gives. An inner name shadows an equal outer one. Once the follow-up actions are done, the chain goes on with the siblings of the action, which see the arguments without the result.
+The result of an action does not reach the actions *following* it. An action with a useful result takes its **follow-up actions in its `<with-result>` element** (`WithResultActions`, `WithResult`); they run once the action has completed — including a commit the action does itself, so a follow-up action never sees an uncommitted object — with the arguments of the chain, extended by the result under the name `result`, or the name the `as` of `<with-result>` gives. The result is their default value. An inner name shadows an equal outer one. Once the follow-up actions are done, the chain goes on with the siblings of the action, which see the arguments without the result.
 
 ```xml
-<generic-command inputs="draft" placement="BUTTON_BAR">
-  <execute-script as="created" function="$draft.copy(transient: false)">
-    <write-channel name="selection"/>
-    <close-dialog/>
-  </execute-script>
+<generic-command inputs="model" placement="BUTTON_BAR">
+  <store-form-state/>
+  <persist-transient container="container" reference="milestones">
+    <with-result as="created">
+      <write-channel name="selection"/>
+      <close-dialog/>
+    </with-result>
+  </persist-transient>
 </generic-command>
 ```
 
-- **Actions with a result**: `<execute-script>` and `<evaluate-script>` (the value of the script), `<create-transient>`, `<persist-transient>`, `<read-form-object>`, `<store-form-state>`, `<link-element>`, `<remove-element>`, `<start-job>`, `<issue-access-token>`, `<create-account>`, `<set-password>` and the load actions of the administration views. Chains of producers nest: `<store-form-state><persist-transient><write-channel name="selection"/></persist-transient></store-form-state>`.
-- **Actions without a result**: `<open-dialog>` (the chain goes on once the dialog is open), `<write-channel>`, `<close-dialog>`, `<close-popover>`, `<delete-object>`, and the containers `<with-transaction>`, `<if>` and `<switch>`. The actions inside a container run with the arguments the container sees; a sibling following the container does not see what happened inside, so an action working with a result produced inside a branch is nested there too. A transaction hands its result to the actions of its `<after-commit>`, see [transactions](#transactions-with-transaction-and-after-commit).
+- **Actions with a result**: `<execute-script>` and `<evaluate-script>` (the value of the script), `<create-transient>`, `<persist-transient>`, `<read-form-object>`, `<store-form-state>`, `<link-element>`, `<remove-element>`, `<start-job>`, `<issue-access-token>`, `<create-account>`, `<set-password>`, `<with-transaction>` (the result of its last inner action, see [transactions](#transactions-with-transaction)) and the load actions of the administration views. Chains of producers nest: `<store-form-state><with-result><persist-transient><with-result><write-channel name="selection"/></with-result></persist-transient></with-result></store-form-state>`.
+- An action with a result accepts follow-up actions only inside its `<with-result>`; an action written directly into it is a configuration error.
+- **Actions without a result**: `<open-dialog>` (the chain goes on once the dialog is open), `<write-channel>`, `<close-dialog>`, `<close-popover>`, `<delete-object>`, and the containers `<if>` and `<switch>`. The actions inside a container run with the arguments the container sees; a sibling following the container does not see what happened inside, so an action working with a result produced inside a branch is nested there too.
 
-## Transactions: `<with-transaction>` and `<after-commit>`
+## Transactions: `<with-transaction>`
 
 `<with-transaction>` (`WithTransactionAction`) runs the actions written inside it in one transaction with the arguments of the chain, commits it with its `<commitMessage>` (filled with the label of the default argument) and results in the result of its last inner action. When an inner action throws, the transaction is rolled back and the command fails.
 
-The actions in the transaction only read and modify the model. An action that changes the state of the view — `<write-channel>`, `<open-dialog>`, `<close-dialog>`, `<close-popover>`, `<notify>`, `<show-object>`, `<show-view>`, `<download>`, `<scroll-to-anchor>`, `<history-back>`, the wizard and tile-stack navigation, … (`ViewAction#changesViewState()`) — would keep its effect when the commit fails, e.g. a channel holding an object that was never created. Configured inside the transaction, it is reported as a configuration error when the view is loaded. It belongs to `<after-commit>`, whose actions run only after a successful commit, with the arguments of the chain and the result of the transaction under the name `with-result` gives (`result` without one):
+The actions in the transaction only read and modify the model. An action that changes the state of the view — `<write-channel>`, `<open-dialog>`, `<close-dialog>`, `<close-popover>`, `<notify>`, `<show-object>`, `<show-view>`, `<download>`, `<scroll-to-anchor>`, `<history-back>`, the wizard and tile-stack navigation, … (`ViewAction#changesViewState()`) — would keep its effect when the commit fails, e.g. a channel holding an object that was never created. Configured inside the transaction, it is reported as a configuration error when the view is loaded. It belongs to the `<with-result>` of the transaction, whose actions run only after a successful commit, with the arguments of the chain and the result of the transaction under the name `as` gives (`result` without one):
 
 ```xml
 <generic-command inputs="model" placement="BUTTON_BAR">
   <store-form-state/>
   <with-transaction>
     <commitMessage><en>Created ticket {0}.</en><de>Ticket {0} angelegt.</de></commitMessage>
-    <persist-transient as="created">
-      <execute-script function="$created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+    <persist-transient>
+      <with-result as="created">
+        <execute-script function="$created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+      </with-result>
     </persist-transient>
-    <after-commit with-result="created">
+    <with-result as="created">
       <write-channel name="selection"/>
-    </after-commit>
+    </with-result>
   </with-transaction>
   <close-dialog/>
 </generic-command>
 ```
 
-- Follow-up actions nested into an action *inside* the transaction run inside it as well, so they are model operations too — like the `<execute-script>` setting the status above.
-- The actions of `<after-commit>` run outside the transaction, as follow-up actions of it: they may suspend (a `<confirm>`, an `<open-dialog>`) and abort the chain, the committed changes stay. Their scripts see the result as a variable, and the script editor offers it.
+- The follow-up actions of an action *inside* the transaction run inside it as well, before the commit, so they are model operations too — like the `<execute-script>` setting the status above.
+- The actions of the `<with-result>` of the transaction run outside the transaction, as its follow-up actions: they may suspend (a `<confirm>`, an `<open-dialog>`) and abort the chain, the committed changes stay. Their scripts see the result as a variable, and the script editor offers it.
 - Inner actions must complete synchronously; a `<confirm>` or another suspending action inside a transaction fails, place it before the `<with-transaction>`.
-- A `<with-transaction>` nested in the actions of another transaction commits with the outer one; its `<after-commit>` then still runs inside the outer transaction and is restricted the same way.
+- A `<with-transaction>` nested in the actions of another transaction commits with the outer one; its `<with-result>` then still runs inside the outer transaction and is restricted the same way.
 
 ## Actions processing one value: `value`
 
@@ -78,8 +84,10 @@ The actions in the transaction only read and modify the model. An action that ch
 ```xml
 <generic-command inputs="selection as ticket, project">
   <execute-script function="$project.get(`demo.tickets:Project#lead`)">
-    <write-channel name="lead"/>                      <!-- the result -->
-    <write-channel name="lastTicket" value="ticket"/> <!-- an argument by name -->
+    <with-result>
+      <write-channel name="lead"/>                      <!-- the result -->
+      <write-channel name="lastTicket" value="ticket"/> <!-- an argument by name -->
+    </with-result>
   </execute-script>
 </generic-command>
 ```
@@ -100,20 +108,22 @@ Every script of a chain — the `function` of `<execute-script>` and `<start-job
 <value-input value="jump">
   <on-submit>
     <execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
-      <if test="$result != null">
-        <then>
-          <write-channel name="ticket"/>
-        </then>
-        <else>
-          <notify kind="warning" stop="true" expr="#('No ticket {0}.'@en, 'Kein Ticket {0}.'@de).fill($value)"/>
-        </else>
-      </if>
+      <with-result>
+        <if test="$result != null">
+          <then>
+            <write-channel name="ticket"/>
+          </then>
+          <else>
+            <notify kind="warning" stop="true" expr="#('No ticket {0}.'@en, 'Kein Ticket {0}.'@de).fill($value)"/>
+          </else>
+        </if>
+      </with-result>
     </execute-script>
   </on-submit>
 </value-input>
 ```
 
-`<notify>` (`NotifyAction`) tells the user something from inside the chain. Its `expr` computes the message over the arguments, exactly like every other script of an action; a result of `null` or an empty text is nothing to say — so the message itself decides whether the user hears anything. `kind="info|warning|error"` (`info` by default) says how serious the notice is, `display="snackbar|dialog"` (`snackbar` by default) where it is read: a snackbar passes by beside the user's work and is shown synchronously, while a dialog is a single-OK message that suspends the chain until it is acknowledged, exactly as a `<confirm>` does (a chain running headless has no dialog to open and falls back to the snackbar). Either way the notice changes the state of the view, so after a model change it is placed in the `<after-commit>` of the transaction, where it reports only what was committed. `stop="true"` ends the chain after the notice: the compensations of the actions before it run, the remaining actions are skipped, and nothing is logged or reported beyond the message — the notice *is* the outcome. That is what separates it from a failure raised by the TL-Script `throw(#('…'@en, '…'@de))` inside an `<execute-script>`, which travels the error path: it is logged and reported through `CommandErrors` like any other failure of the command.
+`<notify>` (`NotifyAction`) tells the user something from inside the chain. Its `expr` computes the message over the arguments, exactly like every other script of an action; a result of `null` or an empty text is nothing to say — so the message itself decides whether the user hears anything. `kind="info|warning|error"` (`info` by default) says how serious the notice is, `display="snackbar|dialog"` (`snackbar` by default) where it is read: a snackbar passes by beside the user's work and is shown synchronously, while a dialog is a single-OK message that suspends the chain until it is acknowledged, exactly as a `<confirm>` does (a chain running headless has no dialog to open and falls back to the snackbar). Either way the notice changes the state of the view, so after a model change it is placed in the `<with-result>` of the transaction, where it reports only what was committed. `stop="true"` ends the chain after the notice: the compensations of the actions before it run, the remaining actions are skipped, and nothing is logged or reported beyond the message — the notice *is* the outcome. That is what separates it from a failure raised by the TL-Script `throw(#('…'@en, '…'@de))` inside an `<execute-script>`, which travels the error path: it is logged and reported through `CommandErrors` like any other failure of the command.
 
 ## Branching: `<if>` and `<switch>`
 
@@ -205,20 +215,26 @@ The opener and the dialog of a creation in a container:
 <!-- opener, e.g. in the list toolbar -->
 <generic-command image="css:bi bi-plus-lg" placement="TOOLBAR">
   <create-transient type="tl.demo.projectManagement:Milestone" container="selectedScope" reference="milestones">
-    <open-dialog bind-input-to="model" dialog-view="demo/create-milestone.view.xml">
-      <bind channel="container" to="selectedScope"/>
-      <bind channel="selection" to="selectedMilestone"/>
-    </open-dialog>
+    <with-result>
+      <open-dialog bind-input-to="model" dialog-view="demo/create-milestone.view.xml">
+        <bind channel="container" to="selectedScope"/>
+        <bind channel="selection" to="selectedMilestone"/>
+      </open-dialog>
+    </with-result>
   </create-transient>
 </generic-command>
 
 <!-- dialog: the form edits the draft in "model" -->
 <generic-command image="css:bi bi-check-lg" inputs="model" placement="BUTTON_BAR">
   <store-form-state>
-    <persist-transient container="container" reference="milestones">
-      <write-channel name="selection"/>
-      <close-dialog/>
-    </persist-transient>
+    <with-result>
+      <persist-transient container="container" reference="milestones">
+        <with-result>
+          <write-channel name="selection"/>
+          <close-dialog/>
+        </with-result>
+      </persist-transient>
+    </with-result>
   </store-form-state>
 </generic-command>
 ```
@@ -237,7 +253,7 @@ A top-level creation omits `container` and `reference` on both actions. Deleting
 
 ## Long-running jobs: `<start-job>` and `<job-status>`
 
-Work that takes longer than a request may take does not belong in the request. `<start-job>` (`StartJobAction`) is the action that hands it to a worker thread, publishes what it reports on a channel, and **suspends the command** until the work has ended — the same suspension a `<confirm>` uses, so the chain simply continues afterwards, and the follow-up actions nested into the `<start-job>` see the job's result as `result`:
+Work that takes longer than a request may take does not belong in the request. `<start-job>` (`StartJobAction`) is the action that hands it to a worker thread, publishes what it reports on a channel, and **suspends the command** until the work has ended — the same suspension a `<confirm>` uses, so the chain simply continues afterwards, and the follow-up actions in the `<with-result>` of the `<start-job>` see the job's result as `result`:
 
 ```xml
 <action class="com.top_logic.layout.view.command.GenericViewCommand" inputs="progress">
@@ -258,13 +274,15 @@ Work that takes longer than a request may take does not belong in the request. `
 	sleep(1500);
 	#('5 records processed.'@en);
 }]]></function>
-    <write-channel name="report"/>
+    <with-result>
+      <write-channel name="report"/>
+    </with-result>
   </start-job>
 </action>
 ```
 
 - **The channel carries immutable snapshots.** The `progress` channel holds a `JobState` from the moment the job starts, and a *new* one on every report, so nothing a display would have to observe ever changes. `update-interval` is the shortest time in milliseconds between two published snapshots: a job counting thousands of items is followed at that pace instead of flooding the browser, the last report of a burst is never lost, and the snapshot that ends the job is always delivered. The body runs in the sub-session of the starting request and publishes under the window's interaction through a `ChannelPublisher` (the mechanism behind a [`<source-channel>`](doc:view-layer/channels#channels-fed-by-a-server-side-source-source-channel) as well), so the channel write, the controls updating from it and the updates reaching the browser are serialized against the requests of the same session exactly like a command is.
-- **The work runs outside any transaction, on a thread that serves no request.** Persisting what the job produced is the business of the follow-up actions nested into the `<start-job>`: the command continues where it left off, and they see the job's result as `result` (or the name `as` gives), so a `<with-transaction><execute-script function="… $result …"/></with-transaction>` or a `<write-channel>` inside the `<start-job>` is where the result lands. A job that fails or is cancelled **aborts** the command instead — the remaining actions are skipped, the compensations of the ones before it run, and the failure stays visible in the last state of the job rather than in a snackbar.
+- **The work runs outside any transaction, on a thread that serves no request.** Persisting what the job produced is the business of the follow-up actions in the `<with-result>` of the `<start-job>`: the command continues where it left off, and they see the job's result as `result` (or the name its `as` gives), so a `<with-transaction><execute-script function="… $result …"/></with-transaction>` or a `<write-channel>` in that `<with-result>` is where the result lands. A job that fails or is cancelled **aborts** the command instead — the remaining actions are skipped, the compensations of the ones before it run, and the failure stays visible in the last state of the job rather than in a snackbar.
 - **The body is a TL-Script `function=` or a Java `<body class="…"/>`**, exactly one of the two. The function sees the **monitor of the job as the variable `job`**, beside the arguments of the chain and the values of the action's own `inputs` as variables named after them (`ScriptJobBody`, `StartJobAction.jobScope`); the monitor hides an argument of the same name. It reports with `$job.jobPhase('name')` (entering a step marks the steps passed over as done; naming a step that was never declared ends the job with an error), `$job.jobPhases([…])` or `$job.jobPhases({name: label})` for a job that learns its steps only while running, `$job.jobProgress(done, total)`, `$job.jobIndeterminate()` and `$job.jobMessage(text)`. What the function returns is the result of the job.
 - **Reading a snapshot** is `jobIsRunning($s)`, `jobIsFinished($s)`, `jobStatus($s)` (the texts `running`, `completed`, `failed`, `cancelled`, so a `<switch><case match="'completed'">` decides on it), `jobResult($s)` and `jobError($s)`. Each of them answers over no job at all as well, which is what the channel holds before the first start — so a start button guards itself with `inputs="progress"` plus `<disabled-if expr="jobIsRunning($progress)"/>` and needs no case of its own for the time before the first run.
 - **Cancellation is cooperative.** `cancelable="true"` offers the reader a cancel button; pressing it marks the job and interrupts the worker. `sleep()` keeps the interrupt it was woken by, so a sleeping job wakes at once and ends at the next point it *reports* from — which is what makes a loop of `sleep` + `jobProgress` stop within one step. Every report a Java body makes on its `JobMonitor` checks the same way, and `JobMonitor.checkCancelled()` is that check on its own for a stretch of work that reports nothing. Only declare it for work that may be given up half-done: a cancelled job has done part of what it was started for.

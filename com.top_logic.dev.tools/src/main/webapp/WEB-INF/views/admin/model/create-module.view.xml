@@ -36,18 +36,20 @@
 						<de>Anlegen</de>
 					</label>
 					<store-form-state>
-						<with-transaction>
-							<commitMessage>
-								<en>Created module {0}.</en>
-								<de>Modul {0} angelegt.</de>
-							</commitMessage>
-							<action class="com.top_logic.dev.tools.model.ModelEditAction"
-								mode="CREATE_MODULE"
-							/>
-							<after-commit with-result="created">
-								<write-channel name="selection"/>
-							</after-commit>
-						</with-transaction>
+						<with-result>
+							<with-transaction>
+								<commitMessage>
+									<en>Created module {0}.</en>
+									<de>Modul {0} angelegt.</de>
+								</commitMessage>
+								<action class="com.top_logic.dev.tools.model.ModelEditAction"
+									mode="CREATE_MODULE"
+								/>
+								<with-result as="created">
+									<write-channel name="selection"/>
+								</with-result>
+							</with-transaction>
+						</with-result>
 					</store-form-state>
 					<close-dialog/>
 				</generic-command>

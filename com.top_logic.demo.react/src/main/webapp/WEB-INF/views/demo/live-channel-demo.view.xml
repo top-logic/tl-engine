@@ -98,7 +98,9 @@
 	};
 	$state;
 }]]></function>
-					<write-channel name="ticker"/>
+					<with-result>
+						<write-channel name="ticker"/>
+					</with-result>
 				</execute-script>
 			</action>
 		</button>

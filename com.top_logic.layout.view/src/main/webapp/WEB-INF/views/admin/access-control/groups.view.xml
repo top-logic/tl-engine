@@ -29,15 +29,17 @@
 								<de>Neu</de>
 							</label>
 							<execute-script function="new(`tl.accounts:Group`, transient: true)">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="admin/access-control/create-group.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="selectedGroup"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/access-control/create-group.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedGroup"
+										/>
+									</open-dialog>
+								</with-result>
 							</execute-script>
 						</generic-command>
 						<generic-command

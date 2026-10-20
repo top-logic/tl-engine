@@ -42,7 +42,9 @@
 					<de>Anmelden</de>
 				</label>
 				<store-form-state>
-					<login/>
+					<with-result>
+						<login/>
+					</with-result>
 				</store-form-state>
 			</generic-command>
 		</commands>

@@ -30,15 +30,17 @@
 					<de>Logger hinzufügen</de>
 				</label>
 				<execute-script function="new(`tl.admin:NewLogger`, transient: true)">
-					<open-dialog
-						bind-input-to="model"
-						dialog-view="admin/system/add-logger.view.xml"
-					>
-						<bind
-							channel="loggers"
-							to="loggers"
-						/>
-					</open-dialog>
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="admin/system/add-logger.view.xml"
+						>
+							<bind
+								channel="loggers"
+								to="loggers"
+							/>
+						</open-dialog>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -58,7 +60,9 @@
 					mode="REMOVE"
 					selection="selection"
 				>
-					<write-channel name="loggers"/>
+					<with-result>
+						<write-channel name="loggers"/>
+					</with-result>
 				</action>
 			</generic-command>
 			<generic-command
@@ -72,7 +76,9 @@
 				<action class="com.top_logic.layout.view.admin.system.LoggerLevelAction"
 					mode="REFRESH"
 				>
-					<write-channel name="loggers"/>
+					<with-result>
+						<write-channel name="loggers"/>
+					</with-result>
 				</action>
 			</generic-command>
 		</commands>

@@ -29,15 +29,17 @@
 								<de>Neu</de>
 							</label>
 							<execute-script function="new(`tl.admin:NewAccount`, transient: true)">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="admin/access-control/create-account.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="selectedAccount"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/access-control/create-account.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedAccount"
+										/>
+									</open-dialog>
+								</with-result>
 							</execute-script>
 						</generic-command>
 						<generic-command
@@ -76,10 +78,12 @@
 								<model-access operation="Write"/>
 							</executability>
 							<execute-script function="new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $selectedAccount)">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="admin/access-control/reset-password.view.xml"
-								/>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/access-control/reset-password.view.xml"
+									/>
+								</with-result>
 							</execute-script>
 						</generic-command>
 						<!--

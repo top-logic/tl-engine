@@ -26,15 +26,17 @@
 								<de>Neu</de>
 							</label>
 							<create-transient type="test.constraints:ConstraintTestType">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="demo/create-constraint-test.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="selectedObject"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-constraint-test.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedObject"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</generic-command>
 						<generic-command

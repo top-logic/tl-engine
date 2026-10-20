@@ -90,7 +90,9 @@
 								<de>Analysiert die geltende Zugriffsdefinition erneut und baut die Tabelle neu auf. Gespeicherte, noch nicht angewendete Änderungen bleiben dabei unberücksichtigt.</de>
 							</tooltip>
 							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction">
-								<write-channel name="rows"/>
+								<with-result>
+									<write-channel name="rows"/>
+								</with-result>
 							</action>
 						</generic-command>
 						<generic-command
@@ -109,7 +111,9 @@
 							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 								mode="APPLY"
 							>
-								<write-channel name="rows"/>
+								<with-result>
+									<write-channel name="rows"/>
+								</with-result>
 							</action>
 							<write-channel name="pending"
 								clear="true"
@@ -167,15 +171,17 @@
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="EDIT_ACCESS_RIGHTS"
 										>
-											<open-dialog
-												bind-input-to="rights"
-												dialog-view="admin/access-control/coverage-access-rights.view.xml"
-											>
-												<bind
-													channel="pending"
-													to="pending"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="rights"
+													dialog-view="admin/access-control/coverage-access-rights.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -197,15 +203,17 @@
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="EDIT_MODULE_ACCESS_RIGHTS"
 										>
-											<open-dialog
-												bind-input-to="rights"
-												dialog-view="admin/access-control/coverage-access-rights.view.xml"
-											>
-												<bind
-													channel="pending"
-													to="pending"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="rights"
+													dialog-view="admin/access-control/coverage-access-rights.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -234,7 +242,9 @@
 											mode="MARK_INTERNAL"
 											selection="selection"
 										>
-											<write-channel name="pending"/>
+											<with-result>
+												<write-channel name="pending"/>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -262,7 +272,9 @@
 											mode="UNMARK_INTERNAL"
 											selection="selection"
 										>
-											<write-channel name="pending"/>
+											<with-result>
+												<write-channel name="pending"/>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -291,7 +303,9 @@
 											mode="MARK_WITHOUT_SECURITY"
 											selection="selection"
 										>
-											<write-channel name="pending"/>
+											<with-result>
+												<write-channel name="pending"/>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -319,7 +333,9 @@
 											mode="UNMARK_WITHOUT_SECURITY"
 											selection="selection"
 										>
-											<write-channel name="pending"/>
+											<with-result>
+												<write-channel name="pending"/>
+											</with-result>
 										</action>
 									</generic-command>
 								</commands>
@@ -375,15 +391,17 @@
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="NEW_ROLE_PARENT_RULE"
 										>
-											<open-dialog
-												bind-input-to="rule"
-												dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
-											>
-												<bind
-													channel="pending"
-													to="pending"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="rule"
+													dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -405,15 +423,17 @@
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="NEW_ROLE_RULE"
 										>
-											<open-dialog
-												bind-input-to="rule"
-												dialog-view="admin/access-control/coverage-role-rule.view.xml"
-											>
-												<bind
-													channel="pending"
-													to="pending"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="rule"
+													dialog-view="admin/access-control/coverage-role-rule.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -435,36 +455,44 @@
 										<switch value="$selectedRuleEntry['kind']">
 											<case match="'roleParent'">
 												<execute-script function="$selectedRuleEntry['id']">
-													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-														mode="EDIT_ROLE_PARENT_RULE"
-													>
-														<open-dialog
-															bind-input-to="rule"
-															dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+													<with-result>
+														<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+															mode="EDIT_ROLE_PARENT_RULE"
 														>
-															<bind
-																channel="pending"
-																to="pending"
-															/>
-														</open-dialog>
-													</action>
+															<with-result>
+																<open-dialog
+																	bind-input-to="rule"
+																	dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+																>
+																	<bind
+																		channel="pending"
+																		to="pending"
+																	/>
+																</open-dialog>
+															</with-result>
+														</action>
+													</with-result>
 												</execute-script>
 											</case>
 											<case match="'roleRule'">
 												<execute-script function="$selectedRuleEntry['id']">
-													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-														mode="EDIT_ROLE_RULE"
-													>
-														<open-dialog
-															bind-input-to="rule"
-															dialog-view="admin/access-control/coverage-role-rule.view.xml"
+													<with-result>
+														<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+															mode="EDIT_ROLE_RULE"
 														>
-															<bind
-																channel="pending"
-																to="pending"
-															/>
-														</open-dialog>
-													</action>
+															<with-result>
+																<open-dialog
+																	bind-input-to="rule"
+																	dialog-view="admin/access-control/coverage-role-rule.view.xml"
+																>
+																	<bind
+																		channel="pending"
+																		to="pending"
+																	/>
+																</open-dialog>
+															</with-result>
+														</action>
+													</with-result>
 												</execute-script>
 											</case>
 										</switch>
@@ -489,20 +517,28 @@
 										<switch value="$selectedRuleEntry['kind']">
 											<case match="'roleParent'">
 												<execute-script function="$selectedRuleEntry['id']">
-													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-														mode="REMOVE_ROLE_PARENT_RULE"
-													>
-														<write-channel name="pending"/>
-													</action>
+													<with-result>
+														<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+															mode="REMOVE_ROLE_PARENT_RULE"
+														>
+															<with-result>
+																<write-channel name="pending"/>
+															</with-result>
+														</action>
+													</with-result>
 												</execute-script>
 											</case>
 											<case match="'roleRule'">
 												<execute-script function="$selectedRuleEntry['id']">
-													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-														mode="REMOVE_ROLE_RULE"
-													>
-														<write-channel name="pending"/>
-													</action>
+													<with-result>
+														<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+															mode="REMOVE_ROLE_RULE"
+														>
+															<with-result>
+																<write-channel name="pending"/>
+															</with-result>
+														</action>
+													</with-result>
 												</execute-script>
 											</case>
 										</switch>

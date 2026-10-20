@@ -43,25 +43,26 @@
 					<null-input-disabled/>
 				</executability>
 				<create-transient
-					as="draft"
 					container="project"
 					reference="tickets"
 					type="tl.demo.projectManagement:Ticket"
 				>
-					<execute-script function="$draft.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone)"/>
-					<open-dialog
-						bind-input-to="model"
-						dialog-view="demo/create-ticket.view.xml"
-					>
-						<bind
-							channel="container"
-							to="project"
-						/>
-						<bind
-							channel="selection"
-							to="ticket"
-						/>
-					</open-dialog>
+					<with-result as="draft">
+						<execute-script function="$draft.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone)"/>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-ticket.view.xml"
+						>
+							<bind
+								channel="container"
+								to="project"
+							/>
+							<bind
+								channel="selection"
+								to="ticket"
+							/>
+						</open-dialog>
+					</with-result>
 				</create-transient>
 			</generic-command>
 			<generic-command

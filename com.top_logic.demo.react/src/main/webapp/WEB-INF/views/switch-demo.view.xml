@@ -50,15 +50,17 @@
 								<de>Neu</de>
 							</label>
 							<create-transient type="demo.react:Demo">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="switch-demo-create.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="selectedDemo"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="switch-demo-create.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedDemo"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</generic-command>
 						<generic-command

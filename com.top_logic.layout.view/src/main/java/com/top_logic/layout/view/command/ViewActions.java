@@ -44,7 +44,8 @@ public class ViewActions {
 	 * {@link ActionScope#of(InstantiationContext)}. The options a configuration offers for the chain
 	 * - the argument to process ({@link WithValueArgument}), the follow-up actions over the result
 	 * ({@link WithResultActions}) - are applied by wrapping the action into an {@link ActionStep};
-	 * the follow-up actions are instantiated in the scope extended by the name of the result.
+	 * the follow-up actions are instantiated in the scope of the action extended by the name of the
+	 * result.
 	 * </p>
 	 *
 	 * <p>
@@ -83,7 +84,8 @@ public class ViewActions {
 			context.error("The action at " + config.location()
 				+ " changes the state of the view and must not run inside the transaction of '"
 				+ WithTransactionAction.Config.TAG_NAME + "': if the commit fails, the view keeps its"
-				+ " effect. Move it into '" + WithTransactionAction.Config.AFTER_COMMIT + "'.");
+				+ " effect. Move it into the '" + WithResultActions.WITH_RESULT + "' of the '"
+				+ WithTransactionAction.Config.TAG_NAME + "'.");
 			return null;
 		}
 
@@ -100,8 +102,11 @@ public class ViewActions {
 		String resultName = WithResultActions.RESULT;
 		List<ViewAction> followUps = List.of();
 		if (config instanceof WithResultActions resultConfig) {
-			resultName = WithResultActions.resultName(resultConfig);
-			followUps = instantiate(context, resultConfig.getActions(), scope.with(resultName));
+			WithResult withResult = resultConfig.getWithResult();
+			if (withResult != null) {
+				resultName = WithResult.resultName(withResult);
+				followUps = instantiate(context, withResult.getActions(), scope.with(resultName));
+			}
 		}
 
 		if (valueName == null && followUps.isEmpty()) {

@@ -88,19 +88,21 @@
 								reference="milestones"
 								type="tl.demo.projectManagement:Milestone"
 							>
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="demo/create-milestone.view.xml"
-								>
-									<bind
-										channel="container"
-										to="project"
-									/>
-									<bind
-										channel="selection"
-										to="milestone"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-milestone.view.xml"
+									>
+										<bind
+											channel="container"
+											to="project"
+										/>
+										<bind
+											channel="selection"
+											to="milestone"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</action>
 					</button>
@@ -151,15 +153,17 @@
 								reference="notes"
 								type="tl.demo.projectManagement:Note"
 							>
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="demo/create-note.view.xml"
-								>
-									<bind
-										channel="container"
-										to="project"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-note.view.xml"
+									>
+										<bind
+											channel="container"
+											to="project"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</action>
 					</button>

@@ -62,15 +62,17 @@
 								<de>Neu</de>
 							</label>
 							<create-transient type="demo.react:Demo">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="attributes-create.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="selected"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="attributes-create.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selected"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</generic-command>
 						<!--
@@ -145,7 +147,9 @@
 											content: [excelSheet(name: 'Summary', content: concat([['Priority', 'Objects', 'Total amount']], $rows))])
 									}
 								]]></function>
-								<download/>
+								<with-result>
+									<download/>
+								</with-result>
 							</execute-script>
 						</generic-command>
 					</commands>
@@ -390,15 +394,17 @@
 											<de>Neu</de>
 										</label>
 										<create-transient type="demo.react:Demo">
-											<open-dialog
-												bind-input-to="model"
-												dialog-view="attributes-create.view.xml"
-											>
-												<bind
-													channel="selection"
-													to="selected"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="attributes-create.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="selected"
+													/>
+												</open-dialog>
+											</with-result>
 										</create-transient>
 									</generic-command>
 									<generic-command

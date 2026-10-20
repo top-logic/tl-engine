@@ -48,15 +48,17 @@
 								<de>Neues Modul</de>
 							</label>
 							<execute-script function="new(`tl.devtools:NewModule`, transient: true)">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="admin/model/create-module.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="selectedModule"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/model/create-module.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedModule"
+										/>
+									</open-dialog>
+								</with-result>
 							</execute-script>
 						</generic-command>
 						<generic-command
@@ -127,23 +129,25 @@
 											<null-input-disabled/>
 										</executability>
 										<execute-script function="new(`tl.devtools:NewType`, transient: true)">
-											<open-dialog
-												bind-input-to="model"
-												dialog-view="admin/model/create-type.view.xml"
-											>
-												<bind
-													channel="selection"
-													to="selectedPart"
-												/>
-												<bind
-													channel="container"
-													to="selectedModule"
-												/>
-												<bind
-													channel="reload"
-													to="reload"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="admin/model/create-type.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="selectedPart"
+													/>
+													<bind
+														channel="container"
+														to="selectedModule"
+													/>
+													<bind
+														channel="reload"
+														to="reload"
+													/>
+												</open-dialog>
+											</with-result>
 										</execute-script>
 									</generic-command>
 									<generic-command
@@ -159,23 +163,25 @@
 											<visible-if expr="$selectedPart != null &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLClassifier`)"/>
 										</executability>
 										<execute-script function="new(`tl.devtools:NewAttribute`, transient: true)">
-											<open-dialog
-												bind-input-to="model"
-												dialog-view="admin/model/create-attribute.view.xml"
-											>
-												<bind
-													channel="selection"
-													to="selectedPart"
-												/>
-												<bind
-													channel="container"
-													to="selectedPart"
-												/>
-												<bind
-													channel="reload"
-													to="reload"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="admin/model/create-attribute.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="selectedPart"
+													/>
+													<bind
+														channel="container"
+														to="selectedPart"
+													/>
+													<bind
+														channel="reload"
+														to="reload"
+													/>
+												</open-dialog>
+											</with-result>
 										</execute-script>
 									</generic-command>
 									<generic-command
@@ -191,23 +197,25 @@
 											<visible-if expr="$selectedPart != null &amp;&amp; ($selectedPart.instanceOf(`tl.model:TLEnumeration`) || $selectedPart.instanceOf(`tl.model:TLClassifier`))"/>
 										</executability>
 										<execute-script function="new(`tl.devtools:NewClassifier`, transient: true)">
-											<open-dialog
-												bind-input-to="model"
-												dialog-view="admin/model/create-classifier.view.xml"
-											>
-												<bind
-													channel="selection"
-													to="selectedPart"
-												/>
-												<bind
-													channel="container"
-													to="selectedPart"
-												/>
-												<bind
-													channel="reload"
-													to="reload"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="admin/model/create-classifier.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="selectedPart"
+													/>
+													<bind
+														channel="container"
+														to="selectedPart"
+													/>
+													<bind
+														channel="reload"
+														to="reload"
+													/>
+												</open-dialog>
+											</with-result>
 										</execute-script>
 									</generic-command>
 									<generic-command
@@ -233,7 +241,9 @@
 											clear="true"
 										/>
 										<execute-script function="now()">
-											<write-channel name="reload"/>
+											<with-result>
+												<write-channel name="reload"/>
+											</with-result>
 										</execute-script>
 									</generic-command>
 								</commands>

@@ -34,7 +34,9 @@ import com.top_logic.util.error.TopLogicException;
  * <pre>
  * &lt;generic-command placement="TOOLBAR"&gt;
  *   &lt;store-form-state&gt;
- *     &lt;link-element/&gt;
+ *     &lt;with-result&gt;
+ *       &lt;link-element/&gt;
+ *     &lt;/with-result&gt;
  *   &lt;/store-form-state&gt;
  * &lt;/generic-command&gt;
  * </pre>

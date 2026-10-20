@@ -2884,7 +2884,21 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	private DBContext lookupDBContext() {
-		return currentInteraction().get(_localDBContext);
+		return lookupDBContext(currentInteraction());
+	}
+
+	/**
+	 * The {@link DBContext} of the given interaction.
+	 * 
+	 * @param interaction
+	 *        The interaction of the current thread, see {@link #currentInteraction()}.
+	 * @return The {@link DBContext} with the local changes of the current thread, or
+	 *         <code>null</code> if there are none.
+	 * 
+	 * @see #getCurrentDBContext()
+	 */
+	/* package protected */ final DBContext lookupDBContext(TLInteractionContext interaction) {
+		return interaction.get(_localDBContext);
 	}
 
 	/**
@@ -3543,7 +3557,13 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		return newRevision;
 	}
 
-	private TLInteractionContext currentInteraction() {
+	/**
+	 * The {@link TLInteractionContext} of the current thread.
+	 * 
+	 * @throws IllegalStateException
+	 *         If the current thread has no interaction.
+	 */
+	/* package protected */ final TLInteractionContext currentInteraction() {
 		TLInteractionContext interaction = TLContextManager.getInteraction();
 		if (interaction == null) {
 			throw new IllegalStateException("KnowledgeBase operations require a valid InteractionContext.");
@@ -4486,7 +4506,19 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 	@Override
 	public long getSessionRevision() {
-		TLInteractionContext interactionContext = TLContextManager.getInteraction();
+		return getSessionRevision(TLContextManager.getInteraction());
+	}
+
+	/**
+	 * The session revision as seen by the given interaction.
+	 * 
+	 * @param interactionContext
+	 *        The interaction of the current thread, or <code>null</code> if the current thread has
+	 *        no interaction.
+	 * 
+	 * @see #getSessionRevision()
+	 */
+	/* package protected */ final long getSessionRevision(TLInteractionContext interactionContext) {
 		if (interactionContext == null) {
 			synchronized (refetchLock) {
 				return updateChainTail.getRevision();

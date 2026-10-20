@@ -77,7 +77,7 @@ its content.
 
 Bounding the width leaves the **fill contract** (see below) alone: `max-width` and the auto margins
 work across the direction of a column, while filling is about the height a container takes from its
-own container. A bounded stack that hosts a filling child still carries `tlFill` and still reports
+own container. A bounded stack that hosts a filling child still carries `tl-fill` and still reports
 filling upwards, so a table inside a centered content column keeps bounding its own scroll viewport.
 
 ## A page of weighted columns: `<columns>`

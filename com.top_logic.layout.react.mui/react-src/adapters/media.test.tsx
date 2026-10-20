@@ -811,7 +811,7 @@ describe('the PDF viewer (TLPdfViewer)', () => {
     const frame = root().querySelector(':scope > iframe.tl-media__frame')!;
     expect(frame.getAttribute('title')).toBe('js.pdfViewer.title');
     expect(serverClassCount()).toBe(1);
-    expect(nonPackageClasses(SERVER_CLASS, 'tlFill')).toEqual([]);
+    expect(nonPackageClasses(SERVER_CLASS)).toEqual([]);
   });
 
   it('says that there is no document in a status line', async () => {
@@ -833,13 +833,13 @@ describe('the HTML (TLHtml)', () => {
 
     expect(root().classList).toContain('tl-overlay');
     expect(root().classList).toContain('tl-overlay--fill');
-    expect(root().classList).toContain('tlFill');
+    expect(root().classList).toContain('tl-fill');
     expect(serverClassCount()).toBe(1);
     const media = root().querySelector(':scope > div.tl-overlay__base > div.tl-media.tl-media--document')!;
     expect(media).not.toBeNull();
     expect(media.querySelector(':scope > iframe.tl-media__frame')).not.toBeNull();
     expect(root().querySelector('.tl-overlay__layer')).toBeNull();
-    expect(nonPackageClasses(SERVER_CLASS, 'tlFill')).toEqual([]);
+    expect(nonPackageClasses(SERVER_CLASS)).toEqual([]);
   });
 
   it('puts the print button in an action at the top right over the document', async () => {

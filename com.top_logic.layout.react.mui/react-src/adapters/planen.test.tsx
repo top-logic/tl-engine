@@ -15,7 +15,6 @@ import {
   TOOLTIP_ATTR, useTLState, readDragPayload, LONG_PRESS_EVENT, boundaryAt,
 } from 'tl-react-bridge';
 import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
-import { FILL_CLASS } from '../../../com.top_logic.layout.react/react-src/bridge/fill';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/TLValueList';
 import TLDashboard from '../../../com.top_logic.layout.react/react-src/controls/TLDashboard';
@@ -338,11 +337,11 @@ describe('the value list (spec §7: tl-value-list)', () => {
     return [childControl('v1', 'Eins', true), childControl('v2', 'Zwei', true)];
   }
 
-  /** The classes of the page that are not package classes: every class starting with `tl` is a `tl-…` class or the fill marker of the layout. */
+  /** The classes of the page that are not package classes: every class starting with `tl` is a `tl-…` class. */
   function legacyClasses() {
     return Array.from(document.querySelectorAll('*'))
       .flatMap(element => Array.from(element.classList))
-      .filter(name => name.startsWith('tl') && !name.startsWith('tl-') && name !== FILL_CLASS);
+      .filter(name => name.startsWith('tl') && !name.startsWith('tl-'));
   }
 
   it('reads as one text with the separator written out', async () => {
@@ -463,11 +462,11 @@ describe('the dashboard (spec §6: tl-dashboard)', () => {
     return sent.mock.calls.filter(([name]) => name === command);
   }
 
-  /** The classes of the page that are not package classes: every class starting with `tl` is a `tl-…` class or the fill marker of the layout. */
+  /** The classes of the page that are not package classes: every class starting with `tl` is a `tl-…` class. */
   function legacyClasses() {
     return Array.from(document.querySelectorAll('*'))
       .flatMap(element => Array.from(element.classList))
-      .filter(name => name.startsWith('tl') && !name.startsWith('tl-') && name !== FILL_CLASS);
+      .filter(name => name.startsWith('tl') && !name.startsWith('tl-'));
   }
 
   it('shows the tiles as cards with their content as the base of an overlay', async () => {
@@ -762,11 +761,11 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     return sent.mock.calls.filter(([name]) => name === command);
   }
 
-  /** The classes of the page that are not package classes: every class starting with `tl` is a `tl-…` class or the fill marker of the layout. */
+  /** The classes of the page that are not package classes: every class starting with `tl` is a `tl-…` class. */
   function legacyClasses() {
     return Array.from(document.querySelectorAll('*'))
       .flatMap(element => Array.from(element.classList))
-      .filter(name => name.startsWith('tl') && !name.startsWith('tl-') && name !== FILL_CLASS);
+      .filter(name => name.startsWith('tl') && !name.startsWith('tl-'));
   }
 
   /** Focuses the card with the given key and presses Alt with the given arrow key on it. */
@@ -1339,11 +1338,11 @@ describe('the calendar (spec §3: tl-calendar)', () => {
     return screen.getByRole('button', { name }).closest<HTMLElement>('.tl-calendar__day')!;
   }
 
-  /** The classes that are not package classes (`tl-…`, or the fill marker of the layout), and inline styles in the page that set a custom property instead of data. */
+  /** The classes that are not package classes (`tl-…`), and inline styles in the page that set a custom property instead of data. */
   function legacy() {
     const elements = Array.from(document.querySelectorAll('*'));
     return [
-      ...elements.flatMap(element => Array.from(element.classList)).filter(name => name.startsWith('tl') && !name.startsWith('tl-') && name !== FILL_CLASS),
+      ...elements.flatMap(element => Array.from(element.classList)).filter(name => name.startsWith('tl') && !name.startsWith('tl-')),
       ...Array.from(document.body.querySelectorAll('*')).map(element => element.getAttribute('style') ?? '').filter(style => /(^|;)\s*--/.test(style)),
     ];
   }

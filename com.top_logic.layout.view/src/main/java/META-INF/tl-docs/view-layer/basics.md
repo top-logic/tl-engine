@@ -148,7 +148,7 @@ Checklist: content glued to the border of its container → `with-inset="true"` 
 
 ## Filling the available height: the fill contract
 
-A control that should span the height its container offers - instead of growing with its content - carries the CSS class `tlFill`, which the layout CSS turns into `flex: 1; min-height: 0`. That bounds the control only while its container has a definite height itself, so the decision is not local: a container hosting a filling child has to fill in turn, up to the first box that is bounded anyway (the viewport-high mount point, a tab-content region, a split pane). This chain is a property of the path through the control tree, which is why it lives in the React bridge (`react-src/bridge/fill.ts`) rather than in a CSS selector enumerating the child types allowed to grow.
+A control that should span the height its container offers - instead of growing with its content - carries the CSS class `tl-fill`, which the design system package (`layout.css`) turns into `flex: 1; min-height: 0`. That bounds the control only while its container has a definite height itself, so the decision is not local: a container hosting a filling child has to fill in turn, up to the first box that is bounded anyway (the viewport-high mount point, a tab-content region, a split pane). This chain is a property of the path through the control tree, which is why it lives in the React bridge (`react-src/bridge/fill.ts`) rather than in a CSS selector enumerating the child types allowed to grow.
 
 A container component therefore declares how it takes part:
 

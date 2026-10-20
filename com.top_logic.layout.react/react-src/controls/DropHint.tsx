@@ -22,6 +22,10 @@ export interface HintAnchor {
  * neither side is shifted along the cross axis into the viewport and may then overlap the drag image. The target (table, tree, Kanban board)
  * moves it through `moveRef` on every dragover, so only the hint renders while the pointer moves, not
  * the target.
+ *
+ * Under a finger the drag image is an element of the page (`tl-drag-image`, bridge/touch-drag.ts) on the same layer
+ * as the hint. The hint is appended to the end of the body when it mounts, which is during the drag and so after the
+ * image: it lies above the image wherever the two overlap.
  */
 export const DropHint: React.FC<{
   reason: string;

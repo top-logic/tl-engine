@@ -44,8 +44,10 @@ default) takes any number the format of the field reads, `slider` drags a handle
 between `min` and `max`, snapping to `step` (whole numbers where nothing is stated). A slider needs
 its bounds, which `@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)` demands of
 the configuration - `min` and `max` are mandatory as soon as `display` is `slider` and ignored
-otherwise - and `@ComparisonDependency` keeps `min` below `max`. The slider exchanges its value as a
-number rather than as formatted text, so no locale format reads it.
+otherwise. The slider exchanges its value as a number rather than as formatted text, so no locale
+format reads it. `unit` is written after the value and after both bounds (`12,5 %`).
+
+`min`, `max`, `step` and `unit` are TL-Script expressions. A literal is a constant range:
 
 ```xml
 <value-input
@@ -60,6 +62,26 @@ number rather than as formatted text, so no locale format reads it.
 	/>
 </value-input>
 ```
+
+With `inputs` (channels, optionally renamed with `as`), the expressions read the channel values as
+variables without declaring them, and the range is computed again whenever one of the channels
+changes - here from a dictionary the channel `target` holds:
+
+```xml
+<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+	display="slider"
+	inputs="target"
+	max="$target['max']"
+	min="$target['min']"
+	unit="$target['unit']"
+/>
+```
+
+A range a slider cannot travel - a bound that is no number, `min` not below `max`, `step` not above
+zero - is refused when the configuration is instantiated if it is constant. A range computed from
+inputs may be unusable for a while, e.g. while a channel is still empty: the slider is then
+disabled until the channels yield a usable range. A slider with inputs resolves its channels in
+the view it is created in; created outside of a view, it is refused.
 
 **A truth value** — `BooleanControlProvider`, option `display` (`BooleanPresentation`): the box that
 is ticked by default, `switch` for a handle sliding between the two states, `radio` and `select` for

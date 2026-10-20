@@ -6,19 +6,18 @@
 package com.top_logic.layout.view.form;
 
 import java.text.Format;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.annotation.defaults.NullDefault;
-import com.top_logic.basic.config.constraint.annotation.Bound;
-import com.top_logic.basic.config.constraint.annotation.Comparision;
-import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
 import com.top_logic.basic.config.constraint.annotation.MandatoryIf;
+import com.top_logic.basic.listener.Registration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -29,6 +28,17 @@ import com.top_logic.layout.react.control.form.SliderRange;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.NamedInputs;
+import com.top_logic.layout.view.channel.NamedInputsVariables;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.util.Resources;
 
 /**
  * {@link ReactFieldControlProvider} for integer and floating-point attributes.
@@ -44,13 +54,21 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * travelling along a track between the {@link Config#getMin() smallest} and the
  * {@link Config#getMax() largest} value.
  * </p>
+ *
+ * <p>
+ * The range of a slider is computed by TL-Script expressions. Without {@link Config#getInputs()
+ * inputs}, the range is constant and computed once; a constant range a slider cannot travel is a
+ * configuration error. With inputs, the range is computed from the values of the input channels
+ * for each control and again whenever one of them changes; while that range cannot be travelled,
+ * the slider is disabled.
+ * </p>
  */
 public class NumberInputControlProvider implements ReactFieldControlProvider {
 
 	/**
 	 * Configuration options for {@link NumberInputControlProvider}.
 	 */
-	public interface Config extends PolymorphicConfiguration<NumberInputControlProvider> {
+	public interface Config extends PolymorphicConfiguration<NumberInputControlProvider>, NamedInputs {
 
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = "display";
@@ -63,6 +81,9 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 
 		/** Configuration name for {@link #getStep()}. */
 		String STEP = "step";
+
+		/** Configuration name for {@link #getUnit()}. */
+		String UNIT = "unit";
 
 		@Override
 		@ClassDefault(NumberInputControlProvider.class)
@@ -85,62 +106,95 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		 * The smallest value a slider can set, which it must be given.
 		 *
 		 * <p>
-		 * The value the handle stands on at the left end of the track. An input has no range to
-		 * travel and ignores it.
+		 * A TL-Script expression over the {@link #getInputs() inputs}, which it uses as variables
+		 * without declaring them: {@code 0} for a fixed bound, {@code $target['min']} for one read
+		 * from a channel. Its result is the value the handle stands on at the left end of the
+		 * track; a result that is no number leaves the slider without a range. An input has no
+		 * range to travel and ignores it.
+		 * </p>
+		 *
+		 * <p>
+		 * Each value of the {@link #getInputs() inputs} is a variable named after its channel, or
+		 * by the name given with {@code as}. The expressions of the range are computed again
+		 * whenever one of these channels changes. Without inputs, they are constant.
 		 * </p>
 		 */
 		@Name(MIN)
-		@Nullable
-		@NullDefault
 		@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)
-		@ComparisonDependency(comparison = Comparision.SMALLER, other = @Ref(MAX))
-		Double getMin();
+		@ScriptContextVariables(NamedInputsVariables.class)
+		Expr getMin();
 
 		/**
 		 * The largest value a slider can set, which it must be given.
 		 *
 		 * <p>
-		 * The value the handle stands on at the right end of the track, above the
-		 * {@link #getMin() smallest} one. An input has no range to travel and ignores it.
+		 * A TL-Script expression over the {@link #getInputs() inputs}, like the {@link #getMin()
+		 * smallest} one. Its result is the value the handle stands on at the right end of the
+		 * track, above the smallest one. An input has no range to travel and ignores it.
 		 * </p>
 		 */
 		@Name(MAX)
-		@Nullable
-		@NullDefault
 		@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)
-		Double getMax();
+		@ScriptContextVariables(NamedInputsVariables.class)
+		Expr getMax();
 
 		/**
 		 * The distance between two values a slider can set, whole numbers where nothing is stated.
 		 *
 		 * <p>
-		 * The grid the handle snaps to: a step of {@code 0.5} offers every half, a step of
-		 * {@code 10} every tenth value of the range. An input has no grid and ignores it.
+		 * A TL-Script expression over the {@link #getInputs() inputs}, like the {@link #getMin()
+		 * smallest} value. Its result is the grid the handle snaps to and must be above zero: a
+		 * step of {@code 0.5} offers every half, a step of {@code 10} every tenth value of the
+		 * range. An input has no grid and ignores it.
 		 * </p>
 		 */
 		@Name(STEP)
-		@Nullable
-		@NullDefault
-		@Bound(comparison = Comparision.GREATER, value = 0)
-		Double getStep();
+		@ScriptContextVariables(NamedInputsVariables.class)
+		Expr getStep();
+
+		/**
+		 * The unit of the value, written after the value and after the bounds of a slider.
+		 *
+		 * <p>
+		 * A TL-Script expression over the {@link #getInputs() inputs}, like the {@link #getMin()
+		 * smallest} value: {@code '%'} for a fixed unit, {@code $target['unit']} for one read from
+		 * a channel. An internationalized text is written in the language of the user; an empty
+		 * result writes no unit. An input ignores it.
+		 * </p>
+		 */
+		@Name(UNIT)
+		@ScriptContextVariables(NamedInputsVariables.class)
+		Expr getUnit();
 	}
 
 	private final NumberDisplay _display;
 
-	private final Double _min;
+	private final List<InputRef> _inputs;
 
-	private final Double _max;
+	private final QueryExecutor _min;
 
-	private final Double _step;
+	private final QueryExecutor _max;
+
+	private final QueryExecutor _step;
+
+	private final QueryExecutor _unit;
+
+	/**
+	 * The range of every slider, when it does not depend on {@link Config#getInputs() inputs}.
+	 */
+	private final SliderRange _constantRange;
 
 	/**
 	 * Creates a {@link NumberInputControlProvider} taking the value as typed text.
 	 */
 	public NumberInputControlProvider() {
 		_display = NumberDisplay.INPUT;
+		_inputs = List.of();
 		_min = null;
 		_max = null;
 		_step = null;
+		_unit = null;
+		_constantRange = SliderRange.NONE;
 	}
 
 	/**
@@ -149,14 +203,30 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 	@CalledByReflection
 	public NumberInputControlProvider(InstantiationContext context, Config config) {
 		_display = config.getDisplay();
-		_min = config.getMin();
-		_max = config.getMax();
-		_step = config.getStep();
-		if (_display == NumberDisplay.SLIDER && (_min == null || _max == null)) {
-			// The constraints on the configuration are what keeps this from happening, see
-			// Config#getMin(); a configuration built without them is rejected here.
-			throw new IllegalArgumentException(
+		_inputs = List.copyOf(config.getInputs());
+		List<String> names = InputRef.names(_inputs);
+		_min = QueryExecutor.compileOptional(config.getMin(), names);
+		_max = QueryExecutor.compileOptional(config.getMax(), names);
+		_step = QueryExecutor.compileOptional(config.getStep(), names);
+		_unit = QueryExecutor.compileOptional(config.getUnit(), names);
+		if (_display == NumberDisplay.SLIDER && _inputs.isEmpty()) {
+			_constantRange = range();
+			checkConstantRange(context, _constantRange);
+		} else {
+			_constantRange = SliderRange.NONE;
+		}
+	}
+
+	private static void checkConstantRange(InstantiationContext context, SliderRange range) {
+		if (range.min() == null || range.max() == null) {
+			context.error(
 				"A slider needs the bounds of its range: '" + Config.MIN + "' and '" + Config.MAX + "'.");
+		} else if (range.min().doubleValue() >= range.max().doubleValue()) {
+			context.error("A slider needs a range to travel: '" + Config.MIN + "' (" + range.min()
+				+ ") is not below '" + Config.MAX + "' (" + range.max() + ").");
+		} else if (range.effectiveStep() <= 0) {
+			context.error("A slider needs a step to move by: '" + Config.STEP + "' (" + range.effectiveStep()
+				+ ") is not above zero.");
 		}
 	}
 
@@ -170,10 +240,60 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		Format format = FieldControlRegistry.numberFormat(field);
-		if (_display == NumberDisplay.SLIDER) {
-			return new ReactSliderControl(context, model, format, new SliderRange(_min, _max, _step, null));
+		if (_display != NumberDisplay.SLIDER) {
+			return new ReactNumberInputControl(context, model, format);
 		}
-		return new ReactNumberInputControl(context, model, format);
+		if (_inputs.isEmpty()) {
+			return new ReactSliderControl(context, model, format, _constantRange);
+		}
+		if (!(context instanceof ViewContext viewContext)) {
+			throw new IllegalStateException("A slider whose range reads the channels of its '" + Config.INPUTS
+				+ "' must be created in a view, but is created in: " + context);
+		}
+		List<ViewChannel> channels = new ArrayList<>(_inputs.size());
+		for (InputRef input : _inputs) {
+			channels.add(viewContext.resolveChannel(input.getChannel()));
+		}
+		ReactSliderControl slider = new ReactSliderControl(context, model, format, range(values(channels)));
+		ChannelListener listener = (sender, oldValue, newValue) -> slider.setRange(range(values(channels)));
+		for (ViewChannel channel : channels) {
+			Registration registration = channel.addListener(listener);
+			slider.addCleanupAction(registration::dispose);
+		}
+		return slider;
+	}
+
+	private static Object[] values(List<ViewChannel> channels) {
+		Object[] result = new Object[channels.size()];
+		for (int n = 0, cnt = result.length; n < cnt; n++) {
+			result[n] = SearchExpression.normalizeValue(channels.get(n).get());
+		}
+		return result;
+	}
+
+	private SliderRange range(Object... inputValues) {
+		return new SliderRange(number(_min, inputValues), number(_max, inputValues),
+			number(_step, inputValues), text(_unit, inputValues));
+	}
+
+	private static Double number(QueryExecutor expr, Object[] inputValues) {
+		if (expr == null) {
+			return null;
+		}
+		Object result = expr.execute(inputValues);
+		return result instanceof Number number ? Double.valueOf(number.doubleValue()) : null;
+	}
+
+	private static String text(QueryExecutor expr, Object[] inputValues) {
+		if (expr == null) {
+			return null;
+		}
+		Object result = expr.execute(inputValues);
+		if (result == null) {
+			return null;
+		}
+		String text = result instanceof ResKey key ? Resources.getInstance().getString(key) : result.toString();
+		return text.isEmpty() ? null : text;
 	}
 
 }

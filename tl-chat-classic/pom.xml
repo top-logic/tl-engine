@@ -1,66 +1,74 @@
 <?xml version="1.0"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.top-logic</groupId>
-		<artifactId>tl-ai-parent</artifactId>
-		<version>2.1.4-SNAPSHOT</version>
-	</parent>
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
 
-	<artifactId>tl-chat-classic</artifactId>
+  <artifactId>tl-chat-classic</artifactId>
+  <name>${project.artifactId}</name>
+  <description>The React chat in a classic LayoutServlet application: a LayoutComponent that writes a React view into a classic page.</description>
+  <url>https://github.com/top-logic/tl-engine/</url>
 
-	<licenses>
-	  <license>
-	    <name>LicenseRef-BOS-TopLogic-1.0</name>
-	    <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
-	  </license>
-	</licenses>
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+    </dependency>
+    <!--
+      The React view layer: ReactViewComponent builds a view's control tree and registers it as
+      the React window of the classic window. tl-chat brings both in already; they are named
+      here because this module's code uses them directly.
+    -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+    </dependency>
+    <!--
+      The chat this module's tab displays: the view elements of chat.view.xml, the /chat/* API
+      they talk to, and ChatSessionRegistry, which names the classic window.
+    -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-chat</artifactId>
+    </dependency>
 
-	<properties>
-		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
-	</properties>
+    <!-- Tests -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
-	<dependencies>
-		<!-- TopLogic -->
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-core</artifactId>
-		</dependency>
-		<!--
-			The React view layer: ReactViewComponent builds a view's control tree and registers it as
-			the React window of the classic window. tl-chat brings both in already; they are named
-			here because this module's code uses them directly.
-		-->
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-react</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-view</artifactId>
-		</dependency>
-		<!--
-			The chat this module's tab displays: the view elements of chat.view.xml, the /chat/* API
-			they talk to, and ChatSessionRegistry, which names the classic window.
-		-->
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-chat</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<!-- Tests -->
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-basic</artifactId>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-core</artifactId>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+  <build>
+    <plugins>
+      <!-- The tests live in packages mirroring the production code, see the comment in tl-ai-core/pom.xml. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>%regex[test[/.]TestAll(\.class)?]</include>
+            <include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
+          </includes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

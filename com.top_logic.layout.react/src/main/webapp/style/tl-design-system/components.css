@@ -5805,10 +5805,13 @@ button.tl-swatch:not(:disabled):hover {
 /* Alles außer dem Titel schrumpft nicht: Kopfknöpfe behalten ihre Maße bei langem Titel. */
 .tl-titlebar > .tl-button { flex: none; }
 
+/* Die Aktionen stehen am Ende des Kopfes, wie in der AppBar — auch wenn sie beim Nachgeben (unten) den ganzen Rest
+   nehmen (#29918). */
 .tl-titlebar__actions {
   display: flex;
   flex: 0 1 auto;
   align-items: center;
+  justify-content: end;
   gap: var(--tl-space-2xs);
   min-width: 0;
 }
@@ -6228,4 +6231,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:2627ecf4da9c45022de600144a8beb4eed49c322927daebb90aa95a4d2a785e1 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:bcc969085a2effc895ca970c621c79af7852146afd8ac0371f7301702518f41d — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

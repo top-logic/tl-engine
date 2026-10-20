@@ -865,6 +865,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Pushes the rows of the current window again, with the cell controls built for them.
+	 *
+	 * <p>
+	 * For a change that leaves the rows and their cells as they are but changes what is evaluated
+	 * with every push of the rows, such as the {@link TableView#rowCssClass(Row) row class}: no cell
+	 * control is built again, in contrast to {@link #refreshData()}.
+	 * </p>
+	 */
+	public void repaintRows() {
+		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
 	 * Selects exactly the row with the given {@link Row#key() row key} (clearing any other selection),
 	 * or clears the selection when {@code key} is {@code null} or names no row of the table's data.
 	 * Pushes the change to the client, scrolls the row into view and notifies the

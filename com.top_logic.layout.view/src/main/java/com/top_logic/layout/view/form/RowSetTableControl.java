@@ -189,6 +189,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private List<ViewChannel> _inputChannels = List.of();
 
+	/** @see #setRowRefresh(Function, Set, List, List, List) */
+	private List<ViewChannel> _rowIndependentInputs = List.of();
+
+	/** @see #setRowRefresh(Function, Set, List, List, List) */
+	private List<ViewChannel> _cellIndependentInputs = List.of();
+
 	private TableViewControl<TLObject> _tableControl;
 
 	/**
@@ -464,18 +470,38 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * Enables automatic row refresh outside edit sessions: the row function is re-evaluated when an
 	 * observed object or input channel changes.
 	 *
+	 * <p>
+	 * An input change that leaves the rows as they are - a change of a row-independent input, or
+	 * of a cell-independent input yielding the same rows - keeps the cells: only the criteria of
+	 * the declared filters are resolved again, and the rows are pushed again for their
+	 * {@link #setRowCssClass(Function) CSS class}, where one is set. A change of any other input
+	 * builds the cells again.
+	 * </p>
+	 *
 	 * @param rowFunction
-	 *        Computes the row objects from the input channel values.
+	 *        Computes the row objects from the values of all input channels, in their order.
 	 * @param observedTypes
 	 *        Types whose object changes trigger a refresh.
 	 * @param inputChannels
-	 *        Channels whose changes trigger a refresh.
+	 *        Channels whose values the row function is called with.
+	 * @param rowIndependentInputs
+	 *        Those of the input channels whose changes cannot change the rows, e.g. the table's
+	 *        own selection channel; their changes do not re-evaluate the row function.
+	 * @param cellIndependentInputs
+	 *        Those of the input channels no cell reads; a change of one of them that yields the
+	 *        same rows keeps the cells.
+	 *
+	 * @see RowSourceObserver#withRowIndependentInputs(Collection)
+	 * @see RowSourceObserver#onInputsChanged(Collection, Runnable)
 	 */
 	public void setRowRefresh(Function<Object[], Collection<?>> rowFunction,
-			Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels) {
+			Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels,
+			List<ViewChannel> rowIndependentInputs, List<ViewChannel> cellIndependentInputs) {
 		_rowFunction = rowFunction;
 		_observedTypes = observedTypes;
 		_inputChannels = inputChannels;
+		_rowIndependentInputs = rowIndependentInputs;
+		_cellIndependentInputs = cellIndependentInputs;
 	}
 
 	/**
@@ -730,14 +756,21 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				() -> {
 					// The criteria a table declares can depend on the inputs it is refreshed for, so
 					// they are resolved again for their new values.
-					if (_declaredFilters != null) {
-						view.setDeclaredFilters(_declaredFilters.apply(columns));
-					}
+					refreshDeclaredFilters(view, columns);
 					table.refreshData();
 					if (_selectionBinding != null) {
 						_selectionBinding.rowsRefreshed();
 					}
-				});
+				})
+					.withRowIndependentInputs(_rowIndependentInputs)
+					.onInputsChanged(_cellIndependentInputs, () -> {
+						// The rows and their cells stay; what is computed from the inputs apart
+						// from the rows is computed again.
+						refreshDeclaredFilters(view, columns);
+						if (_rowCssClass != null) {
+							table.repaintRows();
+						}
+					});
 			if (isAttached()) {
 				attachObserver();
 			}
@@ -746,6 +779,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Update toolbar: a framed table offers an own Add button in edit mode, when the binding
 		// offers row creation.
 		updateToolbar(_framed && editMode && !binding().getCreateTypes().isEmpty());
+	}
+
+	/**
+	 * Resolves the criteria of the declared filters again for the current input values.
+	 */
+	private void refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
+		if (_declaredFilters != null) {
+			view.setDeclaredFilters(_declaredFilters.apply(columns));
+		}
 	}
 
 	/**

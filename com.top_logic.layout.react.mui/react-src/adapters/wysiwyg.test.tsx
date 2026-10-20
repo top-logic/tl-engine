@@ -16,7 +16,7 @@ import MenuTriggerPart from '../../../com.top_logic.layout.react/react-src/contr
 import DividerPart from '../../../com.top_logic.layout.react/react-src/controls/divider/DividerPart';
 import TextInputPart from '../../../com.top_logic.layout.react/react-src/controls/form/TextInputPart';
 import '../../../com.top_logic.layout.react.wysiwyg/react-src/wysiwyg-entry';
-import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
+import { CONTROL_ID, mountAdapter, patchState, settle } from './wire-test-support';
 import type { ChildControlJson } from 'tl-react-bridge';
 
 /** The module name the bundle of the editor registers it under. */
@@ -183,6 +183,23 @@ describe('rich text editor', () => {
     const surface = within(root).getByRole('textbox');
     expect(surface.classList.contains('ProseMirror')).toBe(true);
     expect(surface.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('an error the server reports later reaches the textbox, and leaves it when cleared', async () => {
+    const { surface } = await mountEditor({ value: TEXT, editable: true });
+    expect(surface.hasAttribute('aria-invalid')).toBe(false);
+
+    patchState({ hasError: true });
+    expect(document.getElementById(CONTROL_ID)!.getAttribute('aria-invalid')).toBe('true');
+    expect(surface.getAttribute('aria-invalid')).toBe('true');
+    // The editor is not re-created for it: the same surface, still a textbox of prose.
+    expect(document.querySelector('.ProseMirror')).toBe(surface);
+    expect(surface.getAttribute('role')).toBe('textbox');
+    expect(surface.classList.contains('tl-prose')).toBe(true);
+
+    patchState({ hasError: false });
+    expect(document.getElementById(CONTROL_ID)!.hasAttribute('aria-invalid')).toBe(false);
+    expect(surface.hasAttribute('aria-invalid')).toBe(false);
   });
 
   it('the commands of the server are a toolbar of their own, alone in a group that may shrink', async () => {

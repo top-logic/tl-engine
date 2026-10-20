@@ -58,11 +58,11 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const hasError: boolean = !!state.hasError;
 
   // The editable area is the element a form field's label names and focuses. Its attributes reach
-  // the editor through the editor options, which the editor compares by identity on every render,
-  // so a change of the label association or of the error updates the element without re-creating
-  // the editor. The area is the writing surface of the library (.ProseMirror, a textbox); the text
-  // in it is prose of the design system. An error is announced at the textbox, which assistive
-  // technology reads; the frame shows it.
+  // the editor through the editor options: given when the editor is created, and handed to it again
+  // by the effect below whenever they change, so that a change of the label association or of the
+  // error updates the element without re-creating the editor. The area is the writing surface of
+  // the library (.ProseMirror, a textbox); the text in it is prose of the design system. An error is
+  // announced at the textbox, which assistive technology reads; the frame shows it.
   const inputId = fieldInputId(controlId);
   const labelledBy = useFieldLabelProps(controlId, inputId)['aria-labelledby'];
   const editorProps = React.useMemo(() => {
@@ -139,6 +139,15 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       }
     },
   }, [editable]);
+
+  // The editor takes its options again on a render only while it has no dependencies; with the
+  // dependency above it keeps the attributes it was created with. Changed attributes are handed to
+  // it here, and the editor applies them to its element.
+  React.useEffect(() => {
+    if (editor && !editor.isDestroyed) {
+      editor.setOptions({ editorProps });
+    }
+  }, [editor, editorProps]);
 
   // Sync external value changes into the editor.
   React.useEffect(() => {

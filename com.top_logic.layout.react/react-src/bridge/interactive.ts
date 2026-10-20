@@ -8,7 +8,7 @@ export const INTERACTIVE_SELECTOR =
   'input, textarea, select, button, a, [contenteditable="true"], '
   + '[role="combobox"], [role="listbox"], [role="option"], [role="button"], [role="link"], '
   + '[role="checkbox"], [role="radio"], [role="switch"], [role="textbox"], [role="spinbutton"], '
-  + '[role="slider"], [role="menu"], [role="menuitem"]';
+  + '[role="slider"], [role="menu"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]';
 
 /**
  * Whether the given target lies on an interactive element (see {@link INTERACTIVE_SELECTOR}) within

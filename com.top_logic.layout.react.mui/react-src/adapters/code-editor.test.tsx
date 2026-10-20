@@ -38,12 +38,11 @@ describe('TLCodeEditor', () => {
     expect(classes.filter(c => c.includes('--'))).toEqual([]);
   });
 
-  it('is no field when it is read-only, and keeps the scope class and the code text', async () => {
+  it('keeps the field frame when it is read-only, with the scope class and the code text', async () => {
     mountAdapter(TLCodeEditor, { value: 'a = 1', language: 'plain', editable: false });
     await settle();
     const classes = Array.from(frame().classList);
-    expect(classes).toEqual(expect.arrayContaining(['tlCodeEditor', 'tlCodeEditorSurface', 'tl-type-code']));
-    expect(classes).not.toContain('tl-field');
+    expect(classes).toEqual(expect.arrayContaining(['tlCodeEditor', 'tlCodeEditorSurface', 'tl-field', 'tl-type-code']));
   });
 
   it('announces an error at the textbox and shows it at the frame, without a modifier class', async () => {

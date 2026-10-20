@@ -103,8 +103,9 @@ const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   // The root is a field of the design system with code text; `tlCodeEditor` scopes the CodeMirror
   // rules of the stylesheet. The error is `aria-invalid`, not a class.
-  // A read-only editor offers no edit and is no field: it keeps the scope class and the code text.
-  const cls = readOnly ? 'tlCodeEditor tl-type-code' : 'tlCodeEditor tl-field tl-type-code';
+  // A read-only editor keeps the field frame too: without it, the line numbers and the empty lines
+  // stand loose in the form. Its own reading form comes with the UI pass (docs/ui-durchgang.md U18).
+  const cls = 'tlCodeEditor tl-field tl-type-code';
 
   return (
     <CodeEditor

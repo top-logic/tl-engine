@@ -61,6 +61,9 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	/** {@link PersonalConfiguration} key storing the user's selected theme id. */
 	public static final String PERSONAL_THEME_KEY = "react.theme";
 
+	/** {@link PersonalConfiguration} key storing the user's selected density. */
+	public static final String PERSONAL_DENSITY_KEY = "react.density";
+
 	/** Attribute of the {@code html} element naming the theme in effect. */
 	public static final String THEME_ATTRIBUTE = "data-theme";
 
@@ -81,12 +84,17 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 
 	/**
 	 * Attribute of the {@code html} element naming the density of the design system, {@code normal}
-	 * or {@code compact}. Set once to {@link #DS_DENSITY_NORMAL} unless the page carries it already.
+	 * or {@code compact}. The server writes the density the user has selected into the first HTML
+	 * (see {@link #writeDensityAttribute(TagWriter)}); the page script sets {@link #DS_DENSITY_NORMAL}
+	 * unless the page carries it already.
 	 */
 	public static final String DS_DENSITY_ATTRIBUTE = "data-tl-density";
 
 	/** Value of {@link #DS_DENSITY_ATTRIBUTE} while nothing has selected a density. */
 	public static final String DS_DENSITY_NORMAL = "normal";
+
+	/** Value of {@link #DS_DENSITY_ATTRIBUTE} for the dense layout. */
+	public static final String DS_DENSITY_COMPACT = "compact";
 
 	/** Value of {@link #THEME_MODE_ATTRIBUTE} while the page follows the operating system. */
 	public static final String SYSTEM_MODE = "system";
@@ -104,6 +112,12 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 * Name of the {@link #CLIENT_API} function that puts the theme with a given id into effect.
 	 */
 	public static final String SELECT_FUNCTION = "select";
+
+	/**
+	 * Name of the {@link #CLIENT_API} function that puts the density with a given name,
+	 * {@link #DS_DENSITY_NORMAL} or {@link #DS_DENSITY_COMPACT}, into effect at once.
+	 */
+	public static final String DENSITY_FUNCTION = "density";
 
 	/**
 	 * Name of the {@link #CLIENT_API} function that holds the page in one appearance mode,
@@ -287,6 +301,76 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	}
 
 	/**
+	 * The density the current user has selected, {@link #DS_DENSITY_NORMAL} or
+	 * {@link #DS_DENSITY_COMPACT}.
+	 *
+	 * <p>
+	 * Without a stored selection - or without a personal configuration to store one in - the
+	 * density is {@link #DS_DENSITY_NORMAL}.
+	 * </p>
+	 */
+	public String getSelectedDensity() {
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		return densityOf(pc == null ? null : pc.getJSONValue(PERSONAL_DENSITY_KEY));
+	}
+
+	/**
+	 * Stores the given density as the current user's selection.
+	 *
+	 * @param density
+	 *        {@link #DS_DENSITY_NORMAL} or {@link #DS_DENSITY_COMPACT}; any other value is ignored.
+	 */
+	public void setSelectedDensity(String density) {
+		if (!DS_DENSITY_NORMAL.equals(density) && !DS_DENSITY_COMPACT.equals(density)) {
+			return;
+		}
+		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+		if (pc != null) {
+			pc.setJSONValue(PERSONAL_DENSITY_KEY, density);
+			PersonalConfiguration.storePersonalConfiguration();
+		}
+	}
+
+	/**
+	 * The density a stored value stands for.
+	 *
+	 * @param stored
+	 *        The value read from the personal configuration, possibly {@code null}.
+	 * @return {@link #DS_DENSITY_COMPACT} for exactly that value, else {@link #DS_DENSITY_NORMAL}.
+	 */
+	public static String densityOf(Object stored) {
+		return DS_DENSITY_COMPACT.equals(stored) ? DS_DENSITY_COMPACT : DS_DENSITY_NORMAL;
+	}
+
+	/**
+	 * Writes {@link #DS_DENSITY_ATTRIBUTE} with the density the current user has selected.
+	 *
+	 * <p>
+	 * Written into the {@code html} start tag of the first HTML, so that the page is dense from its
+	 * first paint and nothing jumps when the script has run.
+	 * </p>
+	 *
+	 * @param out
+	 *        The writer of the {@code html} start tag.
+	 */
+	public void writeDensityAttribute(TagWriter out) {
+		writeDensityAttribute(out, getSelectedDensity());
+	}
+
+	/**
+	 * Writes {@link #DS_DENSITY_ATTRIBUTE} for the given density.
+	 *
+	 * @param out
+	 *        The writer of the {@code html} start tag.
+	 * @param density
+	 *        The density to write; anything but {@link #DS_DENSITY_COMPACT} writes
+	 *        {@link #DS_DENSITY_NORMAL}.
+	 */
+	public void writeDensityAttribute(TagWriter out, String density) {
+		out.writeAttribute(DS_DENSITY_ATTRIBUTE, densityOf(density));
+	}
+
+	/**
 	 * The theme with the given id.
 	 *
 	 * @param id
@@ -422,6 +506,11 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 * </p>
 	 *
 	 * <p>
+	 * Its {@link #DENSITY_FUNCTION} puts the given density into the {@link #DS_DENSITY_ATTRIBUTE} at
+	 * once; the tokens, and what the controls measure from them, follow without a reload.
+	 * </p>
+	 *
+	 * <p>
 	 * Its {@link #LOCK_MODE_FUNCTION} holds the page in one appearance mode: the
 	 * {@link #DS_MODE_ATTRIBUTE} names that mode, and a requested theme of the other color scheme is
 	 * represented by the {@link #getModeTheme(ColorScheme) theme of the held mode}. The requested
@@ -496,6 +585,9 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 		out.writeScript("html.removeAttribute(" + modeAttr + ");");
 		out.writeScript("requested = id;");
 		out.writeScript("apply();");
+		out.writeScript("},");
+		out.writeScript(DENSITY_FUNCTION + ": function(value) {");
+		out.writeScript("html.setAttribute(" + dsDensityAttr + ", value);");
 		out.writeScript("},");
 		out.writeScript(LOCK_MODE_FUNCTION + ": function(mode) {");
 		out.writeScript("locked = mode || null;");

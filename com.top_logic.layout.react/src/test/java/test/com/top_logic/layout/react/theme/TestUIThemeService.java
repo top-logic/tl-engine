@@ -225,6 +225,58 @@ public class TestUIThemeService extends TestCase {
 	}
 
 	/**
+	 * The script offers the client a function putting a density into effect at once, the way
+	 * {@link UIThemeService#SELECT_FUNCTION} does for a theme.
+	 */
+	public void testThemeScriptOffersDensity() throws ConfigurationException {
+		String script = script(service(LIGHT_AND_DARK));
+
+		assertTrue(script, script.contains(UIThemeService.DENSITY_FUNCTION + ": function(value)"));
+		assertTrue(script, script.contains("html.setAttribute('" + UIThemeService.DS_DENSITY_ATTRIBUTE + "', value)"));
+	}
+
+	/**
+	 * Without a personal configuration to store it in, the density is the default one.
+	 */
+	public void testNoDensityWithoutPersonalConfiguration() throws ConfigurationException {
+		UIThemeService service = service(LIGHT_AND_DARK);
+
+		assertEquals(UIThemeService.DS_DENSITY_NORMAL, service.getSelectedDensity());
+		// Nothing to store it in, and nothing to fail on.
+		service.setSelectedDensity(UIThemeService.DS_DENSITY_COMPACT);
+		assertEquals(UIThemeService.DS_DENSITY_NORMAL, service.getSelectedDensity());
+	}
+
+	/**
+	 * A stored value other than the two densities counts as the default one.
+	 */
+	public void testStoredDensity() {
+		assertEquals(UIThemeService.DS_DENSITY_COMPACT, UIThemeService.densityOf("compact"));
+		assertEquals(UIThemeService.DS_DENSITY_NORMAL, UIThemeService.densityOf("normal"));
+		assertEquals(UIThemeService.DS_DENSITY_NORMAL, UIThemeService.densityOf("huge"));
+		assertEquals(UIThemeService.DS_DENSITY_NORMAL, UIThemeService.densityOf(Integer.valueOf(1)));
+		assertEquals(UIThemeService.DS_DENSITY_NORMAL, UIThemeService.densityOf(null));
+	}
+
+	/**
+	 * The page carries the stored density in its first HTML, on the {@code html} start tag, so that
+	 * nothing jumps once the script has run.
+	 */
+	public void testDensityInFirstHtml() throws ConfigurationException {
+		UIThemeService service = service(LIGHT_AND_DARK);
+
+		assertEquals("<html data-tl-density=\"compact\">", htmlStartTag(service, UIThemeService.DS_DENSITY_COMPACT));
+		assertEquals("<html data-tl-density=\"normal\">", htmlStartTag(service, UIThemeService.DS_DENSITY_NORMAL));
+		assertEquals("<html data-tl-density=\"normal\">", htmlStartTag(service, null));
+		// No stored choice: the default.
+		TagWriter out = new TagWriter();
+		out.beginBeginTag("html");
+		service.writeDensityAttribute(out);
+		out.endBeginTag();
+		assertEquals("<html data-tl-density=\"normal\">", out.toString());
+	}
+
+	/**
 	 * The theme representing a color scheme while the page is held in that mode is the theme
 	 * answering the operating system's preference for it, if it has that scheme.
 	 */
@@ -399,6 +451,14 @@ public class TestUIThemeService extends TestCase {
 		} catch (IOException ex) {
 			throw new AssertionError(ex);
 		}
+		return out.toString();
+	}
+
+	private static String htmlStartTag(UIThemeService service, String density) {
+		TagWriter out = new TagWriter();
+		out.beginBeginTag("html");
+		service.writeDensityAttribute(out, density);
+		out.endBeginTag();
 		return out.toString();
 	}
 

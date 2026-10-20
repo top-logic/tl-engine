@@ -6,10 +6,12 @@
 // Review focus 1: the tooltip stands at the element the pointer moved on to, not at the one it came from.
 // Review focus 5: Escape in the element picker inside an open dialog ends only the picker, and the hint refusing a drop
 // lies above the image of a touch drag - both sit on layer-drag, so the hint has to follow the image in the DOM.
+// Review focus 4: the density chosen in the user menu reaches the page without a reload - the page script's
+// `tlTheme.density(value)` sets `data-tl-density` on <html>, and what the controls read through useTokenPx follows.
 
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { React, useFill, KeyboardScopeProvider, EscapeToClose, startPointerDrag, TOOLTIP_ATTR } from 'tl-react-bridge';
+import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { React, useFill, useTokenPx, KeyboardScopeProvider, EscapeToClose, startPointerDrag, TOOLTIP_ATTR } from 'tl-react-bridge';
 import { scrollToAnchor } from '../../../com.top_logic.layout.react/react-src/bridge/scroll';
 import { handlePick } from '../../../com.top_logic.layout.react/react-src/bridge/element-picker';
 import { initKeyboardDispatcher } from '../../../com.top_logic.layout.react/react-src/bridge/keyboard-dispatcher';
@@ -39,6 +41,8 @@ afterEach(() => {
   cleanup();
   document.body.replaceChildren();
   document.body.removeAttribute('data-tl-state');
+  document.documentElement.removeAttribute('data-tl-density');
+  document.documentElement.style.removeProperty('--tl-size-row');
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -468,5 +472,38 @@ describe('tooltip', () => {
     await rest();
     expect(screen.getByRole('tooltip').textContent).toBe('Price');
     expect(tooltipLeft()).toBe(240);
+  });
+});
+
+describe('density', () => {
+  /** The row height of each density, as tokens.css gives it; jsdom does not cascade the package's rules. */
+  const ROW = { normal: '36px', compact: '28px' };
+
+  /** What the page script's `density` function does: sets the attribute at once (the tokens follow by cascade). */
+  function setDensity(density: keyof typeof ROW) {
+    document.documentElement.style.setProperty('--tl-size-row', ROW[density]);
+    document.documentElement.setAttribute('data-tl-density', density);
+  }
+
+  it('a length read via useTokenPx changes with data-tl-density, without a reload', async () => {
+    setDensity('normal');
+    const ref = { current: document.documentElement };
+    const { result } = renderHook(() => useTokenPx(ref, '--tl-size-row', 40));
+    expect(result.current).toBe(36);
+
+    act(() => setDensity('compact'));
+    await waitFor(() => expect(result.current).toBe(28));
+    expect(document.documentElement.getAttribute('data-tl-density')).toBe('compact');
+
+    act(() => setDensity('normal'));
+    await waitFor(() => expect(result.current).toBe(36));
+  });
+
+  it('a hook mounted after the switch reads the chosen density', () => {
+    setDensity('compact');
+    const ref = { current: document.documentElement };
+    const { result } = renderHook(() => useTokenPx(ref, '--tl-size-row', 40));
+
+    expect(result.current).toBe(28);
   });
 });

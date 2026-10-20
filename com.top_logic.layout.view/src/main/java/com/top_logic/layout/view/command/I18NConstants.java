@@ -45,6 +45,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey THEME_GROUP;
 
 	/**
+	 * @en Density
+	 */
+	public static ResKey DENSITY_GROUP;
+
+	/**
+	 * @en Normal
+	 */
+	public static ResKey DENSITY_NORMAL;
+
+	/**
+	 * @en Compact
+	 */
+	public static ResKey DENSITY_COMPACT;
+
+	/**
 	 * @en Changed language of "{0}".
 	 */
 	public static ResKey1 CHANGED_LANGUAGE__USER;

@@ -47,6 +47,12 @@ public class ViewActions {
 	 * the follow-up actions are instantiated in the scope extended by the name of the result.
 	 * </p>
 	 *
+	 * <p>
+	 * In a {@link ActionScope#isTransactional() transactional} scope, an action that
+	 * {@link ViewAction#changesViewState() changes the state of the view} is reported as an error
+	 * and left out.
+	 * </p>
+	 *
 	 * @param configs
 	 *        The configurations to instantiate, in the order they run in.
 	 * @param scope
@@ -71,6 +77,13 @@ public class ViewActions {
 			PolymorphicConfiguration<? extends ViewAction> config, ActionScope scope) {
 		ViewAction action = context.getInstance(config);
 		if (action == null) {
+			return null;
+		}
+		if (scope.isTransactional() && action.changesViewState()) {
+			context.error("The action at " + config.location()
+				+ " changes the state of the view and must not run inside the transaction of '"
+				+ WithTransactionAction.Config.TAG_NAME + "': if the commit fails, the view keeps its"
+				+ " effect. Move it into '" + WithTransactionAction.Config.AFTER_COMMIT + "'.");
 			return null;
 		}
 

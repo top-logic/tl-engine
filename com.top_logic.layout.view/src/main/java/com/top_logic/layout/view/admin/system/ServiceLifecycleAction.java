@@ -158,4 +158,12 @@ public class ServiceLifecycleAction implements ViewAction {
 		Object value = viewContext.resolveChannel(new ChannelRef(_selectionChannel)).get();
 		return value instanceof BasicRuntimeModule<?> module ? module : null;
 	}
+
+	/**
+	 * Tells the user when the service operation fails.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

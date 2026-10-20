@@ -36,9 +36,10 @@
 								<en>Created account {0}.</en>
 								<de>Konto {0} angelegt.</de>
 							</commitMessage>
-							<create-account>
+							<create-account/>
+							<after-commit with-result="created">
 								<write-channel name="selection"/>
-							</create-account>
+							</after-commit>
 						</with-transaction>
 						<close-dialog/>
 					</store-form-state>

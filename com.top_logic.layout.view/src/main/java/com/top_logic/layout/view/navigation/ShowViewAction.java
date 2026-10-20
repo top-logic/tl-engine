@@ -88,4 +88,12 @@ public class ShowViewAction extends InterruptibleViewAction {
 	public void execute(ReactContext context, Object input, Continuation continuation) {
 		ObjectNavigation.show(context, _shows, input, new ResumeWith(continuation, input));
 	}
+
+	/**
+	 * Navigates to the view and writes its channels.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

@@ -84,4 +84,12 @@ public class WizardGotoAction implements ViewAction {
 		WizardScope.lookup(context, Config.TAG_NAME).goTo(_step != null ? _step : input);
 		return input;
 	}
+
+	/**
+	 * Changes the displayed step of the wizard.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

@@ -108,4 +108,11 @@ public class SelectElementAction implements ViewAction {
 		return input;
 	}
 
+	/**
+	 * Writes the node channel of the inspector.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

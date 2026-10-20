@@ -97,4 +97,11 @@ public class RecorderAction implements ViewAction {
 		return input;
 	}
 
+	/**
+	 * Starts or stops the script recording of a window.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

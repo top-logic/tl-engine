@@ -146,4 +146,26 @@ public interface ViewAction {
 	default ButtonTone getTone() {
 		return ButtonTone.DEFAULT;
 	}
+
+	/**
+	 * Whether this action changes the state of the view rather than (or in addition to) the model:
+	 * it writes a channel, opens or closes a dialog, navigates, tells the user something, hands
+	 * something to the client, or switches the session.
+	 *
+	 * <p>
+	 * Such an action must not run inside the transaction of a {@link WithTransactionAction}: when
+	 * the commit fails, the model changes are rolled back, but the view would keep what the action
+	 * did - e.g. a channel holding an object that does not exist. Configuring it there is reported
+	 * as an error; it belongs to the actions run after the commit (see
+	 * {@link WithTransactionAction.Config#getAfterCommit()}).
+	 * </p>
+	 *
+	 * @return {@code false} for an action that only reads or modifies the model, which is the
+	 *         default.
+	 *
+	 * @see ActionScope#isTransactional()
+	 */
+	default boolean changesViewState() {
+		return false;
+	}
 }

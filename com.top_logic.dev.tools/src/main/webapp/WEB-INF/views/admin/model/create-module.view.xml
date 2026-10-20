@@ -43,9 +43,10 @@
 							</commitMessage>
 							<action class="com.top_logic.dev.tools.model.ModelEditAction"
 								mode="CREATE_MODULE"
-							>
+							/>
+							<after-commit with-result="created">
 								<write-channel name="selection"/>
-							</action>
+							</after-commit>
 						</with-transaction>
 					</store-form-state>
 					<close-dialog/>

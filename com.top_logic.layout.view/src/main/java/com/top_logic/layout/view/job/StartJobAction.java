@@ -396,4 +396,11 @@ public class StartJobAction extends ArgumentsViewAction {
 		}
 	}
 
+	/**
+	 * Writes the job channel and lets the command wait for the job.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

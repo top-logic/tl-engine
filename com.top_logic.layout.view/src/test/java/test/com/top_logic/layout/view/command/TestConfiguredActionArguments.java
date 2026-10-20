@@ -40,13 +40,13 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 	private static final String CHANNEL = "project";
 
 	/** Name of a channel of the view the commands under test run in. */
-	private static final String SELECTION = "selection";
+	static final String SELECTION = "selection";
 
 	/** Name of a further channel of the view the commands under test run in. */
-	private static final String OTHER = "other";
+	static final String OTHER = "other";
 
 	/** An action recording the arguments it runs with. */
-	private static final String PROBE = "<action class='" + ArgumentsProbe.class.getName() + "'/>";
+	static final String PROBE = "<action class='" + ArgumentsProbe.class.getName() + "'/>";
 
 	@Override
 	protected void setUp() throws Exception {
@@ -261,14 +261,14 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 				+ "</generic-command>");
 	}
 
-	private static void assertInstantiationError(String xml) throws ConfigurationException {
+	static void assertInstantiationError(String xml) throws ConfigurationException {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestConfiguredActionArguments.class);
 		GenericViewCommand.Config config = parse(context, xml);
 		context.getInstance(config);
 		assertTrue("Instantiating is refused: " + xml, context.hasErrors());
 	}
 
-	private static DefaultViewContext context(Map<String, Object> values) {
+	static DefaultViewContext context(Map<String, Object> values) {
 		DefaultViewContext context = new DefaultViewContext(null);
 		for (String name : List.of(SELECTION, OTHER)) {
 			DefaultViewChannel channel = new DefaultViewChannel(name);
@@ -278,7 +278,7 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 		return context;
 	}
 
-	private static GenericViewCommand.Config parse(DefaultInstantiationContext context, String xml)
+	static GenericViewCommand.Config parse(DefaultInstantiationContext context, String xml)
 			throws ConfigurationException {
 		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap("generic-command",
 			TypedConfiguration.getConfigurationDescriptor(GenericViewCommand.Config.class)));
@@ -288,7 +288,7 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 		return config;
 	}
 
-	private static GenericViewCommand command(String xml) throws ConfigurationException {
+	static GenericViewCommand command(String xml) throws ConfigurationException {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestConfiguredActionArguments.class);
 		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap("generic-command",
 			TypedConfiguration.getConfigurationDescriptor(GenericViewCommand.Config.class)));

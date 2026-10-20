@@ -34,8 +34,10 @@
 						</commitMessage>
 						<persist-transient as="created">
 							<execute-script function="$created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
-							<write-channel name="selection"/>
 						</persist-transient>
+						<after-commit with-result="created">
+							<write-channel name="selection"/>
+						</after-commit>
 					</with-transaction>
 					<close-dialog/>
 				</generic-command>

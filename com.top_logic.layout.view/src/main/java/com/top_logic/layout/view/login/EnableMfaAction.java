@@ -99,4 +99,11 @@ public class EnableMfaAction implements ViewAction {
 		return input;
 	}
 
+	/**
+	 * Tells the user that multi-factor authentication was configured.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

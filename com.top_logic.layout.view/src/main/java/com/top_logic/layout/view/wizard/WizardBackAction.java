@@ -60,4 +60,12 @@ public class WizardBackAction implements ViewAction {
 		WizardScope.lookup(context, Config.TAG_NAME).back();
 		return input;
 	}
+
+	/**
+	 * Changes the displayed step of the wizard.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

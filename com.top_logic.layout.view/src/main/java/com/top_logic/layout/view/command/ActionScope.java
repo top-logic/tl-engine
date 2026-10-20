@@ -27,7 +27,8 @@ import com.top_logic.basic.config.InstantiationContextAdaptor;
  *
  * <p>
  * The names and the default name of a scope are those of the arguments the actions in the scope run
- * with.
+ * with. A scope also knows whether its actions run inside a transaction, see
+ * {@link #isTransactional()}.
  * </p>
  */
 public final class ActionScope {
@@ -35,15 +36,18 @@ public final class ActionScope {
 	/**
 	 * The scope of actions run without any argument.
 	 */
-	public static final ActionScope NONE = new ActionScope(Collections.emptyList(), null);
+	public static final ActionScope NONE = new ActionScope(Collections.emptyList(), null, false);
 
 	private final List<String> _names;
 
 	private final String _defaultName;
 
-	private ActionScope(List<String> names, String defaultName) {
+	private final boolean _transactional;
+
+	private ActionScope(List<String> names, String defaultName, boolean transactional) {
 		_names = names;
 		_defaultName = defaultName;
+		_transactional = transactional;
 	}
 
 	/**
@@ -79,7 +83,7 @@ public final class ActionScope {
 		if (unique.isEmpty()) {
 			return NONE;
 		}
-		return new ActionScope(Collections.unmodifiableList(unique), defaultName);
+		return new ActionScope(Collections.unmodifiableList(unique), defaultName, false);
 	}
 
 	/**
@@ -119,7 +123,37 @@ public final class ActionScope {
 		List<String> names = new ArrayList<>(_names);
 		names.remove(name);
 		names.add(name);
-		return new ActionScope(Collections.unmodifiableList(names), name);
+		return new ActionScope(Collections.unmodifiableList(names), name, _transactional);
+	}
+
+	/**
+	 * This scope for actions that run inside a transaction, e.g. the body of a
+	 * {@link WithTransactionAction}.
+	 *
+	 * <p>
+	 * The names stay the same, and every scope {@link #with(String) derived} from the result is
+	 * transactional as well.
+	 * </p>
+	 *
+	 * @see #isTransactional()
+	 */
+	public ActionScope transactional() {
+		if (_transactional) {
+			return this;
+		}
+		return new ActionScope(_names, _defaultName, true);
+	}
+
+	/**
+	 * Whether the actions in this scope run inside an open transaction.
+	 *
+	 * <p>
+	 * Such an action must not {@link ViewAction#changesViewState() change the state of the view}: a
+	 * failing commit rolls back the model changes, but not what the view shows.
+	 * </p>
+	 */
+	public boolean isTransactional() {
+		return _transactional;
 	}
 
 	/**
@@ -145,7 +179,7 @@ public final class ActionScope {
 
 	@Override
 	public String toString() {
-		return _names + " (default: " + _defaultName + ")";
+		return _names + " (default: " + _defaultName + (_transactional ? ", transactional" : "") + ")";
 	}
 
 	/**

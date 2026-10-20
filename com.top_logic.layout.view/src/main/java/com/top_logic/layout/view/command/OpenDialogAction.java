@@ -307,4 +307,12 @@ public class OpenDialogAction extends InterruptibleViewAction {
 
 		return handle;
 	}
+
+	/**
+	 * Opens a dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

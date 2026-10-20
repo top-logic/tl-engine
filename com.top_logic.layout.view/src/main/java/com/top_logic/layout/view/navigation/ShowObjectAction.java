@@ -108,4 +108,12 @@ public class ShowObjectAction extends InterruptibleViewAction {
 		}
 		return input;
 	}
+
+	/**
+	 * Navigates to the object.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

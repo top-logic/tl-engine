@@ -131,4 +131,11 @@ public class VerifyOtpAction implements ViewAction {
 		return value == null ? null : value.toString();
 	}
 
+	/**
+	 * Completes the login, switching the session to the authenticated user.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

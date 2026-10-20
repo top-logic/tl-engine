@@ -140,4 +140,11 @@ public class DownloadAction extends ArgumentsViewAction {
 		return new DefaultDataItem(Resources.getInstance().getString(name), file, file.getContentType());
 	}
 
+	/**
+	 * Hands a file to the client.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

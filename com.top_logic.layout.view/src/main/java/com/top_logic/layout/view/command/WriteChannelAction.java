@@ -142,4 +142,12 @@ public class WriteChannelAction extends InterruptibleViewAction {
 		}
 		return null;
 	}
+
+	/**
+	 * Writes a channel of the view.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

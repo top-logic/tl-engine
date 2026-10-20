@@ -151,4 +151,12 @@ public class ConfirmAction extends ArgumentsViewAction {
 			() -> continuation.abort(),
 			continuation.tone());
 	}
+
+	/**
+	 * Asks the user in a dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

@@ -46,8 +46,10 @@
 							<inputs>
 								<input channel="container"/>
 							</inputs>
-							<write-channel name="selection"/>
 						</execute-script>
+						<after-commit with-result="created">
+							<write-channel name="selection"/>
+						</after-commit>
 					</with-transaction>
 					<close-dialog/>
 				</generic-command>

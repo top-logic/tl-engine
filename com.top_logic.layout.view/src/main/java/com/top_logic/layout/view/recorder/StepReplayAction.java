@@ -121,5 +121,11 @@ public class StepReplayAction implements ViewAction {
 		return Integer.toString(index + 1);
 	}
 
-
+	/**
+	 * Replays a recorded step on a window.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

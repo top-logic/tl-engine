@@ -33,9 +33,10 @@
 								<en>Created group {0}.</en>
 								<de>Gruppe {0} angelegt.</de>
 							</commitMessage>
-							<execute-script function="$result.copy(transient: false)">
+							<execute-script function="$result.copy(transient: false)"/>
+							<after-commit with-result="created">
 								<write-channel name="selection"/>
-							</execute-script>
+							</after-commit>
 						</with-transaction>
 						<close-dialog/>
 					</store-form-state>

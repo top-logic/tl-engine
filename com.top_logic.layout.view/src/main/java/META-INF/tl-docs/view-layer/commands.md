@@ -42,7 +42,34 @@ The result of an action does not reach the actions *following* it. An action wit
 ```
 
 - **Actions with a result**: `<execute-script>` and `<evaluate-script>` (the value of the script), `<create-transient>`, `<persist-transient>`, `<read-form-object>`, `<store-form-state>`, `<link-element>`, `<remove-element>`, `<start-job>`, `<issue-access-token>`, `<create-account>`, `<set-password>` and the load actions of the administration views. Chains of producers nest: `<store-form-state><persist-transient><write-channel name="selection"/></persist-transient></store-form-state>`.
-- **Actions without a result**: `<open-dialog>` (the chain goes on once the dialog is open), `<write-channel>`, `<close-dialog>`, `<close-popover>`, `<delete-object>`, and the containers `<with-transaction>`, `<if>` and `<switch>`. The actions inside a container run with the arguments the container sees; a sibling following the container does not see what happened inside, so an action working with a result produced inside a transaction or a branch is nested there too: `<with-transaction><persist-transient><write-channel name="selection"/></persist-transient></with-transaction>`.
+- **Actions without a result**: `<open-dialog>` (the chain goes on once the dialog is open), `<write-channel>`, `<close-dialog>`, `<close-popover>`, `<delete-object>`, and the containers `<with-transaction>`, `<if>` and `<switch>`. The actions inside a container run with the arguments the container sees; a sibling following the container does not see what happened inside, so an action working with a result produced inside a branch is nested there too. A transaction hands its result to the actions of its `<after-commit>`, see [transactions](#transactions-with-transaction-and-after-commit).
+
+## Transactions: `<with-transaction>` and `<after-commit>`
+
+`<with-transaction>` (`WithTransactionAction`) runs the actions written inside it in one transaction with the arguments of the chain, commits it with its `<commitMessage>` (filled with the label of the default argument) and results in the result of its last inner action. When an inner action throws, the transaction is rolled back and the command fails.
+
+The actions in the transaction only read and modify the model. An action that changes the state of the view — `<write-channel>`, `<open-dialog>`, `<close-dialog>`, `<close-popover>`, `<notify>`, `<show-object>`, `<show-view>`, `<download>`, `<scroll-to-anchor>`, `<history-back>`, the wizard and tile-stack navigation, … (`ViewAction#changesViewState()`) — would keep its effect when the commit fails, e.g. a channel holding an object that was never created. Configured inside the transaction, it is reported as a configuration error when the view is loaded. It belongs to `<after-commit>`, whose actions run only after a successful commit, with the arguments of the chain and the result of the transaction under the name `with-result` gives (`result` without one):
+
+```xml
+<generic-command inputs="model" placement="BUTTON_BAR">
+  <store-form-state/>
+  <with-transaction>
+    <commitMessage><en>Created ticket {0}.</en><de>Ticket {0} angelegt.</de></commitMessage>
+    <persist-transient as="created">
+      <execute-script function="$created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+    </persist-transient>
+    <after-commit with-result="created">
+      <write-channel name="selection"/>
+    </after-commit>
+  </with-transaction>
+  <close-dialog/>
+</generic-command>
+```
+
+- Follow-up actions nested into an action *inside* the transaction run inside it as well, so they are model operations too — like the `<execute-script>` setting the status above.
+- The actions of `<after-commit>` run outside the transaction, as follow-up actions of it: they may suspend (a `<confirm>`, an `<open-dialog>`) and abort the chain, the committed changes stay. Their scripts see the result as a variable, and the script editor offers it.
+- Inner actions must complete synchronously; a `<confirm>` or another suspending action inside a transaction fails, place it before the `<with-transaction>`.
+- A `<with-transaction>` nested in the actions of another transaction commits with the outer one; its `<after-commit>` then still runs inside the outer transaction and is restricted the same way.
 
 ## Actions processing one value: `value`
 
@@ -84,7 +111,7 @@ Every script of a chain — the `function` of `<execute-script>` and `<start-job
 </value-input>
 ```
 
-`<notify>` (`NotifyAction`) tells the user something from inside the chain. Its `expr` computes the message over the arguments, exactly like every other script of an action; a result of `null` or an empty text is nothing to say — so the message itself decides whether the user hears anything. `kind="info|warning|error"` (`info` by default) says how serious the notice is, `display="snackbar|dialog"` (`snackbar` by default) where it is read: a snackbar passes by beside the user's work and is shown synchronously, so it may sit inside a `<with-transaction>`, while a dialog is a single-OK message that suspends the chain until it is acknowledged, exactly as a `<confirm>` does, and therefore may not (a chain running headless has no dialog to open and falls back to the snackbar). `stop="true"` ends the chain after the notice: the compensations of the actions before it run, the remaining actions are skipped, and nothing is logged or reported beyond the message — the notice *is* the outcome. That is what separates it from a failure raised by the TL-Script `throw(#('…'@en, '…'@de))` inside an `<execute-script>`, which travels the error path: it is logged and reported through `CommandErrors` like any other failure of the command.
+`<notify>` (`NotifyAction`) tells the user something from inside the chain. Its `expr` computes the message over the arguments, exactly like every other script of an action; a result of `null` or an empty text is nothing to say — so the message itself decides whether the user hears anything. `kind="info|warning|error"` (`info` by default) says how serious the notice is, `display="snackbar|dialog"` (`snackbar` by default) where it is read: a snackbar passes by beside the user's work and is shown synchronously, while a dialog is a single-OK message that suspends the chain until it is acknowledged, exactly as a `<confirm>` does (a chain running headless has no dialog to open and falls back to the snackbar). Either way the notice changes the state of the view, so after a model change it is placed in the `<after-commit>` of the transaction, where it reports only what was committed. `stop="true"` ends the chain after the notice: the compensations of the actions before it run, the remaining actions are skipped, and nothing is logged or reported beyond the message — the notice *is* the outcome. That is what separates it from a failure raised by the TL-Script `throw(#('…'@en, '…'@de))` inside an `<execute-script>`, which travels the error path: it is logged and reported through `CommandErrors` like any other failure of the command.
 
 ## Branching: `<if>` and `<switch>`
 

@@ -49,9 +49,10 @@
 							<action class="com.top_logic.dev.tools.model.ModelEditAction"
 								container="container"
 								mode="CREATE_TYPE"
-							>
+							/>
+							<after-commit with-result="created">
 								<write-channel name="selection"/>
-							</action>
+							</after-commit>
 						</with-transaction>
 					</store-form-state>
 					<execute-script function="now()">

@@ -147,4 +147,11 @@ public class ScrollToAnchorAction extends ArgumentsViewAction {
 		return buffer.append("\"]").toString();
 	}
 
+	/**
+	 * Scrolls the client.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

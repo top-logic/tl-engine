@@ -13,3 +13,5 @@
 /src/main/webapp/script/tl-chat-seams.js
 /src/main/webapp/script/tl-chat-shared.js
 /src/main/webapp/script/assets/
+# The theme stylesheets the engine compiles at run time (tests, exec:java).
+/src/main/webapp/style/_*.css

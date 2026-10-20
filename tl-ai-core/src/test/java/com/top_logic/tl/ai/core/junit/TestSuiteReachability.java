@@ -29,15 +29,15 @@ import org.w3c.dom.NodeList;
 import junit.framework.TestCase;
 
 /**
- * Asserts that every test class in this repository is one that a build actually runs.
+ * Asserts that every test class of the AI modules is one that a build actually runs.
  *
  * <p>
- * Which classes surefire executes is decided by the {@code <includes>} of the aggregator pom (see
- * #369 for why they look the way they do). Nothing used to check that those includes still cover
- * the files on disk, so a test class in a package nobody scans was simply never run - green in the
- * IDE, invisible to the build, and no louder about it than a test that passes. This test closes
- * that gap: it reads the includes out of the poms, walks every module's {@code src/test/java}, and
- * fails naming each test class that no include reaches.
+ * Which classes surefire executes is decided by the {@code <includes>} of a module's pom (see the
+ * comment in the pom of tl-ai-core for why they look the way they do). Without a check that those
+ * includes cover the files on disk, a test class in a package nobody scans is simply never run -
+ * green in the IDE, invisible to the build, and no louder about it than a test that passes. This
+ * test closes that gap: it reads the includes out of the poms, walks every AI module's
+ * {@code src/test/java}, and fails naming each test class that no include reaches.
  * </p>
  *
  * <p>
@@ -47,10 +47,9 @@ import junit.framework.TestCase;
  * </p>
  *
  * <p>
- * The check spans the whole repository, not just the module it lives in, because the invariant is a
- * repository-level one: the patterns are configured once, in the aggregator pom. That means a run
- * of a single other module ({@code mvn -pl tl-chat test}) does not perform it - a full reactor
- * build, which is what CI runs, does.
+ * The check spans all AI modules, not just the module it lives in, so that a module whose pom lost
+ * its includes is noticed. A run of a single other module ({@code mvn -pl tl-chat test}) does not
+ * perform it - a full reactor build, which is what CI runs, does.
  * </p>
  *
  * @see #REACHABLE_NAME the file-name rule a test class additionally has to satisfy.
@@ -83,8 +82,14 @@ public class TestSuiteReachability extends TestCase {
 	/** Source root every module keeps its tests in. */
 	private static final String TEST_SOURCE_DIR = "src/test/java";
 
-	/** The artifact the aggregator pom is recognised by. */
-	private static final String AGGREGATOR_ARTIFACT = "tl-ai-parent";
+	/** The artifact the engine's root pom is recognised by. */
+	private static final String AGGREGATOR_ARTIFACT = "tl-parent-all";
+
+	/** The parent pom of the engine modules, whose surefire includes a module inherits. */
+	private static final String MODULE_PARENT_POM = "tl-parent-core/pom.xml";
+
+	/** The directories of the AI modules next to the root pom. */
+	private static final Pattern AI_MODULE_DIR = Pattern.compile("tl-ai-.*|tl-chat.*");
 
 	/**
 	 * A class body that only forwards to a test class somewhere else.
@@ -112,8 +117,7 @@ public class TestSuiteReachability extends TestCase {
 		}
 		assertTrue("These test classes are never run: no <include> of their module reaches them."
 			+ " Move them below one of the scanned package roots, or widen the <includes> in the"
-			+ " aggregator pom (and in tl-ai-demo's, which does not inherit them):"
-			+ list(unreachable), unreachable.isEmpty());
+			+ " module's pom:" + list(unreachable), unreachable.isEmpty());
 	}
 
 	/** Every test class on disk is named so that the collector recognises it as one. */
@@ -153,19 +157,21 @@ public class TestSuiteReachability extends TestCase {
 			+ " is collected directly:" + list(duplicates), duplicates.isEmpty());
 	}
 
-	/** The modules of this repository, each with the includes that apply to it. */
+	/** The AI modules of the reactor, each with the includes that apply to it. */
 	private List<Module> modules() {
 		File root = repositoryRoot();
-		List<String> inherited = surefireIncludes(new File(root, "pom.xml"));
-		assertFalse("The aggregator pom configures no surefire <includes>, so this test cannot tell"
-			+ " what a build runs. Restore them, or delete this test with the reason.", inherited.isEmpty());
+		List<String> inherited = surefireIncludes(new File(root, MODULE_PARENT_POM));
+		assertFalse("The parent pom " + MODULE_PARENT_POM + " configures no surefire <includes>, so this"
+			+ " test cannot tell what a build runs. Restore them, or delete this test with the reason.",
+			inherited.isEmpty());
 
 		List<Module> modules = new ArrayList<>();
 		File[] candidates = root.listFiles();
 		assertNotNull("Cannot read the repository root: " + root, candidates);
 		for (File dir : sorted(candidates)) {
 			File pom = new File(dir, "pom.xml");
-			if (!new File(dir, TEST_SOURCE_DIR).isDirectory() || !pom.isFile()) {
+			if (!AI_MODULE_DIR.matcher(dir.getName()).matches()
+				|| !new File(dir, TEST_SOURCE_DIR).isDirectory() || !pom.isFile()) {
 				continue;
 			}
 			List<String> own = surefireIncludes(pom);
@@ -176,12 +182,12 @@ public class TestSuiteReachability extends TestCase {
 	}
 
 	/**
-	 * The directory holding the aggregator pom, found by walking up from the module under test.
+	 * The directory holding the engine's root pom, found by walking up from the module under test.
 	 *
 	 * <p>
-	 * Recognised by the pom's <em>own</em> artifactId, not by the text appearing anywhere: every
-	 * module's pom names the aggregator in its {@code <parent>}, so a search for the name would
-	 * stop at the module itself.
+	 * Recognised by the pom's <em>own</em> artifactId, not by the text appearing anywhere: the module
+	 * parents name the root pom in their {@code <parent>}, so a search for the name would stop too
+	 * early.
 	 * </p>
 	 */
 	private File repositoryRoot() {

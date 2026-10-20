@@ -63,15 +63,25 @@ public class SecDemoGermanTerminologyTest extends BasicTestCase {
 	private static final String FORBIDDEN = "Werkzeug";
 
 	/**
-	 * Identifies the POM at the root of the tl-ai reactor.
+	 * Identifies the POM at the root of the engine reactor.
 	 *
 	 * <p>
-	 * The artifact name alone does not: every module names the same artifact as its parent. Only the
-	 * root POM names it and is itself an aggregator.
+	 * The artifact name alone does not: the module parents name the same artifact as their parent.
+	 * Only the root POM names it and is itself an aggregator.
 	 * </p>
 	 */
 	private static final List<String> REACTOR_POM_MARKERS =
-		List.of("<artifactId>tl-ai-parent</artifactId>", "<packaging>pom</packaging>");
+		List.of("<artifactId>tl-parent-all</artifactId>", "<packaging>pom</packaging>");
+
+	/**
+	 * The directories of the AI modules next to the reactor POM.
+	 *
+	 * <p>
+	 * The rule is one of the AI modules; the other modules of the engine have German texts of their
+	 * own and are not held to it.
+	 * </p>
+	 */
+	private static final Pattern AI_MODULE_DIR = Pattern.compile("tl-ai-.*|tl-chat.*");
 
 	/** Where the build's doclet writes the German resources of a module. */
 	private static final String MODULE_BUNDLE = "src/main/java/META-INF/messages_de.properties";
@@ -206,10 +216,15 @@ public class SecDemoGermanTerminologyTest extends BasicTestCase {
 		return properties;
 	}
 
-	/** The file at the given path below every module of the reactor that has one. */
+	/** The file at the given path below every AI module of the reactor that has one. */
 	private static List<Path> reactorFiles(String path) throws IOException {
 		try (Stream<Path> modules = Files.list(reactorRoot())) {
-			return modules.map(module -> module.resolve(path)).filter(Files::isRegularFile).sorted().toList();
+			return modules
+				.filter(module -> AI_MODULE_DIR.matcher(module.getFileName().toString()).matches())
+				.map(module -> module.resolve(path))
+				.filter(Files::isRegularFile)
+				.sorted()
+				.toList();
 		}
 	}
 

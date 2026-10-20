@@ -7,3 +7,6 @@
 /src/main/webapp/script/top-logic.js
 /.settings/com.gwtplugins.gwt.eclipse.core.prefs
 /**/*~
+
+# The theme stylesheets the engine compiles at run time (tests, exec:java).
+/src/main/webapp/style/_*.css

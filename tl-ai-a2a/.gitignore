@@ -7,3 +7,6 @@ test-time.txt
 jacoco.exec
 dist
 report
+
+# The theme stylesheets the engine compiles at run time (tests, exec:java).
+/src/main/webapp/style/_*.css

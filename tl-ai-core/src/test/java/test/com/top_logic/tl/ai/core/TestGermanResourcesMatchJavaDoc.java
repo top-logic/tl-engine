@@ -64,8 +64,7 @@ import junit.framework.TestCase;
  * <p>
  * It stays useful after the generator learns to honour {@code @de}: it is that fix's acceptance
  * test, green the moment the doclet writes the authored German and green afterwards. That matters
- * here because tl-ai tracks {@code 8.0.0-alpha*} snapshots of the engine, so the behaviour of the
- * generators can change under it between two builds.
+ * here because the behaviour of the generators can change between two builds.
  * </p>
  */
 /*
@@ -82,7 +81,7 @@ import junit.framework.TestCase;
  * keeps its own resource check, TestI18NConstantsTranslations, which asks the complementary
  * question: whether a translation exists at all.
  *
- * It walks every module of the reactor rather than only its own. Surefire runs a test with its
+ * It walks every AI module of the reactor rather than only its own. Surefire runs a test with its
  * module directory as the working directory, so a per-module check would be the smaller step - but
  * it would need a shared base class and a subclass that somebody has to remember for a module added
  * later, and a check whose coverage can silently shrink is the very failure mode this test exists
@@ -91,15 +90,21 @@ import junit.framework.TestCase;
 public class TestGermanResourcesMatchJavaDoc extends TestCase {
 
 	/**
-	 * Identifies the POM at the root of the tl-ai reactor.
+	 * Identifies the POM at the root of the engine reactor.
 	 *
 	 * <p>
-	 * The artifact name alone does not: every module names the same artifact as its parent. Only the
-	 * root POM names it and is itself an aggregator.
+	 * The artifact name alone does not: the module parents name the same artifact as their parent.
+	 * Only the root POM names it and is itself an aggregator.
 	 * </p>
 	 */
 	private static final List<String> REACTOR_POM_MARKERS =
-		List.of("<artifactId>tl-ai-parent</artifactId>", "<packaging>pom</packaging>");
+		List.of("<artifactId>tl-parent-all</artifactId>", "<packaging>pom</packaging>");
+
+	/** The POM declaring the engine modules, relative to the reactor root. */
+	private static final String ENGINE_MODULES_POM = "tl-parent-engine/pom.xml";
+
+	/** The directories of the AI modules next to the reactor POM, which this test covers. */
+	private static final Pattern AI_MODULE_DIR = Pattern.compile("tl-ai-.*|tl-chat.*");
 
 	/** Where a module keeps the Java sources the doclet reads. */
 	private static final String SOURCE_FOLDER = "src/main/java";
@@ -127,7 +132,8 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 	private static final String GENERATOR_PLACEHOLDER = "[missing:";
 
 	/** A module of the reactor, as its POM declares it. */
-	private static final Pattern DECLARED_MODULE = Pattern.compile("<module>\\s*([^<\\s]+)\\s*</module>");
+	private static final Pattern DECLARED_MODULE =
+		Pattern.compile("<module>\\s*(?:\\.\\./)?([^<\\s]+)\\s*</module>");
 
 	/**
 	 * A documented resource constant: its JavaDoc block, optional plain comments in between, and the
@@ -331,16 +337,16 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 		Path root = reactorRoot();
 		List<String> checked = modules().stream().map(module -> module.getFileName().toString()).toList();
 		List<String> missed = new ArrayList<>();
-		String pom = Files.readString(root.resolve("pom.xml"), StandardCharsets.UTF_8);
+		String pom = Files.readString(root.resolve(ENGINE_MODULES_POM), StandardCharsets.UTF_8);
 		Matcher declared = DECLARED_MODULE.matcher(pom);
 		while (declared.find()) {
 			String module = declared.group(1);
-			if (!checked.contains(module)) {
+			if (AI_MODULE_DIR.matcher(module).matches() && !checked.contains(module)) {
 				missed.add(module);
 			}
 		}
 
-		assertEquals("These modules are declared in " + root + "/pom.xml but hold no " + SOURCE_FOLDER
+		assertEquals("These AI modules are declared in " + root + "/" + ENGINE_MODULES_POM + " but hold no " + SOURCE_FOLDER
 			+ ", so nothing of theirs is checked. The module keeps its Java sources somewhere else -"
 			+ " teach this test where, or the resources it generates go unwatched.\n  "
 			+ String.join("\n  ", missed), List.of(), missed);
@@ -483,10 +489,12 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 		return result;
 	}
 
-	/** The modules of the reactor that have Java sources. */
+	/** The AI modules of the reactor that have Java sources. */
 	private static List<Path> modules() throws IOException {
 		try (Stream<Path> candidates = Files.list(reactorRoot())) {
-			return candidates.filter(candidate -> Files.isDirectory(candidate.resolve(SOURCE_FOLDER)))
+			return candidates
+				.filter(candidate -> AI_MODULE_DIR.matcher(candidate.getFileName().toString()).matches())
+				.filter(candidate -> Files.isDirectory(candidate.resolve(SOURCE_FOLDER)))
 				.sorted(Comparator.comparing(Path::toString)).toList();
 		}
 	}

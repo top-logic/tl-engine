@@ -152,6 +152,17 @@
 					</annotations>
 				</property>
 
+				<!-- String brought into canonical form when entered: trimmed, inner whitespace runs collapsed to one space -->
+				<property name="normalizedText"
+					type="tl.core:String"
+				>
+					<annotations>
+						<value-normalizer>
+							<normalize-by-expression function="value -> obj -> regex('\\s+').regexReplace($value, ' ').trim()"/>
+						</value-normalizer>
+					</annotations>
+				</property>
+
 				<!-- Optional plain string (no constraints, for comparison) -->
 				<property name="freeText"
 					type="tl.core:String"

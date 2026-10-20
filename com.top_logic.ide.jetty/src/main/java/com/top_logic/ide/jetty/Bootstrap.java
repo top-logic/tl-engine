@@ -34,6 +34,7 @@ import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHandler;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.ee10.webapp.WebAppContext;
+import org.eclipse.jetty.ee10.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.eclipse.jetty.http.UriCompliance;
 import org.eclipse.jetty.http.UriCompliance.Violation;
 import org.eclipse.jetty.server.HttpConfiguration;
@@ -57,6 +58,16 @@ import com.top_logic.basic.core.workspace.Workspace;
  * After the server has started, the application is opened in a browser. Which browser, if any, is
  * chosen by the system property or environment variable {@value #BROWSER_VARIABLE}, see
  * {@link #openBrowser(String)}.
+ * </p>
+ *
+ * <p>
+ * The web application context is assembled explicitly: neither annotations are scanned nor
+ * {@link jakarta.servlet.ServletContainerInitializer}s are discovered. The JSP engine and Jakarta
+ * websocket are set up by hand. For websocket, the context provides a
+ * {@link jakarta.websocket.server.ServerContainer} in the servlet context attribute named after
+ * that interface, together with Jetty's websocket upgrade filter. Endpoints are registered by the
+ * application through the standard API
+ * ({@link jakarta.websocket.server.ServerContainer#addEndpoint(Class)}).
  * </p>
  *
  * @see Shutdown
@@ -221,6 +232,10 @@ public class Bootstrap {
 		tmpDir.mkdirs();
 		webapp.setAttribute(ServletContext.TEMPDIR, tmpDir);
 		webapp.addBean(new JspStarter(webapp));
+
+		// Provides the jakarta.websocket.server.ServerContainer and the websocket upgrade filter;
+		// the application registers its endpoints with that container.
+		JakartaWebSocketServletContainerInitializer.configure(webapp, null);
 
 		ServletContextHandler adminHandler = new ServletContextHandler(ADMIN_WEBAPP);
 

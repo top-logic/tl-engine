@@ -79,6 +79,18 @@
       <artifactId>tl-dev-tools</artifactId>
     </dependency>
 
+    <!-- Websocket API of the demo endpoint; the servlet container provides the implementation. -->
+    <dependency>
+      <groupId>jakarta.websocket</groupId>
+      <artifactId>jakarta.websocket-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.websocket</groupId>
+      <artifactId>jakarta.websocket-client-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-presentation</artifactId>

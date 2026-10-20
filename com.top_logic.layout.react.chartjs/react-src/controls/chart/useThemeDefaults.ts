@@ -1,5 +1,6 @@
 // react-src/controls/chart/useThemeDefaults.ts
 import { React, useTokenSwitch } from 'tl-react-bridge';
+import { Chart } from 'chart.js';
 
 /** The categories of the design system the series are coloured with: `--tl-category-1-surface` to `-8-surface`. */
 const CATEGORIES = 8;
@@ -30,10 +31,6 @@ const POINT_ALPHA = '33';
 
 /** Alpha of the backdrop of the tick labels of a radial scale (Chart.js draws it white at 75 % by default). */
 const BACKDROP_ALPHA = 'bf';
-
-/** The chart types with a category and a value axis (`x`, `y`) and those with a radial one (`r`). */
-const CARTESIAN = ['bar', 'line', 'scatter', 'bubble'];
-const RADIAL = ['radar', 'polarArea'];
 
 const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 const RGB = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)\s*(?:[,/]\s*[\d.]+%?\s*)?\)$/i;
@@ -103,25 +100,52 @@ function themedScale(scale: any, radial: boolean, theme: ThemeColors): any {
   return themed;
 }
 
-/** The axis a configured scale belongs to, as Chart.js decides it: its `axis` option, else the first letter of its id. */
-const axisOf = (id: string, scale: any): string => scale?.axis ?? id.charAt(0).toLowerCase();
+/** The axes a scale can have, as Chart.js ids them: the id of a scale is its axis, or names it by its first letter. */
+const AXES = ['x', 'y', 'r'];
 
 /**
- * The ids of the scales Chart.js builds for the config (`mergeScaleConfig`) - and no others, a scale added here would be
- * drawn as an empty axis. Those are the configured ones, and per dataset the axes of its type, each under the id the
- * dataset names with `xAxisID`, `yAxisID` or `rAxisID`, else under the axis itself (`x`, `y`, `r`), whether or not a
- * configured scale of that axis exists. A pie or a doughnut has no axes.
+ * The axis of a scale the server configured, as Chart.js decides it (`determineAxis`): the id `x`, `y` or `r`, the `axis`
+ * option, the axis of the `position`, the axis of a dataset bound to the id, the first letter of an id of two or more.
+ * `undefined` where Chart.js would throw: the chart is then built (and fails) as it would without the theme.
  */
-function scaleIds(config: any): string[] {
-  const ids = new Set(Object.keys(config.options?.scales ?? {}));
+function axisOf(id: string, scale: any, config: any): string | undefined {
+  if (AXES.includes(id)) return id;
+  const position = scale?.position;
+  const bound = (config.data?.datasets ?? []).find((ds: any) => ds.xAxisID === id || ds.yAxisID === id);
+  return scale?.axis
+    ?? (position === 'top' || position === 'bottom' ? 'x' : position === 'left' || position === 'right' ? 'y' : undefined)
+    ?? (bound === undefined ? undefined : bound.xAxisID === id ? 'x' : 'y')
+    ?? (id.length > 1 && AXES.includes(id[0].toLowerCase()) ? id[0].toLowerCase() : undefined);
+}
+
+/** The axis the index (category) scale of a chart of the type runs along, as Chart.js reads it (`getIndexAxis`). */
+const indexAxisOf = (type: string, options: any): string =>
+  options?.datasets?.[type]?.indexAxis ?? options?.indexAxis ?? (Chart.defaults.datasets as any)[type]?.indexAxis ?? 'x';
+
+/**
+ * The scales Chart.js builds for the datasets next to the configured ones (`mergeScaleConfig`): per dataset, each axis of
+ * its type under the id the dataset names with `xAxisID`, `yAxisID` or `rAxisID`, else the axis itself, with the scale
+ * options its type brings (`Chart.overrides`) and the axis - exactly what Chart.js merges for such a scale. Writing them
+ * into the config as scales of their own is what lets them be themed; with the axis in place Chart.js builds the same
+ * scale from the written options as it would have built by itself. A pie or a doughnut has none. A scale of the server
+ * is not among them.
+ */
+function datasetScales(config: any): Record<string, any> {
+  const configured = config.options?.scales ?? {};
+  const built: Record<string, any> = {};
   for (const ds of config.data?.datasets ?? []) {
-    const type = ds.type ?? config.type;
-    const axes = CARTESIAN.includes(type) ? ['x', 'y'] : RADIAL.includes(type) ? ['r'] : [];
-    for (const axis of axes) {
-      ids.add(ds[axis + 'AxisID'] || axis);
+    const type = ds.type || config.type;
+    const indexAxis = ds.indexAxis || indexAxisOf(type, config.options);
+    const brought = (Chart.overrides as any)[type]?.scales ?? {};
+    for (const defaultId of Object.keys(brought)) {
+      const axis = defaultId === '_index_' ? indexAxis : defaultId === '_value_' ? (indexAxis === 'x' ? 'y' : 'x') : defaultId;
+      const id = ds[axis + 'AxisID'] || axis;
+      if (!(id in configured)) {
+        built[id] = { axis, ...brought[defaultId], ...built[id] };
+      }
     }
   }
-  return [...ids];
+  return built;
 }
 
 /**
@@ -193,11 +217,13 @@ export function useThemeDefaults(config: any): any {
 
     // Scales: Chart.js routes the colours of grid, axis line, ticks and title to its global defaults, not to the
     // options of the chart, so every scale gets them in its own config: the ones the server configures, and the ones
-    // Chart.js creates for the datasets (scaleIds).
+    // Chart.js builds for the datasets (datasetScales).
     const options = { ...merged.options };
-    const scales = { ...options.scales };
-    for (const id of scaleIds(config)) {
-      scales[id] = themedScale(scales[id], axisOf(id, scales[id]) === 'r' || scales[id]?.type === 'radialLinear', theme);
+    const scales = { ...datasetScales(config), ...options.scales };
+    for (const id of Object.keys(scales)) {
+      const radial = (config.options?.scales?.[id] === undefined ? scales[id].axis : axisOf(id, scales[id], config)) === 'r'
+        || scales[id].type === 'radialLinear';
+      scales[id] = themedScale(scales[id], radial, theme);
     }
     if (Object.keys(scales).length > 0) {
       options.scales = scales;

@@ -328,45 +328,92 @@ describe('chart scales (a real Chart.js chart)', () => {
     chart.destroy();
   });
 
-  it('only the scales Chart.js builds are themed: datasets with axis ids of their own add no x or y', () => {
-    const line = {
+  /**
+   * Charts with scales the datasets bring along (ids of their own), next to scales of the server. For each the themed
+   * chart has to build exactly the scales plain Chart.js builds, with the same axis, type and position, draw every point
+   * (a scale of the wrong axis makes them NaN) - and have every scale themed, in both modes.
+   */
+  const XVAL = { type: 'line', data: { labels: ['a', 'b'], datasets: [{ data: [1, 2], yAxisID: 'xval' }] } };
+  const CASES: Record<string, any> = {
+    'line with yAxisID left and right': {
       type: 'line',
-      data: {
-        labels: ['a', 'b'],
-        datasets: [
-          { label: 'l', data: [1, 2], yAxisID: 'left' },
-          { label: 'r', data: [2, 1], yAxisID: 'right' },
-        ],
-      },
-    };
-    const { result } = renderHook(() => useThemeDefaults(line));
-    expect(Object.keys(result.current.options.scales).sort()).toEqual(['left', 'right', 'x']);
+      data: { labels: ['a', 'b'], datasets: [{ data: [1, 2], yAxisID: 'left' }, { data: [2, 1], yAxisID: 'right' }] },
+    },
+    "line with yAxisID 'xval'": XVAL,
+    "scatter with xAxisID 'xs'": {
+      type: 'scatter', data: { datasets: [{ data: [{ x: 1, y: 2 }, { x: 2, y: 3 }], xAxisID: 'xs' }] },
+    },
+    'bar next to a configured scale': {
+      ...barChart(1), options: { scales: { left: { axis: 'y', type: 'linear' } } },
+    },
+    'line with scales configured by position': {
+      type: 'line',
+      data: { labels: ['a'], datasets: [{ data: [1], yAxisID: 'left' }, { data: [2], yAxisID: 'right' }] },
+      options: { scales: { left: { position: 'left' }, right: { position: 'right' } } },
+    },
+    'mixed bar and line on a second y': {
+      type: 'bar',
+      data: { labels: ['a'], datasets: [{ data: [1] }, { type: 'line', data: [2], yAxisID: 'y1' }] },
+      options: { scales: { y1: { position: 'right' } } },
+    },
+    "radar with rAxisID 'foo'": {
+      type: 'radar', data: { labels: ['a', 'b', 'c'], datasets: [{ data: [1, 2, 3], rAxisID: 'foo' }] },
+    },
+    'horizontal bar': { ...barChart(2), options: { indexAxis: 'y' } },
+    'dataset with an index axis of its own': {
+      type: 'bar', data: { labels: ['a', 'b'], datasets: [{ data: [1, 2], indexAxis: 'y' }] },
+    },
+    'pie': { type: 'pie', data: { labels: ['a', 'b'], datasets: [{ data: [1, 2] }] } },
+  };
 
-    const { chart } = drawChart(result.current);
-    expect(Object.keys(chart.scales).sort()).toEqual(['left', 'right', 'x']);
-    for (const id of ['x', 'left', 'right']) {
-      expect(cartesian(chart, id), id).toMatchObject({ grid: COLORS.light.grid, ticks: COLORS.light.text });
+  /** What a scale is, besides its colours. */
+  const shape = (chart: Chart) => Object.fromEntries(Object.entries(chart.scales)
+    .map(([id, scale]: [string, any]) => [id, { axis: scale.axis, type: scale.type, position: scale.options.position }]));
+
+  /** Every number the chart parsed from its data. */
+  const parsed = (chart: Chart) => chart.data.datasets.flatMap((_, i) => (chart.getDatasetMeta(i) as any)._parsed
+    .flatMap((point: any) => typeof point === 'number' ? [point] : Object.values(point).filter(v => typeof v === 'number')));
+
+  /** The colours of the grid and the ticks of a scale, whichever kind of scale it is. */
+  const lines = (scale: any) => [scale.options.grid.color, scale.options.ticks.color];
+
+  for (const [name, config] of Object.entries(CASES)) {
+    it(`${name}: the same scales as without the theme, every point drawn, every scale themed in both modes`, async () => {
+      const plain = drawChart(structuredClone(config)).chart;
+      const { result } = renderHook(() => useThemeDefaults(config));
+      const { chart, repaint } = drawChart(result.current);
+
+      expect(shape(chart)).toEqual(shape(plain));
+      expect(parsed(chart)).toEqual(parsed(plain));
+      expect(parsed(chart).every(Number.isFinite)).toBe(true);
+      for (const [id, scale] of Object.entries(chart.scales)) {
+        expect(lines(scale), id).toEqual([COLORS.light.grid, COLORS.light.text]);
+      }
+
+      switchMode('dark');
+      await waitFor(() => expect(result.current.options.plugins.colors.enabled).toBe(false));
+      await waitFor(() => expect(result.current.data.datasets[0].borderColor ?? 'none').not.toBe(LIGHT[0]));
+      repaint(result.current);
+      expect(shape(chart)).toEqual(shape(plain));
+      for (const [id, scale] of Object.entries(chart.scales)) {
+        expect(lines(scale), id).toEqual([COLORS.dark.grid, COLORS.dark.text]);
+      }
+      chart.destroy();
+      plain.destroy();
+    });
+  }
+
+  it('radial options go to a radial scale only, whatever its id, and never to a left or right one', () => {
+    const { result: radar } = renderHook(() => useThemeDefaults(CASES["radar with rAxisID 'foo'"]));
+    expect(radar.current.options.scales.foo.angleLines.color).toBe(COLORS.light.grid);
+    expect(radar.current.options.scales.foo.pointLabels.color).toBe(COLORS.light.text);
+
+    const { result: line } = renderHook(() => useThemeDefaults(CASES['line with yAxisID left and right']));
+    for (const id of ['left', 'right', 'x']) {
+      expect(line.current.options.scales[id].angleLines, id).toBeUndefined();
+      expect(line.current.options.scales[id].pointLabels, id).toBeUndefined();
+      expect(line.current.options.scales[id].ticks.backdropColor, id).toBeUndefined();
     }
-    chart.destroy();
-  });
-
-  it('a scatter with its own x id gains no x; a configured scale next to the default axes is themed as well', () => {
-    const scatter = { type: 'scatter', data: { datasets: [{ label: 's', data: [{ x: 1, y: 2 }], xAxisID: 'xs' }] } };
-    const { result: scatterResult } = renderHook(() => useThemeDefaults(scatter));
-    const { chart: scatterChart } = drawChart(scatterResult.current);
-    expect(Object.keys(scatterChart.scales).sort()).toEqual(['xs', 'y']);
-    expect(cartesian(scatterChart, 'xs')).toMatchObject({ grid: COLORS.light.grid });
-    scatterChart.destroy();
-
-    const served = { ...barChart(1), options: { scales: { left: { axis: 'y', type: 'linear' } } } };
-    const { result: servedResult } = renderHook(() => useThemeDefaults(served));
-    const { chart } = drawChart(servedResult.current);
-    // Chart.js builds x and y for the bar chart next to the configured scale; every scale it built is themed.
-    expect(Object.keys(chart.scales).sort()).toEqual(['left', 'x', 'y']);
-    for (const id of Object.keys(chart.scales)) {
-      expect(cartesian(chart, id), id).toMatchObject({ grid: COLORS.light.grid, ticks: COLORS.light.text });
-    }
-    chart.destroy();
   });
 
   it('a pie gets no axes', () => {

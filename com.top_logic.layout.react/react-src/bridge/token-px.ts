@@ -51,6 +51,38 @@ export function tokenMs(name: string, fallback: number): number {
 const TOKEN_SWITCHES = ['data-tl-density', 'data-tl-theme', 'data-tl-mode'];
 
 /**
+ * A value read from the tokens as state: read when the control is mounted, and again whenever the document root
+ * switches density, theme or mode. The state keeps its previous value when the new one is equal, so a switch that does
+ * not touch what the control reads renders nothing; after unmount the observer is gone.
+ *
+ * @param read Reads the value from the page now.
+ * @param initial The value of the first render (a function is called once): before the first reading, where the
+ *        element to read at does not exist yet, or the first reading itself.
+ * @param same Whether two values read are the same; identity by default.
+ * @param deps What `read` depends on: the reading is repeated, and the observer set up anew, when one of them changes.
+ */
+export function useTokenSwitch<T>(
+  read: () => T,
+  initial: T | (() => T),
+  same: (a: T, b: T) => boolean = Object.is,
+  deps: React.DependencyList = [],
+): T {
+  const [value, setValue] = React.useState<T>(initial);
+  React.useLayoutEffect(() => {
+    const update = () => {
+      const next = read();
+      setValue((previous) => (same(previous, next) ? previous : next));
+    };
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: TOKEN_SWITCHES });
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return value;
+}
+
+/**
  * A length token as state: measured at the element once it is mounted, and again whenever the
  * document root switches density or theme.
  *
@@ -59,16 +91,5 @@ const TOKEN_SWITCHES = ['data-tl-density', 'data-tl-theme', 'data-tl-mode'];
  * @param fallback The value before the first measurement and without a design system.
  */
 export function useTokenPx(ref: React.RefObject<Element | null>, name: string, fallback: number): number {
-  const [px, setPx] = React.useState(fallback);
-  React.useLayoutEffect(() => {
-    const measure = () => {
-      const next = tokenPx(ref.current, name, fallback);
-      setPx((previous) => (previous === next ? previous : next));
-    };
-    measure();
-    const observer = new MutationObserver(measure);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: TOKEN_SWITCHES });
-    return () => observer.disconnect();
-  }, [ref, name, fallback]);
-  return px;
+  return useTokenSwitch(() => tokenPx(ref.current, name, fallback), fallback, Object.is, [ref, name, fallback]);
 }

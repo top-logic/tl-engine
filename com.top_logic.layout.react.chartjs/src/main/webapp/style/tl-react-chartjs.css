@@ -1,5 +1,0 @@
-/* The chart (TLChart) takes its whole look from the design system package: the block `tl-chart` with its tooltip on the
-   surface of `tl-popover` and the reset button of the zoom, and `tl-status` for no data and an error
-   (tl-design-system/components.css, contract: chart.contract.md). The series, grid and labels are painted onto the
-   canvas in the colours the control reads from the categories and roles of the theme (useThemeDefaults.ts). Nothing is
-   left to style here; a rule added to this sheet reads package tokens only (TestChartStylesheetTokens). */

@@ -148,7 +148,7 @@ export { scrollToAnchor } from './bridge/scroll';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
-export { tokenPx, tokenMs, useTokenPx } from './bridge/token-px';
+export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
 export { isEditorTarget } from './bridge/editor-target';
 export { filterOptions } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';

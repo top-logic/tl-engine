@@ -11,7 +11,7 @@
 
 import { describe, it, expect, vi, afterEach, beforeEach, beforeAll } from 'vitest';
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
-import { React, useFill, useTokenPx, KeyboardScopeProvider, EscapeToClose, startPointerDrag, TOOLTIP_ATTR, Menu, MenuItem, ButtonDefaults, useButtonDefaults, usePart, registerPart } from 'tl-react-bridge';
+import { React, useFill, useTokenPx, useTokenSwitch, KeyboardScopeProvider, EscapeToClose, startPointerDrag, TOOLTIP_ATTR, Menu, MenuItem, ButtonDefaults, useButtonDefaults, usePart, registerPart } from 'tl-react-bridge';
 import { scrollToAnchor } from '../../../com.top_logic.layout.react/react-src/bridge/scroll';
 import { handlePick } from '../../../com.top_logic.layout.react/react-src/bridge/element-picker';
 import { initKeyboardDispatcher } from '../../../com.top_logic.layout.react/react-src/bridge/keyboard-dispatcher';
@@ -506,6 +506,36 @@ describe('density', () => {
     const { result } = renderHook(() => useTokenPx(ref, '--tl-size-row', 40));
 
     expect(result.current).toBe(28);
+  });
+
+  it('useTokenSwitch reads again on a switch, renders nothing when the value stays, and stops after unmount', async () => {
+    document.documentElement.setAttribute('data-tl-mode', 'light');
+    const read = vi.fn(() => document.documentElement.getAttribute('data-tl-mode') === 'dark' ? 'dark' : 'other');
+    let renders = 0;
+    const { result, unmount } = renderHook(() => {
+      renders++;
+      return useTokenSwitch(read, read);
+    });
+    expect(result.current).toBe('other');
+
+    // A switch that leaves the value as it is renders nothing.
+    const rendered = renders;
+    act(() => document.documentElement.setAttribute('data-tl-mode', 'contrast'));
+    await waitFor(() => expect(read.mock.calls.length).toBeGreaterThan(2));
+    expect(renders).toBe(rendered);
+
+    act(() => document.documentElement.setAttribute('data-tl-mode', 'dark'));
+    await waitFor(() => expect(result.current).toBe('dark'));
+
+    // After unmount a flip reads nothing and updates nothing.
+    unmount();
+    const reads = read.mock.calls.length;
+    const afterUnmount = renders;
+    document.documentElement.setAttribute('data-tl-mode', 'light');
+    await new Promise(resolve => setTimeout(resolve, 30));
+    expect(read).toHaveBeenCalledTimes(reads);
+    expect(renders).toBe(afterUnmount);
+    document.documentElement.removeAttribute('data-tl-mode');
   });
 });
 

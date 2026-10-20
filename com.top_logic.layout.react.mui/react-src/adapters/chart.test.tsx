@@ -1,8 +1,11 @@
 // The chart (spec 2026-10-20 wave 5d §8): its series take their colours from the categories of the theme, grid and
 // labels from the border and text roles, and the chart reads them again when the mode switches. Chart.js paints onto a
 // canvas, which jsdom cannot (no 2D context), so the colours are checked where the control computes them
-// (useThemeDefaults, from custom properties at the document root, as textOn is checked) and the DOM around the canvas
-// is checked through the control: status lines, the name of the canvas, the tooltip and the reset button.
+// (useThemeDefaults, from custom properties at the document root, as textOn is checked), and the DOM around the canvas
+// through the control: status lines, the name of the canvas, the tooltip and the reset button.
+//
+// Grid, axis lines, tick labels and titles are checked on a real Chart.js chart over a context that records nothing:
+// Chart.js routes those colours to its global defaults, so the config of each scale has to carry them.
 //
 // Review focus 3: ten series -> series 9 and 10 take category 1 and 2; after data-tl-mode="dark" the series, the grid
 // and the labels have the values of the dark mode without a reload; a series with a colour of its own keeps it.
@@ -14,7 +17,10 @@ import ButtonPart from '../../../com.top_logic.layout.react/react-src/controls/b
 import { useThemeDefaults } from '../../../com.top_logic.layout.react.chartjs/react-src/controls/chart/useThemeDefaults';
 import ChartTooltip from '../../../com.top_logic.layout.react.chartjs/react-src/controls/chart/ChartTooltip';
 import TLChart from '../../../com.top_logic.layout.react.chartjs/react-src/controls/TLChart';
+import { Chart, registerables } from '../../../com.top_logic.layout.react.chartjs/node_modules/chart.js';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
+
+Chart.register(...registerables);
 
 /** The eight categories of a mode as `#RRGGBB`: the tokens of the package are hex. */
 const LIGHT = ['#c0392b', '#d68910', '#27ae60', '#16a085', '#2874a6', '#5b2c6f', '#a93f92', '#884ea0'];
@@ -39,6 +45,43 @@ function switchMode(mode: 'light' | 'dark') {
     applyTokens(mode);
     document.documentElement.setAttribute('data-tl-mode', mode);
   });
+}
+
+/** The context of a canvas that answers every call with nothing and measures every text 10 wide. */
+function recordingContext(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+  const members: Record<string | symbol, unknown> = { canvas, measureText: () => ({ width: 10 }) };
+  return new Proxy(members, {
+    get: (target, name) => (name in target ? target[name] : () => undefined),
+  }) as unknown as CanvasRenderingContext2D;
+}
+
+/** Gives every canvas of the page such a context, and the resize observer a responsive chart installs. */
+function stubContexts() {
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (this: HTMLCanvasElement) {
+    return recordingContext(this);
+  } as any);
+  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+}
+
+/**
+ * A chart over a canvas whose 2D context records nothing: jsdom has none, and Chart.js needs one to lay out and to
+ * measure text. Draws once; `repaint` hands it the config of the hook again, as react-chartjs-2 does after a render.
+ */
+function drawChart(themed: any): { chart: Chart; repaint: (next: any) => void } {
+  const canvas = document.createElement('canvas');
+  canvas.width = 300;
+  canvas.height = 150;
+  stubContexts();
+  const calm = (config: any) => ({ ...config, options: { ...config.options, responsive: false, animation: false } });
+  const chart = new Chart(canvas, calm(themed));
+  return {
+    chart,
+    repaint: (next) => {
+      chart.data = next.data;
+      chart.options = calm(next).options;
+      chart.update();
+    },
+  };
 }
 
 /** A bar chart of the given number of series, none with a colour of its own. */
@@ -84,8 +127,6 @@ describe('chart colours', () => {
     });
     expect(datasets[8].borderColor).toBe(datasets[0].borderColor);
     expect(datasets[9].borderColor).toBe(datasets[1].borderColor);
-    expect(result.current.options.borderColor).toBe(COLORS.light.grid);
-    expect(result.current.options.color).toBe(COLORS.light.text);
   });
 
   it('reads the tokens again when data-tl-mode switches, without a reload', async () => {
@@ -103,8 +144,6 @@ describe('chart colours', () => {
     });
     expect(datasets[8].borderColor).toBe(DARK[0]);
     expect(datasets[9].borderColor).toBe(DARK[1]);
-    expect(result.current.options.borderColor).toBe(COLORS.dark.grid);
-    expect(result.current.options.color).toBe(COLORS.dark.text);
 
     switchMode('light');
     await waitFor(() => expect(result.current.data.datasets[0].borderColor).toBe(LIGHT[0]));
@@ -135,12 +174,16 @@ describe('chart colours', () => {
     expect(datasets[2].borderColor).toBe(LIGHT[2]);
   });
 
-  it('colours of its own in the options of the server keep the grid and the labels', () => {
-    const config = { ...barChart(1), options: { color: '#aabbcc', borderColor: '#ddeeff' } };
-    const { result } = renderHook(() => useThemeDefaults(config));
+  it('an unreadable category leaves its series uncoloured and does not shift the others', () => {
+    document.documentElement.style.setProperty('--tl-category-2-surface', 'not-a-colour');
+    const { result } = renderHook(() => useThemeDefaults(barChart(10)));
 
-    expect(result.current.options.color).toBe('#aabbcc');
-    expect(result.current.options.borderColor).toBe('#ddeeff');
+    const datasets = result.current.data.datasets;
+    expect(datasets[1].borderColor).toBeUndefined();
+    expect(datasets[1].backgroundColor).toBeUndefined();
+    expect(datasets[2].borderColor).toBe(LIGHT[2]);
+    expect(datasets[8].borderColor).toBe(LIGHT[0]);
+    expect(datasets[9].borderColor).toBeUndefined();
   });
 
   it('a pie takes one category per data point, a line draws its points transparent', () => {
@@ -163,6 +206,8 @@ describe('chart colours', () => {
     expect(result.current.data.datasets[0].borderColor).toBeUndefined();
     expect(result.current.data.datasets[0].backgroundColor).toBeUndefined();
     expect(result.current.options.color).toBeUndefined();
+    expect(result.current.options.scales?.y?.grid).toBeUndefined();
+    expect(result.current.options.plugins).toBeUndefined();
   });
 
   it('a token written as rgb() or a short hex is read as a hex colour', () => {
@@ -175,12 +220,128 @@ describe('chart colours', () => {
   });
 });
 
-describe('chart control', () => {
-  /** Chart.js cannot draw into jsdom: the canvas answers no context, and the chart reports it on the console. */
-  beforeEach(() => {
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+/** A chart of titles on every level, so that every colour of a scale and a plugin is there to read. */
+function titledChart(type: string, scales: Record<string, unknown> | undefined) {
+  return {
+    type,
+    data: { labels: ['a', 'b', 'c'], datasets: [{ label: 's1', data: [1, 2, 3] }, { label: 's2', data: [3, 2, 1] }] },
+    options: {
+      scales,
+      plugins: { title: { display: true, text: 'Title' }, subtitle: { display: true, text: 'Subtitle' } },
+    },
+  };
+}
+
+/** The titles of the axes, so that the colour of an axis title is on a scale that draws one. */
+const AXIS_TITLES = { x: { title: { display: true, text: 'X' } }, y: { title: { display: true, text: 'Y' } } };
+
+describe('chart scales (a real Chart.js chart)', () => {
+  /** The colours of a cartesian scale, as Chart.js resolved them. */
+  function cartesian(chart: Chart, id: string) {
+    const options = (chart.scales[id] as any).options;
+    return { grid: options.grid.color, border: options.border.color, ticks: options.ticks.color, title: options.title.color };
+  }
+
+  it('grid, axis line, tick labels and axis title of a bar chart take the theme, and follow the mode', async () => {
+    const { result } = renderHook(() => useThemeDefaults(titledChart('bar', AXIS_TITLES)));
+    const { chart, repaint } = drawChart(result.current);
+
+    for (const id of ['x', 'y']) {
+      expect(cartesian(chart, id), id).toEqual(
+        { grid: COLORS.light.grid, border: COLORS.light.grid, ticks: COLORS.light.text, title: COLORS.light.text });
+    }
+    expect((chart as any).titleBlock.options.color).toBe(COLORS.light.text);
+    expect((chart.options as any).plugins.subtitle.color).toBe(COLORS.light.text);
+    expect((chart as any).legend.options.labels.color).toBe(COLORS.light.text);
+
+    switchMode('dark');
+    await waitFor(() => expect(result.current.options.scales.y.grid.color).toBe(COLORS.dark.grid));
+    repaint(result.current);
+
+    for (const id of ['x', 'y']) {
+      expect(cartesian(chart, id), id).toEqual(
+        { grid: COLORS.dark.grid, border: COLORS.dark.grid, ticks: COLORS.dark.text, title: COLORS.dark.text });
+    }
+    expect((chart as any).titleBlock.options.color).toBe(COLORS.dark.text);
+    expect((chart.options as any).plugins.subtitle.color).toBe(COLORS.dark.text);
+    expect((chart as any).legend.options.labels.color).toBe(COLORS.dark.text);
+    chart.destroy();
   });
+
+  it('the axes Chart.js creates itself are themed too: a line chart without scales in its config', () => {
+    const { result } = renderHook(() => useThemeDefaults(titledChart('line', undefined)));
+    const { chart } = drawChart(result.current);
+
+    for (const id of ['x', 'y']) {
+      expect(cartesian(chart, id), id).toMatchObject({ grid: COLORS.light.grid, ticks: COLORS.light.text });
+    }
+    chart.destroy();
+  });
+
+  it('a radar chart themes its radial scale: lines, spokes, labels, tick backdrop', async () => {
+    document.documentElement.style.setProperty('--tl-surface-layer', '#ffffff');
+    const { result } = renderHook(() => useThemeDefaults(titledChart('radar', undefined)));
+    const { chart, repaint } = drawChart(result.current);
+    const radial = () => (chart.scales.r as any).options;
+
+    expect(radial().grid.color).toBe(COLORS.light.grid);
+    expect(radial().angleLines.color).toBe(COLORS.light.grid);
+    expect(radial().pointLabels.color).toBe(COLORS.light.text);
+    expect(radial().ticks.color).toBe(COLORS.light.text);
+    expect(radial().ticks.backdropColor).toBe('#ffffffbf');
+    expect(Object.keys(chart.scales)).toEqual(['r']);
+
+    act(() => {
+      document.documentElement.style.setProperty('--tl-surface-layer', '#101828');
+    });
+    switchMode('dark');
+    await waitFor(() => expect(result.current.options.scales.r.grid.color).toBe(COLORS.dark.grid));
+    repaint(result.current);
+
+    expect(radial().grid.color).toBe(COLORS.dark.grid);
+    expect(radial().angleLines.color).toBe(COLORS.dark.grid);
+    expect(radial().pointLabels.color).toBe(COLORS.dark.text);
+    expect(radial().ticks.backdropColor).toBe('#101828bf');
+    chart.destroy();
+  });
+
+  it('a pie gets no axes', () => {
+    const { result } = renderHook(() => useThemeDefaults(titledChart('pie', undefined)));
+    expect(result.current.options.scales).toBeUndefined();
+
+    const { chart } = drawChart(result.current);
+    expect(Object.keys(chart.scales)).toEqual([]);
+    expect((chart as any).titleBlock.options.color).toBe(COLORS.light.text);
+    chart.destroy();
+  });
+
+  it('colours of the server on a scale or a plugin win, the rest of the scale takes the theme', () => {
+    const config = titledChart('bar', {
+      y: { grid: { color: '#111111' }, ticks: { color: '#222222' }, title: { display: true, text: 'Y', color: '#333333' } },
+    });
+    (config.options.plugins.title as any).color = '#444444';
+    const { result } = renderHook(() => useThemeDefaults(config));
+    const { chart } = drawChart(result.current);
+
+    expect(cartesian(chart, 'y')).toEqual({ grid: '#111111', border: COLORS.light.grid, ticks: '#222222', title: '#333333' });
+    expect(cartesian(chart, 'x')).toMatchObject({ grid: COLORS.light.grid, ticks: COLORS.light.text });
+    expect((chart as any).titleBlock.options.color).toBe('#444444');
+    chart.destroy();
+  });
+
+  it('a chart of the page does not change the defaults of Chart.js, which every other chart shares', () => {
+    const before = JSON.stringify([Chart.defaults.color, Chart.defaults.borderColor]);
+    const { result } = renderHook(() => useThemeDefaults(titledChart('bar', undefined)));
+    const { chart } = drawChart(result.current);
+
+    expect(JSON.stringify([Chart.defaults.color, Chart.defaults.borderColor])).toBe(before);
+    chart.destroy();
+  });
+});
+
+describe('chart control', () => {
+  /** The canvas of jsdom has no 2D context; the stand-in lets the chart lay out and draw. */
+  beforeEach(stubContexts);
 
   it('no data is a status line, an error an alert, both of the package and centred by its root', async () => {
     mountAdapter(TLChart, { chartConfig: { type: 'bar', data: { datasets: [] } }, noDataMessage: 'Keine Daten' });

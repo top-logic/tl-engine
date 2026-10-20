@@ -4,4 +4,6 @@
 	<item name="i3" flag="0"/>
 	<item name="i4" flag="false"/>
 	<item name="i5" flag="maybe"/>
+	<item name="i6" flag=""/>
+	<item name="i7"/>
 </data>

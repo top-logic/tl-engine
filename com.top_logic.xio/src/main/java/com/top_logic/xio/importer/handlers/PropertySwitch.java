@@ -13,7 +13,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -78,12 +77,13 @@ public class PropertySwitch<C extends PropertySwitch.Config<?>> extends Configur
 			 * selecting this case, comma-separated.
 			 * 
 			 * <p>
-			 * Each of the values selects this case.
+			 * Each of the values selects this case. An empty entry, or an empty value of this
+			 * property, stands for the empty attribute value.
 			 * </p>
 			 */
 			@Name(VALUE)
 			@Mandatory
-			@Format(CommaSeparatedStrings.class)
+			@Format(CaseValues.class)
 			List<String> getValue();
 		}
 	}
@@ -106,13 +106,8 @@ public class PropertySwitch<C extends PropertySwitch.Config<?>> extends Configur
 
 		_cases = new HashMap<>();
 		for (ValueHandler valueHandler : config.getCases()) {
-			List<String> values = valueHandler.getValue();
-			if (values.isEmpty()) {
-				context.error("No value given for a case of the switch at " + config.location() + ".");
-				continue;
-			}
 			Handler handler = context.getInstance(valueHandler.getHandler());
-			for (String value : values) {
+			for (String value : valueHandler.getValue()) {
 				if (_cases.containsKey(value)) {
 					context.error("Duplicate case value '" + value + "' in the switch at " + config.location() + ".");
 					continue;

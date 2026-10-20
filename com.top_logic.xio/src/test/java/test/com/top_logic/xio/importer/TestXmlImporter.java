@@ -6,6 +6,7 @@
 package test.com.top_logic.xio.importer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -427,9 +428,25 @@ public class TestXmlImporter extends TestCase {
 	}
 
 	public void testMultiValueCase() throws XMLStreamException, IOException {
+		// The trailing empty entry of the case "0, false," selects it for the empty value.
+		assertEquals(List.of("on", "on", "off", "off", "unknown", "off"),
+			importMultiValueCase("testXmlImporter13-MultiValueCase.importer.xml"));
+	}
+
+	public void testEmptyCaseValue() throws XMLStreamException, IOException {
+		// The case with an empty value selects the empty attribute value.
+		assertEquals(List.of("on", "on", "off", "off", "unknown", "empty"),
+			importMultiValueCase("testXmlImporter13-MultiValueCase-empty.importer.xml"));
+	}
+
+	/**
+	 * Imports the multi-value test data with the given importer and returns the states of the
+	 * items that have a flag attribute.
+	 */
+	private List<Object> importMultiValueCase(String importerResource) throws XMLStreamException, IOException {
 		Protocol log = new AssertProtocol();
 		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
-			resource("testXmlImporter13-MultiValueCase.importer.xml"));
+			resource(importerResource));
 		TLModel model = loadModel(log, "testXmlImporter13-MultiValueCase.model.xml");
 		TLModule module = model.getModule("test.com.top_logic.xio.importer.test13");
 		TLObject container =
@@ -440,11 +457,17 @@ public class TestXmlImporter extends TestCase {
 
 		// Each value of a case selects that case, other values select the default.
 		List<? extends TLObject> elements = list(container.tValueByName("elements"));
-		assertEquals(5, elements.size());
-		assertEquals(List.of("i1", "i2", "i3", "i4", "i5"),
+		assertEquals(List.of("i1", "i2", "i3", "i4", "i5", "i6", "i7"),
 			elements.stream().map(item -> item.tValueByName("name")).toList());
-		assertEquals(List.of("on", "on", "off", "off", "unknown"),
-			elements.stream().map(item -> item.tValueByName("state")).toList());
+
+		// Without the attribute, no case runs.
+		assertNull(elements.get(6).tValueByName("state"));
+
+		List<Object> states = new ArrayList<>();
+		for (TLObject item : elements.subList(0, 6)) {
+			states.add(item.tValueByName("state"));
+		}
+		return states;
 	}
 
 	public void testMultiValueCaseDuplicate() {

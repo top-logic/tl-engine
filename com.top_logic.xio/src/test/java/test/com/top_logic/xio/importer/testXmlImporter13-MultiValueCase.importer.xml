@@ -11,7 +11,7 @@
 						<case value="1, true">
 							<assign property="state" value="x -> 'on'"/>
 						</case>
-						<case value="0,false">
+						<case value="0, false,">
 							<assign property="state" value="x -> 'off'"/>
 						</case>
 						<default>

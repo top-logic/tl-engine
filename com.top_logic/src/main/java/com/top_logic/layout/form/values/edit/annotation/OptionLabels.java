@@ -42,6 +42,7 @@ import com.top_logic.layout.LabelProvider;
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 @TagName("option-labels")
+@ControlAnnotation
 public @interface OptionLabels {
 
 	/**

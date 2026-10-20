@@ -1,5 +1,5 @@
 ---
-description: Read before choosing or changing the input control of a configuration property in a configuration form (classic EditorFactory or React ConfigControlService) - the meaning annotations @MultiLine, @CommonMark, @Code with CodeLanguage, @Html, @Inline, @OptionLabels, @Encrypted and @Options, the <annotation-controls> and <type-controls> / <providers> maps, the SPIs AnnotationControlProvider and ConfigAnnotationControlProvider, and defining a meaning annotation of your own (e.g. @ApplicationRelativeURL).
+description: Read before choosing or changing the input control of a configuration property in a configuration form (classic EditorFactory or React ConfigControlService) - the meaning annotations @MultiLine, @CommonMark, @Code with CodeLanguage, @Html, @Inline and @OptionLabels with their meta-annotation @ControlAnnotation, @Encrypted and @Options, the <annotation-controls> and <type-controls> / <providers> maps, the SPIs AnnotationControlProvider and ConfigAnnotationControlProvider, and defining a meaning annotation of your own (e.g. @ApplicationRelativeURL).
 order: 50
 ---
 
@@ -58,6 +58,11 @@ that cannot edit the value in that form returns `null`, and the next step decide
 All in `com.top_logic.layout.form.values.edit.annotation` unless noted, usable at the property or
 at its value type; `@Inline` and `@Encrypted` only at the property.
 
+Every annotation a form looks up in `<annotation-controls>` is marked with the meta-annotation
+`@ControlAnnotation`. Its usages list all such annotations of an application, including those
+modules define for their own properties. `@Encrypted` and `@Options` are not marked: both stacks
+evaluate them before any map, so no map entry can change their control.
+
 | Annotation | Meaning | Classic UI | React UI |
 |---|---|---|---|
 | `@MultiLine(rows)` | The text spans several lines. | text area | text area |
@@ -87,7 +92,9 @@ contributes:
 A module adds or replaces entries in its own `*.config.xml`. Entries are keyed by the annotation
 or type, and the configuration files of all modules are merged in module order, so a module above
 another overrides its entry, e.g. a code editor module replaces the text-area entry for `@Code`.
-The order of `<annotation-controls>` decides for a property that carries several of the
+The `annotation` of an entry must be marked with `@ControlAnnotation`; an entry for another
+annotation is rejected when the configuration is loaded, and a configuration form offers the marked
+annotations of the application to choose from. The order of `<annotation-controls>` decides for a property that carries several of the
 annotations. In both stacks, an entry for an annotation already configured is updated in place and
 keeps its position; an entry for a new annotation is appended. `config:position` (`begin`, `end`,
 `before`, `after` with `config:reference`) places or moves an entry elsewhere, and
@@ -162,6 +169,7 @@ full URL as link.
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @TagName("application-relative-url")
+@ControlAnnotation
 public @interface ApplicationRelativeURL {
 	// Pure marker.
 }
@@ -180,10 +188,13 @@ public class ApplicationRelativeURLProvider implements AnnotationControlProvider
 The property is annotated (`@ApplicationRelativeURL String getBaseURL();`) and the module's
 `tl-service-openapi-server.conf.config.xml` adds the `<annotation-control>` entry. Rules:
 
+- Mark it with `@ControlAnnotation`, or no map accepts an entry for it.
 - Name the annotation after what the value *is*, not after the control. The control is the
   decision of the form stack and may differ between the stacks.
 - Give it a `@TagName`, so it can also be added through a form's `<customizations>`.
 - Map it in every stack the module serves. A stack without an entry displays the property with its
-  default control.
+  default control. The tests `TestControlAnnotationCoverage` of the demo applications fail for a
+  marked annotation without an entry; one the React UI deliberately does not map (because its
+  module has no React UI) is listed there as exception with the reason.
 - Keep the annotation in the lowest module that owns the meaning, and the provider in the module
   that owns the control.

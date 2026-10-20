@@ -11,6 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 
 /**
  * States that a string property holds a URL path relative to the URL of the application.
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.annotation.TagName;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @TagName("application-relative-url")
+@ControlAnnotation
 public @interface ApplicationRelativeURL {
 
 	// Pure marker.

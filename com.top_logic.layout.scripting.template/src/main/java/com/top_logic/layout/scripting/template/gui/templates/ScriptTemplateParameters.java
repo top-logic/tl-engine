@@ -11,6 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 
 /**
  * States that a list property holds the parameters of a script template, each a
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.annotation.TagName;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @TagName("script-template-parameters")
+@ControlAnnotation
 public @interface ScriptTemplateParameters {
 
 	// Pure marker.

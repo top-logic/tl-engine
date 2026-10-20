@@ -59,14 +59,18 @@ import com.top_logic.layout.form.values.CommonMarkText;
 import com.top_logic.layout.form.values.HtmlText;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.AnnotationControlProvider;
+import com.top_logic.layout.form.values.edit.ControlAnnotationFormat;
+import com.top_logic.layout.form.values.edit.ControlAnnotationOptions;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.EditorFactory.AnnotationControlMapping;
 import com.top_logic.layout.form.values.edit.EditorFactory.Config;
 import com.top_logic.layout.form.values.edit.EditorFactory.TypeControlMapping;
+import com.top_logic.layout.form.values.edit.I18NConstants;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Code;
 import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
@@ -91,14 +95,23 @@ public class TestEditorFactoryControls extends TestCase {
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ ElementType.METHOD, ElementType.TYPE })
+	@ControlAnnotation
 	public @interface First {
 		String value();
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ ElementType.METHOD, ElementType.TYPE })
+	@ControlAnnotation
 	public @interface Second {
 		String value();
+	}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target({ ElementType.METHOD, ElementType.TYPE })
+	@ControlAnnotation
+	public @interface Third {
+		// Pure marker.
 	}
 
 	/**
@@ -537,7 +550,7 @@ public class TestEditorFactoryControls extends TestCase {
 		String second = "<config>"
 			+ "<annotation-controls>"
 			+ annotationControl(First.class, OtherFirstProvider.class)
-			+ annotationControl(Deprecated.class, FirstProvider.class)
+			+ annotationControl(Third.class, FirstProvider.class)
 			+ "</annotation-controls>"
 			+ "</config>";
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestEditorFactoryControls.class);
@@ -548,10 +561,58 @@ public class TestEditorFactoryControls extends TestCase {
 		context.checkErrors();
 
 		List<AnnotationControlMapping> entries = config.getAnnotationControls();
-		assertEquals(Arrays.asList(First.class, Second.class, Deprecated.class),
+		assertEquals(Arrays.asList(First.class, Second.class, Third.class),
 			entries.stream().map(AnnotationControlMapping::getAnnotation).toList());
 		assertEquals(Arrays.asList(OtherFirstProvider.class, SecondProvider.class, FirstProvider.class),
 			entries.stream().map(entry -> entry.getImpl().getImplementationClass()).toList());
+	}
+
+	/**
+	 * An annotation not marked with {@link ControlAnnotation} cannot key an entry.
+	 */
+	public void testUnmarkedAnnotationRejected() {
+		String config = "<config>"
+			+ "<annotation-controls>"
+			+ annotationControl(Deprecated.class, FirstProvider.class)
+			+ "</annotation-controls>"
+			+ "</config>";
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestEditorFactoryControls.class);
+		try {
+			new ConfigurationReader(context,
+				Collections.singletonMap("config", TypedConfiguration.getConfigurationDescriptor(Config.class)))
+					.setSource(CharacterContents.newContent(config))
+					.read();
+			context.checkErrors();
+			fail("An entry for an annotation without the control annotation mark must be rejected.");
+		} catch (ConfigurationException ex) {
+			// Expected.
+		}
+
+		try {
+			ControlAnnotationFormat.INSTANCE.getValue(AnnotationControlMapping.ANNOTATION, Deprecated.class.getName());
+			fail("An annotation without the control annotation mark must be rejected.");
+		} catch (ConfigurationException ex) {
+			assertEquals(I18NConstants.ERROR_NO_CONTROL_ANNOTATION__CLASS.getKey(), ex.getErrorKey().plain().getKey());
+		}
+
+		try {
+			ControlAnnotationFormat.INSTANCE.getValue(AnnotationControlMapping.ANNOTATION, String.class.getName());
+			fail("A class that is no annotation must be rejected.");
+		} catch (ConfigurationException ex) {
+			assertEquals(I18NConstants.ERROR_NO_CONTROL_ANNOTATION__CLASS.getKey(), ex.getErrorKey().plain().getKey());
+		}
+	}
+
+	/**
+	 * The options of an entry's annotation are the marked annotations of the application.
+	 */
+	public void testControlAnnotationOptions() {
+		List<Class<?>> options = ControlAnnotationOptions.controlAnnotations();
+		assertTrue(options.contains(MultiLine.class));
+		assertTrue(options.contains(Code.class));
+		assertTrue(options.contains(Inline.class));
+		assertFalse(options.contains(Deprecated.class));
+		assertFalse(options.contains(Options.class));
 	}
 
 	private static String annotationControl(Class<? extends Annotation> annotation, Class<?> impl) {

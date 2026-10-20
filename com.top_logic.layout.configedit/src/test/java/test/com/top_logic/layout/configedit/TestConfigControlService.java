@@ -75,6 +75,7 @@ import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Code;
 import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -443,6 +444,7 @@ public class TestConfigControlService extends TestCase {
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ ElementType.METHOD, ElementType.TYPE })
+	@ControlAnnotation
 	public @interface AsCheckbox {
 		// Pure marker.
 	}
@@ -455,6 +457,7 @@ public class TestConfigControlService extends TestCase {
 	 */
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target({ ElementType.METHOD, ElementType.TYPE })
+	@ControlAnnotation
 	public @interface Caption {
 
 		/**

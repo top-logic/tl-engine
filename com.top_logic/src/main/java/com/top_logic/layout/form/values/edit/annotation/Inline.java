@@ -38,6 +38,7 @@ import com.top_logic.basic.config.annotation.TagName;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @TagName("inline")
+@ControlAnnotation
 public @interface Inline {
 
 	// Pure marker.

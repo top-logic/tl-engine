@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.configedit;
 
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.layout.form.values.edit.ControlAnnotationFormat;
+import com.top_logic.layout.form.values.edit.ControlAnnotationOptions;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,7 +25,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Encrypted;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -35,6 +37,7 @@ import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -223,9 +226,15 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 		/**
 		 * The annotation type a property must carry for this entry to apply.
+		 *
+		 * <p>
+		 * Only an annotation marked with {@link ControlAnnotation} can be given.
+		 * </p>
 		 */
 		@Name(ANNOTATION)
 		@Mandatory
+		@Format(ControlAnnotationFormat.class)
+		@Options(fun = ControlAnnotationOptions.class)
 		Class<? extends Annotation> getAnnotation();
 
 		/**

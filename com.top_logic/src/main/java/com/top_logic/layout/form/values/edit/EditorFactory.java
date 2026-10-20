@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.form.values.edit;
 
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import static com.top_logic.basic.util.Utils.*;
 import static com.top_logic.layout.form.template.model.Templates.*;
 import static com.top_logic.layout.form.values.Fields.*;
@@ -92,6 +94,7 @@ import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.annotation.UseBuilder;
@@ -259,9 +262,15 @@ public class EditorFactory implements AnnotationCustomizations {
 
 		/**
 		 * The annotation type a property must carry for this entry to apply.
+		 *
+		 * <p>
+		 * Only an annotation marked with {@link ControlAnnotation} can be given.
+		 * </p>
 		 */
 		@Name(ANNOTATION)
 		@Mandatory
+		@Format(ControlAnnotationFormat.class)
+		@Options(fun = ControlAnnotationOptions.class)
 		Class<? extends Annotation> getAnnotation();
 
 		/**

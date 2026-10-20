@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.TagName;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @TagName("common-mark")
+@ControlAnnotation
 public @interface CommonMark {
 
 	// Pure marker annotation.

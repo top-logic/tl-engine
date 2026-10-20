@@ -31,6 +31,7 @@ import com.top_logic.layout.form.values.MultiLineText;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @TagName("multi-line")
+@ControlAnnotation
 public @interface MultiLine {
 
 	/** Name of {@link #rows()}. */

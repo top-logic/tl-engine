@@ -34,6 +34,7 @@ import com.top_logic.basic.config.annotation.TagName;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @TagName("html")
+@ControlAnnotation
 public @interface Html {
 
 	/** Name of {@link #features()}. */

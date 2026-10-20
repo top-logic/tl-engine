@@ -327,9 +327,30 @@
 							</format>
 						</annotations>
 					</property>
+					<property name="dateTimeSeconds"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<format>
+								<date-time
+									date-style="medium"
+									time-style="medium"
+								/>
+							</format>
+						</annotations>
+					</property>
 					<property name="time"
 						type="tl.core:Time"
 					/>
+					<property name="timeSeconds"
+						type="tl.core:Time"
+					>
+						<annotations>
+							<format>
+								<time style="medium"/>
+							</format>
+						</annotations>
+					</property>
 					<property name="duration"
 						type="tl.core:Duration"
 					/>

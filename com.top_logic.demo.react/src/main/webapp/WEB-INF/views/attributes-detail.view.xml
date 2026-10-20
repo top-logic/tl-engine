@@ -93,7 +93,9 @@
 				<field attribute="date"/>
 				<field attribute="dateTime"/>
 				<field attribute="dateTimeShort"/>
+				<field attribute="dateTimeSeconds"/>
 				<field attribute="time"/>
+				<field attribute="timeSeconds"/>
 				<field attribute="duration"/>
 			</group>
 			<group

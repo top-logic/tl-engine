@@ -9,6 +9,8 @@ const { useCallback } = React;
  *
  * Which HTML input it is - a date, a time of day, or both - the server decides from the attribute's
  * type and states in `inputType`; the value is exchanged in the ISO form belonging to that input.
+ * A field whose `precision` is `seconds` lets the seconds of a time of day be entered (`step="1"`)
+ * and exchanges the time with its seconds.
  *
  * A read-only field shows the localized value, drawn by the part `FieldValue`; a disabled field
  * renders the input as an inactive one (native `disabled`, see showsValueOnly).
@@ -38,6 +40,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
     <span id={controlId}>
       <input
         type={state.inputType ?? 'date'}
+        step={state.precision === 'seconds' ? 1 : undefined}
         value={(value as string) ?? ''}
         onChange={handleChange}
         disabled={state.disabled === true}

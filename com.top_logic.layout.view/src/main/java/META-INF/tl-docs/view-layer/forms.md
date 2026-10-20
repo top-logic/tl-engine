@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes, and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -191,6 +191,78 @@ The rule counts only errors on display: an error the user cannot see yet leaves 
 **A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
+
+## Saving with an action chain
+
+A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-and-the-chain-can-branch)). The chain runs in the form's context and starts without a value; `<read-form-object/>` puts the object the form displays into the chain, and `<store-form-state/>` continues with the object it stored. Save stays disabled while the form displays an error.
+
+Four actions work on the edit session of the form they run in:
+
+- `<store-form-state/>` (`StoreFormStateAction`) checks the input, reveals every error and aborts the chain while one remains; otherwise it stores the input and continues with the stored object. The edit session goes on, now without unsaved changes. Inside a `<with-transaction>`, the storing joins that transaction, and the scripts after it in the same `<with-transaction>` are committed together with the stored values - or not at all.
+- `<leave-edit-mode/>` (`LeaveEditModeAction`) ends the edit session without storing or dropping anything. A form that still holds unsaved changes refuses: the chain aborts and the form stays in edit mode with its input.
+- `<discard-form-state/>` (`DiscardFormStateAction`) drops the input and ends the edit session.
+- `<enter-edit-mode/>` (`EnterEditModeAction`) starts the edit session like the form's own Edit button: it locks the object and is subject to the edit permission, the right to write the object and the rules of `<edit-executability>`. A form that shows no object, or whose permission refuses, aborts the chain, so no later action runs on a form that cannot be edited. A form already in edit mode keeps its session.
+
+A save that post-processes the stored values stores them and runs its script in one transaction, and leaves the edit mode after it:
+
+```xml
+<form input="ticket">
+	<save-action>
+		<with-transaction>
+			<store-form-state/>
+			<execute-script function="t -> ..."/>
+		</with-transaction>
+		<leave-edit-mode/>
+	</save-action>
+	...
+</form>
+```
+
+`<leave-edit-mode/>` belongs outside the `<with-transaction>`: inside it, the form would show view mode before the commit, and a commit that fails would have ended the edit session already. After it, a failed commit aborts the chain before the form leaves edit mode, so the form stays in edit mode.
+
+The actions find the form only where the form runs them: in its `<save-action>` and `<cancel-action>`, and in the commands of its own `<commands>`. A command in the `<commands>` of a surrounding `<panel>` runs outside the form, and the four actions have no effect there. A form with `mode-switch="false"` offers no Edit, Save and Cancel of its own, so its `<commands>` can provide them with these actions. The form publishes its mode on the channel named by `editMode`, and the commands decide on it whether they are shown. The tickets demo derives the ticket in view mode and in edit mode from that channel and hides each command while its input is empty:
+
+```xml
+<channels>
+	<channel name="ticket"/>
+	<channel name="ticketEditMode"/>
+	<derived-channel name="viewedTicket"
+		expr="t -> editing -> if($editing == true, null, $t)"
+		inputs="ticket,ticketEditMode"
+	/>
+	<derived-channel name="editedTicket"
+		expr="t -> editing -> if($editing == true, $t, null)"
+		inputs="ticket,ticketEditMode"
+	/>
+</channels>
+...
+<form editMode="ticketEditMode" input="ticket" mode-switch="false">
+	<field attribute="name"/>
+	<commands>
+		<generic-command input="viewedTicket" placement="TOOLBAR">
+			<label><en>Edit</en></label>
+			<executability><null-input-hidden/></executability>
+			<enter-edit-mode/>
+		</generic-command>
+		<generic-command input="editedTicket" placement="TOOLBAR">
+			<label><en>Save</en></label>
+			<executability><null-input-hidden/></executability>
+			<with-transaction>
+				<store-form-state/>
+				<execute-script function="t -> ..."/>
+			</with-transaction>
+			<leave-edit-mode/>
+		</generic-command>
+		<generic-command input="editedTicket" placement="TOOLBAR">
+			<label><en>Cancel</en></label>
+			<executability><null-input-hidden/></executability>
+			<discard-form-state/>
+		</generic-command>
+	</commands>
+</form>
+```
+
+A command of the form's `<commands>` that stores the form state is disabled while the form displays an error (`<form-valid/>`, see [validation](#validation)) without stating it.
 
 ## Derived fields
 

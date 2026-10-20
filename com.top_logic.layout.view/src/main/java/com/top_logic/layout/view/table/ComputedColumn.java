@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -18,6 +19,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -186,6 +188,20 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 	@Override
 	public List<String> declaredNames() {
 		return List.of(_name);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The channels the functions of the column read, and the ones its filter reads.
+	 * </p>
+	 */
+	@Override
+	public List<ChannelRef> inputs() {
+		List<ChannelRef> result = new ArrayList<>(_functions.inputs());
+		result.addAll(super.inputs());
+		return result;
 	}
 
 	@Override

@@ -288,6 +288,20 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		return result;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The channels the computed object is read with, and the ones the embedded declarations read.
+	 * </p>
+	 */
+	@Override
+	public List<ChannelRef> inputs() {
+		List<ChannelRef> result = new ArrayList<>(_inputs);
+		result.addAll(ColumnDeclarations.inputs(_columns));
+		return result;
+	}
+
 	@Override
 	public List<SortColumn> defaultSort() {
 		List<SortColumn> result = new ArrayList<>();

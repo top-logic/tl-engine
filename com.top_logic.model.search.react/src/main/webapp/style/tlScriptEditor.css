@@ -8,64 +8,70 @@
 	min-height: 200px;
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--corner-radius);
-	background: var(--field);
+	/* The gutter and the scroller reach the border of the frame: no padding at the sides. */
+	padding: 0;
 }
 
+.tlScriptEditor[hidden] {
+	display: none;
+}
+
+/*
+ * The root is a field of the design system with code text (tl-field, tl-type-code): border, hover
+ * and the error through aria-invalid come from the field, the font from the root, which the
+ * scroller of CodeMirror takes over instead of its own. This sheet holds the layout of the editor
+ * and the classes of CodeMirror, whose names cannot be replaced.
+ */
 .tlScriptEditor .cm-editor {
 	flex: 1;
-	font-size: var(--body-02-font-size);
-	line-height: var(--body-02-line-height);
-}
-
-.tlScriptEditor:focus-within {
-	border-color: var(--focus);
-	box-shadow: 0 0 0 1px var(--focus);
-}
-
-.tlScriptEditor .cm-editor.cm-focused {
-	outline: none;
 }
 
 .tlScriptEditor .cm-scroller {
 	overflow: auto;
+	font-family: inherit;
+	line-height: inherit;
 }
 
-.tlScriptEditor .cm-content {
-	font-family: var(--font-family-mono);
+/* The keyboard focus ring of the design system, inside the frame; CodeMirror's own marks are off. */
+.tlScriptEditor .cm-editor.cm-focused {
+	outline: none;
+}
+
+.tlScriptEditor .cm-content:focus-visible {
+	outline: var(--tl-focus-width) solid var(--tl-focus-ring);
+	outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 .tlScriptEditor .cm-gutters {
-	background: var(--layer);
-	border-right: 1px solid var(--border-subtle);
-	color: var(--text-secondary);
+	background: var(--tl-surface-layer);
+	border-right: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	color: var(--tl-text-secondary);
 }
 
 .tlScriptEditor .cm-activeLineGutter {
-	background: var(--layer-accent);
-	color: var(--layer-accent-text);
+	background: var(--tl-surface-interactive-selected);
+	color: var(--tl-text-primary);
 }
 
 .tlScriptEditor .cm-activeLine {
-	background: var(--background-selected);
+	background: var(--tl-surface-interactive-selected);
 }
 
 .tlScriptEditor .cm-selectionBackground {
-	background: var(--script-editor-text-highlight) !important;
+	background: var(--tl-surface-brand-subtle) !important;
 }
 
 .tlScriptEditor .cm-tooltip-autocomplete {
-	font-family: var(--font-family-mono);
-	font-size: var(--body-02-font-size);
+	font-family: var(--tl-font-family-mono);
+	font-size: var(--tl-font-size-body);
 }
 
 .tlScriptEditor .cm-diagnostic-error {
-	border-left-color: var(--support-error);
+	border-left-color: var(--tl-status-error-border);
 }
 
 .tlScriptEditor .cm-diagnostic-warning {
-	border-left-color: var(--support-warning);
+	border-left-color: var(--tl-status-warning-border);
 }
 
 /*
@@ -75,21 +81,18 @@
  */
 .tlScriptEditor .cm-editor .cm-tooltip.cm-completionInfo,
 .tlScriptEditor .cm-editor .cm-tooltip-hover {
-	background: var(--layer);
-	color: var(--text-primary);
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--border-radius-02);
-	box-shadow: var(--shadow-menu);
-	font-family: var(--font-family);
-	font-size: var(--body-compact-01-font-size);
-	line-height: var(--body-compact-01-line-height);
+	background: var(--tl-surface-overlay);
+	color: var(--tl-text-primary);
+	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	border-radius: var(--tl-radius-md);
+	box-shadow: var(--tl-shadow-popover);
 }
 
 .tlScriptEditor .cm-editor .cm-tooltip.cm-completionInfo,
 .tlScriptEditor .cm-editor .cm-tooltip-hover .tlScriptHover {
 	overflow: auto;
 	white-space: normal;
-	padding: var(--spacing-02) var(--spacing-03);
+	padding: var(--tl-space-xs) var(--tl-space-md);
 }
 
 /* The width of the info panel is set by CodeMirror, which places it next to the option list. */
@@ -103,11 +106,9 @@
 }
 
 .tlScriptEditor .tlScriptDoc h2 {
-	font-size: var(--heading-compact-02-font-size);
-	line-height: var(--heading-compact-02-line-height);
-	letter-spacing: var(--heading-compact-02-letter-spacing);
-	font-weight: bold;
-	margin: var(--spacing-03) 0 var(--spacing-01);
+	font-size: var(--tl-font-size-heading-sm);
+	font-weight: 600;
+	margin: var(--tl-space-md) 0 var(--tl-space-2xs);
 }
 
 .tlScriptEditor .tlScriptDoc h2:first-child {
@@ -116,34 +117,33 @@
 
 .tlScriptEditor .tlScriptDoc h3,
 .tlScriptEditor .tlScriptDoc h4 {
-	font-size: var(--body-compact-01-font-size);
-	line-height: var(--body-compact-01-line-height);
-	font-weight: bold;
-	margin: var(--spacing-02) 0 var(--spacing-01);
+	font-size: inherit;
+	font-weight: 600;
+	margin: var(--tl-space-xs) 0 var(--tl-space-2xs);
 }
 
 .tlScriptEditor .tlScriptDoc p {
-	margin: 0 0 var(--spacing-02);
+	margin: 0 0 var(--tl-space-xs);
 }
 
 .tlScriptEditor .tlScriptDoc code,
 .tlScriptEditor .tlScriptDoc pre {
-	font-family: var(--font-family-mono);
+	font-family: var(--tl-font-family-mono);
 }
 
 .tlScriptEditor .tlScriptDoc pre {
 	white-space: pre-wrap;
 	tab-size: 2;
-	margin: 0 0 var(--spacing-02);
+	margin: 0 0 var(--tl-space-xs);
 }
 
 .tlScriptEditor .tlScriptDoc a {
-	color: var(--link-primary);
+	color: var(--tl-text-link);
 }
 
 .tlScriptEditor .tlScriptDoc table.tlDocTable {
 	border-collapse: collapse;
-	margin: 0 0 var(--spacing-02);
+	margin: 0 0 var(--tl-space-xs);
 }
 
 .tlScriptEditor .tlScriptDoc table.tlDocTable th,
@@ -151,23 +151,23 @@
 	font: inherit;
 	text-align: left;
 	vertical-align: top;
-	border: 1px solid var(--border-subtle);
-	padding: var(--spacing-01) var(--spacing-02);
+	border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	padding: var(--tl-space-2xs) var(--tl-space-xs);
 }
 
 .tlScriptEditor .tlScriptDoc table.tlDocTable th {
-	color: var(--text-primary);
-	font-weight: bold;
+	color: var(--tl-text-primary);
+	font-weight: 600;
 	white-space: nowrap;
-	background: var(--layer-01);
+	background: var(--tl-surface-layer-nested);
 }
 
 /* Long type names such as "Zahl/Zeichenkette/Wahrheitswert" break to fit the popup width. */
 .tlScriptEditor .tlScriptDoc table.tlDocTable td {
-	color: var(--text-secondary);
+	color: var(--tl-text-secondary);
 	overflow-wrap: anywhere;
 }
 
 .tlScriptEditor .tlScriptDoc .tlDocReturnType {
-	color: var(--text-accent);
+	color: var(--tl-text-link);
 }

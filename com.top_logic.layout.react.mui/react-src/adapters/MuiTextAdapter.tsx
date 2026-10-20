@@ -37,10 +37,10 @@ const COLORS: Record<TextStateJson.Tone, TypographyProps['color'] | undefined> =
 };
 
 /**
- * The color of text on a filled surface: the theme color TLText draws it in (`text-on-color`),
- * else the white of the MUI palette. The surface is the application's, not one the text knows.
+ * The color of text on a filled surface: the role of the design system TLText draws it in
+ * (`text-on-brand`). The surface is the application's, not one the text knows.
  */
-const ON_COLOR_SX: SxProps<Theme> = { color: 'var(--text-on-color, var(--mui-palette-common-white))' };
+const ON_COLOR_SX: SxProps<Theme> = { color: 'var(--tl-text-on-brand)' };
 
 /**
  * The color role a text of the given tone is drawn in as a pill without a role of its own, as
@@ -64,7 +64,7 @@ function roleOfTone(tone: TextStateJson.Tone): ColorRole {
  *     display → `h4`, label → `subtitle2`, caption → `caption`;</li>
  * <li>tone → the `color` of the `Typography`: primary → `textPrimary`, secondary and helper →
  *     `textSecondary`, placeholder → `textDisabled`, success, warning and error → the palette color of that
- *     name, on-color → the theme color for text on a filled surface (`text-on-color`, as in TLText);</li>
+ *     name, on-color → the role for text on a filled surface (`text-on-brand`, as in TLText);</li>
  * <li>overflow `ellipsis` → `noWrap`;</li>
  * <li>colorRole, or appearance `pill` → the part `Chip` of the role (for a pill without a role of
  *     its own, the role of its tone) inside a `span`, as TLText draws it; an empty text is never a

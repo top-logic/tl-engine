@@ -101,10 +101,9 @@ const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const binding = useMemo(() => bindingFor(language), [language]);
 
-  const cls = [
-    'tlCodeEditor',
-    state.hasError === true ? 'tlCodeEditor--error' : '',
-  ].filter(Boolean).join(' ');
+  // The root is a field of the design system with code text; `tlCodeEditor` scopes the CodeMirror
+  // rules of the stylesheet. The error is `aria-invalid`, not a class.
+  const cls = 'tlCodeEditor tl-field tl-type-code';
 
   return (
     <CodeEditor
@@ -115,6 +114,7 @@ const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       extraExtensions={binding.extras}
       onChange={setValue}
       className={rootClassName(state, cls)}
+      invalid={state.hasError === true}
       contentAttributes={{ id: inputId, ...labelProps }}
     />
   );

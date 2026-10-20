@@ -1,37 +1,47 @@
+/*
+ * Code editor on the design system: the root is a field (tl-field: border, hover, error through
+ * aria-invalid) with code text (tl-type-code); this sheet only holds what the field cannot know,
+ * the layout of the editor inside it and the classes of CodeMirror, a library whose classes cannot
+ * be replaced. The sheet stays unlayered: it must beat the base theme CodeMirror writes into the
+ * page at runtime, which is unlayered too and would win against every rule of a layer.
+ */
 .tlCodeEditor {
 	min-height: 160px;
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--corner-radius);
-	background: var(--field);
+	/* The gutter and the scroller reach the border of the frame: no padding at the sides. */
+	padding: 0;
+}
+
+.tlCodeEditor[hidden] {
+	display: none;
 }
 
 .tlCodeEditor .cm-editor {
 	flex: 1;
-	font-size: var(--body-02-font-size);
-	line-height: var(--body-02-line-height);
 }
 
-.tlCodeEditor:focus-within {
-	border-color: var(--focus);
-	box-shadow: 0 0 0 1px var(--focus);
+/*
+ * The text of the editor is the code text of the root: CodeMirror sets a font of its own on the
+ * scroller, which hands the root's font down instead.
+ */
+.tlCodeEditor .cm-scroller {
+	overflow: auto;
+	font-family: inherit;
+	line-height: inherit;
 }
 
-.tlCodeEditor--error {
-	border-color: var(--support-error);
-}
-
+/*
+ * The focus ring of the keyboard focus of the design system, drawn inside the frame: the content
+ * reaches the border, an outer ring would lie on it. CodeMirror's own marks of the focus are off.
+ */
 .tlCodeEditor .cm-editor.cm-focused {
 	outline: none;
 }
 
-.tlCodeEditor .cm-scroller {
-	overflow: auto;
-}
-
-.tlCodeEditor .cm-content {
-	font-family: var(--font-family-mono);
+.tlCodeEditor .cm-content:focus-visible {
+	outline: var(--tl-focus-width) solid var(--tl-focus-ring);
+	outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 /*
@@ -53,24 +63,24 @@
 }
 
 .tlCodeEditor .cm-gutters {
-	background: var(--layer);
-	border-right: 1px solid var(--border-subtle);
-	color: var(--text-secondary);
+	background: var(--tl-surface-layer);
+	border-right: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	color: var(--tl-text-secondary);
 }
 
 .tlCodeEditor .cm-activeLineGutter {
-	background: var(--layer-accent);
-	color: var(--layer-accent-text);
+	background: var(--tl-surface-interactive-selected);
+	color: var(--tl-text-primary);
 }
 
 .tlCodeEditor .cm-activeLine {
-	background: var(--background-selected);
+	background: var(--tl-surface-interactive-selected);
 }
 
 .tlCodeEditor .cm-diagnostic-error {
-	border-left-color: var(--support-error);
+	border-left-color: var(--tl-status-error-border);
 }
 
 .tlCodeEditor .cm-diagnostic-warning {
-	border-left-color: var(--support-warning);
+	border-left-color: var(--tl-status-warning-border);
 }

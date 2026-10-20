@@ -103,21 +103,34 @@ function themedScale(scale: any, radial: boolean, theme: ThemeColors): any {
   return themed;
 }
 
-/** The ids of the axes Chart.js creates itself for the types of the chart: none for a pie or a doughnut. */
-function defaultAxes(config: any): string[] {
-  const types: string[] = [config.type, ...(config.data?.datasets ?? []).map((ds: any) => ds.type)].filter(Boolean);
-  const axes: string[] = [];
-  if (types.some(type => CARTESIAN.includes(type))) axes.push('x', 'y');
-  if (types.some(type => RADIAL.includes(type))) axes.push('r');
-  return axes;
+/** The axis a configured scale belongs to, as Chart.js decides it: its `axis` option, else the first letter of its id. */
+const axisOf = (id: string, scale: any): string => scale?.axis ?? id.charAt(0).toLowerCase();
+
+/**
+ * The ids of the scales Chart.js builds for the config (`mergeScaleConfig`) - and no others, a scale added here would be
+ * drawn as an empty axis. Those are the configured ones, and per dataset the axes of its type, each under the id the
+ * dataset names with `xAxisID`, `yAxisID` or `rAxisID`, else under the axis itself (`x`, `y`, `r`), whether or not a
+ * configured scale of that axis exists. A pie or a doughnut has no axes.
+ */
+function scaleIds(config: any): string[] {
+  const ids = new Set(Object.keys(config.options?.scales ?? {}));
+  for (const ds of config.data?.datasets ?? []) {
+    const type = ds.type ?? config.type;
+    const axes = CARTESIAN.includes(type) ? ['x', 'y'] : RADIAL.includes(type) ? ['r'] : [];
+    for (const axis of axes) {
+      ids.add(ds[axis + 'AxisID'] || axis);
+    }
+  }
+  return [...ids];
 }
 
 /**
  * Merges the colours of the theme into a Chart.js config: the series that have no colour of their own take the
  * categories of the theme in turn (the ninth series the first again), grid, axis lines, tick labels and titles of every
  * scale the separator and the secondary text, the legend, the title and the subtitle the secondary text. Colours in
- * the config - of a series, a scale, a plugin - take precedence. A category that is not a readable colour leaves its
- * series uncoloured; it does not shift the others.
+ * the config - of a series, a scale, a plugin - take precedence. A category that is not a readable colour gives its
+ * series the neutral separator colour; it does not shift the others. Without any readable category nothing is coloured,
+ * and the Colors plugin of Chart.js, which would make a palette up, is off unless the server turns it on.
  *
  * The colours are written into the config of this chart, never into `Chart.defaults`: several charts, in different
  * themes, share a page.
@@ -128,14 +141,16 @@ export function useThemeDefaults(config: any): any {
   return React.useMemo(() => {
     if (!config) return config;
 
-    const { palette, textColor } = theme;
+    const { palette, gridColor, textColor } = theme;
     const merged = { ...config };
     const data = merged.data ? { ...merged.data } : {};
 
-    // Apply the categories to datasets that don't have explicit colors.
-    if (data.datasets) {
+    // Apply the categories to datasets that don't have explicit colors. A category that is not a readable colour gives
+    // its series or point the neutral separator colour, so it stays visibly uncategorised and the others keep their
+    // index; with no readable category at all (no design system) nothing is made up.
+    if (data.datasets && palette.some(color => color !== undefined)) {
       const isPieType = merged.type === 'pie' || merged.type === 'doughnut' || merged.type === 'polarArea';
-      const categoryColor = (i: number) => palette[i % palette.length];
+      const categoryColor = (i: number) => palette[i % palette.length] ?? gridColor;
 
       data.datasets = data.datasets.map((ds: any, i: number) => {
         const result = { ...ds };
@@ -143,13 +158,12 @@ export function useThemeDefaults(config: any): any {
           if (isPieType || ds.type === 'pie' || ds.type === 'doughnut' || ds.type === 'polarArea') {
             // Pie/doughnut/polarArea: one color per data point.
             const dataLen = Array.isArray(result.data) ? result.data.length : 0;
-            const point = (j: number, alpha: string) => {
-              const color = categoryColor(j);
-              return color === undefined ? undefined : color + alpha;
-            };
-            result.backgroundColor = Array.from({ length: dataLen }, (_, j) => point(j, FILL_ALPHA));
+            const points = Array.from({ length: dataLen }, (_, j) => categoryColor(j));
+            // No colour at all for a point (no neutral colour either): the dataset is left alone, no array holds a gap.
+            if (points.some(color => color === undefined)) return result;
+            result.backgroundColor = points.map(color => color + FILL_ALPHA);
             if (!result.borderColor) {
-              result.borderColor = Array.from({ length: dataLen }, (_, j) => point(j, ''));
+              result.borderColor = points;
             }
           } else {
             // Bar/line/etc.: one color per dataset.
@@ -179,23 +193,26 @@ export function useThemeDefaults(config: any): any {
 
     // Scales: Chart.js routes the colours of grid, axis line, ticks and title to its global defaults, not to the
     // options of the chart, so every scale gets them in its own config: the ones the server configures, and the ones
-    // Chart.js creates for the type of the chart.
+    // Chart.js creates for the datasets (scaleIds).
     const options = { ...merged.options };
     const scales = { ...options.scales };
-    for (const id of new Set([...Object.keys(scales), ...defaultAxes(merged)])) {
-      scales[id] = themedScale(scales[id], id === 'r' || scales[id]?.type === 'radialLinear', theme);
+    for (const id of scaleIds(config)) {
+      scales[id] = themedScale(scales[id], axisOf(id, scales[id]) === 'r' || scales[id]?.type === 'radialLinear', theme);
     }
     if (Object.keys(scales).length > 0) {
       options.scales = scales;
     }
 
     // Labels of the legend follow the root option `color`; title and subtitle have their own.
+    options.plugins = { ...options.plugins };
     if (textColor !== undefined) {
       options.color ??= textColor;
-      options.plugins = { ...options.plugins };
       paint(options.plugins, 'title', 'color', textColor);
       paint(options.plugins, 'subtitle', 'color', textColor);
     }
+    // The Colors plugin of Chart.js paints series that have no colour with a palette of its own. TopLogic defines every
+    // value of the design, no foreign palette: a series without a colour stays without one.
+    options.plugins.colors = { ...options.plugins.colors, enabled: options.plugins.colors?.enabled ?? false };
     merged.options = options;
     return merged;
   }, [config, theme]);

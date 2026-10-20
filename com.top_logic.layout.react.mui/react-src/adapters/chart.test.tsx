@@ -174,16 +174,26 @@ describe('chart colours', () => {
     expect(datasets[2].borderColor).toBe(LIGHT[2]);
   });
 
-  it('an unreadable category leaves its series uncoloured and does not shift the others', () => {
+  it('an unreadable category gives its series the neutral separator colour and does not shift the others', () => {
     document.documentElement.style.setProperty('--tl-category-2-surface', 'not-a-colour');
     const { result } = renderHook(() => useThemeDefaults(barChart(10)));
 
     const datasets = result.current.data.datasets;
-    expect(datasets[1].borderColor).toBeUndefined();
-    expect(datasets[1].backgroundColor).toBeUndefined();
+    expect(datasets[1].borderColor).toBe(COLORS.light.grid);
+    expect(datasets[1].backgroundColor).toBe(COLORS.light.grid + 'cc');
     expect(datasets[2].borderColor).toBe(LIGHT[2]);
     expect(datasets[8].borderColor).toBe(LIGHT[0]);
-    expect(datasets[9].borderColor).toBeUndefined();
+    expect(datasets[9].borderColor).toBe(COLORS.light.grid);
+  });
+
+  it('a pie with one unreadable category draws that point neutral, and no array holds a gap', () => {
+    document.documentElement.style.setProperty('--tl-category-2-surface', 'not-a-colour');
+    const pie = { type: 'pie', data: { labels: ['a', 'b', 'c'], datasets: [{ data: [1, 2, 3] }] } };
+    const { result } = renderHook(() => useThemeDefaults(pie));
+
+    const dataset = result.current.data.datasets[0];
+    expect(dataset.borderColor).toEqual([LIGHT[0], COLORS.light.grid, LIGHT[2]]);
+    expect(dataset.backgroundColor).toEqual([LIGHT[0] + 'cc', COLORS.light.grid + 'cc', LIGHT[2] + 'cc']);
   });
 
   it('a pie takes one category per data point, a line draws its points transparent', () => {
@@ -199,15 +209,28 @@ describe('chart colours', () => {
     expect(lineResult.current.data.datasets[0].fill).toBe(false);
   });
 
-  it('without a design system no colour is made up', () => {
+  it('without a design system no colour is made up: no array, no key, the Colors plugin of Chart.js off', () => {
     document.documentElement.removeAttribute('style');
-    const { result } = renderHook(() => useThemeDefaults(barChart(2)));
+    const pie = { type: 'pie', data: { labels: ['a', 'b'], datasets: [{ data: [1, 2] }] } };
+    const { result: bar } = renderHook(() => useThemeDefaults(barChart(2)));
+    const { result: pieResult } = renderHook(() => useThemeDefaults(pie));
 
-    expect(result.current.data.datasets[0].borderColor).toBeUndefined();
-    expect(result.current.data.datasets[0].backgroundColor).toBeUndefined();
-    expect(result.current.options.color).toBeUndefined();
-    expect(result.current.options.scales?.y?.grid).toBeUndefined();
-    expect(result.current.options.plugins).toBeUndefined();
+    for (const themed of [bar.current, pieResult.current]) {
+      expect(themed.data.datasets[0].borderColor).toBeUndefined();
+      expect(themed.data.datasets[0].backgroundColor).toBeUndefined();
+      expect(themed.options.color).toBeUndefined();
+      expect(themed.options.plugins.colors.enabled).toBe(false);
+    }
+    expect(bar.current.options.scales?.y?.grid).toBeUndefined();
+  });
+
+  it('the Colors plugin stays off for a chart with colours, unless the server turns it on', () => {
+    const { result } = renderHook(() => useThemeDefaults(barChart(1)));
+    expect(result.current.options.plugins.colors.enabled).toBe(false);
+
+    const on = { ...barChart(1), options: { plugins: { colors: { enabled: true } } } };
+    const { result: server } = renderHook(() => useThemeDefaults(on));
+    expect(server.current.options.plugins.colors.enabled).toBe(true);
   });
 
   it('a token written as rgb() or a short hex is read as a hex colour', () => {
@@ -302,6 +325,47 @@ describe('chart scales (a real Chart.js chart)', () => {
     expect(radial().angleLines.color).toBe(COLORS.dark.grid);
     expect(radial().pointLabels.color).toBe(COLORS.dark.text);
     expect(radial().ticks.backdropColor).toBe('#101828bf');
+    chart.destroy();
+  });
+
+  it('only the scales Chart.js builds are themed: datasets with axis ids of their own add no x or y', () => {
+    const line = {
+      type: 'line',
+      data: {
+        labels: ['a', 'b'],
+        datasets: [
+          { label: 'l', data: [1, 2], yAxisID: 'left' },
+          { label: 'r', data: [2, 1], yAxisID: 'right' },
+        ],
+      },
+    };
+    const { result } = renderHook(() => useThemeDefaults(line));
+    expect(Object.keys(result.current.options.scales).sort()).toEqual(['left', 'right', 'x']);
+
+    const { chart } = drawChart(result.current);
+    expect(Object.keys(chart.scales).sort()).toEqual(['left', 'right', 'x']);
+    for (const id of ['x', 'left', 'right']) {
+      expect(cartesian(chart, id), id).toMatchObject({ grid: COLORS.light.grid, ticks: COLORS.light.text });
+    }
+    chart.destroy();
+  });
+
+  it('a scatter with its own x id gains no x; a configured scale next to the default axes is themed as well', () => {
+    const scatter = { type: 'scatter', data: { datasets: [{ label: 's', data: [{ x: 1, y: 2 }], xAxisID: 'xs' }] } };
+    const { result: scatterResult } = renderHook(() => useThemeDefaults(scatter));
+    const { chart: scatterChart } = drawChart(scatterResult.current);
+    expect(Object.keys(scatterChart.scales).sort()).toEqual(['xs', 'y']);
+    expect(cartesian(scatterChart, 'xs')).toMatchObject({ grid: COLORS.light.grid });
+    scatterChart.destroy();
+
+    const served = { ...barChart(1), options: { scales: { left: { axis: 'y', type: 'linear' } } } };
+    const { result: servedResult } = renderHook(() => useThemeDefaults(served));
+    const { chart } = drawChart(servedResult.current);
+    // Chart.js builds x and y for the bar chart next to the configured scale; every scale it built is themed.
+    expect(Object.keys(chart.scales).sort()).toEqual(['left', 'x', 'y']);
+    for (const id of Object.keys(chart.scales)) {
+      expect(cartesian(chart, id), id).toMatchObject({ grid: COLORS.light.grid, ticks: COLORS.light.text });
+    }
     chart.destroy();
   });
 

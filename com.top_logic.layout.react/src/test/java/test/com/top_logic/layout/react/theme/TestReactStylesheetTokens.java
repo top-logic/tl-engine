@@ -22,9 +22,8 @@ import com.top_logic.layout.react.theme.UIThemeService;
  */
 public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 
-	/** The stylesheets audited. */
-	private static final List<String> STYLESHEETS =
-		List.of("/style/tlReactBase.css", "/style/tlReactControls.css");
+	/** The stylesheets audited: the page frame of the engine; the controls live in the design system package. */
+	private static final List<String> STYLESHEETS = List.of("/style/tlReactBase.css");
 
 	/**
 	 * The token sheet of the design system package: the only place the {@code --tl} namespace is

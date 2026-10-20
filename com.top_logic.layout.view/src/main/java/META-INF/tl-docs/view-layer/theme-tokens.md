@@ -38,7 +38,7 @@ The styles of the React page are ordered by CSS cascade layers, not by their pos
 
 | Order | Layer | Rules |
 |---|---|---|
-| 1 | `tl` | the theme token blocks of the `UIThemeService`, the design system, `tlReactControls.css`, the stylesheets of the engine modules and of the libraries they bundle (fonts, icon fonts) |
+| 1 | `tl` | the theme token blocks of the `UIThemeService`, the design system, the stylesheets of the engine modules and of the libraries they bundle (fonts, icon fonts) |
 | 2 | `mui` | the rules of a component library rendering the UI: Material UI's emotion styles, its CSS variables, the styling properties derived from the MUI theme (`tl-mui-theme-properties`), the rules of a customer's `styled` components and `styleOverrides` |
 | — | unlayered | the stylesheets of the application, e.g. the rules of its `css-class` names |
 

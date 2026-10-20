@@ -210,6 +210,13 @@ public class ValueInputElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
+		 * The options of an expression are offered in the order it computes them, so that the
+		 * expression decides where each option stands. The options of the type are offered in the
+		 * order of its classifiers for an enumeration, and sorted by their labels for the instances
+		 * of a class. An order stated at the input control wins over both.
+		 * </p>
+		 *
+		 * <p>
 		 * The options are computed again whenever one of the input channels changes.
 		 * </p>
 		 */
@@ -496,6 +503,10 @@ public class ValueInputElement implements UIElement {
 		Resources resources = Resources.getInstance();
 		String label = _label == null ? null : resources.getString(_label);
 		FieldSpec spec = FieldControlService.fieldSpec(type, _annotations, label, _multiple, field);
+		if (_options != null) {
+			// The options expression computes the order the options are offered in.
+			spec.setOptionOrder(null);
+		}
 		if (_placeholder != null) {
 			spec.setPlaceholder(resources.getString(_placeholder));
 		}

@@ -8,17 +8,21 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.element.meta.kbbased.storage.mappings.JavaEnumMapping;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
@@ -196,6 +200,67 @@ public class AttributeOptions {
 			return enumOptions(primitive);
 		}
 		return null;
+	}
+
+	/**
+	 * The order the options of the given attribute are offered in, or {@code null} to offer them in
+	 * the order {@link #optionsFor(TLObject, TLStructuredTypePart, OverlayLookup, Sink)} computes
+	 * them.
+	 *
+	 * <p>
+	 * The source of the options decides, as it decides the options themselves: an options
+	 * annotation states its own order through {@link Generator#getOptionOrder()}, where
+	 * {@link OptionsByExpression} keeps the order its expression computes unless it is asked to
+	 * sort alphabetically. The classifiers of an enumeration and the constants of an enum datatype
+	 * have an order of their own and are offered in it. The instances of a class have none and are
+	 * sorted by their labels.
+	 * </p>
+	 *
+	 * @param part
+	 *        The attribute whose options are offered.
+	 */
+	public static Comparator<?> orderFor(TLStructuredTypePart part) {
+		Generator generator = AttributeOperations.getOptions(part);
+		if (generator != null) {
+			Comparator<?> order = generator.getOptionOrder();
+			// The order a generator states to keep its options as computed.
+			return order == Equality.INSTANCE ? null : order;
+		}
+		TLType type = part.getType();
+		if (type instanceof TLPrimitive primitive && isEnumDatatype(primitive)) {
+			return null;
+		}
+		if (type instanceof TLEnumeration) {
+			return null;
+		}
+		return byLabel();
+	}
+
+	/**
+	 * The order the options of a value of the given type are offered in, or {@code null} to offer
+	 * them in the order {@link #optionsFor(TLType)} computes them.
+	 *
+	 * <p>
+	 * The counterpart of {@link #orderFor(TLStructuredTypePart)} for a value that no attribute
+	 * holds: the classifiers of an enumeration and the constants of an enum datatype are offered in
+	 * their own order, the instances of a class sorted by their labels.
+	 * </p>
+	 *
+	 * @param type
+	 *        The model type of the value.
+	 */
+	public static Comparator<?> orderFor(TLType type) {
+		if (type instanceof TLClass) {
+			return byLabel();
+		}
+		return null;
+	}
+
+	/**
+	 * The order sorting options by the labels they are displayed with.
+	 */
+	public static Comparator<?> byLabel() {
+		return LabelComparator.newCachingInstance(MetaResourceProvider.INSTANCE);
 	}
 
 	/**

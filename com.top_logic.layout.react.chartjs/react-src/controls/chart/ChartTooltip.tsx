@@ -14,7 +14,7 @@ interface ChartTooltipProps {
 }
 
 /**
- * Renders server-provided tooltip HTML.
+ * Renders server-provided tooltip HTML on the surface of a popover (`tl-chart__tooltip`, chart.contract.md).
  * Position is tracked locally from Chart.js caret coordinates;
  * HTML content arrives asynchronously from the server via SSE.
  */
@@ -26,7 +26,8 @@ const ChartTooltip: React.FC<ChartTooltipProps> = ({ content, position }) => {
 
   return (
     <div
-      className="tlReactChart__tooltip"
+      className="tl-popover tl-chart__tooltip tl-type-label"
+      role="tooltip"
       style={{ left: position.x + 'px', top: (position.y - 10) + 'px' }}
       dangerouslySetInnerHTML={{ __html: content.html }}
     />

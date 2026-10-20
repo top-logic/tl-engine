@@ -1,48 +1,5 @@
-.tlReactChart {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    min-height: 200px;
-}
-
-.tlReactChart--error,
-.tlReactChart--noData {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.tlReactChart__error {
-    color: var(--support-error);
-    padding: 1rem;
-    text-align: center;
-}
-
-.tlReactChart__noData {
-    color: var(--text-secondary);
-    padding: 1rem;
-    text-align: center;
-    font-style: italic;
-}
-
-.tlReactChart__tooltip {
-    position: absolute;
-    pointer-events: none;
-    z-index: 100;
-    background: var(--layer-02);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-02);
-    padding: 0.5rem 0.75rem;
-    box-shadow: var(--shadow-menu);
-    font-size: 0.8125rem;
-}
-
-.tlReactChart__zoomReset {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    z-index: 10;
-    /* The button floats over the plot: a surface of its own keeps it readable there. */
-    background: var(--layer-01);
-    border-radius: var(--corner-radius);
-}
+/* The chart (TLChart) takes its whole look from the design system package: the block `tl-chart` with its tooltip on the
+   surface of `tl-popover` and the reset button of the zoom, and `tl-status` for no data and an error
+   (tl-design-system/components.css, contract: chart.contract.md). The series, grid and labels are painted onto the
+   canvas in the colours the control reads from the categories and roles of the theme (useThemeDefaults.ts). Nothing is
+   left to style here; a rule added to this sheet reads package tokens only (TestChartStylesheetTokens). */

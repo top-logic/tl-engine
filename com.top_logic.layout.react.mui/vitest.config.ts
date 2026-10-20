@@ -39,11 +39,14 @@ export default defineConfig({
       deps: {
         // Dependencies of the bridge that import React are processed by Vite, so the aliases above
         // reach them too. The same holds for the libraries of the editor modules a test mounts:
-        // the rich text editor (Tiptap) of com.top_logic.layout.react.wysiwyg.
+        // the rich text editor (Tiptap) of com.top_logic.layout.react.wysiwyg, and the chart
+        // (react-chartjs-2 and Chart.js) of com.top_logic.layout.react.chartjs.
         inline: [
           /@floating-ui/,
           /@testing-library/,
           /@tiptap/,
+          /react-chartjs-2/,
+          /chart\.js/,
         ],
       },
     },

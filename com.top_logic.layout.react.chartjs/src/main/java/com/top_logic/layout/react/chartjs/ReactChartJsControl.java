@@ -37,8 +37,6 @@ public class ReactChartJsControl extends ReactControl {
 
 	private static final String INTERACTIONS = "interactions";
 
-	private static final String THEME_COLORS = "themeColors";
-
 	private static final String ZOOM_ENABLED = "zoomEnabled";
 
 	private static final String ERROR = "error";
@@ -108,8 +106,6 @@ public class ReactChartJsControl extends ReactControl {
 
 		putState(ZOOM_ENABLED, zoomEnabled);
 		setCssClass(cssClass);
-
-		putState(THEME_COLORS, Icons.getChartThemeColors());
 
 		evaluateAndSetChartData(initialInputValues);
 	}

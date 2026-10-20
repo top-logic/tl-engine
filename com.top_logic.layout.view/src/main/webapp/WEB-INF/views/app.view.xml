@@ -19,6 +19,10 @@
 	section, it names the separator in front of the administration item:
 	config:position="before" config:reference="system-separator".
 	
+	The two areas closing the app bar carry the ids dev-menu and user-menu, so that an element the
+	application adds to the trailing area of the bar is placed against them, e.g.
+	config:position="before" config:reference="user-menu".
+	
 	An application that defines its whole shell itself marks the content of its copy as a
 	replacement: <app-shell config:override="true">. Its copy then takes the place of this shell as a
 	whole.
@@ -124,14 +128,18 @@
 						whether the session may use it, and the menu shows no trigger while none is
 						available.
 					-->
-					<view-ref view="dev-menu.view.xml"/>
+					<view-ref id="dev-menu"
+						view="dev-menu.view.xml"
+					/>
 
 					<!--
 						The account area: who is logged in, plus logout and the theme entries. Its
 						view declares the channel feeding it, so nothing here wires it. It closes the
 						bar, where an application's account area is looked for.
 					-->
-					<view-ref view="user-menu.view.xml"/>
+					<view-ref id="user-menu"
+						view="user-menu.view.xml"
+					/>
 				</trailing>
 			</app-bar>
 		</header>

@@ -7,6 +7,18 @@
 	ViewLoader merges all copies in dependency order, so this view is extended - and its sections
 	repositioned - without this module depending on the contributor. See tl-model-search-react and
 	tl-dev-tools.
+
+	A view inside an existing section is contributed the same way: the inner tab bar of each section
+	has the id "views", so the overlay names the section's tab and that tab bar on its way to the
+	list it extends:
+
+		<tab-bar>
+			<tabs>
+				<tab id="system">
+					<tab-bar id="views">
+						<tabs>
+							<tab id="my-view" config:position="after" config:reference="locks">
+								...
 -->
 <view>
 	<tab-bar active-tab="access-control">
@@ -16,7 +28,9 @@
 					<en>Access control</en>
 					<de>Zugriffskontrolle</de>
 				</label>
-				<tab-bar active-tab="accounts">
+				<tab-bar id="views"
+					active-tab="accounts"
+				>
 					<tabs>
 						<tab id="accounts">
 							<label>
@@ -61,7 +75,9 @@
 					<en>Monitoring</en>
 					<de>Überwachung</de>
 				</label>
-				<tab-bar active-tab="system-environment">
+				<tab-bar id="views"
+					active-tab="system-environment"
+				>
 					<tabs>
 						<tab id="system-environment">
 							<label>
@@ -120,7 +136,9 @@
 					<en>System</en>
 					<de>System</de>
 				</label>
-				<tab-bar active-tab="services">
+				<tab-bar id="views"
+					active-tab="services"
+				>
 					<tabs>
 						<tab id="services">
 							<label>

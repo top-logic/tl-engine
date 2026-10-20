@@ -49,6 +49,24 @@ public class ConfigUtil {
 	 */
 	public static final Class<?>[] CONFIG_CONSTRUCTOR_SIGNATURE = {Properties.class};
 
+	/**
+	 * Whether the given value of the {@link PropertyDescriptor#getKeyProperty() key property} of
+	 * a list entry makes the entry anonymous.
+	 * 
+	 * <p>
+	 * An entry of a keyed list without key value (<code>null</code>, or the empty string) is
+	 * anonymous: It is part of the list in order, but no key lookup and no reference matches it,
+	 * and any number of anonymous entries may occur in one list.
+	 * </p>
+	 * 
+	 * @param key
+	 *        The key value of a list entry.
+	 * @return Whether the entry is anonymous.
+	 */
+	public static boolean isAnonymousKey(Object key) {
+		return key == null || "".equals(key);
+	}
+
 	/** 
 	 * Method name of singleton lookup methods.  
 	 */

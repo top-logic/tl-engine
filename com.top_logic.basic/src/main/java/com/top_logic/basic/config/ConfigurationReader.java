@@ -42,6 +42,31 @@ import com.top_logic.basic.xml.XMLStreamUtil;
 /**
  * Reader instantiating {@link ConfigurationItem}s from XML definition files.
  * 
+ * <p>
+ * Multiple sources are read in order, each source updates the configuration of the sources before
+ * it. The attributes of namespace {@link ConfigurationSchemaConstants#CONFIG_NS} on an entry of a
+ * list valued property control how the entry changes the list:
+ * </p>
+ * <ul>
+ * <li>{@link ConfigurationSchemaConstants#LIST_OPERATION} selects add, update, add-or-update
+ * (default), or remove. In a list with {@link PropertyDescriptor#getKeyProperty() key property},
+ * the entry is matched by its key value.</li>
+ * <li>{@link ConfigurationSchemaConstants#LIST_POSITION} and
+ * {@link ConfigurationSchemaConstants#LIST_REFERENCE_ATTR_NAME} place an added entry or move an
+ * updated one.</li>
+ * <li>{@link ConfigurationSchemaConstants#LIST_INDEX} addresses an entry by its position in the
+ * list read so far and updates it.</li>
+ * <li>{@link ConfigurationSchemaConstants#CONFIG_OVERLOADING_OVERRIDE} replaces an updated entry
+ * instead of merging it.</li>
+ * </ul>
+ * <p>
+ * An entry of a keyed list without key value (see {@link ConfigUtil#isAnonymousKey(Object)}) is
+ * anonymous: It is added (at the end or as placed by
+ * {@link ConfigurationSchemaConstants#LIST_POSITION}), matches no other entry, and any number of
+ * anonymous entries may occur in one list. An update or remove operation without key value and a
+ * reference naming no key are errors. Map valued properties require a key for every entry.
+ * </p>
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ConfigurationReader extends AbstractConfigurationReader {
@@ -967,49 +992,64 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					keyProperty = null;
 				}
 				ListOperation listOperation = getListOperation(reader);
+				Integer index = getListIndexValue(reader);
 				Object listKey;
-				switch (listOperation) {
-					case ADD_OR_UPDATE: {
-						if (keyProperty == null) {
+				if (index != null) {
+					listKey = handleListIndexUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler,
+						listOperation, index.intValue());
+				} else {
+					switch (listOperation) {
+						case ADD_OR_UPDATE: {
+							if (keyProperty == null) {
+								listKey =
+									handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
+								break;
+							}
+							Object keyPropValue =
+								getKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
+							final ConfigurationItem configToUpdate = handler.resolveReferenceOrNull(keyPropValue);
+							if (configToUpdate != null) {
+								handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler,
+									configToUpdate);
+								listKey = keyPropValue;
+							} else {
+								listKey =
+									handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
+							}
+							break;
+						}
+						case ADD: {
 							listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
 							break;
 						}
-						Object keyPropValue = getKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
-						final ConfigurationItem configToUpdate = handler.resolveReferenceOrNull(keyPropValue);
-						if (configToUpdate != null) {
-							handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler,
-								configToUpdate);
-							listKey = keyPropValue;
-						} else {
-							listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
+						case REMOVE: {
+							listKey = readListEntryKey(reader, owningProperty, keyProperty, elementDescriptor,
+								listOperation);
+							handler.remove(listKey);
+
+							/* May removed to insert at a different position */
+							checkDuplicateKey(reader, listKeys, keyProperty, listKey);
+							listKeys.remove(listKey);
+							listKey = NO_KEY;
+
+							// skip section
+							XMLStreamUtil.skipUpToMatchingEndTag(reader);
+							break;
 						}
-						break;
+						case UPDATE: {
+							listKey =
+								handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler);
+							break;
+						}
+						default: {
+							listKey = NO_KEY;
+							assert false : "Unknown " + ListOperation.class.getName() + ": " + listOperation;
+						}
 					}
-					case ADD: {
-						listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
-						break;
-					}
-					case REMOVE: {
-						listKey = readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
-						handler.remove(listKey);
-
-						/* May removed to insert at a different position */
-						checkDuplicateKey(reader, listKeys, keyProperty, listKey);
-						listKeys.remove(listKey);
-						listKey = NO_KEY;
-
-						// skip section
-						XMLStreamUtil.skipUpToMatchingEndTag(reader);
-						break;
-					}
-					case UPDATE: {
-						listKey = handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler);
-						break;
-					}
-					default: {
-						listKey = NO_KEY;
-						assert false : "Unknown " + ListOperation.class.getName() + ": " + listOperation;
-					}
+				}
+				if (ConfigUtil.isAnonymousKey(listKey)) {
+					// Anonymous entries never collide.
+					listKey = NO_KEY;
 				}
 				checkDuplicateKey(reader, listKeys, keyProperty, listKey);
 			} catch (ConfigurationException ex) {
@@ -1017,6 +1057,54 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			} catch (RuntimeException ex) {
 				errorInvalidListEntry(reader, owningProperty, ex);
 			}
+		}
+
+		/**
+		 * Updates the list entry addressed by {@link ConfigurationSchemaConstants#LIST_INDEX}.
+		 * 
+		 * @return The key value of the updated entry, {@link #NO_KEY} for a list without key
+		 *         property.
+		 */
+		private Object handleListIndexUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
+				PropertyDescriptor keyProperty, PropertyDescriptor owningProperty, ListHandler handler,
+				ListOperation listOperation, int index) throws ConfigurationException, XMLStreamException {
+			if (listOperation == ListOperation.ADD || listOperation == ListOperation.REMOVE) {
+				throw new ConfigurationException("Attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+					+ ConfigurationSchemaConstants.LIST_INDEX + "' must not be combined with '"
+					+ ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":" + ConfigurationSchemaConstants.LIST_OPERATION
+					+ "=\"" + listOperation.getExternalName() + "\"' " + atLocation(reader) + ".");
+			}
+			ConfigurationItem configToUpdate = handler.resolveIndexOrNull(index);
+			if (configToUpdate == null) {
+				throw new ConfigurationException("List index " + index + " is out of range, the list has "
+					+ handler.size() + " entries " + atLocation(reader) + ".");
+			}
+			ConfigurationItem newConfig =
+				handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler, configToUpdate);
+			if (keyProperty == null || newConfig == null) {
+				return NO_KEY;
+			}
+			return newConfig.value(keyProperty);
+		}
+
+		/**
+		 * Reads the key value of a list entry whose operation requires a key.
+		 */
+		private Object readListEntryKey(XMLStreamReader reader, PropertyDescriptor owningProperty,
+				PropertyDescriptor keyProperty, ConfigurationDescriptor elementDescriptor,
+				ListOperation listOperation) throws ConfigurationException {
+			Object key =
+				keyProperty == null ? null : readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
+			if (ConfigUtil.isAnonymousKey(key)) {
+				throw new ConfigurationException("A list entry with '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX
+					+ ":" + ConfigurationSchemaConstants.LIST_OPERATION + "=\"" + listOperation.getExternalName()
+					+ "\"' must have a key value" + (listOperation == ListOperation.UPDATE
+						? " or an attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+							+ ConfigurationSchemaConstants.LIST_INDEX + "'"
+						: "")
+					+ "; anonymous entries cannot be addressed by key " + atLocation(reader) + ".");
+			}
+			return key;
 		}
 
 		private void appendAtLocation(StringBuilder out, XMLStreamReader reader) {
@@ -1271,49 +1359,52 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		private Object handleListUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
 				PropertyDescriptor keyProperty, PropertyDescriptor owningProperty, ListHandler handler)
 				throws ConfigurationException, XMLStreamException {
-			final Object keyPropValue = readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
-			final ConfigurationItem configToUpdate = handler.resolveReference(keyPropValue);
+			final Object keyPropValue =
+				readListEntryKey(reader, owningProperty, keyProperty, elementDescriptor, ListOperation.UPDATE);
+			final ConfigurationItem configToUpdate = handler.resolveReferenceOrNull(keyPropValue);
+			if (configToUpdate == null) {
+				throw new ConfigurationException("No list entry to update with key '" + keyPropValue + "' "
+					+ atLocation(reader) + ".");
+			}
 			handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler, configToUpdate);
 			return keyPropValue;
 		}
 
-		private void handleListUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
+		/**
+		 * Updates the given list entry with the contents of the current element and moves it, if
+		 * {@link ConfigurationSchemaConstants#LIST_POSITION} is given.
+		 * 
+		 * @return The entry replacing the given one, <code>null</code> if reading failed.
+		 */
+		private ConfigurationItem handleListUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
 				PropertyDescriptor keyProperty, PropertyDescriptor owningProperty, ListHandler handler,
 				final ConfigurationItem configToUpdate) throws ConfigurationException, XMLStreamException {
 			Position movePosition = getPosition(reader, null);
-			if (movePosition == null) {
-				ConfigurationItem newConfig =
-					readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
-				handler.update(newConfig);
-			} else {
+			Object reference = null;
+			if (movePosition == Position.BEFORE || movePosition == Position.AFTER) {
+				reference = parseReference(reader, owningProperty, keyProperty);
+			}
+			ConfigurationItem newConfig =
+				readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
+			if (newConfig == null) {
+				return null;
+			}
+			handler.replace(configToUpdate, newConfig);
+			if (movePosition != null) {
 				switch (movePosition) {
 					case BEGIN: {
-						ConfigurationItem newConfig =
-							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
 						handler.moveToStart(newConfig);
 						break;
 					}
 					case END: {
-						ConfigurationItem newConfig =
-							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
 						handler.moveToEnd(newConfig);
 						break;
 					}
 					case BEFORE: {
-						String externalReference = getEncodedReferenceKey(reader);
-						final Object reference =
-							parseKeyProperty(reader, owningProperty, keyProperty, externalReference);
-						ConfigurationItem newConfig =
-							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
 						handler.moveBefore(newConfig, reference);
 						break;
 					}
 					case AFTER: {
-						String externalReference = getEncodedReferenceKey(reader);
-						final Object reference =
-							parseKeyProperty(reader, owningProperty, keyProperty, externalReference);
-						ConfigurationItem newConfig =
-							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
 						handler.moveAfter(newConfig, reference);
 						break;
 					}
@@ -1322,6 +1413,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 						break;
 				}
 			}
+			return newConfig;
 		}
 
 		private Object readKeyProperty(XMLStreamReader reader, PropertyDescriptor owningProperty,
@@ -1348,17 +1440,13 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					break;
 				}
 				case BEFORE: {
-					String encodedExternalKeyProperty = getEncodedReferenceKey(reader);
-					final Object reference =
-						parseKeyProperty(reader, owningProperty, keyProperty, encodedExternalKeyProperty);
+					final Object reference = parseReference(reader, owningProperty, keyProperty);
 					newConfig = readConfigurationItem(reader, elementDescriptor, elementDescriptor, owningProperty);
 					handler.insertBefore(reference, newConfig);
 					break;
 				}
 				case AFTER: {
-					String encodedExternalKeyProperty = getEncodedReferenceKey(reader);
-					final Object reference =
-						parseKeyProperty(reader, owningProperty, keyProperty, encodedExternalKeyProperty);
+					final Object reference = parseReference(reader, owningProperty, keyProperty);
 					newConfig = readConfigurationItem(reader, elementDescriptor, elementDescriptor, owningProperty);
 					handler.insertAfter(reference, newConfig);
 					break;
@@ -1372,6 +1460,27 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				return newConfig.value(keyProperty);
 			}
 			return NO_KEY;
+		}
+
+		/**
+		 * Parses the key value of {@link ConfigurationSchemaConstants#LIST_REFERENCE_ATTR_NAME}.
+		 * 
+		 * <p>
+		 * A missing reference attribute references the default value of the key property. A
+		 * reference that names no key is an error.
+		 * </p>
+		 */
+		private Object parseReference(XMLStreamReader reader, PropertyDescriptor owningProperty,
+				PropertyDescriptor keyProperty) throws ConfigurationException {
+			String encodedReference = getEncodedReferenceKey(reader);
+			Object reference = parseKeyProperty(reader, owningProperty, keyProperty, encodedReference);
+			if (ConfigUtil.isAnonymousKey(reference)) {
+				throw new ConfigurationException("Attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+					+ ConfigurationSchemaConstants.LIST_REFERENCE_ATTR_NAME
+					+ "' must name the key of a list entry, anonymous entries cannot be referenced "
+					+ atLocation(reader) + ".");
+			}
+			return reference;
 		}
 
 		private String getEncodedReferenceKey(XMLStreamReader reader) {
@@ -1570,6 +1679,39 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			return ConfigUtil.getEnumValue(ConfigurationSchemaConstants.LIST_OPERATION, attributeValue,
 				ListOperation.class, defaultOperation);
 
+		}
+
+		/**
+		 * Parses the configured value of the list index.
+		 * 
+		 * @param reader
+		 *        {@link XMLStreamReader} that parses the configuration.
+		 * @return The zero-based position given in
+		 *         {@link ConfigurationSchemaConstants#LIST_INDEX}, or <code>null</code> if the
+		 *         attribute is not given.
+		 * @throws ConfigurationException
+		 *         If the value is not a non-negative number.
+		 */
+		public static Integer getListIndexValue(XMLStreamReader reader) throws ConfigurationException {
+			final String attributeValue = reader.getAttributeValue(ConfigurationSchemaConstants.CONFIG_NS,
+				ConfigurationSchemaConstants.LIST_INDEX);
+			if (StringServices.isEmpty(attributeValue)) {
+				return null;
+			}
+			int index;
+			try {
+				index = Integer.parseInt(attributeValue.trim());
+			} catch (NumberFormatException ex) {
+				throw new ConfigurationException("Attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+					+ ConfigurationSchemaConstants.LIST_INDEX + "' is not a number: '" + attributeValue + "' "
+					+ XMLStreamUtil.atLocation(reader) + ".", ex);
+			}
+			if (index < 0) {
+				throw new ConfigurationException("Attribute '" + ConfigurationSchemaConstants.CONFIG_NS_PREFIX + ":"
+					+ ConfigurationSchemaConstants.LIST_INDEX + "' must not be negative: '" + attributeValue + "' "
+					+ XMLStreamUtil.atLocation(reader) + ".");
+			}
+			return Integer.valueOf(index);
 		}
 
 		private Position getPosition(XMLStreamReader reader, Position defaultPosition) {

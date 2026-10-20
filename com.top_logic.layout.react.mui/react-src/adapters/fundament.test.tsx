@@ -1,20 +1,30 @@
-// The foundation of wave 5d (spec 2026-10-20 "Fundament", §3 and §4): what the bridge marks on the page for the design
+// The foundation of wave 5d (spec 2026-10-20 "Fundament", §3 to §5): what the bridge marks on the page for the design
 // system package to draw - the filling control, the jump target flashing, the element picker, the drag shield, the touch
-// drag - and that nothing of it carries an old class any more. The test registry has no parts of its own, as in
-// planen.test.tsx; nothing here renders a part.
+// drag, the tooltip - and that nothing of it carries an old class any more. The test registry has no parts of its own,
+// as in planen.test.tsx; nothing here renders a part.
 //
+// Review focus 1: the tooltip stands at the element the pointer moved on to, not at the one it came from.
 // Review focus 5: Escape in the element picker inside an open dialog ends only the picker, and the hint refusing a drop
 // lies above the image of a touch drag - both sit on layer-drag, so the hint has to follow the image in the DOM.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { React, useFill, KeyboardScopeProvider, EscapeToClose, startPointerDrag } from 'tl-react-bridge';
+import { React, useFill, KeyboardScopeProvider, EscapeToClose, startPointerDrag, TOOLTIP_ATTR } from 'tl-react-bridge';
 import { scrollToAnchor } from '../../../com.top_logic.layout.react/react-src/bridge/scroll';
 import { handlePick } from '../../../com.top_logic.layout.react/react-src/bridge/element-picker';
 import { initKeyboardDispatcher } from '../../../com.top_logic.layout.react/react-src/bridge/keyboard-dispatcher';
 import { installTouchDrag } from '../../../com.top_logic.layout.react/react-src/bridge/touch-drag';
 import { DropHint } from '../../../com.top_logic.layout.react/react-src/controls/DropHint';
 import type { HintAnchor } from '../../../com.top_logic.layout.react/react-src/controls/DropHint';
+import { HOVER_DELAY_MS } from '../../../com.top_logic.layout.react/react-src/bridge/tooltip-host';
+import type { TooltipResolveDetail } from '../../../com.top_logic.layout.react/react-src/bridge/tooltip-host';
+import type { TooltipData } from '../../../com.top_logic.layout.react/react-src/bridge/TooltipPopover';
+
+/**
+ * The element the bridge shows its tooltips in, created when the bridge loads. The cleanup after each test empties the
+ * page, the tooltip tests put it back.
+ */
+const tooltipHost = document.getElementById('tl-tooltip-host');
 
 /** A resize observer that never reports: jsdom lays nothing out. */
 class NoResizeObserver {
@@ -331,5 +341,132 @@ describe('touch drag', () => {
     expect(image!.compareDocumentPosition(hint!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     touch('touchend', card, 40, 10);
+  });
+});
+
+describe('tooltip', () => {
+  /** A box at the given place, as `getBoundingClientRect` reports it. */
+  function box(left: number, top: number, width: number, height: number): DOMRect {
+    return {
+      left, top, width, height, x: left, y: top, right: left + width, bottom: top + height, toJSON() {},
+    } as DOMRect;
+  }
+
+  /** A column heading declaring the given tooltip, laid out 80 pixels wide from the given left edge. */
+  function heading(text: string, left: number): HTMLElement {
+    const element = document.createElement('span');
+    element.setAttribute(TOOLTIP_ATTR, 'text:' + text);
+    element.textContent = text;
+    element.getBoundingClientRect = () => box(left, 100, 80, 20);
+    document.body.append(element);
+    return element;
+  }
+
+  /** The pointer moves from the given element (none: from outside the page) onto the given one. */
+  function movePointer(from: Element | null, to: Element) {
+    from?.dispatchEvent(new MouseEvent('pointerout', { bubbles: true, relatedTarget: to }));
+    to.dispatchEvent(new MouseEvent('pointerover', { bubbles: true, relatedTarget: from }));
+  }
+
+  /** The pointer rests until the tooltip waiting for it opens and floating-ui has placed it. */
+  async function rest() {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(HOVER_DELAY_MS);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+  }
+
+  /**
+   * The horizontal place floating-ui gave the shown tooltip: the left edge of its box. The tooltip has no size in jsdom,
+   * so a tooltip centred above its anchor stands at the anchor's centre.
+   */
+  function tooltipLeft(): number {
+    const transform = screen.getByRole('tooltip').style.transform;
+    const match = /translate\((-?[\d.]+)px,/.exec(transform);
+    expect(match, 'transform ' + transform).not.toBeNull();
+    return Number(match![1]);
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    // jsdom lays nothing out, its viewport has no size: floating-ui would push every tooltip to the same edge.
+    Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 1000 });
+    Object.defineProperty(document.documentElement, 'clientHeight', { configurable: true, value: 800 });
+    document.body.append(tooltipHost!);
+  });
+
+  afterEach(async () => {
+    // A press closes the tooltip that is open.
+    await act(async () => {
+      document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    });
+    delete (document.documentElement as { clientWidth?: number }).clientWidth;
+    delete (document.documentElement as { clientHeight?: number }).clientHeight;
+  });
+
+  /** An element answering for its tooltip on demand with the given one, as a container answers for its parts. */
+  function withTooltip(data: TooltipData): HTMLElement {
+    const element = document.createElement('span');
+    element.setAttribute(TOOLTIP_ATTR, 'dynamic');
+    element.textContent = 'Price';
+    element.getBoundingClientRect = () => box(0, 100, 80, 20);
+    element.addEventListener('tl-tooltip-resolve', event => {
+      (event as CustomEvent<TooltipResolveDetail>).detail.resolved = { inline: data };
+    });
+    document.body.append(element);
+    return element;
+  }
+
+  it('tooltip is the block tl-tooltip with caption, body and arrow', async () => {
+    movePointer(null, withTooltip({ caption: 'Price', text: 'Gross, in euros' }));
+    await rest();
+
+    const tooltip = screen.getByRole('tooltip');
+    expect(tooltip.classList).toContain('tl-tooltip');
+    expect(tooltip.querySelector(':scope > .tl-tooltip__caption.tl-type-label-strong')?.textContent).toBe('Price');
+    expect(tooltip.querySelector(':scope > .tl-tooltip__body.tl-type-label')?.textContent).toBe('Gross, in euros');
+    expect(tooltip.querySelector(':scope > .tl-tooltip__arrow')).not.toBeNull();
+    // Passive: the pointer goes through it, by the rule of the block, not by a style of its own.
+    expect(stateWords(tooltip)).toEqual([]);
+    expect(tooltip.style.pointerEvents).toBe('');
+    expect(tooltipHost!.querySelector('[class*="tl-tooltip-"]')).toBeNull();
+  });
+
+  it('tooltip without caption has no caption row', async () => {
+    movePointer(null, withTooltip({ text: 'Gross, in euros' }));
+    await rest();
+
+    const tooltip = screen.getByRole('tooltip');
+    expect(tooltip.querySelector('.tl-tooltip__caption')).toBeNull();
+    expect(tooltip.querySelector('.tl-tooltip__body')?.textContent).toBe('Gross, in euros');
+  });
+
+  it('interactive tooltip carries data-tl-state interactive, not a modifier class', async () => {
+    movePointer(null, withTooltip({ html: '<a href="#help">Help</a>', interactive: true }));
+    await rest();
+
+    const tooltip = screen.getByRole('tooltip');
+    expect(stateWords(tooltip)).toEqual(['interactive']);
+    expect(tooltip.className).toBe('tl-tooltip');
+    expect(tooltip.querySelector(':scope > .tl-tooltip__body.tl-type-label > a')?.textContent).toBe('Help');
+  });
+
+  it('tooltip follows the new anchor when the pointer moves to the next element while open', async () => {
+    const first = heading('Name', 0);
+    const second = heading('Price', 200);
+
+    movePointer(null, first);
+    await rest();
+    expect(screen.getByRole('tooltip').textContent).toBe('Name');
+    expect(tooltipLeft()).toBe(40);
+
+    // From heading to heading, the tooltip still open.
+    movePointer(first, second);
+    await rest();
+    expect(screen.getByRole('tooltip').textContent).toBe('Price');
+    expect(tooltipLeft()).toBe(240);
   });
 });

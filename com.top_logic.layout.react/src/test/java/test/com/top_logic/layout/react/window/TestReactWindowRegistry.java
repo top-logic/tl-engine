@@ -303,6 +303,23 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	/**
+	 * Closing a window removes its subsession from the session, and only its own.
+	 */
+	public void testCloseRemovesWindowSubSession() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		TLSessionContext session = DefaultSessionContext.newDefaultSessionContext();
+		TLSubSessionContext callerSubSession = createSubSession(session, "vOther", Locale.ENGLISH);
+		createSubSession(session, "vTab", Locale.GERMAN);
+		displayPage(registry, registry.getOrCreateWindow("vTab"));
+
+		inRequest(session, callerSubSession, () -> registry.windowClosed("vTab"));
+
+		assertNull("The subsession of the closed window must be gone.", session.getSubSession("vTab"));
+		assertSame("The subsession of another window must be kept.", callerSubSession,
+			session.getSubSession("vOther"));
+	}
+
+	/**
 	 * A window whose page was never rendered has no subsession, and is closed in the context of
 	 * the request.
 	 */
@@ -318,6 +335,8 @@ public class TestReactWindowRegistry extends TestCase {
 
 		assertEquals(List.of(new Observation(callerSubSession, Locale.ENGLISH)), seen);
 		assertNull(registry.getWindow("vTab"));
+		assertSame("The subsession of the calling window must be kept.", callerSubSession,
+			session.getSubSession("vOther"));
 	}
 
 	/**

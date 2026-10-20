@@ -249,6 +249,8 @@ Whether a script is evaluated secured is decided by its kind, not by the script 
 
 A called function - built-in or configured (`ConfiguredTLScriptFunctions`) - has no setting of its
 own: it takes over the setting of the calling script.
+Exception: a privileged function (`privileged-script`) called from a secured script checks its
+command group once and runs unsecured, see [privileged TL-Script functions](doc:access-privileged-scripts).
 
 Rules for the individual kinds:
 

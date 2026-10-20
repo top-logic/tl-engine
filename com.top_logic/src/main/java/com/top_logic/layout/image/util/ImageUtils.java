@@ -5,17 +5,21 @@
  */
 package com.top_logic.layout.image.util;
 
+import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.MemoryCacheImageOutputStream;
 
 import com.top_logic.basic.io.BinaryContent;
@@ -56,6 +60,60 @@ public class ImageUtils {
 	 */
 	public static BufferedImage createImage(InputStream inputStream) throws IOException {
 		return ImageIO.read(inputStream);
+	}
+
+	/**
+	 * The size of the image in the given data in pixels.
+	 *
+	 * <p>
+	 * Only the image header is read, the pixel data is not decoded.
+	 * </p>
+	 *
+	 * @param imageData
+	 *        The encoded image, e.g. a PNG or JPEG file.
+	 * @return The width and height of the (first) image in pixels, or <code>null</code> if the data
+	 *         is not in an image format readable by {@link ImageIO}.
+	 * @throws IOException
+	 *         If reading the data fails.
+	 */
+	public static Dimension getImageSize(BinaryContent imageData) throws IOException {
+		try (InputStream in = imageData.getStream();
+				ImageInputStream imageIn = ImageIO.createImageInputStream(in)) {
+			return getImageSize(imageIn);
+		}
+	}
+
+	/**
+	 * The size of the image read from the given stream in pixels.
+	 *
+	 * <p>
+	 * Only the image header is read, the pixel data is not decoded. The given stream is not closed.
+	 * </p>
+	 *
+	 * @param imageIn
+	 *        The stream to read the image from, may be <code>null</code> if
+	 *        {@link ImageIO#createImageInputStream(Object)} found no stream implementation for the
+	 *        input.
+	 * @return The width and height of the (first) image in pixels, or <code>null</code> if the data
+	 *         is not in an image format readable by {@link ImageIO}.
+	 * @throws IOException
+	 *         If reading the data fails.
+	 */
+	public static Dimension getImageSize(ImageInputStream imageIn) throws IOException {
+		if (imageIn == null) {
+			return null;
+		}
+		Iterator<ImageReader> readers = ImageIO.getImageReaders(imageIn);
+		if (!readers.hasNext()) {
+			return null;
+		}
+		ImageReader reader = readers.next();
+		try {
+			reader.setInput(imageIn, true, true);
+			return new Dimension(reader.getWidth(0), reader.getHeight(0));
+		} finally {
+			reader.dispose();
+		}
 	}
 
 	/**

@@ -192,6 +192,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final String VIEWPORT_START = "viewportStart";
 
+	/**
+	 * The first row of the window the client body showed last, so that a body mounted again (after a
+	 * reload of the page) scrolls back to it. {@link #VIEWPORT_START} is the start of the rows sent,
+	 * which lies before it by the prefetched rows.
+	 */
+	private static final String SCROLL_START = "scrollStart";
+
 	private static final String ROWS = "rows";
 
 	private static final String SELECTION_MODE = "selectionMode";
@@ -1091,6 +1098,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_viewportCount = count;
 
 		putState(VIEWPORT_START, Integer.valueOf(bufferedStart));
+		putState(SCROLL_START, Integer.valueOf(start));
 		putState(ROWS, rowStates);
 		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
 		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));

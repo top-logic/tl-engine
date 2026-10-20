@@ -39,6 +39,7 @@
 						class="com.top_logic.layout.scripting.template.gui.StartBackgroundReplayCommand"
 						disabledImage="theme:ICONS_BUTTON_FAST_FORWARD_DISABLED"
 						executability="com.top_logic.layout.scripting.template.gui.DisabledWhenBuzzy"
+						group="System"
 						image="theme:ICONS_BUTTON_FAST_FORWARD"
 						resourceKey="tl.scripting.recorder.exec"
 					/>

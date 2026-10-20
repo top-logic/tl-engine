@@ -7,7 +7,6 @@
 package com.top_logic.element.changelog;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -151,13 +150,18 @@ public class KBChangeAnalzyer {
 
 	private void analyzeUpdates() {
 		Map<ObjectKey, KnowledgeItem> updatedObjects = _event.getUpdatedObjects();
+
+		// All object IDs of objects created or deleted in the current change set. Their creation or
+		// deletion is recorded instead of an update.
+		Set<ObjectKey> createdDeletedKeys = new HashSet<>(_event.getCreatedObjectKeys());
+		createdDeletedKeys.addAll(_event.getDeletedObjectKeys());
 		for (ItemUpdate update : _event.getChanges().getUpdates()) {
 			MetaObject table = update.getObjectType();
 
 			Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
 			if (!descriptors.isEmpty()) {
 				// Table is used to store value of foreign objects.
-				analyzeTechnicalUpdate(descriptors, table, update);
+				analyzeTechnicalUpdate(descriptors, table, createdDeletedKeys, update);
 			}
 
 			List<TLClass> classes = _modelTables.getClassesForTable(table);
@@ -303,10 +307,10 @@ public class KBChangeAnalzyer {
 	}
 
 	private void analyzeTechnicalUpdate(Map<String, AssociationStorageDescriptor> descriptors, MetaObject table,
-			ItemUpdate update) {
+			Set<ObjectKey> createdDeletedKeys, ItemUpdate update) {
 		Map<String, Object> values = update.getValues();
 		Map<String, Object> oldValues = update.getOldValues();
-		analyzeTechnicalUpdate(descriptors, table, Collections.emptySet(),
+		analyzeTechnicalUpdate(descriptors, table, createdDeletedKeys,
 			value(values), part(values),
 			value(oldValues), part(oldValues));
 	}
@@ -370,8 +374,9 @@ public class KBChangeAnalzyer {
 		TLStructuredTypePart part;
 
 		if (oldValue) {
-			Set<ObjectKey> deletedKeys = createdDeletedKeys;
-			if (deletedKeys.contains(partId)) {
+			// The attribute of an old value exists before the commit, so the part ID of an old
+			// value is contained in the given keys only if the attribute is deleted in the commit.
+			if (createdDeletedKeys.contains(partId)) {
 				part = kb().withoutModifications(() -> resolvePart(object, partId));
 			} else {
 				part = resolvePart(object, partId);

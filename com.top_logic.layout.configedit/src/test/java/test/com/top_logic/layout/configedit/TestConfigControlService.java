@@ -7,6 +7,7 @@ package test.com.top_logic.layout.configedit;
 
 import java.awt.Color;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -37,8 +38,15 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.format.DateStyle;
+import com.top_logic.basic.format.DecimalFormatDefinition;
+import com.top_logic.basic.format.FormatFactory;
+import com.top_logic.basic.format.TimeFormatDefinition;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.func.Function0;
+import com.top_logic.basic.logging.Level;
+import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
@@ -72,6 +80,9 @@ import com.top_logic.layout.react.control.form.ReactIconSelectControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.DatePickerState;
+import com.top_logic.layout.react.state.DatePickerState.Precision;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -1103,6 +1114,9 @@ public class TestConfigControlService extends TestCase {
 		List<String> getCommaList();
 	}
 
+	/** A time of day with seconds, 14:30:15 in the default time zone. */
+	private static final Date TIME_WITH_SECONDS = timeWithSeconds();
+
 	private TestConfig _config;
 
 	@Override
@@ -1343,6 +1357,88 @@ public class TestConfigControlService extends TestCase {
 		assertTrue("A value provider that is a subclass of a mapped one must be claimed by the "
 			+ "same mapping.", control instanceof ReactDatePickerControl);
 		assertEquals("time", control.scriptingScalarState().get("inputType"));
+	}
+
+	/**
+	 * The time picker of a {@link TimeOfDayAsDateValueProvider} property edits hours and minutes
+	 * only: the configured mapping shows the value in a short time format, which writes no seconds,
+	 * and the value provider stores none. Proves the format definition in the service's
+	 * {@code tl-layout-configedit.conf.config.xml} is read and reaches the control.
+	 */
+	public void testTimeOfDayIsEditedInMinutes() {
+		set(_config, TestConfig.TIME_OF_DAY, TIME_WITH_SECONDS);
+
+		ReactDatePickerControl control = (ReactDatePickerControl) control(TestConfig.TIME_OF_DAY);
+		assertEquals("A value provider writing no seconds must get a field editing no seconds.",
+			Precision.MINUTES, control.getPrecision());
+		assertEquals(Precision.MINUTES.protocolName(),
+			control.scriptingScalarState().get(DatePickerState.PRECISION__PROP));
+		assertIsoValue("\\d{2}:\\d{2}", control);
+	}
+
+	/**
+	 * A {@link DatePickerFormatProvider} configured with a format that writes seconds creates a
+	 * field that edits seconds and exchanges them in its ISO value.
+	 */
+	public void testFormatWritingSecondsEditsSeconds() {
+		TimeFormatDefinition.Config format = TypedConfiguration.newConfigItem(TimeFormatDefinition.Config.class);
+		set(format, "style", DateStyle.MEDIUM);
+
+		set(_config, TestConfig.TIME_OF_DAY, TIME_WITH_SECONDS);
+		ReactDatePickerControl control = datePicker(format);
+		assertEquals("A format writing seconds must give a field editing seconds.",
+			Precision.SECONDS, control.getPrecision());
+		assertIsoValue("\\d{2}:\\d{2}:\\d{2}", control);
+	}
+
+	/**
+	 * A format definition that creates no date format is reported as an error, and the field shows
+	 * the value in the default format of its kind - the same as a provider without a format.
+	 */
+	public void testFormatNotWritingDatesIsReported() {
+		DecimalFormatDefinition.Config<?> format =
+			TypedConfiguration.newConfigItem(DecimalFormatDefinition.Config.class);
+		set(format, DecimalFormatDefinition.Config.PATTERN, "#0.00");
+
+		CollectingLogListener log = new CollectingLogListener(Collections.singleton(Level.ERROR), true);
+		ReactDatePickerControl control;
+		try {
+			control = datePicker(format);
+		} finally {
+			log.deactivate();
+		}
+		assertEquals("A format definition that writes no dates must be reported.", 1, log.getLogEntries().size());
+		assertEquals("The field must fall back to the default format of its kind.",
+			ReactDatePickerControl.precision(ReactDatePickerControl.Kind.TIME,
+				ReactDatePickerControl.Kind.TIME.displayFormat()),
+			control.getPrecision());
+	}
+
+	/**
+	 * A time picker for {@link TestConfig#getTimeOfDay()} created by a
+	 * {@link DatePickerFormatProvider} with the given format.
+	 */
+	private ReactDatePickerControl datePicker(PolymorphicConfiguration<? extends FormatFactory> format) {
+		DatePickerFormatProvider.Config providerConfig =
+			TypedConfiguration.newConfigItem(DatePickerFormatProvider.Config.class);
+		set(providerConfig, DatePickerFormatProvider.Config.KIND, ReactDatePickerControl.Kind.TIME);
+		set(providerConfig, DatePickerFormatProvider.Config.FORMAT, format);
+		DatePickerFormatProvider provider = TypedConfigUtil.createInstance(providerConfig);
+
+		return (ReactDatePickerControl) provider.createControl(context(), model(TestConfig.TIME_OF_DAY));
+	}
+
+	private static Date timeWithSeconds() {
+		Calendar calendar = Calendar.getInstance();
+		calendar.clear();
+		calendar.set(1970, Calendar.JANUARY, 1, 14, 30, 15);
+		return calendar.getTime();
+	}
+
+	private static void assertIsoValue(String pattern, ReactControl control) {
+		Object iso = control.scriptingScalarState().get(FieldState.VALUE__PROP);
+		assertTrue("ISO value '" + iso + "' does not match '" + pattern + "'.",
+			iso instanceof String && ((String) iso).matches(pattern));
 	}
 
 	/**

@@ -182,6 +182,16 @@ public class ViewServlet extends TopLogicServlet {
 		// tree. The trees are therefore only touched within an interaction.
 		try (Interaction interaction = windowRegistry.beginInteraction()) {
 			displayWindow(request, response, subSession, windowRegistry, windowName, pathInfo, routePath);
+
+			// The client of the rendered page connects within seconds. One that never does - the tab
+			// was closed while the page loaded - leaves a window that is torn down like one whose
+			// client went away, which is what the heartbeat started here checks.
+			SSEUpdateQueue sseQueue = windowRegistry.getQueue(windowName);
+			TLSessionContext sessionContext = TLContextManager.getSession();
+			if (sseQueue != null && sessionContext != null) {
+				sseQueue.setWindowContext(windowName, sessionContext, windowRegistry);
+				sseQueue.expectClient(System.currentTimeMillis());
+			}
 		}
 	}
 

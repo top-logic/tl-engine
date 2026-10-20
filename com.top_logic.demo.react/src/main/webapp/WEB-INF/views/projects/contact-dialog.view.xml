@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Where the application displays a person contact: a dialog on top of whatever the user is looking
+	at, because a contact has no place of its own in the drill-down. The contact is edited right
+	there, so a renamed contact shows up under its new name wherever it is displayed behind the
+	dialog - in the assignee cells of the tickets table, for instance.
+	
+	Below the contact, the tickets assigned to it: the tickets whose assignee reference points to the
+	contact, found through referers(), since the contact type itself knows nothing of tickets. The
+	table observes tickets, so a ticket assigned or unassigned elsewhere is reflected in its rows.
+-->
+<view>
+	<channels>
+		<channel name="contact"/>
+	</channels>
+
+	<window width="560px">
+		<title>
+			<en>Contact</en>
+			<de>Kontakt</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="contact"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="firstname"/>
+			<!-- The person's name, which the shared contact attribute cannot call anything more specific than a name. -->
+			<field attribute="name">
+				<label>
+					<en>Last name</en>
+					<de>Nachname</de>
+				</label>
+			</field>
+			<field attribute="email"/>
+			<field attribute="phone"/>
+			<commands>
+				<generic-command placement="BUTTON_BAR">
+					<label>
+						<en>Save</en>
+						<de>Speichern</de>
+					</label>
+					<store-form-state/>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<table
+			observed-types="tl.demo.projectManagement:Ticket"
+			types="tl.demo.projectManagement:Ticket"
+		>
+			<columns>
+				<column
+					attribute="title"
+					sort="ASC"
+				/>
+				<column attribute="milestone"/>
+			</columns>
+			<inputs>
+				<input channel="contact"/>
+			</inputs>
+			<rows><![CDATA[c -> if($c == null, [], $c.referers(`tl.demo.projectManagement:Ticket#assignee`))]]></rows>
+		</table>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

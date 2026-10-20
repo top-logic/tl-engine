@@ -32,12 +32,19 @@
 	line-height: inherit;
 }
 
-/* The keyboard focus ring of the design system, inside the frame; CodeMirror's own marks are off. */
+/*
+ * The keyboard focus ring of the design system, inside the frame on the editor, which does not
+ * scroll (the content scrolls inside the scroller); see tlCodeEditor.css.
+ */
 .tlScriptEditor .cm-editor.cm-focused {
-	outline: none;
+	outline-color: transparent;
 }
 
 .tlScriptEditor .cm-content:focus-visible {
+	outline-color: transparent;
+}
+
+.tlScriptEditor .cm-editor:has(.cm-content:focus-visible) {
 	outline: var(--tl-focus-width) solid var(--tl-focus-ring);
 	outline-offset: calc(-1 * var(--tl-focus-offset));
 }
@@ -55,10 +62,6 @@
 
 .tlScriptEditor .cm-activeLine {
 	background: var(--tl-surface-interactive-selected);
-}
-
-.tlScriptEditor .cm-selectionBackground {
-	background: var(--tl-surface-brand-subtle) !important;
 }
 
 .tlScriptEditor .cm-tooltip-autocomplete {

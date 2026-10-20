@@ -59,7 +59,7 @@
 	padding: var(--tl-space-2xs) var(--tl-space-md);
 	border-radius: var(--tl-radius-sm);
 	background: var(--tl-surface-scrim);
-	color: var(--tl-text-on-brand);
+	color: var(--tl-text-contrast-light);
 	font-size: var(--tl-font-size-label);
 }
 
@@ -71,7 +71,7 @@
 	width: 100%;
 	padding: var(--tl-space-lg) var(--tl-space-md) var(--tl-space-xs);
 	background: linear-gradient(to bottom, transparent, var(--tl-surface-scrim));
-	color: var(--tl-text-on-brand);
+	color: var(--tl-text-contrast-light);
 }
 
 /*

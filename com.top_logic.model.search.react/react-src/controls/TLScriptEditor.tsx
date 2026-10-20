@@ -308,7 +308,7 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       diagnostics={diagnostics}
       onChange={handleChange}
       onBlur={handleBlur}
-      className={rootClassName(state, 'tlScriptEditor tl-field tl-type-code')}
+      className={rootClassName(state, readOnly ? 'tlScriptEditor tl-type-code' : 'tlScriptEditor tl-field tl-type-code')}
       invalid={state.hasError === true}
       contentAttributes={{ id: inputId, ...labelProps }}
     />

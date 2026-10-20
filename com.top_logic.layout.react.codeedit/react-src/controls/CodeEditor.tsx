@@ -20,7 +20,7 @@ import {
   syntaxHighlighting, defaultHighlightStyle, bracketMatching, LanguageSupport,
 } from '@codemirror/language';
 
-const { useRef, useEffect, useMemo } = React;
+const { useRef, useEffect } = React;
 
 /** A diagnostic expressed in 1-based line/column coordinates (as produced server-side). */
 export interface CodeEditorDiagnostic {
@@ -162,9 +162,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   } = props;
 
   // The attributes of the content element: those of the host, and the error as the host reports it.
-  const contentAttributes = useMemo(
-    () => (invalid ? { ...props.contentAttributes, 'aria-invalid': 'true' } : props.contentAttributes),
-    [props.contentAttributes, invalid]);
+  const contentAttributes = invalid ? { ...props.contentAttributes, 'aria-invalid': 'true' } : props.contentAttributes;
 
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);

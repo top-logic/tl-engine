@@ -18,6 +18,7 @@ import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.LayoutConfigTreeNode;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -80,15 +81,33 @@ public class ApplyRolesCommandHandler extends AbstractApplyCommandHandler {
 					break;
 				}
 			}
+			ConfigNode child = node;
 			ConfigNode csl = node.getParent();
-			while (csl != null) {
+			/* Do not propagate the read right from a dialog to its opener: A dialog with its own
+			 * security may be reachable without its opener, e.g. by a goto. */
+			while (csl != null && !isDialogRoot(child)) {
 				if (ensureRead(csl, role, hasAnyRight)) {
+					child = csl;
 					csl = csl.getParent();
 				} else {
 					break;
 				}
 			}
 		}
+	}
+
+	/**
+	 * Whether the given node represents the top-level component of a dialog.
+	 *
+	 * <p>
+	 * Such a node is created for a dialog with its own security configuration. Its parent is the
+	 * component that declares the dialog.
+	 * </p>
+	 */
+	private static boolean isDialogRoot(ConfigNode node) {
+		LayoutConfigTreeNode layoutNode = node.layoutNode();
+		LayoutConfigTreeNode dialogParent = layoutNode.getDialogParent();
+		return dialogParent != null && dialogParent == layoutNode.getParent();
 	}
 
 	private boolean ensureRead(ConfigNode csl, BoundedRole role, boolean shouldHaveRight) {
@@ -110,6 +129,10 @@ public class ApplyRolesCommandHandler extends AbstractApplyCommandHandler {
 		for (SecurityNode child : children) {
 			if (child instanceof ConfigNode) {
 				ConfigNode childConfigNode = (ConfigNode) child;
+				if (isDialogRoot(childConfigNode)) {
+					// Rights in a dialog do not require the read right of the opener.
+					continue;
+				}
 				List<BoundCommandGroup> commands = childConfigNode.getCommandGroups();
 				for (BoundCommandGroup cgn : commands) {
 					if (childConfigNode.hasRight(role, cgn)) {

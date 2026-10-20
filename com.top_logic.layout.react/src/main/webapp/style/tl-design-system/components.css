@@ -5916,6 +5916,14 @@ button.tl-swatch:not(:disabled):hover {
   display: none;
 }
 
+/* Eine Gruppe, die eine eingebettete Toolbar hält (die Befehle des Servers in der Leiste des Wysiwyg-Editors),
+   schrumpft unter ihren Inhalt: erst dann bekommt die eingebettete Toolbar weniger als ihre natürliche Breite und
+   kollabiert in ihren Überlauf, statt die Leiste über den Rand zu schieben. */
+.tl-toolbar__group:has(> .tl-toolbar) {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
 /* --- tooltip/tooltip.css --- */
 /* Tooltip — Spec 2026-10-20 Welle 5d §5. Der Hinweis an einem Element (bridge/tooltip-host.ts, TooltipPopover.tsx):
    die einzige invertierte Fläche des Pakets — ein Hinweis, kein Menü. Die Lage setzt floating-ui inline; hier
@@ -6176,4 +6184,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:8eaf6b18e0078f40ac61eda0639cc248ff2c650e0d34a8d64a611164209dfe2e — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:6deb47d5bb87d2ead2d70db4848a88d284603934dcb7b0dd1ed10747d74b9d6e — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -4041,10 +4041,13 @@ a.tl-field-value:hover {
 /* Alles außer dem Titel schrumpft nicht: Kopfknöpfe behalten ihre Maße bei langem Titel. */
 .tl-titlebar > .tl-button { flex: none; }
 
+/* Die Aktionen stehen am Ende des Kopfes, wie in der AppBar — auch wenn sie beim Nachgeben (unten) den ganzen Rest
+   nehmen (#29918). */
 .tl-titlebar__actions {
   display: flex;
   flex: 0 1 auto;
   align-items: center;
+  justify-content: end;
   gap: var(--tl-space-2xs);
   min-width: 0;
 }
@@ -4378,4 +4381,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:436053dc142e033b0406d3049020e9fe79c2d359b98122a4e323acdef83a609c — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:c2bb9ad38c8ec84344437023901864c0a6616a9bc82e1015f3870658b52ae365 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -158,8 +158,15 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 
 	}
 
-	/** Storage object holding global data without local changes. */
-	private Values _values;
+	/**
+	 * Storage object holding global data without local changes.
+	 * 
+	 * <p>
+	 * Read without lock, written only in the synchronized {@link #setValues(Values)}, see
+	 * {@link #getValues()}.
+	 * </p>
+	 */
+	private volatile Values _values;
 
 	/* package protected */DBKnowledgeItem(DBKnowledgeBase kb, MOKnowledgeItem staticType) {
 		super(kb, staticType);
@@ -1296,9 +1303,19 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 	 * In a new object this is <code>null</code> until the object is committed.
 	 * </p>
 	 * 
+	 * <p>
+	 * The reference is a volatile read without lock: A caller sees the {@link Values} installed by
+	 * the latest {@link #setValues(Values)}. The consistency of the chain of {@link Values} (the
+	 * validity bounds {@link Values#minValidity()} and {@link Values#maxValidity()} and the link
+	 * {@link Values#formerValidity()}) is guarded by the synchronized methods
+	 * {@link #findValues(long, Values)} and {@link #updateValues(Values)}, which walk and modify
+	 * the chain under the lock of this item; {@link ValidityChainImpl} declares the bounds and the
+	 * link volatile.
+	 * </p>
+	 * 
 	 * @see #findValues(long) The values for a given revision.
 	 */
-	protected synchronized Values getValues() {
+	protected Values getValues() {
 		return _values;
 	}
 

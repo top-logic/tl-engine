@@ -33,6 +33,12 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 IMPORT_ROLES_PROFILE_MISSING_VIEWS__VIEWS;
 
+	/**
+	 * @en The following command groups are not available in their views and were not imported:
+	 *     {0}
+	 */
+	public static ResKey1 IMPORT_ROLES_PROFILE_UNAVAILABLE_COMMAND_GROUPS__GROUPS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

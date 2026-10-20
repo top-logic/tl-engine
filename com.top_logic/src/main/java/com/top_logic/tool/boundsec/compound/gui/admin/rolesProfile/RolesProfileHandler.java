@@ -19,11 +19,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.swing.tree.TreeModel;
 
 import com.top_logic.basic.FileManager;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.DescendantDFSIterator;
@@ -50,6 +52,7 @@ import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
+import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.CommandGroupConfig;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.RoleProfileConfig;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.ViewConfig;
 import com.top_logic.tool.boundsec.gui.profile.CommandGroupCollector;
@@ -357,13 +360,23 @@ public class RolesProfileHandler {
 		Map<String, RoleProfileConfig> profiles = securityConfig.getProfiles();
 		Set<ComponentName> allViews = addAllViewNames(new HashSet<>(), profiles);
 		Map<String, BoundedRole> roleByName = rolesByName(profiles.keySet());
-		layoutTrees.forEach(tree -> importProfiles(tree, profiles, roleByName, allViews));
+		Set<String> skippedGroups = new TreeSet<>();
+		layoutTrees.forEach(tree -> importProfiles(tree, profiles, roleByName, allViews, skippedGroups));
 		for (BoundedRole role : roleByName.values()) {
 			layoutTrees.forEach(tree -> ImplicitReadRights.addImplicitReadRights(tree, role));
 		}
 		if (!allViews.isEmpty()) {
+			String missingViews = StringServices.toString(allViews);
+			Logger.warn("Role profiles for non-existing views not imported: " + missingViews,
+				RolesProfileHandler.class);
+			InfoService.showWarning(I18NConstants.IMPORT_ROLES_PROFILE_MISSING_VIEWS__VIEWS.fill(missingViews));
+		}
+		if (!skippedGroups.isEmpty()) {
+			String unavailableGroups = StringServices.toString(skippedGroups);
+			Logger.warn("Command groups not available in their views not imported: " + unavailableGroups,
+				RolesProfileHandler.class);
 			InfoService.showWarning(
-				I18NConstants.IMPORT_ROLES_PROFILE_MISSING_VIEWS__VIEWS.fill(StringServices.toString(allViews)));
+				I18NConstants.IMPORT_ROLES_PROFILE_UNAVAILABLE_COMMAND_GROUPS__GROUPS.fill(unavailableGroups));
 		}
 	}
 
@@ -374,10 +387,10 @@ public class RolesProfileHandler {
 	}
 
 	private void importProfiles(LayoutConfigTree tree, Map<String, RoleProfileConfig> profiles,
-			Map<String, BoundedRole> roleByName, Set<ComponentName> allConfiguredViews) {
+			Map<String, BoundedRole> roleByName, Set<ComponentName> allConfiguredViews, Set<String> skippedGroups) {
 		DescendantDFSIterator<LayoutConfigTreeNode> allNodes = new DescendantDFSIterator<>(tree, tree.getRoot());
 		while (allNodes.hasNext()) {
-			importProfiles(allNodes.next(), profiles, roleByName, allConfiguredViews);
+			importProfiles(allNodes.next(), profiles, roleByName, allConfiguredViews, skippedGroups);
 		}
 	}
 
@@ -388,20 +401,32 @@ public class RolesProfileHandler {
 			.filter(name -> !roles.containsKey(name))
 			.collect(Collectors.toList());
 		if (!missingRoles.isEmpty()) {
-			InfoService.showWarning(
-				I18NConstants.IMPORT_ROLES_PROFILE_MISSING_ROLES__ROLES.fill(StringServices.toString(missingRoles)));
+			String missing = StringServices.toString(missingRoles);
+			Logger.warn("Role profiles for non-existing roles not imported: " + missing, RolesProfileHandler.class);
+			InfoService.showWarning(I18NConstants.IMPORT_ROLES_PROFILE_MISSING_ROLES__ROLES.fill(missing));
 		}
 		return roles;
 	}
 
 	private void importProfiles(LayoutConfigTreeNode node, Map<String, RoleProfileConfig> profiles,
-			Map<String, BoundedRole> roleByName, Set<ComponentName> allConfiguredViews) {
+			Map<String, BoundedRole> roleByName, Set<ComponentName> allConfiguredViews, Set<String> skippedGroups) {
 		PersBoundComp secComp = node.getSecurityComponent();
 		if (secComp == null) {
 			return;
 		}
 		ComponentName secCompName = secComp.getIdentifier();
 		allConfiguredViews.remove(secCompName);
+		Set<BoundCommandGroup> availableGroups;
+		if (node.getConfig() instanceof CompoundSecurityLayout.Config) {
+			if (!node.getConfig().getName().qualifiedName().equals(secComp.getName())) {
+				/* Component delegates to another PersBoundComp. The rights are imported for the
+				 * component that defines the security. */
+				return;
+			}
+			availableGroups = new HashSet<>(CommandGroupCollector.collectNonSystemGroups(node));
+		} else {
+			availableGroups = null;
+		}
 		Map<BoundedRole, Collection<BoundCommandGroup>> neededRights = new HashMap<>();
 		for (Entry<String, RoleProfileConfig> profile: profiles.entrySet()) {
 			BoundedRole role = roleByName.get(profile.getKey());
@@ -415,9 +440,16 @@ public class RolesProfileHandler {
 				// No rights for view
 				continue;
 			}
-			List<BoundCommandGroup> groups = view.getCommandGroups()
-				.stream()
-				.map(config -> config.getCommandGroup()).collect(Collectors.toList());
+			List<BoundCommandGroup> groups = new ArrayList<>();
+			for (CommandGroupConfig groupConfig : view.getCommandGroups()) {
+				BoundCommandGroup group = groupConfig.getCommandGroup();
+				if (availableGroups != null && !availableGroups.contains(group)) {
+					skippedGroups.add("'" + group.getID() + "' in '" + secCompName.qualifiedName() + "' for role '"
+						+ role.getName() + "'");
+					continue;
+				}
+				groups.add(group);
+			}
 			neededRights.put(role, groups);
 		}
 		secComp.setAccess(neededRights);

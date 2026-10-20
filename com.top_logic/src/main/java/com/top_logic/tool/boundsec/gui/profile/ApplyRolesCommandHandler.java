@@ -72,8 +72,8 @@ public class ApplyRolesCommandHandler extends AbstractApplyCommandHandler {
 
 	private void ensureRead(ConfigNode node, Set<BoundedRole> roles) {
 		List<BoundCommandGroup> commands = node.getCommandGroups();
-		boolean hasAnyRight = false;
 		for (BoundedRole role : roles) {
+			boolean hasAnyRight = false;
 			for (BoundCommandGroup cgn : commands) {
 				hasAnyRight = node.hasRight(role, cgn);
 				if (hasAnyRight) {

@@ -55,10 +55,11 @@ const TOKEN_SWITCHES = ['data-tl-density', 'data-tl-theme', 'data-tl-mode'];
  * switches density, theme or mode. The state keeps its previous value when the new one is equal, so a switch that does
  * not touch what the control reads renders nothing; after unmount the observer is gone.
  *
- * @param read Reads the value from the page now.
+ * @param read Reads the value from the page now. The latest one given is the one called, so an inline closure may
+ *        change between renders.
  * @param initial The value of the first render (a function is called once): before the first reading, where the
  *        element to read at does not exist yet, or the first reading itself.
- * @param same Whether two values read are the same; identity by default.
+ * @param same Whether two values read are the same; identity by default. The latest one given is the one called.
  * @param deps What `read` depends on: the reading is repeated, and the observer set up anew, when one of them changes.
  */
 export function useTokenSwitch<T>(
@@ -68,10 +69,17 @@ export function useTokenSwitch<T>(
   deps: React.DependencyList = [],
 ): T {
   const [value, setValue] = React.useState<T>(initial);
+  // The observer outlives a render: it calls what the latest render gave, not the first one's closure.
+  const readRef = React.useRef(read);
+  const sameRef = React.useRef(same);
+  React.useLayoutEffect(() => {
+    readRef.current = read;
+    sameRef.current = same;
+  });
   React.useLayoutEffect(() => {
     const update = () => {
-      const next = read();
-      setValue((previous) => (same(previous, next) ? previous : next));
+      const next = readRef.current();
+      setValue((previous) => (sameRef.current(previous, next) ? previous : next));
     };
     update();
     const observer = new MutationObserver(update);

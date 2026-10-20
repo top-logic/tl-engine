@@ -321,7 +321,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 *        {@link #DS_DENSITY_NORMAL} or {@link #DS_DENSITY_COMPACT}; any other value is ignored.
 	 */
 	public void setSelectedDensity(String density) {
-		if (!DS_DENSITY_NORMAL.equals(density) && !DS_DENSITY_COMPACT.equals(density)) {
+		if (!isDensity(density)) {
 			return;
 		}
 		PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
@@ -336,10 +336,22 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 *
 	 * @param stored
 	 *        The value read from the personal configuration, possibly {@code null}.
-	 * @return {@link #DS_DENSITY_COMPACT} for exactly that value, else {@link #DS_DENSITY_NORMAL}.
+	 * @return The stored value if it is one of the densities (see {@link #isDensity(String)}), else
+	 *         {@link #DS_DENSITY_NORMAL}.
 	 */
 	public static String densityOf(Object stored) {
-		return DS_DENSITY_COMPACT.equals(stored) ? DS_DENSITY_COMPACT : DS_DENSITY_NORMAL;
+		return stored instanceof String && isDensity((String) stored) ? (String) stored : DS_DENSITY_NORMAL;
+	}
+
+	/**
+	 * Whether the given name is one of the densities the UI offers, {@link #DS_DENSITY_NORMAL} or
+	 * {@link #DS_DENSITY_COMPACT}.
+	 *
+	 * @param density
+	 *        The name to check, possibly {@code null}.
+	 */
+	public static boolean isDensity(String density) {
+		return DS_DENSITY_NORMAL.equals(density) || DS_DENSITY_COMPACT.equals(density);
 	}
 
 	/**
@@ -354,20 +366,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 *        The writer of the {@code html} start tag.
 	 */
 	public void writeDensityAttribute(TagWriter out) {
-		writeDensityAttribute(out, getSelectedDensity());
-	}
-
-	/**
-	 * Writes {@link #DS_DENSITY_ATTRIBUTE} for the given density.
-	 *
-	 * @param out
-	 *        The writer of the {@code html} start tag.
-	 * @param density
-	 *        The density to write; anything but {@link #DS_DENSITY_COMPACT} writes
-	 *        {@link #DS_DENSITY_NORMAL}.
-	 */
-	public void writeDensityAttribute(TagWriter out, String density) {
-		out.writeAttribute(DS_DENSITY_ATTRIBUTE, densityOf(density));
+		out.writeAttribute(DS_DENSITY_ATTRIBUTE, getSelectedDensity());
 	}
 
 	/**

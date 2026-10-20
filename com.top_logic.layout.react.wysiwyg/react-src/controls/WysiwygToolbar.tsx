@@ -221,8 +221,8 @@ interface ChoiceEntryProps extends Omit<Choice, 'apply'> {
 
 /**
  * An entry of a menu of the toolbar: the part `Button` as entry of the menu. Under the defaults of
- * a choice (`ButtonDefaults` `radio`) it is a `menuitemradio` whose `aria-checked` is the given
- * state.
+ * a choice (`ButtonDefaults` `radio`) it is a `menuitemradio`, otherwise a `menuitemcheckbox`;
+ * `aria-checked` is the given state either way.
  */
 const ChoiceEntry: React.FC<ChoiceEntryProps> = ({ label, icon, checked, onSelect }) => {
   const Button = usePart('Button');
@@ -255,14 +255,22 @@ interface ChoiceMenuProps {
 
   /** The alternatives, one entry each; at most one is checked. */
   choices: Choice[];
+
+  /**
+   * Whether the entries are the alternatives of a choice that always holds one of them (radio
+   * entries), or toggles that may all be off, choosing the checked one switching it off (checkbox
+   * entries).
+   */
+  radio: boolean;
 }
 
 /**
  * A menu of the toolbar offering the alternatives of one choice (paragraph format, list kind): the
- * part `MenuTrigger` opening the menu of the bridge, whose entries are radio entries. The menu
- * closes after an entry is chosen; the focus goes back into the text.
+ * part `MenuTrigger` opening the menu of the bridge, whose entries are radio entries or checkbox
+ * entries ({@link ChoiceMenuProps.radio}). The menu closes after an entry is chosen; the focus goes
+ * back into the text.
  */
-const ChoiceMenu: React.FC<ChoiceMenuProps> = ({ editor, label, icon, choices }) => {
+const ChoiceMenu: React.FC<ChoiceMenuProps> = ({ editor, label, icon, choices, radio }) => {
   const MenuTrigger = usePart('MenuTrigger');
   const defaults = useButtonDefaults();
   const [open, setOpen] = useState(false);
@@ -293,7 +301,7 @@ const ChoiceMenu: React.FC<ChoiceMenuProps> = ({ editor, label, icon, choices })
         onClick={toggle}
       />
       <Menu open={open} anchor={anchor} onClose={close}>
-        <ButtonDefaults appearance="menu-item" radio iconOnly={false}>
+        <ButtonDefaults appearance="menu-item" radio={radio} iconOnly={false}>
           {choices.map(choice => (
             <ChoiceEntry
               key={choice.label}
@@ -453,8 +461,9 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
 /**
  * The toolbar of the rich text editor (rich-text.contract.md): a wrapping `tl-toolbar` whose
  * groups are divided by vertical dividers. Its buttons are the part `Button`, ghost and icon
- * alone; the paragraph format and the list kind are menus of radio entries, the link a popup. The
- * commands the editor is configured with form a toolbar of their own inside.
+ * alone; the paragraph format is a menu of radio entries, the list kind a menu of checkbox entries
+ * (the checked one switches the list off), the link a popup. The commands the editor is configured
+ * with form a toolbar of their own inside.
  */
 const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar }) => {
   const labels = useI18N(I18N_KEYS);
@@ -483,6 +492,7 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
         editor={editor}
         label={t(labels, 'heading')}
         icon={headingLevel === null ? ICON_PARAGRAPH : ICON_HEADING}
+        radio
         choices={[
           {
             label: t(labels, 'paragraph'),
@@ -501,6 +511,7 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
         editor={editor}
         label={t(labels, 'lists')}
         icon={state.orderedList ? ICON_NUMBERED_LIST : ICON_BULLET_LIST}
+        radio={false}
         choices={[
           {
             label: t(labels, 'bulletList'),

@@ -15,7 +15,7 @@ export type ButtonAppearance = 'primary' | 'secondary' | 'ghost' | 'link' | 'men
  *   button is an entry, carrying the {@link menuItemProps} the menu's keyboard navigation finds its
  *   entries by.
  * - `radio`: the toggle buttons inside are the alternatives of one choice, of which exactly one is checked
- *   (paragraph format, list kind): in a menu each is a `menuitemradio` instead of a `menuitemcheckbox`.
+ *   (paragraph format): in a menu each is a `menuitemradio` instead of a `menuitemcheckbox`.
  * - `iconOnly`: a compact toolbar says `true`; every button that shows its icon drops its label
  *   then and becomes a square icon button, its label moving to the tooltip.
  */

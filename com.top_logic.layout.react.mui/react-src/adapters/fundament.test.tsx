@@ -537,6 +537,26 @@ describe('density', () => {
     expect(renders).toBe(afterUnmount);
     document.documentElement.removeAttribute('data-tl-mode');
   });
+
+  it('useTokenSwitch calls the read and same of the latest render, not those of the first', async () => {
+    document.documentElement.setAttribute('data-tl-mode', 'light');
+    const { result, rerender } = renderHook(
+      ({ suffix }: { suffix: string }) =>
+        useTokenSwitch(
+          // Inline closures, new on every render.
+          () => document.documentElement.getAttribute('data-tl-mode') + suffix,
+          '',
+          (a, b) => a === b,
+        ),
+      { initialProps: { suffix: '-first' } },
+    );
+    expect(result.current).toBe('light-first');
+
+    rerender({ suffix: '-second' });
+    act(() => document.documentElement.setAttribute('data-tl-mode', 'dark'));
+    await waitFor(() => expect(result.current).toBe('dark-second'));
+    document.documentElement.removeAttribute('data-tl-mode');
+  });
 });
 
 describe('menu', () => {

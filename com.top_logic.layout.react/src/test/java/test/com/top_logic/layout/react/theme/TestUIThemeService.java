@@ -267,13 +267,22 @@ public class TestUIThemeService extends TestCase {
 
 		assertEquals("<html data-tl-density=\"compact\">", htmlStartTag(service, UIThemeService.DS_DENSITY_COMPACT));
 		assertEquals("<html data-tl-density=\"normal\">", htmlStartTag(service, UIThemeService.DS_DENSITY_NORMAL));
-		assertEquals("<html data-tl-density=\"normal\">", htmlStartTag(service, null));
 		// No stored choice: the default.
 		TagWriter out = new TagWriter();
 		out.beginBeginTag("html");
 		service.writeDensityAttribute(out);
 		out.endBeginTag();
 		assertEquals("<html data-tl-density=\"normal\">", out.toString());
+	}
+
+	/**
+	 * Only the two densities of the design system can be chosen.
+	 */
+	public void testOnlyKnownDensities() {
+		assertTrue(UIThemeService.isDensity("normal"));
+		assertTrue(UIThemeService.isDensity("compact"));
+		assertFalse(UIThemeService.isDensity("huge"));
+		assertFalse(UIThemeService.isDensity(null));
 	}
 
 	/**
@@ -454,10 +463,21 @@ public class TestUIThemeService extends TestCase {
 		return out.toString();
 	}
 
+	/**
+	 * The {@code html} start tag the given service writes, whose user has selected the given
+	 * density.
+	 */
 	private static String htmlStartTag(UIThemeService service, String density) {
+		UIThemeService selecting = new UIThemeService(new DefaultInstantiationContext(new BufferingProtocol()),
+			service.getConfig()) {
+			@Override
+			public String getSelectedDensity() {
+				return density;
+			}
+		};
 		TagWriter out = new TagWriter();
 		out.beginBeginTag("html");
-		service.writeDensityAttribute(out, density);
+		selecting.writeDensityAttribute(out);
 		out.endBeginTag();
 		return out.toString();
 	}

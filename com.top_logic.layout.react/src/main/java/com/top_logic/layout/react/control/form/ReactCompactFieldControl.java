@@ -264,7 +264,6 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		_opener.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		_opener.setAppearance(ButtonAppearance.GHOST);
 		_opener.setSize(ButtonSize.SMALL);
-		_opener.setCssClass(CSS_OPENER);
 		updateDisplay();
 
 		setChildren(List.of(_preview, _opener));

@@ -21,14 +21,4 @@ public class TestSetDensityCommand extends TestCase {
 		assertEquals("window.tlTheme.density('compact');", SetDensityCommand.clientCode("compact"));
 		assertEquals("window.tlTheme.density('normal');", SetDensityCommand.clientCode("normal"));
 	}
-
-	/**
-	 * Only the two densities of the design system can be chosen.
-	 */
-	public void testOnlyKnownDensities() {
-		assertTrue(SetDensityCommand.isDensity("normal"));
-		assertTrue(SetDensityCommand.isDensity("compact"));
-		assertFalse(SetDensityCommand.isDensity("huge"));
-		assertFalse(SetDensityCommand.isDensity(null));
-	}
 }

@@ -318,23 +318,28 @@ describe('rich text editor', () => {
     expect(selection(editor)).toEqual(WORLD);
   });
 
-  it('the list kind is a menu of radio entries', async () => {
+  it('the list kind is a menu of checkbox entries: choosing the checked one removes the list', async () => {
     const user = userEvent.setup();
     layOut();
     const { editor } = await mountEditor({ value: TEXT, editable: true });
     selectWorld(editor);
 
     await user.click(screen.getByRole('button', { name: 'js.wysiwyg.lists' }));
-    let radios = within(screen.getByRole('menu')).getAllByRole('menuitemradio');
-    expect(radios.map(radio => radio.textContent)).toEqual(['js.wysiwyg.bulletList', 'js.wysiwyg.orderedList']);
-    expect(radios.map(radio => radio.getAttribute('aria-checked'))).toEqual(['false', 'false']);
+    expect(within(screen.getByRole('menu')).queryAllByRole('menuitemradio')).toHaveLength(0);
+    let entries = within(screen.getByRole('menu')).getAllByRole('menuitemcheckbox');
+    expect(entries.map(entry => entry.textContent)).toEqual(['js.wysiwyg.bulletList', 'js.wysiwyg.orderedList']);
+    expect(entries.map(entry => entry.getAttribute('aria-checked'))).toEqual(['false', 'false']);
 
-    await user.click(radios[1]);
+    await user.click(entries[1]);
     expect(editor.isActive('orderedList')).toBe(true);
 
     await user.click(screen.getByRole('button', { name: 'js.wysiwyg.lists' }));
-    radios = within(screen.getByRole('menu')).getAllByRole('menuitemradio');
-    expect(radios.map(radio => radio.getAttribute('aria-checked'))).toEqual(['false', 'true']);
+    entries = within(screen.getByRole('menu')).getAllByRole('menuitemcheckbox');
+    expect(entries.map(entry => entry.getAttribute('aria-checked'))).toEqual(['false', 'true']);
+
+    // A checkbox entry is a toggle: choosing the list kind in force removes the list.
+    await user.click(entries[1]);
+    expect(editor.isActive('orderedList')).toBe(false);
   });
 
   it('the link popup is a popover with a labelled field; applying sets the link and gives the focus back to the text', async () => {

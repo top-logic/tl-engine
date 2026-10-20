@@ -78,7 +78,7 @@ public class SetDensityCommand implements ViewCommand {
 	 * @return The result of the activation.
 	 */
 	public static HandlerResult applyDensity(ReactContext context, String density) {
-		if (!isDensity(density)) {
+		if (!UIThemeService.isDensity(density)) {
 			// Neither stored nor put into effect, so that the page keeps the density the user sees.
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -92,17 +92,10 @@ public class SetDensityCommand implements ViewCommand {
 	}
 
 	/**
-	 * Whether the given name is one of the densities the UI offers.
-	 */
-	public static boolean isDensity(String density) {
-		return UIThemeService.DS_DENSITY_NORMAL.equals(density) || UIThemeService.DS_DENSITY_COMPACT.equals(density);
-	}
-
-	/**
 	 * The script putting the given density into effect in the browser.
 	 *
 	 * @param density
-	 *        Name of the density, see {@link #isDensity(String)}.
+	 *        Name of the density, see {@link UIThemeService#isDensity(String)}.
 	 */
 	public static String clientCode(String density) {
 		StringBuilder code = new StringBuilder();

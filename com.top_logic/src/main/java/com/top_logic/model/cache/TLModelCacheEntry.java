@@ -74,6 +74,8 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	private final Map<TLStructuredType, List<TLObjectInitializer>> _initializers = map();
 
+	private final Map<TLStructuredType, List<PartDefault>> _defaultProviders = map();
+
 	/**
 	 * <p>
 	 * Mapping from a {@link TLType} to the
@@ -451,6 +453,14 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			key -> immutable(super.getInitializers(key)));
 	}
 
+	@Override
+	public List<PartDefault> getDefaultProviders(TLStructuredType type) {
+		if (!canModelPartBeCached(type)) {
+			return super.getDefaultProviders(type);
+		}
+		return computeIfAbsent(_defaultProviders, type, super::getDefaultProviders);
+	}
+
 	/** Whether data about the given {@link TLModelPart} can be cached. */
 	private boolean canModelPartBeCached(TLModelPart modelPart) {
 		if (!(modelPart instanceof PersistentModelPart)) {
@@ -488,6 +498,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_iconProviderByType.clear();
 		_colorProviderByType.clear();
 		_initializers.clear();
+		_defaultProviders.clear();
 		_globalAppModelClasses = null;
 		_globalClasses = null;
 	}
@@ -506,6 +517,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			.add("globalAppModelClasses", _globalAppModelClasses == null ? "null" : _globalAppModelClasses.size())
 			.add("globalClasses", _globalClasses == null ? null : _globalClasses.size())
 			.add("initializers", _initializers.size())
+			.add("defaultProviders", _defaultProviders.size())
 			.build();
 	}
 

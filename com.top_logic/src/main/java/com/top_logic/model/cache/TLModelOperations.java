@@ -7,6 +7,7 @@ package com.top_logic.model.cache;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -37,6 +38,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
@@ -53,6 +55,7 @@ import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.composite.TargetTable;
 import com.top_logic.model.initializer.TLObjectInitializer;
+import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -557,6 +560,55 @@ public class TLModelOperations {
 	 */
 	public List<TLObjectInitializer> getInitializers(TLStructuredType type) {
 		return TLAnnotations.getInitializers(type);
+	}
+
+	/**
+	 * The {@link DefaultProvider}s of the parts of the given type, which are applied to a newly
+	 * created instance of that type.
+	 * 
+	 * <p>
+	 * The result contains an entry for each non-derived part of {@link TLStructuredType#getAllParts()}
+	 * for which {@link DisplayAnnotations#getDefaultProvider(TLStructuredTypePart)} resolves a
+	 * provider, in the order of {@link TLStructuredType#getAllParts()}.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type whose parts are inspected.
+	 * @return An unmodifiable list of {@link PartDefault} entries.
+	 * 
+	 * @implNote For a persistent part, the {@link DefaultProvider} resolved by
+	 *           {@link DisplayAnnotations#getDefaultProvider(TLStructuredTypePart)} is already a
+	 *           single instance cached at the part's knowledge item, so sharing one provider instance
+	 *           per part for all created objects is consistent with the per-part resolution.
+	 */
+	public List<PartDefault> getDefaultProviders(TLStructuredType type) {
+		List<PartDefault> result = new ArrayList<>();
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (part.isDerived()) {
+				// For safety reasons, ignore default value annotations on derived attributes.
+				continue;
+			}
+			DefaultProvider provider = DisplayAnnotations.getDefaultProvider(part);
+			if (provider == null) {
+				continue;
+			}
+			result.add(new PartDefault(part, provider));
+		}
+		return Collections.unmodifiableList(result);
+	}
+
+	/**
+	 * A part of a type together with the {@link DefaultProvider} creating its default value.
+	 * 
+	 * @param part
+	 *        The part receiving the default value.
+	 * @param provider
+	 *        The {@link DefaultProvider} computing the default value of {@link #part()}.
+	 * 
+	 * @see TLModelOperations#getDefaultProviders(TLStructuredType)
+	 */
+	public record PartDefault(TLStructuredTypePart part, DefaultProvider provider) {
+		// Pure data.
 	}
 
 	/**

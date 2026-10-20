@@ -213,7 +213,7 @@ public class TestValueNormalizer extends AbstractTicketFormTest {
 	private static TLValueNormalizer normalizerAnnotation(
 			PolymorphicConfiguration<? extends ValueNormalizer> normalizer) {
 		TLValueNormalizer result = TypedConfiguration.newConfigItem(TLValueNormalizer.class);
-		result.setNormalizer(normalizer);
+		result.getNormalizers().add(normalizer);
 		return result;
 	}
 

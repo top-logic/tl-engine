@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.annotate.util;
 
+import java.util.List;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.form.values.edit.InAppImplementations;
@@ -56,19 +58,40 @@ public interface ValueNormalizer {
 	Object normalize(TLObject object, TLStructuredTypePart attribute, Object value);
 
 	/**
+	 * Whether a normalizer is {@link TLValueNormalizer annotated} in the given annotations.
+	 *
+	 * @param annotations
+	 *        The annotations of an attribute, or of an input that is not bound to an attribute.
+	 * @return Whether {@link #annotated(AnnotationLookup)} delivers a normalizer.
+	 */
+	static boolean isAnnotated(AnnotationLookup annotations) {
+		TLValueNormalizer annotation = annotations.getAnnotation(TLValueNormalizer.class);
+		return annotation != null && !annotation.getNormalizers().isEmpty();
+	}
+
+	/**
 	 * The normalizer {@link TLValueNormalizer annotated} in the given annotations.
 	 *
 	 * @param annotations
 	 *        The annotations of an attribute, or of an input that is not bound to an attribute.
-	 * @return A new instance of the annotated normalizer, or {@code null} if no normalizer is
-	 *         annotated.
+	 * @return A new instance of the annotated normalizer, a {@link ValueNormalizerChain} applying
+	 *         the annotated normalizers in their order if more than one is annotated, or
+	 *         {@code null} if no normalizer is annotated.
 	 */
 	static ValueNormalizer annotated(AnnotationLookup annotations) {
 		TLValueNormalizer annotation = annotations.getAnnotation(TLValueNormalizer.class);
 		if (annotation == null) {
 			return null;
 		}
-		return TypedConfigUtil.createInstance(annotation.getNormalizer());
+		List<ValueNormalizer> normalizers = TypedConfigUtil.createInstanceList(annotation.getNormalizers());
+		switch (normalizers.size()) {
+			case 0:
+				return null;
+			case 1:
+				return normalizers.get(0);
+			default:
+				return new ValueNormalizerChain(normalizers);
+		}
 	}
 
 }

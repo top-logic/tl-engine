@@ -152,13 +152,14 @@
 					</annotations>
 				</property>
 
-				<!-- String brought into canonical form when entered: trimmed, inner whitespace runs collapsed to one space -->
+				<!-- String brought into canonical form when entered: trimmed, inner whitespace runs collapsed to one space, lower case -->
 				<property name="normalizedText"
 					type="tl.core:String"
 				>
 					<annotations>
 						<value-normalizer>
-							<normalize-by-expression function="value -> obj -> regex('\\s+').regexReplace($value, ' ').trim()"/>
+							<collapse-whitespace/>
+							<lower-case/>
 						</value-normalizer>
 					</annotations>
 				</property>

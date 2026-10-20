@@ -14,6 +14,7 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.TLValueNormalizer;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.impl.TransientObjectFactory;
@@ -80,9 +81,9 @@ public class TestNormalizeByExpression extends AbstractSearchExpressionTest {
 		TypedConfigUtil.setProperty(config, NormalizeByExpression.Config.FUNCTION, parse(function));
 
 		TLValueNormalizer annotation = TypedConfiguration.newConfigItem(TLValueNormalizer.class);
-		annotation.setNormalizer(config);
+		annotation.getNormalizers().add(config);
 
-		return TypedConfigUtil.createInstance(annotation.getNormalizer());
+		return ValueNormalizer.annotated(AnnotationContainer.EMPTY.with(annotation));
 	}
 
 	public static Test suite() {

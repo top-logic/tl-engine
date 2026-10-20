@@ -60,7 +60,6 @@ import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.annotate.TLValueNormalizer;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
@@ -68,6 +67,7 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPrese
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
+import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -594,7 +594,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
 			.setDateFormat(dateFormat(annotations, type))
 			.setNumberFormat(numberFormat(annotations, type))
-			.setSendValueOnBlur(annotations.getAnnotation(TLValueNormalizer.class) != null);
+			.setSendValueOnBlur(ValueNormalizer.isAnnotated(annotations));
 	}
 
 	/**

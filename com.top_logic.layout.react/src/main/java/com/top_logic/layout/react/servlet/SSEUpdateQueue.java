@@ -82,6 +82,14 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * waits up to {@link #POLL_HOLD_MILLIS} for an event, so an event is delivered as soon as it
  * exists, and every poll ends before a proxy's idle timeout.
  * </p>
+ *
+ * <p>
+ * <b>A client that went away.</b> The heartbeat keeps running while the queue has no client, see
+ * {@link #clientGoneSince(long)}. A browser tab killed without an unload report, a closed laptop, a
+ * lost network leave such a queue behind. The heartbeat reports it to its
+ * {@link ReactWindowRegistry}, which tears the window down once the client has been gone for
+ * {@link ReactWindowRegistry#DISCONNECT_GRACE_MILLIS}, see {@link #checkAbandoned(long)}.
+ * </p>
  */
 public class SSEUpdateQueue {
 
@@ -109,7 +117,7 @@ public class SSEUpdateQueue {
 	 * How long the queue keeps serving a polling client after its last poll: one that polls asks
 	 * again at once, so a longer silence means the page is gone.
 	 */
-	private static final long POLL_ORPHAN_MILLIS = 60_000;
+	public static final long POLL_ORPHAN_MILLIS = 60_000;
 
 	/** How much the queue keeps of what it wrote, in characters of serialized events. */
 	static final int MAX_RETAINED_CHARS = 1_000_000;
@@ -153,6 +161,14 @@ public class SSEUpdateQueue {
 
 	/** When the client last polled. Guarded by {@code this}. */
 	private long _lastPoll;
+
+	/**
+	 * When the event stream of a client that does not poll was lost, {@code 0} while it is
+	 * connected or if the queue never had a stream. Guarded by {@code this}.
+	 *
+	 * @see #clientGoneSince(long)
+	 */
+	private long _streamLostAt;
 
 	/** The poll waiting for the next event, {@code null} if none. Guarded by {@code this}. */
 	private WaitingPoll _waitingPoll;
@@ -551,12 +567,32 @@ public class SSEUpdateQueue {
 
 	/**
 	 * Sets the SSE connection for this queue, replacing any existing one.
+	 *
+	 * <p>
+	 * A queue that is {@link #shutdown() shut down} stays dead: the connection is closed at once, so
+	 * that a client reconnecting while its window is torn down does not revive the window.
+	 * </p>
+	 *
+	 * @return Whether the connection was accepted, {@code false} if the queue is shut down and the
+	 *         connection was closed.
 	 */
-	public void setConnection(AsyncContext asyncContext) {
-		SSEConnection old = _connection;
+	public boolean setConnection(AsyncContext asyncContext) {
+		SSEConnection old;
 		SSEConnection newConn = new SSEConnection(asyncContext);
 		synchronized (this) {
+			if (_shutdown) {
+				Logger.info("SSE connection REFUSED for window '" + _windowName + "' (queue@"
+					+ System.identityHashCode(this) + "): the window is torn down.", SSEUpdateQueue.class);
+				try {
+					asyncContext.complete();
+				} catch (RuntimeException ex) {
+					// Already closed.
+				}
+				return false;
+			}
+			old = _connection;
 			_connection = newConn;
+			_streamLostAt = 0;
 			// The client starts again from the state this connection sends; what was written before
 			// is not to be replayed to it.
 			forgetWritten();
@@ -589,23 +625,41 @@ public class SSEUpdateQueue {
 		// registration during control tree construction).
 		flush();
 		ensureHeartbeat();
+		return true;
 	}
 
 	/**
 	 * Clears the SSE connection if it matches the given async context.
+	 *
+	 * <p>
+	 * The client counts as {@link #clientGoneSince(long) gone} from now on, until it connects again
+	 * or polls. The heartbeat keeps running, so that it notices when the client stays away.
+	 * </p>
 	 */
 	public void clearConnection(AsyncContext asyncContext) {
 		SSEConnection current = _connection;
 		if (current != null && current.getContext() == asyncContext) {
-			synchronized (this) {
-				if (_connection == current) {
-					_connection = null;
-				}
+			if (dropConnection(current, System.currentTimeMillis())) {
+				Logger.info("SSE connection cleared for window '" + _windowName + "' (queue@"
+					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 			}
-			Logger.info("SSE connection cleared for queue@" + System.identityHashCode(this),
-				SSEUpdateQueue.class);
 		}
-		cancelHeartbeatIfEmpty();
+	}
+
+	/**
+	 * Drops the given connection if it is still the current one, recording when the client was lost.
+	 *
+	 * @return Whether the given connection was the current one.
+	 */
+	private synchronized boolean dropConnection(SSEConnection connection, long now) {
+		if (_connection != connection) {
+			return false;
+		}
+		_connection = null;
+		if (!_polling) {
+			_streamLostAt = now;
+		}
+		return true;
 	}
 
 	/**
@@ -817,6 +871,7 @@ public class SSEUpdateQueue {
 			abandoned = _connection;
 			_connection = null;
 			_polling = true;
+			_streamLostAt = 0;
 			_lastPoll = System.currentTimeMillis();
 			// Only one poll per window waits: a second one means the client gave up the first.
 			answerWaitingPoll(true);
@@ -1092,6 +1147,10 @@ public class SSEUpdateQueue {
 	}
 
 	private synchronized void ensureHeartbeat() {
+		if (_shutdown) {
+			// A queue that is torn down is never revived, not by a client that reconnects late.
+			return;
+		}
 		if (!SchedulerService.Module.INSTANCE.isActive()) {
 			// No scheduler outside a running application, e.g. in a test of the queue alone.
 			return;
@@ -1102,25 +1161,92 @@ public class SSEUpdateQueue {
 		}
 	}
 
-	private synchronized void cancelHeartbeatIfEmpty() {
-		if (_connection == null && !isPollingClientAlive() && _heartbeatTask != null) {
+	/** Stops the heartbeat. Done exactly once by whoever finds it still running. */
+	private synchronized void stopHeartbeat() {
+		if (_heartbeatTask != null) {
 			_heartbeatTask.cancel(false);
 			_heartbeatTask = null;
 		}
 	}
 
+	/**
+	 * Since when this queue has had no client, {@code 0} if it has one at the given time.
+	 *
+	 * <p>
+	 * The client is present while its event stream is connected, or while it polls: a poll waits,
+	 * or the last poll arrived less than {@link #POLL_ORPHAN_MILLIS} ago. It is gone otherwise, and
+	 * gone since
+	 * </p>
+	 * <ul>
+	 * <li>the moment its event stream was lost (it ended, or a write to it failed), for a client
+	 * that read a stream,</li>
+	 * <li>the moment it was orphaned, the last poll plus {@link #POLL_ORPHAN_MILLIS}, for a client
+	 * that polled.</li>
+	 * </ul>
+	 * <p>
+	 * A stream connecting or a poll arriving makes the client present again. A rendered page whose
+	 * client never arrives - no stream connects and no poll comes - counts as gone since the page was
+	 * rendered, see {@link #expectClient(long)}. A queue that neither had a client nor rendered a page
+	 * answers {@code 0}.
+	 * </p>
+	 *
+	 * @param now
+	 *        The current time in milliseconds.
+	 * @return The time in milliseconds since which the client is gone, or {@code 0} if it is
+	 *         present.
+	 */
+	public synchronized long clientGoneSince(long now) {
+		if (_connection != null) {
+			return 0;
+		}
+		if (_polling) {
+			if (_waitingPoll != null) {
+				return 0;
+			}
+			long orphanedAt = _lastPoll + POLL_ORPHAN_MILLIS;
+			return now < orphanedAt ? 0 : orphanedAt;
+		}
+		return _streamLostAt;
+	}
+
+	/**
+	 * Announces that a client is to arrive: the window's page was just rendered, and its client
+	 * connects a stream or polls within seconds.
+	 *
+	 * <p>
+	 * Unless a client is present, the client counts as {@link #clientGoneSince(long) gone} from the
+	 * given time on, and the heartbeat is started, so that a page whose client never arrives - the
+	 * tab was closed while it loaded, its script did not run - is torn down like a window whose
+	 * client went away. The client arriving makes it present. A present client is left as it is.
+	 * </p>
+	 *
+	 * @param now
+	 *        The current time in milliseconds, the time the page was rendered.
+	 */
+	public void expectClient(long now) {
+		synchronized (this) {
+			if (_shutdown || _connection != null || isPollingClientAlive(now)) {
+				return;
+			}
+			// The rendered page starts a client of its own, which streams or polls afresh.
+			_polling = false;
+			_streamLostAt = now;
+		}
+		ensureHeartbeat();
+	}
+
 	/** Whether a client polls and was heard of recently. Called while holding the lock. */
-	private boolean isPollingClientAlive() {
-		return _polling
-			&& (_waitingPoll != null || System.currentTimeMillis() - _lastPoll < POLL_ORPHAN_MILLIS);
+	private boolean isPollingClientAlive(long now) {
+		return _polling && (_waitingPoll != null || now - _lastPoll < POLL_ORPHAN_MILLIS);
 	}
 
 	private void sendHeartbeat() {
-		expireDownloads(System.currentTimeMillis());
+		long now = System.currentTimeMillis();
+		expireDownloads(now);
 		SSEConnection conn = _connection;
 		boolean polled;
 		synchronized (this) {
-			polled = isPollingClientAlive();
+			polled = isPollingClientAlive(now);
 		}
 		if (conn != null) {
 			synthesizeModelEventsIfPossible();
@@ -1132,7 +1258,57 @@ public class SSEUpdateQueue {
 			synthesizeModelEventsIfPossible();
 			flush();
 		}
-		cancelHeartbeatIfEmpty();
+		if (clientGoneSince(now) != 0) {
+			checkAbandoned(now);
+		}
+	}
+
+	/**
+	 * Reports the absence of this queue's client to its window's {@link ReactWindowRegistry}, which
+	 * tears the window down once the client has been {@link #clientGoneSince(long) gone} for
+	 * {@link ReactWindowRegistry#DISCONNECT_GRACE_MILLIS}.
+	 *
+	 * <p>
+	 * Called by the heartbeat, which runs on a thread without a session context. The registry is
+	 * therefore asked in the window's own sub-session, which is what the teardown of the window
+	 * disposes its controls in; a window without a sub-session - its page was never rendered - is
+	 * torn down without context. Tearing the window down {@link #shutdown() shuts} this queue down,
+	 * which stops the heartbeat.
+	 * </p>
+	 *
+	 * <p>
+	 * A queue without window context - not served to a window of a registry, see
+	 * {@link #setWindowContext(String, TLSessionContext, ReactWindowRegistry)} - has nothing to be
+	 * torn down through: once its client has been gone for the grace period, only its heartbeat
+	 * stops. So does the heartbeat of a queue whose window the registry no longer knows.
+	 * </p>
+	 *
+	 * @param now
+	 *        The current time in milliseconds.
+	 */
+	public void checkAbandoned(long now) {
+		ReactWindowRegistry registry = _windowRegistry;
+		TLSessionContext sessionCtx = _sessionContext;
+		String windowName = _windowName;
+		if (registry == null || sessionCtx == null || windowName == null) {
+			long goneSince = clientGoneSince(now);
+			if (goneSince != 0 && now - goneSince >= ReactWindowRegistry.DISCONNECT_GRACE_MILLIS) {
+				stopHeartbeat();
+			}
+			return;
+		}
+		boolean gone;
+		TLSubSessionContext subSession = sessionCtx.getSubSession(windowName);
+		if (subSession == null) {
+			gone = registry.tearDownIfAbandoned(windowName, now);
+		} else {
+			gone = ThreadContextManager.inContext(subSession, () -> registry.tearDownIfAbandoned(windowName, now));
+		}
+		if (gone) {
+			// Done by the shutdown of a torn-down window already; a window the registry no longer
+			// knows has no one else to stop it.
+			stopHeartbeat();
+		}
 	}
 
 	private void synthesizeModelEventsIfPossible() {
@@ -1159,9 +1335,9 @@ public class SSEUpdateQueue {
 			writeToConnection(connection.getContext(), message);
 			return true;
 		} catch (IOException ex) {
-			Logger.info("SSE connection lost for queue@" + System.identityHashCode(this),
-				SSEUpdateQueue.class);
-			_connection = null;
+			Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
+				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
+			dropConnection(connection, System.currentTimeMillis());
 			return false;
 		}
 	}

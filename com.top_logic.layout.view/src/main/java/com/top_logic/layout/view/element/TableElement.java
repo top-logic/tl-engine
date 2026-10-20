@@ -297,7 +297,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	public TableElement(InstantiationContext context, Config config) {
 		super(context, config);
 		_rowsExecutor = InputScript.compile(config, Config.ROWS);
-		_rowClass = RowClassFunction.compile(config.getRowClass());
+		_rowClass = RowClassFunction.compile(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
 		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {
 			// The editable table is a control of its own, which carries no drag-and-drop seam; a

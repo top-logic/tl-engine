@@ -423,7 +423,7 @@
 							<decimal pattern="0"/>
 						</format>
 					</annotations>
-					<value><![CDATA[cs -> $cs.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`)]]></value>
+					<value><![CDATA[$row.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`)]]></value>
 				</computed-column>
 				<column attribute="date"/>
 				<column attribute="author"/>

@@ -521,7 +521,7 @@
 												<en>Kind</en>
 												<de>Art</de>
 											</label>
-											<value><![CDATA[row -> $row["kindLabel"]]]></value>
+											<value><![CDATA[$row["kindLabel"]]]></value>
 										</computed-column>
 										<computed-column name="id"
 											type="tl.core:String"
@@ -531,7 +531,7 @@
 												<en>Id</en>
 												<de>Id</de>
 											</label>
-											<value><![CDATA[row -> $row["id"]]]></value>
+											<value><![CDATA[$row["id"]]]></value>
 										</computed-column>
 										<computed-column name="state"
 											type="tl.core:String"
@@ -545,7 +545,7 @@
 													<de>Eine Änderung der Regel, die gespeichert ist, aber erst mit „Konfiguration anwenden“ wirksam wird: Die Regel ist neu, geändert oder gelöscht. Leer für eine Regel, die so gilt, wie sie gespeichert ist.</de>
 												</tooltip>
 											</label>
-											<value><![CDATA[row -> $row["stateLabel"]]]></value>
+											<value><![CDATA[$row["stateLabel"]]]></value>
 										</computed-column>
 										<computed-column name="description"
 											type="tl.core:String"
@@ -555,7 +555,7 @@
 												<en>Description</en>
 												<de>Beschreibung</de>
 											</label>
-											<value><![CDATA[row -> $row["description"]]]></value>
+											<value><![CDATA[$row["description"]]]></value>
 										</computed-column>
 										<computed-column name="stored"
 											type="tl.core:Boolean"
@@ -569,7 +569,7 @@
 													<de>Ob die Regel in der Anwendungskonfiguration gespeichert ist, weil sie in dieser Ansicht angelegt oder bearbeitet wurde. Eine Regel ohne Haken stammt unverändert aus der Konfiguration der darunterliegenden Schichten.</de>
 												</tooltip>
 											</label>
-											<value><![CDATA[row -> $row["stored"]]]></value>
+											<value><![CDATA[$row["stored"]]]></value>
 										</computed-column>
 									</columns>
 									<rows><![CDATA[$selectedRules]]></rows>

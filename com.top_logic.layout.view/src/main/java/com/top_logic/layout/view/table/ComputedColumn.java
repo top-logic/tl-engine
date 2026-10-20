@@ -18,16 +18,19 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * The {@code <computed-column>} of a table: one column showing a value computed from the row.
  *
  * <p>
- * The value function is evaluated per row and yields what the cell holds. The declared type says
+ * The value expression is evaluated per row and yields what the cell holds. The declared type says
  * what kind of value that is, and with it how the column is displayed, sorted, filtered, searched
  * and how wide it starts out - so a computed column gets everything a column over a model attribute
  * gets. A column declaring no type shows its values by their display label.
@@ -39,8 +42,8 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  *
  * <p>
- * A column declaring an update function is edited where the rows of the table are: what an edited
- * value means for the row is what that function does with it, and which rows offer the edit is what
+ * A column declaring an update expression is edited where the rows of the table are: what an edited
+ * value means for the row is what that expression does with it, and which rows offer the edit is what
  * the predicate says. The control the value is entered with follows from the declared type, so a
  * column that is edited declares one.
  * </p>
@@ -112,26 +115,31 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		boolean getMultiple();
 
 		/**
-		 * The function computing the cell value, receiving the row as its last argument.
+		 * The expression computing the cell value of a row.
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order, so a column can show
-		 * something that depends on what is displayed elsewhere.
+		 * The expression sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the
+		 * name the table gives it with {@value RowAsConfig#ROW_AS}, and the values of the
+		 * {@link #getInputs() inputs} of the column as variables named after their channels or by
+		 * their <code>as</code> names, so a column can show something that depends on what is
+		 * displayed elsewhere.
 		 * </p>
 		 */
 		@Name(VALUE)
 		@Mandatory
 		@NonNullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getValue();
 
 		/**
-		 * The function writing an edited cell value, receiving the row and the entered value as its
-		 * last two arguments.
+		 * The expression writing an edited cell value.
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order, exactly as they do
-		 * for the value function. What the update does with the value is up to it - assign an
-		 * attribute, create an object, distribute it over several attributes.
+		 * The expression sees the variables of the {@link #getValue() value}, and the entered value
+		 * as the variable {@value ValueAsConfig#DEFAULT_VALUE_AS}, or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}. What the update does with the value is up to it -
+		 * assign an attribute, create an object, distribute it over several attributes.
 		 * </p>
 		 *
 		 * <p>
@@ -140,19 +148,24 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		 */
 		@Name(UPDATE)
 		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getUpdate();
 
 		/**
-		 * Whether the cell of a row can be edited: a function of the row yielding whether the edit
-		 * is offered there.
+		 * Whether the cell of a row can be edited: an expression yielding whether the edit is
+		 * offered for the row.
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order, exactly as they do
-		 * for the value function. Unset, every row of a column that declares an update is edited.
+		 * The expression sees the variables of the {@link #getValue() value}. Unset, every row of a
+		 * column that declares an update is edited.
 		 * </p>
 		 */
 		@Name(CAN_UPDATE)
 		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCanUpdate();
 
 	}
@@ -175,7 +188,7 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		_typeRef = config.getType();
 		_multiple = config.getMultiple();
 		_functions =
-			ColumnFunctions.compile(config.getValue(), config.getUpdate(), config.getCanUpdate(), config.getInputs());
+			ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
 
 		if (_functions.updates() && _typeRef == null) {
 			context.error("An edited column must declare the type of its values, so that it is known"

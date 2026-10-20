@@ -284,8 +284,8 @@
 							<column attribute="count">
 								<!--
 									Model- and script-defined filter: the form is a transient
-									demo.filter:LongRange instance; the match function builds a
-									per-row predicate closure from it.
+									demo.filter:LongRange instance $params; the match expression
+									decides per row whether the cell $value lies in its range.
 								-->
 								<filter class="com.top_logic.layout.view.table.ScriptedFilter"
 									model="demo.filter:LongRange"
@@ -295,7 +295,7 @@
 										<de>Anzahl-Bereich (per Skript)</de>
 									</label>
 									<match><![CDATA[
-										params -> value -> row -> {
+										{
 											min = $params.get(`demo.filter:LongRange#min`);
 											max = $params.get(`demo.filter:LongRange#max`);
 											($min == null || $value >= $min) && ($max == null || $value <= $max)
@@ -504,7 +504,7 @@
 									<!-- Marks the parts with an amount above 100. -->
 									<composition-table
 										attribute="parts"
-										row-class="row -> $row.get(`demo.react:DemoPart#amount`) > 100 ? 'tl-status-warning' : null"
+										row-class="$row.get(`demo.react:DemoPart#amount`) > 100 ? 'tl-status-warning' : null"
 									>
 										<columns>
 											<column attribute="name"/>

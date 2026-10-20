@@ -445,7 +445,7 @@
 											<en>Comments</en>
 											<de>Kommentare</de>
 										</label>
-										<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).size()</value>
+										<value>$row.get(`demo.tickets:Ticket#comments`).size()</value>
 									</computed-column>
 									<computed-column name="commentedByMe"
 										type="tl.core:Boolean"
@@ -454,12 +454,12 @@
 											<en>Commented by me</en>
 											<de>Von mir kommentiert</de>
 										</label>
-										<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
+										<value>$row.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
 									</computed-column>
 								</columns>
 								<rows>{ tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($status == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $status)); }</rows>
 								<!-- Tints the tickets in progress; the class follows the status of each ticket. -->
-								<row-class>state -&gt; row -&gt; $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
+								<row-class>$row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
 							</table>
 						</panel>
 						<panel fill="false">

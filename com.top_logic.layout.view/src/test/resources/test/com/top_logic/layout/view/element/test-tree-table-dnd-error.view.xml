@@ -34,7 +34,7 @@
 			<computed-column name="value"
 				type="tl.core:String"
 			>
-				<value>row -&gt; $row</value>
+				<value>$row</value>
 			</computed-column>
 		</columns>
 	</tree-table>

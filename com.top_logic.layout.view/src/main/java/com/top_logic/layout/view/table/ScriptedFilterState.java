@@ -9,11 +9,11 @@ import com.top_logic.table.FilterState;
 
 /**
  * The applied state of a {@link ScriptedFilter}: the filter-parameter object (a snapshot of the
- * dialog form's transient instance) plus the resolved values of any configured extra inputs, passed
- * to the match-function when building the per-row predicate.
+ * dialog form's transient instance) plus the resolved values of any configured extra inputs, the
+ * variables of the match expression besides the cell value and the row.
  *
  * @param params
- *        The filter-parameter object the match function reads.
+ *        The filter-parameter object the match expression reads.
  * @param inputs
  *        The resolved values of the configured extra inputs, in order.
  */

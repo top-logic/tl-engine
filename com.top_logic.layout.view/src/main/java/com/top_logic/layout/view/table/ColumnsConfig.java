@@ -7,10 +7,10 @@ package com.top_logic.layout.view.table;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 
@@ -24,8 +24,13 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  * Every table describing its columns uses this one configuration, so a kind of column added here is
  * offered by all of them.
  * </p>
+ *
+ * <p>
+ * The columns are parts of the table, so that their scripts see what the table configures for
+ * them, e.g. the name of the row given with {@value RowAsConfig#ROW_AS}.
+ * </p>
  */
-public interface ColumnsConfig extends ConfigurationItem {
+public interface ColumnsConfig extends ConfigPart {
 
 	/** Configuration name for {@link #getColumns()}. */
 	String COLUMNS = "columns";

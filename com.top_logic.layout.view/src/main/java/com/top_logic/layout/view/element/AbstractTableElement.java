@@ -66,6 +66,7 @@ import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
+import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.layout.view.table.TableDragConfig;
 import com.top_logic.model.TLModel;
@@ -122,7 +123,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * Configuration of an {@link AbstractTableElement}: what a table displays of its rows, how they are
 	 * selected, filtered, activated and dragged - whatever computes the rows.
 	 */
-	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, RowAsConfig {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
 	Lookup LOOKUP = MethodHandles.lookup();

@@ -26,6 +26,7 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnsConfig;
+import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.layout.view.table.RowClassConfig;
 import com.top_logic.layout.view.table.RowClassFunction;
 
@@ -60,7 +61,7 @@ public class CompositionTableElement implements UIElement {
 	 * Configuration for {@link CompositionTableElement}.
 	 */
 	@TagName("composition-table")
-	public interface Config extends UIElement.Config, RowClassConfig {
+	public interface Config extends UIElement.Config, RowClassConfig, RowAsConfig {
 
 		@Override
 		@ClassDefault(CompositionTableElement.class)
@@ -158,7 +159,7 @@ public class CompositionTableElement implements UIElement {
 	public CompositionTableElement(InstantiationContext context, Config config) {
 		_config = config;
 		_columns = ColumnDeclarations.instantiate(context, config.getColumns());
-		_rowClass = RowClassFunction.compile(config.getRowClass());
+		_rowClass = RowClassFunction.compile(config);
 	}
 
 	@Override

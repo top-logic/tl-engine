@@ -45,6 +45,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_SCRIPT_PARAMETER_WITHOUT_VARIABLES__PARAMETER;
 
+	/**
+	 * @en The input "{1}" of the script is named "{0}", like a value the element supplies to the
+	 *     script, so the script cannot tell them apart. Name the input differently with "as" (e.g.
+	 *     "{1} as other"), or the supplied value with the attribute "{2}".
+	 */
+	public static ResKey3 ERROR_INPUT_NAMED_LIKE_SUPPLIED__NAME_INPUT_ATTRIBUTE;
+
+	/**
+	 * @en The input "{1}" of the script is named "{0}", like a value the element supplies to the
+	 *     script, so the script cannot tell them apart. Name the input differently with "as" (e.g.
+	 *     "{1} as other").
+	 */
+	public static ResKey2 ERROR_INPUT_NAMED_LIKE_FIXED_SUPPLIED__NAME_INPUT;
+
+	/**
+	 * @en Two values the element supplies to the script are named "{0}", so the script cannot tell
+	 *     them apart. Name one of them differently with the attribute "{1}".
+	 */
+	public static ResKey2 ERROR_SUPPLIED_NAMES_CLASH__NAME_ATTRIBUTE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

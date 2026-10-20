@@ -7,8 +7,11 @@ package com.top_logic.layout.view.channel;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.container.ConfigPart;
@@ -37,9 +40,11 @@ import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
  * </ol>
  *
  * <p>
- * A later name shadows an equal earlier one. The script uses the variables as <code>$name</code>
- * without declaring them; a script declaring a parameter is a configuration error, see
- * {@link ViewScripts}.
+ * The script uses the variables as <code>$name</code> without declaring them; a script declaring a
+ * parameter is a configuration error, see {@link ViewScripts}. So is an input named like a supplied
+ * value, or two supplied values of the same name: the script could not tell them apart. The input
+ * is then renamed with {@value CommaSeparatedInputRefs#AS}, the supplied value with the property
+ * {@link Supplies#renamedBy()} of its supplier.
  * </p>
  *
  * <p>
@@ -73,7 +78,49 @@ public final class InputScript {
 				"No property '" + property + "' in '" + config.getConfigurationInterface().getName() + "'.");
 		}
 		Expr script = (Expr) config.value(descriptor);
-		return ViewScripts.compileOptional(script, variables(config, descriptor));
+		if (script == null) {
+			return null;
+		}
+		checkNames(config, descriptor);
+		return ViewScripts.compile(script, variables(config, descriptor));
+	}
+
+	/**
+	 * Checks that the script in the given property can tell its variables apart: no input is named
+	 * like a supplied value, and no two supplied values have the same name.
+	 *
+	 * @param config
+	 *        The configuration holding the script.
+	 * @param property
+	 *        The script property.
+	 * @throws ConfigurationError
+	 *         If two of the variables share a name.
+	 */
+	public static void checkNames(ConfigurationItem config, PropertyDescriptor property) {
+		List<InputRef> inputs = inputs(config, property);
+		Map<String, Supplies> suppliedNames = new HashMap<>();
+		for (Supplies supplied : supplies(property)) {
+			String name = suppliedName(config, supplied);
+			Supplies clash = suppliedNames.putIfAbsent(name, supplied);
+			if (clash != null) {
+				String attribute = supplied.renamedBy().isEmpty() ? clash.renamedBy() : supplied.renamedBy();
+				throw new ConfigurationError(
+					I18NConstants.ERROR_SUPPLIED_NAMES_CLASH__NAME_ATTRIBUTE.fill(name, attribute));
+			}
+		}
+		for (InputRef input : inputs) {
+			String name = input.getName();
+			Supplies clash = suppliedNames.get(name);
+			if (clash == null) {
+				continue;
+			}
+			if (clash.renamedBy().isEmpty()) {
+				throw new ConfigurationError(
+					I18NConstants.ERROR_INPUT_NAMED_LIKE_FIXED_SUPPLIED__NAME_INPUT.fill(name, input.toString()));
+			}
+			throw new ConfigurationError(I18NConstants.ERROR_INPUT_NAMED_LIKE_SUPPLIED__NAME_INPUT_ATTRIBUTE
+				.fill(name, input.toString(), clash.renamedBy()));
+		}
 	}
 
 	/**

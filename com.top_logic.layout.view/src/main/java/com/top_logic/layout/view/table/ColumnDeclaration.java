@@ -8,6 +8,7 @@ package com.top_logic.layout.view.table;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.table.SortColumn;
 
 /**
@@ -37,8 +38,10 @@ public interface ColumnDeclaration {
 	 * @param <I>
 	 *        The declaration this configuration describes.
 	 */
-	interface Config<I extends ColumnDeclaration> extends PolymorphicConfiguration<I> {
-		// The common base of every column declaration; the properties are declared by the kinds.
+	interface Config<I extends ColumnDeclaration> extends PolymorphicConfiguration<I>, ConfigPart {
+		// The common base of every column declaration; the properties are declared by the kinds. A
+		// declaration is a part of its table, so that its scripts see what the table configures for
+		// them.
 	}
 
 	/**

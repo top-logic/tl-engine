@@ -536,6 +536,7 @@ public class TestConfigEditorControl extends TestCase {
 		String NAME = "name";
 
 		@Name(NAME)
+		@Mandatory
 		String getName();
 
 		void setName(String value);

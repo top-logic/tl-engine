@@ -16,6 +16,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -43,12 +44,19 @@ public class TestConfigChildren extends TestCase {
 		/** Property name for {@link #getKeyed()}. */
 		String KEYED = "keyed";
 
+		/** Property name for {@link #getOptionallyKeyed()}. */
+		String OPTIONALLY_KEYED = "optionally-keyed";
+
 		@Name(ITEMS)
 		List<Item> getItems();
 
 		@Name(KEYED)
 		@Key(Keyed.ID)
 		List<Keyed> getKeyed();
+
+		@Name(OPTIONALLY_KEYED)
+		@Key(OptionallyKeyed.ID)
+		List<OptionallyKeyed> getOptionallyKeyed();
 
 		@Name(SINGLE)
 		Item getSingle();
@@ -76,10 +84,27 @@ public class TestConfigChildren extends TestCase {
 	}
 
 	/**
-	 * An element of the keyed list {@link Container#getKeyed()}.
+	 * An element of the keyed list {@link Container#getKeyed()}, whose key is mandatory.
 	 */
 	@TagName("keyed")
 	public interface Keyed extends ConfigurationItem {
+
+		/** Property name for {@link #getId()}. */
+		String ID = "id";
+
+		@Name(ID)
+		@Mandatory
+		String getId();
+
+		/** @see #getId() */
+		void setId(String value);
+	}
+
+	/**
+	 * An element of the keyed list {@link Container#getOptionallyKeyed()}, whose key is optional.
+	 */
+	@TagName("optional")
+	public interface OptionallyKeyed extends ConfigurationItem {
 
 		/** Property name for {@link #getId()}. */
 		String ID = "id";
@@ -257,8 +282,8 @@ public class TestConfigChildren extends TestCase {
 	}
 
 	/**
-	 * An element added to a keyed list is given a unique key, so that elements do not collapse into
-	 * one when the configuration is read again.
+	 * An element added to a list keyed by a mandatory key is given a unique key, so that elements do
+	 * not collapse into one when the configuration is read again.
 	 */
 	public void testKeyedListGetsUniqueKeys() {
 		Container container = TypedConfiguration.newConfigItem(Container.class);
@@ -288,6 +313,50 @@ public class TestConfigChildren extends TestCase {
 		assertTrue(keyed.add(given));
 
 		assertEquals("chosen", given.getId());
+	}
+
+	/**
+	 * An element added without key to a list keyed by an optional key stays anonymous, and any
+	 * number of anonymous elements can be added.
+	 */
+	public void testOptionallyKeyedListKeepsElementsAnonymous() {
+		Container container = TypedConfiguration.newConfigItem(Container.class);
+		ConfigChildren keyed =
+			ConfigChildren.create(container, container.descriptor().getProperty(Container.OPTIONALLY_KEYED));
+
+		OptionallyKeyed first = TypedConfiguration.newConfigItem(OptionallyKeyed.class);
+		OptionallyKeyed second = TypedConfiguration.newConfigItem(OptionallyKeyed.class);
+		assertTrue(keyed.add(first));
+		assertTrue(keyed.add(second));
+
+		PropertyDescriptor id = first.descriptor().getProperty(OptionallyKeyed.ID);
+		assertFalse("An optional key is not generated", first.valueSet(id));
+		assertFalse("An optional key is not generated", second.valueSet(id));
+		assertEquals("", first.getId());
+		assertEquals(List.of(first, second), container.getOptionallyKeyed());
+	}
+
+	/**
+	 * A keyed element can be added next to anonymous ones, and anonymous ones next to it.
+	 */
+	public void testOptionallyKeyedListMixesKeyedAndAnonymous() {
+		Container container = TypedConfiguration.newConfigItem(Container.class);
+		ConfigChildren keyed =
+			ConfigChildren.create(container, container.descriptor().getProperty(Container.OPTIONALLY_KEYED));
+
+		OptionallyKeyed anonymous = TypedConfiguration.newConfigItem(OptionallyKeyed.class);
+		OptionallyKeyed named = TypedConfiguration.newConfigItem(OptionallyKeyed.class);
+		named.setId("named");
+		OptionallyKeyed emptyKey = TypedConfiguration.newConfigItem(OptionallyKeyed.class);
+		emptyKey.setId("");
+		assertTrue(keyed.add(anonymous));
+		assertTrue(keyed.add(named));
+		assertTrue(keyed.add(emptyKey));
+
+		assertEquals("", anonymous.getId());
+		assertEquals("named", named.getId());
+		assertEquals("", emptyKey.getId());
+		assertEquals(List.of(anonymous, named, emptyKey), container.getOptionallyKeyed());
 	}
 
 	/**

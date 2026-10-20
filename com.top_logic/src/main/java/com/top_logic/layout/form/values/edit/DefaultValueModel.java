@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.misc.PropertyValue;
@@ -116,7 +117,8 @@ public final class DefaultValueModel implements ValueModel {
 					Mapping<Object, Object> keyMapping = _property.getKeyMapping();
 					if (keyMapping != null) {
 						Object key = keyMapping.map(newElement);
-						boolean containsKey = collectionValue.stream()
+						// An anonymous entry has no key and therefore never collides with another entry.
+						boolean containsKey = !ConfigUtil.isAnonymousKey(key) && collectionValue.stream()
 							.map(keyMapping)
 							.anyMatch(key::equals);
 						if (containsKey) {

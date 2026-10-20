@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -684,9 +685,10 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 				if (_choices.hasOptions() && _choices.options().size() > 1) {
 					return createTypeSelector(item, pending, true, true);
 				}
-			} else {
+			} else if (pending != null || !ConfigUtil.isAnonymousKey(item.value(keyProperty))) {
 				return createKeyField(item, keyProperty, pending);
 			}
+			// A committed anonymous entry has no key to show: it is headed by its title.
 		}
 		if (typeHeadsEntry(item)) {
 			// The header would show the name of the type: show it where it is chosen.

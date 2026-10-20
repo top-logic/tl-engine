@@ -29,6 +29,10 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_LINKED_OBJECT_NOT_DISPLAYED;
 
+	/** @en Editor toolbar */
+	@CustomKey("js.wysiwyg.toolbar")
+	public static ResKey JS_WYSIWYG_TOOLBAR;
+
 	/** @en Bold */
 	@CustomKey("js.wysiwyg.bold")
 	public static ResKey JS_WYSIWYG_BOLD;

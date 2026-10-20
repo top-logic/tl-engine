@@ -118,3 +118,48 @@ export const ICON_PREVIOUS = 'css:fa-solid fa-chevron-left';
 
 /** The button moving to the next period, e.g. of a calendar. */
 export const ICON_NEXT = 'css:fa-solid fa-chevron-right';
+
+/** Bold text (the toolbar of the rich text editor). */
+export const ICON_BOLD = 'css:fa-solid fa-bold';
+
+/** Italic text (the toolbar of the rich text editor). */
+export const ICON_ITALIC = 'css:fa-solid fa-italic';
+
+/** Underlined text (the toolbar of the rich text editor). */
+export const ICON_UNDERLINE = 'css:fa-solid fa-underline';
+
+/** Struck-through text (the toolbar of the rich text editor). */
+export const ICON_STRIKETHROUGH = 'css:fa-solid fa-strikethrough';
+
+/** A paragraph of text (the paragraph format of the rich text editor). */
+export const ICON_PARAGRAPH = 'css:fa-solid fa-paragraph';
+
+/** A heading (the paragraph format of the rich text editor). */
+export const ICON_HEADING = 'css:fa-solid fa-heading';
+
+/** A bulleted list (the list kind of the rich text editor). */
+export const ICON_BULLET_LIST = 'css:fa-solid fa-list-ul';
+
+/** A numbered list (the list kind of the rich text editor). */
+export const ICON_NUMBERED_LIST = 'css:fa-solid fa-list-ol';
+
+/** A quotation (the toolbar of the rich text editor). */
+export const ICON_QUOTE = 'css:fa-solid fa-quote-left';
+
+/** A block of code (the toolbar of the rich text editor). */
+export const ICON_CODE_BLOCK = 'css:fa-solid fa-code';
+
+/** A link (the toolbar of the rich text editor). */
+export const ICON_LINK = 'css:fa-solid fa-link';
+
+/** Inserts an image (the toolbar of the rich text editor). */
+export const ICON_IMAGE = 'css:fa-regular fa-image';
+
+/** Inserts a table (the toolbar of the rich text editor). */
+export const ICON_TABLE = 'css:fa-solid fa-table';
+
+/** Undoes the last change (the toolbar of the rich text editor). */
+export const ICON_UNDO = 'css:fa-solid fa-arrow-rotate-left';
+
+/** Redoes the last undone change (the toolbar of the rich text editor). */
+export const ICON_REDO = 'css:fa-solid fa-arrow-rotate-right';

@@ -32,6 +32,12 @@ const STATE_INSERT = 'insert';
 /** CSS class marking an anchor as a link to an application object. */
 const TL_OBJECT = 'tlObject';
 
+/** The class of the design system for text from the server: the writing surface, and the view. */
+const PROSE_CLASS = 'tl-prose';
+
+/** The classes of the frame of the editor: a field of the design system, holding toolbar and text. */
+const FRAME_CLASS = 'tl-field tl-rich-text';
+
 /** What the server asks to be inserted at the cursor. */
 interface InsertRequest {
   /** Counts the insertions, so that inserting the same markup twice is two requests. */
@@ -49,11 +55,13 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
 
   // The editable area is the element a form field's label names and focuses. Its attributes reach
   // the editor through the editor options, which the editor compares by identity on every render,
-  // so a change of the label association updates the element without re-creating the editor.
+  // so a change of the label association updates the element without re-creating the editor. The
+  // area is the writing surface of the library (.ProseMirror); the text in it is prose of the design
+  // system.
   const inputId = fieldInputId(controlId);
   const labelledBy = useFieldLabelProps(controlId, inputId)['aria-labelledby'];
   const editorProps = React.useMemo(() => {
-    const attributes: Record<string, string> = { id: inputId };
+    const attributes: Record<string, string> = { id: inputId, class: PROSE_CLASS };
     if (labelledBy !== undefined) {
       attributes['aria-labelledby'] = labelledBy;
     }
@@ -191,30 +199,27 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     };
   }, []);
 
+  // The view is the text alone, without frame.
   if (!editable) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tlWysiwygEditor tlWysiwygEditor--immutable')}>
-        <div
-          className="tlWysiwygEditor__immutableContent ProseMirror"
-          onClick={handleContentClick}
-          dangerouslySetInnerHTML={{ __html: value }}
-        />
-      </div>
+      <div
+        id={controlId}
+        className={rootClassName(state, PROSE_CLASS)}
+        onClick={handleContentClick}
+        dangerouslySetInnerHTML={{ __html: value }}
+      />
     );
   }
 
-  const cssClass = 'tlWysiwygEditor' + (hasError ? ' tlWysiwygEditor--error' : '');
-
+  // An error is a state of the field, stated where assistive technology and stylesheet read it.
   return (
-    <div id={controlId} className={rootClassName(state, cssClass)}>
+    <div id={controlId} className={rootClassName(state, FRAME_CLASS)} aria-invalid={hasError ? true : undefined}>
       <WysiwygToolbar
         editor={editor}
         onImageUpload={handleImageUpload}
         toolbar={toolbar}
       />
-      <div className="tlWysiwygEditor__content">
-        <EditorContent editor={editor} />
-      </div>
+      <EditorContent editor={editor} />
       <input
         ref={fileInputRef}
         type="file"

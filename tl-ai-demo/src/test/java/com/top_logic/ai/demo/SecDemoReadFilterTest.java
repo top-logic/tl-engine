@@ -43,12 +43,14 @@ import com.top_logic.tl.ai.core.tools.ToolExecutions;
  * </p>
  *
  * <p>
- * The filter covers <b>objects and attribute values</b>. It does not cover what a script turns into a
- * plain value before the filter runs: an aggregate is a number (#291) and a string coercion is a label
- * (#296), and neither carries a {@code TLObject} the filter could recognise. Both are accepted by
- * design and both are asserted here rather than left to be rediscovered - see
- * {@link #testAnAggregateIsNotFilteredAndTheFixtureSaysSo} and
- * {@link #testStringCoercionReturnsALabelAndTheFixtureSaysSo}, with
+ * The filter covers <b>objects and attribute values</b>. What a script turns into a plain value
+ * before the filter runs - an aggregate is a number, a string coercion is a label - carries no
+ * {@code TLObject} the filter could recognise; there the engine's own evaluation is what protects the
+ * data: a tool's script runs secured, so {@code all(...)}, references and the inputs deliver only the
+ * objects the acting account may discover, and a count or a label computed from them discloses nothing
+ * else. Asserted here rather than left to be rediscovered - see
+ * {@link #testAnAggregateCountsOnlyDiscoverableObjects} and
+ * {@link #testStringCoercionLabelsOnlyDiscoverableObjects}, with
  * {@link #testFilteringInsideTheScriptIsTheControl} for the control.
  * </p>
  */
@@ -143,10 +145,10 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 * nothing of the others.
 	 *
 	 * <p>
-	 * {@code All.all()} does not filter - its own javadoc says the caller must - and this is where
-	 * tl-ai holds up that half of the contract. It holds it up for the <em>objects</em> in the result;
-	 * a script that coerces them to strings first leaves nothing to filter, which is
-	 * {@link #testStringCoercionReturnsALabelAndTheFixtureSaysSo}.
+	 * The secured evaluation of the script already narrows {@code all()} to the objects the account may
+	 * discover; the read filter holds up the other half of the contract for the <em>objects</em> in the
+	 * result, the ones it may discover but not read. A script that coerces its objects to strings first
+	 * leaves nothing to filter, which is {@link #testStringCoercionLabelsOnlyDiscoverableObjects}.
 	 * </p>
 	 */
 	public void testScriptResultDisclosesOnlyReadableObjects() {
@@ -171,97 +173,92 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * The boundary, asserted rather than assumed: a count is not filtered, and the fixture ships both
-	 * tools so a reader can see the difference.
+	 * An aggregate counts only what the acting account may discover, and the fixture ships both tools
+	 * so a reader can see where they differ.
 	 *
 	 * <p>
-	 * {@code countTickets} evaluates ``all(`pm:Ticket`).size()``, which is a number by the time the read
-	 * filter sees it - per-object filtering cannot narrow it, and this is accepted rather than fixed
-	 * (issue #291). {@code countVisibleTickets} filters inside the script instead, which is the honest
-	 * way to report a count and the only one that works. Neither tool's description claims to be the
-	 * other.
+	 * {@code countTickets} evaluates ``all(`pm:Ticket`).size()``. The number is computed before the
+	 * read filter sees anything, but the script runs secured, so {@code all} delivers only the tickets
+	 * the account may discover - for Dora, none. {@code countVisibleTickets} filters inside the script
+	 * for the <em>Read</em> right; it differs from the first for an account that may discover a ticket
+	 * without reading it, and agrees with it for every persona of this fixture. Neither tool's
+	 * description claims to be the other.
 	 * </p>
 	 */
-	public void testAnAggregateIsNotFilteredAndTheFixtureSaysSo() {
+	public void testAnAggregateCountsOnlyDiscoverableObjects() {
 		int seeded = tickets().size();
 
-		assertEquals("The unfiltered count reports every ticket, whatever Dora may read.",
-			String.valueOf(seeded), MarkedResults.disclosed(callTool(DORA, CLASSIFIED_READ_SCRIPT_TOOL, Map.of())));
+		assertEquals("Dora may discover no ticket, so the count over all() is zero.",
+			"0", MarkedResults.disclosed(callTool(DORA, CLASSIFIED_READ_SCRIPT_TOOL, Map.of())));
 		assertEquals("The filtered count reports what she may actually see.",
 			"0", MarkedResults.disclosed(callTool(DORA, FILTERED_COUNT_SCRIPT_TOOL, Map.of())));
 
-		assertEquals("For a persona who may read the tickets the two agree, which is why the difference"
-			+ " is easy to miss and worth a test.", String.valueOf(seeded),
+		assertEquals("A persona who may read the tickets counts every one of them.", String.valueOf(seeded),
+			MarkedResults.disclosed(callTool(BEN, CLASSIFIED_READ_SCRIPT_TOOL, Map.of())));
+		assertEquals("...with either tool.", String.valueOf(seeded),
 			MarkedResults.disclosed(callTool(BEN, FILTERED_COUNT_SCRIPT_TOOL, Map.of())));
 	}
 
 	/**
-	 * A denied attribute read yields the empty value, and the spelling decides whether that is visible.
+	 * An attribute read over objects the account may not discover yields nothing, in either spelling.
 	 *
 	 * <p>
-	 * The engine denies the <em>attribute</em> read, not the enumeration, and it denies it silently: the
-	 * expression evaluates to the empty value rather than raising. Collection access
-	 * (``all(...).get(...)``) flattens the empty values away, so Dora gets an empty list; an explicit
-	 * {@code map} keeps one entry per object, so the same question gets a list of nulls whose
-	 * <em>length</em> is the number of projects. That is the cardinality boundary of issue <b>#291</b>, reached by a second
-	 * route: no output filter can tell "null because the read was denied" from "null because the
-	 * attribute is unset", so stripping nulls would silently drop legitimate empty values.
-	 * </p>
-	 *
-	 * <p>
-	 * What matters for #289 is the half that does hold in both spellings: no attribute <em>value</em> of
-	 * an object Dora may not read is disclosed either way.
+	 * Collection access (``all(...).get(...)``) and an explicit {@code map} agree, because the objects
+	 * never enter the computation: {@code all} delivers only the discoverable ones, so there is no
+	 * entry whose attribute read could be denied. For a partner the same expressions name her project
+	 * and not the other.
 	 * </p>
 	 */
 	public void testADeniedAttributeReadYieldsNothingInEitherSpelling() {
 		String collectionAccess = queryAs(DORA, "all(`pm:Project`).get(`pm:Project#name`)");
-		assertEquals("Collection access flattens the empty values away.", "(empty list)",
+		assertEquals("Collection access over no discoverable project.", "(empty list)",
 			MarkedResults.disclosed(collectionAccess));
 
 		String mapped = queryAs(DORA, "all(`pm:Project`).map(p -> $p.get(`pm:Project#name`))");
-		assertEquals("An explicit map keeps one null per project, so the length is disclosed (#291).",
-			projects().size(), MarkedResults.disclosed(mapped).split("\n").length);
+		assertEquals("An explicit map has nothing to map over either.", "(empty list)",
+			MarkedResults.disclosed(mapped));
 
 		for (String result : new String[] { collectionAccess, mapped }) {
 			assertHasNot("No attribute value of an unreadable object is disclosed.", ALPHA, result);
 			assertHasNot(BETA, result);
 		}
+
+		String forAnna = queryAs(ANNA, "all(`pm:Project`).map(p -> $p.get(`pm:Project#name`))");
+		assertHas("Anna reads the name of the project she partners on.", ALPHA, forAnna);
+		assertHasNot("...and nothing of the other.", BETA, forAnna);
 	}
 
 	/**
-	 * The boundary, asserted rather than assumed: string coercion returns a label, and labels are not
-	 * secret.
+	 * A string coercion labels only the objects the account may discover.
 	 *
 	 * <p>
 	 * ``toString($obj)`` and ``"" + $obj`` resolve to {@code SearchExpression.asString}, which falls
-	 * through to {@code MetaLabelProvider} for anything that is not a number, boolean or
-	 * {@code CharSequence}. That path is generic Java model access and is deliberately not
-	 * access-checked, so the label is computed and the result is a {@code String} by the time
-	 * {@link ReadFilter} sees it - there is no {@code TLObject} left to recognise. <b>This is intended
-	 * engine behaviour and will not change</b> (issue <b>#296</b>): object labels are non-secret by
-	 * design, which is also why the user interface renders a referenced object by its label and secures
-	 * only navigation into it. The obligation it creates belongs to the modeller: confidential
-	 * information must not be encoded in object names.
-	 * </p>
-	 *
-	 * <p>
-	 * Asserted the same way {@link #testAnAggregateIsNotFilteredAndTheFixtureSaysSo} asserts #291, and
-	 * for the same reason: a boundary nobody tests is a boundary somebody later reports as a bug.
+	 * through to {@code MetaLabelProvider}: the label of an object the account holds is not
+	 * access-checked, and the result is a {@code String} by the time {@link ReadFilter} sees it. What
+	 * keeps a label from leaking is that the account never holds an object it may not discover - the
+	 * secured {@code all} does not deliver it. A label is therefore visible exactly where the object
+	 * is, which is also how the user interface renders a referenced object; confidential information
+	 * still must not be encoded in object names.
 	 * </p>
 	 */
-	public void testStringCoercionReturnsALabelAndTheFixtureSaysSo() {
+	public void testStringCoercionLabelsOnlyDiscoverableObjects() {
 		String coerced = queryAs(DORA, "all(`pm:Project`).map(p -> toString($p))");
-		assertHas("A label is not access-checked, so Dora gets both project labels (#296).",
-			ALPHA, coerced);
-		assertHas(BETA, coerced);
+		assertEquals("Dora may discover no project, so there is nothing to label.", "(empty list)",
+			MarkedResults.disclosed(coerced));
+		assertHasNot(ALPHA, coerced);
+		assertHasNot(BETA, coerced);
 
-		assertHas("Concatenation takes the same route, so naming only toString() would understate it.",
-			BETA, queryAs(DORA, "all(`pm:Project`).map(p -> \"\" + $p)"));
+		String concatenated = queryAs(DORA, "all(`pm:Project`).map(p -> \"\" + $p)");
+		assertHasNot("Concatenation takes the same route.", BETA, concatenated);
+
+		String forAnna = queryAs(ANNA, "all(`pm:Project`).map(p -> toString($p))");
+		assertHas("Anna gets the label of the project she partners on.", ALPHA, forAnna);
+		assertHasNot("...and not the label of the other.", BETA, forAnna);
 	}
 
 	/**
-	 * The control for {@link #testStringCoercionReturnsALabelAndTheFixtureSaysSo}, in the fixture rather
-	 * than in prose: filter inside the script, before anything coerces.
+	 * The control for {@link #testStringCoercionLabelsOnlyDiscoverableObjects}, in the fixture rather
+	 * than in prose: filter inside the script for the Read right, before anything coerces.
 	 *
 	 * <p>
 	 * ``filterSecurity(...)`` is the engine's own function for exactly this - it applies the current

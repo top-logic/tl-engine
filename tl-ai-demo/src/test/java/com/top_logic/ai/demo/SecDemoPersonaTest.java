@@ -126,8 +126,8 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	public static final String GET_TOOL = "model-instances.getInstance";
 
 	/**
-	 * A TL-Script tool the policy names in its {@code data.read} {@code <tool-groups>} entry, whose
-	 * count is deliberately <em>unfiltered</em>.
+	 * A TL-Script tool the policy names in its {@code data.read} {@code <tool-groups>} entry: a count
+	 * over {@code all(...)}, which the secured evaluation narrows to the discoverable tickets.
 	 *
 	 * @see #UNCLASSIFIED_SCRIPT_TOOL
 	 * @see #FILTERED_COUNT_SCRIPT_TOOL
@@ -135,8 +135,8 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	public static final String CLASSIFIED_READ_SCRIPT_TOOL = "secdemo-reporting.countTickets";
 
 	/**
-	 * The honest counterpart of {@link #CLASSIFIED_READ_SCRIPT_TOOL}: it filters inside the script
-	 * before counting, which is the only way to report a count the acting account may believe.
+	 * The counterpart of {@link #CLASSIFIED_READ_SCRIPT_TOOL} that filters inside the script for the
+	 * Read right before counting, so that a ticket the account may discover but not read is not counted.
 	 */
 	public static final String FILTERED_COUNT_SCRIPT_TOOL = "secdemo-reporting.countVisibleTickets";
 

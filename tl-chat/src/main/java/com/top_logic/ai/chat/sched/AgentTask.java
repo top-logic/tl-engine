@@ -247,6 +247,14 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 			_promptExpression = null;
 		} else {
 			_promptExpression = hasExpression ? QueryExecutor.compile(config.getPromptExpression()) : null;
+			if (_promptExpression != null) {
+				// The prompt is computed by the task itself, like the script of a ScriptTask: backend
+				// logic that names what the application holds, not a user's query. Evaluated secured it
+				// would see only what the account the sitting runs as may discover - and nothing at all
+				// where no account is set yet. What the agent then does with the data is governed by
+				// the run's own security context.
+				_promptExpression.disableSecurity();
+			}
 		}
 	}
 

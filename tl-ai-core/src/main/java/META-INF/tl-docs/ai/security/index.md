@@ -31,7 +31,7 @@ Neither substitutes for the other: `changeData` is one tool but can touch any ty
 
 There is no security mode, flag or agent setting that answers "who does this run act as" differently: a run that cannot name an authenticated account does not start ([identity](doc:ai/security/identity)).
 
-**What read scoping does not cover**, stated here rather than discovered later: it covers **objects and attribute values**, not everything a script can compute from them. A value TL-Script has already reduced to plain data before any output filter runs is outside it - a **count**, and a **label** reached through string coercion. Both are accepted by design: object labels are non-secret in TopLogic, which puts the obligation on the modeller to keep confidential information out of object names. [Data authorization](doc:ai/security/data-authorization#what-labels-are) has the mechanism and the control (`filterSecurity`).
+**Where read scoping happens**, stated here rather than discovered later: the output filter covers **objects and attribute values**, not what a script has already reduced to plain data before the filter runs - a **count**, or a **label** reached through string coercion. Those are bounded one step earlier, by the secured evaluation of the script: `all(...)`, references and the inputs deliver only the objects the acting account may *discover* (the engine's Discover right), so a count or a label discloses nothing about any other object. A label is as visible as its object, which puts the obligation on the modeller to keep confidential information out of the names of objects that accounts may discover without reading them. [Data authorization](doc:ai/security/data-authorization#what-labels-are) has the mechanism and the control (`filterSecurity`).
 
 ## Threat model
 
@@ -79,7 +79,7 @@ The decisive property: **everything that enters the context window is untrusted 
 | # | Threat | Addressed by |
 |---|---|---|
 | T1 | **Agent over-privilege.** The agent invokes any tool in its catalog regardless of who is chatting - a read-only clerk drives the model editor. | L1 |
-| T2 | **Data over-read.** Data tools return objects the user may not see, and the answer, the transcript and the event stream carry them. Objects and attribute values are filtered per object and per attribute; counts and coerced labels are accepted by design. | L2, L3 |
+| T2 | **Data over-read.** Data tools return objects the user may not see, and the answer, the transcript and the event stream carry them. Objects and attribute values are filtered per object and per attribute; counts and coerced labels are bounded by the Discover right of the secured evaluation. | L2, L3 |
 | T3 | **Prompt-injection-driven tool abuse.** A malicious value in a business object, an MCP tool description or a fetched page instructs the agent to call a write tool or exfiltrate data. | L1, L2, L4; approval for write modes; marking of untrusted content - not mitigated by prompting alone |
 | T4 | **Exfiltration through an outbound tool.** The agent is induced to put secret data into a `webFetch` URL, an issue body or a call to an external MCP server. | L2 on the read side (it never gets the data), the `egress` group, the browsing policy and URL provenance |
 | T5 | **Unattended over-privilege.** A background run auto-approves every approval-gated tool. | Identity, and the `<background-allowlist>` ceiling |

@@ -72,11 +72,12 @@ import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
  * <h2>What it does not claim</h2>
  *
  * <p>
- * <b>Aggregates are not filtered.</b> A count, a sum or a maximum computed <em>inside</em> TL-Script
- * (<code>all(`x`).size()</code>) is a number by the time it arrives here, and no read filter can tell
- * which objects it counted. Per-object read filtering covers identity, labels and attribute values;
- * cardinality is out of reach and accepted as such (issue #291). An administrator who needs a count
- * hidden denies the {@code script} capability, which is the honest control and is already expressible.
+ * <b>Aggregates are not filtered here.</b> A count, a sum or a maximum computed <em>inside</em>
+ * TL-Script (<code>all(`x`).size()</code>) is a number by the time it arrives here, and no read filter
+ * can tell which objects it counted. What keeps such a number from disclosing a cardinality is the
+ * secured evaluation of the script: {@code all()}, references and the inputs deliver only the objects
+ * the acting account may discover, so the aggregate counts those and no other. Per-object read
+ * filtering covers identity, labels and attribute values of the objects that reach the result.
  * </p>
  *
  * @see ModelSecurity

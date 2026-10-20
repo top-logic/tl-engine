@@ -27,6 +27,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -102,9 +103,17 @@ public class TestPresentTool extends BasicTestCase {
 	 */
 	private ReactWindowRegistry _window;
 
+	/** The account on the sub-session before the test made it root, restored afterwards. */
+	private Person _previousAccount;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+		// A query of the tool is evaluated secured, so all() delivers the objects the acting account
+		// may discover. The test asks about every person and every session, so it acts as root; the
+		// rights check under test is the one ModelSecurity makes.
+		_previousAccount = subSession().getPerson();
+		subSession().setPerson(PersonManager.getManager().getRoot());
 		if (user == null) {
 			user = TestPerson.createPerson("presenter");
 			// Any persisted object will do: what is under test is the identifier, the rights check
@@ -124,6 +133,7 @@ public class TestPresentTool extends BasicTestCase {
 	protected void tearDown() throws Exception {
 		ChatViewBinding.bind(subSession(), windowName(), "/app", "main").denyPresenting(PANE, _channel);
 		_window = null;
+		subSession().setPerson(_previousAccount);
 		super.tearDown();
 	}
 

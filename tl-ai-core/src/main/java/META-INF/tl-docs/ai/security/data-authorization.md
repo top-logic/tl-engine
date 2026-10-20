@@ -68,11 +68,11 @@ What `ReadFilter` enforces:
 
 ### What it does not claim: aggregates
 
-A count computed inside TL-Script is a number by the time it arrives, and no read filter can tell which objects it counted. Cardinality is accepted, not fixed; `TestReadFilter` states that boundary as a test so it is not mistaken for an oversight.
+A count computed inside TL-Script is a number by the time it arrives, and no read filter can tell which objects it counted. What bounds it is the **secured evaluation** of the script: a tool's script runs on behalf of the acting account, so `all(...)`, reference navigation and the inputs of the script deliver only the objects that account may *discover* - the engine's [Discover right](doc:access-discover-spec), implied by every right on an object or one of its attributes. An aggregate therefore counts discoverable objects and no other. `TestReadFilter` states the filter's own boundary as a test so it is not mistaken for an oversight, and `SecDemoReadFilterTest` asserts the bound against the test bed's accounts.
 
 ### What labels are
 
-A **label** is not read-scoped either - and that is the engine's own position on what a label *is*:
+A **label** is not read-scoped by the filter either - and that is the engine's own position on what a label *is*:
 
 ```
 TL-Script  toString($obj)   ->  ToString
@@ -84,21 +84,21 @@ TL-Script  toString($obj)   ->  ToString
                             ->  a String
 ```
 
-Only TL-Script's **attribute** access (`AccessLike.lookupValue`) consults `ModelAccessRights`; label rendering deliberately does not. The engine states the rule in the JavaDoc of `FilterSecurity`: access operations in TL-Script return referenced objects unfiltered (consistent with the user interface, which always shows a referenced object by its label and only secures navigation into it); only the access to the *attributes* of an object is denied if the user must not read the object. So by the time the value reaches `ReadFilter` it is a `String`, and there is nothing left for a filter to recognise. Two consequences:
+Only TL-Script's **attribute** access (`AccessLike.lookupValue`) consults `ModelAccessRights` for the Read right; label rendering does not. What keeps a label from leaking is one step earlier: a secured script never *holds* an object the account may not discover, because every object source - `all`, references, `referers`, the inputs - delivers discoverable objects only. A label is therefore visible exactly where the object is, which is how the user interface shows a referenced object by its label and secures navigation into it. Two consequences:
 
-- **Object labels are non-secret by design.** A reference is rendered by its label in every table, tooltip and selector; what is secured is navigating into the object, not naming it.
-- **The modeller carries the obligation.** An application must not encode confidential information in the name of an object. If a contract's *name* has to be secret, the secret belongs in an attribute with its own `<part>` grant - which *is* read-scoped - and the label must not repeat it.
+- **A label is as visible as the object.** An account that may discover an object - because it holds *some* right on it or one of its attributes - sees its label, in a table, a tooltip, a selector and a coerced script value alike, even where it may not read a single attribute.
+- **The modeller carries the obligation.** An application must not encode confidential information in the name of an object that accounts may discover without reading it. If a contract's *name* has to be secret, the secret belongs in an attribute with its own `<part>` grant - which *is* read-scoped - and the label must not repeat it.
 
-A label discloses whatever the model's label provider renders. A type with a `name` attribute is labelled by its name; a type without one gets the generic *"Unnamed object of type Ticket"*, so coercing such objects discloses **how many** exist and nothing else - the cardinality boundary reached by a second route. The two accepted disclosures are one family: a script reduces an object to a plain value before any output filter runs, and an output filter cannot recover what the value was.
+A label discloses whatever the model's label provider renders. A type with a `name` attribute is labelled by its name; a type without one gets the generic *"Unnamed object of type Ticket"*, so coercing such objects discloses how many of them the account may discover and nothing else.
 
-**The control is the caller's.** `filterSecurity(...)` - the engine's TL-Script function behind `SearchExpression.filterSecurity` - applies the current user's read permissions to a value, dropping the objects the user may not read, recursively through collections and maps. Applied *before* the coercion, there is no object left to label:
+**The caller narrows further with `filterSecurity(...)`** - the engine's TL-Script function behind `SearchExpression.filterSecurity` - which applies the current user's *Read* permissions to a value, dropping the objects the user may discover but not read, recursively through collections and maps. Applied *before* the coercion, there is no object left to label:
 
 ```
-filterSecurity(all(`pm:Project`)).map(p -> toString($p))   // scoped to what the user may read
-all(`pm:Project`).map(p -> toString($p))                   // every label, by design
+filterSecurity(all(`pm:Project`)).map(p -> toString($p))   // the labels of the projects the user may read
+all(`pm:Project`).map(p -> toString($p))                   // the labels of the projects the user may discover
 ```
 
-The cheat sheet of the query language (`QueryLanguage`, which a failing query is answered with and which the skill `TL_writingDataChanges` carries) and that skill's security section say so. A script reaches a reader through `query` and `present`, which are in `data.read`: withholding `script` does not keep a count or a label from an account; only withholding `data.read` does.
+The cheat sheet of the query language (`QueryLanguage`, which a failing query is answered with and which the skill `TL_writingDataChanges` carries) and that skill's security section say so. A script reaches a reader through `query` and `present`, which are in `data.read`: what it may count or label is bounded by the account's rights on the objects, not by the tool layer.
 
 ## What the tools disclose
 

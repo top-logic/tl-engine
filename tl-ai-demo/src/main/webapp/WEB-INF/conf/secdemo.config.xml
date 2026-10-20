@@ -298,11 +298,11 @@
 			that the first is named in <tool-groups> and the second is not, so the pair isolates the
 			classification mechanism exactly.
 
-			"secdemo-reporting.countVisibleTickets" is the honest counterpart of countTickets and the
-			reason both exist: per-object read filtering cannot narrow an aggregate, because a count is
-			a number by the time any filter sees it (issue #291). A tool that wants a filtered count has
-			to filter inside the script, which is what filterSecurity does. Neither tool lies about
-			which one it is.
+			"secdemo-reporting.countVisibleTickets" is the counterpart of countTickets: a count is a
+			number by the time the read filter sees it, so what narrows it is the secured evaluation of
+			the script itself - all() delivers only the tickets the acting account may discover - and,
+			in countVisibleTickets, the filterSecurity inside the script, which also drops a ticket the
+			account may discover but not read. Neither tool lies about which one it is.
 		-->
 		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
 			<instance>
@@ -314,8 +314,8 @@
 									mode="READ"
 								>
 									<description>
-										<en>Counts every ticket, including ones the acting account may not read - an aggregate computed inside a script is not read-filtered. Named in tool-groups, which puts it in data.read.</en>
-										<de>Zählt alle Tickets, auch die für das ausführende Konto nicht lesbaren - eine im Skript berechnete Kennzahl wird nicht gefiltert. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.read.</de>
+										<en>Counts the tickets the acting account may discover: the script runs secured, so all() delivers no other. Named in tool-groups, which puts it in data.read.</en>
+										<de>Zählt die Tickets, die das ausführende Konto sehen darf: das Skript läuft gesichert, all() liefert keine anderen. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.read.</de>
 									</description>
 									<implementation>all(`pm:Ticket`).size()</implementation>
 								</tool>
@@ -323,8 +323,8 @@
 									mode="READ"
 								>
 									<description>
-										<en>Counts the tickets the acting account may read, by filtering inside the script before counting. The honest way to report a count.</en>
-										<de>Zählt die für das ausführende Konto lesbaren Tickets, indem im Skript vor dem Zählen gefiltert wird. Der ehrliche Weg, eine Anzahl zu melden.</de>
+										<en>Counts the tickets the acting account may read, by filtering for the Read right inside the script before counting; a ticket the account may discover but not read is left out.</en>
+										<de>Zählt die für das ausführende Konto lesbaren Tickets, indem im Skript vor dem Zählen nach dem Leserecht gefiltert wird; ein Ticket, das das Konto sehen, aber nicht lesen darf, bleibt außen vor.</de>
 									</description>
 									<implementation>filterSecurity(all(`pm:Ticket`)).size()</implementation>
 								</tool>
@@ -381,8 +381,8 @@
 									mode="READ"
 								>
 									<description>
-										<en>Counts every ticket, unfiltered. Deliberately left out of tool-groups, so it belongs to no group and is denied to every role.</en>
-										<de>Zählt alle Tickets, ungefiltert. Absichtlich nicht in tool-groups eingetragen, gehört daher zu keiner Gruppe und ist für jede Rolle gesperrt.</de>
+										<en>Counts the tickets the acting account may discover. Deliberately left out of tool-groups, so it belongs to no group and is denied to every role.</en>
+										<de>Zählt die Tickets, die das ausführende Konto sehen darf. Absichtlich nicht in tool-groups eingetragen, gehört daher zu keiner Gruppe und ist für jede Rolle gesperrt.</de>
 									</description>
 									<implementation>all(`pm:Ticket`).size()</implementation>
 								</tool>

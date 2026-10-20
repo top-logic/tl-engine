@@ -226,7 +226,8 @@ public class TestReadFilter extends TestCase {
 
 	/**
 	 * A count is a number by the time it arrives, so the filter cannot touch it. Stated as a test
-	 * because it is the accepted boundary of the guarantee (issue #291), not an oversight.
+	 * because it is the boundary of this filter, not an oversight: what bounds such a number is the
+	 * secured evaluation of the script that computed it.
 	 */
 	public void testAggregatesAreNotFiltered() {
 		assertEquals("The read filter cannot filter a cardinality; per-object filtering is what it does.",

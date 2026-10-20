@@ -184,11 +184,12 @@ public class RoleToolAccess {
 	 * That argument holds since #289/#295. The data tools do consult L2: every TLObject they render
 	 * passes ReadFilter, which cannot be constructed without the run's ModelSecurity, and TidResolver
 	 * is itself the read check - so InstanceBrowserTool's identities, counts and attribute values and
-	 * a TL-Script result are all filtered per object and per attribute. What this default still does
-	 * not promise is the two disclosures no output-boundary filter can reach: a cardinality TL-Script
-	 * reduced to a number before the filter saw it (#291) and a label reached through string coercion
-	 * (#296). Both are stated in the developer article ai/security/data-authorization and asserted in
-	 * SecDemoReadFilterTest, and nothing in the documentation may claim more than that.
+	 * a TL-Script result are all filtered per object and per attribute. Two values no output-boundary
+	 * filter can reach - a cardinality TL-Script reduced to a number before the filter saw it and a
+	 * label reached through string coercion - are bounded by the secured evaluation of the script
+	 * instead, which delivers only the objects the account may discover. Both are stated in the
+	 * developer article ai/security/data-authorization and asserted in SecDemoReadFilterTest, and
+	 * nothing in the documentation may claim more than that.
 	 */
 	public static final List<String> DEFAULT_BASELINE =
 		List.of(ToolGroups.MODEL_READ, ToolGroups.DATA_READ);

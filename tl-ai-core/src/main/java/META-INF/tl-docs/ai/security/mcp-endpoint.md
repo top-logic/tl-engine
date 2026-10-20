@@ -190,7 +190,7 @@ The agent framework's own MCP client ignores all of it: the hints are a server's
 
 - **`tools/list` is not filtered per caller.** The MCP Java SDK answers it from the globally registered tool set without reference to the caller, so every *authenticated* caller sees every *published* tool's name, description and input schema; only execution is authorized per caller.
 - **No RFC 9728 protected-resource metadata.** Nothing serves `/.well-known/oauth-protected-resource`, and the bearer challenge carries no `resource_metadata`, so an OAuth client cannot discover this server automatically - it has to be configured. The MCP specification makes authorization optional.
-- **An aggregate a TL-Script computes is not filtered.** ``all(`X`).size()`` is a number by the time the read filter sees it.
+- **An aggregate a TL-Script computes passes the read filter untouched.** ``all(`X`).size()`` is a number by the time the filter sees it; it is bounded by the secured evaluation, which delivers only the objects the account may discover to the script.
 - **The model-metadata resources** (types of a module, parts of a type, classifiers, usages, configuration schemas) disclose model structure, not business data, and are not bounded by the account's readable types.
 
 ## Switching it on

@@ -28,8 +28,9 @@
  * </p>
  *
  * <p>
- * Two disclosures are outside that chokepoint by construction and say so where they occur: a
- * cardinality TL-Script has already reduced to a number carries no object left to filter (issue #291),
+ * Two values are outside that chokepoint by construction and say so where they occur: a cardinality
+ * TL-Script has already reduced to a number carries no object left to filter - it is bounded by the
+ * secured evaluation of the script, which delivers only discoverable objects to the computation -
  * and an embedding was computed from text the filter only removes from the answer. Both are stated on
  * {@code ReadFilter} and {@code VectorReadFilter} rather than left implicit.
  * </p>

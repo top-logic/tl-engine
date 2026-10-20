@@ -1,5 +1,5 @@
 import {
-  React, useI18N, TLChild, usePart, ButtonDefaults, useButtonDefaults, Menu, usePopover, useMergeRefs,
+  React, useI18N, TLChild, usePart, ButtonDefaults, useButtonDefaults, Menu, usePopover,
   useCloseOnOutsidePress, useFocusTrap, useStandaloneKeyboardScope, pressClosedSurface, createPortal,
   anchoredOverlayProps,
   ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE, ICON_STRIKETHROUGH, ICON_PARAGRAPH, ICON_HEADING, ICON_BULLET_LIST,
@@ -197,7 +197,11 @@ const ToolButton: React.FC<ToolButtonProps> = ({ icon, label, checked, disabled,
   );
 };
 
-/** An alternative of a choice the toolbar offers in a menu. */
+/**
+ * An alternative of a choice the toolbar offers in a menu. Applying it leaves the focus alone: the
+ * menu gives it back to the text when it closes (useReturnToText), at once - a second, deferred
+ * focus of the editor would pull it back from where the user has gone meanwhile.
+ */
 interface Choice {
   label: string;
 
@@ -326,12 +330,20 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState('');
 
+  // Trigger and surface each carry an own ref and the one of the popover: plain callbacks, as in the
+  // menu of the bridge, so that the refs type-check under the React types of this module.
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
-  const setTriggerRefs = useMergeRefs([triggerRef, setAnchor]);
+  const setTriggerRefs = useCallback((element: HTMLButtonElement | null) => {
+    triggerRef.current = element;
+    setAnchor(element);
+  }, []);
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const { setFloating, style } = usePopover({ open, anchor });
-  const setSurfaceRefs = useMergeRefs([surfaceRef, setFloating]);
+  const setSurfaceRefs = useCallback((element: HTMLDivElement | null) => {
+    surfaceRef.current = element;
+    setFloating(element);
+  }, [setFloating]);
 
   const close = useCallback(() => setOpen(false), []);
   useStandaloneKeyboardScope(open, { ESCAPE: close });
@@ -353,15 +365,16 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
 
   const href = url.trim();
 
+  // The focus goes back to the text when the popup closes (useReturnToText).
   const apply = useCallback(() => {
     if (href) {
-      editor.chain().focus().setLink({ href }).run();
+      editor.chain().setLink({ href }).run();
     }
     close();
   }, [editor, href, close]);
 
   const remove = useCallback(() => {
-    editor.chain().focus().unsetLink().run();
+    editor.chain().unsetLink().run();
     close();
   }, [editor, close]);
 
@@ -474,12 +487,13 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
           {
             label: t(labels, 'paragraph'),
             checked: headingLevel === null,
-            apply: () => editor.chain().focus().setParagraph().run(),
+            apply: () => editor.chain().setParagraph().run(),
           },
           ...HEADING_LEVELS.map(level => ({
             label: t(labels, 'heading' + level),
             checked: headingLevel === level,
-            apply: () => editor.chain().focus().toggleHeading({ level }).run(),
+            // Choosing the level in force keeps it: a radio entry is no toggle.
+            apply: () => editor.chain().setHeading({ level }).run(),
           })),
         ]}
       />
@@ -492,13 +506,13 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
             label: t(labels, 'bulletList'),
             icon: ICON_BULLET_LIST,
             checked: state.bulletList,
-            apply: () => editor.chain().focus().toggleBulletList().run(),
+            apply: () => editor.chain().toggleBulletList().run(),
           },
           {
             label: t(labels, 'orderedList'),
             icon: ICON_NUMBERED_LIST,
             checked: state.orderedList,
-            apply: () => editor.chain().focus().toggleOrderedList().run(),
+            apply: () => editor.chain().toggleOrderedList().run(),
           },
         ]}
       />

@@ -53,11 +53,16 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const uploadFile = useTLUpload();
   const dataUrl = useTLDataUrl();
 
+  const value: string = (state.value as string) || '';
+  const editable: boolean = state.editable !== false;
+  const hasError: boolean = !!state.hasError;
+
   // The editable area is the element a form field's label names and focuses. Its attributes reach
   // the editor through the editor options, which the editor compares by identity on every render,
-  // so a change of the label association updates the element without re-creating the editor. The
-  // area is the writing surface of the library (.ProseMirror); the text in it is prose of the design
-  // system.
+  // so a change of the label association or of the error updates the element without re-creating
+  // the editor. The area is the writing surface of the library (.ProseMirror, a textbox); the text
+  // in it is prose of the design system. An error is announced at the textbox, which assistive
+  // technology reads; the frame shows it.
   const inputId = fieldInputId(controlId);
   const labelledBy = useFieldLabelProps(controlId, inputId)['aria-labelledby'];
   const editorProps = React.useMemo(() => {
@@ -65,12 +70,12 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     if (labelledBy !== undefined) {
       attributes['aria-labelledby'] = labelledBy;
     }
+    if (hasError) {
+      attributes['aria-invalid'] = 'true';
+    }
     return { attributes };
-  }, [inputId, labelledBy]);
+  }, [inputId, labelledBy, hasError]);
 
-  const value: string = (state.value as string) || '';
-  const editable: boolean = state.editable !== false;
-  const hasError: boolean = !!state.hasError;
   const imageUrl: string | null = (state.imageUrl as string) || null;
   const commitEdits: boolean = state.commitEdits === true;
   const toolbar: unknown = state[STATE_TOOLBAR] || null;
@@ -211,7 +216,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     );
   }
 
-  // An error is a state of the field, stated where assistive technology and stylesheet read it.
+  // The frame shows an error of the field (the border of tl-field); the textbox announces it.
   return (
     <div id={controlId} className={rootClassName(state, FRAME_CLASS)} aria-invalid={hasError ? true : undefined}>
       <WysiwygToolbar

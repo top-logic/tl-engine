@@ -13,9 +13,7 @@
     "isolatedModules": true,
     "outDir": "dist",
     "paths": {
-      "tl-react-bridge": ["../com.top_logic.layout.react/react-src/bridge-entry.ts"],
-      "react": ["./node_modules/@types/react"],
-      "react/*": ["./node_modules/@types/react/*"]
+      "tl-react-bridge": ["../com.top_logic.layout.react/react-src/bridge-entry.ts"]
     }
   },
   "include": ["react-src"]

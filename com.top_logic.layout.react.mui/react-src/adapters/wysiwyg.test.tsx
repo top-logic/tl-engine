@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { React, getComponent, registerPart } from 'tl-react-bridge';
+import { React, getComponent, register, registerPart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import ButtonPart from '../../../com.top_logic.layout.react/react-src/controls/button/ButtonPart';
 import MenuTriggerPart from '../../../com.top_logic.layout.react/react-src/controls/button/MenuTriggerPart';
@@ -17,6 +17,7 @@ import DividerPart from '../../../com.top_logic.layout.react/react-src/controls/
 import TextInputPart from '../../../com.top_logic.layout.react/react-src/controls/form/TextInputPart';
 import '../../../com.top_logic.layout.react.wysiwyg/react-src/wysiwyg-entry';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
+import type { ChildControlJson } from 'tl-react-bridge';
 
 /** The module name the bundle of the editor registers it under. */
 const MODULE = 'TLWysiwygEditor';
@@ -47,6 +48,14 @@ const FORMATS = [
   'js.wysiwyg.paragraph', 'js.wysiwyg.heading1', 'js.wysiwyg.heading2', 'js.wysiwyg.heading3',
   'js.wysiwyg.heading4', 'js.wysiwyg.heading5', 'js.wysiwyg.heading6',
 ];
+
+/** The module name of the stand-in for the toolbar of the commands the server configures for the editor. */
+const COMMANDS = 'WysiwygTestCommands';
+
+/** The stand-in for the toolbar of the server's commands: a toolbar of the package, as `TLToolbar` draws its root. */
+register(COMMANDS, ({ controlId }: TLCellProps) => (
+  <div id={controlId} className="tl-toolbar" role="toolbar" aria-label="commands" />
+));
 
 beforeAll(() => {
   // The TopLogic drawing of the parts: the test asks for the classes of the package.
@@ -155,19 +164,43 @@ describe('rich text editor', () => {
       expect(button.className).toMatch(/\btl-button--icon\b/);
     });
 
-    // The writing surface of the library carries the prose of the package.
+    // The writing surface of the library carries the prose of the package; without an error it states none.
     const surface = root.querySelector('.ProseMirror')!;
     expect(surface.classList.contains('tl-prose')).toBe(true);
+    expect(surface.getAttribute('role')).toBe('textbox');
+    expect(surface.hasAttribute('aria-invalid')).toBe(false);
 
     expect(leftovers()).toEqual([]);
   });
 
-  it('an error marks the frame aria-invalid, not a class', async () => {
+  it('an error marks the frame and the textbox aria-invalid, not a class', async () => {
     await mountEditor({ value: TEXT, editable: true, hasError: true });
 
+    // The frame shows it (the border of tl-field), the textbox announces it.
     const root = document.getElementById(CONTROL_ID)!;
     expect(root.getAttribute('aria-invalid')).toBe('true');
     expect(root.className).toBe('tl-field tl-rich-text');
+    const surface = within(root).getByRole('textbox');
+    expect(surface.classList.contains('ProseMirror')).toBe(true);
+    expect(surface.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('the commands of the server are a toolbar of their own, alone in a group that may shrink', async () => {
+    const commands = { controlId: 'c2', module: COMMANDS, state: {} } as unknown as ChildControlJson;
+    await mountEditor({ value: TEXT, editable: true, toolbar: commands });
+
+    const toolbar = screen.getByRole('toolbar', { name: 'js.wysiwyg.toolbar' });
+    const nested = document.getElementById('c2')!;
+    const group = nested.parentElement!;
+    // The package lets exactly this group shrink below its content: `.tl-toolbar__group:has(> .tl-toolbar)`.
+    expect(group.parentElement).toBe(toolbar);
+    expect(group.className).toBe('tl-toolbar__group');
+    expect(Array.from(group.children)).toEqual([nested]);
+    expect(group.matches('.tl-toolbar__group:has(> .tl-toolbar)')).toBe(true);
+    // Before the history, after the link group.
+    const groups = Array.from(toolbar.querySelectorAll(':scope > .tl-toolbar__group'));
+    expect(groups.indexOf(group)).toBe(groups.length - 2);
+    expect(toolbar.querySelectorAll('.tl-toolbar__group:has(> .tl-toolbar)')).toHaveLength(1);
   });
 
   it('the view is prose without frame', async () => {
@@ -246,6 +279,12 @@ describe('rich text editor', () => {
 
     expect(editor.getHTML()).toBe('<h2>Hello world</h2>');
     expect(screen.queryByRole('menu')).toBeNull();
+    await waitFor(() => expect(document.activeElement).toBe(surface));
+
+    // A radio entry is no toggle: choosing the level in force keeps it.
+    await user.click(trigger);
+    await user.click(within(screen.getByRole('menu')).getAllByRole('menuitemradio')[2]);
+    expect(editor.getHTML()).toBe('<h2>Hello world</h2>');
     await waitFor(() => expect(document.activeElement).toBe(surface));
 
     // Opened again from the keyboard, the menu checks the format at the cursor; Escape closes it and gives the focus

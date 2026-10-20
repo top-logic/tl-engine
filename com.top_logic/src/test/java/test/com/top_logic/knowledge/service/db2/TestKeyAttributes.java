@@ -6,6 +6,8 @@
 package test.com.top_logic.knowledge.service.db2;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -24,8 +26,12 @@ import com.top_logic.dob.meta.MORepository;
 import com.top_logic.knowledge.event.ItemEvent;
 import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.UpdateEvent;
+import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.service.db2.ItemEventReader;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
 
@@ -123,6 +129,45 @@ public class TestKeyAttributes extends AbstractDBKnowledgeBaseTest {
 		} finally {
 			reader.close();
 		}
+	}
+
+	public void testKeyAttributeInFlexOnlyUpdateEvent() throws DataObjectException {
+		final KnowledgeObject b1;
+		{
+			Transaction tx = begin();
+			b1 = newA(B_NAME_EXT, "b");
+			setB1(b1, "b1Value");
+			setB2(b1, "b2Value");
+			tx.commit();
+		}
+
+		String flexAttribute = "someFlexName";
+		List<ItemUpdate> updates = new ArrayList<>();
+		UpdateListener listener = new UpdateListener() {
+			@Override
+			public void notifyUpdate(KnowledgeBase sender, UpdateEvent event) {
+				updates.addAll(event.getChanges().getUpdates());
+			}
+		};
+		kb().addUpdateListener(listener);
+		try {
+			Transaction tx = begin();
+			b1.setAttributeValue(flexAttribute, "value");
+			tx.commit();
+		} finally {
+			kb().removeUpdateListener(listener);
+		}
+
+		assertEquals("Exactly one update expected: " + updates, 1, updates.size());
+		ItemUpdate update = updates.get(0);
+		assertEquals(ObjectBranchId.toObjectBranchId(b1.tId()), update.getObjectId());
+		Map<String, Object> newValues = update.getValues();
+		Map<String, Object> oldValues = update.getOldValues();
+		assertEquals("Key property is contained also on flex only change.", "b1Value", newValues.get(B1_NAME));
+		assertEquals("Key property is contained also on flex only change.", "b1Value", oldValues.get(B1_NAME));
+		assertEquals("value", newValues.get(flexAttribute));
+		assertFalse("Non key attribute has not changed", newValues.containsKey(B2_NAME));
+		assertFalse("Non key attribute has not changed", oldValues.containsKey(B2_NAME));
 	}
 
 	public void testMoreSpecialKeyAttributeInEvent() throws SQLException, DataObjectException {

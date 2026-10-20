@@ -9,6 +9,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.layout.form.values.edit.ControlAnnotationFormat;
 import com.top_logic.layout.form.values.edit.ControlAnnotationOptions;
 import java.lang.annotation.Annotation;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,6 +31,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.SelectField;
@@ -48,6 +50,7 @@ import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.state.DatePickerState.Precision;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
@@ -662,11 +665,35 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			if (Date.class.isAssignableFrom(type)) {
 				// A plain Date is stored with its time of day (DateValueProvider writes date and
 				// time), so it is edited with both - a date-only picker would drop the time.
-				return new ReactDatePickerControl(context, model, ReactDatePickerControl.Kind.DATE_TIME);
+				return new ReactDatePickerControl(context, model, ReactDatePickerControl.Kind.DATE_TIME,
+					dateTimeWithSeconds());
 			}
 		}
 		// String, and every specialized/typed value the format model turned into text.
 		return createTextInput(context, model);
+	}
+
+	/**
+	 * The format a plain {@code Date} property is shown in.
+	 *
+	 * <p>
+	 * The configuration stores such a value with its seconds, so the format must write seconds: the
+	 * display format decides the {@link ReactDatePickerControl#precision(ReactDatePickerControl.Kind, DateFormat)
+	 * precision} of the picker, and a picker editing minutes only would drop the seconds of the
+	 * stored value. The user's date-time format is used if it writes seconds, otherwise the medium
+	 * date-time format of the user's locale.
+	 * </p>
+	 */
+	private static DateFormat dateTimeWithSeconds() {
+		ReactDatePickerControl.Kind kind = ReactDatePickerControl.Kind.DATE_TIME;
+		DateFormat userFormat = kind.displayFormat();
+		if (ReactDatePickerControl.precision(kind, userFormat) == Precision.SECONDS) {
+			return userFormat;
+		}
+		DateFormat result = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
+			ThreadContext.getLocale());
+		result.setTimeZone(ThreadContext.getTimeZone());
+		return result;
 	}
 
 	/**

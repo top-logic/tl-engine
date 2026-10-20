@@ -1,6 +1,5 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { useMergeRefs } from '@floating-ui/react';
 import { usePart } from './parts';
 import { useCloseOnOutsidePress } from './outside-press';
 import { useFocusTrap } from './tl-react-bridge';
@@ -69,7 +68,13 @@ export interface MenuProps {
 export const Menu: React.FC<MenuProps> = ({ open, anchor, onClose, placement, id, className, children }) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const { setFloating, style } = usePopover({ open, anchor, placement });
-  const setRefs = useMergeRefs<HTMLDivElement>([ref, setFloating]);
+  // Both the own ref and the popover's go on the surface. A plain callback rather than floating-ui's
+  // useMergeRefs: that one's return type comes from the React types of this module and fails to match
+  // the JSX of a module with its own copy of @types/react.
+  const setRefs = useCallback((el: HTMLDivElement | null) => {
+    ref.current = el;
+    setFloating(el);
+  }, [setFloating]);
   useCloseOnOutsidePress(open, [ref], onClose);
   useFocusTrap(open, ref, 'first');
   const { onKeyDown } = useRovingMenu(ref, open, onClose);

@@ -28,6 +28,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.DefaultValueModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.calendar.CalendarEvent;
@@ -53,16 +54,19 @@ import com.top_logic.layout.view.list.ObjectListElement;
 import com.top_logic.layout.view.list.ObjectListScope;
 import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.layout.view.table.RowAsConfig;
+import com.top_logic.layout.view.wizard.DynamicStepsSource;
+import com.top_logic.layout.view.wizard.WizardStep;
+import com.top_logic.layout.view.wizard.WizardStepSource;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.ui.ScriptContextVariablesResolver;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Tests the scripts of trees, object lists, kanban boards and calendars, which see the inputs of
- * their element as variables and the values the element supplies - the node, the element, the
- * column, the calendar entry and the values of an edit - under their default names or the names
- * the element gives them.
+ * Tests the scripts of trees, object lists, kanban boards, calendars and dynamic wizard steps,
+ * which see the inputs of their element as variables and the values the element supplies - the
+ * node, the element, the column, the calendar entry, the values of an edit and the element of a
+ * step - under their default names or the names the element gives them.
  */
 public class TestElementSuppliedScripts extends BasicTestCase {
 
@@ -75,6 +79,8 @@ public class TestElementSuppliedScripts extends BasicTestCase {
 	private static final String KANBAN_BOARD = "kanban-board";
 
 	private static final String CALENDAR = "calendar";
+
+	private static final String DYNAMIC_STEPS = "dynamic-steps";
 
 	private ViewContext _context;
 
@@ -280,6 +286,36 @@ public class TestElementSuppliedScripts extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * Tests that the scripts naming the steps of a wizard see the inputs of the source and the
+	 * element of the step by the name the source gives it, in the editor and at runtime.
+	 */
+	public void testDynamicSteps() throws Exception {
+		DynamicStepsSource.Config config = (DynamicStepsSource.Config) parse(DYNAMIC_STEPS,
+			"<dynamic-steps steps='questions' inputs='factor as f' step-as='q'"
+				+ " label='$q + $f' icon=\"'css:' + $q\" auto-advance='if($q == \"a\", 2000, null)'/>");
+		for (String property : List.of(DynamicStepsSource.Config.LABEL, DynamicStepsSource.Config.ICON,
+			DynamicStepsSource.Config.AUTO_ADVANCE)) {
+			assertScope(List.of("f", "q"), config, property);
+		}
+		assertScope(List.of(DynamicStepsSource.Config.DEFAULT_STEP_AS),
+			parse(DYNAMIC_STEPS, "<dynamic-steps steps='questions' label='$step'/>"), DynamicStepsSource.Config.LABEL);
+
+		ViewChannel questions = new DefaultViewChannel("questions");
+		_context.registerChannel("questions", questions);
+		questions.set(List.of("a", "b"));
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestElementSuppliedScripts.class);
+		WizardStepSource source = context.getInstance(config);
+		context.checkErrors();
+		List<WizardStep> steps = source.steps(_context);
+		assertEquals(ResKey.text("af"), steps.get(0).label());
+		assertEquals(ResKey.text("bf"), steps.get(1).label());
+		assertEquals("css:a", steps.get(0).icon());
+		assertEquals(Long.valueOf(2000L), steps.get(0).autoAdvanceMillis());
+		assertNull(steps.get(1).autoAdvanceMillis());
+		assertEquals("The source follows its inputs.", List.of(questions, _factor), source.observedChannels(_context));
+	}
+
 	private static UIElement instantiate(PolymorphicConfiguration<? extends UIElement> config)
 			throws ConfigurationException {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestElementSuppliedScripts.class);
@@ -316,7 +352,8 @@ public class TestElementSuppliedScripts extends BasicTestCase {
 			TREE_TABLE, TypedConfiguration.getConfigurationDescriptor(TreeTableElement.Config.class),
 			OBJECT_LIST, TypedConfiguration.getConfigurationDescriptor(ObjectListElement.Config.class),
 			KANBAN_BOARD, TypedConfiguration.getConfigurationDescriptor(KanbanBoardElement.Config.class),
-			CALENDAR, TypedConfiguration.getConfigurationDescriptor(CalendarElement.Config.class));
+			CALENDAR, TypedConfiguration.getConfigurationDescriptor(CalendarElement.Config.class),
+			DYNAMIC_STEPS, TypedConfiguration.getConfigurationDescriptor(DynamicStepsSource.Config.class));
 		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap(tag, descriptors.get(tag)));
 		reader.setSource(CharacterContents.newContent(xml));
 		ConfigurationItem result = reader.read();

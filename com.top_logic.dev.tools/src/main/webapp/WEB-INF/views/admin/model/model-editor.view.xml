@@ -239,10 +239,13 @@
 								</commands>
 								<flow-diagram selection="selectedPart">
 									<inputs>
-										<input channel="selectedModule"/>
+										<input
+											as="module"
+											channel="selectedModule"
+										/>
 										<input channel="reload"/>
 									</inputs>
-									<createChart><![CDATA[module -> reload -> {
+									<createChart><![CDATA[{
 	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`)
 		.filter(t -> $t.get(`tl.model:TLType#scope`).instanceOf(`tl.model:TLModule`));
 	classes = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLClass`));

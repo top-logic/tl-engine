@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.channel;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -108,6 +109,34 @@ public final class InputScript {
 					I18NConstants.ERROR_SUPPLIED_NAMES_CLASH__NAME_ATTRIBUTE.fill(name, attribute));
 			}
 		}
+		checkInputsNotSupplied(inputs, suppliedNames);
+	}
+
+	/**
+	 * Checks that no input of a script is named like a value the element supplies to the script.
+	 *
+	 * <p>
+	 * For a script whose supplied values are named by the configuration itself, e.g. after
+	 * configured handlers, instead of by {@link Supplies} annotations.
+	 * </p>
+	 *
+	 * @param inputs
+	 *        The inputs the script sees.
+	 * @param suppliedNames
+	 *        The names of the values the element supplies to the script.
+	 * @throws ConfigurationError
+	 *         If an input is named like a supplied value.
+	 */
+	public static void checkInputNames(List<InputRef> inputs, Collection<String> suppliedNames) {
+		for (InputRef input : inputs) {
+			if (suppliedNames.contains(input.getName())) {
+				throw new ConfigurationError(I18NConstants.ERROR_INPUT_NAMED_LIKE_FIXED_SUPPLIED__NAME_INPUT
+					.fill(input.getName(), input.toString()));
+			}
+		}
+	}
+
+	private static void checkInputsNotSupplied(List<InputRef> inputs, Map<String, Supplies> suppliedNames) {
 		for (InputRef input : inputs) {
 			String name = input.getName();
 			Supplies clash = suppliedNames.get(name);

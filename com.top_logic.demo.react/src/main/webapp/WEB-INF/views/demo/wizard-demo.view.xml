@@ -175,8 +175,8 @@
 				</step>
 				<dynamic-steps
 					element-channel="question"
-					icon="q -> 'css:bi bi-question-circle'"
-					label="q -> if($q == 'role', 'Role', if($q == 'phone', 'Phone', 'Notes'))"
+					icon="'css:bi bi-question-circle'"
+					label="if($step == 'role', 'Role', if($step == 'phone', 'Phone', 'Notes'))"
 					steps="questions"
 				>
 					<form

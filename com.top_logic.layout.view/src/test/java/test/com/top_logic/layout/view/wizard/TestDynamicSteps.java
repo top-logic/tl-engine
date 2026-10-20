@@ -128,7 +128,8 @@ public class TestDynamicSteps extends TestCase {
 
 		WizardStepSource source = sources(_wizards.get(2)).get(0);
 		assertTrue("The functions are compiled with the source.", source instanceof DynamicStepsSource);
-		assertEquals(List.of(_questions), source.observedChannels(_context));
+		assertEquals("The source observes the list of elements and its inputs.", List.of(_questions, _questions),
+			source.observedChannels(_context));
 	}
 
 	/**

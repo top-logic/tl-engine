@@ -150,7 +150,7 @@ public class ChartElement implements UIElement {
 
 		_tooltips = new HashMap<>();
 		for (TooltipProviderConfig tooltip : config.getTooltips()) {
-			_tooltips.put(tooltip.getName(), QueryExecutor.compile(tooltip.getExpr()));
+			_tooltips.put(tooltip.getName(), InputScript.compile(tooltip, TooltipProviderConfig.EXPR));
 		}
 	}
 

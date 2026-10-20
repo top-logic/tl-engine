@@ -63,8 +63,8 @@ import com.top_logic.layout.view.navigation.RevealPath;
  *   &lt;tile-stack path="navPath" initial="products/overview.view.xml"&gt;
  *     &lt;frame route="product/:product" view="products/detail.view.xml"&gt;
  *       &lt;param name="product"
- *         expr="p -&gt; objectId($p)"
- *         reverse="id -&gt; $id.objectResolve(`my:Product`)"/&gt;
+ *         expr="objectId($product)"
+ *         reverse="$value.objectResolve(`my:Product`)"/&gt;
  *     &lt;/frame&gt;
  *   &lt;/tile-stack&gt;
  * &lt;/view&gt;

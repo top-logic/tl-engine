@@ -42,8 +42,8 @@ import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
  * &lt;tile-stack initial="accounts/overview.view.xml" path="navPath"&gt;
  *   &lt;frame route="person/:person" view="accounts/person-detail.view.xml"&gt;
  *     &lt;param name="person"
- *       expr="p -&gt; objectId($p)"
- *       reverse="id -&gt; $id.objectResolve(`tl.accounts:Person`)"/&gt;
+ *       expr="objectId($person)"
+ *       reverse="$value.objectResolve(`tl.accounts:Person`)"/&gt;
  *     &lt;label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
  *       expr="$person.get(`tl.accounts:Person#name`)" inputs="person"/&gt;
  *   &lt;/frame&gt;

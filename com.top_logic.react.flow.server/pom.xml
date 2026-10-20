@@ -42,6 +42,18 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-basic-db-schema</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.top-logic</groupId>
+            <artifactId>tl-core</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
 
         <!-- The GWT client-code: WAR overlay for Maven packaging. -->
         <dependency>

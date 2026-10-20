@@ -42,7 +42,8 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
   const i18n = useI18N(I18N_KEYS);
   const Button = usePart('Button');
 
-  // Merge theme defaults: the categories, the separator and the secondary text of the theme, read in the browser.
+  // Merge theme defaults: the categories, the separator and the secondary text of the theme, read in the browser; the
+  // scales are painted by the plugin the themed config carries.
   const themedConfig = useThemeDefaults(chartConfig);
 
   // Build callbacks from interaction descriptor.
@@ -135,6 +136,7 @@ const TLChart: React.FC<TLCellProps> = ({ controlId, state }) => {
         type={themedConfig.type}
         data={themedConfig.data}
         options={options}
+        plugins={themedConfig.plugins}
         role="img"
         aria-label={i18n['js.chart.label']}
       />

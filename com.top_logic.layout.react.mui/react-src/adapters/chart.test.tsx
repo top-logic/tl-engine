@@ -5,7 +5,9 @@
 // through the control: status lines, the name of the canvas, the tooltip and the reset button.
 //
 // Grid, axis lines, tick labels and titles are checked on a real Chart.js chart over a context that records nothing:
-// Chart.js routes those colours to its global defaults, so the config of each scale has to carry them.
+// Chart.js copies those colours from its global defaults into every scale it builds, and the chart paints them over
+// after that merge. A themed chart is compared with a plain Chart.js chart of the same config: the same scales in the
+// same order, bound to the same datasets, drawing every point at the same pixel.
 //
 // Review focus 3: ten series -> series 9 and 10 take category 1 and 2; after data-tl-mode="dark" the series, the grid
 // and the labels have the values of the dark mode without a reload; a series with a colour of its own keeps it.
@@ -27,20 +29,23 @@ const LIGHT = ['#c0392b', '#d68910', '#27ae60', '#16a085', '#2874a6', '#5b2c6f',
 const DARK = ['#e57368', '#f0b27a', '#58d68d', '#48c9b0', '#5dade2', '#af7ac5', '#d98cc9', '#bb8fce'];
 
 const COLORS = {
-  light: { categories: LIGHT, grid: '#d0d5dd', text: '#475467' },
-  dark: { categories: DARK, grid: '#344054', text: '#98a2b3' },
+  light: { categories: LIGHT, grid: '#d0d5dd', text: '#475467', layer: '#ffffff' },
+  dark: { categories: DARK, grid: '#344054', text: '#98a2b3', layer: '#101828' },
 };
 
+type Mode = keyof typeof COLORS;
+
 /** The custom properties of a mode at the document root, as the stylesheets of the package declare them. */
-function applyTokens(mode: 'light' | 'dark') {
+function applyTokens(mode: Mode) {
   const root = document.documentElement;
   COLORS[mode].categories.forEach((color, i) => root.style.setProperty(`--tl-category-${i + 1}-surface`, color));
   root.style.setProperty('--tl-border-separator', COLORS[mode].grid);
   root.style.setProperty('--tl-text-secondary', COLORS[mode].text);
+  root.style.setProperty('--tl-surface-layer', COLORS[mode].layer);
 }
 
 /** Switches the mode as the user menu does: the attribute, and with it the tokens. */
-function switchMode(mode: 'light' | 'dark') {
+function switchMode(mode: Mode) {
   act(() => {
     applyTokens(mode);
     document.documentElement.setAttribute('data-tl-mode', mode);
@@ -221,7 +226,13 @@ describe('chart colours', () => {
       expect(themed.options.color).toBeUndefined();
       expect(themed.options.plugins.colors.enabled).toBe(false);
     }
-    expect(bar.current.options.scales?.y?.grid).toBeUndefined();
+    const plain = drawChart(barChart(2)).chart;
+    const { chart } = drawChart(bar.current);
+    for (const id of Object.keys(plain.scales)) {
+      expect(scaleColours(chart.scales[id]), id).toEqual(scaleColours(plain.scales[id]));
+    }
+    chart.destroy();
+    plain.destroy();
   });
 
   it('the Colors plugin stays off for a chart with colours, unless the server turns it on', () => {
@@ -258,33 +269,151 @@ function titledChart(type: string, scales: Record<string, unknown> | undefined) 
 /** The titles of the axes, so that the colour of an axis title is on a scale that draws one. */
 const AXIS_TITLES = { x: { title: { display: true, text: 'X' } }, y: { title: { display: true, text: 'Y' } } };
 
-describe('chart scales (a real Chart.js chart)', () => {
-  /** The colours of a cartesian scale, as Chart.js resolved them. */
-  function cartesian(chart: Chart, id: string) {
-    const options = (chart.scales[id] as any).options;
-    return { grid: options.grid.color, border: options.border.color, ticks: options.ticks.color, title: options.title.color };
-  }
+const L = ['a', 'b'];
 
+/**
+ * Charts with scales the datasets bring along (ids of their own), next to scales of the server. Each is a factory: the
+ * plain chart and the themed one get a config of their own, as Chart.js writes into the config it is given.
+ */
+const CASES: Record<string, () => any> = {
+  'line with yAxisID left and right': () => ({
+    type: 'line', data: { labels: L, datasets: [{ data: [1, 2], yAxisID: 'left' }, { data: [20, 10], yAxisID: 'right' }] },
+  }),
+  "line with yAxisID 'xval'": () => ({
+    type: 'line', data: { labels: L, datasets: [{ data: [1, 2] }, { data: [20, 10], yAxisID: 'xval' }] },
+  }),
+  'server y next to a dataset on an unconfigured y2': () => ({
+    type: 'line',
+    data: { labels: L, datasets: [{ data: [3, 4] }, { data: [12, 15], yAxisID: 'y2' }] },
+    options: { scales: { y: { title: { display: true, text: 'v' } } } },
+  }),
+  "scatter with xAxisID 'xs'": () => ({
+    type: 'scatter', data: { datasets: [{ data: [{ x: 1, y: 2 }, { x: 3, y: 5 }], xAxisID: 'xs' }] },
+  }),
+  'bar next to a configured scale left': () => ({
+    ...barChart(1), options: { scales: { left: { axis: 'y', type: 'linear' } } },
+  }),
+  "server scale 'rhs' at the right": () => ({
+    type: 'line',
+    data: { labels: L, datasets: [{ data: [1, 2] }, { data: [20, 10], yAxisID: 'rhs' }] },
+    options: { scales: { rhs: { position: 'right' } } },
+  }),
+  'line with scales configured by position': () => ({
+    type: 'line',
+    data: { labels: ['a'], datasets: [{ data: [1], yAxisID: 'left' }, { data: [2], yAxisID: 'right' }] },
+    options: { scales: { left: { position: 'left' }, right: { position: 'right' } } },
+  }),
+  'bar and line on a configured second y': () => ({
+    type: 'bar',
+    data: { labels: ['a'], datasets: [{ data: [1] }, { type: 'line', data: [2], yAxisID: 'y1' }] },
+    options: { scales: { y1: { position: 'right' } } },
+  }),
+  'bar and line on an unconfigured y1': () => ({
+    type: 'bar', data: { labels: L, datasets: [{ data: [3, 4] }, { type: 'line', data: [12, 15], yAxisID: 'y1' }] },
+  }),
+  'bar with a dataset of index axis y': () => ({
+    type: 'bar', data: { labels: L, datasets: [{ data: [3, 4], indexAxis: 'y' }] },
+  }),
+  "radar with rAxisID 'foo'": () => ({
+    type: 'radar', data: { labels: ['a', 'b', 'c'], datasets: [{ data: [1, 2, 3], rAxisID: 'foo' }] },
+  }),
+  'line and bar on an unconfigured xb': () => ({
+    type: 'line', data: { labels: L, datasets: [{ data: [3, 4] }, { type: 'bar', data: [12, 15], xAxisID: 'xb' }] },
+  }),
+  'polar area': () => ({ type: 'polarArea', data: { labels: ['a', 'b', 'c'], datasets: [{ data: [1, 2, 3] }] } }),
+  'horizontal bar': () => ({ ...barChart(2), options: { indexAxis: 'y' } }),
+  'pie': () => ({ type: 'pie', data: { labels: L, datasets: [{ data: [1, 2] }] } }),
+};
+
+/**
+ * What Chart.js built from a config, apart from colours: the scales in key order with axis, type, position, the resolved
+ * offset, beginAtZero, min and max, the range and the box they take; per dataset the scales it is bound to, the parsed
+ * points and the pixels they are drawn at.
+ */
+function built(chart: Chart) {
+  return {
+    scales: Object.entries(chart.scales).map(([id, scale]: [string, any]) => ({
+      id,
+      axis: scale.axis,
+      type: scale.type,
+      position: scale.options.position,
+      offset: scale.options.offset,
+      beginAtZero: scale.options.beginAtZero,
+      min: scale.options.min,
+      max: scale.options.max,
+      range: [scale.min, scale.max],
+      box: [scale.left, scale.top, scale.right, scale.bottom],
+    })),
+    datasets: chart.data.datasets.map((_, i) => {
+      const meta = chart.getDatasetMeta(i) as any;
+      return {
+        scales: [meta.xAxisID, meta.yAxisID, meta.rAxisID],
+        parsed: meta._parsed,
+        pixels: meta.data.map((element: any) => [element.x, element.y]),
+      };
+    }),
+  };
+}
+
+/** Every number the chart parsed from its data. */
+const parsed = (chart: Chart) => chart.data.datasets.flatMap((_, i) => (chart.getDatasetMeta(i) as any)._parsed
+  .flatMap((point: any) => typeof point === 'number' ? [point] : Object.values(point).filter(v => typeof v === 'number')));
+
+/**
+ * The colours of a scale as Chart.js resolved them: grid, axis line, tick labels, axis title, and on a radial scale the
+ * spokes, the point labels and the backdrop of the tick labels.
+ */
+function scaleColours(scale: any): Record<string, unknown> {
+  const options = scale.options;
+  const colours: Record<string, unknown> = {
+    grid: options.grid.color, border: options.border.color, ticks: options.ticks.color, title: options.title.color,
+  };
+  if (scale.axis === 'r') {
+    Object.assign(colours, {
+      angleLines: options.angleLines.color, pointLabels: options.pointLabels.color, backdrop: options.ticks.backdropColor,
+    });
+  }
+  return colours;
+}
+
+/** The colours of the theme for a scale in the mode. */
+function themeColours(mode: Mode, radial: boolean): Record<string, unknown> {
+  const { grid, text, layer } = COLORS[mode];
+  const colours: Record<string, unknown> = { grid, border: grid, ticks: text, title: text };
+  return radial ? { ...colours, angleLines: grid, pointLabels: text, backdrop: layer + 'bf' } : colours;
+}
+
+/** Every scale Chart.js built has the colours of the theme in the mode. */
+function expectThemed(chart: Chart, mode: Mode) {
+  for (const [id, scale] of Object.entries(chart.scales)) {
+    expect(scaleColours(scale), `${id} (${mode})`).toEqual(themeColours(mode, (scale as any).axis === 'r'));
+  }
+}
+
+/**
+ * Switches the mode and, once the hook has read the tokens of the new mode, hands the chart the config of the hook
+ * again, as react-chartjs-2 does after the render the switch causes.
+ */
+async function switchChart(result: { current: any }, repaint: (next: any) => void, mode: Mode) {
+  switchMode(mode);
+  await waitFor(() => expect(result.current.options.color).toBe(COLORS[mode].text));
+  repaint(result.current);
+}
+
+describe('chart scales (a real Chart.js chart)', () => {
   it('grid, axis line, tick labels and axis title of a bar chart take the theme, and follow the mode', async () => {
-    const { result } = renderHook(() => useThemeDefaults(titledChart('bar', AXIS_TITLES)));
+    const config = titledChart('bar', AXIS_TITLES);
+    const { result } = renderHook(() => useThemeDefaults(config));
     const { chart, repaint } = drawChart(result.current);
 
-    for (const id of ['x', 'y']) {
-      expect(cartesian(chart, id), id).toEqual(
-        { grid: COLORS.light.grid, border: COLORS.light.grid, ticks: COLORS.light.text, title: COLORS.light.text });
-    }
+    expectThemed(chart, 'light');
     expect((chart as any).titleBlock.options.color).toBe(COLORS.light.text);
     expect((chart.options as any).plugins.subtitle.color).toBe(COLORS.light.text);
     expect((chart as any).legend.options.labels.color).toBe(COLORS.light.text);
 
-    switchMode('dark');
-    await waitFor(() => expect(result.current.options.scales.y.grid.color).toBe(COLORS.dark.grid));
-    repaint(result.current);
+    await switchChart(result, repaint, 'dark');
 
-    for (const id of ['x', 'y']) {
-      expect(cartesian(chart, id), id).toEqual(
-        { grid: COLORS.dark.grid, border: COLORS.dark.grid, ticks: COLORS.dark.text, title: COLORS.dark.text });
-    }
+    expectThemed(chart, 'dark');
     expect((chart as any).titleBlock.options.color).toBe(COLORS.dark.text);
     expect((chart.options as any).plugins.subtitle.color).toBe(COLORS.dark.text);
     expect((chart as any).legend.options.labels.color).toBe(COLORS.dark.text);
@@ -292,132 +421,67 @@ describe('chart scales (a real Chart.js chart)', () => {
   });
 
   it('the axes Chart.js creates itself are themed too: a line chart without scales in its config', () => {
-    const { result } = renderHook(() => useThemeDefaults(titledChart('line', undefined)));
+    const config = titledChart('line', undefined);
+    const { result } = renderHook(() => useThemeDefaults(config));
     const { chart } = drawChart(result.current);
 
-    for (const id of ['x', 'y']) {
-      expect(cartesian(chart, id), id).toMatchObject({ grid: COLORS.light.grid, ticks: COLORS.light.text });
-    }
+    expect(Object.keys(chart.scales)).toEqual(['x', 'y']);
+    expectThemed(chart, 'light');
     chart.destroy();
   });
 
   it('a radar chart themes its radial scale: lines, spokes, labels, tick backdrop', async () => {
-    document.documentElement.style.setProperty('--tl-surface-layer', '#ffffff');
-    const { result } = renderHook(() => useThemeDefaults(titledChart('radar', undefined)));
+    const config = titledChart('radar', undefined);
+    const { result } = renderHook(() => useThemeDefaults(config));
     const { chart, repaint } = drawChart(result.current);
-    const radial = () => (chart.scales.r as any).options;
 
-    expect(radial().grid.color).toBe(COLORS.light.grid);
-    expect(radial().angleLines.color).toBe(COLORS.light.grid);
-    expect(radial().pointLabels.color).toBe(COLORS.light.text);
-    expect(radial().ticks.color).toBe(COLORS.light.text);
-    expect(radial().ticks.backdropColor).toBe('#ffffffbf');
     expect(Object.keys(chart.scales)).toEqual(['r']);
+    expectThemed(chart, 'light');
 
-    act(() => {
-      document.documentElement.style.setProperty('--tl-surface-layer', '#101828');
-    });
-    switchMode('dark');
-    await waitFor(() => expect(result.current.options.scales.r.grid.color).toBe(COLORS.dark.grid));
-    repaint(result.current);
-
-    expect(radial().grid.color).toBe(COLORS.dark.grid);
-    expect(radial().angleLines.color).toBe(COLORS.dark.grid);
-    expect(radial().pointLabels.color).toBe(COLORS.dark.text);
-    expect(radial().ticks.backdropColor).toBe('#101828bf');
+    await switchChart(result, repaint, 'dark');
+    expectThemed(chart, 'dark');
     chart.destroy();
   });
 
-  /**
-   * Charts with scales the datasets bring along (ids of their own), next to scales of the server. For each the themed
-   * chart has to build exactly the scales plain Chart.js builds, with the same axis, type and position, draw every point
-   * (a scale of the wrong axis makes them NaN) - and have every scale themed, in both modes.
-   */
-  const XVAL = { type: 'line', data: { labels: ['a', 'b'], datasets: [{ data: [1, 2], yAxisID: 'xval' }] } };
-  const CASES: Record<string, any> = {
-    'line with yAxisID left and right': {
-      type: 'line',
-      data: { labels: ['a', 'b'], datasets: [{ data: [1, 2], yAxisID: 'left' }, { data: [2, 1], yAxisID: 'right' }] },
-    },
-    "line with yAxisID 'xval'": XVAL,
-    "scatter with xAxisID 'xs'": {
-      type: 'scatter', data: { datasets: [{ data: [{ x: 1, y: 2 }, { x: 2, y: 3 }], xAxisID: 'xs' }] },
-    },
-    'bar next to a configured scale': {
-      ...barChart(1), options: { scales: { left: { axis: 'y', type: 'linear' } } },
-    },
-    'line with scales configured by position': {
-      type: 'line',
-      data: { labels: ['a'], datasets: [{ data: [1], yAxisID: 'left' }, { data: [2], yAxisID: 'right' }] },
-      options: { scales: { left: { position: 'left' }, right: { position: 'right' } } },
-    },
-    'mixed bar and line on a second y': {
-      type: 'bar',
-      data: { labels: ['a'], datasets: [{ data: [1] }, { type: 'line', data: [2], yAxisID: 'y1' }] },
-      options: { scales: { y1: { position: 'right' } } },
-    },
-    "radar with rAxisID 'foo'": {
-      type: 'radar', data: { labels: ['a', 'b', 'c'], datasets: [{ data: [1, 2, 3], rAxisID: 'foo' }] },
-    },
-    'horizontal bar': { ...barChart(2), options: { indexAxis: 'y' } },
-    'dataset with an index axis of its own': {
-      type: 'bar', data: { labels: ['a', 'b'], datasets: [{ data: [1, 2], indexAxis: 'y' }] },
-    },
-    'pie': { type: 'pie', data: { labels: ['a', 'b'], datasets: [{ data: [1, 2] }] } },
-  };
-
-  /** What a scale is, besides its colours. */
-  const shape = (chart: Chart) => Object.fromEntries(Object.entries(chart.scales)
-    .map(([id, scale]: [string, any]) => [id, { axis: scale.axis, type: scale.type, position: scale.options.position }]));
-
-  /** Every number the chart parsed from its data. */
-  const parsed = (chart: Chart) => chart.data.datasets.flatMap((_, i) => (chart.getDatasetMeta(i) as any)._parsed
-    .flatMap((point: any) => typeof point === 'number' ? [point] : Object.values(point).filter(v => typeof v === 'number')));
-
-  /** The colours of the grid and the ticks of a scale, whichever kind of scale it is. */
-  const lines = (scale: any) => [scale.options.grid.color, scale.options.ticks.color];
-
-  for (const [name, config] of Object.entries(CASES)) {
-    it(`${name}: the same scales as without the theme, every point drawn, every scale themed in both modes`, async () => {
-      const plain = drawChart(structuredClone(config)).chart;
+  for (const [name, make] of Object.entries(CASES)) {
+    it(`${name}: builds what plain Chart.js builds, and every scale takes the theme in both modes`, async () => {
+      const plain = drawChart(make()).chart;
+      const config = make();
       const { result } = renderHook(() => useThemeDefaults(config));
       const { chart, repaint } = drawChart(result.current);
 
-      expect(shape(chart)).toEqual(shape(plain));
-      expect(parsed(chart)).toEqual(parsed(plain));
+      expect(built(chart)).toEqual(built(plain));
       expect(parsed(chart).every(Number.isFinite)).toBe(true);
-      for (const [id, scale] of Object.entries(chart.scales)) {
-        expect(lines(scale), id).toEqual([COLORS.light.grid, COLORS.light.text]);
-      }
+      expectThemed(chart, 'light');
 
-      switchMode('dark');
-      await waitFor(() => expect(result.current.options.plugins.colors.enabled).toBe(false));
-      await waitFor(() => expect(result.current.data.datasets[0].borderColor ?? 'none').not.toBe(LIGHT[0]));
-      repaint(result.current);
-      expect(shape(chart)).toEqual(shape(plain));
-      for (const [id, scale] of Object.entries(chart.scales)) {
-        expect(lines(scale), id).toEqual([COLORS.dark.grid, COLORS.dark.text]);
-      }
+      await switchChart(result, repaint, 'dark');
+      expect(built(chart)).toEqual(built(plain));
+      expectThemed(chart, 'dark');
       chart.destroy();
       plain.destroy();
     });
   }
 
   it('radial options go to a radial scale only, whatever its id, and never to a left or right one', () => {
-    const { result: radar } = renderHook(() => useThemeDefaults(CASES["radar with rAxisID 'foo'"]));
-    expect(radar.current.options.scales.foo.angleLines.color).toBe(COLORS.light.grid);
-    expect(radar.current.options.scales.foo.pointLabels.color).toBe(COLORS.light.text);
+    const make = CASES['line with yAxisID left and right'];
+    const plain = drawChart(make()).chart;
+    const config = make();
+    const { result } = renderHook(() => useThemeDefaults(config));
+    const { chart } = drawChart(result.current);
 
-    const { result: line } = renderHook(() => useThemeDefaults(CASES['line with yAxisID left and right']));
     for (const id of ['left', 'right', 'x']) {
-      expect(line.current.options.scales[id].angleLines, id).toBeUndefined();
-      expect(line.current.options.scales[id].pointLabels, id).toBeUndefined();
-      expect(line.current.options.scales[id].ticks.backdropColor, id).toBeUndefined();
+      const options = (chart.scales[id] as any).options;
+      expect(options.angleLines, id).toBeUndefined();
+      expect(options.pointLabels, id).toBeUndefined();
+      expect(options.ticks.backdropColor, id).toBe((plain.scales[id] as any).options.ticks.backdropColor);
     }
+    chart.destroy();
+    plain.destroy();
   });
 
   it('a pie gets no axes', () => {
-    const { result } = renderHook(() => useThemeDefaults(titledChart('pie', undefined)));
+    const config = titledChart('pie', undefined);
+    const { result } = renderHook(() => useThemeDefaults(config));
     expect(result.current.options.scales).toBeUndefined();
 
     const { chart } = drawChart(result.current);
@@ -426,27 +490,103 @@ describe('chart scales (a real Chart.js chart)', () => {
     chart.destroy();
   });
 
-  it('colours of the server on a scale or a plugin win, the rest of the scale takes the theme', () => {
-    const config = titledChart('bar', {
-      y: { grid: { color: '#111111' }, ticks: { color: '#222222' }, title: { display: true, text: 'Y', color: '#333333' } },
-    });
-    (config.options.plugins.title as any).color = '#444444';
+  it('colours of the server on a scale or a plugin win in both modes, the rest of the scale takes the theme', async () => {
+    const make = () => {
+      const config = titledChart('bar', {
+        y: { grid: { color: '#111111' }, ticks: { color: '#222222' }, title: { display: true, text: 'Y', color: '#333333' } },
+      });
+      (config.options.plugins.title as any).color = '#444444';
+      return config;
+    };
+    const plain = drawChart(make()).chart;
+    const config = make();
     const { result } = renderHook(() => useThemeDefaults(config));
-    const { chart } = drawChart(result.current);
+    const { chart, repaint } = drawChart(result.current);
+    expect(built(chart)).toEqual(built(plain));
 
-    expect(cartesian(chart, 'y')).toEqual({ grid: '#111111', border: COLORS.light.grid, ticks: '#222222', title: '#333333' });
-    expect(cartesian(chart, 'x')).toMatchObject({ grid: COLORS.light.grid, ticks: COLORS.light.text });
-    expect((chart as any).titleBlock.options.color).toBe('#444444');
+    for (const mode of ['light', 'dark'] as const) {
+      if (mode === 'dark') await switchChart(result, repaint, mode);
+      expect(scaleColours(chart.scales.y), mode)
+        .toEqual({ grid: '#111111', border: COLORS[mode].grid, ticks: '#222222', title: '#333333' });
+      expect(scaleColours(chart.scales.x), mode).toEqual(themeColours(mode, false));
+      expect((chart as any).titleBlock.options.color, mode).toBe('#444444');
+    }
     chart.destroy();
+    plain.destroy();
   });
 
-  it('a chart of the page does not change the defaults of Chart.js, which every other chart shares', () => {
-    const before = JSON.stringify([Chart.defaults.color, Chart.defaults.borderColor]);
-    const { result } = renderHook(() => useThemeDefaults(titledChart('bar', undefined)));
+  it('a scriptable colour of the server is kept and resolved by Chart.js, in both modes', async () => {
+    const gridColor = (context: any) => (context.index === 0 ? '#111111' : '#222222');
+    const tickColor = () => '#333333';
+    const make = () => ({ ...barChart(1), options: { scales: { x: { grid: { color: gridColor } }, y: { ticks: { color: tickColor } } } } });
+    const plain = drawChart(make()).chart;
+    const config = make();
+    const { result } = renderHook(() => useThemeDefaults(config));
+    const { chart, repaint } = drawChart(result.current);
+    expect(built(chart)).toEqual(built(plain));
+
+    for (const mode of ['light', 'dark'] as const) {
+      if (mode === 'dark') await switchChart(result, repaint, mode);
+      const merged = (chart.config.options as any).scales;
+      expect(merged.x.grid.color, mode).toBe(gridColor);
+      expect(merged.y.ticks.color, mode).toBe(tickColor);
+      expect((chart.scales.x as any).options.grid.color, mode).toBe('#222222');
+      expect((chart.scales.y as any).options.ticks.color, mode).toBe('#333333');
+      expect((chart.scales.x as any).options.ticks.color, mode).toBe(COLORS[mode].text);
+      expect((chart.scales.y as any).options.grid.color, mode).toBe(COLORS[mode].grid);
+    }
+    chart.destroy();
+    plain.destroy();
+  });
+
+  it('a new config of the server reaches the chart as react-chartjs-2 hands it over, and the server colour in it wins', async () => {
+    const make = (yGrid?: string) => {
+      const config = CASES['server y next to a dataset on an unconfigured y2']();
+      if (yGrid !== undefined) config.options.scales.y.grid = { color: yGrid };
+      return config;
+    };
+    const { result, rerender } = renderHook(({ config }) => useThemeDefaults(config), { initialProps: { config: make() } });
     const { chart } = drawChart(result.current);
+    expectThemed(chart, 'light');
+
+    // react-chartjs-2 assigns the new options onto those of the chart (setOptions) and updates it.
+    const handOver = () => {
+      Object.assign(chart.options, result.current.options);
+      chart.update();
+    };
+    rerender({ config: make('#111111') });
+    handOver();
+    const plain = drawChart(make('#111111')).chart;
+    expect(built(chart)).toEqual(built(plain));
+    expect(scaleColours(chart.scales.y)).toEqual({ ...themeColours('light', false), grid: '#111111' });
+    expect(scaleColours(chart.scales.y2)).toEqual(themeColours('light', false));
+
+    switchMode('dark');
+    await waitFor(() => expect(result.current.options.color).toBe(COLORS.dark.text));
+    handOver();
+    expect(scaleColours(chart.scales.y)).toEqual({ ...themeColours('dark', false), grid: '#111111' });
+    expect(scaleColours(chart.scales.x)).toEqual(themeColours('dark', false));
+    expect(scaleColours(chart.scales.y2)).toEqual(themeColours('dark', false));
+
+    rerender({ config: make() });
+    handOver();
+    expect(scaleColours(chart.scales.y)).toEqual(themeColours('dark', false));
+    chart.destroy();
+    plain.destroy();
+  });
+
+  it('a chart of the page changes neither the defaults of Chart.js nor a plain chart next to it', () => {
+    const before = JSON.stringify([Chart.defaults.color, Chart.defaults.borderColor]);
+    const config = titledChart('bar', undefined);
+    const { result } = renderHook(() => useThemeDefaults(config));
+    const { chart } = drawChart(result.current);
+    const plain = drawChart(titledChart('bar', undefined)).chart;
 
     expect(JSON.stringify([Chart.defaults.color, Chart.defaults.borderColor])).toBe(before);
+    expect((plain.scales.x as any).options.grid.color).toBe(Chart.defaults.borderColor);
+    expect((plain.scales.x as any).options.ticks.color).toBe(Chart.defaults.color);
     chart.destroy();
+    plain.destroy();
   });
 });
 
@@ -496,6 +636,19 @@ describe('chart control', () => {
       if (name.startsWith('tlReactChart')) old.push(name);
     }));
     expect(old).toEqual([]);
+  });
+
+  it('the chart on the page paints every scale Chart.js builds and follows a mode switch through react-chartjs-2', async () => {
+    mountAdapter(TLChart, { chartConfig: CASES['server y next to a dataset on an unconfigured y2']() });
+    await settle();
+
+    const chart = Chart.getChart(document.getElementById(CONTROL_ID)!.querySelector('canvas')!)!;
+    expect(Object.keys(chart.scales)).toEqual(['y', 'x', 'y2']);
+    expect(chart.data.datasets.map((_, i) => chart.getDatasetMeta(i).yAxisID)).toEqual(['y', 'y2']);
+    expectThemed(chart, 'light');
+
+    switchMode('dark');
+    await waitFor(() => expectThemed(chart, 'dark'));
   });
 
   it('without zoom there is no reset button', async () => {

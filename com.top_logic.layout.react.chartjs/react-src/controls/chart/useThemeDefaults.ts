@@ -1,6 +1,6 @@
 // react-src/controls/chart/useThemeDefaults.ts
 import { React, useTokenSwitch } from 'tl-react-bridge';
-import { Chart } from 'chart.js';
+import type { Chart, Plugin } from 'chart.js';
 
 /** The categories of the design system the series are coloured with: `--tl-category-1-surface` to `-8-surface`. */
 const CATEGORIES = 8;
@@ -84,68 +84,58 @@ function paint(options: any, group: string, key: string, color: string | undefin
   }
 }
 
-/** A scale with the colours of the theme where the server gave none. Scale colours do not follow the root options. */
-function themedScale(scale: any, radial: boolean, theme: ThemeColors): any {
+/**
+ * Paints one scale of an update: `target` is the config Chart.js merged for the scale, with the colours it copied from
+ * its global defaults; `server` is the scale of the same id in the config of the server. A colour the server set there -
+ * a value or a scriptable function - stays; every other colour is the theme's, where the theme has one.
+ */
+function paintScale(target: any, server: any, radial: boolean, theme: ThemeColors): void {
   const { gridColor, textColor, backdropColor } = theme;
-  const themed = { ...scale };
-  paint(themed, 'grid', 'color', gridColor);
-  paint(themed, 'border', 'color', gridColor);
-  paint(themed, 'ticks', 'color', textColor);
-  paint(themed, 'title', 'color', textColor);
-  if (radial) {
-    paint(themed, 'angleLines', 'color', gridColor);
-    paint(themed, 'pointLabels', 'color', textColor);
-    paint(themed, 'ticks', 'backdropColor', backdropColor);
-  }
-  return themed;
-}
-
-/** The axes a scale can have, as Chart.js ids them: the id of a scale is its axis, or names it by its first letter. */
-const AXES = ['x', 'y', 'r'];
-
-/**
- * The axis of a scale the server configured, as Chart.js decides it (`determineAxis`): the id `x`, `y` or `r`, the `axis`
- * option, the axis of the `position`, the axis of a dataset bound to the id, the first letter of an id of two or more.
- * `undefined` where Chart.js would throw: the chart is then built (and fails) as it would without the theme.
- */
-function axisOf(id: string, scale: any, config: any): string | undefined {
-  if (AXES.includes(id)) return id;
-  const position = scale?.position;
-  const bound = (config.data?.datasets ?? []).find((ds: any) => ds.xAxisID === id || ds.yAxisID === id);
-  return scale?.axis
-    ?? (position === 'top' || position === 'bottom' ? 'x' : position === 'left' || position === 'right' ? 'y' : undefined)
-    ?? (bound === undefined ? undefined : bound.xAxisID === id ? 'x' : 'y')
-    ?? (id.length > 1 && AXES.includes(id[0].toLowerCase()) ? id[0].toLowerCase() : undefined);
-}
-
-/** The axis the index (category) scale of a chart of the type runs along, as Chart.js reads it (`getIndexAxis`). */
-const indexAxisOf = (type: string, options: any): string =>
-  options?.datasets?.[type]?.indexAxis ?? options?.indexAxis ?? (Chart.defaults.datasets as any)[type]?.indexAxis ?? 'x';
-
-/**
- * The scales Chart.js builds for the datasets next to the configured ones (`mergeScaleConfig`): per dataset, each axis of
- * its type under the id the dataset names with `xAxisID`, `yAxisID` or `rAxisID`, else the axis itself, with the scale
- * options its type brings (`Chart.overrides`) and the axis - exactly what Chart.js merges for such a scale. Writing them
- * into the config as scales of their own is what lets them be themed; with the axis in place Chart.js builds the same
- * scale from the written options as it would have built by itself. A pie or a doughnut has none. A scale of the server
- * is not among them.
- */
-function datasetScales(config: any): Record<string, any> {
-  const configured = config.options?.scales ?? {};
-  const built: Record<string, any> = {};
-  for (const ds of config.data?.datasets ?? []) {
-    const type = ds.type || config.type;
-    const indexAxis = ds.indexAxis || indexAxisOf(type, config.options);
-    const brought = (Chart.overrides as any)[type]?.scales ?? {};
-    for (const defaultId of Object.keys(brought)) {
-      const axis = defaultId === '_index_' ? indexAxis : defaultId === '_value_' ? (indexAxis === 'x' ? 'y' : 'x') : defaultId;
-      const id = ds[axis + 'AxisID'] || axis;
-      if (!(id in configured)) {
-        built[id] = { axis, ...brought[defaultId], ...built[id] };
-      }
+  const over = (group: string, key: string, color: string | undefined) => {
+    if (color !== undefined && server?.[group]?.[key] === undefined) {
+      (target[group] ??= {})[key] = color;
     }
+  };
+  over('grid', 'color', gridColor);
+  over('border', 'color', gridColor);
+  over('ticks', 'color', textColor);
+  over('title', 'color', textColor);
+  if (radial) {
+    over('angleLines', 'color', gridColor);
+    over('pointLabels', 'color', textColor);
+    over('ticks', 'backdropColor', backdropColor);
   }
-  return built;
+}
+
+/** What a chart paints its scales with: the config of the server and the colours of the theme, as last rendered. */
+interface Painting {
+  config: any;
+  theme: ThemeColors;
+}
+
+/**
+ * The plugin of one chart that paints its scales, handed to that chart and never registered with Chart.js.
+ *
+ * Chart.js builds scales from the config and from the datasets (an axis id of its own), binds a dataset without an axis
+ * id to the first scale of the axis, and copies the colours of grid, axis line, tick labels and titles from its global
+ * defaults into every scale. The scales of the config are therefore left as the server sent them: the plugin paints
+ * every scale Chart.js built once it has merged and built them (`beforeUpdate`), on each update - a new config, a
+ * resize, a switch of the mode. Spokes, point labels and the backdrop of the tick labels go to a radial scale only.
+ */
+function scalePainter(painting: { current: Painting }): Plugin {
+  return {
+    id: 'tlThemeScales',
+    beforeUpdate(chart: Chart) {
+      const { config, theme } = painting.current;
+      const merged = (chart.config.options as any)?.scales ?? {};
+      for (const scale of Object.values(chart.scales)) {
+        const target = merged[scale.id];
+        if (target !== undefined) {
+          paintScale(target, config?.options?.scales?.[scale.id], scale.axis === 'r', theme);
+        }
+      }
+    },
+  };
 }
 
 /**
@@ -156,12 +146,23 @@ function datasetScales(config: any): Record<string, any> {
  * series the neutral separator colour; it does not shift the others. Without any readable category nothing is coloured,
  * and the Colors plugin of Chart.js, which would make a palette up, is off unless the server turns it on.
  *
- * The colours are written into the config of this chart, never into `Chart.defaults`: several charts, in different
- * themes, share a page.
+ * The scales of the config stay as the server sent them, so Chart.js builds the same scales as without the theme; the
+ * returned config carries, under `plugins`, the plugin of this chart that paints them (see {@link scalePainter}). The
+ * colours go into the config of this chart, never into `Chart.defaults`: several charts, in different themes, share a
+ * page.
  */
 export function useThemeDefaults(config: any): any {
   // Read when the control renders, and again when the mode or the theme switches: a canvas takes no `var()`.
   const theme = useTokenSwitch(readThemeColors, readThemeColors, sameColors);
+
+  // react-chartjs-2 hands a chart its plugins once, when it creates it; the painter reads the latest config and theme
+  // at each update the render causes.
+  const painting = React.useRef<Painting>({ config, theme });
+  React.useLayoutEffect(() => {
+    painting.current = { config, theme };
+  }, [config, theme]);
+  const painter = React.useMemo(() => scalePainter(painting), []);
+
   return React.useMemo(() => {
     if (!config) return config;
 
@@ -214,20 +215,9 @@ export function useThemeDefaults(config: any): any {
     }
 
     merged.data = data;
+    merged.plugins = [painter];
 
-    // Scales: Chart.js routes the colours of grid, axis line, ticks and title to its global defaults, not to the
-    // options of the chart, so every scale gets them in its own config: the ones the server configures, and the ones
-    // Chart.js builds for the datasets (datasetScales).
     const options = { ...merged.options };
-    const scales = { ...datasetScales(config), ...options.scales };
-    for (const id of Object.keys(scales)) {
-      const radial = (config.options?.scales?.[id] === undefined ? scales[id].axis : axisOf(id, scales[id], config)) === 'r'
-        || scales[id].type === 'radialLinear';
-      scales[id] = themedScale(scales[id], radial, theme);
-    }
-    if (Object.keys(scales).length > 0) {
-      options.scales = scales;
-    }
 
     // Labels of the legend follow the root option `color`; title and subtitle have their own.
     options.plugins = { ...options.plugins };
@@ -241,5 +231,5 @@ export function useThemeDefaults(config: any): any {
     options.plugins.colors = { ...options.plugins.colors, enabled: options.plugins.colors?.enabled ?? false };
     merged.options = options;
     return merged;
-  }, [config, theme]);
+  }, [config, theme, painter]);
 }

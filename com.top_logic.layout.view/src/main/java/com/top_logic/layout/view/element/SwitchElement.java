@@ -14,8 +14,9 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -141,7 +142,8 @@ public class SwitchElement implements UIElement {
 		String TEST = "test";
 
 		/**
-		 * The name an overlay of the view addresses this case by.
+		 * The name an overlay of the view addresses this case by, unique in the whole view, see
+		 * {@link UIElement.Config#getId()}.
 		 *
 		 * <p>
 		 * A case without id is anonymous: an overlay adds cases beside it, but cannot address the
@@ -149,6 +151,7 @@ public class SwitchElement implements UIElement {
 		 * </p>
 		 */
 		@Name(ID)
+		@GlobalKey
 		String getId();
 
 		/** Configuration name for {@link #getContent()}. */

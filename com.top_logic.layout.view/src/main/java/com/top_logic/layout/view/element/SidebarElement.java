@@ -22,11 +22,12 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
@@ -310,9 +311,10 @@ public class SidebarElement implements UIElement {
 		String ID = "id";
 
 		/**
-		 * The unique item identifier.
+		 * The item identifier, unique in the whole view, see {@link UIElement.Config#getId()}.
 		 */
 		@Name(ID)
+		@GlobalKey
 		String getId();
 	}
 

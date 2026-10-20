@@ -14,10 +14,11 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
@@ -97,7 +98,8 @@ public class SplitPanelElement implements UIElement {
 		String CHILDREN = "children";
 
 		/**
-		 * The name an overlay of the view addresses this pane by.
+		 * The name an overlay of the view addresses this pane by, unique in the whole view, see
+		 * {@link UIElement.Config#getId()}.
 		 *
 		 * <p>
 		 * A pane without id is anonymous: an overlay adds panes beside it, but cannot address the
@@ -105,6 +107,7 @@ public class SplitPanelElement implements UIElement {
 		 * </p>
 		 */
 		@Name(ID)
+		@GlobalKey
 		String getId();
 
 		/**

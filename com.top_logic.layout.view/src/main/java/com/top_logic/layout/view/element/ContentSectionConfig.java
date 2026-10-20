@@ -8,6 +8,7 @@ package com.top_logic.layout.view.element;
 import java.util.List;
 
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -39,14 +40,16 @@ public interface ContentSectionConfig extends WithAccessControl {
 	String ICON = "icon";
 
 	/**
-	 * The identifier of this part, unique within its container.
+	 * The identifier of this part, unique in the whole view.
 	 *
 	 * <p>
-	 * It is the route segment of a tab and the key an overlay of the view addresses the part by.
+	 * It is the route segment of a tab and the key an overlay of the view addresses the part by,
+	 * see {@link UIElement.Config#getId()}.
 	 * </p>
 	 */
 	@Name(ID)
 	@Mandatory
+	@GlobalKey
 	String getId();
 
 	/**

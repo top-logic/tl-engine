@@ -38,8 +38,9 @@ import com.top_logic.layout.view.element.TabBarElement;
 import com.top_logic.layout.view.element.TextElement;
 
 /**
- * Tests that a same-path overlay of a view descends into the element lists of the view by the ids
- * of their elements, and reaches an anonymous element by its position.
+ * Tests that a same-path overlay of a view addresses an element by its id with a referencing
+ * element ({@code config:ref}), descends into the element lists of the view by the ids of their
+ * elements, and reaches an anonymous element by its position.
  *
  * <p>
  * The views are folded the way the application reads a view several modules provide, by
@@ -350,6 +351,168 @@ public class TestViewOverlayKeyedLists extends TestCase {
 		} catch (ConfigurationException ex) {
 			// Expected: duplicate key.
 		}
+	}
+
+	/**
+	 * Adds a tab to the tab bar of the device case with a referencing element: the tab bar is
+	 * addressed by its id, the path to it is not written.
+	 */
+	private static final String ADD_TAB_BY_REFERENCE = """
+			<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+				<tab-bar config:ref="tabs">
+					<tab id="virtual">
+						<label><en>Virtual</en></label>
+					</tab>
+				</tab-bar>
+			</view>
+			""";
+
+	/** The device case of the base and the tab added by {@link #ADD_TAB_BY_REFERENCE}. */
+	public void testAddTabByReference() throws Exception {
+		ViewElement.Config view = view(BASE, ADD_TAB_BY_REFERENCE);
+		assertTabAdded(view);
+	}
+
+	/** A referencing element merges exactly like the path to the element it addresses. */
+	public void testReferenceMergesLikePath() throws Exception {
+		assertTrue("The reference and the path produce the same view.",
+			ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(view(BASE, ADD_TAB), view(BASE, ADD_TAB_BY_REFERENCE)));
+	}
+
+	/**
+	 * A referencing element nested in another one: the inner one addresses an element below the
+	 * element the outer one addresses, the elements between them are not written.
+	 */
+	public void testNestedReferences() throws Exception {
+		ViewElement.Config view = view(BASE, """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<switch config:ref="kind">
+						<tab-bar config:ref="tabs">
+							<tab id="virtual">
+								<label><en>Virtual</en></label>
+							</tab>
+						</tab-bar>
+					</switch>
+				</view>
+				""");
+		assertTabAdded(view);
+	}
+
+	/** A referencing element written in an element reached by its path. */
+	public void testReferenceInsideElementOnThePath() throws Exception {
+		ViewElement.Config view = view(BASE, """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<split-panel id="main">
+						<panes>
+							<pane id="detail">
+								<tab-bar config:ref="tabs">
+									<tab id="virtual">
+										<label><en>Virtual</en></label>
+									</tab>
+								</tab-bar>
+							</pane>
+						</panes>
+					</split-panel>
+				</view>
+				""");
+		assertTabAdded(view);
+	}
+
+	/** A referencing element marked as override replaces the element it addresses, which keeps its id. */
+	public void testReferenceOverridesTab() throws Exception {
+		ViewElement.Config view = view(BASE, """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<tab config:ref="general" config:override="true">
+						<label><en>Replaced</en></label>
+					</tab>
+				</view>
+				""");
+		TabBarElement.Config tabBar = (TabBarElement.Config) deviceStack(view).getChildren().get(1);
+		assertEquals(List.of("general"), tabIds(tabBar));
+		ContentSectionConfig tab = tabBar.getTabs().get(0);
+		assertEquals(text("Replaced"), tab.getLabel());
+		assertEquals("The replacement has no content of the base.", 0, tab.getChildren().size());
+	}
+
+	/** A referencing element removes the element it addresses. */
+	public void testReferenceRemovesCase() throws Exception {
+		ViewElement.Config view = view(BASE, """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<case config:ref="device" config:operation="remove"/>
+				</view>
+				""");
+		SwitchElement.Config switchConfig = switchOf(pane(split(view), "detail"));
+		assertEquals(0, switchConfig.getCases().size());
+		assertEquals("The default content stays.", 1, switchConfig.getDefault().size());
+	}
+
+	/** A referencing element moves the element it addresses within its list. */
+	public void testReferenceMovesPane() throws Exception {
+		ViewElement.Config view = view(BASE, """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<pane config:ref="detail" config:position="begin"/>
+				</view>
+				""");
+		assertEquals(List.of("detail", "list"), paneIds(split(view)));
+	}
+
+	/** A referencing element addresses only elements below the element it is written in. */
+	public void testReferenceNotBelowEnclosingFails() {
+		try {
+			view(BASE, """
+					<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+						<pane config:ref="list">
+							<tab-bar config:ref="tabs">
+								<tab id="virtual">
+									<label><en>Virtual</en></label>
+								</tab>
+							</tab-bar>
+						</pane>
+					</view>
+					""");
+			fail("A reference to an element outside the enclosing element must fail.");
+		} catch (ConfigurationException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("No entry with the key 'tabs'"));
+		}
+	}
+
+	/** An id names one thing in a view: two elements of different lists with the same id are rejected. */
+	public void testDuplicateIdAcrossListsFails() {
+		try {
+			view("""
+					<view>
+						<stack>
+							<text id="same"/>
+							<tab-bar id="bar">
+								<tab id="same">
+									<label><en>Same</en></label>
+								</tab>
+							</tab-bar>
+						</stack>
+					</view>
+					""");
+			fail("Two parts with the same id must be rejected.");
+		} catch (ConfigurationException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("Duplicate value 'same'"));
+		}
+	}
+
+	private static void assertTabAdded(ViewElement.Config view) {
+		SplitPanelElement.Config split = split(view);
+		assertEquals("The overlay adds no pane.", List.of("list", "detail"), paneIds(split));
+		SwitchElement.Config switchConfig = switchOf(pane(split, "detail"));
+		assertEquals("The overlay adds no case.", 1, switchConfig.getCases().size());
+		assertEquals("The default content is the one of the base.", 1, switchConfig.getDefault().size());
+
+		List<UIElement.Config> content = switchConfig.getCases().get(0).getContent();
+		assertEquals("The anonymous stack is updated, not duplicated.", 1, content.size());
+		StackElement.Config stack = (StackElement.Config) content.get(0);
+		assertEquals("The anonymous text stays in front of the tab bar.", 2, stack.getChildren().size());
+
+		TabBarElement.Config tabBar = (TabBarElement.Config) stack.getChildren().get(1);
+		assertEquals(List.of("general", "virtual"), tabIds(tabBar));
+		assertEquals(text("Virtual"), tabBar.getTabs().get(1).getLabel());
+		assertEquals("The content of the base's tab is kept.", 1, tabBar.getTabs().get(0).getChildren().size());
 	}
 
 	/**

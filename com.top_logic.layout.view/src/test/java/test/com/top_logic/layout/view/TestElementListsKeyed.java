@@ -26,11 +26,19 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.reflect.TypeDescriptor;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.element.AbstractMenuElement.Config.CommandGroup;
+import com.top_logic.layout.view.element.BottomBarElement;
+import com.top_logic.layout.view.element.ContentSectionConfig;
+import com.top_logic.layout.view.element.SidebarElement.SidebarItemConfig;
+import com.top_logic.layout.view.element.SplitPanelElement.PaneConfig;
+import com.top_logic.layout.view.element.SwitchElement.CaseConfig;
+import com.top_logic.layout.view.wizard.WizardStepSource;
 
 /**
  * Audit that a same-path overlay of a view can descend into every list of the element tree.
@@ -43,7 +51,8 @@ import com.top_logic.layout.view.ViewElement;
  * <ul>
  * <li>A list whose entries have an {@link UIElement.Config#ID id} property is keyed by it, or by
  * the kind of its entries ({@link ConfigurationItem#CONFIGURATION_INTERFACE_NAME}) for a list that
- * holds at most one entry per kind.</li>
+ * holds at most one entry per kind; the id is a {@link GlobalKey}, so that a referencing element
+ * ({@code config:ref}) addresses an entry without naming the path to it.</li>
  * <li>A list whose entry type has no id, while some specialization of it has one, is reported: the
  * entry type must declare the id for the list to be keyed.</li>
  * <li>Every concrete {@link UIElement} is configured by a specialization of
@@ -90,12 +99,18 @@ public class TestElementListsKeyed extends TestCase {
 					PropertyDescriptor key = property.getKeyProperty();
 					if (key == null) {
 						problems.add(name + ": entries have an id, but the list is not keyed.");
-					} else if (!UIElement.Config.ID.equals(key.getPropertyName())
-						&& !ConfigurationItem.CONFIGURATION_INTERFACE_NAME.equals(key.getPropertyName())) {
+					} else if (ConfigurationItem.CONFIGURATION_INTERFACE_NAME.equals(key.getPropertyName())) {
 						// A list keyed by the kind of its entries holds at most one entry per kind,
 						// which an overlay addresses by its kind.
+					} else if (!UIElement.Config.ID.equals(key.getPropertyName())) {
 						problems.add(name + ": entries have an id, but the list is keyed by '"
 							+ key.getPropertyName() + "'.");
+					} else if (key.getAnnotation(GlobalKey.class) == null
+						&& !WizardStepSource.Config.class.isAssignableFrom(entryType)) {
+						// The id of a wizard step is the value of the wizard's step channel; two
+						// wizards of one view may well have a step of the same name.
+						problems.add(name + ": the id of the entries is not a global key, so a"
+							+ " referencing element cannot address an entry.");
 					}
 				} else if (property.getKeyProperty() == null) {
 					List<String> withId = new ArrayList<>();
@@ -114,6 +129,20 @@ public class TestElementListsKeyed extends TestCase {
 
 		assertTrue("Element lists not addressable by an overlay:\n" + String.join("\n", problems),
 			problems.isEmpty());
+	}
+
+	/**
+	 * The ids of the parts of the element tree that are no elements themselves - tabs and
+	 * sections, panes, cases, sidebar and bottom bar items, menu groups - are global keys as well,
+	 * so that a referencing element addresses them and one id names one thing in a view.
+	 */
+	public void testPartIdsAreGlobalKeys() {
+		for (Class<?> part : List.of(ContentSectionConfig.class, PaneConfig.class, CaseConfig.class,
+			SidebarItemConfig.class, BottomBarElement.ItemConfig.class, CommandGroup.class)) {
+			PropertyDescriptor id = TypedConfiguration.getConfigurationDescriptor(part).getProperty(UIElement.Config.ID);
+			assertNotNull(part.getName() + " has no id.", id);
+			assertNotNull(part.getName() + ": the id is not a global key.", id.getAnnotation(GlobalKey.class));
+		}
 	}
 
 	/**

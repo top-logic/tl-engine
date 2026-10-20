@@ -21,6 +21,7 @@ import org.apache.commons.collections4.map.ListOrderedMap;
 import com.google.common.collect.ImmutableSet;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.TooltipProvider;
 import com.top_logic.layout.provider.icon.IconProvider;
@@ -281,6 +282,62 @@ public class TLModelOperations {
 			}
 		}
 		return allParts;
+	}
+
+	/**
+	 * The part of the given type that is used when the given part is accessed on an object of that
+	 * type.
+	 * 
+	 * <p>
+	 * This is the (potential) override of the accessed part in the given type. If the accessed part
+	 * is defined in a subtype of the given type, the definition in the given type is returned. This
+	 * allows to use the overriding part of a subtype to access a value of an object of the super
+	 * type. This is allowed only for convenience. Being pedantic makes object access in some
+	 * scenarios more complicated (e.g. copying values of common attributes of an object to an
+	 * instance of a supertype).
+	 * </p>
+	 * 
+	 * @param actualType
+	 *        The concrete type of the accessed object, must not be <code>null</code>.
+	 * @param accessedPart
+	 *        A part of the given type, of a super type thereof, or of a subtype thereof that
+	 *        overrides a part of the given type.
+	 * @return The part of the given type to use for accessing the given part, or <code>null</code>,
+	 *         if the given part does not belong to the given type (or did not exist in the revision
+	 *         of the given type).
+	 */
+	public TLStructuredTypePart resolvePart(TLStructuredType actualType, TLStructuredTypePart accessedPart) {
+		// The accessed type may be a historic type, look up the part in the revision of that type.
+		TLStructuredTypePart partInTypeRev = WrapperHistoryUtils.getWrapper(actualType.tRevision(), accessedPart);
+		if (partInTypeRev == null) {
+			// Part does not exist at the time of the accessed type.
+			return null;
+		}
+		if (actualType == partInTypeRev.getOwner()) {
+			// Short-cut for the case where the matching/correct part override was given.
+			return partInTypeRev;
+		}
+
+		// Check whether the given part has a definition in the actual type.
+		TLStructuredTypePart definition = partInTypeRev.getDefinition();
+		TLStructuredType definingType = definition.getOwner();
+		if (definingType == null || !TLModelUtil.isGeneralization(definingType, actualType)) {
+			// Part of an unrelated type.
+
+			// Note: This still allows to use the overridden part of a subtype to access a value of
+			// an object of the super type. This is allowed only for convenience. Being pedantic
+			// makes object access in some scenarios more complicated (e.g. copying values of
+			// common attributes of an object to an instance of a supertype).
+			return null;
+		}
+		if (actualType == definingType) {
+			// Short-cut for the case where an overriding part was used to access the defining
+			// type.
+			return definition;
+		}
+
+		// Lookup by name in the concrete type.
+		return actualType.getPart(partInTypeRev.getName());
 	}
 
 	/**

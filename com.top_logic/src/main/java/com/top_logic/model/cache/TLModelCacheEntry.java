@@ -14,10 +14,12 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.apache.commons.collections4.map.ListOrderedMap;
 
@@ -107,6 +109,18 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	private final ConcurrentMap<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _concreteOverridesByPart =
 		new ConcurrentHashMap<>();
 
+	/**
+	 * Results of {@link #resolvePart(TLStructuredType, TLStructuredTypePart)} indexed by the actual
+	 * type and the accessed part.
+	 * 
+	 * <p>
+	 * An empty {@link Optional} represents the <code>null</code> result for a part of an unrelated
+	 * type.
+	 * </p>
+	 */
+	private final ConcurrentMap<TLStructuredType, ConcurrentMap<TLStructuredTypePart, Optional<TLStructuredTypePart>>> _resolvedParts =
+		new ConcurrentHashMap<>();
+
 	/** Cached for performance. */
 	private final TLModel _appModel = ModelService.getApplicationModel();
 
@@ -169,83 +183,76 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	@Override
 	public synchronized Set<TLClass> getSuperClasses(TLClass tlClass) {
-		if (!canBeCached(tlClass)) {
-			return computeSuperClasses(tlClass);
-		}
-		return computeIfAbsent(_superClasses, tlClass, key -> immutableCopy(computeSuperClasses(key)));
+		return cached(_superClasses, tlClass, this::canBeCached,
+			key -> immutableCopy(computeSuperClasses(key)), this::computeSuperClasses);
 	}
 
 	@Override
 	public synchronized Set<TLClass> getSubClasses(TLClass tlClass) {
-		if (!canBeCached(tlClass)) {
-			return computeSubClasses(tlClass);
-		}
-		return computeIfAbsent(_subClasses, tlClass, key -> immutableCopy(computeSubClasses(key)));
+		return cached(_subClasses, tlClass, this::canBeCached,
+			key -> immutableCopy(computeSubClasses(key)), this::computeSubClasses);
 	}
 
 	@Override
 	public synchronized Map<String, Set<TLClass>> getPotentialTables(TLClass tlClass) {
-		if (!canBeCached(tlClass)) {
-			return computePotentialTables(tlClass);
-		}
-		return computeIfAbsent(_potentialTables, tlClass, key -> unmodifiableMultiMap(computePotentialTables(key)));
+		return cached(_potentialTables, tlClass, this::canBeCached,
+			key -> unmodifiableMultiMap(computePotentialTables(key)), this::computePotentialTables);
 	}
 
 	@Override
 	public synchronized TLStructuredTypePart getAttribute(TLClass tlClass, String name) {
-		if (!canBeCached(tlClass)) {
+		ListOrderedMap<String, TLStructuredTypePart> partMap = partMap(tlClass);
+		if (partMap == null) {
 			return super.getAttribute(tlClass, name);
 		}
-		return partMap(tlClass).get(name);
+		return partMap.get(name);
 	}
 
 	@Override
 	public synchronized List<? extends TLStructuredTypePart> getAllAttributes(TLClass tlClass) {
-		if (!canBeCached(tlClass)) {
+		ListOrderedMap<String, TLStructuredTypePart> partMap = partMap(tlClass);
+		if (partMap == null) {
 			return super.getAllAttributes(tlClass);
 		}
 		/* Here no ImmutableList is used, as a Map is needed for getAttribute(TLClass, String), but
 		 * a List is needed for this method. And there is no immutable ListOrderedMap. */
-		return unmodifiableList(partMap(tlClass).valueList());
+		return unmodifiableList(partMap.valueList());
 	}
 
+	/**
+	 * The cached parts of the given {@link TLClass} by name, or <code>null</code>, if the given
+	 * class {@link #canBeCached(TLClass) cannot be cached}.
+	 */
 	private ListOrderedMap<String, TLStructuredTypePart> partMap(TLClass tlClass) {
-		ListOrderedMap<String, TLStructuredTypePart> cacheEntry = _allAttributes.get(tlClass);
-		if (cacheEntry != null) {
-			return cacheEntry;
-		}
-
-		ListOrderedMap<String, TLStructuredTypePart> newEntry = computeAllAttributes(tlClass);
-		return putIfAbsent(_allAttributes, tlClass, newEntry);
-	}
-
-	private static <K, V> V putIfAbsent(Map<K, V> map, K key, V value) {
-		assert value != null;
-
-		V formerlyValue = map.putIfAbsent(key, value);
-		if (formerlyValue == null) {
-			return value;
-		} else {
-			return formerlyValue;
-		}
+		return cached(_allAttributes, tlClass, this::canBeCached, this::computeAllAttributes, key -> null);
 	}
 
 	@Override
 	public synchronized Set<TLClassPart> getAttributesOfSubClasses(TLClass tlClass) {
-		if (!canBeCached(tlClass)) {
-			return computeAttributesOfSubClasses(tlClass);
-		}
-		return computeIfAbsent(_attributesOfSubClasses, tlClass,
-			key -> immutableCopy(computeAttributesOfSubClasses(key)));
+		return cached(_attributesOfSubClasses, tlClass, this::canBeCached,
+			key -> immutableCopy(computeAttributesOfSubClasses(key)), this::computeAttributesOfSubClasses);
 	}
 
 	@Override
 	protected Set<TLStructuredTypePart> computeOverrides(TLClass owner, TLStructuredTypePart part) {
-		if (!canBeCached(owner)) {
-			return super.computeOverrides(owner, part);
+		return cached(_overridesOfPart, part, key -> canBeCached(owner),
+			key -> immutableCopy(super.computeOverrides(owner, key)), key -> super.computeOverrides(owner, key));
+	}
+
+	@Override
+	public TLStructuredTypePart resolvePart(TLStructuredType actualType, TLStructuredTypePart accessedPart) {
+		ConcurrentMap<TLStructuredTypePart, Optional<TLStructuredTypePart>> partsOfType =
+			cached(_resolvedParts, actualType, this::canModelPartBeCached, key -> new ConcurrentHashMap<>(),
+				key -> null);
+		if (partsOfType == null) {
+			return super.resolvePart(actualType, accessedPart);
 		}
-		return computeIfAbsent(_overridesOfPart, part,
-			key -> immutableCopy(super.computeOverrides(owner, key)));
+		Optional<TLStructuredTypePart> resolved = cached(partsOfType, accessedPart, this::canModelPartBeCached,
+			key -> Optional.ofNullable(super.resolvePart(actualType, key)), key -> null);
+		if (resolved == null) {
+			return super.resolvePart(actualType, accessedPart);
+		}
+		return resolved.orElse(null);
 	}
 
 	@Override
@@ -267,11 +274,55 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	}
 
 	/**
+	 * Looks up the value for the given key in the given cache map, computes it on a miss.
+	 * 
+	 * <p>
+	 * A hit is returned without evaluating the given cacheable predicate: a value is only stored
+	 * for a key that passed the predicate, and every relevant model change either creates a fresh
+	 * cache entry or {@link #clear() clears} all maps (see
+	 * {@link AbstractTLModelCache#handleEvent(AbstractTLModelCacheEntry, com.top_logic.knowledge.service.UpdateEvent, boolean)}
+	 * and {@link AbstractTLModelCache#isRelevantChange(com.top_logic.knowledge.objects.KnowledgeItem)}).
+	 * Therefore, a hit is neither stale nor for a key that cannot be cached. The predicate, which
+	 * may be expensive, is evaluated only on a miss.
+	 * </p>
+	 * 
+	 * <p>
+	 * The value computation may recursively access the cache, see
+	 * {@link #computeIfAbsent(Map, Object, Function)}.
+	 * </p>
+	 * 
+	 * @param map
+	 *        The cache map.
+	 * @param key
+	 *        The key to look up.
+	 * @param cacheable
+	 *        Whether a value for a key can be stored in the given map.
+	 * @param compute
+	 *        Computes the value to store for a cacheable key. Must not return <code>null</code>.
+	 * @param uncached
+	 *        Computes the result for a key that cannot be cached. May return <code>null</code> to
+	 *        let the caller compute the result.
+	 * @return The cached value, the computed value for a cacheable key, or the result of
+	 *         the uncached computation.
+	 */
+	private static <K, R, V extends R> R cached(Map<K, V> map, K key, Predicate<? super K> cacheable,
+			Function<? super K, ? extends V> compute, Function<? super K, ? extends R> uncached) {
+		V hit = map.get(key);
+		if (hit != null) {
+			return hit;
+		}
+		if (!cacheable.test(key)) {
+			return uncached.apply(key);
+		}
+		return computeIfAbsent(map, key, compute);
+	}
+
+	/**
 	 * Alternative to {@link HashMap#computeIfAbsent(Object, Function)} that allows recursive
 	 * functions for value computation (which seems to be disallowed in certain JDK implementations
 	 * and results in a {@link ConcurrentModificationException}).
 	 */
-	private static <K, V> V computeIfAbsent(Map<K, V> map, K key, Function<K, V> fun) {
+	private static <K, V> V computeIfAbsent(Map<K, V> map, K key, Function<? super K, ? extends V> fun) {
 		V result = map.get(key);
 		if (result == null) {
 			result = fun.apply(key);
@@ -435,30 +486,22 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 
 	@Override
 	public <T extends TLStructuredTypePart> Set<T> getDirectConcreteOverrides(T part) {
-		if (!canModelPartBeCached(part)) {
-			return super.getDirectConcreteOverrides(part);
-		}
 		@SuppressWarnings("unchecked")
-		Set<T> typeSafe = (Set<T>) computeIfAbsent(_concreteOverridesByPart, part,
-			key -> immutableCopy(super.getDirectConcreteOverrides(key)));
+		Set<T> typeSafe = (Set<T>) cached(_concreteOverridesByPart, part, this::canModelPartBeCached,
+			key -> immutableCopy(super.getDirectConcreteOverrides(key)), super::getDirectConcreteOverrides);
 		return typeSafe;
 	}
 
 	@Override
 	public List<TLObjectInitializer> getInitializers(TLStructuredType type) {
-		if (!canModelPartBeCached(type)) {
-			return super.getInitializers(type);
-		}
-		return computeIfAbsent(_initializers, type,
-			key -> immutable(super.getInitializers(key)));
+		return cached(_initializers, type, this::canModelPartBeCached,
+			key -> immutable(super.getInitializers(key)), super::getInitializers);
 	}
 
 	@Override
 	public List<PartDefault> getDefaultProviders(TLStructuredType type) {
-		if (!canModelPartBeCached(type)) {
-			return super.getDefaultProviders(type);
-		}
-		return computeIfAbsent(_defaultProviders, type, super::getDefaultProviders);
+		return cached(_defaultProviders, type, this::canModelPartBeCached, super::getDefaultProviders,
+			super::getDefaultProviders);
 	}
 
 	/** Whether data about the given {@link TLModelPart} can be cached. */
@@ -497,6 +540,10 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_overridesOfPart.clear();
 		_iconProviderByType.clear();
 		_colorProviderByType.clear();
+		_tooltipProviderByType.clear();
+		_labelProviderByType.clear();
+		_concreteOverridesByPart.clear();
+		_resolvedParts.clear();
 		_initializers.clear();
 		_defaultProviders.clear();
 		_globalAppModelClasses = null;
@@ -518,6 +565,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			.add("globalClasses", _globalClasses == null ? null : _globalClasses.size())
 			.add("initializers", _initializers.size())
 			.add("defaultProviders", _defaultProviders.size())
+			.add("resolvedParts", _resolvedParts.values().stream().mapToInt(Map::size).sum())
 			.build();
 	}
 

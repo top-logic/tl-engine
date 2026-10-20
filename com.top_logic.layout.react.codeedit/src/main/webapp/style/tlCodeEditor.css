@@ -45,7 +45,21 @@
 	outline-color: transparent;
 }
 
-.tlCodeEditor .cm-editor:has(.cm-content:focus-visible) {
+/*
+ * The ring is drawn by a layer over the editor: CodeMirror's line numbers are sticky and opaque and
+ * would cover the left edge of a ring on the editor itself. The line numbers stay above the
+ * scrolling content (raised), the ring above them (sticky).
+ */
+.tlCodeEditor .cm-gutters {
+	z-index: var(--tl-layer-raised);
+}
+
+.tlCodeEditor .cm-editor:has(.cm-content:focus-visible)::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: var(--tl-layer-sticky);
+	pointer-events: none;
 	outline: var(--tl-focus-width) solid var(--tl-focus-ring);
 	outline-offset: calc(-1 * var(--tl-focus-offset));
 }

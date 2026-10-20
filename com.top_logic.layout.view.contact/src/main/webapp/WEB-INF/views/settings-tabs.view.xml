@@ -3,8 +3,8 @@
 <!--
 	Overlay contributing the profile tab into the settings dialog of tl-layout-view
 	(WEB-INF/views/settings-tabs.view.xml). This is a same-path overlay: the ViewLoader merges it
-	onto the base in dependency order, and the tab is appended to the base's tab bar purely through
-	the typed-configuration list merge.
+	onto the base in dependency order; the overlay addresses the base's tab bar by its id, and the
+	tab is appended to it purely through the typed-configuration list merge.
 	
 	A tab of its own rather than fields added to the account tab, because the data lives on another
 	object: an account's name, language and timezone are its own, while the name a person is called
@@ -23,7 +23,7 @@
 			expr="currentUser().get(`tl.accounts:Person#contact`)"
 		/>
 	</channels>
-	<tab-bar>
+	<tab-bar config:ref="settings-tabs">
 		<tabs>
 			<tab id="profile"
 				config:operation="add"

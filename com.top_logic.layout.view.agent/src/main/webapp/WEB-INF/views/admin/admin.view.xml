@@ -5,13 +5,13 @@
 	tl-layout-view (WEB-INF/views/admin/admin.view.xml). Same-path overlay merged by the ViewLoader
 	in dependency order, so the section is there where this module is deployed and absent where it is
 	not - tl-layout-view knows nothing about it.
-
+	
 	Contributed as a section of its own: the issued tokens are a concern of their own beside the
-	system settings. A view inside an existing section is added through the id of the section's tab
-	and the id "views" of its inner tab bar instead.
+	system settings. The overlay addresses the tab bar of the sections by its id; a view inside an
+	existing section would address the inner tab bar of that section instead (system-views).
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<tab-bar>
+	<tab-bar config:ref="sections">
 		<tabs>
 			<tab id="agent-access"
 				config:operation="add"

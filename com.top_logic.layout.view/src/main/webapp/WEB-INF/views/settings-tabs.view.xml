@@ -5,8 +5,9 @@
 	
 	At the root of a view of its own, so that a module contributes a tab by dropping a same-path
 	overlay (WEB-INF/views/settings-tabs.view.xml) into its own module and adding an entry to the
-	<tabs> list; the ViewLoader merges all copies in dependency order. See tl-layout-view-contact,
-	which adds the profile of the person behind the account.
+	<tabs> of a <tab-bar config:ref="settings-tabs"> element; the ViewLoader merges all copies in
+	dependency order. See tl-layout-view-contact, which adds the profile of the person behind the
+	account.
 	
 	Deliberately small. What a user changes with a single decision - the language, the theme, where
 	they start - is an entry of the user menu (user-menu.view.xml), one click from the app bar, so
@@ -47,7 +48,9 @@
 			inputs="account"
 		/>
 	</channels>
-	<tab-bar active-tab="account">
+	<tab-bar id="settings-tabs"
+		active-tab="account"
+	>
 		<tabs>
 			<tab id="account"
 				icon="css:bi bi-person"

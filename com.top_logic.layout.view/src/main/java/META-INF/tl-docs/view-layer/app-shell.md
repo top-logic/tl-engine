@@ -9,7 +9,7 @@ order: 80
 
 `tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` ending in a separator (`id="system-separator"`) and the `administration` item, and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order. The general merge rules - keys, positions, overrides, anonymous elements - are described in [extending a view with a same-path overlay](doc:view-layer/overlays); what follows is what they mean for the shell.
 
-- Each slot of `<app-shell>` (`header`, `notices`, `content`, `footer`) holds **at most one element of a kind** — the slot lists are keyed by the configuration interface of their entries. The overlay's `<content><sidebar>` and `<header><app-bar>` therefore extend the shell's sidebar and app bar instead of adding second ones; two elements of the same kind in one slot are rejected.
+- The overlay addresses the shell's sidebar and app bar by their ids, wherever the shell keeps them: `<sidebar config:ref="sidebar">` and `<app-bar config:ref="app-bar">`, written directly in the `<view>`. (The slots of `<app-shell>` — `header`, `notices`, `content`, `footer` — hold **at most one element of a kind**, the slot lists being keyed by the configuration interface of their entries, so an overlay that writes the path, `<app-shell><content><sidebar>`, extends the same sidebar; two elements of the same kind in one slot are rejected.)
 - Single-valued properties written in the overlay replace the shell's: the `<title>` of the app bar, the `active-item` of the sidebar.
 - The rail chrome (`<header>`, `<footer>`, … of the sidebar) is a list of arbitrary elements; the overlay marks its list with `config:override="true"` to replace the shell's neutral texts instead of adding to them.
 - Sidebar items are keyed by `id`. An item without a position is appended — after the `administration` item; an item for the application's own section names the separator: `config:position="before" config:reference="system-separator"`.
@@ -17,24 +17,18 @@ order: 80
 
 ```xml
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-    <app-shell>
-        <content>
-            <sidebar active-item="home">
-                <header config:override="true">
-                    <text><label><en>My App</en></label></text>
-                </header>
-                <nav-item id="home" config:position="before" config:reference="system-separator">
-                    <view-ref view="home.view.xml"/>
-                    <label><en>Home</en></label>
-                </nav-item>
-            </sidebar>
-        </content>
-        <header>
-            <app-bar>
-                <title><en>My App</en></title>
-            </app-bar>
+    <sidebar config:ref="sidebar" active-item="home">
+        <header config:override="true">
+            <text><label><en>My App</en></label></text>
         </header>
-    </app-shell>
+        <nav-item id="home" config:position="before" config:reference="system-separator">
+            <view-ref view="home.view.xml"/>
+            <label><en>Home</en></label>
+        </nav-item>
+    </sidebar>
+    <app-bar config:ref="app-bar">
+        <title><en>My App</en></title>
+    </app-bar>
 </view>
 ```
 

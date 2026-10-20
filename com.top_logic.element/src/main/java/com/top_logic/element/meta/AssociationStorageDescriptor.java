@@ -75,6 +75,13 @@ public interface AssociationStorageDescriptor {
 
 	/**
 	 * The ID of the attribute for which values are stored in the given row.
+	 * 
+	 * @param row
+	 *        Values of a {@link #getTable() table} row.
+	 * @return ID of the attribute for which a value is stored in the given row, or
+	 *         <code>null</code> when the given row stores no value for any attribute of this
+	 *         {@link AssociationStorageDescriptor}, e.g. because the identifying columns are missing
+	 *         from the row or empty.
 	 */
 	ObjectKey getPartId(Map<String, Object> row);
 

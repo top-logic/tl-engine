@@ -15,6 +15,10 @@ import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.AssertNoErrorLogListener;
+import test.com.top_logic.element.structured.model.PreloadTest;
+import test.com.top_logic.element.structured.model.TestTypesFactory;
+
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
 import com.top_logic.knowledge.service.KBUtils;
@@ -22,8 +26,10 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
 import com.top_logic.model.cs.TLObjectChange;
 import com.top_logic.model.cs.TLObjectChangeSet;
 import com.top_logic.model.cs.TLObjectCreation;
@@ -223,6 +229,139 @@ public class TestTLObjectChangeSet extends AbstractTLObjectChangeSetTest {
 			tx.commit();
 		}
 
+	}
+
+	/**
+	 * Tests that changing a row column of a part of an inline set reports only the part.
+	 */
+	public void testRowColumnUpdateOfInlineSetPart() {
+		TestTypesFactory factory = TestTypesFactory.getInstance();
+		PreloadTest c;
+		PreloadTest p1;
+		PreloadTest p2;
+		PreloadTest x;
+		try (Transaction tx = beginTX()) {
+			c = factory.createPreloadTest();
+			p1 = factory.createPreloadTest();
+			p2 = factory.createPreloadTest();
+			x = factory.createPreloadTest();
+			c.setCompositeSet(set(p1, p2));
+			tx.commit();
+		}
+
+		try {
+			testNextCommit(changeSet -> {
+				assertEquals(0, changeSet.creations().size());
+				assertEquals(0, changeSet.deletions().size());
+				List<TLObjectUpdate> updates = changeSet.updates();
+				assertEquals("Only the part is updated, not its container: " + updates, 1, updates.size());
+				TLObjectUpdate update = updates.get(0);
+				assertEquals(p1, update.object());
+				TLReference inlineAttr = TestTypesFactory.getInlinePreloadTestAttr();
+				assertTrue(update.newValues().containsKey(inlineAttr));
+				assertEquals(x, update.newValues().get(inlineAttr));
+			});
+			commitWithoutErrorLog("Updating a row column of an inline set part: ", () -> p1.setInline(x));
+		} finally {
+			deleteAll(p1, p2);
+			deleteAll(c, x);
+		}
+	}
+
+	/**
+	 * Tests that changing only a flex attribute of a part of an inline set reports only the part.
+	 */
+	public void testFlexUpdateOfInlineSetPart() {
+		TestTypesFactory factory = TestTypesFactory.getInstance();
+		TLClass preloadType = TestTypesFactory.getPreloadTestType();
+		TLProperty flexProperty;
+		PreloadTest c;
+		PreloadTest p1;
+		PreloadTest p2;
+		try (Transaction tx = beginTX()) {
+			TLType stringType = TLModelUtil.findType("tl.core:String");
+			flexProperty = TLModelUtil.addProperty(preloadType, "flexName", stringType);
+			c = factory.createPreloadTest();
+			p1 = factory.createPreloadTest();
+			p2 = factory.createPreloadTest();
+			c.setCompositeSet(set(p1, p2));
+			tx.commit();
+		}
+
+		try {
+			testNextCommit(changeSet -> {
+				assertEquals(0, changeSet.creations().size());
+				assertEquals(0, changeSet.deletions().size());
+				List<TLObjectUpdate> updates = changeSet.updates();
+				assertEquals("Only the part is updated, not its container: " + updates, 1, updates.size());
+				TLObjectUpdate update = updates.get(0);
+				assertEquals(p1, update.object());
+				assertEquals("p1", update.newValues().get(flexProperty));
+			});
+			commitWithoutErrorLog("Updating a flex attribute of an inline set part: ",
+				() -> p1.tUpdate(flexProperty, "p1"));
+		} finally {
+			deleteAll(p1, p2);
+			deleteAll(c, flexProperty);
+		}
+	}
+
+	/**
+	 * Tests that removing a part from an inline set reports the change of the container.
+	 */
+	public void testRemoveFromInlineSet() {
+		TestTypesFactory factory = TestTypesFactory.getInstance();
+		PreloadTest c;
+		PreloadTest p1;
+		PreloadTest p2;
+		try (Transaction tx = beginTX()) {
+			c = factory.createPreloadTest();
+			p1 = factory.createPreloadTest();
+			p2 = factory.createPreloadTest();
+			c.setCompositeSet(set(p1, p2));
+			tx.commit();
+		}
+
+		try {
+			testNextCommit(changeSet -> {
+				assertEquals(0, changeSet.creations().size());
+				Map<TLObject, TLObjectUpdate> updates = toMap(changeSet.updates());
+				TLObjectUpdate update = updates.get(c);
+				assertNotNull("No update for the container: " + changeSet, update);
+				TLReference compositeSetAttr = TestTypesFactory.getCompositeSetPreloadTestAttr();
+				assertEquals(set(p1, p2), set(((Collection<?>) update.oldValues().get(compositeSetAttr)).toArray()));
+				assertEquals(set(p1), set(((Collection<?>) update.newValues().get(compositeSetAttr)).toArray()));
+			});
+			commitWithoutErrorLog("Removing a part from an inline set: ", () -> c.removeCompositeSet(p2));
+		} finally {
+			deleteAll(p1, p2);
+			deleteAll(c);
+		}
+	}
+
+	private void commitWithoutErrorLog(String message, Runnable change) {
+		AssertNoErrorLogListener listener = new AssertNoErrorLogListener(false);
+		listener.activate();
+		try {
+			try (Transaction tx = beginTX()) {
+				change.run();
+				tx.commit();
+			}
+			listener.assertNoErrorLogged(message);
+		} finally {
+			listener.deactivate();
+		}
+	}
+
+	private void deleteAll(TLObject... objects) {
+		try (Transaction tx = beginTX()) {
+			for (TLObject obj : objects) {
+				if (obj.tValid()) {
+					obj.tDelete();
+				}
+			}
+			tx.commit();
+		}
 	}
 
 	private static <T extends TLObjectChange> Map<TLObject, T> toMap(Collection<? extends T> changes) {

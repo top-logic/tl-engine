@@ -52,8 +52,8 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="a -> if($a == currentUser(), #('A user cannot delete himself.'@en, 'Ein Benutzer kann sich nicht selber löschen.'@de), null)"/>
-								<disabled-if expr="a -> if($a.get(`tl.accounts:Person#admin`), #('An administrator cannot be deleted.'@en, 'Ein Administrator kann nicht gelöscht werden.'@de), null)"/>
+								<disabled-if expr="if($selectedAccount == currentUser(), #('A user cannot delete himself.'@en, 'Ein Benutzer kann sich nicht selber löschen.'@de), null)"/>
+								<disabled-if expr="if($selectedAccount.get(`tl.accounts:Person#admin`), #('An administrator cannot be deleted.'@en, 'Ein Administrator kann nicht gelöscht werden.'@de), null)"/>
 							</executability>
 							<confirm expr="#('Delete account {0}?'@en, 'Konto {0} löschen?'@de).fill($selectedAccount.get(`tl.accounts:Person#name`))"/>
 							<delete-object/>

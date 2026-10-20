@@ -24,7 +24,14 @@ import com.top_logic.layout.view.channel.NamedInputs;
  * uploaded file - adds it as the <em>main argument</em> under the name the trigger gives it.
  * Without such a trigger, the first input is the main argument, and a command with neither has the
  * single argument {@link #DEFAULT_ARGUMENT}. The main argument is the default argument of the
- * actions and the input the executability rules of the command decide over.
+ * actions.
+ * </p>
+ *
+ * <p>
+ * The executability rules of the command decide over the same arguments: a rule deciding over a
+ * single value sees the main argument, a script rule sees all of them (see {@link ScriptedRule}).
+ * Where the state of the command is displayed before its trigger supplied a value - the button of
+ * an upload, say - the trigger's argument is {@code null}.
  * </p>
  */
 public final class CommandArguments {
@@ -63,6 +70,18 @@ public final class CommandArguments {
 	 */
 	public static CommandArguments of(ViewCommand.Config config, ActionScope trigger) {
 		return new CommandArguments(config.getInputs(), config.triggerName(trigger));
+	}
+
+	/**
+	 * The {@link CommandArguments} of a command with the given configuration run by a trigger
+	 * supplying a value of the given name.
+	 *
+	 * @param trigger
+	 *        The name of the value the trigger supplies, {@code null} for a trigger supplying none.
+	 * @see #of(ViewCommand.Config, ActionScope)
+	 */
+	public static CommandArguments of(ViewCommand.Config config, String trigger) {
+		return of(config, trigger == null ? ActionScope.NONE : ActionScope.single(trigger));
 	}
 
 	/**

@@ -161,11 +161,11 @@
 										<show-view view="tickets.view.xml">
 											<bind
 												channel="activeFilter"
-												expr="term -> 'all'"
+												expr="'all'"
 											/>
 											<bind
 												channel="searchTerm"
-												expr="term -> $term"
+												expr="$value"
 											/>
 										</show-view>
 									</else>
@@ -250,7 +250,7 @@
 								</label>
 								<executability>
 									<null-input-disabled/>
-									<disabled-if expr="t -> if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
+									<disabled-if expr="if($ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
 								</executability>
 								<delete-object/>
 								<write-channel name="ticket"
@@ -267,7 +267,7 @@
 									<de>Schließen</de>
 								</label>
 								<executability>
-									<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
+									<visible-if expr="$ticket != null &amp;&amp; $ticket.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
 								</executability>
 								<with-transaction>
 									<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
@@ -283,7 +283,7 @@
 									<de>Wiedereröffnen</de>
 								</label>
 								<executability>
-									<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
+									<visible-if expr="$ticket != null &amp;&amp; $ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
 								</executability>
 								<with-transaction>
 									<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
@@ -478,7 +478,7 @@
 										<authenticated-only/>
 									</executability>
 									<row-executability>
-										<disabled-if expr="t -> $t.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
+										<disabled-if expr="$row.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
 									</row-executability>
 								</drag>
 								<drop

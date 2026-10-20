@@ -49,7 +49,7 @@ order: 70
 
 - **Push**: `<navigate-push view="products/detail.view.xml" inputs="selectedProduct" bind-input-to="product">` (`NavigatePushCommand`) mounts a view as a new frame. `bind-input-to` maps the command's main argument onto a channel of the pushed view; further `<bind>` entries capture the *current value* of caller-scope channels at push time. `frame-label` supplies the breadcrumb label — `<static>` for fixed text, `<scripted expr="p -> $p.get(\`tl.accounts:Person#name\`)" inputs="selectedPerson"/>` for one derived from channels at the push moment. Where the stack declares a `<label>` for the pushed view (see below), the push needs no `frame-label` of its own.
 - **Pop**: `<navigate-pop>` drops the top frame, `<navigate-pop-to depth="1">` truncates to a given depth. Each of the two is a `ViewCommand` *and*, under the same tag, a `ViewAction` (`NavigatePopAction` / `NavigatePopToAction`) — the command delegates to the action, and the tag is resolved per list type, so the same `<navigate-pop/>` names the command in a `<commands>` list and the action in a `<generic-command>` chain. Leaving a frame is therefore the last step of a longer command: `<generic-command><execute-script .../><navigate-pop/></generic-command>` deletes the displayed object and then leaves the frame that displayed it. Both actions pass the chain's object through as their result, so an action after them still sees it.
-- **The path inside a frame**: `<tile-stack bind-path-to="navPath">` registers the stack's own path channel under that name in every mounted frame's context, so a frame view declaring `<channel name="navPath"/>` reads the live path — the declaration is pre-bound and not instantiated locally. `<derived-channel name="depth" inputs="navPath" expr="$navPath.size()"/>` turns it into the frame's depth, which a command tests via `<executability><visible-if expr="d -> $d > 0"/></executability>`: that is how a Back button hides itself on the initial frame and shows on every pushed one. Without `bind-path-to` a frame sees only the parameters it was pushed with.
+- **The path inside a frame**: `<tile-stack bind-path-to="navPath">` registers the stack's own path channel under that name in every mounted frame's context, so a frame view declaring `<channel name="navPath"/>` reads the live path — the declaration is pre-bound and not instantiated locally. `<derived-channel name="depth" inputs="navPath" expr="$navPath.size()"/>` turns it into the frame's depth, which a command with `inputs="depth"` tests via `<executability><visible-if expr="$depth > 0"/></executability>`: that is how a Back button hides itself on the initial frame and shows on every pushed one. Without `bind-path-to` a frame sees only the parameters it was pushed with.
 - `<tile-breadcrumb path="navPath">` reads the same channel and renders a crumb per frame; clicking a crumb truncates the path. Wrapping the breadcrumb in `<slot-content to="appbar-content">` raises it to the app bar instead of showing it inside the frame.
 - A frame's parameters are a snapshot, not live channels: `TileFrame` is the view reference, the label, and the parameter values captured at push time, which become the mounted view's channels. The path channel a `bind-path-to` adds is the exception — that one is the stack's own.
 - **The path in the URL**: a `<frame route="person/:person" view="accounts/person-detail.view.xml">` entry inside `<tile-stack>` declares the segments a frame of that view occupies, so the drill-down path becomes part of the address: each frame on the path contributes its route, in the order it was drilled down (`…/person/<id>`). A `<param name="person" expr="objectId($person)" reverse="$value.objectResolve(`tl.accounts:Person`)"/>` converts between the parameter value (the variable named like the parameter in `expr`) and the text the URL carries (`$value` in `reverse`) — a parameter without a `<param>` entry is carried as text, which is what a string parameter needs. A `<label class="…ScriptedTileLabel" expr="$person.get(`tl.accounts:Person#name`)" inputs="person"/>` inside the `<frame>` names every frame of that view, evaluated over its parameters as channels: the frame a URL restores and the one a `<navigate-push>` pushes without a `frame-label` of its own — so a frame is named once, at the stack, for every place that pushes it.
@@ -87,9 +87,9 @@ The hiding sits on a wrapper element the stack renders itself: a frame's content
 
 ```xml
 <target type="tl.demo.projectManagement:Ticket">
-  <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
-  <show view="projects/milestones.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
-  <show view="projects/milestone-list.view.xml"><bind channel="milestone" expr="t -> $t.get(`…:Ticket#milestone`)"/></show>
+  <show view="projects/overview.view.xml"><bind channel="project" expr="$object.container()"/></show>
+  <show view="projects/milestones.view.xml"><bind channel="project" expr="$object.container()"/></show>
+  <show view="projects/milestone-list.view.xml"><bind channel="milestone" expr="$object.get(`…:Ticket#milestone`)"/></show>
   <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
 </target>
 <target type="Contacts:PersonContact">
@@ -105,7 +105,7 @@ A `<show>` entry is carried out in one of three ways, decided by how its view is
 
 A reveal can show views and write channels and nothing else, so revealing a tab — or any other keyed place — inside a frame a preceding show pushed works by naming a view that sits on it: the content of the tab gets a view file of its own, and a `<show>` for that file both brings the tab up and receives the bindings. That file is reachable from no root view, which is exactly why it is found within the frame.
 
-A `<bind expr>` is a TL-Script function of the object being shown and defaults to the object itself. A frame entry carries its breadcrumb label as `<label>` or, computed from the shown object, as `label-expr` — the same expression the drill-down's `<frame-label>` uses, because `TileFrame` equality includes the label. Resolution (`DisplayTargets.resolve`): the most specific type wins (an exact class beats a generalization, following `TLClass.getGeneralizations()`); among targets for the same type, the one whose first view is mounted **nearest** to the view that triggered the navigation (longest common mount prefix), then the one flagged `default="true"`, then the first declared. `hasTarget(type)` is the question "can objects of this type be shown at all?" — it decides whether a value is rendered as a link. At startup the service checks every `<bind channel>` against the channels the view declares and logs a configuration error for a mismatch (a typo in a channel name is found without clicking through the app).
+A `<bind expr>` is a TL-Script over the object being shown, which it sees as the variable `object` (`DisplayTargetService.OBJECT`) without declaring it, and defaults to the object itself. A frame entry carries its breadcrumb label as `<label>` or, computed from the shown object, as `label-expr` (seeing `$object` as well) — the same expression the drill-down's `<frame-label>` uses, because `TileFrame` equality includes the label. Resolution (`DisplayTargets.resolve`): the most specific type wins (an exact class beats a generalization, following `TLClass.getGeneralizations()`); among targets for the same type, the one whose first view is mounted **nearest** to the view that triggered the navigation (longest common mount prefix), then the one flagged `default="true"`, then the first declared. `hasTarget(type)` is the question "can objects of this type be shown at all?" — it decides whether a value is rendered as a link. At startup the service checks every `<bind channel>` against the channels the view declares and logs a configuration error for a mismatch (a typo in a channel name is found without clicking through the app).
 
 ### Where a view is mounted is known statically
 
@@ -118,20 +118,22 @@ Every control that shows one of several children implements `com.top_logic.layou
 ### Entry points
 
 - **`<show-object/>`** (`ShowObjectAction`) in a `<generic-command>` chain shows the object it processes — the default argument, or the one `value` names (see [commands](doc:view-layer/commands#actions-processing-one-value-value)); no object does nothing, a selection of exactly one object shows that object. `<generic-command inputs="selection"><show-object/></generic-command>` is the whole configuration of a "go to" button. Java code calls `ObjectNavigation.show(context, object, continuation)`.
-- **`<show-view view="…">`** (`ShowViewAction`) brings one view into view and writes the values its channels receive, without a business object being involved. It carries exactly the attributes and `<bind>` children of a display target's `<show>` — `view` (mandatory), `dialog`, `label`, `label-expr` — and each `<bind expr>` is a TL-Script function of the value the action processes — the default argument, or the one `value` names (a `<bind>` without `expr` receives that value itself). The view is reached the same way a target's view is: the containers on the way are opened, or it is drilled down to as a frame, or opened as a dialog.
+- **`<show-view view="…">`** (`ShowViewAction`) brings one view into view and writes the values its channels receive, without a business object being involved. It carries exactly the attributes and `<bind>` children of a display target's `<show>` — `view` (mandatory), `dialog`, `label`, `label-expr` — and each `<bind expr>` (as the `label-expr`) is a script of the chain: it uses the arguments of the chain as variables without declaring them (see [named arguments](doc:view-layer/commands#scripts-use-the-arguments-as-variables)), and a `<bind>` without `expr` receives the value the action processes — the default argument, or the one `value` names. The view is reached the same way a target's view is: the containers on the way are opened, or it is drilled down to as a frame, or opened as a dialog.
 
   ```xml
-  <show-view view="tickets.view.xml">
-    <bind channel="activeFilter" expr="term -> 'all'"/>
-    <bind channel="searchTerm" expr="term -> $term"/>
-  </show-view>
+  <generic-command inputs="searchInput as term">
+    <show-view view="tickets.view.xml">
+      <bind channel="activeFilter" expr="'all'"/>
+      <bind channel="searchTerm" expr="$term"/>
+    </show-view>
+  </generic-command>
   ```
 
-- **`<show-views>`** (`ShowViewsAction`) holds a list of `<show>` entries carried out in **one** request, so each entry is looked for within the view the entry before it displayed — a display target's `<show>` list, written in the command chain instead of declared per type. Java code calls `ObjectNavigation.show(context, shows, value, continuation)` for either.
+- **`<show-views>`** (`ShowViewsAction`) holds a list of `<show>` entries carried out in **one** request, so each entry is looked for within the view the entry before it displayed — a display target's `<show>` list, written in the command chain instead of declared per type. Java code calls `ObjectNavigation.show(context, shows, arguments, continuation)` for either.
 
   ```xml
-  <show-views>
-    <show view="projects/overview.view.xml"><bind channel="project" expr="t -> $t.container()"/></show>
+  <show-views value="ticket">
+    <show view="projects/overview.view.xml"><bind channel="project" expr="$ticket.container()"/></show>
     <show view="projects/ticket-detail.view.xml"><bind channel="ticket"/></show>
   </show-views>
   ```

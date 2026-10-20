@@ -28,7 +28,7 @@
 					<de>Freigeben</de>
 				</label>
 				<executability>
-					<visible-if expr="selected -> $selected != null"/>
+					<visible-if expr="$selection != null"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.LockListAction"
 					mode="RELEASE"

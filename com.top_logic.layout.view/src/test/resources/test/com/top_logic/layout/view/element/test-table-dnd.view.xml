@@ -15,7 +15,7 @@
 				<null-input-disabled/>
 			</executability>
 			<row-executability>
-				<disabled-if expr="row -> $row == 'locked'"/>
+				<disabled-if expr="$row == 'locked'"/>
 			</row-executability>
 		</drag>
 		<drop
@@ -27,7 +27,7 @@
 				<null-input-disabled/>
 			</executability>
 			<target-executability>
-				<disabled-if expr="row -> $row == 'locked'"/>
+				<disabled-if expr="$target == 'locked'"/>
 			</target-executability>
 			<execute-script function="$objects"/>
 		</drop>

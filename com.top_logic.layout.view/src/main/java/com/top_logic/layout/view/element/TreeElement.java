@@ -425,7 +425,7 @@ public class TreeElement implements UIElement {
 				control.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getNodeExecutability());
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), TreeDragConfig.NODE_EXECUTABILITY);
 	}
 
 	@Override

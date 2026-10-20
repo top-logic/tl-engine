@@ -86,7 +86,7 @@
 				</label>
 				<executability>
 					<null-input-disabled/>
-					<disabled-if expr="m -> if(canCall(approveMilestone($m)), null, #('You may not approve this milestone.'@en, 'Sie dürfen diesen Meilenstein nicht freigeben.'@de))"/>
+					<disabled-if expr="if(canCall(approveMilestone($milestone)), null, #('You may not approve this milestone.'@en, 'Sie dürfen diesen Meilenstein nicht freigeben.'@de))"/>
 				</executability>
 				<with-transaction>
 					<execute-script function="approveMilestone($milestone)"/>

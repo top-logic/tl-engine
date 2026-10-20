@@ -177,6 +177,29 @@ public final class ActionScope {
 		return _defaultName;
 	}
 
+	/**
+	 * Arguments with the names of this scope, the default holding the given value and every other
+	 * argument {@code null}.
+	 *
+	 * <p>
+	 * These are the arguments of an operation that supplies a single value, e.g. the row of a table
+	 * an executability rule decides over.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value of the {@link #defaultName() default argument}; ignored for {@link #NONE}.
+	 */
+	public ActionArguments arguments(Object value) {
+		if (_defaultName == null) {
+			return ActionArguments.NONE;
+		}
+		List<Object> values = new ArrayList<>(_names.size());
+		for (String name : _names) {
+			values.add(name.equals(_defaultName) ? value : null);
+		}
+		return ActionArguments.of(_names, values, _defaultName);
+	}
+
 	@Override
 	public String toString() {
 		return _names + " (default: " + _defaultName + (_transactional ? ", transactional" : "") + ")";

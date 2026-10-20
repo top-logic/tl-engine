@@ -24,6 +24,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
@@ -46,6 +47,9 @@ import com.top_logic.util.model.ModelService;
  */
 public class TestShowViewAction extends AbstractNavigationTest {
 
+	/** Name of the argument the command chain carries. */
+	private static final String ARGUMENT = "input";
+
 	/** The value the command chain carries. */
 	private static final String INPUT = "alpha";
 
@@ -59,7 +63,7 @@ public class TestShowViewAction extends AbstractNavigationTest {
 		run(action("""
 			<show-view view="nav-item.view.xml">
 				<bind channel="item"
-					expr="s -> $s + '!'"
+					expr="$input + '!'"
 				/>
 				<bind channel="raw"/>
 			</show-view>
@@ -188,7 +192,7 @@ public class TestShowViewAction extends AbstractNavigationTest {
 		PolymorphicConfiguration<?> config = (PolymorphicConfiguration<?>) reader.read();
 		context.checkErrors();
 
-		ViewAction result = (ViewAction) context.getInstance(config);
+		ViewAction result = (ViewAction) ActionScope.single(ARGUMENT).bind(context).getInstance(config);
 		context.checkErrors();
 		return result;
 	}
@@ -205,6 +209,6 @@ public class TestShowViewAction extends AbstractNavigationTest {
 
 	/** The given value as the single argument of a chain. */
 	private static ActionArguments args(Object value) {
-		return ActionArguments.of("input", value);
+		return ActionArguments.of(ARGUMENT, value);
 	}
 }

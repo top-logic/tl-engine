@@ -190,7 +190,7 @@
 				</label>
 				<executability>
 					<null-input-disabled/>
-					<disabled-if expr="milestone -> if($milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).isEmpty(), #('The project has no ticket without a milestone.'@en, 'Das Projekt hat kein Ticket ohne Meilenstein.'@de), null)"/>
+					<disabled-if expr="if($milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).isEmpty(), #('The project has no ticket without a milestone.'@en, 'Das Projekt hat kein Ticket ohne Meilenstein.'@de), null)"/>
 				</executability>
 				<with-transaction>
 					<commitMessage>

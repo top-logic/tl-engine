@@ -156,7 +156,7 @@
 											<de>Neues Attribut</de>
 										</label>
 										<executability>
-											<visible-if expr="part -> $part != null &amp;&amp; !$part.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$part.instanceOf(`tl.model:TLClassifier`)"/>
+											<visible-if expr="$selectedPart != null &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLClassifier`)"/>
 										</executability>
 										<execute-script function="new(`tl.devtools:NewAttribute`, transient: true)">
 											<open-dialog
@@ -188,7 +188,7 @@
 											<de>Neuer Klassifikator</de>
 										</label>
 										<executability>
-											<visible-if expr="part -> $part != null &amp;&amp; ($part.instanceOf(`tl.model:TLEnumeration`) || $part.instanceOf(`tl.model:TLClassifier`))"/>
+											<visible-if expr="$selectedPart != null &amp;&amp; ($selectedPart.instanceOf(`tl.model:TLEnumeration`) || $selectedPart.instanceOf(`tl.model:TLClassifier`))"/>
 										</executability>
 										<execute-script function="new(`tl.devtools:NewClassifier`, transient: true)">
 											<open-dialog

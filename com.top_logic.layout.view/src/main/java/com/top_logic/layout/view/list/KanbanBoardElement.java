@@ -531,7 +531,7 @@ public class KanbanBoardElement implements UIElement {
 				board.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, board, source, drag, drag.getKind(), drag.getCardExecutability());
+		DragSourceBinding.install(context, board, source, drag, drag.getKind(), KanbanDragConfig.CARD_EXECUTABILITY);
 	}
 
 	private static void inTransaction(Runnable action) {

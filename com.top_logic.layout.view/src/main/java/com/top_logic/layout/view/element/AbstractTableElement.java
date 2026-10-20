@@ -934,7 +934,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 				control.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getRowExecutability());
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), TableDragConfig.ROW_EXECUTABILITY);
 	}
 
 	/**

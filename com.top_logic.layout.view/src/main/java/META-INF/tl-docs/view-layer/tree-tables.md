@@ -48,7 +48,7 @@ The scripts use the arguments as variables without declaring them (see [named ar
     <inputs><input channel="project"/></inputs>
     <drag kind="item">
         <row-executability>
-            <disabled-if expr="item -> $item.get(`demo.tickets:Item#locked`)"/>
+            <disabled-if expr="$row.get(`demo.tickets:Item#locked`)"/>
         </row-executability>
     </drag>
     <!-- Move items: insert the dragged items under `parent` before its child `before`. -->

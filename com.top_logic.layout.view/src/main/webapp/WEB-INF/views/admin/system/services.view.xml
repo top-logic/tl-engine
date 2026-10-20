@@ -32,7 +32,7 @@
 					<de>Starten</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'INACTIVE'"/>
+					<visible-if expr="$state == 'INACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="START"
@@ -54,7 +54,7 @@
 					<de>Stoppen</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
+					<visible-if expr="$state == 'ACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="STOP"
@@ -76,7 +76,7 @@
 					<de>Neustart</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
+					<visible-if expr="$state == 'ACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="RESTART"

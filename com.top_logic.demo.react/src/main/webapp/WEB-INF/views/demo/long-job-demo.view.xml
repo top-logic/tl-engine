@@ -78,7 +78,7 @@
 					<de>Auftrag starten</de>
 				</label>
 				<executability>
-					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
 				</executability>
 				<start-job
 					cancelable="true"
@@ -139,7 +139,7 @@
 					<de>Fehlschlagenden Auftrag starten</de>
 				</label>
 				<executability>
-					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
 				</executability>
 				<start-job
 					cancelable="true"
@@ -194,7 +194,7 @@
 					<de>500 Tickets blockweise importieren</de>
 				</label>
 				<executability>
-					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
 					<model-access
 						operation="Create"
 						type="demo.tickets:Ticket"
@@ -277,7 +277,7 @@
 					<de>Bulk-Tickets blockweise entfernen</de>
 				</label>
 				<executability>
-					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
 					<model-access
 						operation="Delete"
 						type="demo.tickets:Ticket"

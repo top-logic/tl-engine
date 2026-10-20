@@ -13,7 +13,7 @@
 	>
 		<drag kind="item">
 			<node-executability>
-				<disabled-if expr="node -> $node == 'b'"/>
+				<disabled-if expr="$node == 'b'"/>
 			</node-executability>
 		</drag>
 		<drop

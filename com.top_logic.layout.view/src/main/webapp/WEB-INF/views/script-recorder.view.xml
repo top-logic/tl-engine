@@ -31,7 +31,7 @@
 					<de>Starten</de>
 				</label>
 				<executability>
-					<visible-if expr="running -> $running != true"/>
+					<visible-if expr="$recording != true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.recorder.RecorderAction"
 					mode="START"
@@ -50,7 +50,7 @@
 					<de>Stoppen</de>
 				</label>
 				<executability>
-					<visible-if expr="running -> $running == true"/>
+					<visible-if expr="$recording == true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.recorder.RecorderAction"
 					mode="STOP"

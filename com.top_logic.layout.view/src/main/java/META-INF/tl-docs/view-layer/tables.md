@@ -257,7 +257,7 @@ A `<table>` declares that its rows may be dragged, and what it accepts a drop of
 </table>
 ```
 
-- **`<drag/>`** makes the rows draggable. Dragging a selected row drags the whole selection, an unselected row drags itself — and the selection is read on the server, so a selection reaching beyond the rendered row window is dragged completely. `kind` classifies the drag with a free name the application chooses (`ticket`, `assignment`, …); without it, the drag has no kind.
+- **`<drag/>`** makes the rows draggable. Dragging a selected row drags the whole selection, an unselected row drags itself — and the selection is read on the server, so a selection reaching beyond the rendered row window is dragged completely. `kind` classifies the drag with a free name the application chooses (`ticket`, `assignment`, …); without it, the drag has no kind. `row-executability` decides per row, with the row as the rules' input, which a script rule sees as `$row` (renamed by the table's `row-as`); the rules in the drag's own `executability` decide for the table as a whole over the value of the drag's `input` channel, seen under the channel's name (or its `as`).
 - **`<drop>`** is a list, so a table can accept several kinds of drag, and accept one kind on its rows and another as a whole. `accept` lists the kinds it takes, comma-separated (`accept="ticket, milestone"`); a drag without a kind or of an unlisted kind is refused. Without `accept`, the drop takes every drag, of any kind or none. Kinds are compared literally, so a drag and the drops meant to take it agree on the spelling. What a drop takes beyond the kind — only objects of a certain model type, say — is decided by its `refuse-if`, e.g. ``refuse-if="$objects.filter(o -> !$o.instanceOf(`demo.tickets:Ticket`)).size() > 0"``. `target` is `table` (default), `row` or `ordered`, and decides which objects the drop refers to at its place — its *references*.
 
   **The arguments of a drop** are the list of dragged objects, named `objects` (renamed with `as`) and its main argument, followed by its references, each named after the reference (renamed with `target-as`, `before-as`; see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). `refuse-if` and the action chain see the same arguments, as variables without declaring them (`DropArguments`):
@@ -318,7 +318,7 @@ A `<tree>` declares `<drag>` and `<drop>` exactly as a table does, and takes par
 >
     <drag kind="item">
         <node-executability>
-            <disabled-if expr="item -> $item.get(`demo.tickets:Item#locked`)"/>
+            <disabled-if expr="$node.get(`demo.tickets:Item#locked`)"/>
         </node-executability>
     </drag>
     <!-- Move nodes: insert the dragged items under `parent` before its child `before`. -->
@@ -341,7 +341,7 @@ A `<tree>` declares `<drag>` and `<drop>` exactly as a table does, and takes par
 </tree>
 ```
 
-- **`<drag>`** makes the nodes draggable; dragging a selected node drags the whole selection, including selected nodes in collapsed subtrees. `node-executability` decides per node, with the node's object as the rules' input — a node the rules refuse offers no drag, and a selection including it is refused as a whole.
+- **`<drag>`** makes the nodes draggable; dragging a selected node drags the whole selection, including selected nodes in collapsed subtrees. `node-executability` decides per node, with the node's object as the rules' input, which a script rule sees as `$node` (renamed by the tree's `node-as`) — a node the rules refuse offers no drag, and a selection including it is refused as a whole.
 - **`<drop target="…">`** is `tree` (default), `node` or `ordered`:
 
   | `target` | applies | arguments | renamed by |

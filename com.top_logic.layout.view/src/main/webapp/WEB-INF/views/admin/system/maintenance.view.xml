@@ -31,7 +31,7 @@
 					<de>Wartungsmodus aktivieren</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'NORMAL'"/>
+					<visible-if expr="$state == 'NORMAL'"/>
 				</executability>
 				<execute-script function="new(`tl.admin:MaintenanceMode`, transient: true)">
 					<open-dialog
@@ -55,7 +55,7 @@
 					<de>Abbrechen</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'PENDING'"/>
+					<visible-if expr="$state == 'PENDING'"/>
 				</executability>
 				<confirm expr="#('Abort entering maintenance mode?'@en, 'Aktivierung des Wartungsmodus abbrechen?'@de)"/>
 				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
@@ -74,7 +74,7 @@
 					<de>Wartungsmodus beenden</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
+					<visible-if expr="$state == 'ACTIVE'"/>
 				</executability>
 				<confirm expr="#('Leave maintenance mode and return to normal operation?'@en, 'Wartungsmodus beenden und zum Normalbetrieb zurückkehren?'@de)"/>
 				<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"

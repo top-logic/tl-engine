@@ -15,7 +15,7 @@
 	>
 		<drag kind="item">
 			<row-executability>
-				<disabled-if expr="row -> $row == 'b'"/>
+				<disabled-if expr="$row == 'b'"/>
 			</row-executability>
 		</drag>
 		<drop

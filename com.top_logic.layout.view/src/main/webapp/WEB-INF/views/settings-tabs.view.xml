@@ -148,7 +148,7 @@
 									<de>Passwort ändern</de>
 								</label>
 								<executability>
-									<visible-if expr="account -> $account.accountPasswordChangeAllowed()"/>
+									<visible-if expr="$account.accountPasswordChangeAllowed()"/>
 								</executability>
 								<execute-script function="new(`tl.login:PasswordChange`, transient: true)">
 									<open-dialog
@@ -247,7 +247,7 @@
 									<de>Zwei-Faktor-Authentifizierung einrichten</de>
 								</label>
 								<executability>
-									<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) == null"/>
+									<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) == null"/>
 								</executability>
 								<enroll-mfa/>
 							</action>
@@ -262,7 +262,7 @@
 									<de>Zwei-Faktor-Authentifizierung abschalten</de>
 								</label>
 								<executability>
-									<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>
+									<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) != null"/>
 								</executability>
 								<confirm expr="#('Log in with your password alone from now on?'@en, 'Künftig nur noch mit dem Passwort anmelden?'@de)"/>
 								<disable-mfa/>

@@ -17,7 +17,9 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.Continuation;
-import com.top_logic.layout.view.command.InterruptibleViewAction;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ArgumentsViewAction;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
 
@@ -30,17 +32,21 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  * </p>
  *
  * <pre>
- * &lt;show-view view="tickets.view.xml"&gt;
- *   &lt;bind channel="activeFilter" expr="term -&gt; 'all'"/&gt;
- *   &lt;bind channel="searchTerm" expr="term -&gt; $term"/&gt;
- * &lt;/show-view&gt;
+ * &lt;generic-command inputs="searchInput as term"&gt;
+ *   &lt;show-view view="tickets.view.xml"&gt;
+ *     &lt;bind channel="activeFilter" expr="'all'"/&gt;
+ *     &lt;bind channel="searchTerm" expr="$term"/&gt;
+ *   &lt;/show-view&gt;
+ * &lt;/generic-command&gt;
  * </pre>
  *
  * <p>
  * The view is reached wherever it is displayed: the containers on the way to it are opened, or it
  * is drilled down to as a frame of the surrounding stack, or - with {@code dialog} - opened as a
- * dialog. Each binding is a function of the value the action processes; a binding without an
- * expression receives that value itself.
+ * dialog. Each binding is a script over the arguments of the chain, which it uses as variables
+ * without declaring them, like every script of the chain (see
+ * {@link com.top_logic.layout.view.command.ActionScript}); a binding without an expression receives
+ * the value the action processes itself. The same holds for the {@code label-expr}.
  * </p>
  *
  * @implNote The action carries out one {@link ShowStep}; a list of them is
@@ -48,7 +54,7 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  */
 @InApp
 @Label("Show view")
-public class ShowViewAction extends InterruptibleViewAction {
+public class ShowViewAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link ShowViewAction}.
@@ -81,12 +87,16 @@ public class ShowViewAction extends InterruptibleViewAction {
 	 */
 	@CalledByReflection
 	public ShowViewAction(InstantiationContext context, Config config) {
-		this(ShowStep.fromConfig(config));
+		this(ShowStep.fromConfig(config, ActionScope.of(context)));
 	}
 
+	/**
+	 * Displays the views, their scripts evaluated over the given arguments; resumes the chain with
+	 * the value the action processes.
+	 */
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
-		ObjectNavigation.show(context, _shows, input, new ResumeWith(continuation, input));
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		ObjectNavigation.show(context, _shows, arguments, new ResumeWith(continuation, arguments.value()));
 	}
 
 	/**

@@ -21,7 +21,9 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.Continuation;
-import com.top_logic.layout.view.command.InterruptibleViewAction;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ArgumentsViewAction;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
 
@@ -36,9 +38,9 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  * </p>
  *
  * <pre>
- * &lt;show-views&gt;
+ * &lt;show-views value="ticket"&gt;
  *   &lt;show view="projects/overview.view.xml"&gt;
- *     &lt;bind channel="project" expr="t -&gt; $t.container()"/&gt;
+ *     &lt;bind channel="project" expr="$ticket.container()"/&gt;
  *   &lt;/show&gt;
  *   &lt;show view="projects/ticket-detail.view.xml"&gt;
  *     &lt;bind channel="ticket"/&gt;
@@ -47,8 +49,9 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  * </pre>
  *
  * <p>
- * Each binding is a function of the value the action processes; a binding without an expression
- * receives that value itself.
+ * Each binding is a script over the arguments of the chain, which it uses as variables without
+ * declaring them (see {@link com.top_logic.layout.view.command.ActionScript}); a binding without an
+ * expression receives the value the action processes itself.
  * </p>
  *
  * @implNote The action carries out a list of {@link ShowStep}s in one request; a single one is
@@ -56,7 +59,7 @@ import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
  */
 @InApp
 @Label("Show views")
-public class ShowViewsAction extends InterruptibleViewAction {
+public class ShowViewsAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link ShowViewsAction}.
@@ -109,12 +112,16 @@ public class ShowViewsAction extends InterruptibleViewAction {
 	 */
 	@CalledByReflection
 	public ShowViewsAction(InstantiationContext context, Config config) {
-		this(ShowStep.fromConfigs(config.getShows()));
+		this(ShowStep.fromConfigs(config.getShows(), ActionScope.of(context)));
 	}
 
+	/**
+	 * Displays the views, their scripts evaluated over the given arguments; resumes the chain with
+	 * the value the action processes.
+	 */
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
-		ObjectNavigation.show(context, _shows, input, new ResumeWith(continuation, input));
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		ObjectNavigation.show(context, _shows, arguments, new ResumeWith(continuation, arguments.value()));
 	}
 
 	/**

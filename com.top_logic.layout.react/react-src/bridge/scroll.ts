@@ -9,6 +9,9 @@ import { addStateWord, removeStateWord } from './css';
  */
 const FLASH = 'flash';
 
+/** The keyframes of the flash in the design system package (base.css). */
+const FLASH_ANIMATION = 'tl-anchor-flash';
+
 /**
  * Ends the flash of the jump target this listener is registered on, once its own animation is over.
  *
@@ -17,8 +20,8 @@ const FLASH = 'flash';
  * ends (the target hidden meanwhile) keeps its word until the next jump to it restarts it.
  */
 function endFlash(this: Element, event: Event): void {
-  if (event.target !== this) {
-    // Something inside the target animating, not the target itself.
+  if (event.target !== this || (event as AnimationEvent).animationName !== FLASH_ANIMATION) {
+    // Something inside the target animating, or another animation of the target itself.
     return;
   }
   this.removeEventListener('animationend', endFlash);

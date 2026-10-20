@@ -63,6 +63,13 @@ describe('anchor', () => {
     return node;
   }
 
+  /** The end of an animation with the given name (jsdom has no AnimationEvent). */
+  function animationEnd(animationName: string): Event {
+    const event = new Event('animationend', { bubbles: true });
+    Object.defineProperty(event, 'animationName', { value: animationName });
+    return event;
+  }
+
   it('anchor flash sets and clears data-tl-state flash', () => {
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { callback(0); return 0; });
     const node = anchor('a1', 'selected');
@@ -76,12 +83,24 @@ describe('anchor', () => {
     expect(node.className).toBe('');
 
     // An animation of something inside the target ends: the flash goes on.
-    child.dispatchEvent(new Event('animationend', { bubbles: true }));
+    child.dispatchEvent(animationEnd('tl-anchor-flash'));
     expect(stateWords(node)).toEqual(['selected', 'flash']);
 
     // The flash of the target itself ends: the state goes, the other words stay.
-    node.dispatchEvent(new Event('animationend', { bubbles: true }));
+    node.dispatchEvent(animationEnd('tl-anchor-flash'));
     expect(stateWords(node)).toEqual(['selected']);
+  });
+
+  it('anchor flash is not ended by another animation of the target', () => {
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { callback(0); return 0; });
+    const node = anchor('a3');
+
+    scrollToAnchor('a3');
+    node.dispatchEvent(animationEnd('tl-tooltip-in'));
+    expect(stateWords(node)).toEqual(['flash']);
+
+    node.dispatchEvent(animationEnd('tl-anchor-flash'));
+    expect(node.hasAttribute('data-tl-state')).toBe(false);
   });
 
   it('anchor flash starts again on a repeated jump and is cleared once', () => {
@@ -92,7 +111,7 @@ describe('anchor', () => {
     scrollToAnchor('a2');
     expect(stateWords(node)).toEqual(['flash']);
 
-    node.dispatchEvent(new Event('animationend'));
+    node.dispatchEvent(animationEnd('tl-anchor-flash'));
     expect(node.hasAttribute('data-tl-state')).toBe(false);
   });
 });

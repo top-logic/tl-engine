@@ -42,7 +42,7 @@ export function stateAttr(...words: (string | false | null | undefined)[]): stri
 }
 
 /** The attribute the design system package reads state words from. */
-const STATE_ATTR = 'data-tl-state';
+export const STATE_ATTR = 'data-tl-state';
 
 /**
  * Adds a word to the `data-tl-state` of an element the bridge marks outside of React (a jump target,

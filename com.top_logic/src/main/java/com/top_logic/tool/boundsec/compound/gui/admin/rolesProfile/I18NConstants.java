@@ -40,6 +40,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 IMPORT_ROLES_PROFILE_UNAVAILABLE_COMMAND_GROUPS__GROUPS;
 
 	/**
+	 * @en The following command groups do not exist and were not imported: {0}
+	 */
+	public static ResKey1 IMPORT_ROLES_PROFILE_UNKNOWN_COMMAND_GROUPS__GROUPS;
+
+	/**
 	 * @en The read right was added to the following views, because it is needed by the rights in
 	 *     their contents: {0}
 	 */

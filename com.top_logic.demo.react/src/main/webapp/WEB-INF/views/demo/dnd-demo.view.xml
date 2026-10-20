@@ -191,9 +191,9 @@
 												<de>Baum</de>
 											</title>
 											<tree
-												children="node -> $node.get(`demo.dnd:Node#children`)"
+												children="$node.get(`demo.dnd:Node#children`)"
 												observed-types="demo.dnd:Node"
-												parents="node -> $node.container()"
+												parents="$node.container()"
 												root="all(`demo.dnd:Node`).filter(n -> $n.get(`demo.dnd:Node#key`) == &quot;tree&quot;).firstElement()"
 												selection="treeSelection"
 											>
@@ -233,9 +233,9 @@
 												<de>Baumtabelle</de>
 											</title>
 											<tree-table
-												children="node -> $node.get(`demo.dnd:Node#children`)"
+												children="$node.get(`demo.dnd:Node#children`)"
 												observed-types="demo.dnd:Node"
-												parents="node -> $node.container()"
+												parents="$node.container()"
 												root="all(`demo.dnd:Node`).filter(n -> $n.get(`demo.dnd:Node#key`) == &quot;treeTable&quot;).firstElement()"
 												selection="treeTableSelection"
 												selection-mode="multi"
@@ -285,8 +285,9 @@
 									<de>Board</de>
 								</title>
 								<kanban-board
-									column="n -> $n.get(`demo.dnd:Node#lane`)"
+									column="$node.get(`demo.dnd:Node#lane`)"
 									columns="all(`demo.dnd:Lane`)"
+									element-as="node"
 									element-channel="node"
 									items="all(`demo.dnd:Node`).filter(n -> $n.get(`demo.dnd:Node#lane`) != null).sort(a -> b -> compare($a.get(`demo.dnd:Node#name`), $b.get(`demo.dnd:Node#name`)))"
 									observed-types="demo.dnd:Node"

@@ -43,6 +43,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -204,7 +205,7 @@ public class ObjectListElement implements UIElement {
 	 * Configuration for {@link ObjectListElement}.
 	 */
 	@TagName("object-list")
-	public interface Config extends UIElement.Config, Inputs, GridOptions {
+	public interface Config extends UIElement.Config, Inputs, GridOptions, ElementAsConfig {
 
 		/** Configuration name for {@link #getLayout()}. */
 		String LAYOUT = "layout";
@@ -277,28 +278,39 @@ public class ObjectListElement implements UIElement {
 		Expr getItems();
 
 		/**
-		 * TL-Script function attaching a newly composed element:
-		 * {@code ...inputs -> element -> ...}.
+		 * TL-Script expression attaching a newly composed element.
 		 *
 		 * <p>
-		 * Run by {@link LinkElementAction &lt;link-element&gt;} in a transaction. The element passed
-		 * behind the input values is the new-element template's transient object; the function is
-		 * responsible for making it persistent (e.g. via a non-transient copy) and attaching it
-		 * where it belongs.
+		 * Run by {@link LinkElementAction &lt;link-element&gt;} in a transaction. The expression
+		 * sees the values of the {@link #getInputs() inputs} as variables named after their
+		 * channels, or by their {@code as} names, and the element as the variable
+		 * {@value ElementAsConfig#DEFAULT_ELEMENT_AS}, or by the name given with
+		 * {@value ElementAsConfig#ELEMENT_AS}. The element is the new-element template's transient
+		 * object; the expression is responsible for making it persistent (e.g. via a non-transient
+		 * copy) and attaching it where it belongs:
 		 * </p>
+		 *
+		 * <pre>
+		 * $ticket.add(`my:Ticket#comments`, $element.copy(transient: false))
+		 * </pre>
 		 */
 		@Name(LINK)
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getLink();
 
 		/**
-		 * TL-Script function detaching an element: {@code ...inputs -> element -> ...}.
+		 * TL-Script expression detaching an element.
 		 *
 		 * <p>
-		 * Run by {@link RemoveElementAction &lt;remove-element&gt;} in a transaction, with the
-		 * element passed behind the input values.
+		 * Run by {@link RemoveElementAction &lt;remove-element&gt;} in a transaction. The expression
+		 * sees the values of the {@link #getInputs() inputs} and the element, as the
+		 * {@link #getLink() link expression} does.
 		 * </p>
 		 */
 		@Name(REMOVE)
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getRemove();
 
 		/**
@@ -426,8 +438,8 @@ public class ObjectListElement implements UIElement {
 	public ObjectListElement(InstantiationContext context, Config config) {
 		_config = config;
 		_itemsExecutor = InputScript.compile(config, Config.ITEMS);
-		_linkExecutor = config.getLink() == null ? null : QueryExecutor.compile(config.getLink());
-		_removeExecutor = config.getRemove() == null ? null : QueryExecutor.compile(config.getRemove());
+		_linkExecutor = InputScript.compile(config, Config.LINK);
+		_removeExecutor = InputScript.compile(config, Config.REMOVE);
 		_itemContent = instantiate(context, config.getItem());
 		_newElementContent = instantiate(context, config.getNewElement());
 	}

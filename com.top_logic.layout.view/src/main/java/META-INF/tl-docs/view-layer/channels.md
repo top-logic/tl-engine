@@ -42,6 +42,8 @@ A script of a channel sees the value of each input as a variable named after the
 
 The script declares no parameters. It is evaluated without positional arguments, so a lambda header (`t -> $t.get(…)`) would make its result a function instead of a value; a script whose top-level expression is a lambda is therefore rejected with a configuration error when the view is loaded, naming the variables the script can use. The same holds for every script of the view layer that sees named values - the scripts of an action chain, the `init` of a channel, the `reverse` of a derived channel, the scripts of an element over its inputs (a table's `<rows>`, an `<object-list>`'s `items`, an `<alert>`'s texts, the `test` of a `<case>`, …) - also for a script that sees no variables at all. The script editor offers the variables for completion after `$`.
 
+A value an element supplies to its script itself - the row of a table, the node of a `<tree>`, the element of an `<object-list>` or a `<kanban-board>`, the entry of a `<calendar>` - is a variable behind the inputs, under a default name the supplying element changes with a `…-as` attribute (`row-as`, `node-as`, `element-as`, `column-as`, `entry-as`; `InputScript`, `Supplies`). An input named like such a value is a configuration error and is renamed with `as`.
+
 ### A writable channel initialized from other channels: `init`
 
 A `<channel>` with an `init` function is a writable value that takes its value from other channels - an input field that shows the stored value of the selected object, lets the user enter a new one, and shows the stored value again for the next selection:

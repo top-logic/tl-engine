@@ -6,7 +6,7 @@
 	</channels>
 
 	<tree
-		children="node -> []"
+		children="[]"
 		root="'root'"
 	>
 		<drop

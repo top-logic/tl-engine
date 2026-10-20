@@ -225,8 +225,8 @@
 			selection-mode="multi"
 		>
 			<root>`tl.demo.projectManagement:ProjectScope`</root>
-			<children>node -&gt; if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
-			<parents>node -&gt; if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
+			<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+			<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
 			<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
 				<write-channel name="activated"/>
 			</on-activate>

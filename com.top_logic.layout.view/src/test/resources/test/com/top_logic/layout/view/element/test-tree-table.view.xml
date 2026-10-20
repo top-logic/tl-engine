@@ -9,7 +9,7 @@
 	</channels>
 
 	<tree-table
-		children="node -> if($node == 'root', ['a', 'b'], if($node == 'a', ['a1', 'a2'], []))"
+		children="if($node == 'root', ['a', 'b'], if($node == 'a', ['a1', 'a2'], []))"
 		root="'root'"
 		selection="selected"
 	>

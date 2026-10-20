@@ -92,7 +92,7 @@ Every script of a chain — the `function` of `<execute-script>` and `<start-job
 
 - The names are known when the view is loaded: every trigger and every action with a result declares the names it defines, and the actions are compiled against the names of their position (`ActionScope`). A script using a name that is not defined there is a **configuration error** reported at load time; the script editor offers exactly the defined names for completion.
 - **An action's own `inputs`** (`<execute-script>`, `<if>`, `<confirm>`, `<notify>`, `<download>`, `<start-job>`) add one variable per channel, named after the channel or its `as`, behind the arguments of the chain: ``<execute-script function="$context.add(`m:Container#items`, $ticket)" inputs="context"/>``.
-- Scripts outside a chain keep their functions with declared parameters: executability rules (`<disabled-if expr="x -> …">`), derived channels, the scripts of elements (table rows and columns, `row-class`, the scripts of an `<object-list>`, `on-reorder`), the `<bind expr>` of `<show-view>`, and form scripts.
+- The scripts of channels and elements outside a chain see named variables as well: the values of their inputs and the values the element supplies (see [named inputs](doc:view-layer/channels#named-inputs-variables-instead-of-parameters)). Executability rules (`<disabled-if expr="x -> …">`), the `<bind expr>` of `<show-view>`, and form scripts keep their functions with declared parameters.
 
 ```xml
 <value-input value="jump">

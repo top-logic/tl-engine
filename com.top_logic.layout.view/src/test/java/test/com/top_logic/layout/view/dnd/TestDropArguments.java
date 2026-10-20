@@ -147,7 +147,7 @@ public class TestDropArguments extends AbstractModelAccessTest {
 		ConfigurationReader reader = new ConfigurationReader(context,
 			Collections.singletonMap("tree", TypedConfiguration.getConfigurationDescriptor(TreeElement.Config.class)));
 		reader.setSource(CharacterContents.newContent(
-			"<tree root=\"'root'\" children='node -> []'>" + dropXml + "</tree>"));
+			"<tree root=\"'root'\" children='[]'>" + dropXml + "</tree>"));
 		TreeElement.Config tree = (TreeElement.Config) reader.read();
 		context.checkErrors();
 		return tree.getDrops();

@@ -61,9 +61,9 @@
 					<inputs>
 						<input channel="search"/>
 					</inputs>
-					<root>search -&gt; devDocsRoot()</root>
-					<children>search -&gt; node -&gt; devDocsChildren($node, $search)</children>
-					<parents>search -&gt; node -&gt; devDocsParent($node)</parents>
+					<root>devDocsRoot()</root>
+					<children>devDocsChildren($node, $search)</children>
+					<parents>devDocsParent($node)</parents>
 				</tree>
 			</panel>
 		</selector>

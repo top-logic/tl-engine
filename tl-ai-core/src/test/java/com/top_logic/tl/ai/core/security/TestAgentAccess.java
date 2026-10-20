@@ -28,10 +28,9 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentRoleAccess;
  * Tests for the agent half of {@link RoleAccessPolicy}: which agents a role may run.
  *
  * <p>
- * One test per rule of the "Agents, models and MCP servers" section of
- * {@code doc/security/tool-access-configuration.md}. The other two dimensions share the evaluator and
- * differ only in their default and in what the agent itself contributes - see {@link TestModelAccess}
- * and {@link TestMcpAccess}.
+ * One test per rule of the developer article {@code ai/security/run-access}. The other two
+ * dimensions share the evaluator and differ only in their default and in what the agent itself
+ * contributes - see {@link TestModelAccess} and {@link TestMcpAccess}.
  * </p>
  */
 public class TestAgentAccess extends TestCase {

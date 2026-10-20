@@ -44,7 +44,7 @@ public class MCPTransportServlet extends HttpServlet {
 	 * <p>
 	 * It also names the second step, because turning the module on is not enough: the endpoint serves
 	 * no request it cannot attribute to an account, so an application also has to configure an
-	 * authentication for it (issue #261, {@code doc/security/mcp-endpoint.md}).
+	 * authentication for it (see the developer article {@code ai/security/mcp-endpoint}).
 	 * </p>
 	 */
 	static final String SERVICE_DISABLED_MESSAGE =
@@ -52,7 +52,7 @@ public class MCPTransportServlet extends HttpServlet {
 			+ " because publishing it is a deployment decision; enable the module"
 			+ " com.top_logic.ai.mcp.server.MCPServerService$Module to switch it on, and configure an"
 			+ " authentication for it - it serves no request it cannot attribute to an account. See"
-			+ " doc/security/mcp-endpoint.md and issue #261.";
+			+ " the article ai/security/mcp-endpoint in the developer documentation.";
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {

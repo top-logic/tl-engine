@@ -68,7 +68,7 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  *
  * There is no switch that turns this off. An application that writes no policy at all does not get an
  * unchecked agent; it gets one whose principal holds RoleToolAccess.DEFAULT_BASELINE - the read-only
- * default of #293 - and nothing else. See doc/security/tool-access-configuration.md.
+ * default of #293 - and nothing else. See the developer article ai/security/tool-access-configuration.
  *
  * This is static application configuration, deliberately shaped like the engine's <security-config>
  * (ticket #29088) so administrators meet one idiom rather than two.
@@ -579,7 +579,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	 *
 	 * Unlike <tool-access> there is no group vocabulary and no baseline here: an agent, a model and an
 	 * MCP server are each named individually, because there is no classification of them that anybody
-	 * has agreed on. See doc/security/tool-access-configuration.md.
+	 * has agreed on. See the developer article ai/security/run-access.
 	 */
 
 	/**

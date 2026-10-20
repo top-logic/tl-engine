@@ -3,8 +3,8 @@
 <!--
 	The business model of the agent security test bed: projects with tickets.
 
-	It is the model of doc/security/role-model-worked-example.md, built so that the document and the
-	fixture cannot disagree. Two types are enough to cover every mechanism the role model has:
+	It is the model of the developer article ai/security/role-model-worked-example, built so that
+	the article and the fixture cannot disagree. Two types are enough to cover every mechanism the role model has:
 
 	  * "Project" carries "partners", an ordinary business attribute that a declarative role rule
 	    reads to derive the "projectPartner" role ON THAT PROJECT. Security is derived from the data,

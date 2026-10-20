@@ -30,10 +30,10 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
  * Tests for {@link RoleToolAccess}.
  *
  * <p>
- * One test per row of the "Semantics, stated precisely" table in section 4.1 of
- * {@code doc/security/agent-security-architecture.md}, which is the normative specification of this
- * class. The only row not covered here is the boot-time rejection of an unknown role name, which
- * belongs to the service that reads the policy - see {@code TestAiToolAccessService}.
+ * One test per row of the rule table of the tool access policy in the developer article
+ * {@code ai/security/administration}, which is the normative specification of this class. The only
+ * row not covered here is the boot-time rejection of an unknown role name, which belongs to the
+ * service that reads the policy - see {@code TestAiToolAccessService}.
  * </p>
  */
 public class TestRoleToolAccess extends TestCase {

@@ -45,7 +45,7 @@ Both are closed until an application configures them. `tl-ai-demo` carries a rea
 | `app` | The application's name in artifact references and in the metadata it sends. Default: the context path. |
 | `public-url` | Base URL in the agent cards. Default: taken from the request. |
 | `max-blocking-seconds` | Longest wait of a blocking `SendMessage` and of `askAgent` (default 1500). |
-| `<authentications>`, `<secrets>` | As on `MCPServerService` (`doc/security/mcp-endpoint.md`). A calling application uses a personal access token of the account its requests should act as. Nothing configured: every call is answered 503. |
+| `<authentications>`, `<secrets>` | As on `MCPServerService` (the developer article `ai/security/mcp-endpoint`). A calling application uses a personal access token of the account its requests should act as. Nothing configured: every call is answered 503. |
 | `<agent>` | `path` is the URL name, `agent` the tl-ai agent, `model` an optional override. `allow-writes="true"` lets A2A runs use the tools that change the application, without approval; otherwise those tools are not offered. The first agent also answers `/.well-known/agent-card.json`. |
 | `<remote-agent>` | `card-url` of the remote agent; `token-env` names the environment variable (or system property) whose value is sent as `Authorization: Bearer`. |
 

@@ -133,8 +133,8 @@ public @interface ToolMethod {
 	 * <p>
 	 * Enforced only where a deployment has configured a &lt;tool-access&gt; policy; without one,
 	 * tool authorization stays unenforced and this value is inert. See
-	 * {@code doc/security/agent-security-architecture.md}, section 3.2, and
-	 * {@code doc/security/tool-access-configuration.md} for the administrator's view.
+	 * the developer articles {@code ai/security/tool-authorization} and
+	 * {@code ai/security/tool-access-configuration} for the administrator's view.
 	 * </p>
 	 *
 	 * @see Tool#group()
@@ -162,7 +162,7 @@ public @interface ToolMethod {
 	 * <p>
 	 * <b>Declare a type only where its READ right is granted to a role held on the security root.</b>
 	 * The check is an L1 check and reads roles there, like every other one - see
-	 * {@code doc/security/agent-security-architecture.md}, section 3.3.4. A type whose read right is
+	 * the developer article {@code ai/security/declared-types}. A type whose read right is
 	 * derived <em>per object</em> instead, as {@code tl.ai.screenshots:Screenshot} derives
 	 * {@code AiBinaryOwner} from the screenshot's own owner, must <b>not</b> be declared: no account
 	 * holds such a role on the root, so declaring it would refuse the owner their own object. Where

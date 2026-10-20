@@ -28,7 +28,7 @@ import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentica
  * The tokens are not configured: each person creates their own in the application, and the request
  * acts as that person. So this scheme needs no secret - configuring it is the whole decision to
  * accept personal access tokens. See {@link AccessTokens} for the format and the storage, and
- * {@code doc/security/mcp-endpoint.md} for how to switch it on.
+ * the developer article {@code ai/security/mcp-endpoint} for how to switch it on.
  * </p>
  */
 @Label("Personal access token")

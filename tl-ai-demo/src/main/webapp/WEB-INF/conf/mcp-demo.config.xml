@@ -7,7 +7,7 @@
 	FOR A LOCAL DEMO ONLY. HTTP basic puts a person's password into the client configuration; a real
 	installation uses an API key or a bearer token instead. What the endpoint publishes
 	is configured in autoconf/com.top_logic.ai.mcp.server.MCPServerService.config.xml; see
-	doc/security/mcp-endpoint.md.
+	the developer article ai/security/mcp-endpoint.
 
 	Connect Claude Code to a running demo with:
 

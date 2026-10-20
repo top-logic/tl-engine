@@ -63,7 +63,7 @@
 						With no <tool-access> configured, every user holds the read-only default
 						baseline below and nothing more.
 
-						See doc/security/tool-access-configuration.md.
+						See the developer article ai/security/tool-access-configuration.
 					-->
 					<module key="com.top_logic.tl.ai.core.security.AiToolAccessService$Module" value="true"/>
 					<!--
@@ -89,8 +89,8 @@
 			replaces the default" exactly true, and lets <baseline/> mean "grant nothing to everyone".
 
 			An application authors its own policy with a <tool-access> block; see
-			doc/security/tool-access-configuration.md for a minimal working example and
-			doc/security/agent-security-architecture.md section 4.1 for the full specification.
+			the developer articles ai/security/tool-access-configuration for a minimal working example and
+			ai/security/administration for the full specification.
 		-->
 		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
 			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService"/>
@@ -190,7 +190,8 @@
 				     not be written: a run another run started (a research worker, a delegated agent)
 				     opens with webFetch or the browser only an address its user or lead gave, that a
 				     search returned, or that a page it read links to. "ALL" applies the rule to the
-				     chat's own agent too, "OFF" to no run. See doc/security/browsing-governance.md. -->
+				     chat's own agent too, "OFF" to no run. See the developer article
+				     ai/security/browsing-governance. -->
 
 				<!-- BROWSING GOVERNANCE (issue #347). Which origins an agent run may reach,
 				     resolved per security role. Nothing is configured here, and that is the
@@ -227,7 +228,7 @@
 				     A policy name no <policy> declares is a boot error, deliberately, so that a
 				     typo in a security setting cannot silently hand out "everything".
 
-				     See doc/security/browsing-governance.md. -->
+				     See the developer article ai/security/browsing-governance. -->
 			</instance>
 		</config>
 
@@ -2820,7 +2821,7 @@ Write the report in the language of the task. Call no tool after the report.
 						infrastructure: the chat runs this one *for* the user - it rewrites the draft
 						they are about to send and never answers as a persona. It is therefore offered
 						by no menu and refused wherever a user's own run names it, whatever
-						<agent-access> grants. See doc/security/tool-access-configuration.md.
+						<agent-access> grants. See the developer article ai/security/run-access.
 					-->
 					<agent name="TL_PromptImprover"
 						description="Rewrite a draft user prompt so it is clearer and ready to send. Returns only the improved prompt text."

@@ -66,9 +66,9 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  *
  * Deliberately shaped like the engine's SecurityConfigurationService (ticket #29088) so that an
  * administrator meets one idiom rather than two: static application configuration, role names resolved
- * and validated at boot, deny-by-default semantics. See doc/security/tool-access-configuration.md for
- * the five-line version an administrator starts from, and section 4.1 of
- * doc/security/agent-security-architecture.md for the full design.
+ * and validated at boot, deny-by-default semantics. See the developer article
+ * ai/security/tool-access-configuration for the five-line version an administrator starts from, and
+ * ai/security/administration for the precise semantics.
  *
  * Enforcement is unconditional: there is no mode, no opt-in and no way to switch this layer off. An
  * application that authors no <tool-access> matrix has not opted out - its users hold
@@ -183,7 +183,8 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 			// context alone is not enough: TypedRuntimeModule tests it for errors *before* running this
 			// method, so at boot the refusal only surfaces as the next service's failure, and an in-app
 			// restart of this service alone - which has no next service - would report nothing at all
-			// and leave the invalid policy running. See doc/security/tool-access-configuration.md.
+			// and leave the invalid policy running. See the developer article
+			// ai/security/tool-access-configuration.
 			throw new ConfigurationError(ResKey.text("The agent tool access policy is invalid and was"
 				+ " refused, so this service is not running: " + String.join(" ", refusals)));
 		}
@@ -708,8 +709,8 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * engine's read semantics make that look like "there is no data" rather than "you may not see it".
 	 * A role holding {@code data.write} with no {@code Write} or {@code Create} grant has write tools
 	 * and nothing to write. This is the "Dora" case of
-	 * {@code doc/security/role-model-worked-example.md}, and it argues for exactly this warning rather
-	 * than for a different architecture.
+	 * the developer article {@code ai/security/role-model-worked-example}, and it argues for exactly
+	 * this warning rather than for a different architecture.
 	 * </p>
 	 *
 	 * <p>

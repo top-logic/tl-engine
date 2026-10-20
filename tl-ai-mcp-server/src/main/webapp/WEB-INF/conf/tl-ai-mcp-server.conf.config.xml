@@ -25,8 +25,8 @@
 						The MCP server is opt-in, because /mcp/* authenticates nobody.
 
 						Enabling it publishes the application's model and business data to
-						everyone who can reach the endpoint. See doc/security/mcp-endpoint.md
-						for what exactly is exposed and how to switch it on. Transport
+						everyone who can reach the endpoint. See the developer article
+						ai/security/mcp-endpoint for what exactly is exposed and how to switch it on. Transport
 						authentication is issue #261.
 					-->
 					<module key="com.top_logic.ai.mcp.server.MCPServerService$Module" value="false"/>

@@ -21,7 +21,8 @@ import junit.framework.TestCase;
  * The endpoint authenticates its callers since issue #261, so this is no longer a hole being kept
  * shut - it is that <em>publishing</em> an application's model and business data over HTTP is a
  * deployment decision and not a default. An application that wants {@code /mcp/*} switches the module
- * on and configures an authentication for it; see {@code doc/security/mcp-endpoint.md}.
+ * on and configures an authentication for it; see the developer article
+ * {@code ai/security/mcp-endpoint}.
  * </p>
  *
  * <p>
@@ -57,7 +58,7 @@ public class TestShippedModuleDefault extends TestCase {
 		assertEquals("Serving /mcp/* publishes this application's model and business data over HTTP,"
 			+ " which is a deployment decision, so this module must ship switched off. Do not flip it"
 			+ " here: an application that wants the endpoint overrides the module in its own"
-			+ " configuration - see doc/security/mcp-endpoint.md.",
+			+ " configuration - see the developer article ai/security/mcp-endpoint.",
 			"false", entry.group(1));
 	}
 
@@ -79,7 +80,7 @@ public class TestShippedModuleDefault extends TestCase {
 		assertTrue("The answer must name the second step, because enabling the module alone still"
 			+ " serves nothing.", message.contains("configure an authentication"));
 		assertTrue("The answer must point at the page that explains both steps.",
-			message.contains("doc/security/mcp-endpoint.md"));
+			message.contains("ai/security/mcp-endpoint"));
 	}
 
 	/**

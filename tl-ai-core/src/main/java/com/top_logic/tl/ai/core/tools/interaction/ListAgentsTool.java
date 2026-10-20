@@ -30,7 +30,7 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * denied to the acting user is left out, and one that is only partly reachable is listed with the
  * capabilities it cannot use. Listing what a spawn would spend a provider round trip failing at is
  * what this filter exists to stop; see {@link AgentCapabilities#unusableReason(AgentDefinition)} and
- * {@code doc/security/agent-security-architecture.md} section 3.2.7.
+ * the developer article {@code ai/security/capability-notices}.
  * </p>
  */
 public class ListAgentsTool implements Tool {

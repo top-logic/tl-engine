@@ -187,7 +187,7 @@ public class RoleToolAccess {
 	 * a TL-Script result are all filtered per object and per attribute. What this default still does
 	 * not promise is the two disclosures no output-boundary filter can reach: a cardinality TL-Script
 	 * reduced to a number before the filter saw it (#291) and a label reached through string coercion
-	 * (#296). Both are stated in doc/security/agent-security-architecture.md 3.3.2 and asserted in
+	 * (#296). Both are stated in the developer article ai/security/data-authorization and asserted in
 	 * SecDemoReadFilterTest, and nothing in the documentation may claim more than that.
 	 */
 	public static final List<String> DEFAULT_BASELINE =

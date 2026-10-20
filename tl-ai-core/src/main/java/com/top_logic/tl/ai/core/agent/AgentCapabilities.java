@@ -83,7 +83,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * <p>
  * <b>This is UX, not a control.</b> Nothing here decides whether a tool may run - the invocation
  * gate in {@link AgentLoop} does, and it is unaffected by everything below. See
- * {@code doc/security/agent-security-architecture.md} section 2.2: all gates are deterministic Java
+ * the developer article {@code ai/security} (the threat model): all gates are deterministic Java
  * checks on the call path, never prompt instructions.
  * </p>
  */
@@ -244,7 +244,7 @@ public class AgentCapabilities {
 	 * The declared-type twin of {@link #NO_GUESSING}, which cannot be reused verbatim: it opens with
 	 * "These capabilities", and here there are none to point at. What it has to keep is the half that
 	 * matters - the model must not supply a capability of its own to fill the gap, which is the very
-	 * guessing #517 found. See {@code doc/security/agent-security-architecture.md} section 3.3.3.
+	 * guessing #517 found. See the developer article {@code ai/security/declared-types}.
 	 * </p>
 	 */
 	static final String NO_CAPABILITY_GUESSING =
@@ -516,7 +516,7 @@ public class AgentCapabilities {
 	 * <li>A partly reachable delegate is kept and the parent is told what it cannot do, rather than
 	 * discovering it by sending work that comes back refused. See
 	 * {@link #unreachableCapabilities(AgentDefinition)} and
-	 * {@code doc/security/agent-security-architecture.md} section 3.2.7.</li>
+	 * the developer article {@code ai/security/capability-notices}.</li>
 	 * <li>A delegate none of whose tool names resolve is kept, because a typo in an agent's tool list
 	 * is indistinguishable from a denial here.</li>
 	 * </ul>
@@ -900,7 +900,7 @@ public class AgentCapabilities {
 	 * </p>
 	 *
 	 * <p>
-	 * See {@code doc/security/agent-security-architecture.md} section 3.2.7.
+	 * See the developer article {@code ai/security/capability-notices}.
 	 * </p>
 	 *
 	 * @param skillId

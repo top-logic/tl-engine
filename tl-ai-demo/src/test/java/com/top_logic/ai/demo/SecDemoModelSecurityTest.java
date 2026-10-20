@@ -27,7 +27,8 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The persona walkthrough of {@code doc/security/role-model-worked-example.md}, one test per row.
+ * The persona walkthrough of the developer article {@code ai/security/role-model-worked-example}, one
+ * test per row.
  *
  * <p>
  * This is the layer that carries every per-object and per-type guarantee in the design: L1 can only

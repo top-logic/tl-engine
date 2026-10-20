@@ -18,8 +18,8 @@
 	Secret instances of a module this file no longer declares, so it will not boot. See
 	tl-ai-demo/doc/secdemo/testbed.md, section "Enabling and resetting the fixture".
 
-	What it wires - the application of doc/security/role-model-worked-example.md, built so that the
-	document and the fixture cannot disagree:
+	What it wires - the application of the developer article ai/security/role-model-worked-example,
+	built so that the article and the fixture cannot disagree:
 	  * the "pm" business model (Project / Ticket),
 	  * two roles and two groups - one role vocabulary serving both grant tables,
 	  * four declarative role rules on the access manager: two tiers on the security root, one scope

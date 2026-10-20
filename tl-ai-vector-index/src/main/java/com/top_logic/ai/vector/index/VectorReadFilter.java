@@ -55,7 +55,7 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
  * the answer; it does not undo that the vector was computed from content the principal may not read,
  * and a caller who can observe scores can still learn that <em>something</em> similar exists. Not
  * indexing unreadable content in the first place is the stronger guarantee and a different change with
- * a very different cost - see {@code doc/security/agent-security-architecture.md} 3.4.3.
+ * a very different cost - see the developer article {@code ai/security/result-filtering}.
  * </p>
  *
  * @see ReadFilter

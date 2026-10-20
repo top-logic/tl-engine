@@ -39,7 +39,7 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * There is no mode that turns this off. An application that writes no {@code <security-config>} does
  * not get an unchecked agent - the engine's rights are deny-by-default, so it gets an agent that can
- * read nothing. See {@code doc/security/role-model-worked-example.md}.
+ * read nothing. See the developer article {@code ai/security/role-model-worked-example}.
  * </p>
  *
  * @see ModelAccessRightsSecurity

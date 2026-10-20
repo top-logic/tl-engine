@@ -58,7 +58,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * </p>
  *
  * <p>
- * See {@code doc/security/agent-security-architecture.md}, section 3.3.3.
+ * See the developer article {@code ai/security/declared-types}.
  * </p>
  */
 public class DeclaredTypeAccess {

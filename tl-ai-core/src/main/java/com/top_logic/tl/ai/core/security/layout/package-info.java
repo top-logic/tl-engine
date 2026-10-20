@@ -30,7 +30,7 @@
  * enforcement path; what the editor writes is the same configuration file the engine's service editor
  * writes, which remains the raw view of the same policy. The catalog and the editor report the
  * <em>saved</em> policy, the effective-permissions view the <em>running</em> service, and the editor
- * says so while the two differ. See {@code doc/security/tool-access-configuration.md}.
+ * says so while the two differ. See the developer article {@code ai/security/tool-access-editor}.
  * </p>
  */
 package com.top_logic.tl.ai.core.security.layout;

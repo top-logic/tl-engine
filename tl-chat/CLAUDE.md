@@ -73,7 +73,7 @@ whether one is raised. The factory is asked once per run and returns a context w
 `DefaultSecurityContextFactory.defaultContext(run)` so that every other question keeps its answer.
 Every other entry point - the TL-Script functions, the MCP endpoint, the prompt improver - goes
 through the same call, so the substitution is one class and not five call sites. See
-[the security architecture, 4.5](../doc/security/agent-security-architecture.md).
+the developer article `ai/security/administration` (approval decided from the call).
 
 ### Human-in-the-loop: a pending interaction belongs to the account (#393)
 

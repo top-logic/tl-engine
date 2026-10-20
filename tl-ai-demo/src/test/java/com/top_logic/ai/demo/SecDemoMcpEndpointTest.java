@@ -689,8 +689,8 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 
 	/**
 	 * The authenticator {@code MCPServerService} builds from the API-key configuration of
-	 * {@code doc/security/mcp-endpoint.md}, with a secret that maps {@link #API_KEY} to the given
-	 * persona.
+	 * the developer article {@code ai/security/mcp-endpoint}, with a secret that maps
+	 * {@link #API_KEY} to the given persona.
 	 *
 	 * <p>
 	 * Read from the XML of an application configuration file, as the application reads it: the

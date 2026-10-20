@@ -247,7 +247,7 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	 * {@code TestAiToolAccessService.testPolicyWithRolesMustDeclareBackgroundAllowlist}; what this
 	 * asserts is the other half - that the shipped fixture, which does grant roles, satisfies the rule.
 	 * An application whose boot fails on this shows the message quoted in
-	 * doc/security/tool-access-configuration.md.
+	 * the developer article ai/security/tool-access-recipes.
 	 * </p>
 	 */
 	public void testTheDeployedPolicyDeclaresAnAllowlist() {

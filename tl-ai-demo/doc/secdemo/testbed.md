@@ -11,9 +11,9 @@ its walkthrough lives next door:
 
 | Page | Read it when |
 |---|---|
-| [role-model-worked-example.md](../../../doc/security/role-model-worked-example.md) | you want the **role model** from scratch: what a role is, why one role name serves both grant tables, the flag that decides whether per-object scoping works at all, and the **model-rights walkthrough** persona by persona - what `ModelAccessRights` does per object and per attribute (its section 4). **This fixture is that document, built** |
-| [tool-access-configuration.md](../../../doc/security/tool-access-configuration.md) | you are writing a `<tool-access>` policy for **your own** application |
-| [agent-security-architecture.md](../../../doc/security/agent-security-architecture.md) | you want the design: threat model, layers, built versus staged |
+| the developer article `ai/security/role-model-worked-example` | you want the **role model** from scratch: what a role is, why one role name serves both grant tables, the flag that decides whether per-object scoping works at all, and the **model-rights walkthrough** persona by persona - what `ModelAccessRights` does per object and per attribute (its persona section). **This fixture is that article, built** |
+| the developer article `ai/security/tool-access-configuration` | you are writing a `<tool-access>` policy for **your own** application |
+| the developer chapter `ai/security` | you want the design: threat model and layers |
 
 All of this is **test scaffolding**, off in the shipped application, switched on by one line of
 `metaConf.txt`.
@@ -62,7 +62,7 @@ happens; the fourth is asked again at the end of the turn.
 L1 can only answer "may this account use this *kind* of tool at all", because when it runs there is no
 object yet. Anna and Dora are **indistinguishable at L1** and opposite at L2 - one partners on a project,
 the other on nothing. That is why several rows are *ALLOWED at L1 and empty in the result*;
-[role-model-worked-example.md](../../../doc/security/role-model-worked-example.md) section 4 reasons that interplay out.
+the persona section of the developer article `ai/security/role-model-worked-example` reasons that interplay out.
 
 ### 1.2 The hinge
 
@@ -77,7 +77,7 @@ security *ancestors*, never its children. Hence:
   the fixture still looks fine: the tools are all there, they all run, they all return nothing.
 
 The five rules are in `secdemo.config.xml`, explained in
-[role-model-worked-example.md](../../../doc/security/role-model-worked-example.md) section 3.4. Nothing in `SecDemoSetupService`
+the role-rules section of the developer article `ai/security/role-model-worked-example`. Nothing in `SecDemoSetupService`
 *assigns* a role: it states which roles the matrix expects and checks after boot that the rules delivered
 them.
 
@@ -356,8 +356,8 @@ JUnit test.
 The per-object and per-attribute half of the substrate - a partner reading one project of two, a reader
 reading every ticket and no project, an attribute grant omitting `pm:Ticket#body` - is the engine's model
 security. Its walkthrough is
-[role-model-worked-example.md](../../../doc/security/role-model-worked-example.md#4-the-personas-and-what-each-one-can-do)
-section 4, one case per persona, with `SecDemoModelSecurityTest` and `SecDemoRoleRuleTest` as the
+the persona section of the developer article `ai/security/role-model-worked-example`,
+one case per persona, with `SecDemoModelSecurityTest` and `SecDemoRoleRuleTest` as the
 deterministic form.
 
 ### 5.2 Tool access - the invocation gate
@@ -502,7 +502,7 @@ each result; the rows say which case to read. **Model-dependent**, with
 | **A2** | an allowlisted `script` does not admit writes | `anna` | case **3.2** beside cases **3.1** and **3.6** | the commit refused while the read-only scripts of the same run succeed. The unattended-write bypass, pinned closed: `script` on the allowlist is not a write grant |
 | **A3** | it binds administrators too | `root` | case **3.2** (as `root`, `fire` fires every case) | still refused, for the same capability. The missing approval prompt is the justification, not the principal's authority |
 | **A4** | what the allowlist admits still works | `ben` | cases **3.3**, **3.4**, **3.5** | the listings, with the model rights applied inside them. The ceiling narrows, it is not a blanket refusal - the harness of this page depends on that |
-| **A5** | an enforcing policy must declare an allowlist | - | *(edit config instead)* | delete the whole `<background-allowlist>` element from `secdemo.config.xml` and restart: the application refuses to start, with the message quoted in [tool-access-configuration.md](../../../doc/security/tool-access-configuration.md#cap-what-an-unattended-run-can-do). Silence is not read as a decision in either direction |
+| **A5** | an enforcing policy must declare an allowlist | - | *(edit config instead)* | delete the whole `<background-allowlist>` element from `secdemo.config.xml` and restart: the application refuses to start, with the message quoted in the developer article `ai/security/tool-access-recipes` (capping what an unattended run can do). Silence is not read as a decision in either direction |
 
 ### 5.6 The pre-commit guard (L4)
 
@@ -530,7 +530,7 @@ the engine keeps outside the holder's row this way, the children of a `tl.doc` p
 > **What L4 does not cover**, stated so an observation is not mistaken for a finding: attribute writes to
 > an object created in the *same* turn (the engine allows every instance-level check on an uncommitted
 > object, so the creation is what gets checked - see
-> [agent-security-architecture.md](../../../doc/security/agent-security-architecture.md) section 3.5), and
+> the developer article `ai/security/pre-commit-guard`), and
 > side effects outside the KnowledgeBase, which a KB rollback cannot undo. There is no run in which the
 > guard is a no-op: it runs for every turn that opened a transaction.
 
@@ -554,7 +554,7 @@ turn as a persona:
 
 | # | Behaviour | Where | You should see |
 |---|---|---|---|
-| **P1** | `/mcp/*` is not served at all | `curl -i http://localhost:8080/tl-ai-demo/mcp` | **HTTP 503** and a message naming both steps: `MCPServerService` is not started, enabling the module `MCPServerService$Module` switches it on, and an authentication has to be configured for it because the endpoint serves no request it cannot attribute to an account. The demo does neither, so it answers 503. [mcp-endpoint.md](../../../doc/security/mcp-endpoint.md) is how to configure it, and what an authenticated caller then reaches |
+| **P1** | `/mcp/*` is not served at all | `curl -i http://localhost:8080/tl-ai-demo/mcp` | **HTTP 503** and a message naming both steps: `MCPServerService` is not started, enabling the module `MCPServerService$Module` switches it on, and an authentication has to be configured for it because the endpoint serves no request it cannot attribute to an account. The demo does neither, so it answers 503. The developer article `ai/security/mcp-endpoint` is how to configure it, and what an authenticated caller then reaches |
 | **P2** | a run with no account does not start | test | `SecDemoBackgroundAccessTest.testARunWithoutAPrincipalCannotBeBuilt` is green. An agent definition cannot loosen anything either: a tool the acting user is denied stays denied whatever the definition carries |
 
 > The MCP **resource** surface (`toplogic://instance/...`) used to serialize instances the way the data
@@ -604,7 +604,7 @@ other way round, Ben and Dora neither.
 > ⚠️ **What the index does not claim.** The embedding vector was computed from unfiltered text.
 > Dropping a hit keeps the text out of the answer; it does not undo that the vector exists. Not
 > *indexing* unreadable content is the stronger guarantee and a different change - see
-> [agent-security-architecture.md](../../../doc/security/agent-security-architecture.md) 3.4.3 for the
+> the developer article `ai/security/result-filtering` for the
 > cost it carries.
 
 ---
@@ -657,8 +657,8 @@ Eight more carry no scenario row of their own, because what they assert is not s
 by logging in as a persona:
 
 - `SecDemoModelSecurityTest` - one test per case of
-  [role-model-worked-example.md](../../../doc/security/role-model-worked-example.md#4-the-personas-and-what-each-one-can-do)
-  section 4, i.e. the substrate rather than the agent layers.
+  the persona section of the developer article `ai/security/role-model-worked-example`,
+  i.e. the substrate rather than the agent layers.
 - `SecDemoSpawnFilterTest` - that a spawn decision is taken per child context.
 - `SecDemoHarnessScriptsTest` - that every `harness/*.tlscript` still compiles against the model and the
   registered script functions.
@@ -676,7 +676,7 @@ by logging in as a persona:
   applying account itself is bound by.
 
 The last four belong to the administration views, whose own documentation is
-[tool-access-configuration.md](../../../doc/security/tool-access-configuration.md#agent-sicherheit-the-view-that-explains-this-policy-and-the-one-that-writes-it);
+the developer article `ai/security/tool-access-editor`;
 they run in this suite because they need the same booted fixture.
 
 Every part of that command line earns its place. `-Dtest=...`: a bare `mvn test` here runs only
@@ -716,7 +716,7 @@ principal and the deny-by-default of an empty policy, `TestPreCommitGuard` and t
   granted on the security root reaches **no** business object, so it satisfies the *tool* layer and
   grants no data access whatever. Every per-object and per-type statement therefore needs a role rule
   that produces the role on the objects themselves. See [1.2](#12-the-hinge) and
-  [role-model-worked-example.md](../../../doc/security/role-model-worked-example.md) section 3.4.1.
+  the developer article `ai/security/role-model-worked-example` (why the type-scope rule is not redundant).
 - **An empty result is the model layer, not a broken tool**, which is why almost every row is a **pair**:
   one persona who sees the data next to one who does not. And an application whose agent's tools all work
   and all return nothing has forgotten a scope rule ([1.2](#12-the-hinge)).

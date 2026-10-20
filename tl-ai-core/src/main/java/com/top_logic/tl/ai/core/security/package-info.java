@@ -9,7 +9,7 @@
  *
  * <p>
  * This package holds the layered agent security design documented in
- * {@code doc/security/agent-security-architecture.md}. The decision types are implemented and
+ * the developer documentation chapter {@code ai/security}. The decision types are implemented and
  * unit-tested, {@link com.top_logic.tl.ai.core.security.ModelSecurity} is reachable from every tool
  * through {@code ToolContext.modelSecurity()}, and the
  * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} of section 3.5 runs once per writing turn.
@@ -48,8 +48,8 @@
  * almost nothing rather than one that is unchecked: an absent {@code <tool-access>} matrix grants only
  * {@link com.top_logic.tl.ai.core.security.RoleToolAccess#IMPLICIT_BASELINE}, and the engine's
  * {@code SecurityConfigurationService} is active in every TL 8 application and instantiates with empty
- * rights. See {@code doc/security/role-model-worked-example.md} for the configuration an application
- * has to write.
+ * rights. See the developer article {@code ai/security/role-model-worked-example} for the
+ * configuration an application has to write.
  * </p>
  *
  * <p>

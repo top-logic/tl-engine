@@ -47,7 +47,8 @@
 	role rule of its own that puts "AiBinaryOwner" on the objects a reporting role is to reach. It
 	never has to narrow anything here, because nothing here grants more than ownership.
 
-	See doc/security/agent-security-architecture.md section 4.6, tl-ai-core/doc/screenshots.md.
+	See the developer article ai/security/administration (the shipped read policy for perceivable
+	binaries) and tl-ai-core/doc/screenshots.md.
 -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>

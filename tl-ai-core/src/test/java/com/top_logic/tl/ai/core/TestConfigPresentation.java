@@ -168,7 +168,8 @@ public class TestConfigPresentation extends BasicTestCase {
 			}
 		}
 
-		assertEquals("An XML example belongs in doc/security/tool-access-configuration.md, not in a"
+		assertEquals("An XML example belongs in the developer article"
+			+ " ai/security/tool-access-configuration, not in a"
 			+ " tooltip:\n  " + String.join("\n  ", withExample), List.of(), withExample);
 	}
 

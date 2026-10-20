@@ -205,7 +205,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		 * The chat's prompt improver is such an agent: it rewrites the draft a user is about to send
 		 * and never answers as a persona. An agent marked here is offered by no menu and is refused
 		 * wherever a user's own run would name it, whatever the agent access policy grants - see
-		 * {@code doc/security/tool-access-configuration.md}. The product's own call path stays open:
+		 * the developer article {@code ai/security/run-access}. The product's own call path stays open:
 		 * it builds its run with {@code SecurityContext.withoutAgentChoice()}, which is what says in
 		 * code that the agent is not the user's choice.
 		 * </p>

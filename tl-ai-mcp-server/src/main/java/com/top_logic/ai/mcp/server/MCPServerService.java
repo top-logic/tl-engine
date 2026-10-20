@@ -89,7 +89,7 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
  * that switches it on has to say who may reach it: {@code /mcp/*} serves no request it cannot
  * attribute to an account, and it accepts only the {@link Config#getAuthentications()
  * authentications} the application configures. Configure none and every request is refused. See
- * {@code doc/security/mcp-endpoint.md} and issue #261. While the service is off,
+ * the developer article {@code ai/security/mcp-endpoint}. While the service is off,
  * {@code MCPTransportServlet} answers the whole {@code /mcp/*} path with 503.
  * </p>
  *
@@ -546,7 +546,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			Logger.warn("MCP server started on " + MCP_ENDPOINT + "/* with NO authentication"
 				+ " configured, so it refuses every request with 503. The endpoint serves nothing it"
 				+ " cannot attribute to an account. Configure <authentications> and <secrets> on"
-				+ " MCPServerService to make it usable - see doc/security/mcp-endpoint.md.",
+				+ " MCPServerService to make it usable - see the developer article ai/security/mcp-endpoint.",
 				MCPServerService.class);
 			return;
 		}
@@ -559,7 +559,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			+ " filtered by that account's model access rights, and tool calls are authorized against"
 			+ " its roles, bounded by the <background-allowlist> because an MCP caller has no human to"
 			+ " answer an approval prompt. tools/list shows every published tool to any authenticated"
-			+ " caller. See doc/security/mcp-endpoint.md.",
+			+ " caller. See the developer article ai/security/mcp-endpoint.",
 			MCPServerService.class);
 	}
 

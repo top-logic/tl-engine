@@ -204,7 +204,7 @@ public class ToolCatalog implements ToolRegistry {
 	 * </p>
 	 *
 	 * <p>
-	 * See {@code doc/security/agent-security-architecture.md} section 3.2.7.
+	 * See the developer article {@code ai/security/capability-notices}.
 	 * </p>
 	 */
 	private static String absenceReason(String requested, ToolRegistry registry, ToolContext context) {

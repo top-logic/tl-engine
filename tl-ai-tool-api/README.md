@@ -201,7 +201,7 @@ either way.
 the security root.** This check reads roles there, like every other tool-level check. A type whose read
 right is derived *per object* - as `tl.ai.screenshots:Screenshot` derives `AiBinaryOwner` from the
 screenshot's own owner - must not be declared, or the owner is refused their own object. Where you
-cannot tell, declare nothing. See `doc/security/agent-security-architecture.md`, section 3.3.3.
+cannot tell, declare nothing. See the developer article `ai/security/declared-types`.
 
 ## What your answer claims
 

@@ -34,8 +34,8 @@ import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointSecret;
 
 /**
- * Tests that the secrets {@code doc/security/mcp-endpoint.md} documents are read from an
- * application configuration file and reach the authenticator (issue #672).
+ * Tests that the secrets the developer article {@code ai/security/mcp-endpoint} documents are read
+ * from an application configuration file and reach the authenticator (issue #672).
  *
  * <p>
  * The engine's secret types may only stand in the configuration of its <i>OpenAPI</i> server, so a
@@ -54,8 +54,8 @@ import com.top_logic.tl.ai.core.access.EndpointSecret;
 public class TestMcpSecrets extends TestCase {
 
 	/**
-	 * The API-key configuration of {@code doc/security/mcp-endpoint.md}: the content of the
-	 * {@code <instance>} element of {@code MCPServerService}.
+	 * The API-key configuration of the developer article {@code ai/security/mcp-endpoint}: the content
+	 * of the {@code <instance>} element of {@code MCPServerService}.
 	 */
 	public static final String DOCUMENTED_API_KEY_CONFIGURATION = ""
 		+ "  <authentications>\n"

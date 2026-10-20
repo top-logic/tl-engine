@@ -2375,6 +2375,7 @@
 @media (pointer: coarse) {
   [draggable="true"] {
     -webkit-touch-callout: none;
+    -webkit-user-select: none;
     user-select: none;
   }
 }
@@ -6175,4 +6176,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:ca7e71390c4cb99c1c0ac4fdbbc6d97181c399f9f12d3f518571f968e5f7ac10 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:8eaf6b18e0078f40ac61eda0639cc248ff2c650e0d34a8d64a611164209dfe2e — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -5,7 +5,8 @@
  */
 package com.top_logic.tool.boundsec.gui.profile;
 
-import com.top_logic.basic.Logger;
+import java.util.Collection;
+
 import com.top_logic.mig.html.layout.LayoutConfigTree;
 import com.top_logic.mig.html.layout.LayoutConfigTreeNode;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -78,9 +79,18 @@ public class ImplicitReadRights {
 	 * <p>
 	 * Existing rights are never removed.
 	 * </p>
+	 *
+	 * @param tree
+	 *        The tree in which the read rights are added.
+	 * @param role
+	 *        The role whose read rights are added.
+	 * @param added
+	 *        Collection to which each {@link PersBoundComp} is added, in which a read right was
+	 *        added.
 	 */
-	public static void addImplicitReadRights(LayoutConfigTree tree, BoundedRole role) {
-		addImplicitReadRights(tree.getRoot(), role);
+	public static void addImplicitReadRights(LayoutConfigTree tree, BoundedRole role,
+			Collection<? super PersBoundComp> added) {
+		addImplicitReadRights(tree.getRoot(), role, added);
 	}
 
 	/**
@@ -88,11 +98,12 @@ public class ImplicitReadRights {
 	 *
 	 * @return Whether the enclosing security node needs the read right for the given role.
 	 */
-	private static boolean addImplicitReadRights(LayoutConfigTreeNode node, BoundedRole role) {
+	private static boolean addImplicitReadRights(LayoutConfigTreeNode node, BoundedRole role,
+			Collection<? super PersBoundComp> added) {
 		boolean childNeedsRead = false;
 		for (LayoutConfigTreeNode child : node.getChildren()) {
 			// Descend into all children, also when the result is already known.
-			if (addImplicitReadRights(child, role)) {
+			if (addImplicitReadRights(child, role, added)) {
 				childNeedsRead = true;
 			}
 		}
@@ -102,8 +113,7 @@ public class ImplicitReadRights {
 		PersBoundComp secComp = node.getSecurityComponent();
 		if (childNeedsRead && secComp != null && !hasRight(secComp, role, SimpleBoundCommandGroup.READ)) {
 			secComp.addAccess(SimpleBoundCommandGroup.READ, role);
-			Logger.info("Added implicit read right for role '" + role.getName() + "' in '" + secComp.getName()
-				+ "'.", ImplicitReadRights.class);
+			added.add(secComp);
 		}
 		if (isDialogRoot(node)) {
 			return false;

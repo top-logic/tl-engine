@@ -39,6 +39,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 IMPORT_ROLES_PROFILE_UNAVAILABLE_COMMAND_GROUPS__GROUPS;
 
+	/**
+	 * @en The read right was added to the following views, because it is needed by the rights in
+	 *     their contents: {0}
+	 */
+	public static ResKey1 IMPORT_ROLES_PROFILE_IMPLICIT_READ_RIGHTS__RIGHTS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

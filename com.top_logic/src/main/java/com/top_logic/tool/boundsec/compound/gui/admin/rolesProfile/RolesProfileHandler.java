@@ -362,8 +362,17 @@ public class RolesProfileHandler {
 		Map<String, BoundedRole> roleByName = rolesByName(profiles.keySet());
 		Set<String> skippedGroups = new TreeSet<>();
 		layoutTrees.forEach(tree -> importProfiles(tree, profiles, roleByName, allViews, skippedGroups));
+		Set<String> implicitReadRights = new TreeSet<>();
 		for (BoundedRole role : roleByName.values()) {
-			layoutTrees.forEach(tree -> ImplicitReadRights.addImplicitReadRights(tree, role));
+			List<PersBoundComp> added = new ArrayList<>();
+			layoutTrees.forEach(tree -> ImplicitReadRights.addImplicitReadRights(tree, role, added));
+			added.forEach(secComp -> implicitReadRights
+				.add("'" + secComp.getName() + "' for role '" + role.getName() + "'"));
+		}
+		if (!implicitReadRights.isEmpty()) {
+			String addedRights = StringServices.toString(implicitReadRights);
+			Logger.warn("Implicitly needed read rights added: " + addedRights, RolesProfileHandler.class);
+			InfoService.showWarning(I18NConstants.IMPORT_ROLES_PROFILE_IMPLICIT_READ_RIGHTS__RIGHTS.fill(addedRights));
 		}
 		if (!allViews.isEmpty()) {
 			String missingViews = StringServices.toString(allViews);

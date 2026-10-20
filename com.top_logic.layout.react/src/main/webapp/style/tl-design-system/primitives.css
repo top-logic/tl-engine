@@ -150,6 +150,8 @@
   --tl-depth-3: 1000;
   --tl-depth-4: 1100;
   --tl-depth-5: 1200;
+  --tl-depth-6: 1300;
+  --tl-depth-7: 1400;
   --tl-font-1: 'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif;
   --tl-font-2: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
   --tl-dur-1: 100ms;
@@ -175,4 +177,4 @@
   --tl-veil-5: rgba(27, 29, 33, 0.16);
   --tl-veil-6: rgba(240, 243, 249, 0.13);
 }
-/* tl-design-system sha256:41428ba2ad3f6f78c020353e1c4aa66155374bd7fd8ff25a7f91f538b5782d67 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:c39c2fbf6fc90b846787ad31831c845aca3d6c76e34f8c9727aca7dfc9cede12 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

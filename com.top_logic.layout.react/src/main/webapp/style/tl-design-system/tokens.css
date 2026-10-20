@@ -72,6 +72,8 @@
   --tl-layer-overlay: var(--tl-depth-3);
   --tl-layer-popover: var(--tl-depth-4);
   --tl-layer-toast: var(--tl-depth-5);
+  --tl-layer-tooltip: var(--tl-depth-6);
+  --tl-layer-drag: var(--tl-depth-7);
 
   --tl-surface-base: var(--tl-gray-1);
   --tl-surface-layer: var(--tl-gray-0);
@@ -150,6 +152,8 @@
   --tl-category-8-surface: var(--tl-magenta-47);
   --tl-text-contrast-light: var(--tl-gray-0);
   --tl-text-contrast-dark: var(--tl-gray-77);
+  --tl-surface-inverse: var(--tl-gray-77);
+  --tl-text-inverse: var(--tl-gray-0);
   --tl-text-on-brand: #FFFFFF;
   --tl-text-on-brand-hover: #FFFFFF;
   --tl-text-on-brand-active: #FFFFFF;
@@ -266,6 +270,8 @@
   --tl-category-8-surface: var(--tl-magenta-47);
   --tl-text-contrast-light: var(--tl-gray-0);
   --tl-text-contrast-dark: var(--tl-gray-77);
+  --tl-surface-inverse: var(--tl-gray-1);
+  --tl-text-inverse: var(--tl-gray-77);
   --tl-text-on-brand: #1B1D21;
   --tl-text-on-brand-hover: #1B1D21;
   --tl-text-on-brand-active: #FFFFFF;
@@ -304,4 +310,4 @@
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
-/* tl-design-system sha256:cd3dc50aa0e7855d7e917a436a8e552760b1be6a5c9aae44a14b96310ea469bd — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:6f7560ff0f20998c6cbe47064dd2cc4a1e35875a6ce153c10bce4f77e0f118db — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

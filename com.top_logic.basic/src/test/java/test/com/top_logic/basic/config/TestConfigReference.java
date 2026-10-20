@@ -82,12 +82,21 @@ public class TestConfigReference extends AbstractTypedConfigurationTestCase {
 
 		String DETAIL = "detail";
 
+		String MAP = "map";
+
+		String BY_VALUE = "by-value";
+
+		String OTHER = "other";
+
 		@Name(NAME)
 		@GlobalKey
 		String getName();
 
 		@Name(VALUE)
 		String getValue();
+
+		@Name(OTHER)
+		String getOther();
 
 		/** The children, written directly in the node. */
 		@Name(NODES)
@@ -111,6 +120,18 @@ public class TestConfigReference extends AbstractTypedConfigurationTestCase {
 		/** A single node, reached through an item property. */
 		@Name(DETAIL)
 		Node getDetail();
+
+		/** Nodes in a map, keyed by their name. */
+		@Name(MAP)
+		@Key(NAME)
+		@EntryTag("node")
+		Map<String, Node> getMap();
+
+		/** Nodes in a list keyed by another property than the global one. */
+		@Name(BY_VALUE)
+		@Key(VALUE)
+		@EntryTag("node")
+		List<Node> getByValue();
 
 	}
 
@@ -171,6 +192,47 @@ public class TestConfigReference extends AbstractTypedConfigurationTestCase {
 		Node a = node(root, "a");
 		assertEquals(1, a.getOthers().size());
 		assertEquals("o2", a.getOthers().get(0).getValue());
+	}
+
+	public void testReferenceToItemProperty() throws ConfigurationException {
+		Node root = readRoot(
+			root("<detail name='d' value='d1'><node name='e' value='e1'/></detail>"),
+			root("<detail " + REF + "='d' value='d2'/>"));
+		assertEquals("d2", root.getDetail().getValue());
+		assertEquals("The content of the item is kept.", "e1", node(root.getDetail(), "e").getValue());
+	}
+
+	public void testRemoveItemProperty() throws ConfigurationException {
+		Node root = readRoot(
+			root("<detail name='d' value='d1'/>"),
+			root("<detail " + REF + "='d' " + OPERATION + "='remove'/>"));
+		assertNull(root.getDetail());
+	}
+
+	public void testPositioningItemPropertyFails() {
+		assertFails("cannot be positioned",
+			root("<detail name='d' value='d1'/>"),
+			root("<detail " + REF + "='d' " + POSITION + "='begin'/>"));
+	}
+
+	public void testReferenceToMapEntry() throws ConfigurationException {
+		Node root = readRoot(
+			root("<map><node name='m' value='m1'/></map>"),
+			root("<node " + REF + "='m' value='m2'/>"));
+		assertEquals("m2", root.getMap().get("m").getValue());
+	}
+
+	public void testReferenceToEntryOfListWithOtherKey() throws ConfigurationException {
+		Node root = readRoot(
+			root("<by-value><node name='k' value='v1'/></by-value>"),
+			root("<node " + REF + "='k' other='changed'/>"));
+		assertEquals(1, root.getByValue().size());
+		assertEquals("changed", root.getByValue().get(0).getOther());
+		assertEquals("v1", root.getByValue().get(0).getValue());
+	}
+
+	public void testDuplicateGlobalKeyAcrossPropertyKindsFails() {
+		assertFails("Duplicate value 'x'", root("<detail name='x'/><node name='x'/>"));
 	}
 
 	public void testReferenceBelowItemProperty() throws ConfigurationException {
@@ -253,25 +315,25 @@ public class TestConfigReference extends AbstractTypedConfigurationTestCase {
 	}
 
 	public void testUnknownReferenceFails() {
-		assertFails("No entry with the key 'z'", CHAIN, root("<node " + REF + "='z'/>"));
+		assertFails("No item with the key 'z'", CHAIN, root("<node " + REF + "='z'/>"));
 	}
 
 	public void testReferenceNotBelowEnclosingFails() {
-		assertFails("No entry with the key 'c'", TWO_CHAINS, root(
+		assertFails("No item with the key 'c'", TWO_CHAINS, root(
 			"<node " + REF + "='x'>"
 				+ "<node " + REF + "='c' value='c2'/>"
 				+ "</node>"));
 	}
 
 	public void testReferenceNotBelowElementOnThePathFails() {
-		assertFails("No entry with the key 'y'", TWO_CHAINS, root(
+		assertFails("No item with the key 'y'", TWO_CHAINS, root(
 			"<node name='a'>"
 				+ "<node " + REF + "='y' value='y2'/>"
 				+ "</node>"));
 	}
 
 	public void testReferenceIntoLocalKeyFails() {
-		assertFails("No entry with the key 'i'",
+		assertFails("No item with the key 'i'",
 			root("<local><item name='i' value='i1'/></local>"),
 			root("<item " + REF + "='i' value='i2'/>"));
 	}

@@ -18,7 +18,7 @@ import com.top_logic.basic.config.annotation.GlobalKey;
  * entry without key value is anonymous: It is added, matches no existing entry, and cannot be
  * referenced; any number of anonymous entries may occur. {@link #LIST_INDEX} addresses an entry
  * by its position, also in lists without key property and for anonymous entries.
- * {@link #CONFIG_REF} addresses an entry of a list keyed by a {@link GlobalKey} property from
+ * {@link #CONFIG_REF} addresses an item by the value of its {@link GlobalKey} property from
  * anywhere above it, without naming the path to it.
  * </p>
  * 
@@ -139,35 +139,36 @@ public interface ConfigurationSchemaConstants {
 	public static final String LIST_INDEX = "index";
 
 	/**
-	 * Name of the attribute which addresses an entry of a list keyed by a {@link GlobalKey}
-	 * property by its key value, without naming the path to it.
+	 * Name of the attribute which addresses an item by the value of its {@link GlobalKey}
+	 * property, without naming the path to it.
 	 * 
 	 * <p>
 	 * An element with this attribute is a referencing element. It stands in the content of an
 	 * element and is not an entry of a property of that element: The reader resolves the key among
-	 * the entries of all lists with {@link GlobalKey} key property below the element it is written
-	 * in, in the configuration as read so far, and updates the entry found as by a
-	 * {@link ListOperation#UPDATE} of an entry addressed by its key. The properties of the entry
-	 * are merged with the contents of the referencing element, or the entry is replaced if
+	 * all items with a {@link GlobalKey} property below the element it is written in, in the
+	 * configuration as read so far, and updates the item found as by a
+	 * {@link ListOperation#UPDATE} of a list entry addressed by its key. The properties of the item
+	 * are merged with the contents of the referencing element, or the item is replaced if
 	 * {@link #CONFIG_OVERLOADING_OVERRIDE} is set; {@link #LIST_OPERATION}
-	 * {@link ListOperation#REMOVE} removes the entry; {@link #LIST_POSITION} and
-	 * {@link #LIST_REFERENCE_ATTR_NAME} move it within its list. The entry keeps its key: the
+	 * {@link ListOperation#REMOVE} removes the item; {@link #LIST_POSITION} and
+	 * {@link #LIST_REFERENCE_ATTR_NAME} move an entry within its list. The item keeps its key: the
 	 * referencing element may repeat it, but not change it.
 	 * </p>
 	 * 
 	 * <p>
 	 * The element the referencing element is written in is the root element, an element on the
-	 * path to the entry written as usual, or another referencing element; it bounds the search,
-	 * so a referencing element can be nested in another one that addresses an entry above it. The
-	 * tag of the referencing element determines the configuration type of the entry, as the tag of
-	 * a list entry does.
+	 * path to the item written as usual, or another referencing element; it bounds the search, so
+	 * a referencing element can be nested in another one that addresses an item above it. The tag
+	 * of the referencing element determines the configuration type of the item, as the tag of an
+	 * entry of the property holding the item does.
 	 * </p>
 	 * 
 	 * <p>
-	 * It is an error if no entry with the key is found below the enclosing element, if the
+	 * It is an error if no item with the key is found below the enclosing element, if the
 	 * attribute is written on the root element or on an entry of a list property, if it is
 	 * combined with {@link #LIST_INDEX} or with the {@link #LIST_OPERATION}
-	 * {@link ListOperation#ADD}, or if the referencing element writes another key value.
+	 * {@link ListOperation#ADD}, if an item that is no list entry is positioned, or if the
+	 * referencing element writes another key value.
 	 * </p>
 	 */
 	public static final String CONFIG_REF = "ref";

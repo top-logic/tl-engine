@@ -26,10 +26,14 @@ import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.element.AppShellElement;
 import com.top_logic.layout.view.element.ContentSectionConfig;
+import com.top_logic.layout.view.element.SidebarElement;
+import com.top_logic.layout.view.element.SidebarElement.SidebarItemConfig;
 import com.top_logic.layout.view.element.SplitPanelElement;
 import com.top_logic.layout.view.element.SplitPanelElement.PaneConfig;
 import com.top_logic.layout.view.element.StackElement;
@@ -472,7 +476,7 @@ public class TestViewOverlayKeyedLists extends TestCase {
 					""");
 			fail("A reference to an element outside the enclosing element must fail.");
 		} catch (ConfigurationException ex) {
-			assertTrue(ex.getMessage(), ex.getMessage().contains("No entry with the key 'tabs'"));
+			assertTrue(ex.getMessage(), ex.getMessage().contains("No item with the key 'tabs'"));
 		}
 	}
 
@@ -495,6 +499,54 @@ public class TestViewOverlayKeyedLists extends TestCase {
 		} catch (ConfigurationException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("Duplicate value 'same'"));
 		}
+	}
+
+	/**
+	 * A referencing element addresses an element of a list keyed by something else than the id -
+	 * the sidebar in the content slot of the shell - and the content element of the view itself.
+	 */
+	public void testReferenceIntoSlotAndContent() throws Exception {
+		ViewElement.Config view = view("""
+				<view>
+					<app-shell>
+						<content>
+							<sidebar id="sidebar">
+								<items>
+									<nav-item id="home">
+										<label><en>Home</en></label>
+										<text/>
+									</nav-item>
+								</items>
+							</sidebar>
+						</content>
+					</app-shell>
+				</view>
+				""", """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<sidebar config:ref="sidebar" active-item="home">
+						<items>
+							<nav-item id="about">
+								<label><en>About</en></label>
+								<text/>
+							</nav-item>
+						</items>
+					</sidebar>
+				</view>
+				""");
+		AppShellElement.Config shell = (AppShellElement.Config) view.getContent();
+		assertEquals(1, shell.getContent().size());
+		SidebarElement.Config sidebar = (SidebarElement.Config) shell.getContent().get(0);
+		assertEquals("home", sidebar.getActiveItem());
+		assertEquals(List.of("home", "about"),
+			sidebar.getItems().stream().map(SidebarItemConfig::getId).collect(Collectors.toList()));
+
+		ViewElement.Config replaced = view(BASE, """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<split-panel config:ref="main" orientation="vertical"/>
+				</view>
+				""");
+		assertEquals(List.of("list", "detail"), paneIds(split(replaced)));
+		assertEquals(Orientation.VERTICAL, split(replaced).getOrientation());
 	}
 
 	private static void assertTabAdded(ViewElement.Config view) {

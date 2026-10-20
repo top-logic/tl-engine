@@ -2233,7 +2233,9 @@
    Zeilen, an einer Zeile unter ihren haftenden Zellen (layer-raised). ::after ist der Cursor-Ring
    (base.css). Die Fläche erbt die Ecke des Ziels: die Marke folgt der runden Pille, eckige Ziele bleiben
    eckig. Die Fläche von drop-onto steht am Ziel; eine Fläche, die sie übermalen soll, steht beim
-   Block in :where (Tabellenzeile, Baumknoten, Listeneintrag der Spaltenwahl). */
+   Block in :where (Tabellenzeile, Baumknoten, Listeneintrag der Spaltenwahl).
+   Dazu, was beim Ziehen über allem liegt (Spec 5d §4): der Schild, das Zieh-Bild des Fingers, der Ablehnungshinweis
+   und die Markierung des Element-Pickers, alle auf layer-drag. */
 
 /* Die Fläche braucht ein positioniertes Ziel. :where hat keine Spezifität: eine Lage, die der Block
    setzt (absolute Zeile, haftende Kopfzelle), bleibt. */
@@ -2292,11 +2294,66 @@
 
 /* Warum das Ziel unter dem Zeiger ablehnt (Spec 5c §8): ein tl-popover (Lage aus bridge/popover.ts) an Tabelle, Baum
    und Board, Text und Rand in Fehlerfarbe; der Zeiger geht hindurch. Vorher tl-table__hint. Am tl-popover, weil
-   popover.css im Bundle nach drag.css steht und seinen Rand sonst über diesen legte. */
+   popover.css im Bundle nach drag.css steht und seinen Rand sonst über diesen legte. Er liegt auf layer-drag und steht
+   im DOM nach dem Zieh-Bild: beim Ziehen mit dem Finger verdeckt das Bild den Grund nicht (Spec 5d §4). */
 .tl-popover.tl-drop-hint {
+  z-index: var(--tl-layer-drag);
   border-color: var(--tl-status-error-border);
   color: var(--tl-status-error-text);
   pointer-events: none;
+}
+
+/* Der Schild beim Ziehen mit der Maus (pointer-drag.ts): deckt das Fenster, damit kein Element unter dem Zeiger
+   Zeigen-Zustände oder eine Textauswahl bekommt; die Geste selbst geht über Pointer-Capture an den Griff. */
+.tl-drag-shield {
+  position: fixed;
+  inset: 0;
+  z-index: var(--tl-layer-drag);
+  user-select: none;
+}
+
+/* Die Kopie des gezogenen Elements, die dem Finger folgt (touch-drag.ts). 0.9 ist ein Anteil, kein Maß. */
+.tl-drag-image {
+  z-index: var(--tl-layer-drag);
+  opacity: 0.9;
+  box-shadow: var(--tl-shadow-drag);
+}
+
+/* Bereit: der Finger hat das Element nach langem Drücken aufgenommen und sich noch nicht bewegt. Ein eigenes Attribut,
+   nicht data-tl-state: das Wort dort setzt das Control, ein Re-Render verwürfe ein fremdes (Plan-Review K15). Die
+   Quelle beim Ziehen mit dem Finger trägt danach dragging wie beim Ziehen mit der Maus (oben). */
+[data-tl-armed] {
+  box-shadow: var(--tl-shadow-drag);
+  transform: scale(1.02);
+  transition:
+    transform var(--tl-duration-fast) var(--tl-easing-standard),
+    box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Ein ziehbares Element nimmt der Finger mit langem Drücken auf (touch-drag.ts); auf Geräten ohne Maus öffnet das
+   Drücken darum weder das Kontextmenü noch eine Textauswahl. */
+@media (pointer: coarse) {
+  [draggable="true"] {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+}
+
+/* Element-Picker (element-picker.ts, ein Entwicklerwerkzeug): die Markierung über dem Element unter dem Zeiger, in
+   beiden Modi aus dem Theme. Sie liegt über dem Element, die Deckkraft lässt es durchscheinen — ein Anteil, kein Maß.
+   Der Zeiger „Fadenkreuz“ ist ein Zustand am body. */
+.tl-pick-highlight {
+  position: fixed;
+  pointer-events: none;
+  z-index: var(--tl-layer-drag);
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+  background: var(--tl-surface-brand-subtle);
+  opacity: 0.5;
+}
+
+body[data-tl-state~="picking"],
+body[data-tl-state~="picking"] * {
+  cursor: crosshair;
 }
 
 /* --- drawer/drawer.css --- */
@@ -2813,9 +2870,8 @@ a.tl-field-value:hover {
 
 /* Ein Formular, das eine füllende Region trägt, ist eine Spalte: das füllende Kind nimmt die Höhe, die
    das Formular bekommt, jedes andere Kind behält die Höhe seines Inhalts. Das füllende Kind trägt die
-   Füllklasse der Engine (tlFill, Welle 3/4); das Klassen-Gate lässt sie nicht in einem Selektor zu, darum
-   gilt die Regel für alle Kinder — und :where gibt ihr die Spezifität null, sodass die Füllregel der
-   Engine das Schrumpfverbot für das füllende Kind aufhebt. */
+   Füllklasse tl-fill (layout.css); die Regel gilt für alle Kinder — und :where gibt ihr die Spezifität
+   null, sodass die Füllregel das Schrumpfverbot für das füllende Kind aufhebt. */
 .tl-form-layout--fill {
   display: flex;
   flex-direction: column;
@@ -2990,7 +3046,8 @@ a.tl-field-value:hover {
    Gap-Skala, die tl-columns seit 3b liest: compact space-sm, default space-md, loose space-lg. Inset ist der Abstand
    eines Inhalts zum Rand; wie weit, sagt die nächste Fläche über React-Kontext (useSurface) als Modifier — ohne
    Modifier die Seite. Bounded begrenzt die Breite und mittelt, Item umhüllt wiederholte Kinder, Deck zeigt eines zur
-   Zeit und nimmt seine Größe. Wer füllt, entscheidet der Fill-Vertrag (tlFill, bis Welle 5 im alten Stylesheet). */
+   Zeit und nimmt seine Größe. Wer füllt, trägt tl-fill (unten). Ein Element, das erst beim Zeigen erscheint, trägt
+   tl-reveal-on-hover (unten). */
 
 .tl-stack {
   display: flex;
@@ -3129,6 +3186,53 @@ a.tl-field-value:hover {
   min-height: 0;
 }
 .tl-deck[hidden] { display: none; }
+
+/* Füllen (Spec 5d §3): ein Kind mit tl-fill nimmt die Höhe, die sein Behälter in der Hauptachse übrig lässt, und darf
+   unter seinen Inhalt schrumpfen, damit es selbst scrollt. Ob ein Kind füllt, entscheidet der Control-Baum (useFill /
+   useFillHost der Bridge): ein Behälter mit füllendem Kind füllt seinerseits, bis zur ersten Box, die ohnehin begrenzt
+   ist. Die Hülle eines wiederholten Kindes (tl-item) füllt mit, solange ihr Kind füllt. */
+.tl-fill {
+  flex: 1;
+  min-height: 0;
+}
+
+.tl-item:has(> .tl-fill) {
+  flex: 1;
+}
+
+/* Aktion beim Zeigen (Spec 5d §6, Plan-Review K6): eine Regel für jedes Element, das erst beim Zeigen erscheint — der
+   Griff und die Knöpfe der umsortierbaren Liste, der Öffner des Compact field. opacity, nicht visibility: ein
+   unsichtbarer Knopf bleibt mit Tab erreichbar und erscheint, sobald er den Fokus hat. Die Übergangsliste ersetzt die
+   von .tl-button (button.css steht im Bundle davor): opacity kommt dazu, die weichen Hover-Übergänge bleiben. */
+.tl-reveal-on-hover {
+  opacity: 0;
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Sichtbar beim Zeigen auf das eigene Feld (den direkten Elternteil) oder die Zeile, und bei Tastaturfokus. Fokus heißt
+   hier :focus-visible, nicht :focus-within: nach einem Mausklick bleibt der Fokus im Knopf, und die Zeile hielte ihre
+   Knöpfe sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). Die Zeile der umsortierbaren Liste zeigt
+   Griff und Knöpfe wie bisher als Ganzes: die Knöpfe stehen in tl-reorder-list__actions, und der Zeiger auf der
+   Beschriftung soll sie zeigen. */
+:hover > .tl-reveal-on-hover,
+:has(:focus-visible) > .tl-reveal-on-hover,
+.tl-reveal-on-hover:focus-visible,
+.tl-table__row:hover .tl-reveal-on-hover,
+.tl-reorder-list__item:hover .tl-reveal-on-hover,
+.tl-reorder-list__item:has(:focus-visible) .tl-reveal-on-hover {
+  opacity: 1;
+}
+
+/* Ohne Zeigen (Touch) gäbe es nie :hover — dort steht die Aktion immer. */
+@media (hover: none) {
+  .tl-reveal-on-hover {
+    opacity: 1;
+  }
+}
 
 /* --- media/media.css --- */
 /* Media — Spec 2026-10-19 Welle 5b §5. Ein Block für eingebettete Inhalte: Bild, PDF, HTML-Dokument und -Vorschau,
@@ -3749,7 +3853,7 @@ a.tl-field-value:hover {
    ul.tl-reorder-list > li.tl-reorder-list__item: vorn der Griff (tl-reorder-list__handle, ein
    tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter die
    Beschriftung und rechts Schloss und Auge (tl-reorder-list__actions); Griff und Knöpfe erscheinen beim Zeigen
-   oder Fokus (Spec 2026-10-12, #29825). Die Ziehen-Optik zeichnet
+   oder Fokus (Spec 2026-10-12, #29825) über tl-reveal-on-hover (layout.css, Spec 5d §6). Die Ziehen-Optik zeichnet
    drag.css, den Ring base.css — am Griff innen, weil die Liste scrollt. Höchstens size-popover-max
    hoch; dann scrollt die Liste in sich. Steht die Suche davor, füllen beide ihren Behälter: die
    Suche bleibt stehen, nur die Liste scrollt, und die Höhe gibt der Behälter (Sichtprüfung 12.10.). */
@@ -3801,12 +3905,6 @@ a.tl-field-value:hover {
 .tl-reorder-list__handle {
   color: var(--tl-icon-secondary);
   cursor: grab;
-  opacity: 0;
-  transition:
-    opacity var(--tl-duration-fast) var(--tl-easing-standard),
-    background-color var(--tl-duration-fast) var(--tl-easing-standard),
-    border-color var(--tl-duration-fast) var(--tl-easing-standard),
-    color var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
 .tl-reorder-list__handle:active {
@@ -3837,39 +3935,11 @@ a.tl-field-value:hover {
   margin-inline-start: auto;
 }
 
-/* Die Knöpfe erscheinen beim Zeigen oder wenn ein Element der Zeile den Tastaturfokus hat (der Griff ebenso, seine opacity
-   steht in seiner Grundregel oben). opacity, nicht visibility: ein unsichtbarer Knopf bleibt mit Tab erreichbar und
-   erscheint, sobald er den Fokus hat. */
-.tl-reorder-list__actions > .tl-button {
-  opacity: 0;
-  transition:
-    opacity var(--tl-duration-fast) var(--tl-easing-standard),
-    background-color var(--tl-duration-fast) var(--tl-easing-standard),
-    border-color var(--tl-duration-fast) var(--tl-easing-standard),
-    color var(--tl-duration-fast) var(--tl-easing-standard);
-}
-
-/* Fokus heißt hier Tastaturfokus (:focus-visible), nicht :focus-within: nach einem Mausklick bleibt der Fokus im Knopf,
-   und die Zeile hielte Auge und Schloss sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). */
-.tl-reorder-list__item:hover > .tl-reorder-list__handle,
-.tl-reorder-list__item:has(:focus-visible) > .tl-reorder-list__handle,
-.tl-reorder-list__item:hover > .tl-reorder-list__actions > .tl-button,
-.tl-reorder-list__item:has(:focus-visible) > .tl-reorder-list__actions > .tl-button {
-  opacity: 1;
-}
-
-/* Gesetzte Zustände bleiben zu sehen: das Auge einer ausgeblendeten, das Schloss einer fixierten Spalte. */
+/* Gesetzte Zustände bleiben zu sehen, auch ohne Zeigen (tl-reveal-on-hover verbirgt sie sonst): das Auge einer
+   ausgeblendeten, das Schloss einer fixierten Spalte. */
 .tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
 .tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock {
   opacity: 1;
-}
-
-/* Ohne Zeigen (Touch) gäbe es nie :hover — dort stehen Griff und Knöpfe immer. */
-@media (hover: none) {
-  .tl-reorder-list__handle,
-  .tl-reorder-list__actions > .tl-button {
-    opacity: 1;
-  }
 }
 
 /* Ausgeblendet: die Spalte behält ihren Platz, ihr Name tritt zurück. Der Eintrag bleibt bedienbar — die
@@ -5932,4 +6002,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:e6b0e122e638a8571cf23c6bb5354dfd0cca7cf6dc69cee7e40fa0f4d37332d7 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:894d1d45dbc45dabf8b0b19c4ba554b0de70a6c22fae0300f51ea7a83d7c46be — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

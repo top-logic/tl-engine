@@ -175,6 +175,20 @@ body {
 .tl-icon-md { font-size: var(--tl-size-icon-md); }
 .tl-icon-lg { font-size: var(--tl-size-icon-lg); }
 
+/* Sprungziel (<anchor>, scroll.ts): nach einem Sprung blitzt das Ziel kurz auf, damit der Sprung zu sehen ist — auch
+   wenn nichts scrollt, weil das Ziel schon sichtbar war. Ein Zustand, keine Klasse; scroll.ts setzt und entfernt ihn.
+   Das Bild ist der halo des Pakets (focus-width in surface-state-hover-strong), kein Ring: der Ring gehört der Tastatur
+   (Spec 5d §3, Plan-Review K2). Der halo klingt zum eigenen Schatten des Ziels aus — ein Endbild „transparent“ wäre
+   kein halo und bräche das Klassen-Gate. Reduced Motion regelt die Grundregel unten. */
+[data-tl-anchor][data-tl-state~="flash"] {
+  border-radius: var(--tl-radius-sm);
+  animation: tl-anchor-flash var(--tl-duration-loop) var(--tl-easing-exit);
+}
+
+@keyframes tl-anchor-flash {
+  from { box-shadow: 0 0 0 var(--tl-focus-width) var(--tl-surface-state-hover-strong); }
+}
+
 /* Wer Bewegung abbestellt hat, hat sie abbestellt. 0.01ms statt 0, sonst feuert transitionend nie. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -211,4 +225,4 @@ body {
     font-variant-numeric: tabular-nums;
   }
 }
-/* tl-design-system sha256:10139bb09984eb3ae549b17cff39ffc9b4277ec5e5db7e6f8bde9528fdc657bd — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:9da9e59df57ab06d0fa02110b8a8d1d73dd42f0e9770f59921b94be615d98bd2 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

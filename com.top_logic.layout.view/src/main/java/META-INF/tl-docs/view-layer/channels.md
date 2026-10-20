@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
 order: 15
 ---
 
@@ -43,6 +43,38 @@ A script of a channel sees the value of each input as a variable named after the
 The script declares no parameters. It is evaluated without positional arguments, so a lambda header (`t -> $t.get(…)`) would make its result a function instead of a value; a script whose top-level expression is a lambda is therefore rejected with a configuration error when the view is loaded, naming the variables the script can use. The same holds for every script of the view layer that sees named values - the scripts of an action chain, the `init` of a channel, the `reverse` of a derived channel, the scripts of an element over its inputs (a table's `<rows>`, an `<object-list>`'s `items`, an `<alert>`'s texts, the `test` of a `<case>`, …) - also for a script that sees no variables at all. The script editor offers the variables for completion after `$`.
 
 A value an element supplies to its script itself - the row of a table, the node of a `<tree>`, the element of an `<object-list>` or a `<kanban-board>`, the entry of a `<calendar>` - is a variable behind the inputs, under a default name the supplying element changes with a `…-as` attribute (`row-as`, `node-as`, `element-as`, `column-as`, `entry-as`; `InputScript`, `Supplies`). An input named like such a value is a configuration error and is renamed with `as`.
+
+### Which names a script sees
+
+Every script of the view layer sees the values of its inputs (the `inputs` or `input` of the element, the channel, the command or the action, named after the channel or by `as`) and, behind them, the values listed here. A rename attribute stands on the element supplying the value, not on the script. A name without a rename attribute is fixed.
+
+| Script property | Variables beside the inputs | Renamed by |
+|---|---|---|
+| `<derived-channel>` `expr`, `<channel>` `init` | — | |
+| `<derived-channel>` `reverse` | `value` (the written value) | — |
+| `<table>` / `<tree-table>` / `<composition-table>`: `row-class`, column `<value>`, `<can-update>`, `<object>` | `row` | `row-as` on the table |
+| column `<update>` | `row`, `value` (the entered value) | `row-as`, `value-as` on the column |
+| `<dynamic-columns>` `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`; `<value>`, `<update>`, `<can-update>`, `<aggregate>` | `column`; with `row` / `value` / `members` as for the other columns | `column-as` on the dynamic columns |
+| column `<aggregate>` / `<comparator>` | `members` / `left`, `right` | — |
+| `<match>` of a scripted filter | `params`, `value`, `row` | `value-as`, `row-as` |
+| `<tree>` / `<tree-table>` `children`, `parents` | `node` | `node-as` on the tree |
+| `<object-list>` `link`, `remove`; `<kanban-board>` `column` | `element` | `element-as` on the list / board |
+| `<kanban-board>` `column-label` / `on-reorder` | `column` / `column`, `objects` | `column-as` on the board |
+| `<calendar>` event `start`, `end`, `all-day`, `title`, `tooltip`, `category`, `color`, `movable`, `resizable` | `entry` | `entry-as` on the calendar |
+| `<calendar>` `on-move` / `on-resize` / `on-create` | `entry`, `start`, `end` / `entry`, `end` / `start`, `end`, `allDay`, `title` | `entry-as` on the calendar |
+| `<dynamic-steps>` `label`, `icon`, `auto-advance` | `step` | `step-as` on the dynamic steps |
+| `<frame>` `<param>` `expr` / `reverse` | the parameter value, named like the parameter (`param` without a `name`) / `value` (the text of the URL) | `name` of the param |
+| chart `<tooltips>` `expr` | `element` (the data point) | `as` on the tooltip |
+| `<flow-diagram>` `createChart` | one variable per entry of `handlers`, named by its key | — |
+| display target `<bind expr>`, `label-expr` | `object` (the shown object) | — |
+| scripts of an action chain (`<execute-script>`, `<if>`, `<switch>`, `<confirm>`, `<notify>`, `<download>`, `<show-view>` binds, …) and the `refuse-if` of a `<drop>` | the arguments of the chain: the command's inputs or the value its trigger supplies (`row`, `node`, `value`, `link`, `element`, `file`, `objects` with `target` / `parent` / `before`), and inside follow-up actions `result` | see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments); `as` on the action with the result, `with-result` on `<after-commit>` |
+| `<case>` `match` / `test` of a `<switch>` action | `value` (the switch value) | `as` on the switch |
+| `<start-job>` `function`; `ChunkedScriptJobBody` `init` / `elements`, `finish` / `<step>` | `job` beside the arguments / `job`, `state` / `job`, `state`, `chunk` | — |
+| executability rules (`<visible-if>`, `<disabled-if>`) of a command | the arguments of the command, as the chain sees them | as for the chain |
+| `row-executability`, `node-executability`, `card-executability` of a `<drag>`; `target-executability` of a `<drop>` | `row` / `node` / `element` / `target` | `row-as` / `node-as` / `element-as` / `target-as` |
+| `edit-executability` of a `<form>` | the object of the form's `input`, named after its channel | — |
+
+The details stand with the elements: [columns](doc:view-layer/tables#column-declarations), [drag and drop](doc:view-layer/tables#drag-and-drop-of-table-rows), [tree tables](doc:view-layer/tree-tables), [object lists and boards](doc:view-layer/layout#repeating-a-template-over-a-computed-list-object-list), [frames](doc:view-layer/navigation#drill-down-navigation-with-tile-stack), [wizards](doc:view-layer/navigation#multi-step-flows-with-wizard), [display targets](doc:view-layer/navigation#display-targets-are-declared-globally-per-type), [action chains](doc:view-layer/commands#scripts-use-the-arguments-as-variables).
 
 ### A writable channel initialized from other channels: `init`
 
@@ -138,7 +170,7 @@ Elements and commands name channels in their configuration; a channel reference 
 - **`input="ch"`** - the object an element displays: `<form input="selectedNode">`, `<text input="element"/>`. The element follows the channel and shows the new value.
 - **`selection="ch"`** - what the user selects in a `<table>`, a tree, a `<flow-diagram>`, a `<kanban-board>` or an `<object-list>` is written to the channel, and a value written to the channel by another element is marked as selected (see [selecting rows and nodes](doc:view-layer/tables#selecting-rows-and-nodes)).
 - **`inputs="a, b"`** - the channels whose values an element's TL-Script functions read: the `<rows>` of a `<table>`, the `items` of an `<object-list>`, a `<derived-channel>`. The values are read every time a function is applied. The scripts of a channel see them as variables named after the channels or renamed with `as` ([named inputs](#named-inputs-variables-instead-of-parameters)).
-- **`inputs="a as x, b"`** on a command or an action of a chain - the channels whose values are *named arguments*, which the scripts of the chain use as variables (`$x`, `$b`) without declaring them; the first input of a command is its main argument, the input of its executability rules: `<generic-command inputs="model">`. See [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments).
+- **`inputs="a as x, b"`** on a command or an action of a chain - the channels whose values are *named arguments*, which the scripts of the chain use as variables (`$x`, `$b`) without declaring them; the first input of a command is its main argument, the value its rules deciding over a single value (`<null-input-disabled/>`, …) decide over, while its script rules see all arguments: `<generic-command inputs="model">`. See [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments).
 - **`value="ch"`** - a channel bound to an input control in both directions, as with `<value-input value="search"/>`.
 
 Several elements sharing one channel is all a master-detail needs. A table and a form share the selected flow node:

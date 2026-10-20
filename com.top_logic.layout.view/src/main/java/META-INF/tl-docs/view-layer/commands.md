@@ -11,7 +11,7 @@ order: 50
 
 **The arguments of a chain are named values** (`ActionArguments`), and **they flow unchanged through the chain**: every action of the chain sees the same arguments, whatever the actions before it produced. Which names exist is decided by what triggered the chain:
 
-- **A command's `inputs`** — one argument per channel, named after the channel: `inputs="selection as ticket, editMode"` or `<inputs><input channel="selection" as="ticket"/><input channel="editMode"/></inputs>` (`NamedInputs`; `as` renames the argument). The first entry is the **main argument**, the value the command's `<executability>` rules decide over.
+- **A command's `inputs`** — one argument per channel, named after the channel: `inputs="selection as ticket, editMode"` or `<inputs><input channel="selection" as="ticket"/><input channel="editMode"/></inputs>` (`NamedInputs`; `as` renames the argument). The first entry is the **main argument**, the value the command's rules deciding over a single value decide over; its script rules see all arguments (see [branching](#branching-if-and-switch)).
 - **A trigger that supplies a value itself** names it; the value is the main argument, and the command's `inputs` are available beside it. Each trigger has a default name and a property renaming it:
 
   | trigger | name | renamed by |
@@ -94,7 +94,7 @@ Every script of a chain — the `function` of `<execute-script>` and `<start-job
 - **An action's own `inputs`** (`<execute-script>`, `<if>`, `<confirm>`, `<notify>`, `<download>`, `<start-job>`) add one variable per channel, named after the channel or its `as`, behind the arguments of the chain: ``<execute-script function="$context.add(`m:Container#items`, $ticket)" inputs="context"/>``.
 - The `<bind expr>` and `label-expr` of `<show-view>` / `<show-views>` are scripts of the chain as well; a `<bind>` without `expr` receives the value the action processes.
 - **Executability rules see the arguments of their command** in the same way: `<visible-if expr="$ticket != null"/>` and `<disabled-if expr="…"/>` use the command's inputs (named after their channels or their `as`) and the value its trigger supplies (the activated row, the uploaded file) as variables. The button state is computed from the same arguments the command runs with; before a trigger supplied its value, that argument is `null`. A rule guarding a single value of an element sees it under the name the element gives it: the dragged row of a table as `row` (`row-as`), the node of a tree as `node` (`node-as`), the card of a board as `element` (`element-as`), the target of a drop as `target` (`target-as`), the object of a `<form>` in its `edit-executability` as the form's `input` channel name, and the rules of a `<drag>` / `<drop>` as a whole the value of their `input` (with `as`).
-- The scripts of channels and elements outside a chain see named variables as well: the values of their inputs and the values the element supplies (see [named inputs](doc:view-layer/channels#named-inputs-variables-instead-of-parameters)).
+- The scripts of channels and elements outside a chain see named variables as well: the values of their inputs and the values the element supplies (see [named inputs](doc:view-layer/channels#named-inputs-variables-instead-of-parameters)); [which names a script sees](doc:view-layer/channels#which-names-a-script-sees) lists them for every script of the view layer, the scripts of a chain included.
 
 ```xml
 <value-input value="jump">

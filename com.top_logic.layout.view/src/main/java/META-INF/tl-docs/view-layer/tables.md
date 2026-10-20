@@ -26,7 +26,7 @@ The `<columns>` of a `<table>` (and of a `<composition-table>`) is a list of col
 
 Further rules that hold across the kinds:
 
-- **Scripts see named variables, never declare parameters.** A column script is an expression over variables (`ColumnFunctions`, `InputScript`); a lambda header (`row -> …`) is a configuration error. What a script sees:
+- **Scripts see named variables, never declare parameters.** A column script is an expression over variables (`ColumnFunctions`, `InputScript`); a lambda header (`row -> …`) is a configuration error. What a script sees (the names of every script of the view layer are listed in [which names a script sees](doc:view-layer/channels#which-names-a-script-sees)):
 
   | Script | Variables (default names) | Renamed by |
   |---|---|---|

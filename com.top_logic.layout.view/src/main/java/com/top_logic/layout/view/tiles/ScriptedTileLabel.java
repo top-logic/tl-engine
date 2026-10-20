@@ -29,10 +29,10 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  * expression.
  *
  * <p>
- * Resolves all {@link Config#getInputs() inputs} to channels at compute time, reads their current
- * values and passes them as positional arguments to the compiled expression. The expression's
- * result is converted to a {@link ResKey} according to its runtime type - intended for labels
- * derived from business object names.
+ * Resolves all {@link Config#getInputs() inputs} to channels at compute time and evaluates the
+ * expression over their current values, which it sees as variables named after the channels or by
+ * their {@code as} names. The expression's result is converted to a {@link ResKey} according to its
+ * runtime type - intended for labels derived from business object names.
  * </p>
  *
  * @implNote The result is turned into a {@link ResKey} by

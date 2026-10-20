@@ -70,8 +70,8 @@ import com.top_logic.util.error.TopLogicException;
  *           input, reports a failure of the editor as a {@link TopLogicException} and hands the
  *           result back to the chain. The marker of the stored but unapplied changes is a
  *           number new with every change, so that a view displays it with the plain predicate
- *           {@code p -> $p != null} and a listener of the channel holding it notices every change,
- *           not only the first one.
+ *           {@code $pending != null} over the channel {@code pending} holding it, and a listener
+ *           of that channel notices every change, not only the first one.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

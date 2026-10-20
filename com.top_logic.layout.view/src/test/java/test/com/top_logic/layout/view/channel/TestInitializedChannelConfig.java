@@ -54,7 +54,7 @@ public class TestInitializedChannelConfig extends TestCase {
 
 		ValueChannelConfig budget = (ValueChannelConfig) config.getChannels().get(1);
 		assertEquals(1, budget.getInputs().size());
-		assertEquals("project", budget.getInputs().get(0).getChannelName());
+		assertEquals("project", budget.getInputs().get(0).getChannel().getChannelName());
 		assertNotNull(budget.getInit());
 		assertEquals(1, budget.getObservedTypes().size());
 		assertEquals("test.types:B", budget.getObservedTypes().get(0).qualifiedName());

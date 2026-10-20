@@ -33,7 +33,7 @@
 	<channels>
 		<channel name="selected"/>
 		<derived-channel name="ticket"
-			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			expr="if($selected.size() == 1, $selected.singleElement(), null)"
 			inputs="selected"
 		/>
 	</channels>

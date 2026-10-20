@@ -27,12 +27,12 @@
 			account, so a display computed straight from the account would not follow it.
 		-->
 		<derived-channel name="representativeGroup"
-			expr="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+			expr="$account.get(`tl.accounts:Person#representativeGroup`)"
 			inputs="account"
 		/>
 		<!-- The accounts that may act in the name of this account. -->
 		<derived-channel name="deputies"
-			expr="group -> $group.get(`tl.accounts:Group#members`)"
+			expr="$representativeGroup.get(`tl.accounts:Group#members`)"
 			inputs="representativeGroup"
 		/>
 		<!--
@@ -43,7 +43,7 @@
 			member of is nothing.
 		-->
 		<derived-channel name="deputyFor"
-			expr="account -> all(`tl.accounts:Person`).filter(other -> $account.get(`tl.accounts:Person#groups`).containsElement($other.get(`tl.accounts:Person#representativeGroup`)))"
+			expr="all(`tl.accounts:Person`).filter(other -> $account.get(`tl.accounts:Person#groups`).containsElement($other.get(`tl.accounts:Person#representativeGroup`)))"
 			inputs="account"
 		/>
 	</channels>

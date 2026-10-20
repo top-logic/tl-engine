@@ -348,7 +348,7 @@ public class TestValueInputElement extends TestCase {
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
 		assertNotNull("The options expression must reach the configuration.", owners.getOptions());
 		assertEquals("The options depend on one channel.", 1, owners.getInputs().size());
-		assertEquals("project", owners.getInputs().get(0).getChannelName());
+		assertEquals("project", owners.getInputs().get(0).getChannel().getChannelName());
 	}
 
 	/** A text is written in a text input, on a channel as in an attribute. */

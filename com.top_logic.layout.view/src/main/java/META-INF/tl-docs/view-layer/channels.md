@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer), how elements read and write channels, and how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>.
 order: 15
 ---
 
@@ -12,14 +12,14 @@ A channel is a named value of one view instance. Elements read the object they d
 The channels of a view are declared in the `<channels>` section of its `<view>` element (`ViewElement.Config.getChannels()`). Every name is unique within the view. Three kinds exist:
 
 - **`<channel name="…"/>`** (`ValueChannelConfig`) is a writable value. It starts empty and holds whatever an element or an action writes into it last. With an `init` function it is filled from other channels instead, see [below](#a-writable-channel-initialized-from-other-channels-init).
-- **`<derived-channel name="…" inputs="…" expr="…"/>`** (`DerivedChannelConfig`) computes its value from other channels with a TL-Script function. The values of the `inputs` channels are the positional arguments of `expr`, in the order the inputs are listed: with `inputs="a, b"` the function is written `x -> y -> …` and receives the value of `a` as `x` and the value of `b` as `y`. The value is computed when the view is built and computed again whenever one of the inputs takes a new value; listeners are told only when the result differs from the previous one. A derived channel is read-only: an element writing it fails (`UnsupportedOperationException`) unless the channel has a `reverse` function (below).
+- **`<derived-channel name="…" inputs="…" expr="…"/>`** (`DerivedChannelConfig`) computes its value from other channels with a TL-Script expression. The values of the `inputs` channels are variables of `expr`, named after their channels: with `inputs="a, b"` the expression reads `$a` and `$b`, without declaring them (see [named inputs](#named-inputs-variables-instead-of-parameters)). The value is computed when the view is built and computed again whenever one of the inputs takes a new value; listeners are told only when the result differs from the previous one. A derived channel is read-only: an element writing it fails (`UnsupportedOperationException`) unless the channel has a `reverse` function (below).
 - **`<source-channel name="…"><source class="…"/></source-channel>`** (`SourceChannelConfig`) is a writable value that additionally receives what a server-side source publishes, see [below](#channels-fed-by-a-server-side-source-source-channel).
 
 ```xml
 <channels>
 	<channel name="element"/>
 	<derived-channel name="photo"
-		expr="n -> $n.get(`test.flowchart:FlowNode#image`)"
+		expr="$element.get(`test.flowchart:FlowNode#image`)"
 		inputs="element"
 	/>
 </channels>
@@ -29,6 +29,19 @@ The channels are created in declaration order, and a derived channel resolves it
 
 `inputs` takes two notations, here as everywhere in the view layer (`Inputs`): the comma-separated attribute `inputs="selectedCustomer, editMode"` and nested elements `<inputs><input channel="selectedCustomer"/><input channel="editMode"/></inputs>`.
 
+### Named inputs: variables instead of parameters
+
+A script of a channel sees the value of each input as a variable named after the channel. An input whose channel name does not suit the script - a name that is no TL-Script identifier, or one that says less than the script needs - is renamed with `as`, in either notation: `inputs="selection as ticket, editMode"` or `<input channel="selection" as="ticket"/>`; the script then reads `$ticket` and `$editMode`.
+
+```xml
+<derived-channel name="title"
+	inputs="selection as ticket"
+	expr="$ticket.get(`demo.tickets:Ticket#name`)"
+/>
+```
+
+The script declares no parameters. It is evaluated without positional arguments, so a lambda header (`t -> $t.get(…)`) would make its result a function instead of a value; a script whose top-level expression is a lambda is therefore rejected with a configuration error when the view is loaded, naming the variables the script can use. The same holds for every script of the view layer that sees named values - the scripts of an action chain, the `init` of a channel, the `reverse` of a derived channel - also for a script that sees no variables at all. The script editor offers the variables for completion after `$`.
+
 ### A writable channel initialized from other channels: `init`
 
 A `<channel>` with an `init` function is a writable value that takes its value from other channels - an input field that shows the stored value of the selected object, lets the user enter a new one, and shows the stored value again for the next selection:
@@ -37,13 +50,13 @@ A `<channel>` with an `init` function is a writable value that takes its value f
 <channels>
 	<channel name="project"/>
 	<channel name="budget"
-		init="p -> $p.get(`tl.demo.projectManagement:ProjectScope#budget`)"
+		init="$project.get(`tl.demo.projectManagement:ProjectScope#budget`)"
 		inputs="project"
 	/>
 </channels>
 ```
 
-`inputs` and `init` work like `inputs` and `expr` of a derived channel: the values of the inputs are the positional arguments of the function. The channel (`InitializedViewChannel`) is filled with the result
+`inputs` and `init` work like `inputs` and `expr` of a derived channel: the values of the inputs are variables of the function, named after their channels or by their `as` name. The channel (`InitializedViewChannel`) is filled with the result
 
 - when the view is built,
 - whenever an input takes a new value - also when the result is the same as before, so a value the user entered for the previous project is replaced,
@@ -68,15 +81,15 @@ An expression that reads beyond the input objects - all instances of a type, an 
 
 ### Writing through a derived channel: `reverse`
 
-A derived channel with a `reverse` function is bidirectional. A value written to it is passed to `reverse`, and the result is written to the *first* input channel; the forward `expr` then recomputes the derived value from the updated input. This is what an element that writes a different representation of a value needs - most of all a URL binding, which writes the text of an address segment into its channel when a link is opened. The tickets demo carries the selected ticket in the address bar by its identifier:
+A derived channel with a `reverse` function is bidirectional. A value written to it is the variable `$value` of `reverse` - next to the inputs, which `reverse` sees like `expr` -, and the result is written to the *first* input channel; the forward `expr` then recomputes the derived value from the updated input. This is what an element that writes a different representation of a value needs - most of all a URL binding, which writes the text of an address segment into its channel when a link is opened. The tickets demo carries the selected ticket in the address bar by its identifier:
 
 ```xml
 <channels>
 	<channel name="ticket"/>
 	<derived-channel name="ticketId"
-		expr="t -> objectId($t)"
+		expr="objectId($ticket)"
 		inputs="ticket"
-		reverse="id -> $id.objectResolve(`demo.tickets:Ticket`)"
+		reverse="$value.objectResolve(`demo.tickets:Ticket`)"
 	/>
 </channels>
 <param-bindings>
@@ -122,7 +135,7 @@ Elements and commands name channels in their configuration; a channel reference 
 
 - **`input="ch"`** - the object an element displays: `<form input="selectedNode">`, `<text input="element"/>`. The element follows the channel and shows the new value.
 - **`selection="ch"`** - what the user selects in a `<table>`, a tree, a `<flow-diagram>`, a `<kanban-board>` or an `<object-list>` is written to the channel, and a value written to the channel by another element is marked as selected (see [selecting rows and nodes](doc:view-layer/tables#selecting-rows-and-nodes)).
-- **`inputs="a, b"`** - the channels whose values become the leading arguments of an element's TL-Script functions: the `<rows>` of a `<table>`, the `items` of an `<object-list>`, a `<derived-channel>`. The values are read every time a function is applied.
+- **`inputs="a, b"`** - the channels whose values an element's TL-Script functions read: the `<rows>` of a `<table>`, the `items` of an `<object-list>`, a `<derived-channel>`. The values are read every time a function is applied. The scripts of a channel see them as variables named after the channels or renamed with `as` ([named inputs](#named-inputs-variables-instead-of-parameters)).
 - **`inputs="a as x, b"`** on a command or an action of a chain - the channels whose values are *named arguments*, which the scripts of the chain use as variables (`$x`, `$b`) without declaring them; the first input of a command is its main argument, the input of its executability rules: `<generic-command inputs="model">`. See [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments).
 - **`value="ch"`** - a channel bound to an input control in both directions, as with `<value-input value="search"/>`.
 
@@ -185,7 +198,7 @@ A bound channel is not a copy: the channel object of the enclosing view is regis
 	<channel name="comment"/>
 	<channel name="draft"/>
 	<derived-channel name="author"
-		expr="c -> $c.get(`demo.tickets:Comment#author`)"
+		expr="$comment.get(`demo.tickets:Comment#author`)"
 		inputs="comment"
 	/>
 </channels>

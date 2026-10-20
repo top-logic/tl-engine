@@ -25,7 +25,7 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -121,7 +121,7 @@ public class ChartElement implements UIElement {
 
 	private final Map<String, QueryExecutor> _tooltips;
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	private final boolean _zoomEnabled;
 

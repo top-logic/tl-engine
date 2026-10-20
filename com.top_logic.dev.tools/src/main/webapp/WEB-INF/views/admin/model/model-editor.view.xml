@@ -20,7 +20,7 @@
 			other model part, so one form serves both and the module needs no panel of its own.
 		-->
 		<derived-channel name="selectedDetail"
-			expr="part -> module -> ifElse($part != null, $part, $module)"
+			expr="ifElse($selectedPart != null, $selectedPart, $selectedModule)"
 			inputs="selectedPart, selectedModule"
 		/>
 	</channels>

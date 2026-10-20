@@ -5,20 +5,20 @@
 		<channel name="comment"/>
 		<channel name="draft"/>
 		<derived-channel name="author"
-			expr="c -> $c.get(`demo.tickets:Comment#author`)"
+			expr="$comment.get(`demo.tickets:Comment#author`)"
 			inputs="comment"
 		/>
 		<derived-channel name="date"
-			expr="c -> $c.get(`demo.tickets:Comment#date`)"
+			expr="$comment.get(`demo.tickets:Comment#date`)"
 			inputs="comment"
 		/>
 		<derived-channel name="cited"
-			expr="c -> $c.get(`demo.tickets:Comment#cited`)"
+			expr="$comment.get(`demo.tickets:Comment#cited`)"
 			inputs="comment"
 		/>
 		<!-- The ticket the comment belongs to, in which a reply is created. -->
 		<derived-channel name="ticket"
-			expr="c -> $c.container()"
+			expr="$comment.container()"
 			inputs="comment"
 		/>
 	</channels>

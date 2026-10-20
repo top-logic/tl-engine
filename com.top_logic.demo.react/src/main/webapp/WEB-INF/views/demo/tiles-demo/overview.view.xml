@@ -17,7 +17,7 @@
 		<channel name="navPath"/>
 		<channel name="selectedPerson"/>
 		<derived-channel name="depth"
-			expr="p -> $p.size()"
+			expr="$navPath.size()"
 			inputs="navPath"
 		/>
 	</channels>

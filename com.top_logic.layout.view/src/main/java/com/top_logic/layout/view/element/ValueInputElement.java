@@ -49,6 +49,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -455,7 +456,7 @@ public class ValueInputElement implements UIElement {
 
 	private final QueryExecutor _options;
 
-	private final List<ChannelRef> _inputRefs;
+	private final List<InputRef> _inputRefs;
 
 	private final boolean _multiple;
 

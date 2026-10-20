@@ -11,7 +11,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -36,7 +36,7 @@ public class ColumnFunctions {
 
 	private final QueryExecutor _canUpdate;
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	/**
 	 * Creates a {@link ColumnFunctions} from the declared expressions.
@@ -52,13 +52,13 @@ public class ColumnFunctions {
 	 * @param inputs
 	 *        References to the channels whose values lead the arguments of each of the functions.
 	 */
-	public static ColumnFunctions compile(Expr value, Expr update, Expr canUpdate, List<ChannelRef> inputs) {
+	public static ColumnFunctions compile(Expr value, Expr update, Expr canUpdate, List<InputRef> inputs) {
 		return new ColumnFunctions(QueryExecutor.compile(value), QueryExecutor.compileOptional(update),
 			QueryExecutor.compileOptional(canUpdate), inputs);
 	}
 
 	private ColumnFunctions(QueryExecutor value, QueryExecutor update, QueryExecutor canUpdate,
-			List<ChannelRef> inputs) {
+			List<InputRef> inputs) {
 		_value = value;
 		_update = update;
 		_canUpdate = canUpdate;

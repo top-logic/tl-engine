@@ -17,17 +17,17 @@
 		<channel name="search"/>
 		<channel name="doc"/>
 		<derived-channel name="docHtml"
-			expr="doc -> devDocsHtml($doc)"
+			expr="devDocsHtml($doc)"
 			inputs="doc"
 		/>
 		<derived-channel name="docSource"
-			expr="doc -> devDocsSource($doc)"
+			expr="devDocsSource($doc)"
 			inputs="doc"
 		/>
 		<derived-channel name="docKey"
-			expr="doc -> devDocsRouteKey($doc)"
+			expr="devDocsRouteKey($doc)"
 			inputs="doc"
-			reverse="key -> devDocsByRouteKey($key)"
+			reverse="devDocsByRouteKey($value)"
 		/>
 	</channels>
 	<param-bindings>

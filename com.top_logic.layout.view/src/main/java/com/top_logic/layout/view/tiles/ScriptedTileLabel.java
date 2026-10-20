@@ -16,9 +16,9 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.Inputs;
-import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -64,7 +64,7 @@ public class ScriptedTileLabel implements TileLabelProvider {
 		Expr getExpr();
 	}
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	private final QueryExecutor _executor;
 
@@ -79,10 +79,7 @@ public class ScriptedTileLabel implements TileLabelProvider {
 
 	@Override
 	public ResKey compute(ViewContext context) {
-		Object[] args = _inputs.stream()
-			.map(context::resolveChannel)
-			.map(ViewChannel::get)
-			.toArray();
+		Object[] args = ChannelInputs.arguments(ChannelInputs.resolve(context, _inputs));
 		return TileLabelProvider.toLabel(_executor.execute(args));
 	}
 }

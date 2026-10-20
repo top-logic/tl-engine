@@ -22,11 +22,11 @@
 		<channel name="project"/>
 		<channel name="milestone"/>
 		<derived-channel name="milestoneCount"
-			expr="p -> if($p == null, 0, $p.get(`tl.demo.projectManagement:ProjectScope#milestones`).size())"
+			expr="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#milestones`).size())"
 			inputs="project"
 		/>
 		<derived-channel name="noteCount"
-			expr="p -> if($p == null, 0, $p.get(`tl.demo.projectManagement:ProjectScope#notes`).size())"
+			expr="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#notes`).size())"
 			inputs="project"
 		/>
 	</channels>

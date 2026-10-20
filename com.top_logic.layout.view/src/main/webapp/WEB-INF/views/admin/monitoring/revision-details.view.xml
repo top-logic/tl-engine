@@ -15,7 +15,7 @@
 	<channels>
 		<channel name="changeSet"/>
 		<derived-channel name="revision"
-			expr="cs -> toString($cs.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`))"
+			expr="toString($changeSet.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`))"
 			inputs="changeSet"
 		/>
 	</channels>

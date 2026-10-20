@@ -16,7 +16,7 @@
 		<channel name="filterText"/>
 		<channel name="filterPriority"/>
 		<derived-channel name="filterSummary"
-			expr="t -> p -> #('Filter: text {0}, priority {1}'@en, 'Filter: Text {0}, Priorität {1}'@de).fill(if($t == null, '-', $t), if($p == null, '-', $p))"
+			expr="#('Filter: text {0}, priority {1}'@en, 'Filter: Text {0}, Priorität {1}'@de).fill(if($filterText == null, '-', $filterText), if($filterPriority == null, '-', $filterPriority))"
 			inputs="filterText, filterPriority"
 		/>
 	</channels>

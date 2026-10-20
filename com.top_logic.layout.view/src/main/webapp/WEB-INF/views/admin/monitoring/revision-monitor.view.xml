@@ -46,25 +46,25 @@
 		</derived-channel>
 		<channel name="modeInput"/>
 		<derived-channel name="mode"
-			expr="x -> modes -> if($x == null, $modes.firstElement(), $x)"
+			expr="if($modeInput == null, $modes.firstElement(), $modeInput)"
 			inputs="modeInput, modes"
-			reverse="x -> $x"
+			reverse="$value"
 		/>
 		<derived-channel name="revisionRange"
-			expr="mode -> modes -> $mode == $modes.lastElement()"
+			expr="$mode == $modes.lastElement()"
 			inputs="mode, modes"
 		/>
 		<channel name="fromInput"/>
 		<channel name="toInput"/>
 		<derived-channel name="from"
-			expr="x -> switch { $x == null: now().toUserCalendar().withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(); $x == 'cleared': null; default: $x; }"
+			expr="switch { $fromInput == null: now().toUserCalendar().withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(); $fromInput == 'cleared': null; default: $fromInput; }"
 			inputs="fromInput"
-			reverse="x -> if($x == null, 'cleared', $x)"
+			reverse="if($value == null, 'cleared', $value)"
 		/>
 		<derived-channel name="to"
-			expr="x -> switch { $x == null: now().toUserCalendar().withDayAdded(1).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(); $x == 'cleared': null; default: $x; }"
+			expr="switch { $toInput == null: now().toUserCalendar().withDayAdded(1).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(); $toInput == 'cleared': null; default: $toInput; }"
 			inputs="toInput"
-			reverse="x -> if($x == null, 'cleared', $x)"
+			reverse="if($value == null, 'cleared', $value)"
 		/>
 		<channel name="fromRevision"/>
 		<channel name="toRevision"/>
@@ -73,11 +73,11 @@
 		<derived-channel name="filter"
 			inputs="revisionRange, from, to, fromRevision, toRevision, showSystemChanges, showTechnical"
 		>
-			<expr><![CDATA[byRevision -> from -> to -> fromRevision -> toRevision -> showSystemChanges -> showTechnical -> {
+			<expr><![CDATA[{
 	swapDates = $from != null && $to != null && toMillis($from) > toMillis($to);
 	swapRevisions = $fromRevision != null && $toRevision != null && $fromRevision > $toRevision;
 	{
-		"byRevision": $byRevision,
+		"byRevision": $revisionRange,
 		"from": if($swapDates, $to, $from),
 		"to": if($swapDates, $from, $to),
 		"fromRevision": if($swapRevisions, $toRevision, $fromRevision),
@@ -90,37 +90,37 @@
 		<derived-channel name="shiftedFilters"
 			inputs="filter"
 		>
-			<expr><![CDATA[f -> {
+			<expr><![CDATA[{
 	with = from -> to -> fromRevision -> toRevision -> {
-		"byRevision": $f["byRevision"],
+		"byRevision": $filter["byRevision"],
 		"from": $from,
 		"to": $to,
 		"fromRevision": $fromRevision,
 		"toRevision": $toRevision,
-		"showSystemChanges": $f["showSystemChanges"],
-		"showTechnical": $f["showTechnical"]
+		"showSystemChanges": $filter["showSystemChanges"],
+		"showTechnical": $filter["showTechnical"]
 	};
 	next = revisionAt(now()).get(`tl.core:Revision#revision`) + 1;
 	firstDate = revisionForCommit(1).get(`tl.core:Revision#date`);
-	shift = dir -> if($f["byRevision"],
-		if($f["fromRevision"] == null || $f["toRevision"] == null, null, {
-			from = $f["fromRevision"];
-			to = $f["toRevision"];
+	shift = dir -> if($filter["byRevision"],
+		if($filter["fromRevision"] == null || $filter["toRevision"] == null, null, {
+			from = $filter["fromRevision"];
+			to = $filter["toRevision"];
 			width = $to - $from;
 			start = if($dir < 0, max($from - $width, min($from, 1)), min($to + $width, max($to, $next)) - $width);
-			$with($f["from"], $f["to"], round($start), round($start + $width));
+			$with($filter["from"], $filter["to"], round($start), round($start + $width));
 		}),
-		if($f["from"] == null || $f["to"] == null, null, if(
-			if($dir > 0, toMillis($f["to"]) > toMillis(now()), $firstDate != null && toMillis($f["from"]) <= toMillis($firstDate)),
-			$f,
+		if($filter["from"] == null || $filter["to"] == null, null, if(
+			if($dir > 0, toMillis($filter["to"]) > toMillis(now()), $firstDate != null && toMillis($filter["from"]) <= toMillis($firstDate)),
+			$filter,
 			{
-				width = toMillis($f["to"]) - toMillis($f["from"]);
+				width = toMillis($filter["to"]) - toMillis($filter["from"]);
 				days = round($width / 86400000);
-				byDays = $days > 0 && $f["from"].toUserCalendar().withDayAdded($days).toDate() == $f["to"];
+				byDays = $days > 0 && $filter["from"].toUserCalendar().withDayAdded($days).toDate() == $filter["to"];
 				$with(
-					if($byDays, $f["from"].toUserCalendar().withDayAdded($dir * $days).toDate(), toDate(toMillis($f["from"]) + $dir * $width)),
-					if($byDays, $f["to"].toUserCalendar().withDayAdded($dir * $days).toDate(), toDate(toMillis($f["to"]) + $dir * $width)),
-					$f["fromRevision"], $f["toRevision"]);
+					if($byDays, $filter["from"].toUserCalendar().withDayAdded($dir * $days).toDate(), toDate(toMillis($filter["from"]) + $dir * $width)),
+					if($byDays, $filter["to"].toUserCalendar().withDayAdded($dir * $days).toDate(), toDate(toMillis($filter["to"]) + $dir * $width)),
+					$filter["fromRevision"], $filter["toRevision"]);
 			})));
 	{"previous": $shift(-1), "next": $shift(1)};
 }]]></expr>
@@ -129,13 +129,13 @@
 		<derived-channel name="query"
 			inputs="queryInput"
 		>
-			<expr><![CDATA[q -> if($q == null, {"filter": {
+			<expr><![CDATA[if($queryInput == null, {"filter": {
 	"byRevision": false,
 	"from": now().toUserCalendar().withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(),
 	"to": now().toUserCalendar().withDayAdded(1).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(),
 	"showSystemChanges": false,
 	"showTechnical": false
-}}, $q)]]></expr>
+}}, $queryInput)]]></expr>
 		</derived-channel>
 	</channels>
 	<full-page>

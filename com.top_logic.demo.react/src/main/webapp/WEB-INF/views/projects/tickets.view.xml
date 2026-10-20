@@ -19,7 +19,7 @@
 		<channel name="milestone"/>
 		<channel name="ticket"/>
 		<derived-channel name="project"
-			expr="m -> if($m == null, null, $m.container())"
+			expr="if($milestone == null, null, $milestone.container())"
 			inputs="milestone"
 		/>
 	</channels>

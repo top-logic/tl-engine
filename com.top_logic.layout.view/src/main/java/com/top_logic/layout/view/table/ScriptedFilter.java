@@ -19,7 +19,7 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLStructuredType;
@@ -107,7 +107,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 
 	private final TLStructuredType _filterType;
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	private final ResKey _label;
 

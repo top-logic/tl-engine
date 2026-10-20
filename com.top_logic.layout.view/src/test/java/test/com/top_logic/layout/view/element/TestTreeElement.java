@@ -48,7 +48,7 @@ public class TestTreeElement extends TestCase {
 
 		// Verify inputs.
 		assertEquals("Should have one input", 1, treeConfig.getInputs().size());
-		assertEquals("Input channel name", "rootInput", treeConfig.getInputs().get(0).getChannelName());
+		assertEquals("Input channel name", "rootInput", treeConfig.getInputs().get(0).getChannel().getChannelName());
 
 		// Verify root expression is present (non-null).
 		assertNotNull("Root expression should be set", treeConfig.getRoot());

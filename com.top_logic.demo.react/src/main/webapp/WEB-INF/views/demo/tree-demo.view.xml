@@ -66,20 +66,20 @@
 			one and a set as the number of its elements.
 		-->
 		<derived-channel name="selectedSingle"
-			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			expr="if($selected.size() == 1, $selected.singleElement(), null)"
 			inputs="selected"
 		/>
 		<!-- The single selection while it is a scope, a milestone, a ticket - nothing otherwise. -->
 		<derived-channel name="selectedScope"
-			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:ProjectScope`), $sel, null)"
+			expr="if($selectedSingle.instanceOf(`tl.demo.projectManagement:ProjectScope`), $selectedSingle, null)"
 			inputs="selectedSingle"
 		/>
 		<derived-channel name="selectedMilestone"
-			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:Milestone`), $sel, null)"
+			expr="if($selectedSingle.instanceOf(`tl.demo.projectManagement:Milestone`), $selectedSingle, null)"
 			inputs="selectedSingle"
 		/>
 		<derived-channel name="selectedTicket"
-			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:Ticket`), $sel, null)"
+			expr="if($selectedSingle.instanceOf(`tl.demo.projectManagement:Ticket`), $selectedSingle, null)"
 			inputs="selectedSingle"
 		/>
 	</channels>

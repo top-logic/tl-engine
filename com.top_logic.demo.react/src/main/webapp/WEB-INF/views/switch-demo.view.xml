@@ -21,7 +21,7 @@
 		<channel name="model"/>
 		<channel name="selectedDemo"/>
 		<derived-channel name="selectedLabel"
-			expr="d -> if($d == null, '', #('Selected: {0}'@en, 'Ausgewählt: {0}'@de).fill($d.get(`demo.react:Demo#name`)))"
+			expr="if($selectedDemo == null, '', #('Selected: {0}'@en, 'Ausgewählt: {0}'@de).fill($selectedDemo.get(`demo.react:Demo#name`)))"
 			inputs="selectedDemo"
 		/>
 	</channels>

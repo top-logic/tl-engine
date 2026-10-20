@@ -12,7 +12,7 @@
 			object binds to this channel.
 		-->
 		<derived-channel name="selectedSingle"
-			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			expr="if($selected.size() == 1, $selected.singleElement(), null)"
 			inputs="selected"
 		/>
 		<!-- Anchor object for the editable-table form: the edit session locks on it. -->

@@ -12,7 +12,7 @@ import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.layout.view.command.ActionScope;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -251,12 +251,12 @@ public class AlertElement implements UIElement {
 		/**
 		 * The name of the argument the {@link #getOnDismiss() actions run after a dismissal} of the
 		 * given alert receive:
-		 * the name of the first {@link #getInputs() input channel}, or
+		 * the name of the first {@link #getInputs() input}, or
 		 * {@link CommandArguments#DEFAULT_ARGUMENT} without one.
 		 */
 		static String dismissArgument(Config config) {
-			List<ChannelRef> inputs = config.getInputs();
-			return inputs.isEmpty() ? CommandArguments.DEFAULT_ARGUMENT : inputs.get(0).getChannelName();
+			List<InputRef> inputs = config.getInputs();
+			return inputs.isEmpty() ? CommandArguments.DEFAULT_ARGUMENT : inputs.get(0).getName();
 		}
 
 		/**

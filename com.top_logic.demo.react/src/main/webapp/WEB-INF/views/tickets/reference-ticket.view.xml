@@ -16,7 +16,7 @@
 		<channel name="ticket"/>
 		<channel name="result"/>
 		<derived-channel name="contextLabel"
-			expr="t -> if($t == null, &quot;&quot;, #(&quot;Referenz im Kommentar zu {0}&quot;@de, &quot;Reference in the comment on {0}&quot;@en).fill(label($t)))"
+			expr="if($context == null, &quot;&quot;, #(&quot;Referenz im Kommentar zu {0}&quot;@de, &quot;Reference in the comment on {0}&quot;@en).fill(label($context)))"
 			inputs="context"
 		/>
 	</channels>

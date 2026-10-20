@@ -18,11 +18,11 @@
 		<channel name="person"/>
 		<channel name="navPath"/>
 		<derived-channel name="contact"
-			expr="p -> if($p != null, $p.get(`tl.accounts:Person#contact`), null)"
+			expr="if($person != null, $person.get(`tl.accounts:Person#contact`), null)"
 			inputs="person"
 		/>
 		<derived-channel name="depth"
-			expr="p -> $p.size()"
+			expr="$navPath.size()"
 			inputs="navPath"
 		/>
 	</channels>

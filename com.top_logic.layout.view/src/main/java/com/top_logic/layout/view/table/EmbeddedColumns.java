@@ -21,7 +21,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
@@ -217,7 +217,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 
 	private final boolean _multiple;
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	private final ResKey _label;
 

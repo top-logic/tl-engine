@@ -21,7 +21,7 @@
 	<channels>
 		<channel name="project"/>
 		<channel name="budget"
-			init="p -> if($p == null, null, $p.get(`tl.demo.projectManagement:ProjectScope#budget`))"
+			init="if($project == null, null, $project.get(`tl.demo.projectManagement:ProjectScope#budget`))"
 			inputs="project"
 		/>
 	</channels>

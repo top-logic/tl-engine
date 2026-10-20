@@ -46,6 +46,13 @@ public class WindowEntry {
 	private volatile GlobalModelEventForwarder _modelScope;
 
 	/**
+	 * Whether the window was torn down and its model scope released.
+	 *
+	 * @see #releaseModelScope()
+	 */
+	private boolean _modelScopeReleased;
+
+	/**
 	 * When the window's page was reported as unloaded, or {@code 0} while it is displayed.
 	 *
 	 * @see #markUnloaded()
@@ -178,12 +185,41 @@ public class WindowEntry {
 	 * Each window gets its own {@link GlobalModelEventForwarder} with an independent update-chain
 	 * cursor, so events synthesized for one window are not dispatched to another.
 	 * </p>
+	 *
+	 * <p>
+	 * A window whose scope was {@link #releaseModelScope() released} answers a released scope: it
+	 * accepts listeners but delivers no events to them and holds no cursor on the update chain. A
+	 * caller still holding the entry of a torn-down window therefore cannot make it observe the model
+	 * again.
+	 * </p>
 	 */
 	public synchronized ModelScope getOrCreateModelScope() {
 		if (_modelScope == null) {
 			_modelScope = GlobalModelEventForwarder.createForWindow();
+			if (_modelScopeReleased) {
+				_modelScope.release();
+			}
 		}
 		return _modelScope;
+	}
+
+	/**
+	 * Releases the {@link #getOrCreateModelScope() model scope} of this window, which is what a
+	 * torn-down window does.
+	 *
+	 * <p>
+	 * The scope gives up its cursor on the update chain of the knowledge base, so that no commit made
+	 * after the teardown is kept in memory on behalf of this window, whoever still references the
+	 * scope. A released scope delivers no events anymore. Safe to call for a window that never created
+	 * a scope, and more than once.
+	 * </p>
+	 */
+	public synchronized void releaseModelScope() {
+		_modelScopeReleased = true;
+		GlobalModelEventForwarder forwarder = _modelScope;
+		if (forwarder != null) {
+			forwarder.release();
+		}
 	}
 
 	/**

@@ -245,7 +245,8 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * The {@link DialogManager} for the current session, or {@code null} if none is installed.
+	 * The {@link DialogManager} for the current session, or {@code null} if none is installed or the
+	 * queue is {@link #shutdown() shut down}.
 	 */
 	public DialogManager getDialogManager() {
 		return _dialogManager;
@@ -262,7 +263,8 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * The {@link RouteManager} for the current window, or {@code null} if none is installed.
+	 * The {@link RouteManager} for the current window, or {@code null} if none is installed or the
+	 * queue is {@link #shutdown() shut down}.
 	 */
 	public RouteManager getRouteManager() {
 		return _routeManager;
@@ -396,7 +398,8 @@ public class SSEUpdateQueue {
 	}
 
 	/**
-	 * The authoritative root control of this window's displayed tree, or {@code null} if not set.
+	 * The authoritative root control of this window's displayed tree, or {@code null} if not set or
+	 * the queue is {@link #shutdown() shut down}.
 	 *
 	 * @see #setRootControl(ReactControl)
 	 */
@@ -1021,6 +1024,15 @@ public class SSEUpdateQueue {
 	/**
 	 * Shuts down this queue, cancelling the heartbeat, closing the connection, and clearing all
 	 * state.
+	 *
+	 * <p>
+	 * The queue lets go of everything of its window: the controls, the
+	 * {@link #getRootControl() root control}, the {@link #getDialogManager() dialog manager}, the
+	 * {@link #getRouteManager() route manager} and the window context the heartbeat synthesizes
+	 * model events in. Whoever still references a shut down queue - the container may keep a
+	 * listener of an ended stream - does not keep the window's tree and the model scope its
+	 * controls observe with it.
+	 * </p>
 	 */
 	public void shutdown() {
 		_shutdown = true;
@@ -1049,6 +1061,11 @@ public class SSEUpdateQueue {
 		}
 		_pendingEvents.clear();
 		_controls.clear();
+		_rootControl = null;
+		_dialogManager = null;
+		_routeManager = null;
+		_sessionContext = null;
+		_windowRegistry = null;
 		List<PendingDownload> givenUp;
 		synchronized (_downloads) {
 			givenUp = new ArrayList<>(_downloads.values());

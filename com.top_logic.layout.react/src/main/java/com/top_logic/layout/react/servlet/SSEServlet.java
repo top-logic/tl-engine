@@ -99,27 +99,7 @@ public class SSEServlet extends HttpServlet {
 			queue.setWindowContext(windowName, sessionContext, registry);
 		}
 
-		asyncContext.addListener(new AsyncListener() {
-			@Override
-			public void onComplete(AsyncEvent event) {
-				queue.clearConnection(asyncContext);
-			}
-
-			@Override
-			public void onTimeout(AsyncEvent event) {
-				queue.clearConnection(asyncContext);
-			}
-
-			@Override
-			public void onError(AsyncEvent event) {
-				queue.clearConnection(asyncContext);
-			}
-
-			@Override
-			public void onStartAsync(AsyncEvent event) {
-				// Nothing to do.
-			}
-		});
+		asyncContext.addListener(new StreamEndListener(queue, asyncContext));
 
 		try {
 			PrintWriter writer = response.getWriter();
@@ -128,6 +108,63 @@ public class SSEServlet extends HttpServlet {
 		} catch (IOException ex) {
 			Logger.warn("Failed to write SSE connection comment.", ex, SSEServlet.class);
 			queue.clearConnection(asyncContext);
+		}
+	}
+
+	/**
+	 * Clears the connection of a window's {@link SSEUpdateQueue} when its stream ends.
+	 *
+	 * <p>
+	 * The container may keep the listener with an idle connection after the stream ended; it must
+	 * not keep the window with it. The listener therefore lets go of the queue as soon as the stream
+	 * has ended.
+	 * </p>
+	 */
+	static final class StreamEndListener implements AsyncListener {
+
+		private volatile SSEUpdateQueue _queue;
+
+		private final AsyncContext _asyncContext;
+
+		/**
+		 * Creates a {@link StreamEndListener}.
+		 *
+		 * @param queue
+		 *        The queue whose connection is the stream of the given context.
+		 * @param asyncContext
+		 *        The context of the stream.
+		 */
+		StreamEndListener(SSEUpdateQueue queue, AsyncContext asyncContext) {
+			_queue = queue;
+			_asyncContext = asyncContext;
+		}
+
+		@Override
+		public void onComplete(AsyncEvent event) {
+			streamEnded();
+		}
+
+		@Override
+		public void onTimeout(AsyncEvent event) {
+			streamEnded();
+		}
+
+		@Override
+		public void onError(AsyncEvent event) {
+			streamEnded();
+		}
+
+		@Override
+		public void onStartAsync(AsyncEvent event) {
+			// Nothing to do.
+		}
+
+		private void streamEnded() {
+			SSEUpdateQueue queue = _queue;
+			if (queue != null) {
+				queue.clearConnection(_asyncContext);
+				_queue = null;
+			}
 		}
 	}
 

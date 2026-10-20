@@ -467,13 +467,21 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	/**
 	 * Called when a window is closed (either by the user or programmatically).
-	 * Invokes the close callback (if any), then cleans up the control tree and removes the entry.
+	 * Removes the entry, invokes the close callback (if any), then disposes the control tree, shuts
+	 * the queue down, releases the window's {@link WindowEntry#releaseModelScope() model scope} and
+	 * removes the window's subsession from the session.
 	 *
 	 * <p>
 	 * The close callback and the disposal of the tree run in the window's own subsession, whatever
 	 * window the calling request serves, so that they see the user and the locale of the window. The
 	 * caller's subsession is restored afterwards. A window whose page was never rendered has no
 	 * subsession; it is closed in the caller's context.
+	 * </p>
+	 *
+	 * <p>
+	 * Afterwards nothing of the window is left that observes the knowledge base: the released model
+	 * scope and the removed subsession were the window's cursors on the update chain, which would
+	 * otherwise keep every later commit in memory.
 	 * </p>
 	 */
 	public void windowClosed(String windowId) {
@@ -493,8 +501,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
-	 * Runs the close callback of the given window that was just removed, then disposes its tree
-	 * and its queue.
+	 * Runs the close callback of the given window that was just removed, then disposes its tree,
+	 * its queue, its model scope and its subsession.
 	 */
 	private static void disposeWindow(WindowEntry entry) {
 		String windowId = entry.getWindowId();
@@ -521,6 +529,22 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 		// After the tree: disposing it unregisters its controls from the queue.
 		entry.getQueue().shutdown();
+		entry.releaseModelScope();
+
+		// Last, because the close callback and the disposal of the tree need the subsession. The
+		// thread keeps the subsession installed until the caller's is restored.
+		removeSubSession(windowId);
+	}
+
+	/**
+	 * Removes the subsession of the given window from the session of the current thread, if there is
+	 * one.
+	 */
+	private static void removeSubSession(String windowId) {
+		TLSessionContext session = TLContextManager.getSession();
+		if (session != null) {
+			session.removeSubSession(windowId);
+		}
 	}
 
 	/**
@@ -685,6 +709,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 				rootControl.cleanupTree();
 			}
 			entry.getQueue().shutdown();
+			// The subsessions go with the session context itself.
+			entry.releaseModelScope();
 		}
 		_windows.clear();
 		_singletonKeys.clear();

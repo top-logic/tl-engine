@@ -319,6 +319,51 @@ public class TestXmlImporter extends TestCase {
 		assertEquals(List.of(n1), strictItem.tValueByName("others"));
 	}
 
+	public void testSecondContainerReported() throws XMLStreamException, IOException {
+		BufferingProtocol importLog = new BufferingProtocol();
+		XmlImporter importer = XmlImporter.newInstance(importLog.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter11-SecondContainer.importer.xml"));
+		TLModel model = loadModel(new AssertProtocol(), "testXmlImporter11-SecondContainer.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test11");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter11-SecondContainer.data.xml").getStream()), container);
+
+		// Linking an object into a second container is reported with the location of the second
+		// occurrence, the import continues.
+		String errors = String.join("\n", importLog.getErrors());
+		assertEquals(errors, 1, importLog.getErrors().size());
+		assertTrue(errors, errors.startsWith("In line 5 "));
+		assertTrue(errors, errors.contains("already part of"));
+		assertTrue(errors, errors.contains("test11:Container#elements"));
+		assertTrue(errors, errors.contains("test11:Item#children"));
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(3, elements.size());
+		TLObject top1 = elements.get(0);
+		TLObject parent1 = elements.get(1);
+		TLObject parent2 = elements.get(2);
+		assertEquals("top1", top1.tValueByName("name"));
+
+		// The object stays in its first container.
+		assertSame(container, top1.tContainer());
+		List<? extends TLObject> children1 = list(parent1.tValueByName("children"));
+		assertEquals(1, children1.size());
+		assertFalse(children1.contains(top1));
+
+		// Different objects in different containers are linked.
+		TLObject child1 = children1.get(0);
+		assertEquals("child1", child1.tValueByName("name"));
+		assertSame(parent1, child1.tContainer());
+		List<? extends TLObject> children2 = list(parent2.tValueByName("children"));
+		assertEquals(1, children2.size());
+		TLObject child2 = children2.get(0);
+		assertEquals("child2", child2.tValueByName("name"));
+		assertSame(parent2, child2.tContainer());
+	}
+
 	public void testLanguageFromInput() throws XMLStreamException, IOException {
 		assertEquals("Test expects English as fallback language.", Locale.ENGLISH,
 			ResourcesModule.getInstance().getFallbackLocale());

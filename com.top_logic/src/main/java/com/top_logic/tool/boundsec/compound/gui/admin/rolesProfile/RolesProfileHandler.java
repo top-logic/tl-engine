@@ -53,6 +53,7 @@ import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.RoleProfileConfig;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.ViewConfig;
 import com.top_logic.tool.boundsec.gui.profile.CommandGroupCollector;
+import com.top_logic.tool.boundsec.gui.profile.ImplicitReadRights;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -357,6 +358,9 @@ public class RolesProfileHandler {
 		Set<ComponentName> allViews = addAllViewNames(new HashSet<>(), profiles);
 		Map<String, BoundedRole> roleByName = rolesByName(profiles.keySet());
 		layoutTrees.forEach(tree -> importProfiles(tree, profiles, roleByName, allViews));
+		for (BoundedRole role : roleByName.values()) {
+			layoutTrees.forEach(tree -> ImplicitReadRights.addImplicitReadRights(tree, role));
+		}
 		if (!allViews.isEmpty()) {
 			InfoService.showWarning(
 				I18NConstants.IMPORT_ROLES_PROFILE_MISSING_VIEWS__VIEWS.fill(StringServices.toString(allViews)));

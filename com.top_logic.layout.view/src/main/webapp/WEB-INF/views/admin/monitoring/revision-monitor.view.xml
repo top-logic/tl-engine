@@ -149,7 +149,7 @@
 					inputs="modes"
 					label-position="above-value"
 					mandatory="true"
-					options="modes -> $modes"
+					options="$modes"
 					value="mode"
 				>
 					<label>
@@ -201,7 +201,7 @@
 					</on-submit>
 				</value-input>
 				<visible-if
-					expr="r -> !$r"
+					expr="!$revisionRange"
 					input="revisionRange"
 				>
 					<stack gap="compact">
@@ -226,7 +226,7 @@
 					</stack>
 				</visible-if>
 				<visible-if
-					expr="r -> $r"
+					expr="$revisionRange"
 					input="revisionRange"
 				>
 					<stack gap="compact">
@@ -429,8 +429,8 @@
 				<column attribute="author"/>
 				<column attribute="message"/>
 			</columns>
-			<rows><![CDATA[q -> {
-	f = $q["filter"];
+			<rows><![CDATA[{
+	f = $query["filter"];
 	byRevision = $f["byRevision"];
 	from = $f["from"];
 	to = $f["to"];

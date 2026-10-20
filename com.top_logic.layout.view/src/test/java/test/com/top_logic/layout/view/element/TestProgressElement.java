@@ -156,9 +156,9 @@ public class TestProgressElement extends TestCase {
 	/** Stating the fraction and the counts it would be the ratio of states it twice. */
 	public void testStatingBothFormsIsAConfigurationError() {
 		assertRejected(
-			ProgressElement.Config.FRACTION, expr("x -> 0.5"),
-			ProgressElement.Config.DONE, expr("x -> 1"),
-			ProgressElement.Config.TOTAL, expr("x -> 2"));
+			ProgressElement.Config.FRACTION, expr("0.5"),
+			ProgressElement.Config.DONE, expr("1"),
+			ProgressElement.Config.TOTAL, expr("2"));
 	}
 
 	/** Neither form is no statement at all. */
@@ -168,14 +168,14 @@ public class TestProgressElement extends TestCase {
 
 	/** One of the two counts alone is half a statement. */
 	public void testOneCountAloneIsAConfigurationError() {
-		assertRejected(ProgressElement.Config.DONE, expr("x -> 1"));
-		assertRejected(ProgressElement.Config.TOTAL, expr("x -> 2"));
+		assertRejected(ProgressElement.Config.DONE, expr("1"));
+		assertRejected(ProgressElement.Config.TOTAL, expr("2"));
 	}
 
 	/** A fraction alone, and two counts alone, are each accepted. */
 	public void testEitherFormAloneIsAccepted() throws ConfigurationException {
-		accept(ProgressElement.Config.FRACTION, expr("x -> 0.5"));
-		accept(ProgressElement.Config.DONE, expr("x -> 1"), ProgressElement.Config.TOTAL, expr("x -> 2"));
+		accept(ProgressElement.Config.FRACTION, expr("0.5"));
+		accept(ProgressElement.Config.DONE, expr("1"), ProgressElement.Config.TOTAL, expr("2"));
 	}
 
 	private static void assertRejected(Object... propertyValuePairs) {

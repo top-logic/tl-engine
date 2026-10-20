@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -67,6 +68,7 @@ import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.TableView;
@@ -136,15 +138,18 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		String EXPORT = "export";
 
 		/**
-		 * TL-Script function computing the row objects (a {@link Collection}).
+		 * TL-Script expression computing the row objects (a {@link Collection}).
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, e.g. {@code inputs="selection as project"}
+		 * with {@code rows="$project.get(`my.module:Project#tickets`)"}.
 		 * </p>
 		 */
 		@Name(ROWS)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getRows();
 
 		/**
@@ -291,7 +296,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	@CalledByReflection
 	public TableElement(InstantiationContext context, Config config) {
 		super(context, config);
-		_rowsExecutor = QueryExecutor.compile(config.getRows());
+		_rowsExecutor = InputScript.compile(config, Config.ROWS);
 		_rowClass = RowClassFunction.compile(config.getRowClass());
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
 		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {

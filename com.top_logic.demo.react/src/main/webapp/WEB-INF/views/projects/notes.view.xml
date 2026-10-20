@@ -57,7 +57,7 @@
 			<inputs>
 				<input channel="project"/>
 			</inputs>
-			<rows>p -&gt; if($p == null, [], $p.get(`tl.demo.projectManagement:ProjectScope#notes`))</rows>
+			<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#notes`))</rows>
 		</table>
 	</panel>
 </view>

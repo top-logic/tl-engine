@@ -324,7 +324,7 @@
 									</generic-command>
 								</commands>
 								<visible-if
-									expr="p -> $p != null"
+									expr="$pending != null"
 									input="pending"
 								>
 									<inset>
@@ -337,7 +337,7 @@
 									</inset>
 								</visible-if>
 								<visible-if
-									expr="selected -> $selected != null"
+									expr="$selection != null"
 									input="selection"
 								>
 									<inset>
@@ -572,7 +572,7 @@
 											<value><![CDATA[row -> $row["stored"]]]></value>
 										</computed-column>
 									</columns>
-									<rows><![CDATA[rules -> $rules]]></rows>
+									<rows><![CDATA[$selectedRules]]></rows>
 								</table>
 							</panel>
 						</pane>

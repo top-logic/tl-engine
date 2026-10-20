@@ -18,9 +18,11 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * {@link TileLabelProvider} that computes the label from current channel values using a TL-Script
@@ -55,12 +57,14 @@ public class ScriptedTileLabel implements TileLabelProvider {
 		 * TL-Script expression returning the label string.
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names.
 		 * </p>
 		 */
 		@Name(EXPR)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getExpr();
 	}
 
@@ -74,7 +78,7 @@ public class ScriptedTileLabel implements TileLabelProvider {
 	@CalledByReflection
 	public ScriptedTileLabel(InstantiationContext context, Config config) {
 		_inputs = config.getInputs();
-		_executor = QueryExecutor.compile(config.getExpr());
+		_executor = InputScript.compile(config, Config.EXPR);
 	}
 
 	@Override

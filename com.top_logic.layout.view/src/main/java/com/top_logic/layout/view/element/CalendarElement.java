@@ -30,6 +30,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.ExpressionCalendarModel.EventExprs;
@@ -37,6 +38,7 @@ import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -103,15 +105,18 @@ public class CalendarElement implements UIElement {
 		String ON_CREATE = "on-create";
 
 		/**
-		 * TL-Script function computing the business objects shown as events (a {@link Collection}).
+		 * TL-Script expression computing the business objects shown as events (a
+		 * {@link Collection}).
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names.
 		 * </p>
 		 */
 		@Name(OBJECTS)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getObjects();
 
 		/**
@@ -313,7 +318,7 @@ public class CalendarElement implements UIElement {
 	@CalledByReflection
 	public CalendarElement(InstantiationContext context, Config config) {
 		_config = config;
-		_objectsExecutor = QueryExecutor.compile(config.getObjects());
+		_objectsExecutor = InputScript.compile(config, Config.OBJECTS);
 
 		EventConfig event = config.getEvent();
 		_eventExprs = new EventExprs(

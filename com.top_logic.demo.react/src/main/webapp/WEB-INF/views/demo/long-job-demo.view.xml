@@ -342,8 +342,8 @@
 		</text>
 
 		<progress
-			fraction="x -> null"
-			label="x -> #('Working…'@en, 'In Arbeit…'@de)"
+			fraction="null"
+			label="#('Working…'@en, 'In Arbeit…'@de)"
 		/>
 	</panel>
 </view>

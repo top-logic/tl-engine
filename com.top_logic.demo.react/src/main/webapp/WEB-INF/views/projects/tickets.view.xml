@@ -100,13 +100,13 @@
 			<inputs>
 				<input channel="milestone"/>
 			</inputs>
-			<rows>m -&gt; if($m == null, [], $m.get(`tl.demo.projectManagement:Milestone#tickets`))</rows>
+			<rows>if($milestone == null, [], $milestone.get(`tl.demo.projectManagement:Milestone#tickets`))</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="ticket"
 				view="projects/ticket-detail.view.xml"
 			>
 				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="t -> $t.get(`tl.demo.projectManagement:Ticket#title`)"
+					expr="$ticket.get(`tl.demo.projectManagement:Ticket#title`)"
 					inputs="ticket"
 				/>
 			</on-activate>

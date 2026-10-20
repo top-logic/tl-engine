@@ -400,7 +400,7 @@
 								classifier, a datatype - with what every model part has.
 							-->
 							<switch input="selectedDetail">
-								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLModule`)">
+								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLModule`)">
 									<panel>
 										<title>
 											<en>Module</en>
@@ -419,7 +419,7 @@
 										</form>
 									</panel>
 								</case>
-								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLStructuredTypePart`)">
+								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLStructuredTypePart`)">
 									<panel>
 										<title>
 											<en>Attribute</en>
@@ -440,7 +440,7 @@
 										</form>
 									</panel>
 								</case>
-								<case test="p -> $p != null &amp;&amp; $p.instanceOf(`tl.model:TLClass`)">
+								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLClass`)">
 									<panel>
 										<title>
 											<en>Class</en>

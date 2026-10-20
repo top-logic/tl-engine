@@ -28,15 +28,7 @@ public class CommaSeparatedInputRefs extends CommaSeparatedListValueProvider<Inp
 	@Override
 	protected InputRef parseSingleValue(String propertyName, CharSequence propertyValue,
 			String singlePropertyValue) throws ConfigurationException {
-		String[] parts = singlePropertyValue.trim().split("\\s+");
-		if (parts.length == 1) {
-			return new InputRef(ChannelRefFormat.INSTANCE.getValueNonEmpty(propertyName, parts[0]));
-		}
-		if (parts.length == 3 && AS.equals(parts[1])) {
-			return new InputRef(ChannelRefFormat.INSTANCE.getValueNonEmpty(propertyName, parts[0]), parts[2]);
-		}
-		throw new ConfigurationException(I18NConstants.ERROR_INVALID_INPUT__VALUE.fill(singlePropertyValue),
-			propertyName, propertyValue);
+		return InputRefFormat.parse(propertyName, propertyValue, singlePropertyValue);
 	}
 
 	@Override

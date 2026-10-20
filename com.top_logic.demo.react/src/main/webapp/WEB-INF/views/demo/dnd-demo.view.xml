@@ -177,7 +177,7 @@
 													<column attribute="lane"/>
 													<column attribute="notes"/>
 												</columns>
-												<rows>root -&gt; $root.get(`demo.dnd:Node#children`)</rows>
+												<rows>$listRoot.get(`demo.dnd:Node#children`)</rows>
 											</table>
 										</panel>
 									</pane>

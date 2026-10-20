@@ -138,6 +138,6 @@
 				<value>factor -&gt; row -&gt; col -&gt; $factor * $row.get(`demo.test:Row#amount`)</value>
 			</dynamic-columns>
 		</columns>
-		<rows>input -&gt; list($input)</rows>
+		<rows>list($testInput)</rows>
 	</table>
 </view>

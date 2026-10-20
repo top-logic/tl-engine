@@ -133,7 +133,7 @@
 						</fields>
 					</inset>
 					<switch input="document">
-						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('image/')">
+						<case test="$document != null &amp;&amp; binaryContentType($document.get(`demo.documents:Document#data`)).stringStartsWith('image/')">
 							<image input="data">
 								<alt>
 									<en>The selected picture.</en>
@@ -141,10 +141,10 @@
 								</alt>
 							</image>
 						</case>
-						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('application/pdf')">
+						<case test="$document != null &amp;&amp; binaryContentType($document.get(`demo.documents:Document#data`)).stringStartsWith('application/pdf')">
 							<pdf input="data"/>
 						</case>
-						<case test="d -> $d != null &amp;&amp; binaryContentType($d.get(`demo.documents:Document#data`)).stringStartsWith('text/html')">
+						<case test="$document != null &amp;&amp; binaryContentType($document.get(`demo.documents:Document#data`)).stringStartsWith('text/html')">
 							<html
 								display="document"
 								input="data"

@@ -136,7 +136,7 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 
 `<object-list>` (`ObjectListElement`) instantiates its `<item>` content once per object of a list it computes itself, with the object published on a channel (`element-channel`, `element` by default). What the list holds is decided by TL-Script over channel values, not by a containment the element knows about, so the same element serves the comments of a ticket, a catalogue of products and the result of a search.
 
-- **Inputs.** `inputs` names the channels the functions read, either as the comma-separated attribute `inputs="catalogue, term"` or as nested `<inputs><input channel="catalogue"/></inputs>` (`Inputs`, the same notation every `inputs` property of the view layer takes). Their values are the leading positional arguments, in declaration order: `items` is `...inputs -> elements`, `link` and `remove` are `...inputs -> element -> ...`, the element coming last. A list with no inputs is a repeater over a plain query — `items="all(\`test.flowchart:FlowNode\`)"` — and follows the model through its `observed-types`.
+- **Inputs.** `inputs` names the channels the functions read, either as the comma-separated attribute `inputs="catalogue, term"` or as nested `<inputs><input channel="catalogue"/></inputs>` (`Inputs`, the same notation every `inputs` property of the view layer takes). `items` sees their values as variables named after the channels, or by their `as` names (`inputs="selection as catalogue"` makes the value `$catalogue`), and computes the elements: `` items="$catalogue.get(`demo:Catalogue#products`)" ``. `link` and `remove` take the input values as leading positional arguments, in declaration order: `...inputs -> element -> ...`, the element coming last. A list with no inputs is a repeater over a plain query — `items="all(\`test.flowchart:FlowNode\`)"` — and follows the model through its `observed-types`.
 - **With and without a container.** A read-only list configures `items` alone. A list that composes objects adds `element-type` plus the `<new-element>` content bound to `new-element-channel`, whose command chain persists the draft with `<link-element>`, and `<remove-element>` inside the `<item>` content detaches one. The composer appears only while *every* input holds a value, because an element is composed to be attached somewhere; `link` is what attaches it, so any containment style works — a composite reference, a back-reference, an association.
 - **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns`, `gap` and `max-width` — the same options `<grid>` takes (see [Layout: stack and grid](#layout-stack-and-grid)). `gap` and `max-width` apply to either arrangement, the column options to a grid.
 - **Selection.** `selection="ch"` makes the elements selectable like the entries of a list box: a click on an element writes its object to the channel, and the element of the object the channel holds is marked as selected (`aria-selected`; the design system draws a ring over the element, `layout.css`; `ItemSelectionBinding`, a `SelectionChannelBinding`; the arrangement container receives the elements together with their objects through `ReactLayoutControl.setItems`). `selection-mode="multi"` selects several elements with `Ctrl` and `Shift`; the channel then holds the set while several are selected. An element that leaves the list gives up the selection. Without `selection`, the list is display-only. A selection is recorded as `selectItemByKey` naming the object.
@@ -146,7 +146,7 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 <object-list
 	gap="default"
 	inputs="search"
-	items="search -> all(`test.flowchart:FlowNode`).filter(n -> $search.isEmpty() || $n.get(`test.flowchart:FlowNode#name`).stringContains($search))"
+	items="all(`test.flowchart:FlowNode`).filter(n -> $search.isEmpty() || $n.get(`test.flowchart:FlowNode#name`).stringContains($search))"
 	layout="grid"
 	max-columns="3"
 	min-column-width="16rem"
@@ -186,7 +186,7 @@ The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.
 
 ## Cards in columns: `<kanban-board>`
 
-`<kanban-board>` (`KanbanBoardElement`, control `ReactKanbanBoardControl`, client `TLKanbanBoard`) distributes computed objects into columns of cards. Over its `inputs`, `columns` computes the column values (the classifiers of an enumeration - `all(\`my:Status\`)` - or arbitrary objects), `items` the objects, whose order is their order within a column, and `column` maps an object to its column value; an object whose column value is none of the columns is not shown. The header shows `column-label` (`column -> label`, the label of the column value by default) and the number of cards.
+`<kanban-board>` (`KanbanBoardElement`, control `ReactKanbanBoardControl`, client `TLKanbanBoard`) distributes computed objects into columns of cards. Over its `inputs`, which these two scripts see as variables named after the channels (or by their `as` names), `columns` computes the column values (the classifiers of an enumeration - `all(\`my:Status\`)` - or arbitrary objects), `items` the objects, whose order is their order within a column, and `column` maps an object to its column value; an object whose column value is none of the columns is not shown. The header shows `column-label` (`column -> label`, the label of the column value by default) and the number of cards.
 
 The `<card>` content is instantiated per object with the object on `element-channel` (`element` by default, as for `<object-list>`), by the same keyed `TemplateInstances` the items of `<object-list>` use: a card of an object that stays keeps its controls, also when the object moves to another column. `selection` names the channel a clicked card writes its object to; the card of the object the channel holds is highlighted (`ItemSelectionBinding`, a `SelectionChannelBinding`). The board follows its displayed objects and the `observed-types`, so changing the attribute the column is computed from moves the card. A card selection is recorded as `selectCardByKey` naming the object, since the client card keys are allocated per session.
 
@@ -205,7 +205,7 @@ The demo is `com.top_logic.demo.react`'s `WEB-INF/views/board.view.xml` (nav ite
 
 ## Content shown under one condition: `<visible-if>`
 
-`<visible-if input="ch" expr="x -> …">` (`VisibleIfElement`) shows its children while a TL-Script predicate over the value of the `input` channel holds, and nothing while it does not. It is the short form of a `<switch>` with a single case and no default, and it is that literally: the element builds the `ReactSwitchControl` of such a switch, so the re-evaluation, the observation and the disposal are the ones of a `<switch>`. Several alternatives of which one is shown at a time stay a `<switch>`.
+`<visible-if input="ch" expr="$ch != null">` (`VisibleIfElement`) shows its children while a TL-Script predicate over the value of the `input` channel holds, and nothing while it does not. The predicate sees the value as a variable named after the channel, or by the name given with `as`: `input="selection as ticket"` makes it `$ticket`. The same holds for the `test` of every `<case>` of a `<switch input="…">`. It is the short form of a `<switch>` with a single case and no default, and it is that literally: the element builds the `ReactSwitchControl` of such a switch, so the re-evaluation, the observation and the disposal are the ones of a `<switch>`. Several alternatives of which one is shown at a time stay a `<switch>`.
 
 - The condition is re-evaluated on a new channel value and on a change of the object the channel holds - a condition usually decides by an attribute of that object, which is edited without the channel value changing. A condition reaching beyond the input object (deciding by an attribute of its container, say) names the types it navigates to in `observed-types`, since a change of another object is invisible to the input's own observation.
 - Content that is hidden is disposed rather than kept alive, so it leaves no contributions - a form's edit / save / cancel commands, a slot contribution - behind in the enclosing scope. While the condition keeps holding, the content stays as it is and follows its own channels.
@@ -239,7 +239,7 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 			</on-submit>
 		</value-input>
 		<visible-if
-			expr="t -> $t != null"
+			expr="$ticket != null"
 			input="ticket"
 		>
 			<text

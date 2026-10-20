@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodHandles;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.command.CommandArguments;
 import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
@@ -57,6 +58,7 @@ import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -66,9 +68,9 @@ import com.top_logic.util.Resources;
  * reason why something cannot be done right now.
  *
  * <p>
- * The message is either fixed text or computed by TL-Script functions over the values of the
+ * The message is either fixed text or computed by TL-Script expressions over the values of the
  * {@link Config#getInputs() input channels}. An optional condition decides whether the message is
- * shown at all. The functions are evaluated again whenever an input channel gets a new value, and
+ * shown at all. The expressions are evaluated again whenever an input channel gets a new value, and
  * when one of the input objects itself is changed - a message typically speaks about an attribute of
  * that object, which can be edited without the channel value changing. A function reaching beyond
  * the input objects states the types it navigates to in {@link Config#getObservedTypes()}.
@@ -88,8 +90,8 @@ import com.top_logic.util.Resources;
  *
  * <pre>
  * &lt;alert severity="warning" inputs="ticket"
- *     visible-if="t -&gt; $t.get(`my.app:Ticket#overdue`)"
- *     message-expr="t -&gt; #('The ticket is overdue.'@en, 'Das Ticket ist überfällig.'@de)"
+ *     visible-if="$ticket.get(`my.app:Ticket#overdue`)"
+ *     message-expr="#('The ticket is overdue.'@en, 'Das Ticket ist überfällig.'@de)"
  *     closable="true"&gt;
  *   &lt;generic-command inputs="ticket"&gt;
  *     &lt;label&gt;&lt;en&gt;Escalate&lt;/en&gt;&lt;de&gt;Eskalieren&lt;/de&gt;&lt;/label&gt;
@@ -165,12 +167,14 @@ public class AlertElement implements UIElement {
 		 * always shown.
 		 *
 		 * <p>
-		 * Called with the values of the {@link #getInputs() input channels} as arguments, in
-		 * declaration order; the message is shown while it returns {@code true}.
+		 * The predicate sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names; the message is shown while it returns
+		 * {@code true}.
 		 * </p>
 		 */
 		@Name(VISIBLE_IF)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getVisibleIf();
 
 		/**
@@ -186,17 +190,18 @@ public class AlertElement implements UIElement {
 		ResKey getTitle();
 
 		/**
-		 * TL-Script function computing the title shown above the message.
+		 * TL-Script expression computing the title shown above the message.
 		 *
 		 * <p>
-		 * Called with the values of the {@link #getInputs() input channels} as arguments, in
-		 * declaration order. The result is shown as text: an internationalized literal in the
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. The result is shown as text: an internationalized literal in the
 		 * language of the user, any other object by its label. A fixed title is given by
 		 * {@link #getTitle()} instead; at most one of both may be given.
 		 * </p>
 		 */
 		@Name(TITLE_EXPR)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTitleExpr();
 
 		/**
@@ -212,17 +217,18 @@ public class AlertElement implements UIElement {
 		ResKey getMessage();
 
 		/**
-		 * TL-Script function computing the message text.
+		 * TL-Script expression computing the message text.
 		 *
 		 * <p>
-		 * Called with the values of the {@link #getInputs() input channels} as arguments, in
-		 * declaration order. The result is shown as text: an internationalized literal in the
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. The result is shown as text: an internationalized literal in the
 		 * language of the user, any other object by its label. A fixed message is given by
 		 * {@link #getMessage()} instead; exactly one of both must be given.
 		 * </p>
 		 */
 		@Name(MESSAGE_EXPR)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getMessageExpr();
 
 		/**
@@ -332,9 +338,9 @@ public class AlertElement implements UIElement {
 	@CalledByReflection
 	public AlertElement(InstantiationContext context, Config config) {
 		_config = config;
-		_visibleIf = QueryExecutor.compileOptional(config.getVisibleIf());
-		_titleExpr = QueryExecutor.compileOptional(config.getTitleExpr());
-		_messageExpr = QueryExecutor.compileOptional(config.getMessageExpr());
+		_visibleIf = InputScript.compile(config, Config.VISIBLE_IF);
+		_titleExpr = InputScript.compile(config, Config.TITLE_EXPR);
+		_messageExpr = InputScript.compile(config, Config.MESSAGE_EXPR);
 
 		if (config.getTitle() != null && config.getTitleExpr() != null) {
 			context.error("An <alert> states its title either as fixed text ('" + Config.TITLE

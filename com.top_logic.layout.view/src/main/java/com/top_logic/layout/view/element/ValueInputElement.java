@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.function.Function;
 
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
 import com.top_logic.layout.view.command.ActionScope;
@@ -69,6 +70,7 @@ import com.top_logic.model.config.AttributeConfigBase;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -216,9 +218,9 @@ public class ValueInputElement implements UIElement {
 		 * The values to choose from.
 		 *
 		 * <p>
-		 * Called with the values of the {@link #getInputs() input channels} as its arguments, so
-		 * that the options can depend on what the rest of the view shows; without inputs, an
-		 * expression computing the options directly.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, so that the options can depend on what the
+		 * rest of the view shows.
 		 * </p>
 		 *
 		 * <p>
@@ -233,6 +235,7 @@ public class ValueInputElement implements UIElement {
 		 */
 		@Name(OPTIONS)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getOptions();
 
 		/**
@@ -497,7 +500,7 @@ public class ValueInputElement implements UIElement {
 	public ValueInputElement(InstantiationContext context, Config config) {
 		_valueRef = config.getValue();
 		_typeRef = config.getType();
-		_options = QueryExecutor.compileOptional(config.getOptions());
+		_options = InputScript.compile(config, Config.OPTIONS);
 		_inputRefs = config.getInputs();
 		_multiple = config.getMultiple();
 		_mandatory = config.getMandatory();

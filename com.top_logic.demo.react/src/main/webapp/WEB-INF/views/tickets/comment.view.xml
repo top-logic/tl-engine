@@ -37,7 +37,7 @@
 				<relative-time input="date"/>
 				<scroll-link
 					input="cited"
-					label="c -> &quot;↩ &quot; + label($c.get(`demo.tickets:Comment#author`))"
+					label="&quot;↩ &quot; + label($cited.get(`demo.tickets:Comment#author`))"
 				/>
 			</title-content>
 			<commands>

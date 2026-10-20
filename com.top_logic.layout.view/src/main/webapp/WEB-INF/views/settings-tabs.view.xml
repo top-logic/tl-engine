@@ -113,7 +113,7 @@
 							having a secret stored, the same condition the buttons are offered by.
 						-->
 						<switch input="account">
-							<case test="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null">
+							<case test="$account.get(`tl.accounts:Person#mfaSecret`) != null">
 								<text>
 									<label>
 										<en>Two-factor authentication: active</en>
@@ -168,7 +168,7 @@
 							is - what the button changes is what the line above it names.
 						-->
 						<switch input="deputies">
-							<case test="deputies -> !$deputies.isEmpty()">
+							<case test="!$deputies.isEmpty()">
 								<stack
 									direction="row"
 									gap="compact"
@@ -197,7 +197,7 @@
 							their deputy stands in for nobody, and a line saying so would be noise.
 						-->
 						<switch input="deputyFor">
-							<case test="accounts -> !$accounts.isEmpty()">
+							<case test="!$deputyFor.isEmpty()">
 								<stack
 									direction="row"
 									gap="compact"

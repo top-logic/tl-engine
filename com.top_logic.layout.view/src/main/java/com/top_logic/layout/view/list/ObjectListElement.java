@@ -41,6 +41,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.GridOptions;
@@ -50,6 +51,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.SelectionMode;
 
@@ -95,7 +97,7 @@ import com.top_logic.table.SelectionMode;
  * <pre>
  * &lt;object-list
  *   inputs="catalogue"
- *   items="catalogue -&gt; $catalogue.get(`demo:Catalogue#products`)"
+ *   items="$catalogue.get(`demo:Catalogue#products`)"
  *   layout="grid"
  *   max-columns="4"
  *   min-column-width="18rem"
@@ -118,7 +120,7 @@ import com.top_logic.table.SelectionMode;
  * <pre>
  * &lt;object-list
  *   inputs="catalogue"
- *   items="catalogue -&gt; $catalogue.get(`demo:Catalogue#products`)"
+ *   items="$catalogue.get(`demo:Catalogue#products`)"
  *   selection="product"
  * &gt;
  *   &lt;item&gt;
@@ -260,16 +262,18 @@ public class ObjectListElement implements UIElement {
 		Layout getLayout();
 
 		/**
-		 * TL-Script function computing the displayed elements from the values of the inputs:
-		 * {@code ...inputs -> elements}.
+		 * TL-Script expression computing the displayed elements from the values of the inputs.
 		 *
 		 * <p>
-		 * Applied again whenever an input changes, so the displayed elements follow what the inputs
-		 * hold. An input whose object was deleted meanwhile is passed as nothing.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. It is evaluated again whenever an input
+		 * changes, so the displayed elements follow what the inputs hold. An input whose object was
+		 * deleted meanwhile has no value.
 		 * </p>
 		 */
 		@Name(ITEMS)
 		@Mandatory
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getItems();
 
 		/**
@@ -421,7 +425,7 @@ public class ObjectListElement implements UIElement {
 	@CalledByReflection
 	public ObjectListElement(InstantiationContext context, Config config) {
 		_config = config;
-		_itemsExecutor = QueryExecutor.compile(config.getItems());
+		_itemsExecutor = InputScript.compile(config, Config.ITEMS);
 		_linkExecutor = config.getLink() == null ? null : QueryExecutor.compile(config.getLink());
 		_removeExecutor = config.getRemove() == null ? null : QueryExecutor.compile(config.getRemove());
 		_itemContent = instantiate(context, config.getItem());

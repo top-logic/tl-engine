@@ -186,10 +186,10 @@
 						with-inset="true"
 					>
 						<switch input="question">
-							<case test="q -> $q == 'role'">
+							<case test="$question == 'role'">
 								<field attribute="string"/>
 							</case>
-							<case test="q -> $q == 'phone'">
+							<case test="$question == 'phone'">
 								<field attribute="phone"/>
 							</case>
 							<default>

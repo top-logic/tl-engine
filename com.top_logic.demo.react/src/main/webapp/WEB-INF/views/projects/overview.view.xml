@@ -286,7 +286,7 @@
 					view="projects/milestones.view.xml"
 				>
 					<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-						expr="p -> $p.get(`tl.demo.projectManagement:ProjectScope#name`)"
+						expr="$project.get(`tl.demo.projectManagement:ProjectScope#name`)"
 						inputs="project"
 					/>
 				</on-activate>

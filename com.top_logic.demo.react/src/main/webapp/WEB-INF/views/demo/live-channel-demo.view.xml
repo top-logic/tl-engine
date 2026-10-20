@@ -69,7 +69,7 @@
 		<object-list
 			gap="compact"
 			inputs="ticker"
-			items="s -> if($s == null, [], $s['recent'])"
+			items="if($ticker == null, [], $ticker['recent'])"
 			layout="list"
 		>
 			<item>

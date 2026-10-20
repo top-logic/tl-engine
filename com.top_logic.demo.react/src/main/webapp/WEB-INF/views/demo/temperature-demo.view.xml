@@ -121,7 +121,7 @@
 								<inputs>
 									<input channel="site"/>
 								</inputs>
-								<rows>site -&gt; if($site == null, [], $site.get(`demo.temperature:DemoSite#sensors`))</rows>
+								<rows>if($site == null, [], $site.get(`demo.temperature:DemoSite#sensors`))</rows>
 							</table>
 						</panel>
 					</selector>

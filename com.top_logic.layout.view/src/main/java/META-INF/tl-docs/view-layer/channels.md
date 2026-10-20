@@ -40,7 +40,7 @@ A script of a channel sees the value of each input as a variable named after the
 />
 ```
 
-The script declares no parameters. It is evaluated without positional arguments, so a lambda header (`t -> $t.get(…)`) would make its result a function instead of a value; a script whose top-level expression is a lambda is therefore rejected with a configuration error when the view is loaded, naming the variables the script can use. The same holds for every script of the view layer that sees named values - the scripts of an action chain, the `init` of a channel, the `reverse` of a derived channel - also for a script that sees no variables at all. The script editor offers the variables for completion after `$`.
+The script declares no parameters. It is evaluated without positional arguments, so a lambda header (`t -> $t.get(…)`) would make its result a function instead of a value; a script whose top-level expression is a lambda is therefore rejected with a configuration error when the view is loaded, naming the variables the script can use. The same holds for every script of the view layer that sees named values - the scripts of an action chain, the `init` of a channel, the `reverse` of a derived channel, the scripts of an element over its inputs (a table's `<rows>`, an `<object-list>`'s `items`, an `<alert>`'s texts, the `test` of a `<case>`, …) - also for a script that sees no variables at all. The script editor offers the variables for completion after `$`.
 
 ### A writable channel initialized from other channels: `init`
 

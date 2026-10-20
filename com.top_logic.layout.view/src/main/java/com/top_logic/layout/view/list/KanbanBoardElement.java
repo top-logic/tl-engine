@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
 import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.command.ActionScope;
@@ -54,6 +55,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.SelectionMode;
 
@@ -181,29 +183,31 @@ public class KanbanBoardElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * TL-Script function computing the column values from the values of the inputs:
-		 * {@code ...inputs -> columns}.
+		 * TL-Script expression computing the column values from the values of the inputs.
 		 *
 		 * <p>
-		 * One column is displayed per value, in the order computed: the classifiers of an
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. One column is displayed per value, in the order computed: the classifiers of an
 		 * enumeration, or arbitrary objects.
 		 * </p>
 		 */
 		@Name(COLUMNS)
 		@Mandatory
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getColumns();
 
 		/**
-		 * TL-Script function computing the displayed objects from the values of the inputs:
-		 * {@code ...inputs -> objects}.
+		 * TL-Script expression computing the displayed objects from the values of the inputs.
 		 *
 		 * <p>
-		 * Within a column, the objects are displayed in the order computed here. An input whose
-		 * object was deleted meanwhile is passed as nothing.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names. Within a column, the objects are displayed in
+		 * the order computed here. An input whose object was deleted meanwhile has no value.
 		 * </p>
 		 */
 		@Name(ITEMS)
 		@Mandatory
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getItems();
 
 		/**
@@ -387,8 +391,8 @@ public class KanbanBoardElement implements UIElement {
 	@CalledByReflection
 	public KanbanBoardElement(InstantiationContext context, Config config) {
 		_config = config;
-		_columnsExecutor = QueryExecutor.compile(config.getColumns());
-		_itemsExecutor = QueryExecutor.compile(config.getItems());
+		_columnsExecutor = InputScript.compile(config, Config.COLUMNS);
+		_itemsExecutor = InputScript.compile(config, Config.ITEMS);
 		_columnExecutor = QueryExecutor.compile(config.getColumn());
 		_columnLabelExecutor = QueryExecutor.compileOptional(config.getColumnLabel());
 		_cardContent = config.getCard().stream()

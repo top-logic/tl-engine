@@ -98,7 +98,7 @@
 					<value><![CDATA[row -> $row["newValue"]]]></value>
 				</computed-column>
 			</columns>
-			<rows><![CDATA[cs -> $cs.get(`tl.changelog:ChangeSet#changes`).flatMap(c -> switch {
+			<rows><![CDATA[$changeSet.get(`tl.changelog:ChangeSet#changes`).flatMap(c -> switch {
 	$c.instanceOf(`tl.changelog:Update`):
 		$c.get(`tl.changelog:Update#modifications`).map(m -> {
 			"kind": `tl.changelog:ChangeType#UPDATE`,

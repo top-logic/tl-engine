@@ -235,7 +235,7 @@
 									rows selected it offers the priorities of all of them.
 								-->
 								<criterion column="priority">
-									<options selected="sel -> $sel.get(`demo.react:Demo#priority`)"/>
+									<options selected="$selected.get(`demo.react:Demo#priority`)"/>
 								</criterion>
 							</preset>
 						</presets>
@@ -336,7 +336,7 @@
 							the table is. The download name is computed from the table's inputs (here the
 							selection, which the name does not need).
 						-->
-						<export download-name="sel -> #('Demo objects'@en, 'Demo-Objekte'@de)">
+						<export download-name="#('Demo objects'@en, 'Demo-Objekte'@de)">
 							<sheet-name>
 								<en>Demo objects</en>
 								<de>Demo-Objekte</de>

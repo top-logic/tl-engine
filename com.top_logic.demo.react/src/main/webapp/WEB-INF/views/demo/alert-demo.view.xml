@@ -109,10 +109,10 @@
 			<alert
 				closable="true"
 				inputs="obj"
-				message-expr="o -> #('Saved text: {0}'@en, 'Gespeicherter Text: {0}'@de).fill($o.get(`demo.react:Demo#string`))"
+				message-expr="#('Saved text: {0}'@en, 'Gespeicherter Text: {0}'@de).fill($obj.get(`demo.react:Demo#string`))"
 				severity="warning"
-				title-expr="o -> $o.get(`demo.react:Demo#name`)"
-				visible-if="o -> $o.get(`demo.react:Demo#active`) == true"
+				title-expr="$obj.get(`demo.react:Demo#name`)"
+				visible-if="$obj.get(`demo.react:Demo#active`) == true"
 			>
 				<on-dismiss>
 					<notify expr="#('Alert closed. Save another text to show it again.'@en, 'Hinweisbox geschlossen. Einen anderen Text speichern, um sie wieder anzuzeigen.'@de)"/>

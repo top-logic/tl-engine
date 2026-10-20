@@ -45,7 +45,7 @@
 		account carries - and the preferences stored on it - waits until somebody is logged in.
 	-->
 	<switch input="currentUser">
-		<case test="account -> $account.accountIsAnonymous()">
+		<case test="$currentUser.accountIsAnonymous()">
 			<button>
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
 					image="css:bi bi-box-arrow-in-right"

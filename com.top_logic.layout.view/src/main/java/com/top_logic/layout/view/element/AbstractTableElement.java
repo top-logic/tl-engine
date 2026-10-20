@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
 import com.top_logic.layout.view.command.ActionScope;
@@ -72,6 +74,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
@@ -392,7 +395,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * Container for the list of {@link PresetConfig}s of a table.
 	 */
-	public interface PresetsConfig extends ConfigurationItem {
+	public interface PresetsConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getInitial()}. */
 		String INITIAL = "initial";
@@ -430,7 +433,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * A filter criterion a table offers under a name.
 	 */
 	@TagName("preset")
-	public interface PresetConfig extends ConfigurationItem {
+	public interface PresetConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -481,7 +484,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * </p>
 	 */
 	@TagName("criterion")
-	public interface CriterionConfig extends ConfigurationItem {
+	public interface CriterionConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getColumn()}. */
 		String COLUMN = "column";
@@ -511,10 +514,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 *
 		 * <p>
 		 * It is evaluated when the table is built and whenever one of its
-		 * {@link Config#getInputs() inputs} changes, with the input values as its arguments - so an
-		 * expression like {@code currentUser()} yields a preset that means something different to
-		 * every user, and one over an input yields a preset that follows what is displayed
-		 * elsewhere. Which value the expression may yield depends on the filter of the column: a
+		 * {@link Config#getInputs() inputs} changes, and it sees the values of the inputs as
+		 * variables named after their channels, or by their {@code as} names - so an expression like
+		 * {@code currentUser()} yields a preset that means something different to every user, and
+		 * one over an input yields a preset that follows what is displayed elsewhere. Which value the expression may yield depends on the filter of the column: a
 		 * text filter accepts any single value and matches its text, a selection filter accepts one
 		 * of the values to select or a list of them, a boolean filter accepts {@code true} or
 		 * {@code false}, and a range filter accepts a single value to match exactly or a list of two
@@ -528,6 +531,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * </p>
 		 */
 		@Name(EXPR)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getExpr();
 
 		/**
@@ -986,7 +990,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			return null;
 		}
 		return new CompiledCriterion(criterionConfig.getColumn(),
-			expr == null ? null : QueryExecutor.compile(expr),
+			InputScript.compile(criterionConfig, CriterionConfig.EXPR),
 			state == null ? null : FilterStateTemplate.compile(state),
 			criterionConfig.getInverted());
 	}

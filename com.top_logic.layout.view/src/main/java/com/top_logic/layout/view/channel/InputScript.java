@@ -27,8 +27,11 @@ import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
  * </p>
  *
  * <ol>
- * <li>the {@link Inputs#getInputs() inputs} of the configuration holding the property, each named
- * after its channel or by its {@value CommaSeparatedInputRefs#AS} name,</li>
+ * <li>the {@link Inputs#getInputs() inputs} (or the {@link SingleInput#getInput() single input}) of
+ * the configuration holding the property, each named after its channel or by its
+ * {@value CommaSeparatedInputRefs#AS} name. A configuration without inputs of its own, a part of an
+ * element, sees the inputs of the element containing it, see {@link #inputs(ConfigurationItem,
+ * PropertyDescriptor)} and {@link InputsOf},</li>
  * <li>the values the element supplies on each evaluation, as declared by the {@link Supplies}
  * annotations of the property.</li>
  * </ol>
@@ -80,18 +83,45 @@ public final class InputScript {
 	 *        The configuration holding the script.
 	 * @param property
 	 *        The script property.
-	 * @return The names of the inputs of the configuration, followed by the names of the supplied
-	 *         values.
+	 * @return The names of the {@link #inputs(ConfigurationItem, PropertyDescriptor) inputs},
+	 *         followed by the names of the supplied values.
 	 */
 	public static List<String> variables(ConfigurationItem config, PropertyDescriptor property) {
-		List<String> result = new ArrayList<>();
-		if (config instanceof Inputs inputs) {
-			result.addAll(InputRef.names(inputs.getInputs()));
-		}
+		List<String> result = new ArrayList<>(InputRef.names(inputs(config, property)));
 		for (Supplies supplied : supplies(property)) {
 			result.add(suppliedName(config, supplied));
 		}
 		return result;
+	}
+
+	/**
+	 * The inputs a script in the given property sees.
+	 *
+	 * @param config
+	 *        The configuration holding the script.
+	 * @param property
+	 *        The script property.
+	 * @return The {@link Inputs#getInputs() inputs} or the {@link SingleInput#getInput() input} of
+	 *         the nearest configuration having them, starting at the given one and continuing with
+	 *         its containers; with an {@link InputsOf} annotation on the property, those of the
+	 *         nearest configuration of the declared type. Empty, if there is no such configuration.
+	 */
+	public static List<InputRef> inputs(ConfigurationItem config, PropertyDescriptor property) {
+		InputsOf inputsOf = property.getAnnotation(InputsOf.class);
+		ConfigurationItem item = config;
+		while (item != null) {
+			if (inputsOf == null || inputsOf.value().isInstance(item)) {
+				if (item instanceof Inputs inputs) {
+					return inputs.getInputs();
+				}
+				if (item instanceof SingleInput single) {
+					InputRef input = single.getInput();
+					return input == null ? Collections.emptyList() : List.of(input);
+				}
+			}
+			item = item instanceof ConfigPart part ? part.container() : null;
+		}
+		return Collections.emptyList();
 	}
 
 	/**

@@ -49,7 +49,9 @@
 		<channel name="picked"/>
 		<channel name="level"/>
 		<!-- The kind of a datapoint, whose range and unit the second slider takes. -->
-		<channel name="kind"/>
+		<channel name="kind"
+			init="'percent'"
+		/>
 		<channel name="range"/>
 		<derived-channel name="rangeMin"
 			expr="k -> if($k == null, null, 0)"

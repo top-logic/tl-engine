@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,8 +134,15 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/**
 	 * Maps option objects to their allocated IDs. Built alongside {@link #_optionIndex} so that
 	 * {@link #toOptionDescriptors(List)} produces IDs consistent with the option index.
+	 *
+	 * <p>
+	 * Options are looked up by {@link Object#equals(Object)}, as the field's value is compared with
+	 * its options everywhere else: a value that is equal to an option, but not the same instance (a
+	 * string read from a channel, a number parsed from a configuration), is the selection of that
+	 * option.
+	 * </p>
 	 */
-	private Map<Object, String> _optionIdByObject = new IdentityHashMap<>();
+	private Map<Object, String> _optionIdByObject = new HashMap<>();
 
 	/**
 	 * Guard flag to suppress the value changed listener when the change originates from the client
@@ -417,7 +423,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private void loadOptions() {
 		List<?> options = sortedOptions();
 		Map<String, Object> newIndex = new HashMap<>();
-		Map<Object, String> newReverse = new IdentityHashMap<>();
+		Map<Object, String> newReverse = new HashMap<>();
 		List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
 		_optionIndex = newIndex;
 		_optionIdByObject = newReverse;

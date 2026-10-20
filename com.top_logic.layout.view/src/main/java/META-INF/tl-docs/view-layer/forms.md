@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes.
 order: 40
 ---
 
@@ -191,6 +191,30 @@ The rule counts only errors on display: an error the user cannot see yet leaves 
 **A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
+
+## Normalizing an entered value
+
+An attribute annotated with `<value-normalizer>` (`TLValueNormalizer`) brings an entered value into its canonical form before it reaches the form's overlay: a code is trimmed, a rule is printed in its canonical notation. The field shows the canonical form once the input is left. A value the normalizer cannot canonicalize - a rule text that does not parse - stays as it was typed, and the constraints of the attribute report it.
+
+```xml
+<property name="code"
+	type="tl.core:String"
+>
+	<annotations>
+		<value-normalizer>
+			<normalize-by-expression function="value -> obj -> $value.trim()"/>
+		</value-normalizer>
+	</annotations>
+</property>
+```
+
+The function receives the entered value and the form's overlay of the edited object as `obj`, so it reads the values entered for the other attributes, not the stored ones. Only a value the user enters is normalized: the stored value is shown as it is, even if it is not in canonical form.
+
+A `<value-input>` declares the normalizer in its own `<annotations>`; its function receives `null` as `obj`, since the input is bound to no object.
+
+A text or password field with a normalizer sends its value when the input is left, not while the user types: a canonical form sent back mid-typing would replace what is being typed (a number field always does so).
+
+A normalizer written in Java implements `ValueNormalizer`; it receives the edited object and the attribute (both `null` for a `<value-input>`) and returns the value unchanged when it cannot canonicalize it, instead of throwing.
 
 ## Derived fields
 

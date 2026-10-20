@@ -100,6 +100,9 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 		if (rows > 0) {
 			control.setMultiline(rows);
 		}
+		if (field.isSendValueOnBlur()) {
+			control.setSendValueOnBlur(true);
+		}
 		return control;
 	}
 

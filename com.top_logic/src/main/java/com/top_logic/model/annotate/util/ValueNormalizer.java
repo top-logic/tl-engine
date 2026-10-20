@@ -6,10 +6,12 @@
 package com.top_logic.model.annotate.util;
 
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.form.values.edit.InAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLValueNormalizer;
 
 /**
@@ -52,5 +54,21 @@ public interface ValueNormalizer {
 	 *         canonicalized.
 	 */
 	Object normalize(TLObject object, TLStructuredTypePart attribute, Object value);
+
+	/**
+	 * The normalizer {@link TLValueNormalizer annotated} in the given annotations.
+	 *
+	 * @param annotations
+	 *        The annotations of an attribute, or of an input that is not bound to an attribute.
+	 * @return A new instance of the annotated normalizer, or {@code null} if no normalizer is
+	 *         annotated.
+	 */
+	static ValueNormalizer annotated(AnnotationLookup annotations) {
+		TLValueNormalizer annotation = annotations.getAnnotation(TLValueNormalizer.class);
+		if (annotation == null) {
+			return null;
+		}
+		return TypedConfigUtil.createInstance(annotation.getNormalizer());
+	}
 
 }

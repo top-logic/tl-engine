@@ -60,6 +60,7 @@ import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLValueNormalizer;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
@@ -592,7 +593,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setSelectOrientation(radio == null ? Orientation.VERTICAL : radio)
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
 			.setDateFormat(dateFormat(annotations, type))
-			.setNumberFormat(numberFormat(annotations, type));
+			.setNumberFormat(numberFormat(annotations, type))
+			.setSendValueOnBlur(annotations.getAnnotation(TLValueNormalizer.class) != null);
 	}
 
 	/**

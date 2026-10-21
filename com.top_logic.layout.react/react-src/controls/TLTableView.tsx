@@ -145,7 +145,6 @@ interface NamedFilterState {
 interface RowState {
   id: string;
   index: number;
-  selected: boolean;
   cells: Record<string, unknown>;
   /**
    * The tooltip of the cells that say more than they display, by column name. A cell named here
@@ -167,6 +166,9 @@ interface RowState {
   /** Whether the row may be dragged; present while the table's rows are draggable at all. */
   draggable?: boolean;
 }
+
+/** The selection of a table that has no row selected, shared so that it keeps its identity. */
+const NO_ROWS: number[] = [];
 
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
@@ -386,6 +388,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
    */
   const selectAllState = (state.selectAllState as string) ?? 'none';
   const cursorIndex = (state.cursorIndex as number) ?? -1;
+  /**
+   * The indexes of the selected rows among the rows sent. The selection is a state of its own, not a
+   * flag of each row, so a change of it reaches the client without the rows.
+   */
+  const selectedRows = (state.selectedRows as number[] | undefined) ?? NO_ROWS;
+  const selectedIndexes = React.useMemo(() => new Set(selectedRows), [selectedRows]);
+  const isSelected = (row: RowState) => selectedIndexes.has(row.index);
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
   /** The column the rows are grouped by, empty when they are not grouped. */
@@ -844,7 +853,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
    * Starts a row drag. The payload names the row by its id and says whether the row was selected -
    * the server then drags the whole selection, which may reach beyond the rendered row window.
    */
-  const handleRowDragStart = React.useCallback((row: RowState, event: React.DragEvent) => {
+  const handleRowDragStart = React.useCallback((row: RowState, selected: boolean, event: React.DragEvent) => {
     if (isInteractiveTarget(event)) {
       // A drag begun on a cell's input belongs to that input (selecting its text), not to the row.
       event.preventDefault();
@@ -853,10 +862,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     writeDragPayload(event, {
       source: controlId,
       keys: [row.id],
-      selection: row.selected,
+      selection: selected,
       kind: dragKind,
     });
-    const dragged = { id: row.id, selection: row.selected };
+    const dragged = { id: row.id, selection: selected };
     // A drag cancelled before the image was taken has already ended: no row stays marked dragging.
     afterDragImage(() => { if (runningDrag()) setDraggedRow(dragged); });
   }, [controlId, dragKind]);
@@ -1128,7 +1137,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (input instanceof HTMLInputElement) {
       input.select();
     }
-  }, [rows]);
+  }, [rows, selectedRows]);
 
   // Tab at a row boundary wraps to the neighbouring row: forward from the last editable cell to the
   // start of the next row, backward from the first to the end of the previous row. In a single-row-
@@ -1592,7 +1601,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return dropMarker && dropMarker !== 'control' && dropMarkerKey === row.id ? ROW_MARKER_STATE[dropMarker] : undefined;
   };
   const draggedWord = (row: RowState) =>
-    draggedRow && (row.id === draggedRow.id || (draggedRow.selection && row.selected)) ? 'dragging' : undefined;
+    draggedRow && (row.id === draggedRow.id || (draggedRow.selection && isSelected(row))) ? 'dragging' : undefined;
 
   return (
     <KeyboardScopeProvider active={isTableFocused}>
@@ -1877,14 +1886,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               id={rowId(row.index)}
               role="row"
               aria-rowindex={row.index + 2}
-              aria-selected={!!row.selected}
+              aria-selected={isSelected(row)}
               aria-level={treegrid ? (row.treeDepth ?? 0) + 1 : undefined}
               aria-expanded={treegrid && row.expandable ? !!row.expanded : undefined}
               data-drop-row={row.id}
               draggable={dragEnabled && row.draggable !== false}
               className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
               // The selection wins over a highlight: a selected row carries no role.
-              data-tl-role={row.selected ? undefined : statusRole(row.cssClass)}
+              data-tl-role={isSelected(row) ? undefined : statusRole(row.cssClass)}
               data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
@@ -1907,7 +1916,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }
               }}
               onClick={(e) => handleRowClick(row.index, e)}
-              onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, e) : undefined}
+              onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, isSelected(row), e) : undefined}
               onDragEnd={dragEnabled && row.draggable !== false ? () => { setDropState(null); setDraggedRow(null); } : undefined}
               onDoubleClick={(e) => handleRowActivate(row.index, e)}
             >
@@ -1922,7 +1931,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     <Checkbox
                       small
                       aria-label={i18n['js.table.selectRow']}
-                      checked={row.selected}
+                      checked={isSelected(row)}
                       onChange={() => handleCheckboxClick(row.index)}
                       tabIndex={-1}
                     />
@@ -1950,7 +1959,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     data-row={row.id}
                     data-col={col.name}
                     data-tl-state={stateAttr(...words)}
-                    data-tl-role={row.selected ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
+                    data-tl-role={isSelected(row) ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
                       ...widthStyle(colIdx, w, isFrozen),

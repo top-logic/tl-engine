@@ -43,6 +43,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 WARN_IGNORING_UNKNOWN__TAG;
 
 	/**
+	 * @en Unknown element "{0}" skipped.
+	 */
+	public static ResKey1 WARN_UNKNOWN_ELEMENT__TAG;
+
+	/**
+	 * @en Unknown element "{0}".
+	 */
+	public static ResKey1 ERROR_UNKNOWN_ELEMENT__TAG;
+
+	/**
 	 * @en Ambiguous key "{1}" of existing objects ({0}): Using "{2}", ignoring "{3}".
 	 */
 	public static ResKey4 WARN_AMBIGUOUS_EXISTING_KEY__HANDLER_KEY_USED_IGNORED;

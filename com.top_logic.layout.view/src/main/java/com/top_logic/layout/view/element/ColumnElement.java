@@ -50,15 +50,18 @@ public class ColumnElement extends ContainerElement {
 	/**
 	 * Configuration for {@link ColumnElement}.
 	 */
-	@TagName("column")
+	@TagName(Config.TAG_NAME)
 	public interface Config extends ContainerElement.Config {
+
+		/** Configuration tag of a {@link ColumnElement}. */
+		String TAG_NAME = "column";
 
 		/** Configuration name for {@link #getWeight()}. */
 		String WEIGHT = "weight";
 
 		@Override
 		@ClassDefault(ColumnElement.class)
-		Class<? extends UIElement> getImplementationClass();
+		Class<? extends ColumnElement> getImplementationClass();
 
 		/**
 		 * The share of the width this column takes, relative to the weights of the other columns.

@@ -291,7 +291,7 @@ public class TestAppShellOverlay extends TestCase {
 		return items.stream().map(SidebarItemConfig::getId).collect(Collectors.toList());
 	}
 
-	private static List<String> views(List<PolymorphicConfiguration<? extends UIElement>> elements) {
+	private static List<String> views(List<UIElement.Config> elements) {
 		return elements.stream()
 			.map(element -> ((ReferenceElement.Config) element).getView())
 			.collect(Collectors.toList());

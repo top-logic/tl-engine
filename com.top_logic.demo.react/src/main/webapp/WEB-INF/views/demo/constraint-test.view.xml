@@ -3,6 +3,7 @@
 <view>
 	<channels>
 		<channel name="selectedObject"/>
+		<channel name="normalizedValue"/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -98,15 +99,43 @@
 				size="70"
 				unit="%"
 			>
-				<panel>
+				<panel with-inset="true">
 					<title>
 						<en>Constraint Test Form</en>
 						<de>Constraint-Test-Formular</de>
 					</title>
-					<form
-						input="selectedObject"
-						with-inset="true"
+					<fields>
+						<value-input
+							type="tl.core:String"
+							value="normalizedValue"
+						>
+							<label>
+								<en>Normalized input (view value)</en>
+								<de>Normalisierte Eingabe (Wert der View)</de>
+							</label>
+							<annotations>
+								<value-normalizer>
+									<normalize-by-expression function="value -> obj -> $value.trim()"/>
+								</value-normalizer>
+							</annotations>
+						</value-input>
+					</fields>
+					<stack
+						direction="row"
+						gap="default"
 					>
+						<text variant="label">
+							<label>
+								<en>On the channel:</en>
+								<de>Auf dem Kanal:</de>
+							</label>
+						</text>
+						<text
+							input="normalizedValue"
+							tone="helper"
+						/>
+					</stack>
+					<form input="selectedObject">
 						<field attribute="name"/>
 						<field attribute="uniqueName"/>
 						<field attribute="sizedString"/>
@@ -117,6 +146,7 @@
 						<field attribute="rangedDouble"/>
 						<field attribute="uppercaseStart"/>
 						<field attribute="warningField"/>
+						<field attribute="normalizedText"/>
 						<field attribute="freeText"/>
 						<field attribute="category"/>
 						<field attribute="codeInCategory"/>

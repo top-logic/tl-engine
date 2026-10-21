@@ -8,6 +8,7 @@ package com.top_logic.layout.configedit;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
@@ -141,9 +142,10 @@ public final class ConfigChildren {
 	 * Appends the given child to the edited property.
 	 *
 	 * <p>
-	 * When the property is keyed, the child is given a unique key first: elements of a keyed list are
-	 * identified by that key when the configuration is read again, so two elements added without one
-	 * would collapse into a single element.
+	 * When the property is keyed by a key the child must have (its key property is
+	 * {@link PropertyDescriptor#isMandatory() mandatory}), a child without key is given a unique one
+	 * first. A child whose key is optional and unset stays anonymous: an anonymous entry of a keyed
+	 * list is identified by its position, not by a key (see {@link ConfigUtil#isAnonymousKey(Object)}).
 	 * </p>
 	 *
 	 * @param child
@@ -165,7 +167,8 @@ public final class ConfigChildren {
 
 	/**
 	 * Gives the child a key that no current element uses, if the property is keyed by a string
-	 * property that the child has not set.
+	 * property that is {@link PropertyDescriptor#isMandatory() mandatory} for the child and that the
+	 * child has not set.
 	 */
 	private void assignUniqueKey(ConfigurationItem child) {
 		PropertyDescriptor keyProperty = _property.getKeyProperty();
@@ -173,11 +176,10 @@ public final class ConfigChildren {
 			return;
 		}
 		PropertyDescriptor childKey = child.descriptor().getProperty(keyProperty.getPropertyName());
-		if (childKey == null) {
+		if (childKey == null || !childKey.isMandatory()) {
 			return;
 		}
-		Object current = child.value(childKey);
-		if (current != null && !current.toString().isEmpty()) {
+		if (!ConfigUtil.isAnonymousKey(child.value(childKey))) {
 			return;
 		}
 
@@ -189,6 +191,14 @@ public final class ConfigChildren {
 		child.update(childKey, candidate);
 	}
 
+	/**
+	 * Whether a current element has the given key.
+	 *
+	 * <p>
+	 * An anonymous element (see {@link ConfigUtil#isAnonymousKey(Object)}) has no key and therefore
+	 * never uses one.
+	 * </p>
+	 */
 	private boolean isKeyUsed(PropertyDescriptor keyProperty, String key) {
 		for (ConfigurationItem element : elements()) {
 			PropertyDescriptor elementKey = element.descriptor().getProperty(keyProperty.getPropertyName());

@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -85,10 +85,14 @@ public class CardElement extends ContainerElement implements TitledElement {
 		/**
 		 * Elements rendered at the right edge of the card header, after the title - an icon
 		 * marking the card as an entry point, a badge, a button.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(HEADER_CONTENT)
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getHeaderContent();
+		List<UIElement.Config> getHeaderContent();
 	}
 
 	private final ResKey _title;

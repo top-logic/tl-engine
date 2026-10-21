@@ -775,6 +775,10 @@ public abstract class PropertyDescriptorImpl
 			for (Object element : valuesToAdd) {
 				checkExpectedType(property, expectedElementType, element);
 				final Object keyValue = keyMapping.map(element);
+				if (ConfigUtil.isAnonymousKey(keyValue)) {
+					// Any number of anonymous entries may occur.
+					continue;
+				}
 				if (!knownKeys.add(keyValue)) {
 					// some previous item has same key
 					throw new IllegalArgumentException(

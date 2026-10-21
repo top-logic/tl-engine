@@ -179,7 +179,8 @@ public class TestFieldControlRegistry extends TestCase {
 			.setTooltip("What they are called")
 			.setIcon(SEARCH_ICON)
 			.setClearable(true)
-			.setDebounce(Long.valueOf(250));
+			.setDebounce(Long.valueOf(250))
+			.setSendValueOnBlur(true);
 
 		FieldSpec element = field.elementSpec();
 
@@ -192,6 +193,7 @@ public class TestFieldControlRegistry extends TestCase {
 		assertTrue("An element is displayed like the field", element.isClearable());
 		assertEquals("An element reports at the pace of the field", Long.valueOf(250),
 			element.getDebounce());
+		assertTrue("An element holds a typed value back like the field", element.isSendValueOnBlur());
 		assertTrue("The field itself is untouched", field.isMultiple());
 	}
 
@@ -207,6 +209,7 @@ public class TestFieldControlRegistry extends TestCase {
 			field.isClearable());
 		assertNull("A field reports at the pace of its control unless it states a span",
 			field.getDebounce());
+		assertFalse("A field sends what is typed unless it states otherwise", field.isSendValueOnBlur());
 	}
 
 	private static ReactControl createControl(FieldSpec field, ReactFieldControlProvider provider) {

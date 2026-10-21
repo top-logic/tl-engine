@@ -50,6 +50,8 @@ public final class FieldSpec {
 
 	private Long _debounce;
 
+	private boolean _sendValueOnBlur;
+
 	private boolean _mandatory;
 
 	private boolean _editable = true;
@@ -245,6 +247,31 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setDebounce(Long debounce) {
 		_debounce = debounce;
+		return this;
+	}
+
+	/**
+	 * Whether a typed value is held back until the field is left.
+	 *
+	 * <p>
+	 * For a field whose model rewrites what it is given - a text it trims, a rule it prints in its
+	 * canonical notation. Sending the value while the user types would bring back the rewritten
+	 * value and replace what is being typed, so the input sends its value when the field is left,
+	 * see {@link com.top_logic.layout.react.control.form.ReactFormFieldControl#setSendValueOnBlur(boolean)}.
+	 * The text, number and password inputs honour it.
+	 * </p>
+	 */
+	public boolean isSendValueOnBlur() {
+		return _sendValueOnBlur;
+	}
+
+	/**
+	 * Sets whether the field {@link #isSendValueOnBlur() sends its value on blur}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setSendValueOnBlur(boolean sendValueOnBlur) {
+		_sendValueOnBlur = sendValueOnBlur;
 		return this;
 	}
 
@@ -601,6 +628,7 @@ public final class FieldSpec {
 		result._icon = _icon;
 		result._clearable = _clearable;
 		result._debounce = _debounce;
+		result._sendValueOnBlur = _sendValueOnBlur;
 		result._mandatory = _mandatory;
 		result._editable = _editable;
 		result._multiple = _multiple;

@@ -8,6 +8,7 @@ package com.top_logic.layout.view.wizard;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -34,7 +35,20 @@ public interface WizardStepSource {
 	 * Configuration for {@link WizardStepSource}.
 	 */
 	interface Config extends PolymorphicConfiguration<WizardStepSource> {
-		// Marker interface.
+
+		/** Configuration name for {@link #getId()}. */
+		String ID = "id";
+
+		/**
+		 * The name an overlay of the view addresses this source by.
+		 *
+		 * <p>
+		 * A source without id is anonymous: an overlay adds sources beside it, but cannot address
+		 * the source itself.
+		 * </p>
+		 */
+		@Name(ID)
+		String getId();
 	}
 
 	/**

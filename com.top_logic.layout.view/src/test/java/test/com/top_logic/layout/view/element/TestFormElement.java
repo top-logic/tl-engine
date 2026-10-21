@@ -281,7 +281,7 @@ public class TestFormElement extends TestCase {
 		context.checkErrors();
 
 		assertTrue("The forms are held by a panel.", config.getContent() instanceof PanelElement.Config);
-		List<PolymorphicConfiguration<? extends UIElement>> forms =
+		List<UIElement.Config> forms =
 			((PanelElement.Config) config.getContent()).getChildren();
 
 		PolymorphicConfiguration<? extends UIElement> entry = forms.get(index);

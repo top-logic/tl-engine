@@ -12,6 +12,7 @@ import junit.framework.Test;
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
 import com.top_logic.base.locking.handler.NoTokenHandling;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -27,6 +28,7 @@ import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.TLValueNormalizer;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Tests that the cell of a row edited in a composition table brings an entered value into the
@@ -49,13 +51,19 @@ public class TestValueNormalizerCompositionCell extends AbstractModelAccessTest 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		becomeUser(_responsible);
 		ReactContext context =
 			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
-		_form = new FormControl(context, _project, "no model", NoTokenHandling.INSTANCE);
-		_tasks = new TasksControl(_form);
-		_tasks.init();
-		assertTrue(_form.enterEditMode());
+		TLContextManager.inPersonContext(_responsible, () -> {
+			_form = new FormControl(context, _project, "no model", NoTokenHandling.INSTANCE);
+			_tasks = new TasksControl(_form);
+			_tasks.init();
+			assertTrue(_form.enterEditMode());
+		});
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _responsible;
 	}
 
 	@Override

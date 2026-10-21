@@ -102,6 +102,15 @@ public class StructuredTextConfigService extends ManagedClass {
 	 */
 	public static final String FEATURE_SET_I18N_HTML = "i18n-html";
 
+	/**
+	 * Name for the feature set containing list of {@link #getFeatures() feature} names to select
+	 * for an HTML editor of a text with embedded TL-Script expressions, which additionally offers
+	 * editing the HTML source.
+	 * 
+	 * @see #getEditorConfig(String, String, List, String)
+	 */
+	public static final String FEATURE_SET_MACRO = "macro";
+
 	private static final String ITEMS_NAME_ATTRIBUTE = "items";
 
 	private static final String FEATURE_NAME_ATTRIBUTE = "name";

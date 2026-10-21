@@ -107,7 +107,7 @@ public class ItemEditor implements Editor {
 		PropertyDescriptor property = valueModel.getProperty();
 		FormGroup result = group(container, editorFactory, property);
 
-		if (!editorFactory.processControlProviderAnnotation(property, result)) {
+		if (!editorFactory.installControlProvider(property, result)) {
 			template(result, embedd(member(OUTER_CONTAINER_NAME)));
 		}
 

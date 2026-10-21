@@ -18,11 +18,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.layout.form.control.ColorControlProvider;
-import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.format.ColorConfigFormat;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.values.edit.EditorFactory;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 
@@ -43,10 +41,6 @@ public class TestEditorFactory extends TestCase {
 	public interface ColorProperties extends ConfigurationItem {
 		@Format(ColorConfigFormat.class)
 		Color getColor();
-
-		@Format(ColorConfigFormat.class)
-		@ControlProvider(PasswordInputControlProvider.class)
-		Color getAnnotatedColor();
 
 		@Format(StringValueProvider.class)
 		String getText();
@@ -71,8 +65,6 @@ public class TestEditorFactory extends TestCase {
 
 		assertSame("Color property is edited with the color chooser.", ColorControlProvider.INSTANCE,
 			group.getField("color").getControlProvider());
-		assertSame("Annotated control provider wins over the type default.",
-			PasswordInputControlProvider.INSTANCE, group.getField("annotated-color").getControlProvider());
 		assertNull("Formatted string property has no special control.",
 			group.getField("text").getControlProvider());
 	}

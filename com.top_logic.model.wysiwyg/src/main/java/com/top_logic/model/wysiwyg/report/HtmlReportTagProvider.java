@@ -14,7 +14,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.element.meta.form.EditContext;
-import com.top_logic.layout.wysiwyg.ui.MacroControlProvider;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.model.search.persistency.attribute.report.ui.ReportControlProvider;
 import com.top_logic.model.search.persistency.attribute.report.ui.ReportTagProvider;
@@ -40,7 +39,7 @@ public class HtmlReportTagProvider extends ReportTagProvider
 		 * @see StructuredTextConfigService#getEditorConfig(String, String, List, String)
 		 */
 		@Name("feature-set")
-		@StringDefault(MacroControlProvider.FEATURE_SET)
+		@StringDefault(StructuredTextConfigService.FEATURE_SET_MACRO)
 		String getFeatureSet();
 
 	}

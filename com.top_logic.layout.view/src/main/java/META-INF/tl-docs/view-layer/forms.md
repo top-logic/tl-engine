@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, or when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false").
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -290,3 +290,7 @@ The same applies to every script a form evaluates for an object it edits: a `dyn
 ```
 
 A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, takes part in this without any cooperation: it reads the attributes of its arguments through `tValue(...)`, `tValueByName(...)` or generated getters like any other Java code. The form evaluates its scripts in a `TracingScope`, which reports every attribute read made on the evaluating thread as a dependency and answers it from the values entered in the form. In edit mode, the function receives the form's overlay of an object, so it declares its parameter as `TLObject` rather than a generated interface.
+
+## Configuration forms
+
+A `<config-form>` edits a `ConfigurationItem` instead of a model object. The control of each property is chosen by the annotations stating what its value means (`@MultiLine`, `@Code`, `@Html`, ...) and by its value type, through maps of the `ConfigControlService` that modules extend; see [controls of configuration forms](doc:config-form-controls).

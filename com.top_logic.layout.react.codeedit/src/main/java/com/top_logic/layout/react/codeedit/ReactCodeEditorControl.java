@@ -22,7 +22,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 public class ReactCodeEditorControl extends ReactFormFieldControl {
 
 	/** State key for the {@link CodeEditorLanguage#clientId() client language id}. */
-	private static final String LANGUAGE = "language";
+	public static final String LANGUAGE = "language";
 
 	/**
 	 * Creates a new {@link ReactCodeEditorControl}.

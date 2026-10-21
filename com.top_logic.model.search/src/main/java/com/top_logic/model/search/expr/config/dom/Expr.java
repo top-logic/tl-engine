@@ -28,7 +28,6 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -44,7 +43,6 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.operations.Count;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.search.ui.TLScriptCodeEditorControl;
 import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 
 /**
@@ -592,7 +590,6 @@ import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 @Format(ExprFormat.class)
 @ItemDisplay(ItemDisplayType.VALUE)
 @PropertyEditor(TLScriptPropertyEditor.class)
-@ControlProvider(TLScriptCodeEditorControl.PlainCP.class)
 @CssClass("tlscript")
 @Label("Expression")
 @RenderWholeLine

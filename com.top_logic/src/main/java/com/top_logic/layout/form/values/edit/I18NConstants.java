@@ -24,6 +24,12 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 SELECTED_OPTION_ALREADY_ADDED__PROPERTY_OPTION;
 
+	/**
+	 * @en The type "{0}" is no annotation marked as control annotation and therefore cannot choose
+	 *     the control of a configuration property.
+	 */
+	public static ResKey1 ERROR_NO_CONTROL_ANNOTATION__CLASS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

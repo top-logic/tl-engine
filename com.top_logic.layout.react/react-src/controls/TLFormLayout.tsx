@@ -16,6 +16,7 @@ const LABEL_SIDE_MIN_WIDTH = 320;
  * - maxColumns: number
  * - labelPosition: "side" | "top" | "auto"
  * - readOnly: boolean
+ * - inline: boolean
  * - children: ChildDescriptor[]
  *
  * Takes part in the fill contract as a container: a form hosting a filling child - a split panel, a
@@ -29,15 +30,22 @@ const LABEL_SIDE_MIN_WIDTH = 320;
  * Like any form, it lays out as many columns as fit into the width it gets - it is indented by the
  * frames around it, so it may get fewer columns than the outer one. Unlike the outermost form, it
  * keeps the columns it has no field for: a single field is not stretched over the whole row.
+ *
+ * An inline form inside another form has no grid of its own: its children are items of the outer
+ * form's grid, among the outer form's fields, and take the outer form's label position. It is
+ * read-only if it says so itself or if the outer form is.
  */
 const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const [fillClass, fillHost] = useFillHost();
-  const insideForm = useContext(FormLayoutContext).insideForm;
+  const outerLayout = useContext(FormLayoutContext);
+  const insideForm = outerLayout.insideForm;
 
   const maxColumns = (state.maxColumns as number) ?? 3;
   const labelPosition = (state.labelPosition as string) ?? 'auto';
   const readOnly = state.readOnly === true;
+  const inline = insideForm && state.inline === true;
+  const hidden = state.hidden === true;
   const children = (state.children as unknown[]) ?? [];
   const noModelMessage = state.noModelMessage as string | null;
 
@@ -48,6 +56,10 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Observe container width to resolve "auto" label position.
   useEffect(() => {
+    if (inline) {
+      // The label position is the one of the outer form.
+      return;
+    }
     if (labelPosition !== 'auto') {
       setResolvedPosition(labelPosition as 'side' | 'top');
       return;
@@ -66,13 +78,19 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
     });
     observer.observe(el);
     return () => observer.disconnect();
-  }, [labelPosition, maxColumns]);
+  }, [labelPosition, maxColumns, inline]);
 
-  const ctxValue = useMemo<FormLayout>(() => ({
-    readOnly,
-    resolvedLabelPosition: resolvedPosition,
-    insideForm: true,
-  }), [readOnly, resolvedPosition]);
+  const ctxValue = useMemo<FormLayout>(() => (inline
+    ? {
+      readOnly: readOnly || outerLayout.readOnly,
+      resolvedLabelPosition: outerLayout.resolvedLabelPosition,
+      insideForm: true,
+    }
+    : {
+      readOnly,
+      resolvedLabelPosition: resolvedPosition,
+      insideForm: true,
+    }), [inline, readOnly, resolvedPosition, outerLayout.readOnly, outerLayout.resolvedLabelPosition]);
 
   // Compute min column width for auto-fit.
   // This ensures columns don't go below a reasonable width before wrapping.
@@ -93,6 +111,20 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
     fillClass ? 'tl-form-layout--fill' : '',
     fillClass,
   ].filter(Boolean).join(' ');
+
+  if (inline) {
+    // Without a box of its own, the children are laid out by the grid of the outer form.
+    return (
+      <FormLayoutContext.Provider value={ctxValue}>
+        <div id={controlId} className={rootClassName(state, 'tl-form-layout--inline')}
+          style={{ display: hidden ? 'none' : 'contents' }}>
+          {children.map((child, i) => (
+            <TLChild key={i} control={child} />
+          ))}
+        </div>
+      </FormLayoutContext.Provider>
+    );
+  }
 
   if (noModelMessage) {
     return (

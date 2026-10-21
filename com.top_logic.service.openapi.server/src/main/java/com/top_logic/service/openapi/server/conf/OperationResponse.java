@@ -9,11 +9,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.layout.codeedit.control.CodeEditorControl;
-import com.top_logic.layout.codeedit.control.EditorControlConfig;
-import com.top_logic.layout.codeedit.editor.DefaultCodeEditor;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.service.openapi.common.document.Described;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter.ParameterConfiguration.VisibleOnObjectParam;
 import com.top_logic.service.openapi.server.parameter.ParameterFormat;
@@ -71,8 +69,7 @@ public interface OperationResponse extends Described {
 	 * The schema of the response object.
 	 */
 	@DynamicMode(fun = VisibleOnObjectParam.class, args = @Ref(FORMAT))
-	@EditorControlConfig(language = CodeEditorControl.MODE_JSON, prettyPrinting = true)
-	@PropertyEditor(DefaultCodeEditor.class)
+	@Code(language = CodeLanguage.JSON)
 	@Name(SCHEMA)
 	@Nullable
 	String getSchema();
@@ -86,8 +83,7 @@ public interface OperationResponse extends Described {
 	 * An example for a potential response object.
 	 */
 	@DynamicMode(fun = VisibleOnObjectParam.class, args = @Ref(FORMAT))
-	@EditorControlConfig(language = CodeEditorControl.MODE_JSON, prettyPrinting = true)
-	@PropertyEditor(DefaultCodeEditor.class)
+	@Code(language = CodeLanguage.JSON)
 	@Name(EXAMPLE)
 	@Nullable
 	String getExample();

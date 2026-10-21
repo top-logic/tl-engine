@@ -20,9 +20,7 @@ import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.util.ResKey1;
-import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.OptionMapping;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
@@ -44,7 +42,6 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Format(TLModelPartRef.TLModelPartRefValueProvider.class)
-@ControlProvider(SelectionControlProvider.class)
 @Options(fun = AllClasses.class, mapping = TLModelPartRef.PartMapping.class)
 @OptionLabels(TLPartScopedResourceProvider.class)
 public class TLModelPartRef {

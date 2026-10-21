@@ -16,9 +16,8 @@ import com.top_logic.basic.func.misc.EmptyCollection;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.FormBuilder;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
 import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.TLLayout;
@@ -55,7 +54,7 @@ public abstract class TLLayoutFormBuilder extends DeclarativeFormBuilder<TLLayou
 		 * Displayed configuration.
 		 */
 		@Subtypes(adjust = false, value = {})
-		@ControlProvider(GroupInlineControlProvider.class)
+		@Inline
 		@Options(fun = EmptyCollection.class)
 		ConfigurationItem getConfiguration();
 

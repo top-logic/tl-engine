@@ -31,12 +31,6 @@ public class TestModifiedRevision extends AbstractSearchExpressionTest {
 
 	private static final String NAME = "name";
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		becomeRoot();
-	}
-
 	public void testSingleReference() throws Exception {
 		TLObject item = newObject(TYPE, "item");
 		TLObject target = newObject(TYPE, "target");

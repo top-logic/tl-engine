@@ -19,6 +19,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.comment.wrap.Comment;
 import com.top_logic.element.meta.AttributeOperations;
@@ -329,7 +330,7 @@ public class CommentDialogComponent extends FormComponent {
                         if (theCreator != null) {
                             Person thePerson = TLContext.getContext().getCurrentPersonWrapper();
 
-                            return WrapperHistoryUtils.equalsUnversioned(theCreator, thePerson) || TLContext.isAdmin()
+                            return WrapperHistoryUtils.equalsUnversioned(theCreator, thePerson) || ThreadContext.isAdmin()
                                 ? ExecutableState.EXECUTABLE
                                 : ExecutableState.NOT_EXEC_HIDDEN;
                         }

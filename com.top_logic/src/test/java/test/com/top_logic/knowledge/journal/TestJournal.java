@@ -43,7 +43,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.thread.InContext;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.attr.NextCommitNumberFuture;
@@ -817,7 +817,7 @@ public class TestJournal extends BasicTestCase {
 		@Override
 		public void run() {
 			super.run();
-			ThreadContextManager.inSystemInteraction(JournalPusher.class, this);
+			ThreadContext.inSystemContext(JournalPusher.class, this);
 		}
 
         @Override
@@ -858,7 +858,7 @@ public class TestJournal extends BasicTestCase {
 		@Override
 		public void run() {
 			super.run();
-			ThreadContextManager.inSystemInteraction(JournalPuller.class, this);
+			ThreadContext.inSystemContext(JournalPuller.class, this);
 		}
 
         @Override

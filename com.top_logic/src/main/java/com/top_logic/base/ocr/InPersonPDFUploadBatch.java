@@ -6,7 +6,7 @@
 package com.top_logic.base.ocr;
 
 import com.top_logic.basic.thread.InContext;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -46,7 +46,7 @@ public class InPersonPDFUploadBatch extends PDFUploadBatch {
 	}
 
 	private Person fetchPerson() {
-		return ThreadContextManager.inSystemInteraction(InPersonPDFUploadBatch.class, new Computation<Person>() {
+		return ThreadContext.inSystemContext(InPersonPDFUploadBatch.class, new Computation<Person>() {
 
 			@Override
 			public Person run() {

@@ -19,7 +19,7 @@ import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.view.ViewLoader;
@@ -73,7 +73,7 @@ public class TestLoadViews extends TestCase {
 	@Override
 	protected void runTest() throws Throwable {
 		// An element may read session settings (e.g. the time zone) when it is instantiated.
-		ThreadContextManager.inSystemInteraction(TestLoadViews.class, () -> ViewLoader.loadView(_viewPath));
+		ThreadContext.inSystemContext(TestLoadViews.class, () -> ViewLoader.loadView(_viewPath));
 	}
 
 	/**

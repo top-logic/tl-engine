@@ -88,9 +88,7 @@ public class TestCleanUpTask extends BasicTestCase {
      * @throws InterruptedException     if an Exception occurs during sleeping.
      */
     public void testRun() throws Exception {
-        ThreadContext.pushSuperUser();
-        
-        try {
+		ThreadContext.withoutSecurityChecks(() -> {
             // Create the Files
             theFirstOne  = new File(PATH, "eins.txt") ;
             theSecondOne = new File(PATH, "zwei.txt") ;
@@ -122,9 +120,8 @@ public class TestCleanUpTask extends BasicTestCase {
             assertFalse(theFirstOne.exists());                           
             assertFalse(theSecondOne.exists());    
             assertFalse(theThirdOne.exists()); 
-        }  finally {
-            ThreadContext.popSuperUser();
-        }
+			return null;
+		});
 
     }
 

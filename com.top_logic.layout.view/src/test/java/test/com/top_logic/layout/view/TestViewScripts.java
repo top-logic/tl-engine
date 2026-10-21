@@ -16,7 +16,7 @@ import junit.framework.TestCase;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.form.values.edit.DefaultValueModel;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
@@ -63,7 +63,7 @@ public class TestViewScripts extends TestCase {
 	protected void runTest() throws Throwable {
 		// Loading a class of the view may read session settings (e.g. the time zone).
 		ViewElement.Config config =
-			ThreadContextManager.inSystemInteraction(TestViewScripts.class, () -> ViewLoader.loadConfig(_viewPath));
+			ThreadContext.inSystemContext(TestViewScripts.class, () -> ViewLoader.loadConfig(_viewPath));
 		List<String> problems = new ArrayList<>();
 		check(config, problems);
 		if (!problems.isEmpty()) {

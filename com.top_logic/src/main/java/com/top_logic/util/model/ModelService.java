@@ -350,7 +350,11 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 				allProblems.add(problem);
 			}
 		};
-		checkConstraints(problems, objectsToCheck);
+
+		// Model integrity must not depend on the read rights of the committing user: e.g. a
+		// constraint reading a derived reference would otherwise see a value filtered for that
+		// user.
+		ThreadContext.withoutSecurityChecks(() -> checkConstraints(problems, objectsToCheck));
 
 		I18NRuntimeException ex = null;
 		for (ResKey message : allProblems) {

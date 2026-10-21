@@ -14,6 +14,7 @@ import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.form.BufferSave;
 import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.TLObjectOverlay;
@@ -58,7 +59,11 @@ public class TestEditLevel extends AbstractModelAccessTest {
 			_project.tUpdateByName(STEPS, List.of(_s1, _s2));
 			tx.commit();
 		}
-		becomeUser(_responsible);
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _responsible;
 	}
 
 	private static TLObject step(String name, TLObject... substeps) {

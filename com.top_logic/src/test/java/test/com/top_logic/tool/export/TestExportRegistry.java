@@ -15,7 +15,7 @@ import com.top_logic.tool.export.ExportHandler;
 import com.top_logic.tool.export.ExportHandlerRegistry;
 import com.top_logic.tool.export.ExportRegistry;
 import com.top_logic.tool.export.ExportRegistryFactory;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -48,8 +48,8 @@ public class TestExportRegistry extends AbstractExportTest {
         Export export3 = reg.getExport(EXPORT_HANDLER_ID, model);
         assertEquals(export1, export3);
 
-        TLContext.getContext().setCurrentPerson(PersonManager.getManager().getRoot());
-        Export export4 = reg.getExport(USER_EXPORT_HANDLER_ID, model);
+		Export export4 = TLContextManager.inPersonContext(PersonManager.getManager().getRoot(),
+			() -> reg.getExport(USER_EXPORT_HANDLER_ID, model));
         assertNotNull(export4.getPerson());
         assertSame(PersonManager.getManager().getRoot(), export4.getPerson());
     }

@@ -18,6 +18,7 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -52,7 +53,11 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		ArgumentsProbe.reset();
-		becomeUser(_root);
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _root;
 	}
 
 	@Override

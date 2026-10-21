@@ -17,6 +17,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
@@ -29,7 +30,6 @@ import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.config.annotation.MainProperties;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.CompatibilityService;
@@ -158,7 +158,7 @@ public class TestTableColumns extends TestCase {
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ModelAccessRights.<Void, Throwable, RuntimeException> uncheckedSecurity(() -> {
+		ThreadContext.<Void, Throwable, RuntimeException> withoutSecurityChecks(() -> {
 			super.runTest();
 			return null;
 		});

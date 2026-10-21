@@ -23,6 +23,7 @@ import com.meterware.servletunit.ServletRunner;
 
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.administration.MaintenanceWindowManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -30,7 +31,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.util.TLContextManager;
 
 /**
  * Test for the sessions ended when the {@link MaintenanceWindowManager} enters the maintenance
@@ -120,7 +120,7 @@ public class TestMaintenanceWindowLogout extends BasicTestCase {
 
 	private static HttpSession login(Person user) throws Exception {
 		InvocationContext invocation = newInvocation();
-		return TLContextManager.inSystemInteraction(TestMaintenanceWindowLogout.class,
+		return ThreadContext.inSystemContext(TestMaintenanceWindowLogout.class,
 			() -> SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), user));
 	}
 
@@ -130,7 +130,7 @@ public class TestMaintenanceWindowLogout extends BasicTestCase {
 	 */
 	private static HttpSession loginAndEnterMaintenanceWindow(Person user, long delay) throws Exception {
 		InvocationContext invocation = newInvocation();
-		return TLContextManager.inSystemInteraction(TestMaintenanceWindowLogout.class, () -> {
+		return ThreadContext.inSystemContext(TestMaintenanceWindowLogout.class, () -> {
 			HttpSession result =
 				SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), user);
 			MaintenanceWindowManager.getInstance().enterMaintenanceWindow(delay);

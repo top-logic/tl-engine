@@ -4228,6 +4228,7 @@ a.tl-field-value:hover {
   list-style: none;
   color: var(--tl-text-primary);
 }
+.tl-tree[hidden] { display: none; }
 
 .tl-tree__node {
   position: relative;
@@ -4402,4 +4403,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:7ac22e87d8ba0e41f48d6421dd9d6949e52e4cf6f50ca7baf56ae6185e6d72b5 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:198ad497809d494ee74e07f936f69397f2ce07ddf171bfd74c3f077d46340334 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

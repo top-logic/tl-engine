@@ -4103,6 +4103,44 @@ a.tl-field-value:hover {
   height: auto;
 }
 
+/* Die Quelle (Umschalter der Leiste, master #29860): eine Textarea an Stelle der Schreibfläche, mit deren
+   Innenabstand und Mindesthöhe; Rand und Fehler zeichnet der Rahmen, die Typo-Klasse tl-type-code trägt das TSX. */
+.tl-rich-text__source {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--tl-size-10);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  resize: vertical;
+}
+.tl-rich-text__source:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Markup, das der Editor behält, ohne es bearbeiten zu können (master #29860), steht als sein Quelltext im Text:
+   leise und gestrichelt umrandet — ein Stück, das man auswählen und löschen, aber nicht formatieren kann. Die
+   Typo-Klasse tl-type-code trägt das TSX; den Ring der Auswahl zeichnet das Engine-Sheet (Klasse der Bibliothek). */
+.tl-rich-text__markup {
+  display: block;
+  margin-block: var(--tl-space-xs);
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+  border: var(--tl-border-width-sm) dashed var(--tl-border-separator);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-layer-nested);
+  color: var(--tl-text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: default;
+}
+.tl-rich-text__markup--inline {
+  display: inline;
+  margin-block: 0;
+  padding-block: 0;
+}
+
 /* --- select/select.css --- */
 /* Select — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“.
    Die Wurzel ist div.tl-field.tl-select[role="combobox"]: Rahmen, Fehler, Warnung, Zeigen und
@@ -6243,4 +6281,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:eaaf9d8e925b286447d3f2d6bf7bbc6a0d23074e6f389606de118c8d6297abb1 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:2d4a6e06ebe59c5e62bbd18401e4e333f8a3f7b4f47f8e9122aaa240f7b6b372 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -349,7 +349,7 @@
 						<feature-ref name="links" />
 						<feature-ref name="paragraph" />
 					</feature-set>
-					<!-- @see com.top_logic.layout.wysiwyg.ui.MacroControlProvider -->
+					<!-- @see com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService#FEATURE_SET_MACRO -->
 					<feature-set name="macro" base="html">
 						<feature-ref name="sourceCode" />
 					</feature-set>
@@ -402,6 +402,11 @@
 	
 	<configs>
 		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
+			<annotation-controls>
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Html">
+					<impl class="com.top_logic.layout.wysiwyg.ui.HtmlEditorProvider"/>
+				</annotation-control>
+			</annotation-controls>
 			<customizations>
 				<type name="com.top_logic.html.i18n.HtmlResKey">
 					<annotations>

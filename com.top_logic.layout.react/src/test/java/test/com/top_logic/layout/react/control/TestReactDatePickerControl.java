@@ -148,6 +148,46 @@ public class TestReactDatePickerControl extends TestCase {
 	}
 
 	/**
+	 * A date and time typed with seconds into a field editing seconds reaches the model with its
+	 * seconds and is echoed back with them.
+	 */
+	public void testDateTimeEnteredWithSeconds() {
+		DateControl field = control(Kind.DATE_TIME, format("dd.MM.yyyy HH:mm:ss"), null);
+
+		field.type("2026-10-16T09:45:12");
+
+		assertFalse(model(field).hasError());
+		assertEquals("16.10.2026 09:45:12", format("dd.MM.yyyy HH:mm:ss").format((Date) field.getFieldModel().getValue()));
+		assertEquals("2026-10-16T09:45:12", field.value());
+	}
+
+	/**
+	 * A date and time typed without seconds is accepted by a field editing seconds as well.
+	 */
+	public void testDateTimeEnteredWithoutSeconds() {
+		DateControl field = control(Kind.DATE_TIME, format("dd.MM.yyyy HH:mm:ss"), null);
+
+		field.type("2026-10-16T09:45");
+
+		assertFalse(model(field).hasError());
+		assertEquals("16.10.2026 09:45:00", format("dd.MM.yyyy HH:mm:ss").format((Date) field.getFieldModel().getValue()));
+	}
+
+	/**
+	 * Text following a value that no accepted pattern reads entirely is rejected and leaves the
+	 * model value unchanged.
+	 */
+	public void testTrailingTextIsRejected() {
+		Date before = moment();
+		DateControl field = control(Kind.DATE_TIME, format("dd.MM.yyyy HH:mm:ss"), before);
+
+		field.type("2026-10-16T09:45:12x");
+
+		assertTrue(model(field).hasError());
+		assertEquals(before, field.getFieldModel().getValue());
+	}
+
+	/**
 	 * The precision is derived from what a format writes, not from a pattern, so it works for a
 	 * format not given by a pattern as well.
 	 */

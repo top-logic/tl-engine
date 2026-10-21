@@ -8,8 +8,7 @@ package com.top_logic.service.openapi.common.document;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.layout.form.values.CommonMarkText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.CommonMark;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 
 /**
@@ -31,7 +30,7 @@ public interface Described extends ConfigurationItem {
 	 */
 	@Name(DESCRIPTION)
 	@Nullable
-	@ControlProvider(CommonMarkText.class)
+	@CommonMark
 	@RenderWholeLine
 	String getDescription();
 

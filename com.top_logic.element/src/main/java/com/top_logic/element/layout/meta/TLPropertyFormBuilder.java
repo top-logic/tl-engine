@@ -14,9 +14,8 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.layout.form.model.FieldMode;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
@@ -106,7 +105,7 @@ public class TLPropertyFormBuilder extends TLStructuredTypePartFormBuilder {
 		@Override
 		@ItemDefault(PropertyModel.class)
 		@DynamicMode(fun = GroupActiveIf.class, args = @Ref(CREATING))
-		@ControlProvider(GroupInlineControlProvider.class)
+		@Inline
 		PartModel getPartModel();
 
 	}

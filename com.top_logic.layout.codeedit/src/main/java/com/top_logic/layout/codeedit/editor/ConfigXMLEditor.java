@@ -10,16 +10,13 @@ import java.text.Format;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.func.Identity;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormFactory;
-import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
-import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
@@ -36,23 +33,13 @@ import com.top_logic.layout.form.values.edit.editor.Editor;
  * 
  * <pre>
  * &#64;{@link PropertyEditor}({@link ConfigXMLEditor}.class)
- * &#64;{@link ControlProvider}({@link ConfigXMLEditor}.{@link CP}.class)
+ * &#64;{@link Code}(language = {@link CodeLanguage}.XML)
  * &#64;{@link ItemDisplay}({@link ItemDisplayType}.VALUE)
  * </pre>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ConfigXMLEditor extends AbstractEditor {
-
-	/**
-	 * {@link ControlProvider} for displaying an XML code editor.
-	 */
-	public static final class CP extends AbstractFormFieldControlProvider {
-		@Override
-		protected Control createInput(FormMember member) {
-			return new CodeEditorControl((FormField) member, CodeEditorControl.MODE_XML);
-		}
-	}
 
 	/**
 	 * Singleton {@link ConfigXMLEditor} instance.

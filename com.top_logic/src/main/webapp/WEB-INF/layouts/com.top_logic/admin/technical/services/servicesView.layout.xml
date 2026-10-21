@@ -96,7 +96,6 @@
 											fun="com.top_logic.layout.form.util.ModuleSystemFormUtils$AllModules"
 											mapping="com.top_logic.layout.form.util.ModuleSystemFormUtils$ModuleClassMapping"
 										/>
-										<control-provider value="com.top_logic.layout.form.template.SelectionControlProvider"/>
 										<option-labels value="com.top_logic.layout.form.util.ModuleSystemFormUtils$ModuleLabel"/>
 									</annotations>
 								</property>

@@ -127,10 +127,30 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 			putState(FieldState.VALUE__PROP, emptyToNull(userText));
 			setPlaceholder(isEmpty(userText) ? fallbackValue(resKey) : null);
 		} else {
-			// View mode: fall back to the best available translation so an existing value shows.
-			putState(FieldState.VALUE__PROP, isEmpty(userText) ? fallbackValue(resKey) : userText);
+			putState(FieldState.VALUE__PROP, displayText(resKey));
 			setPlaceholder(null);
 		}
+	}
+
+	/**
+	 * The text an internationalized value is displayed with while it is not edited.
+	 *
+	 * <p>
+	 * The translation for the user's locale, or the best available translation if there is none,
+	 * so that an existing value is never hidden.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value of the field, a {@link ResKey} or <code>null</code>.
+	 * @return The text to display, <code>null</code> for none.
+	 */
+	public static String displayText(Object value) {
+		ResKey resKey = asResKey(value);
+		if (resKey == null) {
+			return null;
+		}
+		String userText = ResKeyUtil.translateWithoutFallback(TLContext.getLocale(), resKey);
+		return isEmpty(userText) ? fallbackValue(resKey) : userText;
 	}
 
 	@Override

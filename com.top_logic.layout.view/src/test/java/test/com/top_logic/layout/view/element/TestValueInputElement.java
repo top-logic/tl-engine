@@ -35,6 +35,7 @@ import com.top_logic.basic.format.TimeFormatDefinition;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.config.annotation.ConfigType;
@@ -290,7 +291,7 @@ public class TestValueInputElement extends TestCase {
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ThreadContextManager.<Void, Throwable, RuntimeException> inSystemInteraction(TestValueInputElement.class,
+		ThreadContext.<Void, Throwable, RuntimeException> inSystemContext(TestValueInputElement.class,
 			() -> {
 				super.runTest();
 				return null;

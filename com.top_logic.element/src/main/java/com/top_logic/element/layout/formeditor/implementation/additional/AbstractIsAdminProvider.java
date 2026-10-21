@@ -6,6 +6,7 @@
 
 package com.top_logic.element.layout.formeditor.implementation.additional;
 
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTemplateProvider;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.form.FormMember;
@@ -18,7 +19,7 @@ import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.util.TLContext;
 
 /**
- * {@link FormElementTemplateProvider} that enabled fields only for {@link TLContext#isAdmin()
+ * {@link FormElementTemplateProvider} that enabled fields only for {@link ThreadContext#isAdmin()
  * administrators} which does not edit themselves.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -35,7 +36,7 @@ public abstract class AbstractIsAdminProvider implements FormElementTemplateProv
 
 		TLObject model = context.getModel();
 		if (model != null) {
-			if (!TLContext.isAdmin() || model == TLContext.getContext().getCurrentPersonWrapper()) {
+			if (!ThreadContext.isAdmin() || model == TLContext.getContext().getCurrentPersonWrapper()) {
 				displayingField.setMode(FieldMode.DISABLED);
 			}
 		}

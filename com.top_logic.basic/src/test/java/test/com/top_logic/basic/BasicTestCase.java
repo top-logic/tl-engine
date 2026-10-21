@@ -157,7 +157,7 @@ public class BasicTestCase extends TestCase implements InContext {
     @Override
 	public void runBare() throws Throwable {
 		try {
-			ThreadContextManager.inInteraction(testContextId(getClass()), this);
+			ThreadContext.inSystemContext(getClass(), this);
 		} catch (WrappedThrowable ex) {
 			throw ex.getCause();
 		}
@@ -1526,13 +1526,13 @@ public class BasicTestCase extends TestCase implements InContext {
     	final Throwable[] problem = new Throwable[1];
     	boolean otherTerminated;
     	
-		final String ctxId = testContextId(getClass());
+		final Class<?> testClass = getClass();
 		Thread other = new Thread() {
 
 			@Override
 			public void run() {
 				super.run();
-				ThreadContextManager.inInteraction(ctxId, new InContext() {
+				ThreadContext.inSystemContext(testClass, new InContext() {
 
 					@Override
 					public void inContext() {
@@ -1658,7 +1658,7 @@ public class BasicTestCase extends TestCase implements InContext {
     	
     	// Create buffer to communicate exceptions with the caller.
     	
-		final String testContextId = testContextId(getClass());
+		final Class<?> testClass = getClass();
 		final InContext job = new InContext() {
 
 			@Override
@@ -1683,7 +1683,7 @@ public class BasicTestCase extends TestCase implements InContext {
 				if (context != null) {
 					ThreadContextManager.inContext(context, job);
 				} else {
-					ThreadContextManager.inInteraction(testContextId, job);
+					ThreadContext.inSystemContext(testClass, job);
 				}
 			}
     	};
@@ -1790,17 +1790,6 @@ public class BasicTestCase extends TestCase implements InContext {
 			results[n] = inParallel(executionFactory.createExecution(n));
 		}
 		checkAll(results, timeout);
-	}
-
-	/**
-	 * Creates a {@link SubSessionContext#getContextId()} for test cases.
-	 * 
-	 * @param testClass
-	 *        The test class.
-	 * @return The new context id .
-	 */
-	public static String testContextId(Class<?> testClass) {
-		return "test:" + testClass.getName();
 	}
 
 	/**

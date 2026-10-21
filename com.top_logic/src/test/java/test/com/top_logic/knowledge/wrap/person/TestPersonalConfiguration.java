@@ -20,6 +20,7 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper;
 import com.top_logic.knowledge.wrap.person.TransientPersonalConfiguration;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * The class {@link TestPersonalConfiguration} tests the {@link PersonalConfiguration}.
@@ -30,15 +31,17 @@ import com.top_logic.util.TLContext;
  */
 public class TestPersonalConfiguration extends BasicTestCase {
 
-	private Person _oldPerson;
+	/**
+	 * Runs the test in the context of the root person, whose personal configuration is tested.
+	 */
+	@Override
+	public void inContext() {
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), super::inContext);
+	}
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		Person root = PersonManager.getManager().getRoot();
-		TLContext context = TLContext.getContext();
-		_oldPerson = context.getCurrentPersonWrapper();
-		context.setCurrentPerson(root);
 		boolean hasDeletedObject = deletePersonalConfigurationWrapper();
 		assertFalse("Some test before has not removed the personal configuration.", hasDeletedObject);
 	}
@@ -61,7 +64,6 @@ public class TestPersonalConfiguration extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		deletePersonalConfigurationWrapper();
-		TLContext.getContext().setCurrentPerson(_oldPerson);
 		super.tearDown();
 	}
 
@@ -133,36 +135,35 @@ public class TestPersonalConfiguration extends BasicTestCase {
 		assertNotNull("No anonymous account.", anonymous);
 		assertTrue(PersonManager.getManager().isAnonymous(anonymous));
 
-		Person root = context.getCurrentPersonWrapper();
-		context.setCurrentPerson(anonymous);
-		try {
-			assertFalse("Some test before has stored a personal configuration for the anonymous account.",
-				deletePersonalConfigurationWrapper());
-			assertTrue(TLContext.isAnonymous());
+		TLContextManager.inPersonContext(anonymous, () -> {
+			try {
+				assertFalse("Some test before has stored a personal configuration for the anonymous account.",
+					deletePersonalConfigurationWrapper());
+				assertTrue(TLContext.isAnonymous());
 
-			PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
-			pc.setValue("key", "anonymousValue");
+				PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+				pc.setValue("key", "anonymousValue");
 
-			PersonalConfiguration.storePersonalConfiguration();
+				PersonalConfiguration.storePersonalConfiguration();
 
-			assertEquals("Value of the anonymous session lost on store.", "anonymousValue",
-				PersonalConfiguration.getPersonalConfiguration().getValue("key"));
-			assertNull("Personal configuration of the anonymous account was stored.",
-				PersonalConfigurationWrapper.getPersonalConfiguration(anonymous));
+				assertEquals("Value of the anonymous session lost on store.", "anonymousValue",
+					PersonalConfiguration.getPersonalConfiguration().getValue("key"));
+				assertNull("Personal configuration of the anonymous account was stored.",
+					PersonalConfigurationWrapper.getPersonalConfiguration(anonymous));
 
-			// Session end.
-			context.informUnboundListeners();
-			assertNull("Personal configuration of the anonymous account was stored at session end.",
-				PersonalConfigurationWrapper.getPersonalConfiguration(anonymous));
+				// Session end.
+				context.informUnboundListeners();
+				assertNull("Personal configuration of the anonymous account was stored at session end.",
+					PersonalConfigurationWrapper.getPersonalConfiguration(anonymous));
 
-			// A fresh load does not see the value of the former anonymous session.
-			context.resetPersonalConfiguration();
-			assertNull("Value of an anonymous session reached the shared anonymous account.",
-				PersonalConfiguration.getPersonalConfiguration().getValue("key"));
-		} finally {
-			deletePersonalConfigurationWrapper();
-			context.setCurrentPerson(root);
-		}
+				// A fresh load does not see the value of the former anonymous session.
+				context.resetPersonalConfiguration();
+				assertNull("Value of an anonymous session reached the shared anonymous account.",
+					PersonalConfiguration.getPersonalConfiguration().getValue("key"));
+			} finally {
+				deletePersonalConfigurationWrapper();
+			}
+		});
 	}
 
 	/**

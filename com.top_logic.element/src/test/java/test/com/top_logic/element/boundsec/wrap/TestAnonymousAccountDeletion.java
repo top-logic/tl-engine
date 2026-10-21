@@ -40,16 +40,15 @@ public class TestAnonymousAccountDeletion extends BasicTestCase {
 		assertNotNull(anonymous);
 		assertEquals(Optional.of(I18NConstants.ERROR_ANONYMOUS_ACCOUNT_CANNOT_BE_DELETED), anonymous.tDeleteVeto());
 
-		ThreadContext.pushSuperUser();
-		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			anonymous.tDelete();
-			tx.commit();
-			fail("Deleting the anonymous account must be refused.");
-		} catch (RuntimeException ex) {
-			assertVeto(ex);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		ThreadContext.withoutSecurityChecks(() -> {
+			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+				anonymous.tDelete();
+				tx.commit();
+				fail("Deleting the anonymous account must be refused.");
+			} catch (RuntimeException ex) {
+				assertVeto(ex);
+			}
+		});
 
 		assertTrue(anonymous.tValid());
 		assertEquals(anonymous, PersonManager.getManager().getAnonymous());
@@ -60,23 +59,21 @@ public class TestAnonymousAccountDeletion extends BasicTestCase {
 	 */
 	public void testDeleteOrdinaryAccount() {
 		String name = "anonymousDeletionOrdinary";
-		Person person;
-		ThreadContext.pushSuperUser();
-		try {
+		Person person = ThreadContext.withoutSecurityChecks(() -> {
+			Person created;
 			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-				person = Person.create(kb(), name,
+				created = Person.create(kb(), name,
 					TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity"));
 				tx.commit();
 			}
-			assertEquals(Optional.empty(), person.tDeleteVeto());
+			assertEquals(Optional.empty(), created.tDeleteVeto());
 
 			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-				person.tDelete();
+				created.tDelete();
 				tx.commit();
 			}
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+			return created;
+		});
 
 		assertFalse(person.tValid());
 		assertNull(Person.byName(name));

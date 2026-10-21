@@ -23,7 +23,6 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundRole;
-import com.top_logic.util.TLContext;
 
 /**
  * Test case for {@link AccessManager}.
@@ -68,8 +67,6 @@ public class TestAccessManager  extends BasicTestCase {
 				personC = Person.create(PersistencyLayer.getKnowledgeBase(), "CC", authenticationDevice);
 
             assertTrue(KBSetup.getKnowledgeBase().commit());
-			TLContext context = TLContext.getContext();
-            context.setCurrentPerson(personA);
     
             // create some bound objects
             rootObject   = new SimpleBoundObject("root");

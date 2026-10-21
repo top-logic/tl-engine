@@ -26,6 +26,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.ModuleUtil.ModuleContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
@@ -190,7 +191,7 @@ public class MergeOverlays extends Operation {
 				getProtocol().error("Unable to start ThemeFactory", ex);
 				return;
 			}
-			ThreadContextManager.inSystemInteraction(MergeOverlays.class, () -> {
+			ThreadContext.inSystemContext(MergeOverlays.class, () -> {
 				for (Theme theme : ThemeFactory.getInstance().getChoosableThemes()) {
 					ThemeFactory.getInstance().withTheme(theme, new Computation<Void>() {
 

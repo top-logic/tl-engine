@@ -25,7 +25,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -193,7 +193,7 @@ public class TestServiceMethodByExpression extends TestCase {
 			TypedConfiguration.newConfigItem(ServiceMethodBuilderByExpression.Config.class);
 		impl.setOperation(ExprFormat.INSTANCE.getValue(ServiceMethodBuilderByExpression.Config.OPERATION,
 			"[$event, $plain]"));
-		ServiceMethod method = ThreadContextManager.inSystemInteraction(TestServiceMethodByExpression.class,
+		ServiceMethod method = ThreadContext.inSystemContext(TestServiceMethodByExpression.class,
 			() -> TypedConfigUtil.createInstance(impl).build("/hook", variables));
 
 		CapturingHttpServletResponse resp = new CapturingHttpServletResponse();

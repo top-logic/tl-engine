@@ -49,7 +49,7 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.ProxyInputStream;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.ByteArrayStream;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ComputationEx;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 
@@ -216,7 +216,7 @@ public class HttpUnitConnectionSocketFactory implements DetachedSocketFactory {
 				@Override
 				public void run() {
 					try {
-						result.set(ThreadContextManager.inSystemInteraction(clazz, supplier));
+						result.set(ThreadContext.inSystemContext(clazz, supplier));
 					} catch (IOException ex) {
 						problem.set(ex);
 					} catch (RuntimeException | Error ex) {

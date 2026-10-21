@@ -89,6 +89,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Test case for {@link LayoutComponent}.
@@ -132,28 +133,29 @@ public class TestLayoutComponent extends BasicTestCase {
 
 		DisplayContext context = DefaultDisplayContext.getDisplayContext();
 		TLSubSessionContext subSession = ComponentTestUtils.ensureSubSession(context);
-		subSession.setPerson(PersonManager.getManager().getRoot());
-		SubsessionHandler layoutContext = (SubsessionHandler) ComponentTestUtils.ensureLayoutContext(subSession);
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), () -> {
+			SubsessionHandler layoutContext = (SubsessionHandler) ComponentTestUtils.ensureLayoutContext(subSession);
 
-		assertEquals(initialModel, sc.getModel());
-		assertEquals("Model and listeners are updated synchronously.", sc.getModel(), receivedNewModel.get());
+			assertEquals(initialModel, sc.getModel());
+			assertEquals("Model and listeners are updated synchronously.", sc.getModel(), receivedNewModel.get());
 
-		layoutContext.enableUpdate(true);
-		Person newPerson = TestPerson.createPerson("newPerson");
-		sc.setModel(newPerson);
-		ml.globallyValidateModel(context);
-		layoutContext.enableUpdate(false);
+			layoutContext.enableUpdate(true);
+			Person newPerson = TestPerson.createPerson("newPerson");
+			sc.setModel(newPerson);
+			ml.globallyValidateModel(context);
+			layoutContext.enableUpdate(false);
 
-		assertEquals(newPerson, sc.getModel());
-		assertEquals("Model and listeners are updated synchronously.", sc.getModel(), receivedNewModel.get());
+			assertEquals(newPerson, sc.getModel());
+			assertEquals("Model and listeners are updated synchronously.", sc.getModel(), receivedNewModel.get());
 
-		layoutContext.enableUpdate(true);
-		TestPerson.deletePersonAndUser(newPerson);
-		ml.globallyValidateModel(context);
-		layoutContext.enableUpdate(false);
+			layoutContext.enableUpdate(true);
+			TestPerson.deletePersonAndUser(newPerson);
+			ml.globallyValidateModel(context);
+			layoutContext.enableUpdate(false);
 
-		assertEquals("Component resets the model to initial model.", initialModel, sc.getModel());
-		assertEquals("Model and listeners are updated synchronously.", sc.getModel(), receivedNewModel.get());
+			assertEquals("Component resets the model to initial model.", initialModel, sc.getModel());
+			assertEquals("Model and listeners are updated synchronously.", sc.getModel(), receivedNewModel.get());
+		});
 	}
 
 	public void testIntrinsicCommands() throws ConfigurationException, IOException {

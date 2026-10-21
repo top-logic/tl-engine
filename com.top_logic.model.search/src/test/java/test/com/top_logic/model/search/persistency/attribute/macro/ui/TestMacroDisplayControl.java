@@ -14,8 +14,6 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import test.com.top_logic.layout.TestControl;
 
-import com.top_logic.basic.SessionContext;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -28,7 +26,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.persistency.attribute.macro.ui.MacroDisplayControl;
 import com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -76,38 +74,24 @@ public class TestMacroDisplayControl extends TestControl {
 
 		SearchExpression macro = createMacro("<b>name: {$model.get(`tl.model:TLModule#name`)}</b>");
 
-		becomeUser(PersonManager.getManager().getRoot());
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), () -> {
+			for (TLModule module : modules) {
+				MacroDisplayControl control = createControl(module, macro);
 
-		for (TLModule module : modules) {
-			MacroDisplayControl control = createControl(module, macro);
+				String output = writeControl(control);
+				assertContains("<b>name: " + module.getName() + "</b>", output);
+			}
+		});
 
-			String output = writeControl(control);
-			assertContains("<b>name: " + module.getName() + "</b>", output);
-		}
+		TLContextManager.inPersonContext(_user, () -> {
+			for (TLModule module : modules) {
+				MacroDisplayControl control = createControl(module, macro);
 
-		becomeUser(_user);
+				String output = writeControl(control);
 
-		for (TLModule module : modules) {
-			MacroDisplayControl control = createControl(module, macro);
-
-			String output = writeControl(control);
-
-			assertContains("User has no right to see name of module.", "<b>name: " + "" + "</b>", output);
-		}
-
-	}
-
-	/**
-	 * Establishes a (non-system) person context for the given user.
-	 *
-	 * <p>
-	 * Setting the person automatically derives a {@link SessionContext#PERSON_ID_PREFIX person}
-	 * context id, so {@link ThreadContext#isSystemContext()} is {@code false} and the security
-	 * check is not bypassed.
-	 * </p>
-	 */
-	private static void becomeUser(Person person) {
-		TLContext.getContext().setCurrentPerson(person);
+				assertContains("User has no right to see name of module.", "<b>name: " + "" + "</b>", output);
+			}
+		});
 	}
 
 	public void testMacroOutput() {

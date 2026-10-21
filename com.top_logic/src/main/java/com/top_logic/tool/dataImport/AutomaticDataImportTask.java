@@ -177,33 +177,28 @@ public class AutomaticDataImportTask<C extends AutomaticDataImportTask.Config<?>
 
 	@Override
 	public void inContext() {
-		TLContext.pushSuperUser();
+		Lock lock = importer.getNewTokenHandler();
+		if (!lock.tryLock()) {
+			Logger.warn("Automatic data skipped because acquiring token context failed.",
+				AutomaticDataImportTask.class);
+			return;
+		}
 		try {
-			Lock lock = importer.getNewTokenHandler();
-			if (!lock.tryLock()) {
-				Logger.warn("Automatic data skipped because acquiring token context failed.",
-					AutomaticDataImportTask.class);
+			beforeImport(lock);
+			runImport(lock);
+			if (lock.check())
+				importer.cleanUpIfNecessary();
+			if (getShouldStop())
 				return;
+			if (lock.check()) {
+				afterImport(lock);
 			}
-			try {
-				beforeImport(lock);
-				runImport(lock);
-				if (lock.check())
-					importer.cleanUpIfNecessary();
-				if (getShouldStop())
-					return;
-				if (lock.check()) {
-					afterImport(lock);
-				}
-				else {
-					Logger.error("Automatic data token context timed out while importer was running.",
-						AutomaticDataImportTask.class);
-				}
-			} finally {
-				lock.unlock();
+			else {
+				Logger.error("Automatic data token context timed out while importer was running.",
+					AutomaticDataImportTask.class);
 			}
 		} finally {
-			TLContext.popSuperUser();
+			lock.unlock();
 		}
 	}
 

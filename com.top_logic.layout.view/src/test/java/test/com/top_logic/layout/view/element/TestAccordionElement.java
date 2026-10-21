@@ -39,6 +39,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.element.AccordionElement;
 import com.top_logic.layout.view.security.SecurityScopeService;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Tests {@link AccordionElement}: the sections an {@code <accordion>} is written with, what they
@@ -174,7 +175,9 @@ public class TestAccordionElement extends BasicTestCase {
 	 * Tests that a section the session may not see is left out, rather than shown empty.
 	 */
 	public void testGuardedSectionIsOmitted() {
-		List<Map<String, Object>> sections = sections(accordion(DENIED_FIXTURE));
+		// Built with checked security for a session without a person.
+		List<Map<String, Object>> sections =
+			sections(TLContextManager.inPersonContext(null, () -> accordion(DENIED_FIXTURE)));
 
 		assertEquals("Only the unguarded section is offered: " + sections, 1, sections.size());
 		assertEquals("open", sections.get(0).get(AccordionState.Section.ID__PROP));

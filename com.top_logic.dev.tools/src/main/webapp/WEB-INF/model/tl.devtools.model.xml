@@ -2,9 +2,7 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.devtools">
-		<!--
-			Kind of model type created through the model editor: a structured class or an enumeration.
-		-->
+		<!-- Kind of model type created through the model editor: a structured class or an enumeration. -->
 		<enum name="TypeKind">
 			<classifier name="class"/>
 			<classifier name="enumeration"/>
@@ -91,9 +89,22 @@
 				<property name="mandatory"
 					type="tl.core:Boolean"
 				/>
+				<!--
+					A primitive value type without the supports-multiple annotation cannot store several
+					values. While such a type is chosen, the field is disabled once it is unchecked; a
+					checked field stays editable, so the user can clear a value entered for another type.
+				-->
 				<property name="multiple"
 					type="tl.core:Boolean"
-				/>
+				>
+					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+								function="obj -> {type = $obj.get(`tl.devtools:NewAttribute#type`); unsupported = $type != null &amp;&amp; $type.instanceOf(`tl.model:TLPrimitive`) &amp;&amp; $type.get(`tl.model:TLModelPart#annotations`).filter(a -> $a['$tag'] == 'supports-multiple' &amp;&amp; $a['value']).isEmpty(); if($unsupported &amp;&amp; !$obj.get(`tl.devtools:NewAttribute#multiple`), 'disabled', 'default')}"
+							/>
+						</dynamic-visibility>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

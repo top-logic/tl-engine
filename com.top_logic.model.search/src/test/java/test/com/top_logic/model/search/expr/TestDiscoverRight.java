@@ -549,7 +549,28 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		return ((TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className)).getPart(partName);
 	}
 
-	private static final String NAME_SCRIPT = "x -> $x.get(`TestTLScriptSecurity:PathNode#name`)";
+	/**
+	 * R12: A derived attribute is computed unsecured, its value does not depend on the reader: the
+	 * object it is computed for is not withheld from its script, also for a reader that must not
+	 * discover it.
+	 */
+	public void testDerivedAttributeOfUndiscoverableObject() throws Exception {
+		becomeUser(_stranger);
+		assertEquals("a2", _a2.tValueByName("computedName"));
+		becomeUser(_pathUser);
+		assertEquals("a2", _a2.tValueByName("computedName"));
+	}
+
+	/**
+	 * R12: The objects in the value of a derived attribute are not filtered by its computation, but
+	 * when a secured evaluation reads the value (R4).
+	 */
+	public void testDerivedReferenceUnfiltered() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(Arrays.asList(_b1, _b2), _a1.tValueByName("computedBs"));
+	}
+
+	private static final String NAME_SCRIPT ="x -> $x.get(`TestTLScriptSecurity:PathNode#name`)";
 
 	public void testLabelScriptUnsecured() throws Exception {
 		LabelProviderByExpression.Config<?> config =

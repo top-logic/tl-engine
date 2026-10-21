@@ -31,6 +31,7 @@ import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -105,7 +106,7 @@ public class TestNumberInputControlProvider extends TestCase {
 	/** Runs the test in an interaction: TL-Script is evaluated against the knowledge base. */
 	@Override
 	protected void runTest() throws Throwable {
-		ThreadContextManager.<Void, Throwable, RuntimeException> inSystemInteraction(
+		ThreadContext.<Void, Throwable, RuntimeException> inSystemContext(
 			TestNumberInputControlProvider.class, () -> {
 				super.runTest();
 				return null;

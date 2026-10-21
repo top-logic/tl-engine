@@ -18,11 +18,13 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.DataFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactFormFieldControl} for binary ({@link BinaryDataSource}) attributes.
@@ -51,9 +53,6 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 
 	/** State key for the upload status ({@code "idle"} / {@code "received"}). */
 	private static final String STATUS = "status";
-
-	/** State key for an upload error message. */
-	private static final String ERROR = "error";
 
 	/** State key for the maximum upload size. */
 	private static final String MAX_SIZE = "maxSize";
@@ -153,7 +152,8 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 				.orElse(null);
 
 			if (filePart == null) {
-				putState(ERROR, "No file data received.");
+				putState(UploadSupport.ERROR,
+					Resources.getInstance().getString(I18NConstants.ERROR_NO_FILE_DATA_RECEIVED));
 				putState(STATUS, "idle");
 				return HandlerResult.DEFAULT_RESULT;
 			}
@@ -172,11 +172,11 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 			BinaryData data = BinaryDataFactory.createBinaryData(fileData, contentType, fileName);
 			getFieldModel().setValue(data);
 
-			putState(ERROR, null);
+			putState(UploadSupport.ERROR, null);
 			putState(STATUS, "idle");
 		} catch (IOException ex) {
 			Logger.error("Failed to process file upload.", ex, ReactBinaryFieldControl.class);
-			putState(ERROR, ex.getMessage());
+			putState(UploadSupport.ERROR, Resources.getInstance().getString(I18NConstants.FILE_UPLOAD_FAILED));
 			putState(STATUS, "idle");
 		}
 		return HandlerResult.DEFAULT_RESULT;

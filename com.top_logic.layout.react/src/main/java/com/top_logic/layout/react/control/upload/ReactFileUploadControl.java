@@ -36,8 +36,6 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 	/** State key for the current status. */
 	private static final String STATUS = "status";
 
-	/** State key for an error message. */
-	private static final String ERROR = "error";
 
 	/** State key for the accepted MIME type filter. */
 	private static final String ACCEPT = "accept";
@@ -82,7 +80,7 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 				.orElse(null);
 
 			if (filePart == null) {
-				putState(ERROR, "No file data received.");
+				putState(UploadSupport.ERROR, "No file data received.");
 				putState(STATUS, "idle");
 				return HandlerResult.DEFAULT_RESULT;
 			}
@@ -90,11 +88,11 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 			BinaryData data = UploadSupport.toBinaryData(filePart);
 			getFieldModel().setValue(data);
 
-			putState(ERROR, null);
+			putState(UploadSupport.ERROR, null);
 			putState(STATUS, "idle");
 		} catch (IOException ex) {
 			Logger.error("Failed to process file upload.", ex, ReactFileUploadControl.class);
-			putState(ERROR, ex.getMessage());
+			putState(UploadSupport.ERROR, ex.getMessage());
 			putState(STATUS, "idle");
 		}
 		return HandlerResult.DEFAULT_RESULT;

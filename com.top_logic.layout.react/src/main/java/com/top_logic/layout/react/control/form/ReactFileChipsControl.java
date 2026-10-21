@@ -21,12 +21,14 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * A field holding several files, displayed as one chip per file.
@@ -45,6 +47,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * {@link UploadSupport#FILE_PART file part} of the request, and the data endpoint as a
  * {@link DataProvider}, delivering the file of the chip whose key is requested. The files
  * themselves never enter the client state.
+ * </p>
+ *
+ * <p>
+ * The state carries the {@link #CHIPS}, the file types the file picker offers under
+ * {@link UploadSupport#ACCEPT}, the upload limit under {@link UploadSupport#MAX_UPLOAD_SIZE}, by
+ * which the client refuses a larger selection before transmitting it, and the message of a failed
+ * upload under {@link UploadSupport#ERROR}, cleared by the next successful upload.
  * </p>
  *
  * @see ReactBinaryFieldControl
@@ -91,6 +100,7 @@ public class ReactFileChipsControl extends ReactFormFieldControl implements Uplo
 		super(context, model, REACT_MODULE);
 		// The files are displayed as chips; the collection itself is nothing the client draws.
 		putState(FieldState.VALUE__PROP, null);
+		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
 		updateChips();
 	}
 
@@ -171,6 +181,12 @@ public class ReactFileChipsControl extends ReactFormFieldControl implements Uplo
 
 	/**
 	 * Appends every uploaded file to the collection, in the order the client sent them.
+	 *
+	 * <p>
+	 * A failed upload leaves the collection unchanged and reports
+	 * {@link I18NConstants#FILE_UPLOAD_FAILED} under {@link UploadSupport#ERROR}; a successful upload
+	 * clears it.
+	 * </p>
 	 */
 	@Override
 	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
@@ -182,8 +198,10 @@ public class ReactFileChipsControl extends ReactFormFieldControl implements Uplo
 			files = UploadSupport.toBinaryData(parts);
 		} catch (IOException ex) {
 			Logger.error("Failed to process file upload.", ex, ReactFileChipsControl.class);
+			putState(UploadSupport.ERROR, Resources.getInstance().getString(I18NConstants.FILE_UPLOAD_FAILED));
 			return HandlerResult.DEFAULT_RESULT;
 		}
+		putState(UploadSupport.ERROR, null);
 		if (files.isEmpty()) {
 			return HandlerResult.DEFAULT_RESULT;
 		}

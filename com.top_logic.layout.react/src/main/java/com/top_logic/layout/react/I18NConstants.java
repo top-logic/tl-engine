@@ -77,6 +77,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FILE_UPLOAD_FAILED;
 
 	/**
+	 * @en No file data received.
+	 */
+	public static ResKey ERROR_NO_FILE_DATA_RECEIVED;
+
+	/**
 	 * @en Download data cleared.
 	 */
 	public static ResKey REACT_DOWNLOAD_CLEAR;

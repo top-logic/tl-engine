@@ -1219,6 +1219,11 @@ div.tlValueList {
 	cursor: progress;
 }
 
+/* The message of a failed upload, on a line of its own below the chips. */
+.tlFileChips__error {
+	flex-basis: 100%;
+}
+
 /* --- TLSlider ----------------------------------------------------------- */
 
 /* A number set by dragging a handle along a track, with the value written beside it: the two read

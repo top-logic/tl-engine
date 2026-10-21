@@ -48,6 +48,10 @@ function formatSize(size: number): string {
  * - chips: [{ key, name, size, hasData }]
  * - editable: boolean
  * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
+ * - maxUploadSize: number, the upload limit in bytes (0: none); useTLUpload refuses a larger
+ *   selection before transmitting it
+ * - error: string, the message of the last failed upload; absent after a successful one. Hidden
+ *   from the moment the next upload starts until the server reports its outcome.
  */
 const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
@@ -62,10 +66,14 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const chips = (state.chips as FileChip[] | null) ?? [];
   const editable = state.editable === true;
   const accept = (state.accept as string | null) ?? '';
+  const serverError = (state.error as string | null) ?? null;
 
   const [uploading, setUploading] = React.useState(false);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  // The state at the start of the latest upload: its error belongs to an earlier upload and is
+  // hidden until the server sends the next state.
+  const [stateAtUpload, setStateAtUpload] = React.useState<object | null>(null);
 
   const doUpload = React.useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files);
@@ -73,6 +81,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     setUploading(true);
+    setStateAtUpload(state);
     try {
       const formData = new FormData();
       for (const file of list) {
@@ -82,7 +91,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
     } finally {
       setUploading(false);
     }
-  }, [upload]);
+  }, [upload, state]);
 
   const doDownload = React.useCallback(async (chip: FileChip) => {
     if (!chip.hasData) {
@@ -196,6 +205,9 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
             onClick={handleAddClick}
           />
         </>
+      )}
+      {serverError && state !== stateAtUpload && (
+        <span className="tlFileChips__error tl-file-upload__status tl-type-label" role="alert">{serverError}</span>
       )}
     </div>
   );

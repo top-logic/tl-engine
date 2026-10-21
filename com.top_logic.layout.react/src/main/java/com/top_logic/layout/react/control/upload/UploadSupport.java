@@ -42,6 +42,12 @@ public class UploadSupport {
 	public static final String MAX_UPLOAD_SIZE = "maxUploadSize";
 
 	/**
+	 * State key under which an {@link UploadHandler} control publishes the message of its last
+	 * failed upload to its client component, <code>null</code> after a successful upload.
+	 */
+	public static final String ERROR = "error";
+
+	/**
 	 * The {@link UploadConfig#getMaxUploadSize() configured} maximum size of an upload in bytes,
 	 * <code>0</code> if uploads are unlimited.
 	 */

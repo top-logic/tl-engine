@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.react.control;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
@@ -37,6 +39,7 @@ import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.util.Resources;
 
 /**
  * Tests the {@link ReactFileChipsControl}: a field holding several files, one chip per file, to
@@ -257,6 +260,38 @@ public class TestReactFileChipsControl extends TestCase {
 		assertEquals("image/*,.xml", UploadSupport.acceptAttribute("*.xml,image/*"));
 	}
 
+	/**
+	 * The client learns the server's upload limit, so that it refuses a larger selection before
+	 * transmitting it.
+	 */
+	public void testMaxUploadSize() {
+		Chips chips = chips(new AbstractFieldModel(null));
+
+		assertEquals(Long.valueOf(UploadSupport.maxUploadSize()), chips.state(UploadSupport.MAX_UPLOAD_SIZE));
+	}
+
+	/**
+	 * A failed upload reports that it failed and leaves the files unchanged; the next successful
+	 * upload clears the message.
+	 */
+	public void testUploadError() {
+		FieldModel model = new AbstractFieldModel(Arrays.asList(A));
+		Chips chips = chips(model);
+		assertNull("No error before an upload", chips.state(UploadSupport.ERROR));
+
+		chips.handleUpload(null, Arrays.asList(part("c.txt", "C"), failingPart("broken.txt")));
+
+		assertEquals(Resources.getInstance().getString(I18NConstants.FILE_UPLOAD_FAILED),
+			chips.state(UploadSupport.ERROR));
+		assertEquals("A failed upload adds no file", Arrays.asList(A), model.getValue());
+		assertEquals(1, chips.chips().size());
+
+		chips.handleUpload(null, Arrays.asList(part("d.txt", "D")));
+
+		assertNull("A successful upload clears the error", chips.state(UploadSupport.ERROR));
+		assertEquals(2, ((List<?>) model.getValue()).size());
+	}
+
 	private static BinaryData file(String name, String content) {
 		return BinaryDataFactory.createBinaryData(content.getBytes(StandardCharsets.UTF_8), "text/plain", name);
 	}
@@ -266,6 +301,20 @@ public class TestReactFileChipsControl extends TestCase {
 	 */
 	static Part part(String fileName, String content) {
 		return new TestPart(UploadSupport.FILE_PART, fileName, content);
+	}
+
+	private static final String BROKEN_MESSAGE = "Connection reset.";
+
+	/**
+	 * A {@value UploadSupport#FILE_PART} part whose content cannot be read.
+	 */
+	private static Part failingPart(String fileName) {
+		return new TestPart(UploadSupport.FILE_PART, fileName, "") {
+			@Override
+			public InputStream getInputStream() throws IOException {
+				throw new IOException(BROKEN_MESSAGE);
+			}
+		};
 	}
 
 	private static Chips chips(FieldModel model) {
@@ -326,7 +375,7 @@ public class TestReactFileChipsControl extends TestCase {
 	/**
 	 * A {@link Part} of a multipart upload holding a text.
 	 */
-	static final class TestPart implements Part {
+	static class TestPart implements Part {
 
 		private final String _name;
 
@@ -341,7 +390,7 @@ public class TestReactFileChipsControl extends TestCase {
 		}
 
 		@Override
-		public InputStream getInputStream() {
+		public InputStream getInputStream() throws IOException {
 			return new ByteArrayInputStream(_content);
 		}
 

@@ -185,7 +185,7 @@ describe('a boolean field as MUI checkbox', () => {
 
 describe('the selection boxes of a table as MUI checkboxes', () => {
   function row(index: number, extra: Record<string, unknown> = {}) {
-    return { id: 'r' + index, index, selected: false, cells: { name: childControl('c' + index, 'Zeile ' + index) }, ...extra };
+    return { id: 'r' + index, index, cells: { name: childControl('c' + index, 'Zeile ' + index) }, ...extra };
   }
 
   function mountTable(state: Record<string, unknown>) {
@@ -200,7 +200,7 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
   }
 
   it('marks the box selecting all rows indeterminate while some rows are selected, and selects all', async () => {
-    const sent = mountTable({ rows: [row(0, { selected: true }), row(1)], selectAllState: 'some' });
+    const sent = mountTable({ rows: [row(0), row(1)], selectedRows: [0], selectAllState: 'some' });
     await settle();
 
     const all = screen.getByRole('checkbox', { name: LABEL_SELECT_ALL }) as HTMLInputElement;
@@ -217,7 +217,7 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
   });
 
   it('ticks the box selecting all rows while all are, and deselects all', async () => {
-    const sent = mountTable({ rows: [row(0, { selected: true })], selectAllState: 'all' });
+    const sent = mountTable({ rows: [row(0)], selectedRows: [0], selectAllState: 'all' });
     await settle();
 
     const all = screen.getByRole('checkbox', { name: LABEL_SELECT_ALL }) as HTMLInputElement;
@@ -231,7 +231,7 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
   });
 
   it('toggles the selection of a row by its box, out of the tab order', async () => {
-    const sent = mountTable({ rows: [row(0, { selected: true }), row(1)], selectAllState: 'some' });
+    const sent = mountTable({ rows: [row(0), row(1)], selectedRows: [0], selectAllState: 'some' });
     await settle();
 
     const boxes = screen.getAllByRole('checkbox', { name: LABEL_SELECT_ROW }) as HTMLInputElement[];

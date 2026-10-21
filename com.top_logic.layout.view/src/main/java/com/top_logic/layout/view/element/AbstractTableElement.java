@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -38,6 +39,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
@@ -789,6 +791,66 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			return;
 		}
 		table.view().setDeclaredFilters(declaredFilters(table.columns(), table.declaredNames(), inputValues));
+	}
+
+	/**
+	 * What a change of each of the table's input channels has to refresh, see
+	 * {@link #inputRoles(ViewContext, List)}.
+	 *
+	 * @param rowIndependent
+	 *        The inputs whose changes cannot change the rows, nor what the columns show or filter: a
+	 *        change of one of them neither queries the rows again nor builds the cells again.
+	 * @param cellIndependent
+	 *        The inputs whose changes cannot change what the columns show or filter, the
+	 *        row-independent ones included: a change of one of them that leaves the rows equal
+	 *        builds no cell again.
+	 */
+	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent) {
+		// Pure data.
+	}
+
+	/**
+	 * Which of the given input channels of the table can be followed without building the cells
+	 * again.
+	 *
+	 * <p>
+	 * What a column shows or filters follows the channels its declaration reads - the
+	 * {@code inputs} of its functions and of its filter - only by the table being refreshed, which
+	 * builds the cells again and filters the rows anew. A change of such a "cell input" therefore
+	 * refreshes the table in any case. Every other input is cell-independent: where its change
+	 * leaves the rows equal, the cells stay, and only what is computed from the inputs apart from
+	 * the rows - the criteria of the presets, the row class - is computed again.
+	 * </p>
+	 *
+	 * <p>
+	 * The table's own {@link Config#getSelection() selection channel} among the inputs is in
+	 * addition row-independent, unless a column reads it: the rows the user selects from cannot
+	 * depend on what is selected among them, so its change does not query the rows again.
+	 * </p>
+	 *
+	 * @param inputChannels
+	 *        The table's resolved input channels.
+	 */
+	protected final InputRoles inputRoles(ViewContext context, List<ViewChannel> inputChannels) {
+		Set<ViewChannel> cellInputs =
+			new HashSet<>(ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations)));
+
+		List<ViewChannel> cellIndependent = new ArrayList<>();
+		for (ViewChannel input : inputChannels) {
+			if (!cellInputs.contains(input)) {
+				cellIndependent.add(input);
+			}
+		}
+
+		ChannelRef selectionRef = _config.getSelection();
+		List<ViewChannel> rowIndependent = List.of();
+		if (selectionRef != null) {
+			ViewChannel selection = context.resolveChannel(selectionRef);
+			if (cellIndependent.contains(selection)) {
+				rowIndependent = List.of(selection);
+			}
+		}
+		return new InputRoles(rowIndependent, cellIndependent);
 	}
 
 	/**

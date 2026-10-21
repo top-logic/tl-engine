@@ -54,8 +54,8 @@ public class TestTableSelectionRetention extends TestCase {
 	/** State key of the client's row list. */
 	private static final String ROWS = "rows";
 
-	/** Per-row state key of whether the row is selected. */
-	private static final String SELECTED = "selected";
+	/** State key of the indexes of the selected rows among the rows sent. */
+	private static final String SELECTED_ROWS = "selectedRows";
 
 	/** The row the tests select, in group {@code a}. */
 	private static final String A1 = "a1";
@@ -118,7 +118,7 @@ public class TestTableSelectionRetention extends TestCase {
 
 		search("");
 
-		assertEquals(Boolean.TRUE, clientRows().get(0).get(SELECTED));
+		assertEquals(List.of(Integer.valueOf(0)), _table.clientState(SELECTED_ROWS));
 	}
 
 	/**
@@ -198,7 +198,7 @@ public class TestTableSelectionRetention extends TestCase {
 
 		search("");
 
-		assertEquals(Boolean.TRUE, clientRows().get(0).get(SELECTED));
+		assertEquals(List.of(Integer.valueOf(0)), _table.clientState(SELECTED_ROWS));
 	}
 
 	/**

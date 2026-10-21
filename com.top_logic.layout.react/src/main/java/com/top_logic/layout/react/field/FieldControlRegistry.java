@@ -135,10 +135,12 @@ public class FieldControlRegistry {
 	 *
 	 * <p>
 	 * The chips control edits the whole collection, so this provider
-	 * {@link ReactFieldControlProvider#editsCollections() edits collections}. The chips of several
-	 * files take more than a line, so a multi-valued field is {@link #isLarge(FieldSpec) large}.
-	 * The files the file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted types}
-	 * of the field. The preview of the files is their names, separated by commas.
+	 * {@link ReactFieldControlProvider#editsCollections() edits collections}. The chips are no
+	 * {@link ReactFieldControlProvider#isLarge(FieldSpec) large} control: in a
+	 * {@link FieldSpec#isCompact() compact} field, a table cell for instance, they are displayed in
+	 * place, wrapping within the room of the cell, rather than opened from a preview. The files the
+	 * file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted types} of the field.
+	 * The preview of the files is their names, separated by commas.
 	 * </p>
 	 *
 	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
@@ -160,11 +162,6 @@ public class FieldControlRegistry {
 		@Override
 		public boolean editsCollections() {
 			return true;
-		}
-
-		@Override
-		public boolean isLarge(FieldSpec field) {
-			return field.isMultiple();
 		}
 
 		@Override

@@ -20,12 +20,14 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
+import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
@@ -107,15 +109,20 @@ public class TestFieldControlRegistry extends TestCase {
 	}
 
 	/**
-	 * In a compact display, the files of a multi-valued binary field stand as their names; the
-	 * chips need more room than a line.
+	 * In a compact display, a table cell for instance, the chips of a multi-valued binary field are
+	 * displayed in place, told that they have little room; the names of the files remain their
+	 * preview.
 	 */
 	public void testCompactMultipleBinaryValues() {
 		FieldSpec field = FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true).setCompact(true);
 		ReactFieldControlProvider provider = _registry.lookup(BinaryDataSource.class);
 		List<BinaryData> files = List.of(file("a.txt"), file("b.xml"));
 
-		assertTrue(FieldControlRegistry.isLarge(field, provider));
+		assertFalse("The chips wrap within a cell", FieldControlRegistry.isLarge(field, provider));
+		ReactControl control = _registry.createControl(context(), field, new AbstractFieldModel(files));
+		assertInstanceof(ReactFileChipsControl.class, control);
+		assertTrue("The chips know they are in little room", ((ReactFileChipsControl) control).isCompact());
+
 		assertEquals("a.txt, b.xml", FieldControlRegistry.previewText(field, provider, files));
 		assertFalse(FieldControlRegistry.isEmpty(field, provider, files));
 		assertTrue(FieldControlRegistry.isEmpty(field, provider, List.of()));
@@ -123,6 +130,30 @@ public class TestFieldControlRegistry extends TestCase {
 		FieldSpec single = FieldSpec.of(BinaryDataSource.class, "File").setCompact(true);
 		assertFalse("A single file fits a line", FieldControlRegistry.isLarge(single, provider));
 		assertEquals("a.txt", FieldControlRegistry.previewText(single, provider, file("a.txt")));
+	}
+
+	/**
+	 * In a compact display, the list of one file control per file needs more room than a cell: the
+	 * cell shows the names of the files and opens the list in a dialog.
+	 */
+	public void testCompactMultipleBinaryValuesAsList() {
+		FieldSpec field = FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true).setCompact(true);
+
+		ReactControl control = _registry.createControl(context(), field,
+			new AbstractFieldModel(List.of(file("a.txt"), file("b.xml"))), FieldControlRegistry.BINARY);
+
+		assertInstanceof(ReactCompactFieldControl.class, control);
+		assertEquals("a.txt, b.xml", ((ReactCompactFieldControl) control).getPreviewText());
+	}
+
+	/**
+	 * A field that is not compact has all the room it needs.
+	 */
+	public void testFieldWithRoomIsNotCompact() {
+		ReactControl control = _registry.createControl(context(),
+			FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true), new AbstractFieldModel(null));
+
+		assertFalse(((ReactFileChipsControl) control).isCompact());
 	}
 
 	/**
@@ -331,6 +362,7 @@ public class TestFieldControlRegistry extends TestCase {
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestFieldControlRegistry.class, ResourcesModule.Module.INSTANCE));
+			ServiceTestSetup.createSetup(TestFieldControlRegistry.class, ThemeFactory.Module.INSTANCE,
+				ResourcesModule.Module.INSTANCE));
 	}
 }

@@ -217,6 +217,21 @@ public class TestReactFileChipsControl extends TestCase {
 	}
 
 	/**
+	 * The chips learn that they are displayed in little room, and keep the flag out of the headless
+	 * projection, being presentation only.
+	 */
+	public void testCompact() {
+		Chips chips = chips(new AbstractFieldModel(Arrays.asList(A)));
+		assertFalse("A field has its room by default", chips.isCompact());
+
+		chips.setCompact(true);
+
+		assertTrue(chips.isCompact());
+		assertEquals(Boolean.TRUE, chips.state(FieldState.COMPACT__PROP));
+		assertFalse(chips.scriptingScalarState().containsKey(FieldState.COMPACT__PROP));
+	}
+
+	/**
 	 * The accepted file types reach the file picker in the form of the HTML accept attribute: a
 	 * file pattern becomes a file extension.
 	 */

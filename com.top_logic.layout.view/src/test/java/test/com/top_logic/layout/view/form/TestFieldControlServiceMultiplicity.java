@@ -333,10 +333,24 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	}
 
 	/**
-	 * A cell showing several files gives their names in one line and opens the files in a dialog.
+	 * A cell showing several files shows their chips in place, told that it has little room.
 	 */
-	public void testACellOfSeveralFilesShowsTheirNames() {
+	public void testACellOfSeveralFilesShowsTheirChips() {
 		TLStructuredTypePart part = property("files", _binaryType, true, false);
+
+		ReactControl cell = display(ColumnType.of(part), List.of(file("a.txt"), file("b.txt")));
+
+		assertEquals(ReactFileChipsControl.class, cell.getClass());
+		assertTrue(((ReactFileChipsControl) cell).isCompact());
+	}
+
+	/**
+	 * A cell showing several files of an attribute asking for a list gives their names in one line
+	 * and opens the list in a dialog.
+	 */
+	public void testACellOfSeveralFilesAsListShowsTheirNames() {
+		TLStructuredTypePart part = property("files", _binaryType, true, false);
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.LIST));
 
 		ReactControl cell = display(ColumnType.of(part), List.of(file("a.txt"), file("b.txt")));
 

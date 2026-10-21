@@ -77,6 +77,9 @@ public interface ReactFieldControlProvider {
 			if (debounce != null) {
 				fieldControl.setDebounce(debounce);
 			}
+			if (field.isCompact()) {
+				fieldControl.setCompact(true);
+			}
 		}
 		return control;
 	}

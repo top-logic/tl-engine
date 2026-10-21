@@ -399,6 +399,9 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	com.top_logic.layout.react.state.DropdownSelectState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.DropdownSelectState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.DropdownSelectState setHidden(boolean value);
 
 	@Override

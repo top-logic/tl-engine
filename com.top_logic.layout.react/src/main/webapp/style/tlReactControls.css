@@ -1219,6 +1219,12 @@ div.tlValueList {
 	cursor: progress;
 }
 
+/* In little room, a table cell for instance: the chips wrap within it, as close as keeps them apart. */
+.tlFileChips--compact {
+	gap: var(--spacing-01);
+	min-height: 0;
+}
+
 /* The message of a failed upload, on a line of its own below the chips. */
 .tlFileChips__error {
 	flex-basis: 100%;

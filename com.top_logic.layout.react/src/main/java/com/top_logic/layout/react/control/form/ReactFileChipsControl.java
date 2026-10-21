@@ -53,7 +53,9 @@ import com.top_logic.util.Resources;
  * The state carries the {@link #CHIPS}, the file types the file picker offers under
  * {@link UploadSupport#ACCEPT}, the upload limit under {@link UploadSupport#MAX_UPLOAD_SIZE}, by
  * which the client refuses a larger selection before transmitting it, and the message of a failed
- * upload under {@link UploadSupport#ERROR}, cleared by the next successful upload.
+ * upload under {@link UploadSupport#ERROR}, cleared by the next successful upload. A
+ * {@link #setCompact(boolean) compact} control, in a table cell for instance, lets its chips wrap
+ * with reduced spacing and offers the add button as its icon alone.
  * </p>
  *
  * @see ReactBinaryFieldControl

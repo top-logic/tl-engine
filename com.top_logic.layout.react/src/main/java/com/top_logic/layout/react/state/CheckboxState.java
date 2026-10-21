@@ -156,6 +156,9 @@ public interface CheckboxState extends com.top_logic.layout.react.state.FieldSta
 	com.top_logic.layout.react.state.CheckboxState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.CheckboxState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.CheckboxState setHidden(boolean value);
 
 	@Override

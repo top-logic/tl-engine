@@ -42,7 +42,8 @@ function formatSize(size: number): string {
  * Renders a collection of files as chips (part `Chip`): file icon, name, size as detail, pressed to
  * download where the file has data. In edit mode, each chip offers to remove its file, and files can
  * be added via the add button (part `Button`) or by dropping them onto the control; uploads go to the
- * server control's upload endpoint.
+ * server control's upload endpoint. In little room, a table cell for instance, the chips wrap with
+ * reduced spacing and the add button shows its icon alone, its label being its tooltip.
  *
  * State:
  * - chips: [{ key, name, size, hasData }]
@@ -52,6 +53,7 @@ function formatSize(size: number): string {
  *   selection before transmitting it
  * - error: string, the message of the last failed upload; absent after a successful one. Hidden
  *   from the moment the next upload starts until the server reports its outcome.
+ * - compact: boolean, whether the field is displayed in little room (see FieldState)
  */
 const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
@@ -67,6 +69,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const editable = state.editable === true;
   const accept = (state.accept as string | null) ?? '';
   const serverError = (state.error as string | null) ?? null;
+  const compact = state.compact === true;
 
   const [uploading, setUploading] = React.useState(false);
   const [isDragOver, setIsDragOver] = React.useState(false);
@@ -161,6 +164,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
     'tlFileChips',
     editable ? 'tlFileChips--editable' : '',
     isDragOver ? 'tlFileChips--dragover' : '',
+    compact ? 'tlFileChips--compact' : '',
   ].filter(Boolean).join(' ');
 
   return (
@@ -198,7 +202,8 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
           <Button
             label={uploading ? t['js.uploading'] : t['js.fileChips.add']}
             image={ADD_ICON}
-            display="icon-label"
+            display={compact ? 'icon-only' : 'icon-label'}
+            small={compact}
             appearance="secondary"
             disabled={uploading}
             className={uploading ? 'tlFileChips__add tlFileChips__add--uploading' : 'tlFileChips__add'}

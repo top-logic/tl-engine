@@ -26,6 +26,7 @@
 			<field attribute="rangedDouble"/>
 			<field attribute="uppercaseStart"/>
 			<field attribute="warningField"/>
+			<field attribute="normalizedText"/>
 			<field attribute="freeText"/>
 			<field attribute="category"/>
 			<field attribute="codeInCategory"/>

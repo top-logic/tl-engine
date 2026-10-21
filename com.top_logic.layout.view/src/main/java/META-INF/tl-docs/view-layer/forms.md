@@ -132,7 +132,11 @@ whose add button uploads several files at once, one value per file. `data-item` 
 single and a multi-valued value alike. Both annotations are read at the attribute, else at its type,
 and act on a `<value-input>` of type `tl.core:Binary` through its `<annotations>` as well. A
 mandatory multi-valued binary value shows the required marker at the chips and, after a refused
-save, the message of the mandatory check under them.
+save, the message of the mandatory check under them. In a table cell the chips render inline, while
+the list presentation shows the file names and opens its file fields in a dialog. A multi-valued
+binary attribute is persistent: its files are stored one row per file in the generic table
+`BinaryAttributeValue` by `BinaryCollectionStorage`, the storage chosen automatically for a
+multi-valued `tl.core:Binary` property.
 
 ```xml
 <property name="attachments"

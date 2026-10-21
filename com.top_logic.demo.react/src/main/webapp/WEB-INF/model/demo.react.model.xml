@@ -417,6 +417,21 @@
 							</dynamic-visibility>
 						</annotations>
 					</property>
+					<property name="attachments"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Binary"
+					/>
+					<property name="documents"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<accepted-types value="*.pdf, *.txt, *.md"/>
+							<binary-display presentation="list"/>
+						</annotations>
+					</property>
 
 					<!-- Enumeration / classification -->
 					<reference name="priority"

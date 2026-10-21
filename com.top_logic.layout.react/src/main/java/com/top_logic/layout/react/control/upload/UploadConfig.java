@@ -23,11 +23,11 @@ public interface UploadConfig extends ConfigurationItem {
 	String MAX_UPLOAD_SIZE = "max-upload-size";
 
 	/**
-	 * Maximum size of an upload.
+	 * Maximum size of an uploaded file.
 	 *
 	 * <p>
-	 * The limit applies to each single uploaded file and to the whole multipart request. A value of
-	 * <code>0</code> means that there is no limit.
+	 * The limit applies to each single uploaded file. Several files uploaded at once each may use
+	 * the full limit. A value of <code>0</code> means that there is no limit.
 	 * </p>
 	 */
 	@Name(MAX_UPLOAD_SIZE)

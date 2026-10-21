@@ -33,7 +33,7 @@ public class UploadSupport {
 
 	/**
 	 * State key under which an {@link UploadHandler} control publishes {@link #maxUploadSize()} to
-	 * its client component, which refuses a larger selection before transmitting it.
+	 * its client component, which refuses a selection holding a larger file before transmitting it.
 	 *
 	 * <p>
 	 * A value of <code>0</code> means that there is no limit.
@@ -48,8 +48,8 @@ public class UploadSupport {
 	public static final String ERROR = "error";
 
 	/**
-	 * The {@link UploadConfig#getMaxUploadSize() configured} maximum size of an upload in bytes,
-	 * <code>0</code> if uploads are unlimited.
+	 * The {@link UploadConfig#getMaxUploadSize() configured} maximum size of each uploaded file in
+	 * bytes, <code>0</code> if uploads are unlimited.
 	 */
 	public static long maxUploadSize() {
 		UploadConfig config = ApplicationConfig.getInstance().getConfig(UploadConfig.class);

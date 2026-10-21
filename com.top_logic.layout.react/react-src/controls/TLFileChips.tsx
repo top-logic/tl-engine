@@ -51,8 +51,8 @@ function formatSize(size: number): string {
  * - chips: [{ key, name, size, hasData }]
  * - editable: boolean
  * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
- * - maxUploadSize: number, the upload limit in bytes (0: none); useTLUpload refuses a larger
- *   selection before transmitting it
+ * - maxUploadSize: number, the size limit of each single file in bytes (0: none); useTLUpload
+ *   refuses a selection holding a larger file before transmitting it
  * - error: string, the message of the last failed upload; absent after a successful one. Hidden
  *   from the moment the next upload starts until the server reports its outcome.
  * - compact: boolean, whether the field is displayed in little room (see FieldState)

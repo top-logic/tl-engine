@@ -20,7 +20,6 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -269,7 +268,7 @@ public class TestValueInputEditMode extends TestCase {
 	}
 
 	/** The {@code <value-input>} configurations of the test view. */
-	private List<PolymorphicConfiguration<? extends UIElement>> parseInputs() throws Exception {
+	private List<UIElement.Config> parseInputs() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestValueInputEditMode.class);
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
 			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));

@@ -28,14 +28,16 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.CommandArguments;
-import com.top_logic.layout.view.command.ViewActionChain;
-import com.top_logic.layout.view.DefaultViewContext;
-import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.react.EvaluateDynamicScriptAction;
 import com.top_logic.model.search.react.EvaluateScriptAction;
@@ -85,8 +87,6 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		becomeRoot();
-
 		_context = new DefaultViewContext(null);
 		_item = newObject(ITEM, ORIGINAL);
 	}
@@ -96,6 +96,16 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 		_item = null;
 		_context = null;
 		super.tearDown();
+	}
+
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
+	@Override
+	protected Person initialUser() {
+		return PersonManager.getManager().getRoot();
 	}
 
 	/**

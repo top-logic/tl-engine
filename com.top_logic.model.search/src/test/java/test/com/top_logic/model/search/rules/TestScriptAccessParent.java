@@ -46,6 +46,7 @@ import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -210,8 +211,13 @@ public class TestScriptAccessParent extends BasicTestCase {
 		assertTrue(function(expr).getLabel().toString().contains("scriptAccessParentProject"));
 	}
 
+	/**
+	 * Whether the given person may read the given object, decided with checked security in the
+	 * context of that person.
+	 */
 	private static boolean allowed(Person person, TLObject object) {
-		return ModelAccessRights.getInstance().isAllowed(person, object, SimpleBoundCommandGroup.READ);
+		return TLContextManager.inPersonContext(person,
+			() -> ModelAccessRights.getInstance().isAllowed(person, object, SimpleBoundCommandGroup.READ));
 	}
 
 	/**

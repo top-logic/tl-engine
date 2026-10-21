@@ -23,6 +23,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -90,7 +91,11 @@ public class TestViewCommitMessage extends AbstractModelAccessTest {
 		_context = new DefaultViewContext(null);
 		_channel = new DefaultViewChannel(CHANNEL);
 		_context.registerChannel(CHANNEL, _channel);
-		becomeUser(_root);
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _root;
 	}
 
 	@Override

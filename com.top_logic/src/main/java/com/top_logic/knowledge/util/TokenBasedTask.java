@@ -16,7 +16,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
@@ -129,19 +128,7 @@ public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends
 
 		InContext job;
 		if (this.workInSuperUserMode()) {
-			job = new InContext() {
-				
-				@Override
-				public void inContext() {
-					ThreadContext.pushSuperUser();
-					try {
-						TokenBasedTask.this.inContext();
-					} finally {
-						ThreadContext.popSuperUser();
-					}
-					
-				}
-			};
+			job = () -> ThreadContext.withoutSecurityChecks(this);
 		} else {
 			job = this;
 		}
@@ -149,7 +136,7 @@ public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends
 	}
 
 	private Person fetchTaskPerson() {
-		return ThreadContextManager.inSystemInteraction(TokenBasedTask.class, new Computation<Person>() {
+		return ThreadContext.inSystemContext(TokenBasedTask.class, new Computation<Person>() {
 
 			@Override
 			public Person run() {

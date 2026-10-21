@@ -61,26 +61,25 @@ public class MORepositoryImporter extends DispatchingHandler implements KBXMLCon
 	 */
     public void doImport(InputStream is, String resourceName) {
         this.currentResourceName = resourceName;
-        
-		// run in super user context
-        ThreadContext.pushSuperUser();
-        try {
-            SAXParser parser;
-			parser = SAXUtil.newSAXParser();
-            parser.parse(is, this);
-        } catch (ParserConfigurationException ex) {
-            throw new AssertionError(ex);
-        } catch (SAXException ex) {
+		try {
+			ThreadContext.withoutSecurityChecks(() -> parse(is, resourceName));
+		} finally {
+			this.currentResourceName = null;
+		}
+    }
+
+	private void parse(InputStream is, String resourceName) {
+		try {
+			SAXParser parser = SAXUtil.newSAXParser();
+			parser.parse(is, this);
+		} catch (ParserConfigurationException ex) {
+			throw new AssertionError(ex);
+		} catch (SAXException ex) {
 			report.error("Data loaded from '" + resourceName + "' is invalid.", ex);
 		} catch (IOException ex) {
 			report.error("Error while reading data from '" + resourceName + "'.", ex);
-		} finally {
-        	// return to normal user context
-        	ThreadContext.popSuperUser();
-        	
-        	this.currentResourceName = null;
-        }
-    }
+		}
+	}
 
     /** Actual importing function 
      *
@@ -89,26 +88,22 @@ public class MORepositoryImporter extends DispatchingHandler implements KBXMLCon
      * @return true in case import was successful
      */
     public boolean doImport(File aFile) {
-        boolean result = false;
-        
-        // run in super user context
-        ThreadContext.pushSuperUser();
-
-        try {
-			SAXParser parser = SAXUtil.newSAXParser();
-            parser.parse(aFile, this);
-            result = true;
-        } catch (SAXException ex) {
-            throw toRuntimeException(ex);
-        } catch (ParserConfigurationException ex) {
-            throw new AssertionError(ex);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        } finally {         
-            ThreadContext.popSuperUser();
-        }
-        return result;
+		ThreadContext.withoutSecurityChecks(() -> parse(aFile));
+		return true;
     }
+
+	private void parse(File aFile) {
+		try {
+			SAXParser parser = SAXUtil.newSAXParser();
+			parser.parse(aFile, this);
+		} catch (SAXException ex) {
+			throw toRuntimeException(ex);
+		} catch (ParserConfigurationException ex) {
+			throw new AssertionError(ex);
+		} catch (IOException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
 
 	private RuntimeException toRuntimeException(SAXException ex) {
 		Exception cause = ex.getException();

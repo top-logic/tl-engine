@@ -96,9 +96,18 @@ public class TestPrivilegedScript extends AbstractSearchExpressionTest {
 		}
 	}
 
+	/**
+	 * The tests check the access rights of the calling user. A test starts without a user, since an
+	 * administrator would bypass the checks; it switches to the root user to compute a value without
+	 * restrictions.
+	 */
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
-		becomeUser(PersonManager.getManager().getRoot());
 		_kb.removeUpdateListener(_creationListener);
 		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			for (KnowledgeItem item : _toDelete.values()) {

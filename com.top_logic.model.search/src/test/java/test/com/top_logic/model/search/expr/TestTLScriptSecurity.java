@@ -23,7 +23,6 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -40,6 +39,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
+import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
@@ -51,7 +51,6 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -268,6 +267,11 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		super.tearDown();
 	}
 
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
 	private TLObject newObject(String className) {
 		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className);
 		return DynamicModelService.getFactoryFor("TestTLScriptSecurity").createObject(type);
@@ -353,17 +357,14 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		// Sanity: restricted in person context.
 		assertEquals(set(), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
 
-		TLContext context = TLContext.getContext();
-		Person formerPerson = context.getCurrentPersonWrapper();
-		// An explicit context id can only be set without a current person.
-		context.setCurrentPerson(null);
-		context.setContextId(ThreadContextManager.systemContextId(TestTLScriptSecurity.class));
-		try {
-			assertTrue(ThreadContext.isSystemContext());
+		ThreadContext.<Void, ParseException, RuntimeException> inSystemContext(TestTLScriptSecurity.class, () -> {
+			assertTrue(ThreadContext.isSecurityBypassed());
 			assertEquals(set(_p1), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
-		} finally {
-			context.setCurrentPerson(formerPerson);
-		}
+			return null;
+		});
+
+		// The checks apply again after the system context.
+		assertEquals(set(), asSet(eval(PROJECTS_WITH_WELL_PAID_RESPONSIBLE)));
 	}
 
 	/**
@@ -590,7 +591,7 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	 * <p>
 	 * This is a regression test for a {@code PersonRoleCache} staleness bug: the per-interaction role
 	 * computation cache in {@code StorageAccessManager} was reused after the current person was
-	 * switched (via {@code setCurrentPerson}), so it reported the previous user's roles for the new
+	 * switched (via {@link #becomeUser(Person)}), so it reported the previous user's roles for the new
 	 * user, wrongly allowing the second write. The cache is now rebuilt when the current person
 	 * changes (see {@code StorageAccessManager.getRoleComputation}).
 	 * </p>
@@ -1085,17 +1086,11 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			accessRights.isReadAllowed(_user, _p1, name));
 
 		// A bypassing super-user (system context) is unaffected by the attribute deny.
-		TLContext context = TLContext.getContext();
-		Person formerPerson = context.getCurrentPersonWrapper();
-		context.setCurrentPerson(null);
-		context.setContextId(ThreadContextManager.systemContextId(TestTLScriptSecurity.class));
-		try {
-			assertTrue(ThreadContext.isSystemContext());
+		ThreadContext.inSystemContext(TestTLScriptSecurity.class, () -> {
+			assertTrue(ThreadContext.isSecurityBypassed());
 			assertTrue("A system context bypasses the attribute deny.",
 				accessRights.isAllowed(null, _p1, secret, SimpleBoundCommandGroup.WRITE));
-		} finally {
-			context.setCurrentPerson(formerPerson);
-		}
+		});
 
 		// A bypassing super-user is unaffected by the attribute deny.
 		becomeUser(_root);

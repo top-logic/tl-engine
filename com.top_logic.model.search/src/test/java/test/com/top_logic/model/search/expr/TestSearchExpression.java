@@ -107,12 +107,6 @@ import com.top_logic.util.model.ModelService;
 @SuppressWarnings("javadoc")
 public class TestSearchExpression extends AbstractSearchExpressionTest {
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		becomeRoot();
-	}
-
 	public void testKBSearchWithTransientObjects() {
 		with("TestSearchExpression-testKBSearchTransient.scenario.xml",
 			scenario -> {

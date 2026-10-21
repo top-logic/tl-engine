@@ -14,7 +14,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ComputationEx;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
@@ -122,7 +122,7 @@ public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity
 	}
 
 	private LayoutComponent.Config loadLayout(String layoutName) throws ConfigurationException {
-		return ThreadContextManager.inSystemInteraction(LayoutBasedSecurity.class,
+		return ThreadContext.inSystemContext(LayoutBasedSecurity.class,
 			new ComputationEx<LayoutComponent.Config, ConfigurationException>() {
 
 				@Override

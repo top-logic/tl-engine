@@ -75,12 +75,10 @@ private static final String RESTART_LINK = "Reload page";
 			new Thread(){
 				@Override
 				public void run(){
-					ThreadContextManager.inSystemInteraction(SecurityStorage.class, new InContext() {
+					ThreadContext.inSystemContext(SecurityStorage.class, new InContext() {
 							@Override
 							public void inContext() {
-								ThreadContext.pushSuperUser();
 								StorageAccessManager.getInstance().reload();
-								ThreadContext.popSuperUser();
 							}
 					});
 				}

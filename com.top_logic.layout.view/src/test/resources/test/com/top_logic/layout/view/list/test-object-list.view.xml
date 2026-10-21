@@ -4,6 +4,7 @@
 	<channels>
 		<channel name="catalogue"/>
 		<channel name="season"/>
+		<channel name="product"/>
 	</channels>
 
 	<object-list
@@ -12,6 +13,8 @@
 		layout="grid"
 		max-columns="3"
 		min-column-width="18rem"
+		selection="product"
+		selection-mode="multi"
 	>
 		<item>
 			<text input="element"/>

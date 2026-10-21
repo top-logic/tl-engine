@@ -86,47 +86,6 @@
 				/>
 			</attributes>
 		</class>
-		<class name="Contributor">
-			<generalizations>
-				<generalization type="tl.model:TLObject"/>
-			</generalizations>
-			<annotations>
-				<form-definition>
-					<form>
-						<field
-							attribute="name"
-							fullQualifiedName="tl.demo.projectManagement:Contributor#name"
-							type="tl.core:String"
-						/>
-						<field
-							attribute="email"
-							fullQualifiedName="tl.demo.projectManagement:Contributor#email"
-							type="tl.core:String"
-						/>
-						<field
-							attribute="assignedTickets"
-							fullQualifiedName="tl.demo.projectManagement:Contributor#assignedTickets"
-							type="tl.demo.projectManagement:Ticket"
-						/>
-					</form>
-				</form-definition>
-			</annotations>
-			<attributes>
-				<property name="name"
-					mandatory="true"
-					type="tl.core:String"
-				/>
-				<property name="email"
-					type="tl.core:String"
-				/>
-				<reference name="assignedTickets"
-					inverse-reference="assignee"
-					kind="forwards"
-					multiple="true"
-					type="Ticket"
-				/>
-			</attributes>
-		</class>
 		<class name="ProjectScope">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -144,6 +103,9 @@
 				/>
 				<property name="budget"
 					type="tl.core:Double"
+				/>
+				<property name="reportTemplate"
+					type="tl.core:Binary"
 				/>
 				<reference name="members"
 					multiple="true"
@@ -190,6 +152,11 @@
 				<form-definition>
 					<form>
 						<field
+							attribute="number"
+							fullQualifiedName="tl.demo.projectManagement:Ticket#number"
+							type="tl.core:Integer"
+						/>
+						<field
 							attribute="title"
 							fullQualifiedName="tl.demo.projectManagement:Ticket#title"
 							type="tl.core:String"
@@ -197,7 +164,7 @@
 						<field
 							attribute="description"
 							fullQualifiedName="tl.demo.projectManagement:Ticket#description"
-							type="tl.core:String"
+							type="tl.model.wysiwyg:Html"
 						/>
 						<field
 							attribute="milestone"
@@ -207,18 +174,38 @@
 						<field
 							attribute="assignee"
 							fullQualifiedName="tl.demo.projectManagement:Ticket#assignee"
-							type="tl.demo.projectManagement:Contributor"
+							type="Contacts:PersonContact"
+						/>
+						<field
+							attribute="watchers"
+							fullQualifiedName="tl.demo.projectManagement:Ticket#watchers"
+							type="tl.accounts:Person"
 						/>
 					</form>
 				</form-definition>
 			</annotations>
 			<attributes>
+				<property name="number"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.element.structured.util.SequenceDefaultProvider"
+								sequence-name="tl.demo.projectManagement.Ticket"
+							>
+								<dynamic-sequence-name class="com.top_logic.element.structured.util.ContextAwareSequenceName"/>
+							</provider>
+						</default-value>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
 				<property name="title"
 					mandatory="true"
 					type="tl.core:String"
 				/>
 				<property name="description"
-					type="tl.core:String"
+					type="tl.model.wysiwyg:Html"
 				/>
 				<reference name="milestone"
 					inverse-reference="tickets"
@@ -232,14 +219,16 @@
 					</annotations>
 				</reference>
 				<reference name="assignee"
-					inverse-reference="assignedTickets"
-					kind="backwards"
-					type="Contributor"
+					type="Contacts:PersonContact"
 				>
 					<annotations>
 						<change-subtree/>
 					</annotations>
 				</reference>
+				<reference name="watchers"
+					multiple="true"
+					type="tl.accounts:Person"
+				/>
 			</attributes>
 		</class>
 	</module>

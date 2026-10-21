@@ -15,35 +15,25 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} that takes the enclosing form out of edit mode without discarding anything.
+ * {@link ViewAction} that switches the form back to view mode after its changes have been stored.
  *
  * <p>
- * It follows a {@link StoreFormStateAction} in a form's own save chain, which takes the place of
- * the default save and therefore has to end the edit session itself: after the changes are stored,
- * the form shows the stored values of its object and releases its lock, exactly as after the
- * default save. Its input is passed through as its output.
+ * Ends the edit session of the form and releases its lock, without storing or discarding
+ * anything. It is placed in a save action chain after the changes have been stored, e.g. after a
+ * {@link StoreFormStateAction} and the scripts running in the same {@link WithTransactionAction}.
  * </p>
  *
  * <p>
- * The form must not hold unsaved changes when the action runs: a change entered but not stored
- * would be lost. The action then fails with an error message, the form stays in edit mode with all
- * its changes, and the remaining actions of the chain are skipped. A form that is not in edit mode
- * is left as it is.
+ * A form that still holds unsaved changes is not switched: the action throws a
+ * {@link TopLogicException}, which aborts the action chain, and the form stays in edit mode with
+ * all its input. Outside edit mode and outside a form, the action has no effect. The input is
+ * passed on unchanged.
  * </p>
  *
- * <pre>
- * &lt;form input="item"&gt;
- *   &lt;save-action&gt;
- *     &lt;store-form-state/&gt;
- *     &lt;execute-script function="..."/&gt;
- *     &lt;leave-edit-mode/&gt;
- *   &lt;/save-action&gt;
- * &lt;/form&gt;
- * </pre>
- *
- * @implNote Delegates to {@link FormControl#executeLeaveEditMode()}.
+ * @implNote Delegates to {@link FormControl#leaveEditMode()}.
  */
 @InApp
 public class LeaveEditModeAction implements ViewAction {
@@ -51,8 +41,13 @@ public class LeaveEditModeAction implements ViewAction {
 	/**
 	 * Configuration for {@link LeaveEditModeAction}.
 	 */
-	@TagName("leave-edit-mode")
+	@TagName(Config.TAG_NAME)
 	public interface Config extends PolymorphicConfiguration<LeaveEditModeAction> {
+
+		/**
+		 * Tag name of the action in an action chain.
+		 */
+		String TAG_NAME = "leave-edit-mode";
 
 		@Override
 		@ClassDefault(LeaveEditModeAction.class)
@@ -74,9 +69,11 @@ public class LeaveEditModeAction implements ViewAction {
 		}
 
 		FormModel formModel = ((ViewContext) context).getFormModel();
-		if (formModel instanceof FormControl formControl) {
-			formControl.executeLeaveEditMode();
+		if (!(formModel instanceof FormControl)) {
+			return input;
 		}
+
+		((FormControl) formModel).leaveEditMode();
 		return input;
 	}
 }

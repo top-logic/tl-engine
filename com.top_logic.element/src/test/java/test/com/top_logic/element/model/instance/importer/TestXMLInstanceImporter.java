@@ -31,7 +31,9 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.meta.TypeSpec;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
@@ -179,6 +181,73 @@ public class TestXMLInstanceImporter extends TLModelTest {
 		assertTrue("Expected an error for a malformed internationalized value.", testLog.hasErrors());
 
 		assertNull(get(importer.getObject("c2"), "label"));
+	}
+
+	/**
+	 * Tests that an object imported as value of a composite reference is created with its owner as
+	 * creation context, so that a sequence default per context numbers the children of each
+	 * container separately.
+	 */
+	public void testCompositeChildrenCreatedInOwnerContext() throws ConfigurationException {
+		BufferingProtocol testLog = new BufferingProtocol();
+		XMLInstanceImporter importer = importer(testLog);
+
+		ObjectsConf config = XMLInstanceImporter.loadConfig(CharacterContents.newContent(
+			"<objects>"
+				+ container("c1", "c1a", "c1b")
+				+ container("c2", "c2a", "c2b")
+				+ child("t1")
+				+ child("t2")
+				+ "</objects>",
+			"composite-context.xml"));
+
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction()) {
+			importer.importInstances(config);
+			assertFalse(testLog.getErrors().toString(), testLog.hasErrors());
+
+			TLObject c1 = importer.getObject("c1");
+			TLObject c2 = importer.getObject("c2");
+			assertEquals(list(importer.getObject("c1a"), importer.getObject("c1b")), get(c1, "children"));
+			assertEquals(list(importer.getObject("c2a"), importer.getObject("c2b")), get(c2, "children"));
+
+			assertEquals(1L, number(importer, "c1a"));
+			assertEquals(2L, number(importer, "c1b"));
+			assertEquals(1L, number(importer, "c2a"));
+			assertEquals(2L, number(importer, "c2b"));
+
+			// Top-level objects have no creation context and share the global sequence.
+			long t1 = number(importer, "t1");
+			long t2 = number(importer, "t2");
+			assertEquals(t1 + 1, t2);
+
+			tx.commit();
+		}
+	}
+
+	private static String container(String id, String... childIds) {
+		StringBuilder result = new StringBuilder();
+		result.append("<object id=\"" + id + "\" type=\"TestXMLInstanceImporter:Container\">");
+		result.append("<attribute name=\"name\" value=\"" + id + "\"/>");
+		result.append("<attribute name=\"children\">");
+		for (String childId : childIds) {
+			result.append(child(childId));
+		}
+		result.append("</attribute>");
+		result.append("</object>");
+		return result.toString();
+	}
+
+	private static String child(String id) {
+		return "<object id=\"" + id + "\" type=\"TestXMLInstanceImporter:Child\">"
+			+ "<attribute name=\"name\" value=\"" + id + "\"/>"
+			+ "</object>";
+	}
+
+	private long number(XMLInstanceImporter importer, String id) {
+		Object value = get(importer.getObject(id), "number");
+		assertNotNull("No number assigned to '" + id + "'.", value);
+		return ((Number) value).longValue();
 	}
 
 	private ObjectsConf i18nImport(String id, String label) throws ConfigurationException {

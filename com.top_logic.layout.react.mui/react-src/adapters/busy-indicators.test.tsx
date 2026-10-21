@@ -181,7 +181,7 @@ describe('the busy indicator of the icon popup as MUI spinner', () => {
     expect(spinner.classList).toContain('MuiCircularProgress-root');
     expect(spinner.style.width).toBe('24px');
     expect(spinner.closest('.tlIconSelect__loading')).not.toBeNull();
-    expect(document.querySelector('.tlSpinner')).toBeNull();
+    expect(document.querySelector('.tl-spinner')).toBeNull();
   });
 
   it('shows no spinner once the icons are loaded', async () => {

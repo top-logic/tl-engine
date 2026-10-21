@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list>, <kanban-board>, <visible-if> or <accordion>.
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list>, <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>).
 order: 20
 ---
 
@@ -71,7 +71,7 @@ further lines where the screen is too narrow for them:
 space left over is split between its two sides, so the content sits in the middle of the page rather
 than against its left edge. Below the bound nothing changes, so the same element still fills a phone
 screen. The bound travels as an inline `max-width` — it is a value, not a kind of layout — while the
-centering is the shared class `tlBounded` (`width: 100%; margin-inline: auto`), which a stack and a
+centering is the shared class `tl-bounded` (`width: 100%; margin-inline: auto`), which a stack and a
 grid carry alike. The explicit width is what keeps the auto margins from shrinking the container to
 its content.
 
@@ -139,7 +139,8 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 - **Inputs.** `inputs` names the channels the functions read, either as the comma-separated attribute `inputs="catalogue, term"` or as nested `<inputs><input channel="catalogue"/></inputs>` (`Inputs`, the same notation every `inputs` property of the view layer takes). Their values are the leading positional arguments, in declaration order: `items` is `...inputs -> elements`, `link` and `remove` are `...inputs -> element -> ...`, the element coming last. A list with no inputs is a repeater over a plain query — `items="all(\`test.flowchart:FlowNode\`)"` — and follows the model through its `observed-types`.
 - **With and without a container.** A read-only list configures `items` alone. A list that composes objects adds `element-type` plus the `<new-element>` content bound to `new-element-channel`, whose command chain persists the draft with `<link-element>`, and `<remove-element>` inside the `<item>` content detaches one. The composer appears only while *every* input holds a value, because an element is composed to be attached somewhere; `link` is what attaches it, so any containment style works — a composite reference, a back-reference, an association.
 - **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns`, `gap` and `max-width` — the same options `<grid>` takes (see [Layout: stack and grid](#layout-stack-and-grid)). `gap` and `max-width` apply to either arrangement, the column options to a grid.
-- **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tlItem tlObjectList__item" style="--tl-item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tlGrid`, a list into a `.tlStack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
+- **Selection.** `selection="ch"` makes the elements selectable like the entries of a list box: a click on an element writes its object to the channel, and the element of the object the channel holds is marked as selected (`aria-selected`; the design system draws a ring over the element, `layout.css`; `ItemSelectionBinding`, a `SelectionChannelBinding`; the arrangement container receives the elements together with their objects through `ReactLayoutControl.setItems`). `selection-mode="multi"` selects several elements with `Ctrl` and `Shift`; the channel then holds the set while several are selected. An element that leaves the list gives up the selection. Without `selection`, the list is display-only. A selection is recorded as `selectItemByKey` naming the object.
+- **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tl-item tlObjectList__item" style="--item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tl-grid`, a list into a `.tl-stack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
 
 ```xml
 <object-list
@@ -168,14 +169,14 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 	to { opacity: 1; transform: none; }
 }
 
-/* The items of a grid arrangement; a list arranges its items in a `.tlStack` instead. */
-.tlGrid > .tlObjectList__item {
+/* The items of a grid arrangement; a list arranges its items in a `.tl-stack` instead. */
+.tl-grid > .tlObjectList__item {
 	animation: tlDemoRepeaterFadeUp 300ms ease-out both;
-	animation-delay: calc(var(--tl-item-index) * 60ms);
+	animation-delay: calc(var(--item-index) * 60ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.tlGrid > .tlObjectList__item {
+	.tl-grid > .tlObjectList__item {
 		animation: none;
 	}
 }
@@ -187,7 +188,7 @@ The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.
 
 `<kanban-board>` (`KanbanBoardElement`, control `ReactKanbanBoardControl`, client `TLKanbanBoard`) distributes computed objects into columns of cards. Over its `inputs`, `columns` computes the column values (the classifiers of an enumeration - `all(\`my:Status\`)` - or arbitrary objects), `items` the objects, whose order is their order within a column, and `column` maps an object to its column value; an object whose column value is none of the columns is not shown. The header shows `column-label` (`column -> label`, the label of the column value by default) and the number of cards.
 
-The `<card>` content is instantiated per object with the object on `element-channel` (`element` by default, as for `<object-list>`), by the same keyed `TemplateInstances` the items of `<object-list>` use: a card of an object that stays keeps its controls, also when the object moves to another column. `selection` names the channel a clicked card writes its object to; the card of the object the channel holds is highlighted (`KanbanSelectionBinding`, a `SelectionChannelBinding`). The board follows its displayed objects and the `observed-types`, so changing the attribute the column is computed from moves the card. A card selection is recorded as `selectCardByKey` naming the object, since the client card keys are allocated per session.
+The `<card>` content is instantiated per object with the object on `element-channel` (`element` by default, as for `<object-list>`), by the same keyed `TemplateInstances` the items of `<object-list>` use: a card of an object that stays keeps its controls, also when the object moves to another column. `selection` names the channel a clicked card writes its object to; the card of the object the channel holds is highlighted (`ItemSelectionBinding`, a `SelectionChannelBinding`). The board follows its displayed objects and the `observed-types`, so changing the attribute the column is computed from moves the card. A card selection is recorded as `selectCardByKey` naming the object, since the client card keys are allocated per session.
 
 **Drag and drop.** `<drag kind=…/>` (`KanbanDragConfig`: the optional `kind` of the drag; board-wide `executability`; per-card `card-executability`) makes the cards drag sources exactly like table rows - same payload, so a card can be dropped on a `<table>` accepting its kind and table rows on the board. Each `<drop accept=… target-channel=… refuse-if=…>` (`accept` lists the kinds taken, none for every drag; see [tables](doc:view-layer/tables#drag-and-drop-of-table-rows); the shared `DropConfig`, compiled with `DropSignature.ONTO`) makes the columns drop targets: the **column value** is the target - written to `target-channel` before the action chain runs, passed to `target-executability` and to `refuse-if` after the dragged objects (`objects -> column -> reason`). While a drag hovers a column, the client probes the server (`dropProbe`), and a refusal is shown at the column with its reason next to the pointer. A recorded drop becomes `dropObjects`, naming the objects and the place on the board by business identity: an insertion (`ordered`) into the column value before the card it was dropped before, none at the end. On the wire, a drop beside a card is reported as its `upper` or `lower` zone, a drop on the column beside the cards as `none`.
 
@@ -210,7 +211,7 @@ The demo is `com.top_logic.demo.react`'s `WEB-INF/views/board.view.xml` (nav ite
 - Content that is hidden is disposed rather than kept alive, so it leaves no contributions - a form's edit / save / cancel commands, a slot contribution - behind in the enclosing scope. While the condition keeps holding, the content stays as it is and follows its own channels.
 - Not to be confused with the `<visible-if>` inside a command's `<executability>` (`com.top_logic.layout.view.command.VisibleIf`), which carries the same tag name and decides whether a *command* is offered for its input.
 
-**Conditional content takes the size of what it shows.** A `<switch>` and a `<visible-if>` render through the deck pane (`TLDeckPane`, `.tlDeckPane`), a column flex box that states no size of its own: a deck showing content of its own size is exactly as wide and as high as that content, so conditional content stands inline - in an app bar, beside a breadcrumb, in a row of buttons - instead of claiming the box around it. A deck whose content fills takes part in the fill contract as a container (see below) and is then the bounded box the child's height resolves against.
+**Conditional content takes the size of what it shows.** A `<switch>` and a `<visible-if>` render through the deck pane (`TLDeckPane`, `.tl-deck`), a column flex box that states no size of its own: a deck showing content of its own size is exactly as wide and as high as that content, so conditional content stands inline - in an app bar, beside a breadcrumb, in a row of buttons - instead of claiming the box around it. A deck whose content fills takes part in the fill contract as a container (see below) and is then the bounded box the child's height resolves against.
 
 The app bar of `com.top_logic.demo.react` shows both this and the two ways an unlabelled input says what it is for. `WEB-INF/views/tickets.view.xml` raises its jump-to box into the shell's app bar with `<slot-content to="appbar-content">` - the contribution belongs to the view that owns the `ticket` channel, and the shell knows nothing of it - and puts the name of the selected ticket beside it, shown only while a ticket is selected:
 
@@ -272,3 +273,34 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 - **Lazy content.** The content of a section is created when the section is first expanded and kept while it is collapsed — what the user entered there survives collapsing, and collapsing asks nothing about unsaved changes. A section's content gets the personalization segment `section` and the slot path segment of the section `id`; it shares the channels of the enclosing view.
 - **Personalization key.** The expansion is stored as a JSON map from section `id` to `true`/`false`, under the element's `personalization-key` if one is written, else under the view context's personalization key plus `.accordion`. A remembered entry overrides the written `expanded`. A change writes only the entry of the changed section back, so two accordions sharing one key keep each other's entries as long as their section ids differ — two personalized accordions in the same view context therefore need **distinct section ids or a `personalization-key` each**, otherwise they share their expansion.
 - **Reveal.** The accordion is a container of the reveal protocol, keyed by section `id`: revealing something inside a collapsed section expands it (and, in an exclusive accordion, collapses the others).
+
+## Content at a button: `<popover>`
+
+`<popover>` (`PopoverElement`, control `ReactPopoverControl`) is a button that opens a surface of arbitrary content beside it. The surface is non-modal: it has no backdrop, the page around it stays usable, and Escape or a press outside of button and surface closes it. It suits content that belongs to one place of the page but would crowd it when shown permanently - the filter of a list, the details of a value, a small settings form. A choice between commands is a `<menu>` instead, and a task the user has to finish or cancel before going on is a dialog (`<open-dialog>`).
+
+```xml
+<popover
+	image="css:fa-solid fa-filter"
+	label="Filter"
+	placement="bottom-end"
+>
+	<content>
+		<form input="filter">
+			<field attribute="status"/>
+		</form>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				label="Done"
+			>
+				<close-popover/>
+			</action>
+		</button>
+	</content>
+</popover>
+```
+
+- **Attributes.** `label` is the text of the button and, in every case, the name assistive technology announces button and surface by. `image` is the icon of the button, shown alone when given. `placement` (default `bottom-start`) says where the surface stands: `top`, `bottom`, `left` or `right` of the button, centered or aligned with its `-start` or `-end` edge (`top-end`, `left-start`, …); a surface that does not fit on its side flips to the opposite one. `open-on` (default `click`) is the gesture opening it: `click` toggles the surface by clicking the button, `hover` opens it while the pointer rests on the button or the surface (a click opens it as well). `css-class` as for every element.
+- **Button content.** `<trigger>` holds elements the button shows instead of label and icon - a text, an icon, a badge, several of them side by side. They are presentational only: the button is what the user operates, so a `<button>`, an input or a link inside `<trigger>` would be a control inside a control. The `label` remains the accessible name.
+- **Lazy content.** `<content>` holds any elements. The wrapper is required, since the `image` property of the popover and the `<image>` element share a tag name. The content is created when the popover opens for the first time and kept while it is closed, so what the user entered there survives closing. It gets the personalization segment `popover` and is part of the view the popover is written in: it shares that view's channels - a form in the content edits the object of a view channel, a `<write-channel>` in it is seen by the rest of the view. A popover needing channels of its own holds a `<view-ref>`.
+- **Closing from the content.** The action `<close-popover/>` (`ClosePopoverAction`) in a command of the content closes the popover, of nested popovers the innermost one, and passes its input on, so "apply what was entered, then close" is one command. Outside a popover it does nothing, like `<close-dialog/>` outside a dialog.
+- **Reveal.** The popover is a container of the reveal protocol with its content under the key `content`: displaying something that lives inside the content of a closed popover (see [Navigation](doc:view-layer/navigation)) opens it.

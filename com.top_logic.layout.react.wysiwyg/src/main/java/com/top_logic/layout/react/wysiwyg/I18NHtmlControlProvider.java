@@ -9,6 +9,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.I18NEditorDialog;
+import com.top_logic.layout.react.control.form.I18NLocalizedFieldModel;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
@@ -60,7 +61,7 @@ public class I18NHtmlControlProvider implements ReactFieldControlProvider {
 	@Override
 	public String previewText(FieldSpec field, Object value) {
 		if (value instanceof I18NStructuredText text) {
-			return WysiwygControlProvider.htmlPreview(text.localize(I18NLocalizedHtmlFieldModel.editLocale()));
+			return WysiwygControlProvider.htmlPreview(text.localize(I18NLocalizedFieldModel.editLocale()));
 		}
 		return ReactFieldControlProvider.super.previewText(field, value);
 	}

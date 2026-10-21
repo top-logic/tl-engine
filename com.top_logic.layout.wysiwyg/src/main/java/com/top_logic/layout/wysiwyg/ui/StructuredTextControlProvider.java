@@ -114,6 +114,26 @@ public class StructuredTextControlProvider implements ControlProvider {
 		_templates = templates;
 	}
 
+	/**
+	 * Name of the feature set the editor offers, <code>null</code> if it is chosen by
+	 * {@link #getFeatureNames() feature names} or is the standard one.
+	 * 
+	 * @see StructuredTextConfigService#getEditorConfig(String, List, String)
+	 */
+	public String getFeatureSet() {
+		return _featureSet;
+	}
+
+	/**
+	 * Names of the features the editor offers, <code>null</code> if they are chosen by
+	 * {@link #getFeatureSet() feature set} or are the standard ones.
+	 * 
+	 * @see StructuredTextConfigService#getEditorConfig(List, List, String)
+	 */
+	public List<String> getFeatureNames() {
+		return _featureNames;
+	}
+
 	@Override
 	public Control createControl(Object model, String style) {
 		FormField field = (FormField) model;

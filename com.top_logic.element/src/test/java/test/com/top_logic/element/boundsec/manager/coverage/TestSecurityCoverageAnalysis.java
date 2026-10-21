@@ -59,6 +59,9 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type whose role source is a role parent rule pointing to {@link #COVERED}. */
 	private static final String CHILD_OF_COVERED = MODULE + ":ChildOfCovered";
 
+	/** Type with a role rule and only an attribute grant. */
+	private static final String PART_ONLY = MODULE + ":PartOnly";
+
 	/** Type without a role source and without a container. */
 	private static final String ORPHAN = MODULE + ":Orphan";
 
@@ -192,6 +195,11 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertTrue("The type has no role rule of its own.", coverage.roleRules().isEmpty());
 		assertEquals(1, coverage.roleParentRules().size());
 		assertNull("A type with a role parent rule decides for itself.", coverage.accessParent());
+	}
+
+	public void testPartGrantCoversType() {
+		TypeCoverage coverage = coverage(PART_ONLY);
+		assertEquals("An attribute grant implies Discover on the type.", Set.of(), findingKinds(coverage));
 	}
 
 	public void testTypeWithoutRoleSourceAndWithoutGrant() {

@@ -51,8 +51,8 @@ import com.top_logic.model.util.Pointer;
  * </ul>
  *
  * <p>
- * Options are offered to the current user, so objects the user may not read are removed from them,
- * exactly as from the result of every <i>TL-Script</i> an application executes, see
+ * Options are offered to the current user, so objects the user may not discover are removed from
+ * them, exactly as from the result of every <i>TL-Script</i> an application executes, see
  * {@link SearchExpression#filterSecurity(Object)}.
  * </p>
  *
@@ -143,7 +143,7 @@ public class AttributeOptions {
 	 * @param dependencies
 	 *        Receives the attributes read while evaluating an option expression, so the caller can
 	 *        recompute options when one of them changes.
-	 * @return The available options the current user may read.
+	 * @return The available options the current user may discover.
 	 */
 	public static List<?> optionsFor(TLObject self, TLStructuredTypePart part, OverlayLookup overlays,
 			Sink<Pointer> dependencies) {
@@ -178,7 +178,7 @@ public class AttributeOptions {
 	 * <p>
 	 * The counterpart of {@link #optionsFor(TLObject, TLStructuredTypePart, OverlayLookup, Sink)}
 	 * for a value that no attribute holds: the classifiers of an enumeration, the constants of an
-	 * enum datatype, and the instances of a class the current user may read. A primitive value - a
+	 * enum datatype, and the instances of a class the current user may discover. A primitive value - a
 	 * text, a number, a point in time - is entered, so it has no options at all.
 	 * </p>
 	 *
@@ -199,7 +199,7 @@ public class AttributeOptions {
 	}
 
 	/**
-	 * The given options without the objects the current user may not read.
+	 * The given options without the objects the current user may not discover.
 	 *
 	 * @see SearchExpression#filterSecurity(Object)
 	 */

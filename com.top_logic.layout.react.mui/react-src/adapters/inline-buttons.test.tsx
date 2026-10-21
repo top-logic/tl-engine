@@ -41,7 +41,8 @@ const LABEL_ADD = 'js.valueList.add';
 const LABEL_REMOVE = 'js.valueList.remove';
 const LABEL_GROUP_BY = 'js.table.groupBy';
 const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
-const LABEL_UNGROUP = 'js.table.ungroup';
+const LABEL_COLUMN_HIDE = 'js.table.columnHide';
+const LABEL_COLUMN_SHOW_LOCK = 'js.table.columnShowLock';
 
 /** The commands the controls send for their buttons. */
 const CMD_TOGGLE_MINIMIZE = 'toggleMinimize';
@@ -79,9 +80,8 @@ describe('the header buttons of a panel as MUI icon buttons', () => {
     for (const label of [LABEL_MINIMIZE, LABEL_MAXIMIZE, LABEL_POP_OUT]) {
       const button = screen.getByRole('button', { name: label });
       expectMuiIconButton(button);
-      // The class marks the button; the element around the buttons places them.
-      expect(button.classList).toContain('tlPanel__actionButton');
-      expect(button.parentElement!.classList).toContain('tlPanel__actions');
+      // The element around the buttons places them; the buttons carry no class of their own.
+      expect(button.parentElement!.classList).toContain('tl-titlebar__buttons');
     }
   });
 
@@ -187,37 +187,40 @@ describe('the buttons of a value list as MUI icon buttons', () => {
   });
 });
 
-describe('the group-by toggles of the column selection as MUI toggle buttons', () => {
-  /** The command the column selection sends for its group-by toggle. */
-  const CMD_GROUP_BY = 'groupBy';
+describe('the lock and the eye of the column selection as MUI icon buttons', () => {
+  /** The commands the column selection sends for lock and eye. */
+  const CMD_COLUMN_LOCK = 'columnLock';
+  const CMD_COLUMN_VISIBLE = 'columnVisible';
 
-  function entry(name: string, grouped: boolean) {
-    return { name, label: 'Spalte ' + name, visible: true, grouped };
+  function entry(name: string, visible: boolean, locked: boolean) {
+    return { name, label: 'Spalte ' + name, visible, locked };
   }
 
-  it('shows the icon alone, pressed for the grouped column, and groups by the chosen one', async () => {
-    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', false)] });
+  it('draws lock and eye as icon buttons in the row, named by what a click does', async () => {
+    // Two shown columns, so that the eye of the first one is not the last eye and stays enabled.
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, false), entry('b', false, false), entry('c', true, false)] });
     await settle();
 
-    const ungroup = screen.getByRole('button', { name: LABEL_UNGROUP });
-    const groupBy = screen.getByRole('button', { name: LABEL_GROUP_BY });
-    for (const toggle of [ungroup, groupBy]) {
-      expect(toggle.classList).toContain('MuiToggleButton-root');
-      expect(toggle.parentElement!.classList).toContain('tl-reorder-list__item');
-      expect(toggle.textContent).toBe('');
-      expect(toggle.querySelector('i.fa-layer-group')).not.toBeNull();
+    const hide = screen.getAllByRole('button', { name: LABEL_COLUMN_HIDE })[0];
+    const showLock = screen.getByRole('button', { name: LABEL_COLUMN_SHOW_LOCK });
+    for (const button of [hide, showLock]) {
+      expectMuiIconButton(button);
+      expect(button.closest('.tl-reorder-list__item')).not.toBeNull();
+      expect(button.textContent).toBe('');
     }
-    expect(ungroup.getAttribute('aria-pressed')).toBe('true');
-    expect(groupBy.getAttribute('aria-pressed')).toBe('false');
 
-    await userEvent.click(groupBy);
+    await userEvent.click(hide);
     await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_VISIBLE, { column: 'a', visible: false });
 
-    expect(sent).toHaveBeenCalledWith(CMD_GROUP_BY, { column: 'b' });
+    await userEvent.click(showLock);
+    await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_LOCK, { column: 'b', locked: true });
   });
 
-  it('offers no grouping in a table whose rows cannot be grouped', async () => {
-    mountAdapter(TLColumnSelect, { entries: [entry('a', false)], groupable: false });
+  it('offers no grouping in the dialog: grouping rows stays in the header menu (#29825)', async () => {
+    mountAdapter(TLColumnSelect, { entries: [entry('a', true, false)] });
     await settle();
 
     expect(screen.queryByRole('button', { name: LABEL_GROUP_BY })).toBeNull();
@@ -228,21 +231,25 @@ describe('the button opening the drawer of the sidebar as MUI icon button', () =
   /** The command the button sends to the sidebar. */
   const CMD_TOGGLE = 'toggle';
 
-  it('is shown and hidden by the element around it, and toggles the drawer', async () => {
-    const sent = mountAdapter(TLDrawerToggle, {});
+  it('is a button on a compact screen that reports whether the drawer is open, and toggles the drawer', async () => {
+    const sent = mountAdapter(TLDrawerToggle, { open: false, controls: 'nav' }, { displayClass: 'compact' });
     await settle();
 
     const button = screen.getByRole('button', { name: LABEL_OPEN_DRAWER });
     expectMuiIconButton(button);
-    // MUI sets the display of its button, which wins against the stylesheets of TopLogic: the
-    // breakpoints of the sidebar show and hide the element around it.
-    expect(button.classList).not.toContain('tlDrawerToggle');
-    expect(button.parentElement!.classList).toContain('tlDrawerToggle');
-    expect(button.parentElement!.id).toBe(CONTROL_ID);
+    expect(button.id).toBe(CONTROL_ID);
+    expect(button.getAttribute('aria-expanded')).toBe('false');
 
     await userEvent.click(button);
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_TOGGLE, {});
+  });
+
+  it('renders nothing on a wide screen', async () => {
+    mountAdapter(TLDrawerToggle, { open: false });
+    await settle();
+
+    expect(screen.queryByRole('button', { name: LABEL_OPEN_DRAWER })).toBeNull();
   });
 });

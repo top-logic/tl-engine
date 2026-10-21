@@ -1,6 +1,6 @@
 import { React, useTLState, useFillHost, FillProvider, rootClassName, useFieldLabelProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { renderItems } from './items';
+import { useItems } from './items';
 
 /**
  * A flexbox container that arranges children with consistent spacing.
@@ -17,6 +17,8 @@ import { renderItems } from './items';
  *   (default: null - the width the container offers)
  * - itemClass: string - CSS class of a wrapper around each child (default: null - no wrapper)
  * - children: ChildDescriptor[]
+ * - selectable, itemKeys, selected, multiSelect: the selection among the items (see items.tsx); a
+ *   selectable stack is a list box
  *
  * Takes part in the fill contract as a container: a stack hosting a filling child fills its own
  * container, so that the child's height resolves against a definite one.
@@ -37,21 +39,20 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const wrap = state.wrap === true;
   const maxWidth = (state.maxWidth as string) ?? null;
   const growFirst = state.growFirst === true;
-  const itemClass = (state.itemClass as string) ?? null;
-  const children = (state.children as unknown[]) ?? [];
+  const items = useItems(state);
 
   const [fillClass, fillHost] = useFillHost();
 
   const className = rootClassName(
     state,
-    'tlStack',
-    `tlStack--${direction}`,
-    `tlStack--gap-${gap}`,
-    `tlStack--align-${align}`,
-    `tlStack--justify-${justify}`,
-    wrap && 'tlStack--wrap',
-    growFirst && 'tlStack--grow-first',
-    maxWidth && 'tlBounded',
+    'tl-stack',
+    `tl-stack--${direction}`,
+    `tl-stack--gap-${gap}`,
+    `tl-stack--align-${align}`,
+    `tl-stack--justify-${justify}`,
+    wrap && 'tl-stack--wrap',
+    growFirst && 'tl-stack--grow-first',
+    maxWidth && 'tl-bounded',
     fillClass,
   );
 
@@ -60,8 +61,8 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} role={role} {...labelProps} className={className} style={style}>
-        {renderItems(children, itemClass)}
+      <div id={controlId} role={role} {...labelProps} {...items.containerProps} className={className} style={style}>
+        {items.content}
       </div>
     </FillProvider>
   );

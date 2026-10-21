@@ -13,6 +13,8 @@
  * while the password field still holds its latest keystrokes in the debounce window.</p>
  */
 
+import { expectEvents } from './sse-client';
+
 /** Command name for transmitting a form-field value to the server. */
 export const CMD_VALUE_CHANGED = 'valueChanged';
 
@@ -40,6 +42,12 @@ export const CMD_UPLOAD_REJECTED = 'uploadRejected';
  * was restarted). Must match {@code ReactServlet#ERROR_CODE_STALE_UI}.
  */
 const ERROR_CODE_STALE_UI = 'stale-ui';
+
+/**
+ * Header of a command's answer: the number of the last event the server wrote for the window.
+ * Must match {@code ReactServlet#LAST_EVENT_HEADER}.
+ */
+const LAST_EVENT_HEADER = 'X-TL-Last-Event';
 
 /** Session-storage key holding the time of the last stale-UI reload, guarding against loops. */
 const STALE_UI_RELOAD_TIME_KEY = 'tlReactStaleUiReloadTime';
@@ -89,6 +97,8 @@ async function post(url: string, payload: CommandPayload): Promise<CommandRespon
       body: JSON.stringify(payload),
     });
     const body = await resp.text();
+    const lastEvent = resp.headers.get(LAST_EVENT_HEADER);
+    if (lastEvent) expectEvents(Number(lastEvent));
     if (!resp.ok) {
       if (isStaleUiError(body)) {
         reloadOnStaleUi();

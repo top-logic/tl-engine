@@ -192,6 +192,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.sidebar.openDrawer")
 	public static ResKey JS_SIDEBAR_OPEN_DRAWER;
 
+	/**
+	 * @en Bottom navigation
+	 */
+	@CustomKey("js.bottomBar.ariaLabel")
+	public static ResKey JS_BOTTOM_BAR_ARIA_LABEL;
+
 	// -- Dialog client-side i18n keys --
 
 	/**
@@ -390,6 +396,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.panel.popOut")
 	public static ResKey JS_PANEL_POP_OUT;
 
+	// -- Split panel client-side i18n keys --
+
+	/**
+	 * @en Change the size of the areas
+	 */
+	@CustomKey("js.splitPanel.handle")
+	public static ResKey JS_SPLIT_PANEL_HANDLE;
+
 	// -- Breadcrumb client-side i18n keys --
 
 	/**
@@ -411,6 +425,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.toolbar.overflow")
 	public static ResKey JS_TOOLBAR_OVERFLOW;
+
+	// -- Dashboard client-side i18n keys --
+
+	/**
+	 * @en Hide tile
+	 */
+	@CustomKey("js.dashboard.hideTile")
+	public static ResKey JS_DASHBOARD_HIDE_TILE;
 
 	/**
 	 * @en Microphone requires a secure connection (HTTPS).
@@ -509,6 +531,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en No value
 	 */
 	public static ResKey VALUE_NONE;
+
+	/**
+	 * @en *****
+	 */
+	public static ResKey MASKED_VALUE;
 
 	/**
 	 * @en Languages…
@@ -686,6 +713,78 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.columnSearch")
 	public static ResKey JS_TABLE_COLUMN_SEARCH;
+
+	/**
+	 * @en Show {0}
+	 */
+	@CustomKey("js.table.columnShow")
+	public static ResKey JS_TABLE_COLUMN_SHOW;
+
+	/**
+	 * @en Hide {0}
+	 */
+	@CustomKey("js.table.columnHide")
+	public static ResKey JS_TABLE_COLUMN_HIDE;
+
+	/**
+	 * @en Freeze {0}
+	 */
+	@CustomKey("js.table.columnLock")
+	public static ResKey JS_TABLE_COLUMN_LOCK;
+
+	/**
+	 * @en Unfreeze {0}
+	 */
+	@CustomKey("js.table.columnUnlock")
+	public static ResKey JS_TABLE_COLUMN_UNLOCK;
+
+	/**
+	 * @en Show and freeze {0}
+	 */
+	@CustomKey("js.table.columnShowLock")
+	public static ResKey JS_TABLE_COLUMN_SHOW_LOCK;
+
+	/**
+	 * @en Hide and unfreeze {0}
+	 */
+	@CustomKey("js.table.columnHideUnlock")
+	public static ResKey JS_TABLE_COLUMN_HIDE_UNLOCK;
+
+	/**
+	 * @en Show
+	 */
+	@CustomKey("js.table.columnShowShort")
+	public static ResKey JS_TABLE_COLUMN_SHOW_SHORT;
+
+	/**
+	 * @en Hide
+	 */
+	@CustomKey("js.table.columnHideShort")
+	public static ResKey JS_TABLE_COLUMN_HIDE_SHORT;
+
+	/**
+	 * @en Freeze
+	 */
+	@CustomKey("js.table.columnLockShort")
+	public static ResKey JS_TABLE_COLUMN_LOCK_SHORT;
+
+	/**
+	 * @en Unfreeze
+	 */
+	@CustomKey("js.table.columnUnlockShort")
+	public static ResKey JS_TABLE_COLUMN_UNLOCK_SHORT;
+
+	/**
+	 * @en Frozen
+	 */
+	@CustomKey("js.table.columnsLocked")
+	public static ResKey JS_TABLE_COLUMNS_LOCKED;
+
+	/**
+	 * @en At least one column stays visible
+	 */
+	@CustomKey("js.table.columnLastVisible")
+	public static ResKey JS_TABLE_COLUMN_LAST_VISIBLE;
 
 	/**
 	 * @en Group by this column
@@ -1007,6 +1106,14 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.snackbar.dismiss")
 	public static ResKey JS_SNACKBAR_DISMISS;
 
+	// -- Wizard client-side i18n keys --
+
+	/**
+	 * @en Steps
+	 */
+	@CustomKey("js.wizard.steps")
+	public static ResKey JS_WIZARD_STEPS;
+
 	// -- Window client-side i18n keys --
 
 	/**
@@ -1042,6 +1149,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Cannot select card: the business key no longer resolves to a card on this board: {0}
 	 */
 	public static ResKey1 ERROR_CARD_KEY_UNRESOLVED__KEY;
+
+	/**
+	 * @en Cannot select item: the business key no longer resolves to an item of this list: {0}
+	 */
+	public static ResKey1 ERROR_ITEM_KEY_UNRESOLVED__KEY;
 
 	/**
 	 * @en Cannot drop here: this table does not accept the dragged objects.

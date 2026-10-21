@@ -119,12 +119,12 @@ order: 10
 Containers are flush: a `<panel>`, a `<tab>`, a `<pane>`, a dialog window and the simple layouts `<stack>` / `<grid>` lay their content out up to their border and add no padding. The content owns its breathing room:
 
 - **Content that fills** - a `<table>`, a `<flow-diagram>`, a `<split-panel>`, a `<tab-bar>` of its own panels, an `<adaptive-detail>`, an `<html display="document">` - stays edge to edge. Nothing is set.
-- **Content that flows** - texts, stacks, grids, alerts, buttons, cards, a form that does not span its container - keeps the page inset (`--page-inset`) as distance to the border. Where it stands decides how:
+- **Content that flows** - texts, stacks, grids, alerts, buttons, cards, a form that does not span its container - keeps the page inset as distance to the border (`tl-inset`; how far is decided by the surface it stands on: 1.5rem on a page, 1rem in a panel, compact in a card). Where it stands decides how:
   - directly in a `<panel>`: `with-inset="true"` on the panel (first choice). It insets the panel body, not the title and the toolbar (`PanelElement.Config` extends `InsetOptions`).
   - a `<form>` or `<fields>` that is the content of a dialog, a tab or a pane, or the sole content of a panel: `with-inset="true"` on the form / fields (`FormLayoutOptions` extends `InsetOptions`).
   - any other content not directly in a panel (a tab, a pane, a wizard step, a `<visible-if>` that must not leave an empty padded box behind): wrap it in `<inset>` (`InsetElement`).
 
-All three render the same `ReactInsetControl` (`.tlInset`). Content is inset **once**: a panel with `with-inset` holds no form / fields with `with-inset` and no `<inset>`. A nested `<panel>` is a container of its own and decides for its own body. A card (`appearance="card"`, `<card>`) reduces `--page-inset`, so an inset inside it is compact.
+All three render the same `ReactInsetControl` (`.tl-inset`). Content is inset **once**: a panel with `with-inset` holds no form / fields with `with-inset` and no `<inset>`. A nested `<panel>` is a container of its own and decides for its own body. In a card (`appearance="card"`, `<card>`) an inset is compact; the card tells it (React context `useSurface`).
 
 ```xml
 <panel with-inset="true">
@@ -198,7 +198,7 @@ element of the control displaying that element, beside the classes the control's
 ```
 
 ```html
-<div class="tlStack tlStack--column tlStack--gap-normal tlDemoHero">
+<div class="tl-stack tl-stack--column tl-stack--gap-default tlDemoHero">
   <span class="tl-text tl-type-body tlDemoHeroTitle">Welcome</span>
 </div>
 ```
@@ -226,7 +226,7 @@ element, e.g. Material UI (layer `mui`), whatever the specificity and the positi
 rule `.tlDemoGlass { background: … }` therefore beats the background of the MUI `Card` the element
 is rendered with. See [Cascade layers](doc:view-layer/theme-tokens#cascade-layers).
 
-A modifier class of a kind — `tl-text--truncate`, `tlCard--outlined` — is not the way to reach one
+A modifier class of a kind — `tl-text--truncate`, `tl-card__body--pad-compact` — is not the way to reach one
 element. Those classes are what a control writes for the display options of its own kind, so writing
 one in `css-class` styles that element by a rule the engine owns and may change; and it reaches the
 one element only by accident, since the engine writes the same class on every element that carries

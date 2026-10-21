@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.layout.configedit.ConfigControlService">
+			<instance>
+				<annotation-controls>
+					<!-- Configured before AsCheckbox: decides for a property carrying both. -->
+					<annotation-control annotation="test.com.top_logic.layout.configedit.TestConfigControlService$Caption">
+						<impl class="test.com.top_logic.layout.configedit.TestConfigControlService$CaptionProvider"/>
+					</annotation-control>
+					<annotation-control annotation="test.com.top_logic.layout.configedit.TestConfigControlService$AsCheckbox">
+						<impl class="test.com.top_logic.layout.configedit.TestConfigControlService$AsCheckboxProvider"/>
+					</annotation-control>
+					<annotation-control annotation="test.com.top_logic.layout.configedit.TestConfigEditorControl$PlainControl">
+						<impl class="test.com.top_logic.layout.configedit.TestConfigEditorControl$PlainControlProvider"/>
+					</annotation-control>
+				</annotation-controls>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -602,8 +602,17 @@ public class XMLProperties extends ManagedClass {
 		if (!StringServices.isEmpty(value)) {
 			// do not decrypt empty values, just leave them empty
 			try {
-				value = ConfigurationEncryption.decrypt(value);
-			} catch (RuntimeException ex) {
+				String decryptedValue = ConfigurationEncryption.decrypt(value);
+				if (!ConfigurationEncryption.isAuthenticated(value)) {
+					Logger.warn("The value of key '" + key + "' marked with " + ENCRYPT_ATTR + "='true' "
+						+ XMLStreamUtil.atLocation(reader)
+						+ " is encrypted in the unauthenticated format without prefix '"
+						+ ConfigurationEncryption.AUTHENTICATED_PREFIX
+						+ "'. Encrypt the value again, e.g. using the maintenance page EncodeConfigurationValues.jsp.",
+						XMLProperties.class);
+				}
+				value = decryptedValue;
+			} catch (InvalidEncryptedValueException ex) {
 				// The value is not part of the error: a value that cannot be decrypted is in most
 				// cases a secret configured in plain text.
 				StringBuilder msg = new StringBuilder();

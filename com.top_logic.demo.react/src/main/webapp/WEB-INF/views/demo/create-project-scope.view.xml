@@ -29,6 +29,7 @@
 			<field attribute="budget"/>
 			<field attribute="members"/>
 			<field attribute="admins"/>
+			<field attribute="reportTemplate"/>
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"

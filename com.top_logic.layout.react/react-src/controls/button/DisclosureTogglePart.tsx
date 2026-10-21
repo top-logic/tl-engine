@@ -2,13 +2,13 @@ import { React, ThemeIcon, tooltipProps, ICON_EXPAND } from 'tl-react-bridge';
 import type { DisclosureTogglePartProps } from 'tl-react-bridge';
 
 /** The class of a toggle whose content opens toward the end of the line. */
-const OPENS_END_CLASS = 'tlDisclosureToggle--end';
+const OPENS_END_CLASS = 'tl-toggle--end';
 
 /**
  * The TopLogic drawing of the part `DisclosureToggle` ({@link DisclosureTogglePartProps}): the
  * toggle of the design system (tl-toggle), a square ghost button with a chevron that points to the
  * end of the line and turns down while `aria-expanded`. A toggle whose content opens toward the end
- * of the line turns its chevron back to the start instead (tlDisclosureToggle--end).
+ * of the line turns its chevron back to the start instead (tl-toggle--end).
  */
 const DisclosureTogglePart: React.FC<DisclosureTogglePartProps> = ({
   id, ref, expanded, label, opens, disabled, tabIndex, className, onClick, onMouseDown, ...attributes

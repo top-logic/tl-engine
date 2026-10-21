@@ -5,6 +5,7 @@
  */
 package com.top_logic.react.flow.server.script;
 
+import java.awt.Dimension;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,14 +15,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
@@ -36,6 +32,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.image.util.ImageUtils;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
 import com.top_logic.react.flow.callback.ClickHandler;
 import com.top_logic.react.flow.callback.DiagramContextMenuProvider;
@@ -834,15 +831,11 @@ public class FlowFactory extends TLScriptFunctions {
 		findDim:
 		if (width == null || height == null) {
 			if (data instanceof BinaryDataSource c) {
-				try (InputStream in = c.toData().getStream()) {
-					ImageInputStream iis = ImageIO.createImageInputStream(in);
-					Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
-					if (readers.hasNext()) {
-						ImageReader reader = readers.next();
-						reader.setInput(iis, true);
-
-						imgWidth = Double.valueOf(reader.getWidth(0));
-						imgHeight = Double.valueOf(reader.getHeight(0));
+				try {
+					Dimension size = ImageUtils.getImageSize(c.toData());
+					if (size != null) {
+						imgWidth = size.width;
+						imgHeight = size.height;
 						break findDim;
 					}
 				} catch (IOException ex) {

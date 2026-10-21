@@ -107,6 +107,7 @@
 					</tooltip>
 					<executability>
 						<authenticated-only/>
+						<root-only-in-production/>
 					</executability>
 				</open-window>
 			</group>

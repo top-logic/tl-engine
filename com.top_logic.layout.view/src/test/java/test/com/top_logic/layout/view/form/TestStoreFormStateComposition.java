@@ -221,7 +221,7 @@ public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 			action.execute(viewContext(form), _project);
 			fail("Leaving the edit mode must not drop unsaved changes.");
 		} catch (TopLogicException ex) {
-			assertEquals(I18NConstants.ERROR_LEAVE_EDIT_MODE_UNSAVED_CHANGES, ex.getErrorKey());
+			assertEquals(I18NConstants.ERROR_FORM_HAS_UNSAVED_CHANGES, ex.getErrorKey());
 		}
 
 		assertTrue(form.isEditMode());

@@ -8,8 +8,6 @@ package com.top_logic.layout.channel.linking.ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.editor.AllComponents;
 import com.top_logic.layout.editor.ComponentNameMapping;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.layout.ComponentName;
 
@@ -21,7 +19,6 @@ public interface GlobalComponent extends NamedComponent {
 
 	@Override
 	@Options(fun = AllComponents.class, mapping = ComponentNameMapping.class)
-	@ControlProvider(SelectionControlProvider.class)
 	ComponentName getName();
 
 }

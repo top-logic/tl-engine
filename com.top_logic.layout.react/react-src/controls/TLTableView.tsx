@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { isInteractiveTarget, isOperableTarget } from './interactive';
 import { NO_DRAG_IMAGE } from './drop-hint';
@@ -100,6 +100,13 @@ const I18N_KEYS = {
  */
 const SEARCH_DEBOUNCE_MS = 300;
 
+/**
+ * How long a mounted table waits for its body to be able to scroll back to the window it showed
+ * last. The containers fill within a few renders; a body that still cannot scroll that far then has
+ * a shorter scroll range than before.
+ */
+const RESTORE_TIMEOUT_MS = 1000;
+
 interface ColumnState {
   name: string;
   label: string;
@@ -138,7 +145,6 @@ interface NamedFilterState {
 interface RowState {
   id: string;
   index: number;
-  selected: boolean;
   cells: Record<string, unknown>;
   /**
    * The tooltip of the cells that say more than they display, by column name. A cell named here
@@ -160,6 +166,9 @@ interface RowState {
   /** Whether the row may be dragged; present while the table's rows are draggable at all. */
   draggable?: boolean;
 }
+
+/** The selection of a table that has no row selected, shared so that it keeps its identity. */
+const NO_ROWS: number[] = [];
 
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
@@ -301,7 +310,7 @@ const ColumnsButton: React.FC<{
 }> = ({ label, inCell, onClick }) => {
   const Button = usePart('Button');
   return (
-    <div className="tl-table__columns tlTableView__columns">
+    <div className="tl-table__columns">
       <Button
         label={label}
         image={ICON_COLUMNS}
@@ -365,6 +374,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const columns = (state.columns as ColumnState[]) ?? [];
   const totalRowCount = (state.totalRowCount as number) ?? 0;
   const rows = (state.rows as RowState[]) ?? [];
+  /** The first row of the window the body showed last, unlike the start of the rows sent. */
+  const scrollStart = (state.scrollStart as number) ?? 0;
   // The client measures what the design system says (3b §3): a row is size-row high, so the table
   // follows the density (36 px normal, 32 px compact). The server knows no height. The grid is
   // rendered from the first layout on, so the token is read where the rows inherit it.
@@ -377,6 +388,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
    */
   const selectAllState = (state.selectAllState as string) ?? 'none';
   const cursorIndex = (state.cursorIndex as number) ?? -1;
+  /**
+   * The indexes of the selected rows among the rows sent. The selection is a state of its own, not a
+   * flag of each row, so a change of it reaches the client without the rows.
+   */
+  const selectedRows = (state.selectedRows as number[] | undefined) ?? NO_ROWS;
+  const selectedIndexes = React.useMemo(() => new Set(selectedRows), [selectedRows]);
+  const isSelected = (row: RowState) => selectedIndexes.has(row.index);
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
   /** The column the rows are grouped by, empty when they are not grouped. */
@@ -717,6 +735,39 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('columnResize', { column: columnName, width });
   }, [sendCommand]);
 
+  // The width handle takes the keyboard like any separator (bridge/separator.ts): the arrows widen and narrow the
+  // column by one step, Home narrows it to the minimum. A column has no maximum, so End fits it to its content - what a
+  // double click on the handle does - and reports it at once. The arrows reach the server when the key is released.
+  const keyResizeRef = React.useRef<{ column: string; width: number } | null>(null);
+
+  const handleResizeKeyDown = React.useCallback((columnName: string, colWidth: number, event: React.KeyboardEvent<HTMLElement>) => {
+    const handle = event.currentTarget;
+    const move = separatorMove(event.key, 'vertical', handle);
+    if (!move) {
+      return;
+    }
+    // The table's own keyboard (cursor, selection) does not see the key.
+    event.preventDefault();
+    event.stopPropagation();
+    if (move.to === 'max') {
+      keyResizeRef.current = null;
+      fitColumnToContent(columnName);
+      return;
+    }
+    const from = keyResizeRef.current?.column === columnName ? keyResizeRef.current.width : colWidth;
+    const width = movedSize(from, move, MIN_COL_WIDTH, Number.MAX_SAFE_INTEGER, separatorStep(handle));
+    keyResizeRef.current = { column: columnName, width };
+    setColumnWidthOverrides((prev) => ({ ...prev, [columnName]: width }));
+  }, [fitColumnToContent]);
+
+  const handleResizeKeyUp = React.useCallback(() => {
+    const info = keyResizeRef.current;
+    keyResizeRef.current = null;
+    if (info) {
+      sendCommand('columnResize', { column: info.column, width: info.width });
+    }
+  }, [sendCommand]);
+
   // -- The rows the body shows right now, by index: what the server has not sent of them yet is drawn
   //    as a skeleton row, and the grid is aria-busy until it has. Updated when the range changes, not
   //    on every scrolled pixel. --
@@ -802,7 +853,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
    * Starts a row drag. The payload names the row by its id and says whether the row was selected -
    * the server then drags the whole selection, which may reach beyond the rendered row window.
    */
-  const handleRowDragStart = React.useCallback((row: RowState, event: React.DragEvent) => {
+  const handleRowDragStart = React.useCallback((row: RowState, selected: boolean, event: React.DragEvent) => {
     if (isInteractiveTarget(event)) {
       // A drag begun on a cell's input belongs to that input (selecting its text), not to the row.
       event.preventDefault();
@@ -811,10 +862,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     writeDragPayload(event, {
       source: controlId,
       keys: [row.id],
-      selection: row.selected,
+      selection: selected,
       kind: dragKind,
     });
-    const dragged = { id: row.id, selection: row.selected };
+    const dragged = { id: row.id, selection: selected };
     // A drag cancelled before the image was taken has already ended: no row stays marked dragging.
     afterDragImage(() => { if (runningDrag()) setDraggedRow(dragged); });
   }, [controlId, dragKind]);
@@ -1086,7 +1137,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (input instanceof HTMLInputElement) {
       input.select();
     }
-  }, [rows]);
+  }, [rows, selectedRows]);
 
   // Tab at a row boundary wraps to the neighbouring row: forward from the last editable cell to the
   // start of the next row, backward from the first to the end of the previous row. In a single-row-
@@ -1448,6 +1499,70 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!sentIndexes.has(i)) missing.push(i);
   }
 
+  // The server keeps the window of the body that showed the table last, also when the page is
+  // reloaded or the table mounted again: the body then starts at the top, while the server sends the
+  // rows it scrolled to before. The body scrolls back to the first row of that window once the row
+  // height is the token's (see the density switch above) and the body can scroll that far: the
+  // containers fill only a render after the table reports filling (fill.ts), so on its first layout
+  // the body is as high as its rows and cannot scroll at all. A body that does not get there within
+  // RESTORE_TIMEOUT_MS - the scroll range has shrunk - scrolls as far as it can. Should the rows sent
+  // still not cover what the body shows, the body reports its window, which no scroll event does when
+  // the position stays.
+  const scrollRestoredRef = React.useRef(false);
+  const restoreTimedOutRef = React.useRef(false);
+  const restoreScrollRef = React.useRef<() => void>(() => {});
+  restoreScrollRef.current = () => {
+    const body = scrollContainerRef.current;
+    if (scrollRestoredRef.current) {
+      // The body changed its height: the window measured before is stale.
+      measureWindow();
+      return;
+    }
+    if (!body || rowHeight !== tokenPx(gridRef.current, '--tl-size-row', 36)) {
+      return;
+    }
+    const target = Math.min(scrollStart, Math.max(0, totalRowCount - 1)) * rowHeight;
+    const range = body.scrollHeight - body.clientHeight;
+    if (target > range && !restoreTimedOutRef.current) {
+      return;
+    }
+    scrollRestoredRef.current = true;
+    if (target > 0) {
+      body.scrollTop = Math.min(target, Math.max(0, range));
+    }
+    measureWindow();
+    const first = Math.floor(body.scrollTop / rowHeight);
+    const last = Math.min(totalRowCount - 1, Math.ceil((body.scrollTop + body.clientHeight) / rowHeight) - 1);
+    for (let i = first; i <= last; i++) {
+      if (!sentIndexes.has(i)) {
+        handleScroll();
+        break;
+      }
+    }
+  };
+  React.useLayoutEffect(() => {
+    if (!scrollRestoredRef.current) {
+      restoreScrollRef.current();
+    }
+  });
+  React.useEffect(() => {
+    const body = scrollContainerRef.current;
+    if (!body) {
+      return;
+    }
+    // The body gets its height from the containers filling, without a render of the table.
+    const observer = new ResizeObserver(() => restoreScrollRef.current());
+    observer.observe(body);
+    const timeout = window.setTimeout(() => {
+      restoreTimedOutRef.current = true;
+      restoreScrollRef.current();
+    }, RESTORE_TIMEOUT_MS);
+    return () => {
+      observer.disconnect();
+      clearTimeout(timeout);
+    };
+  }, []);
+
   // Where a cell sits relative to the scrolling area: frozen at the start, pinned at the end. A state
   // of its location (data-tl-state), not of the user's handling of it.
   const placeOf = (colIdx: number) => {
@@ -1486,7 +1601,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     return dropMarker && dropMarker !== 'control' && dropMarkerKey === row.id ? ROW_MARKER_STATE[dropMarker] : undefined;
   };
   const draggedWord = (row: RowState) =>
-    draggedRow && (row.id === draggedRow.id || (draggedRow.selection && row.selected)) ? 'dragging' : undefined;
+    draggedRow && (row.id === draggedRow.id || (draggedRow.selection && isSelected(row))) ? 'dragging' : undefined;
 
   return (
     <KeyboardScopeProvider active={isTableFocused}>
@@ -1712,6 +1827,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     role="separator"
                     aria-orientation="vertical"
                     aria-label={i18n['js.table.columnWidth'].replace('{0}', col.label)}
+                    tabIndex={0}
+                    aria-valuenow={w}
+                    aria-valuemin={MIN_COL_WIDTH}
+                    aria-valuemax={Math.max(w, scrollContainerRef.current?.clientWidth ?? w)}
+                    onKeyDown={(e) => handleResizeKeyDown(col.name, w, e)}
+                    onKeyUp={handleResizeKeyUp}
                     onPointerDown={(e) => handleResizeStart(col.name, w, e)}
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => {
@@ -1765,14 +1886,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               id={rowId(row.index)}
               role="row"
               aria-rowindex={row.index + 2}
-              aria-selected={!!row.selected}
+              aria-selected={isSelected(row)}
               aria-level={treegrid ? (row.treeDepth ?? 0) + 1 : undefined}
               aria-expanded={treegrid && row.expandable ? !!row.expanded : undefined}
               data-drop-row={row.id}
               draggable={dragEnabled && row.draggable !== false}
               className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
               // The selection wins over a highlight: a selected row carries no role.
-              data-tl-role={row.selected ? undefined : statusRole(row.cssClass)}
+              data-tl-role={isSelected(row) ? undefined : statusRole(row.cssClass)}
               data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
@@ -1795,7 +1916,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }
               }}
               onClick={(e) => handleRowClick(row.index, e)}
-              onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, e) : undefined}
+              onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, isSelected(row), e) : undefined}
               onDragEnd={dragEnabled && row.draggable !== false ? () => { setDropState(null); setDraggedRow(null); } : undefined}
               onDoubleClick={(e) => handleRowActivate(row.index, e)}
             >
@@ -1810,7 +1931,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     <Checkbox
                       small
                       aria-label={i18n['js.table.selectRow']}
-                      checked={row.selected}
+                      checked={isSelected(row)}
                       onChange={() => handleCheckboxClick(row.index)}
                       tabIndex={-1}
                     />
@@ -1838,7 +1959,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     data-row={row.id}
                     data-col={col.name}
                     data-tl-state={stateAttr(...words)}
-                    data-tl-role={row.selected ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
+                    data-tl-role={isSelected(row) ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
                       ...widthStyle(colIdx, w, isFrozen),

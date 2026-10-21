@@ -37,8 +37,6 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
@@ -221,7 +219,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		String ACCESS_PARENT = "access-parent";
 
 		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -297,7 +294,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLSingletonAccessRights extends ModelAccessRights {
 
 		@Options(fun = AllSingletons.class, mapping = SingletonMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -316,7 +312,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLPartAccessRights extends ModelAccessRights {
 
 		@Options(fun = AllAttributes.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -337,7 +332,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLModuleAccessRights extends TypeBasedAccessRights {
 
 		@Options(fun = TLModelPartRef.AllModules.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -348,6 +342,25 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private Map<TLStructuredTypePart, Map<BoundCommandGroup, Set<BoundedRole>>> _typePartRights = new HashMap<>();
 
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
+
+	/**
+	 * The roles holding {@link SimpleBoundCommandGroup#DISCOVER} on the instances of a class: the
+	 * union of all roles of its class rights, of the rights of its attributes, and of the
+	 * {@link SimpleBoundCommandGroup#CREATE} rights of the types creatable in its compositions.
+	 */
+	private final Map<TLClass, Set<BoundedRole>> _discoverRoles = new HashMap<>();
+
+	/**
+	 * The part of the {@link #_discoverRoles} of a class that does not stem from its class rights:
+	 * the roles of the rights of its attributes and the {@link SimpleBoundCommandGroup#CREATE}
+	 * rights of the types creatable in its compositions.
+	 *
+	 * <p>
+	 * A singleton with rights of its own replaces the class rights by its own rights, but is
+	 * discoverable by the rights on its attributes and compositions as well.
+	 * </p>
+	 */
+	private final Map<TLClass, Set<BoundedRole>> _discoverRolesWithoutClassRights = new HashMap<>();
 
 	/**
 	 * The types without security, each mapped to the part whose definition declares the mark.
@@ -425,7 +438,31 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		_typesWithoutSecurity = origins(_declaredWithoutSecurity);
 		_internalTypes = origins(_declaredInternal);
 		computeClassRights(classRules, moduleRules);
+		computeDiscoverRoles();
 		inheritAccessParents(explicitParents);
+	}
+
+	private void computeDiscoverRoles() {
+		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
+			Set<BoundedRole> roles = new HashSet<>();
+			for (TLStructuredTypePart part : type.getAllParts()) {
+				_typePartRights.getOrDefault(part.getDefinition(), Collections.emptyMap()).values()
+					.forEach(roles::addAll);
+				if (part instanceof TLReference reference && reference.isComposite()
+					&& reference.getType() instanceof TLClass target) {
+					for (TLClass created : TLModelUtil.getConcreteSpecializations(target)) {
+						roles.addAll(getAllowedRoles(created, SimpleBoundCommandGroup.CREATE));
+					}
+				}
+			}
+			if (!roles.isEmpty()) {
+				_discoverRolesWithoutClassRights.put(type, new HashSet<>(roles));
+			}
+			_expandedClassRights.getOrDefault(type, Collections.emptyMap()).values().forEach(roles::addAll);
+			if (!roles.isEmpty()) {
+				_discoverRoles.put(type, roles);
+			}
+		}
 	}
 
 	/**
@@ -854,6 +891,16 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			_singletonRights.getOrDefault(object, Collections.emptyMap());
 		if (!singletonRights.isEmpty()) {
 			// Singleton!
+			if (SimpleBoundCommandGroup.DISCOVER.equals(group)) {
+				// The rights of the singleton replace the class rights, but not the rights on its
+				// attributes and compositions, which imply Discover as well.
+				Set<BoundedRole> all = new HashSet<>();
+				singletonRights.values().forEach(all::addAll);
+				if (object.tType() instanceof TLClass clazz) {
+					all.addAll(_discoverRolesWithoutClassRights.getOrDefault(clazz, Collections.emptySet()));
+				}
+				return all;
+			}
 			return singletonRights.getOrDefault(group, Collections.emptySet());
 		}
 		TLStructuredType tType = object.tType();
@@ -871,6 +918,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup) {
+		if (SimpleBoundCommandGroup.DISCOVER.equals(commandGroup)) {
+			return _discoverRoles.getOrDefault(type, Collections.emptySet());
+		}
 		return _expandedClassRights
 			.getOrDefault(type, Collections.emptyMap())
 			.getOrDefault(commandGroup, Collections.emptySet());
@@ -881,6 +931,21 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return _typePartRights
 			.getOrDefault(attribute.getDefinition(), Collections.emptyMap())
 			.getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public boolean hasSingletonRights(TLClass type) {
+		for (Map.Entry<TLObject, Map<BoundCommandGroup, Set<BoundedRole>>> entry : _singletonRights.entrySet()) {
+			if (entry.getValue().isEmpty()) {
+				// Without rights, the singleton is decided by its class rights, see getRoles().
+				continue;
+			}
+			if (entry.getKey().tType() instanceof TLClass singletonType
+				&& TLModelUtil.isGeneralization(type, singletonType)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -935,7 +1000,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				// a write of the container checked in its own right.
 				return true;
 			}
-			current = editedObject(next);
+			current = TLFormObjectBase.editedObject(next);
 		}
 		// The roles the person holds on the object deciding for the committed access parent are
 		// checked, as for an attribute of a persistent object delegating its access decision.
@@ -959,18 +1024,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return draft.tContainer();
 		}
 		return parent.resolve(draft);
-	}
-
-	/**
-	 * The object a {@link TLFormObjectBase form object} editing an object stands for, the given
-	 * object otherwise.
-	 */
-	private static TLObject editedObject(TLObject object) {
-		TLObject result = object;
-		while (result instanceof TLFormObjectBase form && !form.isCreate() && form.getEditedObject() != null) {
-			result = form.getEditedObject();
-		}
-		return result;
 	}
 
 	@Override
@@ -1125,22 +1178,17 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// nor on its attribute values.
 			return true;
 		}
-		boolean allowedOnInstance = decide(decisionCache(), person, instance, commandGroup);
-		if (!allowedOnInstance) {
-			return false;
-		}
 		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
 			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
 		if (!partRights.containsKey(commandGroup)) {
-			// No attribute-level grant for this operation: the attribute inherits the (passed)
-			// class-level decision.
-			return true;
+			// No grant of the attribute itself: the class decision applies.
+			return decide(decisionCache(), person, instance, commandGroup);
 		}
+		// The grants of the attribute replace the class grant for this attribute.
 		Set<BoundedRole> requiredPartRoles = partRights.get(commandGroup);
 		if (requiredPartRoles.isEmpty()) {
 			// An attribute-level grant is present but lists no roles: the operation is denied for
-			// every role. A role-based user can never satisfy it (only a bypassing super-user, which
-			// is already handled above, is unaffected).
+			// every role (only a bypassing super-user, handled above, is unaffected).
 			return false;
 		}
 		// An object with an access parent holds no roles itself: the roles the person holds on the

@@ -6,12 +6,14 @@
 package com.top_logic.layout.view.list;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactLayoutControl;
+import com.top_logic.layout.react.control.layout.ReactLayoutControl.Item;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
@@ -23,9 +25,11 @@ import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.list.ObjectListElement.Layout;
+import com.top_logic.layout.view.model.ItemSelectionBinding;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.table.SelectionMode;
 import com.top_logic.util.Resources;
 
 /**
@@ -53,6 +57,12 @@ import com.top_logic.util.Resources;
  * an element is composed to be attached somewhere, and an input that is unset - or that names an
  * object which was deleted meanwhile - is no place to attach it to. A change of what the inputs hold
  * discards the element being composed, because it was composed for what the list displayed before.
+ * </p>
+ *
+ * <p>
+ * A list {@link #bindSelection(SelectionMode, ViewChannel) bound to a selection channel} makes its
+ * elements selectable: the container receives each element's control together with the element, and
+ * the element of the object the channel holds is displayed as selected.
  * </p>
  *
  * <p>
@@ -93,6 +103,12 @@ public class ObjectListItems {
 
 	/** The input values the children were last built for, to reset the new element on a change. */
 	private List<Object> _lastInputValues;
+
+	/** The displayed elements, in display order. */
+	private List<Object> _shownElements = List.of();
+
+	/** The binding of the selected elements to a channel, {@code null} for a display-only list. */
+	private ItemSelectionBinding _selectionBinding;
 
 	/**
 	 * Creates the {@link ObjectListItems} of a list.
@@ -148,6 +164,35 @@ public class ObjectListItems {
 	 */
 	public ReactLayoutControl display() {
 		return _display;
+	}
+
+	/**
+	 * Makes the elements selectable and binds the selected elements to the given channel: selecting
+	 * an element writes its object to the channel, and the element of the object the channel holds
+	 * is displayed as selected.
+	 *
+	 * @param mode
+	 *        Whether one element or several may be selected.
+	 * @param channel
+	 *        The channel holding the selection.
+	 */
+	public void bindSelection(SelectionMode mode, ViewChannel channel) {
+		_shownElements = new ArrayList<>(new LinkedHashSet<>(_shownElements));
+		_elements.setItems(items(_shownElements));
+		_elements.setSelectionMode(mode);
+		_selectionBinding = new ItemSelectionBinding(_elements, channel);
+		_display.addCleanupAction(_selectionBinding::dispose);
+	}
+
+	/**
+	 * The items of the given elements, each with the control of its item content.
+	 */
+	private List<Item> items(List<Object> elements) {
+		List<Item> result = new ArrayList<>(elements.size());
+		for (Object element : elements) {
+			result.add(new Item(element, _items.get(element)));
+		}
+		return result;
 	}
 
 	/**
@@ -225,8 +270,15 @@ public class ObjectListItems {
 			}
 		}
 
-		List<ReactControl> items = _items.update(_templateContext, elements);
-		_elements.setChildren(items);
+		boolean selectable = _elements.isSelectable();
+		// A selectable container displays each object once.
+		_shownElements = selectable ? new ArrayList<>(new LinkedHashSet<>(elements)) : elements;
+		List<ReactControl> items = _items.update(_templateContext, _shownElements);
+		if (selectable) {
+			_elements.setItems(items(_shownElements));
+		} else {
+			_elements.setChildren(items);
+		}
 
 		// Only the elements are arranged; what is shown in addition to them follows the arrangement
 		// as a whole.
@@ -249,6 +301,10 @@ public class ObjectListItems {
 		}
 
 		_display.setChildren(displayed);
+
+		if (_selectionBinding != null) {
+			_selectionBinding.refreshed();
+		}
 	}
 
 }

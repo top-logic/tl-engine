@@ -1,4 +1,4 @@
-import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart } from 'tl-react-bridge';
+import { React, useI18N, useCloseOnOutsidePress, useStandaloneKeyboardScope, usePart, createPortal, anchoredOverlayProps } from 'tl-react-bridge';
 import ColorPalette, { COLOR_DRAG_TYPE } from './ColorPalette';
 import ColorMixer from './ColorMixer';
 import { hexToRgb, rgbToHex, isValidHex, clampByte } from './colorUtils';
@@ -201,10 +201,14 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     onConfirm(draft);
   }, [draft, onConfirm, autoAddToPalette]);
 
-  return (
+  // Portaled to the document body, so that no clipping or transformed ancestor - a popover, a
+  // scrolling panel - confines the fixed popup; the anchored-overlay mark keeps it part of the
+  // surface around the field for focus trap and outside press.
+  return createPortal(
     <div
       className="tlColorInput__popup"
       ref={popupRef}
+      {...anchoredOverlayProps}
       style={position
         ? { top: position.top, left: position.left, visibility: 'visible' }
         : { visibility: 'hidden' }}
@@ -327,7 +331,8 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
           {i18n['js.colorInput.ok']}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

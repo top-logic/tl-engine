@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.view.form;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.util.Utils;
@@ -22,6 +20,7 @@ import com.top_logic.layout.view.table.ReadOnlyObjectTable;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.SearchExpression;
 
 /**
  * The edit of the parts of a composition of a table row in a dialog: a
@@ -80,7 +79,8 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 
 	/**
 	 * Creates the read-only control of a composition cell: the labels of the parts and, unless
-	 * there are none, a button opening a read-only table of the parts in a dialog.
+	 * there are none, a button opening a read-only table of the parts in a dialog. Only the parts
+	 * the current user may discover are shown, see {@link #visibleParts(Object)}.
 	 *
 	 * <p>
 	 * The table shows the main columns of the parts, and a composition of a part is displayed the
@@ -99,27 +99,34 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 		AbstractFieldModel model = new AbstractFieldModel(value);
 		model.setEditable(false);
 		ReactCompactFieldControl.Editing display =
-			(field, editable) -> new DisplaySession((TLStructuredType) part.getType(), parts(field.getValue()));
+			(field, editable) -> new DisplaySession((TLStructuredType) part.getType(), visibleParts(field.getValue()));
 		return new ReactCompactFieldControl(context, model, MetaLabelProvider.INSTANCE.getLabel(part),
-			CompositionEditing::previewText, Utils::isEmpty, display);
-	}
-
-	private static List<?> parts(Object value) {
-		if (value instanceof Collection<?> collection) {
-			return new ArrayList<>(collection);
-		}
-		return value == null ? List.of() : List.of(value);
+			CompositionEditing::previewText, parts -> visibleParts(parts).isEmpty(), display);
 	}
 
 	/**
-	 * The labels of the given parts, separated by commas.
+	 * The parts of a composition the current user may discover.
+	 *
+	 * <p>
+	 * The parts of a composition are displayed like the rows of a table: a part the user may not
+	 * discover is left out, see {@link SearchExpression#filterSecurity(Object)}.
+	 * </p>
+	 *
+	 * @param value
+	 *        The parts: a collection of parts, a single part, or {@code null}.
+	 */
+	public static List<?> visibleParts(Object value) {
+		return SearchExpression.asList(SearchExpression.filterSecurity(value));
+	}
+
+	/**
+	 * The labels of the given parts the current user may discover, separated by commas.
+	 *
+	 * @see #visibleParts(Object)
 	 */
 	public static String previewText(Object value) {
-		if (!(value instanceof Collection<?> parts)) {
-			return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
-		}
 		StringBuilder result = new StringBuilder();
-		for (Object part : parts) {
+		for (Object part : visibleParts(value)) {
 			if (result.length() > 0) {
 				result.append(PREVIEW_SEPARATOR);
 			}

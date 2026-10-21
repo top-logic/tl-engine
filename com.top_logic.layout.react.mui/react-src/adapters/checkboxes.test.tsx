@@ -9,7 +9,6 @@ import { CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import type { CheckboxStateJson } from 'tl-react-bridge';
 import TLCheckbox from '../../../com.top_logic.layout.react/react-src/controls/TLCheckbox';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
-import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
 import TLChoiceGroup from '../../../com.top_logic.layout.react/react-src/controls/TLChoiceGroup';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
@@ -38,10 +37,9 @@ const FIELD_ID = 'f1';
 const LABEL_SELECT_ALL = 'js.table.selectAll';
 const LABEL_SELECT_ROW = 'js.table.selectRow';
 
-/** The commands the table and the column selection send for their boxes. */
+/** The commands the table sends for its boxes. */
 const CMD_SELECT = 'select';
 const CMD_SELECT_ALL = 'selectAll';
-const CMD_COLUMN_VISIBLE = 'columnVisible';
 
 /** A resize observer that never reports: jsdom lays nothing out. */
 class NoResizeObserver {
@@ -187,7 +185,7 @@ describe('a boolean field as MUI checkbox', () => {
 
 describe('the selection boxes of a table as MUI checkboxes', () => {
   function row(index: number, extra: Record<string, unknown> = {}) {
-    return { id: 'r' + index, index, selected: false, cells: { name: childControl('c' + index, 'Zeile ' + index) }, ...extra };
+    return { id: 'r' + index, index, cells: { name: childControl('c' + index, 'Zeile ' + index) }, ...extra };
   }
 
   function mountTable(state: Record<string, unknown>) {
@@ -202,7 +200,7 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
   }
 
   it('marks the box selecting all rows indeterminate while some rows are selected, and selects all', async () => {
-    const sent = mountTable({ rows: [row(0, { selected: true }), row(1)], selectAllState: 'some' });
+    const sent = mountTable({ rows: [row(0), row(1)], selectedRows: [0], selectAllState: 'some' });
     await settle();
 
     const all = screen.getByRole('checkbox', { name: LABEL_SELECT_ALL }) as HTMLInputElement;
@@ -219,7 +217,7 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
   });
 
   it('ticks the box selecting all rows while all are, and deselects all', async () => {
-    const sent = mountTable({ rows: [row(0, { selected: true })], selectAllState: 'all' });
+    const sent = mountTable({ rows: [row(0)], selectedRows: [0], selectAllState: 'all' });
     await settle();
 
     const all = screen.getByRole('checkbox', { name: LABEL_SELECT_ALL }) as HTMLInputElement;
@@ -233,7 +231,7 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
   });
 
   it('toggles the selection of a row by its box, out of the tab order', async () => {
-    const sent = mountTable({ rows: [row(0, { selected: true }), row(1)], selectAllState: 'some' });
+    const sent = mountTable({ rows: [row(0), row(1)], selectedRows: [0], selectAllState: 'some' });
     await settle();
 
     const boxes = screen.getAllByRole('checkbox', { name: LABEL_SELECT_ROW }) as HTMLInputElement[];
@@ -262,40 +260,6 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
     await settle();
 
     expect(screen.queryByRole('checkbox')).toBeNull();
-  });
-});
-
-describe('the boxes of the column selection as MUI checkboxes', () => {
-  function entry(name: string, visible: boolean) {
-    return { name, label: 'Spalte ' + name, visible, grouped: false };
-  }
-
-  it('shows or hides a column by its labelled box', async () => {
-    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', false)] });
-    await settle();
-
-    const a = screen.getByRole('checkbox', { name: 'Spalte a' }) as HTMLInputElement;
-    expectMuiBox(a);
-    expect(a.checked).toBe(true);
-    expect(a.closest('label')!.classList).toContain('MuiFormControlLabel-root');
-    expect(a.closest('label')!.parentElement!.classList).toContain('tl-reorder-list__item');
-    await userEvent.click(screen.getByText('Spalte b'));
-    await settle();
-
-    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_VISIBLE, { column: 'b', visible: true });
-  });
-
-  it('keeps the last shown column from being hidden', async () => {
-    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', false)] });
-    await settle();
-
-    const a = screen.getByRole('checkbox', { name: 'Spalte a' }) as HTMLInputElement;
-    expect(a.disabled).toBe(true);
-    expect(screen.getByRole('checkbox', { name: 'Spalte b' })).toHaveProperty('disabled', false);
-    await userEvent.setup({ pointerEventsCheck: 0 }).click(a);
-    await settle();
-
-    expect(sent).not.toHaveBeenCalledWith(CMD_COLUMN_VISIBLE, expect.anything());
   });
 });
 

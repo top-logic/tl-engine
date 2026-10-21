@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,8 +45,10 @@ import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
@@ -331,6 +334,27 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
+	 * Whether the given value must be shown masked: a business object the current user may not
+	 * discover.
+	 *
+	 * <p>
+	 * A field holds the unfiltered value of a reference, so it may contain such objects. Their
+	 * identity - label, image, color, link - is not sent to the client: the field shows the
+	 * placeholder {@link I18NConstants#MASKED_VALUE} instead, keeps the object at its place in the
+	 * value, and writes it back unchanged unless the user removes it.
+	 * </p>
+	 *
+	 * @param option
+	 *        The value to check, may be {@code null}.
+	 */
+	public static boolean isMasked(Object option) {
+		// A model element is meta-data, not a business object, and is never masked (like it is never
+		// filtered, see SearchExpression#filterSecurity).
+		return option instanceof TLObject object && !(object instanceof TLModelPart)
+			&& !ModelAccessRights.getInstance().isDiscoverAllowed(object);
+	}
+
+	/**
 	 * Initializes select-specific state that is not covered by
 	 * {@link ReactFormFieldControl#ReactFormFieldControl(ReactContext, FieldModel, String)}.
 	 */
@@ -489,6 +513,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/**
 	 * Handles the {@link #CMD_VALUE_CHANGED} command from the React client.
 	 *
+	 * <p>
+	 * Like every value arriving from a client, the selection is dropped unless the field
+	 * {@link #acceptsClientValue() accepts client values}.
+	 * </p>
+	 *
 	 * @param arguments
 	 *        Must contain a {@link FieldValueArguments#VALUE} entry with a list of option value IDs.
 	 */
@@ -499,6 +528,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
 		required = true, description = "List of selected option value ids (from the options descriptors)."))
 	HandlerResult handleValueChanged(Map<String, Object> arguments) {
+		if (!acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
 		List<String> selectedIds = (List<String>) arguments.get(FieldValueArguments.VALUE);
 		if (selectedIds == null) {
 			selectedIds = Collections.emptyList();
@@ -543,6 +575,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	@ReactCommandHandler(CMD_SELECT_BY_KEY)
 	HandlerResult handleSelectByKey(SelectByKeysArguments arguments) {
+		if (!acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
 		List<ModelName> keys = arguments.getKeys();
 
 		List<ModelName> unresolved = new ArrayList<>();
@@ -574,8 +609,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		if (CMD_VALUE_CHANGED.equals(command) && arguments != null) {
 			List<String> ids = (List<String>) arguments.get(FieldValueArguments.VALUE);
 			if (ids != null) {
-				ReactOptionScope scope =
-					new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
+				ReactOptionScope scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
 				SelectByKeysArguments recorded = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
 				recorded.setName(CMD_SELECT_BY_KEY);
 				for (String id : ids) {
@@ -602,9 +636,14 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * the keys were built against. A key that throws or resolves to nothing is reported as unresolved
 	 * rather than skipped.
 	 * </p>
+	 *
+	 * <p>
+	 * The scope contains the current value as well: a {@link #isMasked(Object) masked} value is no
+	 * option, but stays in the selection when it is replayed.
+	 * </p>
 	 */
 	private List<Object> resolveByKeys(List<ModelName> keys, List<ModelName> unresolvedOut) {
-		ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_selectModel.getOptions()), _labelProvider);
+		ReactOptionScope scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
 		ActionContext actionContext = ScriptingModelKey.newActionContext();
 		List<Object> resolved = new ArrayList<>(keys.size());
 		for (ModelName name : keys) {
@@ -621,6 +660,21 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		return resolved;
 	}
 
+
+	/**
+	 * The options of the field followed by the elements of its value that are no options (e.g.
+	 * {@link #isMasked(Object) masked} values, which no option list contains).
+	 */
+	private List<Object> optionsAndValue() {
+		List<Object> result = new ArrayList<>(_selectModel.getOptions());
+		Set<Object> contained = new HashSet<>(result);
+		for (Object element : getSelectionSorted()) {
+			if (contained.add(element)) {
+				result.add(element);
+			}
+		}
+		return result;
+	}
 
 	/**
 	 * Builds option descriptors and populates the given index and reverse maps. Each option
@@ -665,7 +719,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			}
 
 			Map<String, Object> descriptor = describe(id, option, resourceProvider);
-			if (navigator != null && navigator.canShow(option)) {
+			if (navigator != null && !isMasked(option) && navigator.canShow(option)) {
 				descriptor.put(DropdownSelectState.Option.LINK__PROP, Boolean.TRUE);
 			}
 			descriptors.add(descriptor);
@@ -683,6 +737,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * option is decided in one place.
 	 * </p>
 	 *
+	 * <p>
+	 * A {@link #isMasked(Object) masked} option is described by its id and the placeholder label
+	 * only.
+	 * </p>
+	 *
 	 * @param id
 	 *        The id the option is addressed by, from {@link #_optionIndex}.
 	 * @param option
@@ -695,6 +754,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private Map<String, Object> describe(String id, Object option, ResourceProvider resourceProvider) {
 		Map<String, Object> descriptor = new HashMap<>();
 		descriptor.put(DropdownSelectState.Option.VALUE__PROP, id);
+		if (isMasked(option)) {
+			// Only the opaque id, so the masked value is written back unchanged.
+			descriptor.put(DropdownSelectState.Option.LABEL__PROP,
+				Resources.getInstance().getString(I18NConstants.MASKED_VALUE));
+			return descriptor;
+		}
 		descriptor.put(DropdownSelectState.Option.LABEL__PROP, _labelProvider.getLabel(option));
 
 		if (resourceProvider != null) {
@@ -719,7 +784,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	HandlerResult handleGoto(ReactContext context, Map<String, Object> arguments) {
 		Object option = _optionIndex.get(arguments.get(ARG_OPTION));
 		ObjectNavigator navigator = navigator();
-		if (option != null && navigator != null && navigator.canShow(option)) {
+		if (option != null && navigator != null && !isMasked(option) && navigator.canShow(option)) {
 			navigator.show(context, option);
 		}
 		return HandlerResult.DEFAULT_RESULT;
@@ -727,7 +792,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	/**
 	 * Returns the current selection as a sorted list. If {@link #_customOrder} is enabled, the
-	 * selection order is preserved. Otherwise it is sorted by {@link #_optionComparator}.
+	 * selection order is preserved. Otherwise it is sorted by {@link #_optionComparator}, with the
+	 * {@link #isMasked(Object) masked} values appended in their stored order: sorting them by their
+	 * labels would disclose these labels by their position.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private List<?> getSelectionSorted() {
@@ -739,9 +806,14 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		if (_customOrder || selection.size() <= 1 || _optionComparator == null) {
 			return selection;
 		}
-		Object[] array = selection.toArray();
-		Arrays.sort(array, (Comparator) _optionComparator);
-		return Arrays.asList(array);
+		List<Object> visible = new ArrayList<>(selection.size());
+		List<Object> masked = new ArrayList<>();
+		for (Object element : selection) {
+			(isMasked(element) ? masked : visible).add(element);
+		}
+		visible.sort((Comparator) _optionComparator);
+		visible.addAll(masked);
+		return visible;
 	}
 
 	/**

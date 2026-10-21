@@ -50,6 +50,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.form.AttributeSelectFieldModel.OptionSource;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLEnumeration;
@@ -965,9 +966,14 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @param part
 	 *        The model attribute the value belongs to.
 	 * @param value
-	 *        The attribute value to display, may be {@code null}.
+	 *        The attribute value to display, may be {@code null}. The
+	 *        {@link ColumnProviderService#UNREADABLE} marker of a value the user may not read is
+	 *        displayed by its placeholder, see {@link #unreadableControl(ReactContext, Object)}.
 	 */
 	public ReactControl createDisplayControl(ReactContext context, TLStructuredTypePart part, Object value) {
+		if (ColumnProviderService.hasUnreadable(value)) {
+			return unreadableControl(context, value);
+		}
 		AbstractFieldModel model = displayModel(part, part.isMultiple(), value);
 		return createFieldControl(context, part, fieldSpec(part, part.isMultiple(), model), model, null);
 	}
@@ -1003,6 +1009,12 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * A value of an unknown type is displayed by its label, the one thing every value has.
 	 * </p>
 	 *
+	 * <p>
+	 * The {@link ColumnProviderService#UNREADABLE} marker of a value the user may not read is
+	 * displayed by its placeholder before anything of the type is considered, see
+	 * {@link #unreadableControl(ReactContext, Object)}.
+	 * </p>
+	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param columnType
@@ -1011,6 +1023,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The value to display, may be {@code null}.
 	 */
 	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
+		if (ColumnProviderService.hasUnreadable(value)) {
+			return unreadableControl(context, value);
+		}
 		TLStructuredTypePart part = columnType.part();
 		boolean multiple = columnType.multiple();
 		if (part != null) {
@@ -1029,6 +1044,17 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		AbstractFieldModel model = displayModel(type, multiple, value);
 		FieldSpec field = cellSpec(fieldSpec(type, columnType.annotations(), null, multiple, model));
 		return createFieldControl(context, type, field, model);
+	}
+
+	/**
+	 * The read-only control of a value holding the {@link ColumnProviderService#UNREADABLE} marker:
+	 * the plain text of the placeholder, whatever the type of the value - an unreadable boolean is
+	 * no unchecked checkbox, an unreadable reference no empty selection.
+	 *
+	 * @see ColumnProviderService#label(Object)
+	 */
+	private static ReactControl unreadableControl(ReactContext context, Object value) {
+		return new ReactTextControl(context, ColumnProviderService.label(value));
 	}
 
 	/**

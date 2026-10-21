@@ -37,7 +37,9 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  * @param type
  *        What the column's values are, deciding its display, sort, filter and search.
  * @param value
- *        Reads the cell value from a row.
+ *        Reads the cell value from a row. For a cell the user may not read, this is the
+ *        {@link ColumnProviderService#UNREADABLE} marker, see
+ *        {@link ColumnProviderService#attributeValue(Object, String)}.
  * @param viewContext
  *        The per-session context, e.g. for resolving channel references.
  * @param binding
@@ -55,7 +57,9 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        The ascending order of the column's values, by which it sorts the rows and orders the
  *        groups it forms, or {@code null} for the order its binding derives. It is never passed
  *        {@code null}; rows without a value are ordered apart from it, a group without a value
- *        comes last.
+ *        comes last. It is never passed the {@link ColumnProviderService#UNREADABLE} marker
+ *        either: a cell the user may not read sorts after every value, see
+ *        {@link ColumnProviderService#unreadableLast(Comparator)}.
  * @param hiddenByDefault
  *        Whether the column is displayed only once the user selects it in the column selection.
  * @param export
@@ -130,7 +134,7 @@ public record ColumnSetup(
 			};
 		}
 		if (comparator != null) {
-			Sort<V> sort = sort(binding().order(comparator));
+			Sort<V> sort = sort(binding().order(ColumnProviderService.unreadableLast(comparator)));
 			result = new DelegatingColumn<>(result) {
 				@Override
 				public Optional<Sort<V>> sort() {
@@ -160,14 +164,17 @@ public record ColumnSetup(
 	 * collection that starts with all elements of a longer one before it.
 	 *
 	 * <p>
-	 * A value that is no collection is ordered as a collection holding only that value.
+	 * A value that is no collection is ordered as a collection holding only that value. An element
+	 * holding the {@link ColumnProviderService#UNREADABLE} marker is ordered after every other
+	 * element but an empty one, see {@link ColumnProviderService#unreadableLast(Comparator)}.
 	 * </p>
 	 *
 	 * @param elementOrder
-	 *        The ascending order of the elements, never passed {@code null}.
+	 *        The ascending order of the elements, never passed {@code null} or the
+	 *        {@link ColumnProviderService#UNREADABLE} marker.
 	 */
 	public static Comparator<Object> elementwise(Comparator<Object> elementOrder) {
-		Comparator<Object> elements = Comparator.nullsLast(elementOrder);
+		Comparator<Object> elements = Comparator.nullsLast(ColumnProviderService.unreadableLast(elementOrder));
 		return (value1, value2) -> {
 			Iterator<?> it1 = elements(value1).iterator();
 			Iterator<?> it2 = elements(value2).iterator();

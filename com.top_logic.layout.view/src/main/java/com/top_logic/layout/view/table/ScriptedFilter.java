@@ -123,6 +123,18 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The configured inputs the match function is evaluated with.
+	 * </p>
+	 */
+	@Override
+	public List<ChannelRef> inputs() {
+		return _inputs;
+	}
+
+	/**
 	 * The filter-parameter type whose transient instance backs the filter form.
 	 */
 	public TLStructuredType filterType() {
@@ -146,7 +158,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 			.renderer(cell -> CellContent.text(ColumnProviderService.label(cell.value())))
 			// The cell pairs the value with its row for the filter; an export writes the value.
 			.exportValue(ScriptedCell::value)
-			.sort(() -> Comparator.comparing((ScriptedCell cell) -> ColumnProviderService.label(cell.value())))
+			.sort(() -> Comparator.comparing(ScriptedCell::value, ColumnProviderService.labelOrder()))
 			.filter(this)
 			.build();
 	}
@@ -181,7 +193,9 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 			return cell -> true;
 		}
 		EvalContext context = _match.context();
-		return cell -> Boolean.TRUE.equals(closure.eval(context, cell.value(), cell.row()));
+		// A cell the user may not read is not given to the filter script: it matches no criterion.
+		return cell -> !ColumnProviderService.isUnreadable(cell.value())
+			&& Boolean.TRUE.equals(closure.eval(context, cell.value(), cell.row()));
 	}
 
 }

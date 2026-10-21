@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, createPortal, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, usePart, tokenPx } from 'tl-react-bridge';
+import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, createPortal, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, usePart, tokenPx, useChildStates } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { MenuSeparator, useRovingMenu } from './menu/Menu';
 
@@ -13,7 +13,7 @@ const I18N_KEYS = {
  * The class of the divider between two groups. The toolbar reads the width of a divider by it,
  * whichever implementation of the part draws it.
  */
-const SEPARATOR_CLASS = 'tlToolbar__separator';
+const SEPARATOR_CLASS = 'tl-toolbar__separator';
 
 /** Icon of the overflow menu trigger. */
 const OVERFLOW_ICON = 'css:bi bi-three-dots';
@@ -241,6 +241,9 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
  * that still do not fit - single items of an inline group, whole menu groups - into an overflow
  * menu at the collapsing end.
  *
+ * A menu group whose entries are all hidden offers nothing: it shows no trigger and takes no place,
+ * until one of its entries is shown again.
+ *
  * The buttons drop their labels themselves: the toolbar tells them through ButtonDefaults
  * (`iconOnly`). The widths of both presentations are therefore read in two passes, one render
  * each: first with labels, then compact. The toolbar measures again when the groups change, or when
@@ -275,9 +278,29 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
   const unitObserverRef = useRef<ResizeObserver | null>(null);
   const observedUnitsRef = useRef<Set<Element>>(new Set());
 
-  // Groups with at least one item, and the unit sequence they decompose into.
+  // The live states of the entries of the menu groups: a menu whose entries are all hidden offers
+  // nothing, so it shows no trigger. The entries render inside the closed dropdown only, so the
+  // toolbar reads their states itself.
+  const menuEntries = useMemo(
+    () => groups.filter(g => g.display === 'menu').flatMap(g => g.items.filter(item => item != null)),
+    [groups]);
+  const menuEntryStates = useChildStates(menuEntries);
+  // Keyed by which entries are hidden, so that another change of an entry (e.g. its enablement)
+  // leaves the groups shown - and with them the measurement - as they are.
+  const hiddenKey = menuEntryStates.map(entryState => (entryState.hidden === true ? '1' : '0')).join('');
+  const hiddenEntries = useMemo(() => {
+    const hidden = new Set<unknown>();
+    menuEntries.forEach((entry, i) => {
+      if (hiddenKey[i] === '1') hidden.add(entry);
+    });
+    return hidden;
+  }, [menuEntries, hiddenKey]);
+
+  // Groups with at least one item offered, and the unit sequence they decompose into. An inline
+  // group keeps its hidden buttons, which take no width (see widthOf).
   const { visibleGroups, units } = useMemo(() => {
-    const shown = groups.filter(g => g.items.some(item => item != null));
+    const shown = groups.filter(g => g.items.some(item => item != null
+      && !(g.display === 'menu' && hiddenEntries.has(item))));
     const sequence: ToolbarUnit[] = [];
     shown.forEach((group, groupIndex) => {
       if (group.display === 'menu') {
@@ -288,12 +311,12 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
       }
     });
     return { visibleGroups: shown, units: sequence };
-  }, [groups]);
+  }, [groups, hiddenEntries]);
 
   // The widths of the current groups are not known yet: this render lays everything out inline,
   // with labels (`full`) or compact, which is what the measuring effect below reads. The first
-  // render after a change of the groups is already the `full` pass.
-  const phase: MeasurePhase = collapsible && measuredRef.current !== groups
+  // render after a change of the groups shown is already the `full` pass.
+  const phase: MeasurePhase = collapsible && measuredRef.current !== visibleGroups
     ? (measurePhase ?? 'full')
     : null;
   const measuring = phase !== null;
@@ -346,19 +369,19 @@ const TLToolbar: React.FC<TLCellProps> = ({ controlId }) => {
     }
 
     if (phase === 'full') {
-      fullRef.current = { groups, widths: readUnits(root, units.length) };
+      fullRef.current = { groups: visibleGroups, widths: readUnits(root, units.length) };
       setMeasurePhase('compact');
       return;
     }
     if (phase === 'compact') {
       const full = fullRef.current;
-      if (!full || full.groups !== groups) {
+      if (!full || full.groups !== visibleGroups) {
         // The groups changed between the passes: the widths read do not belong together.
         setMeasurePhase('full');
         return;
       }
       metricsRef.current = metricsOf(root, full.widths, readUnits(root, units.length));
-      measuredRef.current = groups;
+      measuredRef.current = visibleGroups;
       fullRef.current = null;
       setMeasurePhase(null);
     }

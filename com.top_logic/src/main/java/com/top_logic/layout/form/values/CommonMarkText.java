@@ -5,9 +5,6 @@
  */
 package com.top_logic.layout.form.values;
 
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.CommonMarkControl;
 import com.top_logic.layout.form.control.TextInputControl;
@@ -21,23 +18,16 @@ public class CommonMarkText extends MultiLineText {
 
 	/** {@link CommonMarkText} instance. */
 	@SuppressWarnings("hiding")
-	public static final CommonMarkText INSTANCE;
-	static {
-		Config config = TypedConfiguration.newConfigItem(MultiLineText.Config.class);
-		config.setImplementationClass(CommonMarkText.class);
-		INSTANCE = (CommonMarkText) TypedConfigUtil.createInstance(config);
-	}
+	public static final CommonMarkText INSTANCE = new CommonMarkText(DEFAULT_ROWS);
 
 	/**
 	 * Creates a new {@link CommonMarkText}.
 	 * 
-	 * @param context
-	 *        The context for instantiating sub configurations.
-	 * @param config
-	 *        The configuration.
+	 * @param rows
+	 *        The number of rows to display in the text area.
 	 */
-	public CommonMarkText(InstantiationContext context, Config config) {
-		super(context, config);
+	public CommonMarkText(int rows) {
+		super(rows);
 	}
 
 	@Override
@@ -46,4 +36,3 @@ public class CommonMarkText extends MultiLineText {
 	}
 
 }
-

@@ -119,7 +119,13 @@
   --tl-size-9: 4rem;
   --tl-size-10: 6rem;
   --tl-size-11: 10rem;
+  --tl-size-12: 16rem;
+  --tl-size-13: 24rem;
+  --tl-size-14: 36rem;
+  --tl-size-15: 40rem;
   --tl-view-1: 70vh;
+  --tl-view-2: 100dvw;
+  --tl-view-3: 100dvh;
   --tl-text-1: 0.75rem;
   --tl-text-2: 0.875rem;
   --tl-text-3: 1rem;
@@ -166,4 +172,7 @@
   --tl-veil-2: rgba(27, 29, 33, 0.12);
   --tl-veil-3: rgba(240, 243, 249, 0.06);
   --tl-veil-4: rgba(240, 243, 249, 0.12);
+  --tl-veil-5: rgba(27, 29, 33, 0.16);
+  --tl-veil-6: rgba(240, 243, 249, 0.13);
 }
+/* tl-design-system sha256:41428ba2ad3f6f78c020353e1c4aa66155374bd7fd8ff25a7f91f538b5782d67 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

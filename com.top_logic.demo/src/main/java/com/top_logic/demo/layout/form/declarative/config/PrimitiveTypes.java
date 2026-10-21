@@ -23,15 +23,16 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.AcceptedTypes;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
+import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.editor.BinaryDataEditor;
-import com.top_logic.layout.wysiwyg.ui.StructuredTextControlProvider;
 import com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint;
 
 /**
@@ -54,6 +55,7 @@ import com.top_logic.reporting.flex.chart.config.color.HexEncodedPaint;
 	PrimitiveTypes.LIST_PRIMITIVE,
 	PrimitiveTypes.MAP_PRIMITIVE,
 	PrimitiveTypes.XML_PRIMITIVE,
+	PrimitiveTypes.JSON_PRIMITIVE,
 	PrimitiveTypes.BINARY_PRIMITIVE,
 	PrimitiveTypes.BINARIES,
 	PrimitiveTypes.ICON_PRIMITIVE,
@@ -101,6 +103,9 @@ public interface PrimitiveTypes extends ConfigurationItem {
 
 	/** @see #getXmlPrimitive() */
 	String XML_PRIMITIVE = "xml-primitive";
+
+	/** @see #getJsonPrimitive() */
+	String JSON_PRIMITIVE = "json-primitive";
 
 	/** @see #getBinaryPrimitive() */
 	String BINARY_PRIMITIVE = "binary-primitive";
@@ -181,6 +186,13 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	String getXmlPrimitive();
 
 	/**
+	 * A JSON text edited as source code.
+	 */
+	@Name(JSON_PRIMITIVE)
+	@Code(language = CodeLanguage.JSON)
+	String getJsonPrimitive();
+
+	/**
 	 * A binary data upload.
 	 */
 	@Name(BINARY_PRIMITIVE)
@@ -215,7 +227,7 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	 */
 	@Name(RESKEY_MULTILINE_PRIMITIVE)
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
-	@ControlProvider(MultiLineText.class)
+	@MultiLine
 	ResKey getResKeyMultilinePrimitive();
 
 	/**
@@ -223,7 +235,7 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	 */
 	@Name(RESKEY_HTML_PRIMITIVE)
 	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
-	@ControlProvider(StructuredTextControlProvider.class)
+	@Html
 	ResKey getResKeyHtmlPrimitive();
 
 }

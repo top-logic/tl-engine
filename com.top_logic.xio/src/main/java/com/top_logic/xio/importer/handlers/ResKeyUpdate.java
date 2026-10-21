@@ -232,7 +232,7 @@ public class ResKeyUpdate<C extends ResKeyUpdate.Config<?>> extends StoreHandler
 		if (language.isEmpty()) {
 			return null;
 		}
-		return Locale.of(language);
+		return new Locale(language);
 	}
 
 	private static Locale fallbackLocale() {

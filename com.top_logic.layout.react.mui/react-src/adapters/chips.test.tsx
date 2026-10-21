@@ -288,7 +288,7 @@ describe('the named filters of a table (TLTableView) as MUI chips', () => {
     vi.stubGlobal('ResizeObserver', NoResizeObserver);
     return mountAdapter(TLTableView, {
       columns: [{ name: 'name', label: 'Name', width: 120, sortable: false }],
-      rows: [{ id: 'r0', index: 0, selected: false, cells: { name: childControl('c0', 'Zeile') } }],
+      rows: [{ id: 'r0', index: 0, cells: { name: childControl('c0', 'Zeile') } }],
       totalRowCount: 1,
       filterBar: true,
       namedFilters: [OWN, DECLARED],
@@ -488,8 +488,8 @@ describe('the counts of the navigation as MUI badges', () => {
 
     expect(badges()).toEqual(['3']);
     const badge = document.querySelector('.MuiBadge-root')!;
-    expect(badge.classList).not.toContain('tlSidebar__badge');
-    expect(badge.parentElement!.classList).toContain('tlSidebar__badge');
+    expect(badge.classList).not.toContain('tl-sidebar__item');
+    expect(badge.parentElement!.classList).toContain('tl-sidebar__item');
     expect(badge.querySelector('.MuiBadge-colorPrimary')).not.toBeNull();
   });
 
@@ -498,13 +498,13 @@ describe('the counts of the navigation as MUI badges', () => {
     await settle();
 
     expect(badges()).toEqual(['3']);
-    expectPlacedByCorner(document.querySelector('.MuiBadge-root')!, 'tlSidebar__cornerBadge');
+    expectPlacedByCorner(document.querySelector('.MuiBadge-root')!, 'tl-icon-badge__count');
   });
 
   it('draws the count of an item of the bottom bar, and none for an item without', () => {
     mountAdapter(TLBottomBar, { items: [INBOX, ARCHIVE], activeItemId: 'inbox' });
 
     expect(badges()).toEqual(['3']);
-    expectPlacedByCorner(document.querySelector('.MuiBadge-root')!, 'tlBottomBar__badge');
+    expectPlacedByCorner(document.querySelector('.MuiBadge-root')!, 'tl-icon-badge__count');
   });
 });

@@ -42,6 +42,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
@@ -98,6 +99,14 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	private List<Runnable> _delayed = new ArrayList<>();
 
 	private Object _context;
+
+	/**
+	 * The object whose attribute value is currently resolved, <code>null</code> while resolving
+	 * top-level objects.
+	 * 
+	 * @see #createObject(ObjectConf, TLStructuredTypePart)
+	 */
+	private TLObject _owner;
 
 	/**
 	 * Creates a {@link XMLInstanceImporter}.
@@ -259,11 +268,35 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		return result;
 	}
 
-	private TLObject createObject(ObjectConf config) {
+	/**
+	 * Creates the object described by the given configuration.
+	 * 
+	 * <p>
+	 * An object that is the value of a composite reference of its owner is created with the owner
+	 * as creation context, see {@link TLFactory#createObject(TLClass, TLObject)}. This is the same
+	 * context an object created in the UI or via TL-Script within its container receives, so that
+	 * defaults computed from the creation context (e.g. sequence numbers per container) are
+	 * computed the same way for imported objects. A top-level object is created without context.
+	 * </p>
+	 * 
+	 * @param config
+	 *        The description of the object to create.
+	 * @param part
+	 *        The attribute of {@link #_owner} whose value the object becomes, <code>null</code>
+	 *        for a top-level object.
+	 */
+	private TLObject createObject(ObjectConf config, TLStructuredTypePart part) {
 		TLClass type = (TLClass) TLModelUtil.findType(_model, config.getType());
-		TLObject obj = _factory.createObject(type);
+		TLObject obj = _factory.createObject(type, creationContext(part));
 		addObject(config.getId(), obj);
 		return obj;
+	}
+
+	private TLObject creationContext(TLStructuredTypePart part) {
+		if (part instanceof TLReference reference && reference.isComposite()) {
+			return _owner;
+		}
+		return null;
 	}
 
 	private TLObject importObject(ObjectConf config) {
@@ -290,6 +323,11 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 
 	private Storage storage(TLObject obj, TLStructuredTypePart part, AttributeValueConf valueConf) {
 		return new Storage() {
+			@Override
+			public TLObject getOwner() {
+				return obj;
+			}
+
 			@Override
 			public TLStructuredTypePart getPart() {
 				return part;
@@ -395,13 +433,13 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	}
 
 	private void loadSingle(Storage storage, ValueConf valueConf) throws UnresolvedRef {
-		storage.set(resolveSingle(storage.getPart(), valueConf));
+		storage.set(resolveSingle(storage, valueConf));
 	}
 
 	private void loadCollection(Storage storage, List<? extends ValueConf> references) throws UnresolvedRef {
 		ArrayList<Object> result = new ArrayList<>(references.size());
 		for (ValueConf ref : references) {
-			Object element = resolveSingle(storage.getPart(), ref);
+			Object element = resolveSingle(storage, ref);
 			if (element != null) {
 				result.add(element);
 			}
@@ -409,8 +447,14 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		storage.set(result);
 	}
 
-	private Object resolveSingle(TLStructuredTypePart part, ValueConf ref) throws UnresolvedRef {
-		return ref.visit(this, part);
+	private Object resolveSingle(Storage storage, ValueConf ref) throws UnresolvedRef {
+		TLObject before = _owner;
+		_owner = storage.getOwner();
+		try {
+			return ref.visit(this, storage.getPart());
+		} finally {
+			_owner = before;
+		}
 	}
 
 	@Override
@@ -447,7 +491,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 					return existing;
 				}
 			}
-			createObject(ref);
+			createObject(ref, arg);
 			return importObject(ref);
 		} catch (Exception ex) {
 			_log.error(I18NConstants.FAILED_TO_IMPORT__ID_TYPE_MSG.fill(ref.getId(), ref.getType(), ex.getMessage()), ex);
@@ -776,6 +820,11 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * A storage location, where a value can be stored.
 	 */
 	interface Storage {
+		/**
+		 * The object that owns this storage location.
+		 */
+		TLObject getOwner();
+
 		/**
 		 * The attribute that describes this storage location.
 		 */

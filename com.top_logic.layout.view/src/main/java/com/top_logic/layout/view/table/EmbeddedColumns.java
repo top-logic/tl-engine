@@ -288,6 +288,20 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		return result;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The channels the computed object is read with, and the ones the embedded declarations read.
+	 * </p>
+	 */
+	@Override
+	public List<ChannelRef> inputs() {
+		List<ChannelRef> result = new ArrayList<>(_inputs);
+		result.addAll(ColumnDeclarations.inputs(_columns));
+		return result;
+	}
+
 	@Override
 	public List<SortColumn> defaultSort() {
 		List<SortColumn> result = new ArrayList<>();
@@ -363,21 +377,28 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * collection of those values where the row reaches several objects, and nothing where it
 	 * reaches none.
 	 *
+	 * <p>
+	 * Where the path passes a reference the user may not read, the
+	 * {@link ColumnProviderService#UNREADABLE} marker stands for what lies behind it: the cell, or
+	 * the element of a collected cell, shows the placeholder.
+	 * </p>
+	 *
 	 * @param target
 	 *        The embedded object of one row, a collection of them, or {@code null}.
 	 * @param value
 	 *        Reads the cell value from the embedded object.
 	 */
 	private static Object values(Object target, Function<Object, Object> value) {
-		if (target == null) {
-			return null;
+		if (target == null || ColumnProviderService.isUnreadable(target)) {
+			return target;
 		}
 		if (target instanceof Collection<?> targets) {
 			List<Object> result = new ArrayList<>(targets.size());
 			for (Object object : targets) {
-				if (object != null) {
-					collect(result, value.apply(object));
+				if (object == null) {
+					continue;
 				}
+				collect(result, ColumnProviderService.isUnreadable(object) ? object : value.apply(object));
 			}
 			return result;
 		}
@@ -398,6 +419,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		for (Object row : rows) {
 			collect(result, navigation.apply(row));
 		}
+		// What lies behind a reference the user may not read takes no part in the aggregate.
+		result.removeIf(ColumnProviderService::isUnreadable);
 		return result;
 	}
 
@@ -481,7 +504,10 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * </p>
 	 *
 	 * <p>
-	 * A reference the current user may not read on an object leads nowhere from it.
+	 * A reference the current user may not read on an object leads to the
+	 * {@link ColumnProviderService#UNREADABLE} marker, which every further step keeps: the embedded
+	 * cells show the placeholder instead of being empty, see
+	 * {@link ColumnProviderService#attributeValue(Object, String)}.
 	 * </p>
 	 *
 	 * @param object
@@ -490,8 +516,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 *        The name of the reference to follow.
 	 */
 	private static Object step(Object object, String name) {
-		if (object == null) {
-			return null;
+		if (object == null || ColumnProviderService.isUnreadable(object)) {
+			return object;
 		}
 		if (object instanceof Collection<?> objects) {
 			List<Object> result = new ArrayList<>(objects.size());
@@ -503,10 +529,13 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		if (object instanceof TLObject model) {
 			TLStructuredType type = model.tType();
 			TLStructuredTypePart part = type == null ? null : type.getPart(name);
-			if (part == null
-				|| !ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, model, part).isExecutable()) {
-				// Nothing to follow, or a reference the user may not read on this object.
+			if (part == null) {
+				// Nothing to follow.
 				return null;
+			}
+			if (!ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, model, part).isExecutable()) {
+				// A reference the user may not read on this object.
+				return ColumnProviderService.UNREADABLE;
 			}
 			return model.tValue(part);
 		}

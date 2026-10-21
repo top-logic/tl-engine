@@ -15,6 +15,19 @@
       </instance>
     </config>
 
+    <config service-class="com.top_logic.layout.configedit.ConfigControlService">
+      <instance>
+        <annotation-controls>
+          <annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Html">
+            <!-- The macro feature set offers editing the HTML source of a text with embedded TL-Script expressions. -->
+            <impl class="com.top_logic.layout.react.wysiwyg.HtmlConfigProvider"
+              source-feature-sets="macro"
+            />
+          </annotation-control>
+        </annotation-controls>
+      </instance>
+    </config>
+
     <config service-class="com.top_logic.layout.react.resource.ClientResources">
       <instance class="com.top_logic.layout.react.resource.ClientResources">
         <resources>

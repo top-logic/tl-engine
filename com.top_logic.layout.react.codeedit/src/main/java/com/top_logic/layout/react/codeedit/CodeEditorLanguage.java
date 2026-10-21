@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.react.codeedit;
 
+import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
+
 /**
  * Source language offered by the {@link ReactCodeEditorControl}.
  *
@@ -40,6 +43,29 @@ public enum CodeEditorLanguage {
 
 	CodeEditorLanguage(String clientId) {
 		_clientId = clientId;
+	}
+
+	/**
+	 * The {@link CodeEditorLanguage} for the given {@link CodeLanguage}.
+	 */
+	public static CodeEditorLanguage of(CodeLanguage language) {
+		switch (language) {
+			case PLAIN:
+				return PLAIN;
+			case XML:
+				return XML;
+			case HTML:
+				return HTML;
+			case JSON:
+				return JSON;
+			case CSS:
+				return CSS;
+			case JAVASCRIPT:
+				return JAVASCRIPT;
+			case MARKDOWN:
+				return MARKDOWN;
+		}
+		throw new UnreachableAssertion("No such language: " + language);
 	}
 
 	/**

@@ -96,7 +96,7 @@ public class SplitSizePersonalization {
 
 	private final Store _store;
 
-	private final Map<Integer, Float> _sizes;
+	private Map<Integer, Float> _sizes;
 
 	private final Map<Integer, Boolean> _collapsed;
 
@@ -159,7 +159,7 @@ public class SplitSizePersonalization {
 	public ReactSplitPanelControl createSplitPanel(ReactContext context, Orientation orientation,
 			boolean resizable) {
 		return new ReactSplitPanelControl(context, orientation, resizable, this::saveSizes,
-			(index, collapsed) -> saveCollapsed(index.intValue(), collapsed.booleanValue()));
+			(index, collapsed) -> saveCollapsed(index.intValue(), collapsed.booleanValue()), this::forgetSizes);
 	}
 
 	/**
@@ -175,13 +175,14 @@ public class SplitSizePersonalization {
 	 */
 	public void addPane(ReactSplitPanelControl split, int index, ReactControl content) {
 		ChildConstraint constraint = constraint(index);
+		ChildConstraint configured = _configured.get(index);
 		if (isCollapsed(index)) {
 			// The pane expands to its configured size.
-			ChildConstraint configured = _configured.get(index);
 			split.addChild(content, constraint, true, configured.getSize(), configured.getUnit());
 		} else {
 			split.addChild(content, constraint);
 		}
+		split.setDefaultSize(content, configured.getSize(), configured.getUnit());
 	}
 
 	/**
@@ -226,6 +227,15 @@ public class SplitSizePersonalization {
 		}
 		_store.save(_key + SIZES_SUFFIX, indexed);
 		_store.save(_key + CONFIG_SIGNATURE_SUFFIX, _configSignature);
+	}
+
+	/**
+	 * Forgets the pane sizes the user dragged, after the panes were reset to their configured sizes.
+	 */
+	public void forgetSizes() {
+		_sizes = Map.of();
+		_store.save(_key + SIZES_SUFFIX, null);
+		_store.save(_key + CONFIG_SIGNATURE_SUFFIX, null);
 	}
 
 	/**

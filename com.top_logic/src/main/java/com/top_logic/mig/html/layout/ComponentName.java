@@ -11,8 +11,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.layout.editor.AllComponents;
 import com.top_logic.layout.editor.ComponentNameMapping;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.ComponentNameLabelProvider;
@@ -23,7 +21,6 @@ import com.top_logic.layout.provider.ComponentNameLabelProvider;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Format(ComponentNameFormat.class)
-@ControlProvider(SelectionControlProvider.class)
 @Options(fun = AllComponents.class, mapping = ComponentNameMapping.class)
 @OptionLabels(ComponentNameLabelProvider.class)
 public abstract class ComponentName {

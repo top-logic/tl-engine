@@ -48,26 +48,40 @@ describe('ISO form of a TLDatePicker value', () => {
   it('reads and writes a date', () => {
     const date = fromIso('date', '2026-06-01')!;
     expect([date.year(), date.month(), date.date(), date.hour()]).toEqual([2026, 5, 1, 0]);
-    expect(toIso('date', date)).toBe('2026-06-01');
+    expect(toIso('date', 'minutes', date)).toBe('2026-06-01');
+    expect(toIso('date', 'seconds', date)).toBe('2026-06-01');
   });
 
   it('reads and writes a time of day', () => {
     const time = fromIso('time', '14:30')!;
     expect([time.hour(), time.minute()]).toEqual([14, 30]);
-    expect(toIso('time', time)).toBe('14:30');
+    expect(toIso('time', 'minutes', time)).toBe('14:30');
   });
 
   it('reads a local date-time without a zone and writes it to the minute', () => {
     const dateTime = fromIso('datetime-local', '2026-06-01T14:30:15')!;
     expect([dateTime.date(), dateTime.hour(), dateTime.minute()]).toEqual([1, 14, 30]);
-    expect(toIso('datetime-local', dateTime)).toBe('2026-06-01T14:30');
+    expect(toIso('datetime-local', 'minutes', dateTime)).toBe('2026-06-01T14:30');
+  });
+
+  it('reads and writes a time of day to the second for the precision of seconds', () => {
+    const time = fromIso('time', '14:30:15')!;
+    expect([time.hour(), time.minute(), time.second()]).toEqual([14, 30, 15]);
+    expect(toIso('time', 'seconds', time)).toBe('14:30:15');
+    expect(toIso('time', 'minutes', time)).toBe('14:30');
+  });
+
+  it('writes a local date-time to the second for the precision of seconds', () => {
+    const dateTime = fromIso('datetime-local', '2026-06-01T14:30:15')!;
+    expect(dateTime.second()).toBe(15);
+    expect(toIso('datetime-local', 'seconds', dateTime)).toBe('2026-06-01T14:30:15');
   });
 
   it('reads no value and an invalid text as null', () => {
     expect(fromIso('date', undefined)).toBeNull();
     expect(fromIso('date', '')).toBeNull();
     expect(fromIso('date', 'kein Datum')).toBeNull();
-    expect(toIso('date', null)).toBeNull();
+    expect(toIso('date', 'minutes', null)).toBeNull();
   });
 });
 
@@ -109,6 +123,29 @@ describe('TLDatePicker as MUI X picker', () => {
     await stepUp('Minutes');
 
     expect(sent.mock.calls).toEqual([changedTo('14:31')]);
+  });
+
+  it('edits the seconds of a time of day with the precision of seconds', async () => {
+    const sent = mountDate({ value: '14:30:15', inputType: 'time', precision: 'seconds' });
+
+    await stepUp('Seconds');
+
+    expect(sent.mock.calls).toEqual([changedTo('14:30:16')]);
+  });
+
+  it('has no seconds section for the precision of minutes', () => {
+    mountDate({ value: '14:30', inputType: 'time', precision: 'minutes' });
+
+    expect(screen.getByRole('spinbutton', { name: 'Minutes' })).toBeTruthy();
+    expect(screen.queryByRole('spinbutton', { name: 'Seconds' })).toBeNull();
+  });
+
+  it('edits the seconds of a date-time with the precision of seconds', async () => {
+    const sent = mountDate({ value: '2026-06-01T14:30:15', inputType: 'datetime-local', precision: 'seconds' });
+
+    await stepUp('Seconds');
+
+    expect(sent.mock.calls).toEqual([changedTo('2026-06-01T14:30:16')]);
   });
 
   it('sends the ISO form of a changed date-time', async () => {

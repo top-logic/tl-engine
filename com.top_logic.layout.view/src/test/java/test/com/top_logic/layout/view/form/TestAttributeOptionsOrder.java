@@ -15,6 +15,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.layout.react.control.select.OptionOrder;
@@ -68,12 +69,12 @@ public class TestAttributeOptionsOrder extends TestCase {
 	}
 
 	/**
-	 * Runs the test in an interaction: an options expression is compiled against the application
+	 * Runs the test in the system context: an options expression is compiled against the application
 	 * model, which reads the knowledge base.
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ThreadContextManager.<Void, Throwable, RuntimeException> inSystemInteraction(TestAttributeOptionsOrder.class,
+		ThreadContext.<Void, Throwable, RuntimeException> inSystemContext(TestAttributeOptionsOrder.class,
 			() -> {
 				super.runTest();
 				return null;

@@ -19,7 +19,6 @@ import com.top_logic.ai.chat.view.ChatScope;
 import com.top_logic.ai.chat.view.ChatScopeElement;
 import com.top_logic.ai.chat.view.ChatScopeElement.Config;
 import com.top_logic.ai.chat.view.list.DataListElement;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
@@ -50,7 +49,7 @@ public class TestChatScopeConfig extends TestCase {
 		assertEquals("support", config.getChatId());
 		assertEquals(StackDirection.ROW, config.getDirection());
 
-		List<PolymorphicConfiguration<? extends UIElement>> children = config.getChildren();
+		List<UIElement.Config> children = config.getChildren();
 		assertEquals(2, children.size());
 		assertEquals(ChatConversationElement.class, children.get(0).getImplementationClass());
 		assertEquals(ChatRailElement.class, children.get(1).getImplementationClass());

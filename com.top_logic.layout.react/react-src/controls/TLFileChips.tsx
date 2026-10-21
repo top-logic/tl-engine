@@ -42,8 +42,10 @@ function formatSize(size: number): string {
  * Renders a collection of files as chips (part `Chip`): file icon, name, size as detail, pressed to
  * download where the file has data. In edit mode, each chip offers to remove its file, and files can
  * be added via the add button (part `Button`) or by dropping them onto the control; uploads go to the
- * server control's upload endpoint. In little room, a table cell for instance, the chips wrap with
- * reduced spacing and the add button shows its icon alone, its label being its tooltip.
+ * server control's upload endpoint. In little room, a table cell for instance, the control keeps to one
+ * line: the chips scroll sideways, each name ends with an ellipsis where it is too long, the sizes
+ * are left out, and the add button stays at the end of the line, showing its icon alone, its label
+ * being its tooltip.
  *
  * State:
  * - chips: [{ key, name, size, hasData }]
@@ -177,18 +179,21 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <div className="tlFileChips__chips">
       {chips.map(chip => (
         <Chip
           key={chip.key}
+          className="tlFileChips__chip"
           icon={FILE_ICON}
           label={chip.name}
-          detail={chip.size != null ? formatSize(chip.size) : undefined}
+          detail={chip.size != null && !compact ? formatSize(chip.size) : undefined}
           tooltip={chip.hasData ? t['js.download.file'].replace('{0}', chip.name) : chip.name}
           onClick={chip.hasData ? () => doDownload(chip) : undefined}
           onRemove={editable ? () => sendCommand(CMD_REMOVE_CHIP, { [ARG_KEY]: chip.key }) : undefined}
           removeLabel={t['js.fileChips.remove'].replace('{0}', chip.name)}
         />
       ))}
+      </div>
       {editable && (
         <>
           <input
@@ -212,7 +217,8 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
         </>
       )}
       {serverError && state !== stateAtUpload && (
-        <span className="tlFileChips__error tl-file-upload__status tl-type-label" role="alert">{serverError}</span>
+        <span className="tlFileChips__error tl-file-upload__status tl-type-label" role="alert"
+          title={compact ? serverError : undefined}>{serverError}</span>
       )}
     </div>
   );

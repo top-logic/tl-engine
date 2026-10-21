@@ -1219,10 +1219,51 @@ div.tlValueList {
 	cursor: progress;
 }
 
-/* In little room, a table cell for instance: the chips wrap within it, as close as keeps them apart. */
+/* The chips lay out in the line of the control; the element only exists to scroll them in little room. */
+.tlFileChips__chips {
+	display: contents;
+}
+
+/* In little room, a table cell for instance: one line no higher than a chip. The chips scroll
+   sideways - by wheel and trackpad, without a bar of their own, as the header of a table does - and
+   the add button stays at the end of the line, outside the scrolling row. */
 .tlFileChips--compact {
+	flex-wrap: nowrap;
 	gap: var(--spacing-01);
 	min-height: 0;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.tlFileChips--compact .tlFileChips__chips {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: var(--spacing-01);
+	min-width: 0;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: none;
+}
+
+/* A chip keeps its width while the row scrolls, and a long name ends with an ellipsis within the
+   visible width of the row. */
+.tlFileChips--compact .tlFileChips__chip {
+	flex-shrink: 0;
+	max-width: 100%;
+}
+
+.tlFileChips--compact .tlFileChips__add {
+	flex-shrink: 0;
+}
+
+/* The message of a failed upload stays in the line, cut short; its full text is its tooltip. */
+.tlFileChips--compact .tlFileChips__error {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 /* The message of a failed upload, on a line of its own below the chips. */

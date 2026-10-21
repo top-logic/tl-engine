@@ -366,20 +366,31 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * R4: An undiscoverable object passed as input is not visible to the script.
+	 * R4: The inputs of a script are not filtered, the caller delivering them is the object source
+	 * responsible for their discoverability. The result of the script is filtered nevertheless.
 	 */
-	public void testInputFiltered() throws Exception {
+	public void testInputNotFiltered() throws Exception {
 		becomeUser(_pathUser);
+		assertEquals(Boolean.TRUE, eval("x -> $x != null", _a2));
 		assertNull(eval("x -> $x", _a2));
 	}
 
 	/**
-	 * R4: Objects nested in an input collection are filtered, too.
+	 * R4: Objects nested in an input collection are not filtered either, only those in the result.
 	 */
-	public void testNestedInputFiltered() throws Exception {
+	public void testNestedInputNotFiltered() throws Exception {
 		becomeUser(_pathUser);
+		assertEquals(Double.valueOf(2), eval("x -> $x.size()", Arrays.asList(_a1, _a2)));
 		assertEquals(Arrays.asList(_a1), eval("x -> $x", Arrays.asList(_a1, _a2)));
-		assertEquals(Double.valueOf(1), eval("x -> $x.size()", Arrays.asList(_a1, _a2)));
+	}
+
+	/**
+	 * R4: An undiscoverable input does not make its attributes readable, the attribute access checks
+	 * the read right.
+	 */
+	public void testAttributeOfUndiscoverableInputNotReadable() throws Exception {
+		becomeUser(_pathUser);
+		assertNull(eval("x -> $x.get(`TestTLScriptSecurity:PathNode#name`)", _a2));
 	}
 
 	/**

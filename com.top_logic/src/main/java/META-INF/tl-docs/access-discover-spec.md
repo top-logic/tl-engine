@@ -36,7 +36,7 @@ Before this change that was impossible:
 |---|---|
 | Object right | An operation granted on the type of an object: `Discover`, `Read`, `Write`, `Create`, `Delete`, ... |
 | Attribute right | An operation granted on a single attribute (`<part>` grant): `Read`, `Write`. |
-| Object source | Every place an object enters a computation: reference navigation, backward references (`referers`), `all`, database queries (`kbQuery`), resolving by ID (`objectResolve`), script functions, the inputs of a script, option lists, table and tree models in the UI. |
+| Object source | Every place an object enters a computation: reference navigation, backward references (`referers`), `all`, database queries (`kbQuery`), resolving by ID (`objectResolve`), script functions, the callers handing objects to a script (model, channels, command arguments), option lists, table and tree models in the UI. |
 | Secured evaluation | A computation on behalf of a user (UI, script console, options, commands). |
 | Unsecured evaluation | A computation on behalf of the system (derived attributes, constraints, labels, access rules, BPE execution), see R12. |
 
@@ -80,15 +80,17 @@ A role may read `A#bs` without being able to read any other attribute of `A`, an
 ### R4 - every object source filters for `Discover`
 
 In a secured evaluation, every object source delivers only the objects the user holds `Discover`
-on: a single-valued source delivers `null`, a multi-valued source drops the element. This applies
-to TL-Script and to the UI alike:
+on: a single-valued source delivers `null`, a multi-valued source drops the element. The source
+filters what it delivers; nobody filters what it receives. This applies to TL-Script and to the UI
+alike:
 
 - reference navigation and `referers`,
 - `all(T)`, `all($t)` and their compiled database form (`kbQuery`),
 - resolving objects by ID (`objectResolve`, `objectResolveKey`),
 - script functions delivering objects (engine and application functions),
-- the inputs of a script (model, channels, command arguments, values passed from Java, REST, AI
-  agents),
+- the callers handing objects to a script (the model and the channels of a view, command
+  arguments, values passed from Java, REST, AI agents): a script does not filter its inputs, the
+  caller delivers only objects the user may discover,
 - option lists, table and tree models of the UI.
 
 A filter on `all(...)` is compiled into the database query for an access on the query root only if,
@@ -101,7 +103,7 @@ Model elements (types, attributes, modules) are not filtered. A form field showi
 reference attribute masks instead of filtering, see R11.
 
 The security filter report (`SecurityFilterReport`, the diagnostic for hidden rows) records only the
-objects the executor removes from the final result, not the objects withheld by sources or inputs.
+objects the executor removes from the final result, not the objects withheld by sources.
 
 Composition parts are rows, not reference elements: in table cells and in their read-only dialog
 the undiscoverable parts are filtered, not masked, and on save the hidden parts are kept.
@@ -436,5 +438,10 @@ before it.
   instances. This is now R4 with `Discover` as criterion, and the filter lives in the common layer
   (R8).
 - Object sources outside the TL-Script functions that do not use the common layer (for example
-  `loadFromSession`, `changeLog`, `inRevision`) are only covered by the input and result filters;
-  moving them onto the common layer is follow-up work.
+  `loadFromSession`, `changeLog`, `inRevision`) are only covered by the result filter; moving them
+  onto the common layer is follow-up work.
+- The inputs of a secured script used to be filtered by the executor in addition to the sources
+  delivering them (`TL_8.0.0-alpha11`). The filter withheld the inputs of unsecured computations
+  whose executor still applied security (a derived attribute, #29926) and hid a source that leaked
+  an undiscoverable object instead of exposing it. A script now receives its inputs as the caller
+  delivers them.

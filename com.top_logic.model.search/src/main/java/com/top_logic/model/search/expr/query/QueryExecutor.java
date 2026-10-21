@@ -28,7 +28,7 @@ import com.top_logic.util.model.ModelService;
  * A {@link QueryExecutor} is the interface through which an application executes a
  * <i>TL-Script</i>. It therefore secures the result of an execution: unless the security is
  * {@link #disableSecurity() switched off}, objects that the current user is not allowed to discover
- * are removed from the arguments and the result, see {@link #executeWith(EvalContext, Args)}. A
+ * are removed from the result, see {@link #executeWith(EvalContext, Args)}. A
  * {@link SecurityFilterReport} attached to the {@link EvalContext} of the execution tells the caller
  * what that filter removed.
  * </p>
@@ -398,8 +398,9 @@ public abstract class QueryExecutor {
 	 * </p>
 	 *
 	 * <p>
-	 * The arguments are filtered the same way before the evaluation, so that a script only ever sees
-	 * discoverable objects, also those handed in by the caller.
+	 * The arguments are passed on as they are: an object source filters what it delivers (R4 of the
+	 * Discover specification), so the caller handing an object to a secured script is responsible
+	 * for delivering only objects the current user may discover, like every other object source.
 	 * </p>
 	 *
 	 * @param args
@@ -410,11 +411,6 @@ public abstract class QueryExecutor {
 	 *      Execution from within an ongoing evaluation, whose result is an intermediate one.
 	 */
 	public final Object executeWith(EvalContext definitions, Args args) {
-		if (_securityEnabled) {
-			// The inputs of a secured script are restricted to discoverable objects, like every
-			// other object source.
-			args = args.map(SearchExpression::filterSecurity);
-		}
 		Object result = internalExecuteWith(definitions, args);
 		if (_securityEnabled) {
 			return SearchExpression.filterSecurity(result, definitions.getSecurityReport());

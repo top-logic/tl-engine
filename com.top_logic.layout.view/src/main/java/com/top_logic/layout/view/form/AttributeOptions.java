@@ -23,6 +23,8 @@ import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.react.control.select.OptionOrder;
+import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
@@ -261,6 +263,24 @@ public class AttributeOptions {
 	 */
 	public static Comparator<?> byLabel() {
 		return LabelComparator.newCachingInstance(MetaResourceProvider.INSTANCE);
+	}
+
+	/**
+	 * The order the given {@link OptionOrder} stands for, in the form
+	 * {@link FieldSpec#setOptionOrder(Comparator)} takes it: {@link #byLabel()} for
+	 * {@link OptionOrder#BY_LABEL}, {@code null} for {@link OptionOrder#AS_GIVEN}.
+	 *
+	 * @param order
+	 *        The configured order.
+	 */
+	public static Comparator<?> comparator(OptionOrder order) {
+		switch (order) {
+			case BY_LABEL:
+				return byLabel();
+			case AS_GIVEN:
+				return null;
+		}
+		throw new IllegalArgumentException("No such option order: " + order);
 	}
 
 	/**

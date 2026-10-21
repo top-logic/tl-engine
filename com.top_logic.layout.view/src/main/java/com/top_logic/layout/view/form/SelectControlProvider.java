@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.element.meta.OptionProvider;
-import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -275,8 +274,8 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		// it for want of one. The two registries of LabelProviderService fall back to each other,
 		// so a type registered only for its label is labelled exactly as before.
 		LabelProvider labels = MetaResourceProvider.INSTANCE;
-		Comparator<?> optionOrder = _order == null ? field.getOptionOrder()
-			: (_order == OptionOrder.BY_LABEL ? LabelComparator.newCachingInstance(labels) : null);
+		Comparator<?> optionOrder =
+			_order == null ? field.getOptionOrder() : AttributeOptions.comparator(_order);
 		// An ordered attribute keeps the order the user gives its selection; an unordered one is
 		// shown in the order of the options.
 		SelectDisplay display = _display == null ? field.getSelectDisplay() : _display;

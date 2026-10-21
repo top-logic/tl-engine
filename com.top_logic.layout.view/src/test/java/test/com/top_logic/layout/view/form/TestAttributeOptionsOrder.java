@@ -17,6 +17,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.element.config.annotation.TLOptions;
+import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
@@ -93,6 +94,12 @@ public class TestAttributeOptionsOrder extends TestCase {
 	public void testAReferenceSortsItsOptionsByLabel() {
 		assertNotNull(AttributeOptions.orderFor(_model.addClassProperty(_row, "other", _row)));
 		assertNotNull(AttributeOptions.orderFor(_row));
+	}
+
+	/** A configured {@link OptionOrder} sorts by label or keeps the order as given. */
+	public void testAConfiguredOrderStandsForItsComparator() {
+		assertNotNull(AttributeOptions.comparator(OptionOrder.BY_LABEL));
+		assertNull(AttributeOptions.comparator(OptionOrder.AS_GIVEN));
 	}
 
 	/** An options expression that is not asked to sort keeps the order it computes. */

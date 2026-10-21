@@ -35,7 +35,7 @@ presentation the dropdown.
 Where `order` says nothing, the source of the options decides through `FieldSpec.getOptionOrder()`
 (`null` for the order as given): the classifiers of an enumeration and the constants of an enum
 datatype are offered as given, the options of an expression (`<value-input options="…">`) in the
-order it computes, those of an `options-by-expression` annotation as its `alphabetical-order` says
+order it computes (unless the `<value-input>` states an `option-order` of its own), those of an `options-by-expression` annotation as its `alphabetical-order` says
 (by label unless it is `false`), the instances of a class and the values of an option provider
 configured at the control by label.
 

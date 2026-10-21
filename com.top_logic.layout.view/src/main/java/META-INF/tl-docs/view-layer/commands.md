@@ -7,7 +7,7 @@ order: 50
 
 ## A command is a chain of actions over named arguments
 
-`<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<confirm>`, `<notify>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, `<download>`, … actions written inside it as one chain (`ViewActionChain`). A drop, an upload, an activation and every other trigger of a chain runs its actions the same way.
+`<generic-command>` (`GenericViewCommand`) runs the `<execute-script>`, `<store-form-state>`, `<enter-edit-mode>`, `<leave-edit-mode>` (which switch the edit mode of the form running the command, see [saving with an action chain](doc:view-layer/forms#saving-with-an-action-chain)), `<confirm>`, `<notify>`, `<verify-identity>`, `<with-transaction>`, `<open-dialog>`, `<write-channel>`, `<download>`, … actions written inside it as one chain (`ViewActionChain`). A drop, an upload, an activation and every other trigger of a chain runs its actions the same way.
 
 **The arguments of a chain are named values** (`ActionArguments`), and **they flow unchanged through the chain**: every action of the chain sees the same arguments, whatever the actions before it produced. Which names exist is decided by what triggered the chain:
 

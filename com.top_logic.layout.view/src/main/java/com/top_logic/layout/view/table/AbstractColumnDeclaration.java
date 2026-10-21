@@ -254,6 +254,18 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The channels the declared filter reads.
+	 * </p>
+	 */
+	@Override
+	public List<InputRef> inputs() {
+		return _binding.inputs();
+	}
+
+	/**
 	 * Creates the plain {@link AbstractColumnDeclaration} a table derives for a column no
 	 * declaration of its own describes: the type-derived display, the label and width the column
 	 * brings itself, no sorting, the type-derived order and no aggregate.

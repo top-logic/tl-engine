@@ -8,6 +8,7 @@ package com.top_logic.layout.view.table;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Set;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -94,6 +96,20 @@ public class ColumnDeclarations {
 			result.addAll(declaration.declaredNames());
 		}
 		return result;
+	}
+
+	/**
+	 * The channels the functions of the given declarations read, see
+	 * {@link ColumnDeclaration#inputs()}, each once, in declaration order.
+	 */
+	public static List<InputRef> inputs(List<ColumnDeclaration> declarations) {
+		Map<String, InputRef> result = new LinkedHashMap<>();
+		for (ColumnDeclaration declaration : declarations) {
+			for (InputRef input : declaration.inputs()) {
+				result.putIfAbsent(input.getChannel().getChannelName(), input);
+			}
+		}
+		return new ArrayList<>(result.values());
 	}
 
 	/**

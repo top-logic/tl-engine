@@ -221,8 +221,15 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 				refreshPresets(table, ChannelInputs.arguments(inputChannels));
 				refresh.run();
 			}
+
+			@Override
+			public void inputsChanged() {
+				// The rows and their cells stay; the criteria of the presets may read the inputs.
+				refreshPresets(table, ChannelInputs.arguments(inputChannels));
+			}
 		}, treeModel, _functions::root, builder, _functions.parentFunction(inputChannels),
-			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
+			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels)
+				.withRowIndependentInputs(inputRoles(context, inputChannels).rowIndependent());
 
 		// Opening a row computes the children of its node, whose objects are followed from then on.
 		source.addListener((from, to) -> observableModel.nodesComputed());

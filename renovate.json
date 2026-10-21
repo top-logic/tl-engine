@@ -7,5 +7,11 @@
   ],
   "lockFileMaintenance": {
     "enabled": true
-  }
+  },
+  "constraints": {
+    "npm": "11.19.0"
+  },
+  "postUpdateOptions": [
+    "npmDedupe"
+  ]
 }

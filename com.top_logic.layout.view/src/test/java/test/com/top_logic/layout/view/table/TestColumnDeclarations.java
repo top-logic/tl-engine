@@ -17,13 +17,19 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
 import com.top_logic.basic.format.DecimalFormatDefinition;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.AttributeColumn;
+import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnResolution;
@@ -249,6 +255,94 @@ public class TestColumnDeclarations extends TestCase {
 			sort.columns());
 		assertEquals("A table whose columns declare no direction starts unsorted.", SortSpec.NONE,
 			ColumnDeclarations.defaultSort(instantiate(attributeColumn("count", null))));
+	}
+
+	/**
+	 * The channels the declared columns read are collected once each, in declaration order; a
+	 * {@code <column>} over an attribute reads none.
+	 */
+	public void testInputsOfTheDeclarations() {
+		ComputedColumn.Config total = computedColumn("total", null);
+		set(total, Inputs.INPUTS,
+			List.of(new InputRef(new ChannelRef("selected")), new InputRef(new ChannelRef("factor"))));
+		ComputedColumn.Config share = computedColumn("share", null);
+		set(share, Inputs.INPUTS, List.of(new InputRef(new ChannelRef("factor"))));
+
+		List<ColumnDeclaration> declarations = instantiate(attributeColumn("count", null), total, share);
+
+		assertEquals(List.of(), declarations.get(0).inputs());
+		assertEquals(List.of("selected", "factor"), names(ColumnDeclarations.inputs(declarations)));
+	}
+
+	/**
+	 * The channels a column's filter reads count among the inputs of its declaration: the filter
+	 * decides which rows are displayed, and follows its channels by the table being refreshed.
+	 */
+	public void testFilterInputsOfTheDeclarations() {
+		AttributeColumn.Config count = attributeColumn("count", null);
+		set(count, AttributeColumn.Config.FILTER, inputFilter("threshold"));
+		ComputedColumn.Config total = computedColumn("total", null);
+		set(total, Inputs.INPUTS, List.of(new InputRef(new ChannelRef("factor"))));
+		set(total, ComputedColumn.Config.FILTER, inputFilter("selected"));
+
+		List<ColumnDeclaration> declarations = instantiate(count, total);
+
+		assertEquals(List.of("threshold"), names(declarations.get(0).inputs()));
+		assertEquals(List.of("factor", "selected"), names(declarations.get(1).inputs()));
+		assertEquals(List.of("threshold", "factor", "selected"),
+			names(ColumnDeclarations.inputs(declarations)));
+	}
+
+	/** The argument names of the given input references, in order. */
+	private static List<String> names(List<InputRef> refs) {
+		List<String> result = new ArrayList<>();
+		for (InputRef ref : refs) {
+			result.add(ref.getName());
+		}
+		return result;
+	}
+
+	/** The configuration of an {@link InputFilter} reading the given channel. */
+	private static InputFilter.Config inputFilter(String channel) {
+		InputFilter.Config config = TypedConfiguration.newConfigItem(InputFilter.Config.class);
+		set(config, Inputs.INPUTS, List.of(new InputRef(new ChannelRef(channel))));
+		return config;
+	}
+
+	/**
+	 * A column filter with inputs of its own, as a {@link com.top_logic.layout.view.table.ScriptedFilter}
+	 * has them: it integrates through {@link ColumnBinding} and names its inputs there.
+	 */
+	public static class InputFilter extends TextColumnFilter<Object> implements ColumnBinding {
+
+		/**
+		 * Configuration of an {@link InputFilter}.
+		 */
+		public interface Config extends PolymorphicConfiguration<InputFilter>, Inputs {
+			@Override
+			@ClassDefault(InputFilter.class)
+			Class<? extends InputFilter> getImplementationClass();
+		}
+
+		private final List<InputRef> _inputs;
+
+		/**
+		 * Creates an {@link InputFilter} from configuration.
+		 */
+		public InputFilter(InstantiationContext context, Config config) {
+			super(String::valueOf);
+			_inputs = config.getInputs();
+		}
+
+		@Override
+		public Column<Object, ?> createColumn(ColumnSetup setup) {
+			return ColumnBinding.TYPE_DERIVED.createColumn(setup);
+		}
+
+		@Override
+		public List<InputRef> inputs() {
+			return _inputs;
+		}
 	}
 
 	/**

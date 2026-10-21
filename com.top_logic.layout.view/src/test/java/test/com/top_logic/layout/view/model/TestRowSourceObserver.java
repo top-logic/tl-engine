@@ -8,6 +8,7 @@ package test.com.top_logic.layout.view.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import junit.framework.TestCase;
 
@@ -17,8 +18,10 @@ import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -139,6 +142,192 @@ public class TestRowSourceObserver extends TestCase {
 
 		assertEquals("The channel change reaches the sink, the transient element notwithstanding.",
 			List.of(List.of()), delivered);
+	}
+
+	/**
+	 * Tests that a change of a row-independent input does not call the element function, delivers
+	 * nothing and runs the inputs-changed handler.
+	 */
+	public void testRowIndependentInputChangeOnlyRunsTheHandler() {
+		ViewChannel filter = new DefaultViewChannel("filter");
+		ViewChannel selection = new DefaultViewChannel("selection");
+		int[] calls = { 0 };
+		int[] handled = { 0 };
+		List<String> elements = List.of("a", "ab", "b");
+		RowSourceObserver<String> observer = new RowSourceObserver<>(elements, args -> {
+			calls[0]++;
+			return filtered(elements, args[0]);
+		}, Set.of(), List.of(filter, selection), _delivered::add)
+			.withRowIndependentInputs(List.of(selection))
+			.onInputsChanged(List.of(), () -> handled[0]++);
+		observer.attach(null);
+		calls[0] = 0;
+
+		selection.set("ab");
+
+		assertEquals("The element function is not called.", 0, calls[0]);
+		assertEquals("Nothing is delivered.", List.of(), _delivered);
+		assertEquals("The handler runs once.", 1, handled[0]);
+	}
+
+	/**
+	 * Tests that the element function receives the values of all inputs in their declared order,
+	 * the row-independent ones included.
+	 */
+	public void testElementFunctionReceivesRowIndependentInputs() {
+		ViewChannel selection = new DefaultViewChannel("selection");
+		ViewChannel filter = new DefaultViewChannel("filter");
+		List<Object[]> arguments = new ArrayList<>();
+		List<String> elements = List.of("a", "ab", "b");
+		RowSourceObserver<String> observer = new RowSourceObserver<>(elements, args -> {
+			arguments.add(args);
+			return filtered(elements, args[1]);
+		}, Set.of(), List.of(selection, filter), _delivered::add)
+			.withRowIndependentInputs(List.of(selection))
+			.onInputsChanged(List.of(filter), () -> {
+				// Nothing to refresh.
+			});
+		observer.attach(null);
+		selection.set("ab");
+		arguments.clear();
+
+		filter.set("b");
+
+		assertEquals(1, arguments.size());
+		assertEquals(List.of("ab", "b"), List.of(arguments.get(0)));
+		assertEquals(List.of(List.of("ab", "b")), _delivered);
+	}
+
+	/**
+	 * Tests that a change of another input yielding the elements at hand delivers nothing and runs
+	 * the inputs-changed handler.
+	 */
+	public void testEqualElementsRunOnlyTheHandler() {
+		ViewChannel filter = new DefaultViewChannel("filter");
+		int[] handled = { 0 };
+		RowSourceObserver<String> observer =
+			observer(filter, List.of("a", "ab", "b")).onInputsChanged(List.of(filter), () -> handled[0]++);
+		observer.attach(null);
+
+		// Every element contains the empty term, so the elements stay.
+		filter.set("");
+
+		assertEquals("Nothing is delivered.", List.of(), _delivered);
+		assertEquals("The handler runs once.", 1, handled[0]);
+	}
+
+	/**
+	 * Tests that a change of another input yielding other elements delivers them, and does not run
+	 * the inputs-changed handler.
+	 */
+	public void testChangedElementsAreDeliveredWithAHandler() {
+		ViewChannel filter = new DefaultViewChannel("filter");
+		int[] handled = { 0 };
+		RowSourceObserver<String> observer =
+			observer(filter, List.of("a", "ab", "b")).onInputsChanged(List.of(filter), () -> handled[0]++);
+		observer.attach(null);
+
+		filter.set("a");
+
+		assertEquals(List.of(List.of("a", "ab")), _delivered);
+		assertEquals("The handler does not run.", 0, handled[0]);
+	}
+
+	/**
+	 * Tests that a change of an input not declared to the inputs-changed handler delivers the
+	 * elements even where they equal the ones at hand: what the display builds from them may read
+	 * that input.
+	 */
+	public void testEqualElementsOfAnUndeclaredInputAreDelivered() {
+		ViewChannel filter = new DefaultViewChannel("filter");
+		ViewChannel other = new DefaultViewChannel("other");
+		int[] handled = { 0 };
+		List<String> elements = List.of("a", "ab", "b");
+		RowSourceObserver<String> observer = new RowSourceObserver<>(elements,
+			args -> filtered(elements, args[0]), Set.of(), List.of(filter, other), _delivered::add)
+				.onInputsChanged(List.of(filter), () -> handled[0]++);
+		observer.attach(null);
+
+		other.set("x");
+
+		assertEquals(List.of(List.of("a", "ab", "b")), _delivered);
+		assertEquals("The handler does not run.", 0, handled[0]);
+	}
+
+	/**
+	 * Tests that without an inputs-changed handler a change of an input delivers the elements even
+	 * where they equal the ones at hand.
+	 */
+	public void testEqualElementsAreDeliveredWithoutAHandler() {
+		ViewChannel filter = new DefaultViewChannel("filter");
+		RowSourceObserver<String> observer = observer(filter, List.of("a", "ab", "b"));
+		observer.attach(null);
+
+		filter.set("");
+
+		assertEquals(List.of(List.of("a", "ab", "b")), _delivered);
+	}
+
+	/**
+	 * Tests that a model change delivers the elements even where they equal the ones at hand: the
+	 * displayed objects themselves may have changed.
+	 */
+	public void testModelChangeDeliversEqualElements() {
+		ViewChannel filter = new DefaultViewChannel("filter");
+		int[] handled = { 0 };
+		RowSourceObserver<String> observer =
+			observer(filter, List.of("a", "ab", "b")).onInputsChanged(List.of(filter), () -> handled[0]++);
+		observer.attach(null);
+
+		observer.notifyChange(NoChange.INSTANCE);
+
+		assertEquals(List.of(List.of("a", "ab", "b")), _delivered);
+		assertEquals("The handler does not run.", 0, handled[0]);
+	}
+
+	/**
+	 * A model change reporting no object, as the observer receives it from its scope: the observer
+	 * re-evaluates on every notification.
+	 */
+	private enum NoChange implements ModelChangeEvent {
+
+		/** The sole instance. */
+		INSTANCE;
+
+		@Override
+		public ChangeType getChange(TLObject existingObject) {
+			return ChangeType.NONE;
+		}
+
+		@Override
+		public Stream<? extends TLObject> getUpdated() {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getUpdated(TLStructuredType type) {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getCreated() {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getCreated(TLStructuredType type) {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getDeleted() {
+			return Stream.empty();
+		}
+
+		@Override
+		public Stream<? extends TLObject> getDeleted(TLStructuredType type) {
+			return Stream.empty();
+		}
 	}
 
 	/**

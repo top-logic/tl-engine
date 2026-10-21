@@ -69,6 +69,13 @@ public class ColumnFunctions {
 	}
 
 	/**
+	 * References to the channels whose values lead the arguments of each of the functions.
+	 */
+	public List<InputRef> inputs() {
+		return _inputs;
+	}
+
+	/**
 	 * Whether an edited cell value is written back, so that the column is edited at all.
 	 */
 	public boolean updates() {

@@ -199,7 +199,29 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	private static final String SCROLL_START = "scrollStart";
 
+	/**
+	 * State key of the rows the client renders: the window of the rows around the displayed ones,
+	 * starting at {@link #VIEWPORT_START}, each with its cell controls.
+	 *
+	 * <p>
+	 * Pushed when the rows themselves change - the window is scrolled, the data, the filter, the
+	 * sorting or the grouping changes, or a row's cells are built again. The selection is carried
+	 * by {@link #SELECTED_ROWS}, so a selection change pushes no rows.
+	 * </p>
+	 */
 	private static final String ROWS = "rows";
+
+	/**
+	 * State key of the selected rows among the {@link #ROWS rows sent}: the list of their
+	 * {@link #ROW_INDEX indexes}, in the order of the rows.
+	 *
+	 * <p>
+	 * A selected row outside the window of the rows sent is not listed; the key is pushed again
+	 * whenever the selection or that window changes. Pushed together with {@link #SELECTED_COUNT}
+	 * and {@link #CURSOR_INDEX}, each only when its value changed.
+	 * </p>
+	 */
+	private static final String SELECTED_ROWS = "selectedRows";
 
 	private static final String SELECTION_MODE = "selectionMode";
 
@@ -276,6 +298,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final String ROW_INDEX = "index";
 
+	/**
+	 * Entry of a row in the agent projection of the rows (see {@link #scriptingScalarState()})
+	 * telling whether the row is selected.
+	 */
 	private static final String ROW_SELECTED = "selected";
 
 	/**
@@ -534,6 +560,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private int _viewportStart;
 
 	private int _viewportCount = 50;
+
+	/** The {@link #ROW_INDEX index} of the first of the {@link #ROWS rows sent}. */
+	private int _bufferedStart;
+
+	/** The {@link Row#key() keys} of the {@link #ROWS rows sent}, starting at {@link #_bufferedStart}. */
+	private List<Object> _bufferedKeys = List.of();
 
 	private final SelectionMode _selectionMode;
 
@@ -833,6 +865,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Pushes the rows of the current window again, with the cell controls built for them.
+	 *
+	 * <p>
+	 * For a change that leaves the rows and their cells as they are but changes what is evaluated
+	 * with every push of the rows, such as the {@link TableView#rowCssClass(Row) row class}: no cell
+	 * control is built again, in contrast to {@link #refreshData()}.
+	 * </p>
+	 */
+	public void repaintRows() {
+		updateViewport(_viewportStart, _viewportCount);
+	}
+
+	/**
 	 * Selects exactly the row with the given {@link Row#key() row key} (clearing any other selection),
 	 * or clears the selection when {@code key} is {@code null} or names no row of the table's data.
 	 * Pushes the change to the client, scrolls the row into view and notifies the
@@ -880,11 +925,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		pushSelection();
 		// Scroll the selected row into view when it lies outside the current viewport (e.g. a row
 		// selected programmatically after a create), centering it; keep the viewport otherwise.
-		int start = _viewportStart;
 		if (_cursorIndex >= 0 && (_cursorIndex < _viewportStart || _cursorIndex >= _viewportStart + _viewportCount)) {
-			start = Math.max(0, _cursorIndex - _viewportCount / 2);
+			updateViewport(Math.max(0, _cursorIndex - _viewportCount / 2), _viewportCount);
 		}
-		updateViewport(start, _viewportCount);
 	}
 
 	/**
@@ -1036,6 +1079,20 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		return key == null ? null : resources.getString(key.tooltipOptional());
 	}
 
+	/**
+	 * Pushes the {@link #ROWS rows} of the window around the given viewport, the viewport itself
+	 * and the {@link #SELECTED_ROWS selection} within the window.
+	 *
+	 * <p>
+	 * Called where the rows change; the selection is carried by {@link #SELECTED_ROWS}, so a
+	 * selection change pushes no rows.
+	 * </p>
+	 *
+	 * @param start
+	 *        The index of the first displayed row.
+	 * @param count
+	 *        The number of displayed rows.
+	 */
 	private void updateViewport(int start, int count) {
 		int total = _view.rowCount();
 		int bufferedStart = Math.max(0, start - PREFETCH_ROWS);
@@ -1043,10 +1100,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 		List<Row<R>> rows = bufferedStart < bufferedEnd ? _view.rows(bufferedStart, bufferedEnd) : List.of();
 
-		Set<Object> bufferedKeys = new HashSet<>();
+		List<Object> bufferedKeyList = new ArrayList<>(rows.size());
 		for (Row<R> row : rows) {
-			bufferedKeys.add(row.key());
+			bufferedKeyList.add(row.key());
 		}
+		Set<Object> bufferedKeys = new HashSet<>(bufferedKeyList);
 		// Drop cell controls for rows that left the buffer.
 		for (Object cached : new ArrayList<>(_cellCache.keySet())) {
 			if (!bufferedKeys.contains(cached)) {
@@ -1065,7 +1123,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ROW_ID, ROW_ID_PREFIX + index);
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
-			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
 			if (_dragEnabled) {
 				rowState.put(ROW_DRAGGABLE, Boolean.valueOf(isDraggableRow(row)));
 			}
@@ -1096,12 +1153,35 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 		_viewportStart = start;
 		_viewportCount = count;
+		_bufferedStart = bufferedStart;
+		_bufferedKeys = bufferedKeyList;
 
 		putState(VIEWPORT_START, Integer.valueOf(bufferedStart));
 		putState(SCROLL_START, Integer.valueOf(start));
 		putState(ROWS, rowStates);
-		putState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
-		putState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
+		pushSelectionState();
+	}
+
+	/**
+	 * Pushes the selection as the client displays it - {@link #SELECTED_ROWS},
+	 * {@link #SELECTED_COUNT} and {@link #CURSOR_INDEX} - each only when it changed.
+	 *
+	 * <p>
+	 * Called when the selection changes and when the window of the {@link #ROWS rows sent} does.
+	 * </p>
+	 */
+	private void pushSelectionState() {
+		List<Integer> selectedRows = new ArrayList<>();
+		if (!_selectedKeys.isEmpty()) {
+			for (int n = 0, cnt = _bufferedKeys.size(); n < cnt; n++) {
+				if (_selectedKeys.contains(_bufferedKeys.get(n))) {
+					selectedRows.add(Integer.valueOf(_bufferedStart + n));
+				}
+			}
+		}
+		putChangedState(SELECTED_ROWS, selectedRows);
+		putChangedState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
+		putChangedState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
 	}
 
 	/**
@@ -1214,7 +1294,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		for (Row<R> row : _view.rows(start, end)) {
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			rowState.put(ARG_ROW_INDEX, Integer.valueOf(index));
-			rowState.put("selected", Boolean.valueOf(_selectedKeys.contains(row.key())));
+			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
 			if (row.kind() == RowKind.GROUP_HEADER) {
 				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
 			} else {
@@ -1770,7 +1850,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		}
 
 		pushSelection();
-		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**
@@ -1887,7 +1966,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_cursorIndex = rowIndex;
 		_selectionAnchor = rowIndex;
 		pushSelection();
-		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**
@@ -2085,7 +2163,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			matching.forEach(_selectedKeys::remove);
 		}
 		pushSelection();
-		updateViewport(_viewportStart, _viewportCount);
 	}
 
 	/**
@@ -2661,7 +2738,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Re-buffers the viewport so the given row is within the rendered window, then re-renders.
+	 * Re-buffers the viewport so the given row is within the rendered window, and re-renders the
+	 * rows when that moved the viewport.
 	 */
 	private void scrollIntoView(int target) {
 		int start = _viewportStart;
@@ -2670,7 +2748,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		} else if (target >= start + _viewportCount) {
 			start = target - _viewportCount + 1;
 		}
-		updateViewport(Math.max(0, start), _viewportCount);
+		start = Math.max(0, start);
+		if (start != _viewportStart) {
+			updateViewport(start, _viewportCount);
+		}
 	}
 
 	/**
@@ -2697,6 +2778,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			_cursorIndex = _committedCursor;
 			_selectionAnchor = _committedAnchor;
 			selectInView(_selectedKeys);
+			pushSelectionState();
 			throw ex;
 		}
 		commitSelection();
@@ -2723,6 +2805,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		// A refused change restores exactly this state, so the counts of the committed selection are
 		// the ones the client keeps showing then.
 		refreshSelectionCounts();
+		pushSelectionState();
 	}
 
 }

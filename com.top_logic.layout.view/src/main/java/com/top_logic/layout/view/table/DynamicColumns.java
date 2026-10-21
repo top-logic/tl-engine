@@ -25,6 +25,7 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.Supplies;
@@ -389,6 +390,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 	private final Function<ColumnResolution, DynamicColumnSet> _columns;
 
+	/** @see #inputs() */
+	private final List<InputRef> _inputs;
+
 	/**
 	 * Creates a {@link DynamicColumns} showing one column per object of the given set.
 	 *
@@ -406,11 +410,35 @@ public class DynamicColumns implements ColumnDeclaration {
 	 */
 	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export,
 			Function<ColumnResolution, DynamicColumnSet> columns) {
+		this(name, width, readonly, export, columns, List.of());
+	}
+
+	/**
+	 * Creates a {@link DynamicColumns} showing one column per object of the given set, computed
+	 * with the values of the given channels.
+	 *
+	 * @param name
+	 *        The name every column is named after, ahead of the name of the object it stands for.
+	 * @param width
+	 *        The default display width of every column in pixels, {@code 0} to keep the width the
+	 *        type of its values derives.
+	 * @param readonly
+	 *        Whether the columns stay read-only while the rows of the table are edited.
+	 * @param export
+	 *        How every column takes part in an export of the table.
+	 * @param columns
+	 *        The columns to show, computed for what the table resolves its columns against.
+	 * @param inputs
+	 *        The channels the given columns are computed with, see {@link #inputs()}.
+	 */
+	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export,
+			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs) {
 		_name = name;
 		_width = width;
 		_readonly = readonly;
 		_export = export;
 		_columns = columns;
+		_inputs = inputs;
 	}
 
 	/**
@@ -419,7 +447,7 @@ public class DynamicColumns implements ColumnDeclaration {
 	@CalledByReflection
 	public DynamicColumns(InstantiationContext context, Config config) {
 		this(config.getName(), config.getWidth(), config.getReadonly(), ColumnExport.of(context, config),
-			scripted(context, config));
+			scripted(context, config), config.getInputs());
 	}
 
 	/**
@@ -442,6 +470,19 @@ public class DynamicColumns implements ColumnDeclaration {
 	@Override
 	public List<String> declaredNames() {
 		return List.of();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The channels every function of the declaration reads, the one computing the set of columns
+	 * included.
+	 * </p>
+	 */
+	@Override
+	public List<InputRef> inputs() {
+		return _inputs;
 	}
 
 	@Override

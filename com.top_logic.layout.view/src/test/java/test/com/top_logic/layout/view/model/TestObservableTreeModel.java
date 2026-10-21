@@ -342,6 +342,58 @@ public class TestObservableTreeModel extends TestCase {
 	}
 
 	/**
+	 * Tests that a change of a row-independent input builds nothing: the tree, its nodes and its
+	 * open subtrees stay, and the display is only told that the inputs changed.
+	 */
+	public void testRowIndependentInputChangeKeepsTheTree() {
+		ViewChannel selection = new DefaultViewChannel("selection");
+		int[] replaced = { 0 };
+		int[] inputsChanged = { 0 };
+		startTree(Set.of(), null, List.of(_input, selection), List.of(selection), display -> new ObservableTreeModel.Display() {
+			@Override
+			public void invalidateNode(DefaultTreeUINode node) {
+				display.invalidateNode(node);
+			}
+
+			@Override
+			public void nodesChanged() {
+				display.nodesChanged();
+			}
+
+			@Override
+			public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+				replaced[0]++;
+				display.treeReplaced(treeModel);
+			}
+
+			@Override
+			public void inputsChanged() {
+				inputsChanged[0]++;
+			}
+		});
+		DefaultTreeUINode nodeA = expand(_a);
+		DefaultTreeUINode rootNode = root();
+		int callsBefore = _childListsComputed.size();
+
+		selection.set(_a1);
+
+		assertEquals("The tree is not built anew.", 0, replaced[0]);
+		assertEquals("The display is told that the inputs changed.", 1, inputsChanged[0]);
+		assertEquals("No child list is computed again.", callsBefore, _childListsComputed.size());
+		assertSame(rootNode, root());
+		assertSame(nodeA, node(_a));
+		assertTrue("The subtree the user opened stays open.", nodeA.isExpanded());
+
+		Item otherRoot = item("otherRoot");
+		_children.put(otherRoot, new ArrayList<>(List.of(_a)));
+		_input.set(otherRoot);
+
+		assertEquals("A change of another input builds the tree anew.", 1, replaced[0]);
+		assertSame(otherRoot, root().getBusinessObject());
+		assertEquals("Only a row-independent input tells about an input change.", 1, inputsChanged[0]);
+	}
+
+	/**
 	 * Tests that a display returning on screen shows the model as it is now: what changed while
 	 * nobody was observing reaches the tree when the observation begins again.
 	 */
@@ -496,6 +548,26 @@ public class TestObservableTreeModel extends TestCase {
 	 *        What holds an object in the structure, {@code null} for a tree that does not say.
 	 */
 	private void startTree(Set<TLStructuredType> observedTypes, Function<Object, Object> parentFunction) {
+		startTree(observedTypes, parentFunction, List.of(_input), List.of(), Function.identity());
+	}
+
+	/**
+	 * Builds the tree over the structure the test holds and begins observing it.
+	 *
+	 * @param observedTypes
+	 *        The types whose objects the tree places even while it has no node for them.
+	 * @param parentFunction
+	 *        What holds an object in the structure, {@code null} for a tree that does not say.
+	 * @param inputs
+	 *        The input channels; the first one names the root.
+	 * @param rowIndependentInputs
+	 *        Those of the inputs whose changes cannot change the tree.
+	 * @param display
+	 *        Wraps the display of the tree control.
+	 */
+	private void startTree(Set<TLStructuredType> observedTypes, Function<Object, Object> parentFunction,
+			List<ViewChannel> inputs, List<ViewChannel> rowIndependentInputs,
+			Function<ObservableTreeModel.Display, ObservableTreeModel.Display> display) {
 		ReactContext reactContext =
 			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		TreeBuilder<DefaultTreeUINode> builder = builder();
@@ -504,8 +576,9 @@ public class TestObservableTreeModel extends TestCase {
 			new DefaultSingleSelectionModel<>(SelectionModelOwner.NO_OWNER),
 			(context, model) -> new ReactTextControl(context, String.valueOf(model)));
 
-		_observer = new ObservableTreeModel(ObservableTreeModel.Display.of(_treeControl), treeModel, args -> args[0], builder,
-			parentFunction, observedTypes, List.of(_input));
+		_observer = new ObservableTreeModel(display.apply(ObservableTreeModel.Display.of(_treeControl)), treeModel,
+			args -> args[0], builder, parentFunction, observedTypes, inputs)
+				.withRowIndependentInputs(rowIndependentInputs);
 		_observer.attach(_scope);
 	}
 

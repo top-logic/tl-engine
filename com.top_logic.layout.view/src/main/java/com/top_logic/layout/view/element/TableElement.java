@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import java.lang.invoke.MethodHandles;
@@ -320,9 +321,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			return createEditableControl(context, inputChannels, initialRows);
 		}
 
+		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
 		ReadOnlyTable<ListRowSource<Object>> table = createTable(context, resolveRowType(rows), inputValues,
 			columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false, initialGrouping(), _drops,
-			_rowClass.bind(inputChannels));
+			rowCssClass);
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setRowCount(_config.getRowCount());
@@ -339,12 +341,24 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 				table.selectionBinding().rowsRefreshed();
 			}
 		};
+		// An input change leaving the rows as they are - a change of the table's own selection
+		// above all - keeps the cells where no column reads that input, and only refreshes what is
+		// computed from the inputs apart from the rows.
+		InputRoles roles = inputRoles(context, inputChannels);
+		Runnable inputsChanged = () -> {
+			refreshPresets(table, ChannelInputs.arguments(inputChannels));
+			if (rowCssClass != null) {
+				control.repaintRows();
+			}
+		};
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(
 			table.source(),
 			args -> new ArrayList<>(refreshRows(rowsExecutor, args, control)),
 			ObservedTypes.resolve(_config.getObservedTypes()),
 			inputChannels,
-			refresh);
+			refresh)
+				.withRowIndependentInputs(roles.rowIndependent())
+				.onInputsChanged(roles.cellIndependent(), inputsChanged);
 		// Observe the model only while the table is displayed: a table that is not attached - the
 		// inactive child of a tab bar, a page nobody looks at - must not react to model changes.
 		control.addAttachListener(() -> observer.attach(context.getModelScope()));
@@ -404,8 +418,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setSelectionMode(_config.getSelectionMode());
+		InputRoles roles = inputRoles(context, inputChannels);
 		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
-			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
+			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels, roles.rowIndependent(),
+			roles.cellIndependent());
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
 		control.setRowCssClass(_rowClass.bind(inputChannels));

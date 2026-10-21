@@ -131,6 +131,18 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The configured inputs the match function is evaluated with.
+	 * </p>
+	 */
+	@Override
+	public List<InputRef> inputs() {
+		return _inputs;
+	}
+
+	/**
 	 * The filter-parameter type whose transient instance backs the filter form.
 	 */
 	public TLStructuredType filterType() {

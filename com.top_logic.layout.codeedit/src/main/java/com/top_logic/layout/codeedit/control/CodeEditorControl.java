@@ -75,6 +75,11 @@ public class CodeEditorControl extends AbstractFormFieldControl {
 	public static final String MODE_JSON = "ace/mode/json";
 
 	/**
+	 * {@link #getLanguageMode() Language mode} for Markdown.
+	 */
+	public static final String MODE_MARKDOWN = "ace/mode/markdown";
+
+	/**
 	 * Eclipse like {@link #getEditorTheme() editor theme}.
 	 */
 	public static final String THEME_ECLIPSE = "ace/theme/eclipse";
@@ -93,65 +98,9 @@ public class CodeEditorControl extends AbstractFormFieldControl {
 		MODE_HTML,
 		MODE_XML,
 		MODE_JS,
-		MODE_JSON
+		MODE_JSON,
+		MODE_MARKDOWN
 	));
-
-	/**
-	 * {@link ControlProvider} creating a {@link CodeEditorControl} in XML mode.
-	 */
-	public final static class CPXml extends CP {
-
-		/**
-		 * Singleton {@link CodeEditorControl.CPXml} instance.
-		 */
-		public static final CodeEditorControl.CPXml INSTANCE = new CodeEditorControl.CPXml();
-
-		/**
-		 * Creates a {@link CPXml}.
-		 */
-		private CPXml() {
-			super(MODE_XML);
-		}
-
-	}
-
-	/**
-	 * {@link ControlProvider} creating a {@link CodeEditorControl} in HTML mode.
-	 */
-	public final static class CPHtml extends CP {
-
-		/**
-		 * Singleton {@link CodeEditorControl.CPXml} instance.
-		 */
-		public static final CodeEditorControl.CPHtml INSTANCE = new CodeEditorControl.CPHtml();
-
-		/**
-		 * Creates a {@link CPXml}.
-		 */
-		private CPHtml() {
-			super(MODE_HTML);
-		}
-
-	}
-
-	/**
-	 * {@link ControlProvider} creating a {@link CodeEditorControl} in HTML mode.
-	 */
-	public final static class CPText extends CP {
-
-		/**
-		 * Singleton {@link CodeEditorControl.CPXml} instance.
-		 */
-		public static final CodeEditorControl.CPText INSTANCE = new CodeEditorControl.CPText();
-
-		/**
-		 * Creates a {@link CPXml}.
-		 */
-		private CPText() {
-			super(MODE_TEXT);
-		}
-
-	}
 
 	/**
 	 * {@link ControlProvider} creating {@link CodeEditorControl}s.
@@ -311,6 +260,7 @@ public class CodeEditorControl extends AbstractFormFieldControl {
 	 * @see #MODE_HTML
 	 * @see #MODE_JS
 	 * @see #MODE_JSON
+	 * @see #MODE_MARKDOWN
 	 */
 	public String getLanguageMode() {
 		return _languageMode;

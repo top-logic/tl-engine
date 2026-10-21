@@ -80,7 +80,7 @@ public class TestUserSession extends BasicTestCase {
         kb.commit();
         us.endSession(theEnd);
         try {
-            ThreadContext.pushSuperUser();
+			ThreadContext.withoutSecurityChecks(() -> {
             assertNotNull(us.toString());
             assertSame  (us, UserSession.getInstance(us.tHandle()));
             assertEquals ("guest_de"           , us.getUsername());
@@ -92,9 +92,9 @@ public class TestUserSession extends BasicTestCase {
             assertNotNull(                       us.getServer());
             assertEquals (9999                 , us.getDuration());
             assertTrue   (                       us.isFinished());
+		});
         }
         finally {
-            ThreadContext.popSuperUser();
             us.tDelete();
             kb.commit();
         }

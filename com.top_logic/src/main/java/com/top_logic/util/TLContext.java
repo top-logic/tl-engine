@@ -16,6 +16,7 @@ import com.top_logic.basic.AbstractSubSessionContext;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SessionContext;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.CopyOnChangeListProvider;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -129,6 +130,46 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		super.setContextId(contextID);
 	}
 
+	/**
+	 * Records the identity of this context: its {@link #getPerson() person},
+	 * {@link #getContextId() context id}, {@link #getCurrentLocale() locale},
+	 * {@link #getCurrentTimeZone() time zone} and personal configuration.
+	 *
+	 * @return Restores the recorded identity of this context.
+	 */
+	@FrameworkInternal
+	public Runnable captureIdentity() {
+		Person person = _person;
+		String contextId = getContextId();
+		Locale locale = getCurrentLocale();
+		TimeZone timeZone = getCurrentTimeZone();
+		TransientPersonalConfiguration personalConfig = _personalConfig;
+		return () -> {
+			if (person == null) {
+				setPerson(null);
+				setContextId(contextId);
+			} else {
+				setPerson(person);
+			}
+			setCurrentLocale(locale);
+			setCurrentTimeZone(timeZone);
+			_personalConfig = personalConfig;
+		};
+	}
+
+	/**
+	 * Removes the {@link #getPerson() person} of this context and identifies it by the given
+	 * context id.
+	 *
+	 * @param contextId
+	 *        The new {@link #getContextId() context id}.
+	 */
+	@FrameworkInternal
+	public void setSystemIdentity(String contextId) {
+		setPerson(null);
+		setContextId(contextId);
+	}
+
 	@Override
 	public void resetPersonalConfiguration() {
 		_personalConfig = null;
@@ -219,20 +260,6 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		return getPerson();
    }
 
-   /** 
-    * Set the the Person currently logged in.
-    *
-    * Take care that this does not conflict with the current User.
-    *
-    * This should not be done by normal code, but Person related
-    * Objects.
-    * 
-    * @param aPerson the person to be set. May be <code>null</code>.
-    */
-	public final void setCurrentPerson(Person aPerson) {
-		setPerson(aPerson);
-   }
-   
 	@Override
 	public final String getCurrentUserName() {
 		return TLContextManager.getCurrentUserName(this);
@@ -250,8 +277,13 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		throw new UnsupportedOperationException("Username must not be set. Set Person to SessionContext.");
     }
 
+	/**
+	 * Whether the {@link #getPerson() person} of this context is an administrator.
+	 *
+	 * @see Person#isAdmin(Person)
+	 */
 	@Override
-	protected boolean isAdminContext() {
+	protected boolean isUserAdministrator() {
 		return Person.isAdmin(getPerson());
 	}
 

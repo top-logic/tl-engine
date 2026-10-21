@@ -32,8 +32,8 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.FormComponent;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
-import com.top_logic.layout.wysiwyg.ui.MacroControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Html;
+import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -165,7 +165,7 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 		 * be accessed with the variable {@link MacroFormat#MODEL}.
 		 * </p>
 		 */
-		@ControlProvider(MacroControlProvider.class)
+		@Html(features = StructuredTextConfigService.FEATURE_SET_MACRO)
 		@Format(MacroFormat.class)
 		@Name(HEADER)
 		Expr getHeader();

@@ -58,7 +58,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.URLPathBuilder;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
@@ -141,7 +140,7 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		 * @implSpec The actual value is the path relative to the application path.
 		 */
 		@Mandatory
-		@ControlProvider(DisplayFullPathTemplate.class)
+		@ApplicationRelativeURL
 		String getBaseURL();
 
 		/**

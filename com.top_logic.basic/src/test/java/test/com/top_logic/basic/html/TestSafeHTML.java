@@ -221,6 +221,53 @@ public class TestSafeHTML extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * Test that every attribute with an allowed prefix is allowed, for instance
+	 * <code>&lt;div data-foo="1" data-tl-link="x"&gt;</code>.
+	 */
+	public void testAttributePrefix() throws I18NException {
+		_safeHTML.check("<div data-foo=\"1\" data-tl-link=\"x\">Hello <span data-bar-baz=\"2\">World</span></div>");
+	}
+
+	/**
+	 * Test that an allowed prefix does not allow an attribute that merely contains it, for instance
+	 * <code>&lt;div x-data-foo="1"&gt;</code>, and that an event handler is still refused.
+	 */
+	public void testAttributePrefixOnlyAtStart() {
+		assertInvalidAttribute("<div x-data-foo=\"1\"></div>", "x-data-foo", DIV_TAG);
+		assertInvalidAttribute("<div data-foo=\"1\" onclick=\"alert(1)\"></div>", ONCLICK_ATTRIBUTE, DIV_TAG);
+	}
+
+	/**
+	 * Test that the width of a resized table column is allowed, for instance
+	 * <code>&lt;td colwidth="120"&gt;</code>.
+	 */
+	public void testColumnWidth() throws I18NException {
+		_safeHTML.check("<table><tbody><tr><td colspan=\"1\" rowspan=\"1\" colwidth=\"120\"><p>x</p></td></tr></tbody></table>");
+	}
+
+	/**
+	 * Test that HTML void elements need not be closed, for instance <code>&lt;br&gt;</code>, as
+	 * written by an HTML serializer.
+	 */
+	public void testUnclosedVoidElements() throws I18NException {
+		_safeHTML.check("<p>a<br>b<br/>c<br />d<img src=\"x.png\" alt=\"a > b\"></p><hr><table><colgroup><col style=\"width: 10px\"></colgroup></table>");
+	}
+
+	/** Test that an unclosed void element is still checked, for instance <code>&lt;img onerror&gt;</code>. */
+	public void testUnclosedVoidElementIsChecked() {
+		assertInvalidAttribute("<p><img src=\"x\" onerror=\"alert(1)\"></p>", "onerror", IMG_TAG);
+	}
+
+	private void assertInvalidAttribute(String html, String attribute, String tag) {
+		try {
+			_safeHTML.check(html);
+			fail("Not refused: " + html);
+		} catch (I18NException exception) {
+			assertEquals(I18NConstants.INVALID_ATTRIBUTE_NAME.fill(attribute, tag), getErrorKey(exception));
+		}
+	}
+
 	private ResKey getErrorKey(I18NFailure exception) {
 		return exception.getErrorKey();
 	}

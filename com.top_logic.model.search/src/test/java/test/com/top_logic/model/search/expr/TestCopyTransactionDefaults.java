@@ -36,12 +36,6 @@ public class TestCopyTransactionDefaults extends AbstractSearchExpressionTest {
 	private final List<TLObject> _persistent = new ArrayList<>();
 
 	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		becomeRoot();
-	}
-
-	@Override
 	protected void tearDown() throws Exception {
 		for (TLObject object : _persistent) {
 			if (object.tValid()) {

@@ -788,10 +788,6 @@ public class BoundHelper extends ManagedClass {
             if (currPerson == null)
                 return false;   // no Person, no Security
 
-			if (Person.isAdmin(currPerson)) {
-				return true;
-			}
-
             return hasAnyRole(anObject, currPerson);
         }
     }

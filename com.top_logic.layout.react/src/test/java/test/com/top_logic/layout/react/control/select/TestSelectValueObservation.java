@@ -32,7 +32,6 @@ import com.top_logic.mig.html.layout.AssociationEndRelevance;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.mig.html.layout.MapBasedAssociationEndRelevance;
 import com.top_logic.model.listen.ModelScope;
-import com.top_logic.model.security.ModelAccessRights;
 
 /**
  * Tests that a {@link ReactDropdownSelectControl} follows the objects it displays as its value:
@@ -89,19 +88,6 @@ public class TestSelectValueObservation extends AbstractDBKnowledgeBaseTest {
 		_scope = null;
 
 		super.tearDown();
-	}
-
-	/**
-	 * Runs the test without access checks: the fields display objects of a scenario for which no
-	 * security configuration exists, and the test is about following these objects rather than the
-	 * access rights.
-	 */
-	@Override
-	protected void runTest() throws Throwable {
-		ModelAccessRights.<Void, Throwable, RuntimeException> uncheckedSecurity(() -> {
-			super.runTest();
-			return null;
-		});
 	}
 
 	/**

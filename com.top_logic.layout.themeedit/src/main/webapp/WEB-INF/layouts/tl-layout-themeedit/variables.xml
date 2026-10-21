@@ -121,9 +121,7 @@
 									</property>
 									<property name="com.top_logic.gui.config.ThemeSetting$Config#expr">
 										<annotations>
-											<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.ControlProvider"
-												value="com.top_logic.layout.form.values.MultiLineText"
-											/>
+											<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.MultiLine"/>
 										</annotations>
 									</property>
 									<property name="com.top_logic.gui.config.ThemeSetting$Config#class">
@@ -180,9 +178,7 @@
 								<customizations>
 									<property name="com.top_logic.gui.config.ThemeSetting$Config#expr">
 										<annotations>
-											<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.ControlProvider"
-												value="com.top_logic.layout.form.values.MultiLineText"
-											/>
+											<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.MultiLine"/>
 										</annotations>
 									</property>
 									<property name="com.top_logic.basic.config.PolymorphicConfiguration#class">

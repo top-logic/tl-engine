@@ -36,7 +36,7 @@ import com.meterware.servletunit.ServletUnitClient;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.thread.InContext;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.CachePolicy;
@@ -199,7 +199,7 @@ public class TestCompressionServletResponseWrapper extends TestCase {
 	}
 
 	private void loginUser(final HttpServletRequest request, final HttpServletResponse response) {
-		ThreadContextManager.inSystemInteraction(TestCompressionServletResponseWrapper.class,
+		ThreadContext.inSystemContext(TestCompressionServletResponseWrapper.class,
 			new InContext() {
 				@Override
 				public void inContext() {

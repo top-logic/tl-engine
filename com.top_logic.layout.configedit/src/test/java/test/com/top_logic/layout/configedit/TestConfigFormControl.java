@@ -373,7 +373,7 @@ public class TestConfigFormControl extends TestCase {
 	 * A configuration with a LIST of polymorphic entries, for
 	 * {@link ConfigListEditorControl}'s own type-selector tests - a different
 	 * code path from {@link PolyConfig}'s, even though both end up disabling a
-	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} the same way.
+	 * {@link com.top_logic.layout.form.model.AbstractFieldModel} the same way.
 	 */
 	public interface PolyListConfig extends ConfigurationItem {
 
@@ -525,7 +525,7 @@ public class TestConfigFormControl extends TestCase {
 	 *
 	 * <p>
 	 * Both {@link PolymorphicItemControl} and {@link ConfigListEditorControl}'s own type selector
-	 * wrap their {@link com.top_logic.layout.form.model.SimpleSelectFieldModel} in a
+	 * wrap their {@link com.top_logic.layout.react.control.select.ReactDropdownSelectControl} in a
 	 * {@link com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl} named
 	 * {@link PolymorphicItemControl#TYPE_SELECTOR_NAME}, which unlike its label does not depend on
 	 * the language - the same way {@code TestConfigEditorControl#findTypeFieldModel} finds it. Walked fully recursively
@@ -1435,7 +1435,7 @@ public class TestConfigFormControl extends TestCase {
 	/**
 	 * View mode must close a single polymorphic ITEM property's type selector too, not just a
 	 * plain field: {@link PolymorphicItemControl} backs it with a
-	 * {@link com.top_logic.layout.form.model.SimpleSelectFieldModel}, not a
+	 * {@link com.top_logic.layout.form.model.AbstractFieldModel}, not a
 	 * {@link ConfigFieldModel}, but it is the very same hole - a viewer could otherwise still
 	 * swap the configured implementation - and the model editor this branch is being built for is
 	 * exactly this shape of property.

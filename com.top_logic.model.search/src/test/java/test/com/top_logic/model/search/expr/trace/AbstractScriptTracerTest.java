@@ -65,12 +65,6 @@ public abstract class AbstractScriptTracerTest extends AbstractSearchExpressionT
 	 */
 	protected static final String OTHER_DOUBLED = "otherDoubled";
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		becomeRoot();
-	}
-
 	/**
 	 * Evaluates the given script with a {@link ScriptTracer}.
 	 *

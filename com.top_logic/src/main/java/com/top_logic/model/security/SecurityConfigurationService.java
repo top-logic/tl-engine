@@ -33,12 +33,9 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
@@ -221,7 +218,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		String ACCESS_PARENT = "access-parent";
 
 		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -297,7 +293,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLSingletonAccessRights extends ModelAccessRights {
 
 		@Options(fun = AllSingletons.class, mapping = SingletonMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -316,7 +311,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLPartAccessRights extends ModelAccessRights {
 
 		@Options(fun = AllAttributes.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -337,7 +331,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	public static interface TLModuleAccessRights extends TypeBasedAccessRights {
 
 		@Options(fun = TLModelPartRef.AllModules.class, mapping = TLModelPartMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Override
 		String getName();
 
@@ -978,7 +971,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// input object can be used without a person at all).
 			return true;
 		}
-		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
+		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			return allowedBypass.booleanValue();
 		}
@@ -1042,7 +1035,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// computed roles yet, so an instance-level check against it is not meaningful.
 			return true;
 		}
-		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
+		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			return allowedBypass;
 		}
@@ -1175,7 +1168,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// See isAllowed(Person, TLObject, BoundCommandGroup): no check on not-yet-committed objects.
 			return true;
 		}
-		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
+		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			return allowedBypass;
 		}
@@ -1206,19 +1199,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return accessManager().hasRole(person, holder, requiredPartRoles);
 	}
 
-	private static Boolean isAllowedBypass(Person person, BoundCommandGroup commandGroup) {
-		if (ThreadContext.isSystemContext()) {
-			// The current code deliberately runs in a system context (see
-			// ThreadContext.inSystemContext), i.e. it explicitly opted out of a user identity. Such
-			// code acts on behalf of the system and is granted full access. Note: a system context
-			// is only established when no user interaction is active; code running within a
-			// logged-in user's interaction is unaffected and stays subject to the regular checks.
-			return Boolean.TRUE;
-		}
-
-		return BoundChecker.isAllowedBypass(person, commandGroup);
-	}
-
 	@Override
 	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute,
 			TLClass type) {
@@ -1244,7 +1224,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public boolean isAllowedCreate(Person person, TLClass type, TLObject context) {
-		Boolean allowedBypass = isAllowedBypass(person, SimpleBoundCommandGroup.CREATE);
+		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, SimpleBoundCommandGroup.CREATE);
 		if (allowedBypass != null) {
 			return allowedBypass.booleanValue();
 		}
@@ -1304,7 +1284,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public Set<TLClass> getAccessibleTypes(Person person, BoundCommandGroup commandGroup) {
-		Boolean allowedBypass = isAllowedBypass(person, commandGroup);
+		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, commandGroup);
 		if (allowedBypass != null) {
 			// The decision does not depend on per-type grants: an administrator may act on every
 			// object, so all types of the system are accessible; a restricted user gets none. In

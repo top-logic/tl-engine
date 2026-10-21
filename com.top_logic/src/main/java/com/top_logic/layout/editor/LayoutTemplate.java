@@ -19,9 +19,8 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.misc.EmptyCollection;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -87,7 +86,7 @@ public interface LayoutTemplate extends LayoutComponent.Config {
 	 */
 	@Subtypes(adjust = false, value = {})
 	@Name(TEMPLATE_ARGUMENTS)
-	@ControlProvider(GroupInlineControlProvider.class)
+	@Inline
 	@Options(fun = EmptyCollection.class)
 	ConfigurationItem getTemplateArguments();
 

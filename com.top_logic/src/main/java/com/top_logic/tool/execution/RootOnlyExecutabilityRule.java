@@ -7,8 +7,8 @@ package com.top_logic.tool.execution;
 
 import java.util.Map;
 
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.TLContext;
 
 /**
  * Rule for allowing something only for root.
@@ -28,7 +28,7 @@ public class RootOnlyExecutabilityRule implements ExecutabilityRule {
 
     @Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-		if (TLContext.isAdmin()) {
+		if (ThreadContext.isAdmin()) {
 			return ExecutableState.EXECUTABLE;
 		} else {
 			return ExecutableState.NOT_EXEC_HIDDEN;

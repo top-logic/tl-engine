@@ -34,7 +34,6 @@ import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -167,13 +166,14 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 
 			@Override
 			public void run() throws Exception {
-				TLContextManager.getSubSession().setPerson(p1);
-
-				Transaction tx = begin();
-				KnowledgeObject o1 = kb().createKnowledgeObject(KBTestMeta.TEST_B);
-				wrapper.set(new TestBWrapper(o1));
-				tx.commit();
-				createRev.set(tx.getCommitRevision());
+				TLContextManager.<Void, Exception, RuntimeException> inPersonContext(p1, () -> {
+					Transaction tx = begin();
+					KnowledgeObject o1 = kb().createKnowledgeObject(KBTestMeta.TEST_B);
+					wrapper.set(new TestBWrapper(o1));
+					tx.commit();
+					createRev.set(tx.getCommitRevision());
+					return null;
+				});
 			}
 		});
 
@@ -193,12 +193,13 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 
 			@Override
 			public void run() throws Exception {
-				TLContextManager.getSubSession().setPerson(p2);
-
-				Transaction tx = begin();
-				wrapper.get().setValue(KBTestMeta.TEST_B_NAME, "change");
-				tx.commit();
-				changeRev.set(tx.getCommitRevision());
+				TLContextManager.<Void, Exception, RuntimeException> inPersonContext(p2, () -> {
+					Transaction tx = begin();
+					wrapper.get().setValue(KBTestMeta.TEST_B_NAME, "change");
+					tx.commit();
+					changeRev.set(tx.getCommitRevision());
+					return null;
+				});
 			}
 		});
 
@@ -243,17 +244,18 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 		inThread(new Execution() {
 			@Override
 			public void run() throws Exception {
-				TLContext.getContext().setCurrentPerson(p1);
-				
-				// On behalf of p1.
-				Transaction tx = begin();
-				{
-					KnowledgeObject o1 = kb().createKnowledgeObject(KBTestMeta.TEST_B);
-					w1[0] = new TestBWrapper(o1);
-				}
-				tx.commit();
-				
-				r1[0] = tx.getCommitRevision();
+				TLContextManager.<Void, Exception, RuntimeException> inPersonContext(p1, () -> {
+					// On behalf of p1.
+					Transaction tx = begin();
+					{
+						KnowledgeObject o1 = kb().createKnowledgeObject(KBTestMeta.TEST_B);
+						w1[0] = new TestBWrapper(o1);
+					}
+					tx.commit();
+
+					r1[0] = tx.getCommitRevision();
+					return null;
+				});
 			}
 		});
 		assertFalse("Session has an old revision. Objects created in other session must not be visible.",
@@ -274,14 +276,15 @@ public class TestAbstractWrapper extends AbstractKnowledgeBaseTest {
 		inThread(new Execution() {
 			@Override
 			public void run() throws Exception {
-				TLContext.getContext().setCurrentPerson(p2);
-				
-				// On behalf of p2.
-				Transaction tx = begin();
-				{
-					w1[0].setInteger(KBTestMeta.TEST_B_INT, Integer.valueOf(42));
-				}
-				tx.commit();
+				TLContextManager.<Void, Exception, RuntimeException> inPersonContext(p2, () -> {
+					// On behalf of p2.
+					Transaction tx = begin();
+					{
+						w1[0].setInteger(KBTestMeta.TEST_B_INT, Integer.valueOf(42));
+					}
+					tx.commit();
+					return null;
+				});
 			}
 		});
 

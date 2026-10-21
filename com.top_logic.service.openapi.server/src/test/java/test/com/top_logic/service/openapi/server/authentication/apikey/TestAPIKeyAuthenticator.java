@@ -20,6 +20,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -95,7 +96,7 @@ public class TestAPIKeyAuthenticator extends TestCase {
 
 		assertNotNull(person);
 		assertEquals(_accountName,
-			ThreadContextManager.inSystemInteraction(TestAPIKeyAuthenticator.class, () -> person.getName()));
+			ThreadContext.inSystemContext(TestAPIKeyAuthenticator.class, () -> person.getName()));
 	}
 
 	public void testKeyForSystemContext() throws AuthenticationFailure {

@@ -125,6 +125,11 @@ public class TestSecurityFilterReport extends AbstractSearchExpressionTest {
 		super.tearDown();
 	}
 
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
 	private TLObject newObject(String className) {
 		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className);
 		return DynamicModelService.getFactoryFor("TestTLScriptSecurity").createObject(type);

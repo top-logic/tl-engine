@@ -10,7 +10,18 @@ import * as Popover from '@radix-ui/react-popover';
 
 interface ToolbarProps {
   editor: Editor | null;
-  onImageUpload: () => void;
+
+  /** Starts uploading an image, undefined where the editor offers no image upload. */
+  onImageUpload?: () => void;
+
+  /** Whether the HTML source is shown in place of the formatted text. */
+  sourceMode: boolean;
+
+  /**
+   * Switches between the formatted text and its HTML source, undefined where the editor offers no
+   * source editing.
+   */
+  onToggleSource?: () => void;
 
   /**
    * The toolbar of the commands the editor is configured with, as the server describes it, or
@@ -95,6 +106,7 @@ const ALL_I18N_KEYS: Record<string, string> = {
   'js.wysiwyg.codeBlock': 'Code Block',
   'js.wysiwyg.undo': 'Undo',
   'js.wysiwyg.redo': 'Redo',
+  'js.wysiwyg.source': 'Source code',
 };
 
 // ---------------------------------------------------------------------------
@@ -379,11 +391,33 @@ const LinkPopover: React.FC<{
 // Main Toolbar
 // ---------------------------------------------------------------------------
 
-const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar }) => {
+const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, sourceMode, onToggleSource, toolbar }) => {
   const labels = useI18N(ALL_I18N_KEYS);
   const state = useEditorState({ editor, selector: selectToolbarState });
 
   if (!editor || !state) return null;
+
+  const sourceToggle = onToggleSource && (
+    <div className="tlWysiwygToolbar__group">
+      <ToolbarButton
+        icon="ri-code-box-line"
+        tooltip={t(labels, 'source')}
+        active={sourceMode}
+        onClick={onToggleSource}
+      />
+    </div>
+  );
+
+  if (sourceMode) {
+    // The formatting buttons act on the formatted text, which is not shown.
+    return (
+      <div className="tlWysiwygToolbar" role="toolbar" aria-label="Editor toolbar">
+        <div className="tlWysiwygToolbar__groups">
+          {sourceToggle}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="tlWysiwygToolbar" role="toolbar" aria-label="Editor toolbar">
@@ -446,11 +480,13 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
         {/* Link, Image, Table */}
         <div className="tlWysiwygToolbar__group">
           <LinkPopover editor={editor} labels={labels} isActive={state.link} />
-          <ToolbarButton
-            icon="ri-image-line"
-            tooltip={t(labels, 'image')}
-            onClick={onImageUpload}
-          />
+          {onImageUpload && (
+            <ToolbarButton
+              icon="ri-image-line"
+              tooltip={t(labels, 'image')}
+              onClick={onImageUpload}
+            />
+          )}
           <ToolbarButton
             icon="ri-table-line"
             tooltip={t(labels, 'table')}
@@ -464,6 +500,8 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
             <TLChild control={toolbar} />
           </div>
         )}
+
+        {sourceToggle}
 
         {/* History */}
         <div className="tlWysiwygToolbar__group">

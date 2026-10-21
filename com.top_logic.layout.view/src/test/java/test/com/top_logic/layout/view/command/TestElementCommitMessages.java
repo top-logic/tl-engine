@@ -19,6 +19,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.calendar.CalendarEvent;
@@ -72,7 +73,11 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		becomeUser(_root);
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _root;
 	}
 
 	/**

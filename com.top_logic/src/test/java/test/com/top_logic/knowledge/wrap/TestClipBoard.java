@@ -21,7 +21,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.Clipboard;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /** 
  * Test the {@link Clipboard} .
@@ -41,12 +41,19 @@ public class TestClipBoard extends BasicTestCase {
         super (name);
     }
     
+	/**
+	 * Runs the test in the context of the test person, whose clipboard is tested.
+	 */
+	@Override
+	public void inContext() {
+		TLContextManager.inPersonContext(TestPersonSetup.getTestPerson(), super::inContext);
+	}
+
     @Override
     protected void setUp() throws Exception {
     	super.setUp();
 		Person user = TestPersonSetup.getTestPerson();
 		assertNotNull("Clipboard stors clipboard by user, so test user must not be null", user);
-		TLContext.getContext().setCurrentPerson(user);
 		kb = KBSetup.getKnowledgeBase();
 		clip = Clipboard.getInstance(kb);
 		assertNotNull(clip);

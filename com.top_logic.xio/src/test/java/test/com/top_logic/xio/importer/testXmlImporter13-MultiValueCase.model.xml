@@ -1,0 +1,16 @@
+<model>
+	<module name="test.com.top_logic.xio.importer.test13">
+		<class name="Container">
+			<attributes>
+				<reference name="elements" type="Item" multiple="true" ordered="true" composite="true"/>
+			</attributes>
+		</class>
+
+		<class name="Item">
+			<attributes>
+				<property name="name" type="tl.core:String"/>
+				<property name="state" type="tl.core:String"/>
+			</attributes>
+		</class>
+	</module>
+</model>

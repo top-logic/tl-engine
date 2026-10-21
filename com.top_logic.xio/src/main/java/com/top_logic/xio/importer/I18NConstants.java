@@ -38,6 +38,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey4 ERROR_GETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_MESSAGE;
 
+	/**
+	 * @en Object "{0}" is already part of "{1}" (reference "{2}") and cannot also become part of
+	 *     "{3}" (reference "{4}"), because an object can only be part of one container.
+	 */
+	public static ResKey5 ERROR_OBJECT_ALREADY_CONTAINED__OBJ_CONTAINER_REF_NEW_CONTAINER_NEW_REF;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

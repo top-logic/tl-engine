@@ -3184,6 +3184,23 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		return true;
 	}
 
+	/**
+	 * Whether a value expression of an <code>UPDATE</code> statement sees the values assigned to
+	 * columns earlier in the same statement.
+	 * 
+	 * <p>
+	 * In standard SQL, every value expression of <code>UPDATE t SET a=b, b=a</code> is evaluated
+	 * against the row before the update, so the statement swaps the values of the columns
+	 * <code>a</code> and <code>b</code>. A dialect returning <code>true</code> evaluates the
+	 * assignments from left to right instead: a value expression reading a column that is
+	 * assigned earlier in the same statement sees the assigned value, so the statement above sets
+	 * both columns to the old value of <code>b</code>.
+	 * </p>
+	 */
+	public boolean updateAssignmentsSeeNewValues() {
+		return false;
+	}
+
 	protected DBType fromProprietarySqlType(int sqlType) {
 		throw new IllegalArgumentException("JDBC type '" + sqlType + "' not supported.");
 	}

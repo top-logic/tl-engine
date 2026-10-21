@@ -17,6 +17,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.util.ResKey;
@@ -414,8 +415,7 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		try {
 			_binding.setProperty(handler, obj, name, value);
 		} catch (RuntimeException ex) {
-			error(location(), I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(handler,
-				obj, name, value, ex.getMessage()), ex);
+			errorSettingFailed(handler, obj, name, value, ex);
 		}
 	}
 
@@ -423,7 +423,7 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		try {
 			_binding.getProperty(handler, obj, name, continuation);
 		} catch (RuntimeException ex) {
-			error(location(), I18NConstants.ERROR_GETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_MESSAGE.fill(handler,
+			error(location(), I18NConstants.ERROR_GETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_MESSAGE.fill(handler.location(),
 				obj, name, ex.getMessage()), ex);
 		}
 	}
@@ -432,8 +432,7 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		try {
 			_binding.setReference(handler, obj, name, value);
 		} catch (RuntimeException ex) {
-			error(location(), I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(handler,
-				obj, name, value, ex.getMessage()), ex);
+			errorSettingFailed(handler, obj, name, value, ex);
 		}
 	}
 
@@ -441,9 +440,27 @@ public class DefaultImportContext extends LazyTypedAnnotatable implements Import
 		try {
 			_binding.addValue(handler, obj, name, value);
 		} catch (RuntimeException ex) {
-			error(location(),
-				I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(handler.location(),
-					obj, name, value, ex.getMessage()), ex);
+			errorSettingFailed(handler, obj, name, value, ex);
+		}
+	}
+
+	/**
+	 * Reports a failure to store a value into a property at the current document location.
+	 *
+	 * <p>
+	 * A failure that carries its own internationalized message (an {@link I18NFailure}) is reported
+	 * with that message (and its cause), any other failure with a generic message naming the
+	 * property and value.
+	 * </p>
+	 */
+	private void errorSettingFailed(ImportPart handler, Object obj, String name, Object value,
+			RuntimeException ex) {
+		if (ex instanceof I18NFailure failure) {
+			// The message of the failure is its error key, only its cause adds to it.
+			error(location(), failure.getErrorKey(), ex.getCause());
+		} else {
+			error(location(), I18NConstants.ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE.fill(
+				handler.location(), obj, name, value, ex.getMessage()), ex);
 		}
 	}
 

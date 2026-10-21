@@ -6,6 +6,7 @@
 package test.com.top_logic.xio.importer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -319,6 +320,161 @@ public class TestXmlImporter extends TestCase {
 		assertEquals(List.of(n1), strictItem.tValueByName("others"));
 	}
 
+	public void testSecondContainerReported() throws XMLStreamException, IOException {
+		BufferingProtocol importLog = new BufferingProtocol();
+		XmlImporter importer = XmlImporter.newInstance(importLog.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter11-SecondContainer.importer.xml"));
+		TLModel model = loadModel(new AssertProtocol(), "testXmlImporter11-SecondContainer.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test11");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter11-SecondContainer.data.xml").getStream()), container);
+
+		// Linking an object into a second container is reported with the location of the second
+		// occurrence, the import continues.
+		String errors = String.join("\n", importLog.getErrors());
+		assertEquals(errors, 1, importLog.getErrors().size());
+		assertTrue(errors, errors.startsWith("In line 5 "));
+		assertTrue(errors, errors.contains("already part of"));
+		assertTrue(errors, errors.contains("test11:Container#elements"));
+		assertTrue(errors, errors.contains("test11:Item#children"));
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(3, elements.size());
+		TLObject top1 = elements.get(0);
+		TLObject parent1 = elements.get(1);
+		TLObject parent2 = elements.get(2);
+		assertEquals("top1", top1.tValueByName("name"));
+
+		// The object stays in its first container.
+		assertSame(container, top1.tContainer());
+		List<? extends TLObject> children1 = list(parent1.tValueByName("children"));
+		assertEquals(1, children1.size());
+		assertFalse(children1.contains(top1));
+
+		// Different objects in different containers are linked.
+		TLObject child1 = children1.get(0);
+		assertEquals("child1", child1.tValueByName("name"));
+		assertSame(parent1, child1.tContainer());
+		List<? extends TLObject> children2 = list(parent2.tValueByName("children"));
+		assertEquals(1, children2.size());
+		TLObject child2 = children2.get(0);
+		assertEquals("child2", child2.tValueByName("name"));
+		assertSame(parent2, child2.tContainer());
+	}
+
+	public void testUnknownElementsWarned() throws XMLStreamException, IOException {
+		BufferingProtocol importLog = new BufferingProtocol();
+		TLObject container = importUnknownElements(importLog, "testXmlImporter12-UnknownElements.data.xml");
+
+		// An unknown element at the top level and one inside a leaf element without own content
+		// handlers are both reported with their location, the import continues.
+		assertEquals(String.join("\n", importLog.getErrors()), 0, importLog.getErrors().size());
+		List<String> warnings = unknownElementMessages(importLog);
+		assertEquals(warnings.toString(), 2, warnings.size());
+		assertEquals("In line 4 column 21: Unknown element \"unknown-nested\" skipped.", warnings.get(0));
+		assertEquals("In line 7 column 16: Unknown element \"unknown-top\" skipped.", warnings.get(1));
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(2, elements.size());
+		assertEquals("i1", elements.get(0).tValueByName("name"));
+		TLObject s1 = elements.get(1);
+		assertEquals("s1", s1.tValueByName("name"));
+		List<? extends TLObject> children = list(s1.tValueByName("children"));
+		assertEquals(1, children.size());
+		assertEquals("c1", children.get(0).tValueByName("name"));
+	}
+
+	public void testUnknownElementsNestedSetting() throws XMLStreamException, IOException {
+		BufferingProtocol importLog = new BufferingProtocol();
+		TLObject container = importUnknownElements(importLog, "testXmlImporter12-UnknownElements-error.data.xml");
+
+		// The inner setting applies to its subtree, the outer setting applies again after it.
+		List<String> errors = importLog.getErrors();
+		assertEquals(String.join("\n", errors), 1, errors.size());
+		assertEquals("In line 4 column 20: Unknown element \"unknown-strict\".", errors.get(0));
+		List<String> warnings = unknownElementMessages(importLog);
+		assertEquals(warnings.toString(), 1, warnings.size());
+		assertEquals("In line 6 column 18: Unknown element \"unknown-after\" skipped.", warnings.get(0));
+
+		// A configured default handler takes every element without a tag entry.
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(2, elements.size());
+		TLObject l1 = elements.get(1);
+		assertEquals("l1", l1.tValueByName("name"));
+		List<? extends TLObject> children = list(l1.tValueByName("children"));
+		assertEquals(1, children.size());
+		assertEquals("d1", children.get(0).tValueByName("name"));
+	}
+
+	private TLObject importUnknownElements(BufferingProtocol importLog, String dataResource)
+			throws XMLStreamException, IOException {
+		XmlImporter importer = XmlImporter.newInstance(importLog.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter12-UnknownElements.importer.xml"));
+		TLModel model = loadModel(new AssertProtocol(), "testXmlImporter12-UnknownElements.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test12");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource(dataResource).getStream()), container);
+		return container;
+	}
+
+	private static List<String> unknownElementMessages(BufferingProtocol log) {
+		return log.getInfos().stream().filter(message -> message.contains("Unknown element")).toList();
+	}
+
+	public void testMultiValueCase() throws XMLStreamException, IOException {
+		// The trailing empty entry of the case "0, false," selects it for the empty value.
+		assertEquals(List.of("on", "on", "off", "off", "unknown", "off"),
+			importMultiValueCase("testXmlImporter13-MultiValueCase.importer.xml"));
+	}
+
+	public void testEmptyCaseValue() throws XMLStreamException, IOException {
+		// The case with an empty value selects the empty attribute value.
+		assertEquals(List.of("on", "on", "off", "off", "unknown", "empty"),
+			importMultiValueCase("testXmlImporter13-MultiValueCase-empty.importer.xml"));
+	}
+
+	/**
+	 * Imports the multi-value test data with the given importer and returns the states of the
+	 * items that have a flag attribute.
+	 */
+	private List<Object> importMultiValueCase(String importerResource) throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
+			resource(importerResource));
+		TLModel model = loadModel(log, "testXmlImporter13-MultiValueCase.model.xml");
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test13");
+		TLObject container =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) module.getType("Container"), null, null, null);
+
+		importer.importModel(new TransientModelBinding(model, false),
+			new StreamSource(resource("testXmlImporter13-MultiValueCase.data.xml").getStream()), container);
+
+		// Each value of a case selects that case, other values select the default.
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(List.of("i1", "i2", "i3", "i4", "i5", "i6", "i7"),
+			elements.stream().map(item -> item.tValueByName("name")).toList());
+
+		// Without the attribute, no case runs.
+		assertNull(elements.get(6).tValueByName("state"));
+
+		List<Object> states = new ArrayList<>();
+		for (TLObject item : elements.subList(0, 6)) {
+			states.add(item.tValueByName("state"));
+		}
+		return states;
+	}
+
+	public void testMultiValueCaseDuplicate() {
+		String errors = assertInvalidImporter("testXmlImporter13-MultiValueCase-duplicate.importer.xml");
+		assertTrue(errors, errors.contains("Duplicate case value 'true'"));
+	}
+
 	public void testLanguageFromInput() throws XMLStreamException, IOException {
 		assertEquals("Test expects English as fallback language.", Locale.ENGLISH,
 			ResourcesModule.getInstance().getFallbackLocale());
@@ -359,20 +515,24 @@ public class TestXmlImporter extends TestCase {
 	}
 
 	public void testLanguageOptionsExclusive() {
-		assertInvalidImporter("testXmlImporter10-Language-none.importer.xml");
-		assertInvalidImporter("testXmlImporter10-Language-two.importer.xml");
+		assertLanguageOptionsInvalid("testXmlImporter10-Language-none.importer.xml");
+		assertLanguageOptionsInvalid("testXmlImporter10-Language-two.importer.xml");
 	}
 
-	private void assertInvalidImporter(String importerResource) {
+	private void assertLanguageOptionsInvalid(String importerResource) {
+		String errors = assertInvalidImporter(importerResource);
+		assertTrue(errors, errors.contains("Exactly one of"));
+	}
+
+	private String assertInvalidImporter(String importerResource) {
 		BufferingProtocol log = new BufferingProtocol();
 		try {
 			XmlImporter.readImportConfig(new DefaultInstantiationContext(log), resource(importerResource));
-			fail("Invalid language options not detected: " + importerResource);
+			fail("Invalid importer configuration not detected: " + importerResource);
 		} catch (AbortExecutionException | ConfigurationError ex) {
 			// Expected.
 		}
-		String errors = String.join("\n", log.getErrors());
-		assertTrue(errors, errors.contains("Exactly one of"));
+		return String.join("\n", log.getErrors());
 	}
 
 	private TLObject existingItem(TLObject container, TLClass itemType, String extId) {

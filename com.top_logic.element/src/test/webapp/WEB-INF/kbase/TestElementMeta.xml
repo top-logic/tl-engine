@@ -5,5 +5,6 @@
 <objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
 	<metaobjects>
 		<metaobject object_name="TestObject" super_class="AttributedObject" />
+		<metaobject object_name="UnversionedTestObject" super_class="AttributedObject" versioned="false" db_name="UNVERSIONED_TEST_OBJECT" />
 	</metaobjects>
 </objectlist>

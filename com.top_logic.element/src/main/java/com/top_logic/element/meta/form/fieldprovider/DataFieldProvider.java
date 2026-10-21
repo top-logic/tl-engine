@@ -46,7 +46,7 @@ public class DataFieldProvider extends AbstractFieldProvider {
 		BinaryPresentation presentation =
 			TLAnnotations.getBinaryPresentation(editContext.getAnnotation(BinaryDisplay.class), isMultiple);
 
-		DataField field = FormFactory.newDataField(fieldName);
+		DataField field = FormFactory.newDataField(fieldName, isMultiple);
 		field.setMandatory(isMandatory);
 		field.setImmutable(isDisabled);
 

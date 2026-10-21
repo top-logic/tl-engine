@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestBinaryCollectionStorage">
+			<types>
+				<class name="Node">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<property name="files"
+							multiple="true"
+							ordered="true"
+							type="tl.core:Binary"
+						/>
+						<property name="fileSet"
+							multiple="true"
+							type="tl.core:Binary"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+				<class name="UnversionedNode">
+					<annotations>
+						<table name="UnversionedTestObject"/>
+					</annotations>
+					<attributes>
+						<property name="files"
+							multiple="true"
+							ordered="true"
+							type="tl.core:Binary"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

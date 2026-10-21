@@ -54,15 +54,15 @@
 		/>
 		<channel name="range"/>
 		<derived-channel name="rangeMin"
-			expr="k -> if($k == null, null, 0)"
+			expr="if($kind == null, null, 0)"
 			inputs="kind"
 		/>
 		<derived-channel name="rangeMax"
-			expr="k -> {'percent': 100, 'scale': 255, 'angle': 360}[$k]"
+			expr="{'percent': 100, 'scale': 255, 'angle': 360}[$kind]"
 			inputs="kind"
 		/>
 		<derived-channel name="rangeUnit"
-			expr="k -> {'percent': '%', 'angle': '°'}[$k]"
+			expr="{'percent': '%', 'angle': '°'}[$kind]"
 			inputs="kind"
 		/>
 		<channel name="switched"/>

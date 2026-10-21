@@ -6,7 +6,6 @@
 package com.top_logic.layout.view.form;
 
 import java.text.Format;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -29,9 +28,10 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.NamedInputs;
-import com.top_logic.layout.view.channel.NamedInputsVariables;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -121,7 +121,7 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		 */
 		@Name(MIN)
 		@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)
-		@ScriptContextVariables(NamedInputsVariables.class)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getMin();
 
 		/**
@@ -135,7 +135,7 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		 */
 		@Name(MAX)
 		@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)
-		@ScriptContextVariables(NamedInputsVariables.class)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getMax();
 
 		/**
@@ -149,7 +149,7 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		 * </p>
 		 */
 		@Name(STEP)
-		@ScriptContextVariables(NamedInputsVariables.class)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getStep();
 
 		/**
@@ -163,7 +163,7 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		 * </p>
 		 */
 		@Name(UNIT)
-		@ScriptContextVariables(NamedInputsVariables.class)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getUnit();
 	}
 
@@ -204,11 +204,10 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 	public NumberInputControlProvider(InstantiationContext context, Config config) {
 		_display = config.getDisplay();
 		_inputs = List.copyOf(config.getInputs());
-		List<String> names = InputRef.names(_inputs);
-		_min = QueryExecutor.compileOptional(config.getMin(), names);
-		_max = QueryExecutor.compileOptional(config.getMax(), names);
-		_step = QueryExecutor.compileOptional(config.getStep(), names);
-		_unit = QueryExecutor.compileOptional(config.getUnit(), names);
+		_min = InputScript.compile(config, Config.MIN);
+		_max = InputScript.compile(config, Config.MAX);
+		_step = InputScript.compile(config, Config.STEP);
+		_unit = InputScript.compile(config, Config.UNIT);
 		if (_display == NumberDisplay.SLIDER && _inputs.isEmpty()) {
 			_constantRange = range();
 			checkConstantRange(context, _constantRange);
@@ -250,10 +249,7 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 			throw new IllegalStateException("A slider whose range reads the channels of its '" + Config.INPUTS
 				+ "' must be created in a view, but is created in: " + context);
 		}
-		List<ViewChannel> channels = new ArrayList<>(_inputs.size());
-		for (InputRef input : _inputs) {
-			channels.add(viewContext.resolveChannel(input.getChannel()));
-		}
+		List<ViewChannel> channels = ChannelInputs.resolve(viewContext, _inputs);
 		ReactSliderControl slider = new ReactSliderControl(context, model, format, range(values(channels)));
 		ChannelListener listener = (sender, oldValue, newValue) -> slider.setRange(range(values(channels)));
 		for (ViewChannel channel : channels) {
@@ -264,9 +260,9 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 	}
 
 	private static Object[] values(List<ViewChannel> channels) {
-		Object[] result = new Object[channels.size()];
+		Object[] result = ChannelInputs.arguments(channels);
 		for (int n = 0, cnt = result.length; n < cnt; n++) {
-			result[n] = SearchExpression.normalizeValue(channels.get(n).get());
+			result[n] = SearchExpression.normalizeValue(result[n]);
 		}
 		return result;
 	}

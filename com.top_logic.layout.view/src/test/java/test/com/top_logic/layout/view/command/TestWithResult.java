@@ -22,6 +22,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -66,7 +67,11 @@ public class TestWithResult extends AbstractModelAccessTest {
 		super.setUp();
 		ArgumentsProbe.reset();
 		RevisionProbe.REVISIONS.clear();
-		becomeUser(_root);
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _root;
 	}
 
 	@Override

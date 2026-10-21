@@ -25,6 +25,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.values.edit.DefaultValueModel;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -66,7 +67,11 @@ public class TestExecutabilityArguments extends AbstractModelAccessTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 		ArgumentsProbe.reset();
-		becomeUser(_root);
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _root;
 	}
 
 	@Override

@@ -34,7 +34,7 @@ import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -70,10 +70,22 @@ public class TestResearchPlumbing extends BasicTestCase {
 
 	private String _judgeReply;
 
+	/**
+	 * Runs each test as the root account, the account the runs act for: the tools authorize against
+	 * the account bound to the thread and refuse to run where the security checks are bypassed.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
+	}
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		TLContext.getContext().setPerson(PersonManager.getManager().getRoot());
 		FixtureWeb.search(QUERY, new WebSearchHit("Geoffrey Hinton - biography", PAGE, FACT, ""));
 		FixtureWeb.page(PAGE, "Geoffrey Hinton - biography", "# Geoffrey Hinton\n\n" + FACT
 			+ " He was born in 1947, John Hopfield in 1933.");

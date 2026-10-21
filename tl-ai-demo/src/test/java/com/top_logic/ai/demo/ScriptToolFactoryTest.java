@@ -23,12 +23,10 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.BasicRuntimeModule;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLObject;
@@ -49,7 +47,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -57,35 +55,25 @@ import com.top_logic.util.model.ModelService;
  */
 public class ScriptToolFactoryTest extends BasicTestCase {
 
-	private Person _previousUser;
-
 	/**
-	 * Runs each test as the root account in super-user mode.
+	 * Runs each test as the root account.
 	 *
 	 * <p>
-	 * Since engine {@code 8.0.0-alpha7}, TL-Script applies the model access rights of
-	 * {@code TLContext.currentUser()}: {@code new(...)} checks the CREATE right, and attribute reads
-	 * are filtered. Those rights deny by default and this test app configures no
-	 * {@code <security-config>}, so without a bypass the fixtures cannot be created and every
-	 * attribute read comes back empty. Both parts are needed - the engine denies a
-	 * <code>null</code> user outright, before it ever looks at super-user mode. What these tests are
-	 * about is TID-to-wrapper parameter resolution, not authorization.
+	 * TL-Script applies the model access rights of {@code TLContext.currentUser()}: {@code new(...)}
+	 * checks the CREATE right, and attribute reads are filtered. Those rights deny by default and this
+	 * test app configures no {@code <security-config>}, so the fixtures could not be created and every
+	 * attribute read would come back empty for an ordinary account. The root account is an
+	 * administrator, for whom the engine checks no rights. What these tests are about is TID-to-wrapper
+	 * parameter resolution, not authorization.
 	 * </p>
 	 */
 	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		TLContext context = TLContext.getContext();
-		_previousUser = context.getPerson();
-		context.setCurrentPerson(PersonManager.getManager().getRoot());
-		ThreadContext.pushSuperUser();
-	}
-
-	@Override
-	protected void tearDown() throws Exception {
-		ThreadContext.popSuperUser();
-		TLContext.getContext().setCurrentPerson(_previousUser);
-		super.tearDown();
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
 	}
 
 	/**

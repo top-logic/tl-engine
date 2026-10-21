@@ -26,7 +26,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -50,12 +50,17 @@ public class TestEvalHarness extends BasicTestCase {
 
 	private static final String SCRIPTED_ARM = "scripted";
 
+	/**
+	 * Runs each test as the root account, the account the runs act for: the tools authorize against
+	 * the account bound to the thread and refuse to run where the security checks are bypassed.
+	 */
 	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		// The runs act as the account bound to this thread - what ToolContext.forCurrentUser() reads
-		// and what the tools authorize against.
-		TLContext.getContext().setPerson(PersonManager.getManager().getRoot());
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
 	}
 
 	/** The fixture this suite reasons about actually reached the application. */

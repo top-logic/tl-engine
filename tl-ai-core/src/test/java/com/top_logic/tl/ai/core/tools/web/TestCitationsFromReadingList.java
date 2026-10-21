@@ -403,12 +403,9 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 		InvocationContext invocation =
 			runner.newClient().newInvocation(new GetMethodWebRequest("http://localhost/archived-page/" + handle));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		new Probe().get(request, response.asResponse());
 		return response;
 	}

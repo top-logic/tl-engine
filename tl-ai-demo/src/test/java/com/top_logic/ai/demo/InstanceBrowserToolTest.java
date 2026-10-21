@@ -20,12 +20,10 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLModel;
@@ -40,7 +38,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
 import com.top_logic.tl.ai.core.tools.script.QueryTool;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -52,34 +50,25 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 	private static final String EVENT_CLASS = "Event";
 	private static final String ROOM_CLASS = "Room";
 
-	private Person _previousUser;
-
 	/**
-	 * Runs each test as the root account in super-user mode.
+	 * Runs each test as the root account.
 	 *
 	 * <p>
-	 * Since engine {@code 8.0.0-alpha7}, TL-Script applies the model access rights of
-	 * {@code TLContext.currentUser()}, which deny by default. The fixtures of these tests are
-	 * created with TL-Script {@code new(...)}, so without a bypass they cannot be created at all.
-	 * What these tests are about is instance listing and pagination, not authorization.
+	 * TL-Script applies the model access rights of {@code TLContext.currentUser()}, which deny by
+	 * default. The fixtures of these tests are created with TL-Script {@code new(...)}, which the root
+	 * account, an administrator, may do. What these tests are about is instance listing and
+	 * pagination, not authorization.
 	 * </p>
 	 *
-	 * @see ScriptToolFactoryTest#setUp()
+	 * @see ScriptToolFactoryTest#runTest()
 	 */
 	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		TLContext context = TLContext.getContext();
-		_previousUser = context.getPerson();
-		context.setCurrentPerson(PersonManager.getManager().getRoot());
-		ThreadContext.pushSuperUser();
-	}
-
-	@Override
-	protected void tearDown() throws Exception {
-		ThreadContext.popSuperUser();
-		TLContext.getContext().setCurrentPerson(_previousUser);
-		super.tearDown();
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
 	}
 
 	/**

@@ -34,7 +34,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -487,7 +487,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 			return false;
 		}
 		try {
-			writer.execute(() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, () -> {
+			writer.execute(() -> ThreadContext.inSystemContext(AgentExecutionStore.class, () -> {
 				try {
 					String json = transcript.get();
 					if (json == null || execution.getEndedAt() != null) {
@@ -627,7 +627,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		}
 		try {
 			return writer.submit(
-				() -> ThreadContextManager.inSystemInteraction(AgentExecutionStore.class, work::get))
+				() -> ThreadContext.inSystemContext(AgentExecutionStore.class, work::get))
 				.get(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		} catch (InterruptedException ex) {
 			// Restore the flag before leaving: the interrupt belongs to whoever set it, and code

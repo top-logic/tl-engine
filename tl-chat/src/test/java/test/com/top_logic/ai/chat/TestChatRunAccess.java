@@ -491,12 +491,9 @@ public class TestChatRunAccess extends BasicTestCase {
 
 	private static void login(HttpServletRequest request, Person caller, Recording response)
 			throws Exception {
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 	}
 
 	private static ServletUnitClient client() {

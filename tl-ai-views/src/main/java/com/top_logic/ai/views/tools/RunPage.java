@@ -20,7 +20,7 @@ import com.top_logic.ai.views.WindowPage;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
@@ -150,7 +150,7 @@ final class RunPage {
 		if (runId == null) {
 			return false;
 		}
-		return ThreadContextManager.<Boolean, RuntimeException, RuntimeException> inSystemInteraction(RunPage.class, () -> {
+		return ThreadContext.<Boolean, RuntimeException, RuntimeException> inSystemContext(RunPage.class, () -> {
 			AgentExecution execution = AgentExecutionStore.getInstance().findExecutionByRunId(runId);
 			return execution != null && execution.getEndedAt() == null;
 		});

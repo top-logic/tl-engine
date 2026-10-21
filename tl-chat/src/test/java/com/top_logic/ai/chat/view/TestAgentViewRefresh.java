@@ -40,6 +40,7 @@ import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
+import com.top_logic.basic.thread.ThreadContext;
 
 /**
  * That a row an agent writes reaches the open window, and keeps reaching it while the agent writes
@@ -246,7 +247,7 @@ public class TestAgentViewRefresh extends BasicTestCase {
 		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
 		InvocationContext invocation =
 			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
-		return TLContextManager.inSystemInteraction(TestAgentViewRefresh.class,
+		return ThreadContext.inSystemContext(TestAgentViewRefresh.class,
 			() -> SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), account));
 	}
 

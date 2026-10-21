@@ -23,7 +23,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ReadFilter;
@@ -302,7 +302,7 @@ public class TestIndexSync extends BasicTestCase {
 			if (commits.incrementAndGet() > 200) {
 				return;
 			}
-			Thread other = new Thread(() -> ThreadContextManager.inSystemInteraction(TestIndexSync.class,
+			Thread other = new Thread(() -> ThreadContext.inSystemContext(TestIndexSync.class,
 				() -> committed(() -> create(STATEMENT, Map.of("text", "Sigma meanwhile.")))));
 			other.start();
 			try {

@@ -16,7 +16,6 @@ import junit.framework.Test;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
@@ -275,8 +274,7 @@ public class SecDemoObjectEditTest extends SecDemoPersonaTest {
 
 	/** Puts a value back with the rights of an administrator, so a test leaves the fixture as it was. */
 	private void setAsAdministrator(TLObject object, TLStructuredTypePart part, Object value) {
-		Person admin = anyAdministrator();
-		TLContext.getContext().setCurrentPerson(admin);
+		actAs(anyAdministrator());
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			object.tUpdate(part, value);
 			tx.commit();

@@ -31,6 +31,7 @@ import java.util.function.Predicate;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -1779,7 +1780,7 @@ public class AgentLoop {
 			futures.add(TOOL_WORKERS.submit(
 				() -> userSession != null
 					? ThreadContextManager.inContext(userSession, job)
-					: ThreadContextManager.inSystemInteraction(AgentLoop.class, job)));
+					: ThreadContext.inSystemContext(AgentLoop.class, job)));
 		}
 
 		List<ToolResultMessage> results = collectBatchResults(batch, futures, context);

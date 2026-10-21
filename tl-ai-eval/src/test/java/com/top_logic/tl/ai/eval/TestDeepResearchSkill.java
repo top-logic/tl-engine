@@ -73,7 +73,7 @@ import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -145,11 +145,22 @@ public class TestDeepResearchSkill extends BasicTestCase {
 	 */
 	private SubagentRegistries.Lease _registry;
 
+	/**
+	 * Runs each test as the root account, the account the runs act for: the tools authorize against
+	 * the account bound to the thread and refuse to run where the security checks are bypassed.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
+	}
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		// The account the run acts for, bound as a chat request binds it: the kept run's owner.
-		TLContext.getContext().setPerson(PersonManager.getManager().getRoot());
 		for (Topic topic : TOPICS) {
 			FixtureWeb.search(topic.query(),
 				new WebSearchHit(topic.country() + " subsidy page", topic.url(), topic.fact(), ""));

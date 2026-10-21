@@ -34,7 +34,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.MetaElementUtil;
@@ -427,7 +427,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	protected void startUp() {
 		super.startUp();
 
-		ThreadContextManager.inSystemInteraction(SecDemoSetupService.class, () -> setup());
+		ThreadContext.inSystemContext(SecDemoSetupService.class, () -> setup());
 	}
 
 	private void setup() {

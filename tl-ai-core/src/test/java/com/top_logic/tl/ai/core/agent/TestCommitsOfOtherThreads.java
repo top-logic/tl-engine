@@ -21,6 +21,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -499,7 +500,7 @@ public class TestCommitsOfOtherThreads extends BasicTestCase {
 	 * saving in the browser, a scheduled job.
 	 */
 	static void elsewhere(Runnable change) {
-		onAnotherThread(() -> ThreadContextManager.inSystemInteraction(TestCommitsOfOtherThreads.class,
+		onAnotherThread(() -> ThreadContext.inSystemContext(TestCommitsOfOtherThreads.class,
 			() -> commit(change)));
 	}
 

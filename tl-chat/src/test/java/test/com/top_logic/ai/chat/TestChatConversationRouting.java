@@ -109,12 +109,9 @@ public class TestChatConversationRouting extends BasicTestCase {
 		_client = runner.newClient();
 		Recording login = new Recording();
 		InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest("http://localhost/chat/updates"));
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(invocation.getRequest(), login.asResponse(), user);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_subSession = TLContextManager.getSubSession();
 		assertNotNull("The test needs a sub-session to hang the trackers on.", _subSession);
 		// The chat has no anonymous mode, and doService says so before it dispatches; the sub-session
@@ -276,12 +273,9 @@ public class TestChatConversationRouting extends BasicTestCase {
 		HttpServletRequest request = _client.newInvocation(new PostMethodWebRequest(url(path, conversation),
 			new ByteArrayInputStream(body.getBytes(java.nio.charset.StandardCharsets.UTF_8)),
 			"application/json")).getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), user);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		SessionService.getInstance().getSession(SessionService.getInstance().getSession(request))
 			.setIfAbsent(_windowId, _subSession);
 		_subSession.setPerson(user);

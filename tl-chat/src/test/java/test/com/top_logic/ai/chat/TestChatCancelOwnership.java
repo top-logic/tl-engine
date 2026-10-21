@@ -282,12 +282,9 @@ public class TestChatCancelOwnership extends BasicTestCase {
 			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)),
 			"application/json"));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.post(request, response.asResponse());
 		assertEquals(HttpServletResponse.SC_OK, response._status);
 		return response._body.toString();

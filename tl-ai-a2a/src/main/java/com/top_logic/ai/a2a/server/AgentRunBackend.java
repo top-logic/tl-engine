@@ -28,7 +28,7 @@ import com.top_logic.ai.a2a.protocol.ArtifactRef;
 import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.protocol.TaskState;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -185,7 +185,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 		_running.add(token);
 		_executor.execute(() -> {
 			try {
-				Person person = ThreadContextManager.<Person, RuntimeException, RuntimeException> inSystemInteraction(
+				Person person = ThreadContext.<Person, RuntimeException, RuntimeException> inSystemContext(
 					AgentRunBackend.class, () -> Person.byName(task.owner()));
 				ExposedAgentConfig agent = _service.exposedAgent(task.agent());
 				if (person == null || agent == null) {
@@ -477,7 +477,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 
 	@Override
 	public A2ATask findTask(String taskId, String owner) {
-		return ThreadContextManager.<A2ATask, RuntimeException, RuntimeException> inSystemInteraction(
+		return ThreadContext.<A2ATask, RuntimeException, RuntimeException> inSystemContext(
 			AgentRunBackend.class, () -> {
 				Person person = Person.byName(owner);
 				if (person == null) {

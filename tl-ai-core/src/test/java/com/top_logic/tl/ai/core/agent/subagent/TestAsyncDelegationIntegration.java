@@ -47,7 +47,7 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * These tests exercise the real {@link DelegationTool#executeAsync} code path, which calls
- * {@code ThreadContextManager.inContext} / {@code inSystemInteraction} on the background worker
+ * {@code ThreadContextManager.inContext} / {@code ThreadContext.inSystemContext} on the background worker
  * thread. This requires a started TopLogic module, provided by the {@link #suite()} harness.
  * </p>
  *
@@ -352,7 +352,7 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 	 * {@link KBSetup} and ensures the TL model is loaded; also needed so
 	 * {@code ThreadContextManager} can resolve a proper
 	 * {@link com.top_logic.basic.SubSessionContext} on the background worker threads (the async
-	 * spawn path calls {@code ThreadContextManager.inSystemInteraction}).</li>
+	 * spawn path calls {@code ThreadContext.inSystemContext}).</li>
 	 * </ul>
 	 *
 	 * <p>

@@ -63,9 +63,8 @@ import io.modelcontextprotocol.spec.McpSchema;
  * <p>
  * The row that closes the live exposure is
  * {@link #testAnInstanceReadIsFilteredByTheCallersRights()}: before this, every MCP resource handler
- * read the {@code KnowledgeBase} inside {@code ThreadContextManager.inSystemInteraction(...)} - the
- * engine's super-user bypass - for a caller nobody had authenticated, so any object was readable by
- * TID. It is a <b>pair</b>, deliberately: an account that may not read the object getting nothing
+ * read the {@code KnowledgeBase} in a system context - which bypasses every access check - for a
+ * caller nobody had authenticated, so any object was readable by TID. It is a <b>pair</b>, deliberately: an account that may not read the object getting nothing
  * proves nothing on its own, because a broken handler returns nothing too.
  * </p>
  *
@@ -183,11 +182,9 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 *
 	 * <p>
 	 * This is why the handlers ask {@link McpCallerContext} rather than
-	 * {@code TLContext.currentUser()}. {@code TLContextManager.inPersonContext} and
-	 * {@code ThreadContextManager.inSystemInteraction} are both no-ops when an interaction is already
-	 * bound, so a handler that trusted the ambient context would serve whatever context it found -
-	 * which, before this change, was the engine's system interaction. Here the ambient account is
-	 * deliberately the wrong one.
+	 * {@code TLContext.currentUser()}: a handler that trusted the ambient context would serve
+	 * whatever context it found, a system context as well as the context of an account nobody
+	 * authenticated for the request. Here the ambient account is deliberately the wrong one.
 	 * </p>
 	 */
 	public void testTheReadFollowsTheBoundAccountAndNotTheAmbientOne() {
@@ -389,9 +386,9 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * A request whose thread already carries an interaction is refused, not served as somebody else.
 	 *
 	 * <p>
-	 * {@code TLContextManager.inPersonContext} passes straight through when an interaction is bound,
-	 * so binding the authenticated account would silently fail and the request would act as whoever
-	 * that interaction belongs to. Nothing in the shipped deployment produces this -
+	 * {@code TLContextManager.inPersonContext} would put the authenticated account on the
+	 * sub-session of that interaction for the request, so the request would run in a session that
+	 * belongs to somebody else. Nothing in the shipped deployment produces this -
 	 * {@code MCPTransportServlet} is a plain servlet with no interaction-establishing filter in front
 	 * of it - and the guard exists because the failure it prevents is an identity confusion no test
 	 * would catch by accident. This test thread has an interaction, which is what makes the guard
@@ -582,7 +579,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		}
 		assertTrue("Anna's token must still be there.", annas.tValid());
 
-		TLContext.getContext().setCurrentPerson(anyAdministrator());
+		actAs(anyAdministrator());
 		assertTrue(AccessTokenFunctions.accessTokenRevoke(annas));
 		assertFalse("An administrator revokes any token.", annas.tValid());
 	}

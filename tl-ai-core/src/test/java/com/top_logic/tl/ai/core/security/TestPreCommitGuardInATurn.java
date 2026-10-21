@@ -32,7 +32,6 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
@@ -73,8 +72,8 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Tests the pre-commit guard where it runs: at the end of a real agent turn, over what a tool left in
@@ -628,21 +627,15 @@ public class TestPreCommitGuardInATurn extends BasicTestCase {
 			}
 		};
 
-		TLContext context = TLContext.getContext();
-		Person before = context.getPerson();
-		String beforeId = context.getContextId();
 		// An account, not a system context: a checking tool refuses to write in one.
-		context.setPerson(PersonManager.getManager().getRoot());
-		try (TransactionScope scope = new TransactionScope()) {
-			AgentLoop loop = new AgentLoop(new AgentParams("test-model", "You change things.", 5,
-				AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), provider(tool.name(), arguments), catalog);
-			loop.run(conversation, new ToolContext(security(rights), ApprovalCallback.AUTO_APPROVE, scope), listener);
-		} finally {
-			context.setPerson(before);
-			if (before == null) {
-				context.setContextId(beforeId);
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), () -> {
+			try (TransactionScope scope = new TransactionScope()) {
+				AgentLoop loop = new AgentLoop(new AgentParams("test-model", "You change things.", 5,
+					AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), provider(tool.name(), arguments), catalog);
+				loop.run(conversation, new ToolContext(security(rights), ApprovalCallback.AUTO_APPROVE, scope),
+					listener);
 			}
-		}
+		});
 
 		String rollbackReason = null;
 		for (String event : events) {

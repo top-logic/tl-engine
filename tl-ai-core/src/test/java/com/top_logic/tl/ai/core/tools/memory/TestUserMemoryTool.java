@@ -30,6 +30,7 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
+import com.top_logic.util.TLContextManager;
 
 /**
  * That {@code remember} keeps something only where the user agreed to it in this turn, that
@@ -266,15 +267,7 @@ public class TestUserMemoryTool extends BasicTestCase {
 
 	/** Runs the given call with {@code person} as the acting account. */
 	private static <T> T as(Person person, java.util.function.Supplier<T> job) {
-		TLContext context = TLContext.getContext();
-		assertNotNull("The test needs a bound context to act in.", context);
-		Person before = context.getPerson();
-		context.setPerson(person);
-		try {
-			return job.get();
-		} finally {
-			context.setPerson(before);
-		}
+		return TLContextManager.inPersonContext(person, job::get);
 	}
 
 	/** Advances the session revision so the store's writer-thread commits become visible. */

@@ -27,7 +27,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.locking.LockService;
-import com.top_logic.basic.SessionContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -50,7 +50,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -189,22 +189,19 @@ public class TestObjectEditTool extends BasicTestCase {
 	 */
 	public void testTwoWritesToOneObjectInOneTurnShareItsLock() {
 		Agent agent = agent("before");
-		TLContext context = TLContext.getContext();
-		Person before = context.getPerson();
-		String beforeId = context.getContextId();
-		context.setPerson(_owner);
-		try (TransactionScope turn = new TransactionScope()) {
-			ToolContext inTurn = new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE, turn);
-			turn.begin();
-			ToolResult first = _tool.updateObject(idOf(agent), values("description", "first"), inTurn);
-			ToolResult second = _tool.updateObject(idOf(agent), values("description", "second"), inTurn);
-			turn.commit();
+		TLContextManager.inPersonContext(_owner, () -> {
+			try (TransactionScope turn = new TransactionScope()) {
+				ToolContext inTurn =
+					new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE, turn);
+				turn.begin();
+				ToolResult first = _tool.updateObject(idOf(agent), values("description", "first"), inTurn);
+				ToolResult second = _tool.updateObject(idOf(agent), values("description", "second"), inTurn);
+				turn.commit();
 
-			assertSucceeded(first);
-			assertSucceeded(second);
-		} finally {
-			restore(context, before, beforeId);
-		}
+				assertSucceeded(first);
+				assertSucceeded(second);
+			}
+		});
 		assertEquals("second", agent.getDescription());
 		delete(agent);
 	}
@@ -267,18 +264,13 @@ public class TestObjectEditTool extends BasicTestCase {
 	 */
 	public void testASystemContextIsRefused() {
 		Agent agent = agent("kept");
-		TLContext context = TLContext.getContext();
-		Person before = context.getPerson();
-		String beforeId = context.getContextId();
-		context.setPerson(null);
-		context.setContextId(SessionContext.SYSTEM_ID_PREFIX + "test");
-		ToolResult result;
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			result = _tool.updateObject(idOf(agent), values("description", "x"), ToolContext.EMPTY);
-			tx.commit();
-		} finally {
-			restore(context, before, beforeId);
-		}
+		ToolResult result = ThreadContext.inSystemContext(TestObjectEditTool.class, () -> {
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				ToolResult refused = _tool.updateObject(idOf(agent), values("description", "x"), ToolContext.EMPTY);
+				tx.commit();
+				return refused;
+			}
+		});
 
 		assertRefused(result, "system context");
 		assertEquals("kept", agent.getDescription());
@@ -673,25 +665,13 @@ public class TestObjectEditTool extends BasicTestCase {
 	 * the agent loop does around a {@code DATA_WRITE} tool call.
 	 */
 	private static ToolResult call(Supplier<ToolResult> call) {
-		TLContext context = TLContext.getContext();
-		Person before = context.getPerson();
-		String beforeId = context.getContextId();
-		context.setPerson(_owner);
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			ToolResult result = call.get();
-			tx.commit();
-			return result;
-		} finally {
-			restore(context, before, beforeId);
-		}
-	}
-
-	/** Puts the test's own context back, including the context id a person-less one is known by. */
-	private static void restore(TLContext context, Person person, String contextId) {
-		context.setPerson(person);
-		if (person == null) {
-			context.setContextId(contextId);
-		}
+		return TLContextManager.inPersonContext(_owner, () -> {
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				ToolResult result = call.get();
+				tx.commit();
+				return result;
+			}
+		});
 	}
 
 	private static Map<String, Object> values(Object... keysAndValues) {

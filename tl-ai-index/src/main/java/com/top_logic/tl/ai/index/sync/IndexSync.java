@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -449,7 +449,7 @@ public final class IndexSync {
 		while (_running) {
 			boolean worked;
 			try {
-				worked = ThreadContextManager.inSystemInteraction(IndexSync.class, this::step);
+				worked = ThreadContext.inSystemContext(IndexSync.class, this::step);
 				failures = 0;
 				_lastError = null;
 			} catch (Throwable ex) {

@@ -44,7 +44,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -89,10 +89,27 @@ public class TestResearchEval extends BasicTestCase {
 		super.tearDown();
 	}
 
+	/**
+	 * Runs each test as the root account, the account the runs act for: the tools authorize against
+	 * the account bound to the thread and refuse to run where the security checks are bypassed.
+	 * While the eval is off, the method runs without a context, see {@link #runBare()}.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		if (!ResearchE2e.enabled()) {
+			super.runTest();
+			return;
+		}
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
+	}
+
 	/** Every question (or the selected ones) on every arm, graded. */
 	public void testTheResearchQuestions() throws Exception {
 		ResearchE2e.assumeEnabled();
-		TLContext.getContext().setPerson(PersonManager.getManager().getRoot());
 		ResearchFixture.install();
 
 		EvalConfig config = selected(researchScenarios());

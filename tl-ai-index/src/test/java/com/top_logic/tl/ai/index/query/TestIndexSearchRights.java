@@ -20,7 +20,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.citation.ReadingList;
@@ -199,10 +199,10 @@ public class TestIndexSearchRights extends BasicTestCase {
 			inSystemContext(() -> _index.similar(alicePump, SearchRequest.of(null), everything)));
 	}
 
-	/** Whether the search, run on a thread of its own in a system interaction, is refused. */
+	/** Whether the search, run on a thread of its own in a system context, is refused. */
 	private static boolean inSystemContext(java.util.function.Supplier<Hits> search) throws InterruptedException {
 		java.util.concurrent.atomic.AtomicBoolean refused = new java.util.concurrent.atomic.AtomicBoolean();
-		Thread thread = new Thread(() -> ThreadContextManager.inSystemInteraction(TestIndexSearchRights.class, () -> {
+		Thread thread = new Thread(() -> ThreadContext.inSystemContext(TestIndexSearchRights.class, () -> {
 			try {
 				search.get();
 			} catch (SearchRefusedException ex) {

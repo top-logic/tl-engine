@@ -39,7 +39,7 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.element.meta.MetaElementUtil;
@@ -503,7 +503,7 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 		String hash = sha256(kept);
 		String key = ownerKey(pending.owner()) + "|" + pending.url() + "|" + hash;
 		try {
-			Copy copy = ThreadContextManager.inSystemInteraction(PageArchive.class,
+			Copy copy = ThreadContext.inSystemContext(PageArchive.class,
 				() -> replace(handle, pending.url(), pending.title(), kept, hash, pending.owner()));
 			if (copy == null) {
 				Logger.info("The archived copy of " + pending.url() + " is gone; what the run read on is not kept.",
@@ -527,7 +527,7 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	 * @return What the write answered, or <code>null</code> when it failed or took too long.
 	 */
 	private Copy write(String url, Computation<Copy> write) {
-		Future<Copy> result = _worker.submit(() -> ThreadContextManager.inSystemInteraction(PageArchive.class,
+		Future<Copy> result = _worker.submit(() -> ThreadContext.inSystemContext(PageArchive.class,
 			() -> write.run()));
 		try {
 			return result.get(WRITE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
@@ -734,7 +734,7 @@ public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 	private void purgeQuietly() {
 		try {
 			Instant cutoff = Instant.now().minus(Duration.ofDays(getConfig().getRetentionDays()));
-			int deleted = ThreadContextManager.inSystemInteraction(PageArchive.class, () -> purgeOlderThan(cutoff));
+			int deleted = ThreadContext.inSystemContext(PageArchive.class, () -> purgeOlderThan(cutoff));
 			if (deleted > 0) {
 				Logger.info("Deleted " + deleted + " archived web pages read before " + cutoff + ".",
 					PageArchive.class);

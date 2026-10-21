@@ -10,10 +10,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
-import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
@@ -114,8 +112,8 @@ public final class HeadlessResearch {
 		AgentSession session = AgentExecutionStore.getInstance()
 			.createSession(SessionKind.CHAT, account, titleOf(question, account));
 		String text = prompt(question.trim(), level);
-		SchedulerService.getInstance().submit(() -> ThreadContextManager.inSystemInteraction(
-			HeadlessResearch.class, () -> runAs(account, () -> run(account, text, session))));
+		SchedulerService.getInstance().submit(
+			() -> TLContextManager.inPersonContext(account, () -> run(account, text, session)));
 		return KBUtils.getWrappedObjectName(session).toString();
 	}
 
@@ -202,21 +200,6 @@ public final class HeadlessResearch {
 		}
 		Locale locale = RunEnvironment.localeOf(owner);
 		return Resources.getInstance(locale).getString(I18NConstants.RESEARCH_SESSION_TITLE__QUESTION.fill(shortQuestion));
-	}
-
-	/**
-	 * Runs the given work with the given account on this thread's sub-session, the way a scheduled
-	 * agent task does: a system interaction carries no account, and the run's tools read it there.
-	 */
-	private static void runAs(Person account, Runnable work) {
-		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		Person previous = subSession.getPerson();
-		subSession.setPerson(account);
-		try {
-			work.run();
-		} finally {
-			subSession.setPerson(previous);
-		}
 	}
 
 	/** The background body: the lead's run, recorded under {@code session}. */

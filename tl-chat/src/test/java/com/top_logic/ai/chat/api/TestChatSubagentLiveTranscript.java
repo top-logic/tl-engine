@@ -173,12 +173,9 @@ public class TestChatSubagentLiveTranscript extends BasicTestCase {
 		InvocationContext invocation = runner.newClient().newInvocation(
 			new GetMethodWebRequest("http://localhost" + path));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), lena);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.get(request, response.asResponse());
 		return response;
 	}

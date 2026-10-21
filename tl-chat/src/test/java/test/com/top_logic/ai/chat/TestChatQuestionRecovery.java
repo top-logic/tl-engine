@@ -234,12 +234,9 @@ public class TestChatQuestionRecovery extends BasicTestCase {
 		InvocationContext invocation = runner.newClient().newInvocation(
 			new GetMethodWebRequest("http://localhost/chat/interactions"));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), mia);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.get(request, response.asResponse());
 		assertEquals(HttpServletResponse.SC_OK, response._status);
 		return response._body.toString();

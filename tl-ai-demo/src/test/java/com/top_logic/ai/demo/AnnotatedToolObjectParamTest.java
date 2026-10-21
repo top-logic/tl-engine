@@ -21,12 +21,10 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLClass;
@@ -55,7 +53,7 @@ import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -77,26 +75,17 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 		}
 	}
 
-	private Person _previousUser;
-
 	/**
-	 * Runs each test as the root account in super-user mode - see {@code ScriptToolFactoryTest},
-	 * which needs the same bypass for the same reason.
+	 * Runs each test as the root account - see {@link ScriptToolFactoryTest#runTest()}, which needs
+	 * the same account for the same reason.
 	 */
 	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		TLContext context = TLContext.getContext();
-		_previousUser = context.getPerson();
-		context.setCurrentPerson(PersonManager.getManager().getRoot());
-		ThreadContext.pushSuperUser();
-	}
-
-	@Override
-	protected void tearDown() throws Exception {
-		ThreadContext.popSuperUser();
-		TLContext.getContext().setCurrentPerson(_previousUser);
-		super.tearDown();
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
 	}
 
 	/**

@@ -193,7 +193,7 @@ public class ChangeDataTool {
 			return Checked.refused("No script. Pass the change as one script, e.g."
 				+ " \"Item:12\".objectResolveKey().set(`m:Item#price`, 450).");
 		}
-		if (ThreadContext.isSystemContext() || TLContext.currentUser() == null) {
+		if (ThreadContext.isSecurityBypassed() || TLContext.currentUser() == null) {
 			return Checked.refused("This call runs without a user account, in a system context where the"
 				+ " application checks no rights and records no author. Data is only changed in the name of the"
 				+ " user the run acts for. Nothing was changed.");

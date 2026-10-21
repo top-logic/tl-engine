@@ -82,7 +82,7 @@ import com.top_logic.tl.ai.core.tools.context.DevelopmentWorkspace;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -141,10 +141,22 @@ public class TestInitSkill extends BasicTestCase {
 
 	private final List<BinaryContent> _layers = new ArrayList<>();
 
+	/**
+	 * Runs each test as the root account, the account the runs act for: the tools authorize against
+	 * the account bound to the thread and refuse to run where the security checks are bypassed.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
+	}
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		TLContext.getContext().setPerson(PersonManager.getManager().getRoot());
 		_project = Files.createTempDirectory("init-source");
 		Path webapp = _project.resolve("src/main/webapp");
 		_autoconf = Files.createDirectories(webapp.resolve("WEB-INF/autoconf"));

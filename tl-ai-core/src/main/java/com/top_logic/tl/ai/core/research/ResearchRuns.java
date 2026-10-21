@@ -26,7 +26,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -156,7 +156,7 @@ public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>>
 	 */
 	public Saved save(ResearchReport report, Person owner) {
 		flushArchivedPages(report);
-		Future<Saved> write = _worker.submit(() -> ThreadContextManager.inSystemInteraction(ResearchRuns.class,
+		Future<Saved> write = _worker.submit(() -> ThreadContext.inSystemContext(ResearchRuns.class,
 			() -> store(report, owner)));
 		try {
 			return write.get(WRITE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);

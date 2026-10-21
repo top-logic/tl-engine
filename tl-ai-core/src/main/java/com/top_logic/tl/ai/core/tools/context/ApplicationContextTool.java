@@ -210,7 +210,7 @@ public class ApplicationContextTool {
 				+ ". Remove the double braces or use a known placeholder. Nothing was saved.";
 		}
 		Person user = TLContext.currentUser();
-		if (ThreadContext.isSystemContext() || user == null) {
+		if (ThreadContext.isSecurityBypassed() || user == null) {
 			return SYSTEM_CONTEXT;
 		}
 		if (!user.isAdmin()) {

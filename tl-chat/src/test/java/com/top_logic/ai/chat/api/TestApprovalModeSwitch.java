@@ -319,12 +319,9 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	private Answer call(WebRequest webRequest, Person caller, boolean get) throws Exception {
 		Answer answer = new Answer();
 		HttpServletRequest request = runner.newClient().newInvocation(webRequest).getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, answer.asResponse(), caller);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		if (get) {
 			_servlet.get(request, answer.asResponse());
 		} else {

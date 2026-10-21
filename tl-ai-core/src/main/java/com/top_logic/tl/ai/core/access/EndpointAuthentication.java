@@ -15,7 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
@@ -155,7 +155,7 @@ public final class EndpointAuthentication {
 	 */
 	public static Caller resolve(Authenticator authenticator, HttpServletRequest req, HttpServletResponse resp,
 			Class<?> requester) throws AuthenticationFailure {
-		return ThreadContextManager.<Caller, AuthenticationFailure, RuntimeException> inSystemInteraction(requester,
+		return ThreadContext.<Caller, AuthenticationFailure, RuntimeException> inSystemContext(requester,
 			() -> {
 				Person account = authenticator.authenticate(req, resp);
 				return account == null ? null : new Caller(account, account.getName());

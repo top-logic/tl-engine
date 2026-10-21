@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
@@ -271,7 +272,7 @@ public class SubagentSpawner {
 			if (userSession != null) {
 				return ThreadContextManager.inContext(userSession, work);
 			}
-			return ThreadContextManager.inSystemInteraction(SubagentSpawner.class, work);
+			return ThreadContext.inSystemContext(SubagentSpawner.class, work);
 		}, () -> {
 			// Cancelled while it was still queued: it ends without having run, and is recorded so.
 			if (logListener != null) {

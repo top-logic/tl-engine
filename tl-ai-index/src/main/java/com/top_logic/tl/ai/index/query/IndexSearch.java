@@ -330,7 +330,7 @@ public final class IndexSearch {
 	}
 
 	private void refuseWithoutReader() {
-		if (ThreadContext.isSystemContext() || TLContext.currentUser() == null) {
+		if (ThreadContext.isSecurityBypassed() || TLContext.currentUser() == null) {
 			throw new SearchRefusedException("This search runs without a user account, in a system context where"
 				+ " the application checks no rights. The index is only searched in the name of the user the run"
 				+ " acts for.");

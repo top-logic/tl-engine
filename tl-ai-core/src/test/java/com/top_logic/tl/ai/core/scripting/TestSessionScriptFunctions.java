@@ -23,9 +23,9 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
+import com.top_logic.util.TLContextManager;
 
 /**
  * That {@code aiSessionRename} and {@code aiSessionDelete} act only for the account a chat belongs
@@ -212,15 +212,7 @@ public class TestSessionScriptFunctions extends BasicTestCase {
 
 	/** Every call runs with {@code person} as the acting account, which is what the guard reads. */
 	private static void as(Person person, Runnable job) {
-		TLContext context = TLContext.getContext();
-		assertNotNull("The test needs a bound context to act in.", context);
-		Person before = context.getPerson();
-		context.setPerson(person);
-		try {
-			job.run();
-		} finally {
-			context.setPerson(before);
-		}
+		TLContextManager.inPersonContext(person, job::run);
 	}
 
 	/** That the given call is refused with a {@link TopLogicException}, not carried out. */

@@ -241,12 +241,9 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		InvocationContext invocation = runner.newClient().newInvocation(
 			new GetMethodWebRequest("http://localhost/chat/sessions/" + chatId()));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), otto);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.get(request, response.asResponse());
 
 		assertEquals("A chat that is not yours is not yours to read.",
@@ -519,12 +516,9 @@ public class TestChatInFlightWindow extends BasicTestCase {
 		Recording response = new Recording();
 		InvocationContext invocation = runner.newClient().newInvocation(get);
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), nina);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.get(request, response.asResponse());
 		assertEquals(HttpServletResponse.SC_OK, response._status);
 		return response._body.toString();

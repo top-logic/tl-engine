@@ -7,7 +7,7 @@ package com.top_logic.ai.mcp.server.authentication;
 
 import java.util.Objects;
 
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
@@ -30,11 +30,10 @@ import com.top_logic.util.TLContextManager;
  *
  * <p>
  * The filter also opens the {@code TLContext}, so the ambient user is in fact correct inside a
- * handler. Reading it would nevertheless be wrong here: {@code TLContextManager.inPersonContext} and
- * {@code ThreadContextManager.inSystemInteraction} are both <em>no-ops when an interaction is
- * already bound</em>, so a handler that trusted the ambient context would serve whatever context it
- * happened to find - which, before this class, was the engine's super-user system interaction. This
- * class makes the demand explicit and unsatisfiable by accident: no bound caller, no read.
+ * handler. Reading it would nevertheless be wrong here: a handler that trusted the ambient context
+ * would serve whatever context it happened to find - a system context, which bypasses every access
+ * check, as well as the context of an account nobody authenticated for this request. This class makes
+ * the demand explicit and unsatisfiable by accident: no bound caller, no read.
  * </p>
  *
  * @see McpAuthenticationFilter
@@ -141,17 +140,18 @@ public final class McpCallerContext {
 	 * Runs {@code job} in the {@code TLContext} of the account this request acts as.
 	 *
 	 * <p>
-	 * The replacement for {@link ThreadContextManager#inSystemInteraction} in every MCP handler that
-	 * touches the {@code KnowledgeBase}. The system interaction is the engine's super-user bypass:
-	 * used here it made every read act as nobody, with model access rights not applying by
-	 * construction.
+	 * Every MCP handler that touches the {@code KnowledgeBase} runs in this context, never in a
+	 * {@link ThreadContext#inSystemContext(Class, ComputationEx2) system context}: a system context
+	 * bypasses every access check, so every read would act as nobody, with model access rights not
+	 * applying by construction.
 	 * </p>
 	 *
 	 * <p>
-	 * Establishing the context is idempotent - {@link TLContextManager#inPersonContext} passes
-	 * straight through when an interaction is already bound, which it is, because the filter opened
-	 * one for the whole request. The call is kept anyway so that the handler works standalone and so
-	 * that the context it needs is visible at the point that needs it.
+	 * Establishing the context is idempotent - the filter opened the same account's context for the
+	 * whole request, and {@link TLContextManager#inPersonContext} puts the same account on that
+	 * interaction's sub-session for the job, with the security checks on, and restores it
+	 * afterwards. The call is kept anyway so that the handler works standalone and so that the
+	 * context it needs is visible at the point that needs it.
 	 * </p>
 	 *
 	 * @param job

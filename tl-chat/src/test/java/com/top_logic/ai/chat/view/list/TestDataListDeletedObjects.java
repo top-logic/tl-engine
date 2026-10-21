@@ -68,7 +68,7 @@ public class TestDataListDeletedObjects extends BasicTestCase {
 
 	private DataListControl _list;
 
-	private Person _previousUser;
+	private Runnable _restoreIdentity;
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -78,8 +78,8 @@ public class TestDataListDeletedObjects extends BasicTestCase {
 		// The list reads its rows and its rules decide as the user the page is shown to; TL-Script
 		// sees only what that user may read.
 		TLContext context = TLContext.getContext();
-		_previousUser = context.getPerson();
-		context.setCurrentPerson(PersonManager.getManager().getRoot());
+		_restoreIdentity = context.captureIdentity();
+		context.setPerson(PersonManager.getManager().getRoot());
 		ReactWindowRegistry registry = new ReactWindowRegistry("test-session");
 		String window = "dataListWindow";
 		DefaultReactContext react =
@@ -129,7 +129,7 @@ public class TestDataListDeletedObjects extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		_list.cleanupTree();
-		TLContext.getContext().setCurrentPerson(_previousUser);
+		_restoreIdentity.run();
 		super.tearDown();
 	}
 

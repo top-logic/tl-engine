@@ -7,7 +7,9 @@ package com.top_logic.tl.ai.core.tools;
 
 import java.util.Map;
 
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
@@ -24,16 +26,20 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * Tools access the {@code KnowledgeBase} and therefore need a thread-bound interaction. Rather than
  * having every tool establish one itself, the tool-call boundaries - the agent dispatcher
  * ({@link ToolCatalog}) and the TL-Script bridge - route execution through {@link #execute}. It
- * reuses the caller's interaction when one is present (e.g. the chat user's sub-session, so tools
- * act in the user's context and on the user's UI), and otherwise establishes a system interaction so
- * a context-less caller (a background job) can still reach the {@code KnowledgeBase}.
+ * reuses the caller's interaction when one is present, without changing its identity (e.g. the chat
+ * user's sub-session, so tools act in the user's context, with the user's rights, and on the user's
+ * UI), and otherwise establishes a {@link ThreadContext#inSystemContext(Class, ComputationEx2) system
+ * context} so a context-less caller (a background job) can still reach the {@code KnowledgeBase}.
+ * {@link ThreadContext#inSystemContext(Class, ComputationEx2)} alone is not that: inside an existing
+ * interaction it switches the caller's sub-session to the system identity, which would run the tool
+ * without the user's account and without any access check.
  * </p>
  *
  * <p>
  * <b>The MCP server adapter deliberately does not use this.</b> Its requests arrive with an
  * authenticated account whose context {@code McpAuthenticationFilter} has already opened, and the
- * fallback below would be the wrong answer if that ever failed: a system interaction is the engine's
- * super-user bypass, and issue #261 was exactly the case of an MCP request being served in one. It
+ * fallback below would be the wrong answer if that ever failed: a system context bypasses all access
+ * checks, and issue #261 was exactly the case of an MCP request being served in one. It
  * calls the tool inside the caller's own context and refuses when there is none.
  * </p>
  *
@@ -46,7 +52,7 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * a tool read - the read filter, the page renderer - can register it as a source.
  * </p>
  *
- * @see ThreadContextManager#inSystemInteraction(Class, com.top_logic.basic.util.ComputationEx2)
+ * @see ThreadContext#inSystemContext(Class, ComputationEx2)
  * @see ToolExecutionContext#runInfo()
  */
 public final class ToolExecutions {
@@ -71,10 +77,7 @@ public final class ToolExecutions {
 		RunInfo run = context != null ? context.runInfo() : RunInfo.NONE;
 		try (RunInfoBinding.Binding bound = RunInfoBinding.bind(run);
 				ReadingListBinding.Binding reading = ReadingListBinding.bind(readingListOf(context))) {
-			return ThreadContextManager.inSystemInteraction(tool.getClass(),
-				() -> {
-					return tool.execute(args, context);
-				});
+			return inCallerOrSystemContext(tool.getClass(), () -> tool.execute(args, context));
 		}
 	}
 
@@ -99,10 +102,26 @@ public final class ToolExecutions {
 	public static String refusal(Tool tool, Map<String, Object> args, ToolExecutionContext context) {
 		RunInfo run = context != null ? context.runInfo() : RunInfo.NONE;
 		try (RunInfoBinding.Binding bound = RunInfoBinding.bind(run)) {
-			return ThreadContextManager.inSystemInteraction(tool.getClass(),
-				() -> {
-					return tool.refusal(args, context);
-				});
+			return inCallerOrSystemContext(tool.getClass(), () -> tool.refusal(args, context));
 		}
+	}
+
+	/**
+	 * Runs the given job in the interaction bound to the current thread, keeping its identity, or in
+	 * a {@link ThreadContext#inSystemContext(Class, ComputationEx2) system context} when no
+	 * interaction is bound.
+	 *
+	 * @param caller
+	 *        The class naming the system context, if one is established.
+	 * @param job
+	 *        The computation to run.
+	 * @return The result of the job.
+	 */
+	private static <T> T inCallerOrSystemContext(Class<?> caller,
+			ComputationEx2<T, RuntimeException, RuntimeException> job) {
+		if (ThreadContextManager.getInteraction() != null) {
+			return job.run();
+		}
+		return ThreadContext.inSystemContext(caller, job);
 	}
 }

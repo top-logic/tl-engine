@@ -40,7 +40,7 @@ public class TestChatActivity extends BasicTestCase {
 
 	private static Person neighbour;
 
-	private Person _previousUser;
+	private Runnable _restoreIdentity;
 
 	private AgentSession _chat;
 
@@ -53,8 +53,8 @@ public class TestChatActivity extends BasicTestCase {
 			owner = TestPerson.createPerson("lea-away-from-her-chat");
 			neighbour = TestPerson.createPerson("tom-from-next-door");
 		}
-		_previousUser = TLContext.getContext().getCurrentPersonWrapper();
-		TLContext.getContext().setCurrentPerson(owner);
+		_restoreIdentity = TLContext.getContext().captureIdentity();
+		TLContext.getContext().setPerson(owner);
 
 		_chat = (AgentSession) ChatHistoryService.createSession("Anmeldungen", owner);
 		_lead = store().beginExecution(_chat, "lead-" + UUID.randomUUID(), "Albert", "model", null, null);
@@ -63,7 +63,7 @@ public class TestChatActivity extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		TLContext.getContext().setCurrentPerson(_previousUser);
+		_restoreIdentity.run();
 		super.tearDown();
 	}
 
@@ -87,7 +87,7 @@ public class TestChatActivity extends BasicTestCase {
 		HistoryUtils.updateSessionRevision();
 
 		assertEquals(ChatScriptFunctions.WAITING, ChatScriptFunctions.activity(_chat));
-		TLContext.getContext().setCurrentPerson(neighbour);
+		TLContext.getContext().setPerson(neighbour);
 		assertEquals("Not waiting for somebody else.", ChatScriptFunctions.RUNNING,
 			ChatScriptFunctions.activity(_chat));
 	}

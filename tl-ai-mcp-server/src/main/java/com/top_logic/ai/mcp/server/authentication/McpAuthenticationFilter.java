@@ -66,9 +66,9 @@ import io.modelcontextprotocol.spec.HttpHeaders;
  * {@code user-id} on a secret as "process this in system context", which is the engine's super-user
  * bypass; for this endpoint that is never right, so it is refused rather than honoured.</li>
  * <li>A request for a session another account opened.</li>
- * <li>A request whose thread already carries a TopLogic interaction. {@code inPersonContext} is a
- * no-op when one is bound, so the request would silently act as whoever that interaction belongs to.
- * Nothing in the shipped deployment produces this - {@code MCPTransportServlet} is a plain
+ * <li>A request whose thread already carries a TopLogic interaction. {@code inPersonContext} would
+ * then put the account on the sub-session of that interaction for the request, so the request would
+ * run in a session that belongs to somebody else. Nothing in the shipped deployment produces this - {@code MCPTransportServlet} is a plain
  * {@code HttpServlet} - and the check is here because the failure it prevents is an identity
  * confusion that no test would catch by accident.</li>
  * </ul>

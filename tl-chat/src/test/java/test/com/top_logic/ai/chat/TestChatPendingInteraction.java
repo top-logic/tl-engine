@@ -537,12 +537,9 @@ public class TestChatPendingInteraction extends BasicTestCase {
 		Recording response = new Recording();
 		InvocationContext invocation = client(body);
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.post(request, response.asResponse());
 		return response;
 	}

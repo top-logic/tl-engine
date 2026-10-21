@@ -811,7 +811,7 @@ public class ObjectEditTool {
 	 * </p>
 	 */
 	private static ToolResult run(String call, ToolContext context, Operation operation) {
-		if (ThreadContext.isSystemContext() || TLContext.currentUser() == null) {
+		if (ThreadContext.isSecurityBypassed() || TLContext.currentUser() == null) {
 			return refusal("This call runs without a user account, in a system context where the"
 				+ " application checks no rights and records no author. Data is only changed in the name"
 				+ " of the user the run acts for. Nothing was changed.");

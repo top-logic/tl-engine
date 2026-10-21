@@ -59,8 +59,8 @@ import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
+import com.top_logic.util.TLContextManager;
 
 /**
  * A research run is kept with references to what it rests on - the archived pages, the objects of
@@ -114,7 +114,6 @@ public class TestResearchRuns extends BasicTestCase {
 				tx.commit();
 			}
 		}
-		TLContext.getContext().setPerson(owner);
 		runs++;
 		_lead = "research-lead-" + runs;
 		_worker = "research-worker-" + runs;
@@ -124,6 +123,15 @@ public class TestResearchRuns extends BasicTestCase {
 		store.beginExecution(chat, _worker, "TL_ResearchWorker", "test-model", null, lead);
 		_object = store.createMemory(owner, MemoryKind.FACT, "Prefers storage figures in GWh.", null);
 		HistoryUtils.updateSessionRevision();
+	}
+
+	/** Runs each test as the owner of the research runs. */
+	@Override
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(owner, () -> {
+			super.runTest();
+			return null;
+		});
 	}
 
 	/**

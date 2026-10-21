@@ -20,7 +20,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -193,7 +193,7 @@ public class TestHeadlessResearch extends BasicTestCase {
 	}
 
 	private String startInSystemContext(String question, String effort, String owner) throws Exception {
-		return ThreadContextManager.inSystemInteraction(TestHeadlessResearch.class,
+		return ThreadContext.inSystemContext(TestHeadlessResearch.class,
 			() -> AIScriptFunctions.research(question, effort, owner));
 	}
 

@@ -284,21 +284,20 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 			if (account == null) {
 				return;
 			}
-			// StateHandlingTask has already established a system interaction, and
-			// TLContextManager.inPersonContext does nothing to an existing one - only its root
-			// variant sets the person there. So the account is put onto this sub-session here and
-			// taken off again afterwards, which is what that variant does one level down.
-			TLSubSessionContext subSession = TLContextManager.getSubSession();
-			Person previous = subSession.getPerson();
-			subSession.setPerson(account);
-			TaskProgressTracker tracker = newTracker(account);
-			try {
-				runSitting(account, subSession, tracker);
-			} finally {
-				// The sitting is this run's window, and it ends here.
-				tracker.close();
-				subSession.setPerson(previous);
-			}
+			// StateHandlingTask has already established a system context, in which the security
+			// checks are bypassed. TLContextManager.inPersonContext puts the account onto this
+			// sub-session for the sitting, with the security checks on, and restores the system
+			// context afterwards.
+			TLContextManager.inPersonContext(account, () -> {
+				TLSubSessionContext subSession = TLContextManager.getSubSession();
+				TaskProgressTracker tracker = newTracker(account);
+				try {
+					runSitting(account, subSession, tracker);
+				} finally {
+					// The sitting is this run's window, and it ends here.
+					tracker.close();
+				}
+			});
 		} finally {
 			_running.set(false);
 		}

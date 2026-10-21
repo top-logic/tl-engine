@@ -30,7 +30,7 @@ import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -82,10 +82,27 @@ public class TestEvalPmMatrix extends BasicTestCase {
 		super.runBare();
 	}
 
+	/**
+	 * Runs each test as the root account, the account the runs act for: the tools authorize against
+	 * the account bound to the thread and refuse to run where the security checks are bypassed.
+	 * While the eval is off, the method runs without a context, see {@link #runBare()}.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		if (!EvalE2e.enabled()) {
+			super.runTest();
+			return;
+		}
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
+	}
+
 	/** Runs the whole matrix, writes the CSV and prints the report. */
 	public void testThePmMatrix() throws Exception {
 		EvalE2e.assumeEnabled();
-		TLContext.getContext().setPerson(PersonManager.getManager().getRoot());
 		ScriptedProvider.install(EvalScripts.oracle());
 
 		EvalConfig config = TestEvalConfig.pmScenarios();

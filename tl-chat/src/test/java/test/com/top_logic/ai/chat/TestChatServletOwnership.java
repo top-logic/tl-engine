@@ -205,12 +205,9 @@ public class TestChatServletOwnership extends BasicTestCase {
 			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)),
 			"application/json"));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		return request;
 	}
 

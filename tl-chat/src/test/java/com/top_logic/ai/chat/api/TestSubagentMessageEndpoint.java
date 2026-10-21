@@ -236,12 +236,9 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 		InvocationContext invocation = runner.newClient().newInvocation(
 			new com.meterware.httpunit.GetMethodWebRequest("http://localhost/chat/subagents"));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, answer.asResponse(), mia);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.get(request, answer.asResponse());
 		return answer.text();
 	}
@@ -258,12 +255,9 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)),
 			"application/json"));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.post(request, response.asResponse());
 		return response;
 	}
@@ -275,12 +269,9 @@ public class TestSubagentMessageEndpoint extends BasicTestCase {
 				+ parentToolCallId,
 			new ByteArrayInputStream(new byte[0]), "application/json"));
 		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.pushSuperUser();
-		try {
+		ThreadContext.withoutSecurityChecks(() -> {
 			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		});
 		_servlet.delete(request, response.asResponse());
 		return response;
 	}

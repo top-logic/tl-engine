@@ -16,7 +16,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatJoinLog.Message;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 
 /**
  * What the join diagnostic says about one rendered window, and - more importantly - when it says
@@ -155,7 +155,7 @@ public class TestChatJoinLog extends TestCase {
 		Consumer<Message> previous = ChatJoinLog.sink;
 		ChatJoinLog.sink = said::add;
 		try {
-			ThreadContextManager.inInteraction("test-render-1", () -> {
+			ThreadContext.inSystemContext(TestChatJoinLog.class, () -> {
 				ChatJoinLog.record("w1", "support", "chat-conversation");
 				ChatJoinLog.record("w1", "support", "chat-rail");
 				assertTrue("Nothing is said while the render is still running.", said.isEmpty());
@@ -163,7 +163,7 @@ public class TestChatJoinLog extends TestCase {
 			assertEquals(1, said.size());
 			assertEquals("Chat elements in window 'w1': 'support' (2).", said.get(0).text());
 
-			ThreadContextManager.inInteraction("test-render-2", () -> {
+			ThreadContext.inSystemContext(TestChatJoinLog.class, () -> {
 				ChatJoinLog.record("w1", "support", "chat-conversation");
 			});
 			assertEquals("The next render starts a tally of its own.", 2, said.size());

@@ -39,7 +39,7 @@ import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -162,15 +162,16 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	public static final String CREATE_TICKET =
 		"new(`pm:Ticket`)..set(`pm:Ticket#title`, \"Commit gate test\")";
 
-	private Person _previousUser;
-
+	/**
+	 * Runs each test with the security checks on and without a person, in which every access is
+	 * denied, until the test {@link #actAs(String) acts as} a persona.
+	 */
 	@Override
-	protected void tearDown() throws Exception {
-		if (_previousUser != null) {
-			TLContext.getContext().setCurrentPerson(_previousUser);
-			_previousUser = null;
-		}
-		super.tearDown();
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(null, () -> {
+			super.runTest();
+			return null;
+		});
 	}
 
 	/**
@@ -196,13 +197,17 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	 * Binds the given persona to the calling thread and returns it.
 	 */
 	protected Person actAs(String login) {
-		TLContext context = TLContext.getContext();
-		if (_previousUser == null) {
-			_previousUser = context.getPerson();
-		}
 		Person account = account(login);
-		context.setCurrentPerson(account);
+		actAs(account);
 		return account;
+	}
+
+	/**
+	 * Binds the given account to the calling thread for the rest of the test body; its access
+	 * rights are checked from then on.
+	 */
+	protected static void actAs(Person account) {
+		TLContextManager.getSubSession().setPerson(account);
 	}
 
 	/** Asserts that the given persona may invoke the given tool, and says why not if it may not. */

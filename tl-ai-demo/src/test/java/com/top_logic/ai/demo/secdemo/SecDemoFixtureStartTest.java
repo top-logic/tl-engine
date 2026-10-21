@@ -14,7 +14,7 @@ import com.top_logic.ai.demo.secdemo.SecDemoSetupService.PersonaConfig;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -44,7 +44,7 @@ public class SecDemoFixtureStartTest extends SecDemoPersonaTest {
 
 		// One system interaction around the start, as the application's start has: the fixture's
 		// setup joins it, and with it the enclosing transaction.
-		ThreadContextManager.inSystemInteraction(SecDemoFixtureStartTest.class, () -> {
+		ThreadContext.inSystemContext(SecDemoFixtureStartTest.class, () -> {
 			try (Transaction startup = kb.beginTransaction()) {
 				service.startUp();
 				assertNull("Nothing the start created is committed yet, so nothing may be judged: "

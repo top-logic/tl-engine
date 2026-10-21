@@ -23,7 +23,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -185,7 +185,7 @@ public class TestConcurrentAgents extends BasicTestCase {
 	private RunOutcome runOneAgent(int idx) {
 		long started = System.nanoTime();
 		try {
-			String response = ThreadContextManager.inSystemInteraction(
+			String response = ThreadContext.inSystemContext(
 				TestConcurrentAgents.class,
 				() -> {
 					Conversation conversation = new Conversation();

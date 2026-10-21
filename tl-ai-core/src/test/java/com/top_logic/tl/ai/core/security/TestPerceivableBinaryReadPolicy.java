@@ -115,6 +115,18 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * Runs each test with the security checks on, so that the read rights are decided for the
+	 * account each question names, not bypassed for the system context the test runs in.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		ThreadContext.<Void, Throwable, RuntimeException> withSecurityChecks(true, () -> {
+			super.runTest();
+			return null;
+		});
+	}
+
 	/** The account that captured a screenshot may look at it. */
 	public void testOwnerReadsOwnScreenshot() {
 		assertTrue("The owner holds 'AiBinaryOwner' on their own screenshot, which Read is granted to.",
@@ -220,10 +232,8 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 	 * object.
 	 *
 	 * <p>
-	 * Asked on a thread of its own, because that is the only place the question exists:
-	 * {@link ThreadContext#inSystemContext} establishes a system context only where no user
-	 * interaction is active, and a test method runs inside one. A thread with no context is also
-	 * what the code this covers actually is - the stores' writer thread and the background jobs.
+	 * Asked on a thread of its own, because a thread with no context is what the code this covers
+	 * actually is - the stores' writer thread and the background jobs.
 	 * </p>
 	 */
 	private static boolean readsInSystemContext(TLObject object) {

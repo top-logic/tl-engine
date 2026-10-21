@@ -31,6 +31,10 @@ class IndexedCollectionGetter implements MethodImplementation {
 	@Override
 	public Object invoke(ReflectiveConfigItem impl, Method method, Object[] args)
 			throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		if (ConfigUtil.isAnonymousKey(args[0])) {
+			// Anonymous entries are matched by no key.
+			return null;
+		}
 		Object collection = impl.value(_collectionProperty);
 		ConfigurationAccess configAccess = _collectionProperty.getConfigurationAccess();
 		for (Object value : (Collection<?>) collection) {

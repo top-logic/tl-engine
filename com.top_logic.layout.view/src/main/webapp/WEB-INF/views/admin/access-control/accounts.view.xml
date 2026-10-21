@@ -4,17 +4,17 @@
 	<channels>
 		<channel name="selectedAccount"/>
 	</channels>
-	<split-panel
+	<split-panel id="main"
 		orientation="horizontal"
 		resizable="true"
 	>
 		<panes>
-			<pane
+			<pane id="list"
 				min-size="200"
 				size="40"
 				unit="%"
 			>
-				<panel>
+				<panel id="list-panel">
 					<title>
 						<en>Accounts</en>
 						<de>Konten</de>
@@ -127,7 +127,7 @@
 							<enable-mfa/>
 						</generic-command>
 					</commands>
-					<table
+					<table id="table"
 						observed-types="tl.accounts:Person"
 						selection="selectedAccount"
 						types="tl.accounts:Person"
@@ -139,16 +139,16 @@
 					</table>
 				</panel>
 			</pane>
-			<pane
+			<pane id="detail"
 				size="60"
 				unit="%"
 			>
-				<panel>
+				<panel id="detail-panel">
 					<title>
 						<en>Account</en>
 						<de>Konto</de>
 					</title>
-					<form
+					<form id="form"
 						input="selectedAccount"
 						with-inset="true"
 					>

@@ -20,7 +20,7 @@
 			<en>Add logger</en>
 			<de>Logger hinzufügen</de>
 		</title>
-		<form
+		<form id="form"
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"

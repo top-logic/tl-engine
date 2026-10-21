@@ -65,11 +65,11 @@ public class TileElement implements UIElement {
 	/**
 	 * Configuration for {@link TileElement}.
 	 */
-	@TagName("tile")
+	@TagName(Config.TAG_NAME)
 	public interface Config extends UIElement.Config, WithAccessControl {
 
-		/** Config property name for {@link #getId()}. */
-		String ID = "id";
+		/** Configuration tag of a {@link TileElement}. */
+		String TAG_NAME = "tile";
 
 		/** Config property name for {@link #getWidth()}. */
 		String WIDTH = "width";
@@ -91,12 +91,13 @@ public class TileElement implements UIElement {
 
 		@Override
 		@ClassDefault(TileElement.class)
-		Class<? extends UIElement> getImplementationClass();
+		Class<? extends TileElement> getImplementationClass();
 
 		/**
 		 * Stable id identifying this tile. Used as the persistence key when
 		 * users reorder tiles via drag-and-drop.
 		 */
+		@Override
 		@Name(ID)
 		@Mandatory
 		String getId();

@@ -2,22 +2,37 @@
 
 <!--
 	The account area of an app bar: who is logged in, and what they can do about it.
-
+	
 	Referenced rather than copied - an application places it with
-
-		<app-bar>
-			<trailing>
-				<view-ref view="user-menu.view.xml"/>
-			</trailing>
-		</app-bar>
-
+	
+	<app-bar>
+	<trailing>
+	<view-ref view="user-menu.view.xml"/>
+	</trailing>
+	</app-bar>
+	
 	and wires nothing, because the channel feeding the area is declared here.
-
+	
 	A depending module or the application adds entries with a same-path overlay
 	(WEB-INF/views/user-menu.view.xml of its own module); the ViewLoader merges all copies in
 	dependency order, so an entry is contributed without this module knowing the contributor. The
-	administration view is extended the same way - see admin/admin.view.xml.
-
+	overlay addresses the <menu id="account-menu"> by its id, wherever it sits in this view, and
+	names a group of its own under <groups>:
+	
+	<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<menu config:ref="account-menu">
+	<groups>
+	<group id="my-module" config:position="after" config:reference="account">
+	... the commands of the entry ...
+	</group>
+	</groups>
+	</menu>
+	</view>
+	
+	A <group config:ref="account"> adds its commands to the existing group "account" instead. The
+	overlay of com.top_logic.demo.react is a complete example. The administration view is extended
+	the same way - see admin/admin.view.xml.
+	
 	The same overlay names the account differently by declaring a channel accountName of its own:
 	the overlay's expression replaces the one below, and the menu trigger shows what it computes.
 -->
@@ -44,8 +59,12 @@
 		button where the account area is, with no avatar and no menu in front of it. Everything an
 		account carries - and the preferences stored on it - waits until somebody is logged in.
 	-->
-	<switch input="currentUser">
-		<case test="$currentUser.accountIsAnonymous()">
+	<switch id="session"
+		input="currentUser"
+	>
+		<case id="anonymous"
+			test="$currentUser.accountIsAnonymous()"
+		>
 			<button>
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
 					image="css:bi bi-box-arrow-in-right"
@@ -69,13 +88,14 @@
 		<default>
 			<!--
 				The children are the trigger, the commands are the entries.
-
+				
 				Leaving the session is the first group, everything about the account that stays
 				logged in follows after a separator.
 			-->
-			<menu>
+			<menu id="account-menu">
 				<avatar input="accountName"/>
-				<text css-class="tl-button__label"
+				<text
+					css-class="tl-button__label"
 					input="accountName"
 					overflow="ellipsis"
 				/>

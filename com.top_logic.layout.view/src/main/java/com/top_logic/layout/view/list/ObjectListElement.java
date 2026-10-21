@@ -18,9 +18,9 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -354,12 +354,16 @@ public class ObjectListElement implements UIElement {
 		 * &lt;view-ref&gt;} binding the element channel, or elements written inline. Multiple entries
 		 * are stacked vertically.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(ITEM)
 		@Mandatory
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getItem();
+		List<UIElement.Config> getItem();
 
 		/**
 		 * The content instantiated once behind the items for entering a new element, with the fresh
@@ -370,11 +374,15 @@ public class ObjectListElement implements UIElement {
 		 * Displayed while every input holds a value, because an element is composed to be attached
 		 * somewhere. Ordinary view content, like {@link #getItem()}.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(NEW_ELEMENT)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getNewElement();
+		List<UIElement.Config> getNewElement();
 
 		/**
 		 * Text displayed instead of items when the list is empty.
@@ -445,7 +453,7 @@ public class ObjectListElement implements UIElement {
 	}
 
 	private static List<UIElement> instantiate(InstantiationContext context,
-			List<PolymorphicConfiguration<? extends UIElement>> content) {
+			List<UIElement.Config> content) {
 		if (content == null) {
 			return Collections.emptyList();
 		}

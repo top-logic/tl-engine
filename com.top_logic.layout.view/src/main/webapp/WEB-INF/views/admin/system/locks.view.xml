@@ -12,7 +12,9 @@
 		<channel name="locks"/>
 		<channel name="selection"/>
 	</channels>
-	<panel fill="true">
+	<panel id="panel"
+		fill="true"
+	>
 		<title>
 			<en>Locks</en>
 			<de>Sperren</de>
@@ -55,7 +57,8 @@
 				</action>
 			</generic-command>
 		</commands>
-		<child class="com.top_logic.layout.view.admin.system.LockTable"
+		<child id="table"
+			class="com.top_logic.layout.view.admin.system.LockTable"
 			input="locks"
 			selection="selection"
 		/>

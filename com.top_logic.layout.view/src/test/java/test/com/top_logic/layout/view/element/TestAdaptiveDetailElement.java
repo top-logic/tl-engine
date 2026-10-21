@@ -37,7 +37,7 @@ import com.top_logic.layout.view.element.DetailDisplay;
  */
 public class TestAdaptiveDetailElement extends TestCase {
 
-	private List<PolymorphicConfiguration<? extends UIElement>> parseTestView() throws Exception {
+	private List<UIElement.Config> parseTestView() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestAdaptiveDetailElement.class);
 
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(

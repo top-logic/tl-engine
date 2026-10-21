@@ -15,6 +15,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
@@ -119,11 +120,15 @@ public class AppBarElement implements UIElement {
 		 * bar (e.g. a breadcrumb or a context-specific control group), but any UIElement can be
 		 * placed here.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CHILDREN)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+		List<UIElement.Config> getChildren();
 
 		/**
 		 * Elements rendered in the leading slot before the title (e.g. a mobile drawer-toggle
@@ -133,11 +138,15 @@ public class AppBarElement implements UIElement {
 		 * Typically a single {@code <slot>} placeholder; if multiple elements are configured, they
 		 * render in the order given inside the leading area.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(LEADING)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getLeading();
+		List<UIElement.Config> getLeading();
 
 		/**
 		 * Elements closing the bar, right of the actions area (e.g. the account area).
@@ -146,11 +155,15 @@ public class AppBarElement implements UIElement {
 		 * This is the right end of the bar, past the buttons of toolbar-placed commands. Several
 		 * elements render side by side in the order given.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(TRAILING)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getTrailing();
+		List<UIElement.Config> getTrailing();
 	}
 
 	private final ResKey _title;

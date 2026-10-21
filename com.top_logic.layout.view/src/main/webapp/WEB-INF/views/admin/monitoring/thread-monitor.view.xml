@@ -10,28 +10,30 @@
 	<channels>
 		<channel name="selectedThread"/>
 	</channels>
-	<split-panel
+	<split-panel id="main"
 		orientation="horizontal"
 		resizable="true"
 	>
 		<panes>
-			<pane
+			<pane id="threads"
 				min-size="200"
 				size="55"
 				unit="%"
 			>
 				<full-page>
-					<child class="com.top_logic.layout.view.admin.monitor.ThreadTable"
+					<child id="threads-table"
+						class="com.top_logic.layout.view.admin.monitor.ThreadTable"
 						selection="selectedThread"
 					/>
 				</full-page>
 			</pane>
-			<pane
+			<pane id="stack"
 				size="45"
 				unit="%"
 			>
 				<full-page>
-					<child class="com.top_logic.layout.view.admin.monitor.ThreadStackTable"
+					<child id="stack-table"
+						class="com.top_logic.layout.view.admin.monitor.ThreadStackTable"
 						input="selectedThread"
 					/>
 				</full-page>

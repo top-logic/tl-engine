@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -22,10 +23,12 @@ import com.top_logic.layout.form.values.edit.Labels;
  *
  * <p>
  * A keyed collection is indexed by a property of its entries, so it cannot hold one whose key is
- * empty or already taken - and a freshly created entry's key is empty. Such an entry lives here
- * until the user confirms it with a key the collection accepts. Any number may be pending at once,
- * independently: a keyed collection's constraint is on the entries actually in it, and a pending
- * entry, by definition, is not.
+ * already taken, nor one whose key is empty unless it
+ * {@link ConfigCollection#acceptsAnonymous(ConfigurationItem) accepts anonymous entries} - and a
+ * freshly created entry's key is empty. Such an entry lives here until the user confirms it with a
+ * key the collection accepts. Any number may be pending at once, independently: a keyed
+ * collection's constraint is on the entries actually in it, and a pending entry, by definition, is
+ * not.
  * </p>
  *
  * <p>
@@ -183,11 +186,13 @@ public final class ConfigPendingEntries {
 	 * </p>
 	 *
 	 * <p>
-	 * So both an empty key and one that another entry already uses are reported at the key field,
-	 * and the entry stays pending. Neither is silently tolerated: the user asked for this entry to
-	 * be taken, and has to be told why it was not. Inserting a duplicate key would otherwise be
-	 * rejected by {@link TypedConfiguration} with a message about the collection's index, which says
-	 * nothing to whoever is editing the form.
+	 * An empty key is accepted only where the collection
+	 * {@link ConfigCollection#acceptsAnonymous(ConfigurationItem) accepts anonymous entries}: the
+	 * entry then joins it without a key. Otherwise both an empty key and one that another entry
+	 * already uses are reported at the key field, and the entry stays pending. Neither is silently
+	 * tolerated: the user asked for this entry to be taken, and has to be told why it was not.
+	 * Inserting a duplicate key would otherwise be rejected by {@link TypedConfiguration} with a
+	 * message about the collection's index, which says nothing to whoever is editing the form.
 	 * </p>
 	 *
 	 * <p>
@@ -208,7 +213,10 @@ public final class ConfigPendingEntries {
 		ConfigurationItem entry = pending._entry;
 		PropertyDescriptor keyProperty = _value.keyProperty(entry);
 		Object key = entry.value(keyProperty);
-		if (key == null || key.toString().isEmpty()) {
+		if (ConfigUtil.isAnonymousKey(key)) {
+			if (_value.acceptsAnonymous(entry)) {
+				return commit(pending);
+			}
 			return refuse(pending,
 				I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(keyProperty, false)));
 		}
@@ -216,6 +224,11 @@ public final class ConfigPendingEntries {
 			return refuse(pending, I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE
 				.fill(Labels.propertyLabel(keyProperty, false), key));
 		}
+		return commit(pending);
+	}
+
+	private ResKey commit(PendingEntry pending) {
+		ConfigurationItem entry = pending._entry;
 		_entries.remove(pending);
 		_value.add(entry);
 		checkKeys();
@@ -273,7 +286,7 @@ public final class ConfigPendingEntries {
 		ConfigurationItem entry = pending.entry();
 		PropertyDescriptor keyProperty = _value.keyProperty(entry);
 		Object key = entry.value(keyProperty);
-		if (key == null || key.toString().isEmpty()) {
+		if (ConfigUtil.isAnonymousKey(key)) {
 			return null;
 		}
 		String propertyLabel = Labels.propertyLabel(keyProperty, false);

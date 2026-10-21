@@ -30,10 +30,12 @@ import com.top_logic.basic.config.ConfigurationSchemaConstants;
  * 
  * <p>
  * The property typically also serves as {@link Key} of the lists holding such items, so that an
- * entry written in a later source matches the entry of the same key. An item without value (see
- * {@link ConfigUtil#isAnonymousKey(Object)}) is anonymous as in any keyed list: it takes part in no
- * uniqueness check and cannot be referenced.
+ * entry written in a later source matches the entry of the same key. An item without value is
+ * anonymous as in any keyed list: it takes part in no uniqueness check and cannot be referenced.
  * </p>
+ * 
+ * @implNote Whether a value counts as "no value" is decided by
+ *           {@link ConfigUtil#isAnonymousKey(Object)}.
  * 
  * @see Key
  * @see ConfigurationSchemaConstants#CONFIG_REF

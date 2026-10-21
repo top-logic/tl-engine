@@ -20,6 +20,7 @@ import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -42,13 +43,22 @@ public class TestFileListUpload extends AbstractModelAccessTest {
 
 	private FileListControl _files;
 
+	/**
+	 * The responsible person of the project edits it: the form and its file chips are built in the
+	 * test body with that person's rights, not in the system context of {@link #setUp()}.
+	 */
 	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
+	protected Person initialUser() {
+		return _responsible;
+	}
+
+	/**
+	 * Opens the project in an editing form with file chips for its steps.
+	 */
+	private void openForm() {
 		SSEUpdateQueue queue = new SSEUpdateQueue();
 		ReactContext context = new DefaultReactContext("", "test", queue, new ReactWindowRegistry("test"));
 
-		becomeUser(_responsible);
 		FormControl form = new FormControl(context, _project, "no model", NoTokenHandling.INSTANCE);
 		_files = new FileListControl(context, form, STEPS, null);
 		_files.init();
@@ -59,6 +69,7 @@ public class TestFileListUpload extends AbstractModelAccessTest {
 	 * The client learns the upload limit, which it checks before transmitting a file.
 	 */
 	public void testPublishesUploadLimit() {
+		openForm();
 		assertEquals(UploadSupport.maxUploadSize(), state(UploadSupport.MAX_UPLOAD_SIZE));
 	}
 
@@ -67,6 +78,7 @@ public class TestFileListUpload extends AbstractModelAccessTest {
 	 * the report.
 	 */
 	public void testErrorUntilNextSuccessfulUpload() {
+		openForm();
 		assertNull(state(FileListControl.ERROR));
 
 		upload(new MemoryPart(null));

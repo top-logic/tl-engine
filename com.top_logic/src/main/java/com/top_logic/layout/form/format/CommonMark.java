@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.format;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.util.Objects;
 
@@ -25,6 +26,31 @@ import com.top_logic.basic.xml.TagWriter;
 public class CommonMark {
 
 	/**
+	 * Renders a {@link String} in common mark syntax to an HTML fragment.
+	 * 
+	 * <p>
+	 * The fragment is the one {@link #writeCommonMark(TagWriter, String)} writes: HTML contained
+	 * in the text is escaped, and link and image targets with a scheme that can run a script (such
+	 * as <code>javascript:</code>) are dropped. A text that cannot be parsed is rendered as plain
+	 * text.
+	 * </p>
+	 * 
+	 * @param value
+	 *        The value in <i>CommonMark</i> syntax, not <code>null</code>.
+	 * @return The HTML fragment.
+	 */
+	public static String toHtml(String value) {
+		TagWriter out = new TagWriter();
+		try {
+			writeCommonMark(out, value);
+		} catch (IOException ex) {
+			// Writing to a string does not fail.
+			throw new UncheckedIOException(ex);
+		}
+		return out.toString();
+	}
+
+	/**
 	 * Writes a {@link String} in common mark syntax to the given {@link TagWriter}. Contained HTML
 	 * is escaped.
 	 * 
@@ -36,6 +62,11 @@ public class CommonMark {
 
 	/**
 	 * Writes a {@link String} in common mark syntax to the given {@link TagWriter}
+	 * 
+	 * <p>
+	 * Link and image targets with a scheme that can run a script (such as
+	 * <code>javascript:</code>) are dropped.
+	 * </p>
 	 * 
 	 * @param out
 	 *        {@link TagWriter} to write to.
@@ -63,6 +94,7 @@ public class CommonMark {
 		HtmlRenderer renderer = HtmlRenderer
 			.builder()
 			.escapeHtml(escapeHTML)
+			.sanitizeUrls(true)
 			.build();
 		// Ensure that all content is delivered to the internal Writer
 		out.flushBuffer();

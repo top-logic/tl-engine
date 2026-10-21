@@ -26,7 +26,6 @@ import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.NumberOfRows;
 import com.top_logic.basic.func.Identity;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
@@ -34,7 +33,6 @@ import com.top_logic.basic.xml.XMLPrettyPrinter.Config;
 import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.control.PasswordInputControlProvider;
 import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.EditorFactory;
@@ -83,10 +81,6 @@ public class PlainEditor extends AbstractEditor {
 
 		if (annotation != null) {
 			field.set(NumberOfRows.NUMBER_OF_ROWS, new Pair<>(annotation.min(), annotation.max()));
-		}
-
-		if (editorFactory.getAnnotation(property, Encrypted.class) != null) {
-			field.setControlProvider(PasswordInputControlProvider.INSTANCE);
 		}
 
 		init(editorFactory, model, field, uiConversion, storageConversion);

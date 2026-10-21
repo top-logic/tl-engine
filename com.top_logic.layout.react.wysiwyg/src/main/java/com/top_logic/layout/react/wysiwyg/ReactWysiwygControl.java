@@ -22,9 +22,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -33,6 +37,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandPlacement;
+import com.top_logic.layout.react.control.form.I18NLocalizedFieldModel;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.state.FieldState;
@@ -76,6 +81,18 @@ import com.top_logic.util.error.TopLogicException;
  * download URL in the HTML received from the client is turned back into the reference. A plain
  * {@code <img src="name">} naming an image of the text is shown as well and stored as a reference
  * after the next edit.
+ * </p>
+ *
+ * <p>
+ * An editor {@link #setTextOnly(boolean) for text only} edits a model holding the HTML source as
+ * {@link String}. Such a text cannot store images, so the editor offers no image upload. An editor
+ * {@link #setSourceEditing(boolean) with source editing} offers switching between the formatted
+ * text and its HTML source.
+ * </p>
+ *
+ * <p>
+ * A text received from the client is stored only if it passes the application's HTML safety check
+ * ({@link SafeHTML}), see {@link #setCheckHtml(boolean)}.
  * </p>
  */
 public class ReactWysiwygControl extends ReactFormFieldControl implements UploadHandler, DataProvider {
@@ -128,6 +145,20 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	private static final String IMAGE_URL = "imageUrl";
 
+	/**
+	 * State telling whether the editor offers uploading images, absent for an editor that does.
+	 *
+	 * @see #setTextOnly(boolean)
+	 */
+	private static final String IMAGES = "images";
+
+	/**
+	 * State telling whether the editor offers switching to the HTML source of the text.
+	 *
+	 * @see #setSourceEditing(boolean)
+	 */
+	public static final String SOURCE_EDITING = "sourceEditing";
+
 	/** Path of the download URLs the images are served under by {@link #getDownloadData(String)}. */
 	private static final String DATA_PATH = "/react-api/data?";
 
@@ -151,6 +182,12 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	/** Number of insertions requested so far, the value of {@link #INSERT_SEQ}. */
 	private int _insertions;
 
+	/** Whether the model holds the HTML source as {@link String}, see {@link #setTextOnly(boolean)}. */
+	private boolean _textOnly;
+
+	/** Whether the text received from the client is checked, see {@link #setCheckHtml(boolean)}. */
+	private boolean _checkHtml = true;
+
 	/**
 	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
 	 *
@@ -161,6 +198,25 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	public ReactWysiwygControl(ReactContext context, FieldModel model) {
 		this(context, model, List.of(), List.of(), null);
+	}
+
+	/**
+	 * Creates a {@link ReactWysiwygControl} {@link #setTextOnly(boolean) for text only}, which
+	 * offers no commands of its own.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model holding the HTML source as {@link String}.
+	 * @param sourceEditing
+	 *        Whether the editor offers switching to the HTML source, see
+	 *        {@link #setSourceEditing(boolean)}.
+	 */
+	public static ReactWysiwygControl forText(ReactContext context, FieldModel model, boolean sourceEditing) {
+		ReactWysiwygControl editor = new ReactWysiwygControl(context, model);
+		editor.setTextOnly(true);
+		editor.setSourceEditing(sourceEditing);
+		return editor;
 	}
 
 	/**
@@ -266,24 +322,93 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		_insertChannel.set(null);
 	}
 
+	/**
+	 * Whether the edited model holds the HTML source of the text as {@link String} rather than a
+	 * {@link StructuredText}.
+	 */
+	public boolean isTextOnly() {
+		return _textOnly;
+	}
+
+	/**
+	 * Sets whether the edited model holds the HTML source of the text as {@link String} rather
+	 * than a {@link StructuredText}.
+	 *
+	 * <p>
+	 * A text held as {@link String} has no place for images, so an editor for text only offers no
+	 * image upload.
+	 * </p>
+	 */
+	public void setTextOnly(boolean textOnly) {
+		_textOnly = textOnly;
+		putState(IMAGES, textOnly ? Boolean.FALSE : null);
+	}
+
+	/**
+	 * Whether the editor offers switching between the formatted text and its HTML source.
+	 */
+	public boolean isSourceEditing() {
+		return getState(SOURCE_EDITING) == Boolean.TRUE;
+	}
+
+	/**
+	 * Sets whether the editor offers switching between the formatted text and its HTML source.
+	 *
+	 * <p>
+	 * The source is edited as it is: markup the formatted view cannot show is kept as long as the
+	 * text is not changed in the formatted view.
+	 * </p>
+	 */
+	public void setSourceEditing(boolean sourceEditing) {
+		putState(SOURCE_EDITING, sourceEditing ? Boolean.TRUE : null);
+	}
+
+	/**
+	 * Whether a text received from the client is stored only if it passes the application's HTML
+	 * safety check ({@link SafeHTML}).
+	 */
+	public boolean isCheckHtml() {
+		return _checkHtml;
+	}
+
+	/**
+	 * Sets whether a text received from the client is stored only if it passes the application's
+	 * HTML safety check ({@link SafeHTML}).
+	 *
+	 * <p>
+	 * A text the check rejects is not stored: the field reports the problem the check finds and
+	 * keeps its last accepted value, while the editor still shows the rejected text.
+	 * </p>
+	 *
+	 * <p>
+	 * An editor checks the text unless told otherwise.
+	 * </p>
+	 */
+	public void setCheckHtml(boolean checkHtml) {
+		_checkHtml = checkHtml;
+	}
+
 	private void initShadowCopy() {
-		StructuredText value = (StructuredText) getFieldModel().getValue();
-		if (value != null) {
-			_shadowCopy = value.copy();
-		} else {
-			_shadowCopy = new StructuredText();
+		_shadowCopy = toStructuredText(getFieldModel().getValue());
+	}
+
+	/**
+	 * A copy of the given model value as {@link StructuredText}, an empty text for no value.
+	 */
+	private static StructuredText toStructuredText(Object value) {
+		if (value instanceof StructuredText text) {
+			return text.copy();
 		}
+		if (value instanceof String source) {
+			return new StructuredText(source);
+		}
+		return new StructuredText();
 	}
 
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
-		if (newValue instanceof StructuredText) {
-			_shadowCopy = ((StructuredText) newValue).copy();
-			putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
-		} else {
-			_shadowCopy = new StructuredText();
-			putState(FieldState.VALUE__PROP, "");
-		}
+		_shadowCopy = toStructuredText(newValue);
+		putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
 	}
 
 	@Override
@@ -298,6 +423,9 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			return null;
 		}
 		_shadowCopy.setSourceCode(cleanHtml);
+		if (_textOnly) {
+			return cleanHtml;
+		}
 		return _shadowCopy.copy();
 	}
 
@@ -447,12 +575,47 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	@Override
 	protected void applyRawClientValue(Object rawValue) {
-		super.applyRawClientValue(rawValue);
+		if (_checkHtml) {
+			ResKey problem = rawValue == null ? null : htmlProblem(stripImageUrls(rawValue.toString()));
+			setInputError(problem);
+			if (problem == null) {
+				super.applyRawClientValue(rawValue);
+			}
+		} else {
+			super.applyRawClientValue(rawValue);
+		}
 
 		if (getState(INSERT) == null) {
 			return;
 		}
 		putState(INSERT, null);
+	}
+
+	/**
+	 * The problem the application's HTML safety check ({@link SafeHTML}) finds in the given text,
+	 * {@code null} if it is safe.
+	 */
+	private static ResKey htmlProblem(String html) {
+		try {
+			SafeHTML.getInstance().check(html);
+			return null;
+		} catch (I18NException ex) {
+			return I18NConstants.ERROR_UNSAFE_HTML__PROBLEM.fill(ex.getErrorKey());
+		}
+	}
+
+	/**
+	 * Reports the given problem with the text received from the client on the model, so that the
+	 * field shows it, or clears a reported problem.
+	 */
+	private void setInputError(ResKey problem) {
+		FieldModel model = getFieldModel();
+		if (model instanceof I18NLocalizedFieldModel localized) {
+			model = localized.getDelegate();
+		}
+		if (model instanceof AbstractFieldModel abstractModel) {
+			abstractModel.setError(problem);
+		}
 	}
 
 	private String uniqueImageKey(String name) {

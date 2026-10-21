@@ -32,9 +32,7 @@ import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.element.meta.form.fieldprovider.ConfigurationFieldProvider.ConfigEditContext;
-import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.OptionMapping;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
@@ -164,7 +162,6 @@ public interface DisplayDescription extends EditContextPart {
 		@Name(TYPE_SPEC)
 		@Options(fun = AllTypes.class, mapping = TLModelPartMapping.class)
 		@OptionLabels(TLPartScopedResourceProvider.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@Nullable
 		String getTypeSpec();
 

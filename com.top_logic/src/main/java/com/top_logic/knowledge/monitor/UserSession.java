@@ -335,8 +335,7 @@ public class UserSession extends AbstractWrapper {
      */
     public static void cleanupUserSessions(KnowledgeBase aBase, int maxcount) {
 
-        try {
-            ThreadContext.pushSuperUser();
+        ThreadContext.withoutSecurityChecks(() -> {
             Date          theDate    = new Date();
             String        theServer  = UserSession.getServerName();
                 
@@ -370,10 +369,7 @@ public class UserSession extends AbstractWrapper {
                 Logger.info("Fixed " + fixed + " unterminated UserSession(s)", UserSession.class);
                 aBase.commit();
             }
-        }
-        finally {
-            ThreadContext.popSuperUser();
-        }
+        });
     }
 
     /**

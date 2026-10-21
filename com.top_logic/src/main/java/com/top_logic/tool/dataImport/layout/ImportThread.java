@@ -30,12 +30,7 @@ abstract class ImportThread extends Thread implements InContext {
 
 	@Override
 	public void inContext() {
-		TLContext.pushSuperUser();
-		try {
-			doImport();
-		} finally {
-			TLContext.popSuperUser();
-		}
+		doImport();
 	}
 
 	protected abstract void doImport();

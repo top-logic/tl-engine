@@ -48,7 +48,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ResKey;
@@ -291,7 +291,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 			/* Schedule delayed to ensure that "isStarted" is set. */
 			schedulerService.getImplementationInstance()
-				.schedule(() -> ThreadContextManager.inSystemInteraction(LayoutStorage.class,
+				.schedule(() -> ThreadContext.inSystemContext(LayoutStorage.class,
 					() -> loadLayoutsForNonDefaultThemes(layoutNames, choosableThemes)), 10, TimeUnit.MILLISECONDS);
 		} else {
 			loadLayoutsForAllThemes(layoutNames, choosableThemes);

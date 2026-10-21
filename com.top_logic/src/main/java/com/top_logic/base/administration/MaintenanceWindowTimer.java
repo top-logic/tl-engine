@@ -8,7 +8,7 @@ package com.top_logic.base.administration;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 
 /**
@@ -68,10 +68,10 @@ public class MaintenanceWindowTimer extends Thread {
             Thread.sleep(delay);
             Person contextUser = mwm.getChangingUser();
             if (contextUser != null) {
-                TLContext context = TLContext.getContext();
-                if (context != null) context.setCurrentPerson(contextUser);
-            }
-            mwm.timeUp();
+				TLContextManager.inPersonContext(contextUser, mwm::timeUp);
+			} else {
+				mwm.timeUp();
+			}
         }
         catch (InterruptedException e) {
 			// Most Propably triggered by MaintenanceWindowManager.shutdown();

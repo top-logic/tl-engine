@@ -151,6 +151,17 @@ public class IDEModelExtractCommand extends AbstractCommandHandler {
 							return lookup(base);
 						}
 
+						@Override
+						protected String getMissingValue(String canonicalKey, ResKey labelKey) {
+							// Store the label the application currently shows, e.g. the one derived
+							// from the model part's name.
+							String label = bundle.getString(labelKey, null);
+							if (label != null) {
+								return label;
+							}
+							return super.getMissingValue(canonicalKey, labelKey);
+						}
+
 						private void keepOptionalKey(ResKey infoKey) {
 							String infoValue = lookup(infoKey);
 							if (infoValue != null) {

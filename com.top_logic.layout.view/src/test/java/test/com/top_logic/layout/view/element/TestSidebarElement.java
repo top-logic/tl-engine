@@ -41,6 +41,7 @@ import com.top_logic.layout.view.navigation.MountPath;
 import com.top_logic.layout.view.navigation.MountStep;
 import com.top_logic.layout.view.navigation.ViewMounts;
 import com.top_logic.layout.view.security.SecurityScopeService;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Tests the items a {@code <sidebar>} offers: the captions, groups, navigation items and command
@@ -241,7 +242,9 @@ public class TestSidebarElement extends BasicTestCase {
 	 * than shown empty.
 	 */
 	public void testAGuardedGroupIsOmitted() {
-		List<Map<String, Object>> items = items(sidebar(DENIED_FIXTURE));
+		// Built with checked security for a session without a person.
+		List<Map<String, Object>> items =
+			items(TLContextManager.inPersonContext(null, () -> sidebar(DENIED_FIXTURE)));
 
 		assertEquals("Only the unguarded item is offered: " + items, 1, items.size());
 		assertEquals("open", items.get(0).get(ID));

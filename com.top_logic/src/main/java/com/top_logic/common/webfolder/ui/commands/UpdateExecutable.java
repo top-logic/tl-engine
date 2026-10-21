@@ -6,6 +6,7 @@
 package com.top_logic.common.webfolder.ui.commands;
 
 
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.common.webfolder.model.FolderContent;
 import com.top_logic.common.webfolder.ui.WebFolderUIFactory;
 import com.top_logic.dsa.DataAccessProxy;
@@ -79,7 +80,7 @@ public class UpdateExecutable extends AbstractWebfolderAction {
 	}
 
 	private ExecutableState calculateExecutabilityWhenLocked(DataAccessProxy theDAP) {
-		if (TLContext.isAdmin()) {
+		if (ThreadContext.isAdmin()) {
 			return ExecutableState.EXECUTABLE;
 		}
 		String theName = LockExecutable.getLocker(theDAP);

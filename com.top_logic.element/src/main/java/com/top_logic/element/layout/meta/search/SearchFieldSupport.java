@@ -25,6 +25,7 @@ import com.top_logic.basic.col.MappingSorter;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.search.AttributedSearchComponent.DerivedAttributeDescription;
 import com.top_logic.element.layout.provider.MetaElementLabelProvider;
@@ -353,7 +354,7 @@ public class SearchFieldSupport {
 				// for the owner the unversioned identity must be compared, otherwise it wont be equal
 				// even for the "same" person
 				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser)
-					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || Person.isAdmin(theCurrentUser)) {
+					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || ThreadContext.isAdmin()) {
 					boolean isPublished;
 					
 					if (groupAssociations.isEmpty()) {

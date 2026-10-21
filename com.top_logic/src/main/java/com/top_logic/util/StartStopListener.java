@@ -45,45 +45,7 @@ public class StartStopListener extends AbstractStartStopListener implements Serv
      */
     @Deprecated
     protected void initPersons() {
-//        TokenContext     theTokenCtxt   = null;
-//        KnowledgeBase theKB = KnowledgeBaseFactory.getDefaultKnowledgeBase();
-//        theKB.begin();
-//        try {
-//            long start = System.currentTimeMillis();
-//        	ThreadContext.pushSuperUser(); // else push superuser on old context
-//
-//            theTokenCtxt = PersonManager.getManager().initUserMap();
-//            
-//            if (theTokenCtxt != null && theTokenCtxt.isStateAcquired() && theTokenCtxt.check()) {
-//                if (!theKB.commit())
-//                    throw new RuntimeException("Failed to commit() in initPersons()");
-//            }
-//            else {
-//            	Logger.warn("Init persons: Rolling back person initialisation because of token time - out",this);
-//                theKB.rollback();
-//            }
-//            
-//            long delta = System.currentTimeMillis() - start;
-//            if (delta > 3000)
-//                Logger.info("Init persons needed " + DebugHelper.getTime(delta), this);
-//        } catch (Exception e) {
-////          rollback anything not commited yet          
-//            theKB.rollback();
-//            Logger.error("Init persons: unexpected error during refreshing of users:", e, this);
-//        } finally {
-//            if(theTokenCtxt!=null){
-//                try {
-//                    theTokenCtxt.unlock();
-//                }
-//                catch (Exception ex) {
-//                    // Ignore, but make sure the rest of finally is executed...
-//                }
-//            }else{
-//                Logger.warn("Init persons: unable to get token for user refresh. Skipping this cycle",this);
-//            }
-//            
-//            ThreadContext.popSuperUser(); // else pop super user on old context
-//        }
+        // Nothing to do.
     }
     
     /**

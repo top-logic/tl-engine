@@ -16,7 +16,7 @@ import jakarta.jms.Topic;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 
 /**
  * Base class for a JMS Consumer (fetches messages from a queue).
@@ -79,7 +79,7 @@ public abstract class Consumer<C extends Consumer.Config<?>> extends AbstractCon
 		while (!_closed) {
 			try {
 				Message message = _consumer.receive();
-				ThreadContextManager.inInteraction(Consumer.class.getName(), () -> processMessage(message));
+				ThreadContext.inSystemContext(Consumer.class, () -> processMessage(message));
 			} catch (Throwable ex) {
 				if (_closed) {
 					return;

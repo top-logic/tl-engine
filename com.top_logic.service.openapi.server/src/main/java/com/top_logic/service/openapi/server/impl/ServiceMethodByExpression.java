@@ -24,7 +24,7 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.json.JSON;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -79,7 +79,7 @@ public class ServiceMethodByExpression implements ServiceMethod {
 			return null;
 		};
 		if (account == null) {
-			ThreadContextManager.inSystemInteraction(ServiceMethodBuilderByExpression.class, job);
+			ThreadContext.inSystemContext(ServiceMethodBuilderByExpression.class, job);
 		} else {
 			TLContextManager.inPersonContext(account, job);
 		}

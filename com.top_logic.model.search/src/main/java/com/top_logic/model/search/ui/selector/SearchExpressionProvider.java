@@ -62,7 +62,7 @@ public class SearchExpressionProvider implements Provider<List<SearchExpressionI
 	}
 
 	private boolean showEveryonesSearches() {
-		return ThreadContext.isAdmin() || Person.isAdmin(TLContext.getContext().getPerson());
+		return ThreadContext.isAdmin();
 	}
 
 	private List<SearchExpressionImpl> getAllStoredSearches() {

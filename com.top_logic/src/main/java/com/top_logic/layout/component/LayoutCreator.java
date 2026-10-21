@@ -35,6 +35,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.ModuleUtil.ModuleContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.gui.JSFileCompiler;
@@ -140,7 +141,7 @@ public class LayoutCreator {
 
 	private static void createLayoutsForThemes(File target, CompileTimeApplication application,
 			Map<String, List<BinaryData>> overlaysByLayoutKey) {
-		ThreadContextManager.inSystemInteraction(LayoutCreator.class, () -> {
+		ThreadContext.inSystemContext(LayoutCreator.class, () -> {
 			for (Theme theme : ThemeFactory.getInstance().getChoosableThemes()) {
 				createLayoutsForTheme(theme, target, application, overlaysByLayoutKey);
 			}

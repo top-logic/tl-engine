@@ -483,7 +483,9 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 
 		_unknownKeys.clear();
 		_unknownKeysWithDefault.clear();
-		_bundles = null;
+
+		// Sessions caching a bundle must not keep reading through a stopped module.
+		updateBundles(null);
 	}
 
 	/**

@@ -67,7 +67,6 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.manager.AccessManager.Config;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.util.TLContext;
 
 /**
  * Test for the {@link ElementAccessManager}.
@@ -392,8 +391,6 @@ public class TestElementAccessManager extends BasicTestCase {
             personC = initPerson("CC");
 
 			commit(tx1);
-			TLContext context = TLContext.getContext();
-            context.setCurrentPerson(personA);
 
 			StructuredElement theRoot = projectRoot();
 

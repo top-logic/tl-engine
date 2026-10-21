@@ -16,7 +16,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.element.meta.TestWithModelExtension;
 
 import com.top_logic.basic.col.Maybe;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -116,7 +116,7 @@ public class TestTransientTLObjectNaming extends TestWithModelExtension {
 			 */
 			@Override
 			public void run() throws Exception {
-				ThreadContextManager.inSystemInteraction(TestTransientTLObjectNaming.class, () -> {
+				ThreadContext.inSystemContext(TestTransientTLObjectNaming.class, () -> {
 					ModelName bModelName = createName(bObj);
 					TLObject locatedB = (TLObject) ModelResolver.locateModel(actionContext(), bModelName);
 					TLObject a = (TLObject) locatedB.tValueByName("a");

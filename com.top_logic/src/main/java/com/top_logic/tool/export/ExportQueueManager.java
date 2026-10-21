@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Reloadable;
@@ -250,9 +249,8 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 		public void inContext() {
 			Export theExport = this.lookupQueue();
 			if (theExport != null) {
-				TLSubSessionContext session = TLContextManager.getSubSession();
 				do {
-					this.processExport(session, theExport);
+					this.processExport(theExport);
 					if (shouldStop) {
 						break;
 					}
@@ -280,27 +278,12 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 			}
 		}
 
-		private void processExport(TLSubSessionContext sessionContext, Export anExport) {
-			String systemId = null;
-			Person oldPerson = null;
+		private void processExport(Export anExport) {
 			Person exportPerson = anExport.getPerson();
-			boolean changePerson = exportPerson != null;
-			if (changePerson) {
-				oldPerson = sessionContext.getPerson();
-				if (oldPerson == null) {
-					systemId = sessionContext.getContextId();
-				}
-				sessionContext.setPerson(exportPerson);
-			}
-			try {
+			if (exportPerson != null) {
+				TLContextManager.inPersonContext(exportPerson, () -> inUserContext(anExport));
+			} else {
 				inUserContext(anExport);
-			} finally {
-				if (changePerson) {
-					sessionContext.setPerson(oldPerson);
-					if (oldPerson == null) {
-						sessionContext.setContextId(systemId);
-					}
-				}
 			}
 		}
 

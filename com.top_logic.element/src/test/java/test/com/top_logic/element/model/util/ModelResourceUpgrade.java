@@ -25,6 +25,7 @@ import com.top_logic.basic.config.ResourceDeclaration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.db.schema.io.MORepositoryBuilder;
 import com.top_logic.basic.db.schema.setup.config.ApplicationTypes;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResKey;
@@ -82,7 +83,7 @@ public class ModelResourceUpgrade extends XMain implements ComputationEx2<Void, 
 			DataAccessService.Module.INSTANCE,
 			CompatibilityService.Module.INSTANCE);
 
-		ThreadContextManager.inSystemInteraction(ModelResourceUpgrade.class, this);
+		ThreadContext.inSystemContext(ModelResourceUpgrade.class, this);
 	}
 
 	@Override

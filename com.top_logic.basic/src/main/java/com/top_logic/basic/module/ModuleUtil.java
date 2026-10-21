@@ -31,6 +31,7 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.InContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ComputationEx2;
@@ -773,7 +774,7 @@ public class ModuleUtil {
 				}
 			}
 		};
-		ThreadContextManager.inSystemInteraction(ModuleUtil.class, job);
+		ThreadContext.inSystemContext(ModuleUtil.class, job);
 		if (threadContextModule.get() != null) {
 			// stop thread context module
 			stop(threadContextModule.get());
@@ -983,7 +984,7 @@ public class ModuleUtil {
 			}
 
 		};
-		ModuleException problem = ThreadContextManager.inSystemInteraction(ModuleUtil.class, job);
+		ModuleException problem = ThreadContext.inSystemContext(ModuleUtil.class, job);
 		if (problem != null) {
 			throw problem;
 		}

@@ -26,7 +26,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.base.accesscontrol.IdentityVerifications;
 import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
 import com.top_logic.basic.encryption.SecureRandomService;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
@@ -232,7 +232,7 @@ public class TestIdentityVerifications extends BasicTestCase {
 	 * The registry of a session is allocated once and then kept.
 	 */
 	public void testSessionRegistryIsAllocatedOnce() {
-		ThreadContextManager.inInteraction(TestIdentityVerifications.class.getName(), () -> {
+		ThreadContext.inSystemContext(TestIdentityVerifications.class, () -> {
 			IdentityVerifications first = IdentityVerifications.forCurrentSession();
 			assertNotNull(first);
 			assertSame("The session must keep its registry.", first, IdentityVerifications.forCurrentSession());

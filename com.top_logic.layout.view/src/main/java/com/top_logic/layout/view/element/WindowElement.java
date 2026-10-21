@@ -14,7 +14,7 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -128,11 +128,15 @@ public class WindowElement extends CommandScopeElement {
 		 * <p>
 		 * These are rendered in the window's footer bar below the body content.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(ACTIONS)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getActions();
+		List<UIElement.Config> getActions();
 	}
 
 	/**

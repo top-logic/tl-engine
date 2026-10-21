@@ -3,12 +3,13 @@
 <!--
 	Overlay contributing the Model admin section (the model editor) into the admin view defined by
 	tl-layout-view (WEB-INF/views/admin/admin.view.xml). Same-path overlay merged by the ViewLoader
-	in dependency order. The Model tab is inserted right after the static "system" tab, so the order
-	stays Access control, Monitoring, System, Model, Development - purely through the
-	typed-configuration list merge (config:position), without tl-layout-view knowing this module.
+	in dependency order. The overlay addresses the tab bar of the sections by its id; the Model tab
+	is inserted right after the static "system" tab, so the order stays Access control, Monitoring,
+	System, Model, Development - purely through the typed-configuration list merge
+	(config:position), without tl-layout-view knowing this module.
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<tab-bar>
+	<tab-bar config:ref="sections">
 		<tabs>
 			<tab id="model-editor"
 				config:operation="add"

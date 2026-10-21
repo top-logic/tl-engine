@@ -13,6 +13,8 @@ import java.util.Set;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.TLValueNormalizer;
+import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
 
@@ -33,6 +35,12 @@ import com.top_logic.model.form.TracingScope;
  * computed again and {@link #followObject() taken} as the field's value and as the value it is
  * dirty against. A derived field is therefore never dirty, while its value change is announced to
  * its listeners like any other, so that fields depending on the derived attribute follow in turn.
+ * </p>
+ *
+ * <p>
+ * An entered value of an attribute annotated with a {@link TLValueNormalizer} is brought into its
+ * canonical form before it is written to the object. The normalizer sees the object the field
+ * writes to, in a form the overlay holding the other values entered there.
  * </p>
  */
 public class AttributeFieldModel extends BoundFieldModel {
@@ -78,6 +86,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 		_object = object;
 		_part = part;
 		_form = form;
+		setNormalizer(ValueNormalizer.annotated(part));
 		setMandatory(part.isMandatory());
 		if (isTraced()) {
 			Object value = readValue();
@@ -151,6 +160,16 @@ public class AttributeFieldModel extends BoundFieldModel {
 	}
 
 	@Override
+	protected TLObject normalizationObject() {
+		return _object;
+	}
+
+	@Override
+	protected TLStructuredTypePart normalizationAttribute() {
+		return _part;
+	}
+
+	@Override
 	protected void writeValue(Object value) {
 		_object.tUpdate(_part, value);
 	}
@@ -178,7 +197,11 @@ public class AttributeFieldModel extends BoundFieldModel {
 		Object oldValue = getCachedValue();
 		boolean hadInputError = getInputError() != null;
 		_object = newObject;
+		TLStructuredTypePart oldPart = _part;
 		_part = resolvePart(newObject);
+		if (_part != oldPart) {
+			setNormalizer(ValueNormalizer.annotated(_part));
+		}
 		updateDependencyListener();
 		setMandatory(_part.isMandatory());
 		Object newValue = getValue();

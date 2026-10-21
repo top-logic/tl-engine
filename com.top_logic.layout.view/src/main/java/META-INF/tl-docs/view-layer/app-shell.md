@@ -7,9 +7,9 @@ order: 80
 
 ## The application shell: extending `app.view.xml`
 
-`tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` ending in a separator (`id="system-separator"`) and the `administration` item, and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order.
+`tl-layout-view` ships the shell an application is displayed in as `WEB-INF/views/app.view.xml` — the `default-view` of `ViewConfig`: an `<app-shell>` with the system notices (`<maintenance-notice/>`, `<session-timeout-notice/>`), a `<sidebar>` ending in a separator (`id="system-separator"`) and the `administration` item, and an `<app-bar>` with the drawer-toggle slot `appbar-leading`, the projection slot `appbar-content` and the development menu plus the account area (`dev-menu.view.xml`, `user-menu.view.xml`) in its trailing area. An application does not copy it, it extends it with a **same-path overlay**: a `WEB-INF/views/app.view.xml` of its own module, which the `ViewLoader` merges onto the shipped one in dependency order. The general merge rules - keys, positions, overrides, anonymous elements - are described in [extending a view with a same-path overlay](doc:view-layer/overlays); what follows is what they mean for the shell.
 
-- Each slot of `<app-shell>` (`header`, `notices`, `content`, `footer`) holds **at most one element of a kind** — the slot lists are keyed by the configuration interface of their entries. The overlay's `<content><sidebar>` and `<header><app-bar>` therefore extend the shell's sidebar and app bar instead of adding second ones; two elements of the same kind in one slot are rejected.
+- The overlay addresses the shell's sidebar and app bar by their ids, wherever the shell keeps them: `<sidebar config:ref="sidebar">` and `<app-bar config:ref="app-bar">`, written directly in the `<view>`. (The slots of `<app-shell>` — `header`, `notices`, `content`, `footer` — hold **at most one element of a kind**, the slot lists being keyed by the configuration interface of their entries, so an overlay that writes the path, `<app-shell><content><sidebar>`, extends the same sidebar; two elements of the same kind in one slot are rejected.)
 - Single-valued properties written in the overlay replace the shell's: the `<title>` of the app bar, the `active-item` of the sidebar.
 - The rail chrome (`<header>`, `<footer>`, … of the sidebar) is a list of arbitrary elements; the overlay marks its list with `config:override="true"` to replace the shell's neutral texts instead of adding to them.
 - Sidebar items are keyed by `id`. An item without a position is appended — after the `administration` item; an item for the application's own section names the separator: `config:position="before" config:reference="system-separator"`.
@@ -17,24 +17,18 @@ order: 80
 
 ```xml
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-    <app-shell>
-        <content>
-            <sidebar active-item="home">
-                <header config:override="true">
-                    <text><label><en>My App</en></label></text>
-                </header>
-                <nav-item id="home" config:position="before" config:reference="system-separator">
-                    <view-ref view="home.view.xml"/>
-                    <label><en>Home</en></label>
-                </nav-item>
-            </sidebar>
-        </content>
-        <header>
-            <app-bar>
-                <title><en>My App</en></title>
-            </app-bar>
+    <sidebar config:ref="sidebar" active-item="home">
+        <header config:override="true">
+            <text><label><en>My App</en></label></text>
         </header>
-    </app-shell>
+        <nav-item id="home" config:position="before" config:reference="system-separator">
+            <view-ref view="home.view.xml"/>
+            <label><en>Home</en></label>
+        </nav-item>
+    </sidebar>
+    <app-bar config:ref="app-bar">
+        <title><en>My App</en></title>
+    </app-bar>
 </view>
 ```
 
@@ -50,7 +44,7 @@ Five kinds of item:
 - `<group id icon expanded>` gathers further items under a heading the user folds away. A group holds items, not content: the navigation items inside it lead to the same places and are addressed at the sidebar itself, so a group nests inside a group without changing where anything is displayed. Whether it is folded is remembered per user under the group's `id` (`PersonalizingExpandable`, the states stored as one JSON map beside the rail's own collapsed state), and applied to a group at any depth when the item list is pushed. On a folded rail a group opens as a flyout listing its items.
 - `<header-item id icon>` is a caption naming the items that follow it. It leads nowhere and cannot be activated; it divides a long navigation into named sections that all stay visible, where a group would fold them away.
 - `<command-item id>` runs a command instead of leading somewhere. The `<action>` it hosts is a `ViewCommand`, whose label and image the item displays, so the item reads like the button of the same command elsewhere. The item follows the command's executability for as long as the rail stands: invisible is not displayed, not executable is displayed out of reach (greyed), and the item takes its place back as soon as the rules allow it. The reason a rule gives for disabling the command (the text of a `<disabled-if>` expression, say) is what the item shows when the pointer rests on it, as the button of the same command does. The control refuses an activation of an item in either state, so a client addressing the command directly does not bypass the rules.
-- `<separator/>` draws a line between items. It is the one entry that usually carries no `id`, and at most one such anonymous entry may occur — give separators explicit ids where more than one is needed.
+- `<separator/>` draws a line between items. It is the one entry that usually carries no `id`: an entry without id is anonymous, appended in order and addressed by no fragment, so any number of separators may stay anonymous. Give a separator an id where a fragment positions items against it, as the shell's `system-separator`.
 
 `<nav-item>` and `<group>` take an `<access-control scope="…"/>`: an item the current user may not reach is not built at all, and a group whose access is denied withholds everything inside it.
 

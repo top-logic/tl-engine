@@ -102,7 +102,7 @@ public class TestFieldsElement extends TestCase {
 	public void testTheInputsOfAViewStandInTheGrid() throws Exception {
 		FieldsElement.Config fields = config(OWNED_INPUTS);
 
-		List<PolymorphicConfiguration<? extends UIElement>> children = fields.getChildren();
+		List<UIElement.Config> children = fields.getChildren();
 		assertEquals("Every input written in the element must reach it.", 2, children.size());
 		assertEquals("term", input(children, 0).getValue().getChannelName());
 		assertEquals("status", input(children, 1).getValue().getChannelName());
@@ -276,7 +276,7 @@ public class TestFieldsElement extends TestCase {
 	}
 
 	/** The {@code <value-input>} configuration at the given position within a {@code <fields>}. */
-	private static ValueInputElement.Config input(List<PolymorphicConfiguration<? extends UIElement>> children,
+	private static ValueInputElement.Config input(List<UIElement.Config> children,
 			int index) {
 		PolymorphicConfiguration<? extends UIElement> entry = children.get(index);
 		assertTrue("Entry " + index + " must be a value input, but is " + entry,
@@ -285,7 +285,7 @@ public class TestFieldsElement extends TestCase {
 	}
 
 	/** The {@code <fields>} configurations of the test view. */
-	private static List<PolymorphicConfiguration<? extends UIElement>> parseFields() throws Exception {
+	private static List<UIElement.Config> parseFields() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestFieldsElement.class);
 
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(

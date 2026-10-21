@@ -14,10 +14,10 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -209,12 +209,16 @@ public class AdaptiveDetailElement implements UIElement {
 
 		/**
 		 * The content elements of this side.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+		List<UIElement.Config> getChildren();
 	}
 
 	/**

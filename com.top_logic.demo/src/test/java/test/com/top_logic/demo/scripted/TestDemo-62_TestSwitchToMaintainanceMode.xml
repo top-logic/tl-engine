@@ -1100,6 +1100,27 @@
 										<path>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+													value="Administration > Tech. Administration > Wartungsfenster (Lesen)"
+												/>
+											</object>
+											<named-member name="maintenanceActivate"/>
+										</path>
+									</field>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+										value="true"
+									/>
+								</action>
+								<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+									user-id="root"
+								>
+									<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+										<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											name="com.top_logic/admin/security/profiles/adminSecurity.layout.xml#EditSecurityComponent"
+											tab-path="Administration > Berechtigungen > Rollenprofile"
+										/>
+										<path>
+											<object>
+												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 													value="Administration > Tech. Administration > Wartungsfenster > aktivieren (Lesen)"
 												/>
 											</object>

@@ -140,7 +140,7 @@
 	</channels>
 	<full-page>
 		<inset>
-			<stack
+			<stack id="filter"
 				align="center"
 				direction="row"
 				wrap="true"
@@ -403,7 +403,9 @@
 				</stack>
 			</stack>
 		</inset>
-		<table types="tl.changelog:ChangeSet">
+		<table id="table"
+			types="tl.changelog:ChangeSet"
+		>
 			<inputs>
 				<input channel="query"/>
 			</inputs>

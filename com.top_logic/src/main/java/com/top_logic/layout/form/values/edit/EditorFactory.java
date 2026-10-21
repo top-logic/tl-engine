@@ -1079,7 +1079,8 @@ public class EditorFactory implements AnnotationCustomizations {
 				} else {
 					if (keyMapping != null) {
 						Object key = keyMapping.map(value);
-						boolean containsKey = collectionValue.stream()
+						// An anonymous entry has no key and therefore never collides with another entry.
+						boolean containsKey = !ConfigUtil.isAnonymousKey(key) && collectionValue.stream()
 							.map(keyMapping)
 							.anyMatch(key::equals);
 						if (containsKey) {

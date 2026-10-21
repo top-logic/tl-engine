@@ -15,7 +15,9 @@
 	<channels>
 		<channel name="state"/>
 	</channels>
-	<panel fill="true">
+	<panel id="panel"
+		fill="true"
+	>
 		<title>
 			<en>Maintenance mode</en>
 			<de>Wartungsmodus</de>
@@ -94,7 +96,8 @@
 				<write-channel name="state"/>
 			</generic-command>
 		</commands>
-		<child class="com.top_logic.layout.view.admin.system.MaintenanceStatusView"
+		<child id="status"
+			class="com.top_logic.layout.view.admin.system.MaintenanceStatusView"
 			state="state"
 		/>
 	</panel>

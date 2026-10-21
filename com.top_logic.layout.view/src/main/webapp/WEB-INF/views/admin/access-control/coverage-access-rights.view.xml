@@ -49,7 +49,7 @@
 			</generic-command>
 		</commands>
 		<inset>
-			<config-form
+			<config-form id="form"
 				input="rights"
 				withEditMode="false"
 			>

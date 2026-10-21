@@ -7,6 +7,8 @@
 -->
 <view>
 	<full-page>
-		<child class="com.top_logic.layout.view.admin.monitor.FailedLoginTable"/>
+		<child id="table"
+			class="com.top_logic.layout.view.admin.monitor.FailedLoginTable"
+		/>
 	</full-page>
 </view>

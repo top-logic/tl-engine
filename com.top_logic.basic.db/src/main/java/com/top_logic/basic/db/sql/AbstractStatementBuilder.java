@@ -646,6 +646,9 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		buffer.append(' ');
 		List<String> columnNames = sql.getColumns();
 		List<SQLExpression> values = sql.getValues();
+		if (buffer.sqlDialect.updateAssignmentsSeeNewValues()) {
+			checkNoReadAfterAssignment(buffer.sqlDialect, columnNames, values);
+		}
 		for (int n = 0, cnt = columnNames.size(); n < cnt; n++) {
 			String columnName = columnNames.get(n);
 			SQLExpression value = values.get(n);
@@ -667,6 +670,36 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		}
 	
 		return resetContext(oldContext, buffer);
+	}
+
+	/**
+	 * Ensures that no value expression of an <code>UPDATE</code> reads a column assigned earlier in
+	 * the same statement.
+	 * 
+	 * <p>
+	 * Such a statement has a different result in a dialect that evaluates assignments from left to
+	 * right.
+	 * </p>
+	 * 
+	 * @see DBHelper#updateAssignmentsSeeNewValues()
+	 */
+	private static void checkNoReadAfterAssignment(DBHelper sqlDialect, List<String> columnNames,
+			List<SQLExpression> values) {
+		for (int n = 1, cnt = columnNames.size(); n < cnt; n++) {
+			List<String> assignedBefore = columnNames.subList(0, n);
+			for (SQLColumnReference reference : ColumnReferenceCollector.columnReferences(values.get(n))) {
+				String readColumn = reference.getColumnName();
+				if (assignedBefore.contains(readColumn)) {
+					throw new IllegalArgumentException("The value of column '" + columnNames.get(n)
+						+ "' reads column '" + readColumn + "', which is assigned earlier in the same UPDATE. "
+						+ "The SQL dialect '" + sqlDialect.getClass().getName()
+						+ "' evaluates the assignments from left to right, so the value would be computed from the "
+						+ "value already assigned to '" + readColumn + "' instead of its old value. "
+						+ "Swap the values through a row-wise update, or order the assignments so that a column "
+						+ "is read only before it is assigned.");
+				}
+			}
+		}
 	}
 
 	@Override

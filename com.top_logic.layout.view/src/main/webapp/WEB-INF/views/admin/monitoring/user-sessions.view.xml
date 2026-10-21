@@ -7,6 +7,8 @@
 -->
 <view>
 	<full-page>
-		<child class="com.top_logic.layout.view.admin.monitor.UserSessionTable"/>
+		<child id="table"
+			class="com.top_logic.layout.view.admin.monitor.UserSessionTable"
+		/>
 	</full-page>
 </view>

@@ -8,6 +8,7 @@ package com.top_logic.layout.react.field;
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.layout.LabelProvider;
@@ -49,6 +50,8 @@ public final class FieldSpec {
 
 	private Long _debounce;
 
+	private boolean _sendValueOnBlur;
+
 	private boolean _mandatory;
 
 	private boolean _editable = true;
@@ -68,6 +71,8 @@ public final class FieldSpec {
 	private SelectDisplay _selectDisplay = SelectDisplay.DROPDOWN;
 
 	private Orientation _selectOrientation = Orientation.VERTICAL;
+
+	private Comparator<?> _optionOrder;
 
 	private ReactDatePickerControl.Kind _dateKind = ReactDatePickerControl.Kind.DATE;
 
@@ -242,6 +247,31 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setDebounce(Long debounce) {
 		_debounce = debounce;
+		return this;
+	}
+
+	/**
+	 * Whether a typed value is held back until the field is left.
+	 *
+	 * <p>
+	 * For a field whose model rewrites what it is given - a text it trims, a rule it prints in its
+	 * canonical notation. Sending the value while the user types would bring back the rewritten
+	 * value and replace what is being typed, so the input sends its value when the field is left,
+	 * see {@link com.top_logic.layout.react.control.form.ReactFormFieldControl#setSendValueOnBlur(boolean)}.
+	 * The text, number and password inputs honour it.
+	 * </p>
+	 */
+	public boolean isSendValueOnBlur() {
+		return _sendValueOnBlur;
+	}
+
+	/**
+	 * Sets whether the field {@link #isSendValueOnBlur() sends its value on blur}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setSendValueOnBlur(boolean sendValueOnBlur) {
+		_sendValueOnBlur = sendValueOnBlur;
 		return this;
 	}
 
@@ -425,6 +455,30 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The order the options of a value chosen from options are offered in, or {@code null} to offer
+	 * them as given.
+	 *
+	 * <p>
+	 * The source of the options decides: options with an order of their own - the classifiers of an
+	 * enumeration, the result of an options expression keeping the order it computes - are offered
+	 * as given, the instances of a class sorted by their labels.
+	 * </p>
+	 */
+	public Comparator<?> getOptionOrder() {
+		return _optionOrder;
+	}
+
+	/**
+	 * Sets the {@link #getOptionOrder() order} the options are offered in.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setOptionOrder(Comparator<?> optionOrder) {
+		_optionOrder = optionOrder;
+		return this;
+	}
+
+	/**
 	 * Whether a boolean value keeps a state of its own for "no value".
 	 */
 	public boolean isTriState() {
@@ -574,6 +628,7 @@ public final class FieldSpec {
 		result._icon = _icon;
 		result._clearable = _clearable;
 		result._debounce = _debounce;
+		result._sendValueOnBlur = _sendValueOnBlur;
 		result._mandatory = _mandatory;
 		result._editable = _editable;
 		result._multiple = _multiple;
@@ -584,6 +639,7 @@ public final class FieldSpec {
 		result._triState = _triState;
 		result._selectDisplay = _selectDisplay;
 		result._selectOrientation = _selectOrientation;
+		result._optionOrder = _optionOrder;
 		result._dateKind = _dateKind;
 		result._numberFormat = _numberFormat;
 		result._dateFormat = _dateFormat;

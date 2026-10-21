@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -114,11 +114,14 @@ public class VisibleIfElement implements UIElement {
 		 * The content elements shown while the condition holds.
 		 *
 		 * @implNote Written directly as children of the {@code <visible-if>}.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CONTENT)
 		@DefaultContainer
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+		List<UIElement.Config> getContent();
 
 		/**
 		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the

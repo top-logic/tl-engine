@@ -30,21 +30,38 @@ class ListHandler {
 		_storage.remove(reference);
 	}
 
+	/**
+	 * The entry with the given key value, or <code>null</code> if there is none.
+	 * 
+	 * <p>
+	 * An anonymous reference (see {@link ConfigUtil#isAnonymousKey(Object)}) matches no entry.
+	 * </p>
+	 */
 	public ConfigurationItem resolveReferenceOrNull(Object reference) {
-		ConfigurationItem value = _storage.resolveReferenceOrNull(reference);
-		if (value == null) {
-			return null;
-		}
-		return value;
-	}
-
-	public ConfigurationItem resolveReference(Object reference) {
 		return _storage.resolveReferenceOrNull(reference);
 	}
 
-	public void update(ConfigurationItem newConfig) {
+	/**
+	 * The entry at the given zero-based position, or <code>null</code> if the index is out of
+	 * range.
+	 */
+	public ConfigurationItem resolveIndexOrNull(int index) {
+		return _storage.resolveIndexOrNull(index);
+	}
+
+	/**
+	 * The number of entries in the list.
+	 */
+	public int size() {
+		return _storage.size();
+	}
+
+	/**
+	 * Replaces the given entry with a new entry at the same position.
+	 */
+	public void replace(ConfigurationItem oldConfig, ConfigurationItem newConfig) {
 		if (newConfig != null) {
-			_storage.update(newConfig);
+			_storage.replace(oldConfig, newConfig);
 		}
 	}
 

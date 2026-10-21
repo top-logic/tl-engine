@@ -901,17 +901,93 @@ public class TLModelUtil {
 	 * The value representing "no value" for the given part, depending on its multiplicity.
 	 *
 	 * <p>
-	 * For a single-valued part this is <code>null</code>. For a multiple part it is an empty
-	 * collection of the same kind that the storage returns for a non-empty value: an empty list for
-	 * an {@link TLStructuredTypePart#isOrdered() ordered} part, an empty set otherwise. The
-	 * collection type is determined by {@link TLStructuredTypePart#isOrdered()} alone; a
-	 * (non-ordered) {@link TLStructuredTypePart#isBag() bag} is returned as a set, just as the
-	 * storage does.
+	 * For a single-valued part whose type is a {@link TLPrimitive} with a
+	 * {@link TLPrimitive#getStorageMapping() storage mapping}, this is the value the mapping
+	 * produces for an empty storage value, see {@link StorageMapping#getBusinessObject(Object)}
+	 * (e.g. {@link Boolean#FALSE} for a boolean). For any other single-valued part it is
+	 * <code>null</code>. For a multiple part it is an empty collection of the same kind that the
+	 * storage returns for a non-empty value: an empty list for an
+	 * {@link TLStructuredTypePart#isOrdered() ordered} part, an empty set otherwise. The collection
+	 * type is determined by {@link TLStructuredTypePart#isOrdered()} alone; a (non-ordered)
+	 * {@link TLStructuredTypePart#isBag() bag} is returned as a set, just as the storage does.
 	 * </p>
 	 */
 	public static Object getEmptyValue(TLStructuredTypePart part) {
 		if (part.isMultiple()) {
 			return part.isOrdered() ? Collections.emptyList() : Collections.emptySet();
+		}
+		StorageMapping<?> mapping = getPrimitiveStorageMapping(part);
+		if (mapping != null) {
+			return mapping.getBusinessObject(null);
+		}
+		return null;
+	}
+
+	/**
+	 * Normalizes a value to be stored in the given part the same way the persistency layer does.
+	 *
+	 * <p>
+	 * If the type of the given part is a {@link TLPrimitive} with a
+	 * {@link TLPrimitive#getStorageMapping() storage mapping}, the value is checked with
+	 * {@link StorageMapping#isCompatible(Object)} and converted with
+	 * {@link StorageMapping#normalizeValue(Object)}, so that it has the form it would have after
+	 * storing and loading it from a persistent object (e.g. an {@link Integer} for a long
+	 * attribute becomes a {@link Long}). For a {@link TLStructuredTypePart#isMultiple() multiple}
+	 * part, each element of the given collection is checked and converted; the result is a
+	 * modifiable list for an {@link TLStructuredTypePart#isOrdered() ordered} part and a
+	 * modifiable set otherwise. A <code>null</code> value of a multiple part is returned
+	 * unchanged.
+	 * </p>
+	 *
+	 * <p>
+	 * For any other part, the value is returned unchanged.
+	 * </p>
+	 *
+	 * @param part
+	 *        The part the value is stored in.
+	 * @param value
+	 *        The value to store. For a multiple part a {@link Collection} or <code>null</code>.
+	 * @return The normalized value.
+	 * @throws IllegalArgumentException
+	 *         If the storage mapping of the part's type cannot convert the value (or one of its
+	 *         elements).
+	 */
+	public static Object normalizeValue(TLStructuredTypePart part, Object value) {
+		StorageMapping<?> mapping = getPrimitiveStorageMapping(part);
+		if (mapping == null) {
+			return value;
+		}
+		if (part.isMultiple()) {
+			if (value == null) {
+				return null;
+			}
+			Collection<Object> result = part.isOrdered() ? new ArrayList<>() : new HashSet<>();
+			for (Object element : (Collection<?>) value) {
+				result.add(normalizeSingleValue(part, mapping, element));
+			}
+			return result;
+		}
+		return normalizeSingleValue(part, mapping, value);
+	}
+
+	private static Object normalizeSingleValue(TLStructuredTypePart part, StorageMapping<?> mapping, Object value) {
+		if (!mapping.isCompatible(value)) {
+			throw new IllegalArgumentException("Value '" + value + "'"
+				+ (value != null ? " (" + value.getClass().getName() + ")" : "") + " can not be converted by '"
+				+ mapping.getClass().getName() + "' to value of type '" + mapping.getApplicationType().getName()
+				+ "' for attribute " + part);
+		}
+		return mapping.normalizeValue(value);
+	}
+
+	/**
+	 * The {@link TLPrimitive#getStorageMapping() storage mapping} of the given part's type, or
+	 * <code>null</code> if the type is no {@link TLPrimitive} or has no storage mapping.
+	 */
+	private static StorageMapping<?> getPrimitiveStorageMapping(TLStructuredTypePart part) {
+		TLType type = part.getType();
+		if (type instanceof TLPrimitive primitive) {
+			return primitive.getStorageMapping();
 		}
 		return null;
 	}

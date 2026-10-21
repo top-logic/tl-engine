@@ -5,11 +5,6 @@
  */
 package com.top_logic.layout.form.values;
 
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.control.TextInputControl;
@@ -22,20 +17,6 @@ import com.top_logic.layout.form.template.ControlProvider;
  */
 public class MultiLineText implements ControlProvider {
 
-	/**
-	 * Configuration options for {@link MultiLineText}.
-	 */
-	public interface Config extends PolymorphicConfiguration<MultiLineText> {
-
-		/** @see #getRows() */
-		String ROWS = "rows";
-
-		/** The number of rows to display in the text area. */
-		@Name(ROWS)
-		@IntDefault(DEFAULT_ROWS)
-		int getRows();
-	}
-
 	/** Number of rows to display in the text area. */
 	public static final int DEFAULT_ROWS = 5;
 
@@ -45,20 +26,20 @@ public class MultiLineText implements ControlProvider {
 	private final int _rows;
 
 	/**
-	 * Creates a {@link MultiLineText} from configuration.
+	 * Creates a {@link MultiLineText}.
 	 * 
-	 * @param context
-	 *        The context for instantiating sub configurations.
-	 * @param config
-	 *        The configuration.
+	 * @param rows
+	 *        The number of rows to display in the text area.
 	 */
-	@CalledByReflection
-	public MultiLineText(InstantiationContext context, Config config) {
-		this(config.getRows());
+	public MultiLineText(int rows) {
+		_rows = rows;
 	}
 
-	private MultiLineText(int rows) {
-		_rows = rows;
+	/**
+	 * The number of rows to display in the text area.
+	 */
+	public int getRows() {
+		return _rows;
 	}
 
 	@Override
@@ -75,7 +56,7 @@ public class MultiLineText implements ControlProvider {
 	 * 
 	 * <p>
 	 * The control is later set to {@link TextInputControl#setMultiLine(boolean) multi line} and
-	 * gets the configured number of rows.
+	 * gets the number of rows given at construction.
 	 * </p>
 	 */
 	protected TextInputControl createControl(FormField field) {

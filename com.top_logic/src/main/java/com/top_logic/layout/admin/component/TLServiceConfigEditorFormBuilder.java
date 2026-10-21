@@ -14,8 +14,7 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
 
 /**
  * Builds a form for the configuration of the given TL service.
@@ -50,7 +49,7 @@ public class TLServiceConfigEditorFormBuilder
 		 * 
 		 * @return Configuration of the given service class.
 		 */
-		@ControlProvider(GroupInlineControlProvider.class)
+		@Inline
 		ServiceConfiguration<?> getServiceConfiguration();
 
 		/**

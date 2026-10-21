@@ -5,6 +5,12 @@
  */
 package com.top_logic.layout.configedit;
 
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.layout.form.values.edit.ControlAnnotationFormat;
+import com.top_logic.layout.form.values.edit.ControlAnnotationOptions;
+import java.lang.annotation.Annotation;
+import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -20,12 +26,12 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Encrypted;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.SelectField;
@@ -33,6 +39,7 @@ import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -41,9 +48,9 @@ import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.state.DatePickerState.Precision;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
@@ -69,23 +76,41 @@ import com.top_logic.mig.html.HTMLFormatter;
  * <ol>
  * <li>An encrypted property always gets the password field, deliberately ahead of every other
  * step.</li>
- * <li>{@link ConfigControl} annotation on the property or on its value type.</li>
- * <li>A property edited by selecting from a fixed set of options gets a select - the plain one
- * where its options are the values it stores, and the dropdown addressing each option by an
- * identity of its own where they are not, or where more than one option is taken at a time.</li>
+ * <li>The map from an annotation of the property or of its value type to a control of this
+ * service ({@link Config#getAnnotationControls()}) - an annotation states what the value means
+ * (e.g. that its text spans multiple lines), and the map decides how such a value is edited. The
+ * first configured annotation the property carries whose provider creates a control wins; a
+ * provider may decline a property whose value it cannot edit in the form the remaining rules give
+ * it, which leaves the property to those rules.</li>
+ * <li>A property edited by selecting from a fixed set of options gets a searchable dropdown - the
+ * select model-based forms use - whether it takes one option or several.</li>
  * <li>The value-type-to-provider map configured in this service ({@link Config#getProviders()}).</li>
  * <li>The value-provider-to-provider map configured in this service ({@link Config#getFormats()}) -
  * claims a property whose {@link PropertyDescriptor#getValueProvider() value provider} (or one of
  * its superclasses) is mapped, ahead of the generic format text field. This is what lets a
  * {@code Date} formatted as a time of day get a time picker instead of plain text: the Java-type
  * map above cannot separate it from a plain date, but the value provider's own class can.</li>
- * <li>The built-in fallback: the direct widget for the property's Java type, or otherwise text
+ * <li>The built-in fallback: the direct widget for the property's Java type - a {@code Date} gets
+ * a picker for a date with a time of day, the form its value is stored in - or otherwise text
  * parsed and formatted through the property's own {@code ConfigurationValueProvider}.</li>
  * </ol>
  *
  * <p>
- * The configured maps ({@link Config#getProviders()} and {@link Config#getFormats()}) are what
- * let a module above this one contribute a control - the TL-Script editor, for instance, lives in
+ * The annotation map ({@link Config#getAnnotationControls()}) chooses a control, but not the form
+ * of the value it edits:
+ * an annotation states something about the value, not that the value is held in a form other than
+ * the one the property would otherwise be edited in. A value map, in contrast, claims the property
+ * for a control that edits its typed value (an internationalized string in an editor per language,
+ * a color in a color chooser). A control chosen by an annotation therefore edits the value in the
+ * form the remaining rules give it: the typed value of a property whose Java type one of the
+ * built-in widgets handles directly or that a value map claims, the selected options of a property
+ * edited by selecting, otherwise its format's text.
+ * </p>
+ *
+ * <p>
+ * The configured maps ({@link Config#getAnnotationControls()}, {@link Config#getProviders()} and
+ * {@link Config#getFormats()}) are what let a module above
+ * this one contribute a control - the TL-Script editor, for instance, lives in
  * {@code tl-model-search-react}.
  * </p>
  *
@@ -103,11 +128,11 @@ import com.top_logic.mig.html.HTMLFormatter;
  *           value no format accepts is written in structured form - and edited by a nested editor
  *           or a type selector here.
  *           <p>
- *           {@code @Encrypted} runs before the {@link ConfigControl} annotation, not just before
- *           the built-in steps: a module may override the control for a property, but it must
- *           never be able to make a secret readable by choosing a control that displays it in the
- *           clear. This is a deliberate security decision on its own terms, independent of the
- *           specialization veto below.
+ *           {@code @Encrypted} runs before the annotation map, not just before the built-in
+ *           steps: a module may choose the control for a property, but it must never be able to
+ *           make a secret readable by choosing a control that displays it in the clear. This is
+ *           a deliberate security decision on its own terms, independent of the specialization
+ *           veto below.
  *           <p>
  *           The specialization veto is why a property with its own format is never handed to the
  *           "direct" widget for its Java type: a {@code Date} formatted as a time of day is
@@ -141,6 +166,32 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<ConfigControlService> {
 
+		/** Property name of {@link #getAnnotationControls()}. */
+		String ANNOTATION_CONTROLS = "annotation-controls";
+
+		/**
+		 * Controls chosen by an annotation of the edited property.
+		 *
+		 * <p>
+		 * A property that carries one of the configured annotations, on the property itself or on
+		 * its value type, is edited with the control the annotation's
+		 * {@link ConfigAnnotationControlProvider} creates. If a property carries several of the
+		 * configured annotations, the first entry in this list whose annotation is present and
+		 * whose provider creates a control wins.
+		 * </p>
+		 *
+		 * <p>
+		 * A control chosen here takes precedence over every other mapping of this service and over
+		 * a select. Only an encrypted property is never edited with a control chosen here.
+		 * A provider declines a property whose value it cannot edit in the form the other rules
+		 * give it - a text area declines a property edited by selecting, for instance - and leaves
+		 * it to those rules.
+		 * </p>
+		 */
+		@Name(ANNOTATION_CONTROLS)
+		@Key(AnnotationControlMapping.ANNOTATION)
+		List<AnnotationControlMapping> getAnnotationControls();
+
 		/**
 		 * Value-type-to-provider mappings, keyed by the Java type of the property value.
 		 */
@@ -162,6 +213,44 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		 */
 		@Key(FormatMapping.PROVIDER)
 		Map<Class<?>, FormatMapping> getFormats();
+
+	}
+
+	/**
+	 * Entry of {@link Config#getAnnotationControls()}.
+	 */
+	public interface AnnotationControlMapping extends ConfigurationItem {
+
+		/** Property name of {@link #getAnnotation()}. */
+		String ANNOTATION = "annotation";
+
+		/** Property name of {@link #getImpl()}. */
+		String IMPL = "impl";
+
+		/**
+		 * The annotation type a property must carry for this entry to apply.
+		 *
+		 * <p>
+		 * Only an annotation marked with {@link ControlAnnotation} can be given.
+		 * </p>
+		 */
+		@Name(ANNOTATION)
+		@Mandatory
+		@Format(ControlAnnotationFormat.class)
+		@Options(fun = ControlAnnotationOptions.class)
+		Class<? extends Annotation> getAnnotation();
+
+		/**
+		 * The {@link ConfigAnnotationControlProvider} that creates the control for a property with
+		 * the annotation.
+		 *
+		 * <p>
+		 * The provider must accept the annotation type of this entry.
+		 * </p>
+		 */
+		@Name(IMPL)
+		@Mandatory
+		PolymorphicConfiguration<? extends ConfigAnnotationControlProvider<?>> getImpl();
 
 	}
 
@@ -215,6 +304,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 
 	private final InstantiationContext _context;
 
+	private List<Map.Entry<Class<? extends Annotation>, ConfigAnnotationControlProvider<?>>> _providerByAnnotation;
+
 	private Map<Class<?>, ConfigControlProvider> _providerByType;
 
 	private Map<Class<?>, ConfigControlProvider> _providerByFormat;
@@ -231,6 +322,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	@Override
 	protected void startUp() {
 		super.startUp();
+
+		_providerByAnnotation = new ArrayList<>();
+		for (AnnotationControlMapping mapping : getConfig().getAnnotationControls()) {
+			_providerByAnnotation.add(Map.entry(mapping.getAnnotation(), _context.getInstance(mapping.getImpl())));
+		}
 
 		_providerByType = new HashMap<>();
 		for (ProviderMapping mapping : getConfig().getProviders().values()) {
@@ -373,32 +469,33 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		PropertyDescriptor property = model.getProperty();
 		checkSupportedKind(model.getConfig(), property);
 
-		// 1. Encrypted always wins, deliberately ahead of every other step including an explicit
-		// ConfigControl annotation: a module may override the control for a property, but it must
-		// never be able to make a secret readable by choosing a control that displays it in the
-		// clear. This is a security decision, independent of anything the other steps decide.
+		// 1. Encrypted always wins, deliberately ahead of every other step including the annotation
+		// map: a module may choose the control for a property, but it must never be able to make a
+		// secret readable by choosing a control that displays it in the clear. This is a security
+		// decision, independent of anything the other steps decide.
 		if (property.getAnnotation(Encrypted.class) != null) {
 			return new ReactPasswordInputControl(context, model);
 		}
 
-		// 2. Annotation on the property or on its value type.
-		ConfigControl annotation = controlAnnotation(property);
-		if (annotation != null) {
-			return newProvider(annotation.value()).createControl(context, model);
+		// 2. Configured provider for an annotation on the property or on its value type. Edits the
+		// value in the domain createModel chose by the remaining rules - the mapping is no claim. A
+		// provider that cannot edit the value in that domain declines, and the next steps decide.
+		for (Map.Entry<Class<? extends Annotation>, ConfigAnnotationControlProvider<?>> entry : _providerByAnnotation) {
+			ReactControl result = fromAnnotation(context, model, entry.getKey(), entry.getValue());
+			if (result != null) {
+				return result;
+			}
 		}
 
 		// 3. Edited by selecting.
 		if (model instanceof ConfigSelectFieldModel selectModel) {
 			LabelProvider labels = selectLabels(selectModel.getFormModel(), property);
-			if (needsOptionIdentity(selectModel)) {
-				// Sorted by label rather than left in the order the option function produced, and
-				// without a custom order of the selection: an option list the user picks a type or
-				// a role from is read, and a list of a few hundred model parts is unreadable
-				// unordered.
-				return new ReactDropdownSelectControl(context, selectModel, labels,
-					LabelComparator.newCachingInstance(labels), false);
-			}
-			return new ReactSelectFormFieldControl(context, selectModel, labels);
+			// The control model-based forms use for every select: it addresses each option by an id
+			// of its own, so an option need not be the stored value nor have a text form, and it
+			// takes a multiple selection. The options are sorted by label, as in a model-based form,
+			// and the selection has no custom order.
+			return new ReactDropdownSelectControl(context, selectModel, labels,
+				LabelComparator.newCachingInstance(labels), false);
 		}
 
 		// 4. Configured provider by value type.
@@ -417,9 +514,35 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			return formatProvider.createControl(context, model);
 		}
 
-		// 6. Built-in fallback. formatProvider is known null here (the check just above), passed
-		// on instead of resolving it a second time inside fallback's own isSpecialized check.
+		// 6. Built-in fallback. formatProvider is known null here (the check above), passed on
+		// instead of resolving it a second time inside fallback's own isSpecialized check.
 		return fallback(context, model, property, formatProvider);
+	}
+
+	/**
+	 * Creates a single-line text input for the given field model.
+	 *
+	 * <p>
+	 * A {@link ConfigFormatFieldModel} does not store what it is handed: it parses the text and
+	 * hands back what the value formats to. Sending a value mid-edit would therefore re-render the
+	 * field from the normalized text and throw away what is being typed - typing "red, " into a
+	 * comma separated list would leave "red" behind, comma and space gone from under the cursor.
+	 * For such a model, the input holds the value back until the field is left; the plain
+	 * {@link ConfigFieldModel}, which stores its value verbatim, keeps the default debounce and its
+	 * feedback-while-typing.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model holding the text.
+	 */
+	public static ReactTextInputControl createTextInput(ReactContext context, ConfigFieldModel model) {
+		ReactTextInputControl input = new ReactTextInputControl(context, model);
+		if (model instanceof ConfigFormatFieldModel) {
+			input.setSendValueOnBlur(true);
+		}
+		return input;
 	}
 
 	/**
@@ -510,14 +633,15 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	}
 
 	/**
-	 * The built-in widget for a property that reached neither the annotation, the select, nor
-	 * either configured-map step.
+	 * The built-in widget for a property that reached neither the select nor any configured-map
+	 * step.
 	 *
 	 * <p>
 	 * Only offers the type-specific widgets ({@link ReactCheckboxControl}, a number input, the
-	 * plain {@link com.top_logic.layout.react.control.form.ReactDatePickerControl.Kind#DATE date
-	 * picker}) for a property that is not {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider) specialized} -
-	 * the same veto {@link #createModel(ConfigurationItem, PropertyDescriptor)} applies, so the
+	 * {@link com.top_logic.layout.react.control.form.ReactDatePickerControl.Kind#DATE_TIME date and
+	 * time picker}) for a property that is not
+	 * {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider) specialized}
+	 * - the same veto {@link #createModel(ConfigurationItem, PropertyDescriptor)} applies, so the
 	 * value domain (plain versus format text) and the widget never disagree. A specialized property
 	 * (e.g. one with its own {@code @Format}, such as a time of day) is edited as its format's text
 	 * instead, exactly like the classic declarative form's {@code PlainEditor}.
@@ -539,22 +663,37 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 				return new ReactNumberInputControl(context, model, HTMLFormatter.getInstance().getDoubleFormat());
 			}
 			if (Date.class.isAssignableFrom(type)) {
-				return new ReactDatePickerControl(context, model, ReactDatePickerControl.Kind.DATE);
+				// A plain Date is stored with its time of day (DateValueProvider writes date and
+				// time), so it is edited with both - a date-only picker would drop the time.
+				return new ReactDatePickerControl(context, model, ReactDatePickerControl.Kind.DATE_TIME,
+					dateTimeWithSeconds());
 			}
 		}
 		// String, and every specialized/typed value the format model turned into text.
-		ReactTextInputControl input = new ReactTextInputControl(context, model);
-		if (model instanceof ConfigFormatFieldModel) {
-			// A format model does not store what it is handed: it parses the text and hands back
-			// what the value formats to. Sending a value mid-edit therefore re-renders the field
-			// from the normalized text and throws away what was being typed - typing "red, " into a
-			// comma separated list would leave "red" behind, comma and space gone from under the
-			// cursor. The value is held back until the field is left instead; the plain
-			// ConfigFieldModel, which stores its value verbatim, keeps the default debounce and its
-			// feedback-while-typing.
-			input.setSendValueOnBlur(true);
+		return createTextInput(context, model);
+	}
+
+	/**
+	 * The format a plain {@code Date} property is shown in.
+	 *
+	 * <p>
+	 * The configuration stores such a value with its seconds, so the format must write seconds: the
+	 * display format decides the {@link ReactDatePickerControl#precision(ReactDatePickerControl.Kind, DateFormat)
+	 * precision} of the picker, and a picker editing minutes only would drop the seconds of the
+	 * stored value. The user's date-time format is used if it writes seconds, otherwise the medium
+	 * date-time format of the user's locale.
+	 * </p>
+	 */
+	private static DateFormat dateTimeWithSeconds() {
+		ReactDatePickerControl.Kind kind = ReactDatePickerControl.Kind.DATE_TIME;
+		DateFormat userFormat = kind.displayFormat();
+		if (ReactDatePickerControl.precision(kind, userFormat) == Precision.SECONDS) {
+			return userFormat;
 		}
-		return input;
+		DateFormat result = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM,
+			ThreadContext.getLocale());
+		result.setTimeZone(ThreadContext.getTimeZone());
+		return result;
 	}
 
 	/**
@@ -571,8 +710,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * </p>
 	 *
 	 * <p>
-	 * {@code @Encrypted} forces {@code false} unconditionally, exactly like an explicit control
-	 * annotation - a secret must never be offered as a dropdown of options, since that would
+	 * {@code @Encrypted} forces {@code false} unconditionally - a secret must never be offered as a
+	 * dropdown of options, since that would
 	 * display its value (and every other option) in the clear. This is what makes
 	 * {@link #isSpecialized(PropertyDescriptor, DerivedProperty, ConfigControlProvider)}'s
 	 * inclusion of {@code @Encrypted} hold for every property, not only the ones whose Java type a
@@ -599,9 +738,9 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * that names one, and the {@link Fields#optionMapping(DerivedProperty) option mapping} declared
 	 * with the {@code @Options} annotation is the translation between the two. Such a property is
 	 * edited by selecting all the same: {@link ConfigSelectFieldModel} applies that mapping in both
-	 * directions, and the control such a model is paired with addresses an option by an identity of
-	 * its own instead of by the text {@link Object#toString()} would make of it - see
-	 * {@link #needsOptionIdentity(ConfigSelectFieldModel)}.
+	 * directions, and the {@link ReactDropdownSelectControl} such a model is paired with addresses
+	 * an option by an identity of its own instead of by the text {@link Object#toString()} would
+	 * make of it.
 	 * </p>
 	 *
 	 * @param optionProvider
@@ -610,10 +749,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        it has none.
 	 */
 	private boolean isSelect(PropertyDescriptor property, DerivedProperty<? extends Iterable<?>> optionProvider) {
-		if (controlAnnotation(property) != null) {
-			// An explicitly named control decides on its own.
-			return false;
-		}
 		if (property.getAnnotation(Encrypted.class) != null) {
 			// A secret is never offered as a dropdown of options - see this method's own doc comment.
 			return false;
@@ -667,32 +802,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 		OptionMapping mapping = Fields.optionMapping(optionProvider);
 		return mapping == null ? IdentityOptionMapping.INSTANCE : mapping;
-	}
-
-	/**
-	 * Whether the given select field needs a control that addresses each option by an identity of
-	 * its own.
-	 *
-	 * <p>
-	 * {@link ReactSelectFormFieldControl} renders the plain HTML select, which knows an option only
-	 * by the text it carries and gives back exactly that text. That is enough as long as the option
-	 * <em>is</em> the stored value and the property's own format can parse it back - an enum
-	 * constant, or a plain string from an option function. It is not enough for an option the
-	 * property only stores something else for (a model part stored as its qualified name, a role
-	 * stored as its name): the text such an option would carry is whatever
-	 * {@link Object#toString()} makes of it, which names nothing the server could resolve back.
-	 * Nor does a plain select take more than one value at a time.
-	 * </p>
-	 *
-	 * <p>
-	 * Both cases go to {@link ReactDropdownSelectControl}, which allocates an id per option and
-	 * resolves the ids the client sends back to the options themselves, and which takes a
-	 * multiple selection. The translation from those options to what the property stores is the
-	 * field model's, not the control's.
-	 * </p>
-	 */
-	private static boolean needsOptionIdentity(ConfigSelectFieldModel model) {
-		return model.isMultiple() || model.getOptionMapping() != IdentityOptionMapping.INSTANCE;
 	}
 
 	/**
@@ -792,12 +901,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		if (property.getAnnotation(Encrypted.class) != null) {
 			return true;
 		}
-		if (controlAnnotation(property) != null) {
-			// An explicitly named control decides on its own, and edits the value in its typed form
-			// - the same reason a format claim below is not a specialization either. Checked in the
-			// order createControl resolves in: after @Encrypted, which outranks it there too.
-			return false;
-		}
 		if (optionProvider != null) {
 			return true;
 		}
@@ -818,9 +921,9 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * value in its typed form rather than as the text a format would make of it.
 	 *
 	 * <p>
-	 * The three ways to claim a property - the {@link ConfigControl} annotation,
-	 * {@link Config#getProviders()} by value type, and {@link Config#getFormats()} by value provider
-	 * - all bind a control to the raw typed value. Whether the property's Java type happens to be
+	 * The two ways to claim a property - {@link Config#getProviders()} by value type and
+	 * {@link Config#getFormats()} by value provider - both bind a control to the raw typed value.
+	 * Whether the property's Java type happens to be
 	 * one of {@link #isDirectlyEditable(Class)}'s built-in set has nothing to do with it, so
 	 * {@code createModel} has to hand out the typed {@link ConfigFieldModel} for a claimed property
 	 * either way; leaving it to the built-in set would give a claimed {@code ResKey} or a claimed
@@ -834,7 +937,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 */
 	private boolean isClaimed(PropertyDescriptor property, ConfigControlProvider formatProvider) {
 		return formatProvider != null
-			|| controlAnnotation(property) != null
 			|| _providerByType.containsKey(property.getType());
 	}
 
@@ -875,23 +977,64 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			|| Date.class.isAssignableFrom(type);
 	}
 
-	private ConfigControl controlAnnotation(PropertyDescriptor property) {
-		ConfigControl annotation = property.getAnnotation(ConfigControl.class);
-		if (annotation != null) {
-			return annotation;
+	/**
+	 * The control the given provider creates for the given model, or {@code null} if the model's
+	 * property carries no annotation of the given type, neither itself nor on its value type, or
+	 * the provider declines it.
+	 */
+	private static <A extends Annotation> ReactControl fromAnnotation(ReactContext context, ConfigFieldModel model,
+			Class<A> annotationType, ConfigAnnotationControlProvider<?> provider) {
+		A annotation = annotation(model.getProperty(), annotationType);
+		if (annotation == null) {
+			return null;
 		}
-		return property.getType().getAnnotation(ConfigControl.class);
+		@SuppressWarnings("unchecked")
+		ConfigAnnotationControlProvider<A> typedProvider = (ConfigAnnotationControlProvider<A>) provider;
+		return typedProvider.createControl(context, model, annotation);
 	}
 
-	private ConfigControlProvider newProvider(Class<? extends ConfigControlProvider> providerClass) {
-		try {
-			return providerClass.getDeclaredConstructor().newInstance();
-		} catch (ReflectiveOperationException ex) {
-			throw new IllegalArgumentException(
-				"Cannot instantiate control provider '" + providerClass.getName()
-					+ "'. A public constructor without arguments is required.",
-				ex);
+	/**
+	 * The annotation of the given type that the given property carries, on the property itself or
+	 * else on its value type.
+	 *
+	 * <p>
+	 * This is where the {@link Config#getAnnotationControls() annotation map} looks for an
+	 * annotation, so a provider looking up further annotations of the property finds them the same
+	 * way.
+	 * </p>
+	 *
+	 * @return The annotation, or {@code null} if neither the property nor its value type carries
+	 *         one.
+	 */
+	public static <A extends Annotation> A annotation(PropertyDescriptor property, Class<A> annotationType) {
+		A annotation = property.getAnnotation(annotationType);
+		if (annotation == null) {
+			annotation = property.getType().getAnnotation(annotationType);
 		}
+		return annotation;
+	}
+
+	/**
+	 * Whether the given model holds its value as text.
+	 *
+	 * <p>
+	 * True for a text property, and for every property edited as the text its format makes of the
+	 * value. False for a property edited by selecting, and for a property whose control edits the
+	 * typed value (a number, an internationalized text, a color, ...).
+	 * </p>
+	 *
+	 * <p>
+	 * A control for text - a text area, for instance - can edit exactly the values of such a model.
+	 * </p>
+	 */
+	public static boolean holdsText(ConfigFieldModel model) {
+		if (model instanceof ConfigFormatFieldModel) {
+			return true;
+		}
+		if (model instanceof ConfigSelectFieldModel) {
+			return false;
+		}
+		return model.getProperty().getType() == String.class;
 	}
 
 	/**

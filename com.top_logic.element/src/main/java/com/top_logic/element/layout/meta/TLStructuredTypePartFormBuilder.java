@@ -38,16 +38,11 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.TypedPartAspect;
 import com.top_logic.html.i18n.DefaultHtmlResKey;
-import com.top_logic.layout.Control;
-import com.top_logic.layout.Renderer;
-import com.top_logic.layout.basic.ResourceRenderer;
-import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.control.ValueDisplayControl;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.ConfigLabelProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Inline;
+import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.model.TLModelPart;
@@ -125,7 +120,7 @@ public class TLStructuredTypePartFormBuilder extends
 		 */
 		@Name(PART_MODEL)
 		@DynamicMode(fun = GroupActiveIf.class, args = @Ref(CREATING))
-		@ControlProvider(GroupInlineControlProvider.class)
+		@Inline
 		PartModel getPartModel();
 
 		/**
@@ -183,22 +178,8 @@ public class TLStructuredTypePartFormBuilder extends
 
 		@Override
 		@Hidden(false)
-		@ControlProvider(ConfigLabel.class)
+		@OptionLabels(ConfigLabelProvider.class)
 		Class<?> getConfigurationInterface();
-
-		/**
-		 * {@link com.top_logic.layout.form.template.ControlProvider} displaying a label created
-		 * with {@link ConfigLabelProvider}.
-		 */
-		class ConfigLabel implements com.top_logic.layout.form.template.ControlProvider {
-
-			private final Renderer<Object> _renderer = ResourceRenderer.newResourceRenderer(new ConfigLabelProvider());
-
-			@Override
-			public Control createControl(Object model, String style) {
-				return new ValueDisplayControl((FormField) model, _renderer);
-			}
-		}
 
 		/**
 		 * Access to the top-level editor.

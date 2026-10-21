@@ -14,15 +14,17 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.copy.ConfigCopier;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
-import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactFormGroupControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.layout.react.field.FixedOptionsFieldModel;
 import com.top_logic.util.Resources;
 
 /**
@@ -48,7 +50,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 
 	private final PolymorphicOptions.Choices _choices;
 
-	private final SimpleSelectFieldModel _typeModel;
+	private final AbstractFieldModel _typeModel;
 
 	private ConfigEditorControl _nestedEditor;
 
@@ -57,10 +59,10 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	/**
 	 * Whether the type selector accepts a change - see {@link ConfigEditorControl#_editable}, which
 	 * this mirrors and which threads it here through {@link ConfigEditorControl#createPolymorphicGroup}.
-	 * The selector is still rendered while {@code false} (via {@link SimpleSelectFieldModel#setEditable(boolean)},
+	 * The selector is still rendered while {@code false} (via {@link AbstractFieldModel#setEditable(boolean)},
 	 * the same mechanism {@link ReactFormFieldControl} already applies to a plain field), so the
 	 * currently chosen type stays legible to the reader - only picking a different one is refused,
-	 * both by the disabled client control and, since {@link ReactSelectFormFieldControl} extends
+	 * both by the disabled client control and, since {@link ReactDropdownSelectControl} extends
 	 * {@link ReactFormFieldControl}, by {@link ReactFormFieldControl#acceptsClientValue()} on the
 	 * server should a stale or forged client message arrive anyway.
 	 */
@@ -107,7 +109,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 			keys.add(PolymorphicOptions.keyFor(option));
 		}
 		String currentKey = PolymorphicOptions.keyForItem(rawOptions, _choices.mapping(), currentValue);
-		_typeModel = new SimpleSelectFieldModel(currentKey, keys, false);
+		_typeModel = new AbstractFieldModel(currentKey);
 		_typeModel.setMandatory(property.isMandatory());
 		boolean nullable = property.isNullable();
 		_typeModel.setNullable(nullable);
@@ -117,8 +119,9 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 
 		boolean showSelector = _choices.hasOptions() && (_choices.options().size() > 1 || nullable);
 		if (showSelector) {
-			ReactSelectFormFieldControl typeSelect =
-				new ReactSelectFormFieldControl(context, _typeModel, labelProvider);
+			ReactDropdownSelectControl typeSelect = new ReactDropdownSelectControl(context,
+				new FixedOptionsFieldModel(_typeModel, keys), labelProvider,
+				LabelComparator.newCachingInstance(labelProvider), false);
 			ReactFormFieldChromeControl typeChrome = new ReactFormFieldChromeControl(context,
 				Resources.getInstance().getString(I18NConstants.TYPE_SELECTOR), property.isMandatory(), false, null,
 				null, null, false, true, typeSelect);
@@ -151,9 +154,9 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	}
 
 	/**
-	 * The type selector model.
+	 * The field holding the key of the selected type, see {@link PolymorphicOptions#keyFor(Object)}.
 	 */
-	public SimpleSelectFieldModel getTypeModel() {
+	public FieldModel getTypeModel() {
 		return _typeModel;
 	}
 

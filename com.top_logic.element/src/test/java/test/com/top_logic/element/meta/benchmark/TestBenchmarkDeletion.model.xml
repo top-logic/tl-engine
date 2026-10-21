@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="test.com.top_logic.element.meta.benchmark.TestBenchmarkDeletion">
+		<class name="Node">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<property name="index"
+					type="tl.core:Long"
+				/>
+				<reference name="children"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Node"
+				/>
+				<reference name="related"
+					kind="forwards"
+					navigate="true"
+					type="Node"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

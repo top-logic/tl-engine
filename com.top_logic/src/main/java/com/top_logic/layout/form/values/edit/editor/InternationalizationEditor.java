@@ -57,6 +57,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
+import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
 import com.top_logic.layout.form.values.DerivedProperty;
@@ -67,7 +68,6 @@ import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.Values;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil.FieldTranslator;
 import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil.StringValuedFieldTranslator;
 import com.top_logic.layout.table.ConfigKey;
@@ -140,7 +140,7 @@ public class InternationalizationEditor implements Editor {
 
 	private static final String DISPLAY_DERIVED_FIELD = "displayDerived";
 
-	private static com.top_logic.layout.form.template.ControlProvider templateDefinition(FormMember i18n,
+	private static ControlProvider templateDefinition(FormMember i18n,
 			HTMLFragment displayValue, boolean initiallyCollapsed, List<String> languages,
 			List<String> additionals) {
 
@@ -461,7 +461,7 @@ public class InternationalizationEditor implements Editor {
 	 */
 	protected StringField createInternationalizationField(EditorFactory editorFactory, ValueModel model, String name) {
 		StringField result = FormFactory.newStringField(normalizeFieldName(name));
-		editorFactory.processControlProviderAnnotation(model.getProperty(), result);
+		editorFactory.installControlProvider(model.getProperty(), result);
 
 		return result;
 	}

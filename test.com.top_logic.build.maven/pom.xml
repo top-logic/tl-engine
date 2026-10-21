@@ -22,6 +22,11 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.javadoc.skip>true</maven.javadoc.skip>
+
+		<!-- Layout of the local repository, the defaults of Maven; a build sets them on the command line. -->
+		<aether.enhancedLocalRepository.split>false</aether.enhancedLocalRepository.split>
+		<aether.enhancedLocalRepository.localPrefix>installed</aether.enhancedLocalRepository.localPrefix>
+		<aether.enhancedLocalRepository.remotePrefix>cached</aether.enhancedLocalRepository.remotePrefix>
 	</properties>
 
 	<dependencies>
@@ -60,6 +65,9 @@
 						<!-- Build environment of TestGenerateJavaIntegration. -->
 						<tl.it.mavenHome>${maven.home}</tl.it.mavenHome>
 						<tl.it.remoteRepository>${settings.localRepository}</tl.it.remoteRepository>
+						<tl.it.repositorySplit>${aether.enhancedLocalRepository.split}</tl.it.repositorySplit>
+						<tl.it.localPrefix>${aether.enhancedLocalRepository.localPrefix}</tl.it.localPrefix>
+						<tl.it.remotePrefix>${aether.enhancedLocalRepository.remotePrefix}</tl.it.remotePrefix>
 						<tl.it.version>${project.version}</tl.it.version>
 						<tl.it.projects>${project.basedir}/src/test/projects</tl.it.projects>
 						<tl.it.workDir>${project.build.directory}/it</tl.it.workDir>

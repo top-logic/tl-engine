@@ -67,8 +67,8 @@ public class TestTableGrouping extends TestCase {
 	/** Per-row state key of whether an expandable row is expanded. */
 	private static final String EXPANDED = "expanded";
 
-	/** Per-row state key of whether the row is selected. */
-	private static final String SELECTED = "selected";
+	/** State key of the indexes of the selected rows among the rows sent. */
+	private static final String SELECTED_ROWS = "selectedRows";
 
 	/** Per-row state key of the cell controls, by column name. */
 	private static final String CELLS = "cells";
@@ -307,16 +307,14 @@ public class TestTableGrouping extends TestCase {
 
 		assertEquals("The selected row is the same object under the same key.",
 			Set.of(B), _table.getSelectedKeys());
-		List<Map<String, Object>> grouped = clientRows();
 		assertEquals("It is the last row now: the second group's single member.",
-			Boolean.TRUE, grouped.get(4).get(SELECTED));
+			List.of(Integer.valueOf(4)), _table.clientState(SELECTED_ROWS));
 		assertEquals("The cursor found it again.", Integer.valueOf(4), _table.clientState(CURSOR_INDEX));
 
 		group("");
 
 		assertEquals(Set.of(B), _table.getSelectedKeys());
-		List<Map<String, Object>> flat = clientRows();
-		assertEquals(Boolean.TRUE, flat.get(1).get(SELECTED));
+		assertEquals(List.of(Integer.valueOf(1)), _table.clientState(SELECTED_ROWS));
 		assertEquals(Integer.valueOf(1), _table.clientState(CURSOR_INDEX));
 	}
 

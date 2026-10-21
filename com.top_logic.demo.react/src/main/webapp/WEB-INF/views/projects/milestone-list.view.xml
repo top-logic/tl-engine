@@ -68,7 +68,7 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="m -> #('Delete milestone {0}?'@en, 'Meilenstein {0} löschen?'@de).fill($m.get(`tl.demo.projectManagement:Milestone#name`))"/>
+				<confirm expr="m -> { due = $m.get(`tl.demo.projectManagement:Milestone#dueDate`); #('Delete milestone {0}?\nDue: {1}\nTickets: {2}'@en, 'Meilenstein {0} löschen?\nFällig: {1}\nTickets: {2}'@de).fill($m.get(`tl.demo.projectManagement:Milestone#name`), if($due == null, '–', dateFormat('dd.MM.yyyy').format($due)), $m.get(`tl.demo.projectManagement:Milestone#tickets`).size()) }"/>
 				<delete-object/>
 				<write-channel name="milestone"/>
 			</generic-command>

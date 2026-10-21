@@ -31,6 +31,8 @@ public class DependencyResolver {
 
 	private Map<String, String> _versionById = new LinkedHashMap<>();
 
+	private Set<String> _testIds = new HashSet<>();
+
 	/**
 	 * Enters a project model with its dependencies.
 	 * 
@@ -66,6 +68,10 @@ public class DependencyResolver {
 			// and on all productive parts of its dependencies. This ensures that a test resource of
 			// a dependency must not overwrite productive resources of usages of that dependency.
 			dependencies = projectModel.getDependencies().stream().map(d -> id(d)).collect(Collectors.toList());
+		}
+
+		if (isTest) {
+			_testIds.add(id);
 		}
 
 		String version = projectModel.getModelVersion();
@@ -113,6 +119,29 @@ public class DependencyResolver {
 
 	private String id(String groupId, String artifactId) {
 		return groupId + ":" + artifactId;
+	}
+
+	/**
+	 * The IDs of all projects that some productive (non-test) project entered with
+	 * {@link #enter(Model, boolean)} depends on.
+	 *
+	 * <p>
+	 * Dependencies of test parts are not considered, since the test part of a project always
+	 * depends on the productive part of the same project.
+	 * </p>
+	 *
+	 * @return The IDs of the direct dependencies of all productive projects, in the format
+	 *         returned by {@link #enter(Model, boolean)}.
+	 */
+	public Set<String> getProductiveDependencyIds() {
+		Set<String> result = new HashSet<>();
+		for (Map.Entry<String, List<String>> entry : _dependenciesById.entrySet()) {
+			if (_testIds.contains(entry.getKey())) {
+				continue;
+			}
+			result.addAll(entry.getValue());
+		}
+		return result;
 	}
 
 	/**

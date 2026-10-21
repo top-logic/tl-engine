@@ -93,6 +93,16 @@
 	The lists stand one below the other in the scrolling body of the Tickets panel, each as high as
 	its rows: their panels set fill="false", so that the tables do not divide the height of the
 	page between them, as a panel around a table otherwise does.
+	
+	The form of the Conversation panel switches its edit mode with commands of its own instead of
+	the built-in Edit, Save and Cancel (mode-switch="false"). It publishes its mode on the
+	ticketEditMode channel, from which viewedTicket and editedTicket derive the ticket while it is
+	viewed and while it is edited, so Edit is shown in view mode and Save and Cancel in edit mode.
+	Edit starts the edit session with <enter-edit-mode/>, Cancel drops the input with
+	<discard-form-state/>. Save is a chain: <store-form-state/> and a script adding the comment
+	"Ticket updated." run in one transaction, and <leave-edit-mode/> after it ends the edit
+	session once the transaction is committed - the comment appearing in the conversation shows
+	that the script ran on the stored ticket.
 -->
 <view>
 	<channels>
@@ -103,6 +113,7 @@
 		<channel name="status"/>
 		<channel name="jump"/>
 		<channel name="dropPerson"/>
+		<channel name="ticketEditMode"/>
 		<derived-channel name="ticketId"
 			expr="t -> objectId($t)"
 			inputs="ticket"
@@ -111,6 +122,14 @@
 		<derived-channel name="ticketState"
 			expr="t -> if($t == null, '', if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
 			inputs="ticket"
+		/>
+		<derived-channel name="viewedTicket"
+			expr="t -> editing -> if($editing == true, null, $t)"
+			inputs="ticket,ticketEditMode"
+		/>
+		<derived-channel name="editedTicket"
+			expr="t -> editing -> if($editing == true, $t, null)"
+			inputs="ticket,ticketEditMode"
 		/>
 	</channels>
 	<param-bindings>
@@ -539,12 +558,68 @@
 							<en>Conversation</en>
 							<de>Verlauf</de>
 						</title>
-						<form input="ticket">
+						<form
+							editMode="ticketEditMode"
+							input="ticket"
+							mode-switch="false"
+						>
 							<field attribute="name"/>
 							<field attribute="status"/>
 							<field attribute="statusLabel"/>
 							<field attribute="headline"/>
 							<field attribute="resolution"/>
+							<commands>
+								<generic-command
+									image="css:bi bi-pencil"
+									input="viewedTicket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Edit</en>
+										<de>Bearbeiten</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<enter-edit-mode/>
+								</generic-command>
+								<generic-command
+									image="css:bi bi-check-lg"
+									input="editedTicket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Save</en>
+										<de>Speichern</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<with-transaction>
+										<commitMessage>
+											<en>Updated ticket {0}.</en>
+											<de>Ticket {0} aktualisiert.</de>
+										</commitMessage>
+										<store-form-state/>
+										<execute-script function="t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, currentUser()); $c.set(`demo.tickets:Comment#content`, 'Ticket updated.'); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); $t; }"/>
+									</with-transaction>
+									<leave-edit-mode/>
+								</generic-command>
+								<generic-command
+									image="css:bi bi-x-lg"
+									input="editedTicket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Cancel</en>
+										<de>Abbrechen</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<discard-form-state/>
+								</generic-command>
+							</commands>
 						</form>
 						<object-list
 							element-channel="comment"

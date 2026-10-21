@@ -42,7 +42,9 @@ as the attribute `data-tl-tone` (`secondary`, `helper`, `placeholder`, `success`
 `on-brand`); the primary tone carries no attribute and inherits the colour of its surroundings, which
 is how text on the primary app bar reads in the bar's colour. A strong text names the strong type
 class, `css-class="tl-type-body-strong"`. A text without a value takes no room, unless it carries a
-role (a live region).
+role (a live region). A text keeps the line breaks of its value: a `\n` in the value is a line break,
+while runs of spaces collapse and the text wraps at the width available (`white-space: pre-line`). A
+text with `overflow="ellipsis"` and a text in a table cell stay on one line.
 
 ```html
 <span class="tl-text tl-type-label" data-tl-tone="helper">Figures as of yesterday.</span>

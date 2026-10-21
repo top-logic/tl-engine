@@ -541,7 +541,7 @@ describe('the search and the filter name of a table as MUI text fields', () => {
     vi.stubGlobal('ResizeObserver', NoResizeObserver);
     return mountAdapter(TLTableView, {
       columns: [{ name: 'name', label: 'Name', width: 120, sortable: false }],
-      rows: [{ id: 'r0', index: 0, selected: false, cells: { name: childControl('c0', 'Zeile 0') } }],
+      rows: [{ id: 'r0', index: 0, cells: { name: childControl('c0', 'Zeile 0') } }],
       totalRowCount: 1,
       filterBar: true,
       ...state,

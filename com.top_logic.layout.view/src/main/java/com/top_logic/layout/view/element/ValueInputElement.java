@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
@@ -245,6 +246,7 @@ public class ValueInputElement implements UIElement {
 		 */
 		@Name(OPTION_ORDER)
 		@Nullable
+		@NullDefault
 		OptionOrder getOptionOrder();
 
 		/**

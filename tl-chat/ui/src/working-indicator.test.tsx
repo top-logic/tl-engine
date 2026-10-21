@@ -13,6 +13,7 @@ import {
   workingIndicatorForm,
   type WorkingIndicatorForm,
 } from './working-indicator'
+import { eventually } from '../test/eventually'
 
 /**
  * `<chat-conversation working-indicator="…">`: an application's own animation in place of the three
@@ -136,11 +137,6 @@ describe('an SVG indicator', () => {
     return host
   }
 
-  /** A full turn of the event loop: the fetch, its text, the store notification and the commit. */
-  function settled(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, 20))
-  }
-
   it('is placed into the page, sanitized, so it can draw in the theme’s colours', async () => {
     const svg =
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" onload="alert(1)">' +
@@ -152,10 +148,10 @@ describe('an SVG indicator', () => {
     preloadWorkingIndicator(form)
 
     const page = mount(form)
-    await settled()
+    // The fetch, its text, the store notification and the commit.
+    await eventually(() => expect(page.querySelector('.answer-working.is-svg')).not.toBeNull())
 
     const box = page.querySelector('.answer-working.is-svg')
-    expect(box).not.toBeNull()
     expect(box!.getAttribute('aria-hidden')).toBe('true')
     expect(box!.querySelector('circle')?.getAttribute('fill')).toBe('currentColor')
     // What animates it stays; what could run code does not.
@@ -172,7 +168,7 @@ describe('an SVG indicator', () => {
     preloadWorkingIndicator(form)
 
     const page = mount(form)
-    await settled()
+    await eventually(() => expect(console.warn).toHaveBeenCalledTimes(1))
 
     expect(page.querySelector('.answer-dots')).not.toBeNull()
     expect(page.querySelector('.answer-working')).toBeNull()

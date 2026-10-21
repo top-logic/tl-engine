@@ -6,6 +6,7 @@ import { Composer } from './composer'
 import { bundle } from './i18n'
 import type { ReferenceCandidate } from './extensions'
 import { createDraftReporter } from './draft'
+import { eventually } from '../test/eventually'
 
 /**
  * The composer under input that arrives faster than React commits (#419).
@@ -80,7 +81,7 @@ async function mount(extra: Record<string, unknown> = {}) {
   mounted = { root, container, off: () => window.removeEventListener('error', onError) }
 
   root.render(React.createElement(Composer, baseProps(extra) as never))
-  await settle()
+  await eventually(() => expect(container.querySelector('.token-input')).toBeTruthy())
 
   const field = container.querySelector('.token-input') as HTMLElement
   expect(field).toBeTruthy()
@@ -186,11 +187,10 @@ describe('the composer under a burst of input', () => {
     })
 
     await burst(field, LONG)
-    await settle()
+    // The host heard the sentence, not fifty fragments that ended mid-word.
+    await eventually(() => expect(reported[reported.length - 1]).toBe(LONG))
 
     expect(errors).toEqual([])
-    // The host heard the sentence, not fifty fragments that ended mid-word.
-    expect(reported[reported.length - 1]).toBe(LONG)
   })
 
   it('survives a paste of two kilobytes followed by more typing', async () => {
@@ -265,19 +265,17 @@ describe('the composer under a burst of input', () => {
 
     await burst(field, 'Bitte ')
     await burst(field, '@Konz')
-    await settle()
+    await eventually(() => expect(document.querySelector('.mention-popover button')).toBeTruthy())
 
     const option = document.querySelector('.mention-popover button') as HTMLButtonElement
-    expect(option).toBeTruthy()
     // The row takes the candidate on mousedown, so the editor keeps its caret.
     option.dispatchEvent(new window.MouseEvent('mousedown', { bubbles: true, cancelable: true }))
     await settle()
 
     await burst(field, ' kürzen und den Rest der Seite so lassen, wie er im Entwurf steht, bitte.')
-    await settle()
+    await eventually(() => expect(field.querySelectorAll('.ref-token').length).toBe(1))
 
     expect(errors).toEqual([])
-    expect(field.querySelectorAll('.ref-token').length).toBe(1)
   })
 })
 
@@ -365,19 +363,23 @@ describe('a row of the "+" menu', () => {
 
   async function openMenu() {
     click(mounted!.container.querySelector('.plus-trigger')!)
-    await settle()
+    await eventually(() => expect(rows().length).toBeGreaterThan(0))
+  }
+
+  /** The row named `name`, once the menu shows it. */
+  async function row(name: string): Promise<HTMLElement> {
+    await eventually(() => expect(rows().find((item) => referenced(item, 'aria-labelledby') === name)).toBeTruthy())
+    return rows().find((item) => referenced(item, 'aria-labelledby') === name)!
   }
 
   it('describes an agent by its whole summary, however long it is', async () => {
     await mount({ agents, labels: bundle('de') })
     await openMenu()
-    click(rows().find((row) => referenced(row, 'aria-labelledby').startsWith('Agent'))!)
-    await settle()
+    click(rows().find((item) => referenced(item, 'aria-labelledby').startsWith('Agent'))!)
 
-    const row = rows().find((item) => referenced(item, 'aria-labelledby') === 'Rechnungsprüfung')!
-    expect(row).toBeTruthy()
-    expect(referenced(row, 'aria-describedby')).toBe(SUMMARY)
-    expect(row.textContent).toContain(SUMMARY)
+    const invoices = await row('Rechnungsprüfung')
+    expect(referenced(invoices, 'aria-describedby')).toBe(SUMMARY)
+    expect(invoices.textContent).toContain(SUMMARY)
   })
 
   it('names a setting by its label and value and describes it by its hint', async () => {
@@ -393,10 +395,9 @@ describe('a row of the "+" menu', () => {
   it('gives a row without a hint no description', async () => {
     await mount({ agents })
     await openMenu()
-    click(rows().find((row) => referenced(row, 'aria-labelledby').startsWith('Agent'))!)
-    await settle()
+    click(rows().find((item) => referenced(item, 'aria-labelledby').startsWith('Agent'))!)
 
-    const albert = rows().find((item) => referenced(item, 'aria-labelledby') === 'Albert')!
+    const albert = await row('Albert')
     expect(albert.hasAttribute('aria-describedby')).toBe(false)
   })
 })
@@ -446,7 +447,7 @@ describe('the draft after a send', () => {
     await burst(field, 'Lege das Dokument an.')
     field.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     // The send has answered and React has committed the empty field; the pause has not run out.
-    await settle()
+    await eventually(() => expect(published[published.length - 1]).toBe(''))
     reporter.cancel()
     mounted?.root.unmount()
     mounted = null

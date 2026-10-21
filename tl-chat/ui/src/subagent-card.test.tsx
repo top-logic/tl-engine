@@ -11,6 +11,7 @@ import { cardsForTurn, cardSummary, SubagentCard, SubagentCards, type SubagentCa
 import { SubagentActivityPanel, subagentCosts } from './subagents'
 import { showSubagentCard } from './thread'
 import type { ChatMessage, SubagentActivity, SubagentRef } from './types'
+import { eventually } from '../test/eventually'
 
 /**
  * Runs `work` and commits what it caused, effects included. A test that waited a fixed time for the
@@ -204,10 +205,6 @@ describe('writing to a subagent from its card', () => {
     mounted = null
   })
 
-  function settle(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, 20))
-  }
-
   /** Mounts an open card and answers every message with `answer`. */
   async function openCard(card: Partial<SubagentCardModel>, answer: SubagentMessageStatus | null) {
     const sent: [string, string, string][] = []
@@ -239,24 +236,25 @@ describe('writing to a subagent from its card', () => {
     return { container, sent }
   }
 
-  async function write(container: HTMLElement, text: string) {
+  /** Writes `text` into the card's field and sends it once `answered` holds for the card's answer. */
+  async function write(container: HTMLElement, text: string, answered: (input: HTMLInputElement) => void) {
     const input = container.querySelector('.subagent-card-input') as HTMLInputElement
+    const submit = () => container.querySelector('.subagent-card-compose button[type=submit]') as HTMLButtonElement
     const setValue = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')!.set!
     setValue.call(input, text)
     input.dispatchEvent(new Event('input', { bubbles: true }))
-    await settle()
-    ;(container.querySelector('.subagent-card-compose button[type=submit]') as HTMLButtonElement).click()
-    await settle()
+    await eventually(() => expect(submit().disabled).toBe(false))
+    submit().click()
+    await eventually(() => answered(input))
     return input
   }
 
   /* The message goes to this subagent - named by its id and the call that started it. */
   it('sends to the subagent the card shows and empties the field', async () => {
     const { container, sent } = await openCard({}, 'sent')
-    const input = await write(container, '  Only 2026.  ')
+    const input = await write(container, '  Only 2026.  ', (field) => expect(field.value).toBe(''))
 
     expect(sent).toEqual([['sa-1', 'call-1', 'Only 2026.']])
-    expect(input.value).toBe('')
     expect(input.getAttribute('aria-label')).toBe('Message to sa-1 (researcher)')
     expect(container.textContent).toContain(labels.subagentMessageHint)
   })
@@ -264,9 +262,10 @@ describe('writing to a subagent from its card', () => {
   /* An ended subagent reads nothing more: the user is told, and keeps what they wrote. */
   it('says so when the subagent has ended meanwhile', async () => {
     const { container } = await openCard({}, 'ended')
-    const input = await write(container, 'Only 2026.')
+    const input = await write(container, 'Only 2026.', () =>
+      expect(container.querySelector('[role=alert]')?.textContent).toBe(labels.subagentMessageEnded),
+    )
 
-    expect(container.querySelector('[role=alert]')?.textContent).toBe(labels.subagentMessageEnded)
     expect(input.value).toBe('Only 2026.')
   })
 

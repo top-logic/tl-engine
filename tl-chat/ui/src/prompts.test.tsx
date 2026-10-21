@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client'
 import { approvalOutcomeText, PromptStack } from './prompts'
 import { bundle, type Language } from './i18n'
 import type { ApprovalRequest, InteractionRequest } from './types'
+import { eventually } from '../test/eventually'
 
 /** An approval request as the store builds one, with whatever the test is about overwritten. */
 function approval(over: Partial<ApprovalRequest> = {}): ApprovalRequest {
@@ -106,26 +107,23 @@ describe('the approval card', () => {
         dispatch: () => undefined,
       }),
     )
-    const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
-    await settle()
     const pre = () => container.querySelector('.tool-args pre')!
     const more = () => container.querySelector<HTMLButtonElement>('.tool-args-more')!
     try {
+      await eventually(() => expect(more()).not.toBeNull())
       expect(pre().className).toBe('tool-args-text')
       expect(pre().textContent).not.toContain(tail)
       expect(more().getAttribute('aria-expanded')).toBe('false')
 
       more().click()
-      await settle()
+      await eventually(() => expect(more().getAttribute('aria-expanded')).toBe('true'))
       expect(pre().className).toBe('tool-args-text')
       expect(pre().textContent).toContain(tail)
-      expect(more().getAttribute('aria-expanded')).toBe('true')
       expect(more().textContent).toBe('Weniger anzeigen')
 
       more().click()
-      await settle()
+      await eventually(() => expect(more().getAttribute('aria-expanded')).toBe('false'))
       expect(pre().textContent).not.toContain(tail)
-      expect(more().getAttribute('aria-expanded')).toBe('false')
     } finally {
       root.unmount()
       container.remove()
@@ -250,18 +248,17 @@ describe('the question card', () => {
         dispatch: () => undefined,
       }),
     )
+    const sent = () => fetch.mock.calls.find(([url]) => String(url).includes('/chat/respond'))
     try {
-      await settle()
+      await eventually(() => expect(container.querySelector('button')).not.toBeNull())
       await steps(container)
-      const sent = fetch.mock.calls.find(([url]) => String(url).includes('/chat/respond'))
-      return sent ? JSON.parse(String(sent[1]?.body)) : null
+      await eventually(() => expect(sent()).toBeDefined())
+      return JSON.parse(String(sent()![1]?.body))
     } finally {
       root.unmount()
       container.remove()
     }
   }
-
-  const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
 
   function button(container: HTMLElement, text: string): HTMLButtonElement {
     const found = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes(text))
@@ -274,18 +271,22 @@ describe('the question card', () => {
     if (!input) throw new Error('No text field.')
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, text)
     input.dispatchEvent(new Event('input', { bubbles: true }))
-    await settle()
+    await eventually(() => expect(button(container, 'Weiter').disabled).toBe(false))
+  }
+
+  /** Opens the field for an answer in the user's own words. */
+  async function ownAnswer(container: HTMLElement) {
+    button(container, 'Eigene Antwort…').click()
+    await eventually(() => expect(container.querySelector('.prompt-input')).not.toBeNull())
   }
 
   it('offers an own answer and sends it apart from the options', async () => {
     const body = await answer(question(), async (container) => {
       expect(container.querySelector('.prompt-input')).toBeNull()
-      button(container, 'Eigene Antwort…').click()
-      await settle()
+      await ownAnswer(container)
       expect(button(container, 'Weiter').disabled).toBe(true)
       await type(container, 'Alle zwei Wochen')
       button(container, 'Weiter').click()
-      await settle()
     })
 
     expect(body).toEqual({ requestId: 'interaction-1', response: '', ownWords: 'Alle zwei Wochen' })
@@ -294,11 +295,9 @@ describe('the question card', () => {
   it('sends the own answer beside the options picked in a multi select', async () => {
     const body = await answer(question({ multiSelect: true }), async (container) => {
       button(container, 'Monthly').click()
-      button(container, 'Eigene Antwort…').click()
-      await settle()
+      await ownAnswer(container)
       await type(container, 'und im Dezember')
       button(container, 'Weiter').click()
-      await settle()
     })
 
     expect(body).toEqual({ requestId: 'interaction-1', response: 'Monthly', ownWords: 'und im Dezember' })
@@ -306,14 +305,11 @@ describe('the question card', () => {
 
   it('drops the own answer when an option is picked in a single select', async () => {
     const body = await answer(question(), async (container) => {
-      button(container, 'Eigene Antwort…').click()
-      await settle()
+      await ownAnswer(container)
       await type(container, 'verworfen')
       button(container, 'Quarterly').click()
-      await settle()
-      expect(container.querySelector('.prompt-input')).toBeNull()
+      await eventually(() => expect(container.querySelector('.prompt-input')).toBeNull())
       button(container, 'Weiter').click()
-      await settle()
     })
 
     expect(body).toEqual({ requestId: 'interaction-1', response: 'Quarterly' })

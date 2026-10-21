@@ -244,7 +244,7 @@ public class TransientTLObjectImpl extends TransientObject {
 		}
 
 		checkDerived(resolvedPart);
-		newValue = ensureMultiplicity(resolvedPart, newValue);
+		newValue = TLModelUtil.normalizeValue(resolvedPart, ensureMultiplicity(resolvedPart, newValue));
 		Object oldValue = directUpdate(resolvedPart, newValue);
 		if (resolvedPart.getModelKind() == ModelKind.REFERENCE) {
 			TLReference forwards = (TLReference) resolvedPart;

@@ -12,6 +12,7 @@ import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.bpe.bpml.model.Iconified;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.ManualTask;
@@ -185,7 +186,7 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 
 		// Check if the current person has access rights
 		if ((GuiEngine.getInstance().isActor(currentPerson, currentLane, currentProcessExecution)
-			|| currentPerson.isAdmin())) {
+			|| ThreadContext.isAdmin())) {
 			return true;
 		}
 		return false;

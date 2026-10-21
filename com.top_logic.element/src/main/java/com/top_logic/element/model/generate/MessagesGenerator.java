@@ -29,6 +29,7 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelNamingConvention;
 
 /**
@@ -132,7 +133,7 @@ public class MessagesGenerator extends FileGenerator {
 		Set<String> usedKeys = new HashSet<>();
 
 		ResKey moduleKey = getModuleLabelKey(_module);
-		writeKey(moduleKey, usedKeys);
+		writeKey(moduleKey, moduleKey, usedKeys);
 		for (TLType type : _module.getTypes()) {
 			if (type.getModelKind() == ModelKind.ASSOCIATION) {
 				// Skip since these are almost all only technical ones.
@@ -143,13 +144,13 @@ public class MessagesGenerator extends FileGenerator {
 			commentLine("Internationalization for type '" + type.getName() + "'");
 			commentStop();
 
-			writeKey(resourceKey(type), usedKeys);
+			ResKey typeKey = resourceKey(type);
+			writeKey(typeKey, typeKey, usedKeys);
 			nl();
 
 			if (type instanceof TLEnumeration) {
 				for (TLClassifier part : ((TLEnumeration) type).getClassifiers()) {
-					ResKey resourceKey = resourceKey(part);
-					writeKey(resourceKey, usedKeys);
+					writeKey(resourceKey(part), classifierKey(part), usedKeys);
 				}
 			} else if (type instanceof TLStructuredType) {
 				for (TLStructuredTypePart part : ((TLStructuredType) type).getLocalParts()) {
@@ -157,7 +158,7 @@ public class MessagesGenerator extends FileGenerator {
 					if (part.isOverride() && existing(resourceKey) == null) {
 						continue;
 					}
-					writeKey(resourceKey, usedKeys);
+					writeKey(resourceKey, TLModelI18N.getI18NKey((TLStructuredType) type, part), usedKeys);
 				}
 			}
 		}
@@ -175,13 +176,13 @@ public class MessagesGenerator extends FileGenerator {
 		}
 	}
 
-	private void writeKey(ResKey key, Set<String> usedKeys) {
+	private void writeKey(ResKey key, ResKey labelKey, Set<String> usedKeys) {
 		String existingKey = existing(key);
 		if (existingKey != null) {
 			usedKeys.add(existingKey);
 		}
 		String canonicalKey = canonical(key);
-		String value = getValue(canonicalKey, existingKey);
+		String value = getValue(canonicalKey, labelKey, existingKey);
 
 		line(canonicalKey, value);
 	}
@@ -218,19 +219,29 @@ public class MessagesGenerator extends FileGenerator {
 		return value.replaceAll("\\r?\\n", "\\\\n");
 	}
 
-	private String getValue(String canonicalKey, String existingKey) {
+	private String getValue(String canonicalKey, ResKey labelKey, String existingKey) {
 		String oldValue = existingKey != null ? getValue(existingKey) : null;
 		String value;
 		if (oldValue != null) {
 			value = oldValue;
 		} else {
-			value = getMissingValue(canonicalKey);
+			value = getMissingValue(canonicalKey, labelKey);
 		}
 		return value;
 	}
 
-	private String getMissingValue(String key) {
-		return MISSING_PREFIX + key + MISSING_SUFFIX;
+	/**
+	 * The value written for a model-related key that has no assigned value.
+	 * 
+	 * @param canonicalKey
+	 *        The key being written.
+	 * @param labelKey
+	 *        The key by which the model part is labeled in the application, including its fallbacks
+	 *        (e.g. the label derived from the part's name).
+	 * @return A marker that names the missing key. It is dropped when the file is generated again.
+	 */
+	protected String getMissingValue(String canonicalKey, ResKey labelKey) {
+		return MISSING_PREFIX + canonicalKey + MISSING_SUFFIX;
 	}
 
 	/**

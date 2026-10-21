@@ -304,7 +304,9 @@ public class SSEUpdateQueue {
 	 *
 	 * <p>
 	 * The walk follows the {@link ReactControl#visibleChildren() visible children}, so a control that
-	 * is rendered but hidden - a covered frame of a tile stack - contributes nothing.
+	 * is rendered but hidden - a covered frame of a tile stack - contributes nothing. Neither does
+	 * the content of a participant showing an item without a route (see
+	 * {@link RoutingParticipant#routesContent()}): that part of the display has no URL.
 	 * </p>
 	 *
 	 * @see RouteManager#setDisplayedParticipants(java.util.function.Supplier)
@@ -319,10 +321,15 @@ public class SSEUpdateQueue {
 	}
 
 	private static void collectParticipants(ReactControl control, List<RoutingParticipant> result) {
+		boolean routesContent = true;
 		if (control instanceof RoutingParticipant participant) {
 			result.add(participant);
+			routesContent = participant.routesContent();
 		}
 		result.addAll(control.routeParticipants());
+		if (!routesContent) {
+			return;
+		}
 		for (ReactControl child : control.visibleChildren()) {
 			collectParticipants(child, result);
 		}

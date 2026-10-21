@@ -16,7 +16,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.sched.task.impl.TaskImpl;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 
@@ -85,13 +84,9 @@ public class ScriptTask<C extends ScriptTask.Config<?>> extends TaskImpl<C> {
 
 	@Override
 	public void run() {
-		ThreadContext.inSystemContext(ScriptTask.class, () -> {
-			TLContext context = TLContext.getContext();
-
-			// Add the task name to the context ID to better identify this task in potential log
-			// messages it produces.
-			context.setContextId(context.getContextId() + "-" + getName());
-
+		// The task name in the context ID identifies this task in potential log messages it
+		// produces.
+		ThreadContext.inSystemContext(ScriptTask.class, getName(), () -> {
 			getLog().taskStarted();
 
 			try (Transaction tx =

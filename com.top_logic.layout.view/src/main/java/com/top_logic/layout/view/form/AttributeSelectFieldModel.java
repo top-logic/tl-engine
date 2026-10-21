@@ -147,9 +147,11 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 		if (isObjectDeleted()) {
 			return;
 		}
-		Object newValue = toAttributeValue(selection);
+		Object value = toAttributeValue(selection);
+		Object newValue = normalize(value);
 		Object oldValue = super.getValue();
 		if (Objects.equals(oldValue, newValue)) {
+			fireIfRewritten(value, newValue);
 			return;
 		}
 		getObject().tUpdate(getPart(), newValue);

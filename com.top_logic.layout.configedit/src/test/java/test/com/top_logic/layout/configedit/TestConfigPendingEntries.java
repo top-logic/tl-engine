@@ -21,6 +21,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -42,13 +43,14 @@ import com.top_logic.layout.configedit.I18NConstants;
  */
 public class TestConfigPendingEntries extends TestCase {
 
-	/** An element of the edited collection. */
+	/** An element of the edited collection, whose key is mandatory. */
 	public interface Item extends ConfigurationItem {
 
 		/** Property name for {@link #getName()}. */
 		String NAME = "name";
 
 		@Name(NAME)
+		@Mandatory
 		String getName();
 
 		/** @see #getName() */
@@ -64,6 +66,30 @@ public class TestConfigPendingEntries extends TestCase {
 		@Name(ITEMS)
 		@Key(Item.NAME)
 		List<Item> getItems();
+	}
+
+	/** An element of {@link OptionallyKeyedConfig}, whose key is optional. */
+	public interface OptionalItem extends ConfigurationItem {
+
+		/** Property name for {@link #getName()}. */
+		String NAME = "name";
+
+		@Name(NAME)
+		String getName();
+
+		/** @see #getName() */
+		void setName(String value);
+	}
+
+	/** A keyed list that accepts anonymous entries. */
+	public interface OptionallyKeyedConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getItems()}. */
+		String ITEMS = "items";
+
+		@Name(ITEMS)
+		@Key(OptionalItem.NAME)
+		List<OptionalItem> getItems();
 	}
 
 	private KeyedConfig _config;
@@ -322,6 +348,37 @@ public class TestConfigPendingEntries extends TestCase {
 		_pending.discard(other);
 		assertEquals("Discarding renders with nothing to expand.",
 			Arrays.asList((ConfigurationItem) null), _rendered);
+	}
+
+	/**
+	 * Without a key, an entry of a list whose key is optional is confirmed as anonymous entry, any
+	 * number of times, and anonymous siblings never make a key clash.
+	 */
+	public void testConfirmingWithoutAnOptionalKeyAddsAnonymousEntries() {
+		OptionallyKeyedConfig config = TypedConfiguration.newConfigItem(OptionallyKeyedConfig.class);
+		ConfigCollectionValue value =
+			new ConfigCollectionValue(config, config.descriptor().getProperty(OptionallyKeyedConfig.ITEMS));
+		ConfigPendingEntries pendingEntries = new ConfigPendingEntries(value, _rendered::add);
+
+		OptionalItem first = TypedConfiguration.newConfigItem(OptionalItem.class);
+		OptionalItem second = TypedConfiguration.newConfigItem(OptionalItem.class);
+		second.setName("");
+		assertNull(pendingEntries.confirm(pendingEntries.start(first)));
+		assertNull(pendingEntries.confirm(pendingEntries.start(second)));
+		assertEquals(Arrays.asList(first, second), config.getItems());
+		assertEquals(0, pendingEntries.entries().size());
+
+		PendingEntry named = pendingEntries.start(TypedConfiguration.newConfigItem(OptionalItem.class));
+		ConfigFieldModel keyField = new ConfigFieldModel(named.entry(), value.keyProperty(named.entry()));
+		named.setKeyFieldModel(keyField);
+		((OptionalItem) named.entry()).setName("named");
+		pendingEntries.checkKeys();
+		assertNull("Anonymous siblings never clash with a key.", keyField.getError());
+
+		assertNull(pendingEntries.confirm(named));
+		assertEquals(3, config.getItems().size());
+		assertFalse(value.hasEntryWithKey("other"));
+		assertTrue(value.hasEntryWithKey("named"));
 	}
 
 	/** A refused confirmation reports at the key field the latest render cycle handed over. */

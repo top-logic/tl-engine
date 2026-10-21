@@ -21,6 +21,7 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.resource.ClientResources;
@@ -976,7 +977,7 @@ public class ViewServlet extends TopLogicServlet {
 			throws IOException, ServletException {
 		super.handleNoSession(request, response);
 
-		ThreadContextManager.inSystemInteraction(TopLogicServlet.class, () -> {
+		ThreadContext.inSystemContext(TopLogicServlet.class, () -> {
 			Person anonymous = PersonManager.getManager().getAnonymous();
 			SessionService.getInstance().loginUser(request, response, anonymous);
 		});

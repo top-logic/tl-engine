@@ -15,10 +15,10 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -182,12 +182,15 @@ public class DynamicStepsSource implements WizardStepSource {
 		 * element published on the {@link #getElementChannel() element channel}.
 		 *
 		 * @implNote Written directly as children of the {@code <dynamic-steps>}.
+		 *           Keyed by {@link UIElement.Config#ID} so that a same-path overlay can
+		 *           address an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CONTENT)
 		@DefaultContainer
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+		List<UIElement.Config> getContent();
 	}
 
 	private final ChannelRef _stepsRef;

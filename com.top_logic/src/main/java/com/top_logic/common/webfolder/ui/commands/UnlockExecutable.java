@@ -6,6 +6,7 @@
 package com.top_logic.common.webfolder.ui.commands;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.common.webfolder.model.FolderContent;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.knowledge.wrap.Document;
@@ -70,7 +71,7 @@ public class UnlockExecutable extends AbstractWebfolderAction {
 			}
 			DataAccessProxy theDAP = document.getDAP();
             if (LockExecutable.isLocked(theDAP)) {
-                if (!TLContext.isAdmin()) {
+                if (!ThreadContext.isAdmin()) {
                     String theName = LockExecutable.getLocker(theDAP);
                     String theUser = TLContext.getContext().getCurrentUserName();
 

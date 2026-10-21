@@ -164,7 +164,7 @@ public class TestVisibleIfElement extends BasicTestCase {
 			STATE_CHANNEL, visibleIf.getInput().getChannelName());
 		assertNotNull("The condition is parsed.", visibleIf.getExpr());
 
-		List<PolymorphicConfiguration<? extends UIElement>> content = visibleIf.getContent();
+		List<UIElement.Config> content = visibleIf.getContent();
 		assertEquals("The children of the tag are its content.", 1, content.size());
 		assertTrue("The child of the tag is the <inset> written inside it.",
 			content.get(0) instanceof InsetElement.Config);

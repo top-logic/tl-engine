@@ -28,12 +28,13 @@ import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
- * {@link TestCase} for the storage of multi-valued primitive attributes in
- * {@link PrimitiveStorage}.
+ * {@link TestCase} for the storage of primitive attributes in {@link PrimitiveStorage}, and for
+ * transient objects reading the same values as persistent ones.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -56,12 +57,21 @@ public class TestPrimitiveStorage extends BasicTestCase {
 
 	private static final String BLOBS_ATTRIBUTE = "blobs";
 
+	private static final String FLAG_ATTRIBUTE = "flag";
+
+	private static final String TRISTATE_ATTRIBUTE = "tristate";
+
+	private static final String NUMBER_ATTRIBUTE = "number";
+
 	private TLObject _node;
+
+	private TLObject _transientNode;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		inTransaction(() -> _node = DynamicModelService.getInstance().createObject(getNodeType()));
+		_transientNode = TransientObjectFactory.INSTANCE.createObject(getNodeType());
 	}
 
 	@Override
@@ -135,6 +145,105 @@ public class TestPrimitiveStorage extends BasicTestCase {
 			assertEquals(IllegalArgumentException.class, cause.getClass());
 			assertContains("only numbers, booleans, strings and dates are supported", cause.getMessage());
 		}
+	}
+
+	public void testUnsetValues() {
+		assertEquals(Boolean.FALSE, _node.tValueByName(FLAG_ATTRIBUTE));
+		assertEquals(Boolean.FALSE, _transientNode.tValueByName(FLAG_ATTRIBUTE));
+
+		assertNull(_node.tValueByName(TRISTATE_ATTRIBUTE));
+		assertNull(_transientNode.tValueByName(TRISTATE_ATTRIBUTE));
+
+		assertNull(_node.tValueByName(NUMBER_ATTRIBUTE));
+		assertNull(_transientNode.tValueByName(NUMBER_ATTRIBUTE));
+	}
+
+	public void testBooleanValue() {
+		storeBoth(FLAG_ATTRIBUTE, Boolean.TRUE);
+		assertEquals(Boolean.TRUE, _node.tValueByName(FLAG_ATTRIBUTE));
+		assertEquals(Boolean.TRUE, _transientNode.tValueByName(FLAG_ATTRIBUTE));
+
+		storeBoth(FLAG_ATTRIBUTE, null);
+		assertEquals(Boolean.FALSE, _node.tValueByName(FLAG_ATTRIBUTE));
+		assertEquals(Boolean.FALSE, _transientNode.tValueByName(FLAG_ATTRIBUTE));
+	}
+
+	public void testTristateValue() {
+		storeBoth(TRISTATE_ATTRIBUTE, Boolean.FALSE);
+		assertEquals(Boolean.FALSE, _node.tValueByName(TRISTATE_ATTRIBUTE));
+		assertEquals(Boolean.FALSE, _transientNode.tValueByName(TRISTATE_ATTRIBUTE));
+
+		storeBoth(TRISTATE_ATTRIBUTE, null);
+		assertNull(_node.tValueByName(TRISTATE_ATTRIBUTE));
+		assertNull(_transientNode.tValueByName(TRISTATE_ATTRIBUTE));
+	}
+
+	public void testNumberNormalization() {
+		storeBoth(NUMBER_ATTRIBUTE, Integer.valueOf(42));
+		assertNormalizedLong(_node.tValueByName(NUMBER_ATTRIBUTE));
+		assertNormalizedLong(_transientNode.tValueByName(NUMBER_ATTRIBUTE));
+	}
+
+	public void testNumbersNormalization() {
+		storeBoth(NUMBERS_ATTRIBUTE, asList(Integer.valueOf(42), Long.valueOf(13)));
+		assertNormalizedLongs((List<?>) _node.tValueByName(NUMBERS_ATTRIBUTE));
+		assertNormalizedLongs((List<?>) _transientNode.tValueByName(NUMBERS_ATTRIBUTE));
+	}
+
+	public void testIncompatibleNumber() {
+		try {
+			inTransaction(() -> _node.tUpdateByName(NUMBER_ATTRIBUTE, "42"));
+			fail("A string cannot be stored in a long attribute of a persistent object.");
+		} catch (TopLogicException ex) {
+			assertIncompatibleValue(ex.getCause());
+		}
+		try {
+			_transientNode.tUpdateByName(NUMBER_ATTRIBUTE, "42");
+			fail("A string cannot be stored in a long attribute of a transient object.");
+		} catch (IllegalArgumentException ex) {
+			assertIncompatibleValue(ex);
+		}
+		assertNull(_node.tValueByName(NUMBER_ATTRIBUTE));
+		assertNull(_transientNode.tValueByName(NUMBER_ATTRIBUTE));
+	}
+
+	public void testIncompatibleNumbers() {
+		try {
+			inTransaction(() -> _node.tUpdateByName(NUMBERS_ATTRIBUTE, asList(Long.valueOf(1), "42")));
+			fail("A string cannot be stored in a multiple long attribute of a persistent object.");
+		} catch (TopLogicException ex) {
+			assertIncompatibleValue(ex.getCause());
+		}
+		try {
+			_transientNode.tUpdateByName(NUMBERS_ATTRIBUTE, asList(Long.valueOf(1), "42"));
+			fail("A string cannot be stored in a multiple long attribute of a transient object.");
+		} catch (IllegalArgumentException ex) {
+			assertIncompatibleValue(ex);
+		}
+		assertEquals(List.of(), _node.tValueByName(NUMBERS_ATTRIBUTE));
+		assertEquals(List.of(), _transientNode.tValueByName(NUMBERS_ATTRIBUTE));
+	}
+
+	private static void assertIncompatibleValue(Throwable problem) {
+		assertEquals(IllegalArgumentException.class, problem.getClass());
+		assertContains("Value '42' (java.lang.String) can not be converted", problem.getMessage());
+	}
+
+	private static void assertNormalizedLong(Object value) {
+		assertEquals(Long.valueOf(42), value);
+		assertEquals(Long.class, value.getClass());
+	}
+
+	private static void assertNormalizedLongs(List<?> values) {
+		assertEquals(asList(Long.valueOf(42), Long.valueOf(13)), values);
+		for (Object value : values) {
+			assertEquals(Long.class, value.getClass());
+		}
+	}
+
+	private void storeBoth(String attributeName, Object value) {
+		inTransaction(() -> _node.tUpdateByName(attributeName, value));
+		_transientNode.tUpdateByName(attributeName, value);
 	}
 
 	private Throwable rootCause(Throwable problem) {

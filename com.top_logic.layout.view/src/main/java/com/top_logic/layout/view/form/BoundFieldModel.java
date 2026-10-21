@@ -81,7 +81,8 @@ public abstract class BoundFieldModel extends AbstractFieldModel {
 	}
 
 	/**
-	 * Writes the given value to the bound object and fires a value change.
+	 * Writes the {@link #normalize(Object) canonical form} of the given value to the bound object
+	 * and fires a value change.
 	 *
 	 * <p>
 	 * When the bound object is {@link #isObjectDeleted() deleted}, the edit is dropped: there is no
@@ -93,13 +94,15 @@ public abstract class BoundFieldModel extends AbstractFieldModel {
 		if (isObjectDeleted()) {
 			return;
 		}
+		Object newValue = normalize(value);
 		Object oldValue = getValue();
-		if (Objects.equals(oldValue, value)) {
+		if (Objects.equals(oldValue, newValue)) {
+			fireIfRewritten(value, newValue);
 			return;
 		}
-		writeValue(value);
-		setValueInternal(value);
-		fireValueChanged(oldValue, value);
+		writeValue(newValue);
+		setValueInternal(newValue);
+		fireValueChanged(oldValue, newValue);
 	}
 
 	/**

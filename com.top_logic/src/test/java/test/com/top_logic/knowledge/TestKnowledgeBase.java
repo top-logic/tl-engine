@@ -216,11 +216,17 @@ public class TestKnowledgeBase extends BasicTestCase {
      * Test creating of new Associations in special circumstances.
      */
     public void testNewAssoc() throws Exception  {
+		ThreadContext.withoutSecurityChecks(() -> {
+			checkNewAssoc();
+			return null;
+		});
+	}
+
+	private void checkNewAssoc() throws Exception   {
 
         KnowledgeBase   kb        = KBSetup.getKnowledgeBase();
         KnowledgeAssociation ref1 = null;
     
-        ThreadContext.pushSuperUser();
 		try
 		{
 			final TLID id1 = kb.createID();
@@ -250,7 +256,6 @@ public class TestKnowledgeBase extends BasicTestCase {
 			if (ref1 != null)
 				kb.delete(ref1);
             kb.commit();
-			ThreadContext.popSuperUser();
 		}
     }
 
@@ -292,46 +297,45 @@ public class TestKnowledgeBase extends BasicTestCase {
      * (Time) testcase for getAllKnowledgeObjects
      */
     public void testGetAllKnowledgeObjects() throws Exception  {
+		ThreadContext.withoutSecurityChecks(() -> {
+			checkGetAllKnowledgeObjects();
+			return null;
+		});
+	}
+
+	private void checkGetAllKnowledgeObjects() throws Exception   {
 
         KnowledgeBase   kb        = KBSetup.getKnowledgeBase();
     
-        ThreadContext.pushSuperUser();
-        try
-        {
-            startTime();
-            int numAll = kb.getAllKnowledgeObjects().size();
-            assertTrue(numAll > 0);
-            logTime("getAllKnowledgeObjects\t" + kb);
+        startTime();
+        int numAll = kb.getAllKnowledgeObjects().size();
+        assertTrue(numAll > 0);
+        logTime("getAllKnowledgeObjects\t" + kb);
 
-			KnowledgeObject ko = kb.createKnowledgeObject(KBTestMeta.TEST_B);
-            ko.setAttributeValue(KBTestMeta.TEST_B_NAME, "testGetAllKnowledgeObjects");
+		KnowledgeObject ko = kb.createKnowledgeObject(KBTestMeta.TEST_B);
+        ko.setAttributeValue(KBTestMeta.TEST_B_NAME, "testGetAllKnowledgeObjects");
 
-            startTime();
-            assertEquals(numAll + 1, kb.getAllKnowledgeObjects().size());
-            logTime("getAllKnowledgeObjects\t" + kb);
+        startTime();
+        assertEquals(numAll + 1, kb.getAllKnowledgeObjects().size());
+        logTime("getAllKnowledgeObjects\t" + kb);
 
-            assertTrue(kb.commit());
+        assertTrue(kb.commit());
 
-            startTime();
-            assertEquals(numAll + 1, kb.getAllKnowledgeObjects().size());
-            logTime("getAllKnowledgeObjects\t" + kb);
-            
-            kb.delete(ko);
+        startTime();
+        assertEquals(numAll + 1, kb.getAllKnowledgeObjects().size());
+        logTime("getAllKnowledgeObjects\t" + kb);
+        
+        kb.delete(ko);
 
-            startTime();
-            assertEquals(numAll, kb.getAllKnowledgeObjects().size());
-            logTime("getAllKnowledgeObjects\t" + kb);
-            
-            assertTrue(kb.commit());
-            
-            startTime();
-            assertEquals(numAll, kb.getAllKnowledgeObjects().size());
-            logTime("getAllKnowledgeObjects\t" + kb);
-        }
-        finally
-        {
-            ThreadContext.popSuperUser();
-        }
+        startTime();
+        assertEquals(numAll, kb.getAllKnowledgeObjects().size());
+        logTime("getAllKnowledgeObjects\t" + kb);
+        
+        assertTrue(kb.commit());
+        
+        startTime();
+        assertEquals(numAll, kb.getAllKnowledgeObjects().size());
+        logTime("getAllKnowledgeObjects\t" + kb);
     }
     
     /**
@@ -551,13 +555,19 @@ public class TestKnowledgeBase extends BasicTestCase {
       * Used to check perfomance improvement in commit-handling.
       */
      public void testMassData() throws Exception {
+		ThreadContext.withoutSecurityChecks(() -> {
+			checkMassData();
+			return null;
+		});
+	}
+
+	private void checkMassData() throws Exception  {
          
          KnowledgeObject      ko1[] = new KnowledgeObject[MASS_UPDDATE_COUNT];
          KnowledgeObject      ko2[] = new KnowledgeObject[MASS_UPDDATE_COUNT];
          KnowledgeAssociation ka[]  = new KnowledgeAssociation[MASS_UPDDATE_COUNT];
          KnowledgeBase        kb    = KBSetup.getKnowledgeBase();
          try {
-             ThreadContext.pushSuperUser();
              for (int i=0; i < MASS_UPDDATE_COUNT; i++) {
 				KnowledgeObject k1 = ko1[i] = kb.createKnowledgeObject(KBTestMeta.TEST_C);
                  k1.setAttributeValue(KBTestMeta.TEST_A_NAME , "testMassData" + i);
@@ -612,7 +622,6 @@ public class TestKnowledgeBase extends BasicTestCase {
                  }
              }
              kb.commit();
-             ThreadContext.popSuperUser();
          }
      }
 
@@ -623,13 +632,19 @@ public class TestKnowledgeBase extends BasicTestCase {
       * improvement is this special case.
       */
      public void testStupidDelete() throws Exception {
+		ThreadContext.withoutSecurityChecks(() -> {
+			checkStupidDelete();
+			return null;
+		});
+	}
+
+	private void checkStupidDelete() throws Exception  {
          
          KnowledgeObject      ko1[] = new KnowledgeObject[MASS_UPDDATE_COUNT];
          KnowledgeObject      ko2[] = new KnowledgeObject[MASS_UPDDATE_COUNT];
          KnowledgeAssociation ka[]  = new KnowledgeAssociation[MASS_UPDDATE_COUNT];
          KnowledgeBase        kb    = KBSetup.getKnowledgeBase();
          try {
-             ThreadContext.pushSuperUser();
              for (int i=0; i < MASS_UPDDATE_COUNT; i++) {
 				KnowledgeObject k1 = ko1[i] = kb.createKnowledgeObject(KBTestMeta.TEST_C);
                  k1.setAttributeValue(KBTestMeta.TEST_A_NAME , "testMassData" + i);
@@ -665,7 +680,6 @@ public class TestKnowledgeBase extends BasicTestCase {
                  }
              }
              kb.commit();
-             ThreadContext.popSuperUser();
          }
      }
      

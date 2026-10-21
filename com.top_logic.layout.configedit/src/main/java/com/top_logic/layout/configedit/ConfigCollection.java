@@ -7,6 +7,7 @@ package com.top_logic.layout.configedit;
 
 import java.util.List;
 
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 
@@ -53,8 +54,9 @@ public interface ConfigCollection {
 	 * Whether the collection is indexed by a property of its entries.
 	 *
 	 * <p>
-	 * A keyed collection cannot hold an entry whose key is empty or already taken, which is what
-	 * makes a freshly created entry pending until the user has given it a key - see
+	 * A keyed collection cannot hold an entry whose key is already taken, nor one whose key is empty
+	 * unless it {@link #acceptsAnonymous(ConfigurationItem) accepts anonymous entries}. This is what
+	 * makes a freshly created entry pending until the user has confirmed its key - see
 	 * {@link ConfigPendingEntries}. An unkeyed collection takes a new entry straight away.
 	 * </p>
 	 */
@@ -74,6 +76,24 @@ public interface ConfigCollection {
 	 * </p>
 	 */
 	PropertyDescriptor keyProperty(ConfigurationItem entry);
+
+	/**
+	 * Whether the given entry may join the collection without a key, as an anonymous entry.
+	 *
+	 * <p>
+	 * A keyed list accepts any number of entries whose key is unset (see
+	 * {@link ConfigUtil#isAnonymousKey(Object)}), unless its key property is
+	 * {@link PropertyDescriptor#isMandatory() mandatory}. Such an entry is matched by no key lookup,
+	 * it is identified by its position.
+	 * </p>
+	 *
+	 * @param entry
+	 *        The entry to add; its key property is resolved as by
+	 *        {@link #keyProperty(ConfigurationItem)}.
+	 */
+	default boolean acceptsAnonymous(ConfigurationItem entry) {
+		return false;
+	}
 
 	/**
 	 * Whether some element of the collection carries the given key.

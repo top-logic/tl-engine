@@ -24,7 +24,6 @@ import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.LoggingDataSourceProxy;
 import com.top_logic.basic.sql.LoggingDataSourceProxy.StatementAnalyzer;
 import com.top_logic.basic.thread.ThreadContext;
-import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -177,15 +176,15 @@ public class TestRoleLookupPerInteraction extends BasicTestCase {
 			TLObject child = _children.get(0);
 			assertRoles(Set.of(), child, _other);
 
-			ThreadContext.pushSuperUser();
-			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-				BoundedRole.assignRole(_parent, _other, _reader);
-				assertRoles("The assignment is visible in the transaction that makes it.", Set.of(_reader), child,
-					_other);
-				// Not committed: closing the transaction rolls it back.
-			} finally {
-				ThreadContext.popSuperUser();
-			}
+			ThreadContext.withoutSecurityChecks(() -> {
+				try (Transaction tx =
+					kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+					BoundedRole.assignRole(_parent, _other, _reader);
+					assertRoles("The assignment is visible in the transaction that makes it.", Set.of(_reader),
+						child, _other);
+					// Not committed: closing the transaction rolls it back.
+				}
+			});
 			assertRoles("A rolled back assignment is gone.", Set.of(), child, _other);
 		});
 	}
@@ -364,17 +363,17 @@ public class TestRoleLookupPerInteraction extends BasicTestCase {
 	}
 
 	private static void inInteraction(Runnable check) {
-		ThreadContextManager.inInteraction(TestRoleLookupPerInteraction.class.getName(), check::run);
+		ThreadContext.inSystemContext(TestRoleLookupPerInteraction.class, check::run);
 	}
 
 	private static void inTransaction(Runnable modification) {
-		ThreadContext.pushSuperUser();
-		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-			modification.run();
-			tx.commit();
-		} finally {
-			ThreadContext.popSuperUser();
-		}
+		ThreadContext.withoutSecurityChecks(() -> {
+			try (Transaction tx =
+				kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+				modification.run();
+				tx.commit();
+			}
+		});
 	}
 
 	/** Return the suite of tests to perform. */

@@ -250,6 +250,11 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 		_persons.clear();
 	}
 
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
 	private Person newPerson(String name) {
 		Person result = TestPerson.createPerson(name);
 		_persons.add(result);

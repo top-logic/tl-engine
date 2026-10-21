@@ -15,7 +15,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
@@ -137,7 +137,7 @@ public class PersistencyMaintenance {
 		log.info("Restarting the persistency layer in " + RESTART_DELAY_SECONDS + " seconds.");
 
 		SchedulerService.getInstance().schedule(
-			() -> ThreadContextManager.inSystemInteraction(PersistencyMaintenance.class,
+			() -> ThreadContext.inSystemContext(PersistencyMaintenance.class,
 				() -> restart(log, leaveMaintenanceWindow)),
 			RESTART_DELAY_SECONDS, TimeUnit.SECONDS);
 	}

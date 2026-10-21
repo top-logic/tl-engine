@@ -27,6 +27,8 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -76,8 +78,6 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		becomeRoot();
-
 		_context = new DefaultViewContext(null);
 		_item = newObject(ITEM, ORIGINAL);
 	}
@@ -87,6 +87,16 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 		_item = null;
 		_context = null;
 		super.tearDown();
+	}
+
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
+	@Override
+	protected Person initialUser() {
+		return PersonManager.getManager().getRoot();
 	}
 
 	/**

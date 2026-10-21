@@ -278,7 +278,7 @@ public class TestDashboardElement extends BasicTestCase {
 			layoutCommands(new CommandScope(List.of())));
 
 		List<String> offered = new ArrayList<>();
-		TLContextManager.inRootPersonContext(() -> {
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), () -> {
 			for (CommandModel command : layoutCommands(new CommandScope(List.of()))) {
 				offered.add(command.getName());
 			}
@@ -453,7 +453,7 @@ public class TestDashboardElement extends BasicTestCase {
 	 * Runs the given test code for a logged-in user whose dashboard is not yet personalized.
 	 */
 	private static void inUserContext(Runnable test) {
-		TLContextManager.inRootPersonContext(() -> {
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), () -> {
 			PersonalConfiguration.getPersonalConfiguration().setJSONValue(VISIBILITY_KEY, null);
 			test.run();
 		});

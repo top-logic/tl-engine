@@ -58,14 +58,10 @@ public class TestPDFUploadBatch extends BasicTestCase {
         if (!compress.isInstalled())
             return; // No need to choke on this ...
         
-        try {
-            // TODO TRI fix this bug please
-            ThreadContext.pushSuperUser();
-            Person ocrPerson = Person.byName("root");
-            assertTrue(ocrPerson.getKnowledgeBase().commit());
-        } finally  {
-            ThreadContext.popSuperUser();
-        }
+		ThreadContext.withoutSecurityChecks(() -> {
+			Person ocrPerson = Person.byName("root");
+			assertTrue(ocrPerson.getKnowledgeBase().commit());
+		});
         
         Document        theDoc = null;
         KnowledgeBase   theKB  = KBSetup.getKnowledgeBase();
@@ -116,14 +112,10 @@ public class TestPDFUploadBatch extends BasicTestCase {
         if (!compress.isInstalled())
             return; // No need to choke on this ...
         
-        try {
-            // TODO TRI fix this bug please
-            ThreadContext.pushSuperUser();
-            Person ocrPerson = Person.byName("dau");
-            assertTrue(ocrPerson.getKnowledgeBase().commit());
-        } finally  {
-            ThreadContext.popSuperUser();
-        }
+		ThreadContext.withoutSecurityChecks(() -> {
+			Person ocrPerson = Person.byName("dau");
+			assertTrue(ocrPerson.getKnowledgeBase().commit());
+		});
         
         Document        theDoc = null;
         KnowledgeBase   theKB  = KBSetup.getKnowledgeBase();
@@ -174,14 +166,10 @@ public class TestPDFUploadBatch extends BasicTestCase {
         if (!compress.isInstalled())
             return; // No need to choke on this ...
         
-        try {
-            // TODO TRI fix this bug please
-            ThreadContext.pushSuperUser();
-            Person ocrPerson = Person.byName("dau");
-            assertTrue(ocrPerson.getKnowledgeBase().commit());
-        } finally  {
-            ThreadContext.popSuperUser();
-        }
+		ThreadContext.withoutSecurityChecks(() -> {
+			Person ocrPerson = Person.byName("dau");
+			assertTrue(ocrPerson.getKnowledgeBase().commit());
+		});
         
         Document        theDoc1 = null;
         Document        theDoc2 = null;

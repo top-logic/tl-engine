@@ -26,7 +26,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -71,7 +71,7 @@ public class TestLoginMessagesUtil extends AbstractKnowledgeBaseTest {
 			tx.commit();
 		}
 
-		withPerson(_p1, () -> {
+		TLContextManager.inPersonContext(_p1, () -> {
 			Date confirmDate = LoginMessagesUtil.getConfirmDate(pc(), loginMessage);
 			assertNull("Never confirmed by p1", confirmDate);
 
@@ -83,34 +83,19 @@ public class TestLoginMessagesUtil extends AbstractKnowledgeBaseTest {
 			assertFalse(LoginMessagesUtil.isConfirmExpired(pc(), loginMessage));
 		});
 
-		withPerson(_p2, () -> {
+		TLContextManager.inPersonContext(_p2, () -> {
 			Date confirmDate = LoginMessagesUtil.getConfirmDate(pc(), loginMessage);
 			assertNull("Never confirmed by p2", confirmDate);
 
 			assertTrue(LoginMessagesUtil.isConfirmExpired(pc(), loginMessage));
 		});
 
-		withPerson(_p1, () -> {
+		TLContextManager.inPersonContext(_p1, () -> {
 			try (Transaction tx = kb.beginTransaction()) {
 				LoginMessagesUtil.setConfirmDate(pc(), loginMessage, DateUtil.addDays(now(), -2));
 			}
 			assertTrue(LoginMessagesUtil.isConfirmExpired(pc(), loginMessage));
 		});
-	}
-
-	private static void withPerson(Person p, Runnable runnable) {
-		TLContext context = TLContext.getContext();
-		Person oldP = context.getPerson();
-		String contextId = context.getContextId();
-		context.setPerson(p);
-		try {
-			runnable.run();
-		} finally {
-			context.setPerson(oldP);
-			if (oldP == null) {
-				context.setContextId(contextId);
-			}
-		}
 	}
 
 	private static PersonalConfiguration pc() {

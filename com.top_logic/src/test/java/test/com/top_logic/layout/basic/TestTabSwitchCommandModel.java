@@ -26,7 +26,6 @@ import com.top_logic.basic.listener.GenericPropertyListener;
 import com.top_logic.basic.listener.PropertyObservable;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.MapBasedXMLAttributes;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.component.TabComponent.TabbedLayoutComponent;
@@ -39,7 +38,6 @@ import com.top_logic.mig.html.layout.SimpleComponent;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
-import com.top_logic.util.TLContext;
 
 /**
  * Test case for {@link TabSwitchCommandModel}.
@@ -64,7 +62,6 @@ public class TestTabSwitchCommandModel extends BasicTestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		TLContext.getContext().setCurrentPerson(PersonManager.getManager().getRoot());
 
 		tabComponent =
 			new TabComponent(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,

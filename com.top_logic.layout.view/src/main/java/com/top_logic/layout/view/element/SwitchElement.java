@@ -12,9 +12,10 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.GlobalKey;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -92,19 +93,25 @@ public class SwitchElement implements UIElement {
 		/**
 		 * The cases, evaluated in order; the first matching case is shown.
 		 *
-		 * @implNote Written directly as {@code <case>} children of the {@code <switch>}.
+		 * @implNote Written directly as {@code <case>} children of the {@code <switch>}. Keyed by
+		 *           {@link CaseConfig#ID} so that a same-path overlay can address a case.
 		 */
 		@Name(CASES)
+		@Key(CaseConfig.ID)
 		@DefaultContainer
 		@TreeProperty
 		List<CaseConfig> getCases();
 
 		/**
 		 * Content shown when no {@code <case>} matches; empty for no fallback content.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(DEFAULT)
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends UIElement>> getDefault();
+		List<UIElement.Config> getDefault();
 
 		/**
 		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
@@ -128,8 +135,24 @@ public class SwitchElement implements UIElement {
 	@TagName("case")
 	public interface CaseConfig extends ConfigurationItem {
 
+		/** Configuration name for {@link #getId()}. */
+		String ID = "id";
+
 		/** Configuration name for {@link #getTest()}. */
 		String TEST = "test";
+
+		/**
+		 * The name an overlay of the view addresses this case by, unique in the whole view, see
+		 * {@link UIElement.Config#getId()}.
+		 *
+		 * <p>
+		 * A case without id is anonymous: an overlay adds cases beside it, but cannot address the
+		 * case itself.
+		 * </p>
+		 */
+		@Name(ID)
+		@GlobalKey
+		String getId();
 
 		/** Configuration name for {@link #getContent()}. */
 		String CONTENT = "content";
@@ -145,11 +168,15 @@ public class SwitchElement implements UIElement {
 
 		/**
 		 * The content elements shown when this case is chosen.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CONTENT)
 		@DefaultContainer
 		@TreeProperty
-		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+		List<UIElement.Config> getContent();
 	}
 
 	private final ChannelRef _inputRef;

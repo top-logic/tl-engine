@@ -149,13 +149,20 @@ public abstract class AbstractDropSecurityTest<C extends BoundComponent> extends
 			tx.commit();
 		}
 		AccessManager.getInstance().reload();
+	}
 
-		becomeUser(_user);
+	@Override
+	protected boolean checksSecurity() {
+		return true;
+	}
+
+	@Override
+	protected Person initialUser() {
+		return _user;
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		becomeRoot();
 		_kb.removeUpdateListener(_creationListener);
 		try (Transaction tx = _kb.beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 			KBUtils.deleteAllKI(_toDelete.values().iterator());

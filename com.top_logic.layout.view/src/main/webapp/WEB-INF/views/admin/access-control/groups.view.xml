@@ -4,17 +4,17 @@
 	<channels>
 		<channel name="selectedGroup"/>
 	</channels>
-	<split-panel
+	<split-panel id="main"
 		orientation="horizontal"
 		resizable="true"
 	>
 		<panes>
-			<pane
+			<pane id="list"
 				min-size="200"
 				size="40"
 				unit="%"
 			>
-				<panel>
+				<panel id="list-panel">
 					<title>
 						<en>Groups</en>
 						<de>Gruppen</de>
@@ -63,7 +63,7 @@
 							<write-channel name="selectedGroup"/>
 						</generic-command>
 					</commands>
-					<table
+					<table id="table"
 						observed-types="tl.accounts:Group"
 						selection="selectedGroup"
 						types="tl.accounts:Group"
@@ -75,16 +75,16 @@
 					</table>
 				</panel>
 			</pane>
-			<pane
+			<pane id="detail"
 				size="60"
 				unit="%"
 			>
-				<panel>
+				<panel id="detail-panel">
 					<title>
 						<en>Group</en>
 						<de>Gruppe</de>
 					</title>
-					<form
+					<form id="form"
 						input="selectedGroup"
 						with-inset="true"
 					>

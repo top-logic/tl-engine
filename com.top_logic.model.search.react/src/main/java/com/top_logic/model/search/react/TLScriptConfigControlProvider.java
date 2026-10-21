@@ -5,6 +5,7 @@
 package com.top_logic.model.search.react;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -13,11 +14,14 @@ import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.values.edit.DefaultValueModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
+import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.model.search.ui.ScriptContextVariablesResolver;
 
 /**
  * Edits a TL-Script valued configuration property in the TL-Script editor, the one of the script
@@ -38,13 +42,21 @@ import com.top_logic.model.search.ui.ModelReferenceChecker;
  * that the error appears then and not on every key stroke. The stored expression stays the last
  * one accepted. The editor marks syntax errors in the text itself all along.
  * </p>
+ *
+ * <p>
+ * A script may use the variables the {@link ScriptContextVariables} annotation of the edited
+ * property declares: the check accepts them, and the completion offers them. They are resolved
+ * through {@link ScriptContextVariablesResolver} on every check and every completion request, since
+ * they may depend on other properties edited in the same form.
+ * </p>
  */
 public class TLScriptConfigControlProvider implements ConfigControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
+		Supplier<List<String>> variables = contextVariables(model);
 		TLScriptEditorReactControl control =
-			new TLScriptEditorReactControl(context, source(model.getValue()), !model.isEditable(), List.of());
+			new TLScriptEditorReactControl(context, source(model.getValue()), !model.isEditable(), variables);
 		ResKey[] pendingError = { null };
 		control.setValueCallback(text -> {
 			if (text == null || text.isBlank()) {
@@ -56,7 +68,7 @@ public class TLScriptConfigControlProvider implements ConfigControlProvider {
 				Expr expr = ExprFormat.INSTANCE.getValue(TLScriptConfigControlProvider.class.getName(), text);
 				// A script that parses may still refer to a variable, function or model element
 				// that does not exist; the application could not compile it then.
-				ModelReferenceChecker.checkModelElements(expr);
+				ModelReferenceChecker.checkModelElements(expr, variables.get());
 				pendingError[0] = null;
 				store(model, expr);
 			} catch (ConfigurationException ex) {
@@ -93,6 +105,14 @@ public class TLScriptConfigControlProvider implements ConfigControlProvider {
 		control.addCleanupAction(() -> model.removeListener(listener));
 
 		return control;
+	}
+
+	/**
+	 * Computes the names of the variables the edited property declares for its script.
+	 */
+	private static Supplier<List<String>> contextVariables(ConfigFieldModel model) {
+		DefaultValueModel valueModel = new DefaultValueModel(model.getConfig(), model.getProperty());
+		return () -> ScriptContextVariablesResolver.resolve(valueModel);
 	}
 
 	/**

@@ -219,15 +219,23 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 
 	/**
 	 * Reports the route of the given tab to the {@link RouteChangeListener}s.
+	 *
+	 * <p>
+	 * A tab without a route is reported as well, with an empty segment: the address bar has to leave
+	 * the tab active before, whose segment no longer describes the display.
+	 * </p>
 	 */
 	private void notifyRouteListeners(String tabId) {
 		TabDefinition newTab = findTab(tabId);
+		RouteSegment segment;
 		if (newTab.getRoute() != null) {
 			RoutePattern pattern = RoutePattern.compile(newTab.getRoute(), newTab.getId());
-			RouteSegment segment = new RouteSegment(pattern.produce(Map.of()));
-			for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
-				listener.onRouteChange(this, segment);
-			}
+			segment = new RouteSegment(pattern.produce(Map.of()));
+		} else {
+			segment = new RouteSegment("");
+		}
+		for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
+			listener.onRouteChange(this, segment);
 		}
 	}
 
@@ -290,6 +298,14 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			return new RouteSegment(pattern.produce(Map.of()));
 		}
 		return null;
+	}
+
+	/**
+	 * The content of an active tab without a route has no URL.
+	 */
+	@Override
+	public boolean routesContent() {
+		return findTab(_activeTabId).getRoute() != null;
 	}
 
 	@Override

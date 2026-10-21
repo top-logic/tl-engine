@@ -513,7 +513,9 @@ message NumberInputState extends TypingFieldState {
  * State of a field for a date, a time of day, or both, the component {@code TLDatePicker}.
  *
  * The {@link #value} is the ISO form of the value for the HTML input of the {@link #inputType}, a
- * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}).
+ * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}). A time of day is
+ * written with its seconds when the field has the {@link #precision} of seconds (e.g.
+ * {@code 14:30:15}, {@code 2026-06-01T14:30:15}).
  */
 message DatePickerState extends FieldState {
 
@@ -538,6 +540,27 @@ message DatePickerState extends FieldState {
 	 * The part of a point in time the field edits.
 	 */
 	InputType inputType;
+
+	/**
+	 * The smallest unit of a time of day a field edits.
+	 */
+	enum Precision {
+		/** A time of day is edited in hours and minutes. */
+		@Name("minutes")
+		MINUTES;
+
+		/** A time of day is edited in hours, minutes and seconds. */
+		@Name("seconds")
+		SECONDS;
+	}
+
+	/**
+	 * The smallest unit of a time of day the field edits, the one its display format writes.
+	 *
+	 * A field with the precision of seconds lets the seconds be entered and writes them in the ISO
+	 * {@link #value}. A date without a time of day has the precision of minutes.
+	 */
+	Precision precision;
 
 	/**
 	 * The value written in the display format of the current user, shown while the field is not

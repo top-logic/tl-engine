@@ -6,8 +6,17 @@
 >
     <display-name>TopLogic React Demo</display-name>
 
+    <context-param>
+        <param-name>websocket.endpoints</param-name>
+        <param-value>com.top_logic.demo.react.websocket.EchoEndpoint</param-value>
+    </context-param>
+
     <listener>
          <listener-class>com.top_logic.element.ElementStartStop</listener-class>
+    </listener>
+
+    <listener>
+         <listener-class>com.top_logic.util.WebSocketEndpointListener</listener-class>
     </listener>
 
 </web-app>

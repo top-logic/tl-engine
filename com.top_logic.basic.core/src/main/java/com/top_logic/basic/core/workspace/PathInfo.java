@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,6 +35,12 @@ import org.apache.maven.model.io.ModelReader;
 
 /**
  * Algorithm for building the resource path of an application by inspecting its classpath.
+ *
+ * <p>
+ * The deploy aspect {@link ModuleLayoutConstants#DEPLOY_LOCAL_FOLDER_NAME} is only included for the
+ * top-level project, the application module. This is the project directory on the classpath that
+ * no other project on the classpath depends on, see {@link #addDeployAspects(File)}.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -67,7 +74,29 @@ public class PathInfo {
 
 	private List<Path> _resourceDirs = new ArrayList<>();
 
+	/**
+	 * The directory of the top-level project, see {@link #addDeployAspects(File)}.
+	 *
+	 * <p>
+	 * Determined in {@link #complete()}, after all classpath entries are known.
+	 * </p>
+	 */
 	private File _toplevelProjectPath;
+
+	/**
+	 * The IDs (see {@link DependencyResolver#enter(Model, boolean)}) of all productive project
+	 * directories with a POM on the classpath, indexed by the project directory.
+	 */
+	private Map<File, String> _projectIdByPath = new LinkedHashMap<>();
+
+	/**
+	 * Parts not taking part in dependency resolution, in classpath order.
+	 *
+	 * <p>
+	 * Those parts are built in {@link #complete()} before the parts ordered by dependencies.
+	 * </p>
+	 */
+	private List<Runnable> _unorderedParts = new ArrayList<>();
 
 	private List<File> _classFolders = new ArrayList<>();
 
@@ -84,10 +113,9 @@ public class PathInfo {
 	/**
 	 * Creates a {@link PathInfo}.
 	 */
-	PathInfo(String deployDir, String[] deployAspects) throws IOException {
+	PathInfo(String deployDir, String[] deployAspects) {
 		_deployDir = deployDir;
 		_deployAspects = deployAspects;
-		_toplevelProjectPath = new File(".").getCanonicalFile();
 	}
 
 	/**
@@ -142,9 +170,12 @@ public class PathInfo {
 		File pomFile = new File(projectPath, "pom.xml");
 		if (pomFile.exists()) {
 			Model projectModel = _analyzer.read(pomFile, Collections.emptyMap());
-			addPart(projectModel, isTest, () -> doAddProject(projectPath, projectModel, isTest));
+			String id = addPart(projectModel, isTest, () -> doAddProject(projectPath, projectModel, isTest));
+			if (!isTest) {
+				_projectIdByPath.put(projectPath, id);
+			}
 		} else {
-			doAddProject(projectPath, null, isTest);
+			_unorderedParts.add(() -> doAddProject(projectPath, null, isTest));
 		}
 	}
 
@@ -257,7 +288,7 @@ public class PathInfo {
 					return;
 				}
 			}
-			doAddJar(jarFile, null, moduleWithResources);
+			_unorderedParts.add(() -> doAddJar(jarFile, null, moduleWithResources));
 		}
 	}
 
@@ -345,12 +376,13 @@ public class PathInfo {
 		return result;
 	}
 
-	private void addPart(Model projectModel, boolean isTest, Runnable part) {
+	private String addPart(Model projectModel, boolean isTest, Runnable part) {
 		String id = _resolver.enter(projectModel, isTest);
 
 		// Note: For a single project model there may be multiple JAR artifacts in the class path:
 		// The main JAR and the test JAR. Therefore, multiple builders must be kept.
 		_builderById.computeIfAbsent(id, ignore -> new ArrayList<>()).add(part);
+		return id;
 	}
 
 	private void addWebappPath(File webappPath) {
@@ -386,6 +418,17 @@ public class PathInfo {
 		}
 	}
 
+	/**
+	 * Adds the folders of the deploy aspects of the given project to the resource path.
+	 *
+	 * <p>
+	 * The aspect {@link ModuleLayoutConstants#DEPLOY_LOCAL_FOLDER_NAME} is only added for the
+	 * top-level project, the application module. The top-level project is the productive project
+	 * directory with a POM on the classpath that no other productive project on the classpath
+	 * depends on. If there is no such project or there are several of them, the top-level project
+	 * is the project in the working directory of the JVM, if any.
+	 * </p>
+	 */
 	private void addDeployAspects(File projectPath) {
 		if (_deployAspects.length == 0) {
 			return;
@@ -400,8 +443,7 @@ public class PathInfo {
 		for (int i = _deployAspects.length - 1; i >= 0; i--) {
 			String deployAspect = _deployAspects[i];
 			if (ModuleLayoutConstants.DEPLOY_LOCAL_FOLDER_NAME.equals(deployAspect) && !addLocalAspect) {
-				// "deploy local" folder must be skipped for all projects other than the top-level
-				// one.
+				// The local aspect must be skipped for all projects other than the top-level one.
 				continue;
 			}
 			File deployAspectRoot = new File(deploydir, deployAspect);
@@ -420,12 +462,38 @@ public class PathInfo {
 		addResourceDir(deployFolder.toPath());
 	}
 
-	PathInfo complete() {
+	PathInfo complete() throws IOException {
+		_toplevelProjectPath = findToplevelProject();
+
+		for (Runnable part : _unorderedParts) {
+			part.run();
+		}
 		for (Runnable builder : buildersTopologicallySorted()) {
 			builder.run();
 		}
 
 		return this;
+	}
+
+	/**
+	 * Determines the top-level project, see {@link #addDeployAspects(File)}.
+	 */
+	private File findToplevelProject() throws IOException {
+		Set<String> dependencyIds = _resolver.getProductiveDependencyIds();
+		List<File> candidates = _projectIdByPath.entrySet().stream()
+			.filter(entry -> !dependencyIds.contains(entry.getValue()))
+			.map(Map.Entry::getKey)
+			.collect(Collectors.toList());
+		if (candidates.size() == 1) {
+			return candidates.get(0);
+		}
+
+		File workingDir = new File(".").getCanonicalFile();
+		if (candidates.size() > 1 && !candidates.contains(workingDir)) {
+			LOG.info("No unique top-level project on the classpath, local deploy aspect is only used for '"
+				+ workingDir + "', candidates: " + candidates);
+		}
+		return workingDir;
 	}
 
 	private List<Runnable> buildersTopologicallySorted() {

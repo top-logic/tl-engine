@@ -787,6 +787,31 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
+	 * Leaves edit mode without storing or discarding anything.
+	 *
+	 * <p>
+	 * Ends the edit session of a form whose changes are already stored, e.g. by
+	 * {@link #executeStoreState()}, and releases the lock. Has no effect when the form is not in
+	 * edit mode. A form that still {@link #isDirty() holds unsaved changes} stays in edit mode and
+	 * keeps them: the input is neither stored (see {@link #executeSave()}) nor dropped (see
+	 * {@link #executeCancel()}).
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the form holds unsaved changes.
+	 */
+	public void leaveEditMode() {
+		if (!_editMode) {
+			return;
+		}
+		if (isDirty()) {
+			throw new TopLogicException(
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_UNSAVED_CHANGES);
+		}
+		exitEditMode();
+	}
+
+	/**
 	 * Validates all participants and throws if any are invalid.
 	 *
 	 * <p>
@@ -963,8 +988,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * <p>
 	 * Used where the form keeps displaying the same object ({@link #executeSave()},
-	 * {@link #executeCancel()}): the fields must drop the overlay values and show the base values
-	 * again, which the notification triggers.
+	 * {@link #executeCancel()}, {@link #leaveEditMode()}): the fields must drop the overlay values
+	 * and show the base values again, which the notification triggers.
 	 * </p>
 	 */
 	private void exitEditMode() {
@@ -1096,6 +1121,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			discardEditSession();
 		}
 		deregisterModelListener();
+		// A disposed form observes nothing; it must not keep the window's model scope alive.
+		_modelScope = null;
 		_inputRegistration.dispose();
 		_editModeRegistration.dispose();
 	}

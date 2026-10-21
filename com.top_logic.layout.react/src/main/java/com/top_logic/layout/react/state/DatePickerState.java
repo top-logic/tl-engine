@@ -4,7 +4,9 @@ package com.top_logic.layout.react.state;
  * State of a field for a date, a time of day, or both, the component {@code TLDatePicker}.
  *
  * The {@link #getValue()} is the ISO form of the value for the HTML input of the {@link #getInputType()}, a
- * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}).
+ * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}). A time of day is
+ * written with its seconds when the field has the {@link #getPrecision()} of seconds (e.g.
+	 * {@code 14:30:15}, {@code 2026-06-01T14:30:15}).
  */
 public interface DatePickerState extends com.top_logic.layout.react.state.FieldState {
 
@@ -69,6 +71,60 @@ public interface DatePickerState extends com.top_logic.layout.react.state.FieldS
 	}
 
 	/**
+	 * The smallest unit of a time of day a field edits.
+	 */
+	public enum Precision implements de.haumacher.msgbuf.data.ProtocolEnum {
+
+		/**
+		 * A time of day is edited in hours and minutes.
+		 */
+		MINUTES("minutes"),
+
+		/**
+		 * A time of day is edited in hours, minutes and seconds.
+		 */
+		SECONDS("seconds"),
+
+		;
+
+		private final String _protocolName;
+
+		private Precision(String protocolName) {
+			_protocolName = protocolName;
+		}
+
+		/**
+		 * The protocol name of a {@link Precision} constant.
+		 *
+		 * @see #valueOfProtocol(String)
+		 */
+		@Override
+		public String protocolName() {
+			return _protocolName;
+		}
+
+		/** Looks up a {@link Precision} constant by it's protocol name. */
+		public static Precision valueOfProtocol(String protocolName) {
+			if (protocolName == null) { return null; }
+			switch (protocolName) {
+				case "minutes": return MINUTES;
+				case "seconds": return SECONDS;
+			}
+			return MINUTES;
+		}
+
+		/** Writes this instance to the given output. */
+		public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+			out.value(protocolName());
+		}
+
+		/** Reads a new instance from the given reader. */
+		public static Precision readPrecision(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+			return valueOfProtocol(in.nextString());
+		}
+	}
+
+	/**
 	 * Creates a {@link com.top_logic.layout.react.state.DatePickerState} instance.
 	 */
 	static com.top_logic.layout.react.state.DatePickerState create() {
@@ -80,6 +136,9 @@ public interface DatePickerState extends com.top_logic.layout.react.state.FieldS
 
 	/** @see #getInputType() */
 	String INPUT_TYPE__PROP = "inputType";
+
+	/** @see #getPrecision() */
+	String PRECISION__PROP = "precision";
 
 	/** @see #getDisplayValue() */
 	String DISPLAY_VALUE__PROP = "displayValue";
@@ -93,6 +152,19 @@ public interface DatePickerState extends com.top_logic.layout.react.state.FieldS
 	 * @see #getInputType()
 	 */
 	com.top_logic.layout.react.state.DatePickerState setInputType(com.top_logic.layout.react.state.DatePickerState.InputType value);
+
+	/**
+	 * The smallest unit of a time of day the field edits, the one its display format writes.
+	 *
+	 * A field with the precision of seconds lets the seconds be entered and writes them in the ISO
+	 * {@link #getValue()}. A date without a time of day has the precision of minutes.
+	 */
+	com.top_logic.layout.react.state.DatePickerState.Precision getPrecision();
+
+	/**
+	 * @see #getPrecision()
+	 */
+	com.top_logic.layout.react.state.DatePickerState setPrecision(com.top_logic.layout.react.state.DatePickerState.Precision value);
 
 	/**
 	 * The value written in the display format of the current user, shown while the field is not

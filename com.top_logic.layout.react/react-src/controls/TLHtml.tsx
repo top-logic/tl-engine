@@ -1,4 +1,7 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, pushLocalStep, usePart, ICON_PRINT } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, pushLocalStep, usePart, ICON_PRINT,
+  useFieldLabelProps,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /** Command following a link that names its target for the server (ReactHtmlControl.FOLLOW_LINK_COMMAND). */
@@ -79,12 +82,17 @@ const I18N_KEYS = {
  * content is shown in its own proportions rather than reflowed into a small one. It is looked at
  * rather than used - it takes no clicks, no focus and no print button - and it is fetched only once
  * it comes near the viewport, so a grid of previews loads what the reader actually reaches.
+ *
+ * Content in a form field's input slot - the value of a read-only field shown as HTML - is a group
+ * named by the field's label (see FieldLabelContext).
  */
 const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const dataUrl = useTLDataUrl();
   const sendCommand = useTLCommand();
   const t = useI18N(I18N_KEYS);
+  const labelProps = useFieldLabelProps(controlId, controlId);
+  const labelled = labelProps['aria-labelledby'] === undefined ? {} : { role: 'group', ...labelProps };
 
   const display = (state.display as string) || 'inline';
   const html = (state.html as string) ?? '';
@@ -201,7 +209,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   if (error) {
     // A fragment that is not shown says why in its place, as an error message of the design system.
     return (
-      <div id={controlId} className={rootClassName(state, 'tl-alert')} data-tl-role="error" role="alert">
+      <div id={controlId} {...labelled} className={rootClassName(state, 'tl-alert')} data-tl-role="error" role="alert">
         <div className="tl-alert__body"><div className="tl-alert__message tl-type-body">{error}</div></div>
       </div>
     );
@@ -211,7 +219,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
     // The document is the base of an overlay filling its place; the print button lies in a layer over it, on a
     // surface of its own, since the paper of the document is white in either mode.
     return (
-      <div id={controlId} className={rootClassName(state, 'tl-overlay', 'tl-overlay--fill', fillClass)}>
+      <div id={controlId} {...labelled} className={rootClassName(state, 'tl-overlay', 'tl-overlay--fill', fillClass)}>
         <div className="tl-overlay__base">
           <div className="tl-media tl-media--document">
             <iframe
@@ -274,12 +282,13 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   if (display !== 'inline') {
-    return <div id={controlId} className={rootClassName(state)}/>;
+    return <div id={controlId} {...labelled} className={rootClassName(state)}/>;
   }
 
   return (
     <div
       id={controlId}
+      {...labelled}
       ref={contentRef}
       className={rootClassName(state, 'tl-prose')}
       onClick={handleContentClick}

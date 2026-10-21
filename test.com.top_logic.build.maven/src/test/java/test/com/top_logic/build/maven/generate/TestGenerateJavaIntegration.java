@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Properties;
 import java.util.stream.Stream;
 
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
@@ -47,10 +48,44 @@ public class TestGenerateJavaIntegration {
 	private static final String PROPERTY_MAVEN_HOME = "tl.it.mavenHome";
 
 	/**
-	 * System property with the local repository of the running build, the remote repository of the
-	 * application build.
+	 * System property with the local repository of the running build, the source of the remote
+	 * repositories of the application build.
 	 */
 	private static final String PROPERTY_REMOTE_REPOSITORY = "tl.it.remoteRepository";
+
+	/**
+	 * System property telling whether the local repository of the running build is split into a
+	 * part with the installed and a part with the downloaded artifacts.
+	 *
+	 * <p>
+	 * A split repository has no artifacts in its root: the application build gets the two parts
+	 * {@link #PROPERTY_LOCAL_PREFIX} and {@link #PROPERTY_REMOTE_PREFIX} as remote repositories.
+	 * </p>
+	 */
+	private static final String PROPERTY_REPOSITORY_SPLIT = "tl.it.repositorySplit";
+
+	/**
+	 * System property with the directory of the installed artifacts in a split local repository of
+	 * the running build, relative to its root.
+	 */
+	private static final String PROPERTY_LOCAL_PREFIX = "tl.it.localPrefix";
+
+	/**
+	 * System property with the directory of the downloaded artifacts in a split local repository of
+	 * the running build, relative to its root.
+	 */
+	private static final String PROPERTY_REMOTE_PREFIX = "tl.it.remotePrefix";
+
+	/**
+	 * Maven user property that splits the local repository of a build.
+	 *
+	 * <p>
+	 * The application build runs with an unsplit local repository, also when the running build
+	 * passes a split one in <code>MAVEN_ARGS</code>: the test checks the artifacts at their plain
+	 * paths.
+	 * </p>
+	 */
+	private static final String MAVEN_REPOSITORY_SPLIT = "aether.enhancedLocalRepository.split";
 
 	/**
 	 * System property with the version of the plugin under test and the engine.
@@ -114,13 +149,15 @@ public class TestGenerateJavaIntegration {
 	private static final String SKIPPED_FRAGMENT = "Skipping web fragment";
 
 	/**
-	 * Global settings of the application build, a format with the URL of the remote repository and
-	 * {@link #REPOSITORY_PROFILE} as arguments.
+	 * Global settings of the application build, a format with the {@link #REPOSITORY} entries of
+	 * the repositories, the entries of the plugin repositories, and {@link #REPOSITORY_PROFILE} as
+	 * arguments.
 	 *
 	 * <p>
-	 * The settings add the local repository of the running build as remote repository, so that the
-	 * application build uses the engine of the running build. They are passed as global settings,
-	 * so that the user settings of the running build (mirrors, proxies, credentials) apply as well.
+	 * The settings add the local repository of the running build as remote repositories, so that
+	 * the application build uses the engine of the running build. They are passed as global
+	 * settings, so that the user settings of the running build (mirrors, proxies, credentials)
+	 * apply as well.
 	 * </p>
 	 */
 	private static final String SETTINGS = """
@@ -128,30 +165,36 @@ public class TestGenerateJavaIntegration {
 		<settings>
 			<profiles>
 				<profile>
-					<id>%2$s</id>
+					<id>%3$s</id>
 					<repositories>
-						<repository>
-							<id>local.central</id>
-							<url>%1$s</url>
-							<releases><enabled>true</enabled></releases>
-							<snapshots><enabled>true</enabled></snapshots>
-						</repository>
-					</repositories>
+		%1$s			</repositories>
 					<pluginRepositories>
-						<pluginRepository>
-							<id>local.central</id>
-							<url>%1$s</url>
-							<releases><enabled>true</enabled></releases>
-							<snapshots><enabled>true</enabled></snapshots>
-						</pluginRepository>
-					</pluginRepositories>
+		%2$s			</pluginRepositories>
 				</profile>
 			</profiles>
 			<activeProfiles>
-				<activeProfile>%2$s</activeProfile>
+				<activeProfile>%3$s</activeProfile>
 			</activeProfiles>
 		</settings>
 		""";
+
+	/**
+	 * Entry of a repository in {@link #SETTINGS}, a format with the element name
+	 * (<code>repository</code> or <code>pluginRepository</code>), the ID and the URL as arguments.
+	 */
+	private static final String REPOSITORY = """
+						<%1$s>
+							<id>%2$s</id>
+							<url>%3$s</url>
+							<releases><enabled>true</enabled></releases>
+							<snapshots><enabled>true</enabled></snapshots>
+						</%1$s>
+		""";
+
+	/**
+	 * Prefix of the IDs of the repositories in {@link #SETTINGS}.
+	 */
+	private static final String REPOSITORY_ID = "local.central";
 
 	/**
 	 * The generated wrapper classes of the model module <code>it.app</code>.
@@ -181,8 +224,7 @@ public class TestGenerateJavaIntegration {
 		Files.createDirectories(repository);
 
 		Path settings = workDir.resolve("settings.xml");
-		String remoteUrl = Path.of(property(PROPERTY_REMOTE_REPOSITORY)).toUri().toString();
-		Files.writeString(settings, SETTINGS.formatted(remoteUrl, REPOSITORY_PROFILE), StandardCharsets.UTF_8);
+		Files.writeString(settings, settings(remoteRepositories()), StandardCharsets.UTF_8);
 
 		Path log = workDir.resolve("build.log");
 		int exitCode = build(project, repository, settings, log);
@@ -205,6 +247,34 @@ public class TestGenerateJavaIntegration {
 			Files.isDirectory(compilerPlugin));
 	}
 
+	/**
+	 * The directories of the local repository of the running build that hold artifacts: the root
+	 * of a plain repository, the installed and the downloaded part of a split one.
+	 */
+	private static List<Path> remoteRepositories() {
+		Path root = Path.of(property(PROPERTY_REMOTE_REPOSITORY));
+		if (!Boolean.parseBoolean(property(PROPERTY_REPOSITORY_SPLIT))) {
+			return List.of(root);
+		}
+		return List.of(root.resolve(property(PROPERTY_LOCAL_PREFIX)), root.resolve(property(PROPERTY_REMOTE_PREFIX)));
+	}
+
+	/**
+	 * The {@link #SETTINGS} declaring the given directories as repositories and plugin
+	 * repositories.
+	 */
+	private static String settings(List<Path> remoteRepositories) {
+		StringBuilder repositories = new StringBuilder();
+		StringBuilder pluginRepositories = new StringBuilder();
+		for (int n = 0; n < remoteRepositories.size(); n++) {
+			String id = n == 0 ? REPOSITORY_ID : REPOSITORY_ID + "." + n;
+			String url = remoteRepositories.get(n).toUri().toString();
+			repositories.append(REPOSITORY.formatted("repository", id, url));
+			pluginRepositories.append(REPOSITORY.formatted("pluginRepository", id, url));
+		}
+		return SETTINGS.formatted(repositories, pluginRepositories, REPOSITORY_PROFILE);
+	}
+
 	private static int build(Path project, Path repository, Path settings, Path log)
 			throws IOException, MavenInvocationException {
 		InvocationRequest request = new DefaultInvocationRequest();
@@ -213,6 +283,9 @@ public class TestGenerateJavaIntegration {
 		request.setBatchMode(true);
 		request.setGlobalSettingsFile(settings.toFile());
 		request.setLocalRepositoryDirectory(repository.toFile());
+		Properties properties = new Properties();
+		properties.setProperty(MAVEN_REPOSITORY_SPLIT, Boolean.FALSE.toString());
+		request.setProperties(properties);
 
 		DefaultInvoker invoker = new DefaultInvoker();
 		invoker.setMavenHome(new File(property(PROPERTY_MAVEN_HOME)));

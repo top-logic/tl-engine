@@ -65,9 +65,8 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.version.Version;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -239,7 +238,7 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 		 * </p>
 		 */
 		@Name(STARTUP_NOTIFICATION_BODY)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		@Nullable
 		String getStartUpNotificationBody();
 

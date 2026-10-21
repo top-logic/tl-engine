@@ -288,7 +288,7 @@ describe('the named filters of a table (TLTableView) as MUI chips', () => {
     vi.stubGlobal('ResizeObserver', NoResizeObserver);
     return mountAdapter(TLTableView, {
       columns: [{ name: 'name', label: 'Name', width: 120, sortable: false }],
-      rows: [{ id: 'r0', index: 0, selected: false, cells: { name: childControl('c0', 'Zeile') } }],
+      rows: [{ id: 'r0', index: 0, cells: { name: childControl('c0', 'Zeile') } }],
       totalRowCount: 1,
       filterBar: true,
       namedFilters: [OWN, DECLARED],

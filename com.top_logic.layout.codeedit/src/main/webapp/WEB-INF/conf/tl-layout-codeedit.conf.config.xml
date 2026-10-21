@@ -21,16 +21,11 @@
 	
 	<configs>
 		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
-			<customizations>
-				<type name="com.top_logic.html.template.HTMLTemplateFragment">
-					<annotations>
-						<property-editor value="com.top_logic.layout.codeedit.editor.DefaultCodeEditor"/>
-						<annotation config:interface="com.top_logic.layout.codeedit.control.EditorControlConfig"
-							language="ace/mode/html"
-						/>
-					</annotations>
-				</type>
-			</customizations>
+			<annotation-controls>
+				<annotation-control annotation="com.top_logic.layout.form.values.edit.annotation.Code">
+					<impl class="com.top_logic.layout.codeedit.control.CodeEditorProvider"/>
+				</annotation-control>
+			</annotation-controls>
 		</config>
 	</configs>
 </application>

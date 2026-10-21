@@ -6,11 +6,18 @@
 package test.com.top_logic.layout.configedit;
 
 import java.awt.Color;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -44,14 +51,20 @@ import com.top_logic.basic.format.DecimalFormatDefinition;
 import com.top_logic.basic.format.FormatFactory;
 import com.top_logic.basic.format.TimeFormatDefinition;
 import com.top_logic.basic.format.configured.FormatterService;
+import com.top_logic.basic.mime.MimeTypesModule;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.configedit.ConfigControl;
+import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.html.template.config.HTMLTemplate;
+import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
 import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
@@ -61,28 +74,43 @@ import com.top_logic.layout.configedit.ConfigSelectFieldModel;
 import com.top_logic.layout.configedit.DatePickerFormatProvider;
 import com.top_logic.layout.configedit.I18NStringFormatProvider;
 import com.top_logic.layout.form.format.ColorConfigFormat;
-import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
+import com.top_logic.layout.form.values.edit.annotation.CommonMark;
+import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
+import com.top_logic.layout.form.values.edit.annotation.Html;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactColorInputControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.form.ReactIconSelectControl;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
+import com.top_logic.layout.react.control.form.ReactRenderedTextControl;
+import com.top_logic.layout.react.control.html.ReactHtmlControl;
+import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.TextInputState;
+import com.top_logic.layout.react.state.TextState;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.DatePickerState;
 import com.top_logic.layout.react.state.DatePickerState.Precision;
-import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -408,12 +436,66 @@ public class TestConfigControlService extends TestCase {
 	/**
 	 * A {@link ConfigControlProvider} that always renders a checkbox, regardless of the property's
 	 * actual type - deliberately mismatched, so getting this control back can only be explained by
-	 * an explicit {@link ConfigControl} annotation, never by any built-in, type-based resolution.
+	 * a configured mapping, never by any built-in, type-based resolution.
 	 */
 	public static class FixedCheckboxProvider implements ConfigControlProvider {
 		@Override
 		public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
 			return new ReactCheckboxControl(context, model);
+		}
+	}
+
+	/**
+	 * Test annotation mapped to {@link AsCheckboxProvider} in the service's
+	 * {@link com.top_logic.layout.configedit.ConfigControlService.Config#getAnnotationControls()
+	 * annotation map} of this module's test configuration.
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target({ ElementType.METHOD, ElementType.TYPE })
+	@ControlAnnotation
+	public @interface AsCheckbox {
+		// Pure marker.
+	}
+
+	/**
+	 * Test annotation with a parameter, mapped to {@link CaptionProvider} in the service's
+	 * {@link com.top_logic.layout.configedit.ConfigControlService.Config#getAnnotationControls()
+	 * annotation map} of this module's test configuration - configured before
+	 * {@link AsCheckbox}.
+	 */
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target({ ElementType.METHOD, ElementType.TYPE })
+	@ControlAnnotation
+	public @interface Caption {
+
+		/**
+		 * The text the control displays.
+		 */
+		String value();
+
+	}
+
+	/**
+	 * {@link ConfigAnnotationControlProvider} for {@link AsCheckbox}: always renders a checkbox,
+	 * regardless of the property's actual type - deliberately mismatched, so getting this control
+	 * back can only be explained by the annotation map, never by any built-in, type-based
+	 * resolution.
+	 */
+	public static class AsCheckboxProvider implements ConfigAnnotationControlProvider<AsCheckbox> {
+		@Override
+		public ReactControl createControl(ReactContext context, ConfigFieldModel model, AsCheckbox annotation) {
+			return new ReactCheckboxControl(context, model);
+		}
+	}
+
+	/**
+	 * {@link ConfigAnnotationControlProvider} for {@link Caption}: displays the annotation's text,
+	 * which proves that the annotation instance found for the property reaches the provider.
+	 */
+	public static class CaptionProvider implements ConfigAnnotationControlProvider<Caption> {
+		@Override
+		public ReactControl createControl(ReactContext context, ConfigFieldModel model, Caption annotation) {
+			return new ReactTextControl(context, annotation.value());
 		}
 	}
 
@@ -666,6 +748,42 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getText()}. */
 		String TEXT = "text";
 
+		/** Property name for {@link #getMultiLineText()}. */
+		String MULTI_LINE_TEXT = "multiLineText";
+
+		/** Property name for {@link #getCommonMarkText()}. */
+		String COMMON_MARK_TEXT = "commonMarkText";
+
+		/** Property name for {@link #getMultiLineList()}. */
+		String MULTI_LINE_LIST = "multiLineList";
+
+		/** Property name for {@link #getJsonCode()}. */
+		String JSON_CODE = "jsonCode";
+
+		/** Property name for {@link #getFourLineCode()}. */
+		String FOUR_LINE_CODE = "fourLineCode";
+
+		/** Property name for {@link #getHtmlTemplate()}. */
+		String HTML_TEMPLATE = "htmlTemplate";
+
+		/** Property name for {@link #getEightLines()}. */
+		String EIGHT_LINES = "eightLines";
+
+		/** Property name for {@link #getHtmlText()}. */
+		String HTML_TEXT = "htmlText";
+
+		/** Property name for {@link #getHtmlLabel()}. */
+		String HTML_LABEL = "htmlLabel";
+
+		/** Property name for {@link #getMultiLineLabel()}. */
+		String MULTI_LINE_LABEL = "multiLineLabel";
+
+		/** Property name for {@link #getCommonMarkLabel()}. */
+		String COMMON_MARK_LABEL = "commonMarkLabel";
+
+		/** Property name for {@link #getMultiLineChoice()}. */
+		String MULTI_LINE_CHOICE = "multiLineChoice";
+
 		/** Property name for {@link #getIcon()}. */
 		String ICON = "icon";
 
@@ -735,6 +853,15 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getAnnotated()}. */
 		String ANNOTATED = "annotated";
 
+		/** Property name for {@link #getCaptioned()}. */
+		String CAPTIONED = "captioned";
+
+		/** Property name for {@link #getCaptionedCheckbox()}. */
+		String CAPTIONED_CHECKBOX = "captionedCheckbox";
+
+		/** Property name for {@link #getAnnotatedColor()}. */
+		String ANNOTATED_COLOR = "annotatedColor";
+
 		/** Property name for {@link #getAnnotatedMode()}. */
 		String ANNOTATED_MODE = "annotatedMode";
 
@@ -786,11 +913,11 @@ public class TestConfigControlService extends TestCase {
 		}
 
 		/**
-		 * A second enum, annotated at the type level with {@link ConfigControl} - proves the
-		 * annotation is honored from the value type too, not just from the property: without it, a
-		 * plain enum property would get the select, never a checkbox.
+		 * A second enum, annotated at the type level with {@link AsCheckbox} - proves the
+		 * annotation map is consulted for the value type too, not just for the property: without
+		 * it, a plain enum property would get the select, never a checkbox.
 		 */
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		enum AnnotatedMode {
 			/** The one mode. */
 			A,
@@ -801,6 +928,74 @@ public class TestConfigControlService extends TestCase {
 		/** Free text. */
 		@Name(TEXT)
 		String getText();
+
+		/** Free text spanning several lines. */
+		@Name(MULTI_LINE_TEXT)
+		@MultiLine
+		String getMultiLineText();
+
+		/** Free text in CommonMark syntax. */
+		@Name(COMMON_MARK_TEXT)
+		@CommonMark
+		String getCommonMarkText();
+
+		/** @see #getCommonMarkText() */
+		void setCommonMarkText(String value);
+
+		/** A formatted value whose text spans several lines. */
+		@Name(MULTI_LINE_LIST)
+		@Format(CommaSeparatedStrings.class)
+		@MultiLine
+		List<String> getMultiLineList();
+
+		/** Source code in JSON. */
+		@Name(JSON_CODE)
+		@Code(language = CodeLanguage.JSON)
+		String getJsonCode();
+
+		/** Source code with a given number of visible rows. */
+		@Name(FOUR_LINE_CODE)
+		@Code(language = CodeLanguage.XML)
+		@MultiLine(rows = 4)
+		String getFourLineCode();
+
+		/** An HTML template, source code by its value type. */
+		@Name(HTML_TEMPLATE)
+		HTMLTemplate getHtmlTemplate();
+
+		/** Free text with a given number of visible rows. */
+		@Name(EIGHT_LINES)
+		@MultiLine(rows = 8)
+		String getEightLines();
+
+		/** An internationalized text whose translations span several lines. */
+		@Name(MULTI_LINE_LABEL)
+		@MultiLine(rows = 3)
+		ResKey getMultiLineLabel();
+
+		/** An internationalized text whose translations are written in CommonMark syntax. */
+		@Name(COMMON_MARK_LABEL)
+		@CommonMark
+		ResKey getCommonMarkLabel();
+
+		/** An HTML text edited with the macro feature set. */
+		@Name(HTML_TEXT)
+		@Html(features = "macro")
+		String getHtmlText();
+
+		/** @see #getHtmlText() */
+		void setHtmlText(String value);
+
+		/** An internationalized text whose translations are HTML. */
+		@Name(HTML_LABEL)
+		@Html
+		ResKey getHtmlLabel();
+
+		/** One of the offered colours, annotated as multi-line text. */
+		@Name(MULTI_LINE_CHOICE)
+		@Options(fun = Colors.class)
+		@MultiLine
+		String getMultiLineChoice();
 
 		/** An icon, the same value an icon-typed model attribute holds. */
 		@Name(ICON)
@@ -816,13 +1011,12 @@ public class TestConfigControlService extends TestCase {
 		Color getColorValue();
 
 		/**
-		 * A color whose control is named by {@link ConfigControl} - the annotation (step 2) is
-		 * resolved before the value-type map (step 4) that claims every other {@link Color}
-		 * property.
+		 * A color carrying {@link AsCheckbox} - the annotation map (step 2) is consulted before
+		 * the value-type map (step 4) that claims every other {@link Color} property.
 		 */
 		@Name(ANNOTATED_COLOR_VALUE)
 		@Format(ColorConfigFormat.class)
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		Color getAnnotatedColorValue();
 
 		/** A whole number. */
@@ -963,15 +1157,39 @@ public class TestConfigControlService extends TestCase {
 		Formatted getFormattedItem();
 
 		/**
-		 * A {@code String} property naming its own control via {@link ConfigControl} - a plain
-		 * {@code String} would otherwise get the text input, never a checkbox.
+		 * A {@code String} property carrying {@link AsCheckbox} - a plain {@code String} would
+		 * otherwise get the text input, never a checkbox.
 		 */
 		@Name(ANNOTATED)
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		String getAnnotated();
 
 		/**
-		 * An enum property whose control comes from its value type's own {@link ConfigControl}
+		 * A {@code String} property carrying {@link Caption} with a text of its own.
+		 */
+		@Name(CAPTIONED)
+		@Caption("The caption")
+		String getCaptioned();
+
+		/**
+		 * A property carrying two mapped annotations - {@link Caption}, configured first, and
+		 * {@link AsCheckbox}, configured after it.
+		 */
+		@Name(CAPTIONED_CHECKBOX)
+		@AsCheckbox
+		@Caption("Both")
+		String getCaptionedCheckbox();
+
+		/**
+		 * A property edited by selecting that carries {@link AsCheckbox} as well.
+		 */
+		@Name(ANNOTATED_COLOR)
+		@Options(fun = Colors.class)
+		@AsCheckbox
+		String getAnnotatedColor();
+
+		/**
+		 * An enum property whose control comes from its value type's own {@link AsCheckbox}
 		 * annotation, not from an annotation on the property itself.
 		 */
 		@Name(ANNOTATED_MODE)
@@ -990,21 +1208,22 @@ public class TestConfigControlService extends TestCase {
 		String getDerivedChoice();
 
 		/**
-		 * A property carrying both its own {@code @Format} and a {@link ConfigControl} annotation -
-		 * the combination that decides whether the model follows the named control or the format.
+		 * A property carrying both its own {@code @Format} and the mapped {@link AsCheckbox}
+		 * annotation - the combination that decides whether the model follows the chosen control
+		 * or the format.
 		 */
 		@Name(ANNOTATED_COORDINATE)
 		@Format(CoordinateFormat.class)
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		Coordinate getAnnotatedCoordinate();
 
 		/**
-		 * Both {@link Encrypted} and a {@link ConfigControl} annotation - {@code @Encrypted} must
-		 * win: a module's custom control must never be able to expose a secret in the clear.
+		 * Both {@link Encrypted} and the mapped {@link AsCheckbox} annotation - {@code @Encrypted}
+		 * must win: a module's custom control must never be able to expose a secret in the clear.
 		 */
 		@Name(ENCRYPTED_ANNOTATED)
 		@Encrypted
-		@ConfigControl(FixedCheckboxProvider.class)
+		@AsCheckbox
 		String getEncryptedAnnotated();
 
 		/**
@@ -1054,16 +1273,9 @@ public class TestConfigControlService extends TestCase {
 		 * name of, through {@link ShapeNameMapping} - the shape
 		 * {@code RoleRuleConfig#getSourceMetaElement()} has, whose options are model classes and
 		 * whose value is the qualified name of one.
-		 *
-		 * <p>
-		 * Also carries the classic form's {@link ControlProvider @ControlProvider} annotation, as
-		 * those properties do: it names a control of the classic UI, which says nothing about how
-		 * this service edits the property.
-		 * </p>
 		 */
 		@Name(SHAPE_NAME)
 		@Options(fun = Shapes.class, mapping = ShapeNameMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		String getShapeName();
 
 		/** @see #getShapeName() */
@@ -1076,7 +1288,6 @@ public class TestConfigControlService extends TestCase {
 		@Name(SHAPE_NAMES)
 		@Format(CommaSeparatedStrings.class)
 		@Options(fun = Shapes.class, mapping = ShapeNameMapping.class)
-		@ControlProvider(SelectionControlProvider.class)
 		List<String> getShapeNames();
 
 		/** @see #getShapeNames() */
@@ -1214,14 +1425,14 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * A control named by {@link ConfigControl} on a {@link Color} property wins over the mapping
-	 * registered for that value type - the annotation is step 2 of the resolution chain, the
+	 * A control chosen by the annotation map for a {@link Color} property wins over the mapping
+	 * registered for that value type - the annotation map is step 2 of the resolution chain, the
 	 * value-type map step 4.
 	 */
 	public void testAnnotatedControlWinsOverTheColorMapping() {
-		assertTrue("The named control must win over the mapping for the property's value type.",
+		assertTrue("The annotation's control must win over the mapping for the property's value type.",
 			control(TestConfig.ANNOTATED_COLOR_VALUE) instanceof ReactCheckboxControl);
-		assertFalse("The color input must not be reachable once the property names its control.",
+		assertFalse("The color input must not be reachable once an annotation chooses the control.",
 			control(TestConfig.ANNOTATED_COLOR_VALUE) instanceof ReactColorInputControl);
 	}
 
@@ -1240,27 +1451,392 @@ public class TestConfigControlService extends TestCase {
 		assertTrue(control(TestConfig.RATIO) instanceof ReactNumberInputControl);
 	}
 
-	/** An enum property keeps the select. */
+	/** An enum property gets the dropdown select of model-based forms. */
 	public void testEnum() {
-		assertTrue(control(TestConfig.MODE) instanceof ReactSelectFormFieldControl);
+		assertTrue(control(TestConfig.MODE) instanceof ReactDropdownSelectControl);
 	}
 
-	/** A property with an options annotation gets a select, not a text input. */
+	/** A property with an options annotation gets the dropdown select, not a text input. */
 	public void testOptionsProperty() {
 		assertTrue("A property with options must be edited by selecting.",
-			control(TestConfig.COLOR) instanceof ReactSelectFormFieldControl);
+			control(TestConfig.COLOR) instanceof ReactDropdownSelectControl);
 	}
 
 	/**
-	 * A plain {@code Date} property, without a format of its own, is edited in a date picker for a
-	 * bare date - the classic declarative form's {@code calendar} field, and the only case that
-	 * ever reaches the date picker at all.
+	 * Selecting an option of a single-valued enum property stores the enum constant itself, and an
+	 * empty selection is refused for the non-nullable property.
+	 *
+	 * <p>
+	 * The dropdown writes its selection as a list also where a single option is chosen, so the
+	 * selection goes through the control's own model exactly as the control hands it over.
+	 * </p>
+	 */
+	public void testSelectingAnEnumConstantStoresIt() {
+		ReactDropdownSelectControl control = (ReactDropdownSelectControl) control(TestConfig.MODE);
+		FieldModel model = control.getFieldModel();
+		assertEquals("The enum constants are the options.", Arrays.asList(TestConfig.Mode.values()),
+			((SelectFieldModel) model).getOptions());
+
+		model.setValue(Collections.singletonList(TestConfig.Mode.OFF));
+		assertSame("The selected enum constant is stored.", TestConfig.Mode.OFF, _config.getMode());
+		assertSame("The field shows the stored constant.", TestConfig.Mode.OFF, model.getValue());
+
+		model.setValue(Collections.emptyList());
+		assertSame("An empty selection leaves the non-nullable enum property unchanged.", TestConfig.Mode.OFF,
+			_config.getMode());
+		assertNotNull("The refused empty selection is reported as a field error.",
+			((ConfigFieldModel) model).getInputError());
+	}
+
+	/**
+	 * Selecting an option of a single-valued, identity-mapped {@code @Options} property stores the
+	 * option itself, and an empty selection clears it.
+	 */
+	public void testSelectingAnIdentityOptionStoresIt() {
+		ReactDropdownSelectControl control = (ReactDropdownSelectControl) control(TestConfig.COLOR);
+		FieldModel model = control.getFieldModel();
+
+		model.setValue(Collections.singletonList("green"));
+		assertEquals("The selected option is stored.", "green", _config.getColor());
+
+		model.setValue(Collections.emptyList());
+		String cleared = _config.getColor();
+		assertTrue("An empty selection clears the property, but was: " + cleared,
+			cleared == null || cleared.isEmpty());
+		assertNull("Clearing a String property is no error.", ((ConfigFieldModel) model).getInputError());
+	}
+
+	/**
+	 * A plain {@code Date} property, without a format of its own, is edited in a picker for a date
+	 * with a time of day - the form the configuration stores such a value in.
 	 */
 	public void testDate() {
 		ReactControl control = control(TestConfig.START);
 		assertTrue("A plain date must be edited in a date picker.", control instanceof ReactDatePickerControl);
-		assertEquals("A plain date without a format means a bare date.",
-			"date", control.scriptingScalarState().get("inputType"));
+		assertEquals("A plain date is stored with its time of day and must be edited with it.",
+			ReactDatePickerControl.Kind.DATE_TIME.inputType(),
+			control.scriptingScalarState().get(DatePickerState.INPUT_TYPE__PROP));
+	}
+
+	/**
+	 * A time of day keeps the time picker, while a plain date in the same configuration gets date
+	 * and time.
+	 */
+	public void testTimeOfDayKeepsTimePicker() {
+		assertEquals(ReactDatePickerControl.Kind.TIME.inputType(),
+			control(TestConfig.TIME_OF_DAY).scriptingScalarState().get(DatePickerState.INPUT_TYPE__PROP));
+		assertEquals(ReactDatePickerControl.Kind.DATE_TIME.inputType(),
+			control(TestConfig.START).scriptingScalarState().get(DatePickerState.INPUT_TYPE__PROP));
+	}
+
+	/**
+	 * The time of a plain date is shown in the picker and survives a value the user enters through
+	 * it - down to the seconds the input sends.
+	 */
+	public void testDateWithTimeSurvivesAWrite() {
+		TimeZone zone = ThreadContext.getTimeZone();
+		Calendar stored = Calendar.getInstance(zone);
+		stored.clear();
+		stored.set(2026, Calendar.OCTOBER, 15, 14, 30, 0);
+		_config.update(_config.descriptor().getProperty(TestConfig.START), stored.getTime());
+
+		ReactControl control = control(TestConfig.START);
+		assertEquals("A plain date is stored with its seconds and must be edited with them.",
+			Precision.SECONDS, ((ReactDatePickerControl) control).getPrecision());
+		assertEquals("The picker must show the stored time.", "2026-10-15T14:30:00",
+			control.scriptingScalarState().get(FieldState.VALUE__PROP));
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldValueArguments.VALUE, "2026-10-16T09:45:12"));
+
+		Calendar written = Calendar.getInstance(zone);
+		written.setTime(_config.getStart());
+		assertEquals(16, written.get(Calendar.DAY_OF_MONTH));
+		assertEquals("The time entered must reach the configuration.", 9, written.get(Calendar.HOUR_OF_DAY));
+		assertEquals(45, written.get(Calendar.MINUTE));
+		assertEquals(12, written.get(Calendar.SECOND));
+		assertEquals("The picker must show the seconds entered.", "2026-10-16T09:45:12",
+			control.scriptingScalarState().get(FieldState.VALUE__PROP));
+	}
+
+	/**
+	 * A text property annotated with {@link MultiLine} is edited in a text area with the default
+	 * number of rows.
+	 */
+	public void testMultiLineTextAnnotation() {
+		ReactControl control = control(TestConfig.MULTI_LINE_TEXT);
+		assertTrue(control instanceof ReactTextInputControl);
+		Map<String, Object> state = control.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+		assertNotSame("A plain text is sent while it is typed.", Boolean.TRUE,
+			state.get(TypingFieldState.SEND_VALUE_ON_BLUR__PROP));
+	}
+
+	/**
+	 * Without a code editor, {@link Code} is edited in a text area with the default number of
+	 * rows, editable or not.
+	 */
+	public void testCodeFallsBackToATextArea() {
+		Map<String, Object> state = control(TestConfig.JSON_CODE).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+
+		ConfigFieldModel model = model(TestConfig.JSON_CODE);
+		model.setEditable(false);
+		ReactControl readOnly = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(readOnly instanceof ReactTextInputControl);
+		assertEquals(Boolean.TRUE, readOnly.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+	}
+
+	/** The rows of a {@link MultiLine} annotation reach the text area of {@link Code}. */
+	public void testCodeRows() {
+		Map<String, Object> state = control(TestConfig.FOUR_LINE_CODE).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(4), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/** An HTML template is edited as its source text in a text area. */
+	public void testHtmlTemplateIsCode() {
+		assertTrue(model(TestConfig.HTML_TEMPLATE) instanceof ConfigFormatFieldModel);
+		Map<String, Object> state = control(TestConfig.HTML_TEMPLATE).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+	}
+
+	/** The rows of a {@link MultiLine} annotation reach the text area. */
+	public void testMultiLineRows() {
+		Map<String, Object> state = control(TestConfig.EIGHT_LINES).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(8), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/**
+	 * An internationalized text annotated with {@link MultiLine} keeps its editor per language,
+	 * whose input spans the annotated number of rows: the annotation states something about the
+	 * text, it does not take the value away from the editor that handles its type.
+	 */
+	public void testMultiLineResKeyKeepsItsEditorPerLanguage() {
+		assertFalse("A resource key must not be edited as its encoded text.",
+			model(TestConfig.MULTI_LINE_LABEL) instanceof ConfigFormatFieldModel);
+
+		ReactControl control = control(TestConfig.MULTI_LINE_LABEL);
+		ReactI18NStringInputControl input = find(control, ReactI18NStringInputControl.class);
+		assertNotNull("The per-language editor must be used, got: " + control, input);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(3), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/** An internationalized text without the annotation keeps a single-line input. */
+	public void testResKeyIsSingleLine() {
+		ReactI18NStringInputControl input = find(control(TestConfig.LABEL), ReactI18NStringInputControl.class);
+		assertNotNull(input);
+		assertNull(input.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+	}
+
+	/**
+	 * A property edited by selecting stays a select, even when annotated with {@link MultiLine}: a
+	 * text area cannot edit a selection.
+	 */
+	public void testMultiLineSelectStaysASelect() {
+		assertTrue(control(TestConfig.MULTI_LINE_CHOICE) instanceof ReactDropdownSelectControl);
+	}
+
+	/**
+	 * An editable {@link CommonMark} text is edited as its source in a text area with the default
+	 * number of rows.
+	 */
+	public void testCommonMarkIsEditedInATextArea() {
+		ReactControl control = control(TestConfig.COMMON_MARK_TEXT);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactControl input = ((ReactRenderedTextControl) control).getInput();
+		assertTrue(input instanceof ReactTextInputControl);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/** A read-only {@link CommonMark} text is displayed as the HTML rendered from it. */
+	public void testReadOnlyCommonMarkIsDisplayedAsHtml() {
+		_config.setCommonMarkText("A **bold** word.");
+		String html = readOnlyCommonMarkHtml();
+		assertTrue("Unexpected HTML: " + html, html.contains("<strong>bold</strong>"));
+	}
+
+	/** HTML in a {@link CommonMark} text is not passed to the display. */
+	public void testReadOnlyCommonMarkEscapesHtml() {
+		_config.setCommonMarkText("Text <script>alert(1)</script> and [link](javascript:alert(2))");
+		String html = readOnlyCommonMarkHtml();
+		assertFalse("Unexpected HTML: " + html, html.contains("<script"));
+		assertFalse("Unexpected HTML: " + html, html.contains("javascript:"));
+	}
+
+	/** The display of a {@link CommonMark} text follows changes of the value. */
+	public void testReadOnlyCommonMarkFollowsTheValue() {
+		_config.setCommonMarkText("first");
+		ReactRenderedTextControl control = readOnlyCommonMark();
+		_config.setCommonMarkText("*second*");
+		String html = (String) control.getDisplay().scriptingScalarState().get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html, html.contains("<em>second</em>"));
+	}
+
+	/**
+	 * An editable internationalized {@link CommonMark} text keeps its editor per language, with
+	 * multi-line inputs.
+	 */
+	public void testCommonMarkResKeyIsEditedPerLanguage() {
+		ReactControl control = control(TestConfig.COMMON_MARK_LABEL);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactI18NStringInputControl input =
+			find(((ReactRenderedTextControl) control).getInput(), ReactI18NStringInputControl.class);
+		assertNotNull("The per-language editor must be used.", input);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/**
+	 * A read-only internationalized {@link CommonMark} text displays its translation rendered as
+	 * HTML, passing the HTML safety check.
+	 */
+	public void testReadOnlyCommonMarkResKeyIsDisplayedAsHtml() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.COMMON_MARK_LABEL);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		model.setEditable(false);
+		ReactControl control = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(control instanceof ReactRenderedTextControl);
+
+		// The translations a user enters with the editor per language: a literal key, which the
+		// field holds although its format would not write it as text.
+		model.setValue(ResKey.builder()
+			.add(Locale.ENGLISH, "An **English** text.")
+			.add(Locale.GERMAN, "Ein **deutscher** Text.")
+			.build());
+
+		Map<String, Object> state = ((ReactRenderedTextControl) control).getDisplay().scriptingScalarState();
+		assertNull("The rendered text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		String html = (String) state.get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html,
+			html.contains("<strong>English</strong>") || html.contains("<strong>deutscher</strong>"));
+	}
+
+	/**
+	 * Without a WYSIWYG editor, an editable {@link Html} text is edited as its source in a text
+	 * area with the default number of rows, whatever its feature set.
+	 */
+	public void testHtmlIsEditedInATextArea() {
+		ReactControl control = control(TestConfig.HTML_TEXT);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactControl input = ((ReactRenderedTextControl) control).getInput();
+		assertTrue(input instanceof ReactTextInputControl);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+	}
+
+	/** A read-only {@link Html} text is displayed formatted. */
+	public void testReadOnlyHtmlIsDisplayedFormatted() {
+		_config.setHtmlText("A <b>bold</b> word.");
+		Map<String, Object> state = readOnly(TestConfig.HTML_TEXT).getDisplay().scriptingScalarState();
+		assertNull("The text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		assertEquals("A <b>bold</b> word.", state.get(ReactHtmlControl.HTML));
+	}
+
+	/** An unsafe read-only {@link Html} text is not displayed. */
+	public void testReadOnlyUnsafeHtmlIsNotDisplayed() {
+		_config.setHtmlText("Text <script>alert(1)</script>");
+		Map<String, Object> state = readOnly(TestConfig.HTML_TEXT).getDisplay().scriptingScalarState();
+		assertNotNull("The HTML safety check must refuse the text.", state.get(ReactHtmlControl.ERROR));
+		Object html = state.get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html, html == null || !html.toString().contains("<script"));
+	}
+
+	/**
+	 * Without a WYSIWYG editor, an internationalized {@link Html} text is edited per language with
+	 * multi-line inputs for the source, and displayed formatted while it cannot be edited.
+	 */
+	public void testHtmlResKeyIsEditedPerLanguage() {
+		ReactControl control = control(TestConfig.HTML_LABEL);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactI18NStringInputControl input =
+			find(((ReactRenderedTextControl) control).getInput(), ReactI18NStringInputControl.class);
+		assertNotNull("The per-language editor must be used.", input);
+		assertEquals(Boolean.TRUE, input.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
+
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.HTML_LABEL);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		model.setEditable(false);
+		ReactControl readOnly = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(readOnly instanceof ReactRenderedTextControl);
+		model.setValue(ResKey.builder()
+			.add(Locale.ENGLISH, "An <b>English</b> text.")
+			.add(Locale.GERMAN, "Ein <b>deutscher</b> Text.")
+			.build());
+		Map<String, Object> state = ((ReactRenderedTextControl) readOnly).getDisplay().scriptingScalarState();
+		assertNull("The text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		String html = (String) state.get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html,
+			html.contains("<b>English</b>") || html.contains("<b>deutscher</b>"));
+	}
+
+	private ReactRenderedTextControl readOnly(String propertyName) {
+		PropertyDescriptor property = _config.descriptor().getProperty(propertyName);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		model.setEditable(false);
+		ReactControl control = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		assertEquals("A read-only text shows the display.", 1, ((ReactRenderedTextControl) control).getActiveIndex());
+		return (ReactRenderedTextControl) control;
+	}
+
+	private String readOnlyCommonMarkHtml() {
+		Map<String, Object> state = readOnlyCommonMark().getDisplay().scriptingScalarState();
+		assertNull("The rendered text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		return (String) state.get(ReactHtmlControl.HTML);
+	}
+
+	private ReactRenderedTextControl readOnlyCommonMark() {
+		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.COMMON_MARK_TEXT);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(_config, property);
+		model.setEditable(false);
+		ReactControl control = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		assertEquals("A read-only text shows the display.", 1, ((ReactRenderedTextControl) control).getActiveIndex());
+		return (ReactRenderedTextControl) control;
+	}
+
+	/**
+	 * The given control, or the first control of the given type among its descendants.
+	 */
+	private static <T extends ReactControl> T find(ReactControl control, Class<T> type) {
+		if (type.isInstance(control)) {
+			return type.cast(control);
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			T result = find(child, type);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * A formatted value annotated with {@link MultiLine} is edited as its text in a text area,
+	 * sent when the field is left like every formatted text.
+	 */
+	public void testMultiLineFormattedText() {
+		assertTrue(model(TestConfig.MULTI_LINE_LIST) instanceof ConfigFormatFieldModel);
+		Map<String, Object> state = control(TestConfig.MULTI_LINE_LIST).scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Boolean.TRUE, state.get(TypingFieldState.SEND_VALUE_ON_BLUR__PROP));
+	}
+
+	/** A text property without the annotation stays a single line. */
+	public void testPlainTextIsSingleLine() {
+		ReactControl control = control(TestConfig.TEXT);
+		assertTrue(control instanceof ReactTextInputControl);
+		assertNull(control.scriptingScalarState().get(TextInputState.MULTILINE__PROP));
 	}
 
 	/**
@@ -1302,7 +1878,7 @@ public class TestConfigControlService extends TestCase {
 
 	/**
 	 * {@code @Encrypted} wins over a claim in the configured format-provider map, exactly like it
-	 * wins over an explicit {@link ConfigControl} annotation: a module must never be able to make
+	 * wins over the annotation map: a module must never be able to make
 	 * a secret readable by mapping a control to its value provider. Uses the very same
 	 * {@link TimeOfDayAsDateValueProvider} format {@link #testTimeOfDayFormatIsClaimedByDatePicker()}
 	 * proves is claimed - the only difference is {@code @Encrypted} - so the only possible
@@ -1490,39 +2066,30 @@ public class TestConfigControlService extends TestCase {
 
 		ReactControl control = control(TestConfig.CLAIMED_WITH_OPTIONS);
 		assertTrue("An options property must get the select control.",
-			control instanceof ReactSelectFormFieldControl);
+			control instanceof ReactDropdownSelectControl);
 		assertFalse("The format mapping's date picker must not be reachable when @Options wins.",
 			control instanceof ReactDatePickerControl);
 	}
 
 	/**
-	 * A property whose control is named by {@link ConfigControl} gets the plain model, even though
-	 * it also carries a {@code @Format}.
-	 *
-	 * <p>
-	 * The named control edits the value in its typed form, exactly as a claim from the
-	 * format-provider map does - so the same domain pairing has to follow. Left to the
-	 * {@code @Format} alone, {@code createModel} would hand out the format model over <em>text</em>
-	 * while {@code createControl} handed that text to the named control, which expects the typed
-	 * value: the existing value would never render, and what the control sent back would be
-	 * re-parsed by the format and rejected.
-	 * </p>
+	 * A property whose control is chosen by the annotation map keeps the format model of its own
+	 * {@code @Format}: an annotation chooses the control, not the form of the value it edits.
 	 */
-	public void testAnnotatedControlOnAFormattedPropertyGetsPlainModel() {
+	public void testAnnotatedControlOnAFormattedPropertyKeepsFormatModel() {
 		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.ANNOTATED_COORDINATE);
 
 		ConfigFieldModel model = model(TestConfig.ANNOTATED_COORDINATE);
-		assertFalse("A property whose control is named by @ConfigControl must get the plain model, "
-			+ "regardless of its own @Format - the named control edits the typed value.",
+		assertTrue("A property whose control is chosen by an annotation must be edited in the domain "
+			+ "its own @Format gives it.",
 			model instanceof ConfigFormatFieldModel);
-		assertTrue("The named control must be the one used.",
+		assertTrue("The annotation's control must be the one used.",
 			control(TestConfig.ANNOTATED_COORDINATE) instanceof ReactCheckboxControl);
 		assertNotNull("Precondition: the property really does carry a format.", property.getValueProvider());
 	}
 
 	/**
-	 * The value-type provider map pairs its control with the plain model too, for the same reason
-	 * the format map and {@link ConfigControl} do.
+	 * The value-type provider map pairs its control with the plain model, for the same reason the
+	 * format map does.
 	 */
 	public void testProviderMappingOnAFormattedPropertyGetsPlainModel() {
 		ConfigControlService.ProviderMapping mapping =
@@ -1670,16 +2237,6 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * The classic form's {@link ControlProvider @ControlProvider} annotation names a control of the
-	 * classic UI and says nothing about this service, which resolves its controls through
-	 * {@link ConfigControl} instead. A property carrying it is therefore still edited by selecting.
-	 */
-	public void testTheClassicControlProviderAnnotationDoesNotPreventSelecting() {
-		assertTrue("The classic UI's control annotation must not keep a property with options out "
-			+ "of a select.", model(TestConfig.SHAPE_NAME) instanceof ConfigSelectFieldModel);
-	}
-
-	/**
 	 * A collection property with a {@code @Format} of its own and an option list is a multiple
 	 * selection: the options say what may be picked, the format only says how the picked values are
 	 * written - the shape {@code RoleRuleConfig#getRole()} has.
@@ -1730,8 +2287,8 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
-	 * The identity mapping changes nothing: the option is the stored value, and the plain select
-	 * (which knows an option by the text it carries) still edits it.
+	 * The identity mapping changes nothing: the option is the stored value, edited in the same
+	 * dropdown select as a mapped option.
 	 */
 	public void testAnIdentityMappingStoresTheOptionItself() {
 		ConfigFieldModel model = model(TestConfig.COLOR);
@@ -1742,8 +2299,8 @@ public class TestConfigControlService extends TestCase {
 		model.setValue("green");
 		assertEquals("The option itself is what is stored.", "green", _config.getColor());
 		assertEquals("green", model.getValue());
-		assertTrue("The plain select is enough for an option that is its own value.",
-			control(TestConfig.COLOR) instanceof ReactSelectFormFieldControl);
+		assertTrue("An option that is its own value is edited in the dropdown select.",
+			control(TestConfig.COLOR) instanceof ReactDropdownSelectControl);
 	}
 
 	/** Sets the named property of the given item, bypassing the need for a declared setter. */
@@ -1889,7 +2446,7 @@ public class TestConfigControlService extends TestCase {
 		assertTrue("An encrypted enum must be edited in a password field.",
 			control instanceof ReactPasswordInputControl);
 		assertFalse("An encrypted enum must not fall through to the select.",
-			control instanceof ReactSelectFormFieldControl);
+			control instanceof ReactDropdownSelectControl);
 	}
 
 	/**
@@ -1904,33 +2461,68 @@ public class TestConfigControlService extends TestCase {
 		assertTrue("An encrypted, optioned property must be edited in a password field.",
 			control instanceof ReactPasswordInputControl);
 		assertFalse("An encrypted, optioned property must not fall through to the select.",
-			control instanceof ReactSelectFormFieldControl);
+			control instanceof ReactDropdownSelectControl);
 	}
 
 	/**
-	 * A plain {@code String} property naming its own control via a {@link ConfigControl}
-	 * annotation on the property gets that control, not the built-in text input a plain
-	 * {@code String} would otherwise get.
+	 * A plain {@code String} property carrying a mapped annotation gets the mapped control, not the
+	 * built-in text input a plain {@code String} would otherwise get.
 	 */
-	public void testConfigControlAnnotationOnProperty() {
-		assertTrue("The annotated control must be used instead of the built-in text input.",
+	public void testAnnotationOnProperty() {
+		assertTrue("The annotation's control must be used instead of the built-in text input.",
 			control(TestConfig.ANNOTATED) instanceof ReactCheckboxControl);
 	}
 
 	/**
-	 * A {@link ConfigControl} annotation on the property's value type is honored too, not just on
-	 * the property itself: without it, a plain enum property would get the select.
+	 * A mapped annotation on the property's value type is honored too, not just on the property
+	 * itself: without it, a plain enum property would get the select.
 	 */
-	public void testConfigControlAnnotationOnValueType() {
-		assertTrue("The value type's annotated control must be used instead of the enum select.",
+	public void testAnnotationOnValueType() {
+		assertTrue("The value type's annotation must choose the control instead of the enum select.",
 			control(TestConfig.ANNOTATED_MODE) instanceof ReactCheckboxControl);
+		assertTrue("The annotation does not change the domain: an enum is still held as a selection.",
+			model(TestConfig.ANNOTATED_MODE) instanceof ConfigSelectFieldModel);
 	}
 
 	/**
-	 * {@code @Encrypted} wins over an explicit {@link ConfigControl} annotation: a module's own
-	 * choice of control must never be able to expose a secret in the clear.
+	 * The annotation instance found for the property, with its parameters, is what the mapped
+	 * provider receives.
 	 */
-	public void testEncryptedWinsOverConfigControlAnnotation() {
+	public void testAnnotationReachesTheProvider() {
+		ReactControl control = control(TestConfig.CAPTIONED);
+		assertTrue("The annotation's control must be used.", control instanceof ReactTextControl);
+		assertEquals("The provider must receive the property's annotation.",
+			"The caption", control.scriptingScalarState().get(TextState.TEXT__PROP));
+	}
+
+	/**
+	 * Of two mapped annotations on one property, the one configured first decides the control.
+	 */
+	public void testConfiguredOrderDecidesBetweenAnnotations() {
+		ReactControl control = control(TestConfig.CAPTIONED_CHECKBOX);
+		assertTrue("The annotation configured first must choose the control.",
+			control instanceof ReactTextControl);
+		assertEquals("Both", control.scriptingScalarState().get(TextState.TEXT__PROP));
+	}
+
+	/**
+	 * The annotation map is consulted before a property is edited by selecting - the control it
+	 * chooses edits the selection the property is held as.
+	 */
+	public void testAnnotationWinsOverSelect() {
+		assertTrue("An annotated property with options is still held as a selection.",
+			model(TestConfig.ANNOTATED_COLOR) instanceof ConfigSelectFieldModel);
+		ReactControl control = control(TestConfig.ANNOTATED_COLOR);
+		assertTrue("The annotation's control must win over the select.",
+			control instanceof ReactCheckboxControl);
+		assertFalse(control instanceof ReactDropdownSelectControl);
+	}
+
+	/**
+	 * {@code @Encrypted} wins over a mapped annotation: a module's own choice of control must never
+	 * be able to expose a secret in the clear.
+	 */
+	public void testEncryptedWinsOverAnnotation() {
 		ReactControl control = control(TestConfig.ENCRYPTED_ANNOTATED);
 		assertTrue("Encrypted must win over an explicit control annotation.",
 			control instanceof ReactPasswordInputControl);
@@ -1948,7 +2540,7 @@ public class TestConfigControlService extends TestCase {
 			ConfigPropertyOptions.optionProvider(property));
 
 		assertFalse("A plain class-valued property must not be edited by selecting.",
-			control(TestConfig.IMPL_TYPE) instanceof ReactSelectFormFieldControl);
+			control(TestConfig.IMPL_TYPE) instanceof ReactDropdownSelectControl);
 	}
 
 	/**
@@ -2216,6 +2808,8 @@ public class TestConfigControlService extends TestCase {
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestConfigControlService.class,
-				TypeIndex.Module.INSTANCE, FormatterService.Module.INSTANCE, ConfigControlService.Module.INSTANCE));
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE, FormatterService.Module.INSTANCE,
+				MimeTypesModule.Module.INSTANCE, ThemeFactory.Module.INSTANCE, SafeHTML.Module.INSTANCE,
+				ConfigControlService.Module.INSTANCE));
 	}
 }

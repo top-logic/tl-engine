@@ -163,3 +163,6 @@ export const ICON_UNDO = 'css:fa-solid fa-arrow-rotate-left';
 
 /** Redoes the last undone change (the toolbar of the rich text editor). */
 export const ICON_REDO = 'css:fa-solid fa-arrow-rotate-right';
+
+/** Shows the HTML source in place of the formatted text (the toolbar of the rich text editor). */
+export const ICON_SOURCE = 'css:fa-solid fa-file-code';

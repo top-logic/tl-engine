@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
@@ -210,6 +211,18 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_hiddenByDefault = !config.getVisible();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The channels the declared filter reads.
+	 * </p>
+	 */
+	@Override
+	public List<ChannelRef> inputs() {
+		return _binding.inputs();
 	}
 
 	/**

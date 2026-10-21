@@ -73,7 +73,6 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Document;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.WebFolderFactory;
-import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.layout.form.FormMember;
@@ -117,6 +116,7 @@ import com.top_logic.model.annotate.ui.OptionsPresentation;
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.form.TracingScope;
@@ -298,57 +298,12 @@ public class AttributeOperations {
 	public static TLStructuredTypePart getAttributeOverride(TLObject obj, TLStructuredTypePart attribute) {
 		if (obj == null) {
 			return attribute;
-		} else {
-			return getAttributeOverride(obj.tType(), attribute);
 		}
-	}
-
-	/**
-	 * The (potentially) overridden version of the given attribute in the context of the given type.
-	 * 
-	 * @param actualType
-	 *        The concrete type of the context.
-	 * @param attribute
-	 *        An attribute of the given type or of a super class thereof.
-	 * @return The (potentially) overridden version of the given attribute in the given type. If the
-	 *         given attribute does not belong to the given type, <code>null</code> is returned.
-	 */
-	private static TLStructuredTypePart getAttributeOverride(TLStructuredType actualType,
-			TLStructuredTypePart attribute) {
+		TLStructuredType actualType = obj.tType();
 		if (actualType == null) {
 			return null;
 		}
-
-		TLStructuredTypePart attributeInObjectRev = WrapperHistoryUtils.getWrapper(actualType.tRevision(), attribute);
-		if (attributeInObjectRev == null) {
-			// Attribute does not exist at the time of the accessed type.
-			return null;
-		}
-		if (actualType == attributeInObjectRev.getOwner()) {
-			// Short-cut for the case where the matching/correct attribute override was given.
-			return attributeInObjectRev;
-		}
-
-		// Check whether the given attribute has a definition in the actual type.
-		TLStructuredTypePart definition = attributeInObjectRev.getDefinition();
-		TLStructuredType definingType = definition.getOwner();
-		if (definingType == null || !TLModelUtil.isGeneralization(definingType, actualType)) {
-			// Attribute of an unrelated type.
-
-			// Note: This still allows to use the overridden attribute of a subtype to access a
-			// value of an object of the super type. This is allowed only for convenience. Being
-			// pedantic makes object access in some scenarios more complicated (e.g. copying values
-			// common attributes of on object to an instance of a supertype).
-			return null;
-		}
-		if (actualType == definingType) {
-			// Short-cut for the case where a overridden attribute was used to access the defining
-			// type.
-			return definition;
-		}
-
-		// Lookup by name in the concrete type.
-		return actualType.getPart(attributeInObjectRev.getName());
+		return TLModelCacheService.getOperations().resolvePart(actualType, attribute);
 	}
 
 	/**

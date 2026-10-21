@@ -99,9 +99,10 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * A {@link #setFramed framed} table shows the bound attribute's label as panel title and offers row
- * creation as an Add button in its own toolbar; a frameless table shows neither, and its creator
- * offers row creation through the enclosing command scope instead. Optional wiring - column
+ * A {@link #setFramed framed} table shows the bound attribute's label as panel title, offers row
+ * creation as an Add button in its own toolbar and is sized by its rows; a frameless table shows
+ * neither, fills the height its container offers, and its creator offers row creation through the
+ * enclosing command scope instead. Optional wiring - column
  * personalization, a two-way selection channel, and automatic row refresh on model or input changes
  * - is configured through setters before {@link #init()}. While an edit session is running, the row
  * set is frozen (no automatic re-query), so edited rows stay in place; after save or cancel the rows
@@ -188,6 +189,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private Set<TLStructuredType> _observedTypes = Set.of();
 
 	private List<ViewChannel> _inputChannels = List.of();
+
+	/** @see #setRowRefresh(Function, Set, List, List, List) */
+	private List<ViewChannel> _rowIndependentInputs = List.of();
+
+	/** @see #setRowRefresh(Function, Set, List, List, List) */
+	private List<ViewChannel> _cellIndependentInputs = List.of();
 
 	private TableViewControl<TLObject> _tableControl;
 
@@ -279,6 +286,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		putState(ERROR_ICON,
 			ReactImages.encode(_context, com.top_logic.layout.react.control.layout.Icons.VALIDATION_ERROR));
+
+		updateFill();
 	}
 
 	@Override
@@ -329,13 +338,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * creator offers row creation through the enclosing command scope.
 	 *
 	 * <p>
-	 * A frameless table is a region of its own rather than a field among others: it fills the
-	 * height its container offers, so the table bounds its scroll viewport and scrolls internally.
+	 * A framed table is a field among others: its panel is sized by its content and ends the fill
+	 * chain, so the table shows all its rows and the enclosing form or dialog scrolls. A frameless
+	 * table is a region of its own: it fills the height its container offers, so the table bounds
+	 * its scroll viewport and scrolls internally.
 	 * </p>
 	 */
 	public void setFramed(boolean framed) {
 		_framed = framed;
-		putState(ReactPanelControl.FILL, Boolean.valueOf(!framed));
+		updateFill();
+	}
+
+	/**
+	 * Pushes the panel's {@link ReactPanelControl#FILL} state for the current {@link #setFramed
+	 * framed} setting: a framed table is content-sized, a frameless one fills.
+	 */
+	private void updateFill() {
+		putState(ReactPanelControl.FILL, Boolean.valueOf(!_framed));
 	}
 
 	/**
@@ -464,18 +483,38 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * Enables automatic row refresh outside edit sessions: the row function is re-evaluated when an
 	 * observed object or input channel changes.
 	 *
+	 * <p>
+	 * An input change that leaves the rows as they are - a change of a row-independent input, or
+	 * of a cell-independent input yielding the same rows - keeps the cells: only the criteria of
+	 * the declared filters are resolved again, and the rows are pushed again for their
+	 * {@link #setRowCssClass(Function) CSS class}, where one is set. A change of any other input
+	 * builds the cells again.
+	 * </p>
+	 *
 	 * @param rowFunction
-	 *        Computes the row objects from the input channel values.
+	 *        Computes the row objects from the values of all input channels, in their order.
 	 * @param observedTypes
 	 *        Types whose object changes trigger a refresh.
 	 * @param inputChannels
-	 *        Channels whose changes trigger a refresh.
+	 *        Channels whose values the row function is called with.
+	 * @param rowIndependentInputs
+	 *        Those of the input channels whose changes cannot change the rows, e.g. the table's
+	 *        own selection channel; their changes do not re-evaluate the row function.
+	 * @param cellIndependentInputs
+	 *        Those of the input channels no cell reads; a change of one of them that yields the
+	 *        same rows keeps the cells.
+	 *
+	 * @see RowSourceObserver#withRowIndependentInputs(Collection)
+	 * @see RowSourceObserver#onInputsChanged(Collection, Runnable)
 	 */
 	public void setRowRefresh(Function<Object[], Collection<?>> rowFunction,
-			Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels) {
+			Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels,
+			List<ViewChannel> rowIndependentInputs, List<ViewChannel> cellIndependentInputs) {
 		_rowFunction = rowFunction;
 		_observedTypes = observedTypes;
 		_inputChannels = inputChannels;
+		_rowIndependentInputs = rowIndependentInputs;
+		_cellIndependentInputs = cellIndependentInputs;
 	}
 
 	/**
@@ -730,14 +769,21 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				() -> {
 					// The criteria a table declares can depend on the inputs it is refreshed for, so
 					// they are resolved again for their new values.
-					if (_declaredFilters != null) {
-						view.setDeclaredFilters(_declaredFilters.apply(columns));
-					}
+					refreshDeclaredFilters(view, columns);
 					table.refreshData();
 					if (_selectionBinding != null) {
 						_selectionBinding.rowsRefreshed();
 					}
-				});
+				})
+					.withRowIndependentInputs(_rowIndependentInputs)
+					.onInputsChanged(_cellIndependentInputs, () -> {
+						// The rows and their cells stay; what is computed from the inputs apart
+						// from the rows is computed again.
+						refreshDeclaredFilters(view, columns);
+						if (_rowCssClass != null) {
+							table.repaintRows();
+						}
+					});
 			if (isAttached()) {
 				attachObserver();
 			}
@@ -746,6 +792,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Update toolbar: a framed table offers an own Add button in edit mode, when the binding
 		// offers row creation.
 		updateToolbar(_framed && editMode && !binding().getCreateTypes().isEmpty());
+	}
+
+	/**
+	 * Resolves the criteria of the declared filters again for the current input values.
+	 */
+	private void refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
+		if (_declaredFilters != null) {
+			view.setDeclaredFilters(_declaredFilters.apply(columns));
+		}
 	}
 
 	/**

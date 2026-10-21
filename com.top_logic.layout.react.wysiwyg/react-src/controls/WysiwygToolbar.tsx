@@ -3,7 +3,7 @@ import {
   useCloseOnOutsidePress, useFocusTrap, useStandaloneKeyboardScope, pressClosedSurface, createPortal,
   anchoredOverlayProps,
   ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE, ICON_STRIKETHROUGH, ICON_PARAGRAPH, ICON_HEADING, ICON_BULLET_LIST,
-  ICON_NUMBERED_LIST, ICON_QUOTE, ICON_CODE_BLOCK, ICON_LINK, ICON_IMAGE, ICON_TABLE, ICON_UNDO, ICON_REDO,
+  ICON_NUMBERED_LIST, ICON_QUOTE, ICON_CODE_BLOCK, ICON_LINK, ICON_IMAGE, ICON_TABLE, ICON_UNDO, ICON_REDO, ICON_SOURCE,
 } from 'tl-react-bridge';
 import { useEditorState } from '@tiptap/react';
 import type { Editor, EditorStateSnapshot } from '@tiptap/react';
@@ -16,7 +16,18 @@ const { useCallback, useEffect, useId, useRef, useState } = React;
 
 interface ToolbarProps {
   editor: Editor | null;
-  onImageUpload: () => void;
+
+  /** Starts uploading an image, undefined where the editor offers no image upload. */
+  onImageUpload?: () => void;
+
+  /** Whether the HTML source is shown in place of the formatted text. */
+  sourceMode: boolean;
+
+  /**
+   * Switches between the formatted text and its HTML source, undefined where the editor offers no
+   * source editing.
+   */
+  onToggleSource?: () => void;
 
   /**
    * The toolbar of the commands the editor is configured with, as the server describes it, or
@@ -106,6 +117,7 @@ const I18N_KEYS: Record<string, string> = {
   'js.wysiwyg.codeBlock': 'Code block',
   'js.wysiwyg.undo': 'Undo',
   'js.wysiwyg.redo': 'Redo',
+  'js.wysiwyg.source': 'Source code',
 };
 
 /** The translated texts of the toolbar. */
@@ -463,14 +475,30 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
  * groups are divided by vertical dividers. Its buttons are the part `Button`, ghost and icon
  * alone; the paragraph format is a menu of radio entries, the list kind a menu of checkbox entries
  * (the checked one switches the list off), the link a popup. The commands the editor is configured
- * with form a toolbar of their own inside.
+ * with form a toolbar of their own inside. Where the editor offers source editing, a toggle shows the
+ * HTML source in place of the formatted text; while it is shown, the toggle is the only button.
  */
-const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar }) => {
+const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, sourceMode, onToggleSource, toolbar }) => {
   const labels = useI18N(I18N_KEYS);
   const state = useEditorState({ editor, selector: selectToolbarState });
   const Divider = usePart('Divider');
 
   if (!editor || !state) return null;
+
+  const sourceToggle = onToggleSource && (
+    <ToolButton icon={ICON_SOURCE} label={t(labels, 'source')} checked={sourceMode} onPress={onToggleSource} />
+  );
+
+  if (sourceMode) {
+    // The formatting buttons act on the formatted text, which is not shown.
+    return (
+      <ButtonDefaults appearance="ghost" iconOnly>
+        <div className="tl-toolbar tl-toolbar--wrap" role="toolbar" aria-label={t(labels, 'toolbar')}>
+          <div className="tl-toolbar__group">{sourceToggle}</div>
+        </div>
+      </ButtonDefaults>
+    );
+  }
 
   const headingLevel = state.headingLevel;
   const groups: React.ReactNode[] = [
@@ -540,7 +568,7 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
     // Link, image, table
     <>
       <LinkPopup editor={editor} labels={labels} isLink={state.link} />
-      <ToolButton icon={ICON_IMAGE} label={t(labels, 'image')} onPress={onImageUpload} />
+      {onImageUpload && <ToolButton icon={ICON_IMAGE} label={t(labels, 'image')} onPress={onImageUpload} />}
       <ToolButton icon={ICON_TABLE} label={t(labels, 'table')}
         onPress={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} />
     </>,
@@ -549,6 +577,10 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, toolbar
   // The commands the editor is configured with, in a toolbar of their own.
   if (toolbar != null) {
     groups.push(<TLChild control={toolbar} />);
+  }
+
+  if (sourceToggle) {
+    groups.push(sourceToggle);
   }
 
   // History

@@ -111,6 +111,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
 
 	/**
+	 * @en The form still has unsaved changes.
+	 */
+	public static ResKey ERROR_FORM_HAS_UNSAVED_CHANGES;
+
+	/**
+	 * @en The form cannot be edited.
+	 */
+	public static ResKey ERROR_FORM_NOT_EDITABLE;
+
+	/**
 	 * @en Upload of "{0}" failed.
 	 */
 	public static ResKey1 ERROR_UPLOAD_FAILED__FILE;

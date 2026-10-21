@@ -7,8 +7,10 @@
    drawn with the tokens of the package.
    =================================================================== */
 
-/* The selected image (a node selection) is marked with the focus ring. */
-.ProseMirror img.ProseMirror-selectednode {
+/* The selected image and the selected markup the editor keeps without editing it (a node selection)
+   are marked with the focus ring. */
+.ProseMirror img.ProseMirror-selectednode,
+.ProseMirror .tl-rich-text__markup.ProseMirror-selectednode {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
 }
 

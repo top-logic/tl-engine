@@ -320,7 +320,7 @@ public class TestValueInputElement extends TestCase {
 	 * how the value is entered.
 	 */
 	public void testParseInputs() throws Exception {
-		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+		List<UIElement.Config> inputs = parseInputs();
 		assertEquals("Every input of the test view must be parsed.", INPUT_COUNT, inputs.size());
 
 		ValueInputElement.Config text = config(inputs, 0);
@@ -845,7 +845,7 @@ public class TestValueInputElement extends TestCase {
 	 * annotations shaping its display.
 	 */
 	public void testParseValueDeclaration() throws Exception {
-		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+		List<UIElement.Config> inputs = parseInputs();
 
 		assertTrue("A stated mandatory flag must reach the configuration.",
 			config(inputs, MANDATORY_CHOICE).getMandatory());
@@ -1200,7 +1200,7 @@ public class TestValueInputElement extends TestCase {
 	 * An input names the control the value is entered in, in the shape a {@code <field>} names it.
 	 */
 	public void testParseInputControl() throws Exception {
-		List<PolymorphicConfiguration<? extends UIElement>> inputs = parseInputs();
+		List<UIElement.Config> inputs = parseInputs();
 
 		SelectControlProvider.Config chosen = inputControl(inputs, 5, SelectControlProvider.Config.class);
 		assertEquals(SelectControlProvider.class, chosen.getImplementationClass());
@@ -1450,7 +1450,7 @@ public class TestValueInputElement extends TestCase {
 
 	/** The control configuration the input at the given position names. */
 	private static <C extends PolymorphicConfiguration<? extends ReactFieldControlProvider>> C inputControl(
-			List<PolymorphicConfiguration<? extends UIElement>> inputs, int index, Class<C> expected) {
+			List<UIElement.Config> inputs, int index, Class<C> expected) {
 		PolymorphicConfiguration<? extends ReactFieldControlProvider> control =
 			config(inputs, index).getInputControl();
 		assertNotNull("Input " + index + " must name a control.", control);
@@ -1539,7 +1539,7 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/** The {@code <value-input>} configurations of the test view. */
-	private List<PolymorphicConfiguration<? extends UIElement>> parseInputs() throws Exception {
+	private List<UIElement.Config> parseInputs() throws Exception {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestValueInputElement.class);
 
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
@@ -1557,7 +1557,7 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/** The {@code <value-input>} configuration at the given position. */
-	private static ValueInputElement.Config config(List<PolymorphicConfiguration<? extends UIElement>> inputs, int index) {
+	private static ValueInputElement.Config config(List<UIElement.Config> inputs, int index) {
 		PolymorphicConfiguration<? extends UIElement> entry = inputs.get(index);
 		assertTrue("Entry " + index + " must be an input, but is " + entry, entry instanceof ValueInputElement.Config);
 		return (ValueInputElement.Config) entry;

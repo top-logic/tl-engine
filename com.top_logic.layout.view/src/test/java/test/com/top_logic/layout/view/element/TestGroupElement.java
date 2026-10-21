@@ -203,7 +203,7 @@ public class TestGroupElement extends TestCase {
 		assertTrue("The sections are held by a form.", config.getContent() instanceof FormElement.Config);
 		FormElement.Config formConfig = (FormElement.Config) config.getContent();
 
-		List<PolymorphicConfiguration<? extends UIElement>> children = formConfig.getChildren();
+		List<UIElement.Config> children = formConfig.getChildren();
 		assertTrue("The plain section must be written as a group.",
 			children.get(PLAIN_SECTION) instanceof GroupElement.Config);
 		assertTrue("The stated section must be written as a group.",

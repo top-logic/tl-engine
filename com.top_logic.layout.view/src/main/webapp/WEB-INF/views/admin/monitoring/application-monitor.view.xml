@@ -8,6 +8,8 @@
 -->
 <view>
 	<full-page>
-		<child class="com.top_logic.layout.view.admin.monitor.ApplicationMonitorTable"/>
+		<child id="table"
+			class="com.top_logic.layout.view.admin.monitor.ApplicationMonitorTable"
+		/>
 	</full-page>
 </view>

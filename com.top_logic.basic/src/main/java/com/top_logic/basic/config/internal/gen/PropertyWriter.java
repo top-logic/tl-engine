@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationDescriptorBuilder;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -829,6 +830,15 @@ class PropertyWriter {
 				_generator.toString(_descriptor.getValueDescriptor().getConfigurationInterface());
 			String keyType = _generator.toString(keyProperty.getType());
 
+			if (!keyProperty.getType().isPrimitive()) {
+				// Anonymous entries are matched by no key.
+				line("if (" + ConfigUtil.class.getName() + ".isAnonymousKey(" + INDEX_PARAM + ")) {");
+				{
+					line("return null;");
+				}
+				line("}");
+			}
+
 			append("for (Object entry : ");
 			appendInternalGetterCall();
 			append(") {");
@@ -848,9 +858,7 @@ class PropertyWriter {
 				if (keyProperty.getType().isPrimitive()) {
 					line("if (key == " + INDEX_PARAM + ") {");
 				} else {
-					line(
-						"if ((key != null && key.equals(" + INDEX_PARAM + ")) || (key == null && " + INDEX_PARAM
-							+ " == null)) {");
+					line("if (" + INDEX_PARAM + ".equals(key)) {");
 				}
 				{
 					line("return " + entryTyped + ";");

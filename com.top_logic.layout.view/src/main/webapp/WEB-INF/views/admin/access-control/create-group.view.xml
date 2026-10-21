@@ -10,7 +10,7 @@
 			<en>New Group</en>
 			<de>Neue Gruppe</de>
 		</title>
-		<form
+		<form id="form"
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"

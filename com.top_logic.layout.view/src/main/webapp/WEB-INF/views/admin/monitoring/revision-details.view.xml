@@ -24,7 +24,7 @@
 			<en>Changes of the commit</en>
 			<de>Änderungen des Commits</de>
 		</title>
-		<form
+		<form id="form"
 			input="changeSet"
 			max-columns="2"
 			mode-switch="false"
@@ -44,7 +44,7 @@
 			<field attribute="author"/>
 			<field attribute="message"/>
 		</form>
-		<table>
+		<table id="table">
 			<inputs>
 				<input channel="changeSet"/>
 			</inputs>

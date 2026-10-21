@@ -8,6 +8,7 @@ package com.top_logic.layout.view;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.react.control.IReactControl;
 
@@ -32,6 +33,9 @@ public interface UIElement {
 	 */
 	interface Config extends PolymorphicConfiguration<UIElement> {
 
+		/** Configuration name for {@link #getId()}. */
+		String ID = "id";
+
 		/** Configuration name for {@link #getPersonalizationKey()}. */
 		String PERSONALIZATION_KEY = "personalization-key";
 
@@ -50,6 +54,34 @@ public interface UIElement {
 		 */
 		@com.top_logic.basic.config.annotation.Name(PERSONALIZATION_KEY)
 		String getPersonalizationKey();
+
+		/**
+		 * The name an overlay of the view addresses this element by.
+		 *
+		 * <p>
+		 * A view is extended by a view of the same path in another module. Such an overlay
+		 * addresses the element it updates, replaces, removes, places another element beside or
+		 * adds content to by its id, with a referencing element written anywhere above it:
+		 * {@code <tab-bar config:ref="device-tabs">}. An element without id is anonymous: an
+		 * overlay adds elements beside it, but cannot address the element itself.
+		 * </p>
+		 *
+		 * <p>
+		 * The id is unique in the whole view: among all elements, tabs, panes, cases, sidebar items
+		 * and menu groups of the view file, its overlays included. A view a {@code <view-ref>}
+		 * embeds is a view of its own with ids of its own.
+		 * </p>
+		 *
+		 * @implNote The element lists of the view elements are keyed by this property, which is a
+		 *           {@link GlobalKey}: the configuration reader resolves a {@code config:ref} among
+		 *           the entries of all such lists below the enclosing element and rejects two
+		 *           entries with the same id. An anonymous element is appended in order and
+		 *           matched by no overlay entry; an overlay reaches it only by its position with
+		 *           {@code config:index}.
+		 */
+		@com.top_logic.basic.config.annotation.Name(ID)
+		@GlobalKey
+		String getId();
 
 		/**
 		 * CSS class the element is displayed with, beside the classes its kind brings itself.

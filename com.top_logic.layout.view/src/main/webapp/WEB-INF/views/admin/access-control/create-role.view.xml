@@ -10,7 +10,7 @@
 			<en>New Role</en>
 			<de>Neue Rolle</de>
 		</title>
-		<form
+		<form id="form"
 			initial-edit-mode="true"
 			input="model"
 			mode-switch="false"

@@ -16,7 +16,9 @@
 		<channel name="selection"/>
 		<channel name="state"/>
 	</channels>
-	<panel fill="true">
+	<panel id="panel"
+		fill="true"
+	>
 		<title>
 			<en>Services</en>
 			<de>Dienste</de>
@@ -117,7 +119,8 @@
 				</action>
 			</generic-command>
 		</commands>
-		<child class="com.top_logic.layout.view.admin.system.ServiceTable"
+		<child id="table"
+			class="com.top_logic.layout.view.admin.system.ServiceTable"
 			input="services"
 			selection="selection"
 			state="state"

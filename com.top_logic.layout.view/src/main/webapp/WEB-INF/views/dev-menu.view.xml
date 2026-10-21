@@ -9,14 +9,14 @@
 	available, so nothing is to be wired around it.
 	
 	A depending module or the application adds entries with a same-path overlay
-	(WEB-INF/views/dev-menu.view.xml of its own module): inside <menu> and <groups>, it names the
-	group to extend by its id in a <group id="automation" config:operation="update"> element and
-	lists its entries there. The ViewLoader merges all copies in dependency order and appends the
-	contributed entries to that group; a group with an id of its own is added after the existing
-	ones.
+	(WEB-INF/views/dev-menu.view.xml of its own module): it addresses the group to extend by its id
+	in a <group config:ref="automation"> element and lists its entries there. The ViewLoader merges
+	all copies in dependency order and appends the contributed entries to that group. A group of
+	its own goes into the <groups> of a <menu config:ref="dev-menu"> element, after the existing
+	ones or where config:position places it.
 -->
 <view>
-	<menu>
+	<menu id="dev-menu">
 		<theme-icon image="css:bi bi-tools">
 			<tooltip>
 				<en>Tools for designing, inspecting and automating this application.</en>

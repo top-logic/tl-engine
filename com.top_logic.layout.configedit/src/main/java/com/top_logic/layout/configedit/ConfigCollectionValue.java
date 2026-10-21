@@ -219,6 +219,19 @@ public final class ConfigCollectionValue implements ConfigCollection {
 	}
 
 	/**
+	 * Only a {@link PropertyKind#LIST} property holds anonymous entries; a {@link PropertyKind#MAP}
+	 * property maps every entry by its key.
+	 */
+	@Override
+	public boolean acceptsAnonymous(ConfigurationItem entry) {
+		if (_property.kind() != PropertyKind.LIST) {
+			return false;
+		}
+		PropertyDescriptor keyProperty = keyProperty(entry);
+		return keyProperty != null && !keyProperty.isMandatory();
+	}
+
+	/**
 	 * Whether some element of the collection carries the given key.
 	 *
 	 * <p>

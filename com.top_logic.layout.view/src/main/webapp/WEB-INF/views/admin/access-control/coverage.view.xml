@@ -61,17 +61,19 @@
 		<channel name="selectedModule"/>
 		<channel name="pending"/>
 	</channels>
-	<split-panel
+	<split-panel id="main"
 		orientation="horizontal"
 		resizable="true"
 	>
 		<panes>
-			<pane
+			<pane id="coverage"
 				min-size="300"
 				size="65"
 				unit="%"
 			>
-				<panel fill="true">
+				<panel id="coverage-panel"
+					fill="true"
+				>
 					<title>
 						<en>Coverage</en>
 						<de>Abdeckung</de>
@@ -120,7 +122,8 @@
 							/>
 						</generic-command>
 					</commands>
-					<child class="com.top_logic.layout.view.admin.SecurityCoverageTable"
+					<child id="coverage-table"
+						class="com.top_logic.layout.view.admin.SecurityCoverageTable"
 						input="rows"
 						pending="pending"
 						selected-findings="selectedFindings"
@@ -133,20 +136,20 @@
 					/>
 				</panel>
 			</pane>
-			<pane
+			<pane id="detail"
 				size="35"
 				unit="%"
 			>
-				<split-panel
+				<split-panel id="detail-split"
 					orientation="vertical"
 					resizable="true"
 				>
 					<panes>
-						<pane
+						<pane id="findings"
 							size="60"
 							unit="%"
 						>
-							<panel>
+							<panel id="findings-panel">
 								<title>
 									<en>Findings</en>
 									<de>Befunde</de>
@@ -362,11 +365,13 @@
 								</visible-if>
 							</panel>
 						</pane>
-						<pane
+						<pane id="rules"
 							size="40"
 							unit="%"
 						>
-							<panel fill="true">
+							<panel id="rules-panel"
+								fill="true"
+							>
 								<title>
 									<en>Rules in effect</en>
 									<de>Geltende Regeln</de>
@@ -544,7 +549,9 @@
 										</switch>
 									</generic-command>
 								</commands>
-								<table selection="selectedRuleEntry">
+								<table id="rules-table"
+									selection="selectedRuleEntry"
+								>
 									<inputs>
 										<input channel="selectedRules"/>
 									</inputs>

@@ -2,11 +2,18 @@
 
 <!--
 	The demo's increment to the account area of the framework's user menu (same path in
-	tl-layout-view, merged in dependency order): the menu trigger names the account first name
-	first, "Giulia Ferrante". An account with neither first nor last name - such as root - shows its
-	label.
+	tl-layout-view, merged in dependency order). It shows the two things an overlay of that view
+	does:
+	
+	- It redefines a channel: the menu trigger names the account first name first, "Giulia
+	Ferrante". An account with neither first nor last name - such as root - shows its label.
+	
+	- It contributes a menu entry: the overlay addresses the menu "account-menu" by its id, without
+	naming the switch and the default content it sits in, and adds the group "demo" right after
+	the base's group "account". The base's entries stay; the reference fails loudly should the
+	base ever drop the menu.
 -->
-<view>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<channels>
 		<derived-channel name="accountName">
 			<expr><![CDATA[{
@@ -21,4 +28,23 @@
 }]]></expr>
 		</derived-channel>
 	</channels>
+	<menu config:ref="account-menu">
+		<groups>
+			<group id="demo"
+				config:position="after"
+				config:reference="account"
+			>
+				<generic-command image="css:bi bi-info-circle">
+					<label>
+						<en>About this demo</en>
+						<de>Über diese Demo</de>
+					</label>
+					<notify
+						display="dialog"
+						expr="#('This entry is contributed by the overlay of the user menu in the TopLogic React demo (WEB-INF/views/user-menu.view.xml of com.top_logic.demo.react).'@en, 'Dieser Eintrag stammt aus dem Overlay des Benutzermenüs in der TopLogic-React-Demo (WEB-INF/views/user-menu.view.xml von com.top_logic.demo.react).'@de)"
+					/>
+				</generic-command>
+			</group>
+		</groups>
+	</menu>
 </view>

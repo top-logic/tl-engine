@@ -15,6 +15,10 @@ import com.top_logic.basic.Log;
  * {@link PropertyDescriptor#getKeyProperty() key property} so each method which
  * needs the key property results in an error.
  * 
+ * <p>
+ * Items are addressed by their position or, for items already in the list, by identity.
+ * </p>
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class SimpleListStorage<K, V> extends AbstractListStorage<K, V> {
@@ -70,12 +74,20 @@ public class SimpleListStorage<K, V> extends AbstractListStorage<K, V> {
 
 	@Override
 	void moveToStart(V item) {
-		cannotIdentify(item);
+		int index = indexOf(item);
+		if (index >= 0) {
+			_list.remove(index);
+			_list.add(0, item);
+		}
 	}
 
 	@Override
 	void moveToEnd(V item) {
-		cannotIdentify(item);
+		int index = indexOf(item);
+		if (index >= 0) {
+			_list.remove(index);
+			_list.add(item);
+		}
 	}
 
 	@Override
@@ -89,8 +101,25 @@ public class SimpleListStorage<K, V> extends AbstractListStorage<K, V> {
 	}
 
 	@Override
-	void update(V item) {
+	void replace(V oldItem, V newItem) {
+		int index = indexOf(oldItem);
+		if (index >= 0) {
+			_list.set(index, newItem);
+		}
+	}
+
+	/**
+	 * The position of the given item (compared by identity) in the list, or <code>-1</code> after
+	 * reporting an error, if the item is not contained.
+	 */
+	private int indexOf(V item) {
+		for (int n = 0, cnt = _list.size(); n < cnt; n++) {
+			if (_list.get(n) == item) {
+				return n;
+			}
+		}
 		cannotIdentify(item);
+		return -1;
 	}
 
 	@Override
@@ -105,6 +134,19 @@ public class SimpleListStorage<K, V> extends AbstractListStorage<K, V> {
 	}
 
 	@Override
+	V resolveIndexOrNull(int index) {
+		if (index < 0 || index >= _list.size()) {
+			return null;
+		}
+		return _list.get(index);
+	}
+
+	@Override
+	int size() {
+		return _list.size();
+	}
+
+	@Override
 	List<V> toList() {
 		return _list;
 	}
@@ -113,7 +155,7 @@ public class SimpleListStorage<K, V> extends AbstractListStorage<K, V> {
 		StringBuilder message = new StringBuilder();
 		message.append("Property '");
 		message.append(_property);
-		message.append("' has no key property. It is not possible to identify item '");
+		message.append("' does not contain item '");
 		message.append(item);
 		message.append('\'');
 		_protocol.error(message.toString());

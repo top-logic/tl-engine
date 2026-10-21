@@ -13,11 +13,12 @@ import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.GlobalKey;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
@@ -75,8 +76,11 @@ public class SplitPanelElement implements UIElement {
 
 		/**
 		 * The child pane definitions.
+		 *
+		 * @implNote Keyed by {@link PaneConfig#ID} so that a same-path overlay can address a pane.
 		 */
 		@Name(PANES)
+		@Key(PaneConfig.ID)
 		@TreeProperty
 		List<PaneConfig> getPanes();
 	}
@@ -87,17 +91,37 @@ public class SplitPanelElement implements UIElement {
 	@TagName("pane")
 	public interface PaneConfig extends PaneSizeConfig {
 
+		/** Configuration name for {@link #getId()}. */
+		String ID = "id";
+
 		/** Configuration name for {@link #getChildren()}. */
 		String CHILDREN = "children";
 
 		/**
-		 * The content elements in this pane.
+		 * The name an overlay of the view addresses this pane by, unique in the whole view, see
+		 * {@link UIElement.Config#getId()}.
+		 *
+		 * <p>
+		 * A pane without id is anonymous: an overlay adds panes beside it, but cannot address the
+		 * pane itself.
+		 * </p>
 		 */
+		@Name(ID)
+		@GlobalKey
+		String getId();
+
+		/**
+		 * The content elements in this pane.
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
+		 */
+		@Key(UIElement.Config.ID)
 		@Name(CHILDREN)
 		@DefaultContainer
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getChildren();
+		List<UIElement.Config> getChildren();
 	}
 
 	/**

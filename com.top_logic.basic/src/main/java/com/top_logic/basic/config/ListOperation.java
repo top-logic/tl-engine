@@ -24,6 +24,9 @@ public enum ListOperation implements ExternallyNamed {
 	 * the operation is is de facto an update the position is used to move the
 	 * entry to.
 	 * 
+	 * An entry without key value (an anonymous entry) is always added. An entry addressed by
+	 * {@link ConfigurationSchemaConstants#LIST_INDEX} is always an update.
+	 * 
 	 * @see #ADD
 	 * @see #UPDATE
 	 */
@@ -37,14 +40,15 @@ public enum ListOperation implements ExternallyNamed {
 
 	/**
 	 * Used to indicate that the entry which has the same key property must be
-	 * removed
+	 * removed. The removing entry must have a key value.
 	 */
 	REMOVE("remove"),
 
 	/**
 	 * Used to indicate that the entry which has the same key property must be
 	 * updated by the new list value. If also a {@link Position} is given, the
-	 * entry is also moved.
+	 * entry is also moved. The updating entry must have a key value, or address the entry by
+	 * {@link ConfigurationSchemaConstants#LIST_INDEX}.
 	 */
 	UPDATE("update"),
 	;

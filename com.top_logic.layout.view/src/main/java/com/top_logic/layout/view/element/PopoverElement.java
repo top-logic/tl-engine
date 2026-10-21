@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -178,12 +178,16 @@ public class PopoverElement implements UIElement {
 		 * element that is operated itself - a button, an input field, a link - does not belong
 		 * here: it would be a control inside a control, which can be neither reached nor operated.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(TRIGGER)
 		@EntryTag("child")
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getTrigger();
+		List<UIElement.Config> getTrigger();
 
 		/**
 		 * The content of the surface: any elements of the view, created when the popover opens for
@@ -192,12 +196,16 @@ public class PopoverElement implements UIElement {
 		 * <p>
 		 * The content shares the channels of the view the popover is written in.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link UIElement.Config#ID} so that a same-path overlay can address
+		 *           an element.
 		 */
+		@Key(UIElement.Config.ID)
 		@Name(CONTENT)
 		@EntryTag("child")
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends UIElement>> getContent();
+		List<UIElement.Config> getContent();
 	}
 
 	private final Config _config;
@@ -217,7 +225,7 @@ public class PopoverElement implements UIElement {
 	}
 
 	private static List<UIElement> instantiate(InstantiationContext context,
-			List<PolymorphicConfiguration<? extends UIElement>> configs) {
+			List<UIElement.Config> configs) {
 		return configs.stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());

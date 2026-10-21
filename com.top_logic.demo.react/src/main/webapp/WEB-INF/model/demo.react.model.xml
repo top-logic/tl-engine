@@ -421,7 +421,11 @@
 						multiple="true"
 						ordered="true"
 						type="tl.core:Binary"
-					/>
+					>
+						<annotations>
+							<max-upload-size value="5m"/>
+						</annotations>
+					</property>
 					<property name="documents"
 						multiple="true"
 						ordered="true"
@@ -430,6 +434,7 @@
 						<annotations>
 							<accepted-types value="*.pdf, *.txt, *.md"/>
 							<binary-display presentation="list"/>
+							<max-upload-size value="1m"/>
 						</annotations>
 					</property>
 

@@ -170,7 +170,7 @@ public class ReactServlet extends TopLogicServlet {
 
 	/**
 	 * Name of the global command the client sends when it refused a selected file because it
-	 * exceeds {@link UploadSupport#maxUploadSize()}.
+	 * exceeds the {@link UploadHandler#maxUploadSize() size limit} of the addressed control.
 	 */
 	private static final String CMD_UPLOAD_REJECTED = "uploadRejected";
 
@@ -952,8 +952,8 @@ public class ReactServlet extends TopLogicServlet {
 	 * uploaded files are inspected when the parts are requested here. A file refused by a content
 	 * checker makes {@link HttpServletRequest#getParts()} throw an
 	 * {@link UploadRejectedException}, which is answered like the refusal of an upload exceeding
-	 * {@link UploadSupport#maxUploadSize()}: the message is shown in the window of the addressed
-	 * control and the request is answered with an error status, see
+	 * the {@link UploadHandler#maxUploadSize() size limit} of the control: the message is shown in
+	 * the window of the addressed control and the request is answered with an error status, see
 	 * {@link #rejectUpload(HttpServletResponse, ReactCommandTarget, int, ResKey, String)}.
 	 * </p>
 	 */
@@ -979,9 +979,9 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		long limit = UploadSupport.maxUploadSize();
+		long limit = ((UploadHandler) control).maxUploadSize();
 		if (limit > 0) {
-			// Let the container apply the configured limit to each file while it parses the body,
+			// Let the container apply the limit of the control to each file while it parses the body,
 			// instead of the fixed one from the deployment descriptor. The request as a whole is not
 			// limited: the limit is one per file, however many are uploaded at once.
 			request.setAttribute(MULTIPART_CONFIG_ATTRIBUTE,
@@ -1132,8 +1132,8 @@ public class ReactServlet extends TopLogicServlet {
 
 	/**
 	 * Handles the {@link #CMD_UPLOAD_REJECTED} global command: the client refused a selected file
-	 * as larger than {@link UploadSupport#maxUploadSize()} and did not transmit it, so the notice
-	 * the user must see is produced here.
+	 * as larger than the {@link UploadHandler#maxUploadSize() size limit} of the addressed control
+	 * and did not transmit it, so the notice the user must see is produced here.
 	 */
 	private void handleUploadRejected(HttpServletRequest request, HttpServletResponse response,
 			HttpSession session, String windowName, String controlId, Map<String, Object> arguments)
@@ -1147,10 +1147,11 @@ public class ReactServlet extends TopLogicServlet {
 		Object fileName = arguments != null ? arguments.get(ARG_FILE_NAME) : null;
 		Object size = arguments != null ? arguments.get(ARG_SIZE) : null;
 		Logger.info("Upload of '" + fileName + "' (" + size + " bytes) refused by the client, larger than the "
-			+ "configured limit.", ReactServlet.class);
+			+ "upload limit.", ReactServlet.class);
 
+		long limit = control instanceof UploadHandler handler ? handler.maxUploadSize() : UploadSupport.maxUploadSize();
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
-			showUploadNotice(control, uploadTooLarge(UploadSupport.maxUploadSize()));
+			showUploadNotice(control, uploadTooLarge(limit));
 		}
 		sendSuccess(response);
 	}

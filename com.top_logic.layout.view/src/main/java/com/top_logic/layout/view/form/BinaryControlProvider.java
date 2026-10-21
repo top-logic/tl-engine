@@ -21,7 +21,8 @@ import com.top_logic.layout.react.field.UploadValueFactory;
  * <p>
  * Renders a file upload (drag-and-drop plus button) in edit mode and a download link in view mode
  * via {@link ReactBinaryFieldControl}. The file picker offers the
- * {@link FieldSpec#getAcceptedTypes() accepted types} of the field. A multi-valued field is a list
+ * {@link FieldSpec#getAcceptedTypes() accepted types} of the field, each file up to the
+ * {@link FieldSpec#getMaxUploadSize() upload limit} of the field. A multi-valued field is a list
  * with one such control per file, to which several files are added at once.
  * </p>
  *

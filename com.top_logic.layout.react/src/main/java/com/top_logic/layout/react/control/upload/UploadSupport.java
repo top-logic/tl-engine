@@ -32,8 +32,9 @@ public class UploadSupport {
 	public static final String FILE_PART = "file";
 
 	/**
-	 * State key under which an {@link UploadHandler} control publishes {@link #maxUploadSize()} to
-	 * its client component, which refuses a selection holding a larger file before transmitting it.
+	 * State key under which an {@link UploadHandler} control publishes its
+	 * {@link UploadHandler#maxUploadSize() size limit of one file} to its client component, which
+	 * refuses a selection holding a larger file before transmitting it.
 	 *
 	 * <p>
 	 * A value of <code>0</code> means that there is no limit.
@@ -57,6 +58,47 @@ public class UploadSupport {
 			config = TypedConfiguration.newConfigItem(UploadConfig.class);
 		}
 		return config.getMaxUploadSize();
+	}
+
+	/**
+	 * The size limit of one uploaded file for a field with the given limit of its own, capped by the
+	 * application-wide {@link #maxUploadSize()}.
+	 *
+	 * <p>
+	 * A limit of <code>0</code> or less means no limit, so where only one of both limits is set it
+	 * is the one that applies, and where both are set the smaller one does.
+	 * </p>
+	 *
+	 * @param fieldLimit
+	 *        The maximum size in bytes of one file the field accepts, e.g. from the
+	 *        {@link com.top_logic.model.annotate.TLMaxUploadSize} annotation of its attribute;
+	 *        <code>0</code> for none.
+	 * @return The maximum size in bytes of one file the field accepts, <code>0</code> if it is
+	 *         unlimited.
+	 */
+	public static long effectiveMaxUploadSize(long fieldLimit) {
+		return effectiveMaxUploadSize(fieldLimit, maxUploadSize());
+	}
+
+	/**
+	 * The smaller of two size limits, where a limit of <code>0</code> or less means no limit.
+	 *
+	 * @param fieldLimit
+	 *        The limit of the field, <code>0</code> for none.
+	 * @param globalLimit
+	 *        The application-wide limit, <code>0</code> for none.
+	 * @return The limit that applies, <code>0</code> if neither limits the size.
+	 *
+	 * @see #effectiveMaxUploadSize(long)
+	 */
+	public static long effectiveMaxUploadSize(long fieldLimit, long globalLimit) {
+		if (fieldLimit <= 0) {
+			return Math.max(globalLimit, 0);
+		}
+		if (globalLimit <= 0) {
+			return fieldLimit;
+		}
+		return Math.min(fieldLimit, globalLimit);
 	}
 
 	/**

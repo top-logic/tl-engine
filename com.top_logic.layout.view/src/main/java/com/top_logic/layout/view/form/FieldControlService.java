@@ -61,6 +61,7 @@ import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLMaxUploadSize;
 import com.top_logic.model.annotate.ui.BinaryDisplay;
 import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
@@ -541,6 +542,23 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
+	 * The maximum size of one file a binary value is uploaded from, in the form of
+	 * {@link TLMaxUploadSize}, or {@code 0} where the value sets no limit of its own or holds no
+	 * files.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type.
+	 * </p>
+	 */
+	private static long maxUploadSize(AnnotationLookup annotations, TLType type) {
+		if (!isBinary(type)) {
+			return 0;
+		}
+		TLMaxUploadSize annotation = annotation(annotations, type, TLMaxUploadSize.class);
+		return annotation == null ? 0 : annotation.getValue();
+	}
+
+	/**
 	 * Creates the control the given provider builds for the given field.
 	 *
 	 * <p>
@@ -647,7 +665,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
 			.setDateFormat(dateFormat(annotations, type))
 			.setNumberFormat(numberFormat(annotations, type))
-			.setAcceptedTypes(acceptedTypes(annotations, type));
+			.setAcceptedTypes(acceptedTypes(annotations, type))
+			.setMaxUploadSize(maxUploadSize(annotations, type));
 	}
 
 	/**

@@ -129,8 +129,11 @@ list with one file field per file instead (`ReactValueListControl` over `FieldCo
 whose add button uploads several files at once, one value per file. `data-item` (the default) and
 `image-upload` both give the chips. The annotation `<accepted-types value="image/*, *.pdf"/>`
 (`TLAcceptedTypes`, MIME types or file patterns) limits the files the file picker offers, for a
-single and a multi-valued value alike. Both annotations are read at the attribute, else at its type,
-and act on a `<value-input>` of type `tl.core:Binary` through its `<annotations>` as well. A
+single and a multi-valued value alike. The annotation `<max-upload-size value="5m"/>`
+(`TLMaxUploadSize`) limits the size of each file uploaded to the attribute; the application-wide
+`max-upload-size` of the upload configuration still caps it, so the smaller of both applies. These
+annotations are read at the attribute, else at its type, and act on a `<value-input>` of type
+`tl.core:Binary` through its `<annotations>` as well. A
 mandatory multi-valued binary value shows the required marker at the chips and, after a refused
 save, the message of the mandatory check under them. In a table cell the chips render inline, while
 the list presentation shows the file names and opens its file fields in a dialog. A multi-valued

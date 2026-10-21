@@ -31,6 +31,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
@@ -60,6 +61,7 @@ import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.TLMaxUploadSize;
 import com.top_logic.model.annotate.ui.BinaryDisplay;
 import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
@@ -333,6 +335,45 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	}
 
 	/**
+	 * The size limit annotated at a binary attribute reaches the description of the field and the
+	 * control uploading the files; an annotation at the attribute wins over the one of its type.
+	 */
+	public void testMaxUploadSizeReachesTheUploadControl() {
+		long typeLimit = 10L * 1024 * 1024;
+		long attributeLimit = 5L * 1024 * 1024;
+		TLStructuredTypePart files = property("files", _binaryType, true, false);
+		assertEquals("No limit of its own without an annotation.", 0,
+			FieldControlService.fieldSpec(_binaryType, files, LABEL, true, new AbstractFieldModel(null))
+				.getMaxUploadSize());
+
+		_binaryType.setAnnotation(maxUploadSize(typeLimit));
+		assertEquals("The limit of the type applies where the attribute states none.", typeLimit,
+			FieldControlService.fieldSpec(_binaryType, files, LABEL, true, new AbstractFieldModel(null))
+				.getMaxUploadSize());
+
+		files.setAnnotation(maxUploadSize(attributeLimit));
+		assertEquals("The limit of the attribute wins over the one of its type.", attributeLimit,
+			FieldControlService.fieldSpec(_binaryType, files, LABEL, true, new AbstractFieldModel(null))
+				.getMaxUploadSize());
+
+		ReactControl chips = control(files, List.of());
+		assertEquals(Long.valueOf(attributeLimit), chips.scriptingScalarState().get(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(attributeLimit, ((UploadHandler) chips).maxUploadSize());
+
+		files.setAnnotation(BinaryDisplay.display(BinaryPresentation.LIST));
+		ReactControl list = control(files, List.of());
+		assertEquals(ReactValueListControl.class, list.getClass());
+		assertEquals(Long.valueOf(attributeLimit), list.scriptingScalarState().get(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(attributeLimit, ((UploadHandler) list).maxUploadSize());
+
+		TLStructuredTypePart file = property("file", _binaryType, false, false);
+		file.setAnnotation(maxUploadSize(attributeLimit));
+		ReactControl single = control(file, null);
+		assertEquals(Long.valueOf(attributeLimit), single.scriptingScalarState().get(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(attributeLimit, ((UploadHandler) single).maxUploadSize());
+	}
+
+	/**
 	 * A cell showing several files shows their chips in place, told that it has little room.
 	 */
 	public void testACellOfSeveralFilesShowsTheirChips() {
@@ -362,6 +403,13 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	private static TLAcceptedTypes acceptedTypes(String types) {
 		TLAcceptedTypes result = TypedConfiguration.newConfigItem(TLAcceptedTypes.class);
 		result.setValue(types);
+		return result;
+	}
+
+	/** A maximum upload size annotation stating the given limit in bytes. */
+	private static TLMaxUploadSize maxUploadSize(long limit) {
+		TLMaxUploadSize result = TypedConfiguration.newConfigItem(TLMaxUploadSize.class);
+		result.setValue(limit);
 		return result;
 	}
 

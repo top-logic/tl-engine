@@ -27,8 +27,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * The selected file is uploaded via the {@code /react-api/upload} multipart endpoint. The uploaded
  * {@link BinaryData} is stored as the {@link FieldModel} value. When the model is a
- * {@link DataFieldModel}, the accepted types and max upload size are sent to the client
- * automatically.
+ * {@link DataFieldModel}, its accepted types are sent to the client and its
+ * {@link #setMaxUploadSize(long) upload limit} applies.
  * </p>
  */
 public class ReactFileUploadControl extends ReactFormFieldControl implements UploadHandler {
@@ -40,8 +40,8 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 	/** State key for the accepted MIME type filter. */
 	private static final String ACCEPT = "accept";
 
-	/** State key for the maximum upload size. */
-	private static final String MAX_SIZE = "maxSize";
+	/** The size limit of one uploaded file, see {@link #maxUploadSize()}. */
+	private long _maxUploadSize;
 
 	/**
 	 * Creates a new {@link ReactFileUploadControl}.
@@ -50,12 +50,13 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 	 *        The {@link ReactContext} for ID allocation and SSE registration.
 	 * @param model
 	 *        The field model. Value type is {@link BinaryData}. If the model is a
-	 *        {@link DataFieldModel}, accepted types and max upload size are sent to the client.
+	 *        {@link DataFieldModel}, its accepted types and its {@link #setMaxUploadSize(long) upload
+	 *        limit} apply.
 	 */
 	public ReactFileUploadControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLFileUpload");
 		putState(STATUS, "idle");
-		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
+		setMaxUploadSize(0);
 		initDataFieldState();
 	}
 
@@ -63,11 +64,28 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 		if (getFieldModel() instanceof DataFieldModel) {
 			DataFieldModel dataModel = (DataFieldModel) getFieldModel();
 			putState(ACCEPT, dataModel.getAcceptedTypes());
-			long maxSize = dataModel.getMaxUploadSize();
-			if (maxSize > 0) {
-				putState(MAX_SIZE, maxSize);
-			}
+			setMaxUploadSize(dataModel.getMaxUploadSize());
 		}
+	}
+
+	/**
+	 * Limits the size of each uploaded file to the given value, capped by the application-wide
+	 * {@link UploadSupport#maxUploadSize() limit}.
+	 *
+	 * @param fieldLimit
+	 *        The maximum size in bytes of one file the field accepts, <code>0</code> for no limit of
+	 *        its own.
+	 *
+	 * @see UploadSupport#effectiveMaxUploadSize(long)
+	 */
+	public void setMaxUploadSize(long fieldLimit) {
+		_maxUploadSize = UploadSupport.effectiveMaxUploadSize(fieldLimit);
+		putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(_maxUploadSize));
+	}
+
+	@Override
+	public long maxUploadSize() {
+		return _maxUploadSize;
 	}
 
 	@Override

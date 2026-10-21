@@ -81,6 +81,8 @@ public final class FieldSpec {
 
 	private String _acceptedTypes;
 
+	private long _maxUploadSize;
+
 	private FieldSpec(Class<?> valueType, String label) {
 		_valueType = valueType;
 		_label = label;
@@ -564,6 +566,32 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The maximum size in bytes of one file a binary value may be uploaded from, or {@code 0} if the
+	 * field sets no limit of its own.
+	 *
+	 * <p>
+	 * The limit of the maximum upload size annotation of a binary attribute
+	 * ({@link com.top_logic.model.annotate.TLMaxUploadSize}). It applies to each file on its own, and
+	 * the application-wide limit of the upload configuration still caps it: the control accepts
+	 * files up to the {@link com.top_logic.layout.react.control.upload.UploadSupport#effectiveMaxUploadSize(long)
+	 * smaller} of both.
+	 * </p>
+	 */
+	public long getMaxUploadSize() {
+		return _maxUploadSize;
+	}
+
+	/**
+	 * Sets the {@link #getMaxUploadSize() maximum upload size}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setMaxUploadSize(long maxUploadSize) {
+		_maxUploadSize = maxUploadSize;
+		return this;
+	}
+
+	/**
 	 * This specification describing a single one of the values of a
 	 * {@link #isMultiple() multi-valued} field.
 	 *
@@ -616,6 +644,7 @@ public final class FieldSpec {
 		result._options = _options;
 		result._optionLabels = _optionLabels;
 		result._acceptedTypes = _acceptedTypes;
+		result._maxUploadSize = _maxUploadSize;
 		return result;
 	}
 

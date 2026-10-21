@@ -21,6 +21,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.values.edit.editor.AcceptedTypesChecker;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
+import com.top_logic.model.annotate.TLMaxUploadSize;
 import com.top_logic.model.annotate.ui.BinaryDisplay;
 import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
@@ -79,8 +80,27 @@ public class DataFieldProvider extends AbstractFieldProvider {
 		}
 
 		setAcceptedFileTypes(field, acceptedTypes);
+		setMaxUploadSize(field, editContext.getAnnotation(TLMaxUploadSize.class));
 
 		return field;
+	}
+
+	/**
+	 * Limits the size of each file uploaded to the given field.
+	 *
+	 * <p>
+	 * The limit the servlet container applies to every upload of the application still caps it.
+	 * </p>
+	 *
+	 * @param field
+	 *        The {@link DataField}.
+	 * @param annotation
+	 *        The {@link TLMaxUploadSize} annotation, <code>null</code> if there is none.
+	 */
+	private void setMaxUploadSize(DataField field, TLMaxUploadSize annotation) {
+		if (annotation != null && annotation.getValue() > 0) {
+			field.setMaxUploadSize(annotation.getValue());
+		}
 	}
 
 	/**

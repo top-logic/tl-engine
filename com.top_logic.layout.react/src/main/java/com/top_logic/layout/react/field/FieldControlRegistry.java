@@ -100,7 +100,8 @@ public class FieldControlRegistry {
 	 * this provider is a {@link ReactValueListControl} with one such control per file, to which
 	 * several files are added at once: each uploaded file is a {@link ReactFieldControlProvider#uploadValues(FieldSpec)
 	 * value} of its own. The files the file picker offers are the
-	 * {@link FieldSpec#getAcceptedTypes() accepted types} of the field. The preview of a file is its
+	 * {@link FieldSpec#getAcceptedTypes() accepted types} of the field, each up to the
+	 * {@link FieldSpec#getMaxUploadSize() upload limit} of the field. The preview of a file is its
 	 * name.
 	 * </p>
 	 *
@@ -113,6 +114,9 @@ public class FieldControlRegistry {
 			ReactBinaryFieldControl control = new ReactBinaryFieldControl(context, model);
 			if (field.getAcceptedTypes() != null) {
 				control.setAcceptedTypes(field.getAcceptedTypes());
+			}
+			if (field.getMaxUploadSize() > 0) {
+				control.setMaxUploadSize(field.getMaxUploadSize());
 			}
 			return control;
 		}
@@ -139,8 +143,9 @@ public class FieldControlRegistry {
 	 * {@link ReactFieldControlProvider#isLarge(FieldSpec) large} control: in a
 	 * {@link FieldSpec#isCompact() compact} field, a table cell for instance, they are displayed in
 	 * place, wrapping within the room of the cell, rather than opened from a preview. The files the
-	 * file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted types} of the field.
-	 * The preview of the files is their names, separated by commas.
+	 * file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted types} of the field,
+	 * each up to the {@link FieldSpec#getMaxUploadSize() upload limit} of the field. The preview of
+	 * the files is their names, separated by commas.
 	 * </p>
 	 *
 	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
@@ -155,6 +160,9 @@ public class FieldControlRegistry {
 			ReactFileChipsControl control = new ReactFileChipsControl(context, model);
 			if (field.getAcceptedTypes() != null) {
 				control.setAcceptedTypes(field.getAcceptedTypes());
+			}
+			if (field.getMaxUploadSize() > 0) {
+				control.setMaxUploadSize(field.getMaxUploadSize());
 			}
 			return control;
 		}

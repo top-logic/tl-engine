@@ -32,10 +32,13 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.RemoveChipArguments;
 import com.top_logic.layout.react.control.upload.UploadSupport;
+import com.top_logic.layout.react.field.FieldControlRegistry;
+import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -283,6 +286,77 @@ public class TestReactFileChipsControl extends TestCase {
 		Chips chips = chips(new AbstractFieldModel(null));
 
 		assertEquals(Long.valueOf(UploadSupport.maxUploadSize()), chips.state(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(UploadSupport.maxUploadSize(), chips.maxUploadSize());
+	}
+
+	/**
+	 * A limit of the field below the application-wide one is what the control accepts and what the
+	 * client learns.
+	 */
+	public void testFieldLimitBelowTheGlobalLimit() {
+		long global = UploadSupport.maxUploadSize();
+		long limit = global / 2;
+		Chips chips = chips(new AbstractFieldModel(null));
+
+		chips.setMaxUploadSize(limit);
+
+		assertEquals(Long.valueOf(limit), chips.state(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(limit, chips.maxUploadSize());
+	}
+
+	/**
+	 * A limit of the field above the application-wide one is capped by it.
+	 */
+	public void testFieldLimitAboveTheGlobalLimit() {
+		long global = UploadSupport.maxUploadSize();
+		Chips chips = chips(new AbstractFieldModel(null));
+
+		chips.setMaxUploadSize(global * 2);
+
+		assertEquals(Long.valueOf(global), chips.state(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(global, chips.maxUploadSize());
+	}
+
+	/**
+	 * A field without a limit of its own accepts files up to the application-wide limit.
+	 */
+	public void testNoFieldLimit() {
+		long global = UploadSupport.maxUploadSize();
+		Chips chips = chips(new AbstractFieldModel(null));
+		chips.setMaxUploadSize(global / 2);
+
+		chips.setMaxUploadSize(0);
+
+		assertEquals(Long.valueOf(global), chips.state(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(global, chips.maxUploadSize());
+	}
+
+	/**
+	 * The chips provider takes the limit from the description of the field.
+	 */
+	public void testProviderTakesTheLimitOfTheFieldSpec() {
+		long limit = UploadSupport.maxUploadSize() / 4;
+		FieldSpec spec = FieldSpec.of(BinaryData.class, "files").setMultiple(true).setMaxUploadSize(limit);
+
+		ReactControl control =
+			FieldControlRegistry.FILE_CHIPS.createControl(context(), spec, new AbstractFieldModel(null));
+
+		assertTrue(control instanceof ReactFileChipsControl);
+		assertEquals(limit, ((ReactFileChipsControl) control).maxUploadSize());
+	}
+
+	/**
+	 * The single binary field publishes its limit under the key every upload control uses.
+	 */
+	public void testBinaryFieldLimit() {
+		long limit = UploadSupport.maxUploadSize() / 2;
+		Binary binary = new Binary(context(), new AbstractFieldModel(null));
+		assertEquals(Long.valueOf(UploadSupport.maxUploadSize()), binary.state(UploadSupport.MAX_UPLOAD_SIZE));
+
+		binary.setMaxUploadSize(limit);
+
+		assertEquals(Long.valueOf(limit), binary.state(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(limit, binary.maxUploadSize());
 	}
 
 	/**

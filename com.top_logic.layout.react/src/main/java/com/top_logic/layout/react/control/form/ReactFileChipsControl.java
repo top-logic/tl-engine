@@ -51,8 +51,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The state carries the {@link #CHIPS}, the file types the file picker offers under
- * {@link UploadSupport#ACCEPT}, the upload limit under {@link UploadSupport#MAX_UPLOAD_SIZE}, by
- * which the client refuses a larger selection before transmitting it, and the message of a failed
+ * {@link UploadSupport#ACCEPT}, the {@link #maxUploadSize() upload limit} under
+ * {@link UploadSupport#MAX_UPLOAD_SIZE}, by which the client refuses a larger selection before
+ * transmitting it, and the message of a failed
  * upload under {@link UploadSupport#ERROR}, cleared by the next successful upload. A
  * {@link #setCompact(boolean) compact} control, in a table cell for instance, lets its chips wrap
  * with reduced spacing and offers the add button as its icon alone.
@@ -90,6 +91,9 @@ public class ReactFileChipsControl extends ReactFormFieldControl implements Uplo
 
 	private int _nextKey;
 
+	/** The size limit of one uploaded file, see {@link #maxUploadSize()}. */
+	private long _maxUploadSize;
+
 	/**
 	 * Creates a {@link ReactFileChipsControl}.
 	 *
@@ -102,8 +106,28 @@ public class ReactFileChipsControl extends ReactFormFieldControl implements Uplo
 		super(context, model, REACT_MODULE);
 		// The files are displayed as chips; the collection itself is nothing the client draws.
 		putState(FieldState.VALUE__PROP, null);
-		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
+		setMaxUploadSize(0);
 		updateChips();
+	}
+
+	/**
+	 * Limits the size of each uploaded file to the given value, capped by the application-wide
+	 * {@link UploadSupport#maxUploadSize() limit}.
+	 *
+	 * @param fieldLimit
+	 *        The maximum size in bytes of one file the field accepts, <code>0</code> for no limit of
+	 *        its own.
+	 *
+	 * @see UploadSupport#effectiveMaxUploadSize(long)
+	 */
+	public void setMaxUploadSize(long fieldLimit) {
+		_maxUploadSize = UploadSupport.effectiveMaxUploadSize(fieldLimit);
+		putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(_maxUploadSize));
+	}
+
+	@Override
+	public long maxUploadSize() {
+		return _maxUploadSize;
 	}
 
 	/**

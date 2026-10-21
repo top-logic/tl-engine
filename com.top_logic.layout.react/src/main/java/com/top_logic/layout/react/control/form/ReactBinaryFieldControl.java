@@ -54,9 +54,6 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 	/** State key for the upload status ({@code "idle"} / {@code "received"}). */
 	private static final String STATUS = "status";
 
-	/** State key for the maximum upload size. */
-	private static final String MAX_SIZE = "maxSize";
-
 	/** State key indicating whether download data is available. */
 	private static final String HAS_DATA = "hasData";
 
@@ -68,6 +65,9 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 
 	private int _dataRevision;
 
+	/** The size limit of one uploaded file, see {@link #maxUploadSize()}. */
+	private long _maxUploadSize;
+
 	/**
 	 * Creates a new {@link ReactBinaryFieldControl}.
 	 *
@@ -75,8 +75,8 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 	 *        The {@link ReactContext} for ID allocation and SSE registration.
 	 * @param model
 	 *        The field model. Value type is {@link BinaryDataSource}, usually a {@link BinaryData}.
-	 *        If the model is a {@link DataFieldModel}, accepted types and max upload size are sent
-	 *        to the client.
+	 *        If the model is a {@link DataFieldModel}, its accepted types and its
+	 *        {@link #setMaxUploadSize(long) upload limit} apply.
 	 */
 	public ReactBinaryFieldControl(ReactContext context, FieldModel model) {
 		super(context, model, "TLBinaryField");
@@ -84,7 +84,7 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 		// and emit the download/upload display state instead.
 		putState(FieldState.VALUE__PROP, null);
 		putState(STATUS, "idle");
-		putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
+		setMaxUploadSize(0);
 		updateDataState(currentData());
 		initDataFieldState();
 	}
@@ -93,11 +93,28 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 		if (getFieldModel() instanceof DataFieldModel) {
 			DataFieldModel dataModel = (DataFieldModel) getFieldModel();
 			setAcceptedTypes(dataModel.getAcceptedTypes());
-			long maxSize = dataModel.getMaxUploadSize();
-			if (maxSize > 0) {
-				putState(MAX_SIZE, maxSize);
-			}
+			setMaxUploadSize(dataModel.getMaxUploadSize());
 		}
+	}
+
+	/**
+	 * Limits the size of each uploaded file to the given value, capped by the application-wide
+	 * {@link UploadSupport#maxUploadSize() limit}.
+	 *
+	 * @param fieldLimit
+	 *        The maximum size in bytes of one file the field accepts, <code>0</code> for no limit of
+	 *        its own.
+	 *
+	 * @see UploadSupport#effectiveMaxUploadSize(long)
+	 */
+	public void setMaxUploadSize(long fieldLimit) {
+		_maxUploadSize = UploadSupport.effectiveMaxUploadSize(fieldLimit);
+		putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(_maxUploadSize));
+	}
+
+	@Override
+	public long maxUploadSize() {
+		return _maxUploadSize;
 	}
 
 	/**

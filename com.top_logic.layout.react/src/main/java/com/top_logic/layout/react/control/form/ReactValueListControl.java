@@ -99,7 +99,8 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 	 *
 	 * <p>
 	 * Where they are, the control also publishes the file types its file picker offers under
-	 * {@link UploadSupport#ACCEPT} and the upload limit under {@link UploadSupport#MAX_UPLOAD_SIZE}.
+	 * {@link UploadSupport#ACCEPT} and the {@link #maxUploadSize() upload limit} under
+	 * {@link UploadSupport#MAX_UPLOAD_SIZE}.
 	 * </p>
 	 */
 	public static final String UPLOAD = "upload";
@@ -112,6 +113,9 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 
 	/** Creates the values from uploaded files, {@code null} if values are added empty. */
 	private final UploadValueFactory _uploadValues;
+
+	/** The size limit of one uploaded file, see {@link #maxUploadSize()}. */
+	private final long _maxUploadSize;
 
 	private final List<ListElementFieldModel> _elementModels = new ArrayList<>();
 
@@ -137,10 +141,11 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 		_ordered = fieldSpec.isOrdered();
 		_elementProvider = elementProvider;
 		_uploadValues = elementProvider.uploadValues(_elementSpec);
+		_maxUploadSize = UploadSupport.effectiveMaxUploadSize(_elementSpec.getMaxUploadSize());
 		putState(UPLOAD, Boolean.valueOf(_uploadValues != null));
 		if (_uploadValues != null) {
 			putState(UploadSupport.ACCEPT, UploadSupport.acceptAttribute(_elementSpec.getAcceptedTypes()));
-			putState(UploadSupport.MAX_UPLOAD_SIZE, UploadSupport.maxUploadSize());
+			putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(_maxUploadSize));
 		}
 		// The values are the element controls; the collection itself is nothing the client draws.
 		putState(FieldState.VALUE__PROP, null);
@@ -299,6 +304,15 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 		values.addAll(created);
 		getFieldModel().setValue(values);
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The {@link FieldSpec#getMaxUploadSize() limit of the field}, capped by the application-wide
+	 * {@link UploadSupport#maxUploadSize() limit}.
+	 */
+	@Override
+	public long maxUploadSize() {
+		return _maxUploadSize;
 	}
 
 	/**

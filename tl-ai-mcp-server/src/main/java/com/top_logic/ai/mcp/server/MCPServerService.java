@@ -48,9 +48,8 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
@@ -321,7 +320,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		 */
 		@Name(INSTRUCTIONS)
 		@Nullable
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		String getInstructions();
 
 		/**

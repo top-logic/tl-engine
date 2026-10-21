@@ -29,9 +29,8 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
@@ -156,7 +155,7 @@ public class TextPromptContributor extends AbstractConfiguredInstance<TextPrompt
 		@Label("Text")
 		@Mandatory
 		@LabelPositioning(LabelPosition.ABOVE)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		@Constraint(KnownPlaceholders.class)
 		@Binding(VerbatimTextBinding.class)
 		ResKey getText();

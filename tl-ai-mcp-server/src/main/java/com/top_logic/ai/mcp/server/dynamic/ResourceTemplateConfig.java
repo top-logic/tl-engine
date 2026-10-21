@@ -14,8 +14,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -150,7 +149,7 @@ public interface ResourceTemplateConfig extends PolymorphicConfiguration<Configu
 	 */
 	@Name(DESCRIPTION)
 	@Nullable
-	@ControlProvider(MultiLineText.class)
+	@MultiLine
 	String getDescription();
 
 	/**

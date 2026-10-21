@@ -9,8 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.security.AllToolGroups;
@@ -164,7 +163,7 @@ public interface ExposedTool extends ConfigurationItem {
 	 */
 	@Name(DESCRIPTION)
 	@Nullable
-	@ControlProvider(MultiLineText.class)
+	@MultiLine
 	String getDescription();
 
 	/**

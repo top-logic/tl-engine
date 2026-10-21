@@ -31,9 +31,8 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.tl.ai.core.agent.environment.AgentFact;
@@ -148,7 +147,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(DESCRIPTION)
 		@Nullable
 		@LabelPositioning(LabelPosition.ABOVE)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		String getDescription();
 
 		/**
@@ -194,7 +193,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(SYSTEM_PROMPT)
 		@Nullable
 		@LabelPositioning(LabelPosition.ABOVE)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		String getSystemPrompt();
 
 		/**
@@ -391,7 +390,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(DESCRIPTION)
 		@Nullable
 		@LabelPositioning(LabelPosition.ABOVE)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		String getDescription();
 
 		/**
@@ -400,7 +399,7 @@ public class TopLogicAgentDefinitions extends ConfiguredManagedClass<TopLogicAge
 		@Name(CONTENT)
 		@Nullable
 		@LabelPositioning(LabelPosition.ABOVE)
-		@ControlProvider(MultiLineText.class)
+		@MultiLine
 		String getContent();
 
 		/**

@@ -12,9 +12,8 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.form.values.MultiLineText;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
+import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.model.annotate.LabelPosition;
 
 /**
@@ -57,7 +56,7 @@ public interface EnvironmentConfig extends ConfigPart {
 	@Label("Template")
 	@Nullable
 	@LabelPositioning(LabelPosition.ABOVE)
-	@ControlProvider(MultiLineText.class)
+	@MultiLine
 	ResKey getTemplate();
 
 	/**

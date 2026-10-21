@@ -22,7 +22,8 @@ ask for it. The shapes showing every option suit a handful of options; a long li
 dropdown. `radio` offers every option as a radio button (a checkbox where several values can be
 chosen), laid out by `orientation` (`vertical`, the default, or `horizontal`). `filter="false"`
 drops the filter input of the dropdown, which then jumps to an option by typing the beginning of its
-label.
+label. `order` (`OptionOrder`) states the order the options are offered in, whatever the shape:
+`by-label` sorts them by their labels, `as-given` keeps the order their source gives them.
 
 Where `display` and `orientation` say nothing, the field decides: `FieldSpec.getSelectDisplay()` and
 `FieldSpec.getSelectOrientation()`, which `FieldControlService` takes from the model annotations
@@ -30,6 +31,13 @@ Where `display` and `orientation` say nothing, the field decides: `FieldSpec.get
 `<reference-display value="radio|radio-inline"/>` (a reference) - at the attribute, else at its
 type. `radio` and `checklist` give vertical radio buttons, `radio-inline` horizontal ones, every other
 presentation the dropdown.
+
+Where `order` says nothing, the source of the options decides through `FieldSpec.getOptionOrder()`
+(`null` for the order as given): the classifiers of an enumeration and the constants of an enum
+datatype are offered as given, the options of an expression (`<value-input options="…">`) in the
+order it computes (unless the `<value-input>` states an `option-order` of its own), those of an `options-by-expression` annotation as its `alphabetical-order` says
+(by label unless it is `false`), the instances of a class and the values of an option provider
+configured at the control by label.
 
 ```xml
 <field attribute="priority">

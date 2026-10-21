@@ -47,6 +47,8 @@
 		<channel name="radioHorizontal"/>
 		<channel name="checked"/>
 		<channel name="picked"/>
+		<channel name="day"/>
+		<channel name="daySorted"/>
 		<channel name="level"/>
 		<channel name="switched"/>
 		<channel name="requiredRadio"/>
@@ -560,8 +562,8 @@
 
 		<text>
 			<label>
-				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. The text beside each input reads the channel it writes.</en>
-				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
+				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. The options of an expression are offered in the order it computes them, and the order by-label of the input-control sorts them by their labels instead. The text beside each input reads the channel it writes.</en>
+				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Die Optionen eines Ausdrucks erscheinen in der Reihenfolge, in der er sie berechnet; die Reihenfolge by-label des input-control sortiert sie stattdessen nach ihren Beschriftungen. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
 			</label>
 		</text>
 		<fields>
@@ -643,6 +645,31 @@
 				/>
 			</value-input>
 			<value-input
+				options="['No day', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']"
+				value="day"
+			>
+				<label>
+					<en>Day of the week (as given)</en>
+					<de>Wochentag (wie gegeben)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+				/>
+			</value-input>
+			<value-input
+				options="['No day', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']"
+				value="daySorted"
+			>
+				<label>
+					<en>Day of the week (by label)</en>
+					<de>Wochentag (nach Bezeichnung)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="chips"
+					order="by-label"
+				/>
+			</value-input>
+			<value-input
 				type="tl.core:Integer"
 				value="level"
 			>
@@ -703,6 +730,14 @@
 			/>
 			<text
 				input="picked"
+				tone="helper"
+			/>
+			<text
+				input="day"
+				tone="helper"
+			/>
+			<text
+				input="daySorted"
 				tone="helper"
 			/>
 			<text

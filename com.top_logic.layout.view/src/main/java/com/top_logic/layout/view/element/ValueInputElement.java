@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
@@ -44,6 +45,7 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.UIElement;
@@ -165,6 +167,9 @@ public class ValueInputElement implements UIElement {
 		/** Configuration name for {@link #getOptions()}. */
 		String OPTIONS = "options";
 
+		/** Configuration name for {@link #getOptionOrder()}. */
+		String OPTION_ORDER = "option-order";
+
 		/** Configuration name for {@link #getMultiple()}. */
 		String MULTIPLE = "multiple";
 
@@ -238,6 +243,12 @@ public class ValueInputElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
+		 * The options of an expression are offered in the order it computes them, so that the
+		 * expression decides where each option stands; the {@link #getOptionOrder() option order}
+		 * sorts them by their labels instead.
+		 * </p>
+		 *
+		 * <p>
 		 * The options are computed again whenever one of the input channels changes.
 		 * </p>
 		 */
@@ -245,6 +256,27 @@ public class ValueInputElement implements UIElement {
 		@Nullable
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getOptions();
+
+		/**
+		 * The order the options are offered in, or nothing to offer them in the order their source
+		 * gives them.
+		 *
+		 * <p>
+		 * Where nothing is stated, the options of an {@link #getOptions() options expression} are
+		 * offered in the order it computes them, the options of the type in the order of its
+		 * classifiers for an enumeration and sorted by their labels for the instances of a class.
+		 * Sorting by label suits options computed without an order of their own, which the
+		 * expression would otherwise have to sort itself.
+		 * </p>
+		 *
+		 * <p>
+		 * An order stated at the {@link #getInputControl() input control} wins over this one.
+		 * </p>
+		 */
+		@Name(OPTION_ORDER)
+		@Nullable
+		@NullDefault
+		OptionOrder getOptionOrder();
 
 		/**
 		 * Whether the channel holds a collection of values rather than a single one.
@@ -469,6 +501,8 @@ public class ValueInputElement implements UIElement {
 
 	private final List<InputRef> _inputRefs;
 
+	private final OptionOrder _optionOrder;
+
 	private final boolean _multiple;
 
 	private final boolean _mandatory;
@@ -512,6 +546,7 @@ public class ValueInputElement implements UIElement {
 		_typeRef = config.getType();
 		_options = InputScript.compile(config, Config.OPTIONS);
 		_inputRefs = config.getInputs();
+		_optionOrder = config.getOptionOrder();
 		_multiple = config.getMultiple();
 		_mandatory = config.getMandatory();
 		_annotations = config;
@@ -559,6 +594,12 @@ public class ValueInputElement implements UIElement {
 		Resources resources = Resources.getInstance();
 		String label = _label == null ? null : resources.getString(_label);
 		FieldSpec spec = FieldControlService.fieldSpec(type, _annotations, label, _multiple, field);
+		if (_optionOrder != null) {
+			spec.setOptionOrder(AttributeOptions.comparator(_optionOrder));
+		} else if (_options != null) {
+			// The options expression computes the order the options are offered in.
+			spec.setOptionOrder(null);
+		}
 		if (_placeholder != null) {
 			spec.setPlaceholder(resources.getString(_placeholder));
 		}

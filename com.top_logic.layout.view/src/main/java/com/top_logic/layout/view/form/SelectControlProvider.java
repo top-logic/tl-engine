@@ -17,13 +17,13 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.element.meta.OptionProvider;
-import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldSpec;
@@ -53,13 +53,16 @@ import com.top_logic.model.annotate.ui.ReferenceDisplay;
  * <p>
  * The options are offered in the shape the edited field asks for, which for a model attribute
  * follows its {@link ReferenceDisplay} or {@link ClassificationDisplay} annotation and is a list
- * that opens on demand where the attribute says nothing. A {@link Config#getDisplay() display} and
- * an {@link Config#getOrientation() orientation} configured here override what the field says, so a
- * single form field deviates from how the attribute is displayed elsewhere.
+ * that opens on demand where the attribute says nothing. The options come in the order their
+ * source gives them: the classifiers of an enumeration and the result of an options expression
+ * keeping its order as given, the instances of a class sorted by their labels. A
+ * {@link Config#getDisplay() display}, an {@link Config#getOrientation() orientation} and an
+ * {@link Config#getOrder() order} configured here override what the field says, so a single form
+ * field deviates from how the attribute is displayed elsewhere.
  * </p>
  *
- * @implNote What the field asks for is read from {@link FieldSpec#getSelectDisplay()} and
- *           {@link FieldSpec#getSelectOrientation()}.
+ * @implNote What the field asks for is read from {@link FieldSpec#getSelectDisplay()},
+ *           {@link FieldSpec#getSelectOrientation()} and {@link FieldSpec#getOptionOrder()}.
  */
 public class SelectControlProvider implements ReactFieldControlProvider {
 
@@ -76,6 +79,9 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 
 		/** Configuration name for {@link #getOrientation()}. */
 		String ORIENTATION = "orientation";
+
+		/** Configuration name for {@link #getOrder()}. */
+		String ORDER = "order";
 
 		/** Configuration name for {@link #hasFilter()}. */
 		String FILTER = "filter";
@@ -139,6 +145,28 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		Orientation getOrientation();
 
 		/**
+		 * The order the options are offered in, or nothing to offer them in the order their source
+		 * gives them.
+		 *
+		 * <p>
+		 * Sorted by label, an option is found where its name puts it, which suits a long list of
+		 * names without an order of their own. As given, options with an order of their own - the
+		 * days of a week, the steps of a process, a list that starts with "none" - keep that order.
+		 * </p>
+		 *
+		 * <p>
+		 * Where nothing is stated, the source of the options decides: the classifiers of an
+		 * enumeration and the result of an options expression that is not asked to sort
+		 * alphabetically are offered as given, the instances of a class sorted by their labels.
+		 * Stated here, the order holds for this field alone.
+		 * </p>
+		 */
+		@Name(ORDER)
+		@Nullable
+		@NullDefault
+		OptionOrder getOrder();
+
+		/**
 		 * Whether the list that opens on demand offers an input to filter its options by.
 		 *
 		 * <p>
@@ -160,16 +188,19 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 
 	private final Orientation _orientation;
 
+	private final OptionOrder _order;
+
 	private final boolean _filter;
 
 	/**
 	 * Creates a {@link SelectControlProvider} without a configured option source (options are
-	 * derived from the attribute), offering them in the shape each field asks for.
+	 * derived from the attribute), offering them in the shape and the order each field asks for.
 	 */
 	public SelectControlProvider() {
 		_optionProvider = null;
 		_display = null;
 		_orientation = null;
+		_order = null;
 		_filter = true;
 	}
 
@@ -181,6 +212,7 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		_optionProvider = config.getOptionProvider();
 		_display = config.getDisplay();
 		_orientation = config.getOrientation();
+		_order = config.getOrder();
 		_filter = config.hasFilter();
 	}
 
@@ -204,6 +236,13 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	 */
 	public Orientation getOrientation() {
 		return _orientation;
+	}
+
+	/**
+	 * The order the options are offered in, or {@code null} to follow what each field says.
+	 */
+	public OptionOrder getOrder() {
+		return _order;
 	}
 
 	/**
@@ -235,7 +274,8 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		// it for want of one. The two registries of LabelProviderService fall back to each other,
 		// so a type registered only for its label is labelled exactly as before.
 		LabelProvider labels = MetaResourceProvider.INSTANCE;
-		Comparator<?> optionOrder = LabelComparator.newCachingInstance(labels);
+		Comparator<?> optionOrder =
+			_order == null ? field.getOptionOrder() : AttributeOptions.comparator(_order);
 		// An ordered attribute keeps the order the user gives its selection; an unordered one is
 		// shown in the order of the options.
 		SelectDisplay display = _display == null ? field.getSelectDisplay() : _display;

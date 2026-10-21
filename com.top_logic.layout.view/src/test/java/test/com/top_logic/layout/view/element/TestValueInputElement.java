@@ -53,6 +53,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldControlRegistry;
@@ -60,6 +61,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.DatePickerState.Precision;
+import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.react.state.TypingFieldState;
@@ -231,8 +233,20 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final int MANDATORY_TEXT_ON_CHANGE = 18;
 
+	/**
+	 * Position of the input of the test view choosing a text from the options its expression
+	 * computes.
+	 */
+	private static final int COMPUTED_OPTIONS = 19;
+
+	/**
+	 * Position of the input of the test view choosing a text from the options its expression
+	 * computes, offered sorted by their labels.
+	 */
+	private static final int COMPUTED_OPTIONS_BY_LABEL = 20;
+
 	/** The number of inputs in the test view. */
-	private static final int INPUT_COUNT = 19;
+	private static final int INPUT_COUNT = 21;
 
 	/** The enumeration the choice inputs of the test view choose from, part of the application model. */
 	private static final String CHANGE_TYPE = "tl.changelog:ChangeType";
@@ -913,6 +927,38 @@ public class TestValueInputElement extends TestCase {
 
 		assertEquals("Without an annotation, the options are offered in a list that opens on demand.",
 			SelectDisplay.DROPDOWN, select(field(chrome(OPTIONAL_CHOICE))).getDisplay());
+	}
+
+	/**
+	 * The options an expression computes are offered in the order it computes them, not sorted by
+	 * their labels.
+	 */
+	public void testComputedOptionsAreOfferedInTheirOrder() throws Exception {
+		assertEquals(List.of("No day", "Monday", "Tuesday"), offeredLabels(COMPUTED_OPTIONS));
+	}
+
+	/**
+	 * The options an expression computes are offered sorted by their labels where the input states
+	 * {@link OptionOrder#BY_LABEL}.
+	 */
+	public void testComputedOptionsAreSortedByLabelOnRequest() throws Exception {
+		assertEquals(List.of("Monday", "No day", "Tuesday"), offeredLabels(COMPUTED_OPTIONS_BY_LABEL));
+	}
+
+	/**
+	 * The labels of the options the select input at the given position hands to its client, in the
+	 * order handed over.
+	 */
+	private List<String> offeredLabels(int position) throws Exception {
+		Map<String, Object> state = select(input(position)).scriptingScalarState();
+
+		assertEquals("The chips are handed their options.", Boolean.TRUE,
+			state.get(DropdownSelectState.OPTIONS_LOADED__PROP));
+		List<String> labels = new ArrayList<>();
+		for (Object option : (List<?>) state.get(DropdownSelectState.OPTIONS__PROP)) {
+			labels.add((String) ((Map<?, ?>) option).get(DropdownSelectState.Option.LABEL__PROP));
+		}
+		return labels;
 	}
 
 	/**

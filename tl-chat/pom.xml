@@ -148,11 +148,14 @@
             plugin in the child, and Maven orders executions of one phase by the
             order their plugins appear in the effective pom.
 
-            `skipTests` is pinned to false because the frontend plugin honours
-            `${skipTests}` only for an execution in a testing phase: without the pin,
-            the JS tests would be off in every build that does not pass
-            `-DskipTests=false`, which is the default. What switches them off is
-            `-Dskip.npm=true`.
+            In the `test` phase the frontend plugin binds `skipTests` to
+            `${skipTests}` and `testFailureIgnore` to `${maven.test.failure.ignore}`,
+            so the JS tests follow the same switches as the Java tests: they run
+            with `-DskipTests=false` and are skipped by default, and a failure
+            fails the build unless failures are ignored. Vitest writes a JUnit
+            report into `target/surefire-reports` (see `ui/vite.config.ts`), so a CI
+            build that collects the surefire reports shows JS failures together
+            with the Java ones.
           -->
           <execution>
             <id>npm-test</id>
@@ -162,7 +165,6 @@
             </goals>
             <configuration>
               <arguments>test</arguments>
-              <skipTests>false</skipTests>
             </configuration>
           </execution>
         </executions>

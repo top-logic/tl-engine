@@ -8,6 +8,10 @@ export default defineConfig({
     // The host supplies `tl-react-bridge` in the browser and the build keeps it external, so a test
     // run has nothing to resolve it to. See `test/tl-react-bridge.ts` for what the stub covers.
     alias: { 'tl-react-bridge': new URL('./test/tl-react-bridge.ts', import.meta.url).pathname },
+    // A JUnit report next to the surefire reports of the module, so CI collects the JS test results
+    // together with the Java ones.
+    reporters: ['default', 'junit'],
+    outputFile: { junit: '../target/surefire-reports/TEST-vitest.xml' },
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),

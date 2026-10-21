@@ -72,6 +72,16 @@ public final class IndexGeneration implements Closeable {
 
 	private final Analyzer _analyzer;
 
+	/**
+	 * The commit data of the last commit whose documents searches see.
+	 *
+	 * <p>
+	 * Replaced only after the commit and the refresh of the searchers, so that whoever reads a
+	 * watermark from it finds every chunk up to that watermark in a search.
+	 * </p>
+	 */
+	private volatile Map<String, String> _commitData;
+
 	private IndexGeneration(Path path, FSDirectory directory, IndexWriter writer, Analyzer analyzer)
 			throws IOException {
 		_path = path;
@@ -79,6 +89,7 @@ public final class IndexGeneration implements Closeable {
 		_writer = writer;
 		_analyzer = analyzer;
 		_searchers = new SearcherManager(writer, null);
+		_commitData = liveCommitData(writer);
 	}
 
 	/**
@@ -133,11 +144,15 @@ public final class IndexGeneration implements Closeable {
 	}
 
 	/**
-	 * The commit data of the last commit, or of the pending one when it was set since.
+	 * The commit data of the last commit, once its documents are visible to searches.
 	 */
 	public Map<String, String> commitData() {
+		return new HashMap<>(_commitData);
+	}
+
+	private static Map<String, String> liveCommitData(IndexWriter writer) {
 		Map<String, String> result = new HashMap<>();
-		Iterable<Map.Entry<String, String>> data = _writer.getLiveCommitData();
+		Iterable<Map.Entry<String, String>> data = writer.getLiveCommitData();
 		if (data != null) {
 			for (Map.Entry<String, String> entry : data) {
 				result.put(entry.getKey(), entry.getValue());
@@ -181,12 +196,14 @@ public final class IndexGeneration implements Closeable {
 
 	/**
 	 * Commits everything written so far together with the given commit data, and makes it visible to
-	 * searches.
+	 * searches; {@link #commitData()} reports the given data only then.
 	 */
 	public void commit(Map<String, String> data) throws IOException {
-		_writer.setLiveCommitData(new HashMap<>(data).entrySet());
+		Map<String, String> committed = new HashMap<>(data);
+		_writer.setLiveCommitData(committed.entrySet());
 		_writer.commit();
 		_searchers.maybeRefreshBlocking();
+		_commitData = committed;
 	}
 
 	/**

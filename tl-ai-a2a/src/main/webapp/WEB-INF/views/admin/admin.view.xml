@@ -7,7 +7,7 @@
 	tokens" section of tl-ai-core for why a section of its own.
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<tab-bar>
+	<tab-bar config:ref="sections">
 		<tabs>
 			<tab id="a2a"
 				config:operation="add"

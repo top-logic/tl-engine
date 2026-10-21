@@ -12,7 +12,7 @@
 	way tl-model-search-react adds "Development".
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<tab-bar>
+	<tab-bar config:ref="sections">
 		<tabs>
 			<tab id="access-tokens"
 				config:operation="add"

@@ -7,7 +7,7 @@
 	merged onto the base in dependency order, so tl-layout-view needs no knowledge of this module.
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<tab-bar>
+	<tab-bar config:ref="settings-tabs">
 		<tabs>
 			<tab id="access-tokens"
 				config:operation="add"

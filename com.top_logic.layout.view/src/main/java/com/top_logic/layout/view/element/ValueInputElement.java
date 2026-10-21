@@ -59,6 +59,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.TLValueNormalizer;
+import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.config.AttributeConfigBase;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -102,6 +104,12 @@ import com.top_logic.util.Resources;
  * {@code <multi-line>}, a {@code <format>}, an {@code <input-control>} - which act on the input as
  * they act on a field of such an attribute. An annotation the input does not state is taken from
  * the type.
+ * </p>
+ *
+ * <p>
+ * A {@link TLValueNormalizer} among the annotations brings a value the user enters into its
+ * canonical form before it reaches the channel. Its function sees no object, since the input is not
+ * bound to one.
  * </p>
  *
  * <p>
@@ -455,6 +463,8 @@ public class ValueInputElement implements UIElement {
 
 	private final AnnotationLookup _annotations;
 
+	private final ValueNormalizer _normalizer;
+
 	private final ResKey _label;
 
 	private final ResKey _placeholder;
@@ -493,6 +503,7 @@ public class ValueInputElement implements UIElement {
 		_multiple = config.getMultiple();
 		_mandatory = config.getMandatory();
 		_annotations = config;
+		_normalizer = ValueNormalizer.annotated(config);
 		_label = config.getLabel();
 		_placeholder = config.getPlaceholder();
 		_icon = config.getIcon();
@@ -529,6 +540,9 @@ public class ValueInputElement implements UIElement {
 		// channel already holds instead of over an empty field it has to be told about afterwards.
 		ChannelFieldBinding binding = ChannelFieldBinding.bind(context.resolveChannel(_valueRef), field,
 			options != null, _multiple);
+		// Set after binding: the value the channel holds is shown as it is, only an entered value is
+		// normalized.
+		field.setNormalizer(_normalizer);
 		FieldModelListener mandatoryCheck = _mandatory ? checkMandatory(field) : null;
 
 		Resources resources = Resources.getInstance();

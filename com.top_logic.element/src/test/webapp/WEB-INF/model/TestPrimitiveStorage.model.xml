@@ -51,6 +51,15 @@
 								</storage-algorithm>
 							</annotations>
 						</property>
+						<property name="flag"
+							type="tl.core:Boolean"
+						/>
+						<property name="tristate"
+							type="tl.core:Tristate"
+						/>
+						<property name="number"
+							type="tl.core:Long"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="tl.model:TLObject"/>

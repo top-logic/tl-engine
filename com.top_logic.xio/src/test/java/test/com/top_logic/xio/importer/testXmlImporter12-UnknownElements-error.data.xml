@@ -1,0 +1,10 @@
+<data>
+	<strict name="s1">
+		<child name="c1"/>
+		<unknown-strict/>
+	</strict>
+	<unknown-after/>
+	<lenient name="l1">
+		<anything name="d1"/>
+	</lenient>
+</data>

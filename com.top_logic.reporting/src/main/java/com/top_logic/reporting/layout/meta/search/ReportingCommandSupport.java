@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.expression.SaveExpressionCommand;
 import com.top_logic.element.layout.meta.search.DeleteQueryCommandHandler;
@@ -171,7 +172,7 @@ public class ReportingCommandSupport implements ReportConstants{
 			Person creator = ((StoredReport) model).getCreator();
 			Person currentUser = TLContext.getContext().getCurrentPersonWrapper();
 
-			if (!WrapperHistoryUtils.equalsUnversioned(currentUser, creator) || Person.isAdmin(currentUser)) {
+			if (!WrapperHistoryUtils.equalsUnversioned(currentUser, creator) || ThreadContext.isAdmin()) {
 				return ExecutableState.NO_EXEC_PERMISSION;
 			}
 

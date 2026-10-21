@@ -1,0 +1,12 @@
+<handler>
+	<tag name="item">
+		<switch xml-attribute="flag">
+			<case value="1, true">
+				<no-op/>
+			</case>
+			<case value="0, true">
+				<no-op/>
+			</case>
+		</switch>
+	</tag>
+</handler>

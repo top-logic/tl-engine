@@ -31,7 +31,7 @@ import com.nimbusds.oauth2.sdk.util.URLUtils;
 import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.NamedConstant;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenStorage;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
@@ -104,7 +104,7 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 	}
 
 	private Person accountByName(String accountName) {
-		return ThreadContextManager.inSystemInteraction(TokenBasedAuthenticator.class,
+		return ThreadContext.inSystemContext(TokenBasedAuthenticator.class,
 			() -> Person.byName(accountName));
 	}
 

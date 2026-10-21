@@ -80,6 +80,9 @@ public interface ReactFieldControlProvider {
 			if (field.isCompact()) {
 				fieldControl.setCompact(true);
 			}
+			if (field.isSendValueOnBlur()) {
+				fieldControl.setSendValueOnBlur(true);
+			}
 		}
 		return control;
 	}

@@ -15,6 +15,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dev.tools.model.I18NConstants;
 import com.top_logic.dev.tools.model.ModelEditAction;
@@ -120,7 +121,7 @@ public class TestNewAttributeMultiple extends TestCase {
 	 */
 	private static FormVisibility multipleMode(String type, boolean multiple) {
 		FormVisibility[] result = new FormVisibility[1];
-		ThreadContextManager.inSystemInteraction(TestNewAttributeMultiple.class, () -> {
+		ThreadContext.inSystemContext(TestNewAttributeMultiple.class, () -> {
 			TLObject newAttribute = newAttribute(type, multiple);
 			TLStructuredTypePart part = newAttribute.tType().getPartOrFail(MULTIPLE);
 			ModeSelector selector = DynamicVisibility.modeSelector(part);
@@ -161,7 +162,7 @@ public class TestNewAttributeMultiple extends TestCase {
 	 * afterwards.
 	 */
 	private static void inTestModule(OwnerTest test) {
-		ThreadContextManager.inSystemInteraction(TestNewAttributeMultiple.class, () -> {
+		ThreadContext.inSystemContext(TestNewAttributeMultiple.class, () -> {
 			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 				TLModule module = TLModelUtil.addModule(ModelService.getApplicationModel(), TEST_MODULE);
 				test.run(TLModelUtil.addClass(module, TEST_CLASS));

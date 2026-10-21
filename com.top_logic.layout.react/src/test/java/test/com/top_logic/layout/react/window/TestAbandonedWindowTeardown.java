@@ -26,6 +26,7 @@ import com.meterware.servletunit.ServletRunner;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.I18NConstants;
@@ -41,7 +42,6 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.util.TLContext;
-import com.top_logic.util.TLContextManager;
 
 /**
  * Tests that a window whose client went away is torn down after
@@ -275,7 +275,7 @@ public class TestAbandonedWindowTeardown extends BasicTestCase {
 		InvocationContext invocation =
 			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
 		// Keep the session context of the test thread.
-		return TLContextManager.inSystemInteraction(TestAbandonedWindowTeardown.class,
+		return ThreadContext.inSystemContext(TestAbandonedWindowTeardown.class,
 			() -> SessionService.getInstance().loginUser(invocation.getRequest(), invocation.getResponse(), user));
 	}
 

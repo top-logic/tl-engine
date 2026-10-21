@@ -14,14 +14,19 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.xio.importer.binding.ImportContext;
 import com.top_logic.xio.importer.handlers.DispatchingImporter.Config.TagHandler;
 import com.top_logic.xio.importer.handlers.Handler.Config.HandlerRef;
@@ -38,6 +43,14 @@ public class DispatchingImporter<C extends DispatchingImporter.Config<?>> extend
 	private static SkipDeep.Config<?> SKIP_DEEP = TypedConfiguration.newConfigItem(SkipDeep.Config.class);
 
 	/**
+	 * The {@link UnknownElements} mode in effect for the currently imported subtree.
+	 *
+	 * @see Config#getUnknown()
+	 */
+	private static final Property<UnknownElements> UNKNOWN_ELEMENTS =
+		TypedAnnotatable.property(UnknownElements.class, "unknownElements", UnknownElements.SKIP);
+
+	/**
 	 * Configuration options for {@link DispatchingImporter}.
 	 */
 	@TagName("dispatch")
@@ -48,6 +61,26 @@ public class DispatchingImporter<C extends DispatchingImporter.Config<?>> extend
 		 * element.
 		 */
 		HandlerRef getDefault();
+
+		/**
+		 * Configuration name of {@link #getUnknown()}.
+		 */
+		String UNKNOWN = "unknown";
+
+		/**
+		 * How an element is handled that has neither an entry in {@link #getTags()} nor a
+		 * {@link #getDefault() default handler}.
+		 *
+		 * <p>
+		 * If not set, the setting of the enclosing {@link DispatchingImporter} applies, at the top
+		 * level {@link UnknownElements#SKIP}. The setting applies to the whole subtree of this
+		 * {@link DispatchingImporter}, unless a nested one sets it again.
+		 * </p>
+		 */
+		@Name(UNKNOWN)
+		@Label("Unknown elements")
+		@NullDefault
+		UnknownElements getUnknown();
 
 		/**
 		 * The tag name to {@link Handler} mapping.
@@ -79,7 +112,11 @@ public class DispatchingImporter<C extends DispatchingImporter.Config<?>> extend
 
 	private Map<String, Handler> _handlers = new HashMap<>();
 
-	private Handler _defaultHandler;
+	private final Handler _defaultHandler;
+
+	private final Handler _skipHandler;
+
+	private final UnknownElements _unknown;
 
 	/**
 	 * Creates a {@link DispatchingImporter} from configuration.
@@ -96,9 +133,12 @@ public class DispatchingImporter<C extends DispatchingImporter.Config<?>> extend
 		HandlerRef defaultRef = config.getDefault();
 		if (defaultRef != null) {
 			_defaultHandler = context.getInstance(defaultRef.getHandler());
+			_skipHandler = null;
 		} else {
-			_defaultHandler = context.getInstance(SKIP_DEEP);
+			_defaultHandler = null;
+			_skipHandler = context.getInstance(SKIP_DEEP);
 		}
+		_unknown = config.getUnknown();
 		_handlers = new HashMap<>();
 		for (TagHandler tag : config.getTags().values()) {
 			_handlers.put(tag.getName(), NestedImportHandler.buildHandlers(context, tag.getImpl()));
@@ -107,6 +147,19 @@ public class DispatchingImporter<C extends DispatchingImporter.Config<?>> extend
 
 	@Override
 	public Object importXml(ImportContext context, XMLStreamReader in) throws XMLStreamException {
+		if (_unknown == null) {
+			return importContents(context, in);
+		}
+
+		UnknownElements before = context.set(UNKNOWN_ELEMENTS, _unknown);
+		try {
+			return importContents(context, in);
+		} finally {
+			context.set(UNKNOWN_ELEMENTS, before);
+		}
+	}
+
+	private Object importContents(ImportContext context, XMLStreamReader in) throws XMLStreamException {
 		Object result = null;
 		while (true) {
 			switch (in.next()) {
@@ -117,7 +170,7 @@ public class DispatchingImporter<C extends DispatchingImporter.Config<?>> extend
 
 				case XMLStreamConstants.START_ELEMENT: {
 					String localName = in.getLocalName();
-					Handler importer = importer(localName);
+					Handler importer = importer(context, in, localName);
 					Object imported = importer.importXml(context, in);
 					if (imported != null) {
 						result = imported;
@@ -138,12 +191,25 @@ public class DispatchingImporter<C extends DispatchingImporter.Config<?>> extend
 		}
 	}
 
-	private Handler importer(String localName) {
+	private Handler importer(ImportContext context, XMLStreamReader in, String localName) {
 		Handler result = _handlers.get(localName);
-		if (result == null) {
+		if (result != null) {
+			return result;
+		}
+		if (_defaultHandler != null) {
 			return _defaultHandler;
 		}
-		return result;
+		switch (context.get(UNKNOWN_ELEMENTS)) {
+			case SKIP:
+				break;
+			case WARN:
+				context.log(Level.WARN, in.getLocation(), I18NConstants.WARN_UNKNOWN_ELEMENT__TAG.fill(localName));
+				break;
+			case ERROR:
+				context.error(in.getLocation(), I18NConstants.ERROR_UNKNOWN_ELEMENT__TAG.fill(localName));
+				break;
+		}
+		return _skipHandler;
 	}
 
 }

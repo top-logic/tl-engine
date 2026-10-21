@@ -17,7 +17,7 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.io.binary.scan.UploadRejectedException;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.ContentHandlersRegistry;
@@ -145,7 +145,7 @@ public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants 
 			throws IOException, ServletException {
 		super.handleNoSession(request, response);
 
-		ThreadContextManager.inSystemInteraction(TopLogicServlet.class, () -> {
+		ThreadContext.inSystemContext(TopLogicServlet.class, () -> {
 			Person anonymous = PersonManager.getManager().getAnonymous();
 			SessionService.getInstance().loginUser(request, response, anonymous);
 		});

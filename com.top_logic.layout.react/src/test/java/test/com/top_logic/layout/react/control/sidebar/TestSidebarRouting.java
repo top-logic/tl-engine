@@ -19,6 +19,7 @@ import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
@@ -155,6 +156,59 @@ public class TestSidebarRouting extends TestCase {
 		assertEquals("The page left behind was retired only after the sidebar already named the "
 			+ "page moved to; while both are registered, the composed URL carries a segment of a "
 			+ "page that is not displayed.", "first", left._segmentAtDetach);
+	}
+
+	/**
+	 * The content of an item without a route contributes nothing to the URL, and a reload of the
+	 * window keeps the item.
+	 *
+	 * <p>
+	 * A segment the content contributed would stand where the segment of the item belongs: the
+	 * composed URL would name a route of the sidebar it does not have, and opening it in a new window
+	 * would show the default item instead.
+	 * </p>
+	 */
+	public void testContentOfAnItemWithoutRouteHasNoUrl() {
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		ReactContext context = new DefaultReactContext("", "test", queue, new ReactWindowRegistry("test"));
+		RouteManager routeManager = context.getRouteManager();
+		queue.setRouteManager(routeManager);
+		List<String> reported = new ArrayList<>();
+		routeManager.setUrlChangeHandler((url, replace) -> reported.add(url));
+
+		Supplier<String> noSegment = () -> null;
+		List<SidebarItem> items = List.of(
+			new NavigationItem("first", "First", null,
+				() -> new RoutedContent(context, "one", noSegment)).withRoute("first"),
+			new NavigationItem("admin", "Admin", null,
+				() -> new RoutedContent(context, "tab", noSegment)));
+
+		ReactSidebarControl sidebar =
+			new ReactSidebarControl(context, items, "first", false, null, null);
+		queue.setRootControl(sidebar);
+		sidebar.attach();
+		render(sidebar);
+		assertEquals("The content of a routed item is part of the URL.", "first/one",
+			routeManager.currentUrl());
+
+		sidebar.selectItem("admin");
+		render(sidebar);
+		assertFalse("The item without a route is not selected.", sidebar.routesContent());
+		assertEquals("The content of an item without a route contributed to the URL.", "",
+			routeManager.currentUrl());
+		assertEquals("Selecting the item without a route left the URL of the item before in the "
+			+ "address bar.", "", reported.get(reported.size() - 1));
+
+		// A reload of the window adopts the URL the client shows.
+		routeManager.adoptUrl("");
+		routeManager.resolvePending();
+		routeManager.finishAdoption();
+		assertFalse("A reload of the window left the item without a route.", sidebar.routesContent());
+		assertEquals("", routeManager.currentUrl());
+
+		sidebar.selectItem("first");
+		render(sidebar);
+		assertEquals("first/one", routeManager.currentUrl());
 	}
 
 }

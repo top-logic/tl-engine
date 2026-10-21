@@ -1,0 +1,55 @@
+<handler unknown="warn">
+	<tag name="data">
+		<dispatch>
+			<tag name="item">
+				<object model-type="test.com.top_logic.xio.importer.test12:Item">
+					<property name="name" xml-attribute="name"/>
+					<linking>
+						<list-linking name="test.com.top_logic.xio.importer.test12:Container#elements"/>
+					</linking>
+					<dispatch>
+						<tag name="note"/>
+					</dispatch>
+				</object>
+			</tag>
+			<tag name="strict">
+				<object model-type="test.com.top_logic.xio.importer.test12:Item">
+					<property name="name" xml-attribute="name"/>
+					<linking>
+						<list-linking name="test.com.top_logic.xio.importer.test12:Container#elements"/>
+					</linking>
+					<dispatch unknown="error">
+						<tag name="child">
+							<object model-type="test.com.top_logic.xio.importer.test12:Item">
+								<property name="name" xml-attribute="name"/>
+								<linking>
+									<list-linking name="test.com.top_logic.xio.importer.test12:Item#children"/>
+								</linking>
+								<dispatch/>
+							</object>
+						</tag>
+					</dispatch>
+				</object>
+			</tag>
+			<tag name="lenient">
+				<object model-type="test.com.top_logic.xio.importer.test12:Item">
+					<property name="name" xml-attribute="name"/>
+					<linking>
+						<list-linking name="test.com.top_logic.xio.importer.test12:Container#elements"/>
+					</linking>
+					<dispatch unknown="error">
+						<default>
+							<object model-type="test.com.top_logic.xio.importer.test12:Item">
+								<property name="name" xml-attribute="name"/>
+								<linking>
+									<list-linking name="test.com.top_logic.xio.importer.test12:Item#children"/>
+								</linking>
+								<dispatch/>
+							</object>
+						</default>
+					</dispatch>
+				</object>
+			</tag>
+		</dispatch>
+	</tag>
+</handler>

@@ -48,7 +48,7 @@ import com.top_logic.basic.sql.Oracle12Helper;
 import com.top_logic.basic.sql.OracleHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.thread.InContext;
-import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
@@ -331,7 +331,7 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 			private HandlerResult doImport(DisplayContext context) {
 				// Load in the background.
 				SchedulerService.getInstance().schedule(
-					inSystemInteraction(() -> loadSql(importLog, kbConfig, pool, migration, _sqlFile)),
+					withSystemContext(() -> loadSql(importLog, kbConfig, pool, migration, _sqlFile)),
 					2, TimeUnit.SECONDS);
 
 				// Direct logout to prevent errors from being transported back to the UI.
@@ -346,9 +346,9 @@ public class ImportDataDialog extends AbstractFormPageDialog {
 	 * Wraps the given callback into a {@link Runnable} that sets up a system context for the
 	 * execution.
 	 */
-	protected static Runnable inSystemInteraction(InContext runnable) {
+	protected static Runnable withSystemContext(InContext runnable) {
 		return () -> {
-			ThreadContextManager.inSystemInteraction(ImportDataDialog.class, runnable);
+			ThreadContext.inSystemContext(ImportDataDialog.class, runnable);
 		};
 	}
 

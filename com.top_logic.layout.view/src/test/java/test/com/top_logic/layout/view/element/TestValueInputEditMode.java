@@ -26,6 +26,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.element.meta.form.constraint.I18NConstants;
 import com.top_logic.layout.form.model.FieldModel;
@@ -120,7 +121,7 @@ public class TestValueInputEditMode extends TestCase {
 	 */
 	@Override
 	protected void runTest() throws Throwable {
-		ThreadContextManager.<Void, Throwable, RuntimeException> inSystemInteraction(TestValueInputEditMode.class,
+		ThreadContext.<Void, Throwable, RuntimeException> inSystemContext(TestValueInputEditMode.class,
 			() -> {
 				super.runTest();
 				return null;

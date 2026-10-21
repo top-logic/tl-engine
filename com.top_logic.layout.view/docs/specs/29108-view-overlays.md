@@ -46,12 +46,19 @@ with config-grade merge semantics instead of file replacement.
 - `ViewElement.getContent()` is **single-valued** so an overlay's content
   recurse-merges into the base content element instead of replacing or appending
   it.
-- Container child lists that are extension targets are **keyed** so entries
-  merge and `config:position` can address them: `TabBarElement.getTabs()`
-  (`@Key(id)`) and `SidebarElement.getItems()` (`@Key(id)`, via the shared
-  `SidebarItemConfig` base — a `<separator>` may leave the id empty, but at most
-  one anonymous entry may occur). Positioning still requires ids on the elements
-  you position against; contributing to the *end* does not.
+- Every element list of the view is **keyed** by `id` so entries merge and
+  `config:position` can address them: the child lists of the elements
+  (`List<UIElement.Config>`, `@Key(UIElement.Config.ID)`, the optional `id` of
+  `UIElement.Config`), `TabBarElement.getTabs()`, `SidebarElement.getItems()`
+  (via the shared `SidebarItemConfig` base), the panes of a split panel, the
+  cases of a switch, the steps of a wizard and the tiles of a dashboard. An
+  entry without id is **anonymous**: it is appended in order, matches no entry
+  of another source, and any number of anonymous entries may occur.
+  `config:index="n"` addresses the entry at position n of the list as merged so
+  far, which is the only way to descend into an anonymous element. Positioning
+  still requires ids on the elements you position against; contributing to the
+  *end* does not. The four slots of `<app-shell>` are keyed by the kind of
+  their element instead (at most one element per kind).
 
 ## Runtime and build
 

@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
-import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.InContext;
@@ -102,14 +101,17 @@ public class ReportQueue extends Thread {
         while (tokenToExecute != null) {
 			final ReportHandler jobToExecute = ReportGenerator.getInstance().createReportHandler(tokenToExecute);
 			final UserInterface requestUser = tokenToExecute.getRequestUser();
-			TLContext.inSystemContext(ReportQueue.class, new InContext() {
-				@Override
-				public void inContext() {
-					TLSubSessionContext session = TLContextManager.getSubSession();
-					session.setPerson(requestUser == null ? null : Person.byName(requestUser.getUserName()));
-					jobToExecute.prepare();
-					jobToExecute.processReport();
-					jobToExecute.finishReport();
+			InContext job = () -> {
+				jobToExecute.prepare();
+				jobToExecute.processReport();
+				jobToExecute.finishReport();
+			};
+			TLContext.inSystemContext(ReportQueue.class, () -> {
+				Person requestPerson = requestUser == null ? null : Person.byName(requestUser.getUserName());
+				if (requestPerson == null) {
+					job.inContext();
+				} else {
+					TLContextManager.inPersonContext(requestPerson, job);
 				}
 			});
 

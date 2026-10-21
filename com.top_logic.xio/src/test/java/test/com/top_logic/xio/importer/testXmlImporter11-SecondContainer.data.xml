@@ -1,0 +1,10 @@
+<data>
+	<item id="top1"/>
+	<item id="parent1">
+		<child id="child1"/>
+		<child-ref ref="top1"/>
+	</item>
+	<item id="parent2">
+		<child id="child2"/>
+	</item>
+</data>

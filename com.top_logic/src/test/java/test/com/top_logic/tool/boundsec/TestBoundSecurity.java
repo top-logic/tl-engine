@@ -32,7 +32,7 @@ import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundRole;
-import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * Playground to check the BoundSecurity ideas.
@@ -74,8 +74,6 @@ public class TestBoundSecurity extends BasicTestCase {
             if (personC == null)  
 				personC = Person.create(PersistencyLayer.getKnowledgeBase(), "CC", authenticationDevice);
             assertTrue(personA.getKnowledgeBase().commit());
-			TLContext context = TLContext.getContext();
-            context.setCurrentPerson(personA);
     
             // create some bound objects
             rootO   = new SimpleBoundObject("root");
@@ -143,8 +141,8 @@ public class TestBoundSecurity extends BasicTestCase {
             assertTrue(rootO.getRoles().contains(readOnly)); // for Person C
             assertTrue(rootO.getRoles().size()==4);
     
-			assertFalse(BoundChecker.allowCommandOnSecurityObject(rootV, SimpleBoundCommandGroup.WRITE, null));
-            context.setCurrentPerson(personB);
+			assertFalse(TLContextManager.inPersonContext(personA,
+				() -> BoundChecker.allowCommandOnSecurityObject(rootV, SimpleBoundCommandGroup.WRITE, null)));
             
 			Collection<?> theCommands = rootV.getCommandGroups();
             assertTrue(theCommands.size()==2);      // READ and WRITE

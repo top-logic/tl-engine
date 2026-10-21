@@ -72,6 +72,7 @@ import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
+import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -666,7 +667,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setDateFormat(dateFormat(annotations, type))
 			.setNumberFormat(numberFormat(annotations, type))
 			.setAcceptedTypes(acceptedTypes(annotations, type))
-			.setMaxUploadSize(maxUploadSize(annotations, type));
+			.setMaxUploadSize(maxUploadSize(annotations, type))
+			.setSendValueOnBlur(ValueNormalizer.isAnnotated(annotations));
 	}
 
 	/**

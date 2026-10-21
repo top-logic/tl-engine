@@ -15,9 +15,10 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Subtypes;
+import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -89,9 +90,6 @@ public class DashboardElement implements UIElement {
 	@TagName("dashboard")
 	public interface Config extends UIElement.Config {
 
-		/** Config property name for {@link #getId()}. */
-		String ID = "id";
-
 		/** Config property name for {@link #getMinColWidth()}. */
 		String MIN_COL_WIDTH = "min-col-width";
 
@@ -108,6 +106,7 @@ public class DashboardElement implements UIElement {
 		/**
 		 * Stable id used as persistence key for personal tile ordering.
 		 */
+		@Override
 		@Name(ID)
 		@Mandatory
 		String getId();
@@ -137,12 +136,18 @@ public class DashboardElement implements UIElement {
 		String getRowHeight();
 
 		/**
-		 * The tiles. Represented as polymorphic configurations so that the
-		 * default container (child elements) can hold {@code <tile>} entries.
+		 * The tiles.
+		 *
+		 * @implNote Written directly as {@code <tile>} children of the {@code <dashboard>}, the
+		 *           only entries accepted, since the entry type only binds the instance type to
+		 *           {@link UIElement}. Keyed by {@link TileElement.Config#ID} so that a same-path
+		 *           overlay can address a tile.
 		 */
 		@Name(TILES)
+		@Subtypes({ @Subtype(tag = TileElement.Config.TAG_NAME, type = TileElement.Config.class) })
+		@com.top_logic.basic.config.annotation.Key(TileElement.Config.ID)
 		@com.top_logic.basic.config.annotation.DefaultContainer
-		List<PolymorphicConfiguration<? extends TileElement>> getTiles();
+		List<TileElement.Config> getTiles();
 	}
 
 	private final String _id;
@@ -164,8 +169,8 @@ public class DashboardElement implements UIElement {
 		_minColWidth = config.getMinColWidth();
 		_rowHeight = config.getRowHeight();
 		_tiles = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends TileElement> tc : config.getTiles()) {
-			TileElement tile = context.getInstance(tc);
+		for (TileElement.Config tc : config.getTiles()) {
+			TileElement tile = (TileElement) context.getInstance(tc);
 			if (tile != null) {
 				_tiles.add(tile);
 			}

@@ -19,10 +19,10 @@ import test.com.top_logic.basic.TestUtils;
 import com.top_logic.gui.MultiThemeFactory;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 
 /**
@@ -48,11 +48,8 @@ public class TestMultiThemeFactory extends BasicTestCase {
     }
     
     public void testGetCurrentThemeWithoutInitializedContext() {
-		TLContext.pushSuperUser();
-        try {
-            Person root = PersonManager.getManager().getRoot();
+		TLContextManager.inPersonContext(PersonManager.getManager().getRoot(), () -> {
 			TLContext theContext = TLContext.getContext();
-            theContext.setCurrentPerson(root);
 
             PersonalConfiguration config = theContext.getPersonalConfiguration();
 			MultiThemeFactory.setPersonalThemeId(config, "default");
@@ -61,9 +58,7 @@ public class TestMultiThemeFactory extends BasicTestCase {
             Theme theTheme = theFactory.getCurrentTheme();
             
             assertNotNull(theTheme);
-        } finally {
-        	TLContext.popSuperUser();
-        }
+		});
     }
     /**
      * The method constructing a test suite for this class.

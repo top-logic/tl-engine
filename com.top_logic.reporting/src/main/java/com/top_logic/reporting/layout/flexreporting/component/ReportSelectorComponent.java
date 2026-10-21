@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.layout.meta.search.AttributedSearchComponent;
 import com.top_logic.element.layout.meta.search.QueryUtils;
 import com.top_logic.element.meta.query.PublishedFlexWrapperLabelProvider;
@@ -218,7 +219,7 @@ public class ReportSelectorComponent extends FormComponent implements ReportCons
 				
 				// root or owner can modify published queries
 				if (WrapperHistoryUtils.getUnversionedIdentity(theCurrentUser)
-					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || Person.isAdmin(theCurrentUser)) {
+					.equals(WrapperHistoryUtils.getUnversionedIdentity(theCreator)) || ThreadContext.isAdmin()) {
 					boolean isPublished = groupAssociations.isEmpty() ? false : true;
 					
 					thePublishGroup.setVisible(true);

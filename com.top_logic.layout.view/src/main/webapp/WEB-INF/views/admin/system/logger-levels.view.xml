@@ -15,7 +15,9 @@
 		<channel name="loggers"/>
 		<channel name="selection"/>
 	</channels>
-	<panel fill="true">
+	<panel id="panel"
+		fill="true"
+	>
 		<title>
 			<en>Log levels</en>
 			<de>Protokollebenen</de>
@@ -73,7 +75,8 @@
 				<write-channel name="loggers"/>
 			</generic-command>
 		</commands>
-		<child class="com.top_logic.layout.view.admin.system.LoggerLevelTable"
+		<child id="table"
+			class="com.top_logic.layout.view.admin.system.LoggerLevelTable"
 			input="loggers"
 			selection="selection"
 		/>

@@ -153,6 +153,38 @@
 					</attributes>
 				</class>
 
+				<!--
+					The constraint on name reads the derived reference, whose value is an employee
+					the users may not read: the commit check must see the value nevertheless.
+				-->
+				<class name="ConstrainedRecord">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<constraints>
+									<constraint-by-expression>
+										<check>value -&gt; obj -&gt; if ($obj.get(`TestTLScriptSecurity:ConstrainedRecord#derivedRef`) == null, "empty", null)</check>
+									</constraint-by-expression>
+								</constraints>
+							</annotations>
+						</property>
+						<reference name="stored"
+							type="Employee"
+						/>
+						<reference name="derivedRef"
+							type="Employee"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query expr="t -> $t.get(`TestTLScriptSecurity:ConstrainedRecord#stored`)"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+
 				<class name="PathNode">
 					<annotations>
 						<table name="TLSecPathNode"/>

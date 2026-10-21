@@ -13,7 +13,9 @@
 		<channel name="sqlStats"/>
 		<channel name="monitoring"/>
 	</channels>
-	<panel fill="true">
+	<panel id="panel"
+		fill="true"
+	>
 		<title>
 			<en>SQL monitor</en>
 			<de>SQL-Monitor</de>
@@ -75,7 +77,8 @@
 				<write-channel name="monitoring"/>
 			</generic-command>
 		</commands>
-		<child class="com.top_logic.layout.view.admin.monitor.SqlStatisticsTable"
+		<child id="table"
+			class="com.top_logic.layout.view.admin.monitor.SqlStatisticsTable"
 			input="sqlStats"
 		/>
 	</panel>

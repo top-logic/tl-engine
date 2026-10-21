@@ -152,6 +152,18 @@
 					</annotations>
 				</property>
 
+				<!-- String brought into canonical form when entered: trimmed, inner whitespace runs collapsed to one space, lower case -->
+				<property name="normalizedText"
+					type="tl.core:String"
+				>
+					<annotations>
+						<value-normalizer>
+							<collapse-whitespace/>
+							<lower-case/>
+						</value-normalizer>
+					</annotations>
+				</property>
+
 				<!-- Optional plain string (no constraints, for comparison) -->
 				<property name="freeText"
 					type="tl.core:String"

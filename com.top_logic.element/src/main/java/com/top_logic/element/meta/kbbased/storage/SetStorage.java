@@ -144,6 +144,15 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 		LinkStorageUtil.createWrapperAssociation(attribute, object, (TLObject) aValue, this);
 	}
 
+	/**
+	 * Checks that the given value can be added to the given reference.
+	 * 
+	 * <p>
+	 * Whether the value is already contained and whether a single-valued reference is already set
+	 * is looked up in the indexed live link map of the object, at constant cost per element (see
+	 * {@link AbstractWrapper#resolveLinks(TLObject, com.top_logic.knowledge.service.db2.AbstractAssociationQuery)}).
+	 * </p>
+	 */
 	@Override
 	protected void checkAddValue(TLObject object, TLStructuredTypePart attribute, Object aValue) throws TopLogicException {
 		// Check attribute
@@ -152,17 +161,27 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 		// Check values
 		this.checkBasicValue(object, attribute, aValue);
 
-		if (AbstractWrapper.resolveWrappers(object, getOutgoingQuery()).contains(toStorageObject(aValue))) {
+		BidiMap<KnowledgeItem, KnowledgeAssociation> links = AbstractWrapper.resolveLinks(object, _liveQuery);
+		if (linkTo(links, toStorageObject(aValue)) != null) {
 			throw new IllegalArgumentException("'" + aValue + "' is already used and must not be added again to '"
 				+ this + "'");
 		}
 
 		// Check single selection
-		if (!_multiple && (((Collection<?>) this.getAttributeValue(object, attribute)).size() > 0)) {
+		if (!_multiple && !links.isEmpty()) {
 			throw new IllegalArgumentException("Cannot set more than one value for single-select classification list");
 		}
 	}
 
+	/**
+	 * Removes the link to the given value.
+	 * 
+	 * <p>
+	 * The link is looked up by the value's {@link TLObject#tHandle() handle} in the indexed live
+	 * link map of the object, at constant cost per element (see
+	 * {@link AbstractWrapper#resolveLinks(TLObject, com.top_logic.knowledge.service.db2.AbstractAssociationQuery)}).
+	 * </p>
+	 */
 	@Override
 	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
 			throws NoSuchAttributeException, AttributeException {
@@ -171,32 +190,25 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 
 		// Remove value
 		try {
-			DestinationIterator theKAs =
-				new DestinationIterator(AbstractWrapper.resolveLinks(object, getOutgoingQuery()).iterator());
-			aValue = toStorageObject(aValue);
-			KnowledgeItem theKO = ((TLObject) aValue).tHandle();
-			boolean found = false;
-			while (theKAs.hasNext()) {
-				// Remove if matched
-				if (theKAs.nextKO().equals(theKO)) { // Should always be true because it has been
-														// checked by checkRemoveValue
-					// This should not happen...
-					if (found) {
-						Logger.warn("Found multiple KAs for value - removing", this);
-					}
-					DBKnowledgeAssociation.clearReferencesAndRemoveLink(theKAs.currentKA());
-					found = true;
-				}
-			}
-			if (found) {
-				AttributeOperations.touch(object, attribute);
-			}
+			KnowledgeAssociation link =
+				linkTo(AbstractWrapper.resolveLinks(object, _liveQuery), toStorageObject(aValue));
+			DBKnowledgeAssociation.clearReferencesAndRemoveLink(link);
+			AttributeOperations.touch(object, attribute);
 		} catch (Exception ex) {
 			Logger.warn("Failed to remove value: " + ex, this);
 			throw new AttributeException("Failed to remove value: " + ex, ex);
 		}
 	}
 
+	/**
+	 * Checks that the given value can be removed from the given reference.
+	 * 
+	 * <p>
+	 * Whether the value is contained and how many values the reference holds is looked up in the
+	 * indexed live link map of the object, at constant cost per element (see
+	 * {@link AbstractWrapper#resolveLinks(TLObject, com.top_logic.knowledge.service.db2.AbstractAssociationQuery)}).
+	 * </p>
+	 */
 	@Override
 	protected void checkRemoveValue(TLObject object, TLStructuredTypePart attribute, Object aValue) throws TopLogicException {
 		// Check attribute
@@ -206,12 +218,23 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 		this.checkBasicValue(object, attribute, aValue);
 
 		// Check if the value exists in the current collection
-		Collection theWrappers = AbstractWrapper.resolveWrappers(object, getOutgoingQuery());
-		if (!theWrappers.contains(toStorageObject(aValue))) {
+		BidiMap<KnowledgeItem, KnowledgeAssociation> links = AbstractWrapper.resolveLinks(object, _liveQuery);
+		if (linkTo(links, toStorageObject(aValue)) == null) {
 			throw new IllegalArgumentException("Given value is not used and therefore cannot be removed from " + this);
 		}
 
-		checkMandatoryRemove(attribute, theWrappers);
+		checkMandatoryRemove(attribute, links.size());
+	}
+
+	/**
+	 * The link in the given live link map that points to the given storage value, or
+	 * <code>null</code> if there is none.
+	 */
+	private static KnowledgeAssociation linkTo(Map<KnowledgeItem, KnowledgeAssociation> links, Object storageValue) {
+		if (!(storageValue instanceof TLObject)) {
+			return null;
+		}
+		return links.get(((TLObject) storageValue).tHandle());
 	}
 
 	@Override

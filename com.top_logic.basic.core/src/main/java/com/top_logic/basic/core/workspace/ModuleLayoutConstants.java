@@ -244,6 +244,12 @@ public interface ModuleLayoutConstants {
 	/**
 	 * Name of the deploy folder containing the local web application, i.e. the content of this
 	 * folder are not inherited to other modules.
+	 *
+	 * <p>
+	 * When an application is started from its classpath in development mode, this aspect is only
+	 * included for the application module: the project on the classpath that no other project on
+	 * the classpath depends on (see {@link Workspace#getAppPaths(Iterable, String, String[])}).
+	 * </p>
 	 */
 	String DEPLOY_LOCAL_FOLDER_NAME = "local";
 

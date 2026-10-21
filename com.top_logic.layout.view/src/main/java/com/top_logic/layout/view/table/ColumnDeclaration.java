@@ -8,6 +8,7 @@ package com.top_logic.layout.view.table;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.table.SortColumn;
 
 /**
@@ -77,5 +78,19 @@ public interface ColumnDeclaration {
 	 *        What the columns are resolved against: the type of the rows, and the session.
 	 */
 	List<ColumnSetup> resolve(ColumnResolution scope);
+
+	/**
+	 * The channels the functions of this declaration read, in addition to the row - the ones
+	 * computing the cells and the ones of its filter alike.
+	 *
+	 * <p>
+	 * What the columns show or filter follows these channels: the columns are built again whenever
+	 * one of them changes, even where the rows stay the same. Empty (default) for a declaration
+	 * whose columns read nothing but the row.
+	 * </p>
+	 */
+	default List<ChannelRef> inputs() {
+		return List.of();
+	}
 
 }

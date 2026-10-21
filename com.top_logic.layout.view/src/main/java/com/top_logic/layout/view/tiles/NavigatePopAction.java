@@ -55,4 +55,12 @@ public class NavigatePopAction implements ViewAction {
 		TileStackScope.lookup(context, Config.TAG_NAME).pop();
 		return input;
 	}
+
+	/**
+	 * Changes the frames of the tile stack.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

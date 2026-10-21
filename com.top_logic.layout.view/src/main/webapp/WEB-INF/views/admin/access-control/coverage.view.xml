@@ -90,7 +90,9 @@
 								<de>Analysiert die geltende Zugriffsdefinition erneut und baut die Tabelle neu auf. Gespeicherte, noch nicht angewendete Änderungen bleiben dabei unberücksichtigt.</de>
 							</tooltip>
 							<action class="com.top_logic.layout.view.admin.SecurityCoverageAction">
-								<write-channel name="rows"/>
+								<with-result>
+									<write-channel name="rows"/>
+								</with-result>
 							</action>
 						</generic-command>
 						<generic-command
@@ -109,7 +111,9 @@
 							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 								mode="APPLY"
 							>
-								<write-channel name="rows"/>
+								<with-result>
+									<write-channel name="rows"/>
+								</with-result>
 							</action>
 							<write-channel name="pending"
 								clear="true"
@@ -167,15 +171,17 @@
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="EDIT_ACCESS_RIGHTS"
 										>
-											<open-dialog
-												bind-input-to="rights"
-												dialog-view="admin/access-control/coverage-access-rights.view.xml"
-											>
-												<bind
-													channel="pending"
-													to="pending"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="rights"
+													dialog-view="admin/access-control/coverage-access-rights.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -192,20 +198,22 @@
 											<de>Bearbeitet die Rechte, die die Anwendung Rollen an allen Typen des ausgewählten Moduls gewährt, sowie die Kennzeichnungen des Moduls. Die Änderungen werden in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<visible-if expr="module -> $module != null"/>
+											<visible-if expr="$selectedModule != null"/>
 										</executability>
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="EDIT_MODULE_ACCESS_RIGHTS"
 										>
-											<open-dialog
-												bind-input-to="rights"
-												dialog-view="admin/access-control/coverage-access-rights.view.xml"
-											>
-												<bind
-													channel="pending"
-													to="pending"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="rights"
+													dialog-view="admin/access-control/coverage-access-rights.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -224,7 +232,7 @@
 										</tooltip>
 										<executability>
 											<null-input-disabled/>
-											<visible-if expr="internal -> $internal == false"/>
+											<visible-if expr="$selectedInternal == false"/>
 										</executability>
 										<confirm
 											expr="#('Mark {0} as internal? An internal type is used by the application code alone, so it is exempt from the check and no user gets access to its objects. The mark is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} als intern kennzeichnen? Ein interner Typ wird nur vom Anwendungscode verwendet, ist deshalb von der Prüfung ausgenommen, und kein Benutzer erhält Zugriff auf seine Objekte. Die Kennzeichnung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($selectedType))"
@@ -234,7 +242,9 @@
 											mode="MARK_INTERNAL"
 											selection="selection"
 										>
-											<write-channel name="pending"/>
+											<with-result>
+												<write-channel name="pending"/>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -252,7 +262,7 @@
 											<de>Hebt die Kennzeichnung des ausgewählten Typs als intern auf, sodass er wieder geprüft wird. Die Änderung wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<visible-if expr="internal -> $internal == true"/>
+											<visible-if expr="$selectedInternal == true"/>
 										</executability>
 										<confirm
 											expr="#('Drop the internal mark of {0}? The type is checked again, and its objects need a role source and a read grant. The change is stored and takes effect with &quot;Apply configuration&quot;.'@en, 'Kennzeichnung von {0} als intern aufheben? Der Typ wird wieder geprüft, und seine Objekte brauchen eine Rollenquelle und ein Leserecht. Die Änderung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($selectedType))"
@@ -262,7 +272,9 @@
 											mode="UNMARK_INTERNAL"
 											selection="selection"
 										>
-											<write-channel name="pending"/>
+											<with-result>
+												<write-channel name="pending"/>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -281,7 +293,7 @@
 										</tooltip>
 										<executability>
 											<null-input-disabled/>
-											<visible-if expr="withoutSecurity -> $withoutSecurity == false"/>
+											<visible-if expr="$selectedWithoutSecurity == false"/>
 										</executability>
 										<confirm
 											expr="#('Exclude {0} from access control? Every user may then access its objects, no matter which roles the user holds on them. This is meant as a temporary measure only, until the access rights of the type are configured. The exclusion is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} von der Zugriffskontrolle ausnehmen? Jeder Benutzer darf dann auf seine Objekte zugreifen, gleich welche Rollen er auf ihnen hat. Das ist nur als Übergangslösung gedacht, bis die Zugriffsrechte des Typs konfiguriert sind. Die Ausnahme wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($selectedType))"
@@ -291,7 +303,9 @@
 											mode="MARK_WITHOUT_SECURITY"
 											selection="selection"
 										>
-											<write-channel name="pending"/>
+											<with-result>
+												<write-channel name="pending"/>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -309,7 +323,7 @@
 											<de>Unterstellt den ausgewählten Typ wieder der Zugriffskontrolle, sodass ein Benutzer eine Rolle auf seinen Objekten braucht und der Typ geprüft wird. Die Änderung wird in der Anwendungskonfiguration gespeichert und mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<visible-if expr="withoutSecurity -> $withoutSecurity == true"/>
+											<visible-if expr="$selectedWithoutSecurity == true"/>
 										</executability>
 										<confirm
 											expr="#('Put {0} under access control again? A user then needs a role on its objects, and the type is checked. The change is stored and takes effect with &quot;Apply configuration&quot;.'@en, '{0} wieder der Zugriffskontrolle unterstellen? Ein Benutzer braucht dann eine Rolle auf seinen Objekten, und der Typ wird geprüft. Die Änderung wird gespeichert und mit „Konfiguration anwenden“ wirksam.'@de).fill(label($selectedType))"
@@ -319,12 +333,14 @@
 											mode="UNMARK_WITHOUT_SECURITY"
 											selection="selection"
 										>
-											<write-channel name="pending"/>
+											<with-result>
+												<write-channel name="pending"/>
+											</with-result>
 										</action>
 									</generic-command>
 								</commands>
 								<visible-if
-									expr="p -> $p != null"
+									expr="$pending != null"
 									input="pending"
 								>
 									<inset>
@@ -337,7 +353,7 @@
 									</inset>
 								</visible-if>
 								<visible-if
-									expr="selected -> $selected != null"
+									expr="$selection != null"
 									input="selection"
 								>
 									<inset>
@@ -375,15 +391,17 @@
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="NEW_ROLE_PARENT_RULE"
 										>
-											<open-dialog
-												bind-input-to="rule"
-												dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
-											>
-												<bind
-													channel="pending"
-													to="pending"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="rule"
+													dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -405,15 +423,17 @@
 										<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 											mode="NEW_ROLE_RULE"
 										>
-											<open-dialog
-												bind-input-to="rule"
-												dialog-view="admin/access-control/coverage-role-rule.view.xml"
-											>
-												<bind
-													channel="pending"
-													to="pending"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="rule"
+													dialog-view="admin/access-control/coverage-role-rule.view.xml"
+												>
+													<bind
+														channel="pending"
+														to="pending"
+													/>
+												</open-dialog>
+											</with-result>
 										</action>
 									</generic-command>
 									<generic-command
@@ -435,36 +455,44 @@
 										<switch value="$selectedRuleEntry['kind']">
 											<case match="'roleParent'">
 												<execute-script function="$selectedRuleEntry['id']">
-													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-														mode="EDIT_ROLE_PARENT_RULE"
-													>
-														<open-dialog
-															bind-input-to="rule"
-															dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+													<with-result>
+														<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+															mode="EDIT_ROLE_PARENT_RULE"
 														>
-															<bind
-																channel="pending"
-																to="pending"
-															/>
-														</open-dialog>
-													</action>
+															<with-result>
+																<open-dialog
+																	bind-input-to="rule"
+																	dialog-view="admin/access-control/coverage-role-parent-rule.view.xml"
+																>
+																	<bind
+																		channel="pending"
+																		to="pending"
+																	/>
+																</open-dialog>
+															</with-result>
+														</action>
+													</with-result>
 												</execute-script>
 											</case>
 											<case match="'roleRule'">
 												<execute-script function="$selectedRuleEntry['id']">
-													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-														mode="EDIT_ROLE_RULE"
-													>
-														<open-dialog
-															bind-input-to="rule"
-															dialog-view="admin/access-control/coverage-role-rule.view.xml"
+													<with-result>
+														<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+															mode="EDIT_ROLE_RULE"
 														>
-															<bind
-																channel="pending"
-																to="pending"
-															/>
-														</open-dialog>
-													</action>
+															<with-result>
+																<open-dialog
+																	bind-input-to="rule"
+																	dialog-view="admin/access-control/coverage-role-rule.view.xml"
+																>
+																	<bind
+																		channel="pending"
+																		to="pending"
+																	/>
+																</open-dialog>
+															</with-result>
+														</action>
+													</with-result>
 												</execute-script>
 											</case>
 										</switch>
@@ -483,26 +511,34 @@
 											<de>Löscht die ausgewählte Regel. Eine Regel der darunterliegenden Schichten wird durch einen Eintrag in der Anwendungskonfiguration entfernt. Die Änderung wird mit „Konfiguration anwenden“ wirksam.</de>
 										</tooltip>
 										<executability>
-											<visible-if expr="entry -> $entry != null &amp;&amp; $entry['state'] != 'deleted'"/>
+											<visible-if expr="$selectedRuleEntry != null &amp;&amp; $selectedRuleEntry['state'] != 'deleted'"/>
 										</executability>
 										<confirm expr="#('Delete the rule {0}?'@en, 'Die Regel {0} löschen?'@de).fill($selectedRuleEntry['id'])"/>
 										<switch value="$selectedRuleEntry['kind']">
 											<case match="'roleParent'">
 												<execute-script function="$selectedRuleEntry['id']">
-													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-														mode="REMOVE_ROLE_PARENT_RULE"
-													>
-														<write-channel name="pending"/>
-													</action>
+													<with-result>
+														<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+															mode="REMOVE_ROLE_PARENT_RULE"
+														>
+															<with-result>
+																<write-channel name="pending"/>
+															</with-result>
+														</action>
+													</with-result>
 												</execute-script>
 											</case>
 											<case match="'roleRule'">
 												<execute-script function="$selectedRuleEntry['id']">
-													<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
-														mode="REMOVE_ROLE_RULE"
-													>
-														<write-channel name="pending"/>
-													</action>
+													<with-result>
+														<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+															mode="REMOVE_ROLE_RULE"
+														>
+															<with-result>
+																<write-channel name="pending"/>
+															</with-result>
+														</action>
+													</with-result>
 												</execute-script>
 											</case>
 										</switch>
@@ -521,7 +557,7 @@
 												<en>Kind</en>
 												<de>Art</de>
 											</label>
-											<value><![CDATA[row -> $row["kindLabel"]]]></value>
+											<value><![CDATA[$row["kindLabel"]]]></value>
 										</computed-column>
 										<computed-column name="id"
 											type="tl.core:String"
@@ -531,7 +567,7 @@
 												<en>Id</en>
 												<de>Id</de>
 											</label>
-											<value><![CDATA[row -> $row["id"]]]></value>
+											<value><![CDATA[$row["id"]]]></value>
 										</computed-column>
 										<computed-column name="state"
 											type="tl.core:String"
@@ -545,7 +581,7 @@
 													<de>Eine Änderung der Regel, die gespeichert ist, aber erst mit „Konfiguration anwenden“ wirksam wird: Die Regel ist neu, geändert oder gelöscht. Leer für eine Regel, die so gilt, wie sie gespeichert ist.</de>
 												</tooltip>
 											</label>
-											<value><![CDATA[row -> $row["stateLabel"]]]></value>
+											<value><![CDATA[$row["stateLabel"]]]></value>
 										</computed-column>
 										<computed-column name="description"
 											type="tl.core:String"
@@ -555,7 +591,7 @@
 												<en>Description</en>
 												<de>Beschreibung</de>
 											</label>
-											<value><![CDATA[row -> $row["description"]]]></value>
+											<value><![CDATA[$row["description"]]]></value>
 										</computed-column>
 										<computed-column name="stored"
 											type="tl.core:Boolean"
@@ -569,10 +605,10 @@
 													<de>Ob die Regel in der Anwendungskonfiguration gespeichert ist, weil sie in dieser Ansicht angelegt oder bearbeitet wurde. Eine Regel ohne Haken stammt unverändert aus der Konfiguration der darunterliegenden Schichten.</de>
 												</tooltip>
 											</label>
-											<value><![CDATA[row -> $row["stored"]]]></value>
+											<value><![CDATA[$row["stored"]]]></value>
 										</computed-column>
 									</columns>
-									<rows><![CDATA[rules -> $rules]]></rows>
+									<rows><![CDATA[$selectedRules]]></rows>
 								</table>
 							</panel>
 						</pane>

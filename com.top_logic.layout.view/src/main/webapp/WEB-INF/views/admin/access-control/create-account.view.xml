@@ -31,16 +31,19 @@
 						<de>Erstellen</de>
 					</label>
 					<store-form-state>
-						<with-transaction>
-							<commitMessage>
-								<en>Created account {0}.</en>
-								<de>Konto {0} angelegt.</de>
-							</commitMessage>
-							<create-account>
-								<write-channel name="selection"/>
-							</create-account>
-						</with-transaction>
-						<close-dialog/>
+						<with-result>
+							<with-transaction>
+								<commitMessage>
+									<en>Created account {0}.</en>
+									<de>Konto {0} angelegt.</de>
+								</commitMessage>
+								<create-account/>
+								<with-result>
+									<write-channel name="selection"/>
+								</with-result>
+							</with-transaction>
+							<close-dialog/>
+						</with-result>
 					</store-form-state>
 				</generic-command>
 			</commands>

@@ -758,34 +758,50 @@
 				<type name="com.top_logic.layout.ScriptFunction0">
 					<annotations>
 						<property-editor value="com.top_logic.model.search.form.ScriptFunction0Impl$Editor"/>
-						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.layout.ScriptFunction1">
 					<annotations>
 						<property-editor value="com.top_logic.model.search.form.ScriptFunction1Impl$Editor"/>
-						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.layout.ScriptFunction2">
 					<annotations>
 						<property-editor value="com.top_logic.model.search.form.ScriptFunction2Impl$Editor"/>
-						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.layout.ScriptFunction3">
 					<annotations>
 						<property-editor value="com.top_logic.model.search.form.ScriptFunction3Impl$Editor"/>
-						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
 					</annotations>
 				</type>
 				<type name="com.top_logic.layout.ScriptFunction4">
 					<annotations>
 						<property-editor value="com.top_logic.model.search.form.ScriptFunction4Impl$Editor"/>
-						<control-provider value="com.top_logic.model.search.ui.TLScriptCodeEditorControl$PlainCP"/>
 					</annotations>
 				</type>
 			</customizations>
+			<type-controls>
+				<!-- TL-Script, also the script of a script function, is edited in the TL-Script code editor. -->
+				<type-control type="com.top_logic.model.search.expr.config.dom.Expr">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction0">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction1">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction2">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction3">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction4">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+			</type-controls>
 		</config>
 	</configs>
 	

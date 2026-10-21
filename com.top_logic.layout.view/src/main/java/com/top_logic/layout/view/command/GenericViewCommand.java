@@ -28,8 +28,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * The actions run with the arguments of the command: the values of its
  * {@link Config#getInputs() inputs} and the value its trigger supplies, see
- * {@link CommandArguments}. The result of an action is seen by the follow-up actions nested into it
- * (see {@link WithResultActions}). This allows composing complex behaviors from simple, reusable
+ * {@link CommandArguments}. The result of an action is seen by its follow-up actions (see
+ * {@link WithResultActions}). This allows composing complex behaviors from simple, reusable
  * building blocks.
  * </p>
  *
@@ -40,7 +40,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <pre>
  * &lt;generic-command label="New"&gt;
  *   &lt;execute-script function="new(`my.module:MyType`, transient: true)"&gt;
- *     &lt;open-dialog dialog-view="demo/create.view.xml" bind-input-to="model"/&gt;
+ *     &lt;with-result&gt;
+ *       &lt;open-dialog dialog-view="demo/create.view.xml" bind-input-to="model"/&gt;
+ *     &lt;/with-result&gt;
  *   &lt;/execute-script&gt;
  * &lt;/generic-command&gt;
  * </pre>

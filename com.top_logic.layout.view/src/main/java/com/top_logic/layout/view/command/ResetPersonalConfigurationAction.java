@@ -118,4 +118,11 @@ public class ResetPersonalConfigurationAction implements ViewAction {
 		}
 	}
 
+	/**
+	 * Rebuilds the windows of the session.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

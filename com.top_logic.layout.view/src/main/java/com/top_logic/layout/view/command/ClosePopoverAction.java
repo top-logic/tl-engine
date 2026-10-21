@@ -63,4 +63,12 @@ public class ClosePopoverAction implements ViewAction {
 		}
 		return input;
 	}
+
+	/**
+	 * Closes a popover.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

@@ -6,8 +6,10 @@
 package com.top_logic.layout.view.table;
 
 import java.util.Comparator;
+import java.util.List;
 
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 
@@ -55,6 +57,21 @@ public interface ColumnBinding {
 	 */
 	default void installUI(ColumnSetup setup, TableViewControl<?> control) {
 		// No custom UI by default.
+	}
+
+	/**
+	 * The channels the column this binding builds reads, in addition to the row - e.g. the inputs a
+	 * filter evaluates its criteria with.
+	 *
+	 * <p>
+	 * What the column shows or filters follows these channels by the column being built again. The
+	 * default reads none.
+	 * </p>
+	 *
+	 * @see ColumnDeclaration#inputs()
+	 */
+	default List<InputRef> inputs() {
+		return List.of();
 	}
 
 	/**

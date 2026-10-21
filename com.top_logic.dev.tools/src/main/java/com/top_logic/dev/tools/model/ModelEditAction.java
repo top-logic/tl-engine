@@ -36,7 +36,7 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * The mutating operations create their result through the {@link TLModelUtil} primitives and return
- * the newly created part to the follow-up actions nested into it, so it can be written to the
+ * the newly created part to its follow-up actions, so it can be written to the
  * editor's selection channel. The created element's name (and, for an attribute, its value type and
  * cardinality) come from the transient object the action processes (the result of an enclosing
  * {@code <store-form-state>} in the dialog form); the container to create the element in comes

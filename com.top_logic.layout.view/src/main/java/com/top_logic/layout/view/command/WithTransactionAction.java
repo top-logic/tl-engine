@@ -5,16 +5,19 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.List;
 
-import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -48,12 +51,24 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * Example: Copy a transient object to persistent within a transaction:
+ * Inner actions must not change the state of the view either: a failing commit rolls back the
+ * model changes, but not a channel written or a dialog closed. Such actions are placed into the
+ * {@link Config#getWithResult()} of the transaction and run after a successful commit. They see
+ * the result of the transaction in addition to the arguments of the chain and may suspend and abort
+ * like any action of the chain.
+ * </p>
+ *
+ * <p>
+ * Example: Copy a transient object to persistent within a transaction and select the created
+ * object once the transaction is committed:
  * </p>
  *
  * <pre>
  * &lt;with-transaction&gt;
  *   &lt;execute-script function="$obj.copy(transient: false)"/&gt;
+ *   &lt;with-result&gt;
+ *     &lt;write-channel name="selection"/&gt;
+ *   &lt;/with-result&gt;
  * &lt;/with-transaction&gt;
  * </pre>
  */
@@ -63,8 +78,18 @@ public class WithTransactionAction implements ViewAction {
 	/**
 	 * Configuration for {@link WithTransactionAction}.
 	 */
-	@TagName("with-transaction")
-	public interface Config extends PolymorphicConfiguration<WithTransactionAction>, WithCommitMessage, ConfigPart {
+	@TagName(Config.TAG_NAME)
+	public interface Config extends PolymorphicConfiguration<WithTransactionAction>, WithCommitMessage,
+			WithResultActions, ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
+
+		/** The tag name of {@link WithTransactionAction} in an action list. */
+		String TAG_NAME = "with-transaction";
+
+		/** Configuration name for {@link #getActions()}. */
+		String ACTIONS = "actions";
 
 		@Override
 		@ClassDefault(WithTransactionAction.class)
@@ -72,10 +97,41 @@ public class WithTransactionAction implements ViewAction {
 
 		/**
 		 * Inner actions to execute within the transaction.
+		 *
+		 * <p>
+		 * These actions may only read and modify the model. An action changing the state of the
+		 * view belongs to the actions run after the commit, see {@link #getWithResult()}.
+		 * </p>
 		 */
+		@Name(ACTIONS)
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
+
+		/**
+		 * The actions to run once the transaction is committed, e.g. to select the created object
+		 * and close the dialog.
+		 *
+		 * <p>
+		 * They see the result of the last of the {@link #getActions()}. They do not run when one of
+		 * the inner actions fails or the commit fails.
+		 * </p>
+		 */
+		@Override
+		WithResult getWithResult();
+
+		/**
+		 * The actions in the transaction run in a {@link ActionScope#transactional() transactional}
+		 * scope, the ones {@link #getWithResult() after the commit} in the scope of the transaction
+		 * itself.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getActions(), part)) {
+				return outer.transactional();
+			}
+			return outer;
+		}
 	}
 
 	private final List<ViewAction> _actions;
@@ -87,7 +143,7 @@ public class WithTransactionAction implements ViewAction {
 	 */
 	@CalledByReflection
 	public WithTransactionAction(InstantiationContext context, Config config) {
-		_actions = ViewActions.instantiate(context, config.getActions());
+		_actions = ViewActions.instantiate(context, config.getActions(), ActionScope.of(context).transactional());
 		_commitMessage = new ViewCommitMessage(context, config);
 	}
 
@@ -122,10 +178,13 @@ public class WithTransactionAction implements ViewAction {
 		return executeInTransaction(context, ActionArguments.of(GenericViewCommand.DEFAULT_ARGUMENT, input));
 	}
 
+	/**
+	 * Runs the inner actions in a transaction and resumes with the result of the last one once the
+	 * transaction is committed.
+	 */
 	@Override
 	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
-		continuation.resume(executeInTransaction(context,
-			arguments == null ? ActionArguments.NONE : arguments));
+		continuation.resume(executeInTransaction(context, arguments == null ? ActionArguments.NONE : arguments));
 	}
 
 	private Object executeInTransaction(ReactContext context, ActionArguments arguments) {

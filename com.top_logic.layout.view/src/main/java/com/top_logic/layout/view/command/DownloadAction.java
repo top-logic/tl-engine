@@ -43,7 +43,9 @@ import com.top_logic.util.error.TopLogicException;
  * &lt;button&gt;
  *   &lt;action class="com.top_logic.layout.view.command.GenericViewCommand" inputs="selection as tickets"&gt;
  *     &lt;execute-script function="excelFile(name: 'tickets', content: [excelSheet(content: $tickets.map(t -&gt; [$t.get(`demo:Ticket#name`)]))])"&gt;
- *       &lt;download/&gt;
+ *       &lt;with-result&gt;
+ *         &lt;download/&gt;
+ *       &lt;/with-result&gt;
  *     &lt;/execute-script&gt;
  *   &lt;/action&gt;
  * &lt;/button&gt;
@@ -140,4 +142,11 @@ public class DownloadAction extends ArgumentsViewAction {
 		return new DefaultDataItem(Resources.getInstance().getString(name), file, file.getContentType());
 	}
 
+	/**
+	 * Hands a file to the client.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

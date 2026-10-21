@@ -45,7 +45,7 @@
 		account carries - and the preferences stored on it - waits until somebody is logged in.
 	-->
 	<switch input="currentUser">
-		<case test="account -> $account.accountIsAnonymous()">
+		<case test="$currentUser.accountIsAnonymous()">
 			<button>
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
 					image="css:bi bi-box-arrow-in-right"
@@ -55,11 +55,13 @@
 						<de>Anmelden</de>
 					</label>
 					<execute-script function="new(`tl.login:Credentials`, transient: true)">
-						<open-dialog
-							bind-input-to="model"
-							close-on-backdrop="false"
-							dialog-view="login.view.xml"
-						/>
+						<with-result>
+							<open-dialog
+								bind-input-to="model"
+								close-on-backdrop="false"
+								dialog-view="login.view.xml"
+							/>
+						</with-result>
 					</execute-script>
 				</action>
 			</button>

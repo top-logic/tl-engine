@@ -27,12 +27,12 @@
 			account, so a display computed straight from the account would not follow it.
 		-->
 		<derived-channel name="representativeGroup"
-			expr="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+			expr="$account.get(`tl.accounts:Person#representativeGroup`)"
 			inputs="account"
 		/>
 		<!-- The accounts that may act in the name of this account. -->
 		<derived-channel name="deputies"
-			expr="group -> $group.get(`tl.accounts:Group#members`)"
+			expr="$representativeGroup.get(`tl.accounts:Group#members`)"
 			inputs="representativeGroup"
 		/>
 		<!--
@@ -43,7 +43,7 @@
 			member of is nothing.
 		-->
 		<derived-channel name="deputyFor"
-			expr="account -> all(`tl.accounts:Person`).filter(other -> $account.get(`tl.accounts:Person#groups`).containsElement($other.get(`tl.accounts:Person#representativeGroup`)))"
+			expr="all(`tl.accounts:Person`).filter(other -> $account.get(`tl.accounts:Person#groups`).containsElement($other.get(`tl.accounts:Person#representativeGroup`)))"
 			inputs="account"
 		/>
 	</channels>
@@ -113,7 +113,7 @@
 							having a secret stored, the same condition the buttons are offered by.
 						-->
 						<switch input="account">
-							<case test="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null">
+							<case test="$account.get(`tl.accounts:Person#mfaSecret`) != null">
 								<text>
 									<label>
 										<en>Two-factor authentication: active</en>
@@ -148,13 +148,15 @@
 									<de>Passwort ändern</de>
 								</label>
 								<executability>
-									<visible-if expr="account -> $account.accountPasswordChangeAllowed()"/>
+									<visible-if expr="$account.accountPasswordChangeAllowed()"/>
 								</executability>
 								<execute-script function="new(`tl.login:PasswordChange`, transient: true)">
-									<open-dialog
-										bind-input-to="model"
-										dialog-view="change-password.view.xml"
-									/>
+									<with-result>
+										<open-dialog
+											bind-input-to="model"
+											dialog-view="change-password.view.xml"
+										/>
+									</with-result>
 								</execute-script>
 							</action>
 						</button>
@@ -168,7 +170,7 @@
 							is - what the button changes is what the line above it names.
 						-->
 						<switch input="deputies">
-							<case test="deputies -> !$deputies.isEmpty()">
+							<case test="!$deputies.isEmpty()">
 								<stack
 									direction="row"
 									gap="compact"
@@ -197,7 +199,7 @@
 							their deputy stands in for nobody, and a line saying so would be noise.
 						-->
 						<switch input="deputyFor">
-							<case test="accounts -> !$accounts.isEmpty()">
+							<case test="!$deputyFor.isEmpty()">
 								<stack
 									direction="row"
 									gap="compact"
@@ -247,7 +249,7 @@
 									<de>Zwei-Faktor-Authentifizierung einrichten</de>
 								</label>
 								<executability>
-									<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) == null"/>
+									<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) == null"/>
 								</executability>
 								<enroll-mfa/>
 							</action>
@@ -262,7 +264,7 @@
 									<de>Zwei-Faktor-Authentifizierung abschalten</de>
 								</label>
 								<executability>
-									<visible-if expr="account -> $account.get(`tl.accounts:Person#mfaSecret`) != null"/>
+									<visible-if expr="$account.get(`tl.accounts:Person#mfaSecret`) != null"/>
 								</executability>
 								<confirm expr="#('Log in with your password alone from now on?'@en, 'Künftig nur noch mit dem Passwort anmelden?'@de)"/>
 								<disable-mfa/>

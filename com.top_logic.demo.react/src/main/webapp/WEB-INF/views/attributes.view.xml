@@ -12,7 +12,7 @@
 			object binds to this channel.
 		-->
 		<derived-channel name="selectedSingle"
-			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			expr="if($selected.size() == 1, $selected.singleElement(), null)"
 			inputs="selected"
 		/>
 		<!-- Anchor object for the editable-table form: the edit session locks on it. -->
@@ -62,15 +62,17 @@
 								<de>Neu</de>
 							</label>
 							<create-transient type="demo.react:Demo">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="attributes-create.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="selected"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="attributes-create.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selected"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</generic-command>
 						<!--
@@ -145,7 +147,9 @@
 											content: [excelSheet(name: 'Summary', content: concat([['Priority', 'Objects', 'Total amount']], $rows))])
 									}
 								]]></function>
-								<download/>
+								<with-result>
+									<download/>
+								</with-result>
 							</execute-script>
 						</generic-command>
 					</commands>
@@ -235,7 +239,7 @@
 									rows selected it offers the priorities of all of them.
 								-->
 								<criterion column="priority">
-									<options selected="sel -> $sel.get(`demo.react:Demo#priority`)"/>
+									<options selected="$selected.get(`demo.react:Demo#priority`)"/>
 								</criterion>
 							</preset>
 						</presets>
@@ -284,8 +288,8 @@
 							<column attribute="count">
 								<!--
 									Model- and script-defined filter: the form is a transient
-									demo.filter:LongRange instance; the match function builds a
-									per-row predicate closure from it.
+									demo.filter:LongRange instance $params; the match expression
+									decides per row whether the cell $value lies in its range.
 								-->
 								<filter class="com.top_logic.layout.view.table.ScriptedFilter"
 									model="demo.filter:LongRange"
@@ -295,7 +299,7 @@
 										<de>Anzahl-Bereich (per Skript)</de>
 									</label>
 									<match><![CDATA[
-										params -> value -> row -> {
+										{
 											min = $params.get(`demo.filter:LongRange#min`);
 											max = $params.get(`demo.filter:LongRange#max`);
 											($min == null || $value >= $min) && ($max == null || $value <= $max)
@@ -311,6 +315,9 @@
 							</column>
 							<column attribute="date"/>
 							<column attribute="dateTimeShort"/>
+							<column attribute="dateTimeSeconds"/>
+							<column attribute="time"/>
+							<column attribute="timeSeconds"/>
 							<column attribute="aliases"/>
 							<column attribute="notes"/>
 							<column attribute="scores"/>
@@ -336,7 +343,7 @@
 							the table is. The download name is computed from the table's inputs (here the
 							selection, which the name does not need).
 						-->
-						<export download-name="sel -> #('Demo objects'@en, 'Demo-Objekte'@de)">
+						<export download-name="#('Demo objects'@en, 'Demo-Objekte'@de)">
 							<sheet-name>
 								<en>Demo objects</en>
 								<de>Demo-Objekte</de>
@@ -390,15 +397,17 @@
 											<de>Neu</de>
 										</label>
 										<create-transient type="demo.react:Demo">
-											<open-dialog
-												bind-input-to="model"
-												dialog-view="attributes-create.view.xml"
-											>
-												<bind
-													channel="selection"
-													to="selected"
-												/>
-											</open-dialog>
+											<with-result>
+												<open-dialog
+													bind-input-to="model"
+													dialog-view="attributes-create.view.xml"
+												>
+													<bind
+														channel="selection"
+														to="selected"
+													/>
+												</open-dialog>
+											</with-result>
 										</create-transient>
 									</generic-command>
 									<generic-command
@@ -483,7 +492,9 @@
 									<field attribute="date"/>
 									<field attribute="dateTime"/>
 									<field attribute="dateTimeShort"/>
+									<field attribute="dateTimeSeconds"/>
 									<field attribute="time"/>
+									<field attribute="timeSeconds"/>
 									<field attribute="duration"/>
 									<field attribute="deadlines"/>
 									<field attribute="icon"/>
@@ -504,7 +515,7 @@
 									<!-- Marks the parts with an amount above 100. -->
 									<composition-table
 										attribute="parts"
-										row-class="row -> $row.get(`demo.react:DemoPart#amount`) > 100 ? 'tl-status-warning' : null"
+										row-class="$row.get(`demo.react:DemoPart#amount`) > 100 ? 'tl-status-warning' : null"
 									>
 										<columns>
 											<column attribute="name"/>

@@ -37,13 +37,11 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.JSON.ParseException;
-import com.top_logic.layout.codeedit.control.CodeEditorControl;
-import com.top_logic.layout.codeedit.control.EditorControlConfig;
-import com.top_logic.layout.codeedit.editor.DefaultCodeEditor;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.edit.annotation.Code;
+import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
-import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.service.openapi.common.document.Described;
 import com.top_logic.service.openapi.common.document.ParameterLocation;
 import com.top_logic.service.openapi.server.schema.JsonSchemaCompiler;
@@ -184,8 +182,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 		 * <code>https://spec.openapis.org/oas/v3.0.3#schema-object</code>.
 		 */
 		@DynamicMode(fun = ParameterConfiguration.VisibleOnObjectParam.class, args = @Ref(FORMAT))
-		@EditorControlConfig(language = CodeEditorControl.MODE_JSON, prettyPrinting = true)
-		@PropertyEditor(DefaultCodeEditor.class)
+		@Code(language = CodeLanguage.JSON)
 		@Name(SCHEMA)
 		@Nullable
 		String getSchema();
@@ -200,8 +197,7 @@ public abstract class ConcreteRequestParameter<C extends ConcreteRequestParamete
 		 * {@link #getSchema()}.
 		 */
 		@DynamicMode(fun = ParameterConfiguration.VisibleOnObjectParam.class, args = @Ref(FORMAT))
-		@EditorControlConfig(language = CodeEditorControl.MODE_JSON, prettyPrinting = true)
-		@PropertyEditor(DefaultCodeEditor.class)
+		@Code(language = CodeLanguage.JSON)
 		@Name(EXAMPLE)
 		@Nullable
 		String getExample();

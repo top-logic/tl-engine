@@ -25,7 +25,7 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  * The script uses the arguments of the chain as variables, without declaring them: the arguments
  * the trigger of the chain supplies, the results of the actions it is nested in, and the
  * {@link Config#getInputs() inputs} of the action itself. Its value is the result of this action,
- * seen by the follow-up actions nested into it.
+ * seen by its {@link WithResultActions follow-up actions}.
  * </p>
  *
  * <p>
@@ -34,9 +34,11 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  * </p>
  *
  * <pre>
- * &lt;execute-script function="$draft.copy(transient: false)" as="created"&gt;
- *   &lt;write-channel name="selection"/&gt;
- *   &lt;close-dialog/&gt;
+ * &lt;execute-script function="$draft.copy(transient: false)"&gt;
+ *   &lt;with-result&gt;
+ *     &lt;write-channel name="selection"/&gt;
+ *     &lt;close-dialog/&gt;
+ *   &lt;/with-result&gt;
  * &lt;/execute-script&gt;
  * </pre>
  *

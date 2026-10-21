@@ -28,12 +28,14 @@
 					<de>Freigeben</de>
 				</label>
 				<executability>
-					<visible-if expr="selected -> $selected != null"/>
+					<visible-if expr="$selection != null"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.LockListAction"
 					mode="RELEASE"
 				>
-					<write-channel name="locks"/>
+					<with-result>
+						<write-channel name="locks"/>
+					</with-result>
 				</action>
 			</generic-command>
 			<generic-command
@@ -47,7 +49,9 @@
 				<action class="com.top_logic.layout.view.admin.system.LockListAction"
 					mode="REFRESH"
 				>
-					<write-channel name="locks"/>
+					<with-result>
+						<write-channel name="locks"/>
+					</with-result>
 				</action>
 			</generic-command>
 		</commands>

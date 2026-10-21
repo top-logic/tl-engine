@@ -175,7 +175,7 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 		return new DropBinding.Drop(acceptedKinds(), signature, channels,
 			actions,
 			executability,
-			ViewExecutabilityRules.build(config.getTargetExecutability(), context),
+			ViewExecutabilityRules.build(config, DropConfig.TARGET_EXECUTABILITY, context),
 			compiledRefuseIf == null ? null
 				: (objects, references) -> compiledRefuseIf.execute(arguments(objects, references)),
 			names());

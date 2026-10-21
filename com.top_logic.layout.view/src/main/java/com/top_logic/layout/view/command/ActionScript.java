@@ -14,6 +14,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.ViewScripts;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -106,10 +107,12 @@ public interface ActionScript {
 	 *        The inputs of the action itself.
 	 * @param additional
 	 *        The names of the values passed as additional values on execution.
+	 * @throws com.top_logic.basic.ConfigurationError
+	 *         If the script declares a parameter, see {@link ViewScripts}.
 	 */
 	static ActionScript compile(Expr script, ActionScope scope, List<InputRef> inputs, String... additional) {
 		List<String> scopeNames = scope.names();
-		QueryExecutor executor = QueryExecutor.compile(script, variables(scope, inputs, List.of(additional)));
+		QueryExecutor executor = ViewScripts.compile(script, variables(scope, inputs, List.of(additional)));
 		return (context, arguments, additionalValues) -> {
 			List<Object> args = arguments.values(scopeNames);
 			if (!inputs.isEmpty()) {

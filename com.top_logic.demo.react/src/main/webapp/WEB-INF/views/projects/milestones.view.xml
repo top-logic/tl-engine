@@ -22,11 +22,11 @@
 		<channel name="project"/>
 		<channel name="milestone"/>
 		<derived-channel name="milestoneCount"
-			expr="p -> if($p == null, 0, $p.get(`tl.demo.projectManagement:ProjectScope#milestones`).size())"
+			expr="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#milestones`).size())"
 			inputs="project"
 		/>
 		<derived-channel name="noteCount"
-			expr="p -> if($p == null, 0, $p.get(`tl.demo.projectManagement:ProjectScope#notes`).size())"
+			expr="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#notes`).size())"
 			inputs="project"
 		/>
 	</channels>
@@ -88,19 +88,21 @@
 								reference="milestones"
 								type="tl.demo.projectManagement:Milestone"
 							>
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="demo/create-milestone.view.xml"
-								>
-									<bind
-										channel="container"
-										to="project"
-									/>
-									<bind
-										channel="selection"
-										to="milestone"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-milestone.view.xml"
+									>
+										<bind
+											channel="container"
+											to="project"
+										/>
+										<bind
+											channel="selection"
+											to="milestone"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</action>
 					</button>
@@ -151,15 +153,17 @@
 								reference="notes"
 								type="tl.demo.projectManagement:Note"
 							>
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="demo/create-note.view.xml"
-								>
-									<bind
-										channel="container"
-										to="project"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-note.view.xml"
+									>
+										<bind
+											channel="container"
+											to="project"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</action>
 					</button>
@@ -171,7 +175,7 @@
 					view="projects/notes.view.xml"
 				>
 					<executability>
-						<disabled-if expr="p -> if($p == null || $p.get(`tl.demo.projectManagement:ProjectScope#notes`).isEmpty(), #('The project has no notes.'@en, 'Das Projekt hat keine Notizen.'@de))"/>
+						<disabled-if expr="if($project == null || $project.get(`tl.demo.projectManagement:ProjectScope#notes`).isEmpty(), #('The project has no notes.'@en, 'Das Projekt hat keine Notizen.'@de))"/>
 					</executability>
 					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
 						<value>

@@ -5,7 +5,7 @@
 		<channel name="item"/>
 		<channel name="navPath"/>
 		<derived-channel name="depth"
-			expr="p -> $p.size()"
+			expr="$navPath.size()"
 			inputs="navPath"
 		/>
 	</channels>
@@ -15,7 +15,7 @@
 				inputs="depth"
 			>
 				<executability>
-					<visible-if expr="d -> $d > 0"/>
+					<visible-if expr="$depth > 0"/>
 				</executability>
 				<navigate-pop/>
 			</generic-command>
@@ -23,7 +23,7 @@
 		<form input="item">
 			<field attribute="name"/>
 			<visible-if
-				expr="d -> $d == 1"
+				expr="$depth == 1"
 				input="depth"
 			>
 				<field

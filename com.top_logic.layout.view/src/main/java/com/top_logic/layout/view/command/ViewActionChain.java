@@ -21,8 +21,8 @@ import com.top_logic.layout.react.control.button.ButtonTone;
  * <p>
  * Every action of the chain runs with the same arguments: the result an action
  * {@link Continuation#resume(Object) resumes} with does not reach the actions following it, but only
- * the follow-up actions nested into it (see {@link WithResultActions}), which run with the arguments
- * extended by that result.
+ * its follow-up actions (see {@link WithResultActions}), which run with the arguments extended by
+ * that result.
  * </p>
  *
  * <p>

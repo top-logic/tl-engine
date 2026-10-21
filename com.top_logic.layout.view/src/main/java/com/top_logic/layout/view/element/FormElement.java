@@ -251,7 +251,8 @@ public class FormElement extends ContainerElement {
 		 * A {@link com.top_logic.layout.view.security.SecurityRule} checks the user's roles for a
 		 * command group on the enclosing security scope; a
 		 * {@link com.top_logic.layout.view.command.VisibleIf} evaluates a script predicate over the
-		 * displayed object. Without a rule, every user who sees the form may edit it.
+		 * displayed object, which it sees as a variable named after the {@link #getInput() input}
+		 * channel of the form. Without a rule, every user who sees the form may edit it.
 		 * </p>
 		 */
 		@Name(EDIT_EXECUTABILITY)
@@ -291,15 +292,28 @@ public class FormElement extends ContainerElement {
 
 		/**
 		 * The {@link #getSaveActions() save} and {@link #getCancelActions() cancel} actions run
-		 * without arguments.
+		 * without arguments, the {@link #getEditExecutability() edit rules} decide over the
+		 * displayed object, see {@link FormElement#editScope(Config)}.
 		 */
 		@Override
 		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
 			if (ActionScopes.contains(getSaveActions(), part) || ActionScopes.contains(getCancelActions(), part)) {
 				return ActionScope.NONE;
 			}
+			if (ActionScopes.contains(getEditExecutability(), part)) {
+				return editScope(this);
+			}
 			return outer;
 		}
+	}
+
+	/**
+	 * The scope the {@link Config#getEditExecutability() edit rules} of the given form decide in:
+	 * the displayed object, named after the {@link Config#getInput() input} channel.
+	 */
+	public static ActionScope editScope(Config config) {
+		ChannelRef input = config.getInput();
+		return input == null ? ActionScope.NONE : ActionScope.single(input.getChannelName());
 	}
 
 	private final Config _config;
@@ -381,7 +395,8 @@ public class FormElement extends ContainerElement {
 
 		// 5. Wire channels and the edit guard.
 		formControl.setInputChannel(inputChannel);
-		formControl.setEditRule(ViewExecutabilityRules.build(_config.getEditExecutability(), context));
+		formControl.setEditRule(
+			ViewExecutabilityRules.build(_config.getEditExecutability(), context, editScope(_config)));
 
 		ChannelRef editModeRef = _config.getEditMode();
 		if (editModeRef != null) {
@@ -480,7 +495,8 @@ public class FormElement extends ContainerElement {
 			ViewCommand cmd = _formCommands.get(i);
 			ViewCommand.Config cmdConfig = _formCommandConfigs.get(i);
 
-			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), formContext);
+			String trigger = null;
+			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig, trigger, formContext);
 			if (cmd.appliesFormState()) {
 				// The form rejects the command while errors are on screen, so do not offer it.
 				rule = CombinedViewExecutabilityRule.combine(List.of(rule, new FormValid(formControl)));

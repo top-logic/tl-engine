@@ -32,7 +32,9 @@
 				<action class="com.top_logic.model.search.react.EvaluateDynamicScriptAction"
 					transaction="false"
 				>
-					<write-channel name="result"/>
+					<with-result>
+						<write-channel name="result"/>
+					</with-result>
 				</action>
 			</generic-command>
 			<generic-command
@@ -47,7 +49,9 @@
 				<action class="com.top_logic.model.search.react.EvaluateDynamicScriptAction"
 					transaction="true"
 				>
-					<write-channel name="result"/>
+					<with-result>
+						<write-channel name="result"/>
+					</with-result>
 				</action>
 			</generic-command>
 		</commands>

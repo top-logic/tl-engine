@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -21,8 +22,8 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * <p>
  * A derived channel computes its value from other channels using a TL-Script expression. The
- * {@link #getInputs() inputs} are channel references whose current values become positional
- * arguments to the {@link #getExpr() expression}.
+ * {@link #getInputs() inputs} are channel references whose current values the
+ * {@link #getExpr() expression} sees as variables, see {@link InputScript}.
  * </p>
  */
 @TagName("derived-channel")
@@ -42,17 +43,26 @@ public interface DerivedChannelConfig extends ChannelConfig, Inputs {
 	String OBSERVED_TYPES = "observed-types";
 
 	/**
+	 * Name of the variable holding the written value in the {@link #getReverse() reverse
+	 * expression}.
+	 */
+	String VALUE = "value";
+
+	/**
 	 * TL-Script expression computing the derived value.
 	 *
 	 * <p>
-	 * The expression receives the input channel values as positional arguments. For example, with
-	 * {@code inputs="a,b"} and {@code expr="x -> y -> $x + $y"}, the expression is called with the
-	 * current values of channels {@code a} and {@code b}.
+	 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+	 * their channels, without declaring them. For example, with {@code inputs="a, b"} and
+	 * {@code expr="$a + $b"}, the expression computes the sum of the current values of the
+	 * channels {@code a} and {@code b}. An input renamed with {@code as} is seen under its new name:
+	 * {@code inputs="selection as ticket"}, {@code expr="$ticket.get(`my.module:Ticket#name`)"}.
 	 * </p>
 	 */
 	@Name(EXPR)
 	@Mandatory
 	@NonNullable
+	@ScriptContextVariables(InputScript.Variables.class)
 	Expr getExpr();
 
 	/**
@@ -64,13 +74,16 @@ public interface DerivedChannelConfig extends ChannelConfig, Inputs {
 	 * </p>
 	 *
 	 * <p>
-	 * The expression receives the derived value as its single argument and must return the
-	 * corresponding value for the first input channel. For example, with
-	 * {@code expr="id -> 'id-' + $id"} and {@code reverse="s -> $s.substring(3)"}, writing
-	 * {@code "id-42"} to the derived channel sets {@code "42"} on the source.
+	 * The expression sees the value written to the derived channel as the variable
+	 * {@value #VALUE}, behind the values of the {@link #getInputs() inputs}, and must return the
+	 * corresponding value for the first input channel. For example, with {@code inputs="id"},
+	 * {@code expr="'id-' + $id"} and {@code reverse="$value.substring(3)"}, writing {@code "id-42"}
+	 * to the derived channel sets {@code "42"} on the channel {@code id}.
 	 * </p>
 	 */
 	@Name(REVERSE)
+	@Supplies(VALUE)
+	@ScriptContextVariables(InputScript.Variables.class)
 	Expr getReverse();
 
 	/**

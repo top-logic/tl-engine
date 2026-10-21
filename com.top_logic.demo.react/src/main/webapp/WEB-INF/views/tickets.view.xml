@@ -93,6 +93,16 @@
 	The lists stand one below the other in the scrolling body of the Tickets panel, each as high as
 	its rows: their panels set fill="false", so that the tables do not divide the height of the
 	page between them, as a panel around a table otherwise does.
+	
+	The form of the Conversation panel switches its edit mode with commands of its own instead of
+	the built-in Edit, Save and Cancel (mode-switch="false"). It publishes its mode on the
+	ticketEditMode channel, from which viewedTicket and editedTicket derive the ticket while it is
+	viewed and while it is edited, so Edit is shown in view mode and Save and Cancel in edit mode.
+	Edit starts the edit session with <enter-edit-mode/>, Cancel drops the input with
+	<discard-form-state/>. Save is a chain: <store-form-state/> and a script adding the comment
+	"Ticket updated." run in one transaction, and <leave-edit-mode/> after it ends the edit
+	session once the transaction is committed - the comment appearing in the conversation shows
+	that the script ran on the stored ticket.
 -->
 <view>
 	<channels>
@@ -102,14 +112,23 @@
 		<channel name="searchTerm"/>
 		<channel name="status"/>
 		<channel name="jump"/>
+		<channel name="ticketEditMode"/>
 		<derived-channel name="ticketId"
-			expr="t -> objectId($t)"
+			expr="objectId($ticket)"
 			inputs="ticket"
-			reverse="id -> $id.objectResolve(`demo.tickets:Ticket`)"
+			reverse="$value.objectResolve(`demo.tickets:Ticket`)"
 		/>
 		<derived-channel name="ticketState"
-			expr="t -> if($t == null, '', if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
+			expr="if($ticket == null, '', if($ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
 			inputs="ticket"
+		/>
+		<derived-channel name="viewedTicket"
+			expr="if($editing == true, null, $ticket)"
+			inputs="ticket, ticketEditMode as editing"
+		/>
+		<derived-channel name="editedTicket"
+			expr="if($editing == true, $ticket, null)"
+			inputs="ticket, ticketEditMode as editing"
 		/>
 	</channels>
 	<param-bindings>
@@ -154,18 +173,20 @@
 								<if test="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement() != null">
 									<then>
 										<execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
-											<write-channel name="ticket"/>
+											<with-result>
+												<write-channel name="ticket"/>
+											</with-result>
 										</execute-script>
 									</then>
 									<else>
 										<show-view view="tickets.view.xml">
 											<bind
 												channel="activeFilter"
-												expr="term -> 'all'"
+												expr="'all'"
 											/>
 											<bind
 												channel="searchTerm"
-												expr="term -> $term"
+												expr="$value"
 											/>
 										</show-view>
 									</else>
@@ -175,7 +196,7 @@
 					</on-submit>
 				</value-input>
 				<visible-if
-					expr="t -> $t != null"
+					expr="$ticket != null"
 					input="ticket"
 				>
 					<text
@@ -228,15 +249,17 @@
 									<de>Neu</de>
 								</label>
 								<create-transient type="demo.tickets:Ticket">
-									<open-dialog
-										bind-input-to="model"
-										dialog-view="tickets-create.view.xml"
-									>
-										<bind
-											channel="selection"
-											to="ticket"
-										/>
-									</open-dialog>
+									<with-result>
+										<open-dialog
+											bind-input-to="model"
+											dialog-view="tickets-create.view.xml"
+										>
+											<bind
+												channel="selection"
+												to="ticket"
+											/>
+										</open-dialog>
+									</with-result>
 								</create-transient>
 							</generic-command>
 							<generic-command
@@ -250,7 +273,7 @@
 								</label>
 								<executability>
 									<null-input-disabled/>
-									<disabled-if expr="t -> if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
+									<disabled-if expr="if($ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
 								</executability>
 								<delete-object/>
 								<write-channel name="ticket"
@@ -267,7 +290,7 @@
 									<de>Schließen</de>
 								</label>
 								<executability>
-									<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
+									<visible-if expr="$ticket != null &amp;&amp; $ticket.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
 								</executability>
 								<with-transaction>
 									<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
@@ -283,7 +306,7 @@
 									<de>Wiedereröffnen</de>
 								</label>
 								<executability>
-									<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
+									<visible-if expr="$ticket != null &amp;&amp; $ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
 								</executability>
 								<with-transaction>
 									<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
@@ -330,9 +353,9 @@
 								input="ticketState"
 							/>
 							<progress
-								done="x -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
+								done="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
 								observed-types="demo.tickets:Ticket"
-								total="x -> all(`demo.tickets:Ticket`).size()"
+								total="all(`demo.tickets:Ticket`).size()"
 							/>
 							<fields>
 								<value-input
@@ -445,7 +468,7 @@
 											<en>Comments</en>
 											<de>Kommentare</de>
 										</label>
-										<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).size()</value>
+										<value>$row.get(`demo.tickets:Ticket#comments`).size()</value>
 									</computed-column>
 									<computed-column name="commentedByMe"
 										type="tl.core:Boolean"
@@ -454,12 +477,12 @@
 											<en>Commented by me</en>
 											<de>Von mir kommentiert</de>
 										</label>
-										<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
+										<value>$row.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
 									</computed-column>
 								</columns>
-								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<rows>{ tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($status == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $status)); }</rows>
 								<!-- Tints the tickets in progress; the class follows the status of each ticket. -->
-								<row-class>state -&gt; row -&gt; $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
+								<row-class>$row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
 							</table>
 						</panel>
 						<panel fill="false">
@@ -478,7 +501,7 @@
 										<authenticated-only/>
 									</executability>
 									<row-executability>
-										<disabled-if expr="t -> $t.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
+										<disabled-if expr="$row.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
 									</row-executability>
 								</drag>
 								<drop
@@ -504,7 +527,7 @@
 									<column attribute="status"/>
 									<column attribute="statusLabel"/>
 								</columns>
-								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<rows>{ tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($status == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $status)); }</rows>
 							</table>
 						</panel>
 						<panel fill="false">
@@ -545,21 +568,78 @@
 							<en>Conversation</en>
 							<de>Verlauf</de>
 						</title>
-						<form input="ticket">
+						<form
+							editMode="ticketEditMode"
+							input="ticket"
+							mode-switch="false"
+						>
 							<field attribute="name"/>
 							<field attribute="status"/>
 							<field attribute="statusLabel"/>
 							<field attribute="headline"/>
 							<field attribute="resolution"/>
+							<commands>
+								<generic-command
+									image="css:bi bi-pencil"
+									inputs="viewedTicket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Edit</en>
+										<de>Bearbeiten</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<enter-edit-mode/>
+								</generic-command>
+								<generic-command
+									image="css:bi bi-check-lg"
+									inputs="editedTicket as ticket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Save</en>
+										<de>Speichern</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<with-transaction>
+										<commitMessage>
+											<en>Updated ticket {0}.</en>
+											<de>Ticket {0} aktualisiert.</de>
+										</commitMessage>
+										<store-form-state/>
+										<execute-script function="{ c = new(`demo.tickets:Comment`, $ticket); $c.set(`demo.tickets:Comment#author`, currentUser()); $c.set(`demo.tickets:Comment#content`, 'Ticket updated.'); $c.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $c); }"/>
+									</with-transaction>
+									<leave-edit-mode/>
+								</generic-command>
+								<generic-command
+									image="css:bi bi-x-lg"
+									inputs="editedTicket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Cancel</en>
+										<de>Abbrechen</de>
+									</label>
+									<executability>
+										<null-input-hidden/>
+									</executability>
+									<discard-form-state/>
+								</generic-command>
+							</commands>
 						</form>
 						<object-list
+							element-as="comment"
 							element-channel="comment"
 							element-type="demo.tickets:Comment"
 							inputs="ticket"
-							items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
-							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+							items="$ticket.get(`demo.tickets:Ticket#comments`)"
+							link="{ persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
 							new-element-channel="newComment"
-							remove="ticket -> comment -> $comment.delete()"
+							remove="$comment.delete()"
 						>
 							<item>
 								<view-ref view="tickets/comment.view.xml">

@@ -148,7 +148,7 @@ describe('the toggle of a tree node as MUI icon button', () => {
 
 describe('the toggle of a tree table row as MUI icon button', () => {
   function row(index: number, extra: Record<string, unknown>) {
-    return { id: 'r' + index, index, selected: false, cells: { name: childControl('c' + index, 'Zeile') }, treeDepth: 0, ...extra };
+    return { id: 'r' + index, index, cells: { name: childControl('c' + index, 'Zeile') }, treeDepth: 0, ...extra };
   }
 
   function mountTreeTable(rows: unknown[]) {

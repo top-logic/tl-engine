@@ -5,13 +5,12 @@
  */
 package com.top_logic.layout.view.dnd;
 
-import java.util.List;
 import java.util.function.Predicate;
 
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.LiveExecutability;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
@@ -84,14 +83,17 @@ public final class DragSourceBinding {
 	 *        The {@link DragConfig#getKind() kind} of a drag, {@code null} or empty for a drag
 	 *        without a kind.
 	 * @param itemExecutability
-	 *        The rules deciding which single item may be dragged, each item being their input. Empty
-	 *        lets every item be dragged.
+	 *        The name of the property of the drag holding the rules that decide which single item
+	 *        may be dragged. The property declares the name the rules see the item under, see
+	 *        {@link ViewExecutabilityRules#scope(com.top_logic.basic.config.ConfigurationItem, String)}.
+	 *        Empty rules let every item be dragged.
 	 */
 	public static void install(ViewContext context, ReactControl control, Source source, DragConfig drag,
-			String dragKind, List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> itemExecutability) {
-		ViewExecutabilityRule itemRule = ViewExecutabilityRules.build(itemExecutability, context);
+			String dragKind, String itemExecutability) {
+		ViewExecutabilityRule itemRule = ViewExecutabilityRules.build(drag, itemExecutability, context);
+		ActionScope itemScope = ViewExecutabilityRules.scope(drag, itemExecutability);
 		Predicate<Object> draggable = itemRule == ViewExecutabilityRule.ALWAYS_EXECUTABLE ? null
-			: item -> itemRule.isExecutable(item).isExecutable();
+			: item -> itemRule.isExecutableFor(itemScope.arguments(item)).isExecutable();
 		source.setDragSource(dragKind == null || dragKind.isEmpty() ? null : dragKind, draggable);
 		if (drag.getExecutability().isEmpty()) {
 			return;

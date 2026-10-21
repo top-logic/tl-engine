@@ -175,8 +175,8 @@ public class TestConfigSelectFieldModel extends TestCase {
 	}
 
 	/**
-	 * {@link ConfigSelectFieldModel#setValue(Object)} forwards a non-{@link String} value
-	 * unchanged to {@link com.top_logic.layout.configedit.ConfigFieldModel#setValue(Object)}, so
+	 * {@link ConfigSelectFieldModel#setValue(Object)} forwards an identity-mapped selection to
+	 * {@link com.top_logic.layout.configedit.ConfigFieldModel#setValue(Object)}, so
 	 * the null-refusal for a technically mandatory property (see
 	 * {@link com.top_logic.layout.configedit.ConfigFieldModel}) already applies here without any
 	 * change of its own: clearing the (non-nullable) enum selection is refused as a field error,

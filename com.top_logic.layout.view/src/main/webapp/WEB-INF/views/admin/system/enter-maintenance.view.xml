@@ -46,13 +46,17 @@
 						<de>Wartungsmodus aktivieren</de>
 					</label>
 					<store-form-state>
-						<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
-							mode="ENTER"
-							model="model"
-						>
-							<write-channel name="state"/>
-							<close-dialog/>
-						</action>
+						<with-result>
+							<action class="com.top_logic.layout.view.admin.system.MaintenanceModeAction"
+								mode="ENTER"
+								model="model"
+							>
+								<with-result>
+									<write-channel name="state"/>
+									<close-dialog/>
+								</with-result>
+							</action>
+						</with-result>
 					</store-form-state>
 				</generic-command>
 			</commands>

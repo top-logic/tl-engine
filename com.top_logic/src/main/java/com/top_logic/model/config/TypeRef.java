@@ -9,8 +9,6 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
@@ -37,7 +35,6 @@ public interface TypeRef extends ConfigurationItem {
 	@Nullable
 	@Options(fun = AllTypes.class, mapping = TLModelPartMapping.class)
 	@OptionLabels(TLPartScopedResourceProvider.class)
-	@ControlProvider(SelectionControlProvider.class)
 	String getTypeSpec();
 
 	/** @see #getTypeSpec() */

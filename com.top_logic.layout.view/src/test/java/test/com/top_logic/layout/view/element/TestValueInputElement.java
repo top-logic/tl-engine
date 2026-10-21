@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.io.IOException;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -29,11 +30,14 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.format.DateStyle;
+import com.top_logic.basic.format.TimeFormatDefinition;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.meta.form.constraint.I18NConstants;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
@@ -54,6 +58,7 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.DatePickerState.Precision;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.react.state.TypingFieldState;
@@ -86,9 +91,12 @@ import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
+import com.top_logic.model.annotate.ui.Format;
+import com.top_logic.model.annotate.ui.FormatBase;
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
@@ -128,6 +136,12 @@ import com.top_logic.util.model.ModelService;
  * </p>
  */
 public class TestValueInputElement extends TestCase {
+
+	/** {@link ConfigType} value marking a datatype as a time of day. */
+	private static final String CONFIG_TYPE_TIME = "TIME";
+
+	/** Name of the property {@link TimeFormatDefinition.Config#getStyle()}. */
+	private static final String TIME_STYLE = "style";
 
 	/** Name of the module the types under test live in. */
 	private static final String MODULE = "test.input";
@@ -352,7 +366,7 @@ public class TestValueInputElement extends TestCase {
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
 		assertNotNull("The options expression must reach the configuration.", owners.getOptions());
 		assertEquals("The options depend on one channel.", 1, owners.getInputs().size());
-		assertEquals("project", owners.getInputs().get(0).getChannelName());
+		assertEquals("project", owners.getInputs().get(0).getChannel().getChannelName());
 	}
 
 	/** A text is written in a text input, on a channel as in an attribute. */
@@ -368,6 +382,82 @@ public class TestValueInputElement extends TestCase {
 	/** A point in time is picked in a date picker, on a channel as in an attribute. */
 	public void testDateIsPickedInADatePicker() {
 		assertEnteredLike(datatype("Day", Kind.DATE, Date.class), Date.class, ReactDatePickerControl.class);
+	}
+
+	/** A time of day shown in a format writing seconds is edited with seconds. */
+	public void testATimeShownWithSecondsIsEditedInSeconds() {
+		assertEquals("A format writing seconds must give a field editing seconds.",
+			Precision.SECONDS, timePicker(timeOfDay("TimeSeconds"), timeFormat(DateStyle.MEDIUM)).getPrecision());
+	}
+
+	/** A time of day shown in a format without seconds is edited in minutes. */
+	public void testATimeShownWithoutSecondsIsEditedInMinutes() {
+		assertEquals("A format writing no seconds must give a field editing minutes.",
+			Precision.MINUTES, timePicker(timeOfDay("TimeMinutes"), timeFormat(DateStyle.SHORT)).getPrecision());
+	}
+
+	/**
+	 * A time of day without a format of its own is edited in the precision of the format its type
+	 * carries.
+	 *
+	 * <p>
+	 * The attribute settings of the type
+	 * ({@link com.top_logic.element.meta.AttributeSettings#getConfiguredTypeAnnotation(Class, TLType)},
+	 * reached through {@link TLType#getAnnotation(Class)}) give a datatype of {@link ConfigType}
+	 * {@value #CONFIG_TYPE_TIME} the {@code short-time} format, which writes no seconds, so a value
+	 * without a {@link Format} of its own is edited in minutes.
+	 * </p>
+	 */
+	public void testATimeWithoutFormatFollowsTheFormatOfItsType() throws ConfigurationException {
+		TLPrimitive type = timeOfDay("TimeDefault");
+		Format typeFormat = type.getAnnotation(Format.class);
+		assertNotNull("The attribute settings must give a time of day a format.", typeFormat);
+		Precision expected = ReactDatePickerControl.precision(ReactDatePickerControl.Kind.TIME,
+			(DateFormat) DisplayAnnotations.toFormat(typeFormat));
+
+		assertEquals("The format of the type must decide the precision.", Precision.MINUTES, expected);
+		assertEquals(expected, timePicker(type, null).getPrecision());
+	}
+
+	/**
+	 * A datatype of time-of-day values, marked as such by its {@link ConfigType}.
+	 *
+	 * @param name
+	 *        The name of the datatype within the test module.
+	 */
+	private TLPrimitive timeOfDay(String name) {
+		TLPrimitive type = datatype(name, Kind.DATE, Date.class);
+		ConfigType configType = TypedConfiguration.newConfigItem(ConfigType.class);
+		configType.setValue(CONFIG_TYPE_TIME);
+		type.setAnnotation(configType);
+		return type;
+	}
+
+	/**
+	 * The picker a value of the given time-of-day type is entered in on a channel, the value
+	 * declared with the given display format, or with none if it is {@code null}.
+	 */
+	private ReactDatePickerControl timePicker(TLPrimitive type, Format format) {
+		ValueInputElement.Config declared = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		if (format != null) {
+			declared.getAnnotations().add(format);
+		}
+		AbstractFieldModel field = new AbstractFieldModel(null);
+		FieldSpec spec = FieldControlService.fieldSpec(type, declared, LABEL, false, field);
+		assertEquals(ReactDatePickerControl.Kind.TIME, spec.getDateKind());
+
+		ReactControl control = FieldControlRegistry.getInstance().createControl(_context, spec, field);
+		assertEquals(ReactDatePickerControl.class, control.getClass());
+		return (ReactDatePickerControl) control;
+	}
+
+	/** A {@link Format} annotation showing a time of day in the given style. */
+	private static Format timeFormat(DateStyle style) {
+		TimeFormatDefinition.Config definition = TypedConfiguration.newConfigItem(TimeFormatDefinition.Config.class);
+		definition.update(definition.descriptor().getProperty(TIME_STYLE), style);
+		Format format = TypedConfiguration.newConfigItem(Format.class);
+		format.update(format.descriptor().getProperty(FormatBase.DEFINITION), definition);
+		return format;
 	}
 
 	/**

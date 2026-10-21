@@ -519,6 +519,11 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/**
 	 * Handles the {@link #CMD_VALUE_CHANGED} command from the React client.
 	 *
+	 * <p>
+	 * Like every value arriving from a client, the selection is dropped unless the field
+	 * {@link #acceptsClientValue() accepts client values}.
+	 * </p>
+	 *
 	 * @param arguments
 	 *        Must contain a {@link FieldValueArguments#VALUE} entry with a list of option value IDs.
 	 */
@@ -529,6 +534,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
 		required = true, description = "List of selected option value ids (from the options descriptors)."))
 	HandlerResult handleValueChanged(Map<String, Object> arguments) {
+		if (!acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
 		List<String> selectedIds = (List<String>) arguments.get(FieldValueArguments.VALUE);
 		if (selectedIds == null) {
 			selectedIds = Collections.emptyList();
@@ -573,6 +581,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	@ReactCommandHandler(CMD_SELECT_BY_KEY)
 	HandlerResult handleSelectByKey(SelectByKeysArguments arguments) {
+		if (!acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
 		List<ModelName> keys = arguments.getKeys();
 
 		List<ModelName> unresolved = new ArrayList<>();

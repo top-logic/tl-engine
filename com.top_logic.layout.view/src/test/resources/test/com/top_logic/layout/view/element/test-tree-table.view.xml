@@ -9,13 +9,13 @@
 	</channels>
 
 	<tree-table
-		children="node -> if($node == 'root', ['a', 'b'], if($node == 'a', ['a1', 'a2'], []))"
+		children="if($node == 'root', ['a', 'b'], if($node == 'a', ['a1', 'a2'], []))"
 		root="'root'"
 		selection="selected"
 	>
 		<drag kind="item">
 			<row-executability>
-				<disabled-if expr="row -> $row == 'b'"/>
+				<disabled-if expr="$row == 'b'"/>
 			</row-executability>
 		</drag>
 		<drop
@@ -38,7 +38,7 @@
 			<computed-column name="value"
 				type="tl.core:String"
 			>
-				<value>row -&gt; $row</value>
+				<value>$row</value>
 			</computed-column>
 		</columns>
 	</tree-table>

@@ -21,7 +21,7 @@
 		<channel name="model"/>
 		<channel name="selectedDemo"/>
 		<derived-channel name="selectedLabel"
-			expr="d -> if($d == null, '', #('Selected: {0}'@en, 'Ausgewählt: {0}'@de).fill($d.get(`demo.react:Demo#name`)))"
+			expr="if($selectedDemo == null, '', #('Selected: {0}'@en, 'Ausgewählt: {0}'@de).fill($selectedDemo.get(`demo.react:Demo#name`)))"
 			inputs="selectedDemo"
 		/>
 	</channels>
@@ -50,15 +50,17 @@
 								<de>Neu</de>
 							</label>
 							<create-transient type="demo.react:Demo">
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="switch-demo-create.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="selectedDemo"
-									/>
-								</open-dialog>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="switch-demo-create.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedDemo"
+										/>
+									</open-dialog>
+								</with-result>
 							</create-transient>
 						</generic-command>
 						<generic-command
@@ -131,16 +133,16 @@
 					</inset>
 					<inset>
 						<progress
-							done="d -> { amount = if($d == null, null, $d.get(`demo.react:Demo#amount`)); if($amount == null, 0, $amount); }"
-							input="selectedDemo"
-							label="d -> { amount = if($d == null, null, $d.get(`demo.react:Demo#amount`)); if($d == null, #('Nothing selected'@en, 'Nichts ausgewählt'@de), #('{0}: {1} of 100'@en, '{0}: {1} von 100'@de).fill($d.get(`demo.react:Demo#name`), if($amount == null, 0, $amount))); }"
+							done="{ amount = if($demo == null, null, $demo.get(`demo.react:Demo#amount`)); if($amount == null, 0, $amount); }"
+							input="selectedDemo as demo"
+							label="{ amount = if($demo == null, null, $demo.get(`demo.react:Demo#amount`)); if($demo == null, #('Nothing selected'@en, 'Nichts ausgewählt'@de), #('{0}: {1} of 100'@en, '{0}: {1} von 100'@de).fill($demo.get(`demo.react:Demo#name`), if($amount == null, 0, $amount))); }"
 							observed-types="demo.react:Demo"
-							total="d -> 100"
+							total="100"
 						/>
 						<text input="selectedLabel"/>
 					</inset>
-					<switch input="selectedDemo">
-						<case test="d -> $d != null &amp;&amp; $d.get(`demo.react:Demo#priority`) != null &amp;&amp; $d.get(`demo.react:Demo#priority`).get(`tl.model:TLNamedPart#name`) == 'high'">
+					<switch input="selectedDemo as demo">
+						<case test="$demo != null &amp;&amp; $demo.get(`demo.react:Demo#priority`) != null &amp;&amp; $demo.get(`demo.react:Demo#priority`).get(`tl.model:TLNamedPart#name`) == 'high'">
 							<tab-bar active-tab="details">
 								<tab id="details"
 									icon="css:bi bi-card-list"

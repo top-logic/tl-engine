@@ -40,7 +40,9 @@
 						<de>Bestätigen</de>
 					</label>
 					<store-form-state>
-						<verify-otp/>
+						<with-result>
+							<verify-otp/>
+						</with-result>
 					</store-form-state>
 				</generic-command>
 			</commands>

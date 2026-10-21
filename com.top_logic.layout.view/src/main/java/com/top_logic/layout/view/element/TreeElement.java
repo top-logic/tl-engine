@@ -141,12 +141,14 @@ public class TreeElement implements UIElement {
 		String DROPS = "drops";
 
 		/**
-		 * Optional TL-Script function computing what holds an object in the tree.
+		 * Optional TL-Script expression computing what holds an object in the tree.
 		 *
 		 * <p>
-		 * Takes the input channel values followed by an object as last argument, and returns the object
-		 * whose child list holds it - nothing for the object the tree is built from, and for an object
-		 * belonging to no tree at all.
+		 * The expression sees the values of the inputs as variables named after their channels, or
+		 * by their <code>as</code> names, and the object as the variable
+		 * {@value NodeAsConfig#DEFAULT_NODE_AS}, or by the name given with
+		 * {@value NodeAsConfig#NODE_AS}. It returns the object whose child list holds it - nothing
+		 * for the object the tree is built from, and for an object belonging to no tree at all.
 		 * </p>
 		 *
 		 * <p>
@@ -423,7 +425,7 @@ public class TreeElement implements UIElement {
 				control.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getNodeExecutability());
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), TreeDragConfig.NODE_EXECUTABILITY);
 	}
 
 	@Override

@@ -10,10 +10,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -67,6 +69,7 @@ import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.TableView;
@@ -136,15 +139,18 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		String EXPORT = "export";
 
 		/**
-		 * TL-Script function computing the row objects (a {@link Collection}).
+		 * TL-Script expression computing the row objects (a {@link Collection}).
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, e.g. {@code inputs="selection as project"}
+		 * with {@code rows="$project.get(`my.module:Project#tickets`)"}.
 		 * </p>
 		 */
 		@Name(ROWS)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getRows();
 
 		/**
@@ -291,8 +297,8 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	@CalledByReflection
 	public TableElement(InstantiationContext context, Config config) {
 		super(context, config);
-		_rowsExecutor = QueryExecutor.compile(config.getRows());
-		_rowClass = RowClassFunction.compile(config.getRowClass());
+		_rowsExecutor = InputScript.compile(config, Config.ROWS);
+		_rowClass = RowClassFunction.compile(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
 		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {
 			// The editable table is a control of its own, which carries no drag-and-drop seam; a
@@ -315,9 +321,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			return createEditableControl(context, inputChannels, initialRows);
 		}
 
+		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
 		ReadOnlyTable<ListRowSource<Object>> table = createTable(context, resolveRowType(rows), inputValues,
 			columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false, initialGrouping(), _drops,
-			_rowClass.bind(inputChannels));
+			rowCssClass);
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setRowCount(_config.getRowCount());
@@ -334,12 +341,24 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 				table.selectionBinding().rowsRefreshed();
 			}
 		};
+		// An input change leaving the rows as they are - a change of the table's own selection
+		// above all - keeps the cells where no column reads that input, and only refreshes what is
+		// computed from the inputs apart from the rows.
+		InputRoles roles = inputRoles(context, inputChannels);
+		Runnable inputsChanged = () -> {
+			refreshPresets(table, ChannelInputs.arguments(inputChannels));
+			if (rowCssClass != null) {
+				control.repaintRows();
+			}
+		};
 		RowSourceObserver<Object> observer = new RowSourceObserver<>(
 			table.source(),
 			args -> new ArrayList<>(refreshRows(rowsExecutor, args, control)),
 			ObservedTypes.resolve(_config.getObservedTypes()),
 			inputChannels,
-			refresh);
+			refresh)
+				.withRowIndependentInputs(roles.rowIndependent())
+				.onInputsChanged(roles.cellIndependent(), inputsChanged);
 		// Observe the model only while the table is displayed: a table that is not attached - the
 		// inactive child of a tab bar, a page nobody looks at - must not react to model changes.
 		control.addAttachListener(() -> observer.attach(context.getModelScope()));
@@ -399,8 +418,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setFixedColumns(_config.getFixedColumns());
 		control.setSelectionChannel(selectionChannel);
 		control.setSelectionMode(_config.getSelectionMode());
+		InputRoles roles = inputRoles(context, inputChannels);
 		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
-			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
+			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels, roles.rowIndependent(),
+			roles.cellIndependent());
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
 		control.setRowCssClass(_rowClass.bind(inputChannels));

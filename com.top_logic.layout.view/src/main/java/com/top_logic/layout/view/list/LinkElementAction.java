@@ -34,7 +34,9 @@ import com.top_logic.util.error.TopLogicException;
  * <pre>
  * &lt;generic-command placement="TOOLBAR"&gt;
  *   &lt;store-form-state&gt;
- *     &lt;link-element/&gt;
+ *     &lt;with-result&gt;
+ *       &lt;link-element/&gt;
+ *     &lt;/with-result&gt;
  *   &lt;/store-form-state&gt;
  * &lt;/generic-command&gt;
  * </pre>
@@ -92,4 +94,11 @@ public class LinkElementAction implements ViewAction {
 		return scope;
 	}
 
+	/**
+	 * Ends the edit session of the form and resets the channel of the new element.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

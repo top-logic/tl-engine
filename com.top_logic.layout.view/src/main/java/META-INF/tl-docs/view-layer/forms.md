@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values) or when a channel write must ask about unsaved changes.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -101,6 +101,32 @@ is a switch everywhere says so once:
 A value that may also be unknown (`tl.core:Tristate`, a tri-state field) stays a checkbox even where
 a switch is asked for: a switch has no third position for "no value".
 
+**A point in time** — `DatePickerControlProvider`: a date, a time of day or both
+(`tl.core:Date`, `tl.core:Time`, `tl.core:DateTime`) are each edited in the browser's own input for
+that part. All three are stored as a `Date`; the `ConfigType` annotation of the type says which part
+a value holds (`ReactDatePickerControl.Kind`). The field exchanges its value in ISO form, so no
+locale format reads it. The display format of the field decides both how a value reads in view mode
+and the precision of the input: a format that writes seconds gives an input editing seconds, a
+format without seconds an input editing minutes. The display format is the `<format>` annotation of
+the attribute, else the default the engine gives attributes of that type - `short-time` for
+`tl.core:Time` (attribute settings) and `medium-date-time` for `tl.core:DateTime` (the type's own
+annotation). Neither writes seconds, so an attribute edits minutes unless its format writes them:
+
+```xml
+<property name="timeSeconds"
+	type="tl.core:Time"
+>
+	<annotations>
+		<format>
+			<time style="medium"/>
+		</format>
+	</annotations>
+</property>
+```
+
+A `<value-input type="tl.core:Time">` without a `<format>` takes the type's `short-time` format as
+well and edits minutes; a `<format>` inside the `<value-input>` sets display and precision there.
+
 **Three ways to choose the provider**, in the order `FieldControlService` tries them:
 
 1. `<input-control class="…Provider" …/>` inside a `<field>` (`FieldElement.Config.getInputControl()`)
@@ -188,6 +214,81 @@ The rule counts only errors on display: an error the user cannot see yet leaves 
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
 
+## Saving with an action chain
+
+A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The chain runs in the form's context without arguments; `<read-form-object/>` results in the object the form displays, and `<store-form-state/>` in the object it stored, which their follow-up actions in `<with-result>` see (see [actions with a result](doc:view-layer/commands#actions-with-a-result-with-result)). Save stays disabled while the form displays an error.
+
+Four actions work on the edit session of the form they run in:
+
+- `<store-form-state/>` (`StoreFormStateAction`) checks the input, reveals every error and aborts the chain while one remains; otherwise it stores the input and results in the stored object. The edit session goes on, now without unsaved changes. Inside a `<with-transaction>`, the storing joins that transaction, and the scripts of its `<with-result>` and after it in the same `<with-transaction>` are committed together with the stored values - or not at all.
+- `<leave-edit-mode/>` (`LeaveEditModeAction`) ends the edit session without storing or dropping anything. A form that still holds unsaved changes refuses: the chain aborts and the form stays in edit mode with its input.
+- `<discard-form-state/>` (`DiscardFormStateAction`) drops the input and ends the edit session.
+- `<enter-edit-mode/>` (`EnterEditModeAction`) starts the edit session like the form's own Edit button: it locks the object and is subject to the edit permission, the right to write the object and the rules of `<edit-executability>`. A form that shows no object, or whose permission refuses, aborts the chain, so no later action runs on a form that cannot be edited. A form already in edit mode keeps its session.
+
+A save that post-processes the stored values stores them and runs its script over the stored object in one transaction, and leaves the edit mode after it:
+
+```xml
+<form input="ticket">
+	<save-action>
+		<with-transaction>
+			<store-form-state>
+				<with-result as="ticket">
+					<execute-script function="... $ticket ..."/>
+				</with-result>
+			</store-form-state>
+		</with-transaction>
+		<leave-edit-mode/>
+	</save-action>
+	...
+</form>
+```
+
+`<leave-edit-mode/>` belongs outside the `<with-transaction>`: inside it, the form would show view mode before the commit, and a commit that fails would have ended the edit session already. Like `<enter-edit-mode/>` and `<discard-form-state/>`, it changes the state of the view, so placing it inside the transaction is reported as a configuration error (see [transactions](doc:view-layer/commands#transactions-with-transaction)). After it, a failed commit aborts the chain before the form leaves edit mode, so the form stays in edit mode.
+
+The actions find the form only where the form runs them: in its `<save-action>` and `<cancel-action>`, and in the commands of its own `<commands>`. A command in the `<commands>` of a surrounding `<panel>` runs outside the form, and the four actions have no effect there. A form with `mode-switch="false"` offers no Edit, Save and Cancel of its own, so its `<commands>` can provide them with these actions. The form publishes its mode on the channel named by `editMode`, and the commands decide on it whether they are shown. The tickets demo derives the ticket in view mode and in edit mode from that channel and hides each command while its main argument is empty:
+
+```xml
+<channels>
+	<channel name="ticket"/>
+	<channel name="ticketEditMode"/>
+	<derived-channel name="viewedTicket"
+		expr="if($editing == true, null, $ticket)"
+		inputs="ticket, ticketEditMode as editing"
+	/>
+	<derived-channel name="editedTicket"
+		expr="if($editing == true, $ticket, null)"
+		inputs="ticket, ticketEditMode as editing"
+	/>
+</channels>
+...
+<form editMode="ticketEditMode" input="ticket" mode-switch="false">
+	<field attribute="name"/>
+	<commands>
+		<generic-command inputs="viewedTicket" placement="TOOLBAR">
+			<label><en>Edit</en></label>
+			<executability><null-input-hidden/></executability>
+			<enter-edit-mode/>
+		</generic-command>
+		<generic-command inputs="editedTicket as ticket" placement="TOOLBAR">
+			<label><en>Save</en></label>
+			<executability><null-input-hidden/></executability>
+			<with-transaction>
+				<store-form-state/>
+				<execute-script function="... $ticket ..."/>
+			</with-transaction>
+			<leave-edit-mode/>
+		</generic-command>
+		<generic-command inputs="editedTicket" placement="TOOLBAR">
+			<label><en>Cancel</en></label>
+			<executability><null-input-hidden/></executability>
+			<discard-form-state/>
+		</generic-command>
+	</commands>
+</form>
+```
+
+A command of the form's `<commands>` that stores the form state is disabled while the form displays an error (`<form-valid/>`, see [validation](#validation)) without stating it.
+
 ## Derived fields
 
 A `<field>` of a derived attribute - one computed by a `<storage-algorithm>`, such as a `<query>` - follows the values entered in the form. While the form is edited, the field computes the attribute over the form's edits instead of the stored values, and computes it again when a field it reads changes. This holds through a chain of derived attributes as well: a `headline` reading a derived `statusLabel` that reads the `status` reference changes as soon as another status is selected, before anything is saved. A derived field is never dirty - it holds no input of its own and is not stored - but it announces each change of its value, so whatever depends on it follows in turn.
@@ -211,3 +312,7 @@ The same applies to every script a form evaluates for an object it edits: a `dyn
 ```
 
 A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, takes part in this without any cooperation: it reads the attributes of its arguments through `tValue(...)`, `tValueByName(...)` or generated getters like any other Java code. The form evaluates its scripts in a `TracingScope`, which reports every attribute read made on the evaluating thread as a dependency and answers it from the values entered in the form. In edit mode, the function receives the form's overlay of an object, so it declares its parameter as `TLObject` rather than a generated interface.
+
+## Configuration forms
+
+A `<config-form>` edits a `ConfigurationItem` instead of a model object. The control of each property is chosen by the annotations stating what its value means (`@MultiLine`, `@Code`, `@Html`, ...) and by its value type, through maps of the `ConfigControlService` that modules extend; see [controls of configuration forms](doc:config-form-controls).

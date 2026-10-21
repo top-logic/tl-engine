@@ -21,7 +21,7 @@
 	<channels>
 		<channel name="project"/>
 		<channel name="budget"
-			init="p -> if($p == null, null, $p.get(`tl.demo.projectManagement:ProjectScope#budget`))"
+			init="if($project == null, null, $project.get(`tl.demo.projectManagement:ProjectScope#budget`))"
 			inputs="project"
 		/>
 	</channels>
@@ -40,20 +40,19 @@
 					<en>New Project</en>
 					<de>Neues Projekt</de>
 				</label>
-				<create-transient
-					as="p"
-					type="tl.demo.projectManagement:ProjectScope"
-				>
-					<execute-script function="$p.set(`tl.demo.projectManagement:ProjectScope#admins`, [currentUser()])"/>
-					<open-dialog
-						bind-input-to="model"
-						dialog-view="demo/create-project-scope.view.xml"
-					>
-						<bind
-							channel="selection"
-							to="project"
-						/>
-					</open-dialog>
+				<create-transient type="tl.demo.projectManagement:ProjectScope">
+					<with-result as="p">
+						<execute-script function="$p.set(`tl.demo.projectManagement:ProjectScope#admins`, [currentUser()])"/>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-project-scope.view.xml"
+						>
+							<bind
+								channel="selection"
+								to="project"
+							/>
+						</open-dialog>
+					</with-result>
 				</create-transient>
 			</generic-command>
 			<generic-command
@@ -244,7 +243,9 @@
 								name: toString($name, ".pptx"))
 						}
 					]]></function>
-					<download/>
+					<with-result>
+						<download/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 		</commands>
@@ -286,7 +287,7 @@
 					view="projects/milestones.view.xml"
 				>
 					<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-						expr="p -> $p.get(`tl.demo.projectManagement:ProjectScope#name`)"
+						expr="$project.get(`tl.demo.projectManagement:ProjectScope#name`)"
 						inputs="project"
 					/>
 				</on-activate>

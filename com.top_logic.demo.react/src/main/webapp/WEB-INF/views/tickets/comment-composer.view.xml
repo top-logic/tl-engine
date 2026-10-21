@@ -69,7 +69,9 @@
 							/>
 						</executability>
 						<store-form-state>
-							<link-element/>
+							<with-result>
+								<link-element/>
+							</with-result>
 						</store-form-state>
 					</generic-command>
 				</commands>

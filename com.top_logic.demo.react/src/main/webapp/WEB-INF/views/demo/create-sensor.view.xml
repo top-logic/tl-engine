@@ -46,8 +46,10 @@
 							<inputs>
 								<input channel="container"/>
 							</inputs>
-							<write-channel name="selection"/>
 						</execute-script>
+						<with-result>
+							<write-channel name="selection"/>
+						</with-result>
 					</with-transaction>
 					<close-dialog/>
 				</generic-command>

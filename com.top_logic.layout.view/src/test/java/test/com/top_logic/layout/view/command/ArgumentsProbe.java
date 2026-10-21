@@ -12,6 +12,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionScope;
@@ -31,7 +32,7 @@ public class ArgumentsProbe extends ArgumentsViewAction {
 	/**
 	 * Configuration of an {@link ArgumentsProbe}.
 	 */
-	public interface Config extends PolymorphicConfiguration<ArgumentsProbe> {
+	public interface Config extends PolymorphicConfiguration<ArgumentsProbe>, ConfigPart {
 
 		@Override
 		@ClassDefault(ArgumentsProbe.class)

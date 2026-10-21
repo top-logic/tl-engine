@@ -98,4 +98,19 @@ public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, Con
 		}
 		return ExecutableState.EXECUTABLE;
 	}
+
+	/**
+	 * Hands the arguments to every combined rule, so that each decides over the arguments it
+	 * needs.
+	 */
+	@Override
+	public ExecutableState isExecutableFor(ActionArguments arguments) {
+		for (ViewExecutabilityRule rule : _rules) {
+			ExecutableState state = rule.isExecutableFor(arguments);
+			if (!state.isExecutable()) {
+				return state;
+			}
+		}
+		return ExecutableState.EXECUTABLE;
+	}
 }

@@ -66,20 +66,20 @@
 			one and a set as the number of its elements.
 		-->
 		<derived-channel name="selectedSingle"
-			expr="sel -> if($sel.size() == 1, $sel.singleElement(), null)"
+			expr="if($selected.size() == 1, $selected.singleElement(), null)"
 			inputs="selected"
 		/>
 		<!-- The single selection while it is a scope, a milestone, a ticket - nothing otherwise. -->
 		<derived-channel name="selectedScope"
-			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:ProjectScope`), $sel, null)"
+			expr="if($selectedSingle.instanceOf(`tl.demo.projectManagement:ProjectScope`), $selectedSingle, null)"
 			inputs="selectedSingle"
 		/>
 		<derived-channel name="selectedMilestone"
-			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:Milestone`), $sel, null)"
+			expr="if($selectedSingle.instanceOf(`tl.demo.projectManagement:Milestone`), $selectedSingle, null)"
 			inputs="selectedSingle"
 		/>
 		<derived-channel name="selectedTicket"
-			expr="sel -> if($sel.instanceOf(`tl.demo.projectManagement:Ticket`), $sel, null)"
+			expr="if($selectedSingle.instanceOf(`tl.demo.projectManagement:Ticket`), $selectedSingle, null)"
 			inputs="selectedSingle"
 		/>
 	</channels>
@@ -106,19 +106,21 @@
 					reference="milestones"
 					type="tl.demo.projectManagement:Milestone"
 				>
-					<open-dialog
-						bind-input-to="model"
-						dialog-view="demo/create-milestone.view.xml"
-					>
-						<bind
-							channel="container"
-							to="selectedScope"
-						/>
-						<bind
-							channel="selection"
-							to="selected"
-						/>
-					</open-dialog>
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-milestone.view.xml"
+						>
+							<bind
+								channel="container"
+								to="selectedScope"
+							/>
+							<bind
+								channel="selection"
+								to="selected"
+							/>
+						</open-dialog>
+					</with-result>
 				</create-transient>
 			</generic-command>
 			<!--
@@ -149,9 +151,10 @@
 						<en>Created a ticket in milestone {0}.</en>
 						<de>Ticket in Meilenstein {0} angelegt.</de>
 					</commitMessage>
-					<execute-script function="{ scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, context: $scope, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }">
+					<execute-script function="{ scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, context: $scope, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
+					<with-result>
 						<write-channel name="selected"/>
-					</execute-script>
+					</with-result>
 				</with-transaction>
 			</generic-command>
 			<generic-command
@@ -189,16 +192,17 @@
 				</label>
 				<executability>
 					<null-input-disabled/>
-					<disabled-if expr="milestone -> if($milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).isEmpty(), #('The project has no ticket without a milestone.'@en, 'Das Projekt hat kein Ticket ohne Meilenstein.'@de), null)"/>
+					<disabled-if expr="if($milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).isEmpty(), #('The project has no ticket without a milestone.'@en, 'Das Projekt hat kein Ticket ohne Meilenstein.'@de), null)"/>
 				</executability>
 				<with-transaction>
 					<commitMessage>
 						<en>Attached a ticket to milestone {0}.</en>
 						<de>Ticket an Meilenstein {0} angehängt.</de>
 					</commitMessage>
-					<execute-script function="{ ticket = $milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).firstElement(); if($ticket == null, $milestone, { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }); }">
+					<execute-script function="{ ticket = $milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).firstElement(); if($ticket == null, $milestone, { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }); }"/>
+					<with-result>
 						<write-channel name="selected"/>
-					</execute-script>
+					</with-result>
 				</with-transaction>
 			</generic-command>
 			<!-- <delete-object/> deletes a single object as well as a set of them. -->
@@ -223,8 +227,8 @@
 			selection-mode="multi"
 		>
 			<root>`tl.demo.projectManagement:ProjectScope`</root>
-			<children>node -&gt; if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
-			<parents>node -&gt; if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
+			<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+			<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
 			<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
 				<write-channel name="activated"/>
 			</on-activate>

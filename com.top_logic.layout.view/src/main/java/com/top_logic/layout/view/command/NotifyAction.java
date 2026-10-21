@@ -271,4 +271,12 @@ public class NotifyAction extends ArgumentsViewAction {
 			continuation.resume(input);
 		}
 	}
+
+	/**
+	 * Tells the user something.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

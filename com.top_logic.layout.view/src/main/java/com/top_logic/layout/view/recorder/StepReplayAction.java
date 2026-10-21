@@ -30,7 +30,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * Its input is the selected step's 1-based row key (written by the steps table to a {@code selection}
  * channel). It replays that step on the recorded (opener) window through {@link ReactWindowReplay}, so
  * the effect appears in the main browser window, and returns the <em>next</em> step's row key so a
- * nested {@code <write-channel>} advances the selection. When the last step has been replayed the
+ * {@code <write-channel>} in its {@code <with-result>} advances the selection. When the last step has been replayed the
  * selection is left unchanged. A step that fails to replay (e.g. its address does not resolve in the
  * opener window's current state) reports the failure through the window's {@link ErrorSink} and keeps
  * the selection on the failed step, so the debugger stops where the script does.
@@ -121,5 +121,11 @@ public class StepReplayAction implements ViewAction {
 		return Integer.toString(index + 1);
 	}
 
-
+	/**
+	 * Replays a recorded step on a window.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

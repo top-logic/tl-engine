@@ -13,31 +13,33 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.form.I18NLocalizedFieldModel;
+import com.top_logic.layout.react.control.form.I18NValueEditor;
 import com.top_logic.layout.react.state.TypingFieldState;
-import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
 
 /**
- * {@link ReactWysiwygControl} editing the current session locale's entry of an {@code I18NHtml}
- * attribute inline.
+ * {@link ReactWysiwygControl} editing the current session locale's entry of an internationalized
+ * HTML text inline, such as an {@code I18NHtml} attribute.
  *
  * <p>
- * The control operates on the {@link I18NLocalizedHtmlFieldModel locale-scoped view} of the
- * internationalized value. When the user-locale entry is edited and a {@link TranslationService}
- * is active, the other locales are auto-translated from it when the editor is committed (loses
- * focus), overwriting their previous values; otherwise they are preserved. Translation runs on
- * commit rather than per keystroke, since it is a blocking remote call.
+ * The control operates on the {@link I18NLocalizedFieldModel locale-scoped view} of the
+ * internationalized value, e.g. an {@link I18NLocalizedHtmlFieldModel}. When the user-locale entry
+ * is edited and a {@link TranslationService} is active, the other locales are auto-translated from
+ * it when the editor is committed (loses focus), overwriting their previous values; otherwise they
+ * are preserved. Translation runs on commit rather than per keystroke, since it is a blocking
+ * remote call.
  * </p>
  */
 public class I18NWysiwygControl extends ReactWysiwygControl {
 
 	private final FieldModel _i18nModel;
 
-	private final I18NHtmlValueEditor _valueEditor = new I18NHtmlValueEditor();
+	private final I18NValueEditor _valueEditor;
 
 	/**
-	 * Creates a new {@link I18NWysiwygControl}.
+	 * Creates a new {@link I18NWysiwygControl} for an {@code I18NHtml} attribute.
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -45,8 +47,23 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 	 *        The field model holding the internationalized value.
 	 */
 	public I18NWysiwygControl(ReactContext context, FieldModel i18nModel) {
-		super(context, new I18NLocalizedHtmlFieldModel(i18nModel));
-		_i18nModel = i18nModel;
+		this(context, new I18NLocalizedHtmlFieldModel(i18nModel));
+	}
+
+	/**
+	 * Creates a new {@link I18NWysiwygControl}.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param localizedModel
+	 *        The view of the internationalized value restricted to the edited locale. Its
+	 *        {@link I18NLocalizedFieldModel#getValueEditor() value editor} describes the entries
+	 *        this control edits.
+	 */
+	public I18NWysiwygControl(ReactContext context, I18NLocalizedFieldModel localizedModel) {
+		super(context, localizedModel);
+		_i18nModel = localizedModel.getDelegate();
+		_valueEditor = localizedModel.getValueEditor();
 		if (TranslationService.isActive()) {
 			// Defer auto-translation to editor commit (blur); see #onCommit.
 			putState(TypingFieldState.COMMIT_EDITS__PROP, Boolean.TRUE);
@@ -76,7 +93,7 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 			return;
 		}
 		Object i18nValue = _i18nModel.getValue();
-		Locale editLocale = I18NLocalizedHtmlFieldModel.editLocale();
+		Locale editLocale = I18NLocalizedFieldModel.editLocale();
 		Object edited = _valueEditor.localize(i18nValue, editLocale);
 		if (_valueEditor.isEmpty(edited)) {
 			return;
@@ -92,7 +109,7 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 			if (locale.getLanguage().equals(editLocale.getLanguage())) {
 				entry = edited;
 			} else if (translator.isSupported(locale)) {
-				entry = translate(translator, (StructuredText) edited, editLocale, locale, i18nValue);
+				entry = translate(translator, edited, editLocale, locale, i18nValue);
 			} else {
 				entry = _valueEditor.localize(i18nValue, locale);
 			}
@@ -105,7 +122,7 @@ public class I18NWysiwygControl extends ReactWysiwygControl {
 	 * Translates {@code edited} from {@code source} to {@code target}; on a service failure keeps
 	 * the previous entry of {@code target} from {@code i18nValue}.
 	 */
-	private Object translate(Translator translator, StructuredText edited, Locale source, Locale target,
+	private Object translate(Translator translator, Object edited, Locale source, Locale target,
 			Object i18nValue) {
 		try {
 			return _valueEditor.translate(translator, edited, source, target);

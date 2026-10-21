@@ -48,4 +48,12 @@ public class CloseDialogAction implements ViewAction {
 		}
 		return input;
 	}
+
+	/**
+	 * Closes a dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

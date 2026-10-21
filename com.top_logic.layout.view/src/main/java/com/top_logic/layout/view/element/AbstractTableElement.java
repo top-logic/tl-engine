@@ -9,6 +9,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,6 +18,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
 import com.top_logic.layout.view.command.ActionScope;
@@ -44,6 +47,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
@@ -64,6 +68,7 @@ import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
+import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.layout.view.table.TableDragConfig;
 import com.top_logic.model.TLModel;
@@ -72,6 +77,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
@@ -119,7 +125,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * Configuration of an {@link AbstractTableElement}: what a table displays of its rows, how they are
 	 * selected, filtered, activated and dragged - whatever computes the rows.
 	 */
-	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, RowAsConfig {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
 	Lookup LOOKUP = MethodHandles.lookup();
@@ -392,7 +398,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * Container for the list of {@link PresetConfig}s of a table.
 	 */
-	public interface PresetsConfig extends ConfigurationItem {
+	public interface PresetsConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getInitial()}. */
 		String INITIAL = "initial";
@@ -430,7 +436,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * A filter criterion a table offers under a name.
 	 */
 	@TagName("preset")
-	public interface PresetConfig extends ConfigurationItem {
+	public interface PresetConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -481,7 +487,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * </p>
 	 */
 	@TagName("criterion")
-	public interface CriterionConfig extends ConfigurationItem {
+	public interface CriterionConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getColumn()}. */
 		String COLUMN = "column";
@@ -511,10 +517,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 *
 		 * <p>
 		 * It is evaluated when the table is built and whenever one of its
-		 * {@link Config#getInputs() inputs} changes, with the input values as its arguments - so an
-		 * expression like {@code currentUser()} yields a preset that means something different to
-		 * every user, and one over an input yields a preset that follows what is displayed
-		 * elsewhere. Which value the expression may yield depends on the filter of the column: a
+		 * {@link Config#getInputs() inputs} changes, and it sees the values of the inputs as
+		 * variables named after their channels, or by their {@code as} names - so an expression like
+		 * {@code currentUser()} yields a preset that means something different to every user, and
+		 * one over an input yields a preset that follows what is displayed elsewhere. Which value the expression may yield depends on the filter of the column: a
 		 * text filter accepts any single value and matches its text, a selection filter accepts one
 		 * of the values to select or a list of them, a boolean filter accepts {@code true} or
 		 * {@code false}, and a range filter accepts a single value to match exactly or a list of two
@@ -528,6 +534,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * </p>
 		 */
 		@Name(EXPR)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getExpr();
 
 		/**
@@ -832,6 +839,66 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
+	 * What a change of each of the table's input channels has to refresh, see
+	 * {@link #inputRoles(ViewContext, List)}.
+	 *
+	 * @param rowIndependent
+	 *        The inputs whose changes cannot change the rows, nor what the columns show or filter: a
+	 *        change of one of them neither queries the rows again nor builds the cells again.
+	 * @param cellIndependent
+	 *        The inputs whose changes cannot change what the columns show or filter, the
+	 *        row-independent ones included: a change of one of them that leaves the rows equal
+	 *        builds no cell again.
+	 */
+	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent) {
+		// Pure data.
+	}
+
+	/**
+	 * Which of the given input channels of the table can be followed without building the cells
+	 * again.
+	 *
+	 * <p>
+	 * What a column shows or filters follows the channels its declaration reads - the
+	 * {@code inputs} of its functions and of its filter - only by the table being refreshed, which
+	 * builds the cells again and filters the rows anew. A change of such a "cell input" therefore
+	 * refreshes the table in any case. Every other input is cell-independent: where its change
+	 * leaves the rows equal, the cells stay, and only what is computed from the inputs apart from
+	 * the rows - the criteria of the presets, the row class - is computed again.
+	 * </p>
+	 *
+	 * <p>
+	 * The table's own {@link Config#getSelection() selection channel} among the inputs is in
+	 * addition row-independent, unless a column reads it: the rows the user selects from cannot
+	 * depend on what is selected among them, so its change does not query the rows again.
+	 * </p>
+	 *
+	 * @param inputChannels
+	 *        The table's resolved input channels.
+	 */
+	protected final InputRoles inputRoles(ViewContext context, List<ViewChannel> inputChannels) {
+		Set<ViewChannel> cellInputs =
+			new HashSet<>(ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations)));
+
+		List<ViewChannel> cellIndependent = new ArrayList<>();
+		for (ViewChannel input : inputChannels) {
+			if (!cellInputs.contains(input)) {
+				cellIndependent.add(input);
+			}
+		}
+
+		ChannelRef selectionRef = _config.getSelection();
+		List<ViewChannel> rowIndependent = List.of();
+		if (selectionRef != null) {
+			ViewChannel selection = context.resolveChannel(selectionRef);
+			if (cellIndependent.contains(selection)) {
+				rowIndependent = List.of(selection);
+			}
+		}
+		return new InputRoles(rowIndependent, cellIndependent);
+	}
+
+	/**
 	 * The order the table is displayed in before the user sorts it, as its declarations say.
 	 */
 	protected final SortSpec defaultSort() {
@@ -929,7 +996,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 				control.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getRowExecutability());
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), TableDragConfig.ROW_EXECUTABILITY);
 	}
 
 	/**
@@ -986,7 +1053,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			return null;
 		}
 		return new CompiledCriterion(criterionConfig.getColumn(),
-			expr == null ? null : QueryExecutor.compile(expr),
+			InputScript.compile(criterionConfig, CriterionConfig.EXPR),
 			state == null ? null : FilterStateTemplate.compile(state),
 			criterionConfig.getInverted());
 	}

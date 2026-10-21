@@ -21,7 +21,6 @@ import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -37,14 +36,16 @@ import com.top_logic.tool.execution.ExecutableState;
  * <p>
  * The model reads the {@link ViewCommand.Config#getInputs() inputs} of the command and hands them
  * to the command as its {@link CommandArguments arguments}. Without a trigger supplying a value,
- * the first input is the main argument, the input the executability rules decide over.
+ * the first input is the main argument. The executability rules decide over the same arguments,
+ * whether the state of the button is computed, a single row of a table is checked, or the command
+ * is about to run; before a trigger supplied its value, its argument is {@code null}.
  * </p>
  *
  * <p>
  * Created by the panel at setup time, one per command. While
- * {@link #attach(ModelScope) attached}, the model follows its input in both directions a rule can
- * decide by: the channel of the main argument taking a new value, and the
- * object that value points to being edited. A rule testing an attribute of the input object -
+ * {@link #attach(ModelScope) attached}, the model follows its inputs in both directions a rule can
+ * decide by: any input channel taking a new value, and the
+ * object such a value points to being edited. A rule testing an attribute of the input object -
  * a workflow command offered only while a ticket is open, say - therefore re-evaluates when that
  * attribute is stored, although the channel keeps pointing to the same object. A rule that decides
  * by more than the input - the step a surrounding wizard displays, the validation state of the form
@@ -60,15 +61,8 @@ public class ViewCommandModel implements CommandModel {
 
 	private final ViewCommand.Config _config;
 
-	private final CommandArguments _arguments;
-
 	/**
-	 * The channels of the {@link CommandArguments#getInputs() inputs}, in their order.
-	 */
-	private final List<ViewChannel> _inputChannels;
-
-	/**
-	 * The command's rule applied to its input channel, followed while this model is attached.
+	 * The command's rule applied to its arguments, followed while this model is attached.
 	 */
 	private final LiveExecutability _executability;
 
@@ -142,12 +136,10 @@ public class ViewCommandModel implements CommandModel {
 			String trigger, ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
 		_command = command;
 		_config = config;
-		_arguments = new CommandArguments(config.getInputs(), trigger);
-		_inputChannels = List.copyOf(inputChannels);
 		_scopeDirty = scopeDirty;
 		_executableState = ExecutableState.EXECUTABLE;
-		_executability = new LiveExecutability(rule, _inputChannels.isEmpty() ? null : _inputChannels.get(0),
-			ObservedTypes.resolve(config.getObservedTypes()), this::updateExecutableState);
+		_executability = new LiveExecutability(rule, new CommandArguments(config.getInputs(), trigger),
+			inputChannels, ObservedTypes.resolve(config.getObservedTypes()), this::updateExecutableState);
 	}
 
 	/**
@@ -180,9 +172,8 @@ public class ViewCommandModel implements CommandModel {
 				inputChannels.add(context.resolveChannel(input.getChannel()));
 			}
 		}
-		if (config instanceof UploadCommand.Config) {
-			return new ViewUploadCommandModel((UploadCommand) command, (UploadCommand.Config) config, inputChannels,
-				deciding);
+		if (config instanceof UploadCommand.Config uploadConfig) {
+			return new ViewUploadCommandModel((UploadCommand) command, uploadConfig, inputChannels, deciding);
 		}
 		DirtyChannel scopeDirty = context == null ? null : context.getDirtyChannel();
 		return new ViewCommandModel(command, config, inputChannels, trigger, deciding, scopeDirty);
@@ -225,12 +216,13 @@ public class ViewCommandModel implements CommandModel {
 	 */
 	public static ViewCommandModel forCommand(ViewContext context, ViewCommand command,
 			ViewCommand.Config config, String trigger) {
-		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config.getExecutability(), context);
+		ViewExecutabilityRule rule = ViewExecutabilityRules.build(config, trigger, context);
 		return create(context, command, config, trigger, rule);
 	}
 
 	/**
-	 * Resolves the current value of the main argument from its channel.
+	 * Resolves the current value of the main argument from its channel: the value of the first
+	 * input, {@code null} for a command whose trigger supplies the main argument.
 	 */
 	public Object resolveInput() {
 		return _executability.getInput();
@@ -241,18 +233,14 @@ public class ViewCommandModel implements CommandModel {
 	 * order, without the objects deleted meanwhile.
 	 */
 	protected List<Object> inputValues() {
-		List<Object> result = new ArrayList<>(_inputChannels.size());
-		for (ViewChannel channel : _inputChannels) {
-			result.add(DeletedObjects.withoutDeleted(channel.get()));
-		}
-		return result;
+		return _executability.inputValues();
 	}
 
 	/**
 	 * The arguments of a run of the command for the given main argument.
 	 */
 	protected ActionArguments arguments(Object main) {
-		return _arguments.arguments(main, inputValues());
+		return _executability.arguments(main);
 	}
 
 	@Override
@@ -400,18 +388,19 @@ public class ViewCommandModel implements CommandModel {
 	}
 
 	/**
-	 * The command's executability for an input the caller supplies instead of the
+	 * The command's executability for a main argument the caller supplies instead of the
 	 * {@link #resolveInput() channel value} - a single row of a table, say.
 	 *
 	 * <p>
 	 * This is what {@link #execute(ReactContext, Object)} decides by, offered separately for a UI
 	 * that shows the state before the command runs: the button a table puts on every row reads it
-	 * per row, and is disabled or omitted accordingly.
+	 * per row, and is disabled or omitted accordingly. The rules decide over the
+	 * {@link #arguments(Object) arguments} of a run with that main argument.
 	 * </p>
 	 *
 	 * @param input
-	 *        The command's input value.
-	 * @return The state the command's rules assign to that input.
+	 *        The command's main argument.
+	 * @return The state the command's rules assign to the arguments of a run with it.
 	 */
 	public ExecutableState executability(Object input) {
 		return _executability.getState(input);
@@ -517,8 +506,7 @@ public class ViewCommandModel implements CommandModel {
 	}
 
 	private void updateExecutableState() {
-		Object input = resolveInput();
-		ExecutableState newState = executability(input);
+		ExecutableState newState = _executability.getState();
 		if (!newState.equals(_executableState)) {
 			_executableState = newState;
 			fireStateChanged();

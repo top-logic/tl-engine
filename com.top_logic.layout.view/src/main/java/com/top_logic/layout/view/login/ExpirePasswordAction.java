@@ -75,4 +75,11 @@ public class ExpirePasswordAction implements ViewAction {
 		return input;
 	}
 
+	/**
+	 * Tells the user that the password was expired.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

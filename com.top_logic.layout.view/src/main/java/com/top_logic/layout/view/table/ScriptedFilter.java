@@ -16,17 +16,19 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.search.expr.EvalContext;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
@@ -37,22 +39,12 @@ import com.top_logic.table.impl.DefaultColumn;
 
 /**
  * A fully model- and script-defined column filter: the filter UI is a form over a transient
- * instance of a configured {@link Config#getModel() parameter type}, and the filter logic is a
- * TL-Script {@link Config#getMatch() match function}.
+ * instance of a configured parameter type, and the filter logic is a TL-Script expression deciding
+ * per row whether the row matches.
  *
  * <p>
- * The match function is a <em>closure builder</em>:
- * </p>
- *
- * <pre>
- * match : (params [, ...inputs]) -&gt; ( (value, row) -&gt; Boolean )
- * </pre>
- *
- * <p>
- * It is evaluated <em>once</em> per filter application (binding the form's parameter object and any
- * configured {@link Config#getInputs() extra inputs}) to produce a predicate closure, which is then
- * applied per row with the column's cell {@code value} and the whole {@code row} as context - so
- * expensive parameter-derived setup happens once, not per row.
+ * The expression sees the object holding the parameters the user entered, the cell value of the
+ * column and the row. The values of the inputs of the filter are taken when the filter is applied.
  * </p>
  *
  * <p>
@@ -68,7 +60,10 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	/**
 	 * Configuration of a {@link ScriptedFilter}.
 	 */
-	public interface Config extends PolymorphicConfiguration<ScriptedFilter>, Inputs {
+	public interface Config extends PolymorphicConfiguration<ScriptedFilter>, Inputs, ConfigPart {
+
+		/** Name of the variable holding the object with the filter parameters in {@link #getMatch()}. */
+		String PARAMS_VARIABLE = "params";
 
 		/** Configuration name of {@link #getModel()}. */
 		String MODEL = "model";
@@ -87,12 +82,25 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 		TLModelPartRef getModel();
 
 		/**
-		 * The closure-building match function {@code (params [, ...inputs]) -> ((value, row) ->
-		 * Boolean)}.
+		 * The expression deciding whether a row matches the filter.
+		 *
+		 * <p>
+		 * The expression sees the object holding the filter parameters - an instance of the
+		 * {@link #getModel() model} type - as the variable {@value #PARAMS_VARIABLE}, the cell value
+		 * of the column as {@value ValueAsConfig#DEFAULT_VALUE_AS} (or by the name the column gives
+		 * it with {@value ValueAsConfig#VALUE_AS}), the row as {@value RowAsConfig#DEFAULT_ROW_AS}
+		 * (or by the name the table gives it with {@value RowAsConfig#ROW_AS}), and the values of the
+		 * {@link #getInputs() inputs} as variables named after their channels or by their
+		 * <code>as</code> names. The row matches, if the expression yields <code>true</code>.
+		 * </p>
 		 */
 		@Name(MATCH)
 		@Mandatory
 		@NonNullable
+		@Supplies(PARAMS_VARIABLE)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getMatch();
 
 		/**
@@ -107,7 +115,7 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 
 	private final TLStructuredType _filterType;
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	private final ResKey _label;
 
@@ -116,10 +124,22 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	 */
 	@CalledByReflection
 	public ScriptedFilter(InstantiationContext context, Config config) {
-		_match = QueryExecutor.compile(config.getMatch());
+		_match = InputScript.compile(config, Config.MATCH);
 		_filterType = (TLStructuredType) config.getModel().resolveType();
 		_inputs = config.getInputs();
 		_label = config.getLabel();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The configured inputs the match function is evaluated with.
+	 * </p>
+	 */
+	@Override
+	public List<InputRef> inputs() {
+		return _inputs;
 	}
 
 	/**
@@ -171,19 +191,22 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	public Predicate<ScriptedCell> predicate(FilterState state) {
 		ScriptedFilterState scripted = (ScriptedFilterState) state;
 		Object[] inputValues = scripted.inputs();
-		Object[] args = new Object[1 + inputValues.length];
-		args[0] = scripted.params();
-		System.arraycopy(inputValues, 0, args, 1, inputValues.length);
-
-		// Build the predicate closure once, then apply it per row.
-		Object closureValue = _match.execute(args);
-		if (!(closureValue instanceof SearchExpression closure)) {
-			return cell -> true;
-		}
-		EvalContext context = _match.context();
+		Object params = scripted.params();
+		QueryExecutor match = _match;
 		// A cell the user may not read is not given to the filter script: it matches no criterion.
 		return cell -> !ColumnProviderService.isUnreadable(cell.value())
-			&& Boolean.TRUE.equals(closure.eval(context, cell.value(), cell.row()));
+			&& Boolean.TRUE.equals(match.execute(arguments(inputValues, params, cell.value(), cell.row())));
+	}
+
+	/**
+	 * The values of the variables of the {@link Config#getMatch() match expression}: the values of
+	 * the inputs, followed by the supplied values.
+	 */
+	private static Object[] arguments(Object[] inputValues, Object... supplied) {
+		Object[] result = new Object[inputValues.length + supplied.length];
+		System.arraycopy(inputValues, 0, result, 0, inputValues.length);
+		System.arraycopy(supplied, 0, result, inputValues.length, supplied.length);
+		return result;
 	}
 
 }

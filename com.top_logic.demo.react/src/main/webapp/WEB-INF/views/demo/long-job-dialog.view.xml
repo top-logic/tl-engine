@@ -34,7 +34,7 @@
 					<de>Auftrag starten</de>
 				</label>
 				<executability>
-					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
 				</executability>
 				<start-job
 					cancelable="true"

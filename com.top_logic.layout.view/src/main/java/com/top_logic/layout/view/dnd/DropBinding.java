@@ -94,7 +94,7 @@ public class DropBinding implements DropTarget {
 	 * @param refuseIf
 	 *        Computes the reason a drop is refused from the list of dropped objects and the objects
 	 *        the drop refers to at its location, in the order of the signature's references; the
-	 *        result is interpreted as by {@link DisabledIf#stateFor(Object)}. {@code null}
+	 *        result is interpreted as by {@link DisabledIf#reasonState(Object)}. {@code null}
 	 *        refuses nothing.
 	 * @param names
 	 *        The names of the {@link DropArguments arguments} of the drop, see
@@ -158,7 +158,7 @@ public class DropBinding implements DropTarget {
 				}
 			}
 			if (refuseIf != null) {
-				return reasonOf(DisabledIf.stateFor(refuseIf.apply(objects, signature.valuesAt(location))));
+				return reasonOf(DisabledIf.reasonState(refuseIf.apply(objects, signature.valuesAt(location))));
 			}
 			return null;
 		}

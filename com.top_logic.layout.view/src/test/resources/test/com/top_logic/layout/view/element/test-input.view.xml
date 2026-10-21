@@ -50,7 +50,7 @@
 			</value-input>
 			<value-input
 				multiple="true"
-				options="p -> all(`tl.accounts:Person`)"
+				options="all(`tl.accounts:Person`)"
 				type="tl.accounts:Person"
 				value="owners"
 			>

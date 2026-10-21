@@ -61,7 +61,7 @@
 			<inputs>
 				<input channel="contact"/>
 			</inputs>
-			<rows><![CDATA[c -> if($c == null, [], $c.referers(`tl.demo.projectManagement:Ticket#assignee`))]]></rows>
+			<rows><![CDATA[if($contact == null, [], $contact.referers(`tl.demo.projectManagement:Ticket#assignee`))]]></rows>
 		</table>
 		<actions>
 			<button>

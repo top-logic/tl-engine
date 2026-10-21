@@ -294,4 +294,11 @@ public class LoginAction implements ViewAction {
 		return value == null || value.isEmpty();
 	}
 
+	/**
+	 * Switches the session to the authenticated user or opens a dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

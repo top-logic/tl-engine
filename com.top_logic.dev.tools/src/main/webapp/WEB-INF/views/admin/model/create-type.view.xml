@@ -41,21 +41,26 @@
 						<de>Anlegen</de>
 					</label>
 					<store-form-state>
-						<with-transaction>
-							<commitMessage>
-								<en>Created type {0}.</en>
-								<de>Typ {0} angelegt.</de>
-							</commitMessage>
-							<action class="com.top_logic.dev.tools.model.ModelEditAction"
-								container="container"
-								mode="CREATE_TYPE"
-							>
-								<write-channel name="selection"/>
-							</action>
-						</with-transaction>
+						<with-result>
+							<with-transaction>
+								<commitMessage>
+									<en>Created type {0}.</en>
+									<de>Typ {0} angelegt.</de>
+								</commitMessage>
+								<action class="com.top_logic.dev.tools.model.ModelEditAction"
+									container="container"
+									mode="CREATE_TYPE"
+								/>
+								<with-result>
+									<write-channel name="selection"/>
+								</with-result>
+							</with-transaction>
+						</with-result>
 					</store-form-state>
 					<execute-script function="now()">
-						<write-channel name="reload"/>
+						<with-result>
+							<write-channel name="reload"/>
+						</with-result>
 					</execute-script>
 					<close-dialog/>
 				</generic-command>

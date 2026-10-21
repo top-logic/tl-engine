@@ -70,6 +70,13 @@ html, body {
 	min-height: 0;
 }
 
+/* A filling table keeps the height of its header bar, three rows and its footer: a table shorter
+   than that shows nothing useful. Where the bounded region it stands in (a dialog body, a
+   scrolling panel body) is too small for that, the region scrolls instead of the table collapsing. */
+.tl-table.tlFill {
+	min-height: calc(var(--tl-size-bar) + 3 * var(--tl-size-row) + var(--tl-size-control));
+}
+
 /* --- Repeated items ----------------------------------------------------- */
 
 /* The wrapper of a repeated item (tl-item, design system package) fills while its item fills, so that the fill

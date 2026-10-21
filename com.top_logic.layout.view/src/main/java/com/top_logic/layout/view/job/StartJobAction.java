@@ -36,6 +36,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
 import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.layout.view.command.ArgumentsViewAction;
 import com.top_logic.layout.view.command.Continuation;
@@ -81,7 +82,8 @@ public class StartJobAction extends ArgumentsViewAction {
 	 * Configuration for {@link StartJobAction}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends PolymorphicConfiguration<StartJobAction>, NamedInputs, WithResultActions {
+	public interface Config extends PolymorphicConfiguration<StartJobAction>, NamedInputs, WithResultActions,
+			ActionScopeDefinition {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
 	Lookup LOOKUP = MethodHandles.lookup();
@@ -199,7 +201,7 @@ public class StartJobAction extends ArgumentsViewAction {
 			if (part != null && part == getBody()) {
 				return jobScope(outer, getInputs());
 			}
-			return WithResultActions.super.actionScope(part, outer);
+			return outer;
 		}
 	}
 
@@ -396,4 +398,11 @@ public class StartJobAction extends ArgumentsViewAction {
 		}
 	}
 
+	/**
+	 * Writes the job channel and lets the command wait for the job.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

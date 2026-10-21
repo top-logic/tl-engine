@@ -82,4 +82,11 @@ public class DisableMfaAction implements ViewAction {
 		return input;
 	}
 
+	/**
+	 * Tells the user that multi-factor authentication was taken off.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

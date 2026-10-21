@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.dnd;
 
+import com.top_logic.layout.view.channel.Supplies;
 import java.util.List;
 
 import com.top_logic.basic.config.container.ConfigPart;
@@ -212,11 +213,14 @@ public interface DropConfig extends InputExecutabilityConfig, ConfigPart {
 	 * decide over.
 	 *
 	 * <p>
-	 * Only a drop onto a single item has a target to decide over; declaring rules here for any
-	 * other drop is a configuration error. Empty (default) accepts every item.
+	 * A script rule sees the target item as the variable {@value DropArguments#TARGET}, or by the
+	 * name given with {@link #getTargetAs()}. Only a drop onto a single item has a target to decide
+	 * over; declaring rules here for any other drop is a configuration error. Empty (default)
+	 * accepts every item.
 	 * </p>
 	 */
 	@Name(TARGET_EXECUTABILITY)
+	@Supplies(value = DropArguments.TARGET, renamedBy = TARGET_AS)
 	@EntryTag(RULE)
 	List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getTargetExecutability();
 

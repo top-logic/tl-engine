@@ -32,10 +32,14 @@
 							<en>Created ticket {0} as closed.</en>
 							<de>Ticket {0} geschlossen angelegt.</de>
 						</commitMessage>
-						<persist-transient as="created">
-							<execute-script function="$created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
-							<write-channel name="selection"/>
+						<persist-transient>
+							<with-result as="created">
+								<execute-script function="$created.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+							</with-result>
 						</persist-transient>
+						<with-result>
+							<write-channel name="selection"/>
+						</with-result>
 					</with-transaction>
 					<close-dialog/>
 				</generic-command>
@@ -49,8 +53,10 @@
 					</label>
 					<store-form-state/>
 					<persist-transient>
-						<write-channel name="selection"/>
-						<close-dialog/>
+						<with-result>
+							<write-channel name="selection"/>
+							<close-dialog/>
+						</with-result>
 					</persist-transient>
 				</generic-command>
 			</commands>

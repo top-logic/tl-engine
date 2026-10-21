@@ -6,7 +6,9 @@
 package com.top_logic.basic.html;
 
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -26,11 +28,21 @@ class WhiteListHTMLChecker implements HTMLChecker {
 
 	private Set<String> _allowedAttributeNames;
 
+	private List<String> _allowedAttributePrefixes;
+
 	private Set<String> _allowedTagNames;
 
 	private Map<String, AttributeChecker> _attributeChecker;
 
 	private static final Pattern ENTITY_PATTERN = Pattern.compile("&([a-zA-Z]+);");
+
+	/**
+	 * Start tag of an HTML void element, which has no end tag in HTML, but must be closed in XML.
+	 * Group 1 is the tag up to its end, group 2 the closing slash, if it is closed already.
+	 */
+	private static final Pattern VOID_ELEMENT_PATTERN = Pattern.compile(
+		"(<(?:area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*?)\\s*(/?)>",
+		Pattern.CASE_INSENSITIVE);
 
 	/**
 	 * Creates a {@link WhiteListHTMLChecker}.
@@ -51,6 +63,7 @@ class WhiteListHTMLChecker implements HTMLChecker {
 
 	private void initAllowedAttributes(Config config) {
 		_allowedAttributeNames = new HashSet<>(config.getAllowedAttributes());
+		_allowedAttributePrefixes = new ArrayList<>(config.getAllowedAttributePrefixes());
 	}
 
 	@Override
@@ -149,13 +162,14 @@ class WhiteListHTMLChecker implements HTMLChecker {
 	}
 
 	/**
-	 * Add a root tag and replace named entities not defined by XML
+	 * Add a root tag, close void elements, and replace named entities not defined by XML
 	 * 
 	 * @param html
 	 *        the HTML string to convert.
 	 * @return The converted XML string.
 	 */
 	private static String xml(String html) {
+		html = closeVoidElements(html);
 		Matcher matcher = ENTITY_PATTERN.matcher(html);
 
 		StringBuilder buffer = new StringBuilder();
@@ -172,6 +186,20 @@ class WhiteListHTMLChecker implements HTMLChecker {
 		return buffer.toString();
 	}
 
+	/**
+	 * Closes each start tag of an HTML void element, e.g. <code>&lt;br&gt;</code>, so that the
+	 * HTML can be read as XML.
+	 */
+	private static String closeVoidElements(String html) {
+		Matcher matcher = VOID_ELEMENT_PATTERN.matcher(html);
+		StringBuilder buffer = new StringBuilder();
+		while (matcher.find()) {
+			matcher.appendReplacement(buffer, Matcher.quoteReplacement(matcher.group(1) + "/>"));
+		}
+		matcher.appendTail(buffer);
+		return buffer.toString();
+	}
+
 	@Override
 	public boolean isAllowedTagName(String tag) {
 		return _allowedTagNames.contains(tag);
@@ -179,6 +207,14 @@ class WhiteListHTMLChecker implements HTMLChecker {
 
 	@Override
 	public boolean isAllowedAttributeName(String attribute) {
-		return _allowedAttributeNames.contains(attribute);
+		if (_allowedAttributeNames.contains(attribute)) {
+			return true;
+		}
+		for (String prefix : _allowedAttributePrefixes) {
+			if (attribute.startsWith(prefix)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

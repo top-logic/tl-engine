@@ -53,7 +53,9 @@
 								<de>Aktualisieren</de>
 							</label>
 							<execute-script function="($reload == null) ? 1 : $reload + 1">
-								<write-channel name="reload"/>
+								<with-result>
+									<write-channel name="reload"/>
+								</with-result>
 							</execute-script>
 						</generic-command>
 					</commands>

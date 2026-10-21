@@ -134,4 +134,12 @@ public class SqlMonitorAction implements ViewAction {
 			return '\'';
 		}
 	}
+
+	/**
+	 * Tells the user about the monitoring state.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

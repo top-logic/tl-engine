@@ -16,8 +16,6 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.boundsec.manager.rule.RoleProvider.Type;
-import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.config.TLModelPartMapping;
@@ -70,7 +68,6 @@ public interface RoleRuleConfig extends NavigationRuleConfig {
 	@Nullable
 	@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 	@OptionLabels(TLPartScopedResourceProvider.class)
-	@ControlProvider(SelectionControlProvider.class)
 	String getSourceMetaElement();
 
 	/**
@@ -85,7 +82,6 @@ public interface RoleRuleConfig extends NavigationRuleConfig {
 	@Mandatory
 	@Label("Granted roles")
 	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
-	@ControlProvider(SelectionControlProvider.class)
 	List<String> getRole();
 
 	/**
@@ -96,7 +92,6 @@ public interface RoleRuleConfig extends NavigationRuleConfig {
 	@Name(RoleRuleConfig.XML_ATTRIBUTE_SOURCE_ROLE)
 	@Label("Role at path end")
 	@Options(fun = BoundedRole.AllRoles.class, mapping = RoleNameMapping.class)
-	@ControlProvider(SelectionControlProvider.class)
 	List<String> getSourceRole();
 
 	/**

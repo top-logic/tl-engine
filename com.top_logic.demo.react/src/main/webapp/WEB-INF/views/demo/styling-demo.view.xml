@@ -372,7 +372,9 @@
 						<de>Nach "Token" suchen</de>
 					</label>
 					<execute-script function="'token'">
-						<write-channel name="q"/>
+						<with-result>
+							<write-channel name="q"/>
+						</with-result>
 					</execute-script>
 				</action>
 			</button>
@@ -385,7 +387,9 @@
 						<de>Suchfeld leeren</de>
 					</label>
 					<execute-script function="''">
-						<write-channel name="q"/>
+						<with-result>
+							<write-channel name="q"/>
+						</with-result>
 					</execute-script>
 				</action>
 			</button>

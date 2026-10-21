@@ -85,19 +85,21 @@
 										<null-input-disabled/>
 									</executability>
 									<create-transient type="demo.temperature:DemoSensor">
-										<open-dialog
-											bind-input-to="model"
-											dialog-view="demo/create-sensor.view.xml"
-										>
-											<bind
-												channel="container"
-												to="site"
-											/>
-											<bind
-												channel="selection"
-												to="sensor"
-											/>
-										</open-dialog>
+										<with-result>
+											<open-dialog
+												bind-input-to="model"
+												dialog-view="demo/create-sensor.view.xml"
+											>
+												<bind
+													channel="container"
+													to="site"
+												/>
+												<bind
+													channel="selection"
+													to="sensor"
+												/>
+											</open-dialog>
+										</with-result>
 									</create-transient>
 								</generic-command>
 							</commands>
@@ -121,7 +123,7 @@
 								<inputs>
 									<input channel="site"/>
 								</inputs>
-								<rows>site -&gt; if($site == null, [], $site.get(`demo.temperature:DemoSite#sensors`))</rows>
+								<rows>if($site == null, [], $site.get(`demo.temperature:DemoSite#sensors`))</rows>
 							</table>
 						</panel>
 					</selector>

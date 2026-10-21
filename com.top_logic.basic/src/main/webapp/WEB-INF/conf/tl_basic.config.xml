@@ -64,12 +64,8 @@
 					<attribute name="charset" />
 					<attribute name="class" />
 					<attribute name="colspan" />
+					<attribute name="colwidth" /> <!-- The width of a resized table column, written by the WYSIWYG editor. -->
 					<attribute name="contenteditable" />
-					<attribute name="data-custom" /> <!-- For backwards compatibility with documentation pages from before the removal of these attributes in #27590. -->
-					<attribute name="data-object" />
-					<attribute name="data-section" />
-					<attribute name="data-tooltip" />
-					<attribute name="data-tl-link" /> <!-- The target of a link followed by the application, see ReactHtmlControl.LINK_ATTRIBUTE. -->
 					<attribute name="dir" />
 					<attribute name="download" />
 					<attribute name="href" />
@@ -89,6 +85,13 @@
 					<attribute name="title" />
 					<attribute name="type" />
 				</allowed-attributes>
+				<allowed-attribute-prefixes>
+					<!--
+						Custom data attributes, which hold data and do not act in the page, e.g. the target
+						of a link followed by the application (data-tl-link, see ReactHtmlControl.LINK_ATTRIBUTE).
+					-->
+					<prefix name="data-" />
+				</allowed-attribute-prefixes>
 				<allowed-tags>
 					<tag name="html" />
 					<tag name="head" />

@@ -6,7 +6,7 @@
 	</channels>
 
 	<tree-table
-		children="node -> []"
+		children="[]"
 		root="'root'"
 	>
 		<drop
@@ -34,7 +34,7 @@
 			<computed-column name="value"
 				type="tl.core:String"
 			>
-				<value>row -&gt; $row</value>
+				<value>$row</value>
 			</computed-column>
 		</columns>
 	</tree-table>

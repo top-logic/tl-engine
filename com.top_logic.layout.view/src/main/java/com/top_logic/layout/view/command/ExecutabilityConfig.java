@@ -20,8 +20,9 @@ import com.top_logic.model.util.TLModelPartRef;
  * and the types whose changes let them decide anew.
  *
  * <p>
- * A {@link ViewCommand} is such an operation; its rules decide over its main argument. While its UI
- * is displayed, the rules are followed live by a {@link LiveExecutability}.
+ * A {@link ViewCommand} is such an operation; its rules decide over its arguments, see
+ * {@link CommandArguments}. While its UI is displayed, the rules are followed live by a
+ * {@link LiveExecutability}.
  * </p>
  *
  * @see InputExecutabilityConfig

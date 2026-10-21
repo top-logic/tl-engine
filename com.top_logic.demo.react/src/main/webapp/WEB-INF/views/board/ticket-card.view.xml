@@ -13,11 +13,11 @@
 	<channels>
 		<channel name="ticket"/>
 		<derived-channel name="name"
-			expr="t -> $t.get(`demo.tickets:Ticket#name`)"
+			expr="$ticket.get(`demo.tickets:Ticket#name`)"
 			inputs="ticket"
 		/>
 		<derived-channel name="status"
-			expr="t -> $t.get(`demo.tickets:Ticket#status`)"
+			expr="$ticket.get(`demo.tickets:Ticket#status`)"
 			inputs="ticket"
 		/>
 	</channels>

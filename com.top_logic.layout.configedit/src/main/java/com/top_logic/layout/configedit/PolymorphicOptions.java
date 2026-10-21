@@ -17,7 +17,7 @@ import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
+import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 
 /**
  * Adapter that looks up the polymorphic options for a {@link PropertyDescriptor} through
@@ -143,7 +143,7 @@ public class PolymorphicOptions {
 	 * <p>
 	 * A key the given options do not name is labelled from the key itself, not left blank: the key
 	 * is a type name, and a selector is given the type an entry actually has even where that type
-	 * is no longer offered (see {@link ReactSelectFormFieldControl}).
+	 * is no longer offered (see {@link ReactDropdownSelectControl}).
 	 * </p>
 	 */
 	public static LabelProvider keyLabelProvider(List<?> options) {

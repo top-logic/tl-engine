@@ -44,8 +44,10 @@
 				<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 					mode="SAVE_ACCESS_RIGHTS"
 				>
-					<write-channel name="pending"/>
-					<close-dialog/>
+					<with-result>
+						<write-channel name="pending"/>
+						<close-dialog/>
+					</with-result>
 				</action>
 			</generic-command>
 		</commands>

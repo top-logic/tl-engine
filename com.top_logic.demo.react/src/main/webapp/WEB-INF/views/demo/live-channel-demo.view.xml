@@ -27,11 +27,11 @@
 			/>
 		</source-channel>
 		<derived-channel name="tick"
-			expr="s -> if($s == null, null, #('Tick: {0}'@en, 'Tick: {0}'@de).fill($s['tick']))"
+			expr="if($ticker == null, null, #('Tick: {0}'@en, 'Tick: {0}'@de).fill($ticker['tick']))"
 			inputs="ticker"
 		/>
 		<derived-channel name="at"
-			expr="s -> if($s == null, null, #('Last telegram at {0}'@en, 'Letztes Telegramm um {0}'@de).fill(dateFormat('HH:mm:ss.SSS').format($s['at'])))"
+			expr="if($ticker == null, null, #('Last telegram at {0}'@en, 'Letztes Telegramm um {0}'@de).fill(dateFormat('HH:mm:ss.SSS').format($ticker['at'])))"
 			inputs="ticker"
 		/>
 	</channels>
@@ -69,7 +69,7 @@
 		<object-list
 			gap="compact"
 			inputs="ticker"
-			items="s -> if($s == null, [], $s['recent'])"
+			items="if($ticker == null, [], $ticker['recent'])"
 			layout="list"
 		>
 			<item>
@@ -98,7 +98,9 @@
 	};
 	$state;
 }]]></function>
-					<write-channel name="ticker"/>
+					<with-result>
+						<write-channel name="ticker"/>
+					</with-result>
 				</execute-script>
 			</action>
 		</button>

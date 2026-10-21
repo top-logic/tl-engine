@@ -47,8 +47,10 @@
 						container="container"
 						reference="milestones"
 					>
-						<write-channel name="selection"/>
-						<close-dialog/>
+						<with-result>
+							<write-channel name="selection"/>
+							<close-dialog/>
+						</with-result>
 					</persist-transient>
 				</generic-command>
 			</commands>

@@ -23,12 +23,10 @@ import com.top_logic.basic.config.customization.CustomizationContainer;
 import com.top_logic.basic.config.customization.CustomizationContainer.TypeCustomizationConfig;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.messagebox.CreateConfigurationsDialog.ModelPartDefinition;
-import com.top_logic.layout.provider.SelectControlProvider;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.tiles.component.SimpleFormBuilder;
@@ -156,10 +154,6 @@ public abstract class AbstractComponentConfigurationDialogBuilder extends Create
 		Options options = TypedConfiguration.newAnnotationItem(Options.class);
 		TypedConfiguration.updateValue(options, "fun", AllVisibleComponentNames.class);
 		annotations.put(Options.class, options);
-
-		ControlProvider controlProvider = TypedConfiguration.newAnnotationItem(ControlProvider.class);
-		TypedConfiguration.updateValue(controlProvider, "value", SelectControlProvider.class);
-		annotations.put(ControlProvider.class, controlProvider);
 
 		return annotations;
 	}

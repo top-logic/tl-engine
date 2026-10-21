@@ -40,9 +40,7 @@ import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
-import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
-import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -296,7 +294,6 @@ public class TLStructuredTypeFormBuilder
 		@Options(fun = AllExtendableClassesDirect.class)
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@OptionLabels(MetaResourceProvider.class)
-		@ControlProvider(SelectionControlProvider.class)
 		@DynamicMode(fun = ActiveIf.class, args = { @Ref(NO_INSTANCES) })
 		@Constraint(value = TypeHasNoConflictingAttributes.class, args = { @Ref(EDITED_TYPE) })
 		List<TLClass> getGeneralizationTypes();
@@ -309,7 +306,6 @@ public class TLStructuredTypeFormBuilder
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@OptionLabels(MetaResourceProvider.class)
 		@DynamicMode(fun = HideImmutableIf.class, args = @Ref(CREATE))
-		@ControlProvider(SelectionControlProvider.class)
 		List<TLClass> getSpecializationTypes();
 
 		@Override

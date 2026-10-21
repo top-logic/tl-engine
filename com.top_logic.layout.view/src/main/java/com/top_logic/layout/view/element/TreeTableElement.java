@@ -91,12 +91,14 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		String DROPS = "drops";
 
 		/**
-		 * Optional TL-Script function computing what holds an object in the tree.
+		 * Optional TL-Script expression computing what holds an object in the tree.
 		 *
 		 * <p>
-		 * Takes the input channel values followed by an object as last argument, and returns the object
-		 * whose child list holds it - nothing for the object the tree is built from, and for an object
-		 * belonging to no tree at all.
+		 * The expression sees the values of the inputs as variables named after their channels, or
+		 * by their <code>as</code> names, and the object as the variable
+		 * {@value NodeAsConfig#DEFAULT_NODE_AS}, or by the name given with
+		 * {@value NodeAsConfig#NODE_AS}. It returns the object whose child list holds it - nothing
+		 * for the object the tree is built from, and for an object belonging to no tree at all.
 		 * </p>
 		 *
 		 * <p>
@@ -219,8 +221,15 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 				refreshPresets(table, ChannelInputs.arguments(inputChannels));
 				refresh.run();
 			}
+
+			@Override
+			public void inputsChanged() {
+				// The rows and their cells stay; the criteria of the presets may read the inputs.
+				refreshPresets(table, ChannelInputs.arguments(inputChannels));
+			}
 		}, treeModel, _functions::root, builder, _functions.parentFunction(inputChannels),
-			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels);
+			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels)
+				.withRowIndependentInputs(inputRoles(context, inputChannels).rowIndependent());
 
 		// Opening a row computes the children of its node, whose objects are followed from then on.
 		source.addListener((from, to) -> observableModel.nodesComputed());

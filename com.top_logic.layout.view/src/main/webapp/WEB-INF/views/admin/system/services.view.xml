@@ -32,16 +32,20 @@
 					<de>Starten</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'INACTIVE'"/>
+					<visible-if expr="$state == 'INACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="START"
 					selection="selection"
 				>
-					<write-channel name="services"/>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
 				</action>
 				<execute-script function="'ACTIVE'">
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -54,16 +58,20 @@
 					<de>Stoppen</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
+					<visible-if expr="$state == 'ACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="STOP"
 					selection="selection"
 				>
-					<write-channel name="services"/>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
 				</action>
 				<execute-script function="'INACTIVE'">
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -76,16 +84,20 @@
 					<de>Neustart</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
+					<visible-if expr="$state == 'ACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="RESTART"
 					selection="selection"
 				>
-					<write-channel name="services"/>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
 				</action>
 				<execute-script function="'ACTIVE'">
-					<write-channel name="state"/>
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
 				</execute-script>
 			</generic-command>
 			<generic-command
@@ -99,7 +111,9 @@
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="REFRESH"
 				>
-					<write-channel name="services"/>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
 				</action>
 			</generic-command>
 		</commands>

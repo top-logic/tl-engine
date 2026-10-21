@@ -10,8 +10,8 @@ A `<tree-table>` is a table whose rows form a tree: each object is a row with th
 ```xml
 <tree-table
     root="all(`demo.tickets:Project`).firstElement()"
-    children="node -> $node.get(`demo.tickets:Item#children`)"
-    parents="item -> $item.get(`demo.tickets:Item#parent`)"
+    children="$node.get(`demo.tickets:Item#children`)"
+    parents="$node.get(`demo.tickets:Item#parent`)"
     observed-types="demo.tickets:Item"
     selection="selectedItem" selection-mode="multi"
     types="demo.tickets:Item" personalization-key="project-items"
@@ -23,9 +23,9 @@ A `<tree-table>` is a table whose rows form a tree: each object is a row with th
 </tree-table>
 ```
 
-- **The tree**: `root`, `children`, `parents` and `canExpandAll` are the properties of a `<tree>` (`TreeStructureConfig`), compiled and evaluated by the same `TreeFunctions`. The object `root` computes is not displayed; the objects `children` returns for it are the top-level rows, and the rows are the objects `children` returns - so a cell, the selection channel, a drag and a drop all see business objects, never nodes. A row's children are computed when it is opened (and to tell whether it has any).
+- **The tree**: `root`, `children`, `parents`, `node-as` and `canExpandAll` are the properties of a `<tree>` (`TreeStructureConfig`), compiled and evaluated by the same `TreeFunctions`. Its scripts see the inputs, and `children` and `parents` the object of the node as `$node` (renamed by `node-as`), while the scripts of the columns see the same object as the row, `$row` (renamed by `row-as`; see [which names a script sees](doc:view-layer/channels#which-names-a-script-sees)). The object `root` computes is not displayed; the objects `children` returns for it are the top-level rows, and the rows are the objects `children` returns - so a cell, the selection channel, a drag and a drop all see business objects, never nodes. A row's children are computed when it is opened (and to tell whether it has any).
 - **Following the model** is that of a `<tree>`: the tree is held in a `DefaultTreeUINodeModel` kept in sync by the same `ObservableTreeModel` (through its `Display` seam), so a deleted object loses its row, an object that appeared in a child list gets one, the rows the user opened stay open, and an input naming another root builds the tree anew. An object of an `observed-types` type that is created or changed while the tree table has no row for it is placed through `parents`: the row of what holds it now has its children computed again when that row is open, and a closed row computes them when it is opened - so `observed-types` requires `parents` (see [a tree follows the model it displays](doc:view-layer/tables#selecting-rows-and-nodes)). The rows are keyed by their business object (`TreeStructure.key`), so expansion and selection survive a rebuild.
-- **The table**: `types`, `<columns>`, `fixed-columns`, `selection`, `selection-mode`, `<on-activate>`, `activation-button`, `filter-bar`, `<presets>`, `active-preset`, `search-term` and `<drag>` are those of a `<table>` (`AbstractTableElement.Config`), built by the same code (`AbstractTableElement.createTable`). Sorting orders siblings; a filter keeps the rows that match and their ancestors, all opened. A tree table has no `rows`, no `group-by` and no `row-edit`.
+- **The table**: `types`, `<columns>` (whose scripts see the row as `$row`, or by the name `row-as` gives it), `fixed-columns`, `selection`, `selection-mode`, `<on-activate>`, `activation-button`, `filter-bar`, `<presets>`, `active-preset`, `search-term` and `<drag>` are those of a `<table>` (`AbstractTableElement.Config`), built by the same code (`AbstractTableElement.createTable`). Sorting orders siblings; a filter keeps the rows that match and their ancestors, all opened. A tree table has no `rows`, no `group-by` and no `row-edit`.
 - **Selection** works as in a table (`TableSelectionBinding`): the channel holds the selected object, a set of them, or nothing, and an object written to it is selected - also one inside a row that is not open, which shows as selected once it is opened.
 - The control is the `TableViewControl` in tree mode, fed by a `TreeRowSource`; the source is the table's `RowHierarchy` (`TableView.hierarchy()`): which row holds a row, and the children of a row in display order, whether it is open or not.
 
@@ -42,13 +42,13 @@ A `<tree-table>` declares `<drag>` and `<drop>` with the vocabulary of a table â
 The scripts use the arguments as variables without declaring them (see [named arguments](doc:view-layer/commands#scripts-use-the-arguments-as-variables)); `target-channel`, `parent-channel` and `before-channel` additionally publish the references as channel state where a view needs them there.
 
 ```xml
-<tree-table root="$project" children="node -> $node.get(`demo.tickets:Item#children`)"
+<tree-table root="$project" children="$node.get(`demo.tickets:Item#children`)"
     selection="selectedItem" types="demo.tickets:Item"
 >
     <inputs><input channel="project"/></inputs>
     <drag kind="item">
         <row-executability>
-            <disabled-if expr="item -> $item.get(`demo.tickets:Item#locked`)"/>
+            <disabled-if expr="$row.get(`demo.tickets:Item#locked`)"/>
         </row-executability>
     </drag>
     <!-- Move items: insert the dragged items under `parent` before its child `before`. -->

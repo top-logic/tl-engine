@@ -48,12 +48,17 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 	/**
 	 * Creates a new {@link ViewUploadCommandModel} for a command reading the given input channels.
 	 *
+	 * <p>
+	 * The uploaded file is the value the trigger supplies: the rules decide over the arguments
+	 * without a file before the upload, the actions run with each file in turn.
+	 * </p>
+	 *
 	 * @param inputChannels
 	 *        The channels of the {@link UploadCommand.Config#getInputs() inputs}, in their order.
 	 */
 	public ViewUploadCommandModel(UploadCommand command, UploadCommand.Config config,
 			List<ViewChannel> inputChannels, ViewExecutabilityRule rule) {
-		super(command, config, inputChannels, null, rule, null);
+		super(command, config, inputChannels, command.getArguments().getTrigger(), rule, null);
 		_uploadCommand = command;
 	}
 

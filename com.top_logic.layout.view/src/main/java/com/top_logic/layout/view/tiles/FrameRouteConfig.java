@@ -42,10 +42,10 @@ import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
  * &lt;tile-stack initial="accounts/overview.view.xml" path="navPath"&gt;
  *   &lt;frame route="person/:person" view="accounts/person-detail.view.xml"&gt;
  *     &lt;param name="person"
- *       expr="p -&gt; objectId($p)"
- *       reverse="id -&gt; $id.objectResolve(`tl.accounts:Person`)"/&gt;
+ *       expr="objectId($person)"
+ *       reverse="$value.objectResolve(`tl.accounts:Person`)"/&gt;
  *     &lt;label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
- *       expr="p -&gt; $p.get(`tl.accounts:Person#name`)" inputs="person"/&gt;
+ *       expr="$person.get(`tl.accounts:Person#name`)" inputs="person"/&gt;
  *   &lt;/frame&gt;
  * &lt;/tile-stack&gt;
  * </pre>
@@ -112,7 +112,7 @@ public interface FrameRouteConfig extends ConfigurationItem {
 	 * <p>
 	 * Evaluated over the parameters of the frame, which the provider reads as channels of their
 	 * names: {@link ScriptedTileLabel &lt;scripted&gt;} with
-	 * {@code inputs="person" expr="p -&gt; $p.get(`tl.accounts:Person#name`)"} names a frame by the
+	 * {@code inputs="person" expr="$person.get(`tl.accounts:Person#name`)"} names a frame by the
 	 * object it displays, {@link StaticTileLabel &lt;static&gt;} by fixed text.
 	 * </p>
 	 *

@@ -42,7 +42,7 @@ public class IconChooserEditor implements Editor {
 			linkStorage(input, modelValue, Identity.INSTANCE);
 		}
 
-		editorFactory.processControlProviderAnnotation(model.getProperty(), field);
+		editorFactory.installControlProvider(model.getProperty(), field);
 		return field;
 	}
 

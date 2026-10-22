@@ -1,0 +1,162 @@
+---
+description: Read before choosing the column order of primary keys and indexes, or before changing branch-last or multiple-branches for an application whose database already exists - the type system option branch-last (IDENTIFIER, BRANCH, REV_MAX) and why H2 needs it, its relation to the DefaultIndexColumnsStrategy options, the FLEX_DATA primary key, and the automatic conversion of existing tables at startup (AlignTableLayoutProcessor, align-table-layout) with its preconditions.
+order: 25
+---
+
+# Table layout: branch position and conversion
+
+Two options of a type system determine how the tables are built from the table declarations:
+`multiple-branches` decides whether the tables carry a `BRANCH` column at all (see
+[branches](doc:persistency/branches)), `branch-last` decides where that column stands in the
+primary keys and indexes. Both can be changed for an existing database: the engine converts the
+tables when the application starts.
+
+## The option `branch-last`
+
+`branch-last` is an attribute of the type system (`SchemaConfiguration.isBranchLast()`, default
+`false`). tl-core ships the file `WEB-INF/conf/top-logic.branchLast.config.xml` that switches it on:
+
+```xml
+<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+	<type-systems>
+		<type-system name="Default"
+			branch-last="true"
+		/>
+	</type-systems>
+</config>
+```
+
+The type system list is keyed by `name`, so this partial entry only sets the flag of the `Default`
+type system that the modules declare elsewhere, the same way `top-logic.singleBranch.config.xml`
+sets `multiple-branches`. An application enables it with a line in its `WEB-INF/conf/metaConf.txt`:
+
+```
+top-logic.branchLast.config.xml
+```
+
+By default the branch leads every key. With `branch-last="true"`, the branch column moves directly
+before the revision column `REV_MAX` (or to the end of a key without one); all other columns keep
+their order:
+
+| Key | Default | `branch-last="true"` |
+|---|---|---|
+| Primary key of an object table | `BRANCH, IDENTIFIER, REV_MAX` | `IDENTIFIER, BRANCH, REV_MAX` |
+| Index of a reference | `BRANCH, <REF>_ID, REV_MAX` | `<REF>_ID, BRANCH, REV_MAX` |
+| Declared index (not `custom`) | `BRANCH, <declared columns>, REV_MAX` | `<declared columns>, BRANCH, REV_MAX` |
+| Declared index with `custom="true"` | declared order | declared order |
+| `FLEX_DATA` primary key | `BRANCH, IDENTIFIER, ATTR, REV_MAX` | `IDENTIFIER, ATTR, BRANCH, REV_MAX` |
+
+A reference with a branch column of its own (`<REF>_BRC`, see [branches](doc:persistency/branches))
+has that column in its index instead of the `BRANCH` of the table. In a single-branch database
+the tables have no `BRANCH` column, so the option changes none of these keys.
+
+### Why the option exists
+
+A DBMS with index prefix compression (Oracle) stores a leading column only once per index block;
+a `BRANCH` column in front costs almost nothing there, which is why it stays the default. Other
+DBMS use an `IN` list only on the first column of an index. H2 is one of them: with `BRANCH` in
+front, a query with a list of identifiers seeks on `BRANCH = 1`, matches every row of the trunk
+and checks the list row by row. This hits
+
+- the search for the referrers of deleted objects (`ReferenceDeletionHelper`,
+  `DBKnowledgeBase.anyRefereesQuery`),
+- the bulk load of objects by their identifiers,
+- the navigation of associations for a list of objects,
+- the bulk load of flex attributes from `FLEX_DATA`.
+
+With `branch-last="true"`, the identifier is the first index column and H2 seeks on the `IN` list.
+`TestBranchLastH2IndexUsage` shows the effect: the referrer search for 20 of 300 objects reads
+301 rows of the association table with the branch in front and 21 rows with the branch last.
+The mechanism and the measured deletion times are described in the
+[database notes](doc:persistency/database-notes#h2-an-in-list-seeks-an-index-only-on-its-first-column).
+Applications on H2 get the option together with the H2 configuration: the `with-h2` profile of
+the application parent POM (`tl-parent-app`) adds `db-h2.xml` and `top-logic.branchLast.config.xml`
+to the generated `metaConf.txt` (`tl.app.metaConfAddons`). A start configuration that lists
+`db-h2.xml` in its own `metaConf.txt`, such as `deploy/local/webapp/WEB-INF/conf/metaConf.txt`,
+adds `top-logic.branchLast.config.xml` there as well. The development start configurations of the
+engine modules do not list it, since a module's tests read its `deploy/local` configuration and run
+on every supported database. An existing H2 database is converted at the next
+start, see [conversion](#conversion-of-an-existing-database).
+
+### Relation to the options of `DefaultIndexColumnsStrategy`
+
+`DefaultIndexColumnsStrategy`, the index strategy of `Item`, has its own options (see
+[branches](doc:persistency/branches#index-options-of-defaultindexcolumnsstrategy)), set per
+declaration of `Item`:
+
+| | Applies to |
+|---|---|
+| `branch-after-custom-columns` | Declared indexes generated by the strategy only. |
+| `branch-last` | Primary keys, reference indexes, declared indexes generated by the strategy, `FLEX_DATA`. |
+
+In a type system with `branch-last="true"` the strategy places the branch behind the declared
+columns regardless of `branch-after-custom-columns`. The exclude options
+(`exclude-branch-from-non-unique-indices`, `exclude-revision-from-non-unique-indices`) are
+independent of `branch-last`. Changing a strategy option is not converted at
+startup; it takes effect only for a database created afterwards.
+
+## The `FLEX_DATA` primary key
+
+`FLEX_DATA` holds one row per object and attribute (see
+[type systems](doc:persistency/type-systems)). Its primary key is `(BRANCH, IDENTIFIER, ATTR,
+REV_MAX)`, or `(IDENTIFIER, ATTR, BRANCH, REV_MAX)` with `branch-last`; `BRANCH` is missing in a
+single-branch database. The column `TYPE` is still stored but is not part of the key, since an
+object identifier is unique across all types. `REV_MAX` comes last because the attribute load
+constrains it only by a range (see
+[database notes](doc:persistency/database-notes#postgresql-the-flex_data-primary-key)). The
+journal tables of `FlexJournalManager` keep their key with `TYPE`. The engine creates `FLEX_DATA`
+with this key; an existing `FLEX_DATA` table keeps the key it was created with until a
+[conversion](#conversion-of-an-existing-database) rebuilds it.
+
+On a DBMS with key compression, the leading key columns up to `IDENTIFIER` are compressed: the
+branch and the identifier by default, the identifier alone with `branch-last`.
+
+## Conversion of an existing database
+
+The knowledge base boots on the schema stored in the database (`TL_PROPERTIES`, see
+[the stored schema](doc:persistency/type-systems#the-stored-schema)). At startup,
+`MigrationService.executeAutomaticSchemaMigrations` (the automatic schema update, which is skipped
+in dry-run mode and with `tl_noAutomaticalDatabaseSetup`) compares `branch-last` and
+`multiple-branches` of the stored schema with the configured ones. If one of them differs, it runs
+the `AlignTableLayoutProcessor` (tag `align-table-layout`) before it creates the tables of new
+types:
+
+1. It computes the table definitions of all stored types twice, with the stored and with the
+   configured options. When `multiple-branches` changes, the definition of `Item` is taken from the
+   configuration (with or without `singleBranchMeta.xml`); all other type definitions stay as
+   stored.
+2. For every existing table whose definition differs, it
+   - drops the primary key and the indexes whose columns change,
+   - adds missing branch columns (`BRANCH`, `<REF>_BRC`) and fills them with the trunk (`1`; a
+     reference branch column only where the reference is set), when switching to
+     `multiple-branches="true"`,
+   - drops the branch columns, when switching to `multiple-branches="false"`,
+   - creates the primary key and the indexes in their configured column order.
+3. It stores the schema with the new options in `TL_PROPERTIES`, so the next start finds no
+   difference.
+
+Other differences between the stored and the configured schema - changed declarations, changed
+index strategy options - are not applied, see
+[changing the schema](doc:persistency/type-systems#changing-the-schema-of-an-existing-database).
+
+**Preconditions.**
+
+- Dropping the branch columns requires that the database contains only the trunk: the table
+  `Branch` has no other branch, and no dropped branch column holds another value. Otherwise the
+  processor changes nothing and startup fails with an error naming the tables, columns and branches
+  found.
+- Switching `multiple-branches` needs the matching declaration as well: an application switching
+  to a single branch adds `top-logic.singleBranch.config.xml`, one switching back removes it.
+
+**Database specifics.**
+
+- A table whose primary key cannot be changed in place is rebuilt by copy: on Oracle, a table
+  stored along its primary key (an index-organized table, such as `FLEX_DATA`) is copied into a new
+  table with the configured key, which then replaces the old one. All other tables are changed in
+  place.
+- On Oracle and MySQL every DDL statement commits implicitly. If the conversion fails half way,
+  the tables converted so far stay converted while the stored schema still describes the old
+  layout. Back up the database before the first start with changed options.
+
+**Order.** Pending migration scripts run first and work on the tables in the stored layout; the
+conversion afterwards also covers the tables these scripts created.

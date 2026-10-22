@@ -1,14 +1,15 @@
 ---
-description: Read before the first database of an application is created, to decide whether its tables carry a branch column - what a Branch is, what multiple-branches costs in every primary key, index and query, the single-branch switch top-logic.singleBranch.config.xml (TrunkStorage), the DefaultIndexColumnsStrategy options, and why an existing database cannot be converted.
+description: Read to decide whether the tables of an application carry a branch column - what a Branch is, what multiple-branches costs in every primary key, index and query, the single-branch switch top-logic.singleBranch.config.xml (TrunkStorage), the DefaultIndexColumnsStrategy options, and what switching an existing database between single and multiple branches requires.
 order: 20
 ---
 
 # Single branch or multiple branches
 
-Every object table of a TopLogic database starts with a `BRANCH` column by default. This article
-explains what the column is for, what it costs, how an application leaves it out, and why that
-decision has to be made before the first database of the application is created. How the type
-system is configured in general is described in [Type systems](doc:persistency/type-systems).
+Every object table of a TopLogic database has a `BRANCH` column by default. This article explains
+what the column is for, what it costs, and how an application leaves it out. Where the column
+stands in the keys (`branch-last`) and how an existing database is converted when either option
+changes is described in [table layout](doc:persistency/table-layout). How the type system is
+configured in general is described in [Type systems](doc:persistency/type-systems).
 
 ## What a branch is
 
@@ -48,11 +49,11 @@ With `multiple-branches="true"`:
 | Where | Effect |
 |---|---|
 | Every object table | The attribute `_branch` (column `BRANCH`, `BranchStorage`), declared on the abstract `Item` in `WEB-INF/kbase/BasicMeta.xml`. |
-| Primary key | `(_branch, _identifier, _rev_max)` - the branch is its first column. |
-| Indexes | `Item` carries the `DefaultIndexColumnsStrategy`, which puts `BRANCH` in front of the columns of every generated index and `REV_MAX` behind them. |
+| Primary key | `(_branch, _identifier, _rev_max)` - the branch is its first column, or the second one with `branch-last`. |
+| Indexes | `Item` carries the `DefaultIndexColumnsStrategy`, which puts `BRANCH` in front of the columns of every generated index (behind them with `branch-last`) and `REV_MAX` behind them. |
 | Custom unique indexes | An index declared `custom="true"` and `unique="true"` must contain `_branch` itself (`AbstractIndexColumnsStrategy` rejects it otherwise). |
 | References | A reference column gets an additional `<name>_BRC` column if the reference is `branch-global` or stores a revision (`AbstractMOReference.hasBranchColumn()`). |
-| `FLEX_DATA` and its journal tables | A `BRANCH` column (`AbstractFlexDataManager`, `FlexJournalManager`). |
+| `FLEX_DATA` and its journal tables | A `BRANCH` column in the table and its primary key (`AbstractFlexDataManager`, `FlexJournalManager`). |
 
 The tables `Branch`, `BranchSwitch` and `RevisionXref` exist in both modes.
 
@@ -103,6 +104,7 @@ The `DefaultIndexColumnsStrategy` turns it into these database columns:
 | Mode | Columns of the index |
 |---|---|
 | `multiple-branches="true"` | `BRANCH, SOURCE_ID, META_ATTRIBUTE_ID, REV_MAX` |
+| `multiple-branches="true"`, `branch-last="true"` | `SOURCE_ID, META_ATTRIBUTE_ID, BRANCH, REV_MAX` |
 | `multiple-branches="false"` | `SOURCE_ID, META_ATTRIBUTE_ID, REV_MAX` |
 
 ### The effect on queries
@@ -114,8 +116,11 @@ values. On H2 the effect is severe: an `IN` list is matched only against the fir
 so a query such as the search for objects referring to deleted objects (`ReferenceDeletionHelper`,
 `DBKnowledgeBase.anyRefereesQuery`) scans the whole association table instead of using the index
 on `SOURCE_ID`. In an application on H2, the same deletion took 21 s with and 2.3 s without the
-branch column (Trac #29876). The article on database notes of this chapter lists this and further
-DBMS-specific effects of the generated SQL.
+branch column (Trac #29876). An application that keeps its branches avoids the scan with
+`branch-last`, which moves `BRANCH` behind the identifying columns, see
+[table layout](doc:persistency/table-layout). The
+[database notes](doc:persistency/database-notes) list this and further DBMS-specific effects of the
+generated SQL.
 
 With a single branch the knowledge base also reads less: `MonomorphicSearch` reads only the
 identifier column of a result row and assigns the trunk, where a query spanning several branches
@@ -170,8 +175,10 @@ top-logic.singleBranch.config.xml
 ```
 
 A `metaConf.txt` entry ending in `.config.xml` is loaded as typed configuration only; there is no
-untyped counterpart for this file. Nothing else is needed: for a fresh database, the index columns,
-the reference branch columns, `FLEX_DATA` and the journal tables all follow the flag.
+untyped counterpart for this file. Nothing else is needed: the index columns, the reference branch
+columns, `FLEX_DATA` and the journal tables all follow the flag. For an existing database, the
+tables are converted at the next start, see
+[switching an existing database](#switching-an-existing-database).
 
 What changes for code running in the application: `createBranch` cannot branch any type.
 Requesting a type explicitly fails with *"Type ... does not support branching."*
@@ -184,10 +191,12 @@ a second time as a *"no branches"* variant on freshly created tables (`MultipleB
 `SchemaTestSetup.updateMultipleBranches`, which sets the flag and adds `singleBranchMeta.xml`
 exactly like the configuration above).
 
-## Keeping branches, changing the index layout
+## Index options of DefaultIndexColumnsStrategy
 
-An application that needs branches can still move the `BRANCH` column within the generated
-indexes. `DefaultIndexColumnsStrategy.Config` has three options, all `false` by default:
+An application that needs branches can move the `BRANCH` column in all keys with the type system
+option `branch-last` (see [table layout](doc:persistency/table-layout)). Independently,
+`DefaultIndexColumnsStrategy.Config` has three options for the generated indexes of declared
+`<mo_index>` entries, all `false` by default:
 
 | Option | Effect |
 |---|---|
@@ -226,32 +235,23 @@ are identified by their `config:interface`, so a declaration of the application 
 ```
 
 No configuration shipped with TopLogic sets one of these options. They change the index
-definitions of every table and so are subject to the same rule as the branch mode: they take effect
-only for a database created afterwards.
+definitions of every table, and changing them is not converted at startup: they take effect only for
+a database created afterwards.
 
-## An existing database cannot be converted
+## Switching an existing database
 
-The branch mode is fixed when the database is created:
+The knowledge base boots on the schema stored in the database (table `TL_PROPERTIES`, see
+[the stored schema](doc:persistency/type-systems#the-stored-schema)). When the configured
+`multiple-branches` differs from the stored one, the automatic schema update at startup converts the
+tables (`AlignTableLayoutProcessor`, see
+[conversion of an existing database](doc:persistency/table-layout#conversion-of-an-existing-database)):
 
-- The knowledge base boots on the schema stored in the database (table `TL_PROPERTIES`, read by
-  `KBSchemaUtil` in `DBKnowledgeBase.loadSchemaSetup`), not on the configured one. Changing
-  `multiple-branches` or the index strategy in the configuration of an application with an existing
-  database has no effect on startup. The knowledge-base option `override-persistent-type-definitions`
-  only makes the knowledge base read the configured schema instead of the stored one; it changes no
-  table, so with a flipped flag the knowledge base would address columns that do not exist.
-- The automatic schema update at startup (`MigrationService.executeAutomaticSchemaMigrations`)
-  only creates tables for types that are new in the configuration. It compares neither existing
-  types nor the branch flag.
-- No migration processor converts the table layout: none adds or removes the `BRANCH` column or
-  switches `_branch` to `TrunkStorage`. `MigrationContext.hasBranchSupport()` reports the flag of
-  the *stored* schema, so that processors write to the tables as they exist.
-- After an explicit migration, `StoreTypeConfiguration` stores the application's configured schema
-  as the new stored schema. With a changed flag, the stored schema then no longer describes the
-  existing tables.
-- A replay migration (`ReplayConfig`, `DataMigration.dropAndRecreateDatabase`) dumps the history
-  and recreates all tables from the configured schema. The engine provides no support and no test
-  for changing the branch layout this way; it is not a supported conversion.
+- Switching to a single branch drops the `BRANCH` column and the reference branch columns of all
+  tables and replaces `_branch` by the computed attribute of `singleBranchMeta.xml`. This requires
+  that the database contains only the trunk. If the table `Branch` lists another branch or a branch
+  column holds a value other than the trunk, nothing is changed and startup fails with an error
+  naming the tables, columns and branches found.
+- Switching to multiple branches adds the branch columns and fills them with the trunk.
 
-Decide on the branch mode and the index options before the first database of the application is
-created. To change them later, set up a fresh database with the new configuration and transfer the
-application data into it.
+Back up the database before the first start with the switched configuration: on Oracle and MySQL
+the conversion cannot be rolled back.

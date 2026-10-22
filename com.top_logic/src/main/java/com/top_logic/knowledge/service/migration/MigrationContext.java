@@ -127,6 +127,13 @@ public class MigrationContext extends TypedAnnotationContainer {
 	}
 
 	/**
+	 * The configuration of the {@link KnowledgeBase} to be migrated.
+	 */
+	public KnowledgeBaseConfiguration getKnowledgeBaseConfiguration() {
+		return _kbConfig;
+	}
+
+	/**
 	 * The schema read from the application configuration.
 	 */
 	public SchemaConfiguration getApplicationSchema() {

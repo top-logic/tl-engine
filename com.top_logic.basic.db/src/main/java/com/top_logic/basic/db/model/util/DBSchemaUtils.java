@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.DebugHelper;
+import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.UnreachableAssertion;
@@ -27,7 +28,10 @@ import com.top_logic.basic.col.MappedIterable;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.db.model.DBColumn;
+import com.top_logic.basic.db.model.DBColumnRef;
 import com.top_logic.basic.db.model.DBForeignKey;
+import com.top_logic.basic.db.model.DBIndex;
+import com.top_logic.basic.db.model.DBPrimary;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.DBSchemaPart;
@@ -46,6 +50,12 @@ import com.top_logic.basic.sql.SQLLoader;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class DBSchemaUtils {
+
+	/**
+	 * Prefix of the name of the temporary table created by
+	 * {@link #rebuildTable(Log, PooledConnection, DBTable, DBTable)}.
+	 */
+	public static final String REBUILD_TABLE_PREFIX = "TL_REBUILD_";
 	
 	/**
 	 * {@link Mapping} of {@link DBForeignKey}s to the {@link DBTable} of the target index .
@@ -762,6 +772,199 @@ public class DBSchemaUtils {
 		connection.commit();
 	}
 	
+	/**
+	 * Adapts the primary key and the indexes of an existing table to a target definition.
+	 *
+	 * <p>
+	 * The primary key is replaced, if its columns differ from the primary key of the target
+	 * definition. An index of the current definition is dropped and created in its target form, if
+	 * the target definition has an index with the same name but other columns, column order,
+	 * uniqueness or compression. Indexes that exist only in one of the definitions are not touched.
+	 * </p>
+	 *
+	 * <p>
+	 * If the database cannot change the primary key of the table in place (see
+	 * {@link DBHelper#canChangePrimaryKey(boolean)}), the table is rebuilt, see
+	 * {@link #rebuildTable(Log, PooledConnection, DBTable, DBTable)}.
+	 * </p>
+	 *
+	 * @param log
+	 *        The {@link Log} to report the changes to.
+	 * @param connection
+	 *        The connection to the database containing the table.
+	 * @param current
+	 *        The definition the existing table was created from, part of a {@link DBSchema}.
+	 * @param target
+	 *        The target definition of the table with the same name and columns, part of a
+	 *        {@link DBSchema}.
+	 * @return Whether the table was changed.
+	 * @throws SQLException
+	 *         If the database access fails.
+	 */
+	public static boolean alignKeys(Log log, PooledConnection connection, DBTable current, DBTable target)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		boolean primaryKeyChanged = !columnNames(current.getPrimaryKey()).equals(columnNames(target.getPrimaryKey()));
+		List<DBIndex> changedIndexes = new ArrayList<>();
+		for (DBIndex targetIndex : target.getIndices()) {
+			DBIndex currentIndex = current.getIndex(targetIndex.getName());
+			if (currentIndex != null && !sameIndex(currentIndex, targetIndex)) {
+				changedIndexes.add(currentIndex);
+			}
+		}
+		if (!primaryKeyChanged && changedIndexes.isEmpty()) {
+			return false;
+		}
+
+		if (primaryKeyChanged && !sqlDialect.canChangePrimaryKey(current.getPKeyStorage())) {
+			rebuildTable(log, connection, current, target);
+			return true;
+		}
+
+		String tableName = target.getDBName();
+		for (DBIndex currentIndex : changedIndexes) {
+			execute(connection, sqlDialect.dropIndex(CreateStatementBuilder.qName(sqlDialect, currentIndex), tableName));
+		}
+		if (primaryKeyChanged) {
+			String constraintName = primaryKeyName(connection, tableName);
+			if (constraintName != null) {
+				execute(connection, sqlDialect.dropPrimaryKey(tableName, constraintName));
+			}
+			DBPrimary targetKey = target.getPrimaryKey();
+			if (targetKey != null) {
+				execute(connection, sqlDialect.addPrimaryKey(tableName, columnDBNames(targetKey)));
+			}
+			log.info("Changed primary key of table '" + tableName + "' from " + columnNames(current.getPrimaryKey())
+				+ " to " + columnNames(targetKey) + ".");
+		}
+		for (DBIndex currentIndex : changedIndexes) {
+			DBIndex targetIndex = target.getIndex(currentIndex.getName());
+			executeSQL(connection, toSQL(sqlDialect, targetIndex));
+			log.info("Changed index '" + targetIndex.getName() + "' of table '" + tableName + "' from "
+				+ columnNames(currentIndex) + " to " + columnNames(targetIndex) + ".");
+		}
+		return true;
+	}
+
+	/**
+	 * Rebuilds an existing table in a target definition, keeping its rows.
+	 *
+	 * <p>
+	 * The rows are copied to a table created in the target definition, which replaces the existing
+	 * table. All indexes of the target definition are created, as well as the indexes of the
+	 * current definition that the target definition does not have. Other database objects bound to
+	 * the existing table (e.g. grants, or indexes not declared in the current definition) are
+	 * dropped with it.
+	 * </p>
+	 *
+	 * @param log
+	 *        The {@link Log} to report the changes to.
+	 * @param connection
+	 *        The connection to the database containing the table.
+	 * @param current
+	 *        The definition the existing table was created from, part of a {@link DBSchema}.
+	 * @param target
+	 *        The target definition of the table with the same name and columns, part of a
+	 *        {@link DBSchema}.
+	 * @throws SQLException
+	 *         If the database access fails, or the name used for the temporary table is already
+	 *         taken (e.g. by an aborted rebuild, whose rows must then be recovered manually).
+	 */
+	public static void rebuildTable(Log log, PooledConnection connection, DBTable current, DBTable target)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		String tableName = target.getDBName();
+		String tmpName = REBUILD_TABLE_PREFIX + Integer.toHexString(tableName.hashCode()).toUpperCase();
+		if (exists(connection, tmpName)) {
+			throw new SQLException("Cannot rebuild table '" + tableName + "', temporary table '" + tmpName
+				+ "' already exists.");
+		}
+
+		DBSchema tmpSchema = newDBSchema();
+		DBTable tmpTable = TypedConfiguration.copy(target);
+		tmpTable.setName(tmpName);
+		tmpTable.setExplicitDBName(tmpName);
+		tmpTable.getIndices().clear();
+		tmpTable.getForeignKeys().clear();
+		tmpSchema.getTables().add(tmpTable);
+		executeSQL(connection, toSQL(sqlDialect, tmpTable));
+
+		StringBuilder columns = new StringBuilder();
+		for (DBColumn column : target.getColumns()) {
+			if (columns.length() > 0) {
+				columns.append(", ");
+			}
+			columns.append(sqlDialect.columnRef(column.getDBName()));
+		}
+		int rows = executeUpdate(connection,
+			"INSERT INTO " + sqlDialect.tableRef(tmpName) + " (" + columns + ") SELECT " + columns + " FROM "
+				+ sqlDialect.tableRef(tableName));
+		execute(connection, "DROP TABLE " + sqlDialect.tableRef(tableName));
+		execute(connection, sqlDialect.renameTable(tmpName, tableName));
+
+		for (DBIndex index : target.getIndices()) {
+			executeSQL(connection, toSQL(sqlDialect, index));
+		}
+		for (DBIndex index : current.getIndices()) {
+			if (target.getIndex(index.getName()) == null) {
+				executeSQL(connection, toSQL(sqlDialect, index));
+			}
+		}
+		log.info("Rebuilt table '" + tableName + "' with " + rows + " rows, changed primary key from "
+			+ columnNames(current.getPrimaryKey()) + " to " + columnNames(target.getPrimaryKey()) + ".");
+	}
+
+	private static boolean sameIndex(DBIndex index1, DBIndex index2) {
+		return columnNames(index1).equals(columnNames(index2))
+			&& index1.isUnique() == index2.isUnique()
+			&& index1.getCompress() == index2.getCompress();
+	}
+
+	private static List<String> columnNames(DBIndex index) {
+		if (index == null) {
+			return Collections.emptyList();
+		}
+		List<String> result = new ArrayList<>();
+		for (DBColumnRef ref : index.getColumnRefs()) {
+			result.add(ref.getName());
+		}
+		return result;
+	}
+
+	private static List<String> columnDBNames(DBIndex index) {
+		List<String> result = new ArrayList<>();
+		for (DBColumn column : index.getColumns()) {
+			result.add(column.getDBName());
+		}
+		return result;
+	}
+
+	private static String primaryKeyName(PooledConnection connection, String tableName) throws SQLException {
+		SchemaExtraction extraction = new SchemaExtraction(connection.getMetaData(), connection.getSQLDialect());
+		DBPrimary primaryKey = extraction.addTable(DBSchemaFactory.createDBSchema(), tableName).getPrimaryKey();
+		return primaryKey == null ? null : primaryKey.getName();
+	}
+
+	private static void execute(PooledConnection connection, String sql) throws SQLException {
+		try (Statement statement = connection.createStatement()) {
+			statement.execute(sql);
+		}
+	}
+
+	private static int executeUpdate(PooledConnection connection, String sql) throws SQLException {
+		try (Statement statement = connection.createStatement()) {
+			return statement.executeUpdate(sql);
+		}
+	}
+
+	private static void executeSQL(PooledConnection connection, String script) throws SQLException {
+		try {
+			new SQLLoader(connection).executeSQL(script);
+		} catch (IOException ex) {
+			throw new UnreachableAssertion("Reading from string must not fail.", ex);
+		}
+	}
+
 	/**
 	 * Creates a new empty {@link DBSchema}.
 	 */

@@ -315,6 +315,22 @@ public class MSSQLHelper extends DBHelper {
 		return false;
 	}
     
+	/**
+	 * MS SQL Server drops a primary key by the name of its constraint.
+	 */
+	@Override
+	public String dropPrimaryKey(String tableName, String constraintName) {
+		return alterTable(tableName) + "DROP CONSTRAINT " + columnRef(constraintName);
+	}
+
+	/**
+	 * MS SQL Server renames a table with the stored procedure <code>sp_rename</code>.
+	 */
+	@Override
+	public String renameTable(String tableName, String newName) {
+		return "EXEC sp_rename " + columnRef(tableName) + ", " + columnRef(newName);
+	}
+
     /**
      * OverWritten to get the correct MSSQL drop index statement
 	 */

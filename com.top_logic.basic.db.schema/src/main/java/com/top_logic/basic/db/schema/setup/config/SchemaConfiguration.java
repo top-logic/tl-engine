@@ -137,8 +137,8 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	 * </p>
 	 * 
 	 * <p>
-	 * The value is fixed when the database is created, since it determines the layout of the
-	 * database tables.
+	 * Changing the value for an existing database converts the primary keys and indexes of its
+	 * tables to the configured layout when the application starts.
 	 * </p>
 	 */
 	@BooleanDefault(DEFAULT_BRANCH_LAST_ATTRIBUTE)

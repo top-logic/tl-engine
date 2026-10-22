@@ -34,6 +34,7 @@ import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.IdentifierUtil;
@@ -3161,6 +3162,68 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 */
 	public String dropForeignKey(String tableName, String foreignKeyName) {
 		return alterTable(tableName) + "DROP CONSTRAINT " + tableRef(foreignKeyName);
+	}
+
+	/**
+	 * Whether the primary key of an existing table can be dropped and added with
+	 * {@link #dropPrimaryKey(String, String)} and {@link #addPrimaryKey(String, List)}.
+	 *
+	 * <p>
+	 * If not, the table must be rebuilt to change its primary key.
+	 * </p>
+	 *
+	 * @param pkeyStorage
+	 *        Whether the rows of the table are stored along its primary key, see
+	 *        {@link #appendTableOptions(Appendable, boolean, int)}.
+	 */
+	public boolean canChangePrimaryKey(boolean pkeyStorage) {
+		return true;
+	}
+
+	/**
+	 * Creates a statement dropping the primary key of a table.
+	 *
+	 * @param tableName
+	 *        The name of the table.
+	 * @param constraintName
+	 *        The name of the primary key constraint, as reported by
+	 *        {@link DatabaseMetaData#getPrimaryKeys(String, String, String)}.
+	 */
+	public String dropPrimaryKey(String tableName, String constraintName) {
+		return alterTable(tableName) + "DROP PRIMARY KEY";
+	}
+
+	/**
+	 * Creates a statement adding a primary key to a table.
+	 *
+	 * @param tableName
+	 *        The name of the table.
+	 * @param columnNames
+	 *        The names of the key columns in key order.
+	 */
+	public String addPrimaryKey(String tableName, List<String> columnNames) {
+		StringBuilder result = new StringBuilder(alterTable(tableName));
+		result.append("ADD PRIMARY KEY (");
+		for (int n = 0, cnt = columnNames.size(); n < cnt; n++) {
+			if (n > 0) {
+				result.append(", ");
+			}
+			result.append(columnRef(columnNames.get(n)));
+		}
+		result.append(')');
+		return result.toString();
+	}
+
+	/**
+	 * Creates a statement renaming a table.
+	 *
+	 * @param tableName
+	 *        The current name of the table.
+	 * @param newName
+	 *        The new name of the table.
+	 */
+	public String renameTable(String tableName, String newName) {
+		return alterTable(tableName) + "RENAME TO " + tableRef(newName);
 	}
 
 	/**

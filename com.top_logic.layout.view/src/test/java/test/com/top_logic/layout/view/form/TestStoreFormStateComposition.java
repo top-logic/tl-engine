@@ -57,8 +57,6 @@ public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 
 	private static final String LEAVE_EDIT_MODE = "leave-edit-mode";
 
-	private static final String WITH_RESULT = "with-result";
-
 	private static final String NEW_TASK = "new task";
 
 	/**
@@ -199,10 +197,12 @@ public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		FormControl form = newForm(_project);
 
-		ViewAction action = action("<" + WITH_TRANSACTION + "><" + STORE_FORM_STATE + "/><" + WITH_RESULT + "><"
-			+ LEAVE_EDIT_MODE + "/></" + WITH_RESULT + "></" + WITH_TRANSACTION + ">");
-		action.execute(viewContext(form), _project);
+		DefaultViewContext context = viewContext(form);
+		action("<" + WITH_TRANSACTION + "><" + STORE_FORM_STATE + "/></" + WITH_TRANSACTION + ">").execute(context,
+			_project);
+		Object result = action("<" + LEAVE_EDIT_MODE + "/>").execute(context, _project);
 
+		assertSame(_project, result);
 		assertFalse(form.isEditMode());
 		assertFalse(form.isDirty());
 		assertNewTaskStored();

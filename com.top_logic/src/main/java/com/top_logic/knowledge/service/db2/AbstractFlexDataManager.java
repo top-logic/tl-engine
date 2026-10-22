@@ -268,6 +268,13 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 * Create {@link KnowledgeItem} type that stores {@link NamedValues} data associated with a
 	 * {@link KnowledgeObject}.
 	 * 
+	 * <p>
+	 * The primary key consists of the branch column (if multiple branches are supported), the
+	 * {@link #IDENTIFIER}, the {@link #ATTRIBUTE} and the {@link #REV_MAX} column. The
+	 * {@link #TYPE} column is not part of the key, since object identifiers are unique across all
+	 * types.
+	 * </p>
+	 * 
 	 * @param typeName
 	 *        The internal name of the flex data type.
 	 * @param dbName
@@ -276,43 +283,6 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 *        Whether multiple branches are supported
 	 */
 	public static MOKnowledgeItemImpl createFlexDataType(String typeName, String dbName, boolean multipleBranches) {
-		MOKnowledgeItemImpl type = new MOKnowledgeItemImpl(typeName);
-		type.setDBName(dbName);
-    	type.setFinal(true);
-    	type.setVersioned(false);
-    	MOKnowledgeItemUtil.setSystem(type, true);
-        type.setPkeyStorage(true);
-		MOAttribute branchAttribute;
-		MOAttributeImpl typeAttribute;
-		MOAttributeImpl idAttribute;
-		MOAttributeImpl revMaxAttribute;
-		MOAttributeImpl attributeAttribute;
-		MOAttributeImpl revMinAttribute;
-    	try {
-			branchAttribute = createBranchAttr(multipleBranches);
-			type.addAttribute(branchAttribute);
-			typeAttribute = createTypeAttr();
-			type.addAttribute(typeAttribute);
-			idAttribute = createIdentifierAttr();
-			type.addAttribute(idAttribute);
-			revMaxAttribute = createRevMaxAttr();
-			type.addAttribute(revMaxAttribute);
-			attributeAttribute = createAttributeAttr();
-			type.addAttribute(attributeAttribute);
-			
-			revMinAttribute = createRevMinAttr();
-			type.addAttribute(revMinAttribute);
-			type.addAttribute(createDataTypeAttr());
-			
-			type.addAttribute(createLongTypeAttr());
-			type.addAttribute(createDoubleDataAttr());
-			type.addAttribute(createVarcharDataAttr());
-			type.addAttribute(createClobDataAttr());
-			type.addAttribute(createBlobDataAttr());
-		} catch (DuplicateAttributeException e) {
-			throw new UnreachableAssertion(e);
-		}
-
 		// Note: Even if it sounds appealing to move the REV_MAX column more to the start of the
 		// index to bring rows for the current revision more close together, this is not advisable,
 		// since optimizers of some DBs (including PostgreSQL) then do not consider this index for
@@ -330,19 +300,91 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		// query execution, since the range most likely only consists of a single value
 		// Long.MAX_VALUE, this may prevent the optimizer from using this index at all preferring a
 		// full-table-scan. This results in catastrophic performance degradation for non-trivial
-		// datasets.
-		DBAttribute[] primaryKeyColumns =
-			BasicTypeProvider.primaryKeyColumns(branchAttribute, typeAttribute, idAttribute, revMaxAttribute,
-				attributeAttribute);
+		// datasets. The ATTR column in front of REV_MAX does not hurt: the equality conditions on
+		// branch and identifier form the index prefix used for such queries.
+
+		// The compressed prefix is the branch and identifier, which is shared by all rows of an
+		// object. Compressing the ATTR column as well would not pay off, since the prefix up to
+		// ATTR is repeated only by historic versions of the same attribute value.
+		return createFlexDataType(typeName, dbName, multipleBranches, 1, IDENTIFIER, ATTRIBUTE, REV_MAX);
+	}
+
+	/**
+	 * Create a {@link KnowledgeItem} type with the columns of
+	 * {@link #createFlexDataType(String, String, boolean) flex data} and a custom primary key.
+	 * 
+	 * @param typeName
+	 *        The internal name of the flex data type.
+	 * @param dbName
+	 *        The name of the corresponding database table.
+	 * @param multipleBranches
+	 *        Whether multiple branches are supported
+	 * @param compressedKeyAttributes
+	 *        The number of leading key attributes (following the branch column) that are stored
+	 *        in compressed format, if the database supports compression. Must be less than the
+	 *        number of key attributes.
+	 * @param keyAttributes
+	 *        Names of the attributes that form the primary key following the branch column (e.g.
+	 *        {@link #IDENTIFIER}, {@link #ATTRIBUTE}, {@link #REV_MAX}).
+	 */
+	public static MOKnowledgeItemImpl createFlexDataType(String typeName, String dbName, boolean multipleBranches,
+			int compressedKeyAttributes, String... keyAttributes) {
+		if (compressedKeyAttributes >= keyAttributes.length) {
+			/* Compress value must be strict less than number of columns in the prefix. Otherwise
+			 * Oracle sends a ORA-25194 error. */
+			throw new IllegalArgumentException("Number of compressed key attributes (" + compressedKeyAttributes
+				+ ") must be less than the number of key attributes (" + keyAttributes.length + ").");
+		}
+
+		MOKnowledgeItemImpl type = new MOKnowledgeItemImpl(typeName);
+		type.setDBName(dbName);
+		type.setFinal(true);
+		type.setVersioned(false);
+		MOKnowledgeItemUtil.setSystem(type, true);
+		type.setPkeyStorage(true);
+		MOAttribute branchAttribute;
+		MOAttributeImpl revMaxAttribute;
+		MOAttributeImpl revMinAttribute;
+		try {
+			branchAttribute = createBranchAttr(multipleBranches);
+			type.addAttribute(branchAttribute);
+			type.addAttribute(createTypeAttr());
+			type.addAttribute(createIdentifierAttr());
+			revMaxAttribute = createRevMaxAttr();
+			type.addAttribute(revMaxAttribute);
+			type.addAttribute(createAttributeAttr());
+
+			revMinAttribute = createRevMinAttr();
+			type.addAttribute(revMinAttribute);
+			type.addAttribute(createDataTypeAttr());
+
+			type.addAttribute(createLongTypeAttr());
+			type.addAttribute(createDoubleDataAttr());
+			type.addAttribute(createVarcharDataAttr());
+			type.addAttribute(createClobDataAttr());
+			type.addAttribute(createBlobDataAttr());
+		} catch (DuplicateAttributeException e) {
+			throw new UnreachableAssertion(e);
+		}
+
+		MOAttributeImpl[] keyAttributeImpls = new MOAttributeImpl[keyAttributes.length];
+		for (int n = 0; n < keyAttributes.length; n++) {
+			MOAttributeImpl keyAttribute = (MOAttributeImpl) type.getAttributeOrNull(keyAttributes[n]);
+			if (keyAttribute == null) {
+				throw new IllegalArgumentException(
+					"No attribute '" + keyAttributes[n] + "' in flex data type '" + typeName + "'.");
+			}
+			keyAttributeImpls[n] = keyAttribute;
+		}
+		DBAttribute[] primaryKeyColumns = BasicTypeProvider.primaryKeyColumns(branchAttribute, keyAttributeImpls);
 
 		type.setPrimaryKey(primaryKeyColumns);
-		/* Compress value must be strict less than number of columns in the prefix. Otherwise Oracle
-		 * sends a ORA-25194 error. */
-		type.setCompress(primaryKeyColumns.length - 1);
+		int branchColumns = primaryKeyColumns.length - keyAttributeImpls.length;
+		type.setCompress(branchColumns + compressedKeyAttributes);
 		BasicTypeProvider.addMaxMinIndexes(type, revMaxAttribute, revMinAttribute);
 
 		return type;
-    }
+	}
 
 	/**
 	 * Name of the {@link MOAttribute} that stores {@link #createBranchAttr(boolean)} data.

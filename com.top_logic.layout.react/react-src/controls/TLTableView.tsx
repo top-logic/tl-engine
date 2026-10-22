@@ -1350,7 +1350,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     searchTimeoutRef.current = window.setTimeout(() => sendSearch(term), SEARCH_DEBOUNCE_MS);
   }, [sendSearch]);
 
-  const handleSearchKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
       // Sends the term without waiting out the pause; the scope default must not also fire.
       event.preventDefault();
@@ -1417,7 +1417,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     closeSaveForm();
   }, [saveName, sendCommand, closeSaveForm]);
 
-  const handleSaveKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSaveKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       handleSaveSubmit();

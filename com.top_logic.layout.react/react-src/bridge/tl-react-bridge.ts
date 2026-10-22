@@ -10,6 +10,7 @@ import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
 import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
+import type { CommandOptions } from './command-channel';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -284,10 +285,14 @@ export function useTLState<T extends object = Record<string, unknown>>(): T {
  *
  * <p>Commands are dispatched through the strict FIFO chain of {@link enqueueCommand}: they reach
  * the server in dispatch order, and an action command implicitly flushes all pending debounced
- * field values first (see {@link useTLFieldValue}). The returned promise resolves when this
- * command's server response has arrived.</p>
+ * field values first (see {@link useTLFieldValue}), unless the given {@link CommandOptions} say
+ * otherwise. The returned promise resolves when this command's server response has arrived.</p>
  */
-export function useTLCommand(): (command: string, args?: Record<string, unknown>) => Promise<void> {
+export function useTLCommand(): (
+  command: string,
+  args?: Record<string, unknown>,
+  options?: CommandOptions,
+) => Promise<void> {
   const ctx = useContext(TLControlContext);
   if (!ctx) {
     throw new Error('useTLCommand must be used inside a TLReact-mounted component.');
@@ -296,13 +301,13 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
   const windowName = ctx.windowName;
 
   return useCallback(
-    async (command: string, args?: Record<string, unknown>) => {
+    async (command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
       await enqueueCommand(getApiBase() + 'react-api/command', {
         controlId,
         command,
         windowName,
         arguments: args ?? {},
-      });
+      }, options);
     },
     [controlId, windowName]
   );
@@ -565,7 +570,7 @@ export interface TLTypingField {
    * The key handler of a single-line input, `undefined` while the state asks for nothing on Enter.
    * Never attach it to a text area, where Enter is part of the text.
    */
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 /**
@@ -636,7 +641,7 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
   }, [normalize, text, setValue, toValue, commitEdit]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+    (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
         return;
       }

@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -148,6 +148,42 @@ well and edits minutes; a `<format>` inside the `<value-input>` sets display and
    `SelectControlProvider` the same way.
 3. The type map of `FieldControlService` and, failing that, the `FieldControlRegistry` entry for the
    kind of value the type holds.
+
+**Files** — a value of `tl.core:Binary` is a file. A single file is one file field
+(`FieldControlRegistry.BINARY`, `ReactBinaryFieldControl`): an upload area while the field is
+editable, a download link otherwise. The files of a multi-valued binary attribute are shown as file
+chips by default (`FieldControlRegistry.FILE_CHIPS`, `ReactFileChipsControl`, client `TLFileChips`):
+one chip per file, a button and a drop area adding several files at once. The model annotation
+`<binary-display presentation="list"/>` (`BinaryDisplay.BinaryPresentation.LIST`) shows them as a
+list with one file field per file instead (`ReactValueListControl` over `FieldControlRegistry.BINARY`),
+whose add button uploads several files at once, one value per file. `data-item` (the default) and
+`image-upload` both give the chips. The annotation `<accepted-types value="image/*, *.pdf"/>`
+(`TLAcceptedTypes`, MIME types or file patterns) limits the files the file picker offers, for a
+single and a multi-valued value alike. The annotation `<max-upload-size value="5m"/>`
+(`TLMaxUploadSize`) limits the size of each file uploaded to the attribute; the application-wide
+`max-upload-size` of the upload configuration still caps it, so the smaller of both applies. These
+annotations are read at the attribute, else at its type, and act on a `<value-input>` of type
+`tl.core:Binary` through its `<annotations>` as well. A
+mandatory multi-valued binary value shows the required marker at the chips and, after a refused
+save, the message of the mandatory check under them. In a table cell the chips render inline, while
+the list presentation shows the file names and opens its file fields in a dialog. A multi-valued
+binary attribute is persistent: its files are stored one row per file in the generic table
+`BinaryAttributeValue` by `BinaryCollectionStorage`, the storage chosen automatically for a
+multi-valued `tl.core:Binary` property.
+
+```xml
+<property name="attachments"
+	mandatory="true"
+	multiple="true"
+	type="tl.core:Binary"
+>
+	<annotations>
+		<accepted-types value="*.pdf"/>
+		<binary-display presentation="list"/>
+	</annotations>
+</property>
+```
+
 
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
 the headless projection, so a scripted test reads the same options and the same value in every shape.

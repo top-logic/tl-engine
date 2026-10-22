@@ -196,6 +196,12 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.TextInputState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.TextInputState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;

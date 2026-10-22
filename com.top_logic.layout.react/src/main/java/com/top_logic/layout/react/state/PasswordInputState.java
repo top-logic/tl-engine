@@ -63,6 +63,9 @@ public interface PasswordInputState extends com.top_logic.layout.react.state.Typ
 	com.top_logic.layout.react.state.PasswordInputState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.PasswordInputState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.PasswordInputState setHidden(boolean value);
 
 	@Override

@@ -22,10 +22,12 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.TLSupportsMultiple;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -184,14 +186,34 @@ public class ModelEditAction implements ViewAction {
 		if (!(model.tValueByName(TYPE) instanceof TLType valueType)) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_TYPE);
 		}
+		boolean multiple = Boolean.TRUE.equals(model.tValueByName(MULTIPLE));
+		if (multiple && !supportsMultiple(valueType)) {
+			throw new TopLogicException(I18NConstants.ERROR_MULTIPLE_NOT_SUPPORTED__TYPE.fill(valueType));
+		}
 		TLProperty property = TLModelUtil.addProperty(owner, name, valueType);
 		if (Boolean.TRUE.equals(model.tValueByName(MANDATORY))) {
 			property.setMandatory(true);
 		}
-		if (Boolean.TRUE.equals(model.tValueByName(MULTIPLE))) {
+		if (multiple) {
 			property.setMultiple(true);
 		}
 		return property;
+	}
+
+	/**
+	 * Whether an attribute of the given value type may hold several values.
+	 *
+	 * <p>
+	 * A primitive type supports multiple values only if it is annotated with
+	 * {@link TLSupportsMultiple}; every other type (class, enumeration) does.
+	 * </p>
+	 */
+	private static boolean supportsMultiple(TLType valueType) {
+		if (!(valueType instanceof TLPrimitive primitive)) {
+			return true;
+		}
+		TLSupportsMultiple annotation = primitive.getAnnotation(TLSupportsMultiple.class);
+		return annotation != null && annotation.getValue();
 	}
 
 	/**

@@ -58,6 +58,8 @@
 			<field attribute="phone"/>
 			<field attribute="json"/>
 			<field attribute="image"/>
+			<field attribute="attachments"/>
+			<field attribute="documents"/>
 			<field attribute="priority"/>
 			<field attribute="tags"/>
 			<field attribute="owner"/>

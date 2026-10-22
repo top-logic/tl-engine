@@ -94,6 +94,9 @@ public interface TypingFieldState extends com.top_logic.layout.react.state.Field
 	com.top_logic.layout.react.state.TypingFieldState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.TypingFieldState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.TypingFieldState setHidden(boolean value);
 
 	@Override

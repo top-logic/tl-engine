@@ -214,6 +214,9 @@ public interface DatePickerState extends com.top_logic.layout.react.state.FieldS
 	com.top_logic.layout.react.state.DatePickerState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.DatePickerState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.DatePickerState setHidden(boolean value);
 
 	@Override

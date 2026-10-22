@@ -243,6 +243,29 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
+	 * Sets whether the field is displayed in little room, a table cell for instance.
+	 *
+	 * <p>
+	 * Set from the {@link com.top_logic.layout.react.field.FieldSpec#isCompact() compact} flag of
+	 * the specification describing the field. A compact field keeps to the height of a single line
+	 * of text where its value allows and reduces its spacing; a control drawing several parts - the
+	 * chips of several files, for instance - lets them wrap within the room it has. A control that
+	 * needs more room than that is not created compact but opened from a preview, see
+	 * {@link ReactCompactFieldControl}.
+	 * </p>
+	 */
+	public void setCompact(boolean compact) {
+		putState(FieldState.COMPACT__PROP, Boolean.valueOf(compact));
+	}
+
+	/**
+	 * Whether the field is displayed in little room, see {@link #setCompact(boolean)}.
+	 */
+	public boolean isCompact() {
+		return Boolean.TRUE.equals(getState(FieldState.COMPACT__PROP));
+	}
+
+	/**
 	 * Shows the given icon inside the input, ahead of what is typed.
 	 *
 	 * <p>
@@ -431,10 +454,11 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/**
 	 * The display of a field beyond the value it holds: the icon it carries, whether it offers a
-	 * button that empties it, and how long it waits before sending what is typed.
+	 * button that empties it, how long it waits before sending what is typed, and whether it is
+	 * displayed in little room.
 	 *
 	 * <p>
-	 * Each of the three is how the input looks and how fast it reports, not what it says. The
+	 * Each of these is how the input looks and how fast it reports, not what it says. The
 	 * {@link FieldState#PLACEHOLDER__PROP placeholder} stays in the projection instead, being the text a
 	 * label-less input names itself by, which is what an agent reads to tell one input from
 	 * another.
@@ -443,7 +467,7 @@ public class ReactFormFieldControl extends ReactControl {
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
 		return presentationKeys(super.scriptingPresentationKeys(), TextInputState.ICON__PROP,
-			TextInputState.CLEARABLE__PROP, TypingFieldState.DEBOUNCE_MS__PROP);
+			TextInputState.CLEARABLE__PROP, TypingFieldState.DEBOUNCE_MS__PROP, FieldState.COMPACT__PROP);
 	}
 
 	/**

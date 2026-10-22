@@ -105,6 +105,12 @@ public class PasswordInputState_Impl extends com.top_logic.layout.react.state.im
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.PasswordInputState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.PasswordInputState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;

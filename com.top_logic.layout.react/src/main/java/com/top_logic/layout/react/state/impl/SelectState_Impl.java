@@ -204,6 +204,12 @@ public class SelectState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.SelectState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.SelectState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;

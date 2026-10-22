@@ -4205,18 +4205,30 @@ a.tl-field-value:hover {
    ist der Knoten positioniert), aria-selected die Fläche — kein Balken links. Der Einzug je Ebene ist die
    Breite des Toggles, inline aus dem TSX; ein Blatt hält ihren Platz mit tl-tree__spacer frei. Ein
    Knoten, dessen Kinder kommen, trägt aria-busy; unter ihm steht eine tl-status-Zeile mit unbestimmtem
-   tl-progress — selbst ein treeitem eine Ebene tiefer, benannt „Lädt“ (js.tree.loading). Ziehen und
+   tl-progress — selbst ein treeitem eine Ebene tiefer, benannt „Lädt“ (js.tree.loading). Ein Knoten
+   bricht nicht um und endet nicht mit Ellipse: ist er breiter als der Baum, rollt der Baum waagerecht.
+   Der Baum ist ein Raster aus einer Spalte, so breit wie der breiteste Knoten, mindestens aber so breit
+   wie sichtbar; jeder Knoten und die Ladezeile füllen sie, so reichen Fläche beim Zeigen und Auswählen
+   und die Ablagemarken über die ganze gerollte Breite. Die Spalte ist minmax(max-content, 100%), nicht
+   umgekehrt: eine Spur wächst über ihr Minimum nur in freien Platz, und ein Rollkasten hat keinen —
+   minmax(100%, max-content) bliebe bei 100 %. So ist max-content das Minimum; liegt 100 % darunter, zählt
+   als Maximum das Minimum, und ein schmalerer Inhalt wächst bis 100 % in die sichtbare Breite.
+   align-content: start hält die Zeilen oben, wenn der Baum kürzer ist als sein Kasten. Ziehen und
    Ablegen zeichnet drag.css. */
 
 .tl-tree {
+  display: grid;
+  grid-template-columns: minmax(max-content, 100%);
+  align-content: start;
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
+  overflow: auto;
   isolation: isolate;
   list-style: none;
   color: var(--tl-text-primary);
 }
+.tl-tree[hidden] { display: none; }
 
 .tl-tree__node {
   position: relative;
@@ -4244,11 +4256,16 @@ a.tl-field-value:hover {
   width: var(--tl-size-control-sm);
 }
 
+/* Eine Zeile, ungekürzt; die automatische Mindestbreite des Flex-Elements (mit nowrap die Breite des
+   Texts) hält es so breit wie seinen Inhalt. */
 .tl-tree__content {
   flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ein tl-text als Inhalt bleibt auf seiner Zeile. (0,2,0): text.css setzt pre-line mit (0,1,0) und steht
+   im Bundle danach — wie in der Tabellenzelle. */
+.tl-tree__content > .tl-text {
   white-space: nowrap;
 }
 
@@ -4386,4 +4403,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:c6f208acafec80a32e3326df90cac14b8091518905dd1454b5df0d0ce209f950 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:198ad497809d494ee74e07f936f69397f2ce07ddf171bfd74c3f077d46340334 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

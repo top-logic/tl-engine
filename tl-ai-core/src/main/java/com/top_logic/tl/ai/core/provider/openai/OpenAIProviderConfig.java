@@ -10,11 +10,15 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
@@ -34,6 +38,7 @@ public class OpenAIProviderConfig implements LLMProviderConfig {
 		LLMProviderConfig.Config.CATALOG_PROVIDER_ID,
 		LLMProviderConfig.Config.BASE_URL,
 		Config.API_KEY,
+		LLMProviderConfig.Config.CREDENTIALS,
 		LLMProviderConfig.Config.MODELS,
 		LLMProviderConfig.Config.CONNECT_TIMEOUT,
 		LLMProviderConfig.Config.REQUEST_TIMEOUT,
@@ -48,8 +53,8 @@ public class OpenAIProviderConfig implements LLMProviderConfig {
 		 * The API key for <code>OpenAI</code> authentication.
 		 */
 		@Name(API_KEY)
-		@Encrypted
-		String getApiKey();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getApiKey();
 
 		@Override
 		@StringDefault("https://api.openai.com")
@@ -62,22 +67,25 @@ public class OpenAIProviderConfig implements LLMProviderConfig {
 
 	private final Config _config;
 
+	private final CredentialProvider _credentials;
+
 	/** */
 	@CalledByReflection
 	public OpenAIProviderConfig(InstantiationContext context, Config config) {
 		_config = config;
+		_credentials = LLMProviderConfig.createCredentials(context, config, config.getApiKey(), CredentialProvider.AUTHORIZATION, CredentialProvider.BEARER);
 	}
 
 	@Override
 	public LLMProvider createProvider() {
 		return new OpenAIResponsesProvider(
-			_config.getApiKey(), resolveBaseUrl(),
+			_credentials, resolveBaseUrl(),
 			_config.getConnectTimeout(), _config.getRequestTimeout(), _config.getCustomHeaders());
 	}
 
 	@Override
 	public List<String> discoverModels() {
-		return ModelDiscoveryHelper.fetchModels(_config.getApiKey(), resolveBaseUrl());
+		return ModelDiscoveryHelper.fetchModels(_credentials, resolveBaseUrl());
 	}
 
 	@Override

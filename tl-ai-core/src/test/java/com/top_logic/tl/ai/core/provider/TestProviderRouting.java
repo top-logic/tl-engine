@@ -410,7 +410,7 @@ public class TestProviderRouting extends TestCase {
 		result.setName(name);
 		set(result, LLMProviderConfig.Config.BASE_URL, baseUrl);
 		set(result, LLMProviderConfig.Config.MODELS, List.of(models));
-		set(result, AnthropicProviderConfig.Config.API_KEY, "unencrypted:test");
+		set(result, AnthropicProviderConfig.Config.API_KEY, FixedCredentials.secret("test"));
 		return result;
 	}
 

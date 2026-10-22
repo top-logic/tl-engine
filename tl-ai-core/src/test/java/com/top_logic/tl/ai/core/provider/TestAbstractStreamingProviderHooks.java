@@ -25,7 +25,7 @@ public class TestAbstractStreamingProviderHooks extends TestCase {
 	static class StubProvider extends AbstractStreamingProvider {
 
 		StubProvider() {
-			super(null, "https://example.com", defaultHttpClient());
+			super(FixedCredentials.NONE, "https://example.com", defaultHttpClient());
 		}
 
 		@Override

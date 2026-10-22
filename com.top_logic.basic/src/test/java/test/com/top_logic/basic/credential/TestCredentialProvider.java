@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.BasicCredentials;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.HeaderCredentials;
+import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.NoCredentials;
 import com.top_logic.basic.credential.RequestAuthentication;
 
@@ -73,6 +74,16 @@ public class TestCredentialProvider extends AbstractTypedConfigurationTestCase {
 				+ "' scheme='DeepL-Auth-Key' secret='unencrypted:s3cr3t'/>"));
 
 		assertEquals(Collections.singletonMap("Authorization", "DeepL-Auth-Key s3cr3t"), headers);
+	}
+
+	public void testHeaderCredentialsInCode() {
+		LiteralSecretSource.Config secret = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
+		secret.setValue("s3cr3t");
+
+		Map<String, String> headers =
+			authenticate(getInstance(HeaderCredentials.config("x-api-key", null, secret)));
+
+		assertEquals(Collections.singletonMap("x-api-key", "s3cr3t"), headers);
 	}
 
 	public void testBasic() throws ConfigurationException {

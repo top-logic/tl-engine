@@ -9,6 +9,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -121,6 +122,30 @@ public class HeaderCredentials extends AbstractConfiguredInstance<HeaderCredenti
 	}
 
 	private final SecretSource _secret;
+
+	/**
+	 * Creates the configuration of a {@link HeaderCredentials} in code.
+	 *
+	 * <p>
+	 * Used by a consumer that accepts a secret as shorthand for its credentials and knows the
+	 * header in which its service expects the secret.
+	 * </p>
+	 *
+	 * @param header
+	 *        See {@link Config#getHeader()}.
+	 * @param scheme
+	 *        See {@link Config#getScheme()}, <code>null</code> for sending the bare secret.
+	 * @param secret
+	 *        See {@link Config#getSecret()}.
+	 * @return The configuration to instantiate.
+	 */
+	public static Config config(String header, String scheme, PolymorphicConfiguration<? extends SecretSource> secret) {
+		Config result = TypedConfiguration.newConfigItem(Config.class);
+		result.setHeader(header);
+		result.setScheme(scheme);
+		result.setSecret(secret);
+		return result;
+	}
 
 	/**
 	 * Creates a {@link HeaderCredentials} from configuration.

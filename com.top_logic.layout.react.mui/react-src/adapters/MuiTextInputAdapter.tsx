@@ -21,19 +21,19 @@ const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display:
  * <ul>
  * <li>value → `value`, onChange → `onChange` with the text of the input; type → `type`;
  *     placeholder → `placeholder`;</li>
- * <li>multiline, rows → a multi-line `TextField`, which takes no key handler;</li>
+ * <li>multiline, rows → a multi-line `TextField`;</li>
  * <li>icon → a start adornment ({@link ThemeIcon}); action → an end adornment;</li>
  * <li>disabled → `disabled`; readOnly → `readOnly` of the input;</li>
  * <li>validation → `error` (with `aria-invalid`) or color `warning`; required →
  *     `aria-required` - not `required`, which would mark a label the field does not have;</li>
  * <li>tooltip → the tooltip of the input;</li>
- * <li>id, ref, name, autoFocus, inputMode, maxLength, min, max, the key, focus and blur handlers
- *     and the passed-through attributes → the input; className → the root of the
- *     `TextField`.</li>
+ * <li>id, ref, role, name, autoFocus, inputMode, maxLength, min, max, the key, focus and blur
+ *     handlers and the passed-through attributes (with the combobox attributes of a box offering
+ *     suggestions) → the input or text area; className → the root of the `TextField`.</li>
  * </ul>
  */
 const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
-  id, ref, value, type, inputMode, placeholder, multiline, rows, icon, action, disabled, readOnly, required,
+  id, ref, role, value, type, inputMode, placeholder, multiline, rows, icon, action, disabled, readOnly, required,
   validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
   ...attributes
 }) => {
@@ -75,14 +75,15 @@ const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
         },
         htmlInput: {
           ...attributes,
+          role,
           inputMode,
           maxLength,
           min,
           max,
           'aria-invalid': validation === 'error' ? true : undefined,
           'aria-required': required || undefined,
-          // On the input itself: a handler reads the text from the element it is bound to.
-          onKeyDown: multiline ? undefined : onKeyDown,
+          // On the input itself: a handler reads the text and the caret from the element it is bound to.
+          onKeyDown,
           ...tooltipProps(tooltip),
         },
       }}

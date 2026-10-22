@@ -480,6 +480,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_INVALID_URL__VALUE;
 
+	/**
+	 * @en The suggestions for the text could not be computed.
+	 */
+	public static ResKey ERROR_SUGGESTIONS_FAILED;
+
 	// -- Text input client-side i18n keys --
 
 	/**

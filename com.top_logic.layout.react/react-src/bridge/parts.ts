@@ -8,7 +8,7 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
 // - a button, the trigger of a menu, the toggle disclosing content, a checkbox, a text box, the value
-// of a field, a chip, a badge, a divider, a progress bar, a spinner. A part has a typed props contract and no server state: the control
+// of a field, a chip, a badge, a divider, a progress bar, a spinner, a list to pick from. A part has a typed props contract and no server state: the control
 // maps its state to the props of the part, sends its commands and handles keyboard bindings and
 // navigation, and the part only draws. The controls bundle registers a default for every part (registerPart); a customer
 // component library replaces a part (replacePart) and so changes how the part looks wherever a
@@ -423,8 +423,8 @@ export type TextInputMode = 'text' | 'numeric' | 'decimal' | 'search' | 'email' 
  * A multi-line box ({@link multiline}) draws neither.</p>
  *
  * <p>Every implementation marks an invalid box `aria-invalid` and a required one
- * `aria-required`, and puts {@link id}, {@link ref}, {@link name}, the key, focus and blur
- * handlers and the passed-through attributes on the input. The box has no label of its own: the
+ * `aria-required`, and puts {@link id}, {@link ref}, {@link role}, {@link name}, the key, focus
+ * and blur handlers and the passed-through attributes on the input. The box has no label of its own: the
  * control names it, by an `aria-label`, or by `aria-labelledby` naming the label of its form
  * field.</p>
  */
@@ -432,8 +432,19 @@ export interface TextInputPartProps extends PartAttributes {
   /** The ID of the input. */
   id?: string;
 
-  /** Receives the input, e.g. to give it the focus. */
+  /**
+   * Receives the input, e.g. to give it the focus, or to read and place the caret
+   * (`selectionStart`, `setSelectionRange`).
+   */
   ref?: PartRef<HTMLInputElement | HTMLTextAreaElement>;
+
+  /**
+   * The role of the input: `combobox` for a box controlling a list of suggestions (part
+   * {@link PartProps.Listbox}), which the passed-through `aria-autocomplete`, `aria-expanded`,
+   * `aria-controls` and `aria-activedescendant` attributes describe. Absent: the native role of
+   * the input.
+   */
+  role?: 'combobox';
 
   /** The text shown. */
   value: string;
@@ -509,11 +520,11 @@ export interface TextInputPartProps extends PartAttributes {
   onChange?: (value: string) => void;
 
   /**
-   * Called for a key pressed in a single-line box, with the event of the input, e.g. to finish an
-   * edit with Enter or to move through a list with the arrow keys. Not called in a multi-line box,
-   * where Enter is part of the text.
+   * Called for a key pressed in the box, with the event of the input, e.g. to finish an edit with
+   * Enter or to move through a list with the arrow keys. In a multi-line box, where Enter is part of
+   * the text, a handler that does not prevent the default action of the key lets it type.
    */
-  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 
   /** Called when the input takes the focus. */
   onFocus?: (event: React.FocusEvent<HTMLElement>) => void;
@@ -823,6 +834,63 @@ export interface SpinnerPartProps extends PartAttributes {
   className?: string;
 }
 
+/** An entry of a {@link ListboxPartProps list}. */
+export interface ListboxEntry {
+  /** The ID of the drawn entry, which `aria-activedescendant` of the controlling element names. */
+  id: string;
+
+  /** The text the entry shows. */
+  label: string;
+}
+
+/**
+ * The props of the part {@link PartProps.Listbox}: a list of entries floating at an element, one of
+ * which may be active, from which the user picks one - the suggestions under a text box.
+ *
+ * <p>The list is drawn while it is open: the control draws the part only then. It stands below its
+ * {@link anchor}, at least as wide as the anchor, flipped above it where there is no room below,
+ * outside the flow of the page (in a portal), and is an anchored overlay (see
+ * `anchoredOverlayProps`), so that a dialog around the anchor does not take a press into it for a
+ * press outside.</p>
+ *
+ * <p>The list never takes the focus: the focus stays in the element controlling it, which moves the
+ * active entry with the keyboard and names it by `aria-activedescendant`. A press on an entry
+ * therefore leaves the focus where it is, and picks the entry ({@link onPick}).</p>
+ *
+ * <p>Every implementation draws an element of the role `listbox` carrying {@link id},
+ * {@link className} and the passed-through attributes (e.g. `aria-labelledby` naming the label of
+ * the field), and each entry as an element of the role `option` with the {@link ListboxEntry.id}
+ * of the entry, `aria-selected="true"` on the active entry and `aria-selected="false"` on every
+ * other. The active entry is highlighted and scrolled into view.</p>
+ */
+export interface ListboxPartProps extends PartAttributes {
+  /** The ID of the list, which `aria-controls` of the controlling element names. */
+  id: string;
+
+  /** The element the list stands at, e.g. the text box it offers suggestions for. */
+  anchor: Element | null;
+
+  /** The entries, in the order shown. */
+  entries: readonly ListboxEntry[];
+
+  /** The position of the active entry in {@link entries}; -1 or absent: none. */
+  activeIndex?: number;
+
+  /** Called with the position of the entry the user picks with the pointer. */
+  onPick: (index: number) => void;
+
+  /** Called with the position of the entry the pointer rests on, e.g. to make it the active one. */
+  onActivate?: (index: number) => void;
+
+  /** Called for a press outside the list and its {@link anchor}, which closes the list. */
+  onDismiss?: () => void;
+
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout.
+   */
+  className?: string;
+}
+
 /**
  * The parts of the React UI by name, each with its props. The name is what {@link registerPart},
  * {@link replacePart} and {@link usePart} take; the props are the contract every implementation of
@@ -861,6 +929,9 @@ export interface PartProps {
 
   /** A turning ring showing that something is going on: {@link SpinnerPartProps}. */
   Spinner: SpinnerPartProps;
+
+  /** A list of entries floating at an element, one to pick: {@link ListboxPartProps}. */
+  Listbox: ListboxPartProps;
 }
 
 /** The name of a part, see {@link PartProps}. */

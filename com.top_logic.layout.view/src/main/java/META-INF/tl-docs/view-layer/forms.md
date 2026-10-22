@@ -135,6 +135,43 @@ annotation). Neither writes seconds, so an attribute edits minutes unless its fo
 A `<value-input type="tl.core:Time">` without a `<format>` takes the type's `short-time` format as
 well and edits minutes; a `<format>` inside the `<value-input>` sets display and precision there.
 
+**A text** — `TextInputControlProvider`, option `suggestions`: a TL-Script function
+`self -> text -> caret -> entries` offering suggestions while the user types. `self` is the edited
+object (empty in a field editing no attribute of an object, such as a `<value-input>`), `text` the
+text typed so far, `caret` the position of the caret in it. An entry is a dictionary
+`{"label": …, "text": …, "from": …, "to": …}` - its text replaces the characters from `from` up to
+(excluding) `to`, the list shows its label - or a plain string inserted at the caret; the label
+defaults to the text, the positions to the caret, and a malformed entry is skipped. The function
+alone decides what fits: it filters by what is typed and names the range a suggestion replaces, the
+field shows its entries as given, in their order. Typing asks for suggestions after a short pause,
+Alt+ArrowDown and Ctrl+Space ask at once; ArrowUp and ArrowDown move through the list, Enter or a
+click picks the active entry, Escape closes the list. Picking an entry enters its text as if it
+were typed - the field treats it like any other input - and the value is never restricted to
+the suggestions. The list is the part `Listbox` (see [parts](doc:view-layer/parts)), so a component
+library draws it in its own style.
+
+```xml
+<field attribute="alarmCondition">
+	<input-control class="com.top_logic.layout.view.form.TextInputControlProvider">
+		<suggestions><![CDATA[self -> text -> caret -> {
+	before = $text.subString(0, $caret);
+	// An unfinished sensor reference: @ or @" followed by a name without closing quote.
+	reference = regex('@"?([^"@]*)$').regexSearch($before).firstElement();
+	if($reference == null, [],
+		$self.get(`demo.temperature:DemoSite#sensors`)
+			.map(sensor -> $sensor.get(`demo.temperature:DemoSensor#name`))
+			.filter(name -> $name.stringContains($reference.regexGroup(1)))
+			.map(name -> {
+				"label": $name,
+				"text": '@"' + $name + '"',
+				"from": $reference.regexStart(),
+				"to": $caret
+			}))
+}]]></suggestions>
+	</input-control>
+</field>
+```
+
 **Three ways to choose the provider**, in the order `FieldControlService` tries them:
 
 1. `<input-control class="…Provider" …/>` inside a `<field>` (`FieldElement.Config.getInputControl()`)

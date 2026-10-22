@@ -425,7 +425,7 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 	 */
 	public MORepository createMORepository(MOFactory typeFactory) {
 		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
-		MORepository repository = new DefaultMORepository(getConfig().hasMultipleBranches());
+		MORepository repository = new DefaultMORepository(getConfig().hasMultipleBranches(), getConfig().isBranchLast());
 		createTypes(context, repository, typeFactory);
 		repository.resolveReferences();
 		return repository;

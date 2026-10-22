@@ -5,7 +5,7 @@
  */
 package com.top_logic.knowledge.service.db2;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -14,6 +14,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.dob.meta.IndexColumnOrder;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.schema.config.annotation.IndexColumnsStrategy;
 import com.top_logic.dob.sql.DBAttribute;
@@ -107,30 +108,31 @@ public class DefaultIndexColumnsStrategy extends AbstractIndexColumnsStrategy {
 			excludeBranch = true;
 		}
 		boolean excludeRevision = config().getExcludeRevisionFromNonUniqueIndices() && (!unique);
-		boolean branchAfterCustomColumns = config().getBranchAfterCustomColumns();
+		// A type system that places the branch last does so in all indexes.
+		boolean branchAfterCustomColumns =
+			config().getBranchAfterCustomColumns() || type.getDBMapping().branchLast();
 
-		ArrayList<DBAttribute> result = new ArrayList<>(attributes.size() + 2);
-
-		if (!excludeBranch && !branchAfterCustomColumns) {
-			Collections.addAll(result, type.getAttributeOrNull(BasicTypes.BRANCH_ATTRIBUTE_NAME).getDbMapping());
+		List<DBAttribute> branchColumns;
+		if (excludeBranch) {
+			branchColumns = Collections.emptyList();
+		} else {
+			branchColumns = Arrays.asList(type.getAttributeOrNull(BasicTypes.BRANCH_ATTRIBUTE_NAME).getDbMapping());
 		}
 
-		result.addAll(attributes);
-
-		if (!excludeBranch && branchAfterCustomColumns) {
-			Collections.addAll(result, type.getAttributeOrNull(BasicTypes.BRANCH_ATTRIBUTE_NAME).getDbMapping());
-		}
-
-		if (!excludeRevision) {
+		List<DBAttribute> revisionColumns;
+		if (excludeRevision) {
+			revisionColumns = Collections.emptyList();
+		} else {
 			// The uniqueness must only be ensured in the current revision. This
 			// is sufficient to ensure that the constraint holds in all stable
 			// revisions. Without this column in the index, uniqueness of values
 			// would be enforced throughout history and updating an attribute to
 			// a value it already had would fail.
-			Collections.addAll(result, type.getAttributeOrNull(BasicTypes.REV_MAX_ATTRIBUTE_NAME).getDbMapping());
+			revisionColumns =
+				Arrays.asList(type.getAttributeOrNull(BasicTypes.REV_MAX_ATTRIBUTE_NAME).getDbMapping());
 		}
 
-		return result;
+		return IndexColumnOrder.arrange(branchAfterCustomColumns, branchColumns, attributes, revisionColumns);
 	}
 
 	private Config config() {

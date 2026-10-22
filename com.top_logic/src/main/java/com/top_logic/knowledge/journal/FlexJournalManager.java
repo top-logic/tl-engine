@@ -101,7 +101,8 @@ public class FlexJournalManager extends JournalManager {
 		}
 
 		private static MOKnowledgeItemImpl createJournalType(String typeName, boolean multipleBranches) {
-			return AbstractFlexDataManager.createFlexDataType(typeName, null, multipleBranches,
+			// The journal tables keep the branch in front of their key independent of the type system.
+			return AbstractFlexDataManager.createFlexDataType(typeName, null, multipleBranches, false,
 				JOURNAL_COMPRESSED_KEY_ATTRIBUTES, JOURNAL_KEY_ATTRIBUTES);
 		}
 

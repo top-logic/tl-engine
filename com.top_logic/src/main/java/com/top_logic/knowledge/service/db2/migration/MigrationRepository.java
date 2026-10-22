@@ -97,6 +97,11 @@ public class MigrationRepository implements MORepository {
 	}
 
 	@Override
+	public boolean branchLast() {
+		return _impl.branchLast();
+	}
+
+	@Override
 	public MetaObject getTypeOrNull(String typeName) {
 		MetaObject result = _impl.getTypeOrNull(typeName);
 		if (result != null) {

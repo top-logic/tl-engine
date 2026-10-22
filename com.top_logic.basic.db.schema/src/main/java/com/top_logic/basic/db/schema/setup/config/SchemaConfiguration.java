@@ -40,6 +40,11 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	boolean DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE = true;
 
 	/**
+	 * Default of {@link #isBranchLast()}
+	 */
+	boolean DEFAULT_BRANCH_LAST_ATTRIBUTE = false;
+
+	/**
 	 * Name of the {@link SchemaConfiguration} used by default.
 	 */
 	String DEFAULT_NAME = "Default";
@@ -52,6 +57,9 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 
 	/** @see #hasMultipleBranches() */
 	String MULTIPLE_BRANCHES_ATTRIBUTE = "multiple-branches";
+
+	/** @see #isBranchLast() */
+	String BRANCH_LAST_ATTRIBUTE = "branch-last";
 
 	/** @see #getMetaObjects() */
 	String META_OBJECTS_ATTRIBUTE = "meta-objects";
@@ -102,6 +110,40 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	@BooleanDefault(DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE)
 	@Name(MULTIPLE_BRANCHES_ATTRIBUTE)
 	boolean hasMultipleBranches();
+
+	/**
+	 * Whether the branch column is placed behind the identifying columns in the primary keys and
+	 * reference indexes of the tables.
+	 * 
+	 * <p>
+	 * By default, the branch column leads each index. This allows databases with index prefix
+	 * compression (Oracle) to store the branch only once per index block. With this option, the
+	 * branch column is placed directly before the trailing revision column instead (or at the end
+	 * of an index without revision column), e.g. the primary key of an object table becomes
+	 * <code>(IDENTIFIER, BRANCH, REV_MAX)</code> and the index of a reference
+	 * <code>(&lt;REF&gt;_ID, BRANCH, REV_MAX)</code>.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is meant for database systems that use an index for a condition with an
+	 * <code>IN</code> list only if the list values are given for the first column of the index
+	 * (H2). With the branch column in front, loading objects by a list of identifiers and searching
+	 * the referrers of a list of objects scan the whole table on such a system.
+	 * </p>
+	 * 
+	 * <p>
+	 * Indexes declared with an explicit column list (custom indexes) keep their declared column
+	 * order. In the other declared indexes, the branch column follows the declared columns.
+	 * </p>
+	 * 
+	 * <p>
+	 * The value is fixed when the database is created, since it determines the layout of the
+	 * database tables.
+	 * </p>
+	 */
+	@BooleanDefault(DEFAULT_BRANCH_LAST_ATTRIBUTE)
+	@Name(BRANCH_LAST_ATTRIBUTE)
+	boolean isBranchLast();
 
 	/**
 	 * No longer used: All {@link KeyAttributes} indexed by type for this

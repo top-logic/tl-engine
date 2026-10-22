@@ -139,6 +139,30 @@ public class SchemaTestSetup extends RearrangableTestSetup {
 		return schemaConfig;
 	}
 
+	/**
+	 * Returns a {@link SchemaConfiguration} where the value of
+	 * {@link SchemaConfiguration#isBranchLast()} is updated with the value of the given
+	 * {@link Decision}.
+	 * 
+	 * @param schemaConfig
+	 *        The {@link SchemaConfiguration} to update.
+	 * @param branchLast
+	 *        New value of {@link SchemaConfiguration#isBranchLast()}. If {@link Decision#DEFAULT}
+	 *        the call is a no-op.
+	 * @return The given {@link SchemaConfiguration}, or a copy of it with the desired value.
+	 */
+	public static SchemaConfiguration updateBranchLast(SchemaConfiguration schemaConfig, Decision branchLast) {
+		if (branchLast == Decision.DEFAULT) {
+			return schemaConfig;
+		}
+		/* Copy the configuration because this is the "static" one from the application
+		 * configuration, which should not be modified. */
+		SchemaConfiguration result = TypedConfiguration.copy(schemaConfig);
+		result.update(result.descriptor().getProperty(SchemaConfiguration.BRANCH_LAST_ATTRIBUTE),
+			branchLast.toBoolean(SchemaConfiguration.DEFAULT_BRANCH_LAST_ATTRIBUTE));
+		return result;
+	}
+
 	private static ResourceDeclaration resourceDeclaration(String resource) {
 		ResourceDeclaration decl = TypedConfiguration.newConfigItem(ResourceDeclaration.class);
 		decl.setResource(resource);

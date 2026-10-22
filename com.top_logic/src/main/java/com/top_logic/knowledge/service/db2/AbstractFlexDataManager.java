@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -73,7 +74,9 @@ import com.top_logic.dob.ex.DuplicateAttributeException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.dob.meta.IndexColumnOrder;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.TypeContext;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -272,7 +275,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 * The primary key consists of the branch column (if multiple branches are supported), the
 	 * {@link #IDENTIFIER}, the {@link #ATTRIBUTE} and the {@link #REV_MAX} column. The
 	 * {@link #TYPE} column is not part of the key, since object identifiers are unique across all
-	 * types.
+	 * types. With <code>branchLast</code>, the branch column is placed directly before the
+	 * {@link #REV_MAX} column.
 	 * </p>
 	 * 
 	 * @param typeName
@@ -281,8 +285,12 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 *        The name of the corresponding database table.
 	 * @param multipleBranches
 	 *        Whether multiple branches are supported
+	 * @param branchLast
+	 *        Whether the branch column follows the identifying columns in the primary key, see
+	 *        {@link TypeContext#branchLast()}.
 	 */
-	public static MOKnowledgeItemImpl createFlexDataType(String typeName, String dbName, boolean multipleBranches) {
+	public static MOKnowledgeItemImpl createFlexDataType(String typeName, String dbName, boolean multipleBranches,
+			boolean branchLast) {
 		// Note: Even if it sounds appealing to move the REV_MAX column more to the start of the
 		// index to bring rows for the current revision more close together, this is not advisable,
 		// since optimizers of some DBs (including PostgreSQL) then do not consider this index for
@@ -305,8 +313,10 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 		// The compressed prefix is the branch and identifier, which is shared by all rows of an
 		// object. Compressing the ATTR column as well would not pay off, since the prefix up to
-		// ATTR is repeated only by historic versions of the same attribute value.
-		return createFlexDataType(typeName, dbName, multipleBranches, 1, IDENTIFIER, ATTRIBUTE, REV_MAX);
+		// ATTR is repeated only by historic versions of the same attribute value. With the branch
+		// placed last, the compressed prefix is the identifier alone: the branch follows the ATTR
+		// column and cannot be compressed without it.
+		return createFlexDataType(typeName, dbName, multipleBranches, branchLast, 1, IDENTIFIER, ATTRIBUTE, REV_MAX);
 	}
 
 	/**
@@ -319,16 +329,20 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 	 *        The name of the corresponding database table.
 	 * @param multipleBranches
 	 *        Whether multiple branches are supported
+	 * @param branchLast
+	 *        Whether the branch column is moved from the front of the primary key directly before
+	 *        the {@link #REV_MAX} column (or to the end of the key, if it does not contain
+	 *        {@link #REV_MAX}), see {@link IndexColumnOrder#branchLast(List)}.
 	 * @param compressedKeyAttributes
-	 *        The number of leading key attributes (following the branch column) that are stored
-	 *        in compressed format, if the database supports compression. Must be less than the
-	 *        number of key attributes.
+	 *        The number of leading key attributes (following the branch column, unless
+	 *        <code>branchLast</code> is set) that are stored in compressed format, if the database
+	 *        supports compression. Must be less than the number of key attributes.
 	 * @param keyAttributes
 	 *        Names of the attributes that form the primary key following the branch column (e.g.
 	 *        {@link #IDENTIFIER}, {@link #ATTRIBUTE}, {@link #REV_MAX}).
 	 */
 	public static MOKnowledgeItemImpl createFlexDataType(String typeName, String dbName, boolean multipleBranches,
-			int compressedKeyAttributes, String... keyAttributes) {
+			boolean branchLast, int compressedKeyAttributes, String... keyAttributes) {
 		if (compressedKeyAttributes >= keyAttributes.length) {
 			/* Compress value must be strict less than number of columns in the prefix. Otherwise
 			 * Oracle sends a ORA-25194 error. */
@@ -377,10 +391,16 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			keyAttributeImpls[n] = keyAttribute;
 		}
 		DBAttribute[] primaryKeyColumns = BasicTypeProvider.primaryKeyColumns(branchAttribute, keyAttributeImpls);
+		int branchColumns = primaryKeyColumns.length - keyAttributeImpls.length;
+		if (branchLast) {
+			primaryKeyColumns =
+				IndexColumnOrder.branchLast(Arrays.asList(primaryKeyColumns)).toArray(DBAttribute.NO_DB_ATTRIBUTES);
+			type.setCompress(compressedKeyAttributes);
+		} else {
+			type.setCompress(branchColumns + compressedKeyAttributes);
+		}
 
 		type.setPrimaryKey(primaryKeyColumns);
-		int branchColumns = primaryKeyColumns.length - keyAttributeImpls.length;
-		type.setCompress(branchColumns + compressedKeyAttributes);
 		BasicTypeProvider.addMaxMinIndexes(type, revMaxAttribute, revMinAttribute);
 
 		return type;

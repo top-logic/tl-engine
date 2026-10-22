@@ -10,7 +10,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.bpe.execution.engine.InitialProcessSetupService;
+import com.top_logic.bpe.execution.engine.InitialProcessSetup;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.form.FormContainer;
@@ -49,7 +49,7 @@ public class BPMLUploadCommand extends AbstractCreateCommandHandler {
 		
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		return InitialProcessSetupService.importWorkflow(kb, data);
+		return InitialProcessSetup.importWorkflow(kb, data);
 	}
 
 	@Override

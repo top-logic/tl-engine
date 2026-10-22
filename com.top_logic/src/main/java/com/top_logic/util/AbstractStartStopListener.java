@@ -622,6 +622,12 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 			}
 		}
 		commitStartupChanges(tx, theVersion);
+
+		/* Startup hooks run in their own transactions after the startup transaction: A failing hook
+		 * that does not abort the startup must not roll back the startup transaction. */
+		if (StartupHooks.Module.INSTANCE.isActive()) {
+			StartupHooks.Module.INSTANCE.getImplementationInstance().runHooks();
+		}
 	}
 
 	/**

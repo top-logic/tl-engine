@@ -106,6 +106,42 @@
 							>
 								<field attribute="name"/>
 								<field attribute="temperatureUnit"/>
+								<field attribute="alarmCondition">
+									<input-control class="com.top_logic.layout.view.form.TextInputControlProvider">
+										<suggestions><![CDATA[self -> text -> caret -> {
+	// What fits at the caret depends on the text before it.
+	before = $text.subString(0, $caret);
+	endsWith = pattern -> !regex($pattern + '$').regexSearch($before).isEmpty();
+
+	// An unfinished sensor reference: @ or @" followed by a name without closing quote.
+	reference = regex('@"?([^"@]*)$').regexSearch($before).firstElement();
+
+	switch {
+		$reference != null: $self.get(`demo.temperature:DemoSite#sensors`)
+			.map(sensor -> $sensor.get(`demo.temperature:DemoSensor#name`))
+			.filter(name -> $name.stringContains($reference.regexGroup(1)))
+			.map(name -> {
+				"label": $name,
+				"text": '@"' + $name + '"',
+				"from": $reference.regexStart(),
+				"to": $caret
+			});
+
+		// The start of a condition.
+		$endsWith('^\\s*') || $endsWith('\\b(and|or) '): ['not ', '@"'];
+		$endsWith('\\bnot '): ['@"'];
+
+		// A complete reference is compared to a number.
+		$endsWith('" '): ['> ', '< '];
+
+		// A complete comparison is combined with the next one.
+		$endsWith('\\d '): ['and ', 'or '];
+
+		default: [];
+	}
+}]]></suggestions>
+									</input-control>
+								</field>
 							</form>
 							<table
 								observed-types="demo.temperature:DemoSite,demo.temperature:DemoSensor"

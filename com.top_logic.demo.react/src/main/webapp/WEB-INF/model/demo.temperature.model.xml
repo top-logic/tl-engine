@@ -42,6 +42,9 @@
 						mandatory="true"
 						type="TemperatureUnit"
 					/>
+					<property name="alarmCondition"
+						type="tl.core:String"
+					/>
 					<reference name="sensors"
 						composite="true"
 						kind="forwards"

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A model for TestInitSkill: one type with a derived attribute, whose calculation rule the init skill
+	has to read before it can say what the value means. A module of its own rather than a third type
+	in "pm", so the eval's scenarios keep the domain their prompts describe.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="initfixture">
+		<class name="Item">
+			<attributes>
+				<property name="price"
+					type="tl.core:Double"
+				/>
+				<property name="quantity"
+					type="tl.core:Integer"
+				/>
+				<property name="total"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[item -> $item.get(`initfixture:Item#price`) * $item.get(`initfixture:Item#quantity`)]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

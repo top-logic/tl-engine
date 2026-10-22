@@ -1,0 +1,324 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.demo;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import junit.framework.Test;
+
+import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.RoleToolAccess;
+import com.top_logic.tl.ai.tool.api.ToolGroups;
+
+/**
+ * The invocation gate of the tool layer (L1), one persona at a time.
+ *
+ * <p>
+ * This is the enforcement point: {@code AgentLoop.executeWithSecurityCheck} asks exactly the
+ * {@link TopLogicSecurityContext#hasToolPermission} this test asks, so an allow or a denial here is
+ * an allow or a denial of a real tool call. The per-turn schema filter is a separate question and
+ * lives in {@link SecDemoSchemaFilterTest}; what a denial does to the agent's <em>prompt</em> lives
+ * in {@link SecDemoCapabilityNoticeTest}.
+ * </p>
+ *
+ * <p>
+ * The counterpart of {@link SecDemoModelSecurityTest}, which covers the model layer (L2). The two
+ * are independent: a role can be granted a tool and still be denied every object that tool touches,
+ * and the other way round.
+ * </p>
+ *
+ * @see SecDemoPersonaTest
+ */
+public class SecDemoToolAccessTest extends SecDemoPersonaTest {
+
+	/** Precondition: the fixture's policy is the one being evaluated. */
+	public void testPolicyIsTheFixtures() {
+		assertTrue("The secdemo aspect must be enabled for this test.",
+			AiToolAccessService.Module.INSTANCE.isActive());
+		assertFalse("The fixture's <tool-access> matrix must have reached the service. If this is"
+			+ " empty, something replaced the deployed policy and every assertion below would pass"
+			+ " vacuously by denying everything.",
+			AiToolAccessService.policy().getToolAccess().isEmpty());
+	}
+
+	/** Precondition: the group taxonomy actually reached the registered tools. */
+	public void testToolsDeclareTheirGroups() {
+		assertEquals(ToolGroups.MODEL_READ, tool(MODEL_READ_TOOL).group());
+		assertEquals(ToolGroups.DATA_READ, tool(LIST_TOOL).group());
+		assertEquals(ToolGroups.DATA_READ, tool(GET_TOOL).group());
+		assertEquals(ToolGroups.AGENT_META, tool(AGENT_META_TOOL).group());
+		assertEquals(ToolGroups.AGENT_AUTHORING, tool(AGENT_AUTHORING_TOOL).group());
+		assertEquals(ToolGroups.SCRIPT, tool(SCRIPT_TOOL).group());
+		assertEquals(ToolGroups.MODEL_STRUCTURE, tool(STRUCTURE_TOOL).group());
+		assertEquals(ToolGroups.WORKSPACE, tool(WORKSPACE_TOOL).group());
+		assertEquals(ToolGroups.EGRESS, tool(EGRESS_TOOL).group());
+	}
+
+	/**
+	 * Precondition: the execution context the change check needs is injected, not asked of the model.
+	 *
+	 * <p>
+	 * The check on the change path reads the run's authorization from an injected
+	 * {@code ToolExecutionContext} parameter. Were that parameter to reach the JSON schema, the model
+	 * would see a required argument it cannot supply and the tool would become uncallable - a far worse
+	 * failure than the one the check prevents.
+	 * </p>
+	 */
+	public void testTheInjectedContextIsInvisibleToTheModel() {
+		String schema = tool(SCRIPT_TOOL).schema().inputSchemaJson();
+
+		assertTrue("The declared arguments must be there: " + schema, schema.contains("script"));
+		assertTrue(schema, schema.contains("dryRun"));
+		assertFalse("The injected context must not be a schema property: " + schema,
+			schema.contains("context"));
+	}
+
+	/**
+	 * Precondition: every configured persona exists, holds exactly its own role, and is not an
+	 * administrator.
+	 *
+	 * <p>
+	 * Note what else each of them holds: in this demo every account also has
+	 * {@code SecurityStructure.user} on the security root. It is not a defect and not something this
+	 * layer adds - it comes from {@code tl-bpe-app}, which the demo builds on and which ships the
+	 * role, the {@code user} group and the {@code <singleton-rule target="SecurityStructure#ROOT">}
+	 * binding them. It is simply another role name a {@code <tool-access>} entry may be written
+	 * against, and the closest thing to an "every authenticated account" row short of the policy's
+	 * own {@code <baseline>}. An administrator who grants it is granting every account of an
+	 * application that has it; one built on {@code tl-core}/{@code tl-element} alone has not.
+	 * </p>
+	 */
+	public void testEveryPersonaHoldsTheRolesTheMatrixClaims() {
+		Map<String, List<String>> expected = SecDemoSetupService.personaRoles();
+		assertEquals("The aspect must configure four personas; adjust this test bed if it changed.",
+			4, expected.size());
+
+		for (Map.Entry<String, List<String>> persona : expected.entrySet()) {
+			String login = persona.getKey();
+			Set<String> held = AiToolAccessService.heldRoleNames(account(login));
+
+			for (String expectedRole : persona.getValue()) {
+				assertTrue(login + " must hold '" + expectedRole + "' on the security root, got " + held
+					+ ". Nothing assigns it - the <singleton-rule> tier rules do, from group"
+					+ " membership. SecDemoRoleRuleTest is where that is asserted directly.",
+					held.contains(expectedRole));
+			}
+		}
+
+		assertFalse("Ben partners on nothing and must not hold projectPartner.",
+			AiToolAccessService.heldRoleNames(account(BEN)).contains("projectPartner"));
+		assertTrue("Cara is in both groups, so she holds both roles - the fixture's only account that"
+			+ " does.", AiToolAccessService.heldRoleNames(account(CARA)).containsAll(
+				Set.of("projectPartner", "ticketReader")));
+	}
+
+	/**
+	 * The tier is blind to the scope, which is why L1 cannot be the control.
+	 *
+	 * <p>
+	 * Anna and Dora are indistinguishable here: same role on the security root, same grants, same
+	 * answer for every tool. What separates them is a business attribute on a project, which this layer
+	 * never sees - see {@code SecDemoModelSecurityTest.testDoraCanWriteNothing()}.
+	 * </p>
+	 */
+	public void testTheTierIsBlindToTheScope() {
+		for (String toolName : List.of(MODEL_READ_TOOL, LIST_TOOL, GET_TOOL, SCRIPT_TOOL,
+			CLASSIFIED_WRITE_SCRIPT_TOOL)) {
+			assertAllowed(ANNA, toolName);
+			assertAllowed(DORA, toolName);
+		}
+	}
+
+	/**
+	 * A capability no role is granted is denied to every persona, and no {@code <deny>} was written.
+	 *
+	 * <p>
+	 * This is what the empty {@code <baseline/>} buys. An absent element would mean the read-only
+	 * default of #293 - {@code model.read} plus {@code data.read} for everyone - which would not change
+	 * these four but would silently make the fixture unable to show a persona short of a read
+	 * capability at all.
+	 * </p>
+	 */
+	public void testUngrantedCapabilitiesAreDeniedToEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertDenied(login, AGENT_META_TOOL, ToolGroups.AGENT_META);
+			assertDenied(login, AGENT_AUTHORING_TOOL, ToolGroups.AGENT_AUTHORING);
+			assertDenied(login, WORKSPACE_TOOL, ToolGroups.WORKSPACE);
+			assertDenied(login, STRUCTURE_TOOL, ToolGroups.MODEL_STRUCTURE);
+			assertDenied(login, EGRESS_TOOL, ToolGroups.EGRESS);
+		}
+	}
+
+	/**
+	 * {@code interaction} reaches everyone, including the persona whose role grants nothing.
+	 *
+	 * <p>
+	 * The deployed policy declares an <em>empty</em> {@code <baseline>}, so what this pins is the
+	 * implicit grant: an agent that cannot ask the user a question is broken, and a policy that forgot
+	 * to say so must not be able to produce that state. Asserted against the real application
+	 * configuration rather than a fixture, because "nothing in the XML grants this" is the whole point.
+	 * </p>
+	 *
+	 * <p>
+	 * The empty declaration is load-bearing for this fixture and not an accident: an <em>absent</em>
+	 * element would mean {@link RoleToolAccess#DEFAULT_BASELINE}, which would hand every persona both
+	 * read capabilities whatever its role says, and the matrix would stop being exact.
+	 * </p>
+	 */
+	public void testBaselineReachesEvenTheBarePersona() {
+		assertNotNull("The fixture must declare <baseline/> explicitly, not leave it out: an absent"
+			+ " element means the read-only default, which secBare must not have.",
+			AiToolAccessService.policy().getBaseline());
+		assertEquals("The precondition of this test: the policy grants interaction nowhere.",
+			List.of(), AiToolAccessService.policy().getBaseline().getGrants());
+
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertAllowed(login, "user-interaction.askUser");
+		}
+	}
+
+	/** Both roles reach both read groups: the read half of the matrix is deliberately identical. */
+	public void testBothRolesRead() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			assertAllowed(login, MODEL_READ_TOOL);
+			assertAllowed(login, LIST_TOOL);
+			assertAllowed(login, GET_TOOL);
+		}
+	}
+
+	/**
+	 * The one-capability pair: the same tool, allowed to a partner and denied to a ticket reader.
+	 *
+	 * <p>
+	 * The sharpest single assertion in the tool layer: one tool, one capability, two answers. Anything
+	 * that broke enforcement in general would break one half of this; anything that broke role
+	 * resolution would break the other. It is also the fixture's only "refused at L1" row - every other
+	 * refusal in the matrix comes from L2.
+	 * </p>
+	 */
+	public void testDataWriteSeparatesThePartnerFromTheReader() {
+		assertAllowed(ANNA, CLASSIFIED_WRITE_SCRIPT_TOOL);
+		assertDenied(BEN, CLASSIFIED_WRITE_SCRIPT_TOOL, ToolGroups.DATA_WRITE);
+
+		assertTrue("Cara holds both roles, so the union of their grants reaches the write tool - roles"
+			+ " add up.", securityFor(CARA).hasToolPermission(tool(CLASSIFIED_WRITE_SCRIPT_TOOL)));
+	}
+
+	/** A privileged group is reachable once the policy names it, and only then. */
+	public void testExplicitlyGrantedEscalationGroupIsReachable() {
+		assertAllowed(ANNA, SCRIPT_TOOL);
+		assertAllowed(BEN, SCRIPT_TOOL);
+	}
+
+	/**
+	 * Changing data with a script costs {@code data.write} on top of the {@code script} capability the
+	 * tool is classified as.
+	 *
+	 * <p>
+	 * The gate lets both personas call {@code changeData} - they hold {@code script} - and cannot see
+	 * the argument that decides whether the call persists anything. So the change path asks
+	 * separately, which is the difference between "may try a change" and "may change the database".
+	 * Without this, every holder of {@code script} silently held every write TL-Script can express.
+	 * </p>
+	 */
+	public void testAChangeNeedsDataWriteOnTopOfScript() {
+		assertAllowed(ANNA, SCRIPT_TOOL);
+		assertAllowed(BEN, SCRIPT_TOOL);
+
+		List<TLObject> seeded = tickets();
+
+		String refused = changeDataAs(BEN, CREATE_TICKET, false);
+		assertTrue("Ben holds no data.write, so the change must be refused: " + refused,
+			refused.contains(ToolGroups.DATA_WRITE));
+		assertTrue("The refusal must say which call was refused: " + refused,
+			refused.contains("changing data with changeData"));
+		assertTrue("...and that the role is what lacks the capability: " + refused,
+			refused.contains("none of your roles grants"));
+		assertEquals("A refused commit must not have written anything.",
+			seeded.size(), tickets().size());
+
+		try {
+			String committed = changeDataAs(ANNA, CREATE_TICKET, false);
+
+			assertFalse("Anna holds data.write, so the tool layer lets her commit: " + committed,
+				committed.contains("Permission denied"));
+			assertEquals("...and pm:Ticket grants Create to projectPartner, which she holds on the"
+				+ " security root - the context a top-level creation is checked against: " + committed,
+				seeded.size() + 1, tickets().size());
+		} finally {
+			deleteTicketsBeyond(seeded);
+		}
+	}
+
+	/**
+	 * The dry run of a change is unchanged for both of them: {@code script} alone reaches it.
+	 *
+	 * <p>
+	 * The other half of the rule, and the one that keeps it proportionate - the requirement is on the
+	 * path that persists only. A dry run saves nothing, so it costs nothing more than the tool; what
+	 * the script may write is still the engine's to decide, inside the dry run.
+	 * </p>
+	 */
+	public void testADryRunNeedsOnlyScript() {
+		List<TLObject> seeded = tickets();
+		for (String login : SecDemoSetupService.personaLogins()) {
+			String result = changeDataAs(login, CREATE_TICKET, true);
+
+			assertFalse(login + " must reach a dry run with 'script' alone: " + result,
+				result.contains("Permission denied"));
+			assertTrue("The dry run must actually have run: " + result, result.contains("Dry run"));
+		}
+		assertEquals("A dry run writes nothing.", seeded.size(), tickets().size());
+	}
+
+	/**
+	 * A remote MCP tool has no annotation to carry a group, so it is ungrouped and denied - the
+	 * deny-by-default answer to "what happens when a tool arrives that nobody classified".
+	 */
+	public void testUnclassifiedToolDeniedToEveryPersona() {
+		for (String login : SecDemoSetupService.personaLogins()) {
+			String reason = securityFor(login).toolDenialReason("mcp__unknown__doThing");
+
+			assertNotNull("An unclassified tool must be denied to " + login + ".", reason);
+			assertTrue(reason, reason.contains("no tool group"));
+		}
+	}
+
+	/**
+	 * An administrator bypasses the tool layer, mirroring the engine: {@code root} already bypasses
+	 * {@code ModelAccessRights}, and a tool layer that disagreed would produce a half-denial nobody
+	 * could explain.
+	 */
+	public void testAdministratorBypassesThePolicy() {
+		Person administrator = anyAdministrator();
+		assertNotNull("The application must have at least one administrator account.", administrator);
+		assertTrue("Precondition: " + administrator.getName() + " is an administrator.",
+			administrator.isAdmin());
+
+		TopLogicSecurityContext security = TopLogicSecurityContext.forRun(administrator, false);
+
+		for (String toolName : List.of(STRUCTURE_TOOL, EGRESS_TOOL, AGENT_AUTHORING_TOOL,
+			WORKSPACE_TOOL, UNCLASSIFIED_SCRIPT_TOOL)) {
+			assertTrue("An administrator reaches '" + toolName + "', which the policy grants nobody.",
+				security.hasToolPermission(tool(toolName)));
+			assertNull(security.toolDenialReason(tool(toolName)));
+		}
+	}
+
+	/**
+	 * Creates the test suite.
+	 */
+	public static Test suite() {
+		return suite(SecDemoToolAccessTest.class);
+	}
+
+}

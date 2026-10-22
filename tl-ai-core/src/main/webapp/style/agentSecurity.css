@@ -1,0 +1,362 @@
+/*
+ * Layout of the "Agent-Sicherheit" administration view.
+ *
+ * The Richtlinie tab is a matrix per sub-tab (#404): the table, its fields and the toolbar are the
+ * framework's; what is styled here are the pieces it has no control for - the cells, the column
+ * headers - and the messages at the top.
+ *
+ * Colours are deliberately conservative and stated literally: this file is contributed by a library
+ * module and has to look right in the shipped theme without depending on a variable that theme happens
+ * to define. Notes and warnings are told apart by their background and text colour only.
+ */
+
+.aiSecurityView {
+	padding: 10px 14px 28px;
+	max-width: 1500px;
+}
+
+.aiSecurityView h4 {
+	margin: 24px 0 6px;
+	font-size: 1.05em;
+	font-weight: 600;
+}
+
+.aiSecurityView p.aiSecurityNote,
+.aiSecurityView .aiSecurityNote {
+	margin: 4px 0 10px;
+	color: #4a4a4a;
+	max-width: 1100px;
+}
+
+/* --- messages ------------------------------------------------------------ */
+
+.aiSecurityMessages {
+	display: block;
+	margin: 0 0 12px;
+}
+
+.aiSecurityView div.aiSecurityWarning {
+	margin: 10px 0 14px;
+	padding: 8px 12px;
+	border-radius: 3px;
+	background: #fff8ec;
+	color: #6b3d00;
+}
+
+.aiSecurityView div.aiSecurityWarning p {
+	margin: 0 0 4px;
+	font-weight: 600;
+}
+
+.aiSecurityView div.aiSecurityWarning ul {
+	margin: 2px 0 0 18px;
+	padding: 0;
+}
+
+.aiSecurityView div.aiSecurityWarning li {
+	margin: 2px 0;
+}
+
+.aiSecurityView span.aiSecurityWarning {
+	color: #a83200;
+}
+
+/* Why an apply was refused: an error, not a hint, told apart by its background and text colour. */
+.aiSecurityView div.aiSecurityRefusals {
+	margin: 10px 0 14px;
+	padding: 8px 12px;
+	border-radius: 3px;
+	background: #fdf0ec;
+	color: #8a2600;
+}
+
+.aiSecurityView div.aiSecurityRefusals p {
+	margin: 0 0 4px;
+	font-weight: 600;
+}
+
+.aiSecurityView div.aiSecurityRefusals ul {
+	margin: 2px 0 0 18px;
+	padding: 0;
+}
+
+.aiSecurityView div.aiSecurityRefusals li {
+	margin: 2px 0;
+}
+
+/* The banner saying that what is saved is not what the application applies. */
+.aiSecurityBanner {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin: 0 0 12px;
+	padding: 10px 12px;
+	border-radius: 3px;
+	background: #fff4e0;
+	color: #6b3d00;
+	font-weight: 600;
+}
+
+/* What a collapsed section says about its content, next to its title. */
+.aiSecuritySummary {
+	margin-left: 10px;
+	color: #6b6b6b;
+	font-weight: normal;
+}
+
+/* A block that is recomputed when a value changes; it must not add a box of its own. */
+.aiSecurityDynamic {
+	display: inline;
+}
+
+/* --- the effective-permissions tab --------------------------------------- */
+
+.aiSecurityInputs {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+	padding: 8px 0;
+}
+
+.aiSecurityFooter > div,
+.aiSecurityRows {
+	margin: 8px 0 0;
+}
+
+/* One repeated block of a list, told apart from the next by a hairline. */
+.aiSecurityRow + .aiSecurityRow {
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid #ececec;
+}
+
+/* --- the policy matrix (#404) -------------------------------------------- */
+
+/*
+ * The matrix carries its own tokens, because it is the one part of this view with colours that mean
+ * something: granted, forbidden, refused by the run, not named. Stated literally, like the rest of
+ * this file: the classic layout renders in the application's classic theme, which has no dark variant
+ * a selector could key on.
+ */
+.aiPolicyMatrixView {
+	--ai-policy-border: #9aa4ae;
+	--ai-policy-box-bg: #ffffff;
+	--ai-policy-granted: #1f7a3a;
+	--ai-policy-denied: #b3261e;
+	--ai-policy-ghost: #9aa4ae;
+	--ai-policy-hatch: rgba(120, 130, 140, 0.13);
+	--ai-policy-refused: #b3261e;
+	--ai-policy-own: #1d5fa8;
+	--ai-policy-special-bg: rgba(120, 130, 140, 0.10);
+	--ai-policy-unknown-bg: #fbe3e1;
+	--ai-policy-muted: #5f6b76;
+	max-width: none;
+}
+
+.aiPolicyMatrixTable {
+	overflow-x: auto;
+}
+
+/*
+ * The header carries two lines per name and the section default under its label; the theme's header
+ * height is meant for one line and has no setting of its own, so the matrix raises it.
+ */
+.aiPolicyMatrixTable thead tr.tl-table__row {
+	--table-row-height: 80px !important;
+}
+
+.aiPolicyMatrixTable thead .tl-table__header-cell-content > div:first-child {
+	align-items: flex-end !important;
+	white-space: normal;
+}
+
+/* The search, the row filter and the two switches, in one line above the matrix. */
+.aiPolicyBar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin: 4px 0 10px;
+}
+
+.aiPolicyBar .aiPolicyBulkButton {
+	margin-left: auto;
+}
+
+.aiPolicySwitch {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	white-space: nowrap;
+}
+
+/* The role column: the label an administrator gave the role, the technical name under it. */
+.aiPolicyRole {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	min-height: 32px;
+	line-height: 1.2;
+}
+
+.aiPolicyRoleLabel {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.aiPolicyRoleName {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-family: monospace;
+	font-size: 0.85em;
+	color: var(--ai-policy-muted);
+}
+
+/* The section default, in the header of the row-state column. */
+.aiPolicyDefaultLabel,
+.aiPolicyColumnDetail {
+	font-size: 0.85em;
+	font-weight: normal;
+	color: var(--ai-policy-muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* The engine's header wrapper is a flex row that would shrink these blocks to nothing. */
+.aiPolicyColumn,
+.aiPolicyDefault {
+	flex: 1 1 auto;
+	width: 100%;
+	min-width: 0;
+	line-height: 1.2;
+}
+
+.aiPolicyColumnName {
+	font-size: 0.92em;
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+
+/* --- one cell ------------------------------------------------------------ */
+
+.aiPolicyCell {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	position: relative;
+	vertical-align: middle;
+}
+
+.aiPolicyBox {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border: 1px solid var(--ai-policy-border);
+	border-radius: 3px;
+	background: var(--ai-policy-box-bg);
+	font-weight: 700;
+	line-height: 1;
+}
+
+.aiPolicyClickable .aiPolicyBox {
+	cursor: pointer;
+}
+
+.aiPolicyState-GRANTED .aiPolicyBox {
+	color: var(--ai-policy-granted);
+}
+
+/* A prohibition beats every other role: the loudest answer the matrix has. */
+.aiPolicyState-DENIED .aiPolicyBox {
+	color: var(--ai-policy-denied);
+	border-color: var(--ai-policy-denied);
+}
+
+/* A row the section does not name: what the default gives, greyed and not clickable. */
+.aiPolicyGhost .aiPolicyBox,
+.aiPolicyLocked .aiPolicyBox {
+	color: var(--ai-policy-ghost);
+	border-style: dashed;
+	background: transparent;
+	font-weight: 600;
+}
+
+.aiPolicyGhost-AGENTS_OWN .aiPolicyBox {
+	font-size: 0.8em;
+}
+
+tr.aiPolicyLockedRow > td {
+	background-image: repeating-linear-gradient(-45deg, transparent 0 6px, var(--ai-policy-hatch) 6px 8px);
+}
+
+tr.aiPolicySpecialRow > td {
+	background-color: var(--ai-policy-special-bg);
+	font-weight: 600;
+}
+
+tr.aiPolicyUnknown > td,
+td.aiPolicyUnknown,
+th.aiPolicyUnknown {
+	background-color: var(--ai-policy-unknown-bg);
+}
+
+/* The overlay: what a run refuses although the cell or the default grants it, and what an agent reaches. */
+.aiPolicyRefused .aiPolicyBox {
+	outline: 2px solid var(--ai-policy-refused);
+	outline-offset: 1px;
+}
+
+.aiPolicyMark {
+	font-size: 0.85em;
+	font-weight: 700;
+}
+
+.aiPolicyMarkRefused {
+	color: var(--ai-policy-refused);
+}
+
+.aiPolicyMarkOwn {
+	color: var(--ai-policy-own);
+}
+
+.aiPolicyTools.aiPolicyClickable {
+	cursor: pointer;
+	text-decoration: underline;
+	color: var(--ai-policy-own);
+}
+
+/* --- the bulk dialog ----------------------------------------------------- */
+
+.aiPolicyChips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: 2px 0 10px;
+}
+
+.aiPolicyChip {
+	padding: 1px 6px;
+	border: 1px solid #b8c2cc;
+	border-radius: 3px;
+}
+
+.aiPolicyBulk .cChoice {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px 14px;
+}
+
+.aiPolicyBulkSummary {
+	margin-top: 10px;
+	padding: 8px 10px;
+	border-radius: 3px;
+	background: #e8f0f8;
+	color: #1d3d5c;
+}
+

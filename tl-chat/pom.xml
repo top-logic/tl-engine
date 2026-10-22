@@ -1,0 +1,187 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-chat</artifactId>
+  <name>${project.artifactId}</name>
+  <description>Agentic chat UI: REST API and SSE streaming servlet, the React chat front end, session management and human-in-the-loop approval.</description>
+  <url>https://github.com/top-logic/tl-engine/</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+    </dependency>
+    <!--
+      The view layer is not optional: every dependent that loads this module's
+      application configuration resolves AgentViewRefreshService, and that class
+      needs ReactWindowRegistry from tl-layout-react. tl-layout-view pulls
+      tl-layout-react in, but the React controls in `view/` use it directly, so it
+      is declared here as well.
+    -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react</artifactId>
+    </dependency>
+    <!--
+      The engine's React <chart>: the chat's pane draws what the agent presents as a chart
+      with it, rather than with a chart of its own.
+    -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-react-chartjs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-core</artifactId>
+    </dependency>
+    <!-- The side pane reads the body of an HTML document it shows. -->
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+    </dependency>
+
+    <!-- Tests -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-vector-index</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- The tests live in packages mirroring the production code, see the comment in tl-ai-core/pom.xml. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>%regex[test[/.]TestAll(\.class)?]</include>
+            <include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
+          </includes>
+        </configuration>
+      </plugin>
+
+      <!-- The React chat front end in ui/, bundled by Vite into src/main/webapp/script. -->
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <configuration>
+          <workingDirectory>ui</workingDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>install-node</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>npm-install</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>install</arguments>
+            </configuration>
+          </execution>
+          <!--
+            Type errors must fail the build, not reach the browser: the Vite lib build
+            strips types without checking them, so tsc runs as its own step before it.
+          -->
+          <execution>
+            <id>npm-typecheck</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run typecheck</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>npm-build</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+            </configuration>
+          </execution>
+          <!--
+            The JS tests run in the `test` phase, after surefire, and not with the
+            bundle in `generate-resources`: bound before `compile`, a single
+            broken frontend test aborts the module and the state of its Java
+            tests is not merely unreported but unproduced - no surefire-reports
+            directory exists at all. Behind surefire, both answers are always in.
+
+            Surefire runs first because it is declared in the parent pom and this
+            plugin in the child, and Maven orders executions of one phase by the
+            order their plugins appear in the effective pom.
+
+            In the `test` phase the frontend plugin binds `skipTests` to
+            `${skipTests}` and `testFailureIgnore` to `${maven.test.failure.ignore}`,
+            so the JS tests follow the same switches as the Java tests: they run
+            with `-DskipTests=false` and are skipped by default, and a failure
+            fails the build unless failures are ignored. Vitest writes a JUnit
+            report into `target/surefire-reports` (see `ui/vite.config.ts`), so a CI
+            build that collects the surefire reports shows JS failures together
+            with the Java ones.
+          -->
+          <execution>
+            <id>npm-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>test</arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>de.haumacher.msgbuf</groupId>
+        <artifactId>msgbuf-generator-maven-plugin</artifactId>
+        <version>${msgbuf.version}</version>
+        <executions>
+          <execution>
+            <id>generate-protocols</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

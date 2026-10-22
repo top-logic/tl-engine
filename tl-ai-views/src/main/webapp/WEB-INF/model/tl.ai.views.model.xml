@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	View change sets: changes of the application's view files, each with the text of every view
+	before and after it - the record that makes a change an agent wrote reversible.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.views">
+		<types>
+			<enum name="ViewChangeStatus">
+				<!-- Written into the view files. -->
+				<classifier name="APPLIED"/>
+				<!-- Applied, then put back. -->
+				<classifier name="REVERTED"/>
+			</enum>
+
+			<class name="ViewChangeSet">
+				<annotations>
+					<instance-presentation icon="css:bi bi-git"/>
+				</annotations>
+				<attributes>
+					<property name="name" mandatory="true" type="tl.core:String"/>
+					<reference name="status" mandatory="true" type="ViewChangeStatus"/>
+					<!-- Who made the change set: the account, and the agent when one did. -->
+					<property name="author" type="tl.core:String"/>
+					<property name="date" type="tl.core:DateTime"/>
+					<reference name="changes"
+						composite="true"
+						multiple="true"
+						ordered="true"
+						type="ViewChange"
+					/>
+				</attributes>
+			</class>
+
+			<class name="ViewChange">
+				<attributes>
+					<!-- The view, relative to /WEB-INF/views/. -->
+					<property name="name" mandatory="true" type="tl.core:String"/>
+					<!-- The text it had; empty for a view the change creates. -->
+					<property name="before" type="tl.core:Text"/>
+					<!-- The text it gets; empty for a view the change deletes. -->
+					<property name="after" type="tl.core:Text"/>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

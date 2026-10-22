@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Rename dialog for a chat, opened from the row menu in tl-ai-demo/chat-grouped.view.xml.
+
+	One field on the chat's own title. What OK does is worth reading, because it is *not* the usual
+	<store-form-state/>: that writes the attribute straight onto the session, which skips the store's
+	notification (a second browser tab would stand still) and skips lastUpdated (the renamed chat
+	would keep yesterday's group). <read-form-object/> hands over the form's overlay instead - the
+	object carrying what the user typed, with nothing written yet - and aiSessionRename performs the
+	one write there is, checking on the way that this chat is the user's.
+
+	Enter and Escape are bound explicitly. A sole button-bar command and a cancel action would answer
+	them anyway; saying so here means a second command added later does not silently take Enter away.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+
+	<!-- One field: nothing to resize or maximise, so the window offers neither. -->
+	<window resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>Rename chat</en>
+			<de>Chat umbenennen</de>
+		</title>
+		<form initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="title"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					key="Enter"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>OK</en>
+						<de>OK</de>
+					</label>
+					<read-form-object>
+						<with-result as="edited">
+							<execute-script>
+								<inputs>
+									<input
+										as="session"
+										channel="model"
+									/>
+								</inputs>
+								<function><![CDATA[aiSessionRename($session, $edited.get(`tl.ai.execution:AgentSession#title`))]]></function>
+							</execute-script>
+						</with-result>
+					</read-form-object>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+					key="Escape"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

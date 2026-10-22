@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	An installation's override of one shipped agent, for TestShippedAgentOverride.
+
+	It sets a single scalar - the display name of TL_ModelExplorer - and nothing else, which is
+	exactly what an administrator saving that one field in the service editor leaves behind.
+	Everything the test then asserts about that agent - its summary, its description, its system
+	prompt, its tools and its skill - therefore still comes from tl-ai-core.conf.config.xml.
+
+	In autoconf rather than in WEB-INF/conf, because that is the layer an application overrides a
+	framework default in: tl-ai-core declares the agent in its own conf file, and a second conf file
+	cannot beat it.
+-->
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+				<agents>
+					<agent name="TL_ModelExplorer">
+						<display-name>
+							<en>Model Scout</en>
+							<de>Modell-Späher</de>
+						</display-name>
+					</agent>
+				</agents>
+			</instance>
+		</config>
+	</services>
+</application>

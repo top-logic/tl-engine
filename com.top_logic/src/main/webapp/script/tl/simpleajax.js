@@ -26,6 +26,16 @@ services.AJAXServiceClass = function() {
 
 	this.IS_PROPERTY_ELEMENT = this.PROPERTY_ELEMENT.getPredicate();
 	
+	/**
+	 * Name of the command of the main layout that informs the server about a 
+	 * window closed on the client (WindowManager.OnCloseWindow on the server).
+	 * 
+	 * <p>
+	 * Arguments: <code>name</code>, the name of the closed window.
+	 * </p>
+	 */
+	this.WINDOW_CLOSE_COMMAND = "onWindowClose";
+
 	this.REQUEST_QUEUE = new queuing.RequestQueue(10);
 	// is activated in on load
 	this.REQUEST_QUEUE.stop();
@@ -489,7 +499,13 @@ services.AJAXServiceClass = function() {
 			}
 		
 			if (reply != null) {
-				reply.call();
+				try {
+					reply.call();
+				} catch (ex) {
+					// The reply is consumed nevertheless: Processing it again 
+					// would fail again and block all subsequent replies.
+					services.log.error("Processing of AJAX reply failed", ex);
+				}
 				
 				// Process functions attached to this request. See runLater().
 				if (request.actions != null) {
@@ -525,11 +541,20 @@ services.AJAXServiceClass = function() {
 			} else {
 				requestSourceWindow = eval(requestSourceExpression);
 			}
+			if (requestSourceWindow != null) {
+				// A request may be sent by a window that is closed before the 
+				// reply arrives. Its document has no window any more and must 
+				// not be accessed.
+				var requestSourceDocument = requestSourceWindow.closed ? null : requestSourceWindow.document;
+				if (requestSourceDocument == null || requestSourceDocument.defaultView == null) {
+					return null;
+				}
+				return requestSourceDocument;
+			}
 		} catch(ex) {
-			requestSourceWindow == null;
+			// The source window is not accessible.
 		}
-		
-		return requestSourceWindow != null ? requestSourceWindow.document : null;
+		return null;
 	};
 
 	/**
@@ -1463,6 +1488,22 @@ services.AJAXServiceClass = function() {
 				
 				'<env:Body>';
 		if (txSequence >= 0) {
+			/*
+			 * Windows closed by the user are reported before all other commands
+			 * of this request. The server processes the commands of a request in
+			 * order, therefore it does not answer a command that opens a window
+			 * again with focusing the closed window.
+			 */
+			var mainLayout = this.mainLayout;
+			if (typeof mainLayout.winTakeClosedWindows === "function") {
+				var mainAjax = mainLayout.services.ajax;
+				var closedWindows = mainLayout.winTakeClosedWindows();
+				for (var closedIndex = 0; closedIndex < closedWindows.length; closedIndex++) {
+					request += this._getCommandString(mainAjax.COMPONENT_ID, mainAjax.COMPONENT_ID, mainAjax.SUBMIT_NUMBER, 
+						mainAjax.WINDOW_CLOSE_COMMAND, {name: closedWindows[closedIndex]});
+				}
+			}
+			
 			/*
 			 * If the event is sent without sequence number, then a problem may
 			 * occur when the lazy events need to be send in correct order. E.g.

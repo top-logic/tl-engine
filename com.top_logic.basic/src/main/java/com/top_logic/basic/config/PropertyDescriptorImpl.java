@@ -2323,7 +2323,7 @@ public abstract class PropertyDescriptorImpl
 
 	@Override
 	public boolean isEncrypted() {
-		return _encrypted;
+		return _encrypted || getValueProvider() instanceof EncodingConfigurationValueProvider;
 	}
 
 	/**

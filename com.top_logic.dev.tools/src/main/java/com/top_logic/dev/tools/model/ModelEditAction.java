@@ -16,6 +16,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModelPart;
@@ -37,12 +38,12 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * The mutating operations create their result through the {@link TLModelUtil} primitives and return
- * the newly created part, so it can be written to the editor's selection channel. The created
- * element's name (and, for an attribute, its value type and cardinality) come from the transient
- * input object passed as the action input (the model of the dialog form after
- * {@code <store-form-state/>}); the container to create the element in comes from the configured
- * {@link Config#getContainer() container channel}. All operations must run inside a transaction
- * (wrap the action in {@code <with-transaction>}).
+ * the newly created part to its follow-up actions, so it can be written to the
+ * editor's selection channel. The created element's name (and, for an attribute, its value type and
+ * cardinality) come from the transient object the action processes (the result of an enclosing
+ * {@code <store-form-state>} in the dialog form); the container to create the element in comes
+ * from the configured {@link Config#getContainer() container channel}. All operations must run
+ * inside a transaction (wrap the action in {@code <with-transaction>}).
  * </p>
  */
 public class ModelEditAction implements ViewAction {
@@ -93,7 +94,7 @@ public class ModelEditAction implements ViewAction {
 	 * global {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<ModelEditAction> {
+	public interface Config extends PolymorphicConfiguration<ModelEditAction>, WithResultActions {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";

@@ -12,6 +12,15 @@ import com.top_logic.tool.execution.ExecutableState;
  * Rule that determines whether a {@link ViewCommand} can be executed given the current input.
  *
  * <p>
+ * A rule decides over the {@link ActionArguments arguments} of what it guards: the arguments of a
+ * command (see {@link CommandArguments}), or the single named value an element supplies, such as
+ * the row of a table whose drag a rule allows. A rule deciding over a single value implements
+ * {@link #isExecutable(Object)} only and receives the {@link ActionArguments#value() default
+ * argument}; a rule that sees all arguments - a script rule, say - implements
+ * {@link #isExecutableFor(ActionArguments)} as well.
+ * </p>
+ *
+ * <p>
  * Multiple rules can be combined using {@link CombinedViewExecutabilityRule}. The first
  * non-{@link ExecutableState#EXECUTABLE EXECUTABLE} result wins (short-circuit AND).
  * </p>
@@ -39,4 +48,22 @@ public interface ViewExecutabilityRule {
 	 *         be enabled.
 	 */
 	ExecutableState isExecutable(Object input);
+
+	/**
+	 * Determines the executability of the command for the given arguments.
+	 *
+	 * <p>
+	 * The default decides over the {@link ActionArguments#value() default argument} with
+	 * {@link #isExecutable(Object)}.
+	 * </p>
+	 *
+	 * @param arguments
+	 *        The arguments the guarded operation runs with, built for the
+	 *        {@link ActionScope scope} the rule was instantiated in.
+	 * @return The executable state. Return {@link ExecutableState#EXECUTABLE} if the command should
+	 *         be enabled.
+	 */
+	default ExecutableState isExecutableFor(ActionArguments arguments) {
+		return isExecutable(arguments.value());
+	}
 }

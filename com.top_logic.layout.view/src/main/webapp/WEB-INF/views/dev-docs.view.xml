@@ -17,17 +17,17 @@
 		<channel name="search"/>
 		<channel name="doc"/>
 		<derived-channel name="docHtml"
-			expr="doc -> devDocsHtml($doc)"
+			expr="devDocsHtml($doc)"
 			inputs="doc"
 		/>
 		<derived-channel name="docSource"
-			expr="doc -> devDocsSource($doc)"
+			expr="devDocsSource($doc)"
 			inputs="doc"
 		/>
 		<derived-channel name="docKey"
-			expr="doc -> devDocsRouteKey($doc)"
+			expr="devDocsRouteKey($doc)"
 			inputs="doc"
-			reverse="key -> devDocsByRouteKey($key)"
+			reverse="devDocsByRouteKey($value)"
 		/>
 	</channels>
 	<param-bindings>
@@ -61,9 +61,9 @@
 					<inputs>
 						<input channel="search"/>
 					</inputs>
-					<root>search -&gt; devDocsRoot()</root>
-					<children>search -&gt; node -&gt; devDocsChildren($node, $search)</children>
-					<parents>search -&gt; node -&gt; devDocsParent($node)</parents>
+					<root>devDocsRoot()</root>
+					<children>devDocsChildren($node, $search)</children>
+					<parents>devDocsParent($node)</parents>
 				</tree>
 			</panel>
 		</selector>
@@ -90,8 +90,11 @@
 				</commands>
 				<html input="docHtml">
 					<on-link class="com.top_logic.layout.view.command.GenericViewCommand">
-						<execute-script function="link -> devDocsGet($link)"/>
-						<write-channel name="doc"/>
+						<execute-script function="devDocsGet($link)">
+							<with-result>
+								<write-channel name="doc"/>
+							</with-result>
+						</execute-script>
 					</on-link>
 				</html>
 			</panel>

@@ -19,7 +19,7 @@
 		<channel name="milestone"/>
 		<channel name="ticket"/>
 		<derived-channel name="project"
-			expr="m -> if($m == null, null, $m.container())"
+			expr="if($milestone == null, null, $milestone.container())"
 			inputs="milestone"
 		/>
 	</channels>
@@ -32,7 +32,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-plus-lg"
-				input="project"
+				inputs="project, milestone"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -46,29 +46,28 @@
 					container="project"
 					reference="tickets"
 					type="tl.demo.projectManagement:Ticket"
-				/>
-				<execute-script function="m -> t -> { $t.set(`tl.demo.projectManagement:Ticket#milestone`, $m); $t; }">
-					<inputs>
-						<input channel="milestone"/>
-					</inputs>
-				</execute-script>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="demo/create-ticket.view.xml"
 				>
-					<bind
-						channel="container"
-						to="project"
-					/>
-					<bind
-						channel="selection"
-						to="ticket"
-					/>
-				</open-dialog>
+					<with-result as="draft">
+						<execute-script function="$draft.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone)"/>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-ticket.view.xml"
+						>
+							<bind
+								channel="container"
+								to="project"
+							/>
+							<bind
+								channel="selection"
+								to="ticket"
+							/>
+						</open-dialog>
+					</with-result>
+				</create-transient>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-trash"
-				input="ticket"
+				inputs="ticket"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -78,9 +77,11 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="t -> #('Delete ticket {0}?'@en, 'Ticket {0} löschen?'@de).fill($t.get(`tl.demo.projectManagement:Ticket#title`))"/>
+				<confirm expr="#('Delete ticket {0}?'@en, 'Ticket {0} löschen?'@de).fill($ticket.get(`tl.demo.projectManagement:Ticket#title`))"/>
 				<delete-object/>
-				<write-channel name="ticket"/>
+				<write-channel name="ticket"
+					clear="true"
+				/>
 			</generic-command>
 		</commands>
 		<table
@@ -100,13 +101,13 @@
 			<inputs>
 				<input channel="milestone"/>
 			</inputs>
-			<rows>m -&gt; if($m == null, [], $m.get(`tl.demo.projectManagement:Milestone#tickets`))</rows>
+			<rows>if($milestone == null, [], $milestone.get(`tl.demo.projectManagement:Milestone#tickets`))</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="ticket"
 				view="projects/ticket-detail.view.xml"
 			>
 				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="t -> $t.get(`tl.demo.projectManagement:Ticket#title`)"
+					expr="$ticket.get(`tl.demo.projectManagement:Ticket#title`)"
 					inputs="ticket"
 				/>
 			</on-activate>

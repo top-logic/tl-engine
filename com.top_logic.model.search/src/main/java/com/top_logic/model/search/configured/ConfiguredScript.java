@@ -96,15 +96,8 @@ public class ConfiguredScript extends AbstractConfiguredInstance<ConfiguredScrip
 	 * implementation}.
 	 */
 	protected Expr withParameters(Expr body) {
-		Expr expr = body;
-
-		// Note: The last argument is passed to the innermost function. Therefore, the lambdas must
-		// be constructed in reverse order.
-		List<ScriptParameter> parameters = getConfig().getParameters();
-		for (int n = parameters.size() - 1; n >= 0; n--) {
-			expr = Define.create(parameters.get(n).getName(), expr);
-		}
-		return expr;
+		List<String> names = getConfig().getParameters().stream().map(ScriptParameter::getName).toList();
+		return Define.withVariables(names, body);
 	}
 
 	@Override

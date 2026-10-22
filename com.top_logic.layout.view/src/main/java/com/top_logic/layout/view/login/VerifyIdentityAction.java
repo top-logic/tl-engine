@@ -457,4 +457,11 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 		}
 	}
 
+	/**
+	 * Opens the dialog asking for the identity.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

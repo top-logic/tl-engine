@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.element;
 
+import com.top_logic.layout.view.channel.Supplies;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -34,12 +35,18 @@ public interface TreeDragConfig extends DragConfig {
 	 * decide over.
 	 *
 	 * <p>
+	 * A script rule sees the node object as the variable {@value NodeAsConfig#DEFAULT_NODE_AS}, or
+	 * by the name the tree gives it with {@value NodeAsConfig#NODE_AS}.
+	 * </p>
+	 *
+	 * <p>
 	 * A node the rules refuse offers no drag, and a drag of a selection including such a node is
 	 * refused as a whole. Empty (default) lets every node be dragged while the tree-wide
 	 * {@link #getExecutability() executability} allows dragging at all.
 	 * </p>
 	 */
 	@Name(NODE_EXECUTABILITY)
+	@Supplies(value = NodeAsConfig.DEFAULT_NODE_AS, renamedBy = NodeAsConfig.NODE_AS)
 	@EntryTag(RULE)
 	List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getNodeExecutability();
 

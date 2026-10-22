@@ -10,11 +10,12 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -22,10 +23,10 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * writes, and which rows offer the edit.
  *
  * <p>
- * Every function receives the values of the declared inputs first, in declaration order, then the
- * row, then whatever the column binds behind it - the object one column of a computed set stands
- * for, for instance. An update receives the entered value last. A column computing its value from
- * the row alone binds nothing and is described by the same three functions.
+ * Every function is an {@link InputScript} and sees the values of the inputs, then the row, then
+ * whatever the column binds behind it - the object one column of a computed set stands for, for
+ * instance. An update sees the entered value last. A column computing its value from the row alone
+ * binds nothing and is described by the same three functions.
  * </p>
  */
 public class ColumnFunctions {
@@ -36,29 +37,31 @@ public class ColumnFunctions {
 
 	private final QueryExecutor _canUpdate;
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	/**
 	 * Creates a {@link ColumnFunctions} from the declared expressions.
 	 *
+	 * @param config
+	 *        The configuration of the column holding the expressions.
 	 * @param value
-	 *        Computes the cell value, applied to every row of the column.
+	 *        The name of the property computing the cell value, applied to every row of the column.
 	 * @param update
-	 *        Writes an edited cell value, or {@code null} for a column that is displayed but not
-	 *        edited.
+	 *        The name of the property writing an edited cell value, holding nothing for a column
+	 *        that is displayed but not edited.
 	 * @param canUpdate
-	 *        Whether the cell of a row is edited, or {@code null} where every row of an edited
-	 *        column offers the edit.
-	 * @param inputs
-	 *        References to the channels whose values lead the arguments of each of the functions.
+	 *        The name of the property deciding whether the cell of a row is edited, holding nothing
+	 *        where every row of an edited column offers the edit.
 	 */
-	public static ColumnFunctions compile(Expr value, Expr update, Expr canUpdate, List<ChannelRef> inputs) {
-		return new ColumnFunctions(QueryExecutor.compile(value), QueryExecutor.compileOptional(update),
-			QueryExecutor.compileOptional(canUpdate), inputs);
+	public static ColumnFunctions compile(ConfigurationItem config, String value, String update,
+			String canUpdate) {
+		return new ColumnFunctions(InputScript.compile(config, value), InputScript.compile(config, update),
+			InputScript.compile(config, canUpdate),
+			InputScript.inputs(config, config.descriptor().getProperty(value)));
 	}
 
 	private ColumnFunctions(QueryExecutor value, QueryExecutor update, QueryExecutor canUpdate,
-			List<ChannelRef> inputs) {
+			List<InputRef> inputs) {
 		_value = value;
 		_update = update;
 		_canUpdate = canUpdate;
@@ -68,7 +71,7 @@ public class ColumnFunctions {
 	/**
 	 * References to the channels whose values lead the arguments of each of the functions.
 	 */
-	public List<ChannelRef> inputs() {
+	public List<InputRef> inputs() {
 		return _inputs;
 	}
 

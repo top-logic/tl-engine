@@ -169,4 +169,11 @@ public class RequestPasswordResetAction implements ViewAction {
 		return value == null || value.isEmpty();
 	}
 
+	/**
+	 * Opens the reset-password dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

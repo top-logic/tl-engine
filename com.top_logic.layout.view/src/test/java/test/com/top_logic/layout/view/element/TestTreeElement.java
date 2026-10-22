@@ -48,7 +48,7 @@ public class TestTreeElement extends TestCase {
 
 		// Verify inputs.
 		assertEquals("Should have one input", 1, treeConfig.getInputs().size());
-		assertEquals("Input channel name", "rootInput", treeConfig.getInputs().get(0).getChannelName());
+		assertEquals("Input channel name", "rootInput", treeConfig.getInputs().get(0).getChannel().getChannelName());
 
 		// Verify root expression is present (non-null).
 		assertNotNull("Root expression should be set", treeConfig.getRoot());
@@ -92,7 +92,7 @@ public class TestTreeElement extends TestCase {
 	 */
 	public void testObservedTypesWithParentsLoad() throws Exception {
 		ViewElement.Config config = ViewLoader.parseConfig(List.of(CharacterContents.newContent(
-			observingTree("<parents>input -> node -> $input</parents>"), INLINE_VIEW)));
+			observingTree("<parents>$rootInput</parents>"), INLINE_VIEW)));
 
 		assertNotNull(((TreeElement.Config) config.getContent()).getParents());
 	}
@@ -110,8 +110,8 @@ public class TestTreeElement extends TestCase {
 					<inputs>
 						<input channel="rootInput"/>
 					</inputs>
-					<root>input -> $input</root>
-					<children>input -> parent -> list()</children>
+					<root>$rootInput</root>
+					<children>list()</children>
 					%s
 				</tree>
 			</view>

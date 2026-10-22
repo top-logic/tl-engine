@@ -20,7 +20,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-plus-lg"
-				input="project"
+				inputs="project"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -34,16 +34,19 @@
 					container="project"
 					reference="notes"
 					type="tl.demo.projectManagement:Note"
-				/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="demo/create-note.view.xml"
 				>
-					<bind
-						channel="container"
-						to="project"
-					/>
-				</open-dialog>
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-note.view.xml"
+						>
+							<bind
+								channel="container"
+								to="project"
+							/>
+						</open-dialog>
+					</with-result>
+				</create-transient>
 			</generic-command>
 		</commands>
 		<table
@@ -56,7 +59,7 @@
 			<inputs>
 				<input channel="project"/>
 			</inputs>
-			<rows>p -&gt; if($p == null, [], $p.get(`tl.demo.projectManagement:ProjectScope#notes`))</rows>
+			<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#notes`))</rows>
 		</table>
 	</panel>
 </view>

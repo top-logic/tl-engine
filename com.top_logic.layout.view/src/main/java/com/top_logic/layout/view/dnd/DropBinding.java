@@ -51,8 +51,9 @@ import com.top_logic.tool.execution.ExecutableState;
  * is made at into a location per mode - the location of a {@link DropMode#ONTO} drop names the item
  * the drop is made on, that of a {@link DropMode#ORDERED} drop the place among the items. What a
  * declared drop is told about its location is fixed by its {@link DropSignature}: the objects the
- * location refers to, which the refusal function receives after the dragged objects and which are
- * written to the drop's channels before its action chain runs.
+ * location refers to, which the refusal function and the action chain receive as named arguments
+ * besides the dragged objects (see {@link DropArguments}), and which are written to the drop's
+ * channels before its action chain runs.
  * </p>
  *
  * <p>
@@ -82,7 +83,8 @@ public class DropBinding implements DropTarget {
 	 *        The channel each {@link DropSignature#references() reference} of the signature is
 	 *        written to before the actions run; a reference without an entry is written nowhere.
 	 * @param actions
-	 *        The action chain applying the drop, with the dropped objects as its input.
+	 *        The action chain applying the drop, run with the {@link DropArguments arguments} of the
+	 *        drop.
 	 * @param executability
 	 *        The control-wide state of the drop, asked anew on every use: while it is not
 	 *        executable, the drop is neither announced nor applied.
@@ -92,12 +94,27 @@ public class DropBinding implements DropTarget {
 	 * @param refuseIf
 	 *        Computes the reason a drop is refused from the list of dropped objects and the objects
 	 *        the drop refers to at its location, in the order of the signature's references; the
-	 *        result is interpreted as by {@link DisabledIf#stateFor(Object)}. {@code null}
+	 *        result is interpreted as by {@link DisabledIf#reasonState(Object)}. {@code null}
 	 *        refuses nothing.
+	 * @param names
+	 *        The names of the {@link DropArguments arguments} of the drop, see
+	 *        {@link DropArguments#names(DropConfig, DropSignature)}.
 	 */
 	public record Drop(AcceptedKinds accepted, DropSignature signature, Map<DropReference, ViewChannel> channels,
 			List<ViewAction> actions, Supplier<ExecutableState> executability, ViewExecutabilityRule targetRule,
-			BiFunction<List<?>, List<?>, Object> refuseIf) {
+			BiFunction<List<?>, List<?>, Object> refuseIf, List<String> names) {
+
+		/**
+		 * Creates a {@link Drop} whose arguments have their default names.
+		 *
+		 * @see DropArguments#defaultNames(DropSignature)
+		 */
+		public Drop(AcceptedKinds accepted, DropSignature signature, Map<DropReference, ViewChannel> channels,
+				List<ViewAction> actions, Supplier<ExecutableState> executability, ViewExecutabilityRule targetRule,
+				BiFunction<List<?>, List<?>, Object> refuseIf) {
+			this(accepted, signature, channels, actions, executability, targetRule, refuseIf,
+				DropArguments.defaultNames(signature));
+		}
 
 		/**
 		 * Creates an unrestricted {@link Drop}: always enabled, accepting every target.
@@ -141,7 +158,7 @@ public class DropBinding implements DropTarget {
 				}
 			}
 			if (refuseIf != null) {
-				return reasonOf(DisabledIf.stateFor(refuseIf.apply(objects, signature.valuesAt(location))));
+				return reasonOf(DisabledIf.reasonState(refuseIf.apply(objects, signature.valuesAt(location))));
 			}
 			return null;
 		}
@@ -356,7 +373,8 @@ public class DropBinding implements DropTarget {
 				return input;
 			});
 		}
-		ViewActionChain.run(_context, actions, objects, null);
+		ViewActionChain.run(_context, actions,
+			DropArguments.arguments(drop.names(), drop.signature(), objects, location), null);
 	}
 
 }

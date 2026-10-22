@@ -416,7 +416,7 @@
 			<command-item id="about">
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
 					image="css:bi bi-info-circle"
-					input="ticketCount"
+					inputs="ticketCount as count"
 				>
 					<label>
 						<en>About</en>
@@ -425,7 +425,7 @@
 					<executability>
 						<null-input-disabled/>
 					</executability>
-					<notify expr="count -> #('TopLogic React demo, {0} tickets.'@en, 'TopLogic React Demo, {0} Tickets.'@de).fill($count)"/>
+					<notify expr="#('TopLogic React demo, {0} tickets.'@en, 'TopLogic React Demo, {0} Tickets.'@de).fill($count)"/>
 				</action>
 			</command-item>
 		</items>

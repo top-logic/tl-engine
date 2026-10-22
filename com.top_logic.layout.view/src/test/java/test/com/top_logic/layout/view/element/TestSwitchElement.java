@@ -57,7 +57,7 @@ public class TestSwitchElement extends TestCase {
 		SwitchElement.Config switchConfig = (SwitchElement.Config) config.getContent();
 
 		assertNotNull("Input should be set", switchConfig.getInput());
-		assertEquals("Input channel name", "selectedPart", switchConfig.getInput().getChannelName());
+		assertEquals("Input channel name", "selectedPart", switchConfig.getInput().getChannel().getChannelName());
 
 		assertEquals("Should have one case", 1, switchConfig.getCases().size());
 		SwitchElement.CaseConfig caseConfig = switchConfig.getCases().get(0);

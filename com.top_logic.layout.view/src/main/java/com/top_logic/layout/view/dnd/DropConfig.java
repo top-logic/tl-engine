@@ -5,8 +5,11 @@
  */
 package com.top_logic.layout.view.dnd;
 
+import com.top_logic.layout.view.channel.Supplies;
 import java.util.List;
 
+import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -21,7 +24,7 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.DisabledIf;
-import com.top_logic.layout.view.command.ExecutabilityConfig;
+import com.top_logic.layout.view.command.InputExecutabilityConfig;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -46,7 +49,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * @see DropBinding
  */
 @TagName(DropConfig.TAG_NAME)
-public interface DropConfig extends ExecutabilityConfig {
+public interface DropConfig extends InputExecutabilityConfig, ConfigPart {
 
 	/** The tag a {@link DropConfig} is written with in a list of drops. */
 	String TAG_NAME = "drop";
@@ -72,6 +75,70 @@ public interface DropConfig extends ExecutabilityConfig {
 	/** Configuration name for {@link #getActions()}. */
 	String ACTIONS = "actions";
 
+	/** Configuration name for {@link #getAs()}. */
+	String AS = "as";
+
+	/** Configuration name for {@link #getTargetAs()}. */
+	String TARGET_AS = "target-as";
+
+	/** Configuration name for {@link #getParentAs()}. */
+	String PARENT_AS = "parent-as";
+
+	/** Configuration name for {@link #getBeforeAs()}. */
+	String BEFORE_AS = "before-as";
+
+	/** Name of the argument holding the dropped objects when no other {@link #getAs() name} is given. */
+	String OBJECTS_ARGUMENT = "objects";
+
+	/**
+	 * The name of the argument holding the dropped objects, the main argument of the
+	 * {@link #getActions() actions} and a variable of the {@link #getRefuseIf() refusal function}.
+	 *
+	 * <p>
+	 * Without a name, the argument is called {@value #OBJECTS_ARGUMENT}.
+	 * </p>
+	 */
+	@Name(AS)
+	@Nullable
+	String getAs();
+
+	/**
+	 * The name of the argument holding the item the drop is made onto.
+	 *
+	 * <p>
+	 * Without a name, the argument is called {@value DropArguments#TARGET}. Only a drop on the
+	 * element as a whole or onto a single item has a target; naming it for any other drop is a
+	 * configuration error.
+	 * </p>
+	 */
+	@Name(TARGET_AS)
+	@Nullable
+	String getTargetAs();
+
+	/**
+	 * The name of the argument holding the object the dropped objects are inserted under.
+	 *
+	 * <p>
+	 * Without a name, the argument is called {@value DropArguments#PARENT}. Only an insertion into a
+	 * tree has a parent; naming it for any other drop is a configuration error.
+	 * </p>
+	 */
+	@Name(PARENT_AS)
+	@Nullable
+	String getParentAs();
+
+	/**
+	 * The name of the argument holding the item the dropped objects are inserted before.
+	 *
+	 * <p>
+	 * Without a name, the argument is called {@value DropArguments#BEFORE}. Only an insertion has
+	 * such an item; naming it for any other drop is a configuration error.
+	 * </p>
+	 */
+	@Name(BEFORE_AS)
+	@Nullable
+	String getBeforeAs();
+
 	/**
 	 * The {@link DragConfig#getKind() kinds} of the drags this drop accepts.
 	 *
@@ -89,10 +156,12 @@ public interface DropConfig extends ExecutabilityConfig {
 
 	/**
 	 * A {@link ViewChannel} the target item is written to before the {@link #getActions() actions}
-	 * run, so they can read what was dropped on.
+	 * run.
 	 *
 	 * <p>
-	 * Unset (default) leaves the target unpublished. A drop on the element as a whole has no target
+	 * The actions see the target as an argument (see {@link #getTargetAs()}); the channel is for
+	 * what has to see it as the state of the view, such as a dialog bound to it. Unset (default)
+	 * leaves the target unpublished. A drop on the element as a whole has no target
 	 * item, and writes {@code null} where a channel is declared anyway. An insertion has no target
 	 * item either, but the item it inserts before, see {@link #getBeforeChannel()}; declaring a
 	 * target channel there is a configuration error.
@@ -105,9 +174,11 @@ public interface DropConfig extends ExecutabilityConfig {
 
 	/**
 	 * A {@link ViewChannel} the object the dropped objects are inserted under is written to before
-	 * the {@link #getActions() actions} run, so they can add the objects to its children.
+	 * the {@link #getActions() actions} run.
 	 *
 	 * <p>
+	 * The actions see the parent as an argument (see {@link #getParentAs()}); the channel publishes
+	 * it as the state of the view.
 	 * Only an insertion into a tree has such a parent: the object whose children the dropped
 	 * objects become, which is the object the tree is built from for an insertion among the
 	 * top-level nodes - or {@code null} where that object is displayed as a node itself. Declaring
@@ -122,9 +193,11 @@ public interface DropConfig extends ExecutabilityConfig {
 
 	/**
 	 * A {@link ViewChannel} the item the dropped objects are inserted before is written to before
-	 * the {@link #getActions() actions} run, so they can place the objects there.
+	 * the {@link #getActions() actions} run.
 	 *
 	 * <p>
+	 * The actions see the item as an argument (see {@link #getBeforeAs()}); the channel publishes it
+	 * as the state of the view.
 	 * Only an insertion - a drop at a place in the order of the items - has such an item; it is
 	 * {@code null} for an insertion at the end. Declaring this channel for any other drop is a
 	 * configuration error. Unset (default) leaves the item unpublished.
@@ -140,28 +213,31 @@ public interface DropConfig extends ExecutabilityConfig {
 	 * decide over.
 	 *
 	 * <p>
-	 * Only a drop onto a single item has a target to decide over; declaring rules here for any
-	 * other drop is a configuration error. Empty (default) accepts every item.
+	 * A script rule sees the target item as the variable {@value DropArguments#TARGET}, or by the
+	 * name given with {@link #getTargetAs()}. Only a drop onto a single item has a target to decide
+	 * over; declaring rules here for any other drop is a configuration error. Empty (default)
+	 * accepts every item.
 	 * </p>
 	 */
 	@Name(TARGET_EXECUTABILITY)
+	@Supplies(value = DropArguments.TARGET, renamedBy = TARGET_AS)
 	@EntryTag(RULE)
 	List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getTargetExecutability();
 
 	/**
-	 * TL-Script function computing why a drop must not be made, from the dragged objects and the
-	 * objects the drop refers to at its place.
+	 * TL-Script computing why a drop must not be made, from the dragged objects and the objects the
+	 * drop refers to at its place.
 	 *
 	 * <p>
-	 * The first argument is the list of dragged objects. The objects the drop refers to follow it,
-	 * and depend on what the drop is made on: a drop on the element as a whole or onto a single item
-	 * gets the target, {@code objects -> target -> reason}, which is the item dropped onto, or
-	 * {@code null} for a drop on the element as a whole; an insertion into a list gets the item the
-	 * objects are inserted before, {@code objects -> before -> reason}, which is {@code null} for an
-	 * insertion at the end; an insertion into a tree gets the object the objects are inserted under
-	 * before it, {@code objects -> parent -> before -> reason}. A function deciding over the dragged
-	 * objects alone is written {@code objects -> reason} for every drop: surplus arguments of a
-	 * function with fewer parameters are ignored.
+	 * Uses the arguments of the drop as variables, without declaring them: the list of dragged
+	 * objects ({@value #OBJECTS_ARGUMENT}, see {@link #getAs()}) and the objects the drop refers to,
+	 * which depend on what the drop is made on. A drop on the element as a whole or onto a single
+	 * item has the target ({@value DropArguments#TARGET}, see {@link #getTargetAs()}), which is the
+	 * item dropped onto, or {@code null} for a drop on the element as a whole; an insertion into a
+	 * list has the item the objects are inserted before ({@value DropArguments#BEFORE}, see
+	 * {@link #getBeforeAs()}), which is {@code null} for an insertion at the end; an insertion into
+	 * a tree has in addition the object the objects are inserted under ({@value DropArguments#PARENT},
+	 * see {@link #getParentAs()}).
 	 * </p>
 	 *
 	 * <p>
@@ -171,11 +247,17 @@ public interface DropConfig extends ExecutabilityConfig {
 	 * </p>
 	 */
 	@Name(REFUSE_IF)
+	@ScriptContextVariables(DropArguments.Variables.class)
 	Expr getRefuseIf();
 
 	/**
-	 * The chain of actions applying the drop, receiving the dropped objects as the input of its
-	 * first action.
+	 * The chain of actions applying the drop.
+	 *
+	 * <p>
+	 * The actions run with the arguments of the drop: the dropped objects as main argument (see
+	 * {@link #getAs()}) and the objects the drop refers to at its place, see
+	 * {@link #getRefuseIf()}.
+	 * </p>
 	 */
 	@Name(ACTIONS)
 	@DefaultContainer

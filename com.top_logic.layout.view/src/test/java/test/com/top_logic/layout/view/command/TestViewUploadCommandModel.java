@@ -32,6 +32,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.UploadCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
@@ -147,7 +148,7 @@ public class TestViewUploadCommandModel extends TestCase {
 			};
 
 		ViewUploadCommandModel model =
-			new ViewUploadCommandModel(command, config, null, rule);
+			new ViewUploadCommandModel(command, config, (ViewChannel) null, rule);
 
 		return model.upload(context, List.of(file(FAILING_FILE), file(OTHER_FILE)));
 	}

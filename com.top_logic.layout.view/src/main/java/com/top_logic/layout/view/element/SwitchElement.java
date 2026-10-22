@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
@@ -22,16 +21,20 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputRefFormat;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.SingleInput;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -63,10 +66,7 @@ public class SwitchElement implements UIElement {
 	 * Configuration for {@link SwitchElement}.
 	 */
 	@TagName("switch")
-	public interface Config extends UIElement.Config {
-
-		/** Configuration name for {@link #getInput()}. */
-		String INPUT = "input";
+	public interface Config extends UIElement.Config, SingleInput {
 
 		/** Configuration name for {@link #getCases()}. */
 		String CASES = "cases";
@@ -82,13 +82,19 @@ public class SwitchElement implements UIElement {
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * The channel whose current value is passed to every {@code <case>} test predicate to choose
+		 * The channel whose current value every {@code <case>} test predicate decides on to choose
 		 * the visible content.
+		 *
+		 * <p>
+		 * The predicates see the value as a variable named after the channel, or by the name given
+		 * with {@code as}: {@code input="selection as ticket"}.
+		 * </p>
 		 */
+		@Override
 		@Name(INPUT)
-		@Format(ChannelRefFormat.class)
+		@Format(InputRefFormat.class)
 		@Mandatory
-		ChannelRef getInput();
+		InputRef getInput();
 
 		/**
 		 * The cases, evaluated in order; the first matching case is shown.
@@ -133,7 +139,7 @@ public class SwitchElement implements UIElement {
 	 * Configuration for a single {@code <case>} of a {@link SwitchElement}.
 	 */
 	@TagName("case")
-	public interface CaseConfig extends ConfigurationItem {
+	public interface CaseConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getId()}. */
 		String ID = "id";
@@ -158,12 +164,18 @@ public class SwitchElement implements UIElement {
 		String CONTENT = "content";
 
 		/**
-		 * TL-Script predicate called with the current value of the switch's
-		 * {@link Config#getInput() input} channel; this case is chosen when it returns {@code true}.
+		 * TL-Script predicate over the current value of the switch's {@link Config#getInput() input}
+		 * channel; this case is chosen when it returns {@code true}.
+		 *
+		 * <p>
+		 * The predicate sees the value as a variable named after the channel, or by its {@code as}
+		 * name, e.g. {@code input="selectedDemo as demo"} with {@code test="$demo == 'table'"}.
+		 * </p>
 		 */
 		@Name(TEST)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTest();
 
 		/**
@@ -179,7 +191,7 @@ public class SwitchElement implements UIElement {
 		List<UIElement.Config> getContent();
 	}
 
-	private final ChannelRef _inputRef;
+	private final InputRef _input;
 
 	private final List<SwitchCase> _cases;
 
@@ -194,11 +206,11 @@ public class SwitchElement implements UIElement {
 	 */
 	@CalledByReflection
 	public SwitchElement(InstantiationContext context, Config config) {
-		_inputRef = config.getInput();
+		_input = config.getInput();
 		_observedTypeRefs = config.getObservedTypes();
 		_cases = new ArrayList<>();
 		for (CaseConfig caseConfig : config.getCases()) {
-			QueryExecutor test = QueryExecutor.compile(caseConfig.getTest());
+			QueryExecutor test = InputScript.compile(caseConfig, CaseConfig.TEST);
 			List<UIElement> content = caseConfig.getContent().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
@@ -222,7 +234,7 @@ public class SwitchElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		ViewChannel input = context.resolveChannel(_inputRef);
+		ViewChannel input = context.resolveChannel(_input.getChannel());
 		ReactSwitchControl result =
 			new ReactSwitchControl(context, input, _cases, _default, ObservedTypes.resolve(_observedTypeRefs));
 		result.setCssClass(_cssClass);

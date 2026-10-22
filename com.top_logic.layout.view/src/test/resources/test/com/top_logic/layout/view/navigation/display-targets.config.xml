@@ -5,7 +5,7 @@
 			default="true"
 		>
 			<show view="mounts-shared.view.xml"
-				label-expr="x -> $x"
+				label-expr="$object"
 			>
 				<bind channel="item"/>
 			</show>
@@ -16,7 +16,7 @@
 					<en>Detail</en>
 				</label>
 				<bind channel="value"
-					expr="x -> $x"
+					expr="$object"
 				/>
 			</show>
 		</target>

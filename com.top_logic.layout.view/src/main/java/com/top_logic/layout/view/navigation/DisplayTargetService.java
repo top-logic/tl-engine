@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +27,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -33,8 +36,13 @@ import com.top_logic.layout.view.ViewConfig;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelConfig;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ActionScriptVariables;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.util.model.ModelService;
 
@@ -54,7 +62,7 @@ import com.top_logic.util.model.ModelService;
  *       &lt;target type="demo.tickets:Ticket"&gt;
  *         &lt;show view="milestones.view.xml"&gt;
  *           &lt;bind channel="milestone"
- *             expr="t -&gt; $t.get(`demo.tickets:Ticket#milestone`)"
+ *             expr="$object.get(`demo.tickets:Ticket#milestone`)"
  *           /&gt;
  *         &lt;/show&gt;
  *         &lt;show view="ticket-detail.view.xml"&gt;
@@ -65,6 +73,11 @@ import com.top_logic.util.model.ModelService;
  *   &lt;/instance&gt;
  * &lt;/config&gt;
  * </pre>
+ *
+ * <p>
+ * The scripts of a target - {@link BindConfig#getExpr()} and {@link ShowConfig#getLabelExpr()} -
+ * see the object being displayed as the variable {@value #OBJECT}.
+ * </p>
  *
  * <p>
  * Declaring the targets in one place rather than at the views displaying the objects lets an object
@@ -79,6 +92,17 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 })
 public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetService.Config> {
+
+	/**
+	 * Name of the variable holding the object being displayed in the scripts of a target.
+	 */
+	public static final String OBJECT = "object";
+
+	/**
+	 * The scope the scripts of a target are compiled in: the object being displayed, named
+	 * {@value #OBJECT}.
+	 */
+	public static final ActionScope OBJECT_SCOPE = ActionScope.single(OBJECT);
 
 	/**
 	 * Configuration of the {@link DisplayTargetService}.
@@ -112,7 +136,10 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 	/**
 	 * Where the objects of one model type are displayed.
 	 */
-	public interface TargetConfig extends ConfigurationItem {
+	public interface TargetConfig extends ConfigurationItem, ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getType()}. */
 		String TYPE = "type";
@@ -156,12 +183,30 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		@DefaultContainer
 		@Mandatory
 		List<ShowConfig> getShows();
+
+		/**
+		 * The scripts of the {@link #getShows() views} see the object being displayed as the
+		 * variable {@value DisplayTargetService#OBJECT}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getShows(), part)) {
+				return OBJECT_SCOPE;
+			}
+			return outer;
+		}
 	}
 
 	/**
 	 * One view displaying the object, and the values its channels receive.
+	 *
+	 * <p>
+	 * The scripts see the object being displayed as the variable {@value DisplayTargetService#OBJECT}
+	 * in a display target; in a {@link ShowViewAction} they see the arguments of
+	 * the action chain, like any script of the chain.
+	 * </p>
 	 */
-	public interface ShowConfig extends ConfigurationItem {
+	public interface ShowConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getView()}. */
 		String VIEW = "view";
@@ -209,7 +254,11 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		ResKey getLabel();
 
 		/**
-		 * Function computing the label of the displayed view from the object being displayed.
+		 * Script computing the label of the displayed view from the object being displayed.
+		 *
+		 * <p>
+		 * The script uses the object as a variable without declaring it, see {@link ShowConfig}.
+		 * </p>
 		 *
 		 * <p>
 		 * Takes precedence over the fixed label. A view that the user reaches by drilling down is
@@ -219,6 +268,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		 */
 		@Name(LABEL_EXPR)
 		@Nullable
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getLabelExpr();
 
 		/**
@@ -235,7 +285,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 	/**
 	 * The value one channel of a displayed view receives.
 	 */
-	public interface BindConfig extends ConfigurationItem {
+	public interface BindConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getChannel()}. */
 		String CHANNEL = "channel";
@@ -251,14 +301,16 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 		String getChannel();
 
 		/**
-		 * Function computing the channel value from the object being displayed.
+		 * Script computing the channel value from the object being displayed.
 		 *
 		 * <p>
+		 * The script uses the object as a variable without declaring it, see {@link ShowConfig}.
 		 * Empty passes the displayed object itself.
 		 * </p>
 		 */
 		@Name(EXPR)
 		@Nullable
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getExpr();
 	}
 
@@ -307,7 +359,7 @@ public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetSe
 			return null;
 		}
 
-		return new DisplayTarget(type, config.isDefault(), ShowStep.fromConfigs(config.getShows()));
+		return new DisplayTarget(type, config.isDefault(), ShowStep.fromConfigs(config.getShows(), OBJECT_SCOPE));
 	}
 
 	/**

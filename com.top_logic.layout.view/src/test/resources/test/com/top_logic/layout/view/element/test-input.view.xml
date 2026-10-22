@@ -26,7 +26,7 @@
 					<en>Search</en>
 				</placeholder>
 				<on-submit>
-					<execute-script function="entered -> $entered"/>
+					<execute-script function="$value"/>
 					<write-channel name="state"/>
 				</on-submit>
 			</value-input>
@@ -50,7 +50,7 @@
 			</value-input>
 			<value-input
 				multiple="true"
-				options="p -> all(`tl.accounts:Person`)"
+				options="all(`tl.accounts:Person`)"
 				type="tl.accounts:Person"
 				value="owners"
 			>
@@ -173,7 +173,7 @@
 				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
 			</value-input>
 			<value-input
-				options="x -> ['No day', 'Monday', 'Tuesday']"
+				options="['No day', 'Monday', 'Tuesday']"
 				value="term"
 			>
 				<inputs>
@@ -185,7 +185,7 @@
 			</value-input>
 			<value-input
 				option-order="by-label"
-				options="x -> ['No day', 'Monday', 'Tuesday']"
+				options="['No day', 'Monday', 'Tuesday']"
 				value="term"
 			>
 				<inputs>

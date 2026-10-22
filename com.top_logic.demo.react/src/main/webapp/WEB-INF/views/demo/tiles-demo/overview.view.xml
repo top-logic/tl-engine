@@ -17,7 +17,7 @@
 		<channel name="navPath"/>
 		<channel name="selectedPerson"/>
 		<derived-channel name="depth"
-			expr="p -> $p.size()"
+			expr="$navPath.size()"
 			inputs="navPath"
 		/>
 	</channels>
@@ -30,7 +30,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-arrow-left"
-				input="depth"
+				inputs="depth"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -38,7 +38,7 @@
 					<de>Zurück</de>
 				</label>
 				<executability>
-					<visible-if expr="d -> $d > 0"/>
+					<visible-if expr="$depth > 0"/>
 				</executability>
 				<navigate-pop/>
 			</generic-command>

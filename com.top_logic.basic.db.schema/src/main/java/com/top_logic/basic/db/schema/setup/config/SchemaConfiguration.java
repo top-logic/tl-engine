@@ -106,6 +106,12 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 
 	/**
 	 * Whether the types support more branches than trunk.
+	 * 
+	 * <p>
+	 * Changing the value for an existing database converts its tables when the application starts:
+	 * the branch columns are added and filled with the trunk, or dropped. Dropping the branch
+	 * columns requires that the database contains only the trunk.
+	 * </p>
 	 */
 	@BooleanDefault(DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE)
 	@Name(MULTIPLE_BRANCHES_ATTRIBUTE)

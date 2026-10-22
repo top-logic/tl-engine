@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.DebugHelper;
@@ -36,6 +37,9 @@ import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.DBSchemaPart;
 import com.top_logic.basic.db.model.DBTable;
+import com.top_logic.basic.db.sql.SQLFactory;
+import com.top_logic.basic.db.sql.SQLStatement;
+import com.top_logic.basic.db.sql.SQLTable;
 import com.top_logic.basic.io.WrappedIOException;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
@@ -776,16 +780,8 @@ public class DBSchemaUtils {
 	 * Adapts the primary key and the indexes of an existing table to a target definition.
 	 *
 	 * <p>
-	 * The primary key is replaced, if its columns differ from the primary key of the target
-	 * definition. An index of the current definition is dropped and created in its target form, if
-	 * the target definition has an index with the same name but other columns, column order,
-	 * uniqueness or compression. Indexes that exist only in one of the definitions are not touched.
-	 * </p>
-	 *
-	 * <p>
-	 * If the database cannot change the primary key of the table in place (see
-	 * {@link DBHelper#canChangePrimaryKey(boolean)}), the table is rebuilt, see
-	 * {@link #rebuildTable(Log, PooledConnection, DBTable, DBTable)}.
+	 * Shortcut for {@link #alignTable(Log, PooledConnection, DBTable, DBTable, Collection, Map)}
+	 * without column changes.
 	 * </p>
 	 *
 	 * @param log
@@ -795,41 +791,128 @@ public class DBSchemaUtils {
 	 * @param current
 	 *        The definition the existing table was created from, part of a {@link DBSchema}.
 	 * @param target
-	 *        The target definition of the table with the same name and columns, part of a
-	 *        {@link DBSchema}.
+	 *        The target definition of the table with the same name, part of a {@link DBSchema}.
 	 * @return Whether the table was changed.
 	 * @throws SQLException
 	 *         If the database access fails.
 	 */
 	public static boolean alignKeys(Log log, PooledConnection connection, DBTable current, DBTable target)
 			throws SQLException {
+		return alignTable(log, connection, current, target, Collections.emptyList(), Collections.emptyMap());
+	}
+
+	/**
+	 * Adapts the primary key, the indexes and the given columns of an existing table to a target
+	 * definition.
+	 *
+	 * <p>
+	 * The primary key is replaced, if its columns differ from the primary key of the target
+	 * definition. An index of the current definition is dropped and created in its target form, if
+	 * the target definition has an index with the same name but other columns, column order,
+	 * uniqueness or compression. An index of the current definition that only exists there is kept,
+	 * unless it contains a dropped column. Indexes that exist only in the target definition are not
+	 * created.
+	 * </p>
+	 *
+	 * <p>
+	 * The given columns are dropped, after the primary key and the indexes containing them have been
+	 * dropped. The given columns of the target definition are added and filled for the existing
+	 * rows, before the primary key and the indexes are created. A mandatory column is added as
+	 * nullable column and declared mandatory after it has been filled. Other differences in the
+	 * columns of the definitions are not considered.
+	 * </p>
+	 *
+	 * <p>
+	 * If the database cannot change the primary key of the table in place (see
+	 * {@link DBHelper#canChangePrimaryKey(boolean)}), the table is rebuilt, see
+	 * {@link #rebuildTable(Log, PooledConnection, DBTable, DBTable, Map)}.
+	 * </p>
+	 *
+	 * @param log
+	 *        The {@link Log} to report the changes to.
+	 * @param connection
+	 *        The connection to the database containing the table.
+	 * @param current
+	 *        The definition the existing table was created from, part of a {@link DBSchema}.
+	 * @param target
+	 *        The target definition of the table with the same name, part of a {@link DBSchema}.
+	 * @param dropColumns
+	 *        Database names of the columns of the current definition to drop.
+	 * @param addColumns
+	 *        Database names of the columns of the target definition to add, mapped to the SQL
+	 *        expression computing the value of an existing row. The expression may reference the
+	 *        other columns of the row.
+	 * @return Whether the table was changed.
+	 * @throws SQLException
+	 *         If the database access fails.
+	 */
+	public static boolean alignTable(Log log, PooledConnection connection, DBTable current, DBTable target,
+			Collection<String> dropColumns, Map<String, String> addColumns) throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 		boolean primaryKeyChanged = !columnNames(current.getPrimaryKey()).equals(columnNames(target.getPrimaryKey()));
 		List<DBIndex> changedIndexes = new ArrayList<>();
-		for (DBIndex targetIndex : target.getIndices()) {
-			DBIndex currentIndex = current.getIndex(targetIndex.getName());
-			if (currentIndex != null && !sameIndex(currentIndex, targetIndex)) {
-				changedIndexes.add(currentIndex);
+		List<DBIndex> droppedIndexes = new ArrayList<>();
+		for (DBIndex currentIndex : current.getIndices()) {
+			DBIndex targetIndex = target.getIndex(currentIndex.getName());
+			if (targetIndex != null) {
+				if (!sameIndex(currentIndex, targetIndex)) {
+					changedIndexes.add(currentIndex);
+				}
+			} else if (containsAny(currentIndex, dropColumns)) {
+				droppedIndexes.add(currentIndex);
 			}
 		}
-		if (!primaryKeyChanged && changedIndexes.isEmpty()) {
+		if (!primaryKeyChanged && changedIndexes.isEmpty() && droppedIndexes.isEmpty() && dropColumns.isEmpty()
+			&& addColumns.isEmpty()) {
 			return false;
 		}
 
 		if (primaryKeyChanged && !sqlDialect.canChangePrimaryKey(current.getPKeyStorage())) {
-			rebuildTable(log, connection, current, target);
+			rebuildTable(log, connection, current, target, addColumns);
 			return true;
 		}
 
 		String tableName = target.getDBName();
 		for (DBIndex currentIndex : changedIndexes) {
-			execute(connection, sqlDialect.dropIndex(CreateStatementBuilder.qName(sqlDialect, currentIndex), tableName));
+			dropIndex(connection, currentIndex);
+		}
+		for (DBIndex currentIndex : droppedIndexes) {
+			dropIndex(connection, currentIndex);
+			log.info("Dropped index '" + currentIndex.getName() + "' of table '" + tableName + "'.");
 		}
 		if (primaryKeyChanged) {
 			String constraintName = primaryKeyName(connection, tableName);
 			if (constraintName != null) {
 				execute(connection, sqlDialect.dropPrimaryKey(tableName, constraintName));
 			}
+		}
+
+		for (String column : dropColumns) {
+			executeStatement(connection, SQLFactory.dropColumn(SQLFactory.table(tableName), column));
+			log.info("Dropped column '" + column + "' of table '" + tableName + "'.");
+		}
+		for (Entry<String, String> entry : addColumns.entrySet()) {
+			DBColumn column = target.getColumn(entry.getKey());
+			if (column == null) {
+				throw new IllegalArgumentException(
+					"No column '" + entry.getKey() + "' in the target definition of table '" + tableName + "'.");
+			}
+			SQLTable table = SQLFactory.table(tableName);
+			executeStatement(connection, SQLFactory.addColumn(table, column, null).setMandatory(false));
+			int rows = executeUpdate(connection, "UPDATE " + sqlDialect.tableRef(tableName) + " SET "
+				+ sqlDialect.columnRef(column.getDBName()) + " = " + entry.getValue());
+			if (column.isMandatory()) {
+				executeStatement(connection,
+					SQLFactory.modifyColumnMandatory(table, column.getDBName(), column.getType(), true)
+						.setBinary(column.isBinary())
+						.setSize(column.getSize())
+						.setPrecision(column.getPrecision()));
+			}
+			log.info("Added column '" + column.getDBName() + "' to table '" + tableName + "', filled " + rows
+				+ " rows.");
+		}
+
+		if (primaryKeyChanged) {
 			DBPrimary targetKey = target.getPrimaryKey();
 			if (targetKey != null) {
 				execute(connection, sqlDialect.addPrimaryKey(tableName, columnDBNames(targetKey)));
@@ -850,11 +933,8 @@ public class DBSchemaUtils {
 	 * Rebuilds an existing table in a target definition, keeping its rows.
 	 *
 	 * <p>
-	 * The rows are copied to a table created in the target definition, which replaces the existing
-	 * table. All indexes of the target definition are created, as well as the indexes of the
-	 * current definition that the target definition does not have. Other database objects bound to
-	 * the existing table (e.g. grants, or indexes not declared in the current definition) are
-	 * dropped with it.
+	 * Shortcut for {@link #rebuildTable(Log, PooledConnection, DBTable, DBTable, Map)} without
+	 * added columns.
 	 * </p>
 	 *
 	 * @param log
@@ -864,14 +944,46 @@ public class DBSchemaUtils {
 	 * @param current
 	 *        The definition the existing table was created from, part of a {@link DBSchema}.
 	 * @param target
-	 *        The target definition of the table with the same name and columns, part of a
-	 *        {@link DBSchema}.
+	 *        The target definition of the table with the same name, part of a {@link DBSchema}.
+	 * @throws SQLException
+	 *         If the database access fails, or the name used for the temporary table is already
+	 *         taken.
+	 */
+	public static void rebuildTable(Log log, PooledConnection connection, DBTable current, DBTable target)
+			throws SQLException {
+		rebuildTable(log, connection, current, target, Collections.emptyMap());
+	}
+
+	/**
+	 * Rebuilds an existing table in a target definition, keeping its rows.
+	 *
+	 * <p>
+	 * The rows are copied to a table created in the target definition, which replaces the existing
+	 * table. The copy contains the columns of the target definition that exist in the current
+	 * definition and the given added columns; columns of the current definition missing in the
+	 * target definition are dropped. All indexes of the target definition are created, as well as
+	 * the indexes of the current definition that the target definition does not have and whose
+	 * columns all exist in the target definition. Other database objects bound to the existing table
+	 * (e.g. grants, or indexes not declared in the current definition) are dropped with it.
+	 * </p>
+	 *
+	 * @param log
+	 *        The {@link Log} to report the changes to.
+	 * @param connection
+	 *        The connection to the database containing the table.
+	 * @param current
+	 *        The definition the existing table was created from, part of a {@link DBSchema}.
+	 * @param target
+	 *        The target definition of the table with the same name, part of a {@link DBSchema}.
+	 * @param addColumns
+	 *        Database names of the columns of the target definition missing in the current
+	 *        definition, mapped to the SQL expression computing the value of an existing row.
 	 * @throws SQLException
 	 *         If the database access fails, or the name used for the temporary table is already
 	 *         taken (e.g. by an aborted rebuild, whose rows must then be recovered manually).
 	 */
-	public static void rebuildTable(Log log, PooledConnection connection, DBTable current, DBTable target)
-			throws SQLException {
+	public static void rebuildTable(Log log, PooledConnection connection, DBTable current, DBTable target,
+			Map<String, String> addColumns) throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
 		String tableName = target.getDBName();
 		String tmpName = REBUILD_TABLE_PREFIX + Integer.toHexString(tableName.hashCode()).toUpperCase();
@@ -890,14 +1002,26 @@ public class DBSchemaUtils {
 		executeSQL(connection, toSQL(sqlDialect, tmpTable));
 
 		StringBuilder columns = new StringBuilder();
+		StringBuilder values = new StringBuilder();
 		for (DBColumn column : target.getColumns()) {
+			String columnName = column.getDBName();
+			String value;
+			if (addColumns.containsKey(columnName)) {
+				value = addColumns.get(columnName);
+			} else if (current.getColumn(columnName) != null) {
+				value = sqlDialect.columnRef(columnName);
+			} else {
+				continue;
+			}
 			if (columns.length() > 0) {
 				columns.append(", ");
+				values.append(", ");
 			}
-			columns.append(sqlDialect.columnRef(column.getDBName()));
+			columns.append(sqlDialect.columnRef(columnName));
+			values.append(value);
 		}
 		int rows = executeUpdate(connection,
-			"INSERT INTO " + sqlDialect.tableRef(tmpName) + " (" + columns + ") SELECT " + columns + " FROM "
+			"INSERT INTO " + sqlDialect.tableRef(tmpName) + " (" + columns + ") SELECT " + values + " FROM "
 				+ sqlDialect.tableRef(tableName));
 		execute(connection, "DROP TABLE " + sqlDialect.tableRef(tableName));
 		execute(connection, sqlDialect.renameTable(tmpName, tableName));
@@ -906,12 +1030,40 @@ public class DBSchemaUtils {
 			executeSQL(connection, toSQL(sqlDialect, index));
 		}
 		for (DBIndex index : current.getIndices()) {
-			if (target.getIndex(index.getName()) == null) {
+			if (target.getIndex(index.getName()) == null && allColumnsIn(index, target)) {
 				executeSQL(connection, toSQL(sqlDialect, index));
 			}
 		}
 		log.info("Rebuilt table '" + tableName + "' with " + rows + " rows, changed primary key from "
 			+ columnNames(current.getPrimaryKey()) + " to " + columnNames(target.getPrimaryKey()) + ".");
+	}
+
+	private static void dropIndex(PooledConnection connection, DBIndex index) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		execute(connection,
+			sqlDialect.dropIndex(CreateStatementBuilder.qName(sqlDialect, index), index.getTable().getDBName()));
+	}
+
+	private static boolean containsAny(DBIndex index, Collection<String> columns) {
+		for (DBColumn column : index.getColumns()) {
+			if (columns.contains(column.getDBName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean allColumnsIn(DBIndex index, DBTable table) {
+		for (DBColumn column : index.getColumns()) {
+			if (table.getColumn(column.getName()) == null) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static void executeStatement(PooledConnection connection, SQLStatement statement) throws SQLException {
+		SQLFactory.query(statement).toSql(connection.getSQLDialect()).executeUpdate(connection);
 	}
 
 	private static boolean sameIndex(DBIndex index1, DBIndex index2) {

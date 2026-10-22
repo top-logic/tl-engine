@@ -7,7 +7,9 @@ package test.com.top_logic.knowledge.service.migration.processors;
 
 import static java.util.Arrays.*;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -16,12 +18,16 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.DatabaseTestSetup;
+import test.com.top_logic.basic.db.schema.SchemaTestSetup;
 import test.com.top_logic.knowledge.service.db2.AbstractDBKnowledgeBaseTest;
 import test.com.top_logic.knowledge.service.db2.SetupKBHelper;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.Decision;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.db.model.DBColumnRef;
@@ -32,6 +38,7 @@ import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -40,25 +47,31 @@ import com.top_logic.dob.meta.MOClass;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.service.Branch;
+import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.processors.AlignTableLayoutProcessor;
+import com.top_logic.util.TLContext;
 
 /**
  * Test of {@link AlignTableLayoutProcessor} converting the tables of an existing database between
- * the layouts of {@link SchemaConfiguration#isBranchLast()}.
+ * the layouts of {@link SchemaConfiguration#isBranchLast()} and
+ * {@link SchemaConfiguration#hasMultipleBranches()}.
  *
  * <p>
  * The test works on a separate knowledge base in the database
- * {@link DatabaseTestSetup#MIGRATION_POOL_NAME}, created with the default layout.
+ * {@link DatabaseTestSetup#MIGRATION_POOL_NAME}, created with the configured layout (multiple
+ * branches, branch column first).
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -105,6 +118,18 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 
 	private static final String LABEL_VALUE = "align-label";
 
+	/** Type referenced by {@link #VERSION_TYPE}. */
+	private static final String DOCUMENT_TYPE = "Document";
+
+	/** Type with the historic reference {@link #DOC_REFERENCE}, which has a branch column. */
+	private static final String VERSION_TYPE = "DocumentVersion";
+
+	/** Historic reference of {@link #VERSION_TYPE}. */
+	private static final String DOC_REFERENCE = "doc";
+
+	/** Branch column of {@link #DOC_REFERENCE}. */
+	private static final String DOC_BRANCH_COLUMN = "DOC_BRC";
+
 	private KnowledgeBaseConfiguration _kbConfig;
 
 	private ConnectionPool _pool;
@@ -119,6 +144,10 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 
 	private ObjectKey _group2Key;
 
+	private ObjectKey _documentKey;
+
+	private ObjectKey _versionKey;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -128,6 +157,8 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 		_setup = new SetupKBHelper(_kbConfig);
 		_kb = _setup.setup();
 
+		KnowledgeObject document;
+		Revision documentRevision;
 		try (Transaction tx = _kb.beginTransaction()) {
 			KnowledgeObject group1 = _kb.createKnowledgeObject(GROUP_TYPE);
 			group1.setAttributeValue(GROUP_NAME, "align-group-1");
@@ -139,11 +170,26 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 			KnowledgeObject label = _kb.createKnowledgeObject(LABEL_TYPE);
 			label.setAttributeValue(LABEL_ATTRIBUTE, LABEL_VALUE);
 			label.setAttributeValue(TARGET_REFERENCE, group1);
+
+			document = _kb.createKnowledgeObject(DOCUMENT_TYPE);
+			document.setAttributeValue("name", "align-document");
+			document.setAttributeValue("size", 0L);
+			document.setAttributeValue("updateRevisionNumber", 0L);
 			tx.commit();
+			documentRevision = tx.getCommitRevision();
 
 			_group1Key = group1.tId();
 			_group2Key = group2.tId();
 			_labelKey = label.tId();
+			_documentKey = document.tId();
+		}
+		try (Transaction tx = _kb.beginTransaction()) {
+			KnowledgeObject version = _kb.createKnowledgeObject(VERSION_TYPE);
+			version.setAttributeValue("revision", 1);
+			version.setAttributeValue(DOC_REFERENCE,
+				_kb.getHistoryManager().getKnowledgeItem(documentRevision, document));
+			tx.commit();
+			_versionKey = version.tId();
 		}
 
 		// The database of the application was created with the configured schema.
@@ -155,6 +201,8 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 		} finally {
 			_pool.releaseWriteConnection(connection);
 		}
+		assertTrue(storedSchema().hasMultipleBranches());
+		assertFalse(storedSchema().isBranchLast());
 	}
 
 	@Override
@@ -172,24 +220,80 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 	 */
 	public void testConvertBranchLast() throws Exception {
 		try {
-			assertLayout(false);
+			assertLayout(true, false);
 
-			BufferingProtocol log = align(true);
+			BufferingProtocol log = align(true, true);
 			assertTrue("No tables changed: " + log.getInfos(),
 				log.getInfos().stream().anyMatch(info -> info.contains("Changed primary key")));
-			assertLayout(true);
-			assertTrue(storedSchema().isBranchLast());
-			assertData(true);
+			assertLayout(true, true);
+			assertStored(true, true);
+			assertData(true, true);
 
-			align(false);
-			assertLayout(false);
-			assertFalse(storedSchema().isBranchLast());
-			assertData(false);
+			align(true, false);
+			assertLayout(true, false);
+			assertStored(true, false);
+			assertData(true, false);
 		} finally {
-			if (storedSchema().isBranchLast()) {
-				align(false);
-			}
+			restoreDefaultLayout();
 		}
+	}
+
+	/**
+	 * Converts the tables to a single branch and back to multiple branches.
+	 */
+	public void testConvertSingleBranch() throws Exception {
+		try {
+			align(false, false);
+			assertLayout(false, false);
+			assertStored(false, false);
+			assertData(false, false);
+
+			align(true, false);
+			assertLayout(true, false);
+			assertTrunk(tableName(LABEL_TYPE), BRANCH, 1);
+			assertTrunk(AbstractFlexDataManager.FLEX_DATA_DB_NAME, BRANCH, 1);
+			assertTrunk(tableName(VERSION_TYPE), DOC_BRANCH_COLUMN, 1);
+			assertStored(true, false);
+			assertData(true, false);
+			assertCreateBranch();
+		} finally {
+			restoreDefaultLayout();
+		}
+	}
+
+	/**
+	 * Converts both layout options at once.
+	 */
+	public void testCombinedConversion() throws Exception {
+		try {
+			align(false, true);
+			assertLayout(false, true);
+			assertStored(false, true);
+			assertData(false, true);
+
+			align(true, true);
+			assertLayout(true, true);
+			assertStored(true, true);
+			assertData(true, true);
+		} finally {
+			restoreDefaultLayout();
+		}
+	}
+
+	/**
+	 * A database with a branch other than the trunk is not converted to a single branch.
+	 */
+	public void testNoSingleBranchWithOtherBranches() throws Exception {
+		HistoryManager hm = _kb.getHistoryManager();
+		Branch branch = hm.createBranch(hm.getTrunk(), hm.getRevision(hm.getLastRevision()), null);
+		assertTrue(branch.getBranchId() != TLContext.TRUNK_ID);
+		String storedBefore = storedSchemaRaw();
+
+		BufferingProtocol log = align(false, false, true);
+		assertTrue("Missing error: " + log.getErrors(), log.getErrors().stream()
+			.anyMatch(error -> error.contains(Long.toString(branch.getBranchId()))));
+		assertEquals("Stored schema changed.", storedBefore, storedSchemaRaw());
+		assertLayout(true, false);
 	}
 
 	/**
@@ -207,71 +311,162 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 			_pool.releaseWriteConnection(connection);
 		}
 
-		BufferingProtocol log = align(false);
+		BufferingProtocol log = align(true, false);
 		assertFalse("No changes expected: " + log.getInfos(),
 			log.getInfos().stream().anyMatch(info -> info.contains("layout") || info.contains("Changed")));
 		assertEquals(storedBefore, storedSchemaRaw());
-		assertLayout(false);
+		assertLayout(true, false);
 	}
 
 	/**
-	 * The decision whether a conversion is necessary.
+	 * The decision whether a conversion is necessary and the derivation of the target schema.
 	 */
-	public void testHasLayoutChange() throws ConfigurationException {
-		SchemaConfiguration configured = KBUtils.getSchemaConfigResolved(_kbConfig).getConfig();
-		SchemaConfiguration branchLast = withBranchLast(configured, true);
+	public void testTargetSchema() throws ConfigurationException {
+		SchemaConfiguration configured = configuredSchema(true, false);
+		SchemaConfiguration branchLast = configuredSchema(true, true);
+		SchemaConfiguration singleBranch = configuredSchema(false, false);
 
 		assertFalse(AlignTableLayoutProcessor.hasLayoutChange(configured, configured));
 		assertTrue(AlignTableLayoutProcessor.hasLayoutChange(configured, branchLast));
 		assertTrue(AlignTableLayoutProcessor.hasLayoutChange(branchLast, configured));
+		assertTrue(AlignTableLayoutProcessor.hasLayoutChange(configured, singleBranch));
 
 		SchemaConfiguration target = AlignTableLayoutProcessor.withConfiguredLayout(configured, branchLast);
 		assertTrue(target.isBranchLast());
 		assertNotSame(configured, target);
 		assertFalse("Stored schema not modified.", configured.isBranchLast());
+		assertEquals("Types only change with multiple-branches.", item(configured), item(target));
+
+		SchemaConfiguration single = AlignTableLayoutProcessor.withConfiguredLayout(configured, singleBranch);
+		assertFalse(single.hasMultipleBranches());
+		assertEquals(item(singleBranch), item(single));
+		assertFalse(item(configured).equals(item(single)));
+
+		SchemaConfiguration multi = AlignTableLayoutProcessor.withConfiguredLayout(single, configured);
+		assertTrue(multi.hasMultipleBranches());
+		assertEquals(item(configured), item(multi));
 	}
 
-	private BufferingProtocol align(boolean branchLast) throws SQLException {
+	private static String item(SchemaConfiguration schema) {
+		return TypedConfiguration.toString(schema.getMetaObjects().getTypes().get(BasicTypes.ITEM_TYPE_NAME));
+	}
+
+	private void restoreDefaultLayout() throws Exception {
+		SchemaConfiguration stored = storedSchema();
+		if (!stored.hasMultipleBranches() || stored.isBranchLast()) {
+			align(true, false);
+		}
+	}
+
+	private BufferingProtocol align(boolean multipleBranches, boolean branchLast) throws Exception {
+		return align(multipleBranches, branchLast, false);
+	}
+
+	private BufferingProtocol align(boolean multipleBranches, boolean branchLast, boolean expectErrors)
+			throws Exception {
+		SchemaConfiguration configured = configuredSchema(multipleBranches, branchLast);
 		BufferingProtocol log = new BufferingProtocol();
 		PooledConnection connection = _pool.borrowWriteConnection();
 		try {
 			MigrationContext context = new MigrationContext(log, connection) {
 				@Override
 				public SchemaConfiguration getApplicationSchema() {
-					return withBranchLast(super.getApplicationSchema(), branchLast);
+					return configured;
 				}
 			};
 			AlignTableLayoutProcessor processor =
 				TypedConfigUtil.createInstance(TypedConfiguration.newConfigItem(AlignTableLayoutProcessor.Config.class));
 			processor.doMigration(context, log, connection);
-			connection.commit();
+			if (log.hasErrors()) {
+				connection.rollback();
+			} else {
+				connection.commit();
+				assertEquals(multipleBranches, context.hasBranchSupport());
+			}
 		} finally {
 			_pool.releaseWriteConnection(connection);
 		}
-		assertEquals("Errors: " + log.getErrors(), 0, log.getErrors().size());
+		if (!expectErrors) {
+			assertEquals("Errors: " + log.getErrors(), 0, log.getErrors().size());
+		}
 		return log;
 	}
 
-	private void assertLayout(boolean branchLast) throws SQLException {
+	/**
+	 * The resolved application schema with the given layout options.
+	 */
+	private SchemaConfiguration configuredSchema(boolean multipleBranches, boolean branchLast)
+			throws ConfigurationException {
+		SchemaConfiguration schema = KBUtils.getSchemaConfig(_kbConfig).getConfig();
+		schema = SchemaTestSetup.updateMultipleBranches(schema, decision(multipleBranches));
+		schema = SchemaTestSetup.updateBranchLast(schema, decision(branchLast));
+		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
+		return context.getInstance(schema).resolve(context).getConfig();
+	}
+
+	private static Decision decision(boolean value) {
+		return value ? Decision.TRUE : Decision.FALSE;
+	}
+
+	private void assertStored(boolean multipleBranches, boolean branchLast) {
+		SchemaConfiguration stored = storedSchema();
+		assertEquals(multipleBranches, stored.hasMultipleBranches());
+		assertEquals(branchLast, stored.isBranchLast());
+	}
+
+	private void assertLayout(boolean multipleBranches, boolean branchLast) throws SQLException {
 		DBTable label = extract(tableName(LABEL_TYPE));
 		DBTable association = extract(tableName(MEMBERS_ASSOCIATION));
 		DBTable flexData = extract(AbstractFlexDataManager.FLEX_DATA_DB_NAME);
-		if (branchLast) {
-			assertEquals(asList(IDENTIFIER, BRANCH, REV_MAX), primaryKey(label));
-			assertEquals(asList(IDENTIFIER, BRANCH, REV_MAX), primaryKey(association));
-			assertEquals(asList("TARGET_ID", BRANCH, REV_MAX), index(label, TARGET_INDEX));
-			assertEquals(asList("LABEL", BRANCH, REV_MAX), index(label, LABEL_INDEX));
-			assertEquals(asList("SOURCE_ID", BRANCH, REV_MAX), index(association, SOURCE_INDEX));
-			assertEquals(asList(AbstractFlexDataManager.IDENTIFIER_DBNAME, AbstractFlexDataManager.ATTRIBUTE_DBNAME,
-				BRANCH, REV_MAX), primaryKey(flexData));
-		} else {
-			assertEquals(asList(BRANCH, IDENTIFIER, REV_MAX), primaryKey(label));
-			assertEquals(asList(BRANCH, IDENTIFIER, REV_MAX), primaryKey(association));
-			assertEquals(asList(BRANCH, "TARGET_ID", REV_MAX), index(label, TARGET_INDEX));
-			assertEquals(asList(BRANCH, "LABEL", REV_MAX), index(label, LABEL_INDEX));
-			assertEquals(asList(BRANCH, "SOURCE_ID", REV_MAX), index(association, SOURCE_INDEX));
-			assertEquals(asList(BRANCH, AbstractFlexDataManager.IDENTIFIER_DBNAME,
-				AbstractFlexDataManager.ATTRIBUTE_DBNAME, REV_MAX), primaryKey(flexData));
+		DBTable version = extract(tableName(VERSION_TYPE));
+
+		assertEquals(multipleBranches, label.getColumn(BRANCH) != null);
+		assertEquals(multipleBranches, association.getColumn(BRANCH) != null);
+		assertEquals(multipleBranches, flexData.getColumn(BRANCH) != null);
+		assertEquals(multipleBranches, version.getColumn(BRANCH) != null);
+		assertEquals(multipleBranches, version.getColumn(DOC_BRANCH_COLUMN) != null);
+
+		assertEquals(key(multipleBranches, branchLast, IDENTIFIER), primaryKey(label));
+		assertEquals(key(multipleBranches, branchLast, IDENTIFIER), primaryKey(association));
+		assertEquals(key(multipleBranches, branchLast, "TARGET_ID"), index(label, TARGET_INDEX));
+		assertEquals(key(multipleBranches, branchLast, "LABEL"), index(label, LABEL_INDEX));
+		assertEquals(key(multipleBranches, branchLast, "SOURCE_ID"), index(association, SOURCE_INDEX));
+		assertEquals(key(multipleBranches, branchLast, AbstractFlexDataManager.IDENTIFIER_DBNAME,
+			AbstractFlexDataManager.ATTRIBUTE_DBNAME), primaryKey(flexData));
+	}
+
+	/**
+	 * The expected column order of a versioned index with the given key columns.
+	 */
+	private static List<String> key(boolean multipleBranches, boolean branchLast, String... keyColumns) {
+		List<String> result = new ArrayList<>();
+		if (multipleBranches && !branchLast) {
+			result.add(BRANCH);
+		}
+		result.addAll(asList(keyColumns));
+		if (multipleBranches && branchLast) {
+			result.add(BRANCH);
+		}
+		result.add(REV_MAX);
+		return result;
+	}
+
+	private void assertTrunk(String table, String column, int expectedRows) throws SQLException {
+		PooledConnection connection = _pool.borrowReadConnection();
+		try (Statement stmt = connection.createStatement()) {
+			DBHelper sqlDialect = connection.getSQLDialect();
+			try (ResultSet result = stmt.executeQuery("SELECT " + sqlDialect.columnRef(column) + " FROM "
+				+ sqlDialect.tableRef(table))) {
+				int rows = 0;
+				while (result.next()) {
+					assertEquals("Column '" + column + "' of table '" + table + "'.", TLContext.TRUNK_ID,
+						result.getLong(1));
+					rows++;
+				}
+				assertTrue("Too few rows in table '" + table + "'.", rows >= expectedRows);
+			}
+		} finally {
+			_pool.releaseReadConnection(connection);
 		}
 	}
 
@@ -279,11 +474,10 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 	 * Starts a knowledge base on the stored schema and checks that it reads the objects created in
 	 * {@link #setUp()}.
 	 */
-	private void assertData(boolean branchLast) {
-		DBKnowledgeBase kb = new DBKnowledgeBase();
-		kb.initialize(new AssertProtocol(), _kbConfig);
-		kb.startup(new AssertProtocol());
+	private void assertData(boolean multipleBranches, boolean branchLast) throws Exception {
+		DBKnowledgeBase kb = startKB();
 		try {
+			assertEquals(multipleBranches, kb.getMORepository().multipleBranches());
 			assertEquals(branchLast, kb.getMORepository().branchLast());
 
 			KnowledgeItem group1 = resolve(kb, _group1Key);
@@ -299,9 +493,38 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 			assertTrue(links.hasNext());
 			assertSame(group2, links.next().getDestinationObject());
 			assertFalse(links.hasNext());
+
+			KnowledgeItem version = resolve(kb, _versionKey);
+			KnowledgeItem document = (KnowledgeItem) version.getAttributeValue(DOC_REFERENCE);
+			assertNotNull(document);
+			assertEquals(_documentKey.getObjectName(), document.tId().getObjectName());
 		} finally {
 			kb.shutDown();
 		}
+	}
+
+	/**
+	 * Starts a knowledge base on the stored schema and creates a branch in it.
+	 */
+	private void assertCreateBranch() throws Exception {
+		DBKnowledgeBase kb = startKB();
+		try {
+			HistoryManager hm = kb.getHistoryManager();
+			Branch branch = hm.createBranch(hm.getTrunk(), hm.getRevision(hm.getLastRevision()), null);
+			KnowledgeItem label = hm.getKnowledgeItem(branch, Revision.CURRENT, kb.lookupType(LABEL_TYPE),
+				_labelKey.getObjectName());
+			assertNotNull("Object not branched.", label);
+			assertEquals(LABEL_VALUE, label.getAttributeValue(LABEL_ATTRIBUTE));
+		} finally {
+			kb.shutDown();
+		}
+	}
+
+	private DBKnowledgeBase startKB() {
+		DBKnowledgeBase kb = new DBKnowledgeBase();
+		kb.initialize(new AssertProtocol(), _kbConfig);
+		kb.startup(new AssertProtocol());
+		return kb;
 	}
 
 	private static KnowledgeItem resolve(DBKnowledgeBase kb, ObjectKey key) {
@@ -359,12 +582,6 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 		for (DBColumnRef ref : index.getColumnRefs()) {
 			result.add(ref.getName().toUpperCase());
 		}
-		return result;
-	}
-
-	private static SchemaConfiguration withBranchLast(SchemaConfiguration schema, boolean branchLast) {
-		SchemaConfiguration result = TypedConfiguration.copy(schema);
-		result.update(result.descriptor().getProperty(SchemaConfiguration.BRANCH_LAST_ATTRIBUTE), branchLast);
 		return result;
 	}
 

@@ -60,7 +60,9 @@ public class MigrationContext extends TypedAnnotationContainer {
 
 	private boolean _branchSupport;
 
-	private final Util _util;
+	private final Log _log;
+
+	private Util _util;
 
 	private MORepository _schemaRepository;
 
@@ -83,8 +85,18 @@ public class MigrationContext extends TypedAnnotationContainer {
 		MOFactory factory = new DBKnowledgeTypeFactory();
 		_schemaRepository = _applicationSetup.createMORepository(factory);
 
+		_log = log;
+		reloadPersistentSchemaState();
+	}
+
+	/**
+	 * Updates the state derived from the {@link #getPersistentSchema() stored schema} (e.g.
+	 * {@link #hasBranchSupport()} and {@link #getSQLUtils()}) after the stored schema has been
+	 * replaced.
+	 */
+	public void reloadPersistentSchemaState() {
 		_branchSupport = hasStoredBranchSupport();
-		_util = new Util(log, _connection, _branchSupport);
+		_util = new Util(_log, _connection, _branchSupport);
 	}
 
 	private boolean hasStoredBranchSupport() {

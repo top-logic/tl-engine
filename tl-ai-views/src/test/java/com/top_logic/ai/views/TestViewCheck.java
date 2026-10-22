@@ -56,7 +56,7 @@ public class TestViewCheck extends BasicTestCase {
 							<label>
 								<en>Nothing</en>
 							</label>
-							<execute-script function="x -> null"/>
+							<execute-script function="null"/>
 						</generic-command>
 					</commands>
 				</menu>

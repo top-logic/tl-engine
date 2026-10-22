@@ -17,7 +17,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-x-circle"
-				input="selectedToken"
+				inputs="selectedToken as token"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -27,11 +27,16 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="t -> #('Revoke the token {0} of {1}? A client that uses it is refused from now on.'@en, 'Das Token {0} von {1} widerrufen? Ein Client, der es verwendet, wird ab sofort abgewiesen.'@de).fill($t.get(`tl.ai.access:AccessToken#name`), $t.get(`tl.ai.access:AccessToken#owner`))"/>
+				<confirm expr="#('Revoke the token {0} of {1}? A client that uses it is refused from now on.'@en, 'Das Token {0} von {1} widerrufen? Ein Client, der es verwendet, wird ab sofort abgewiesen.'@de).fill($token.get(`tl.ai.access:AccessToken#name`), $token.get(`tl.ai.access:AccessToken#owner`))"/>
 				<with-transaction>
-					<execute-script function="t -> { aiAccessTokenRevoke($t); null; }"/>
+					<execute-script function="aiAccessTokenRevoke($token)"/>
+					<with-result>
+						<write-channel
+							clear="true"
+							name="selectedToken"
+						/>
+					</with-result>
 				</with-transaction>
-				<write-channel name="selectedToken"/>
 			</generic-command>
 		</commands>
 		<table

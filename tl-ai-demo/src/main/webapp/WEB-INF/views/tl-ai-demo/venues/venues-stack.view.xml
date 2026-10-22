@@ -28,11 +28,11 @@
 				view="tl-ai-demo/venues/venue-detail.view.xml"
 			>
 				<param name="venue"
-					expr="v -> objectId($v)"
-					reverse="id -> $id.objectResolve(`demo.events:Venue`)"
+					expr="objectId($venue)"
+					reverse="$value.objectResolve(`demo.events:Venue`)"
 				/>
 				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="v -> $v.get(`demo.events:Named#name`)"
+					expr="$venue.get(`demo.events:Named#name`)"
 					inputs="venue"
 				/>
 			</frame>

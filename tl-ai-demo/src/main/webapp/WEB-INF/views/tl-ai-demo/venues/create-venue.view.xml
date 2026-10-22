@@ -37,6 +37,7 @@
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"
+					inputs="model as draft"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -46,14 +47,16 @@
 					<store-form-state/>
 					<with-transaction>
 						<execute-script>
-							<function><![CDATA[draft -> {
+							<function><![CDATA[{
 								venue = $draft.copy(transient: false);
 								$venue.set(`demo.events:Venue#address`, new(`demo.events:Address`));
 								$venue;
 							}]]></function>
 						</execute-script>
+						<with-result>
+							<write-channel name="selection"/>
+						</with-result>
 					</with-transaction>
-					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>
 			</commands>

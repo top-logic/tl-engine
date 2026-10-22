@@ -42,14 +42,19 @@
 						<en>OK</en>
 						<de>OK</de>
 					</label>
-					<read-form-object/>
-					<execute-script>
-						<inputs>
-							<input channel="model"/>
-						</inputs>
-						<function><![CDATA[session -> edited ->
-							aiSessionRename($session, $edited.get(`tl.ai.execution:AgentSession#title`))]]></function>
-					</execute-script>
+					<read-form-object>
+						<with-result as="edited">
+							<execute-script>
+								<inputs>
+									<input
+										as="session"
+										channel="model"
+									/>
+								</inputs>
+								<function><![CDATA[aiSessionRename($session, $edited.get(`tl.ai.execution:AgentSession#title`))]]></function>
+							</execute-script>
+						</with-result>
+					</read-form-object>
 					<close-dialog/>
 				</generic-command>
 			</commands>

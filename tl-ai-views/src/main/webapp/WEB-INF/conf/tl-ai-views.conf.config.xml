@@ -86,7 +86,13 @@ its properties and an example from this application.
   Model references are backquoted: `module:Type`, `module:Type#attribute`, `module:Enum#VALUE`.
 - A dialog view has a `<window width="640px">` with a `<title>` as its content.
 - A composition part is never a `<field>`: a single part gets its own `<form>` over a
-  `<derived-channel name="plan" inputs="thing"><expr>t -> $t.get(`module:Type#plan`)</expr></derived-channel>`.
+  `<derived-channel name="plan" inputs="thing"><expr>$thing.get(`module:Type#plan`)</expr></derived-channel>`.
+- A script of the view has no lambda header (`x -> ...` at its top is an error): it reads its values as
+  variables. A derived channel and a command read their `inputs` by channel name, renamed with `as`
+  (`inputs="selectedThing as thing"` gives `$thing`); a column `<value>` reads its row as `$row`.
+- An action's result reaches only the actions inside its `<with-result>` (as `$result`, the value a
+  `<write-channel>` or `<open-dialog>` there takes). Inside `<with-transaction>` only model changes:
+  `<write-channel>`, dialogs and messages go into the transaction's `<with-result>`.
 
 Master-detail page (replace module:Type, the channel and the attributes):
 ```xml
@@ -102,21 +108,26 @@ Master-detail page (replace module:Type, the channel and the attributes):
 					<commands>
 						<generic-command image="css:bi bi-plus-lg" placement="TOOLBAR">
 							<label><en>New</en><de>Neu</de></label>
-							<execute-script function="x -> new(`module:Type`, transient: true)"/>
-							<open-dialog close-on-backdrop="false" bind-input-to="model" dialog-view="app/thing-create.view.xml">
-								<bind channel="selection" to="selectedThing"/>
-							</open-dialog>
+							<execute-script function="new(`module:Type`, transient: true)">
+								<with-result>
+									<open-dialog close-on-backdrop="false" bind-input-to="model" dialog-view="app/thing-create.view.xml">
+										<bind channel="selection" to="selectedThing"/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
 						</generic-command>
-						<generic-command clique="more" image="css:bi bi-trash" input="selectedThing" placement="TOOLBAR">
+						<generic-command clique="more" image="css:bi bi-trash" inputs="selectedThing as thing" placement="TOOLBAR">
 							<label><en>Delete</en><de>Löschen</de></label>
 							<executability><null-input-disabled/></executability>
 							<confirm>
 								<confirm-label><en>Delete</en><de>Löschen</de></confirm-label>
 								<cancel-label><en>Cancel</en><de>Abbrechen</de></cancel-label>
-								<expr>x -> {"en": "Delete " + $x + "?", "de": $x + " löschen?"}.internationalize()</expr>
+								<expr>{"en": "Delete " + $thing + "?", "de": $thing + " löschen?"}.internationalize()</expr>
 							</confirm>
-							<with-transaction><execute-script function="x -> { $x.delete(); null; }"/></with-transaction>
-							<write-channel name="selectedThing"/>
+							<with-transaction>
+								<execute-script function="$thing.delete()"/>
+								<with-result><write-channel clear="true" name="selectedThing"/></with-result>
+							</with-transaction>
 						</generic-command>
 					</commands>
 					<table observed-types="module:Type" selection="selectedThing" types="module:Type">
@@ -154,11 +165,13 @@ Its create dialog (app/thing-create.view.xml):
 		<form initial-edit-mode="true" input="model" mode-switch="false" with-inset="true">
 			<field attribute="name"/>
 			<commands>
-				<generic-command image="css:bi bi-check-lg" placement="BUTTON_BAR">
+				<generic-command image="css:bi bi-check-lg" inputs="model" placement="BUTTON_BAR">
 					<label><en>Create</en><de>Erstellen</de></label>
 					<store-form-state/>
-					<with-transaction><execute-script function="x -> $x.copy(transient: false)"/></with-transaction>
-					<write-channel name="selection"/>
+					<with-transaction>
+						<execute-script function="$model.copy(transient: false)"/>
+						<with-result><write-channel name="selection"/></with-result>
+					</with-transaction>
 					<close-dialog/>
 				</generic-command>
 			</commands>

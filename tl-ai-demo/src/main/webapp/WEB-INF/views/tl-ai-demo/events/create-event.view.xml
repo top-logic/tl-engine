@@ -33,6 +33,7 @@
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"
+					inputs="model"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -41,9 +42,11 @@
 					</label>
 					<store-form-state/>
 					<with-transaction>
-						<execute-script function="e -> $e.copy(transient: false)"/>
+						<execute-script function="$model.copy(transient: false)"/>
+						<with-result>
+							<write-channel name="selection"/>
+						</with-result>
 					</with-transaction>
-					<write-channel name="selection"/>
 					<close-dialog/>
 				</generic-command>
 			</commands>

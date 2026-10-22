@@ -31,20 +31,23 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`demo.events:Venue`, transient: true)"/>
-							<open-dialog close-on-backdrop="false"
-								bind-input-to="model"
-								dialog-view="tl-ai-demo/venues/create-venue.view.xml"
-							>
-								<bind channel="selection"
-									to="selectedVenue"
-								/>
-							</open-dialog>
+							<execute-script function="new(`demo.events:Venue`, transient: true)">
+								<with-result>
+									<open-dialog close-on-backdrop="false"
+										bind-input-to="model"
+										dialog-view="tl-ai-demo/venues/create-venue.view.xml"
+									>
+										<bind channel="selection"
+											to="selectedVenue"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							input="selectedVenue"
+							inputs="selectedVenue as venue"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -63,15 +66,20 @@
 									<en>Cancel</en>
 									<de>Abbrechen</de>
 								</cancel-label>
-								<expr><![CDATA[v -> {
-									"en": "Delete “" + $v.get(`demo.events:Named#name`) + "” with its rooms?",
-									"de": "„" + $v.get(`demo.events:Named#name`) + "“ mit allen Räumen löschen?"
+								<expr><![CDATA[{
+									"en": "Delete “" + $venue.get(`demo.events:Named#name`) + "” with its rooms?",
+									"de": "„" + $venue.get(`demo.events:Named#name`) + "“ mit allen Räumen löschen?"
 								}.internationalize()]]></expr>
 							</confirm>
 							<with-transaction>
-								<execute-script function="v -> { $v.delete(); null; }"/>
+								<execute-script function="$venue.delete()"/>
+								<with-result>
+									<write-channel
+										clear="true"
+										name="selectedVenue"
+									/>
+								</with-result>
 							</with-transaction>
-							<write-channel name="selectedVenue"/>
 						</generic-command>
 					</commands>
 					<table

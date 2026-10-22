@@ -13,7 +13,7 @@
 		<derived-channel name="address"
 			inputs="venue"
 		>
-			<expr><![CDATA[v -> ifElse(isEmpty($v), null, $v.get(`demo.events:Venue#address`))]]></expr>
+			<expr><![CDATA[ifElse(isEmpty($venue), null, $venue.get(`demo.events:Venue#address`))]]></expr>
 		</derived-channel>
 	</channels>
 

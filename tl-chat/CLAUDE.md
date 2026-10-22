@@ -365,21 +365,21 @@ upstream as one clean diff.
 
 A `<row-commands>` entry is the same `<generic-command>` a header command is: label, image, clique,
 tooltip, `<executability>` and any action chain. The row the menu was opened on reaches the command
-through the **row channel** the list registers - which is what the command names in its `input`, and
-what an `<executability>` rule therefore sees, re-evaluated each time the menu opens.
+through the **row channel** the list registers - which is what the command names in its `inputs`, and
+what an `<executability>` rule therefore sees (as `$session` below), re-evaluated each time the menu opens.
 
 ```xml
 <data-list selection="chatSession" row-channel="session" row-actions="hover" …>
     <row-commands>
-        <generic-command image="css:bi bi-pencil" input="session">
+        <generic-command image="css:bi bi-pencil" inputs="session">
             <label><en>Rename</en><de>Umbenennen</de></label>
             <open-dialog dialog-view="tl-ai-demo/rename-session.view.xml" bind-input-to="model"/>
         </generic-command>
-        <generic-command image="css:bi bi-trash" input="session" clique="delete">
+        <generic-command image="css:bi bi-trash" inputs="session" clique="delete">
             <label><en>Delete</en><de>Löschen</de></label>
-            <confirm><expr>s -> …names the row…</expr></confirm>
-            <execute-script function="s -> { aiSessionDelete($s); null; }"/>
-            <write-channel name="chatSession"/>
+            <confirm><expr>…names $session…</expr></confirm>
+            <execute-script function="aiSessionDelete($session)"/>
+            <write-channel name="chatSession" clear="true"/>
         </generic-command>
     </row-commands>
 </data-list>
@@ -1019,10 +1019,14 @@ issue #414). One element changing another element's editable state is what a cha
 `draft` is that channel:
 
 ```xml
-<generic-command image="css:bi bi-chat-left-text" input="invoice">
+<generic-command image="css:bi bi-chat-left-text" inputs="invoice">
     <label><en>Ask about this</en><de>Dazu fragen</de></label>
-    <execute-script><![CDATA[i -> {"en": "Please explain …", "de": "Bitte erkläre …"}.internationalize()]]></execute-script>
-    <write-channel name="chatDraft"/>
+    <execute-script>
+        <function><![CDATA[{"en": "Please explain …", "de": "Bitte erkläre …"}.internationalize()]]></function>
+        <with-result>
+            <write-channel name="chatDraft"/>
+        </with-result>
+    </execute-script>
 </generic-command>
 ```
 
@@ -1061,7 +1065,7 @@ Two existing engine actions, no new class. What to know about it:
   ```
 
   ```
-  section -> {"id": $section, "location": "02 Kontext", "text": $marked}
+  {"id": $section, "location": "02 Kontext", "text": $marked}
   ```
 
   Only `id` and `text` have to be there - there is nothing to quote without the passage, and nothing

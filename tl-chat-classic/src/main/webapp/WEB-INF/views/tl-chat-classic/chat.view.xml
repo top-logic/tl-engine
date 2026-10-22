@@ -98,7 +98,7 @@
 				<generic-command
 					clique="delete"
 					image="css:bi bi-trash"
-					input="session"
+					inputs="session"
 				>
 					<label>
 						<en>Delete</en>
@@ -107,8 +107,8 @@
 					<!-- A chat that is still being answered is not one anyone means to throw away. -->
 					<executability>
 						<visible-if>
-							<expr><![CDATA[s -> isEmpty($s)
-								|| $s.referers(`tl.ai.execution:AgentExecution#session`)
+							<expr><![CDATA[isEmpty($session)
+								|| $session.referers(`tl.ai.execution:AgentExecution#session`)
 									.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
 										== `tl.ai.execution:ExecutionStatus#RUNNING`)
 									.isEmpty()]]></expr>
@@ -127,8 +127,8 @@
 							<en>Delete chat</en>
 							<de>Chat löschen</de>
 						</title>
-						<expr><![CDATA[s -> {
-							title = $s.get(`tl.ai.execution:AgentSession#title`);
+						<expr><![CDATA[{
+							title = $session.get(`tl.ai.execution:AgentSession#title`);
 							{
 								"en": "Delete “" + $title + "”? This cannot be undone.",
 								"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
@@ -138,14 +138,19 @@
 					<!-- Clears the open conversation only when it is the deleted chat. -->
 					<execute-script>
 						<inputs>
-							<input channel="chatSession"/>
+							<input
+								as="open"
+								channel="chatSession"
+							/>
 						</inputs>
-						<function><![CDATA[open -> s -> {
-							aiSessionDelete($s);
-							ifElse($s == $open, null, $open);
+						<function><![CDATA[{
+							aiSessionDelete($session);
+							ifElse($session == $open, null, $open);
 						}]]></function>
+						<with-result>
+							<write-channel name="chatSession"/>
+						</with-result>
 					</execute-script>
-					<write-channel name="chatSession"/>
 				</generic-command>
 			</row-commands>
 			<rows><![CDATA[all(`tl.ai.execution:AgentSession`)

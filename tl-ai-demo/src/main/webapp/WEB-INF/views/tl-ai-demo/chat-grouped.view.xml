@@ -32,7 +32,7 @@
 		<derived-channel name="paneItem"
 			inputs="paneObject"
 		>
-			<expr><![CDATA[v -> ifElse($v.instanceOf(`tl.model:TLObject`), $v, null)]]></expr>
+			<expr><![CDATA[ifElse($paneObject.instanceOf(`tl.model:TLObject`), $paneObject, null)]]></expr>
 		</derived-channel>
 		<!-- The counts the rail shows on the section headers and the strip icons. -->
 		<channel name="progressBadge"/>
@@ -137,7 +137,7 @@
 			<row-commands>
 				<generic-command
 					image="css:bi bi-pencil"
-					input="session"
+					inputs="session"
 				>
 					<label>
 						<en>Rename</en>
@@ -151,7 +151,7 @@
 				<generic-command
 					clique="delete"
 					image="css:bi bi-trash"
-					input="session"
+					inputs="session"
 				>
 					<label>
 						<en>Delete</en>
@@ -165,8 +165,8 @@
 					-->
 					<executability>
 						<visible-if>
-							<expr><![CDATA[s -> isEmpty($s)
-								|| $s.referers(`tl.ai.execution:AgentExecution#session`)
+							<expr><![CDATA[isEmpty($session)
+								|| $session.referers(`tl.ai.execution:AgentExecution#session`)
 									.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
 										== `tl.ai.execution:ExecutionStatus#RUNNING`)
 									.isEmpty()]]></expr>
@@ -186,8 +186,8 @@
 							<en>Delete chat</en>
 							<de>Chat löschen</de>
 						</title>
-						<expr><![CDATA[s -> {
-							title = $s.get(`tl.ai.execution:AgentSession#title`);
+						<expr><![CDATA[{
+							title = $session.get(`tl.ai.execution:AgentSession#title`);
 							{
 								"en": "Delete “" + $title + "”? This cannot be undone.",
 								"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
@@ -195,20 +195,25 @@
 						}]]></expr>
 					</confirm>
 					<!--
-						Clears the open conversation only when it *is* the deleted chat: the value
-						the chain ends with is what <write-channel> writes, so deleting some other
-						chat writes the open one back unchanged and the transcript stays put.
+						Clears the open conversation only when it *is* the deleted chat: the result
+						of the script is what <write-channel> writes, so deleting some other chat
+						writes the open one back unchanged and the transcript stays put.
 					-->
 					<execute-script>
 						<inputs>
-							<input channel="chatSession"/>
+							<input
+								as="open"
+								channel="chatSession"
+							/>
 						</inputs>
-						<function><![CDATA[open -> s -> {
-							aiSessionDelete($s);
-							ifElse($s == $open, null, $open);
+						<function><![CDATA[{
+							aiSessionDelete($session);
+							ifElse($session == $open, null, $open);
 						}]]></function>
+						<with-result>
+							<write-channel name="chatSession"/>
+						</with-result>
 					</execute-script>
-					<write-channel name="chatSession"/>
 				</generic-command>
 			</row-commands>
 			<!--
@@ -551,25 +556,27 @@
 					<row-commands>
 						<generic-command
 							image="css:bi bi-chat-left-text"
-							input="event"
+							inputs="event"
 						>
 							<label>
 								<en>Ask about this</en>
 								<de>Dazu fragen</de>
 							</label>
 							<execute-script>
-								<function><![CDATA[e -> {
-									"en": "How is the event “" + $e.get(`demo.events:Named#name`)
+								<function><![CDATA[{
+									"en": "How is the event “" + $event.get(`demo.events:Named#name`)
 										+ "” doing - registrations, budget and open invoices?",
-									"de": "Wie steht die Veranstaltung „" + $e.get(`demo.events:Named#name`)
+									"de": "Wie steht die Veranstaltung „" + $event.get(`demo.events:Named#name`)
 										+ "“ - Anmeldungen, Budget und offene Rechnungen?"
 								}.internationalize()]]></function>
+								<with-result>
+									<write-channel name="chatDraft"/>
+								</with-result>
 							</execute-script>
-							<write-channel name="chatDraft"/>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-quote"
-							input="event"
+							inputs="event"
 						>
 							<label>
 								<en>Quote in the message</en>
@@ -579,37 +586,41 @@
 						</generic-command>
 						<generic-command
 							image="css:bi bi-card-text"
-							input="event"
+							inputs="event"
 						>
 							<label>
 								<en>Quote the description</en>
 								<de>Beschreibung zitieren</de>
 							</label>
 							<execute-script>
-								<function><![CDATA[e -> {
-									"id": $e,
+								<function><![CDATA[{
+									"id": $event,
 									"location": {"en": "Description", "de": "Beschreibung"}.internationalize(),
-									"text": $e.get(`demo.events:Named#description`)
+									"text": $event.get(`demo.events:Named#description`)
 								}]]></function>
+								<with-result>
+									<write-channel name="chatQuote"/>
+								</with-result>
 							</execute-script>
-							<write-channel name="chatQuote"/>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-cash-coin"
-							input="event"
+							inputs="event"
 						>
 							<label>
 								<en>Quote the balance</en>
 								<de>Saldo zitieren</de>
 							</label>
 							<execute-script>
-								<function><![CDATA[e -> {
-									"id": $e,
+								<function><![CDATA[{
+									"id": $event,
 									"location": {"en": "Balance", "de": "Saldo"}.internationalize(),
-									"text": numberFormat("#,##0.00").format($e.get(`demo.events:Event#balance`))
+									"text": numberFormat("#,##0.00").format($event.get(`demo.events:Event#balance`))
 								}]]></function>
+								<with-result>
+									<write-channel name="chatQuote"/>
+								</with-result>
 							</execute-script>
-							<write-channel name="chatQuote"/>
 						</generic-command>
 					</row-commands>
 					<lines>
@@ -670,7 +681,7 @@
 						<generic-command
 							clique="delete"
 							image="css:bi bi-trash"
-							input="memory"
+							inputs="memory"
 						>
 							<label>
 								<en>Forget</en>
@@ -690,8 +701,8 @@
 									<en>Forget this</en>
 									<de>Das vergessen</de>
 								</title>
-								<expr><![CDATA[m -> {
-									text = $m.get(`tl.ai.execution:UserMemory#text`);
+								<expr><![CDATA[{
+									text = $memory.get(`tl.ai.execution:UserMemory#text`);
 									{
 										"en": "Forget “" + $text + "”? Albert will no longer know it.",
 										"de": "„" + $text + "“ vergessen? Albert weiß es dann nicht mehr."
@@ -699,7 +710,7 @@
 								}]]></expr>
 							</confirm>
 							<execute-script>
-								<function><![CDATA[m -> { aiMemoryDelete($m); null; }]]></function>
+								<function><![CDATA[aiMemoryDelete($memory)]]></function>
 							</execute-script>
 						</generic-command>
 					</row-commands>

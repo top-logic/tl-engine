@@ -50,12 +50,12 @@
 				<field attribute="scan"/>
 				<commands>
 					<!--
-						The command's input is the picked event, so it stays disabled until one is
-						picked; the invoice being created comes in over the "model" channel.
+						The command's main argument is the picked event, so it stays disabled until one
+						is picked; the invoice being created is its second argument, the "model" channel.
 					-->
 					<generic-command
 						image="css:bi bi-check-lg"
-						input="event"
+						inputs="event, model as draft"
 						placement="BUTTON_BAR"
 					>
 						<label>
@@ -69,18 +69,10 @@
 						<with-transaction>
 							<execute-script>
 								<!--
-									Both channels by name: what the chain hands on after
-									<store-form-state> is the form's object, not the command's input.
-								-->
-								<inputs>
-									<input channel="model"/>
-									<input channel="event"/>
-								</inputs>
-								<!--
 									A nested <function> element rather than an attribute: the script carries
 									quotes and line breaks, which an attribute would force into entities.
 								-->
-								<function><![CDATA[draft -> event -> chained -> {
+								<function><![CDATA[{
     invoice = $draft.copy(transient: false);
     $event.add(`demo.events:Event#invoices`, $invoice);
     $invoice.set(`demo.events:Invoice#currency`, $event.get(`demo.events:Event#currency`));
@@ -173,8 +165,10 @@
     $invoice;
 }]]></function>
 							</execute-script>
+							<with-result>
+								<write-channel name="selection"/>
+							</with-result>
 						</with-transaction>
-						<write-channel name="selection"/>
 						<close-dialog/>
 					</generic-command>
 				</commands>

@@ -37,19 +37,22 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`demo.events:Invoice`, transient: true)"/>
-							<open-dialog close-on-backdrop="false"
-								bind-input-to="model"
-								dialog-view="tl-ai-demo/invoices/create-invoice.view.xml"
-							>
-								<bind channel="selection"
-									to="selectedInvoice"
-								/>
-							</open-dialog>
+							<execute-script function="new(`demo.events:Invoice`, transient: true)">
+								<with-result>
+									<open-dialog close-on-backdrop="false"
+										bind-input-to="model"
+										dialog-view="tl-ai-demo/invoices/create-invoice.view.xml"
+									>
+										<bind channel="selection"
+											to="selectedInvoice"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-chat-left-text"
-							input="selectedInvoice"
+							inputs="selectedInvoice as invoice"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -60,19 +63,21 @@
 								<null-input-disabled/>
 							</executability>
 							<execute-script>
-								<function><![CDATA[i -> {
-									"en": "Please check invoice " + $i.get(`demo.events:Invoice#invoiceNumber`)
+								<function><![CDATA[{
+									"en": "Please check invoice " + $invoice.get(`demo.events:Invoice#invoiceNumber`)
 										+ ": do the lines add up, and what is still to do?",
-									"de": "Bitte prüfe die Rechnung " + $i.get(`demo.events:Invoice#invoiceNumber`)
+									"de": "Bitte prüfe die Rechnung " + $invoice.get(`demo.events:Invoice#invoiceNumber`)
 										+ ": Stimmen die Positionen, und was ist noch zu tun?"
 								}.internationalize()]]></function>
+								<with-result>
+									<write-channel name="chatDraft"/>
+								</with-result>
 							</execute-script>
-							<write-channel name="chatDraft"/>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							input="selectedInvoice"
+							inputs="selectedInvoice as invoice"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -91,15 +96,20 @@
 									<en>Cancel</en>
 									<de>Abbrechen</de>
 								</cancel-label>
-								<expr><![CDATA[i -> {
-									"en": "Delete invoice " + $i.get(`demo.events:Invoice#invoiceNumber`) + "?",
-									"de": "Rechnung " + $i.get(`demo.events:Invoice#invoiceNumber`) + " löschen?"
+								<expr><![CDATA[{
+									"en": "Delete invoice " + $invoice.get(`demo.events:Invoice#invoiceNumber`) + "?",
+									"de": "Rechnung " + $invoice.get(`demo.events:Invoice#invoiceNumber`) + " löschen?"
 								}.internationalize()]]></expr>
 							</confirm>
 							<with-transaction>
-								<execute-script function="i -> { $i.delete(); null; }"/>
+								<execute-script function="$invoice.delete()"/>
+								<with-result>
+									<write-channel
+										clear="true"
+										name="selectedInvoice"
+									/>
+								</with-result>
 							</with-transaction>
-							<write-channel name="selectedInvoice"/>
 						</generic-command>
 					</commands>
 					<table

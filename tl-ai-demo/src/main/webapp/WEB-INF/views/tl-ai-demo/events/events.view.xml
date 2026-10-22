@@ -41,19 +41,22 @@
 								<de>Neu</de>
 							</label>
 							<!-- A transient object, copied in by the dialog: an abandoned dialog leaves nothing behind. -->
-							<execute-script function="x -> new(`demo.events:Event`, transient: true)"/>
-							<open-dialog close-on-backdrop="false"
-								bind-input-to="model"
-								dialog-view="tl-ai-demo/events/create-event.view.xml"
-							>
-								<bind channel="selection"
-									to="selectedEvent"
-								/>
-							</open-dialog>
+							<execute-script function="new(`demo.events:Event`, transient: true)">
+								<with-result>
+									<open-dialog close-on-backdrop="false"
+										bind-input-to="model"
+										dialog-view="tl-ai-demo/events/create-event.view.xml"
+									>
+										<bind channel="selection"
+											to="selectedEvent"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-chat-left-text"
-							input="selectedEvent"
+							inputs="selectedEvent as event"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -64,19 +67,21 @@
 								<null-input-disabled/>
 							</executability>
 							<execute-script>
-								<function><![CDATA[e -> {
-									"en": "How is the event “" + $e.get(`demo.events:Named#name`)
+								<function><![CDATA[{
+									"en": "How is the event “" + $event.get(`demo.events:Named#name`)
 										+ "” doing - registrations, budget and open invoices?",
-									"de": "Wie steht die Veranstaltung „" + $e.get(`demo.events:Named#name`)
+									"de": "Wie steht die Veranstaltung „" + $event.get(`demo.events:Named#name`)
 										+ "“ - Anmeldungen, Budget und offene Rechnungen?"
 								}.internationalize()]]></function>
+								<with-result>
+									<write-channel name="chatDraft"/>
+								</with-result>
 							</execute-script>
-							<write-channel name="chatDraft"/>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							input="selectedEvent"
+							inputs="selectedEvent as event"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -95,17 +100,22 @@
 									<en>Cancel</en>
 									<de>Abbrechen</de>
 								</cancel-label>
-								<expr><![CDATA[e -> {
-									"en": "Delete “" + $e.get(`demo.events:Named#name`)
+								<expr><![CDATA[{
+									"en": "Delete “" + $event.get(`demo.events:Named#name`)
 										+ "” with its sessions, registrations, sponsorships and invoices?",
-									"de": "„" + $e.get(`demo.events:Named#name`)
+									"de": "„" + $event.get(`demo.events:Named#name`)
 										+ "“ mit allen Sessions, Anmeldungen, Sponsorings und Rechnungen löschen?"
 								}.internationalize()]]></expr>
 							</confirm>
 							<with-transaction>
-								<execute-script function="e -> { $e.delete(); null; }"/>
+								<execute-script function="$event.delete()"/>
+								<with-result>
+									<write-channel
+										clear="true"
+										name="selectedEvent"
+									/>
+								</with-result>
 							</with-transaction>
-							<write-channel name="selectedEvent"/>
 						</generic-command>
 					</commands>
 					<table

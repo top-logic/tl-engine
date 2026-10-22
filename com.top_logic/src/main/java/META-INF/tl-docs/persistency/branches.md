@@ -168,6 +168,10 @@ Requesting a type explicitly fails with *"Type ... does not support branching."*
 (`DBKnowledgeBase.createBranch`); requesting all types (`null`) finds no branchable type, so the
 new branch shares all data with its base.
 
+An application created from the archetype `tl-archetype-app` decides this with the archetype
+property `useBranches`: with its default `false`, the generated `WEB-INF/conf/metaConf.txt` contains
+the line above; with `useBranches=true`, the application keeps multiple branches.
+
 No application shipped with TopLogic uses this configuration. The engine's knowledge base tests run
 it: `AbstractDBKnowledgeBaseTest.suite(...)` runs every test that does not declare `needsBranches`
 a second time as a *"no branches"* variant on freshly created tables (`MultipleBranchSetup`,

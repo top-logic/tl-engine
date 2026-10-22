@@ -1,2 +1,5 @@
 db-default.xml
+#if ($useBranches != "true")
+top-logic.singleBranch.config.xml
+#end
 \${projectName}.conf.xml

@@ -398,7 +398,7 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
     close();
   }, [editor, close]);
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       apply();

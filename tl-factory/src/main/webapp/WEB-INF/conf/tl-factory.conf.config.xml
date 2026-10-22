@@ -6,6 +6,7 @@
 			<instance>
 				<modules>
 					<module key="com.top_logic.factory.workspace.WorkspaceService$Module" value="true"/>
+					<module key="com.top_logic.factory.project.ProjectWorkspaces$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -25,6 +26,84 @@
 					repository-url="%FACTORY_REPOSITORY_URL%"
 					start-timeout="%FACTORY_START_TIMEOUT%"
 				/>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.factory.project.ProjectWorkspaces">
+			<instance class="com.top_logic.factory.project.ProjectWorkspaces"
+				log-flush-interval="%FACTORY_LOG_FLUSH_INTERVAL%"
+				max-log-size="%FACTORY_MAX_LOG_SIZE%"
+			/>
+		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance class="com.top_logic.element.model.DynamicModelService">
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.factory.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="model.tl.factory.messages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<!--
+			The operators of the control application manage all projects and their workspaces: the
+			role tl.factory.Operator, held on the security root, is passed on to every project by the
+			role parent rule below. A workspace is a part of its project and decided by it.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="tl.factory.Operator"/>
+				</roles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<security-parents>
+					<rule id="SecRootForFactoryProject"
+						inherit="true"
+						meta-element="tl.factory:Project"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+				</security-parents>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<module name="tl.factory">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="tl.factory.Operator"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="tl.factory.Operator"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="tl.factory.Operator"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="tl.factory.Operator"
+						/>
+					</module>
+				</security-config>
 			</instance>
 		</config>
 	</services>

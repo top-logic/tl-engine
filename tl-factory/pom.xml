@@ -11,13 +11,19 @@
 
   <artifactId>tl-factory</artifactId>
   <name>${project.artifactId}</name>
-  <description>Control application for TopLogic applications built by agents: the workspaces, one container per managed application, behind a pluggable provider with a Docker implementation.</description>
+  <description>Control application for TopLogic applications built by agents: the projects and their workspaces, one container per managed application, behind a pluggable provider with a Docker implementation, and the views managing them.</description>
   <url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-core</artifactId>
+    </dependency>
+
+    <!-- The views of the control application. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
     </dependency>
 
     <!-- Docker Engine API client of the Docker workspace provider (Apache-2.0). -->

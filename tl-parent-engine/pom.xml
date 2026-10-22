@@ -147,6 +147,7 @@
 
 		<!-- Control application for applications built by agents -->
 		<module>../tl-factory</module>
+		<module>../tl-factory-app</module>
 
 		<!-- Migration utilities -->
 		<module>../com.top_logic.migrate.tl</module>

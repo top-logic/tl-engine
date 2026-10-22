@@ -111,6 +111,7 @@ export type {
   ToggleButtonStateJson,
   CheckboxStateJson,
   TextInputStateJson,
+  SuggestionEntryJson,
   PasswordInputStateJson,
   NumberInputStateJson,
   DatePickerStateJson,

@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.basic.util.ResKey4;
 
 /**
@@ -85,6 +86,55 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Signing the client assertion with the algorithm {0} failed.
 	 */
 	public static ResKey1 ERROR_SIGNING_FAILED__ALGORITHM;
+
+	/**
+	 * @en Neither the issuer of the authorization server nor the URL of its device authorization
+	 *     endpoint is configured.
+	 */
+	public static ResKey ERROR_NO_DEVICE_AUTHORIZATION_ENDPOINT;
+
+	/**
+	 * @en Login of "{2}" required: open {0} in a browser, confirm the code {1} and repeat the
+	 *     action.
+	 */
+	public static ResKey3 ERROR_DEVICE_LOGIN_REQUIRED__URL_CODE_CLIENT;
+
+	/**
+	 * @en The login of "{0}" was denied. The next request starts a new login.
+	 */
+	public static ResKey1 DEVICE_LOGIN_DENIED__CLIENT;
+
+	/**
+	 * @en The login of "{0}" was not confirmed in time. The next request starts a new login.
+	 */
+	public static ResKey1 DEVICE_LOGIN_EXPIRED__CLIENT;
+
+	/**
+	 * @en The login of "{0}" failed. The next request starts a new login.
+	 */
+	public static ResKey1 DEVICE_LOGIN_FAILED__CLIENT;
+
+	/**
+	 * @en The authorization server no longer accepts the refresh token of "{0}", a new login is
+	 *     required.
+	 */
+	public static ResKey1 REFRESH_TOKEN_REJECTED__CLIENT;
+
+	/**
+	 * @en The refresh token file "{0}" cannot be read.
+	 */
+	public static ResKey1 ERROR_REFRESH_TOKEN_UNREADABLE__PATH;
+
+	/**
+	 * @en The refresh token file "{0}" cannot be written.
+	 */
+	public static ResKey1 ERROR_REFRESH_TOKEN_NOT_WRITTEN__PATH;
+
+	/**
+	 * @en The refresh token file "{0}" belongs to another client or authorization server and is
+	 *     ignored.
+	 */
+	public static ResKey1 REFRESH_TOKEN_FOREIGN__PATH;
 
 	static {
 		initConstants(I18NConstants.class);

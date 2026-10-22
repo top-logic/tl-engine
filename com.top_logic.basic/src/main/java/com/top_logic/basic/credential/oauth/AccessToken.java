@@ -86,6 +86,20 @@ public final class AccessToken {
 	}
 
 	/**
+	 * Whether the lifetime of this token has ended at the given time.
+	 *
+	 * <p>
+	 * A token without specified lifetime never counts as expired.
+	 * </p>
+	 *
+	 * @param now
+	 *        The time in milliseconds since the epoch.
+	 */
+	public boolean isExpired(long now) {
+		return _expiresIn != null && now >= _issuedAt + _expiresIn.longValue() * 1000;
+	}
+
+	/**
 	 * The value of the {@link CredentialProvider#AUTHORIZATION} header presenting this token.
 	 *
 	 * <p>

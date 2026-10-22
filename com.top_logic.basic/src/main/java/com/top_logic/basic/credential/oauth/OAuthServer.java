@@ -256,12 +256,24 @@ public class OAuthServer {
 		return new AccessToken(
 			(String) value,
 			type instanceof String && !((String) type).isEmpty() ? (String) type : CredentialProvider.BEARER,
-			parseExpiresIn(url, response.get(OAuthConstants.EXPIRES_IN)),
+			parseSeconds(url, response.get(OAuthConstants.EXPIRES_IN)),
 			refreshToken instanceof String ? (String) refreshToken : null,
 			issuedAt);
 	}
 
-	private static Long parseExpiresIn(String url, Object value) {
+	/**
+	 * Parses a number of seconds in a response, e.g. {@link OAuthConstants#EXPIRES_IN}.
+	 *
+	 * @param url
+	 *        The URL the response came from, for the error message.
+	 * @param value
+	 *        The value of the field in the response.
+	 * @return The number, or <code>null</code> if the field is missing.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the value is not a number.
+	 */
+	static Long parseSeconds(String url, Object value) {
 		if (value == null) {
 			return null;
 		}

@@ -55,31 +55,33 @@ import com.top_logic.util.TLContext;
  * options of the configured schema.
  *
  * <p>
- * The layout options of a {@link SchemaConfiguration} (see {@link #LAYOUT_OPTIONS}) determine how
- * the tables are built from the type definitions. The processor compares the layout options of the
- * schema stored in the database (see {@link MigrationContext#getPersistentSchema()}) with the ones
- * of the application configuration (see {@link MigrationContext#getApplicationSchema()}). If they
- * differ, the table definitions of all types of the stored schema are computed once with the
- * stored and once with the target schema (see
- * {@link #withConfiguredLayout(SchemaConfiguration, SchemaConfiguration)}), and the existing
- * tables are adapted to the target definitions, see
- * {@link DBSchemaUtils#alignTable(Log, PooledConnection, DBTable, DBTable, java.util.Collection, Map)}:
- * Branch columns missing in a table are added and filled with the trunk, branch columns not part
- * of the target definition are dropped, and the primary keys and indexes are converted.
- * Afterwards, the target schema is stored.
+ * The layout options of the type system (whether multiple branches are supported and whether the
+ * branch column follows the identifying columns of primary keys and indexes) determine how the
+ * tables are built from the type definitions. The processor compares the layout options of the
+ * schema stored in the database with the ones of the application configuration. If they differ,
+ * the table definitions of all types of the stored schema are computed once with the stored and
+ * once with the configured layout options, and the existing tables are adapted: Branch columns
+ * missing in a table are added and filled with the trunk, branch columns not part of the target
+ * definition are dropped, and the primary keys and indexes are converted. Afterwards, the schema
+ * with the configured layout options is stored.
  * </p>
  *
  * <p>
- * Dropping branch columns requires that the database contains only the trunk: The
- * {@link BasicTypes#BRANCH_TYPE_NAME branch table} must not contain another branch, and no dropped
- * branch column may contain a value other than the trunk. Otherwise, the processor reports an error
- * without changing the database.
+ * Dropping branch columns requires that the database contains only the trunk: The branch table
+ * must not contain another branch, and no dropped branch column may contain a value other than the
+ * trunk. Otherwise, the processor reports an error without changing the database.
  * </p>
  *
  * <p>
  * Other differences between the stored and the configured schema (e.g. added types or changed
  * index declarations) are neither applied to the tables nor to the stored schema.
  * </p>
+ *
+ * @see #LAYOUT_OPTIONS
+ * @see MigrationContext#getPersistentSchema()
+ * @see MigrationContext#getApplicationSchema()
+ * @see #withConfiguredLayout(SchemaConfiguration, SchemaConfiguration)
+ * @see DBSchemaUtils#alignTable(Log, PooledConnection, DBTable, DBTable, java.util.Collection, Map)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

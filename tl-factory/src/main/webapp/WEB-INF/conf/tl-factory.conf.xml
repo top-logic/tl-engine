@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<alias>
+		<entry name="%FACTORY_DOCKER_HOST%" value="${env:tl_factory_docker_host:unix:///var/run/docker.sock}" comment="URI of the Docker daemon the workspaces run in."/>
+		<entry name="%FACTORY_DOCKER_NETWORK%" value="${env:tl_factory_docker_network:tl-factory}" comment="Docker network the workspace containers join."/>
+		<entry name="%FACTORY_PUBLIC_HOST%" value="${env:tl_factory_public_host:localhost}" comment="Host name under which a browser reaches the published workspace ports."/>
+		<entry name="%FACTORY_HOST_PORT_MIN%" value="${env:tl_factory_host_port_min:20000}" comment="Lowest host port a workspace port is published on."/>
+		<entry name="%FACTORY_HOST_PORT_MAX%" value="${env:tl_factory_host_port_max:20999}" comment="Highest host port a workspace port is published on."/>
+	</alias>
+</root>

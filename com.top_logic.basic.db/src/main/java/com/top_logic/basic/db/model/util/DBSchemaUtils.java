@@ -811,7 +811,10 @@ public class DBSchemaUtils {
 	 * the target definition has an index with the same name but other columns, column order,
 	 * uniqueness or compression. An index of the current definition that only exists there is kept,
 	 * unless it contains a dropped column. Indexes that exist only in the target definition are not
-	 * created.
+	 * created. An index to drop is looked up in the database by its name and, if not found, by its
+	 * columns in the same order and its uniqueness, so that an index the database holds under
+	 * another name is dropped as well. An index missing in the database is not dropped, but reported
+	 * as warning.
 	 * </p>
 	 *
 	 * <p>
@@ -873,15 +876,18 @@ public class DBSchemaUtils {
 		}
 
 		String tableName = target.getDBName();
+		DBTable existing = extractTable(connection, tableName);
 		for (DBIndex currentIndex : changedIndexes) {
-			dropIndex(connection, currentIndex);
+			dropExistingIndex(log, connection, existing, currentIndex);
 		}
 		for (DBIndex currentIndex : droppedIndexes) {
-			dropIndex(connection, currentIndex);
-			log.info("Dropped index '" + currentIndex.getName() + "' of table '" + tableName + "'.");
+			if (dropExistingIndex(log, connection, existing, currentIndex)) {
+				log.info("Dropped index '" + currentIndex.getName() + "' of table '" + tableName + "'.");
+			}
 		}
 		if (primaryKeyChanged) {
-			String constraintName = primaryKeyName(connection, tableName);
+			DBPrimary existingKey = existing.getPrimaryKey();
+			String constraintName = existingKey == null ? null : existingKey.getName();
 			if (constraintName != null) {
 				execute(connection, sqlDialect.dropPrimaryKey(tableName, constraintName));
 			}
@@ -1038,10 +1044,90 @@ public class DBSchemaUtils {
 			+ columnNames(current.getPrimaryKey()) + " to " + columnNames(target.getPrimaryKey()) + ".");
 	}
 
-	private static void dropIndex(PooledConnection connection, DBIndex index) throws SQLException {
+	/**
+	 * Drops the index of the given existing table that implements the given index of its table
+	 * definition.
+	 *
+	 * <p>
+	 * The index is looked up by the name the definition gives it (see
+	 * {@link CreateStatementBuilder#qName(DBHelper, com.top_logic.basic.db.model.DBTablePart)}). If
+	 * the table has no index with that name, an index with the same columns in the same order and
+	 * the same uniqueness is dropped instead, unless its name is the one of another index of the
+	 * definition. If the table has no matching index either, nothing is dropped and a warning is
+	 * logged.
+	 * </p>
+	 *
+	 * @param log
+	 *        The {@link Log} to report a missing index to.
+	 * @param connection
+	 *        The connection to the database containing the table.
+	 * @param existing
+	 *        The table as extracted from the database, see {@link SchemaExtraction}.
+	 * @param index
+	 *        The index of the definition the existing table was created from.
+	 * @return Whether an index was dropped.
+	 * @throws SQLException
+	 *         If the database access fails.
+	 */
+	private static boolean dropExistingIndex(Log log, PooledConnection connection, DBTable existing, DBIndex index)
+			throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
-		execute(connection,
-			sqlDialect.dropIndex(CreateStatementBuilder.qName(sqlDialect, index), index.getTable().getDBName()));
+		String tableName = index.getTable().getDBName();
+		String expectedName = CreateStatementBuilder.qName(sqlDialect, index);
+		DBIndex existingIndex = existingIndex(sqlDialect, existing, index);
+		if (existingIndex == null) {
+			log.info("Index '" + expectedName + "' with columns " + columnDBNames(index) + " does not exist in table '"
+				+ tableName + "', not dropped.", Log.WARN);
+			return false;
+		}
+		String existingName = existingIndex.getName();
+		execute(connection, sqlDialect.dropIndex(existingName, tableName));
+		if (!existingName.equalsIgnoreCase(expectedName)) {
+			log.info("Dropped index '" + existingName + "' of table '" + tableName + "' in place of index '"
+				+ expectedName + "' with the same columns " + columnDBNames(index) + ".");
+		}
+		return true;
+	}
+
+	/**
+	 * The index of the given existing table that implements the given index of its table
+	 * definition.
+	 *
+	 * @see #dropExistingIndex(Log, PooledConnection, DBTable, DBIndex)
+	 */
+	private static DBIndex existingIndex(DBHelper sqlDialect, DBTable existing, DBIndex index) {
+		String expectedName = CreateStatementBuilder.qName(sqlDialect, index);
+		for (DBIndex candidate : existing.getIndices()) {
+			if (candidate.getName().equalsIgnoreCase(expectedName)) {
+				return candidate;
+			}
+		}
+		List<String> columns = columnDBNames(index);
+		candidates:
+		for (DBIndex candidate : existing.getIndices()) {
+			if (candidate.isUnique() != index.isUnique() || !sameNamesIgnoreCase(columnDBNames(candidate), columns)) {
+				continue;
+			}
+			for (DBIndex declared : index.getTable().getIndices()) {
+				if (candidate.getName().equalsIgnoreCase(CreateStatementBuilder.qName(sqlDialect, declared))) {
+					continue candidates;
+				}
+			}
+			return candidate;
+		}
+		return null;
+	}
+
+	private static boolean sameNamesIgnoreCase(List<String> names1, List<String> names2) {
+		if (names1.size() != names2.size()) {
+			return false;
+		}
+		for (int n = 0, cnt = names1.size(); n < cnt; n++) {
+			if (!names1.get(n).equalsIgnoreCase(names2.get(n))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private static boolean containsAny(DBIndex index, Collection<String> columns) {
@@ -1091,10 +1177,9 @@ public class DBSchemaUtils {
 		return result;
 	}
 
-	private static String primaryKeyName(PooledConnection connection, String tableName) throws SQLException {
+	private static DBTable extractTable(PooledConnection connection, String tableName) throws SQLException {
 		SchemaExtraction extraction = new SchemaExtraction(connection.getMetaData(), connection.getSQLDialect());
-		DBPrimary primaryKey = extraction.addTable(DBSchemaFactory.createDBSchema(), tableName).getPrimaryKey();
-		return primaryKey == null ? null : primaryKey.getName();
+		return extraction.addTable(DBSchemaFactory.createDBSchema(), tableName);
 	}
 
 	private static void execute(PooledConnection connection, String sql) throws SQLException {

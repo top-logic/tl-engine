@@ -131,6 +131,9 @@ public class TestDBSchemaUtils extends BasicTestCase {
 
 	private static final int ROWS = 5;
 
+	/** Name of an index that does not follow the naming of the table definition. */
+	private static final String OTHER_INDEX_NAME = "TEST_ALIGN_OTHER_NAME";
+
 	/**
 	 * Test of {@link DBSchemaUtils#alignKeys(com.top_logic.basic.Log, PooledConnection, DBTable, DBTable)}.
 	 */
@@ -160,6 +163,69 @@ public class TestDBSchemaUtils extends BasicTestCase {
 				columnNames(index(pool, extracted, IDX_CURRENT)));
 			assertNull("Index only in the target definition is not created.",
 				findIndex(pool, extracted, IDX_TARGET));
+			assertEquals(ROWS, rowCount(pool));
+		} finally {
+			dropKeysTable(pool);
+		}
+	}
+
+	/**
+	 * Test of {@link DBSchemaUtils#alignKeys(com.top_logic.basic.Log, PooledConnection, DBTable, DBTable)}
+	 * for a database containing an index of the current definition under another name.
+	 */
+	public void testAlignKeysIndexUnderOtherName() throws SQLException {
+		DBTable current = keysTable(false);
+		DBTable target = keysTable(true);
+
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		createKeysTable(pool, current);
+		try {
+			renameIndex(pool, IDX_CHANGED, OTHER_INDEX_NAME, COL_A, COL_C);
+
+			PooledConnection connection = pool.borrowWriteConnection();
+			try {
+				assertTrue(DBSchemaUtils.alignKeys(new AssertProtocol(), connection, current, target));
+				connection.commit();
+			} finally {
+				pool.releaseWriteConnection(connection);
+			}
+
+			DBTable extracted = DBSchemaUtils.extractTable(pool, DBSchemaFactory.createDBSchema(), KEYS_TABLE);
+			assertEquals(Arrays.asList(COL_C, COL_A), columnNames(index(pool, extracted, IDX_CHANGED)));
+			for (DBIndex index : extracted.getIndices()) {
+				assertFalse("Index under other name dropped.", index.getName().equalsIgnoreCase(OTHER_INDEX_NAME));
+			}
+			assertEquals(ROWS, rowCount(pool));
+		} finally {
+			dropKeysTable(pool);
+		}
+	}
+
+	/**
+	 * Test of {@link DBSchemaUtils#alignKeys(com.top_logic.basic.Log, PooledConnection, DBTable, DBTable)}
+	 * for a database missing an index of the current definition.
+	 */
+	public void testAlignKeysMissingIndex() throws SQLException {
+		DBTable current = keysTable(false);
+		DBTable target = keysTable(true);
+
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		createKeysTable(pool, current);
+		try {
+			dropIndex(pool, IDX_CHANGED);
+
+			PooledConnection connection = pool.borrowWriteConnection();
+			try {
+				assertTrue(DBSchemaUtils.alignKeys(new AssertProtocol(), connection, current, target));
+				connection.commit();
+			} finally {
+				pool.releaseWriteConnection(connection);
+			}
+
+			DBTable extracted = DBSchemaUtils.extractTable(pool, DBSchemaFactory.createDBSchema(), KEYS_TABLE);
+			assertEquals(Arrays.asList(COL_B, COL_A), columnNames(extracted.getPrimaryKey()));
+			assertEquals("Missing index is created in its target form.", Arrays.asList(COL_C, COL_A),
+				columnNames(index(pool, extracted, IDX_CHANGED)));
 			assertEquals(ROWS, rowCount(pool));
 		} finally {
 			dropKeysTable(pool);
@@ -269,6 +335,42 @@ public class TestDBSchemaUtils extends BasicTestCase {
 						+ sqlDialect.columnRef(COL_A) + ", " + sqlDialect.columnRef(COL_B) + ", "
 						+ sqlDialect.columnRef(COL_C) + ") VALUES (" + n + ", " + (ROWS - n) + ", 'v" + n + "')");
 				}
+			}
+			connection.commit();
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	private static void dropIndex(ConnectionPool pool, String indexName) throws SQLException {
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			DBHelper sqlDialect = connection.getSQLDialect();
+			try (Statement stmt = connection.createStatement()) {
+				stmt.execute(sqlDialect.dropIndex(sqlDialect.qualifiedName(KEYS_TABLE, indexName), KEYS_TABLE));
+			}
+			connection.commit();
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	private static void renameIndex(ConnectionPool pool, String indexName, String dbName, String... columns)
+			throws SQLException {
+		dropIndex(pool, indexName);
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			DBHelper sqlDialect = connection.getSQLDialect();
+			StringBuilder columnList = new StringBuilder();
+			for (String column : columns) {
+				if (columnList.length() > 0) {
+					columnList.append(", ");
+				}
+				columnList.append(sqlDialect.columnRef(column));
+			}
+			try (Statement stmt = connection.createStatement()) {
+				stmt.execute("CREATE INDEX " + sqlDialect.columnRef(dbName) + " ON " + sqlDialect.tableRef(KEYS_TABLE)
+					+ " (" + columnList + ")");
 			}
 			connection.commit();
 		} finally {

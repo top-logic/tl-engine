@@ -38,6 +38,16 @@ public class TestFileSizeLabelProvider extends BasicTestCase {
 		assertEquals(expectedSizeLabel, actualFileSizeLabel);
 	}
 
+	/**
+	 * A size that is exactly a power of the unit base is shown in that unit, so a limit of one
+	 * megabyte reads "1 MB", not "1024 KB".
+	 */
+	public void testExactMultipleUsesNextPrefix() {
+		assertEquals("1 KB", FileSizeLabelProvider.INSTANCE.getLabel(1024L));
+		assertEquals("1 MB", FileSizeLabelProvider.INSTANCE.getLabel(1024L * 1024));
+		assertEquals("5 MB", FileSizeLabelProvider.INSTANCE.getLabel(5L * 1024 * 1024));
+	}
+
 	@SuppressWarnings("javadoc")
 	public void testDefaultTwoMaxFractionDigits() {
 		long size = 3 * 1024 + 112; // ~3,109 KB

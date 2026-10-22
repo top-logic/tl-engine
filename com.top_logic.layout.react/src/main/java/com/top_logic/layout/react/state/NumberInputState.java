@@ -137,6 +137,9 @@ public interface NumberInputState extends com.top_logic.layout.react.state.Typin
 	com.top_logic.layout.react.state.NumberInputState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.NumberInputState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.NumberInputState setHidden(boolean value);
 
 	@Override

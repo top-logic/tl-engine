@@ -143,6 +143,12 @@ public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.DatePickerState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.DatePickerState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;

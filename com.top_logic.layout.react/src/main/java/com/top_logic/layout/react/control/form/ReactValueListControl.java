@@ -5,17 +5,28 @@
  */
 package com.top_logic.layout.react.control.form;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import jakarta.servlet.http.Part;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
+import com.top_logic.layout.react.field.UploadValueFactory;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A field holding several values, each edited by the control its value type asks for.
@@ -37,12 +48,19 @@ import com.top_logic.layout.react.state.FieldState;
  * </p>
  *
  * <p>
+ * Where the element provider creates {@link ReactFieldControlProvider#uploadValues(FieldSpec)
+ * values from files}, values are not added empty but uploaded: the add button opens a file picker
+ * selecting several files, files can be dropped onto the list, and the control serves the upload
+ * endpoint as an {@link UploadHandler}, appending the values created from the uploaded files.
+ * </p>
+ *
+ * <p>
  * Which field is displayed this way is decided in
  * {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)}:
  * every multi-valued field whose provider edits one value at a time.
  * </p>
  */
-public class ReactValueListControl extends ReactFormFieldControl {
+public class ReactValueListControl extends ReactFormFieldControl implements UploadHandler {
 
 	private static final String REACT_MODULE = "TLValueList";
 
@@ -75,11 +93,29 @@ public class ReactValueListControl extends ReactFormFieldControl {
 	/** {@link #LAYOUT} of values that each take a line of their own. */
 	public static final String LAYOUT_BLOCK = "block";
 
+	/**
+	 * State key for whether values are added by uploading files rather than as empty values, see
+	 * {@link ReactFieldControlProvider#uploadValues(FieldSpec)}.
+	 *
+	 * <p>
+	 * Where they are, the control also publishes the file types its file picker offers under
+	 * {@link UploadSupport#ACCEPT} and the {@link #maxUploadSize() upload limit} under
+	 * {@link UploadSupport#MAX_UPLOAD_SIZE}.
+	 * </p>
+	 */
+	public static final String UPLOAD = "upload";
+
 	private final FieldSpec _elementSpec;
 
 	private final boolean _ordered;
 
 	private final ReactFieldControlProvider _elementProvider;
+
+	/** Creates the values from uploaded files, {@code null} if values are added empty. */
+	private final UploadValueFactory _uploadValues;
+
+	/** The size limit of one uploaded file, see {@link #maxUploadSize()}. */
+	private final long _maxUploadSize;
 
 	private final List<ListElementFieldModel> _elementModels = new ArrayList<>();
 
@@ -104,6 +140,13 @@ public class ReactValueListControl extends ReactFormFieldControl {
 		_elementSpec = fieldSpec.elementSpec();
 		_ordered = fieldSpec.isOrdered();
 		_elementProvider = elementProvider;
+		_uploadValues = elementProvider.uploadValues(_elementSpec);
+		_maxUploadSize = UploadSupport.effectiveMaxUploadSize(_elementSpec.getMaxUploadSize());
+		putState(UPLOAD, Boolean.valueOf(_uploadValues != null));
+		if (_uploadValues != null) {
+			putState(UploadSupport.ACCEPT, UploadSupport.acceptAttribute(_elementSpec.getAcceptedTypes()));
+			putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(_maxUploadSize));
+		}
 		// The values are the element controls; the collection itself is nothing the client draws.
 		putState(FieldState.VALUE__PROP, null);
 		putState(LAYOUT, _elementSpec.getMultilineRows() > 0 ? LAYOUT_BLOCK : LAYOUT_INLINE);
@@ -229,6 +272,47 @@ public class ReactValueListControl extends ReactFormFieldControl {
 		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
 		values.add(null);
 		getFieldModel().setValue(values);
+	}
+
+	/**
+	 * Appends the values created from the uploaded files, in the order the client sent them.
+	 *
+	 * <p>
+	 * Ignored where the element provider does not create values from files, see {@link #UPLOAD}.
+	 * </p>
+	 */
+	@Override
+	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+		if (_uploadValues == null || !acceptsClientValue()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		List<BinaryData> files;
+		try {
+			files = UploadSupport.toBinaryData(parts);
+		} catch (IOException ex) {
+			Logger.error("Failed to process file upload.", ex, ReactValueListControl.class);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		if (files.isEmpty()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		List<?> created = _uploadValues.createValues(files);
+		if (created.isEmpty()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
+		values.addAll(created);
+		getFieldModel().setValue(values);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The {@link FieldSpec#getMaxUploadSize() limit of the field}, capped by the application-wide
+	 * {@link UploadSupport#maxUploadSize() limit}.
+	 */
+	@Override
+	public long maxUploadSize() {
+		return _maxUploadSize;
 	}
 
 	/**

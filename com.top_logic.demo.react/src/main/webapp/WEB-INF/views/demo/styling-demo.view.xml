@@ -58,6 +58,8 @@
 		<channel name="requiredText"/>
 		<channel name="submittedText"/>
 		<channel name="annotatedChoice"/>
+		<channel name="files"/>
+		<channel name="documents"/>
 		<!-- The object the form of the last section edits, held by the view and stored nowhere. -->
 		<derived-channel name="obj"
 			expr="new(`demo.react:Demo`, transient: true)"
@@ -758,8 +760,8 @@
 		</text>
 		<text>
 			<label>
-				<en>A value-input states its value in the words of an attribute of the model: a type, whether it is mandatory, whether it holds multiple values, and the annotations shaping its display. A mandatory selection offers no empty choice - the mandatory radio group has no button for no value and the mandatory dropdown no clear button, unlike the optional ones beside them. A mandatory text that is emptied shows the missing value and does not run its command: press Enter to hand the text to the channel below it, then empty the field and press Enter again. The last input names its control by an input-control annotation, as an attribute of the model does.</en>
-				<de>Ein value-input beschreibt seinen Wert mit den Worten eines Attributs des Modells: einem Typ, ob er Pflicht ist, ob er mehrere Werte hält, und den Annotationen, die seine Darstellung bestimmen. Eine Pflichtauswahl bietet keine leere Wahl an - die Pflicht-Radio-Gruppe hat keinen Button für keinen Wert und das Pflicht-Dropdown keine Schaltfläche zum Leeren, anders als die optionalen daneben. Ein Pflichttext, der geleert wird, zeigt den fehlenden Wert an und führt sein Kommando nicht aus: Enter übergibt den Text an den Kanal darunter; danach das Feld leeren und erneut Enter drücken. Die letzte Eingabe benennt ihr Steuerelement durch eine input-control-Annotation, wie es ein Attribut des Modells tut.</de>
+				<en>A value-input states its value in the words of an attribute of the model: a type, whether it is mandatory, whether it holds multiple values, and the annotations shaping its display. A mandatory selection offers no empty choice - the mandatory radio group has no button for no value and the mandatory dropdown no clear button, unlike the optional ones beside them. A mandatory text that is emptied shows the missing value and does not run its command: press Enter to hand the text to the channel below it, then empty the field and press Enter again. The input after it names its control by an input-control annotation, as an attribute of the model does. Several files are entered as chips by default; the binary-display annotation of the last input shows them as a list of file fields instead, and its accepted-types annotation offers only PDF documents and images in the file picker. Both take several files at once, from the file picker or dropped onto them.</en>
+				<de>Ein value-input beschreibt seinen Wert mit den Worten eines Attributs des Modells: einem Typ, ob er Pflicht ist, ob er mehrere Werte hält, und den Annotationen, die seine Darstellung bestimmen. Eine Pflichtauswahl bietet keine leere Wahl an - die Pflicht-Radio-Gruppe hat keinen Button für keinen Wert und das Pflicht-Dropdown keine Schaltfläche zum Leeren, anders als die optionalen daneben. Ein Pflichttext, der geleert wird, zeigt den fehlenden Wert an und führt sein Kommando nicht aus: Enter übergibt den Text an den Kanal darunter; danach das Feld leeren und erneut Enter drücken. Die Eingabe danach benennt ihr Steuerelement durch eine input-control-Annotation, wie es ein Attribut des Modells tut. Mehrere Dateien werden standardmäßig als Chips eingegeben; die binary-display-Annotation der letzten Eingabe zeigt sie stattdessen als Liste von Dateifeldern, und ihre accepted-types-Annotation bietet in der Dateiauswahl nur PDF-Dokumente und Bilder an. Beide nehmen mehrere Dateien auf einmal an, aus der Dateiauswahl oder darauf abgelegt.</de>
 			</label>
 		</text>
 		<fields>
@@ -837,6 +839,30 @@
 					</input-control>
 				</annotations>
 			</value-input>
+			<value-input
+				multiple="true"
+				type="tl.core:Binary"
+				value="files"
+			>
+				<label>
+					<en>Files (chips)</en>
+					<de>Dateien (Chips)</de>
+				</label>
+			</value-input>
+			<value-input
+				multiple="true"
+				type="tl.core:Binary"
+				value="documents"
+			>
+				<label>
+					<en>Documents and images (list)</en>
+					<de>Dokumente und Bilder (Liste)</de>
+				</label>
+				<annotations>
+					<binary-display presentation="list"/>
+					<accepted-types value="*.pdf, image/*"/>
+				</annotations>
+			</value-input>
 		</fields>
 		<stack
 			direction="row"
@@ -881,6 +907,14 @@
 			/>
 			<text
 				input="annotatedChoice"
+				tone="helper"
+			/>
+			<text
+				input="files"
+				tone="helper"
+			/>
+			<text
+				input="documents"
 				tone="helper"
 			/>
 		</stack>

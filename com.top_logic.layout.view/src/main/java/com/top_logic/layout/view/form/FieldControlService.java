@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.format.configured.Formatter;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -61,6 +62,9 @@ import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLMaxUploadSize;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
@@ -68,6 +72,7 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPrese
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
+import com.top_logic.model.annotate.ui.TLAcceptedTypes;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
@@ -86,7 +91,10 @@ import com.top_logic.util.model.ModelService;
  * attribute holds - or on its type (via
  * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).</li>
  * <li>Global type-to-provider map configured in this service.</li>
- * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}.</li>
+ * <li>A multi-valued binary value whose {@link BinaryDisplay} asks for a list is edited as a list
+ * with one file field per value.</li>
+ * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}: e.g. the files of a
+ * multi-valued binary value as file chips.</li>
  * </ol>
  *
  * <p>
@@ -100,6 +108,8 @@ import com.top_logic.util.model.ModelService;
  *           {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)},
  *           never in {@link ReactFieldControlProvider#createControl(ReactContext, FieldSpec, FieldModel)}
  *           itself, which is what keeps type and multiplicity decided in one place.
+ *           A binary value asking for a list is edited by {@link FieldControlRegistry#BINARY}, the
+ *           built-in fallback of a binary value is {@link FieldControlRegistry#FILE_CHIPS}.
  */
 @Label("Form field controls")
 @ServiceDependencies({
@@ -483,9 +493,71 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return createControl(context, field, model, mapped);
 		}
 
-		// 4. The control registered for the kind of value the type holds. The same registry
+		// 4. Files displayed as a list of one file field per value.
+		if (field.isMultiple() && isBinary(type)
+			&& binaryPresentation(annotations, type) == BinaryPresentation.LIST) {
+			return createControl(context, field, model, FieldControlRegistry.BINARY);
+		}
+
+		// 5. The control registered for the kind of value the type holds. The same registry
 		// serves configuration properties, so both are edited alike.
 		return FieldControlRegistry.getInstance().createControl(context, field, model);
+	}
+
+	/**
+	 * Whether values of the given type are files.
+	 */
+	private static boolean isBinary(TLType type) {
+		return BinaryDataSource.class.isAssignableFrom(valueType(type));
+	}
+
+	/**
+	 * How a binary value asks to be displayed, {@link BinaryPresentation#DATA_ITEM} when it says
+	 * nothing.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type.
+	 * </p>
+	 */
+	private static BinaryPresentation binaryPresentation(AnnotationLookup annotations, TLType type) {
+		BinaryDisplay annotation = annotation(annotations, type, BinaryDisplay.class);
+		if (annotation == null || annotation.getPresentation() == null) {
+			return BinaryPresentation.DATA_ITEM;
+		}
+		return annotation.getPresentation();
+	}
+
+	/**
+	 * The file types a binary value accepts, in the form of {@link TLAcceptedTypes}, or
+	 * {@code null} where any file is accepted or the value holds no files.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type.
+	 * </p>
+	 */
+	private static String acceptedTypes(AnnotationLookup annotations, TLType type) {
+		if (!isBinary(type)) {
+			return null;
+		}
+		TLAcceptedTypes annotation = annotation(annotations, type, TLAcceptedTypes.class);
+		return annotation == null ? null : annotation.getValue();
+	}
+
+	/**
+	 * The maximum size of one file a binary value is uploaded from, in the form of
+	 * {@link TLMaxUploadSize}, or {@code 0} where the value sets no limit of its own or holds no
+	 * files.
+	 *
+	 * <p>
+	 * An annotation at the attribute wins over the one of its type.
+	 * </p>
+	 */
+	private static long maxUploadSize(AnnotationLookup annotations, TLType type) {
+		if (!isBinary(type)) {
+			return 0;
+		}
+		TLMaxUploadSize annotation = annotation(annotations, type, TLMaxUploadSize.class);
+		return annotation == null ? 0 : annotation.getValue();
 	}
 
 	/**
@@ -605,6 +677,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
 			.setDateFormat(dateFormat(annotations, type))
 			.setNumberFormat(numberFormat(annotations, type))
+			.setAcceptedTypes(acceptedTypes(annotations, type))
+			.setMaxUploadSize(maxUploadSize(annotations, type))
 			.setSendValueOnBlur(ValueNormalizer.isAnnotated(annotations));
 	}
 

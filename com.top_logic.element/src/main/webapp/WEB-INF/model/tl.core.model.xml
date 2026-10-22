@@ -239,6 +239,7 @@
 					/>
 					
 					<annotations>
+						<supports-multiple/>
 						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="BINARY"/>
 					</annotations>
 				</datatype>

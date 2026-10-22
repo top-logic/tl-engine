@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	One invoice: its header, the amounts the model computes from the lines, the lines themselves
+	and the scan it was entered from.
+-->
+<view>
+	<channels>
+		<channel name="invoice"/>
+	</channels>
+
+	<panel fill="true">
+		<title>
+			<en>Invoice</en>
+			<de>Rechnung</de>
+		</title>
+		<!--
+			What this page has open, for the chat (Issue #928). It draws nothing, and the chat states
+			"none" again when the page leaves the screen. See app.view.xml, <chat-channels>.
+		-->
+		<page-selection to="pageSelection">
+			<inputs>
+				<input channel="invoice"/>
+			</inputs>
+		</page-selection>
+		<form input="invoice" with-inset="true">
+			<!-- The amounts the model computes from the lines, side by side and never editable. -->
+			<grid min-column-width="9rem">
+				<field attribute="netAmount"/>
+				<field attribute="grossAmount"/>
+				<field attribute="isOverdue"/>
+			</grid>
+			<grid min-column-width="13rem">
+				<field attribute="invoiceNumber"/>
+				<field attribute="event"/>
+				<field attribute="direction"/>
+				<field attribute="status"/>
+				<field attribute="invoiceDate"/>
+				<field attribute="dueDate"/>
+				<field attribute="counterparty"/>
+				<field attribute="currency"/>
+				<field attribute="taxRate"/>
+			</grid>
+			<composition-table attribute="lines">
+				<columns>
+					<column attribute="description"/>
+					<column attribute="quantity"/>
+					<column attribute="unitPrice"/>
+					<column attribute="lineTotal"/>
+				</columns>
+			</composition-table>
+			<field attribute="scan"/>
+		</form>
+	</panel>
+</view>

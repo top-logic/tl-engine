@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd"
+	version="3.1">
+	<name>tl-ai-mcp-server</name>
+
+	<!-- Authenticates every request to /mcp/* and opens the TLContext of the account it resolved.
+	     Both are required: the protocol handlers read the KnowledgeBase, and what they may return is
+	     decided against that account's model access rights. -->
+	<filter>
+		<filter-name>mcpAuthenticationFilter</filter-name>
+		<filter-class>com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter</filter-class>
+		<async-supported>true</async-supported>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>mcpAuthenticationFilter</filter-name>
+		<url-pattern>/mcp/*</url-pattern>
+	</filter-mapping>
+
+	<servlet>
+		<servlet-name>MCPTransportServlet</servlet-name>
+		<servlet-class>com.top_logic.ai.mcp.server.MCPTransportServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>MCPTransportServlet</servlet-name>
+		<url-pattern>/mcp/*</url-pattern>
+	</servlet-mapping>
+</web-fragment>

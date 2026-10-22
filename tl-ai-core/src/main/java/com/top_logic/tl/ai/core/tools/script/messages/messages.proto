@@ -1,0 +1,38 @@
+package com.top_logic.tl.ai.core.tools.script.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Result message containing a list of available TLScript function names.
+ */
+message FunctionListResult {
+	/**
+	 * List of function names that can be used in TLScript expressions.
+	 */
+	repeated string functions;
+}
+
+/**
+ * Result message containing detailed documentation for a TLScript function.
+ */
+message FunctionDocResult {
+	/**
+	 * The function documentation in Markdown format (when available).
+	 */
+	string documentation;
+
+	/**
+	 * List of parameter names for the function.
+	 * Contains "..." for varargs functions.
+	 */
+	repeated string parameters;
+
+	/**
+	 * Error message if documentation retrieval failed.
+	 */
+	string errorMessage;
+}

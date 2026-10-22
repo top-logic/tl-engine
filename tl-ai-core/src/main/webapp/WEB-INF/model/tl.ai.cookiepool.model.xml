@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.cookiepool">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.core.cookiepool.model.impl"
+				interface-package="com.top_logic.tl.ai.core.cookiepool.model"
+			/>
+		</annotations>
+		<types>
+			<class name="CookiePool">
+				<annotations>
+					<table name="CookiePool"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="state"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+					<property name="shared"
+						type="tl.core:Boolean"
+					/>
+					<property name="updatedAt"
+						type="tl.core:DateTime"
+					/>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					/>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

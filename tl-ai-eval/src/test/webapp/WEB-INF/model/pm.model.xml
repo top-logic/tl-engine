@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The eval's business domain: projects with tickets.
+
+	Deliberately the same two types, with the same names and the same attributes, as the "pm" module
+	of the agent security test bed (tl-ai-demo/src/main/webapp/WEB-INF/model/pm.model.xml). The
+	scenarios of this module are therefore the scenarios of that test bed, and a scenario written
+	here can be pointed at the demo application unchanged.
+
+	It is a copy rather than a dependency because tl-ai-demo is an application module: depending on
+	it from here would drag a whole deployment into a test harness, and its fixture is seeded by a
+	service that boots with the application. This module needs two classes and four rows, and it
+	needs them created and deleted between every single run - see PmFixture.
+
+	What it deliberately leaves out is the test bed's security half: roles, scope rules, the
+	<security-config> and the <tool-access> policy. "Did the agent respect the role model" is a
+	question worth an eval, and it is not this one. Adding it means adding those sections here, not
+	changing this file.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="pm">
+		<class name="Project">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="partners"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.accounts:Person"
+				/>
+				<!--
+					A composition, so a ticket has a container to navigate back to - which is what a
+					scenario asking "how many tickets does Alpha have" has to traverse.
+				-->
+				<reference name="tickets"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Ticket"
+				/>
+			</attributes>
+		</class>
+		<class name="Ticket">
+			<attributes>
+				<property name="title"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="body"
+					type="tl.core:String"
+				/>
+				<property name="status"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

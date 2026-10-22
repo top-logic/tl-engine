@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- The window TestWindowPage drives: a sidebar whose pages are view-refs, as an application shell has. -->
+<view>
+	<app-shell>
+		<content>
+			<sidebar active-item="home">
+				<nav-item id="home">
+					<label>
+						<en>Home</en>
+					</label>
+					<view-ref view="test-window/home.view.xml"/>
+				</nav-item>
+				<nav-item id="tabs">
+					<label>
+						<en>Tabs</en>
+					</label>
+					<view-ref view="test-window/tabs.view.xml"/>
+				</nav-item>
+			</sidebar>
+		</content>
+	</app-shell>
+</view>

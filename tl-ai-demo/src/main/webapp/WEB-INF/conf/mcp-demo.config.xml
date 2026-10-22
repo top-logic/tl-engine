@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Switches the MCP endpoint /mcp on for a local demo, authenticating callers with HTTP basic
+	against the application's own accounts. Enable it in metaConf.txt.
+
+	FOR A LOCAL DEMO ONLY. HTTP basic puts a person's password into the client configuration; a real
+	installation uses an API key or a bearer token instead. What the endpoint publishes
+	is configured in autoconf/com.top_logic.ai.mcp.server.MCPServerService.config.xml; see
+	the developer article ai/security/mcp-endpoint.
+
+	Connect Claude Code to a running demo with:
+
+	    claude mcp add -t http -H "Authorization: Basic $(printf root:<password> | base64)" tl-ai-demo http://localhost:8080/tl-ai-demo/mcp
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<module key="com.top_logic.ai.mcp.server.MCPServerService$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.ai.mcp.server.MCPServerService">
+			<instance>
+				<authentications>
+					<basic-authentication domain="mcp-demo" in-user-context="true"/>
+				</authentications>
+			</instance>
+		</config>
+
+		<!--
+			An MCP call is an unattended run, so the background allowlist is its ceiling. The demo's
+			policy declares none, which leaves such runs nothing but interaction and introspection;
+			the published tools read the model, so model.read is opened for them here. This also
+			applies to every other unattended run of the demo while this aspect is on.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance>
+				<background-allowlist>
+					<grant group="model.read"/>
+				</background-allowlist>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+				<!--
+					What the model is told it is working in (Issue #437). Without it a run reads the
+					application's own name, which is the platform's here; this demo is about event management,
+					and saying so is worth one line in every prompt.
+
+					The block's wording itself is NOT configured here: it is the shipped, translated
+					resource tl.ai.environment.template. See tl-ai-core/doc/environment-block.md.
+				-->
+				<environment>
+					<application>
+						<en>Event management demo (tl-ai-demo)</en>
+						<de>Veranstaltungsmanagement (Demo, tl-ai-demo)</de>
+					</application>
+				</environment>
+			</instance>
+		</config>
+	</services>
+</application>

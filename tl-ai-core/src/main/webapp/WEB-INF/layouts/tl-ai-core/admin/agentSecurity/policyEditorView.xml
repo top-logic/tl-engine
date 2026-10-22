@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Richtlinie: where the policy is actually written (#404).
+	
+	One sub-tab per question, each a matrix of roles against names: which agents a role may run,
+	which models it may choose, which MCP servers it may attach, and which capabilities it may use.
+	Only the matrix of the visible sub-tab is built. The four share one edit session - one draft, one
+	undo history, one apply - which is kept per user session, so a change on one sub-tab is applied
+	from any of them.
+	
+	Übernehmen, Verwerfen, Rückgängig and Wiederholen are command handlers in the component toolbar,
+	which is where every other administration surface puts them. The role search, the row filter, the
+	overlay switch and "Auswahl bearbeiten" sit in a line above the matrix they act on.
+-->
+<securityLayout name="aiToolAccessPolicyView"
+	titleKey="admin.ai.agentSecurity.policy.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentSecurity.policy.tabber"/>
+	<components>
+		<tabbar name="aiToolAccessPolicyView_tabBar">
+			<components>
+				<layout name="aiToolAccessPolicyAgentsTab">
+					<tabInfo label="admin.ai.agentSecurity.policy.agents.tabber"/>
+					<components>
+						<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+							dimension="AGENTS"
+							name="aiToolAccessPolicyAgents"
+							resPrefix="admin.ai.agentSecurity.policy."
+							securityObject="securityRoot"
+							titleKey="admin.ai.agentSecurity.policy.agents.title"
+						>
+							<buttons>
+								<button id="applyAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+									clique="apply"
+								/>
+								<button id="discardAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+									clique="cancel"
+								/>
+								<button id="undoAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.UndoPolicyEditCommand"
+									clique="edit"
+									image="css:fa-solid fa-rotate-left"
+								/>
+								<button id="redoAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.RedoPolicyEditCommand"
+									clique="edit"
+									image="css:fa-solid fa-rotate-right"
+								/>
+							</buttons>
+
+							<layoutInfo scrolleable="true"/>
+						</form>
+					</components>
+				</layout>
+				<layout name="aiToolAccessPolicyModelsTab">
+					<tabInfo label="admin.ai.agentSecurity.policy.models.tabber"/>
+					<components>
+						<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+							dimension="MODELS"
+							name="aiToolAccessPolicyModels"
+							resPrefix="admin.ai.agentSecurity.policy."
+							securityObject="securityRoot"
+							titleKey="admin.ai.agentSecurity.policy.models.title"
+						>
+							<buttons>
+								<button id="applyAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+									clique="apply"
+								/>
+								<button id="discardAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+									clique="cancel"
+								/>
+								<button id="undoAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.UndoPolicyEditCommand"
+									clique="edit"
+									image="css:fa-solid fa-rotate-left"
+								/>
+								<button id="redoAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.RedoPolicyEditCommand"
+									clique="edit"
+									image="css:fa-solid fa-rotate-right"
+								/>
+							</buttons>
+
+							<layoutInfo scrolleable="true"/>
+						</form>
+					</components>
+				</layout>
+				<layout name="aiToolAccessPolicyMcpServersTab">
+					<tabInfo label="admin.ai.agentSecurity.policy.mcp.tabber"/>
+					<components>
+						<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+							dimension="MCP_SERVERS"
+							name="aiToolAccessPolicyMcpServers"
+							resPrefix="admin.ai.agentSecurity.policy."
+							securityObject="securityRoot"
+							titleKey="admin.ai.agentSecurity.policy.mcp.title"
+						>
+							<buttons>
+								<button id="applyAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+									clique="apply"
+								/>
+								<button id="discardAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+									clique="cancel"
+								/>
+								<button id="undoAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.UndoPolicyEditCommand"
+									clique="edit"
+									image="css:fa-solid fa-rotate-left"
+								/>
+								<button id="redoAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.RedoPolicyEditCommand"
+									clique="edit"
+									image="css:fa-solid fa-rotate-right"
+								/>
+							</buttons>
+
+							<layoutInfo scrolleable="true"/>
+						</form>
+					</components>
+				</layout>
+				<layout name="aiToolAccessPolicyCapabilitiesTab">
+					<tabInfo label="admin.ai.agentSecurity.policy.capabilities.tabber"/>
+					<components>
+						<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+							dimension="CAPABILITIES"
+							name="aiToolAccessPolicyCapabilities"
+							resPrefix="admin.ai.agentSecurity.policy."
+							securityObject="securityRoot"
+							titleKey="admin.ai.agentSecurity.policy.capabilities.title"
+						>
+							<buttons>
+								<button id="applyAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+									clique="apply"
+								/>
+								<button id="discardAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+									clique="cancel"
+								/>
+								<button id="undoAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.UndoPolicyEditCommand"
+									clique="edit"
+									image="css:fa-solid fa-rotate-left"
+								/>
+								<button id="redoAgentToolAccessPolicy"
+									class="com.top_logic.tl.ai.core.security.layout.RedoPolicyEditCommand"
+									clique="edit"
+									image="css:fa-solid fa-rotate-right"
+								/>
+							</buttons>
+
+							<layoutInfo scrolleable="true"/>
+						</form>
+					</components>
+				</layout>
+			</components>
+		</tabbar>
+	</components>
+</securityLayout>

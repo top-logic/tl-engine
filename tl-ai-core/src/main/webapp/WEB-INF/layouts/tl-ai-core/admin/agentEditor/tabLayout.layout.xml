@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_e3df1745_93d0_4885_8da7_a0baf99d8d53">
+		<tabLabel key="dynamic.8b8de44d-9cfe-4642-aa57-465772cabc6d">
+			<en>Agent Editor</en>
+			<de>Agent Editor</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="tl-ai-core/admin/agentEditor/innerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

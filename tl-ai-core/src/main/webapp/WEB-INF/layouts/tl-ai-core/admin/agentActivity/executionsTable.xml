@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Every run, main agents and sub-agents, without a time limit. An earlier revision bounded this to
+	the last 7 days because the computed columns walk references per row and the table's own filters
+	run after the rows exist. The measurement in the pull request says the bound was the more
+	expensive half of that trade: loading all 3874 runs takes 2 ms, applying the 7-day filter takes
+	8 ms, and both referers() columns evaluated over every row take 12 ms - which the table does not
+	do anyway, because a column value is fetched per rendered cell and only the current page is
+	rendered. Which runs a reader wants is a question for the column filters.
+	
+	"Kosten" and "Währung" are what the run cost: its tokens priced with the model that answered each
+	request, which the run records in US dollars ("Kosten (USD)", in the column chooser), converted
+	into the system currency at the rate of USD valid on the day the run started - or left in US
+	dollars while there is no such rate. They stand next to each other because a sum is only a sum
+	within one currency.
+	
+	"Dauer", "Token", "Teilagenten" and "Offene Rückfragen" are computed. A running run has no
+	endedAt, so its duration is measured against now - that is what an operator wants to read there,
+	and the value is a snapshot, not a ticking clock; pressing Aktualisieren re-reads it. The last
+	two stay out of the default column set for legibility, not for cost: a run row that carries
+	every count at once is a row nobody reads. They are one click away in the column chooser.
+-->
+<tableView name="aiExecutionsTable"
+	objectType="tl.ai.execution:AgentExecution"
+	securityObject="securityRoot"
+	titleKey="admin.ai.agentActivity.executions.title"
+>
+	<layoutInfo size="68%"/>
+	<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression">
+		<elements><![CDATA[
+			model -> all(`tl.ai.execution:AgentExecution`)
+		]]></elements>
+		<supportsElement>element -&gt; $element.instanceOf(`tl.ai.execution:AgentExecution`)</supportsElement>
+	</modelBuilder>
+	<table
+		defaultColumns="displayName,status,session,model,startedAt,durationSeconds,tokenCount,displayCost,displayCurrency"
+		defaultSortOrder="startedAt:descending"
+		fixedColumns="1"
+	>
+		<columns>
+			<column name="displayName"
+				columnWidth="190px"
+				visibility="mandatory"
+			/>
+			<column name="session"
+				columnWidth="105px"
+			/>
+			<column name="agentName"
+				columnWidth="140px"
+			/>
+			<column name="status"
+				columnWidth="150px"
+			/>
+			<column name="model"
+				columnWidth="155px"
+			/>
+			<column name="provider"
+				columnWidth="105px"
+			/>
+			<column name="parentExecution"
+				columnWidth="220px"
+			/>
+			<column name="startedAt"
+				columnWidth="145px"
+			/>
+			<column name="endedAt"
+				columnWidth="150px"
+			/>
+			<column name="stopReason"
+				columnWidth="135px"
+			/>
+			<column name="cancelRequested"
+				columnWidth="170px"
+			/>
+			<column name="inputTokens"
+				columnWidth="105px"
+			/>
+			<column name="outputTokens"
+				columnWidth="105px"
+			/>
+			<column name="thinkingTokens"
+				columnWidth="105px"
+			/>
+			<column name="cacheReadTokens"
+				columnWidth="115px"
+			/>
+			<column name="cacheWriteTokens"
+				columnWidth="115px"
+			/>
+			<column name="displayCost"
+				columnWidth="90px"
+			/>
+			<column name="displayCurrency"
+				columnWidth="100px"
+			/>
+			<column name="cost"
+				columnWidth="100px"
+			/>
+			<column name="runId"
+				columnWidth="250px"
+			/>
+			<column name="errorMessage"
+				columnWidth="320px"
+			/>
+			<column name="transcript"
+				visibility="excluded"
+			/>
+			<column name="transcriptHtml"
+				visibility="excluded"
+			/>
+			<column name="response"
+				visibility="excluded"
+			/>
+			<!--
+				The computed columns are declared here for their width only; their label, type and
+				accessor come from the configuration providers below. Without the declaration they
+				fall back to the generic width for their type, which is far wider than a count needs
+				and pushes the columns that carry the finding off the pane.
+			-->
+			<column name="durationSeconds"
+				columnWidth="95px"
+			/>
+			<column name="tokenCount"
+				columnWidth="90px"
+			/>
+			<column name="childCount"
+				columnWidth="110px"
+			/>
+			<column name="pendingCount"
+				columnWidth="150px"
+			/>
+		</columns>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="durationSeconds"
+				columnLabel="admin.ai.agentActivity.executions.durationSeconds"
+				columnType="tl.core:Long"
+			>
+				<accessor><![CDATA[
+					e -> {
+						started = $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+						ended = $e.get(`tl.ai.execution:AgentExecution#endedAt`);
+						isEmpty($started) ? null
+							: (ifElse(isEmpty($ended), now(), $ended).toMillis() - $started.toMillis()) / 1000;
+					}
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="tokenCount"
+				columnLabel="admin.ai.agentActivity.executions.tokenCount"
+				columnType="tl.core:Long"
+			>
+				<accessor><![CDATA[
+					e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#inputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#inputTokens`))
+						+ ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#outputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#outputTokens`))
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="childCount"
+				columnLabel="admin.ai.agentActivity.executions.childCount"
+				columnType="tl.core:Integer"
+				columnVisibility="hidden"
+			>
+				<accessor><![CDATA[
+					e -> $e.referers(`tl.ai.execution:AgentExecution#parentExecution`).size()
+				]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="pendingCount"
+				columnLabel="admin.ai.agentActivity.executions.pendingCount"
+				columnType="tl.core:Integer"
+				columnVisibility="hidden"
+			>
+				<accessor><![CDATA[
+					e -> $e.referers(`tl.ai.execution:InteractionRequest#execution`)
+						.filter(r -> $r.get(`tl.ai.execution:InteractionRequest#state`) == `tl.ai.execution:InteractionState#PENDING`)
+						.size()
+				]]></accessor>
+			</configurationProvider>
+		</configurationProviders>
+	</table>
+	<buttons>
+		<button id="requestCancel"
+			class="com.top_logic.tl.ai.core.execution.layout.RequestCancelCommand"
+			clique="additional"
+			target="selection(self())"
+		>
+			<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+				<confirmMessage key="admin.ai.agentActivity.executions.requestCancel.confirm"/>
+			</confirmation>
+		</button>
+		<button id="refreshExecutions"
+			class="com.top_logic.layout.form.component.InvalidateCommand"
+		/>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+		/>
+	</buttons>
+</tableView>

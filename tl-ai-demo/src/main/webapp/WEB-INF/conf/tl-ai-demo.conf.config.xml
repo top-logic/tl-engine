@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			What this application may cite, on top of the framework's `web` and `object`. An event or
+			an invoice a read tool showed the model is put on the run's reading list as one of these
+			kinds, by its type; the reader is shown the label.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+			<instance>
+				<kinds>
+					<kind name="event"
+						description="an event of this application"
+						types="demo.events:Event"
+						passage="false"
+					>
+						<!--
+							`name` is the configuration's vocabulary and stays English in every
+							installation; this is the word the Quellen rail and the marker popover show
+							a reader.
+						-->
+						<label>
+							<de>Veranstaltung</de>
+							<en>Event</en>
+						</label>
+					</kind>
+					<kind name="invoice"
+						description="an invoice of an event in this application"
+						types="demo.events:Invoice"
+						passage="false"
+					>
+						<label>
+							<de>Rechnung</de>
+							<en>Invoice</en>
+						</label>
+					</kind>
+				</kinds>
+			</instance>
+		</config>
+
+		<!--
+			A binary attribute (an invoice's scan) as a file field. The engine's default for
+			tl.core:Binary is a text input in this version, which shows "[no name]" and cannot take a
+			file, so the demo maps the type to the engine's own file control.
+		-->
+		<config service-class="com.top_logic.layout.view.form.FieldControlService">
+			<instance>
+				<providers>
+					<provider type="tl.core:Binary">
+						<impl class="com.top_logic.layout.view.form.BinaryControlProvider"/>
+					</provider>
+				</providers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl-ai-demo.app-messages" />
+				</bundles>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-ai-demo" />
+				</modules>
+			</instance>
+		</config>
+
+		<!--
+			Installation encryption key for the platform EncryptionService, used by CookiePoolService
+			to encrypt browser cookie/login pools at rest (see tl-ai-core CookiePoolService). The
+			platform's default EncryptionService instance installs NO key, so getEncryption() would
+			throw and cookie pools could not be saved.
+
+			DummyEncryptionService installs a real AES SymmetricEncryption from a key embedded in this
+			config. It boots fully unattended (no password prompt), which the cookie-pool feature needs
+			for background/unattended agents and for the demo's unattended startup.
+
+			SECURITY: the key below sits in clear text in this file, so this is a DEV / DEMO setup only.
+			For production, OVERRIDE this instance with the real installation-key service
+			com.top_logic.knowledge.service.encryption.pbe.PasswordBasedEncryptionService (see the
+			platform's top-logic.encrypted.config.xml). CAVEAT: PBE stores its key PBE-encrypted in the
+			DB and can only be unlocked by a human typing the application password through the
+			deferred-boot browser flow, so an app using PBE does NOT boot fully unattended - a
+			background/unattended agent cannot save/use cookie pools until an operator has unlocked
+			encryption. CookiePoolService itself is codec-agnostic: it always encrypts via whichever
+			EncryptionService instance is configured, and refuses to store cookies (never plaintext)
+			when no encryption key is installed.
+		-->
+		<config service-class="com.top_logic.basic.encryption.EncryptionService">
+			<instance class="com.top_logic.basic.encryption.DummyEncryptionService"
+				algorithm="AES"
+				key="7b1f9c2e4a6d8b0f3e5c7a9d1b2f4e60"
+			/>
+		</config>
+
+		<!--
+			Browsing target of the DEMO application. The product default in
+			tl-ai-core.conf.config.xml is an EMPTY allowlist (fail-closed: a fresh installation
+			browses nothing until an administrator configures domains), so the JS-heavy site the
+			browser tool is validated against is allowlisted here, where it belongs - in the demo
+			rather than in every installation.
+
+			Deliberately an override with no class attribute: it can only resolve against the
+			BrowserToolsService instance declared in tl-ai-core.conf.config.xml, so it also proves
+			that file is on this application's configuration load path (see
+			TestBrowserToolsServiceDemoConfig).
+		-->
+		<config service-class="com.top_logic.tl.ai.core.tools.web.BrowserToolsService">
+			<instance allowed-domains="quotes.toscrape.com" />
+		</config>
+
+		<!-- The chat's own bundle is registered by tl-chat. -->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<!--
+						The demo's own skin on the shell around the chat: an app bar that follows
+						the theme, and one theme button instead of two. See the file's header.
+					-->
+					<stylesheet name="tl-ai-demo-shell-css"
+						resource="/style/tl-ai-demo-shell.css"
+						requires="tl-design-system-components"
+					/>
+				</resources>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<!--
+			The demo starts and logs in on its React UI. tl-chat-classic sets these pages back to
+			the classic LayoutServlet for a classic host (workaround E5), so the demo states all five
+			itself; the classic UI stays reachable at /servlet/LayoutServlet.
+		-->
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/view/</startPage>
+			<loginPage>/view/</loginPage>
+			<loginRetrySSO>/view/</loginRetrySSO>
+			<logoutPage>/view/</logoutPage>
+			<unknownAccountPage>/view/unknown-account.view.xml</unknownAccountPage>
+		</config>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/tl-ai-demoMeta.xml" />
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

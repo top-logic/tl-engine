@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Renames the model module tl.ai.agent to tl.ai.execution. There is no
+	RenameTLModuleProcessor, so the rename is expressed as: create the new module, move every
+	type into it (a cross-module qualified new-name on update-class / update-enum), move the
+	synthetic associations that implement the references, then delete the now empty old module.
+
+	Data preserving: the table annotations are untouched (AgentSession, AgentExecution,
+	AgentInteractionRequest, AgentTask), so no row moves and no column changes. The types keep
+	their identity - only their owning module changes.
+
+	Note on the association steps: update-class does try to move the synthetic associations of
+	the type it moves, but matches them by qualified name against an unqualified one, so it
+	never finds any. They are therefore moved explicitly here. Without that, delete-module
+	would drop the associations that carry the references of the moved classes.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Issue_228_rename_module_tl_ai_agent_to_tl_ai_execution"
+		module="tl-ai-core"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29221_Remove_security_domain"
+			module="tl"
+		/>
+		<dependency name="Ticket_29088_Add_PersistentView"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<processors>
+		<create-module name="tl.ai.execution">
+			<annotations>
+				<package-binding
+					implementation-package="com.top_logic.tl.ai.core.execution.model.impl"
+					interface-package="com.top_logic.tl.ai.core.execution.model"
+				/>
+			</annotations>
+		</create-module>
+
+		<!-- Enumerations. -->
+		<update-enum name="tl.ai.agent:SessionKind"
+			new-name="tl.ai.execution:SessionKind"
+		/>
+		<update-enum name="tl.ai.agent:ExecutionStatus"
+			new-name="tl.ai.execution:ExecutionStatus"
+		/>
+		<update-enum name="tl.ai.agent:InteractionType"
+			new-name="tl.ai.execution:InteractionType"
+		/>
+		<update-enum name="tl.ai.agent:InteractionState"
+			new-name="tl.ai.execution:InteractionState"
+		/>
+
+		<!-- Classes. -->
+		<update-class name="tl.ai.agent:AgentSession"
+			new-name="tl.ai.execution:AgentSession"
+		/>
+		<update-class name="tl.ai.agent:AgentExecution"
+			new-name="tl.ai.execution:AgentExecution"
+		/>
+		<update-class name="tl.ai.agent:InteractionRequest"
+			new-name="tl.ai.execution:InteractionRequest"
+		/>
+		<update-class name="tl.ai.agent:AgentTask"
+			new-name="tl.ai.execution:AgentTask"
+		/>
+
+		<!-- Synthetic associations implementing the references of the classes above. -->
+		<update-association name="tl.ai.agent:AgentSession$kind"
+			new-name="tl.ai.execution:AgentSession$kind"
+		/>
+		<update-association name="tl.ai.agent:AgentSession$owner"
+			new-name="tl.ai.execution:AgentSession$owner"
+		/>
+		<update-association name="tl.ai.agent:AgentExecution$session"
+			new-name="tl.ai.execution:AgentExecution$session"
+		/>
+		<update-association name="tl.ai.agent:AgentExecution$parentExecution"
+			new-name="tl.ai.execution:AgentExecution$parentExecution"
+		/>
+		<update-association name="tl.ai.agent:AgentExecution$status"
+			new-name="tl.ai.execution:AgentExecution$status"
+		/>
+		<update-association name="tl.ai.agent:InteractionRequest$execution"
+			new-name="tl.ai.execution:InteractionRequest$execution"
+		/>
+		<update-association name="tl.ai.agent:InteractionRequest$type"
+			new-name="tl.ai.execution:InteractionRequest$type"
+		/>
+		<update-association name="tl.ai.agent:InteractionRequest$state"
+			new-name="tl.ai.execution:InteractionRequest$state"
+		/>
+		<update-association name="tl.ai.agent:InteractionRequest$responder"
+			new-name="tl.ai.execution:InteractionRequest$responder"
+		/>
+		<update-association name="tl.ai.agent:AgentTask$session"
+			new-name="tl.ai.execution:AgentTask$session"
+		/>
+		<update-association name="tl.ai.agent:AgentTask$lastTouchedByExecution"
+			new-name="tl.ai.execution:AgentTask$lastTouchedByExecution"
+		/>
+
+		<!--
+			Fails rather than deleting silently: anything left in the module at this point is a
+			type this migration failed to move, and dropping it would drop model parts.
+		-->
+		<delete-module name="tl.ai.agent"
+			fail-on-existing-types="true"
+		/>
+	</processors>
+</migration>

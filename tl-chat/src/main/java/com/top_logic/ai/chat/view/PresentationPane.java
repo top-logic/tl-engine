@@ -37,6 +37,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -55,6 +56,7 @@ import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.ComputedColumn;
+import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -124,8 +126,14 @@ final class PresentationPane {
 	/** The step's own channel holding the rows a table or chart shows. */
 	private static final String ROWS = "chatPaneRows";
 
+	/** The variable under which the rows script of a step's table reads its {@link #ROWS} channel. */
+	private static final String ROWS_VARIABLE = "rows";
+
 	/** The step's own channel holding the Chart.js configuration a chart draws. */
 	private static final String CHART = "chatPaneChart";
+
+	/** The variable under which the data script of a step's chart reads its {@link #CHART} channel. */
+	private static final String CHART_VARIABLE = "spec";
 
 	/** The step's own channel a table row click or a chart click writes its object to. */
 	private static final String OPEN = "chatPaneOpen";
@@ -563,8 +571,8 @@ final class PresentationPane {
 
 		TLStructuredType type = commonType(rows);
 		TableElement.Config table = TypedConfiguration.newConfigItem(TableElement.Config.class);
-		set(table, Inputs.INPUTS, List.of(new ChannelRef(ROWS)));
-		set(table, TableElement.Config.ROWS, expr(TableElement.Config.ROWS, "rows -> $rows"));
+		set(table, Inputs.INPUTS, List.of(new InputRef(new ChannelRef(ROWS), ROWS_VARIABLE)));
+		set(table, TableElement.Config.ROWS, expr(TableElement.Config.ROWS, "$" + ROWS_VARIABLE));
 		set(table, TableElement.Config.SELECTION, new ChannelRef(OPEN));
 		if (type != null) {
 			set(table, TableElement.Config.TYPES, List.of(TLModelPartRef.ref(type)));
@@ -597,8 +605,8 @@ final class PresentationPane {
 		set(handler, ClickHandlerConfig.ACTION, command);
 
 		ChartElement.Config chart = TypedConfiguration.newConfigItem(ChartElement.Config.class);
-		set(chart, Inputs.INPUTS, List.of(new ChannelRef(CHART)));
-		set(chart, ChartElement.Config.DATA, expr(ChartElement.Config.DATA, "spec -> $spec"));
+		set(chart, Inputs.INPUTS, List.of(new InputRef(new ChannelRef(CHART), CHART_VARIABLE)));
+		set(chart, ChartElement.Config.DATA, expr(ChartElement.Config.DATA, "$" + CHART_VARIABLE));
 		set(chart, ChartElement.Config.HANDLERS, List.of(handler));
 
 		ReactControl control = control(chart, context);
@@ -661,8 +669,8 @@ final class PresentationPane {
 		ViewContext context = stepContext(id).withLocalChannel(ROWS, rowChannel);
 
 		TableElement.Config table = TypedConfiguration.newConfigItem(TableElement.Config.class);
-		set(table, Inputs.INPUTS, List.of(new ChannelRef(ROWS)));
-		set(table, TableElement.Config.ROWS, expr(TableElement.Config.ROWS, "rows -> $rows"));
+		set(table, Inputs.INPUTS, List.of(new InputRef(new ChannelRef(ROWS), ROWS_VARIABLE)));
+		set(table, TableElement.Config.ROWS, expr(TableElement.Config.ROWS, "$" + ROWS_VARIABLE));
 		set(table, TableElement.Config.COLUMNS, columnsConfig);
 
 		ReactControl control = control(table, context);
@@ -674,7 +682,7 @@ final class PresentationPane {
 		ComputedColumn.Config column = TypedConfiguration.newConfigItem(ComputedColumn.Config.class);
 		set(column, ComputedColumn.Config.NAME, CELL + index);
 		set(column, ComputedColumn.Config.LABEL, ResKey.text(header));
-		set(column, ComputedColumn.Config.VALUE, expr(ComputedColumn.Config.VALUE, "r -> $r['" + CELL + index + "']"));
+		set(column, ComputedColumn.Config.VALUE, expr(ComputedColumn.Config.VALUE, "$" + RowAsConfig.DEFAULT_ROW_AS + "['" + CELL + index + "']"));
 		if (type != null) {
 			set(column, ComputedColumn.Config.TYPE, type);
 			// A number column starts as narrow as its numbers, which cuts even a header such as

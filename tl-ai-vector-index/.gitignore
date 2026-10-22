@@ -1,0 +1,12 @@
+.apt_generated
+tmp
+target
+TEST-*.xml
+test-time.txt
+jacoco.exec
+dist
+.apt_generated_tests
+/bin/
+
+# The theme stylesheets the engine compiles at run time (tests, exec:java).
+/src/main/webapp/style/_*.css

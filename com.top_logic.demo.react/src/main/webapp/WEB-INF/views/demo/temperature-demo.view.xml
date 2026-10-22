@@ -74,7 +74,7 @@
 							<commands>
 								<generic-command
 									image="css:bi bi-plus-lg"
-									input="site"
+									inputs="site"
 									placement="TOOLBAR"
 								>
 									<label>
@@ -84,20 +84,23 @@
 									<executability>
 										<null-input-disabled/>
 									</executability>
-									<create-transient type="demo.temperature:DemoSensor"/>
-									<open-dialog
-										bind-input-to="model"
-										dialog-view="demo/create-sensor.view.xml"
-									>
-										<bind
-											channel="container"
-											to="site"
-										/>
-										<bind
-											channel="selection"
-											to="sensor"
-										/>
-									</open-dialog>
+									<create-transient type="demo.temperature:DemoSensor">
+										<with-result>
+											<open-dialog
+												bind-input-to="model"
+												dialog-view="demo/create-sensor.view.xml"
+											>
+												<bind
+													channel="container"
+													to="site"
+												/>
+												<bind
+													channel="selection"
+													to="sensor"
+												/>
+											</open-dialog>
+										</with-result>
+									</create-transient>
 								</generic-command>
 							</commands>
 							<form
@@ -106,6 +109,42 @@
 							>
 								<field attribute="name"/>
 								<field attribute="temperatureUnit"/>
+								<field attribute="alarmCondition">
+									<input-control class="com.top_logic.layout.view.form.TextInputControlProvider">
+										<suggestions><![CDATA[self -> text -> caret -> {
+	// What fits at the caret depends on the text before it.
+	before = $text.subString(0, $caret);
+	endsWith = pattern -> !regex($pattern + '$').regexSearch($before).isEmpty();
+
+	// An unfinished sensor reference: @ or @" followed by a name without closing quote.
+	reference = regex('@"?([^"@]*)$').regexSearch($before).firstElement();
+
+	switch {
+		$reference != null: $self.get(`demo.temperature:DemoSite#sensors`)
+			.map(sensor -> $sensor.get(`demo.temperature:DemoSensor#name`))
+			.filter(name -> $name.stringContains($reference.regexGroup(1)))
+			.map(name -> {
+				"label": $name,
+				"text": '@"' + $name + '"',
+				"from": $reference.regexStart(),
+				"to": $caret
+			});
+
+		// The start of a condition.
+		$endsWith('^\\s*') || $endsWith('\\b(and|or) '): ['not ', '@"'];
+		$endsWith('\\bnot '): ['@"'];
+
+		// A complete reference is compared to a number.
+		$endsWith('" '): ['> ', '< '];
+
+		// A complete comparison is combined with the next one.
+		$endsWith('\\d '): ['and ', 'or '];
+
+		default: [];
+	}
+}]]></suggestions>
+									</input-control>
+								</field>
 							</form>
 							<table
 								observed-types="demo.temperature:DemoSite,demo.temperature:DemoSensor"
@@ -120,7 +159,7 @@
 								<inputs>
 									<input channel="site"/>
 								</inputs>
-								<rows>site -&gt; if($site == null, [], $site.get(`demo.temperature:DemoSite#sensors`))</rows>
+								<rows>if($site == null, [], $site.get(`demo.temperature:DemoSite#sensors`))</rows>
 							</table>
 						</panel>
 					</selector>

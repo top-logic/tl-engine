@@ -28,21 +28,24 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`tl.admin:NewAccount`, transient: true)"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="admin/access-control/create-account.view.xml"
-							>
-								<bind
-									channel="selection"
-									to="selectedAccount"
-								/>
-							</open-dialog>
+							<execute-script function="new(`tl.admin:NewAccount`, transient: true)">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/access-control/create-account.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedAccount"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							input="selectedAccount"
+							inputs="selectedAccount"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -51,17 +54,19 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="a -> if($a == currentUser(), #('A user cannot delete himself.'@en, 'Ein Benutzer kann sich nicht selber löschen.'@de), null)"/>
-								<disabled-if expr="a -> if($a.get(`tl.accounts:Person#admin`), #('An administrator cannot be deleted.'@en, 'Ein Administrator kann nicht gelöscht werden.'@de), null)"/>
+								<disabled-if expr="if($selectedAccount == currentUser(), #('A user cannot delete himself.'@en, 'Ein Benutzer kann sich nicht selber löschen.'@de), null)"/>
+								<disabled-if expr="if($selectedAccount.get(`tl.accounts:Person#admin`), #('An administrator cannot be deleted.'@en, 'Ein Administrator kann nicht gelöscht werden.'@de), null)"/>
 							</executability>
-							<confirm expr="a -> #('Delete account {0}?'@en, 'Konto {0} löschen?'@de).fill($a.get(`tl.accounts:Person#name`))"/>
+							<confirm expr="#('Delete account {0}?'@en, 'Konto {0} löschen?'@de).fill($selectedAccount.get(`tl.accounts:Person#name`))"/>
 							<delete-object/>
-							<write-channel name="selectedAccount"/>
+							<write-channel name="selectedAccount"
+								clear="true"
+							/>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-key"
-							input="selectedAccount"
+							inputs="selectedAccount"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -72,11 +77,14 @@
 								<null-input-disabled/>
 								<model-access operation="Write"/>
 							</executability>
-							<execute-script function="acc -> new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $acc)"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="admin/access-control/reset-password.view.xml"
-							/>
+							<execute-script function="new(`tl.admin:PasswordReset`, transient: true)..set(`tl.admin:PasswordReset#account`, $selectedAccount)">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/access-control/reset-password.view.xml"
+									/>
+								</with-result>
+							</execute-script>
 						</generic-command>
 						<!--
 							Expires the selected account's password, forcing the change-password
@@ -85,7 +93,7 @@
 						<generic-command
 							clique="more"
 							image="css:bi bi-hourglass-split"
-							input="selectedAccount"
+							inputs="selectedAccount"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -105,7 +113,7 @@
 						<generic-command
 							clique="more"
 							image="css:bi bi-shield-lock"
-							input="selectedAccount"
+							inputs="selectedAccount"
 							placement="TOOLBAR"
 						>
 							<label>

@@ -280,7 +280,7 @@ mvn exec:java@migrate-ticket28336
 ## Repository Structure
 
 - **./** - Root aggregator POM
-- **tl-parent-engine/** - Aggregates all runtime modules (103 modules)
+- **tl-parent-engine/** - Aggregates all runtime modules
 - **com.top_logic/** - Core engine (tl-core artifact)
 - **com.top_logic.basic/** - Foundation utilities
 - **com.top_logic.element/** - Element management
@@ -297,6 +297,15 @@ mvn exec:java@migrate-ticket28336
   this app, not `tl-demo` — a feature that works under `tl-demo` may still be
   broken here if it relies on a legacy webapp resource that only `tl-demo`
   happens to serve.
+- **tl-ai-\*/, tl-chat/, tl-chat-classic/** - The AI modules: `tl-ai-tool-api` (tool
+  contracts), `tl-ai-core` (agent loop, LLM providers, tools, MCP client, delegation,
+  TL-Script bindings), `tl-ai-mcp-server`, `tl-ai-a2a`, `tl-chat` (React chat UI),
+  `tl-chat-classic` (the chat in a classic LayoutServlet tab), `tl-ai-views` (agents
+  editing `.view.xml` views), `tl-ai-vector-index`, `tl-ai-index` / `tl-ai-index-onnx`
+  (hybrid search), `tl-ai-eval` (model eval harness) and the demo application
+  `tl-ai-demo`. Their tests live in packages mirroring the production code and are
+  found through the surefire includes in each module POM (see `tl-ai-core/pom.xml`).
+  The developer articles of the chapter `ai` (in `tl-ai-core`) describe them.
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
 - **tl-doc/** - Documentation and JavaDoc output

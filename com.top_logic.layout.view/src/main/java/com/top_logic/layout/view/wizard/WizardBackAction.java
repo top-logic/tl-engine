@@ -22,11 +22,6 @@ import com.top_logic.layout.view.command.ViewAction;
  * {@link WizardHasBack &lt;wizard-has-back&gt;} rule to hide the button on that step instead of
  * offering one that does nothing.
  * </p>
- *
- * <p>
- * Passes the input through as output, so an action following it in the chain still sees the object
- * the chain works on - which is what makes "discard what was entered, then step back" one command.
- * </p>
  */
 @InApp
 public class WizardBackAction implements ViewAction {
@@ -64,5 +59,13 @@ public class WizardBackAction implements ViewAction {
 	public Object execute(ReactContext context, Object input) {
 		WizardScope.lookup(context, Config.TAG_NAME).back();
 		return input;
+	}
+
+	/**
+	 * Changes the displayed step of the wizard.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

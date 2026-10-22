@@ -71,4 +71,11 @@ public class RememberStartPageAction implements ViewAction {
 		return input;
 	}
 
+	/**
+	 * Tells the user about the start page it remembers.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.Arrays;
 
 import com.top_logic.basic.annotation.InApp;
@@ -37,7 +38,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Expects its input to be the transient {@link LoginAction#PASSWORD_CHANGE_TYPE} model (carrying
- * {@code newPassword} and {@code newPasswordConfirm}), e.g. after {@code <store-form-state/>}.
+ * {@code newPassword} and {@code newPasswordConfirm}), e.g. as the result of an enclosing
+ * {@code <store-form-state>}.
  * Password policy validation and the actual change are delegated to the
  * {@link AuthenticationDevice}, which also clears the expiry flag and maintains the password
  * history. On a policy violation or mismatch a {@link TopLogicException} is raised so the form shows
@@ -63,7 +65,7 @@ public class ChangePasswordApplyAction implements ViewAction {
 	 * Configuration for {@link ChangePasswordApplyAction}.
 	 */
 	@TagName("change-password")
-	public interface Config extends PolymorphicConfiguration<ChangePasswordApplyAction> {
+	public interface Config extends PolymorphicConfiguration<ChangePasswordApplyAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(ChangePasswordApplyAction.class)

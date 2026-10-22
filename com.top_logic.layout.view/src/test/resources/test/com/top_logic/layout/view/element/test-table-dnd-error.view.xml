@@ -10,21 +10,21 @@
 			<target-executability>
 				<null-input-disabled/>
 			</target-executability>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="value"
 			before-channel="ch"
 			target="table"
 		>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="value"
 			before-channel="ch"
 			target="row"
 		>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="value"
@@ -34,20 +34,20 @@
 			<target-executability>
 				<null-input-disabled/>
 			</target-executability>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="value"
 			parent-channel="ch"
 			target="ordered"
 		>
-			<execute-script function="rows -> $rows"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<columns>
 			<computed-column name="value"
 				type="tl.core:String"
 			>
-				<value>row -&gt; $row</value>
+				<value>$row</value>
 			</computed-column>
 		</columns>
 		<rows>['free']</rows>

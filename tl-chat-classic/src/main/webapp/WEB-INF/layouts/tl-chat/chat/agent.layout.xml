@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/contentTab.xml"
+	z_legacy_componentName="agent"
+	z_legacy_tabLabel="chat.layout.agent.tabber"
+>
+	<components>
+		<include name="tl-chat/chat/agent.xml"/>
+	</components>
+</include>

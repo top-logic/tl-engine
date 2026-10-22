@@ -5,6 +5,13 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionArguments;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -83,7 +90,10 @@ public class FormElement extends ContainerElement {
 	 * Configuration for {@link FormElement}.
 	 */
 	@TagName("form")
-	public interface Config extends ContainerElement.Config, FormLayoutOptions {
+	public interface Config extends ContainerElement.Config, FormLayoutOptions, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
@@ -241,7 +251,8 @@ public class FormElement extends ContainerElement {
 		 * A {@link com.top_logic.layout.view.security.SecurityRule} checks the user's roles for a
 		 * command group on the enclosing security scope; a
 		 * {@link com.top_logic.layout.view.command.VisibleIf} evaluates a script predicate over the
-		 * displayed object. Without a rule, every user who sees the form may edit it.
+		 * displayed object, which it sees as a variable named after the {@link #getInput() input}
+		 * channel of the form. Without a rule, every user who sees the form may edit it.
 		 * </p>
 		 */
 		@Name(EDIT_EXECUTABILITY)
@@ -278,6 +289,31 @@ public class FormElement extends ContainerElement {
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewAction>> getCancelActions();
+
+		/**
+		 * The {@link #getSaveActions() save} and {@link #getCancelActions() cancel} actions run
+		 * without arguments, the {@link #getEditExecutability() edit rules} decide over the
+		 * displayed object, see {@link FormElement#editScope(Config)}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getSaveActions(), part) || ActionScopes.contains(getCancelActions(), part)) {
+				return ActionScope.NONE;
+			}
+			if (ActionScopes.contains(getEditExecutability(), part)) {
+				return editScope(this);
+			}
+			return outer;
+		}
+	}
+
+	/**
+	 * The scope the {@link Config#getEditExecutability() edit rules} of the given form decide in:
+	 * the displayed object, named after the {@link Config#getInput() input} channel.
+	 */
+	public static ActionScope editScope(Config config) {
+		ChannelRef input = config.getInput();
+		return input == null ? ActionScope.NONE : ActionScope.single(input.getChannelName());
 	}
 
 	private final Config _config;
@@ -319,8 +355,8 @@ public class FormElement extends ContainerElement {
 			}
 		}
 
-		_saveActions = ViewActions.instantiate(context, config.getSaveActions());
-		_cancelActions = ViewActions.instantiate(context, config.getCancelActions());
+		_saveActions = ViewActions.instantiate(context, config.getSaveActions(), ActionScope.NONE);
+		_cancelActions = ViewActions.instantiate(context, config.getCancelActions(), ActionScope.NONE);
 	}
 
 	private LockHandler createLockHandler(InstantiationContext context, Config config) {
@@ -359,7 +395,8 @@ public class FormElement extends ContainerElement {
 
 		// 5. Wire channels and the edit guard.
 		formControl.setInputChannel(inputChannel);
-		formControl.setEditRule(ViewExecutabilityRules.build(_config.getEditExecutability(), context));
+		formControl.setEditRule(
+			ViewExecutabilityRules.build(_config.getEditExecutability(), context, editScope(_config)));
 
 		ChannelRef editModeRef = _config.getEditMode();
 		if (editModeRef != null) {
@@ -458,17 +495,15 @@ public class FormElement extends ContainerElement {
 			ViewCommand cmd = _formCommands.get(i);
 			ViewCommand.Config cmdConfig = _formCommandConfigs.get(i);
 
-			ChannelRef inputRef = cmdConfig.getInput();
-			ViewChannel inputChannel = inputRef != null ? formContext.resolveChannel(inputRef) : null;
-
-			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), formContext);
+			String trigger = null;
+			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig, trigger, formContext);
 			if (cmd.appliesFormState()) {
 				// The form rejects the command while errors are on screen, so do not offer it.
 				rule = CombinedViewExecutabilityRule.combine(List.of(rule, new FormValid(formControl)));
 			}
 
 			ViewCommandModel inner =
-				ViewCommandModel.create(formContext, cmd, cmdConfig, inputChannel, rule);
+				ViewCommandModel.create(formContext, cmd, cmdConfig, null, rule);
 
 			// Wrap the model so that executeCommand uses the form context (which has the
 			// FormModel) instead of the window context passed by the toolbar button.
@@ -721,7 +756,7 @@ public class FormElement extends ContainerElement {
 
 	/**
 	 * Creates a {@link Consumer} that runs the given {@link ViewAction}s as a
-	 * {@link ViewActionChain}, each action's output becoming the next action's input.
+	 * {@link ViewActionChain} without arguments.
 	 *
 	 * <p>
 	 * The actions execute in the form's {@link ViewContext} so that they can access the
@@ -731,6 +766,6 @@ public class FormElement extends ContainerElement {
 	 */
 	private Consumer<ReactContext> createActionChain(ViewContext formContext,
 			List<ViewAction> actions) {
-		return ctx -> ViewActionChain.run(formContext, actions, null, null);
+		return ctx -> ViewActionChain.run(formContext, actions, ActionArguments.NONE, null);
 	}
 }

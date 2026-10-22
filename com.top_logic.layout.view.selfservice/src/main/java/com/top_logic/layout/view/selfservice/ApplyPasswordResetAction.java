@@ -151,4 +151,11 @@ public class ApplyPasswordResetAction implements ViewAction {
 		return value == null || value.isEmpty();
 	}
 
+	/**
+	 * Closes the reset-password dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

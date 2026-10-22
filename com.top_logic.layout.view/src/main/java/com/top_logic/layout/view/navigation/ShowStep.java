@@ -12,7 +12,10 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.navigation.DisplayTargetService.ShowConfig;
 import com.top_logic.layout.view.tiles.TileLabelProvider;
-import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScript;
+import com.top_logic.model.search.expr.config.dom.Expr;
 
 /**
  * One view a {@link DisplayTarget} displays, together with the values its channels receive.
@@ -26,12 +29,12 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *        The label the view is announced with, or {@code null} to leave the naming to the display
  *        itself.
  * @param labelExpr
- *        The function of the shown object computing the label, taking precedence over
- *        {@link #label()}, or {@code null} when the label does not depend on the object.
+ *        The script computing the label from the arguments of the display, taking precedence over
+ *        {@link #label()}, or {@code null} when the label does not depend on them.
  * @param bindings
  *        The values the view's channels receive, in configuration order.
  */
-public record ShowStep(String viewRef, boolean dialog, ResKey label, QueryExecutor labelExpr,
+public record ShowStep(String viewRef, boolean dialog, ResKey label, ActionScript labelExpr,
 		List<Binding> bindings) {
 
 	/**
@@ -46,11 +49,26 @@ public record ShowStep(String viewRef, boolean dialog, ResKey label, QueryExecut
 	 *
 	 * @param config
 	 *        The configured view, with the values its channels receive.
+	 * @param scope
+	 *        The names of the arguments the scripts of the configuration see.
 	 * @return The step displaying that view.
 	 */
-	public static ShowStep fromConfig(ShowConfig config) {
+	public static ShowStep fromConfig(ShowConfig config, ActionScope scope) {
 		return new ShowStep(ViewLoader.viewRef(config.getView()), config.isDialog(), config.getLabel(),
-			QueryExecutor.compileOptional(config.getLabelExpr()), Binding.fromConfigs(config.getBindings()));
+			compile(config.getLabelExpr(), scope), Binding.fromConfigs(config.getBindings(), scope));
+	}
+
+	/**
+	 * Compiles a script of a display over its arguments.
+	 *
+	 * @param expr
+	 *        The script, {@code null} for none.
+	 * @param scope
+	 *        The names of the arguments the script sees as variables.
+	 * @return The compiled script, {@code null} without one.
+	 */
+	static ActionScript compile(Expr expr, ActionScope scope) {
+		return expr == null ? null : ActionScript.compile(expr, scope, List.of());
 	}
 
 	/**
@@ -58,25 +76,27 @@ public record ShowStep(String viewRef, boolean dialog, ResKey label, QueryExecut
 	 *
 	 * @param configs
 	 *        The configured views, the enclosing ones first.
+	 * @param scope
+	 *        The names of the arguments the scripts of the configurations see.
 	 * @return The steps displaying those views.
 	 */
-	public static List<ShowStep> fromConfigs(List<? extends ShowConfig> configs) {
+	public static List<ShowStep> fromConfigs(List<? extends ShowConfig> configs, ActionScope scope) {
 		List<ShowStep> result = new ArrayList<>(configs.size());
 		for (ShowConfig config : configs) {
-			result.add(fromConfig(config));
+			result.add(fromConfig(config, scope));
 		}
 		return result;
 	}
 
 	/**
-	 * The label the view is announced with while it displays the given object.
+	 * The label the view is announced with for the given arguments.
 	 *
-	 * @param shownObject
-	 *        The object being displayed.
+	 * @param arguments
+	 *        The arguments of the display; the default is the object being shown.
 	 * @return The label, or {@code null} to leave the naming to the display itself.
 	 */
-	public ResKey labelFor(Object shownObject) {
-		return labelExpr == null ? label : TileLabelProvider.toLabel(labelExpr.execute(shownObject));
+	public ResKey labelFor(ActionArguments arguments) {
+		return labelExpr == null ? label : TileLabelProvider.toLabel(labelExpr.execute(null, arguments));
 	}
 
 	@Override

@@ -197,9 +197,10 @@ public class TestStoreFormStateComposition extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		FormControl form = newForm(_project);
 
-		ViewAction action = action("<" + WITH_TRANSACTION + "><" + STORE_FORM_STATE + "/><" + LEAVE_EDIT_MODE
-			+ "/></" + WITH_TRANSACTION + ">");
-		Object result = action.execute(viewContext(form), _project);
+		DefaultViewContext context = viewContext(form);
+		action("<" + WITH_TRANSACTION + "><" + STORE_FORM_STATE + "/></" + WITH_TRANSACTION + ">").execute(context,
+			_project);
+		Object result = action("<" + LEAVE_EDIT_MODE + "/>").execute(context, _project);
 
 		assertSame(_project, result);
 		assertFalse(form.isEditMode());

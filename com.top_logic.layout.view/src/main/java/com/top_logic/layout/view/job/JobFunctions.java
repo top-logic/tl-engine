@@ -23,15 +23,14 @@ import com.top_logic.util.error.TopLogicException;
  * what a display reads from what it said.
  *
  * <p>
- * The reporting functions are called on the monitor the body of a job is given as its first
- * argument, so a job written as a TL-Script function reports with
- * <code>$job.jobPhase('read')</code>. The reading functions are called on the state a job publishes
+ * The reporting functions are called on the monitor the body of a job is given, so a job written
+ * as a TL-Script reports with <code>$job.jobPhase('read')</code>. The reading functions are called on the state a job publishes
  * on its channel, so a display asks with <code>jobStatus($state)</code> - over no job at all just
  * as well, which is what a channel holds before the first job was started.
  * </p>
  *
  * <pre>
- * job -&gt; files -&gt; x -&gt; {
+ * {
  *   $job.jobPhases(['read', 'check']);
  *   $job.jobPhase('read');
  *   $job.jobMessage('reading the files');
@@ -61,7 +60,8 @@ public class JobFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param job
-	 *        The job that enters the step, the first argument of the function doing its work.
+	 *        The job that enters the step, the monitor the function doing its work sees as
+	 *        {@value ScriptJobBody#MONITOR}.
 	 * @param name
 	 *        The name of the step to enter.
 	 */
@@ -86,7 +86,8 @@ public class JobFunctions extends TLScriptFunctions {
 	 * </pre>
 	 *
 	 * @param job
-	 *        The job announcing its steps, the first argument of the function doing its work.
+	 *        The job announcing its steps, the monitor the function doing its work sees as
+	 *        {@value ScriptJobBody#MONITOR}.
 	 * @param phases
 	 *        The steps, as a list of names or as a map from a name to what the reader sees.
 	 */
@@ -99,7 +100,8 @@ public class JobFunctions extends TLScriptFunctions {
 	 * States how much of the work is done, as the two counts the progress is the ratio of.
 	 *
 	 * @param job
-	 *        The job reporting its progress, the first argument of the function doing its work.
+	 *        The job reporting its progress, the monitor the function doing its work sees as
+	 *        {@value ScriptJobBody#MONITOR}.
 	 * @param done
 	 *        How much is done.
 	 * @param total
@@ -120,7 +122,8 @@ public class JobFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param job
-	 *        The job giving up its progress, the first argument of the function doing its work.
+	 *        The job giving up its progress, the monitor the function doing its work sees as
+	 *        {@value ScriptJobBody#MONITOR}.
 	 */
 	@Label("Report an unknown progress")
 	public static void indeterminate(@Mandatory JobMonitor job) {
@@ -131,7 +134,8 @@ public class JobFunctions extends TLScriptFunctions {
 	 * States what the job is doing right now.
 	 *
 	 * @param job
-	 *        The job reporting what it does, the first argument of the function doing its work.
+	 *        The job reporting what it does, the monitor the function doing its work sees as
+	 *        {@value ScriptJobBody#MONITOR}.
 	 * @param message
 	 *        What the reader sees - a text, or an internationalized one written as
 	 *        <code>#('Reading'@en, 'Lesen'@de)</code>; nothing at all says nothing.

@@ -6,6 +6,7 @@
 package test.com.top_logic.model.search.react;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -31,8 +32,12 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.CommandArguments;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.react.EvaluateDynamicScriptAction;
 import com.top_logic.model.search.react.EvaluateScriptAction;
@@ -68,8 +73,12 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 	/** The English label of the command in the test configurations. */
 	private static final String LABEL = "Rename";
 
-	/** A script renaming its argument. */
-	private static final String RENAME = "x -> $x.set(" + NAME_ATTRIBUTE + ", 'renamed')";
+	/** A function renaming its argument. */
+	private static final String RENAME_FUNCTION = "x -> $x.set(" + NAME_ATTRIBUTE + ", 'renamed')";
+
+	/** A script renaming the main argument of a command without inputs. */
+	private static final String RENAME =
+		"$" + CommandArguments.DEFAULT_ARGUMENT + ".set(" + NAME_ATTRIBUTE + ", 'renamed')";
 
 	private ViewContext _context;
 
@@ -101,7 +110,7 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 
 	/**
 	 * Without a configured message, an evaluation is committed with a message naming the label of
-	 * the command and the input of the script.
+	 * the command and its main argument.
 	 */
 	public void testEvaluateDefault() throws Exception {
 		GenericViewCommand command = (GenericViewCommand) instantiate(COMMAND, GenericViewCommand.Config.class,
@@ -115,14 +124,15 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 	}
 
 	/**
-	 * A configured message is filled with the label of the input of the script.
+	 * A configured message is filled with the label of the default argument of the chain.
 	 */
 	public void testEvaluateCustom() throws Exception {
 		ViewAction action = (ViewAction) instantiate(EVALUATE, EvaluateScriptAction.Config.class,
 			"<" + EVALUATE + " script=\"" + RENAME + "\"><commitMessage><en>Renamed {0}</en></commitMessage></"
 				+ EVALUATE + ">");
 
-		action.execute(_context, _item);
+		ViewActionChain.run(_context, List.of(action), ActionArguments.of(CommandArguments.DEFAULT_ARGUMENT, _item),
+			null);
 
 		assertEquals("renamed", _item.tValueByName("name"));
 		assertLastMessage("Renamed " + ORIGINAL);
@@ -138,8 +148,8 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 		ViewAction console = context.getInstance(config);
 		context.checkErrors();
 
-		String source = "all(`" + ITEM + "`).foreach(" + RENAME + ")";
-		console.execute(_context, source);
+		String source = "all(`" + ITEM + "`).foreach(" + RENAME_FUNCTION + ")";
+		ViewActionChain.run(_context, List.of(console), ActionArguments.of("source", source), null);
 
 		assertEquals("renamed", _item.tValueByName("name"));
 		assertLastMessage("Executed custom script: " + source);
@@ -153,7 +163,7 @@ public class TestScriptActionCommitMessage extends AbstractSearchExpressionTest 
 		reader.setSource(CharacterContents.newContent(xml));
 		PolymorphicConfiguration<?> config = (PolymorphicConfiguration<?>) reader.read();
 		context.checkErrors();
-		Object result = context.getInstance(config);
+		Object result = ActionScope.single(CommandArguments.DEFAULT_ARGUMENT).bind(context).getInstance(config);
 		context.checkErrors();
 		return result;
 	}

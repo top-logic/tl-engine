@@ -30,7 +30,7 @@
 			expr="all(`demo.charts:Einkauf`).map(t -> $t.get(`demo.charts:Transaktion#wert`)).sum()"
 		/>
 		<derived-channel name="result"
-			expr="revenue -> costs -> $revenue - $costs"
+			expr="$salesTotal - $purchaseTotal"
 			inputs="salesTotal,purchaseTotal"
 		/>
 	</channels>

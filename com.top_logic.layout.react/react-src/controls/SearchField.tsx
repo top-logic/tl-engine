@@ -35,7 +35,7 @@ export function SearchField({
   /** Called when the clear button empties the field; without it, the field reports the empty term
    *  through `onChange`. */
   onClear?: () => void;
-  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   placeholder?: string;
   /** The name of the input (`aria-label`). */
   label: string;

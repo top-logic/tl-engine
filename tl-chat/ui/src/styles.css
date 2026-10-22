@@ -1,0 +1,5317 @@
+/*
+ * Agent chat.
+ *
+ * Every colour, radius and length comes from the TopLogic React design tokens
+ * (com.top_logic.layout.react, tl-react-theme.config.xml), so the chat follows whichever theme the
+ * app-bar's theme switch selects. The aliases below exist for two reasons: a handful of tokens the
+ * shipped themes do not define yet (--support-danger, --background-danger--lighter, --text-danger,
+ * --text-warning, --link, --body-01-font-size, --heading-04-*) need a fallback that is correct in
+ * both light and dark, and the chat's own geometry (column width, radius scale) needs a name.
+ *
+ * Spacing is a 4 px grid throughout; radii use one scale (--r-1 .. --r-3 plus the pill).
+ */
+
+/*
+ * Every chat element is a root of its own.
+ *
+ * A host composing the whole chat renders inside `.tl-cockpit`, but `<chat-conversation/>`,
+ * `<chat-dock/>`, `<chat-rail/>` and the rail-section elements are placed by a view wherever it
+ * likes - outside that root, where neither the component tokens below nor the base CSS after them
+ * would be in scope. Their buttons would
+ * fall back to browser chrome (grey, square, bordered) and every `var(--r-1)` to nothing. One rule
+ * for all of them rather than a copy per root, so a token added here reaches every element.
+ */
+.tl-cockpit,
+.tl-chat-conversation,
+.tl-chat-dock,
+.tl-chat-rail,
+.tl-chat-section,
+.tl-data-list,
+.tl-cockpit *,
+.tl-chat-conversation *,
+.tl-chat-dock *,
+.tl-chat-rail *,
+.tl-chat-section *,
+.tl-data-list * {
+  box-sizing: border-box;
+}
+
+.tl-cockpit,
+.tl-chat-conversation,
+.tl-chat-dock,
+.tl-chat-rail,
+.tl-chat-section {
+  /* Geometry of the chat itself. */
+  --chat-column: 49rem;
+  --chat-sidebar: 16.5rem;
+  --chat-rail-narrow: 3.25rem;
+  --chat-conversation-min-width: 20rem;
+  /*
+   * What stands beside the conversation once a session list beside it is a drawer (#548): the
+   * list's strip, the rail's strip and the host row's two gaps. The floor gives way by this much.
+   */
+  --chat-conversation-floor-reserve: 10rem;
+  --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
+  --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
+  --r-3: calc(var(--corner-radius, 0.25rem) * 4);
+  --r-pill: 999px;
+
+  /* Tokens the shipped themes do not define, resolved to ones they do. */
+  --chat-danger: var(--support-danger, var(--support-error, #d3181b));
+  --chat-danger-soft: var(
+    --background-danger--lighter,
+    color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
+  );
+  --chat-warn: var(--text-warning, var(--support-warning, #d3a118));
+  --chat-warn-soft: var(
+    --background-warning--lighter,
+    color-mix(in srgb, var(--support-warning, #d3a118) 12%, transparent)
+  );
+  --chat-link: var(--link, var(--link-primary, var(--button-primary, #2968c8)));
+  --chat-small: var(--body-01-font-size, 0.75rem);
+  --chat-heading: var(--heading-04-font-size, 1.5rem);
+  --chat-heading-line: var(--heading-04-line-height, 2rem);
+  --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
+  --chat-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/*
+ * The chat measures itself, not the window (Issue #427).
+ *
+ * The chat is placed by an application and almost never owns the window: a shell's navigation
+ * and the page gutters take their share first. A viewport media query therefore asks the wrong box
+ * - it is still wide while the chat is not - and the narrow layout arrived hundreds of pixels too
+ * late, or never. Two containers carry every rule that is about how much room the chat has:
+ *
+ *   chat-shell  - this element: whether the session rail is a column or a drawer over the thread,
+ *                 and whether the artefact pane is a column or a sheet.
+ *   chat-stage  - `.stage` below: the transcript and the composer, which narrow again when the rail
+ *                 and the pane have taken their columns. It exists in a composed
+ *                 `<chat-conversation/>` too, so the same rules reach both.
+ *
+ * What stays a media query is what is genuinely about the screen rather than the chat: the pointer
+ * (`hover: none`), the motion preference, and the popover that goes full-bleed on a phone.
+ */
+.tl-cockpit {
+  container-type: inline-size;
+  container-name: chat-shell;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/* The chat in a session that is not signed in: one sentence instead of an unusable chat. */
+.tl-cockpit.is-signed-out {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.signed-out {
+  max-width: 26rem;
+  text-align: center;
+}
+
+.signed-out h2 {
+  margin: 0;
+  font-size: var(--chat-heading);
+  line-height: var(--chat-heading-line);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  /* Even lines, rather than a single word left alone on the last one. */
+  text-wrap: balance;
+}
+
+.signed-out p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Buttons ------------------------------------------------------------ */
+
+/*
+ * Zero specificity on purpose: this only strips the browser's button chrome, and every rule that
+ * gives a button back a background or a border is a plain class selector. Written as
+ * `.tl-cockpit button` it would out-rank all of them and flatten the send button, the primary
+ * actions and the plus trigger.
+ */
+:where(
+    .tl-cockpit button,
+    .tl-chat-conversation button,
+    .tl-chat-dock button,
+    .tl-chat-rail button,
+    .tl-chat-section button
+  ) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+:where(
+    .tl-cockpit button:disabled,
+    .tl-chat-conversation button:disabled,
+    .tl-chat-dock button:disabled,
+    .tl-chat-rail button:disabled,
+    .tl-chat-section button:disabled
+  ) {
+  cursor: default;
+}
+
+.tl-cockpit :focus-visible,
+.tl-chat-conversation :focus-visible,
+.tl-chat-dock :focus-visible,
+.tl-chat-rail :focus-visible,
+.tl-chat-section :focus-visible {
+  outline: 2px solid var(--focus, var(--button-primary));
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+.icon-button {
+  width: 2rem;
+  height: 2rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-1);
+  color: var(--text-secondary);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.icon-button.tiny {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.icon-button svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-button.tiny svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.icon-button:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.icon-button.is-on {
+  color: var(--button-primary);
+  background: var(--layer-selected);
+}
+
+.text-button {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--r-1);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.text-button:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.text-button.is-danger:hover {
+  color: var(--chat-danger);
+  background: var(--chat-danger-soft);
+}
+
+/* --- Session rail ------------------------------------------------------- */
+
+.rail-scrim {
+  display: none;
+}
+
+.rail {
+  width: var(--chat-sidebar);
+  flex: 0 0 var(--chat-sidebar);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--layer);
+  border-right: 1px solid var(--border-subtle);
+  transition: width 160ms ease, flex-basis 160ms ease;
+}
+
+.rail-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.75rem 0.25rem;
+}
+
+.rail-header[hidden] {
+  display: none;
+}
+
+.rail-header strong {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--heading-compact-02-font-size, 0.875rem);
+  font-weight: 600;
+}
+
+.rail-close {
+  display: none;
+}
+
+/* --- Composed data list ------------------------------------------------ */
+
+/*
+ * <data-list> reuses the App session rail's look; make it fill its host pane and let a row show an
+ * optional muted second line. It does not take App's own drawer, which asks the `chat-shell`
+ * container a composed list is not in; a collapsible list has one of its own instead, for a host
+ * narrower than its `drawer-below` (#548, see "A list in a narrow host" below).
+ */
+/*
+ * <data-list> renders outside .tl-cockpit, so the chat's button reset and focus ring do not reach it.
+ * Without this, the row/new/search <button>s show the browser's default chrome (grey, square, bordered)
+ * instead of the .rail* styling - so reset them the same way here.
+ */
+:where(.tl-data-list button) {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.tl-data-list :focus-visible {
+  outline: 2px solid var(--focus, var(--button-primary));
+  outline-offset: 2px;
+  border-radius: var(--r-1);
+}
+
+.tl-data-list {
+  /*
+   * <data-list> renders outside .tl-cockpit, so the chat's component tokens are not in scope here;
+   * redeclare the ones the .rail* styles need. (A themeable token layer would hoist these to :root;
+   * see the tokens note.)
+   */
+  --chat-sidebar: 16.5rem;
+  --chat-rail-narrow: 3.25rem;
+  --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
+  --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
+  --r-3: calc(var(--corner-radius, 0.25rem) * 4);
+  --r-pill: 999px;
+  --chat-small: var(--body-01-font-size, 0.75rem);
+  --chat-danger: var(--support-danger, var(--support-error, #d3181b));
+  --chat-danger-soft: var(
+    --background-danger--lighter,
+    color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
+  );
+  --chat-warn: var(--text-warning, var(--support-warning, #d3a118));
+  --chat-link: var(--link, var(--link-primary, var(--button-primary, #2968c8)));
+  --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
+
+  display: flex;
+  flex: 0 0 auto;
+  width: var(--chat-sidebar);
+  height: 100%;
+  min-height: 0;
+}
+
+.tl-data-list.is-collapsed {
+  width: var(--chat-rail-narrow);
+}
+
+.tl-data-list .rail {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  width: 100%;
+  flex: 1 1 auto;
+  height: 100%;
+  transform: none;
+  box-shadow: none;
+}
+
+/*
+ * The column the host gave it, not the fixed narrow one the App rail collapses to: this list fills
+ * whatever width it was placed in, collapsed or not.
+ *
+ * Six further rules used to stand here, each undoing one line of the App's mobile-drawer query for
+ * a list that is not in a drawer and never was. That query is now scoped to the `chat-shell`
+ * container (Issue #427) and does not reach this element at all, so the base rules apply and the
+ * counter-rules are gone.
+ */
+.tl-data-list .rail.is-collapsed {
+  width: 100%;
+  flex-basis: auto;
+}
+
+.tl-data-list .rail-open {
+  align-items: flex-start;
+}
+
+.tl-data-list .rail-open-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tl-data-list .rail-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-data-list .rail-line-secondary {
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
+/*
+ * A list in a narrow host (#548).
+ *
+ * Below its `drawer-below` width a collapsible list keeps only its strip in the flow and opens over
+ * its neighbour. data-list.tsx measures the host and sets `.is-drawer`; everything here is geometry.
+ *
+ * The open list is placed against the host, not against the list: the host becomes the containing
+ * block, so the scrim covers exactly the row the list stands in - never the app bar or the page
+ * around a dock - and the panel, which keeps `left: auto`, opens at its static position, i.e. where
+ * the strip is. `isolation` keeps the z-indexes below local to the host: they lift the drawer over
+ * whatever its neighbour stacks inside itself, and the application's own menus and dialogs still
+ * open above it.
+ */
+:has(> .tl-data-list.is-drawer) {
+  position: relative;
+  isolation: isolate;
+}
+
+.tl-data-list.is-drawer {
+  width: var(--chat-rail-narrow);
+}
+
+.tl-data-list.is-drawer-open .rail {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 31;
+  width: min(var(--chat-sidebar), 88vw);
+  height: auto;
+  box-shadow: var(--chat-shadow);
+}
+
+.tl-data-list .data-list-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  /* The engine's own drawer backdrop: dark in both themes, where `--background-inverse` is not. */
+  background: var(--overlay, rgb(0 0 0 / 40%));
+}
+
+/*
+ * Row states a `css-class` expression hands out.
+ *
+ * Which class a row gets is the view's decision; these three are what a list of steps needs and are
+ * named after no particular domain, so any list can use them: something finished, something running,
+ * something not started yet. They read the host theme's tokens, so a theme restyles them with
+ * everything else. An application that wants its own states writes its own rules - nothing here
+ * assumes these names.
+ */
+.tl-data-list .rail-item.is-running .rail-item-mark {
+  background: var(--button-primary);
+}
+
+.tl-data-list .rail-item.is-done .rail-line-primary {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.tl-data-list .rail-item.is-pending .rail-line-primary {
+  color: var(--text-secondary);
+}
+
+/*
+ * Something going on behind a row that its secondary line names (#744 - in the chat list, a chat
+ * whose agent works, waits for the user, or has a result the user has not seen). A dot before the
+ * line says the same at a glance; the line is the text a screen reader reads. Named after no domain,
+ * like the three states above.
+ */
+.tl-data-list .rail-item.is-working .rail-line-secondary,
+.tl-data-list .rail-item.is-waiting .rail-line-secondary,
+.tl-data-list .rail-item.has-news .rail-line-secondary {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.tl-data-list .rail-item.is-working .rail-line-secondary::before,
+.tl-data-list .rail-item.is-waiting .rail-line-secondary::before,
+.tl-data-list .rail-item.has-news .rail-line-secondary::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.tl-data-list .rail-item.is-working .rail-line-secondary::before {
+  background: var(--button-primary);
+  animation: chat-pulse 1.6s ease-in-out infinite;
+}
+
+/* The dot carries the warning colour; a yellow text would be too faint to read on light themes. */
+.tl-data-list .rail-item.is-waiting .rail-line-secondary {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tl-data-list .rail-item.is-waiting .rail-line-secondary::before {
+  background: var(--chat-warn);
+}
+
+.tl-data-list .rail-item.has-news .rail-line-secondary {
+  color: var(--chat-link);
+  font-weight: 600;
+}
+
+/* --- Composed conversation --------------------------------------------- */
+
+/*
+ * It reuses the App's own .stage (normal and .is-empty), so the conversation element only has to be
+ * the fill box that lets .stage take the height its panel gives it - and carry the typography that
+ * .tl-cockpit would otherwise provide. Its tokens, box-sizing, button reset and focus ring come
+ * from the shared rule at the top of this file.
+ */
+.tl-chat-conversation {
+  /*
+   * No `container-type` here on purpose: `.stage`, its only child, is the box the transcript and the
+   * composer actually get, and it is a container in both App and this element - so one set of rules
+   * serves both. A second container around it would only add a second answer to the same question.
+   */
+  display: flex;
+  flex-direction: column;
+  /*
+   * A floor, but never wider than the window.
+   *
+   * `min-width: 0` alone let a host squeeze the element to the width of its own scrollbar - 22 px,
+   * a slit with a composer in it (Consulting #234). Measured in the demo at a 320 px window, the
+   * conversation was 32 px while the page beside it had room to spare.
+   *
+   * The second measure is `100vw` and deliberately **not** `100%`: the box this element is placed
+   * in is the one being squeezed, so a percentage tracks the squeeze instead of resisting it - a
+   * `min(20rem, 100%)` resolved to 32 px in exactly the case this rule exists for. What the window
+   * is, on the other hand, nothing in the page can shrink. So a host with room stops squeezing at
+   * the floor, and a window narrower than the floor is simply filled rather than overflowed.
+   *
+   * The floor is the width below which the composer's controls have nowhere left to go; the
+   * `chat-stage` queries further down still take the layout from there. A theme that wants another
+   * floor redeclares the token.
+   *
+   * That measure alone still overflowed a phone: beside a 16.5 rem session list, the rail's strip
+   * and two gaps, a 20 rem floor made the row 688 px wide at any window below it (#548). A list that
+   * is a drawer leaves only its strip, and then the floor gives way by what is left beside the
+   * conversation - the rule after this one. Beside a list that is a column the floor holds as it is.
+   */
+  min-width: min(var(--chat-conversation-min-width), 100vw);
+  height: 100%;
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/* The floor beside a list that is a drawer: the window less the strips and gaps still beside it. */
+:has(> .tl-data-list.is-drawer) .tl-chat-conversation {
+  min-width: min(var(--chat-conversation-min-width), 100vw - var(--chat-conversation-floor-reserve));
+}
+
+/*
+ * In a dock the window is not what the row has: the panel stands its offset in from both edges, so
+ * a floor measured on the window overflowed the panel of a phone by those 3 rem (#565). The dock's
+ * own width is the measure there, and nothing in the dock can shrink that either.
+ */
+.tl-chat-dock :has(> .tl-data-list.is-drawer) .tl-chat-conversation {
+  min-width: min(
+    var(--chat-conversation-min-width),
+    var(--chat-dock-width) - var(--chat-conversation-floor-reserve)
+  );
+}
+
+.tl-chat-conversation .stage {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tl-chat-conversation .composer {
+  max-width: 100%;
+}
+
+/*
+ * The floating dock: a launcher in the corner of the window, and the panel it opens over the page.
+ *
+ * Fixed rather than in the flow, because the premise is that as much of the page as possible stays
+ * visible and usable. Closed, the dock costs one button. Open, it covers a corner of the work area
+ * and nothing reflows - no column appears, no table gets narrower, and closing it puts the page
+ * back untouched.
+ *
+ * Every measure is a token on this root, so a theme restyles the dock - its corner, its size, its
+ * shadow, how far it stands off the window frame - without touching a rule.
+ */
+.tl-chat-dock {
+  /*
+   * 1100 px is the width the composed chat wants: the session list (16.5rem), the rail strip
+   * (3.25rem) and the rail column (18.75rem) are fixed, so the conversation gets what is left -
+   * about 27rem, which is where its composer still holds the model picker, the send button and the
+   * long Enter hint on one line. Wider buys the transcript nothing: it is centred at 49rem anyway.
+   */
+  --chat-dock-width: min(68.75rem, calc(100vw - 2 * var(--chat-dock-offset)));
+  /*
+   * Capped rather than proportional: on a tall screen a full-height card stops reading as something
+   * *over* the page and becomes a second page. The other term keeps the card clear of the window
+   * frame and of the launcher below it at every viewport, so its composer is always reachable
+   * without scrolling the card.
+   */
+  --chat-dock-height: min(
+    50rem,
+    calc(100vh - var(--chat-dock-launcher) - var(--chat-dock-gap) - 2 * var(--chat-dock-offset))
+  );
+  --chat-dock-offset: 1.5rem;
+  --chat-dock-launcher: 3.5rem;
+  --chat-dock-gap: 0.75rem;
+  --chat-dock-radius: var(--r-2);
+  /*
+   * Black in both themes, not derived from a colour token: a shadow is cast light, and
+   * `--background-inverse` is *light* in the dark theme - which put a white glow around the card
+   * there. The chat's own `--chat-shadow` is the same black, at a menu's geometry rather than a
+   * floating card's.
+   */
+  --chat-dock-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 30%);
+  /* Above the app shell and its panels, below the engine's own dialogs and menus. */
+  --chat-dock-z: 100;
+
+  position: fixed;
+  inset-block-end: var(--chat-dock-offset);
+  inset-inline-end: var(--chat-dock-offset);
+  z-index: var(--chat-dock-z);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--chat-dock-gap);
+  color: var(--text-primary);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/*
+ * Nothing at all, in the two cases where a launcher would be wrong: a session that is not signed in
+ * (the servlet refuses every call it makes), and a page that is already showing this conversation
+ * (the transport carries one conversation per window, so there is no second view to open).
+ */
+.tl-chat-dock.is-stood-down {
+  display: none;
+}
+
+.tl-chat-dock__panel {
+  display: flex;
+  width: var(--chat-dock-width);
+  height: var(--chat-dock-height);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--chat-dock-radius);
+  background: var(--background);
+  box-shadow: var(--chat-dock-shadow);
+}
+
+/*
+ * Hidden, not unmounted.
+ *
+ * The conversation - its event stream, its transcript, its running turn - lives in the elements
+ * inside this panel, and the store drops a chat when its last element leaves. Dropping them on
+ * close would hand the user a new, empty chat on every open. Stated as a rule of its own because
+ * the `display: flex` above would otherwise beat the `hidden` attribute.
+ */
+.tl-chat-dock__panel[hidden] {
+  display: none;
+}
+
+/*
+ * No `container-type` here either: what the card's width has to reach is the conversation's
+ * composer and the lists beside it, and each of those measures itself - the conversation through
+ * `.stage`, the list through the width its column was given. A container on the body would be a
+ * third name for the same question (Issue #427).
+ */
+.tl-chat-dock__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * The configured content is the panel's own flex child, and is given the panel's bounded height.
+ *
+ * This is where a dock would otherwise collapse the conversation: the engine's fill rule
+ * (`.tlStack:has(> .tlPanel--fill)`) looks one level deep, so a `<chat>` that is not the direct
+ * child of a box with a definite height grows with its transcript instead of scrolling inside one.
+ * One level is all this can repair - hence the one-element rule on `<chat-dock>`'s content.
+ */
+.tl-chat-dock__body > .tlStack,
+.tl-chat-dock__body > .tlPanel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * The header of a panel that only bounds a conversation, while it has nothing to show.
+ *
+ * A host wraps `<chat-conversation>` in an untitled `<panel fill="true">` for the bounded height
+ * alone, and the engine still draws that panel's header: padding, a tinted background and a
+ * border line, a band above the conversation's own header (#589). It goes away for as long as it
+ * holds no title, no title content and no command, so a host that gives the panel a title or a
+ * command keeps its header. Once the engine renders no empty header, this rule matches nothing.
+ */
+.tlPanel:has(> .tlPanel__content > .tl-chat-conversation)
+  > .tlPanel__header:not(:has(.tlPanel__title, .tlPanel__titleContent, button)) {
+  display: none;
+}
+
+/*
+ * A composition's table in a folded group of the side pane (`PresentationPane`, #764).
+ *
+ * The group names the composition, and the engine's table writes the same name as its own title,
+ * so the reader saw it twice. The table's header goes while it holds no command; its title goes in
+ * any case.
+ */
+.tlPanel.tl-chat-pane__grouped-table > .tlPanel__header:not(:has(button)) {
+  display: none;
+}
+
+.tlPanel.tl-chat-pane__grouped-table > .tlPanel__header .tlPanel__title {
+  display: none;
+}
+
+.tl-chat-dock__launcher {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--chat-dock-launcher);
+  height: var(--chat-dock-launcher);
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 1.25rem;
+  box-shadow: var(--chat-dock-shadow);
+  transition: background-color 120ms ease;
+}
+
+.tl-chat-dock__launcher:hover {
+  background: var(--button-primary-hover, var(--button-primary));
+}
+
+.tl-chat-dock__launcher svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* "N new since you last looked", on the button because the rail's own is behind a closed panel. */
+.tl-chat-dock__badge {
+  position: absolute;
+  top: 0.3rem;
+  inset-inline-end: 0.3rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Something is running behind the closed panel. */
+.tl-chat-dock__busy {
+  position: absolute;
+  top: 0.5rem;
+  inset-inline-end: 0.5rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  animation: chat-pulse 1.6s ease-in-out infinite;
+}
+
+/*
+ * A rail-section element is an ordinary box: the rail gives it its place, but a view may put one
+ * anywhere, so it carries the chat's typography itself. Its tokens and base CSS come from the
+ * shared rule at the top of this file.
+ */
+.tl-chat-section {
+  min-width: 0;
+  color: var(--text-primary);
+  font-family: var(--font-family, Inter, "Segoe UI", system-ui, sans-serif);
+  font-size: var(--body-02-font-size, 0.875rem);
+  line-height: var(--body-02-line-height, 1.25rem);
+}
+
+/*
+ * The composed rail is a column beside the conversation, not a region of App's workspace grid.
+ *
+ * `.side-strip` and `.side-pane` are App's classes, which place themselves with `grid-column` and
+ * turn into an overlay below 1280 px. Inside this element there is no grid to place into and
+ * nothing to overlay, so their geometry is re-stated here: laid out in flow, sized by themselves,
+ * and a column at every width the host has room for (`placement="rail"` in side-pane.tsx); in a
+ * narrower host the rail is a drawer, see below.
+ *
+ * Not a container either: `flex: 0 0 auto` makes this element as wide as the strip plus the column
+ * it shows, so its width comes from its own contents. `container-type: inline-size` applies
+ * inline-size containment, those contents would then contribute nothing, and the rail would
+ * collapse to 0 px. A pair of fixed-width columns has no width question to ask in any case.
+ */
+.tl-chat-rail {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.tl-chat-rail .side-strip,
+.tl-chat-rail .side-pane {
+  position: relative;
+  grid-column: auto;
+}
+
+/*
+ * The pane's history (#616): every step stays mounted, one above the other, and only the top one
+ * is shown. Each step is its own scroller and the ones below are hidden with `visibility`, not
+ * `display: none`, so a step keeps its layout - and with it its scroll position - while another is
+ * on top, and "back" shows it exactly as it was left. `inert` keeps them out of the tab order.
+ */
+.tl-chat-rail .side-pane-body.has-steps {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tl-chat-rail .pane-step {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.tl-chat-rail .pane-step.is-stashed {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* A table scrolls itself, with its header in place; the step only gives it the height. */
+.tl-chat-rail .pane-step.is-table {
+  overflow: hidden;
+  padding: 0;
+}
+
+.tl-chat-rail .pane-step.is-table > *,
+.tl-chat-rail .pane-step.is-chart > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tl-chat-rail .pane-step.is-chart {
+  padding: 1rem;
+}
+
+/*
+ * A chart is read at a glance: as high as it needs to be for its bars to compare, not as high as the
+ * pane happens to be - a 900 px bar says no more than a 400 px one, and the eye has to travel it.
+ */
+.tl-chat-rail .pane-step.is-chart > * {
+  flex: 0 0 auto;
+  height: clamp(16rem, 60%, 26rem);
+}
+
+/*
+ * A document a form shows in place - a research run's report (#764). The pane is a narrow column,
+ * and in a drawer about 280 px of text: a German compound such as "Photovoltaikanlagen" in a heading
+ * is wider than that, and the engine's `overflow-wrap: break-word` split it at the column's edge,
+ * with no hyphen (#862). So a long word is hyphenated, in the language the document declares or else
+ * the page's. Only a word of ten letters or more, and never with fewer than four letters on a line,
+ * so that ordinary words keep their shape. `break-word` stays the fallback for what has no syllables,
+ * such as an address.
+ */
+.tl-chat-rail .pane-step .tlHtml {
+  hyphens: auto;
+  hyphenate-limit-chars: 10 4 4;
+}
+
+/* The folded pane's way back: the strip's first icon, set apart from the sections below it. */
+.tl-chat-rail .side-strip-item.is-pane {
+  color: var(--button-primary);
+}
+
+.tl-chat-rail .side-strip-item.is-pane + .side-strip-item {
+  margin-top: 0.5rem;
+}
+
+/*
+ * A section is a card of its own.
+ *
+ * App's `.side-section` is borderless, and tells its own sections from a host's with a dashed
+ * outline. The shell has no such distinction - every section is configured, none is more the
+ * framework's than another - so they are plain cards on the column's own background.
+ */
+.tl-chat-rail .side-section {
+  border: 1px solid var(--border-subtle);
+  background: var(--background);
+}
+
+/*
+ * As wide as its section, not the session list's 16.5 rem: that is wider than a section of a rail
+ * drawer at a phone's width, and the rows were cut off at the card's edge instead of elided (#565).
+ */
+.tl-chat-rail .tl-data-list {
+  width: auto;
+}
+
+/*
+ * A list inside a section is content, not a rail of its own.
+ *
+ * `<data-list>` renders the session rail's chrome - its own surface, its own right border, its own
+ * padding. Nested in a section that already is a card, that reads as a box in a box.
+ */
+.tl-chat-rail .tl-data-list .rail {
+  width: auto;
+  min-width: 0;
+  background: none;
+  border-right: 0;
+}
+
+.tl-chat-rail .tl-data-list .rail-list {
+  padding-inline: 0;
+}
+
+/* The sections' own column. Named apart from App's `.side-column`, which is a grid child. */
+.tl-chat-rail .rail-column {
+  flex: 0 0 auto;
+  width: 18.75rem;
+  min-width: 0;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+  overflow: auto;
+}
+
+/*
+ * Hidden, not unmounted.
+ *
+ * A collapsed section keeps reporting its badge, and a closed rail keeps the sections that feed the
+ * number on the conversation's button - both of which stop the moment the browser drops the child.
+ */
+.tl-chat-rail .is-hidden {
+  display: none;
+}
+
+/*
+ * A rail in a narrow host (#565).
+ *
+ * Below its `drawer-below` width the rail keeps only its strip in the flow, and its section column
+ * or its pane opens over the conversation. chat-rail.tsx measures the host, sets `.is-drawer` and
+ * says in `--rail-drawer-end` how far from the host's inline end the strip begins; everything here
+ * is geometry. The same construction as a `<data-list>` drawer (#548): the host is the containing
+ * block, so the scrim covers exactly the row the rail stands in, and `isolation` keeps the
+ * z-indexes local to it.
+ *
+ * The strip stays above the scrim, so another section is still one click away while one is open.
+ */
+:has(> .tl-chat-rail.is-drawer) {
+  position: relative;
+  isolation: isolate;
+}
+
+.tl-chat-rail.is-drawer .rail-column,
+.tl-chat-rail.is-drawer .side-pane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-end: var(--rail-drawer-end, 0px);
+  z-index: 31;
+  box-shadow: var(--chat-shadow);
+}
+
+/*
+ * Never the whole row: a strip's width of scrim stays uncovered beside it, so a pointer always has
+ * somewhere to tap its way out, as beside the list's drawer.
+ */
+.tl-chat-rail.is-drawer {
+  --rail-drawer-room: calc(100% - var(--rail-drawer-end, 0px) - 3.5rem);
+}
+
+.tl-chat-rail.is-drawer .rail-column {
+  width: min(18.75rem, var(--rail-drawer-room));
+}
+
+.tl-chat-rail.is-drawer .side-pane {
+  max-width: var(--rail-drawer-room);
+}
+
+/* A drawer at a phone's width has no 6 rem to promise the title beside "back" and the close cross. */
+.tl-chat-rail.is-drawer .side-pane-title {
+  min-width: 0;
+}
+
+.tl-chat-rail.is-drawer-open .side-strip {
+  z-index: 32;
+}
+
+.tl-chat-rail .rail-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  /* The engine's own drawer backdrop, as for the list's drawer. */
+  background: var(--overlay, rgb(0 0 0 / 40%));
+}
+
+/* A count on a strip icon, so a closed rail still says which section the news is in. */
+.side-strip-badge {
+  position: absolute;
+  top: -0.2rem;
+  inset-inline-end: -0.2rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 0.625rem;
+  line-height: 1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tl-chat-rail .side-strip-item {
+  position: relative;
+}
+
+/* An icon-font glyph on the strip, beside the SVG ones the chat draws itself. */
+.tl-chat-rail .side-strip-item i {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.side-pane[hidden] {
+  display: none;
+}
+
+.tl-chat-conversation.is-signed-out {
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+/*
+ * A rail in a session that is not signed in: nothing, not even the row's gap beside it. The
+ * conversation says why the chat is empty, and a second note in a column of its own read as a
+ * layout error (#643). Signing in reloads the page, so there is no transition to keep a strip for.
+ */
+.tl-chat-rail.is-stood-down {
+  display: none;
+}
+
+.rail-new {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0.75rem 0;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer-01);
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rail-new svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.rail-new:hover {
+  background: var(--layer-hover);
+}
+
+.rail-search {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0.5rem 0.75rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer-01);
+  color: var(--text-secondary);
+}
+
+.rail-search svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.rail-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+}
+
+.rail-search input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+.rail-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 0.5rem 1rem;
+}
+
+.rail-group {
+  margin-top: 0.75rem;
+}
+
+.rail-group h2 {
+  margin: 0 0.5rem 0.25rem;
+  font-size: var(--chat-small);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.rail-item {
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-2);
+}
+
+.rail-item:hover {
+  background: var(--layer-hover);
+}
+
+.rail-item.is-active {
+  background: var(--layer-selected);
+}
+
+.rail-item.is-active .rail-item-mark {
+  background: var(--button-primary);
+}
+
+.rail-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4375rem 0.375rem;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+.rail-open span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail-item-mark {
+  width: 0.1875rem;
+  height: 1rem;
+  border-radius: var(--r-pill);
+  background: transparent;
+  flex: 0 0 auto;
+}
+
+.rail-delete {
+  margin-right: 0.25rem;
+  opacity: 0;
+}
+
+.rail-item:hover .rail-delete,
+.rail-item:focus-within .rail-delete {
+  opacity: 1;
+}
+
+.rail-delete:hover {
+  color: var(--chat-danger);
+  background: var(--chat-danger-soft);
+}
+
+/*
+ * The per-row action trigger of a <data-list>, revealed the way .rail-delete is: on hover and on
+ * :focus-within, so the keyboard reaches it. It sits in space the row already reserves, and
+ * .rail-open keeps `flex: 1; min-width: 0`, so the title shortens instead of the row reflowing when
+ * the trigger appears.
+ */
+.rail-row-menu {
+  margin-right: 0.25rem;
+  flex: 0 0 auto;
+  opacity: 0;
+}
+
+.rail-item:hover .rail-row-menu,
+.rail-item:focus-within .rail-row-menu,
+.rail-row-menu.is-always,
+.rail-row-menu:focus-visible {
+  opacity: 1;
+}
+
+/* Three dots, not three rings: the shared .icon-button svg rule strokes and does not fill. */
+.rail-row-menu svg circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+/*
+ * No hover to reveal anything with, so the trigger is always there - the same caveat a
+ * <panel hover-actions> carries. A finger also needs more than the 1.5rem glyph box, so the trigger
+ * grows to the 44px minimum there; the glyph is centred by .icon-button and does not grow with it.
+ */
+@media (hover: none) {
+  .rail-row-menu {
+    opacity: 1;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+}
+
+.rail-message {
+  margin: 0.75rem 0.5rem;
+  color: var(--text-secondary);
+}
+
+.rail-message.is-error {
+  color: var(--chat-danger);
+}
+
+.rail-loading {
+  display: flex;
+  gap: 0.375rem;
+  padding: 0.75rem 0.625rem;
+}
+
+.rail-loading span {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  animation: chat-pulse 1s ease-in-out infinite;
+}
+
+.rail-loading span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.rail-loading span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.rail.is-collapsed {
+  width: var(--chat-rail-narrow);
+  flex-basis: var(--chat-rail-narrow);
+  overflow: hidden;
+}
+
+.rail.is-collapsed .rail-header strong,
+.rail.is-collapsed .rail-close,
+.rail.is-collapsed .rail-new span,
+.rail.is-collapsed .rail-search,
+.rail.is-collapsed .rail-list {
+  display: none;
+}
+
+.rail.is-collapsed .rail-header {
+  justify-content: center;
+  padding-inline: 0.25rem;
+}
+
+.rail.is-collapsed .rail-new {
+  justify-content: center;
+  margin-inline: 0.5rem;
+  padding-inline: 0;
+}
+
+/* --- Stage -------------------------------------------------------------- */
+
+/*
+ * The transcript's and the composer's own box, and the container everything inside them measures.
+ *
+ * It is what the rail, the artefact pane and - in a composed `<chat-conversation/>` - the host's
+ * panel have left over, which is the only honest answer to "how wide is the prompt field". The
+ * cockpit is not: it stays as wide as ever while a pane takes half of it, which is why App used to
+ * carry a `.has-pane` class that guessed at the same thing from a state.
+ *
+ * Inline-size containment also makes this the containing block of a `position: fixed` descendant,
+ * which is what the composer's full-bleed popovers now pin themselves to - the chat rather than the
+ * screen. That is the better anchor for an embedded chat, and identical for one that fills the page.
+ */
+.stage {
+  container-type: inline-size;
+  container-name: chat-stage;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+}
+
+/*
+ * A chat with nothing in it yet puts its greeting and its composer together in the middle of the
+ * page - the first screen of every new chat, and the one place where a headline in the top third
+ * and an input welded to the bottom edge leaves the window empty between them. The title row stays
+ * where it belongs, at the top, so the rail toggle does not travel with the greeting.
+ */
+.stage.is-empty {
+  display: grid;
+  /*
+   * An explicit, shrinkable column. Without it the single implicit column is auto-sized, which
+   * floors it at the composer's min-content width - so an empty chat beside an open side pane
+   * pushed its own composer out under the pane instead of narrowing with the stage.
+   */
+  grid-template-columns: minmax(0, 1fr);
+  /*
+   * Four content rows, not three: the prompt cards sit between the greeting and the composer, and a
+   * conversation that offers none leaves that row at zero height.
+   */
+  grid-template-rows: 1fr auto auto auto 1.2fr;
+}
+
+.stage.is-empty .thread-shell {
+  position: static;
+  grid-row: 2;
+  min-height: 0;
+}
+
+.stage.is-empty .prompt-suggestions {
+  grid-row: 3;
+}
+
+.stage.is-empty .composer {
+  grid-row: 4;
+}
+
+.stage.is-empty .thread-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.stage.is-empty .thread {
+  overflow: hidden;
+}
+
+.stage.is-empty .welcome {
+  margin: 0;
+  padding: 0 0 1.75rem;
+}
+
+/*
+ * The first questions a page offers, between the greeting and the composer - the position the
+ * classic chat gives its example prompts, and the order the eye reads: what this is, what you could
+ * ask, where you type.
+ *
+ * Same column and same gutters as the composer, so the row lines up with the field it fills rather
+ * than with the transcript's wider measure. They wrap: a page may offer three long questions or six
+ * short ones, and neither should introduce a horizontal scrollbar.
+ */
+.prompt-suggestions {
+  width: min(100%, var(--chat-column));
+  margin: 0 auto;
+  padding: 0 1.25rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.prompt-suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+  text-align: left;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.prompt-suggestion:hover {
+  background: var(--layer-hover);
+  border-color: var(--border-interactive);
+}
+
+.prompt-suggestion__icon {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.prompt-suggestion:hover .prompt-suggestion__icon {
+  color: var(--button-primary);
+}
+
+/*
+ * One line, elided. The label is the short form of the question; the whole sentence is the button's
+ * title and, one click later, the composer's text.
+ */
+.prompt-suggestion__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Narrow: one card per row, so a long label is read rather than elided to three words.
+ */
+@container chat-stage (max-width: 26rem) {
+  .prompt-suggestion {
+    width: 100%;
+  }
+}
+
+.thread-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.thread-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.thread-bar h1 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--heading-compact-02-font-size, 0.875rem);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.thread-column {
+  width: min(100%, var(--chat-column));
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.welcome {
+  margin: auto;
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.welcome h2 {
+  margin: 0;
+  font-size: var(--chat-heading);
+  line-height: var(--chat-heading-line);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.welcome p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* --- Turns -------------------------------------------------------------- */
+
+.run-block,
+.agent-run {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.turn-user {
+  display: block;
+}
+
+.bubble-user {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.5rem 0.625rem 0.875rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  background: var(--layer-01);
+  line-height: 1.5;
+}
+
+.bubble-user-text {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-top: 0.0625rem;
+}
+
+.bubble-user-actions {
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.bubble-user:hover .bubble-user-actions,
+.bubble-user:focus-within .bubble-user-actions {
+  opacity: 1;
+}
+
+.bubble-user-edited {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-style: italic;
+}
+
+/* Editing happens in the bubble, so the bubble becomes the field rather than opening one. */
+.bubble-user.is-editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.bubble-user-edit {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+}
+
+.bubble-user-edit:focus {
+  outline: none;
+}
+
+.bubble-user-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.run-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  min-height: 1rem;
+}
+
+.run-meta-dot {
+  width: 0.1875rem;
+  height: 0.1875rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  flex: 0 0 auto;
+}
+
+.run-meta-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-meta .is-live {
+  animation: chat-pulse 1.4s ease-in-out infinite;
+}
+
+.turn-agent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.answer {
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+/*
+ * The answer's place while the run has produced no text yet (#429). The height is the first text
+ * line's, so the answer does not push the thread down when it arrives.
+ */
+.answer.is-pending {
+  display: flex;
+  align-items: center;
+  min-height: 1.55rem;
+}
+
+.answer-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.answer-dots i {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  opacity: 0.4;
+  animation: chat-dot 1.2s ease-in-out infinite;
+}
+
+.answer-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.answer-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/*
+ * An application's own working indicator in place of the dots (`<chat-conversation
+ * working-indicator>`): an icon class, an inline SVG or an image, at the height of the first text
+ * line so the answer takes its place without a jump. Its size is a token read with a fallback rather
+ * than declared on the chat's roots, so an application may set it anywhere above - on `:root` for
+ * every chat - without the root's own declaration shadowing it. `currentColor` is the secondary text
+ * colour, which an SVG drawing in `currentColor` picks up in either theme.
+ */
+.answer-working {
+  display: inline-flex;
+  align-items: center;
+  height: var(--chat-working-indicator-size, 1.5rem);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.answer-working > i {
+  font-size: var(--chat-working-indicator-size, 1.5rem);
+}
+
+.answer-working > img,
+.answer-working > svg {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
+.answer.is-streaming .md > *:last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 0.95em;
+  margin-left: 0.1em;
+  background: var(--button-primary);
+  animation: chat-blink 1s steps(1) infinite;
+  vertical-align: text-bottom;
+}
+
+.answer-footer-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.answer-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-left: -0.25rem;
+  opacity: 0.55;
+  transition: opacity 120ms ease;
+}
+
+.turn-agent:hover .answer-footer,
+.answer-footer:focus-within {
+  opacity: 1;
+}
+
+.answer-time {
+  margin-left: 0.375rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.feedback-note {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+}
+
+.feedback-note input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--chat-small);
+  outline: none;
+}
+
+.feedback-note input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+/* --- Delete confirmation in the rail ------------------------------------ */
+
+/*
+ * The question stands on its own line above its answers: on one line with them it was the part
+ * that got the ellipsis, and a confirmation that cannot be read is not one.
+ */
+.rail-item.is-confirming {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--chat-danger);
+  background: var(--chat-danger-soft);
+}
+
+.rail-confirm-text {
+  min-width: 0;
+  font-size: var(--chat-small);
+}
+
+.rail-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+/* --- Effort in the trace header ----------------------------------------- */
+
+.trace-effort {
+  flex: 0 0 auto;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--r-pill);
+  background: var(--layer-selected);
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* --- Markdown ----------------------------------------------------------- */
+
+.md > *:first-child {
+  margin-top: 0;
+}
+
+.md > *:last-child {
+  margin-bottom: 0;
+}
+
+.md p {
+  margin: 0 0 0.85em;
+}
+
+.md h1,
+.md h2,
+.md h3,
+.md h4 {
+  margin: 1.4em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.md h1 {
+  font-size: 1.25rem;
+}
+
+.md h2 {
+  font-size: 1.125rem;
+}
+
+.md h3,
+.md h4 {
+  font-size: 1rem;
+}
+
+.md ul,
+.md ol {
+  margin: 0 0 0.85em;
+  padding-left: 1.35em;
+}
+
+.md li {
+  margin: 0.2em 0;
+}
+
+.md li::marker {
+  color: var(--text-secondary);
+}
+
+.md blockquote {
+  margin: 0 0 0.85em;
+  padding: 0.1em 0 0.1em 0.9em;
+  border-left: 2px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.md a {
+  color: var(--chat-link);
+  text-underline-offset: 2px;
+}
+
+/* A picture in an answer - a captured screenshot (/screenshot/<id>), a chart, a web image. It is
+   the width of the column at most, never wider, and keeps its own aspect ratio while it loads. */
+.md img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 0.85em;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--layer);
+}
+
+.md hr {
+  margin: 1.5em 0;
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.md table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0 0 0.85em;
+  font-size: var(--body-02-font-size, 0.875rem);
+}
+
+.md th,
+.md td {
+  border: 1px solid var(--border-subtle);
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+}
+
+.md th {
+  background: var(--layer);
+  font-weight: 600;
+}
+
+.md :not(pre) > code,
+.tool-id {
+  font-family: var(--chat-mono);
+  font-size: 0.85em;
+  padding: 0.1em 0.32em;
+  border-radius: var(--r-1);
+  background: var(--layer);
+  color: var(--text-primary);
+}
+
+.md-plain {
+  white-space: pre-wrap;
+  /* `anywhere` breaks inside words, which in German means inside a compound. Only a word too long
+     for the column is broken now, and a reference token never is - it is `nowrap`. */
+  overflow-wrap: break-word;
+}
+
+/* --- Code blocks -------------------------------------------------------- */
+
+.code-block {
+  margin: 0 0 0.85em;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  overflow: hidden;
+  background: var(--layer);
+}
+
+.code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.375rem 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.code-lang {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.code-copy {
+  padding: 0.1875rem 0.5rem;
+  border-radius: var(--r-1);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.code-copy:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.code-copy.is-done {
+  color: var(--support-success, #04a38d);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 0.75rem;
+  overflow-x: auto;
+  background: var(--layer-01);
+}
+
+.code-block code {
+  font-family: var(--chat-mono);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/*
+ * Syntax colours, expressed in theme tokens rather than taken from a highlight.js stylesheet: the
+ * shipped themes are fixed palettes that would look wrong against one of the two app themes.
+ */
+.hljs-comment,
+.hljs-quote {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-doctag,
+.hljs-type,
+.hljs-name,
+.hljs-strong {
+  color: var(--chat-link);
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta .hljs-string {
+  color: var(--support-success, #04a38d);
+}
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link,
+.hljs-meta,
+.hljs-selector-id,
+.hljs-title {
+  color: var(--chat-warn);
+}
+
+.hljs-attr,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: var(--text-primary);
+}
+
+.hljs-built_in,
+.hljs-class .hljs-title,
+.hljs-title.class_ {
+  color: var(--chat-link);
+  font-weight: 600;
+}
+
+.hljs-deletion {
+  color: var(--chat-danger);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+/* --- Trace -------------------------------------------------------------- */
+
+.trace-panel-head,
+.trace-entry-head {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.trace-panel-head {
+  font-weight: 600;
+}
+
+.trace-panel-summary,
+.trace-preview {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trace-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--chat-mono);
+}
+
+.trace-meta {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.trace-chevron {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-0.1rem, -0.1rem);
+  transition: transform 120ms ease;
+}
+
+.trace-chevron.is-open {
+  transform: rotate(-135deg) translate(-0.15rem, -0.15rem);
+}
+
+.trace-panel-body {
+  margin-top: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trace-entry {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  overflow: hidden;
+  background: var(--layer);
+}
+
+.trace-entry.is-error {
+  border-color: var(--chat-danger);
+}
+
+.trace-entry-head {
+  padding: 0.375rem 0.625rem;
+}
+
+.trace-entry-head:hover {
+  background: var(--layer-hover);
+}
+
+.trace-entry-body {
+  border-top: 1px solid var(--border-subtle);
+  padding: 0.5rem 0.625rem 0.625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--layer-01);
+}
+
+.trace-block-label {
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.trace-block pre,
+.trace-block-md {
+  margin: 0;
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--r-1);
+  background: var(--field, var(--layer));
+  font-family: var(--chat-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.trace-block.is-error .trace-block-label,
+.trace-block.is-error pre {
+  color: var(--chat-danger);
+}
+
+.trace-more {
+  margin-top: 0.25rem;
+  color: var(--chat-link);
+  font-size: 0.6875rem;
+}
+
+.trace-more:hover {
+  text-decoration: underline;
+}
+
+.error-card {
+  color: var(--chat-danger);
+  background: var(--chat-danger-soft);
+  border-left: 2px solid var(--chat-danger);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+}
+
+/* The provider's own words under the sentence: available, not shouted (#429). */
+.error-card-detail {
+  margin-top: 0.125rem;
+  font-size: var(--chat-small);
+  opacity: 0.8;
+}
+
+/*
+ * A run that continued on another model (#344). Deliberately quieter than .error-card: nothing
+ * failed for the user, so it sits under the turn's steps as context, in the thread's secondary text
+ * colour rather than in the danger colour.
+ */
+.notice-line {
+  color: var(--text-secondary);
+  border-left: 2px solid var(--border-subtle);
+  padding: 0.25rem 0.75rem;
+  font-size: var(--chat-small);
+}
+
+/*
+ * A turn whose data changes were thrown away. It reads in the thread's own text colour over the
+ * warning tint, because the answer above it may claim the work is done - so this line has to be
+ * read, not merely available. It is still not .error-card: the run did not fail, and the danger
+ * colour is kept for the turn that produced nothing at all.
+ *
+ * Both tokens carry their own fallback at the top of this file, so the tint is correct in the light
+ * and the dark theme without a rule per theme.
+ */
+.notice-line.is-warning {
+  color: var(--text-primary);
+  background: var(--chat-warn-soft);
+  border-left-color: var(--chat-warn);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+}
+
+/* The server's own line - which model instead and why, or why the turn was rolled back. */
+.notice-line-detail {
+  margin-top: 0.125rem;
+  opacity: 0.8;
+  word-break: break-word;
+}
+
+/* The notice's own expander, matching .trace-more rather than inventing a second look. */
+.notice-line-more {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--chat-link);
+  font-size: 0.6875rem;
+}
+
+.notice-line-more:hover {
+  text-decoration: underline;
+}
+
+/*
+ * The line of a turn subagents started (#721): one entry per subagent, its name a link to its card.
+ * The question after "asks:" is the subagent's own text and may be long; it wraps rather than
+ * widening the thread.
+ */
+.woken-list {
+  list-style: none;
+  margin: 0 0 0.125rem;
+  padding: 0;
+}
+
+.woken-list li {
+  overflow-wrap: anywhere;
+}
+
+.woken-link {
+  background: none;
+  border: 0;
+  color: var(--chat-link);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0;
+}
+
+.woken-link:hover {
+  text-decoration: underline;
+}
+
+.woken-question {
+  color: var(--text-primary);
+}
+
+/* The card a woken line pointed at, marked for a moment so the eye finds it after the jump. */
+.subagent-card.is-highlighted {
+  outline: 2px solid var(--focus, var(--button-primary));
+  outline-offset: 2px;
+  transition: outline-color 0.6s ease-out;
+}
+
+.jump-latest {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  transform: translateX(-50%);
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  background: var(--layer-01);
+  box-shadow: var(--chat-shadow);
+  color: var(--text-primary);
+}
+
+.jump-latest svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.jump-latest:hover {
+  background: var(--layer-hover);
+}
+
+/* --- Composer ----------------------------------------------------------- */
+
+.composer {
+  position: relative;
+  width: min(100%, var(--chat-column));
+  margin: 0 auto;
+  padding: 0 1.25rem 0.75rem;
+}
+
+.composer-overlays {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.composer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.composer-chips:empty {
+  display: none;
+}
+
+.composer-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.4375rem 0.4375rem 0.4375rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--chat-warn);
+  border-radius: var(--r-2);
+  background: var(--layer);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+}
+
+/*
+ * A notice that only says what happened - "Abgebrochen.", "der Chat ist beschäftigt", "N spätere
+ * Antworten entfernt" - keeps the strip but drops the warning accent, so the amber marker is left
+ * to mean that something actually went wrong.
+ */
+.composer-notice.is-neutral {
+  border-left-color: var(--border-subtle);
+}
+
+.composer-notice span {
+  flex: 1;
+  min-width: 0;
+}
+
+.composer-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  background: var(--layer-01);
+  box-shadow: var(--chat-shadow);
+  transition: border-color 120ms ease;
+}
+
+.composer-surface:focus-within {
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.composer-surface.is-dropping {
+  border-color: var(--button-primary);
+  background: var(--color-drop-zone, var(--layer-hover));
+}
+
+/* The controls under the text: the "+" menu on the left, model and send on the right. */
+.composer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.composer-row .composer-actions {
+  margin-inline-start: auto;
+}
+
+.composer-surface textarea {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  resize: none;
+  min-height: 2.25rem;
+  max-height: 11.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  padding: 0.4375rem 0.25rem;
+  outline: none;
+}
+
+/*
+ * One line, cut with an ellipsis: in a narrow column the placeholder otherwise wraps and the second
+ * line is clipped by the textarea's own height, which reads as a broken field.
+ */
+.composer-surface textarea::placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composer-surface textarea:focus-visible {
+  /* The surface already shows focus with its border; a second outline inside it reads as an error. */
+  outline: none;
+}
+
+.composer-surface textarea::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  /* Shrinkable: in a document-mode column the model's name gives way before the send button does. */
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* The model's name is the part that gives way in a narrow column; the send button never does. */
+.composer-actions .model-menu {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.composer-actions .model-trigger {
+  max-width: 100%;
+  min-width: 2rem;
+}
+
+.composer-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 0.5rem;
+  min-width: 0;
+  padding: 0.4375rem 0.25rem 0;
+}
+
+/*
+ * How to send is worth saying at every width; only how much of it fits changes. The short form is
+ * shown where the long one would not fit.
+ *
+ * The hint is a container of its own and takes whatever the row leaves it: with `flex-basis: 0` and
+ * no minimum it never pushes the row into a second line, and whether the long form fits is asked of
+ * the room it actually has - not worked out backwards from the stage's width minus every sibling's,
+ * which held for one wording, one switch label and one set of paddings only (#761).
+ */
+.composer-hint {
+  flex: 1 1 0;
+  min-width: 0;
+  container-type: inline-size;
+  container-name: composer-hint;
+  overflow: hidden;
+  text-align: end;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  white-space: nowrap;
+}
+
+.composer-hint-short {
+  display: none;
+}
+
+/*
+ * The long form no longer fits. In `em` of the hint's own font, so a theme's type scale moves the
+ * breakpoint with the text: the German wording, the longest the product ships, is about 27.8 em.
+ */
+@container composer-hint (max-width: 28em) {
+  .composer-hint-long {
+    display: none;
+  }
+
+  .composer-hint-short {
+    display: inline;
+  }
+}
+
+.attach-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.125rem 0.25rem 0;
+}
+
+.attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 14rem;
+  padding: 0.1875rem 0.1875rem 0.1875rem 0.4375rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--layer);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+}
+
+.attach-chip svg {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  flex: 0 0 0.8125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--text-secondary);
+}
+
+.attach-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attach-chip button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  flex: 0 0 auto;
+}
+
+.attach-chip button:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.drop-veil {
+  position: absolute;
+  inset: -0.5rem 0.75rem 0.25rem;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--button-primary);
+  border-radius: var(--r-3);
+  /* Nearly opaque: the composer sits underneath, and its placeholder must not read through the
+     invitation to drop. */
+  background: color-mix(in srgb, var(--layer-01) 94%, var(--button-primary));
+  color: var(--button-primary);
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* --- Chips -------------------------------------------------------------- */
+
+.overlay-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.625rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-pill);
+  background: var(--layer-01);
+  box-shadow: var(--chat-shadow);
+  color: var(--text-primary);
+  font-size: var(--chat-small);
+  font-weight: 600;
+}
+
+.overlay-chip svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.overlay-chip span {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.overlay-chip:hover {
+  background: var(--layer-hover);
+}
+
+.overlay-chip.is-accent {
+  color: var(--button-primary);
+  border-color: color-mix(in srgb, var(--button-primary) 45%, transparent);
+}
+
+.overlay-chip.is-accent svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.overlay-chip.is-error {
+  color: var(--chat-danger);
+  border-color: var(--chat-danger);
+}
+
+.overlay-chip.is-muted {
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: default;
+}
+
+.chip-spinner {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: 0 0 0.75rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-subtle);
+  border-top-color: var(--button-primary);
+  animation: chat-spin 0.8s linear infinite;
+}
+
+/* --- Prompt cards ------------------------------------------------------- */
+
+.prompt-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prompt-card {
+  width: 100%;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--chat-shadow);
+  padding: 0.625rem 0.75rem 0.75rem;
+}
+
+.prompt-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.prompt-card-head strong {
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+}
+
+.prompt-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prompt-countdown.is-urgent {
+  color: var(--chat-warn);
+}
+
+.prompt-countdown.is-over {
+  color: var(--chat-danger);
+}
+
+.prompt-clock {
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  position: relative;
+}
+
+.prompt-clock::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 1px;
+  width: 1.5px;
+  height: 3px;
+  background: currentColor;
+  transform-origin: bottom center;
+  animation: chat-sweep 4s linear infinite;
+}
+
+.prompt-card-title {
+  margin: 0.375rem 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.prompt-card-body {
+  margin: 0 0 0.5rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * What the tool will be given (#511). Plain text, never rendered: `<pre>` is the whole point - the
+ * payload is model output and the reader has to see what it really says. The approval card and the
+ * detailed trace's entry for the same call render the one block, so it is styled once.
+ */
+.tool-args {
+  margin: 0;
+}
+
+/* The card stacks its blocks with margins; the trace entry's body has a gap of its own. */
+.prompt-card .tool-args {
+  margin-bottom: 0.5rem;
+}
+
+.tool-args-label {
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+/*
+ * Bounded in rendered rows, collapsed and expanded alike (#551). The character and line budget of
+ * the head cannot bound its height: one long line of 700 characters wraps into twenty rows at the
+ * card's width, and the card then took the whole conversation. What does not fit scrolls inside the
+ * block; the expander below it adds what the head cut off, and never makes the card taller.
+ */
+.tool-args-text {
+  --tool-args-rows: 8;
+  margin: 0;
+  max-height: calc(var(--tool-args-rows) * 1.5em + 1rem);
+  overflow: auto;
+  padding: 0.5rem 0.625rem;
+  border-radius: var(--r-1);
+  background: var(--field, var(--layer));
+  font-family: var(--chat-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tool-args-more {
+  margin-top: 0.25rem;
+  color: var(--chat-link);
+  font-size: 0.6875rem;
+}
+
+.tool-args-more:hover {
+  text-decoration: underline;
+}
+
+/* Who asks, when a background subagent does - said before the question, so it is read first. */
+.prompt-card-asker {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* What "allow this chat" will cover, said on the card rather than found out afterwards. */
+.prompt-card-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  overflow-wrap: anywhere;
+}
+
+.prompt-card-bar {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prompt-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.prompt-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4375rem 0.5rem;
+  border-radius: var(--r-2);
+  text-align: left;
+}
+
+.prompt-option:hover {
+  background: var(--layer-hover);
+}
+
+.prompt-option.is-on {
+  background: var(--layer-selected);
+}
+
+.prompt-letter {
+  width: 1.125rem;
+  flex: 0 0 1.125rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.prompt-option em {
+  display: block;
+  font-style: normal;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.prompt-input {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--field, var(--layer));
+  color: var(--text-primary);
+  padding: 0.4375rem 0.625rem;
+  font: inherit;
+  outline: none;
+}
+
+.prompt-input:focus-visible {
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+/*
+ * The answers wrap onto a second line rather than into their own words. Three labels do not fit
+ * across a chat in a narrow dock or a split panel, and a shrinking flex item breaks its text: "In
+ * diesem Chat erlauben" came out as four stacked words beside two buttons it had run into.
+ */
+.prompt-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+}
+
+.prompt-card-footer > button {
+  white-space: nowrap;
+}
+
+/*
+ * Letting a tool write is a decision, not the obvious way on, so the approval card's affirmative
+ * button is outlined rather than filled (#511): an accented button is the one a reader answers
+ * without looking, and the payload above it is there to be looked at. `.prompt-continue` keeps the
+ * accent for the question card, where continuing really is the expected answer.
+ */
+.prompt-decide {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border-strong, var(--border-subtle));
+  border-radius: var(--r-pill);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.prompt-decide:hover {
+  background: var(--layer-hover);
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.prompt-continue {
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-weight: 600;
+}
+
+.prompt-continue:hover:not(:disabled) {
+  background: var(--button-primary-hover, var(--button-primary));
+}
+
+.prompt-continue:disabled {
+  background: var(--button-disabled);
+  color: var(--text-on-color-disabled, var(--text-disabled));
+}
+
+/* --- Menus -------------------------------------------------------------- */
+
+.plus-menu,
+.model-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.plus-trigger {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.plus-trigger svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  transition: transform 140ms ease;
+}
+
+.plus-trigger:hover,
+.plus-trigger.is-open {
+  background: var(--layer-hover);
+}
+
+.plus-trigger.is-open svg {
+  transform: rotate(45deg);
+}
+
+.plus-popover,
+.model-popover {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  width: min(23rem, calc(100vw - 2.5rem));
+  max-height: min(24rem, 60vh);
+  overflow: auto;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--chat-shadow);
+  padding: 0.375rem;
+  z-index: 5;
+}
+
+.plus-popover {
+  left: 0;
+}
+
+.model-popover {
+  right: 0;
+  width: min(20rem, calc(100vw - 2.5rem));
+}
+
+.plus-search {
+  display: block;
+  padding: 0.125rem 0.125rem 0.375rem;
+}
+
+.plus-search input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.375rem 0.375rem 0.5rem;
+  font: inherit;
+  outline: none;
+}
+
+.plus-search input:focus-visible {
+  /* An underline field: the outline of the shared focus rule would box a borderless input. */
+  outline: none;
+  border-bottom-color: var(--border-interactive, var(--button-primary));
+  border-bottom-width: 2px;
+  padding-bottom: calc(0.5rem - 1px);
+}
+
+.plus-search input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+.plus-back {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--r-2);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: left;
+}
+
+.plus-back svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plus-back:hover {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+.plus-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.plus-section + .plus-section {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.plus-heading {
+  padding: 0.5rem 0.5rem 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.plus-list + .plus-list {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/*
+ * A row is a grid: icon, label, value and chevron on the first line, the hint on the lines below,
+ * from under the label to the value's end edge (#635).
+ *
+ * The hint is not beside the value, because then the value would decide how much room it has: a
+ * longer model name or "Zusammenfassung" cut the sentence off again, and changing the value would
+ * change the row's height. Under it, its width is the row's alone. And it wraps rather than ending in
+ * an ellipsis: an agent's summary and a host's menu item are authored text of any length, and a
+ * clamp would hide the rest of them exactly as the ellipsis did. The row's accessible description is
+ * the same sentence (`aria-describedby`).
+ *
+ * The tracks have no gap, the items carry their own margins: a row with no value and no chevron
+ * would otherwise keep two gaps at its end, and its text would stop short of the edge.
+ */
+.plus-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  width: 100%;
+  padding: 0.4375rem 0.5rem;
+  border-radius: var(--r-2);
+  text-align: left;
+}
+
+.plus-row:hover {
+  background: var(--layer-hover);
+}
+
+.plus-row.is-selected {
+  background: var(--layer-selected);
+}
+
+.plus-ico {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-inline-end: 0.625rem;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.plus-ico svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plus-label {
+  grid-column: 2;
+  grid-row: 1;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.plus-hint {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  line-height: 1.4;
+  /* A model's id is one word with no break in it; it may break anywhere rather than overflow. */
+  overflow-wrap: anywhere;
+}
+
+/*
+ * A value is a name or a number and stays on one line. Where a long one is cut, the row's accessible
+ * name still carries all of it, and the pane the row opens shows it in full.
+ */
+.plus-value {
+  grid-column: 3;
+  grid-row: 1;
+  max-width: 9rem;
+  margin-inline-start: 0.625rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+  /* Its own line box stays inside the label's, so a value does not make its row taller. */
+  line-height: 1.2;
+  text-align: end;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plus-more {
+  grid-column: 4;
+  grid-row: 1;
+  align-self: center;
+  margin-inline-start: 0.625rem;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.plus-more svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.plus-empty {
+  padding: 0.75rem 0.5rem;
+  color: var(--text-secondary);
+}
+
+.model-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  max-width: 13rem;
+  height: 2rem;
+  padding: 0 0.375rem 0 0.5rem;
+  border-radius: var(--r-2);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-weight: 500;
+}
+
+.model-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-trigger svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex: 0 0 0.875rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.model-trigger:hover,
+.model-trigger.is-open {
+  background: var(--layer-hover);
+  color: var(--text-primary);
+}
+
+/* --- Auto-approve switch ------------------------------------------------ */
+
+.approve-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.approve-switch:hover {
+  color: var(--text-primary);
+}
+
+.approve-switch.is-on {
+  color: var(--text-primary);
+}
+
+.approve-switch-track {
+  position: relative;
+  width: 1.75rem;
+  height: 1rem;
+  border-radius: var(--r-pill);
+  background: var(--border-subtle);
+  flex: 0 0 auto;
+  transition: background-color 120ms ease;
+}
+
+.approve-switch.is-on .approve-switch-track {
+  background: var(--button-primary);
+}
+
+.approve-switch-knob {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--layer-01);
+  transition: transform 120ms ease;
+}
+
+.approve-switch.is-on .approve-switch-knob {
+  transform: translateX(0.75rem);
+}
+
+/* --- Context usage ------------------------------------------------------ */
+
+.context-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.context-gauge {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--button-primary);
+}
+
+.context-gauge svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.gauge-track,
+.gauge-arc {
+  fill: none;
+  stroke-width: 3;
+}
+
+.gauge-track {
+  stroke: var(--border-subtle);
+}
+
+.gauge-arc {
+  stroke: var(--button-primary);
+  stroke-linecap: round;
+  transition: stroke-dasharray 240ms ease;
+}
+
+.context-gauge.tone-warn .gauge-arc {
+  stroke: var(--chat-warn);
+}
+
+.context-gauge.tone-ember .gauge-arc {
+  stroke: var(--chat-danger);
+}
+
+.context-gauge:hover,
+.context-gauge.is-open {
+  background: var(--layer-hover);
+}
+
+.context-popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  width: min(23rem, calc(100vw - 2.5rem));
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--chat-shadow);
+  padding: 0.75rem 0.875rem 0.625rem;
+  z-index: 5;
+}
+
+.context-popover-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.context-popover-head strong {
+  font-size: 0.9375rem;
+}
+
+.context-popover-head span {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.context-popover-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.375rem 0 0.375rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.context-model {
+  min-width: 0;
+  /* A model's name and effort may take a second line; cut off, the effort was the part lost (#635). */
+  text-align: end;
+  overflow-wrap: anywhere;
+  font-family: var(--chat-mono);
+}
+
+.context-bar {
+  display: flex;
+  height: 0.375rem;
+  border-radius: var(--r-pill);
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+
+.context-bar i {
+  display: block;
+  height: 100%;
+  /* A share that rounds to nothing still shows its colour, so the legend can be read against it. */
+  min-width: 3px;
+}
+
+.slice-system {
+  background: var(--text-secondary);
+}
+
+.slice-tools {
+  background: var(--chat-warn);
+}
+
+.slice-conversation {
+  background: var(--button-primary);
+}
+
+/* Part of the conversation, so a lighter shade of the same colour rather than a fourth hue. */
+.slice-toolResults {
+  background: color-mix(in srgb, var(--button-primary) 55%, transparent);
+}
+
+.context-rows {
+  margin: 0.625rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+}
+
+.context-rows div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: var(--chat-small);
+}
+
+.context-rows dt {
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  min-width: 0;
+  color: var(--text-primary);
+}
+
+.context-rows dt em {
+  font-style: normal;
+  color: var(--text-secondary);
+}
+
+.context-key {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 0.5rem;
+  border-radius: 2px;
+}
+
+.context-rows dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.context-aside {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.context-note {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+/* --- Send button -------------------------------------------------------- */
+
+.send-button {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  transition: background-color 120ms ease;
+}
+
+.send-button:hover:not(:disabled) {
+  background: var(--button-primary-hover, var(--button-primary));
+}
+
+.send-button:disabled {
+  background: var(--button-disabled);
+  color: var(--text-on-color-disabled, var(--text-disabled));
+}
+
+.send-arrow {
+  width: 1.125rem;
+  height: 1.125rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.send-stop {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+/* --- Subagent activity -------------------------------------------------- */
+
+.subagent-activity {
+  position: relative;
+}
+
+.working-chip .status-spinner,
+.activity-status {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 0.5rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+}
+
+.working-chip .status-spinner.is-active,
+.activity-status.is-active {
+  background: var(--button-primary);
+  animation: chat-pulse 1.2s ease-in-out infinite;
+}
+
+.activity-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.5rem);
+  width: min(24rem, calc(100vw - 2.5rem));
+  max-height: min(20rem, 50vh);
+  overflow: auto;
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-3);
+  box-shadow: var(--chat-shadow);
+  z-index: 5;
+}
+
+.activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.5rem 0.25rem 0.75rem;
+}
+
+.activity-header div {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+/* The header's title and, under it, what the subagents spent together (#783). */
+.activity-header {
+  gap: 0.5rem;
+}
+
+.activity-header .activity-title {
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  min-width: 0;
+}
+
+.activity-header .text-button {
+  white-space: nowrap;
+}
+
+.activity-cost {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem 0.375rem 0.5rem;
+}
+
+.activity-item {
+  padding: 0.3125rem 0.25rem;
+  border-radius: var(--r-2);
+}
+
+.activity-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.activity-status {
+  margin-top: 0.4375rem;
+}
+
+.activity-disclosure {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.activity-disclosure strong,
+.activity-disclosure span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-disclosure span {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.activity-detail {
+  margin: 0.375rem 0 0 1rem;
+  color: var(--text-secondary);
+}
+
+.activity-detail p {
+  margin: 0 0 0.375rem;
+}
+
+.activity-transcript {
+  margin-top: 0.375rem;
+  padding: 0.4375rem;
+  background: var(--layer);
+  border-radius: var(--r-2);
+  font-size: var(--chat-small);
+}
+
+.activity-transcript p {
+  margin: 0 0 0.25rem;
+}
+
+.activity-error {
+  margin: 0 0.75rem 0.5rem;
+  color: var(--chat-danger);
+}
+
+.activity-item.status-failed .activity-status,
+.activity-item.status-cancelled .activity-status {
+  background: var(--chat-danger);
+}
+
+.activity-item.status-done .activity-status {
+  background: var(--support-success, #04a38d);
+}
+
+/* --- Responsive --------------------------------------------------------- */
+
+/*
+ * Every query below names a container rather than the viewport - see the note on `.tl-cockpit`.
+ * The numbers are the ones the viewport queries carried; what changed is the box they measure.
+ */
+
+/*
+ * Narrow enough that the gutters are worth more to the text than to the margin.
+ *
+ * The prompt cards are in the list because they stand directly over the composer: a row that kept
+ * the wide gutter here would start four pixels inside the field it fills, which reads as a
+ * misalignment rather than as a margin.
+ */
+@container chat-stage (max-width: 1080px) {
+  .thread-column,
+  .prompt-suggestions,
+  .composer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/*
+ * The session rail as a drawer over the transcript, because a column beside it would leave the
+ * thread less than it needs. `chat-shell` is App's own root, so none of this reaches a composed
+ * `<data-list>` - which renders the same `.rail` chrome and is sized by the view that placed it.
+ * That element used to need a counter-rule for nearly every line here; it does not any more.
+ */
+@container chat-shell (max-width: 1100px) {
+  .rail-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    border: 0;
+    background: color-mix(in srgb, var(--background-inverse, #000) 35%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+  }
+
+  .rail-scrim.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .rail {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 21;
+    width: min(20rem, 88cqi);
+    flex-basis: auto;
+    transform: translateX(-105%);
+    transition: transform 180ms ease;
+    box-shadow: var(--chat-shadow);
+  }
+
+  .rail.is-open {
+    transform: none;
+  }
+
+  .rail.is-collapsed {
+    width: min(20rem, 88cqi);
+    flex-basis: auto;
+    overflow: visible;
+  }
+
+  .rail.is-collapsed .rail-header strong,
+  .rail.is-collapsed .rail-new span,
+  .rail.is-collapsed .rail-search,
+  .rail.is-collapsed .rail-list {
+    display: revert;
+  }
+
+  .rail.is-collapsed .rail-list {
+    display: block;
+  }
+
+  .rail.is-collapsed .rail-header,
+  .rail.is-collapsed .rail-new {
+    justify-content: flex-start;
+    padding-inline: 0.75rem;
+  }
+
+  .rail-close {
+    display: inline-grid;
+  }
+
+  .rail-collapse {
+    display: none;
+  }
+
+}
+
+/*
+ * What the composer gives up, in the order it gives it up.
+ *
+ * Measured on the stage, because that is the box the prompt field is in: the window says nothing
+ * about it once a rail, an artefact pane or a host's panel has taken its share. These steps - with
+ * the Enter hint's, which measures its own box instead (see `.composer-hint`) - replace the
+ * viewport query that used to switch the Enter hint and the `.tl-cockpit.has-pane` /
+ * `.has-document` class hacks, which read a state and guessed a width from it - and which a
+ * composed `<chat-conversation/>`, having neither class, never got at all.
+ *
+ * The widths are where the German wording stops fitting, that being the longest the product ships.
+ */
+
+/* The switch keeps its track, its tooltip and its accessible name; only the written label goes. */
+@container chat-stage (max-width: 19rem) {
+  .approve-switch-label {
+    display: none;
+  }
+}
+
+/*
+ * The model's name would be cut mid-word. It goes, and the trigger takes the shape of the "+" it
+ * now faces across the row - a round 2 rem target - so that what is left reads as the control it is
+ * rather than as a stray caret. Which model is picked is still on its tooltip and its accessible
+ * name, which a clipped "Cla…" did not say either.
+ */
+@container chat-stage (max-width: 18rem) {
+  .model-trigger span {
+    display: none;
+  }
+
+  .model-trigger {
+    width: 2rem;
+    padding: 0;
+    justify-content: center;
+    border: 1px solid var(--border-subtle);
+    border-radius: 50%;
+  }
+}
+
+/*
+ * Narrower than the controls themselves. They wrap onto a second line rather than overflow the
+ * card they are in - the state a chat in a small dock or a split panel ends up in.
+ */
+@container chat-stage (max-width: 16rem) {
+  .composer-row {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+}
+
+/*
+ * A phone, not a narrow chat: a popover that spans the full width and sits on the bottom edge is a
+ * touch idiom, so this one keeps the viewport as its measure. `position: fixed` now resolves
+ * against the stage (see the containment note there), which is what puts it over the chat rather
+ * than over the application around it.
+ */
+@media (max-width: 1100px) {
+  .plus-popover,
+  .model-popover,
+  .context-popover,
+  .activity-panel {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    width: auto;
+    max-height: 70vh;
+  }
+}
+
+/*
+ * Every chat element is a root of its own, so this list is the same one the top of this file
+ * carries: a composed `<chat-conversation/>`, `<chat-rail/>` or rail section is placed by a view
+ * outside the cockpit, where a rule naming only `.tl-cockpit` reaches nothing and the person who
+ * asked for less motion still gets it.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .tl-cockpit *,
+  .tl-cockpit *::before,
+  .tl-cockpit *::after,
+  .tl-chat-conversation *,
+  .tl-chat-conversation *::before,
+  .tl-chat-conversation *::after,
+  .tl-chat-rail *,
+  .tl-chat-rail *::before,
+  .tl-chat-rail *::after,
+  .tl-chat-section *,
+  .tl-chat-section *::before,
+  .tl-chat-section *::after,
+  .tl-data-list *,
+  .tl-data-list *::before,
+  .tl-data-list *::after,
+  .tl-chat-dock *,
+  .tl-chat-dock *::before,
+  .tl-chat-dock *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes chat-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes chat-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes chat-dot {
+  30% {
+    opacity: 1;
+    transform: translateY(-0.125rem);
+  }
+}
+
+@keyframes chat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes chat-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Right rail / side pane (Issue #401) -------------------------------- */
+
+/*
+ * Grid, not flex: the thread and the pane are columns of one track list, so opening the pane
+ * NARROWS the thread instead of being laid over it. `minmax(0, 1fr)` is what lets the thread column
+ * give way - a plain `1fr` refuses to shrink below its content's minimum, which is how the composer
+ * ended up under the icon strip with its send button and Enter hint covered.
+ */
+.workspace {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.workspace .stage {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Never wider than its column, whatever the column has shrunk to. */
+.workspace .composer {
+  max-width: 100%;
+}
+
+.thread-bar-end {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.thread-bar-caption {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-toggle {
+  position: relative;
+}
+
+/*
+ * A badge, not a second label: absolutely positioned over the toggle's top-right corner, so it
+ * cannot grow the button or spill across the header's bottom border.
+ */
+.side-toggle-badge {
+  position: absolute;
+  top: -0.2rem;
+  inset-inline-end: -0.2rem;
+  pointer-events: none;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  border-radius: var(--r-pill);
+  background: var(--button-primary);
+  color: var(--text-on-color, #fff);
+  font-size: 0.625rem;
+  line-height: 1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.side-column {
+  grid-column: 3;
+  width: 18.75rem;
+  min-width: 18.75rem;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+  overflow: auto;
+}
+
+.side-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+}
+
+.side-section {
+  border-radius: var(--r-1);
+  overflow: hidden;
+}
+
+.side-section.is-framework {
+  border: 1px dashed var(--border-subtle);
+}
+
+.side-section.is-accent {
+  border: 1px solid var(--button-primary);
+  background: color-mix(in srgb, var(--button-primary) 10%, var(--layer));
+}
+
+.side-section-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.side-caret {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-inline-end: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  transform: rotate(-45deg);
+}
+
+.side-caret.is-open {
+  transform: rotate(45deg);
+}
+
+.side-section-title {
+  font-weight: 600;
+}
+
+.side-section-badge {
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
+.side-section-by {
+  margin-inline-start: auto;
+  font-size: var(--chat-small);
+  color: var(--text-secondary);
+}
+
+.side-section-body {
+  padding: 0 0.6rem 0.6rem;
+}
+
+.side-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.progress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.progress-step.is-done .progress-label {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.progress-marker {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
+
+.progress-marker svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.progress-step.is-running .progress-marker svg circle:last-child {
+  fill: var(--button-primary);
+  stroke: none;
+}
+
+.progress-step.is-approval .progress-marker {
+  color: var(--chat-warn);
+}
+
+.progress-step.is-approval .progress-label {
+  font-weight: 600;
+}
+
+.progress-step.is-approval .progress-caption {
+  color: var(--chat-warn);
+  white-space: nowrap;
+}
+
+.progress-caption {
+  margin-inline-start: auto;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.context-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.15rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.context-row {
+  display: contents;
+}
+
+.context-list dt {
+  color: var(--text-secondary);
+}
+
+.context-list dd {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-strip {
+  grid-column: 2;
+  width: 3.5rem;
+  min-width: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+}
+
+/*
+ * The strip's 56 px go to the thread once the chat is as short of room as the session rail is.
+ *
+ * This used to go with the sheet, at 1280. Measured on the chat rather than on the window that is
+ * too early: at 1183 px the stage still holds the transcript's 49 rem with room to spare, and the
+ * strip is the only one-click way into a rail section. It belongs with the rail becoming a drawer.
+ * The rail is then reached through the toggle in the thread's header, as it is on a phone.
+ *
+ * Here rather than beside the drawer rules because `.side-strip` above out-ranks nothing and is
+ * beaten by nothing: same specificity, so the later declaration is the one that counts.
+ *
+ * The composed `<chat-rail/>` keeps its own strip at every width and needed a counter-rule for this
+ * one; it does not any more, because it is not inside a `chat-shell` container.
+ */
+@container chat-shell (max-width: 1100px) {
+  .side-strip {
+    display: none;
+  }
+}
+
+.side-strip-item {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--background);
+  color: inherit;
+  cursor: pointer;
+}
+
+.side-strip-item {
+  display: inline-grid;
+  place-items: center;
+}
+
+.side-strip-item svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.side-strip-item.is-active {
+  border-color: var(--button-primary);
+  background: color-mix(in srgb, var(--button-primary) 12%, var(--background));
+  color: var(--button-primary);
+}
+
+.side-pane {
+  position: relative;
+  grid-column: 3;
+  display: flex;
+  flex-direction: column;
+  min-width: 360px;
+  min-height: 0;
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--layer);
+}
+
+.side-splitter {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -3px;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 2;
+}
+
+.side-splitter:focus-visible {
+  background: var(--button-primary);
+  outline: none;
+}
+
+.side-pane-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.side-back {
+  /*
+   * One unit: squeezed by a long title, the chevron and the word used to land on two lines, the
+   * word over the title's baseline (#552). The title is the one that gives way - it has the
+   * ellipsis.
+   */
+  flex: none;
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+  color: var(--button-primary);
+  cursor: pointer;
+  font: inherit;
+}
+
+.side-pane-title {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 6rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-pane-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.side-pane-tab {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+  padding: 0.2rem 0.4rem;
+}
+
+.side-pane-tab.is-active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.side-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+/*
+ * A citation marker: a small grey number after the sentence. Not a chip - it says where the fact
+ * comes from without taking the eye off the text that carries it.
+ */
+.cite-marker {
+  display: inline;
+  /* The space in front of the marker, which the tokenizer removed so it cannot become a line break. */
+  margin-inline-start: 0.2rem;
+  padding: 0 0.1rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.72em;
+  line-height: 1;
+  vertical-align: super;
+  cursor: pointer;
+}
+
+.cite-marker:hover,
+.cite-marker:focus-visible {
+  color: var(--chat-link);
+  text-decoration: underline;
+}
+
+/*
+ * Anchored under the chip that was clicked rather than parked at the end of the answer, which in a
+ * long answer is off screen.
+ */
+.cite-anchor {
+  position: absolute;
+  z-index: 3;
+  max-width: 100%;
+}
+
+.cite-popover {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--layer);
+  box-shadow: var(--chat-shadow);
+  width: max-content;
+  max-width: min(22rem, 100%);
+}
+
+.md-wrap {
+  position: relative;
+}
+
+/*
+ * What the footer gives up when a document-mode pane leaves it about 210 px, and what the composer
+ * gives up beside an open pane, are both decided by the `chat-stage` ladder in the responsive
+ * section above: a width, asked for directly, rather than `.has-document` / `.has-pane` standing in
+ * for one. `has-pane` is gone with its rules - a composed conversation never had it, which is why
+ * it kept the long hint in a 234 px column (Issue #427).
+ */
+
+/*
+ * Below 1280, not at it: 1280 itself still fits a column beside the thread. Measured on the chat,
+ * not on the window - a chat in an application shell owns neither the window's width nor the room
+ * the number is about.
+ */
+@container chat-shell (max-width: 1279.98px) {
+  /*
+   * A sheet spans the whole grid, not its own column.
+   *
+   * An absolutely positioned grid item with a definite grid position takes that *track* as its
+   * containing block. The pane's column holds nothing else once the pane is out of flow, so the
+   * track was 0 px wide, `min(100%, 28rem)` resolved to 0, and the artefact the user clicked was a
+   * 1 px sliver. Spanning every column gives the sheet the workspace as its containing block again.
+   */
+  /*
+   * A sheet covers the thread and stops at the composer: the model picker, the send button and the
+   * Enter hint stay where they are and stay usable while an artefact is open.
+   */
+  .side-column,
+  .side-pane.is-sheet {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    position: absolute;
+    inset: 0 0 var(--composer-height, 0px) auto;
+    z-index: 4;
+    width: min(100%, 28rem);
+    box-shadow: var(--chat-shadow);
+  }
+
+  .side-pane.is-sheet,
+  .side-column {
+    min-width: 0;
+  }
+
+  /*
+   * An empty chat centres its greeting and its composer in the page. With a sheet open that puts
+   * the composer in the middle of what the sheet covers, so for as long as one is open the stage
+   * falls back to the ordinary layout and the composer sits at the bottom, below the sheet's edge.
+   */
+  .tl-cockpit.has-side .stage.is-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .tl-cockpit.has-side .stage.is-empty .thread-shell {
+    flex: 1;
+  }
+
+  /* What a sheet covers is dimmed and clickable: that is how it says it is an overlay. */
+  .side-scrim {
+    position: absolute;
+    inset: 0 0 var(--composer-height, 0px) 0;
+    z-index: 3;
+    background: color-mix(in srgb, var(--text-primary) 28%, transparent);
+  }
+}
+
+/* Above the breakpoint the side is a column, so there is nothing to dim. */
+.side-scrim {
+  display: none;
+}
+
+@container chat-shell (max-width: 1279.98px) {
+  .side-scrim {
+    display: block;
+  }
+}
+
+/* --- Composer: inline reference tokens (Issue #407) ---------------------- */
+
+/*
+ * The field is a contenteditable rather than a textarea, because a reference has to sit *in* the
+ * sentence. Everything below keeps it looking and behaving like the textarea it replaced.
+ */
+.composer-input {
+  position: relative;
+  min-width: 0;
+}
+
+.token-input {
+  position: relative;
+  display: block;
+  min-height: 2.25rem;
+  max-height: 11.25rem;
+  overflow-y: auto;
+  padding: 0.4375rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The surface already shows the focus with its border; a second ring inside it reads as an error. */
+.token-input:focus,
+.token-input:focus-visible {
+  outline: none;
+}
+
+/*
+ * Overlaid, not in flow: a block ::before would take the first line and push the caret onto line two.
+ * Absolute at the field's own padding keeps the caret on line one, where the text will appear.
+ */
+.token-input.is-empty::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  top: 0.4375rem;
+  left: 0.25rem;
+  right: 0.25rem;
+  color: var(--text-placeholder, var(--text-secondary));
+  pointer-events: none;
+  /* One line: in a narrow column the invitation may be cut, but it must not grow the field. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * One atomic thing: the caret steps over it, Backspace takes it whole, and it reads as a single
+ * name. Quiet enough to sit inside a sentence without becoming the sentence.
+ */
+.ref-token {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin-inline-end: 0.1rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--button-primary) 10%, transparent);
+  color: var(--chat-link);
+  font-size: 0.9em;
+  white-space: nowrap;
+  vertical-align: baseline;
+  user-select: none;
+  /* Never wider than the field it sits in: the label ellipsizes instead of being clipped off. */
+  max-width: 100%;
+}
+
+.ref-token.is-static {
+  user-select: text;
+}
+
+.ref-token-icon {
+  width: 0.8em;
+  height: 0.8em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  align-self: center;
+}
+
+.ref-token-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 18rem;
+  /* Never squeezed away entirely, however long the location beside it is. */
+  min-width: 4ch;
+}
+
+/*
+ * The location ellipsizes like the name rather than holding its full width: a quote token carries
+ * both, and in a narrow field one part keeping everything leaves the other with a few pixels. Both
+ * give way in proportion; the whole of either is still in the tooltip and in the aria-label.
+ */
+.ref-token-location {
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 4ch;
+}
+
+.bubble-user-edit.token-input {
+  width: 100%;
+  max-height: none;
+}
+
+/* The "@" picker: what the host offers, under the caret's line. */
+.mention-popover {
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: calc(100% + 0.35rem);
+  z-index: 5;
+  /* Wide enough to read a source's name in, whatever the composer's column has shrunk to. */
+  width: max-content;
+  min-width: min(18rem, 90vw);
+  max-width: min(26rem, 90vw);
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.25rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer-01);
+  box-shadow: var(--chat-shadow);
+}
+
+.mention-row {
+  display: flex;
+  /* A long name wraps; the icon and the kind stay on its first line. */
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.mention-row.is-active {
+  background: var(--layer-hover, color-mix(in srgb, var(--button-primary) 10%, transparent));
+}
+
+.mention-icon {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  height: 1lh;
+}
+
+.mention-icon svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  display: block;
+  color: var(--text-secondary);
+}
+
+.mention-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  /*
+   * Wrapped, not cut off: two objects whose names differ only at the end were two identical rows
+   * (#635). The popover grows to its 26 rem before a name wraps at all.
+   */
+  overflow-wrap: anywhere;
+}
+
+.mention-hint {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  white-space: nowrap;
+}
+
+/* --- Citation presentation: popover, sources, run summary (Issue #408) --- */
+
+/*
+ * The head reads like a row of the Quellen list - kind icon, title, origin - so that a marker, its
+ * popover and the rail all describe a source the same way.
+ */
+.cite-popover-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.cite-popover-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/*
+ * The title and the origin wrap rather than end in an ellipsis (#635): a page's title and its path are
+ * what tells two sources of one site apart, and the popover is where the reader looks that up.
+ */
+.cite-popover-title {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cite-popover-origin {
+  margin: 0.1rem 0 0;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  overflow-wrap: anywhere;
+}
+
+/* Which page of the site, which record of the kind: the origin alone does not say. */
+.cite-popover-detail::before {
+  content: "·";
+  margin: 0 0.3rem;
+  opacity: 0.6;
+}
+
+/*
+ * A structured source, one field per row: the record as a record. The grid gives every value one
+ * start, which is what a run of `label: value` lines could not do.
+ */
+.cite-popover-fields {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 0.1rem 0.5rem;
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.5rem;
+  border-inline-start: 2px solid var(--border-subtle);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  /* A record with many fields must not make the popover taller than the answer it sits on. */
+  max-height: 12rem;
+  overflow: auto;
+}
+
+.cite-popover-field {
+  display: contents;
+}
+
+.cite-popover-fields dt {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.cite-popover-fields dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The window of the source the fact was read in, with the cited sentence marked inside it. */
+.cite-popover-excerpt {
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.5rem;
+  border-inline-start: 2px solid var(--border-subtle);
+  border-radius: 0 var(--r-1) var(--r-1) 0;
+  background: color-mix(in srgb, var(--text-primary) 4%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  /* A structured source's excerpt is one `label: value` per line; collapsed, it is a run-on line. */
+  white-space: pre-wrap;
+  /*
+   * Clamped to whole lines with an ellipsis, not cut by height: `max-height` with `overflow:
+   * hidden` sliced the last line through the middle of its letters.
+   */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
+}
+
+/*
+ * The sentence the fact rests on, inside the window it was read in. Marked rather than merely
+ * tinted: it is the one line of the excerpt the reader came for.
+ */
+.cite-passage {
+  background: color-mix(in srgb, var(--button-primary) 22%, transparent);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--button-primary) 55%, transparent);
+  color: var(--text-primary);
+  border-radius: 2px;
+  padding: 0 0.1rem;
+}
+
+/* The copy of a web source kept when the agent read it, under the source's row (#617). */
+.source-archive {
+  display: block;
+  margin-left: 1.75rem;
+  color: var(--chat-link);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.source-archive:hover,
+.source-archive:focus-visible {
+  text-decoration: underline;
+}
+
+/* "Open source" and, for a web page, the copy kept when the agent read it (#617). */
+.cite-popover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.cite-popover-archive {
+  color: var(--chat-link);
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+
+.cite-popover-archive:hover,
+.cite-popover-archive:focus-visible {
+  text-decoration: underline;
+}
+
+.cite-popover-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  align-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--chat-link);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.cite-popover-open:hover,
+.cite-popover-open:focus-visible {
+  text-decoration: underline;
+}
+
+
+/* The collapsed pill under an answer: how much of it rests on sources. */
+.answer-sources {
+  margin: 0.5rem 0 0.25rem;
+}
+
+.answer-sources-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.answer-sources-caret,
+.run-summary-caret {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-inline-end: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  opacity: 0.7;
+}
+
+.answer-sources-caret.is-open,
+.run-summary-caret.is-open {
+  transform: rotate(45deg);
+}
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sources-tabs {
+  display: flex;
+  gap: 0.15rem;
+  padding: 0.15rem;
+  border-radius: var(--r-1);
+  background: var(--layer-hover, color-mix(in srgb, var(--text-primary) 5%, transparent));
+}
+
+.sources-tab {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: calc(var(--r-1) - 1px);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+}
+
+.sources-tab.is-active {
+  background: var(--layer-01, var(--background));
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.sources-filter {
+  width: 100%;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: var(--background);
+  color: inherit;
+  font: inherit;
+  font-size: var(--chat-small);
+}
+
+.sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.source-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.source-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.25rem 0.3rem;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+}
+
+.source-head:hover,
+.source-head:focus-visible {
+  background: var(--layer-hover, color-mix(in srgb, var(--button-primary) 8%, transparent));
+}
+
+.source-icon svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  display: block;
+  margin-top: 0.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+  color: var(--text-secondary);
+}
+
+.source-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.source-label {
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-origin {
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The markers that point at this source; clicking one goes to the answer it stands in. */
+.source-markers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  padding-inline-start: 1.4rem;
+}
+
+.source-marker {
+  min-width: 1.1rem;
+  padding: 0 0.2rem;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.6875rem;
+}
+
+.source-marker:hover,
+.source-marker:focus-visible {
+  background: color-mix(in srgb, var(--button-primary) 14%, transparent);
+  color: var(--chat-link);
+}
+
+/* The answer a marker pointed at, briefly marked so the eye finds it after the scroll. */
+.turn-agent.is-pointed {
+  animation: pointed 1.6s ease-out;
+  border-radius: var(--r-2);
+}
+
+@keyframes pointed {
+  from {
+    background: color-mix(in srgb, var(--button-primary) 14%, transparent);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+/* The run's activity, collapsed to one quiet line above the answer. */
+.run-summary {
+  margin-bottom: 0.25rem;
+}
+
+.run-summary-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+}
+
+.run-summary-head:hover {
+  color: var(--text-primary);
+}
+
+/* A running run's line can carry the model's current thought: one line, cut where the column ends. */
+.run-summary-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-summary-body {
+  margin-top: 0.35rem;
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid var(--border-subtle);
+}
+
+/* --- Side pane: document mode (Issue #408) ------------------------------ */
+
+/* The name is the half worth reading; when the header is tight the metadata gives way first. */
+.side-pane-version {
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+  white-space: nowrap;
+}
+
+.side-pane-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-inline-start: auto;
+}
+
+.side-pane-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--chat-small);
+}
+
+.side-pane-action svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.side-pane-close,
+.side-pane-collapse {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  border: 0;
+  border-radius: var(--r-1);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.side-pane-close svg,
+.side-pane-collapse svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.side-pane-close:hover,
+.side-pane-collapse:hover {
+  color: var(--text-primary);
+}
+
+/* A document is read, not skimmed: its own body gets the room, the header stays one slim row. */
+.side-pane.is-document .side-pane-body {
+  padding: 1rem 1.25rem;
+}
+
+.side-pane-bar.is-document {
+  min-height: 2.5rem;
+}
+
+/* The title row of a document names it; the session chip beside "Albert" would only crowd it. */
+.tl-cockpit.has-document .thread-bar-caption {
+  display: none;
+}
+
+/*
+ * A background subagent's card, under the steps of the turn that started it. Collapsed it is one
+ * line of state and one of progress; each card shows only its own subagent's steps and text.
+ */
+.subagent-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0.375rem 0;
+}
+
+/* More than three cards (#778): how they stand, and the ended ones folded behind it. */
+.subagent-cards-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  color: var(--text-secondary);
+  font-size: var(--chat-small);
+}
+
+.subagent-cards-folded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.subagent-cards-folded[hidden] {
+  display: none;
+}
+
+.subagent-card {
+  background: var(--layer-01);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  padding: 0.375rem 0.625rem;
+  font-size: var(--chat-small);
+}
+
+/*
+ * The head (#769): chip, agent and the stop on one line, the task under it on at most two lines - a
+ * narrow card keeps what the subagent was asked instead of cutting it to a letter.
+ */
+.subagent-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.subagent-card-head {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.125rem;
+  text-align: left;
+}
+
+.subagent-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.subagent-card-agent {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subagent-card-task {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+}
+
+.subagent-card-toggle {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--text-secondary);
+}
+
+/* A synchronous delegation (#703): the agent waits for it, so it has no field and no stop. */
+.subagent-card-kind {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+}
+
+.subagent-card-stop {
+  flex: 0 0 auto;
+  padding: 0.125rem 0.5rem;
+}
+
+.subagent-card-stop-icon {
+  display: none;
+}
+
+/*
+ * A narrow chat keeps the agent's name: the stop shrinks to its icon (and keeps its name for a
+ * reader), and the name moves under a long chip ("wartet auf dich") rather than shrinking to a letter.
+ */
+@container chat-stage (max-width: 26rem) {
+  .subagent-card-stop-icon {
+    display: inline;
+  }
+
+  .subagent-card-title {
+    flex-wrap: wrap;
+    row-gap: 0.125rem;
+  }
+
+  .subagent-card-stop-label {
+    display: none;
+  }
+}
+
+.subagent-chip {
+  flex: 0 0 auto;
+  padding: 0 0.4375rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.subagent-chip.is-active {
+  color: var(--button-primary);
+  border-color: var(--button-primary);
+}
+
+/* "1 wartet auf dich" before the working chip (#776): what about the subagents needs the user. */
+.overlay-chip.is-waiting {
+  font-weight: 600;
+}
+
+.waiting-dot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 50%;
+  background: var(--chat-warn);
+}
+
+.subagent-card.status-waiting .subagent-chip {
+  color: var(--chat-warn);
+  border-color: var(--chat-warn);
+}
+
+.subagent-card.status-failed .subagent-chip {
+  color: var(--chat-danger);
+  border-color: var(--chat-danger);
+}
+
+.subagent-card-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+  margin-top: 0.1875rem;
+  color: var(--text-secondary);
+}
+
+/* What an ended subagent reported, as plain text in the body font - it is prose, not a step. */
+.subagent-card-summary {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A step (#772): the tool's id as code, the values it was called with in the body font. */
+.subagent-card-step {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subagent-card-body {
+  margin-top: 0.375rem;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.subagent-card-steps {
+  margin: 0 0 0.375rem;
+  padding-left: 1.25rem;
+}
+
+/* One line per step: the arguments are a summary, the transcript has them whole. */
+.subagent-card-steps li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subagent-card-steps .is-running {
+  color: var(--button-primary);
+}
+
+.subagent-card-steps .is-error {
+  color: var(--chat-danger);
+}
+
+.subagent-card-text,
+.subagent-card-empty {
+  margin: 0 0 0.375rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+}
+
+/*
+ * What the user wrote to the subagent from its card (#735), each message with its receipt, and the
+ * field while the subagent works - the same box as the feedback note: a bordered row, the input
+ * borderless inside it. A message is the user's own text; it wraps rather than widening the card.
+ */
+.subagent-card-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0 0 0.375rem;
+}
+
+.subagent-card-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.subagent-card-notes li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.subagent-note-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+}
+
+.subagent-note-state {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+}
+
+.subagent-card-compose {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-2);
+  background: var(--layer);
+}
+
+.subagent-card-compose:focus-within {
+  border-color: var(--border-interactive, var(--button-primary));
+}
+
+.subagent-card-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  outline: none;
+}
+
+.subagent-card-input::placeholder {
+  color: var(--text-placeholder, var(--text-secondary));
+}
+
+.subagent-card-compose .prompt-continue {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.75rem;
+}
+
+.subagent-card-hint,
+.subagent-card-refusal {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+}
+
+.subagent-card-refusal {
+  color: var(--chat-danger);
+}

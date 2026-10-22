@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Configuration options for testing tl-chat-classic with JUnit.
+ -->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<configs />
+</application>

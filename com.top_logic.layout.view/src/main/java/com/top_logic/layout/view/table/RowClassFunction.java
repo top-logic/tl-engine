@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.CellClassProviderByExpression;
 
@@ -32,21 +32,22 @@ public final class RowClassFunction {
 	}
 
 	/**
-	 * Compiles the given row class function.
+	 * Compiles the row class function of the given configuration.
 	 *
-	 * @param expr
-	 *        The configured function, {@code null} for none.
+	 * @param config
+	 *        The configuration of the table, holding no row class function for none.
 	 * @return The compiled function, never {@code null}.
 	 */
-	public static RowClassFunction compile(Expr expr) {
-		return new RowClassFunction(expr == null ? null : QueryExecutor.compile(expr));
+	public static RowClassFunction compile(RowClassConfig config) {
+		return new RowClassFunction(InputScript.compile(config, RowClassConfig.ROW_CLASS));
 	}
 
 	/**
 	 * The function computing the CSS class of a row object in a table reading the given inputs.
 	 *
 	 * @param inputs
-	 *        The table's input channels, whose current values lead the arguments of every call.
+	 *        The table's input channels, whose current values are the values of the input variables
+	 *        of every evaluation.
 	 * @return The function answering the CSS class of a row object (or {@code null} for none), or
 	 *         {@code null} when no row class function is configured.
 	 *

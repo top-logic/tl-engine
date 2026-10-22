@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<!--
+						Pushes a running agent's writes into the open chat windows, so a model-bound
+						element beside the transcript follows the run instead of waiting for the SSE
+						heartbeat.
+					-->
+					<module key="com.top_logic.ai.chat.view.AgentViewRefreshService$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.ai.chat.view.AgentViewRefreshService">
+			<instance class="com.top_logic.ai.chat.view.AgentViewRefreshService"/>
+		</config>
+		<!--
+			The client bundle of the React chat (built from ui/ into /script/), so that every page
+			that shows a chat element - a React view or the Albert tab of tl-chat-classic - can
+			render it. The list is keyed by name: an application that still declares an entry of
+			the same name overrides this one and does not add a second copy.
+
+			The stylesheet is in the engine's cascade layer "tl", as the stylesheets of the engine's
+			own modules are: it keeps its place after the engine's controls, and an application's
+			own (unlayered) stylesheet overrides it whatever the specificity of its rules.
+		-->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<!--
+						Temporary workaround (#940): a classic script, so that it runs before the bridge
+						opens the window's event stream. See WindowPollServlet.
+					-->
+					<script name="tl-window-stream"
+						resource="/script/tl-window-stream.js"
+					/>
+					<module-script name="tl-react-agent-chat"
+						requires="tl-react-bridge"
+						resource="/script/tl-chat-ui.js"
+					/>
+					<stylesheet name="tl-react-agent-chat-css"
+						layer="tl"
+						requires="tl-react-controls-css"
+						resource="/script/tl-chat-ui.css"
+					/>
+				</resources>
+			</instance>
+		</config>
+		<!--
+			The "present" tool: the agent puts model objects onto a channel of the page it is on.
+			Registered here rather than in tl-ai-core because it needs the view layer - a channel
+			only exists in a rendered window. Every application that depends on tl-chat therefore
+			has the tool; which channel it may write is still the page's own decision
+			(<chat-conversation present="..."/>), and a page that names none allows nothing.
+		-->
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+			<instance>
+				<tool-factories>
+					<factory name="present">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.chat.tools.ChatPresentTool"
+						/>
+					</factory>
+				</tool-factories>
+			</instance>
+		</config>
+		<!--
+			The shipped chat entry point gets the tool. A per-entry keyed list, so this adds one
+			tool to the agent tl-ai-core defines without restating its list. An application that
+			ships its own agents names "present.present" in their <tools> the same way.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+			<instance>
+				<agents>
+					<agent name="TL_SingleAgent">
+						<tools>
+							<tool name="present.present"/>
+						</tools>
+					</agent>
+				</agents>
+			</instance>
+		</config>
+	</services>
+</application>

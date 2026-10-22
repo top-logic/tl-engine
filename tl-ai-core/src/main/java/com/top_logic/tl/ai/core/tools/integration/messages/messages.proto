@@ -1,0 +1,22 @@
+package com.top_logic.tl.ai.core.tools.integration.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * JSON payload for the Gitea issue creation API.
+ */
+message CreateIssueRequest {
+	/**
+	 * The issue title.
+	 */
+	string title;
+
+	/**
+	 * The issue body in Markdown format.
+	 */
+	string body;
+}

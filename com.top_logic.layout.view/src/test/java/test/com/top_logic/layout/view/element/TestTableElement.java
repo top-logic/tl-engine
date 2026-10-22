@@ -78,7 +78,7 @@ public class TestTableElement extends TestCase {
 
 		// Verify inputs.
 		assertEquals("Should have one input", 1, tableConfig.getInputs().size());
-		assertEquals("Input channel name", "testInput", tableConfig.getInputs().get(0).getChannelName());
+		assertEquals("Input channel name", "testInput", tableConfig.getInputs().get(0).getChannel().getChannelName());
 
 		// Verify rows expression is present (non-null).
 		assertNotNull("Rows expression should be set", tableConfig.getRows());
@@ -388,7 +388,7 @@ public class TestTableElement extends TestCase {
 		assertNotNull("The columns aggregate over a group.", milestones.getAggregate());
 		assertNotNull("The columns order their values themselves.", milestones.getComparator());
 		assertEquals("Should declare one input", 1, milestones.getInputs().size());
-		assertEquals("testInput", milestones.getInputs().get(0).getChannelName());
+		assertEquals("testInput", milestones.getInputs().get(0).getChannel().getChannelName());
 
 		DynamicColumns.Config plain = TypedConfiguration.newConfigItem(DynamicColumns.Config.class);
 		assertNull("A declaration that names no type computes none either.", plain.getColumnType());
@@ -630,7 +630,7 @@ public class TestTableElement extends TestCase {
 			total.getMultiple());
 		assertNotNull("The value function is declared.", total.getValue());
 		assertEquals("Should declare one input", 1, total.getInputs().size());
-		assertEquals("testInput", total.getInputs().get(0).getChannelName());
+		assertEquals("testInput", total.getInputs().get(0).getChannel().getChannelName());
 		assertNotNull("The column aggregates over a group.", total.getAggregate());
 		assertNotNull("The column orders its values themselves.", total.getComparator());
 		assertNull("A column without a label is named after itself.", total.getLabel());

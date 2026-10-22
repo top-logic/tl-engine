@@ -40,10 +40,12 @@
 			progress="false"
 		>
 			<dynamic-steps
-				auto-advance="q -> if($q == 'a', 2000, null)"
+				auto-advance="if($q == 'a', 2000, null)"
 				element-channel="question"
-				icon="q -&gt; 'css:fa-solid fa-circle-question'"
-				label="q -&gt; $q.toUpperCase()"
+				icon="'css:fa-solid fa-circle-question'"
+				inputs="questions as all"
+				label="$q.toUpperCase() + $all.size()"
+				step-as="q"
 				steps="questions"
 			>
 				<text input="question"/>

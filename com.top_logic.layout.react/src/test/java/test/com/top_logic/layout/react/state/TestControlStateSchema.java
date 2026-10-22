@@ -59,6 +59,7 @@ import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactPasswordInputControl;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
+import com.top_logic.layout.react.control.form.SliderRange;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactCardControl;
@@ -809,7 +810,8 @@ public class TestControlStateSchema extends TestCase {
 	 */
 	public void testSliderKeys() {
 		ReactSliderControl control = new ReactSliderControl(createContext(),
-			new AbstractFieldModel(Double.valueOf(5)), NumberFormat.getInstance(Locale.GERMAN), 0, 10, 0.5);
+			new AbstractFieldModel(Double.valueOf(5)), NumberFormat.getInstance(Locale.GERMAN),
+			new SliderRange(0.0, 10.0, 0.5, null));
 		putFieldKeys(control);
 		control.setDebounce(Long.valueOf(100));
 

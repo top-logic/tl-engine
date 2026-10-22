@@ -54,7 +54,7 @@
 									<en>Milestone</en>
 									<de>Meilenstein</de>
 								</label>
-								<value><![CDATA[row -> $row["name"]]]></value>
+								<value><![CDATA[$row["name"]]]></value>
 							</computed-column>
 							<computed-column name="count"
 								type="tl.core:Integer"
@@ -63,8 +63,8 @@
 									<en>Tickets</en>
 									<de>Tickets</de>
 								</label>
-								<value><![CDATA[row -> $row["count"]]]></value>
-								<aggregate><![CDATA[rows -> $rows.map(r -> $r["count"]).sum()]]></aggregate>
+								<value><![CDATA[$row["count"]]]></value>
+								<aggregate><![CDATA[$members.map(r -> $r["count"]).sum()]]></aggregate>
 							</computed-column>
 							<computed-column name="share"
 								type="tl.core:Double"
@@ -74,7 +74,7 @@
 									<en>Share</en>
 									<de>Anteil</de>
 								</label>
-								<value><![CDATA[row -> if($row["total"] == 0, 0, $row["count"] / $row["total"])]]></value>
+								<value><![CDATA[if($row["total"] == 0, 0, $row["count"] / $row["total"])]]></value>
 							</computed-column>
 						</columns>
 						<rows><![CDATA[{
@@ -128,7 +128,7 @@
 									<en>Tickets</en>
 									<de>Tickets</de>
 								</label>
-								<value><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#tickets`).size()]]></value>
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Milestone#tickets`).size()]]></value>
 							</computed-column>
 						</columns>
 						<rows><![CDATA[count(4).map(i -> {
@@ -187,7 +187,7 @@
 									<en>Titles in the milestone</en>
 									<de>Titel im Meilenstein</de>
 								</label>
-								<value><![CDATA[t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`)
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Ticket#milestone`)
 	.get(`tl.demo.projectManagement:Milestone#tickets`)
 	.map(x -> $x.get(`tl.demo.projectManagement:Ticket#title`))]]></value>
 							</computed-column>
@@ -220,6 +220,7 @@
 						group-by="initial"
 						observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
 						personalization-key="table-columns-dynamic"
+						row-as="contact"
 						types="Contacts:PersonContact"
 					>
 						<columns>
@@ -235,23 +236,24 @@
 									<en>Initial</en>
 									<de>Anfangsbuchstabe</de>
 								</label>
-								<value><![CDATA[c -> $c.get(`Contacts:PersonContact#name`).subString(0, 1)]]></value>
+								<value><![CDATA[$contact.get(`Contacts:PersonContact#name`).subString(0, 1)]]></value>
 							</computed-column>
 							<dynamic-columns name="milestones"
+								column-as="milestone"
 								readonly="true"
 								type="tl.core:Integer"
 								width="120"
 							>
 								<columns><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></columns>
-								<column-name><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
-								<column-label><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
-								<column-visible><![CDATA[m -> $m.get(`tl.demo.projectManagement:Milestone#name`) != "M3"]]></column-visible>
-								<value><![CDATA[c -> m -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`)
-	.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
+								<column-name><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
+								<column-label><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
+								<column-visible><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`) != "M3"]]></column-visible>
+								<value><![CDATA[$contact.referers(`tl.demo.projectManagement:Ticket#assignee`)
+	.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone)
 	.size()]]></value>
-								<aggregate><![CDATA[rows -> m -> $rows
+								<aggregate><![CDATA[$members
 	.map(c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`)
-		.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $m)
+		.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone)
 		.size())
 	.sum()]]></aggregate>
 							</dynamic-columns>
@@ -297,19 +299,22 @@
 									<en>Load</en>
 									<de>Auslastung</de>
 								</label>
-								<value><![CDATA[c -> {
-	count = $c.referers(`tl.demo.projectManagement:Ticket#assignee`).size();
+								<value><![CDATA[{
+	count = $row.referers(`tl.demo.projectManagement:Ticket#assignee`).size();
 	switch {
 		$count == 0: "none";
 		$count <= 2: "few";
 		default: "many";
 	};
 }]]></value>
-								<comparator><![CDATA[comparator(load -> switch ($load) {
-	"none": 0;
-	"few": 1;
-	default: 2;
-})]]></comparator>
+								<comparator><![CDATA[{
+	rank = load -> switch ($load) {
+		"none": 0;
+		"few": 1;
+		default: 2;
+	};
+	compare($rank($left), $rank($right));
+}]]></comparator>
 							</computed-column>
 							<computed-column name="tickets"
 								type="tl.core:Integer"
@@ -319,8 +324,8 @@
 									<en>Tickets</en>
 									<de>Tickets</de>
 								</label>
-								<value><![CDATA[c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`).size()]]></value>
-								<aggregate><![CDATA[rows -> $rows
+								<value><![CDATA[$row.referers(`tl.demo.projectManagement:Ticket#assignee`).size()]]></value>
+								<aggregate><![CDATA[$members
 	.map(c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`).size())
 	.sum()]]></aggregate>
 							</computed-column>
@@ -365,9 +370,9 @@
 										<en>Mail</en>
 										<de>Mail</de>
 									</label>
-									<value><![CDATA[c -> $c.get(`Contacts:PersonContact#email`)]]></value>
-									<update><![CDATA[c -> v -> $c.set(`Contacts:PersonContact#email`, $v)]]></update>
-									<can-update><![CDATA[c -> $c.get(`Contacts:PersonContact#name`) != null]]></can-update>
+									<value><![CDATA[$row.get(`Contacts:PersonContact#email`)]]></value>
+									<update><![CDATA[$row.set(`Contacts:PersonContact#email`, $value)]]></update>
+									<can-update><![CDATA[$row.get(`Contacts:PersonContact#name`) != null]]></can-update>
 								</computed-column>
 							</columns>
 							<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>

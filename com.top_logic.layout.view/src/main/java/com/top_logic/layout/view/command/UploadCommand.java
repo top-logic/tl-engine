@@ -5,8 +5,9 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.List;
-import java.util.Objects;
 
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -31,8 +32,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * The configured action chain (e.g. {@code <confirm>} + {@code <with-transaction><execute-script>})
  * runs <em>once per uploaded file</em>, sequentially, with the uploaded file (a
- * {@link com.top_logic.basic.io.binary.BinaryData}) as the chain's input value. Container/context
- * values are threaded into the actions via their {@code <inputs>} channel references, exactly as for
+ * {@link com.top_logic.basic.io.binary.BinaryData}) as the chain's main argument, named by
+ * {@link Config#getAs()}. Container/context values are threaded into the actions via their
+ * {@code <inputs>} channel references, exactly as for
  * a {@code <generic-command>}.
  * </p>
  *
@@ -53,12 +55,23 @@ public class UploadCommand implements ViewCommand {
 	@TagName("upload-command")
 	public interface Config extends ViewCommand.Config {
 
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
+
 		@Override
 		@ClassDefault(UploadCommand.class)
 		Class<? extends ViewCommand> getImplementationClass();
 
+		/** Configuration name for {@link #getAs()}. */
+		String AS = "as";
+
 		/**
-		 * The chain of actions to execute once per uploaded file (the file is the chain input).
+		 * The chain of actions to execute once per uploaded file.
+		 *
+		 * <p>
+		 * The actions run with the uploaded file as main argument named by {@link #getAs() as},
+		 * together with the values of the {@link #getInputs() inputs}.
+		 * </p>
 		 */
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
@@ -81,7 +94,30 @@ public class UploadCommand implements ViewCommand {
 		@Name("multiple")
 		@BooleanDefault(true)
 		boolean isMultiple();
+
+		/**
+		 * The name of the argument holding the uploaded file.
+		 */
+		@Name(AS)
+		@StringDefault(FILE_ARGUMENT)
+		String getAs();
+
+		/**
+		 * The uploaded file is the value the trigger of this command supplies.
+		 */
+		@Override
+		default String triggerName(ActionScope trigger) {
+			return getAs();
+		}
 	}
+
+	/**
+	 * Name of the argument holding the uploaded file when no other {@link Config#getAs() name} is
+	 * given.
+	 */
+	public static final String FILE_ARGUMENT = "file";
+
+	private final CommandArguments _arguments;
 
 	private final List<ViewAction> _actions;
 
@@ -96,10 +132,8 @@ public class UploadCommand implements ViewCommand {
 	 */
 	@CalledByReflection
 	public UploadCommand(InstantiationContext context, Config config) {
-		_actions = config.getActions().stream()
-			.<ViewAction> map(context::getInstance)
-			.filter(Objects::nonNull)
-			.toList();
+		_arguments = CommandArguments.of(config, ActionScope.of(context));
+		_actions = ViewActions.instantiate(context, config.getActions(), _arguments.scope());
 		_accept = config.getAccept();
 		_multiple = config.isMultiple();
 		_label = config.getLabel();
@@ -112,6 +146,13 @@ public class UploadCommand implements ViewCommand {
 	@Override
 	public ResKey getLabel() {
 		return _label;
+	}
+
+	/**
+	 * The arguments the actions run with, the uploaded file being the main argument.
+	 */
+	public CommandArguments getArguments() {
+		return _arguments;
 	}
 
 	/**

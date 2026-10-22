@@ -71,4 +71,11 @@ public class HistoryBackAction implements ViewAction {
 		return input;
 	}
 
+	/**
+	 * Navigates the client back in its history.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

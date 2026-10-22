@@ -74,7 +74,7 @@ public class TestChunkedScriptJobBody extends AbstractDBKnowledgeBaseTest {
 	 */
 	public void testEveryScriptIsCalledWithTheJobAndTheState() throws Exception {
 		ChunkedScriptJobBody body = body(5,
-			"job -> a -> b -> { $job.jobMessage('init:' + $a + ':' + $b); $a + '/' + $b; }",
+			"a -> b -> job -> { $job.jobMessage('init:' + $a + ':' + $b); $a + '/' + $b; }",
 			"job -> state -> { $job.jobMessage('elements:' + $state); ['e1', 'e2']; }",
 			List.of("job -> chunk -> state -> $chunk.foreach(e -> $job.jobMessage($e + '@' + $state))"),
 			"job -> state -> 'finished:' + $state");

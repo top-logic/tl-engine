@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.admin.system;
 
+import com.top_logic.layout.view.command.WithResultActions;
 import java.util.ArrayList;
 
 import com.top_logic.basic.CalledByReflection;
@@ -66,7 +67,7 @@ public class ServiceLifecycleAction implements ViewAction {
 	 * global {@code @TagName}.
 	 * </p>
 	 */
-	public interface Config extends PolymorphicConfiguration<ServiceLifecycleAction> {
+	public interface Config extends PolymorphicConfiguration<ServiceLifecycleAction>, WithResultActions {
 
 		/** Configuration name for {@link #getMode()}. */
 		String MODE = "mode";
@@ -156,5 +157,13 @@ public class ServiceLifecycleAction implements ViewAction {
 		}
 		Object value = viewContext.resolveChannel(new ChannelRef(_selectionChannel)).get();
 		return value instanceof BasicRuntimeModule<?> module ? module : null;
+	}
+
+	/**
+	 * Tells the user when the service operation fails.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.table.FilterState;
@@ -45,7 +46,8 @@ public interface FilterStateTemplate {
 	 * </p>
 	 *
 	 * @param arguments
-	 *        The input values of the table, in declaration order.
+	 *        The values of the inputs of the table, in declaration order, see
+	 *        {@link InputScript}.
 	 */
 	FilterState evaluate(Object[] arguments);
 
@@ -54,7 +56,7 @@ public interface FilterStateTemplate {
 	 */
 	static FilterStateTemplate compile(FilterStateConfig config) {
 		if (config instanceof FilterStateConfig.TextConfig text) {
-			QueryExecutor pattern = QueryExecutor.compile(text.getPattern());
+			QueryExecutor pattern = InputScript.compile(text, FilterStateConfig.TextConfig.PATTERN);
 			boolean caseSensitive = text.getCaseSensitive();
 			boolean regexp = text.getRegexp();
 			boolean wholeField = text.getWholeField();
@@ -62,18 +64,17 @@ public interface FilterStateTemplate {
 				caseSensitive, regexp, wholeField);
 		}
 		if (config instanceof FilterStateConfig.RangeConfig range) {
-			QueryExecutor primary = QueryExecutor.compile(range.getPrimary());
-			QueryExecutor secondary =
-				range.getSecondary() == null ? null : QueryExecutor.compile(range.getSecondary());
+			QueryExecutor primary = InputScript.compile(range, FilterStateConfig.RangeConfig.PRIMARY);
+			QueryExecutor secondary = InputScript.compile(range, FilterStateConfig.RangeConfig.SECONDARY);
 			return arguments -> new RangeFilterState<>(range.getOperator(), primary.execute(arguments),
 				secondary == null ? null : secondary.execute(arguments));
 		}
 		if (config instanceof FilterStateConfig.OptionsConfig options) {
-			QueryExecutor selected = QueryExecutor.compile(options.getSelected());
+			QueryExecutor selected = InputScript.compile(options, FilterStateConfig.OptionsConfig.SELECTED);
 			return arguments -> new OptionsFilterState(values(selected.execute(arguments)));
 		}
 		if (config instanceof FilterStateConfig.BooleanConfig bool) {
-			QueryExecutor accept = QueryExecutor.compile(bool.getAccept());
+			QueryExecutor accept = InputScript.compile(bool, FilterStateConfig.BooleanConfig.ACCEPT);
 			return arguments -> booleanState(accept.execute(arguments));
 		}
 		throw new IllegalArgumentException("No filter criterion for declaration: " + config);

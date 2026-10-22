@@ -11,7 +11,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * Conversion of one parameter of a {@link FrameRouteConfig frame route} between the value the frame
@@ -20,9 +23,10 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * <p>
  * A URL carries text, a frame parameter typically a business object. The two expressions convert
  * between them: {@link #getExpr() expr} maps the value onto the text that names it,
- * {@link #getReverse() reverse} maps the text back onto the value. For an object identified by its
- * technical identifier this is {@code expr="p -> objectId($p)"} and
- * {@code reverse="id -> $id.objectResolve(`tl.accounts:Person`)"}; a readable URL uses a business
+ * {@link #getReverse() reverse} maps the text back onto the value. For a parameter
+ * <code>person</code> holding an object identified by its technical identifier this is
+ * <code>expr="objectId($person)"</code> and
+ * <code>reverse="$value.objectResolve(`tl.accounts:Person`)"</code>; a readable URL uses a business
  * key instead, at the price of the uniqueness the key then has to have.
  * </p>
  *
@@ -48,6 +52,15 @@ public interface FrameParamConfig extends ConfigurationItem {
 	String REVERSE = "reverse";
 
 	/**
+	 * Name of the variable holding the value of the parameter in the {@link #getExpr() expr} of a
+	 * parameter without a {@link #getName() name}.
+	 */
+	String DEFAULT_PARAM_VARIABLE = "param";
+
+	/** Name of the variable holding the text of the URL in the {@link #getReverse() reverse}. */
+	String VALUE = "value";
+
+	/**
 	 * The parameter this conversion applies to.
 	 *
 	 * <p>
@@ -63,26 +76,33 @@ public interface FrameParamConfig extends ConfigurationItem {
 	 * Expression mapping the value of the parameter onto the text the URL carries.
 	 *
 	 * <p>
-	 * Receives the value the frame holds and returns the text naming it. An expression yielding
-	 * nothing means the value has no name in a URL - a transient object, for instance - and the
-	 * frame then contributes no segment: an address that cannot be opened again is better left
-	 * unwritten.
+	 * The expression sees the value the frame holds as the variable named like the parameter, the
+	 * value of the parameter <code>person</code> as <code>$person</code>, and returns the text
+	 * naming it: <code>objectId($person)</code>. An expression yielding nothing means the value has
+	 * no name in a URL - a transient object, for instance - and the frame then contributes no
+	 * segment: an address that cannot be opened again is better left unwritten.
 	 * </p>
 	 */
 	@Name(EXPR)
 	@Nullable
+	@Supplies(value = DEFAULT_PARAM_VARIABLE, renamedBy = NAME)
+	@ScriptContextVariables(InputScript.Variables.class)
 	Expr getExpr();
 
 	/**
 	 * Expression mapping the text the URL carries back onto the value of the parameter.
 	 *
 	 * <p>
-	 * Receives the text of the URL and returns the value the frame is mounted with. An expression
-	 * yielding nothing means the URL names something the display cannot show - an object that is
-	 * deleted, an identifier that was mistyped - and the frame is then not restored at all.
+	 * The expression sees the text of the URL as the variable {@value #VALUE} and returns the value
+	 * the frame is mounted with: <code>$value.objectResolve(`tl.accounts:Person`)</code>. An
+	 * expression yielding nothing means the URL names something the display cannot show - an
+	 * object that is deleted, an identifier that was mistyped - and the frame is then not restored
+	 * at all.
 	 * </p>
 	 */
 	@Name(REVERSE)
 	@Nullable
+	@Supplies(VALUE)
+	@ScriptContextVariables(InputScript.Variables.class)
 	Expr getReverse();
 }

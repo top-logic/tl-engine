@@ -40,7 +40,7 @@
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-up"
-				input="node"
+				inputs="node"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -61,7 +61,7 @@
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
-				input="node"
+				inputs="node"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -82,7 +82,7 @@
 			</generic-command>
 			<generic-command
 				image="css:bi bi-check2-square"
-				input="selection"
+				inputs="selection"
 				placement="TOOLBAR"
 			>
 				<label>

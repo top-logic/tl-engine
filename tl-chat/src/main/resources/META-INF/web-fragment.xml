@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd"
+	version="3.1">
+	<name>tl-chat</name>
+
+	<filter>
+		<filter-name>chatSessionFilter</filter-name>
+		<filter-class>com.top_logic.ai.chat.api.ChatSessionFilter</filter-class>
+		<async-supported>true</async-supported>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>chatSessionFilter</filter-name>
+		<url-pattern>/chat/*</url-pattern>
+	</filter-mapping>
+
+	<servlet>
+		<servlet-name>ChatServlet</servlet-name>
+		<servlet-class>com.top_logic.ai.chat.api.ChatServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>ChatServlet</servlet-name>
+		<url-pattern>/chat/*</url-pattern>
+	</servlet-mapping>
+
+	<!-- Temporary workaround (#940): the window's events by polling, where a proxy holds the event stream back. -->
+	<servlet>
+		<servlet-name>WindowPollServlet</servlet-name>
+		<servlet-class>com.top_logic.ai.chat.stream.WindowPollServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>WindowPollServlet</servlet-name>
+		<url-pattern>/window-poll</url-pattern>
+	</servlet-mapping>
+</web-fragment>

@@ -127,7 +127,7 @@
 									<en>Show notice</en>
 									<de>Hinweis anzeigen</de>
 								</label>
-								<notify expr="x -> #('The header command of the Notes section was executed.'@en, 'Der Kopfzeilenbefehl des Abschnitts Hinweise wurde ausgeführt.'@de)"/>
+								<notify expr="#('The header command of the Notes section was executed.'@en, 'Der Kopfzeilenbefehl des Abschnitts Hinweise wurde ausgeführt.'@de)"/>
 							</generic-command>
 						</commands>
 						<text>

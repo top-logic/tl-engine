@@ -61,7 +61,7 @@
 		<object-list
 			gap="default"
 			inputs="search"
-			items="search -> all(`test.flowchart:FlowNode`).filter(n -> $search.isEmpty() || $n.get(`test.flowchart:FlowNode#name`).stringContains($search))"
+			items="all(`test.flowchart:FlowNode`).filter(n -> $search.isEmpty() || $n.get(`test.flowchart:FlowNode#name`).stringContains($search))"
 			layout="grid"
 			max-columns="3"
 			min-column-width="16rem"

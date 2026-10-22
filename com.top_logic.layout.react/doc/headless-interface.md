@@ -167,7 +167,7 @@ fragile for recorded scripts (labels duplicate, reorder, localize, change).
 - [ ] **Recorder side-window — reach legacy parity.** Built as a faithful analog of the
       reusable SQL-monitor view (dual `recording`/`steps` channels, one `RecorderAction`
       with `Mode {START, REFRESH, STOP}` returning `recorder.steps()`, a `RecordedStepsTable`
-      `UIElement`). Reuses the generic `VisibleIf` rule and `<execute-script>`+`<write-channel>`
+      `UIElement`). Reuses the generic `VisibleIf` rule and `<execute-script>` with a nested `<write-channel>`
       — no bespoke executability rule. Status of the review gaps:
   - [x] **Buttons sized properly** — compact `placement="TOOLBAR"` icon buttons (Start /
         Refresh / Stop), not full-width content buttons.

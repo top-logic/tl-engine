@@ -7,12 +7,20 @@ import {
   useFieldLabelProps,
   fieldInputId,
   usePart,
+  useTLCommand,
+  useSuggestions,
+  CMD_SUGGEST,
+  ARG_SUGGEST_TEXT,
+  ARG_SUGGEST_CARET,
   ICON_CLEAR,
 } from 'tl-react-bridge';
-import type { TLCellProps, TextInputStateJson } from 'tl-react-bridge';
+import type { TLCellProps, TextInputStateJson, SuggestionsAnswer, ListboxEntry, ListboxPartProps } from 'tl-react-bridge';
 import { showsValueOnly, validationOf } from './form/fieldState';
 
-const { useCallback, useRef } = React;
+const { useCallback, useLayoutEffect, useMemo, useRef } = React;
+
+/** Options of the command asking for suggestions: it carries the text, the form is not read. */
+const SUGGEST_OPTIONS = { flushFields: false } as const;
 
 const I18N_KEYS = {
   'js.textInput.open': 'Open in a new tab',
@@ -54,6 +62,12 @@ const normalizeUrl = (value: string): string => {
   return 'https://' + trimmed;
 };
 
+/** The list of suggestions, drawn by the part `Listbox` while it is open. */
+const SuggestionList: React.FC<ListboxPartProps> = props => {
+  const Listbox = usePart('Listbox');
+  return <Listbox {...props} />;
+};
+
 /**
  * A text input field rendered via React, drawn by the part `TextInput`: a single-line box by
  * default, or a multi-line text area when the field state requests it (state.multiline with
@@ -93,6 +107,12 @@ const normalizeUrl = (value: string): string => {
  * overridden by state.sendValueOnBlur, which holds a value back entirely. The box has room for one
  * action, so the clear button, while it is shown, takes the place of the link.
  *
+ * With state.offersSuggestions, the editable input is a combobox offering suggestions while the
+ * user types (see useSuggestions): it asks the server with the command CMD_SUGGEST for the text and
+ * the caret position, and shows the answer (state.suggestions, computed for state.suggestionsText
+ * and state.suggestionsCaret) in the part `Listbox` below the input. A picked suggestion is entered
+ * like typed text, with the caret behind it.
+ *
  * The state of the value is the validation of the box (see validationOf), a mandatory field a
  * required box, and the message of an error the tooltip of the input. A read-only field renders
  * no input but the value as text (part `FieldValue`), one line per line of a multi-line text.
@@ -113,7 +133,68 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
   const TextInput = usePart('TextInput');
   const FieldValue = usePart('FieldValue');
   const Button = usePart('Button');
+  const sendCommand = useTLCommand();
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+
+  const multiline = state.multiline === true;
+  const disabled = state.disabled === true;
+  const offersSuggestions = state.offersSuggestions === true && !disabled && !showsValueOnly(state);
+
+  const stateSuggestions = state.suggestions;
+  const suggestionsText = state.suggestionsText;
+  const suggestionsCaret = state.suggestionsCaret;
+  const answer = useMemo<SuggestionsAnswer | null>(
+    () => stateSuggestions === undefined || stateSuggestions === null
+      ? null
+      : { entries: stateSuggestions, text: suggestionsText ?? '', caret: suggestionsCaret ?? 0 },
+    [stateSuggestions, suggestionsText, suggestionsCaret]);
+
+  // The caret position a picked suggestion puts the caret at, once the input shows its text.
+  const pendingCaretRef = useRef<number | null>(null);
+
+  const suggestions = useSuggestions({
+    id: inputId,
+    enabled: offersSuggestions,
+    text,
+    answer,
+    getCaret: () => inputRef.current?.selectionStart ?? text.length,
+    request: (typed, caret) => {
+      void sendCommand(CMD_SUGGEST, { [ARG_SUGGEST_TEXT]: typed, [ARG_SUGGEST_CARET]: caret }, SUGGEST_OPTIONS);
+    },
+    apply: (picked, caret) => {
+      pendingCaretRef.current = caret;
+      setText(picked);
+    },
+  });
+
+  useLayoutEffect(() => {
+    const caret = pendingCaretRef.current;
+    const input = inputRef.current;
+    if (caret === null || input === null || input.value !== text) return;
+    pendingCaretRef.current = null;
+    input.setSelectionRange(caret, caret);
+  }, [text]);
+
+  const { entries: suggestionEntries, optionId, changed, onKeyDown: suggestionKeyDown, dismiss } = suggestions;
+  const listEntries = useMemo<ListboxEntry[]>(
+    () => suggestionEntries.map((entry, index) => ({ id: optionId(index), label: entry.label })),
+    [suggestionEntries, optionId]);
+
+  const handleChange = useCallback((typed: string) => {
+    setText(typed);
+    changed(typed, inputRef.current?.selectionStart ?? typed.length);
+  }, [setText, changed]);
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (suggestionKeyDown(event)) return;
+    // The key handler of the typing field finishes a single-line edit; in a text area Enter is text.
+    if (!multiline) onKeyDown?.(event);
+  }, [suggestionKeyDown, multiline, onKeyDown]);
+
+  const handleBlur = useCallback(() => {
+    dismiss();
+    return onBlur();
+  }, [dismiss, onBlur]);
 
   const handleClear = useCallback(async () => {
     setText('');
@@ -126,9 +207,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
     return null;
   }
 
-  const multiline = state.multiline === true;
   const hasError = state.hasError === true;
-  const disabled = state.disabled === true;
   const href = hasError || multiline ? null : linkHref(inputType, text);
 
   if (showsValueOnly(state)) {
@@ -177,6 +256,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
         id={inputId}
         ref={inputRef}
         {...labelProps}
+        {...(offersSuggestions ? suggestions.comboboxAttributes : undefined)}
         value={text}
         type={multiline ? undefined : inputType}
         multiline={multiline}
@@ -189,10 +269,22 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
         validation={validationOf(state)}
         tooltip={hasError ? state.errorMessage : undefined}
         className={rootClassName(state) || undefined}
-        onChange={setText}
-        onBlur={onBlur}
-        onKeyDown={multiline ? undefined : onKeyDown}
+        onChange={offersSuggestions ? handleChange : setText}
+        onBlur={offersSuggestions ? handleBlur : onBlur}
+        onKeyDown={offersSuggestions ? handleKeyDown : multiline ? undefined : onKeyDown}
       />
+      {suggestions.open && (
+        <SuggestionList
+          id={suggestions.listboxId}
+          aria-labelledby={labelProps['aria-labelledby']}
+          anchor={inputRef.current}
+          entries={listEntries}
+          activeIndex={suggestions.activeIndex}
+          onPick={suggestions.pick}
+          onActivate={suggestions.activate}
+          onDismiss={dismiss}
+        />
+      )}
     </span>
   );
 };

@@ -9,8 +9,8 @@ order: 75
 
 ## The element
 
-- **`inputs`** names the channels whose values the script receives as positional arguments, in the notation every `inputs` property of the view layer reads (`inputs="a, b"` or `<inputs><input channel="a"/></inputs>`, see [channels](doc:view-layer/channels#declaring-channels-channels)). A diagram that depends on no channel declares an empty `<inputs/>`.
-- **`createChart`** is the script, usually written as element content in a CDATA section. It is a function of the inputs, `product -> …` for one input, and returns a diagram created with `reactFlowChart(root: …)`. A box returned instead of a diagram becomes the root of a diagram; any other result is an empty diagram. Always configure it: the default expression does not name a function of this module.
+- **`inputs`** names the channels whose values the script sees as variables, named after the channel or by the name given with `as`, in the notation every `inputs` property of the view layer reads (`inputs="selectedProduct as product, reload"` or `<inputs><input channel="selectedProduct" as="product"/></inputs>`, see [channels](doc:view-layer/channels#declaring-channels-channels)). A diagram that depends on no channel declares an empty `<inputs/>`.
+- **`createChart`** is the script, usually written as element content in a CDATA section. It uses the inputs as variables without declaring them (`$product`; a script starting with a parameter declaration such as `product -> …` is a configuration error), sees each handler of `handlers` as the variable named like the handler (`$onClick`), and returns a diagram created with `reactFlowChart(root: …)`. A box returned instead of a diagram becomes the root of a diagram; any other result is an empty diagram. Always configure it: the default expression does not name a function of this module.
 - **`selection`** names a channel the diagram shares its selection through, in both directions (see [selection](#selection) below).
 
 The diagram is built when the element is displayed and built anew whenever one of the input channels takes a new value; the script runs again as a whole. A mutation that changes what the diagram shows without changing an input - an action editing the displayed module - therefore rebuilds the diagram only through an input of its own: the model editor (`com.top_logic.dev.tools`) declares a `reload` channel as a second input and writes `now()` into it after each change.
@@ -22,9 +22,9 @@ The construction plan of `com.top_logic.demo.react` (`WEB-INF/views/demo/flow-di
 ```xml
 <flow-diagram selection="selectedNode">
 	<inputs>
-		<input channel="selectedProduct"/>
+		<input channel="selectedProduct" as="product"/>
 	</inputs>
-	<createChart><![CDATA[product -> {
+	<createChart><![CDATA[{
 parts = $product == null ? [] : $product.get(`test.flowchart:Product#buildInstructions`);
 
 nodes = $parts.map(p -> reactFlowSelection(

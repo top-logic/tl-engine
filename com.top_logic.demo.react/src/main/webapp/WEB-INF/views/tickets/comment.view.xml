@@ -10,30 +10,30 @@
 			again when the comment is displayed and after its attachments are stored.
 		-->
 		<channel name="files"
-			init="c -> $c.get(`demo.tickets:Comment#attachments`).map(a -> $a.get(`demo.tickets:Attachment#data`))"
+			init="$comment.get(`demo.tickets:Comment#attachments`).map(a -> $a.get(`demo.tickets:Attachment#data`))"
 			inputs="comment"
 			observed-types="demo.tickets:Attachment"
 		/>
 		<!-- The attachments are offered while the comment is edited or has any. -->
 		<derived-channel name="showFiles"
-			expr="edit -> files -> $edit || $files.size() > 0"
+			expr="$editMode || $files.size() > 0"
 			inputs="editMode, files"
 		/>
 		<derived-channel name="author"
-			expr="c -> $c.get(`demo.tickets:Comment#author`)"
+			expr="$comment.get(`demo.tickets:Comment#author`)"
 			inputs="comment"
 		/>
 		<derived-channel name="date"
-			expr="c -> $c.get(`demo.tickets:Comment#date`)"
+			expr="$comment.get(`demo.tickets:Comment#date`)"
 			inputs="comment"
 		/>
 		<derived-channel name="cited"
-			expr="c -> $c.get(`demo.tickets:Comment#cited`)"
+			expr="$comment.get(`demo.tickets:Comment#cited`)"
 			inputs="comment"
 		/>
 		<!-- The ticket the comment belongs to, in which a reply is created. -->
 		<derived-channel name="ticket"
-			expr="c -> $c.container()"
+			expr="$comment.container()"
 			inputs="comment"
 		/>
 	</channels>
@@ -52,13 +52,13 @@
 				<relative-time input="date"/>
 				<scroll-link
 					input="cited"
-					label="c -> &quot;↩ &quot; + label($c.get(`demo.tickets:Comment#author`))"
+					label="&quot;↩ &quot; + label($cited.get(`demo.tickets:Comment#author`))"
 				/>
 			</title-content>
 			<commands>
 				<generic-command
 					image="css:bi bi-reply"
-					input="comment"
+					inputs="comment"
 					placement="TOOLBAR"
 				>
 					<label>
@@ -73,13 +73,16 @@
 							type="demo.tickets:Comment"
 						/>
 					</executability>
-					<execute-script function="comment -> { reply = new(`demo.tickets:Comment`, transient: true, context: $comment.container()); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }"/>
-					<write-channel name="draft"/>
+					<execute-script function="{ reply = new(`demo.tickets:Comment`, transient: true, context: $comment.container()); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }">
+						<with-result>
+							<write-channel name="draft"/>
+						</with-result>
+					</execute-script>
 					<scroll-to-anchor target="'composer'"/>
 				</generic-command>
 				<generic-command
 					image="css:bi bi-trash"
-					input="comment"
+					inputs="comment"
 					placement="TOOLBAR"
 				>
 					<label>
@@ -102,7 +105,7 @@
 					label-position="hide-label"
 				/>
 				<visible-if
-					expr="show -> $show"
+					expr="$showFiles"
 					input="showFiles"
 				>
 					<value-input
@@ -116,7 +119,7 @@
 					<with-transaction>
 						<store-form-state/>
 						<execute-script
-							function="comment -> files -> stored -> demoTicketsStoreAttachments($comment, $files)"
+							function="demoTicketsStoreAttachments($comment, $files)"
 							inputs="comment, files"
 						/>
 					</with-transaction>
@@ -125,10 +128,13 @@
 				<cancel-action>
 					<discard-form-state/>
 					<execute-script
-						function="c -> discarded -> $c.get(`demo.tickets:Comment#attachments`).map(a -> $a.get(`demo.tickets:Attachment#data`))"
+						function="$comment.get(`demo.tickets:Comment#attachments`).map(a -> $a.get(`demo.tickets:Attachment#data`))"
 						inputs="comment"
-					/>
-					<write-channel name="files"/>
+					>
+						<with-result>
+							<write-channel name="files"/>
+						</with-result>
+					</execute-script>
 				</cancel-action>
 			</form>
 		</panel>

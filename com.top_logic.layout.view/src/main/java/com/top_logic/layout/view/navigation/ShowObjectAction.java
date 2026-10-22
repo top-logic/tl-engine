@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.navigation;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.Collection;
 
 import com.top_logic.basic.CalledByReflection;
@@ -29,7 +30,7 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <pre>
- * &lt;generic-command input="selection"&gt;
+ * &lt;generic-command inputs="selection"&gt;
  *   &lt;show-object/&gt;
  * &lt;/generic-command&gt;
  * </pre>
@@ -50,7 +51,7 @@ public class ShowObjectAction extends InterruptibleViewAction {
 	 * Configuration for {@link ShowObjectAction}.
 	 */
 	@TagName("show-object")
-	public interface Config extends PolymorphicConfiguration<ShowObjectAction> {
+	public interface Config extends PolymorphicConfiguration<ShowObjectAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(ShowObjectAction.class)
@@ -87,7 +88,7 @@ public class ShowObjectAction extends InterruptibleViewAction {
 	 * The object the given input displays.
 	 *
 	 * @param input
-	 *        The chain's current value: the object itself, a selection holding it, or nothing.
+	 *        The value the action processes: the object itself, a selection holding it, or nothing.
 	 * @return The object to display, or {@code null} if there is nothing to display.
 	 * @throws TopLogicException
 	 *         If the input holds more than one object.
@@ -106,5 +107,13 @@ public class ShowObjectAction extends InterruptibleViewAction {
 			return collection.iterator().next();
 		}
 		return input;
+	}
+
+	/**
+	 * Navigates to the object.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

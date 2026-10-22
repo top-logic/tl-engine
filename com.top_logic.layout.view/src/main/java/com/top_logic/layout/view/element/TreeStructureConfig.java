@@ -12,21 +12,26 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * Configuration of an element displaying a tree of objects: the object the tree is built from and
  * the TL-Script functions computing the children of an object and what holds an object.
  *
  * <p>
- * The functions are called with the values of the element's {@link Inputs#getInputs() inputs} as
- * leading arguments.
+ * The functions see the values of the element's {@link Inputs#getInputs() inputs} as variables
+ * named after their channels, or by their <code>as</code> names; the functions evaluated for a node
+ * see the node as the variable {@value NodeAsConfig#DEFAULT_NODE_AS}, or by the name given with
+ * {@value NodeAsConfig#NODE_AS}.
  * </p>
  *
  * @see TreeFunctions
  */
-public interface TreeStructureConfig extends ConfigurationItem {
+public interface TreeStructureConfig extends ConfigurationItem, NodeAsConfig {
 
 	/** Configuration name for {@link #getRoot()}. */
 	String ROOT = "root";
@@ -41,38 +46,50 @@ public interface TreeStructureConfig extends ConfigurationItem {
 	String CAN_EXPAND_ALL = "canExpandAll";
 
 	/**
-	 * TL-Script function computing the root object of the tree.
+	 * TL-Script expression computing the object the tree is built from.
 	 *
 	 * <p>
-	 * Takes the input channel values as positional arguments and returns a single object to be
-	 * used as the tree root.
+	 * The expression sees the values of the inputs as variables named after their channels, or by
+	 * their <code>as</code> names, and returns a single object. The object itself is not displayed,
+	 * its children are the top-level nodes.
 	 * </p>
 	 */
 	@Name(ROOT)
 	@Mandatory
 	@NonNullable
+	@ScriptContextVariables(InputScript.Variables.class)
 	Expr getRoot();
 
 	/**
-	 * TL-Script function computing the children of a node.
+	 * TL-Script expression computing the children of a node.
 	 *
 	 * <p>
-	 * Takes the input channel values followed by the parent business object as last argument.
-	 * Returns a {@link Collection} of child business objects.
+	 * The expression sees the values of the inputs as variables named after their channels, or by
+	 * their <code>as</code> names, and the business object of the node as the variable
+	 * {@value NodeAsConfig#DEFAULT_NODE_AS}, or by the name given with
+	 * {@value NodeAsConfig#NODE_AS}. It returns a {@link Collection} of child business objects:
 	 * </p>
+	 *
+	 * <pre>
+	 * $node.get(`my:Folder#children`)
+	 * </pre>
 	 */
 	@Name(CHILDREN)
 	@Mandatory
 	@NonNullable
+	@Supplies(value = NodeAsConfig.DEFAULT_NODE_AS, renamedBy = NodeAsConfig.NODE_AS)
+	@ScriptContextVariables(InputScript.Variables.class)
 	Expr getChildren();
 
 	/**
-	 * Optional TL-Script function computing what holds an object in the tree.
+	 * Optional TL-Script expression computing what holds an object in the tree.
 	 *
 	 * <p>
-	 * Takes the input channel values followed by an object as last argument, and returns the object
-	 * whose child list holds it - nothing for the object the tree is built from, and for an object
-	 * belonging to no tree at all.
+	 * The expression sees the values of the inputs as variables named after their channels, or by
+	 * their <code>as</code> names, and the object as the variable
+	 * {@value NodeAsConfig#DEFAULT_NODE_AS}, or by the name given with
+	 * {@value NodeAsConfig#NODE_AS}. It returns the object whose child list holds it - nothing for
+	 * the object the tree is built from, and for an object belonging to no tree at all.
 	 * </p>
 	 *
 	 * <p>
@@ -84,6 +101,8 @@ public interface TreeStructureConfig extends ConfigurationItem {
 	 * </p>
 	 */
 	@Name(PARENTS)
+	@Supplies(value = NodeAsConfig.DEFAULT_NODE_AS, renamedBy = NodeAsConfig.NODE_AS)
+	@ScriptContextVariables(InputScript.Variables.class)
 	Expr getParents();
 
 	/**

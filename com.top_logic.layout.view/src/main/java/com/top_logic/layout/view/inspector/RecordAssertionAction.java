@@ -128,4 +128,11 @@ public class RecordAssertionAction implements ViewAction {
 		return List.of(input.toString());
 	}
 
+	/**
+	 * Changes the running script recording and tells the user about it.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

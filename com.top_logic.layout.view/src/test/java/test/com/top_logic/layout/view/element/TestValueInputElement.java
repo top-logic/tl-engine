@@ -105,6 +105,9 @@ import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -378,7 +381,7 @@ public class TestValueInputElement extends TestCase {
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
 		assertNotNull("The options expression must reach the configuration.", owners.getOptions());
 		assertEquals("The options depend on one channel.", 1, owners.getInputs().size());
-		assertEquals("project", owners.getInputs().get(0).getChannelName());
+		assertEquals("project", owners.getInputs().get(0).getChannel().getChannelName());
 	}
 
 	/** A text is written in a text input, on a channel as in an attribute. */
@@ -1254,9 +1257,9 @@ public class TestValueInputElement extends TestCase {
 			inputControl(inputs, 6, NumberInputControlProvider.Config.class);
 		assertEquals(NumberDisplay.SLIDER, dragged.getDisplay());
 		assertEquals("The bounds of the range must reach the configuration.",
-			Double.valueOf(0.0), dragged.getMin());
-		assertEquals(Double.valueOf(10.0), dragged.getMax());
-		assertEquals(Double.valueOf(1.0), dragged.getStep());
+			Double.valueOf(0.0), evaluated(dragged.getMin()));
+		assertEquals(Double.valueOf(10.0), evaluated(dragged.getMax()));
+		assertEquals(Double.valueOf(1.0), evaluated(dragged.getStep()));
 
 		BooleanControlProvider.Config flipped =
 			inputControl(inputs, 7, BooleanControlProvider.Config.class);
@@ -1446,16 +1449,28 @@ public class TestValueInputElement extends TestCase {
 		return config;
 	}
 
+	/** The number the given constant expression computes. */
+	private static Double evaluated(Expr expr) {
+		return Double.valueOf(((Number) QueryExecutor.compile(expr).execute()).doubleValue());
+	}
+
+	/** The given TL-Script expression. */
+	private static Expr script(String source) {
+		try {
+			return ExprFormat.INSTANCE.getValue(NumberInputControlProvider.Config.MIN, source);
+		} catch (ConfigurationException ex) {
+			throw new AssertionError("Not a TL-Script expression: " + source, ex);
+		}
+	}
+
 	/** A number control dragging its value along a track of a small range. */
 	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> sliderDisplay() {
 		NumberInputControlProvider.Config config =
 			TypedConfiguration.newConfigItem(NumberInputControlProvider.Config.class);
 		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.DISPLAY),
 			NumberDisplay.SLIDER);
-		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MIN),
-			Double.valueOf(0.0));
-		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MAX),
-			Double.valueOf(10.0));
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MIN), script("0.0"));
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MAX), script("10.0"));
 		return config;
 	}
 

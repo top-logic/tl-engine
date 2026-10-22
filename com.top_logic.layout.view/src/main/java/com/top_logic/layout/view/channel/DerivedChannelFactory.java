@@ -12,7 +12,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.model.ObservedTypes;
-import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -29,7 +28,7 @@ public class DerivedChannelFactory implements ChannelFactory {
 
 	private final String _name;
 
-	private final List<ChannelRef> _inputRefs;
+	private final List<InputRef> _inputRefs;
 
 	private final QueryExecutor _executor;
 
@@ -48,20 +47,18 @@ public class DerivedChannelFactory implements ChannelFactory {
 	public DerivedChannelFactory(InstantiationContext context, DerivedChannelConfig config) {
 		_name = config.getName();
 		_inputRefs = config.getInputs();
-		_executor = QueryExecutor.compile(config.getExpr());
-		Expr reverseExpr = config.getReverse();
-		_reverseExecutor = reverseExpr != null ? QueryExecutor.compile(reverseExpr) : null;
+		_executor = InputScript.compile(config, DerivedChannelConfig.EXPR);
+		_reverseExecutor = InputScript.compile(config, DerivedChannelConfig.REVERSE);
 		_observedTypeRefs = config.getObservedTypes();
 	}
 
 	@Override
 	public ViewChannel createChannel(ViewContext context) {
 		DerivedViewChannel channel = new DerivedViewChannel(_name);
-		List<ViewChannel> inputs = _inputRefs.stream()
-			.map(context::resolveChannel)
-			.toList();
-		Function<Object, Object> reverse =
-			_reverseExecutor != null ? value -> _reverseExecutor.execute(value) : null;
+		List<ViewChannel> inputs = ChannelInputs.resolve(context, _inputRefs);
+		Function<Object, Object> reverse = _reverseExecutor != null
+			? value -> _reverseExecutor.execute(ChannelInputs.arguments(inputs, value))
+			: null;
 		channel.bind(inputs, _executor::execute, reverse, ObservedTypes.resolve(_observedTypeRefs));
 		return channel;
 	}

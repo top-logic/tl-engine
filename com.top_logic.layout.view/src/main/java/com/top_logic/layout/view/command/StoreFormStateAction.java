@@ -48,7 +48,7 @@ public class StoreFormStateAction implements ViewAction {
 	 * Configuration for {@link StoreFormStateAction}.
 	 */
 	@TagName("store-form-state")
-	public interface Config extends PolymorphicConfiguration<StoreFormStateAction> {
+	public interface Config extends PolymorphicConfiguration<StoreFormStateAction>, WithResultActions {
 
 		@Override
 		@ClassDefault(StoreFormStateAction.class)

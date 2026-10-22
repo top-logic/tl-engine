@@ -19,19 +19,20 @@ import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
-import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} that hands the chain's current value - a file - to the user as a download.
+ * {@link ViewAction} that hands a file to the user as a download: the innermost result of the
+ * actions it is nested in, or the argument selected with {@code value}.
  *
  * <p>
  * The value must be {@link BinaryData}, as a TL-Script function producing a file returns it - an
  * Excel workbook from {@code excelFile(...)}, a document from a template, the content of a file
- * attribute. The browser saves the file under its name. The chain continues with the file
- * unchanged, so further actions may store it as well.
+ * attribute. The browser saves the file under its name.
  * </p>
  *
  * <p>
@@ -40,26 +41,29 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <pre>
  * &lt;button&gt;
- *   &lt;action class="com.top_logic.layout.view.command.GenericViewCommand" input="selection"&gt;
- *     &lt;execute-script function="tickets -&gt; excelFile(name: 'tickets', content: [excelSheet(content: $tickets.map(t -&gt; [$t.get(`demo:Ticket#name`)]))])"/&gt;
- *     &lt;download/&gt;
+ *   &lt;action class="com.top_logic.layout.view.command.GenericViewCommand" inputs="selection as tickets"&gt;
+ *     &lt;execute-script function="excelFile(name: 'tickets', content: [excelSheet(content: $tickets.map(t -&gt; [$t.get(`demo:Ticket#name`)]))])"&gt;
+ *       &lt;with-result&gt;
+ *         &lt;download/&gt;
+ *       &lt;/with-result&gt;
+ *     &lt;/execute-script&gt;
  *   &lt;/action&gt;
  * &lt;/button&gt;
  * </pre>
  *
  * <p>
- * A chain that produces no file - its value is empty - ends with a message telling the user so,
+ * A chain that produces no file - the value is empty - ends with a message telling the user so,
  * instead of silently doing nothing.
  * </p>
  */
 @InApp
-public class DownloadAction implements ViewAction {
+public class DownloadAction extends ArgumentsViewAction {
 
 	/**
 	 * Configuration for {@link DownloadAction}.
 	 */
 	@TagName("download")
-	public interface Config extends PolymorphicConfiguration<DownloadAction>, Inputs {
+	public interface Config extends PolymorphicConfiguration<DownloadAction>, NamedInputs, WithValueArgument {
 
 		/** @see #getFileName() */
 		String FILE_NAME = "file-name";
@@ -69,16 +73,18 @@ public class DownloadAction implements ViewAction {
 		Class<? extends DownloadAction> getImplementationClass();
 
 		/**
-		 * TL-Script function computing the name the file is saved under, instead of its own name.
+		 * TL-Script computing the name the file is saved under, instead of its own name.
 		 *
 		 * <p>
-		 * Called with the {@link #getInputs() input} channel values as leading positional arguments
-		 * (in declaration order), followed by the file as the last argument. The result is a text
+		 * Uses the arguments of the chain and the values of the {@link #getInputs() inputs} as
+		 * variables named after them, without declaring them; the file is the argument this action
+		 * processes. The result is a text
 		 * or an internationalized text, and includes the file extension. A result of {@code null}
 		 * keeps the file's own name.
 		 * </p>
 		 */
 		@Name(FILE_NAME)
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getFileName();
 	}
 
@@ -89,22 +95,23 @@ public class DownloadAction implements ViewAction {
 	 */
 	@CalledByReflection
 	public DownloadAction(InstantiationContext context, Config config) {
-		this(config.getFileName() == null ? null : ActionScript.compile(config.getFileName(), config.getInputs()));
+		this(config.getFileName() == null ? null
+			: ActionScript.compile(config.getFileName(), ActionScope.of(context), config.getInputs()));
 	}
 
 	/**
 	 * Creates a {@link DownloadAction}.
 	 *
 	 * @param fileName
-	 *        Computes the name the file is saved under from the file, {@code null} to keep the
-	 *        file's own name.
+	 *        Computes the name the file is saved under, {@code null} to keep the file's own name.
 	 */
 	public DownloadAction(ActionScript fileName) {
 		_fileName = fileName;
 	}
 
 	@Override
-	public Object execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		Object input = arguments.value();
 		if (input == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NOTHING_TO_DOWNLOAD);
 		}
@@ -113,7 +120,7 @@ public class DownloadAction implements ViewAction {
 				I18NConstants.ERROR_NOT_A_FILE__VALUE.fill(MetaLabelProvider.INSTANCE.getLabel(input)));
 		}
 
-		BinaryData download = rename(context, file);
+		BinaryData download = rename(context, arguments, file);
 		SSEUpdateQueue queue = context.getSSEQueue();
 		if (queue == null) {
 			// A chain running headless has no browser to save the file in.
@@ -121,18 +128,25 @@ public class DownloadAction implements ViewAction {
 		} else {
 			queue.deliverDownload(download);
 		}
-		return input;
+		continuation.resume(input);
 	}
 
-	private BinaryData rename(ReactContext context, BinaryData file) {
+	private BinaryData rename(ReactContext context, ActionArguments arguments, BinaryData file) {
 		if (_fileName == null) {
 			return file;
 		}
-		ResKey name = _fileName.message(context, file);
+		ResKey name = _fileName.message(context, arguments);
 		if (name == null) {
 			return file;
 		}
 		return new DefaultDataItem(Resources.getInstance().getString(name), file, file.getContentType());
 	}
 
+	/**
+	 * Hands a file to the client.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

@@ -57,9 +57,12 @@
 				</title>
 				<flow-diagram selection="selectedNode">
 					<inputs>
-						<input channel="selectedProduct"/>
+						<input
+							as="product"
+							channel="selectedProduct"
+						/>
 					</inputs>
-					<createChart><![CDATA[product -> {
+					<createChart><![CDATA[{
 parts = $product == null ? list() : $product.get(`test.flowchart:Product#buildInstructions`);
 
 nodes = $parts.map(p -> reactFlowSelection(

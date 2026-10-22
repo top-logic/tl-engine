@@ -28,6 +28,7 @@
 					<calendar
 						day-end-hour="18"
 						day-start-hour="8"
+						entry-as="appointment"
 						granularity="WEEK"
 						observed-types="demo.calendar:Appointment"
 						range-end="to"
@@ -38,18 +39,18 @@
 							<input channel="from"/>
 							<input channel="to"/>
 						</inputs>
-						<objects>from -&gt; to -&gt; if($from == null || $to == null, list(), all(`demo.calendar:Appointment`).filter(a -&gt; { s = $a.get(`demo.calendar:Appointment#start`); e = $a.get(`demo.calendar:Appointment#end`); $s != null &amp;&amp; $s &lt; $to &amp;&amp; if($e == null, $s, $e) &gt; $from; }))</objects>
+						<objects>if($from == null || $to == null, list(), all(`demo.calendar:Appointment`).filter(a -&gt; { s = $a.get(`demo.calendar:Appointment#start`); e = $a.get(`demo.calendar:Appointment#end`); $s != null &amp;&amp; $s &lt; $to &amp;&amp; if($e == null, $s, $e) &gt; $from; }))</objects>
 						<event>
-							<start>x -&gt; $x.get(`demo.calendar:Appointment#start`)</start>
-							<end>x -&gt; $x.get(`demo.calendar:Appointment#end`)</end>
-							<all-day>x -&gt; $x.get(`demo.calendar:Appointment#allDay`)</all-day>
-							<title>x -&gt; $x.get(`demo.calendar:Appointment#name`)</title>
-							<category>x -&gt; $x.get(`demo.calendar:Appointment#category`).get(`demo.calendar:AppointmentCategory#name`)</category>
-							<color>x -&gt; $x.get(`demo.calendar:Appointment#category`).get(`demo.calendar:AppointmentCategory#color`)</color>
+							<start>$appointment.get(`demo.calendar:Appointment#start`)</start>
+							<end>$appointment.get(`demo.calendar:Appointment#end`)</end>
+							<all-day>$appointment.get(`demo.calendar:Appointment#allDay`)</all-day>
+							<title>$appointment.get(`demo.calendar:Appointment#name`)</title>
+							<category>$appointment.get(`demo.calendar:Appointment#category`).get(`demo.calendar:AppointmentCategory#name`)</category>
+							<color>$appointment.get(`demo.calendar:Appointment#category`).get(`demo.calendar:AppointmentCategory#color`)</color>
 						</event>
-						<on-move>obj -&gt; start -&gt; end -&gt; { $obj.set(`demo.calendar:Appointment#start`, $start); $obj.set(`demo.calendar:Appointment#end`, $end); }</on-move>
-						<on-resize>obj -&gt; end -&gt; $obj.set(`demo.calendar:Appointment#end`, $end)</on-resize>
-						<on-create>start -&gt; end -&gt; allDay -&gt; title -&gt; { appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, if($title == null || $title == "", "New appointment", $title)); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
+						<on-move>{ $appointment.set(`demo.calendar:Appointment#start`, $start); $appointment.set(`demo.calendar:Appointment#end`, $end); }</on-move>
+						<on-resize>$appointment.set(`demo.calendar:Appointment#end`, $end)</on-resize>
+						<on-create>{ appt = new(`demo.calendar:Appointment`); $appt.set(`demo.calendar:Appointment#name`, if($title == null || $title == "", "New appointment", $title)); $appt.set(`demo.calendar:Appointment#start`, $start); $appt.set(`demo.calendar:Appointment#end`, $end); $appt.set(`demo.calendar:Appointment#allDay`, $allDay); $appt; }</on-create>
 					</calendar>
 				</panel>
 			</pane>
@@ -66,7 +67,7 @@
 					<commands>
 						<generic-command
 							image="css:bi bi-trash"
-							input="appointment"
+							inputs="appointment"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -77,7 +78,9 @@
 								<null-input-disabled/>
 							</executability>
 							<delete-object/>
-							<write-channel name="appointment"/>
+							<write-channel name="appointment"
+								clear="true"
+							/>
 						</generic-command>
 					</commands>
 					<form input="appointment">

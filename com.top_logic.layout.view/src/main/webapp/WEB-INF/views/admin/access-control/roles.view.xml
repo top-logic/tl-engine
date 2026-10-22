@@ -28,21 +28,24 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<execute-script function="x -> new(`tl.accounts:Role`, transient: true)"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="admin/access-control/create-role.view.xml"
-							>
-								<bind
-									channel="selection"
-									to="selectedRole"
-								/>
-							</open-dialog>
+							<execute-script function="new(`tl.accounts:Role`, transient: true)">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/access-control/create-role.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedRole"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
 						</generic-command>
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							input="selectedRole"
+							inputs="selectedRole"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -52,15 +55,17 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<confirm expr="r -> #('Delete role {0}?'@en, 'Rolle {0} löschen?'@de).fill($r.get(`tl.accounts:Role#name`))"/>
+							<confirm expr="#('Delete role {0}?'@en, 'Rolle {0} löschen?'@de).fill($selectedRole.get(`tl.accounts:Role#name`))"/>
 							<with-transaction>
 								<commitMessage>
 									<en>Deleted role {0}.</en>
 									<de>Rolle {0} gelöscht.</de>
 								</commitMessage>
-								<execute-script function="obj -> $obj.delete()"/>
+								<execute-script function="$selectedRole.delete()"/>
 							</with-transaction>
-							<write-channel name="selectedRole"/>
+							<write-channel name="selectedRole"
+								clear="true"
+							/>
 						</generic-command>
 					</commands>
 					<table id="table"

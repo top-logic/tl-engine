@@ -50,6 +50,23 @@
 		<channel name="day"/>
 		<channel name="daySorted"/>
 		<channel name="level"/>
+		<!-- The kind of a datapoint, whose range and unit the second slider takes. -->
+		<channel name="kind"
+			init="'percent'"
+		/>
+		<channel name="range"/>
+		<derived-channel name="rangeMin"
+			expr="if($kind == null, null, 0)"
+			inputs="kind"
+		/>
+		<derived-channel name="rangeMax"
+			expr="{'percent': 100, 'scale': 255, 'angle': 360}[$kind]"
+			inputs="kind"
+		/>
+		<derived-channel name="rangeUnit"
+			expr="{'percent': '%', 'angle': '°'}[$kind]"
+			inputs="kind"
+		/>
 		<channel name="switched"/>
 		<channel name="requiredRadio"/>
 		<channel name="optionalRadio"/>
@@ -358,8 +375,11 @@
 						<en>Search for "token"</en>
 						<de>Nach "Token" suchen</de>
 					</label>
-					<execute-script function="x -> 'token'"/>
-					<write-channel name="q"/>
+					<execute-script function="'token'">
+						<with-result>
+							<write-channel name="q"/>
+						</with-result>
+					</execute-script>
 				</action>
 			</button>
 			<button>
@@ -370,8 +390,11 @@
 						<en>Empty the search field</en>
 						<de>Suchfeld leeren</de>
 					</label>
-					<execute-script function="x -> ''"/>
-					<write-channel name="q"/>
+					<execute-script function="''">
+						<with-result>
+							<write-channel name="q"/>
+						</with-result>
+					</execute-script>
 				</action>
 			</button>
 		</stack>
@@ -564,8 +587,8 @@
 
 		<text>
 			<label>
-				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. The options of an expression are offered in the order it computes them, and the order by-label of the input-control sorts them by their labels instead. The text beside each input reads the channel it writes.</en>
-				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Die Optionen eines Ausdrucks erscheinen in der Reihenfolge, in der er sie berechnet; die Reihenfolge by-label des input-control sortiert sie stattdessen nach ihren Beschriftungen. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
+				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. The options of an expression are offered in the order it computes them, and the order by-label of the input-control sorts them by their labels instead. The range and the unit of the second slider follow the chosen kind through channels; without a kind, the slider is disabled. The text beside each input reads the channel it writes.</en>
+				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Die Optionen eines Ausdrucks erscheinen in der Reihenfolge, in der er sie berechnet; die Reihenfolge by-label des input-control sortiert sie stattdessen nach ihren Beschriftungen. Bereich und Einheit des zweiten Reglers folgen über Kanäle der gewählten Art; ohne Art ist der Regler deaktiviert. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
 			</label>
 		</text>
 		<fields>
@@ -687,6 +710,35 @@
 				/>
 			</value-input>
 			<value-input
+				options="['percent', 'scale', 'angle']"
+				type="tl.core:String"
+				value="kind"
+			>
+				<label>
+					<en>Kind (segments)</en>
+					<de>Art (Segmente)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+					display="segmented"
+				/>
+			</value-input>
+			<value-input
+				type="tl.core:Integer"
+				value="range"
+			>
+				<label>
+					<en>Range by kind (slider)</en>
+					<de>Bereich nach Art (Regler)</de>
+				</label>
+				<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+					display="slider"
+					inputs="rangeMin, rangeMax, rangeUnit"
+					max="$rangeMax"
+					min="$rangeMin"
+					unit="$rangeUnit"
+				/>
+			</value-input>
+			<value-input
 				type="tl.core:Boolean"
 				value="switched"
 			>
@@ -744,6 +796,14 @@
 			/>
 			<text
 				input="level"
+				tone="helper"
+			/>
+			<text
+				input="kind"
+				tone="helper"
+			/>
+			<text
+				input="range"
 				tone="helper"
 			/>
 			<text
@@ -819,7 +879,6 @@
 					<de>Name (Pflicht, mit Enter übergeben)</de>
 				</label>
 				<on-submit>
-					<execute-script function="text -> $text"/>
 					<write-channel name="submittedText"/>
 				</on-submit>
 			</value-input>

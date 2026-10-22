@@ -5,13 +5,15 @@
  */
 package com.top_logic.model.search.react;
 
+import java.util.function.Supplier;
+
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.component.WithCommitMessage;
+import com.top_logic.layout.view.command.ArgumentsViewAction;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewCommitMessage;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.WithTransaction;
 import com.top_logic.util.error.TopLogicException;
 
@@ -26,7 +28,7 @@ import com.top_logic.util.error.TopLogicException;
  * @see EvaluateScriptAction Evaluating a script given in the configuration.
  * @see EvaluateDynamicScriptAction Evaluating a script entered in the TL-Script console.
  */
-abstract class AbstractScriptAction implements ViewAction, WithTransaction {
+abstract class AbstractScriptAction extends ArgumentsViewAction implements WithTransaction {
 
 	private final boolean _inTransaction;
 
@@ -41,7 +43,7 @@ abstract class AbstractScriptAction implements ViewAction, WithTransaction {
 	 *        Decides whether the evaluation is committed, and with which message.
 	 * @param defaultMessage
 	 *        The commit message used when none is configured, filled with the label of the model
-	 *        given to {@link #evaluate(QueryExecutor, Object, Object)}; {@code null} for the message
+	 *        given to {@link #evaluate(Supplier, Object)}; {@code null} for the message
 	 *        naming the command and that model.
 	 */
 	protected <C extends WithTransaction.Config & WithCommitMessage> AbstractScriptAction(InstantiationContext context,
@@ -51,18 +53,16 @@ abstract class AbstractScriptAction implements ViewAction, WithTransaction {
 	}
 
 	/**
-	 * Evaluates the given script with the given argument and returns its result.
+	 * Evaluates a script and returns its result.
 	 *
 	 * @param script
-	 *        The compiled script.
-	 * @param argument
-	 *        The value passed to the script.
+	 *        The evaluation of the script.
 	 * @param model
 	 *        The object the commit message names.
 	 */
-	protected final Object evaluate(QueryExecutor script, Object argument, Object model) {
+	protected final Object evaluate(Supplier<Object> script, Object model) {
 		try (Transaction tx = beginTransaction(_inTransaction, _commitMessage.create(model))) {
-			Object result = script.execute(argument);
+			Object result = script.get();
 			tx.commit();
 			return result;
 		} catch (RuntimeException ex) {

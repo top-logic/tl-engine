@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.dnd;
 
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ViewActions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,13 +50,21 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 		QueryExecutor refuseIf) {
 
 	/**
+	 * The names of the {@link DropArguments arguments} of this drop.
+	 */
+	public List<String> names() {
+		return DropArguments.names(config, signature);
+	}
+
+	/**
 	 * Instantiates the action chain of the given drop and compiles its refusal function, so that
 	 * applying the drop only has to run them.
 	 *
 	 * <p>
-	 * Options the drop cannot use with the given signature are reported as configuration errors: a
-	 * channel for a {@link DropReference} the signature does not have, and target rules on a drop
-	 * other than one onto a single item.
+	 * The refusal function and the actions are compiled against the {@link DropArguments arguments}
+	 * of the drop. Options the drop cannot use with the given signature are reported as
+	 * configuration errors: a channel or a name for a {@link DropReference} the signature does not
+	 * have, and target rules on a drop other than one onto a single item.
 	 * </p>
 	 *
 	 * @param context
@@ -67,13 +77,12 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 	public static DeclaredDrop compile(InstantiationContext context, DropConfig config,
 			DropSignature signature) {
 		checkOptions(context, config, signature);
-		List<ViewAction> actions = config.getActions().stream()
-			.<ViewAction> map(actionConfig -> context.getInstance(actionConfig))
-			.filter(action -> action != null)
-			.toList();
+		DropArguments.check(context, config, signature);
+		ActionScope scope = DropArguments.scope(config, signature);
+		List<ViewAction> actions = ViewActions.instantiate(context, config.getActions(), scope);
 		Expr refuseIf = config.getRefuseIf();
 		return new DeclaredDrop(config, signature, actions,
-			refuseIf == null ? null : QueryExecutor.compile(refuseIf));
+			refuseIf == null ? null : QueryExecutor.compile(refuseIf, DropArguments.names(config, signature)));
 	}
 
 	/**
@@ -166,13 +175,15 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 		return new DropBinding.Drop(acceptedKinds(), signature, channels,
 			actions,
 			executability,
-			ViewExecutabilityRules.build(config.getTargetExecutability(), context),
+			ViewExecutabilityRules.build(config, DropConfig.TARGET_EXECUTABILITY, context),
 			compiledRefuseIf == null ? null
-				: (objects, references) -> compiledRefuseIf.execute(arguments(objects, references)));
+				: (objects, references) -> compiledRefuseIf.execute(arguments(objects, references)),
+			names());
 	}
 
 	/**
-	 * The arguments of the refusal function: the dropped objects, followed by the referenced ones.
+	 * The values of the variables of the refusal function: the dropped objects, followed by the
+	 * referenced ones, see {@link DropArguments#names(DropConfig, DropSignature)}.
 	 */
 	private static Object[] arguments(List<?> objects, List<?> references) {
 		Object[] result = new Object[references.size() + 1];

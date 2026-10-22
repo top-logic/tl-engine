@@ -18,7 +18,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-slash-circle"
-				input="selectedToken"
+				inputs="selectedToken"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -29,7 +29,9 @@
 					<null-input-disabled/>
 				</executability>
 				<revoke-access-token/>
-				<write-channel name="selectedToken"/>
+				<write-channel name="selectedToken"
+					clear="true"
+				/>
 			</generic-command>
 		</commands>
 		<table

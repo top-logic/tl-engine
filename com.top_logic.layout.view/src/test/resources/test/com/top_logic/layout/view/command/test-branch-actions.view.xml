@@ -8,30 +8,30 @@
 	<panel title="Branch Actions Test">
 		<commands>
 			<generic-command name="decide"
-				input="ticket"
+				inputs="ticket"
 			>
-				<if test="context -> ticket -> $ticket != null">
+				<if test="$branchInput != null &amp;&amp; $ticket != null">
 					<inputs>
 						<input channel="branchInput"/>
 					</inputs>
 					<then>
-						<execute-script function="t -> $t"/>
+						<execute-script function="$ticket"/>
 					</then>
 					<else>
 						<write-channel name="ticket"/>
 					</else>
 				</if>
-				<execute-script function="t -> $t"/>
+				<execute-script function="$ticket"/>
 			</generic-command>
 			<generic-command name="select"
-				input="ticket"
+				inputs="ticket"
 			>
-				<switch value="t -> $t">
+				<switch value="$ticket">
 					<case match="`demo.tickets:TicketStatus#closed`">
-						<execute-script function="t -> $t"/>
+						<execute-script function="$ticket"/>
 					</case>
-					<case test="s -> $s == 'open'">
-						<execute-script function="t -> $t"/>
+					<case test="$value == 'open'">
+						<execute-script function="$ticket"/>
 					</case>
 					<default>
 						<write-channel name="ticket"/>
@@ -39,10 +39,10 @@
 				</switch>
 			</generic-command>
 			<generic-command name="classify"
-				input="ticket"
+				inputs="ticket"
 			>
 				<switch>
-					<case test="t -> $t == null">
+					<case test="$value == null">
 						<write-channel name="ticket"/>
 					</case>
 				</switch>

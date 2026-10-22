@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.admin;
 
+import com.top_logic.layout.view.command.WithResultActions;
+import com.top_logic.layout.view.command.WithValueArgument;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
@@ -28,11 +30,12 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Expects its input to be a (transient) object carrying a {@code login} attribute and an optional
- * {@code password} attribute (e.g. the model of the "new account" {@code <form>} after
- * {@code <store-form-state/>}). The account is created with the default {@link AuthenticationDevice};
+ * {@code password} attribute (e.g. the model of the "new account" {@code <form>} as the result of
+ * an enclosing {@code <store-form-state>}). The account is created with the default {@link AuthenticationDevice};
  * when a password is given (and the device supports password change) it is set, so the account is
  * immediately usable for login. Must run inside a transaction (wrap the action in
- * {@code <with-transaction>}); the created {@link Person} is returned as the action result.
+ * {@code <with-transaction>}); the created {@link Person} is the result of the action, which its
+ * follow-up actions see (e.g. to select the new account).
  * </p>
  */
 @InApp
@@ -42,7 +45,8 @@ public class CreateAccountAction implements ViewAction {
 	 * Configuration for {@link CreateAccountAction}.
 	 */
 	@TagName("create-account")
-	public interface Config extends PolymorphicConfiguration<CreateAccountAction> {
+	public interface Config extends PolymorphicConfiguration<CreateAccountAction>, WithValueArgument,
+			WithResultActions {
 
 		@Override
 		@ClassDefault(CreateAccountAction.class)

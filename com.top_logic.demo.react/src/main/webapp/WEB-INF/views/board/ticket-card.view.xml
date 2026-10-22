@@ -13,11 +13,11 @@
 	<channels>
 		<channel name="ticket"/>
 		<derived-channel name="name"
-			expr="t -> $t.get(`demo.tickets:Ticket#name`)"
+			expr="$ticket.get(`demo.tickets:Ticket#name`)"
 			inputs="ticket"
 		/>
 		<derived-channel name="status"
-			expr="t -> $t.get(`demo.tickets:Ticket#status`)"
+			expr="$ticket.get(`demo.tickets:Ticket#status`)"
 			inputs="ticket"
 		/>
 	</channels>
@@ -38,7 +38,7 @@
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
 					display="icon-only"
 					image="css:bi bi-box-arrow-up-right"
-					input="ticket"
+					inputs="ticket"
 				>
 					<label>
 						<en>Details</en>

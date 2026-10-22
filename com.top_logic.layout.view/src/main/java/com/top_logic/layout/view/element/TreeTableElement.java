@@ -8,6 +8,11 @@ package com.top_logic.layout.view.element;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import com.top_logic.layout.view.dnd.DropArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -72,6 +77,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	@TagName("tree-table")
 	public interface Config extends AbstractTableElement.Config, TreeStructureConfig {
 
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
+
 		@Override
 		@ClassDefault(TreeTableElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -83,12 +91,14 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		String DROPS = "drops";
 
 		/**
-		 * Optional TL-Script function computing what holds an object in the tree.
+		 * Optional TL-Script expression computing what holds an object in the tree.
 		 *
 		 * <p>
-		 * Takes the input channel values followed by an object as last argument, and returns the object
-		 * whose child list holds it - nothing for the object the tree is built from, and for an object
-		 * belonging to no tree at all.
+		 * The expression sees the values of the inputs as variables named after their channels, or
+		 * by their <code>as</code> names, and the object as the variable
+		 * {@value NodeAsConfig#DEFAULT_NODE_AS}, or by the name given with
+		 * {@value NodeAsConfig#NODE_AS}. It returns the object whose child list holds it - nothing
+		 * for the object the tree is built from, and for an object belonging to no tree at all.
 		 * </p>
 		 *
 		 * <p>
@@ -142,6 +152,19 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		@Name(DROPS)
 		@DefaultContainer
 		List<TableDropConfig> getDrops();
+
+		/**
+		 * A {@link #getDrops() drop} runs its actions with the {@link DropArguments arguments} of
+		 * its signature.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			ActionScope drop = DropArguments.scopeOf(part, getDrops(), config -> config.getTarget().treeSignature());
+			if (drop != null) {
+				return drop;
+			}
+			return AbstractTableElement.Config.super.actionScope(part, outer);
+		}
 	}
 
 	/** The compiled functions computing the tree. */

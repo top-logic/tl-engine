@@ -13,6 +13,12 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.dnd.DropArguments;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.InApp;
@@ -63,6 +69,7 @@ import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.TableView;
@@ -97,6 +104,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	@TagName("table")
 	public interface Config extends AbstractTableElement.Config, RowClassConfig {
 
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
+
 		@Override
 		@ClassDefault(TableElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -129,15 +139,18 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		String EXPORT = "export";
 
 		/**
-		 * TL-Script function computing the row objects (a {@link Collection}).
+		 * TL-Script expression computing the row objects (a {@link Collection}).
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, e.g. {@code inputs="selection as project"}
+		 * with {@code rows="$project.get(`my.module:Project#tickets`)"}.
 		 * </p>
 		 */
 		@Name(ROWS)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getRows();
 
 		/**
@@ -223,6 +236,19 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		List<TableDropConfig> getDrops();
 
 		/**
+		 * A {@link #getDrops() drop} runs its actions with the {@link DropArguments arguments} of
+		 * its signature.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			ActionScope drop = DropArguments.scopeOf(part, getDrops(), config -> config.getTarget().signature());
+			if (drop != null) {
+				return drop;
+			}
+			return AbstractTableElement.Config.super.actionScope(part, outer);
+		}
+
+		/**
 		 * The export of this table to Excel, offered as a command in the toolbar of the element the
 		 * table is displayed in, as the first command of its group.
 		 *
@@ -271,8 +297,8 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	@CalledByReflection
 	public TableElement(InstantiationContext context, Config config) {
 		super(context, config);
-		_rowsExecutor = QueryExecutor.compile(config.getRows());
-		_rowClass = RowClassFunction.compile(config.getRowClass());
+		_rowsExecutor = InputScript.compile(config, Config.ROWS);
+		_rowClass = RowClassFunction.compile(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
 		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {
 			// The editable table is a control of its own, which carries no drag-and-drop seam; a

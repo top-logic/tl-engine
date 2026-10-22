@@ -22,11 +22,16 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
- * {@link ViewAction} that writes the input value to a named channel.
+ * {@link ViewAction} that writes the value it processes to a named channel, or empties the channel.
  *
  * <p>
- * Passes the input through as output so the chain can continue.
+ * Example: delete the selected object and clear the selection:
  * </p>
+ *
+ * <pre>
+ * &lt;delete-object/&gt;
+ * &lt;write-channel name="selection" clear="true"/&gt;
+ * </pre>
  *
  * <p>
  * A form displaying the channel value vetoes the write while it holds unsaved changes. The action
@@ -43,21 +48,40 @@ public class WriteChannelAction extends InterruptibleViewAction {
 	 * Configuration for {@link WriteChannelAction}.
 	 */
 	@TagName("write-channel")
-	public interface Config extends PolymorphicConfiguration<WriteChannelAction> {
+	public interface Config extends PolymorphicConfiguration<WriteChannelAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(WriteChannelAction.class)
 		Class<? extends WriteChannelAction> getImplementationClass();
 
+		/** Configuration name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Configuration name for {@link #isClear()}. */
+		String CLEAR = "clear";
+
 		/**
 		 * Name of the channel to write to.
 		 */
-		@Name("name")
+		@Name(NAME)
 		@Mandatory
 		String getName();
+
+		/**
+		 * Whether the channel is emptied instead of receiving a value.
+		 *
+		 * <p>
+		 * A clearing action writes nothing of the arguments of the chain, so it selects none with
+		 * {@link #getValue() value}.
+		 * </p>
+		 */
+		@Name(CLEAR)
+		boolean isClear();
 	}
 
 	private final String _channelName;
+
+	private final boolean _clear;
 
 	/**
 	 * Creates a new {@link WriteChannelAction}.
@@ -65,10 +89,18 @@ public class WriteChannelAction extends InterruptibleViewAction {
 	@CalledByReflection
 	public WriteChannelAction(InstantiationContext context, Config config) {
 		_channelName = config.getName();
+		_clear = config.isClear();
+		String value = config.getValue();
+		if (_clear && value != null && !value.isBlank()) {
+			context.error("A <write-channel> either clears its channel ('" + Config.CLEAR
+				+ "') or writes an argument ('" + WithValueArgument.VALUE + "'), not both (at " + config.location()
+				+ ").");
+		}
 	}
 
 	@Override
-	public void execute(ReactContext context, Object input, Continuation continuation) {
+	public void execute(ReactContext context, Object value, Continuation continuation) {
+		Object input = _clear ? null : value;
 		ViewChannel channel = resolveChannel(context);
 		if (channel == null) {
 			continuation.resume(input);
@@ -109,5 +141,13 @@ public class WriteChannelAction extends InterruptibleViewAction {
 			return viewContext.resolveChannel(new ChannelRef(_channelName));
 		}
 		return null;
+	}
+
+	/**
+	 * Writes a channel of the view.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

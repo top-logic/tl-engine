@@ -110,7 +110,7 @@ Five kinds of item:
         <separator/>
         <command-item id="about">
             <action class="com.top_logic.layout.view.command.GenericViewCommand"
-                image="css:bi bi-info-circle" input="ticketCount"
+                image="css:bi bi-info-circle" inputs="ticketCount"
             >
                 <label>
                     <en>About</en>
@@ -119,7 +119,7 @@ Five kinds of item:
                 <executability>
                     <null-input-disabled/>
                 </executability>
-                <notify expr="count -> #('{0} tickets.'@en, '{0} Tickets.'@de).fill($count)"/>
+                <notify expr="#('{0} tickets.'@en, '{0} Tickets.'@de).fill($ticketCount)"/>
             </action>
         </command-item>
     </items>
@@ -161,7 +161,7 @@ Build the items of a nested list with `SidebarElement.createItems(elements, cont
 
 ## Login, anonymous sessions and the login view
 
-Every visitor reaches the application under an anonymous session, so who is let in is a question the application answers rather than one the servlet refuses. An application that shows itself to visitors offers the login from its account area: `user-menu.view.xml` offers an anonymous session (`account -> $account.accountIsAnonymous()`) a Login button that opens `login.view.xml` as a dialog, and the parts that are not for visitors are gated in place — `<access-control scope="administration"/>` on a `<nav-item>`, `<authenticated-only/>` in a command's `<executability>`.
+Every visitor reaches the application under an anonymous session, so who is let in is a question the application answers rather than one the servlet refuses. An application that shows itself to visitors offers the login from its account area: `user-menu.view.xml` offers an anonymous session (`<case test="$currentUser.accountIsAnonymous()">` over the channel `currentUser`) a Login button that opens `login.view.xml` as a dialog, and the parts that are not for visitors are gated in place — `<access-control scope="administration"/>` on a `<nav-item>`, `<authenticated-only/>` in a command's `<executability>`.
 
 An application that has nothing to show a visitor names a login view in its `ViewConfig` instead: `<config config:interface="com.top_logic.layout.view.ViewConfig" login-view="login-page.view.xml">`. `ViewServlet` then renders that view for every request of a session that belongs to no account, whatever the URL names — a route, the default view, an entry point, or a view that is none of them — so the visitor sees the login and nothing else. `login-page.view.xml` is what the framework ships for this: the credentials form on a centered `<panel appearance="card" width="380px">` and nothing else, where `width` is the general option of `<panel>` for a panel that is not to take the width it is offered. An application with a login display of its own names that one. Both displays reference the same `login-form.view.xml` — the fields, the login action, the `<login-commands/>` a feature module contributes to and the `<login-methods/>` buttons of the configured SSO providers — so the dialog and the page offer the same login.
 

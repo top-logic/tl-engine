@@ -135,7 +135,7 @@ public class TestSuspendedCommands extends TestCase {
 
 		assertTrue("The command has settled, so the dialog can be left.", _dialog.isClosable());
 		assertTrue(window().isClosable());
-		assertEquals(List.of("late"), _downstream);
+		assertEquals("The chain goes on with its unchanged argument.", List.of("in"), _downstream);
 	}
 
 	/**
@@ -252,7 +252,7 @@ public class TestSuspendedCommands extends TestCase {
 
 		suspend.resume("late");
 
-		assertEquals(List.of("late"), _downstream);
+		assertEquals("The chain goes on with its unchanged argument.", List.of("in"), _downstream);
 	}
 
 	/** Runs the given actions as a command of the dialog, starting with {@code "in"}. */

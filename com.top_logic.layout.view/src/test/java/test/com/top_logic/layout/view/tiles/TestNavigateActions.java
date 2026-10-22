@@ -23,6 +23,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -75,7 +76,7 @@ public class TestNavigateActions extends TestCase {
 		Object[] seen = new Object[1];
 		ViewAction record = (context, value) -> seen[0] = value;
 
-		ViewActionChain.run(frameContext(path), List.of(new NavigatePopAction(), record), input, null);
+		ViewActionChain.run(frameContext(path), List.of(new NavigatePopAction(), record), args(input), null);
 
 		assertEquals(List.of(frame("overview")), path.get());
 		assertSame("The object survives the pop.", input, seen[0]);
@@ -273,5 +274,10 @@ public class TestNavigateActions extends TestCase {
 	 */
 	public static Test suite() {
 		return ServiceTestSetup.createSetup(TestNavigateActions.class, TypeIndex.Module.INSTANCE);
+	}
+
+	/** The given value as the single argument of a chain. */
+	private static ActionArguments args(Object value) {
+		return ActionArguments.of("input", value);
 	}
 }

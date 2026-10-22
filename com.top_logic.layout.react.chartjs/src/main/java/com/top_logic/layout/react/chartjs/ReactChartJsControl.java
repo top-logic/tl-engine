@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.chartjs;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -53,6 +55,9 @@ public class ReactChartJsControl extends ReactControl {
 
 	private final ResKey _noDataMessage;
 
+	/** The values of the inputs the chart was last evaluated with. */
+	private Object[] _inputValues = new Object[0];
+
 	/** Atomic snapshot of per-render metadata, handler and tooltip references. */
 	private volatile ChartDataSnapshot _snapshot = ChartDataSnapshot.EMPTY;
 
@@ -83,7 +88,8 @@ public class ReactChartJsControl extends ReactControl {
 	 * @param handlers
 	 *        Named click handler configurations keyed by name.
 	 * @param tooltips
-	 *        Named tooltip expressions keyed by name.
+	 *        Named tooltip expressions keyed by name, each taking the input values followed by the
+	 *        metadata object of the data point.
 	 * @param zoomEnabled
 	 *        Whether zoom/pan interaction is enabled.
 	 * @param cssClass
@@ -122,6 +128,7 @@ public class ReactChartJsControl extends ReactControl {
 	}
 
 	private void evaluateAndSetChartData(Object[] inputValues) {
+		_inputValues = inputValues;
 		try {
 			Object rawConfig = _dataFun.execute(inputValues);
 
@@ -181,8 +188,8 @@ public class ReactChartJsControl extends ReactControl {
 		Object targetObject = resolveMetadata(snapshot, datasetIndex, index);
 
 		try {
-			ViewCommand command = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-				.getInstance(handlerConfig.getAction());
+			ViewCommand command = ViewCommands.instantiate(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+				handlerConfig.getAction(), handlerConfig.getAs());
 			return command.execute(getReactContext(), targetObject);
 		} catch (RuntimeException ex) {
 			putState(ERROR, ex.getMessage());
@@ -218,7 +225,9 @@ public class ReactChartJsControl extends ReactControl {
 
 		Object targetObject = resolveMetadata(snapshot, datasetIndex, index);
 
-		Object html = tooltipExpr.execute(targetObject);
+		Object[] values = Arrays.copyOf(_inputValues, _inputValues.length + 1);
+		values[_inputValues.length] = targetObject;
+		Object html = tooltipExpr.execute(values);
 		if (html != null) {
 			putState(TOOLTIP_CONTENT, Map.of(
 				"html", html.toString(),

@@ -150,13 +150,13 @@ A value of any other type has no HTML representation; the element reports that i
 **`thumbnail`** shows that same isolated document as a picture of itself: a card-sized preview for a grid of documents. The frame is laid out at `thumbnail-width` × `thumbnail-height` CSS pixels — 800 × 1130 by default, a portrait page at that width — and scaled down to the width the preview box measures (a `ResizeObserver` on the box, `transform: scale(…)` from its top left corner), so the document appears in its own proportions instead of being reflowed into a small one. The box keeps the aspect ratio of the two sizes and cuts off what is taller, as a page does. A preview is looked at rather than used: it takes no clicks, no focus and no print button, and it is fetched only once it comes near the viewport, so a grid loads the previews the reader actually reaches. Selecting one is therefore the business of whatever carries it — a button in the card writing the element to a channel, for instance.
 
 ```xml
-<object-list inputs="exposes" items="exposes -> $exposes" layout="grid" max-columns="3">
+<object-list inputs="exposes" items="$exposes" layout="grid" max-columns="3">
 	<item>
 		<card padding="compact">
 			<html display="thumbnail" input="element"/>
 			<text css-class="tl-type-body-strong" input="element"/>
 			<button appearance="link">
-				<action class="com.top_logic.layout.view.command.GenericViewCommand" input="element">
+				<action class="com.top_logic.layout.view.command.GenericViewCommand" inputs="element">
 					<label><en>Show</en></label>
 					<write-channel name="expose"/>
 				</action>
@@ -201,10 +201,10 @@ A fraction between 0 and 1 is displayed as a bar with an optional label beside i
 
 `<progress>` (`ProgressElement`) states the bar one of two ways, never both:
 
-- `<progress input="ch" fraction="x -> …"/>` — the filled part directly. Such a bar carries no label unless `label="x -> …"` gives it one.
+- `<progress input="ch" fraction="…$ch…"/>` — the filled part directly. Such a bar carries no label unless `label="…"` gives it one.
   A fraction expression that answers nothing at all leaves the bar without a share: the client marks the bar `aria-busy` and the design-system stylesheet (`tl-progress`, `progress.css`) sweeps a partial fill over the track instead of filling a share of it, which is how a bar over an operation that does not know how far it has come is written — and an operation that learns its share later switches between the two displays by reporting a number again.
-- `<progress input="ch" done="x -> …" total="x -> …"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
+- `<progress input="ch" done="…" total="…"/>` — the two counts the fraction is the ratio of, which are also the label (`3 / 7`) unless `label=` replaces it. A total of zero leaves the bar empty.
 
-Every expression is called with the current value of the `input` channel, which is optional: a bar counting the model as a whole needs none. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
+Every expression sees the current value of the `input` channel as a variable named after the channel (`$ch`), or by the name given with `as` (`input="job as upload"` makes it `$upload`). The input is optional: a bar counting the model as a whole needs none, and its expressions then see no variable. The bar recomputes on a new channel value, on a change of the object the channel holds, and on a create / change / delete of an `observed-types` type — the last is what a bar counting all objects of a type needs, since no channel value changes when one is added. The observation is the shared `ChannelObjectObserver`, attached and detached with the control.
 
 A table cell needs nothing new: a `CellRenderer` yields `new CellContent.Raw((CellControlFactory) ctx -> new ReactProgressControl(ctx, fraction, label))`, the escape hatch `CellContentReactAdapter` already resolves.

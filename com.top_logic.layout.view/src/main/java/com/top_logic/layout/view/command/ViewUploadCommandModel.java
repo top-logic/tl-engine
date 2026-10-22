@@ -42,7 +42,23 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 	 */
 	public ViewUploadCommandModel(UploadCommand command, UploadCommand.Config config, ViewChannel inputChannel,
 			ViewExecutabilityRule rule) {
-		super(command, config, inputChannel, rule);
+		this(command, config, inputChannel == null ? List.of() : List.of(inputChannel), rule);
+	}
+
+	/**
+	 * Creates a new {@link ViewUploadCommandModel} for a command reading the given input channels.
+	 *
+	 * <p>
+	 * The uploaded file is the value the trigger supplies: the rules decide over the arguments
+	 * without a file before the upload, the actions run with each file in turn.
+	 * </p>
+	 *
+	 * @param inputChannels
+	 *        The channels of the {@link UploadCommand.Config#getInputs() inputs}, in their order.
+	 */
+	public ViewUploadCommandModel(UploadCommand command, UploadCommand.Config config,
+			List<ViewChannel> inputChannels, ViewExecutabilityRule rule) {
+		super(command, config, inputChannels, command.getArguments().getTrigger(), rule, null);
 		_uploadCommand = command;
 	}
 
@@ -86,7 +102,8 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 		try {
 			// onComplete advances to the next file once this file's chain settles (success or
 			// abort), so a suspended <confirm> dialog resolves before the next file is processed.
-			ViewActionChain.run(context, _uploadCommand.getActions(), file,
+			ViewActionChain.run(context, _uploadCommand.getActions(),
+				_uploadCommand.getArguments().arguments(file, inputValues()),
 				result -> processFile(context, files, index + 1));
 		} catch (RuntimeException ex) {
 			HandlerResult result =

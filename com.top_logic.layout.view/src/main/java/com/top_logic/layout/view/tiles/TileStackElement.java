@@ -63,8 +63,8 @@ import com.top_logic.layout.view.navigation.RevealPath;
  *   &lt;tile-stack path="navPath" initial="products/overview.view.xml"&gt;
  *     &lt;frame route="product/:product" view="products/detail.view.xml"&gt;
  *       &lt;param name="product"
- *         expr="p -&gt; objectId($p)"
- *         reverse="id -&gt; $id.objectResolve(`my:Product`)"/&gt;
+ *         expr="objectId($product)"
+ *         reverse="$value.objectResolve(`my:Product`)"/&gt;
  *     &lt;/frame&gt;
  *   &lt;/tile-stack&gt;
  * &lt;/view&gt;
@@ -122,7 +122,7 @@ public class TileStackElement implements UIElement {
 		 * <p>
 		 * The frame gets the stack's own channel, not a copy: a frame view declaring a
 		 * {@code <channel name="..."/>} of that name reads the live path. It thereby knows how deep
-		 * it sits - a {@code <derived-channel name="depth" inputs="navPath" expr="p -&gt; $p.size()"/>}
+		 * it sits - a {@code <derived-channel name="depth" inputs="navPath" expr="$navPath.size()"/>}
 		 * turns the path into a number a command's
 		 * {@link com.top_logic.layout.view.command.VisibleIf &lt;visible-if&gt;} rule can test, so
 		 * a "Back" button hides itself on the initial frame.

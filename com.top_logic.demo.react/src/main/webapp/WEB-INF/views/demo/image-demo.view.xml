@@ -25,7 +25,7 @@
 	<channels>
 		<channel name="node"/>
 		<derived-channel name="photo"
-			expr="n -> $n.get(`test.flowchart:FlowNode#image`)"
+			expr="$node.get(`test.flowchart:FlowNode#image`)"
 			inputs="node"
 		/>
 		<!--
@@ -35,9 +35,9 @@
 		-->
 		<channel name="urlInput"/>
 		<derived-channel name="url"
-			expr="u -> if($u == null || $u.isEmpty(), contextPath() + '/images/demo-landscape.svg', $u)"
+			expr="if($urlInput == null || $urlInput.isEmpty(), contextPath() + '/images/demo-landscape.svg', $urlInput)"
 			inputs="urlInput"
-			reverse="u -> $u"
+			reverse="$value"
 		/>
 	</channels>
 

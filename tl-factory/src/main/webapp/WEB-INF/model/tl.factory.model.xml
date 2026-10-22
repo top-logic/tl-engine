@@ -116,6 +116,17 @@
 							<visibility value="read-only"/>
 						</annotations>
 					</property>
+					<!--
+						The initial password of the account root of the application of a development
+						workspace. It is no longer valid once the password is changed in the application.
+					-->
+					<property name="initialPassword"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
 					<property name="log"
 						type="tl.core:Text"
 					>

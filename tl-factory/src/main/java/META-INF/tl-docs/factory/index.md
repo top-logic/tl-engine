@@ -30,9 +30,19 @@ gets access to the container platform itself.
 
 The model module `tl.factory` has the classes `Project` (name, group ID, artifact ID, engine
 version, the workspace as a composition) and `Workspace` (workspace ID, status, host port,
-preview URL, the output of the last operation as `log`) and the enumeration `WorkspaceStatus`:
-*Created*, *Building*, *Starting*, *Running*, *Stopping*, *Stopped*, *Cleaning up*, *Error*,
-*Unknown*.
+preview URL, initial root password, the output of the last operation as `log`) and the
+enumeration `WorkspaceStatus`: *Created*, *Building*, *Starting*, *Running*, *Stopping*,
+*Stopped*, *Cleaning up*, *Error*, *Unknown*.
+
+A new workspace gets a random initial password, which the container passes to the application in
+the environment variable `tl_initial_password` (`ApplicationWorkspaces.ENV_INITIAL_PASSWORD`); the
+application sets it for its account `root` when it creates its database. The detail view shows it
+under the preview link. It is the password of a development workspace and is no longer valid once
+it is changed in the application.
+
+The output of the application itself - the main process of the container - goes to the log of the
+container in the container platform (`docker logs <container>`); the control application only
+shows the output of its own operations.
 
 An operation is started from a command: the function stores the state the operation is in and
 returns; a worker thread of `ProjectWorkspaces` runs the operation in a system context. Its output

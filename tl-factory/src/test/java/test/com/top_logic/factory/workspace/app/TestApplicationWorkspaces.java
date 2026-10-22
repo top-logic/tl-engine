@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Locale;
@@ -22,7 +23,9 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -41,7 +44,8 @@ import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
 
 /**
  * Integration test of {@link ApplicationWorkspaces}: an application is generated, built and run in
- * a Docker workspace, stopped, started again and removed.
+ * a Docker workspace with a given initial password of its account root, stopped, started again and
+ * removed.
  *
  * <p>
  * The test downloads the workspace base image, Maven and the TopLogic release artifacts and takes
@@ -88,6 +92,21 @@ public class TestApplicationWorkspaces extends TestCase {
 	private static final String DATA_CONTENT = "persisted";
 
 	private static final String DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
+
+	private static final String INITIAL_PASSWORD = "it-" + UUID.randomUUID();
+
+	/**
+	 * Log message of the generated application when it takes the initial password of root from
+	 * {@link ApplicationWorkspaces#ENV_INITIAL_PASSWORD}, see
+	 * <code>PersonManager.setupRootPassword()</code>.
+	 */
+	private static final String PASSWORD_FROM_ENV = "Initial password for 'root' set up from environment variable.";
+
+	/**
+	 * Start of the log message of the generated application when it chose a random initial
+	 * password for root.
+	 */
+	private static final String RANDOM_PASSWORD = "Initial password for 'root': ";
 
 	private DockerWorkspaceProvider _provider;
 
@@ -139,7 +158,9 @@ public class TestApplicationWorkspaces extends TestCase {
 
 		long start = System.currentTimeMillis();
 		WorkspaceInfo created =
-			_applications.create(new ApplicationSpec(_workspaceId, GROUP_ID, ARTIFACT_ID), progress);
+			_applications.create(
+				new ApplicationSpec(_workspaceId, GROUP_ID, ARTIFACT_ID).setInitialPassword(INITIAL_PASSWORD),
+				progress);
 		long built = System.currentTimeMillis();
 		assertEquals(WorkspaceState.RUNNING, created.getState());
 		assertEquals(2, created.getVolumes().size());
@@ -147,6 +168,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		String url = _applications.awaitApplication(_workspaceId, ARTIFACT_ID);
 		long reachable = System.currentTimeMillis();
 		assertLoginPage(url);
+		assertInitialPassword(created.getContainerId());
 		assertEquals(0, _provider.exec(_workspaceId,
 			ExecCommand.of("sh", "-c", "echo " + DATA_CONTENT + " > " + DATA_FILE), ExecOutput.NONE));
 
@@ -160,6 +182,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		String restartedUrl = _applications.awaitApplication(_workspaceId, ARTIFACT_ID);
 		long reachableAgain = System.currentTimeMillis();
 		assertLoginPage(restartedUrl);
+		assertInitialPassword(created.getContainerId());
 		StringBuilder data = new StringBuilder();
 		assertEquals(0, _provider.exec(_workspaceId, ExecCommand.of("cat", DATA_FILE), new ExecOutput() {
 			@Override
@@ -193,6 +216,34 @@ public class TestApplicationWorkspaces extends TestCase {
 		System.out.println("Create (image, release repository, generate, build): " + seconds(start, built) + " s");
 		System.out.println("First start until reachable: " + seconds(built, reachable) + " s");
 		System.out.println("Restart until reachable: " + seconds(restart, reachableAgain) + " s");
+	}
+
+	/**
+	 * The application set up the account root with the given initial password: the container passes
+	 * it in {@link ApplicationWorkspaces#ENV_INITIAL_PASSWORD}, and the application reports in its
+	 * log that it took the password from there instead of choosing a random one.
+	 */
+	private void assertInitialPassword(String containerId) throws Exception {
+		StringBuilder env = new StringBuilder();
+		assertEquals(0, _provider.exec(_workspaceId,
+			ExecCommand.of("printenv", ApplicationWorkspaces.ENV_INITIAL_PASSWORD), new ExecOutput() {
+				@Override
+				public void stdout(String text) {
+					env.append(text);
+				}
+			}));
+		assertEquals(INITIAL_PASSWORD + "\n", env.toString());
+
+		StringBuilder log = new StringBuilder();
+		_docker.logContainerCmd(containerId).withStdOut(true).withStdErr(true)
+			.exec(new ResultCallback.Adapter<Frame>() {
+				@Override
+				public void onNext(Frame frame) {
+					log.append(new String(frame.getPayload(), StandardCharsets.UTF_8));
+				}
+			}).awaitCompletion();
+		assertTrue("Initial password not taken from the environment.", log.indexOf(PASSWORD_FROM_ENV) >= 0);
+		assertTrue("Random initial password chosen.", log.indexOf(RANDOM_PASSWORD) < 0);
 	}
 
 	private static long seconds(long from, long to) {

@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -66,6 +67,7 @@ import com.top_logic.util.model.ModelService;
 	PersistencyLayer.Module.class,
 	ModelService.Module.class,
 	SchedulerService.Module.class,
+	SecureRandomService.Module.class,
 })
 public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.Config<?>> {
 
@@ -162,6 +164,11 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * {@link WorkspaceStatus#BUILDING} before the operation starts.
 	 * </p>
 	 *
+	 * <p>
+	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password},
+	 * which the application in it sets for its account {@code root}.
+	 * </p>
+	 *
 	 * @param project
 	 *        A project without workspace.
 	 * @return The workspace.
@@ -187,15 +194,18 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		if (!_busy.add(workspaceId)) {
 			throw new TopLogicException(I18NConstants.ERROR_WORKSPACE_BUSY__PROJECT.fill(project));
 		}
+		String initialPassword = SecureRandomService.getInstance().getRandomString();
 		TLObject workspace;
 		try {
 			workspace = commitInRequest(
-				() -> FactoryModel.createWorkspace(project, workspaceId, WorkspaceStatus.BUILDING));
+				() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING));
 		} catch (RuntimeException ex) {
 			_busy.remove(workspaceId);
 			throw ex;
 		}
-		ApplicationSpec spec = new ApplicationSpec(workspaceId, groupId, artifactId).setEngineVersion(version);
+		ApplicationSpec spec = new ApplicationSpec(workspaceId, groupId, artifactId)
+			.setEngineVersion(version)
+			.setInitialPassword(initialPassword);
 		run(workspace, "Creating application " + groupId + ":" + artifactId + " " + version + ".", log -> {
 			WorkspaceInfo info = applications().create(spec, log);
 			log.update(w -> {

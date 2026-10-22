@@ -211,6 +211,14 @@ public class ApplicationWorkspaces {
 	public static final String ENV_BROWSER = "tl_browser";
 
 	/**
+	 * Environment variable giving a TopLogic application the password of the account {@code root}
+	 * it creates with its database.
+	 *
+	 * @see ApplicationSpec#getInitialPassword()
+	 */
+	public static final String ENV_INITIAL_PASSWORD = "tl_initial_password";
+
+	/**
 	 * Value of {@link #ENV_BROWSER} opening no browser.
 	 */
 	public static final String BROWSER_NONE = "none";
@@ -351,6 +359,10 @@ public class ApplicationWorkspaces {
 			.putEnv(ENV_BUILT_MARKER, builtMarker())
 			.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT))
 			.putEnv(ENV_BROWSER, BROWSER_NONE);
+		String initialPassword = spec.getInitialPassword();
+		if (initialPassword != null) {
+			workspace.putEnv(ENV_INITIAL_PASSWORD, initialPassword);
+		}
 		_provider.create(workspace);
 		_provider.start(workspaceId);
 

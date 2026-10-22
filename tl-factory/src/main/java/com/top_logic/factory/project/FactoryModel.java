@@ -69,6 +69,9 @@ public class FactoryModel {
 	/** Attribute of a {@link #WORKSPACE}: the URL a browser reaches the application with. */
 	public static final String WORKSPACE_PREVIEW_URL = "previewUrl";
 
+	/** Attribute of a {@link #WORKSPACE}: the initial password of the account root of its application. */
+	public static final String WORKSPACE_INITIAL_PASSWORD = "initialPassword";
+
 	/** Attribute of a {@link #WORKSPACE}: the output of its last operation. */
 	public static final String WORKSPACE_LOG = "log";
 
@@ -104,13 +107,17 @@ public class FactoryModel {
 	 *        The project without workspace.
 	 * @param workspaceId
 	 *        The identifier of the container of the workspace.
+	 * @param initialPassword
+	 *        The initial password of the account root of the application in the workspace.
 	 * @param status
 	 *        The initial state.
 	 * @return The new workspace.
 	 */
-	public static TLObject createWorkspace(TLObject project, String workspaceId, WorkspaceStatus status) {
+	public static TLObject createWorkspace(TLObject project, String workspaceId, String initialPassword,
+			WorkspaceStatus status) {
 		TLObject workspace = ModelService.getInstance().getFactory().createObject(workspaceType(), project);
 		workspace.tUpdateByName(WORKSPACE_ID, workspaceId);
+		workspace.tUpdateByName(WORKSPACE_INITIAL_PASSWORD, initialPassword);
 		setStatus(workspace, status);
 		project.tUpdateByName(PROJECT_WORKSPACE, workspace);
 		return workspace;

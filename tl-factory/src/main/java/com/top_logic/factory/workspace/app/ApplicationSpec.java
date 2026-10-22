@@ -21,6 +21,8 @@ public final class ApplicationSpec {
 
 	private String _engineVersion;
 
+	private String _initialPassword;
+
 	/**
 	 * Creates an {@link ApplicationSpec}.
 	 *
@@ -80,6 +82,26 @@ public final class ApplicationSpec {
 	 */
 	public ApplicationSpec setEngineVersion(String engineVersion) {
 		_engineVersion = engineVersion;
+		return this;
+	}
+
+	/**
+	 * The password the account {@code root} of the application gets when the application creates
+	 * its database, {@code null} for a random one, which the application only writes to its log.
+	 *
+	 * @see ApplicationWorkspaces#ENV_INITIAL_PASSWORD
+	 */
+	public String getInitialPassword() {
+		return _initialPassword;
+	}
+
+	/**
+	 * Sets the initial password of the account {@code root} of the application.
+	 *
+	 * @see #getInitialPassword()
+	 */
+	public ApplicationSpec setInitialPassword(String initialPassword) {
+		_initialPassword = initialPassword;
 		return this;
 	}
 

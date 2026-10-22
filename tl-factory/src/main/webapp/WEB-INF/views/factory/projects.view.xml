@@ -224,6 +224,7 @@
 						input="workspace"
 						mode-switch="false"
 					>
+						<field attribute="initialPassword"/>
 						<field attribute="status"/>
 						<field attribute="workspaceId"/>
 						<field attribute="hostPort"/>

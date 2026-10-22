@@ -133,7 +133,7 @@ public final class WorkspaceInfo {
 	}
 
 	/**
-	 * The names of the volumes of the workspace in the container platform.
+	 * The names of the volumes of the workspace in the container platform, sorted by name.
 	 */
 	public List<String> getVolumes() {
 		return _volumes;

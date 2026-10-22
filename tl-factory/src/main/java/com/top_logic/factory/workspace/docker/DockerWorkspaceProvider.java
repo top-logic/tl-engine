@@ -901,6 +901,7 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		for (InspectVolumeResponse volume : volumes) {
 			result.add(volume.getName());
 		}
+		Collections.sort(result);
 		return result;
 	}
 

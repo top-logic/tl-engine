@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.CalledByReflection;
@@ -45,7 +46,7 @@ public class VerifyOtpAction implements ViewAction {
 	 * Configuration for {@link VerifyOtpAction}.
 	 */
 	@TagName("verify-otp")
-	public interface Config extends PolymorphicConfiguration<VerifyOtpAction> {
+	public interface Config extends PolymorphicConfiguration<VerifyOtpAction>, WithValueArgument {
 
 		/** Configuration name for {@link #getPersist()}. */
 		String PERSIST = "persist";
@@ -130,4 +131,11 @@ public class VerifyOtpAction implements ViewAction {
 		return value == null ? null : value.toString();
 	}
 
+	/**
+	 * Completes the login, switching the session to the authenticated user.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

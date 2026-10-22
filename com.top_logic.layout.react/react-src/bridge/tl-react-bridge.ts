@@ -10,6 +10,7 @@ import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
 import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
+import type { CommandOptions } from './command-channel';
 
 /**
  * Per-control state store compatible with React's useSyncExternalStore.
@@ -284,10 +285,14 @@ export function useTLState<T extends object = Record<string, unknown>>(): T {
  *
  * <p>Commands are dispatched through the strict FIFO chain of {@link enqueueCommand}: they reach
  * the server in dispatch order, and an action command implicitly flushes all pending debounced
- * field values first (see {@link useTLFieldValue}). The returned promise resolves when this
- * command's server response has arrived.</p>
+ * field values first (see {@link useTLFieldValue}), unless the given {@link CommandOptions} say
+ * otherwise. The returned promise resolves when this command's server response has arrived.</p>
  */
-export function useTLCommand(): (command: string, args?: Record<string, unknown>) => Promise<void> {
+export function useTLCommand(): (
+  command: string,
+  args?: Record<string, unknown>,
+  options?: CommandOptions,
+) => Promise<void> {
   const ctx = useContext(TLControlContext);
   if (!ctx) {
     throw new Error('useTLCommand must be used inside a TLReact-mounted component.');
@@ -296,13 +301,13 @@ export function useTLCommand(): (command: string, args?: Record<string, unknown>
   const windowName = ctx.windowName;
 
   return useCallback(
-    async (command: string, args?: Record<string, unknown>) => {
+    async (command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
       await enqueueCommand(getApiBase() + 'react-api/command', {
         controlId,
         command,
         windowName,
         arguments: args ?? {},
-      });
+      }, options);
     },
     [controlId, windowName]
   );
@@ -328,28 +333,15 @@ function oversizedFile(formData: FormData, limit: number): File | null {
 }
 
 /**
- * The total size of all files in the given form data.
- */
-function totalFileSize(formData: FormData): number {
-  let total = 0;
-  for (const value of formData.values()) {
-    if (value instanceof File) {
-      total += value.size;
-    }
-  }
-  return total;
-}
-
-/**
  * Returns a function to upload a FormData to the server for the enclosing control.
  *
  * <p>The control ID and window name are appended automatically. The server dispatches
  * to controls implementing the {@code UploadHandler} interface.</p>
  *
- * <p>A selection larger than the control's {@link STATE_MAX_UPLOAD_SIZE} limit - either a single
- * file or the selection as a whole - is not transmitted at all. Instead, the
- * {@link CMD_UPLOAD_REJECTED} command tells the server about the refusal, which reports the limit
- * to the user.</p>
+ * <p>A selection holding a file larger than the control's {@link STATE_MAX_UPLOAD_SIZE} limit is
+ * not transmitted at all. The limit applies to each file on its own, not to the selection as a
+ * whole. Instead of the upload, the {@link CMD_UPLOAD_REJECTED} command tells the server about the
+ * refusal, which reports the limit to the user.</p>
  */
 export function useTLUpload(): (formData: FormData) => Promise<void> {
   const ctx = useContext(TLControlContext);
@@ -365,15 +357,14 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
       const limit = Number(store.getSnapshot()[STATE_MAX_UPLOAD_SIZE] ?? 0);
       if (limit > 0) {
         const oversized = oversizedFile(formData, limit);
-        const total = totalFileSize(formData);
-        if (oversized !== null || total > limit) {
+        if (oversized !== null) {
           await enqueueCommand(getApiBase() + 'react-api/command', {
             controlId,
             command: CMD_UPLOAD_REJECTED,
             windowName,
             arguments: {
-              fileName: oversized !== null ? oversized.name : '',
-              size: oversized !== null ? oversized.size : total,
+              fileName: oversized.name,
+              size: oversized.size,
             },
           });
           return;
@@ -579,7 +570,7 @@ export interface TLTypingField {
    * The key handler of a single-line input, `undefined` while the state asks for nothing on Enter.
    * Never attach it to a text area, where Enter is part of the text.
    */
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 }
 
 /**
@@ -650,7 +641,7 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
   }, [normalize, text, setValue, toValue, commitEdit]);
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+    (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) {
         return;
       }

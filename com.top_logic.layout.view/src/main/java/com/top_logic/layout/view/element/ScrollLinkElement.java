@@ -19,12 +19,15 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.common.ScrollLinkControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputRefFormat;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.SingleInput;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * Declarative {@link UIElement} rendering a link that scrolls the view to the
@@ -33,7 +36,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * <p>
  * The link is hidden while the input is {@code null}, so it can display a "cited"/"reply-to"
  * reference only when set. The link text is the object's label, or the result of an optional
- * {@link Config#getLabel() label function}.
+ * {@link Config#getLabel() label expression}.
  * </p>
  *
  * <p>
@@ -50,10 +53,7 @@ public class ScrollLinkElement implements UIElement {
 	 * Configuration for {@link ScrollLinkElement}.
 	 */
 	@TagName("scroll-link")
-	public interface Config extends UIElement.Config {
-
-		/** Configuration name for {@link #getInput()}. */
-		String INPUT = "input";
+	public interface Config extends UIElement.Config, SingleInput {
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
@@ -64,20 +64,30 @@ public class ScrollLinkElement implements UIElement {
 
 		/**
 		 * Channel providing the object to scroll to; the link is hidden while it is {@code null}.
-		 */
-		@Name(INPUT)
-		@Mandatory
-		@Format(ChannelRefFormat.class)
-		ChannelRef getInput();
-
-		/**
-		 * TL-Script function computing the link text from the target object: {@code target -> text}.
 		 *
 		 * <p>
+		 * The {@link #getLabel() label} sees the object as a variable named after the channel, or by
+		 * the name given with {@code as}: {@code input="replyTo as comment"}.
+		 * </p>
+		 */
+		@Override
+		@Name(INPUT)
+		@Mandatory
+		@Format(InputRefFormat.class)
+		InputRef getInput();
+
+		/**
+		 * TL-Script expression computing the link text from the target object.
+		 *
+		 * <p>
+		 * The expression sees the target object as a variable named after the
+		 * {@link #getInput() input} channel, or by its {@code as} name, e.g.
+		 * {@code input="replyTo as comment"} with {@code label="$comment.get(`my.module:Comment#title`)"}.
 		 * When unset, the target object's label is used.
 		 * </p>
 		 */
 		@Name(LABEL)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getLabel();
 	}
 
@@ -91,12 +101,12 @@ public class ScrollLinkElement implements UIElement {
 	@CalledByReflection
 	public ScrollLinkElement(InstantiationContext context, Config config) {
 		_config = config;
-		_labelExecutor = config.getLabel() == null ? null : QueryExecutor.compile(config.getLabel());
+		_labelExecutor = InputScript.compile(config, Config.LABEL);
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		ViewChannel channel = context.resolveChannel(_config.getInput());
+		ViewChannel channel = context.resolveChannel(_config.getInput().getChannel());
 		Object target = channel.get();
 
 		ScrollLinkControl control = new ScrollLinkControl(context, target, label(target));

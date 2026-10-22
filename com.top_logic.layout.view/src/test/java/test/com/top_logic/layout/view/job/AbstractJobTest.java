@@ -15,6 +15,8 @@ import junit.framework.TestCase;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -125,12 +127,12 @@ public abstract class AbstractJobTest extends TestCase {
 
 	/** An action starting the given work as a job on the {@link #JOB} channel. */
 	protected StartJobAction job(JobBody body, boolean cancelable, List<JobPhase> phases) {
-		return new StartJobAction(new ChannelRef(JOB), List.of(), phases, cancelable, 0, body);
+		return new StartJobAction(new ChannelRef(JOB), ARGUMENTS, List.of(), phases, cancelable, 0, body);
 	}
 
 	/** Runs the given actions as one command over the channels of this test. */
 	protected void run(List<ViewAction> actions) {
-		ViewActionChain.run(_context, actions, INPUT, value -> {
+		ViewActionChain.run(_context, actions, args(INPUT), value -> {
 			_completions.add(value);
 			_settled.countDown();
 		});
@@ -257,4 +259,14 @@ public abstract class AbstractJobTest extends TestCase {
 		}
 	}
 
+	/** Name of the single argument of the chains of the tests. */
+	protected static final String ARGUMENT = "input";
+
+	/** The scope of the chains of the tests. */
+	protected static final ActionScope ARGUMENTS = ActionScope.single(ARGUMENT);
+
+	/** The given value as the single argument of a chain. */
+	protected static ActionArguments args(Object value) {
+		return ActionArguments.of(ARGUMENT, value);
+	}
 }

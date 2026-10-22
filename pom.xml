@@ -37,7 +37,12 @@
 		<slf4j.version>2.0.20</slf4j.version>
 		<log4j.version>2.26.1</log4j.version>
 		<fasterxml.version>2.22.4</fasterxml.version>
+		<!-- Jackson 3 (tools.jackson), used by the MCP SDK; managed apart from Jackson 2 (com.fasterxml). -->
+		<tools.jackson.version>3.2.4</tools.jackson.version>
 		<msgbuf.version>1.3.0</msgbuf.version>
+		<mcp.sdk.version>1.1.5</mcp.sdk.version>
+		<langchain4j.version>1.22.0</langchain4j.version>
+		<langchain4j.beta.version>1.22.0-beta32</langchain4j.beta.version>
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<batik.version>1.20</batik.version>
 		<commonmark.version>0.30.1</commonmark.version>
@@ -377,6 +382,13 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-react</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view</artifactId>
 				<version>${tl.version}</version>
 				<type>test-jar</type>
 				<scope>test</scope>
@@ -723,6 +735,70 @@
 				<artifactId>tl-layout-view-contact</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
+
+			<!-- AI modules -->
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-tool-api</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-core</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-mcp-server</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-a2a</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-chat</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-chat-classic</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-views</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-vector-index</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-index</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-index-onnx</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-eval</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-core</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-view-selfservice</artifactId>
@@ -985,7 +1061,7 @@
 			<dependency>
 				<groupId>jakarta.websocket</groupId>
 				<artifactId>jakarta.websocket-api</artifactId>
-				<version>2.1.1</version>
+				<version>2.2.0</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.websocket</groupId>
@@ -1085,7 +1161,7 @@
 			<dependency>
 			    <groupId>commons-codec</groupId>
 			    <artifactId>commons-codec</artifactId>
-			    <version>1.22.1</version>
+			    <version>1.23.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>
@@ -1171,6 +1247,16 @@
 			<dependency>
 			    <groupId>org.apache.lucene</groupId>
 			    <artifactId>lucene-backward-codecs</artifactId>
+			    <version>9.12.3</version>
+			</dependency>
+			<dependency>
+			    <groupId>org.apache.lucene</groupId>
+			    <artifactId>lucene-core</artifactId>
+			    <version>9.12.3</version>
+			</dependency>
+			<dependency>
+			    <groupId>org.apache.lucene</groupId>
+			    <artifactId>lucene-queries</artifactId>
 			    <version>9.12.3</version>
 			</dependency>
 			<dependency>
@@ -1296,6 +1382,82 @@
 				<version>${fasterxml.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>tools.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>${tools.jackson.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- Libraries of the AI modules -->
+			<dependency>
+				<!-- HTML to Markdown for the web tools of tl-ai-core. -->
+				<groupId>com.vladsch.flexmark</groupId>
+				<artifactId>flexmark-html2md-converter</artifactId>
+				<version>0.64.8</version>
+			</dependency>
+			<dependency>
+				<!-- Model Context Protocol SDK: the MCP client of tl-ai-core and the server of tl-ai-mcp-server. -->
+				<groupId>io.modelcontextprotocol.sdk</groupId>
+				<artifactId>mcp-core</artifactId>
+				<version>${mcp.sdk.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.modelcontextprotocol.sdk</groupId>
+				<artifactId>mcp-json-jackson3</artifactId>
+				<version>${mcp.sdk.version}</version>
+			</dependency>
+			<dependency>
+				<!-- Headless Chromium for the browser tool of tl-ai-core. -->
+				<groupId>com.microsoft.playwright</groupId>
+				<artifactId>playwright</artifactId>
+				<version>1.63.0</version>
+			</dependency>
+			<dependency>
+				<!-- In-process embedder of tl-ai-index-onnx (MIT). -->
+				<groupId>com.microsoft.onnxruntime</groupId>
+				<artifactId>onnxruntime</artifactId>
+				<version>1.31.0</version>
+			</dependency>
+			<dependency>
+				<!-- Hugging Face tokenizers of DJL for tl-ai-index-onnx (Apache-2.0). -->
+				<groupId>ai.djl.huggingface</groupId>
+				<artifactId>tokenizers</artifactId>
+				<version>0.38.0</version>
+			</dependency>
+			<dependency>
+				<!-- Qdrant vector store client of tl-ai-vector-index. -->
+				<groupId>io.qdrant</groupId>
+				<artifactId>client</artifactId>
+				<version>1.19.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.googlecode.json-simple</groupId>
+				<artifactId>json-simple</artifactId>
+				<version>1.1.1</version>
+			</dependency>
+			<dependency>
+				<groupId>io.grpc</groupId>
+				<artifactId>grpc-protobuf</artifactId>
+				<version>1.85.0</version>
+			</dependency>
+			<dependency>
+				<!-- LangChain4j: embedding models and vector stores of tl-ai-vector-index. -->
+				<groupId>dev.langchain4j</groupId>
+				<artifactId>langchain4j-mistral-ai</artifactId>
+				<version>${langchain4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.langchain4j</groupId>
+				<artifactId>langchain4j-qdrant</artifactId>
+				<version>${langchain4j.beta.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.langchain4j</groupId>
+				<artifactId>langchain4j-community-jvector</artifactId>
+				<version>${langchain4j.beta.version}</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.yaml</groupId>
@@ -1569,6 +1731,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-demo-react-mui</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-demo</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>

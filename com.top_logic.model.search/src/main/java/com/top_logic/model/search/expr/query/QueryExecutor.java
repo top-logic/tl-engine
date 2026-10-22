@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.search.expr.query;
 
+import java.util.List;
+
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -17,6 +19,7 @@ import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.compile.SearchExpressionCompiler;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.interpreter.DefResolver;
 import com.top_logic.model.search.expr.interpreter.TypeResolver;
 import com.top_logic.util.model.ModelService;
@@ -105,8 +108,50 @@ public abstract class QueryExecutor {
 	}
 
 	/**
+	 * Creates a {@link QueryExecutor} for an expression with implicitly defined variables.
+	 *
+	 * <p>
+	 * The expression uses the given variable names without declaring them. The resulting
+	 * {@link QueryExecutor} takes the values of the variables as leading positional arguments in
+	 * the order of the given names, see {@link Define#withVariables(List, Expr)}. Arguments
+	 * following the variable values are passed to the expression itself.
+	 * </p>
+	 *
+	 * @param expr
+	 *        The expression using the variables.
+	 * @param variables
+	 *        The names of the implicitly defined variables in the order of their values in the
+	 *        argument list. With an empty list, this is the same as {@link #compile(Expr)}.
+	 * @return The {@link QueryExecutor} that can execute the expression, see
+	 *         {@link #executeWith(Args)}.
+	 */
+	public static QueryExecutor compile(Expr expr, List<String> variables) {
+		return compile(Define.withVariables(variables, expr));
+	}
+
+	/**
+	 * Creates a {@link QueryExecutor} for an optional expression with implicitly defined
+	 * variables.
+	 *
+	 * @param expr
+	 *        The expression using the variables, or <code>null</code>.
+	 * @param variables
+	 *        See {@link #compile(Expr, List)}.
+	 * @return The {@link QueryExecutor} that can execute the expression, or <code>null</code>, if
+	 *         the expression was <code>null</code>.
+	 *
+	 * @see #compile(Expr, List)
+	 */
+	public static QueryExecutor compileOptional(Expr expr, List<String> variables) {
+		if (expr == null) {
+			return null;
+		}
+		return compile(expr, variables);
+	}
+
+	/**
 	 * Creates a {@link QueryExecutor} from the textual XML representation of a search expression.
-	 * 
+	 *
 	 * @param kb
 	 *        The {@link KnowledgeBase} to execute in.
 	 * @param model

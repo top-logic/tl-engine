@@ -93,6 +93,16 @@
 						<property name="note"
 							type="tl.core:String"
 						/>
+						<property name="label"
+							type="tl.core:String"
+						>
+							<annotations>
+								<value-normalizer>
+									<trim/>
+									<lower-case/>
+								</value-normalizer>
+							</annotations>
+						</property>
 						<property name="secret"
 							type="tl.core:String"
 						>

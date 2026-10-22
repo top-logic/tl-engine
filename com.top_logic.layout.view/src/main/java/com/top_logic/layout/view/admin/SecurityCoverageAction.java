@@ -4,6 +4,7 @@
  */
 package com.top_logic.layout.view.admin;
 
+import com.top_logic.layout.view.command.WithResultActions;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -32,7 +33,7 @@ public class SecurityCoverageAction implements ViewAction {
 	/**
 	 * Configuration for {@link SecurityCoverageAction}.
 	 */
-	public interface Config extends PolymorphicConfiguration<SecurityCoverageAction> {
+	public interface Config extends PolymorphicConfiguration<SecurityCoverageAction>, WithResultActions {
 
 		@Override
 		@ClassDefault(SecurityCoverageAction.class)

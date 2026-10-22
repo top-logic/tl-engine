@@ -5,14 +5,11 @@
  */
 package com.top_logic.graphic.flow.server.ui;
 
-import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -38,14 +35,11 @@ import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
 import com.top_logic.model.search.ui.ScriptContextVariables;
-import com.top_logic.util.model.ModelService;
 
 /**
  * {@link FlowChartBuilder} that can be implemented by TL-Script.
@@ -165,13 +159,10 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 				}
 
 				// Add implicit parameters.
-				Set<String> handlerNames = propertyB.getValue().keySet();
-				for (String name : handlerNames) {
-					expr = Define.create(name, expr);
-				}
+				List<String> handlerNames = List.copyOf(propertyB.getValue().keySet());
 
 				try {
-					ModelReferenceChecker.checkModelElements(expr);
+					ModelReferenceChecker.checkModelElements(expr, handlerNames);
 				} catch (I18NRuntimeException ex) {
 					propertyA.setProblemDescription(ex.getErrorKey());
 				}
@@ -206,17 +197,15 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 		Map<String, DiagramHandler> handlerMap = TypedConfiguration.getInstanceMap(context, config.getHandlers());
 		_supportModel = QueryExecutor.compile(config.getSupportsModel());
 
-		SearchExpression createChart =
-			SearchBuilder.toSearchExpression(ModelService.getApplicationModel(), config.getCreateChart());
-
 		// Inject implicit variables.
+		List<String> handlerNames = new ArrayList<>();
 		_handlers = new ArrayList<>();
 		for (Entry<String, DiagramHandler> handler : handlerMap.entrySet()) {
-			createChart = lambda(handler.getKey(), createChart);
+			handlerNames.add(handler.getKey());
 			_handlers.add(handler.getValue());
 		}
 
-		_createChart = QueryExecutor.compile(createChart);
+		_createChart = QueryExecutor.compile(config.getCreateChart(), handlerNames);
 		_getObserved = QueryExecutor.compileOptional(config.getObserved());
 	}
 
@@ -227,12 +216,12 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 
 	@Override
 	public Diagram getModel(Object businessModel, LayoutComponent aComponent) {
-		Args args = Args.some(businessModel);
-		for (DiagramHandler handler : _handlers) {
-			args = Args.cons(handler, args);
-		}
+		// The handlers are bound to the implicit variables, the business model is the argument of
+		// the configured function.
+		Object[] values = _handlers.toArray(new Object[_handlers.size() + 1]);
+		values[_handlers.size()] = businessModel;
 
-		return (Diagram) _createChart.executeWith(args);
+		return (Diagram) _createChart.executeWith(Args.some(values));
 	}
 
 	@Override

@@ -14,7 +14,7 @@
 	<channels>
 		<channel name="element"/>
 		<derived-channel name="photo"
-			expr="n -> $n.get(`test.flowchart:FlowNode#image`)"
+			expr="$element.get(`test.flowchart:FlowNode#image`)"
 			inputs="element"
 		/>
 	</channels>

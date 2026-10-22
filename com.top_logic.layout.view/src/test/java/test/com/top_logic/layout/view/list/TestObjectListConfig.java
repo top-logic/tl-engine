@@ -31,6 +31,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.list.ObjectListElement;
 import com.top_logic.layout.view.list.ObjectListElement.Layout;
 import com.top_logic.table.SelectionMode;
@@ -57,7 +58,7 @@ public class TestObjectListConfig extends TestCase {
 		ObjectListElement.Config config = readConfig("test-object-list.view.xml");
 
 		assertEquals("The inputs are read in declaration order.",
-			List.of(new ChannelRef("catalogue"), new ChannelRef("season")), config.getInputs());
+			List.of("catalogue", "season"), InputRef.names(config.getInputs()));
 		assertNotNull("The element lookup is read.", config.getItems());
 		assertEquals("The configured arrangement.", Layout.GRID, config.getLayout());
 		assertEquals("The configured column bound.", Integer.valueOf(3), config.getMaxColumns());
@@ -74,7 +75,7 @@ public class TestObjectListConfig extends TestCase {
 		ObjectListElement.Config config = readConfig("test-object-list-inputs.view.xml");
 
 		assertEquals("The inputs are read in declaration order.",
-			List.of(new ChannelRef("catalogue"), new ChannelRef("season")), config.getInputs());
+			List.of("catalogue", "season"), InputRef.names(config.getInputs()));
 	}
 
 	/**

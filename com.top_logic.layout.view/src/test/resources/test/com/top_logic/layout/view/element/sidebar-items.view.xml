@@ -32,7 +32,7 @@
 		<separator id="sep"/>
 		<command-item id="cmdHidden">
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
-				input="count"
+				inputs="count"
 				label="Without input not offered"
 			>
 				<executability>
@@ -42,7 +42,7 @@
 		</command-item>
 		<command-item id="cmdDisabled">
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
-				input="count"
+				inputs="count"
 				label="Without input out of reach"
 			>
 				<executability>

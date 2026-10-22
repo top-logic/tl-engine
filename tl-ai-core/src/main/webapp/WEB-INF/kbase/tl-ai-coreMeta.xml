@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist>
+
+	<metaobject
+		object_name="AIAgent"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+		<!-- Persistence-level uniqueness backstop for Agent names (see issue #172).
+		     The form-level UniqueNameConstraint gives fast interactive feedback; this
+		     index is the authoritative guard against duplicates created programmatically.
+		     For versioned types the framework scopes the index by branch and revision. -->
+		<index>
+			<mo_index name="name" unique="true">
+				<index-parts>
+					<index_part name="name"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+	<metaobject
+		object_name="AISkill"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+		<!-- Persistence-level uniqueness backstop for Skill names (see issue #172).
+		     Skill names are a separate namespace from Agent names. -->
+		<index>
+			<mo_index name="name" unique="true">
+				<index-parts>
+					<index_part name="name"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+	<metaobject
+		object_name="GeneratedHtmlPage"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="id"
+			att_type="String"
+			db_size="32"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="title"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+	</metaobject>
+
+	<!-- Persisted browser screenshots (see browserScreenshot tool). The scalar string metadata
+	     get dedicated columns; the PNG payload (image, Binary), the capture timestamp (capturedAt,
+	     DateTime) and the owner reference use generic flex/association storage, mirroring how
+	     GeneratedHtmlPage stores its htmlContent/owner. -->
+	<metaobject
+		object_name="Screenshot"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="sourceUrl"
+			att_type="String"
+			db_size="2048"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="contentType"
+			att_type="String"
+			db_size="255"
+			mandatory="false"
+		/>
+	</metaobject>
+
+	<!-- Persistent, encrypted browser cookie/login pools (see browserSaveCookies / browserUseCookies
+	     and CookiePoolService). Only the scalar name handle gets a dedicated column; the encrypted
+	     storageState (state, Binary), the shared flag (Boolean), the updatedAt timestamp (DateTime)
+	     and the owner reference use generic flex/association storage, mirroring how Screenshot stores
+	     its image/capturedAt/owner. No unique index on name: uniqueness is per-owner (two users may
+	     each have a pool of the same name), enforced in CookiePoolService, not at the table level. -->
+	<metaobject
+		object_name="CookiePool"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+	</metaobject>
+
+	<!-- tl.ai.execution model. References (kind, owner, session, parentExecution,
+	     status, ...) and date attributes use generic flex/association storage. -->
+
+	<metaobject
+		object_name="AgentSession"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="title"
+			att_type="String"
+			db_size="500"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="status"
+			att_type="String"
+			db_size="255"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="metadata"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+			mandatory="false"
+		/>
+	</metaobject>
+
+	<metaobject
+		object_name="AgentExecution"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="runId"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="agentName"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="model"
+			att_type="String"
+			db_size="255"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="provider"
+			att_type="String"
+			db_size="255"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="stopReason"
+			att_type="String"
+			db_size="64"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="errorMessage"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="inputTokens"
+			att_type="Long"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="outputTokens"
+			att_type="Long"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="thinkingTokens"
+			att_type="Long"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="cacheReadTokens"
+			att_type="Long"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="cacheWriteTokens"
+			att_type="Long"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="transcript"
+			att_type="String"
+			db_size="10000000"
+			db_type="clob"
+			mandatory="false"
+		/>
+	</metaobject>
+
+	<metaobject
+		object_name="AgentInteractionRequest"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="requestId"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="header"
+			att_type="String"
+			db_size="255"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="prompt"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="payload"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="resolution"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+			mandatory="false"
+		/>
+	</metaobject>
+
+	<metaobject
+		object_name="AgentTask"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="taskId"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="subject"
+			att_type="String"
+			db_size="500"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="content"
+			att_type="String"
+			db_size="1000000"
+			db_type="clob"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="status"
+			att_type="String"
+			db_size="64"
+			mandatory="false"
+		/>
+		<mo_attribute
+			att_name="ordinal"
+			att_type="Integer"
+			mandatory="false"
+		/>
+	</metaobject>
+
+	<!-- The memories an agent keeps about a user (Issue #439). The text is a column so the
+	     recall tool can match on it in the database; owner, kind, session and createdAt use
+	     generic flex/association storage like the rest of this module. -->
+	<metaobject
+		object_name="UserMemory"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="text"
+			att_type="String"
+			db_size="4000"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="runId"
+			att_type="String"
+			db_size="64"
+			mandatory="false"
+		/>
+	</metaobject>
+
+	<!-- Archived web pages (tl.ai.execution:ArchivedPage, #617). The handle and the address get
+	     dedicated columns; the text (content, Binary), the fetch time, the hash and the owner
+	     reference use generic flex/association storage, as Screenshot does. -->
+	<metaobject
+		object_name="ArchivedPage"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="handle"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="url"
+			att_type="String"
+			db_size="2048"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="title"
+			att_type="String"
+			db_size="500"
+			mandatory="false"
+		/>
+	</metaobject>
+
+	<!-- Personal access tokens of the agent endpoints (tl.ai.access:AccessToken, Issue #671). The
+	     hash gets a column of its own with a unique index, because every MCP or A2A request looks its
+	     token up by it; the dates and the owner use the generic flex/association storage. -->
+	<metaobject
+		object_name="PersonalAccessToken"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="hint"
+			att_type="String"
+			db_size="32"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="secretHash"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<index>
+			<mo_index name="secretHash" unique="true">
+				<index-parts>
+					<index_part name="secretHash"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+</objectlist>

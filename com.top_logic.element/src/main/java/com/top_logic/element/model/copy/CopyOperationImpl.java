@@ -118,8 +118,9 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	 *
 	 * <p>
 	 * This mirrors a TL-Script attribute read ({@code $orig.get(part)}): if the current user must
-	 * not read the part on the original, the empty value (<code>null</code>, or an empty collection
-	 * for multiple parts) is returned, exactly as {@code get} would. This keeps {@code copy()} a pure
+	 * not read the part on the original, the empty value
+	 * ({@link TLModelUtil#getEmptyValue(TLStructuredTypePart)}) is returned, exactly as {@code get}
+	 * would. This keeps {@code copy()} a pure
 	 * shortcut for {@code new(...).set(part, $orig.get(part))...}.
 	 * </p>
 	 */

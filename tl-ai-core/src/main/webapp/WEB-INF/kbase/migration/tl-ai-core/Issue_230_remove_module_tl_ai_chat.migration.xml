@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Removes the obsolete model module tl.ai.chat and drops its ChatSession table. The model has
+	been replaced by tl.ai.execution:AgentSession; nothing reads or writes ChatSession any more
+	except LegacyChatSessionMigration, which converts every remaining row into an AgentSession at
+	startup and deletes it.
+
+	WHY THIS MIGRATION LIVES IN tl-ai-core AND NOT IN tl-chat
+	The obvious home would be tl-chat, which owns the model being removed. But tl-chat is not a
+	MigrationService module, and making it one would not help: MigrationService only applies
+	migrations of modules that the database already has a stored version for
+	(MigrationUtil.getNewVersions - "if the map is non empty but for a module no Version is given,
+	no migrations must be applied to this module, because the module is a new dependency introduced
+	in a new software version"). A first tl-chat migration would therefore be applied to no
+	existing database at all. tl-ai-core has been a migration module since 8.0.0-alpha7 and has a
+	version chain, so a migration placed here does reach existing databases.
+
+	ORDERING - THIS IS THE DATA-SAFETY ARGUMENT
+	The conversion of the legacy rows is not a migration, it is the startup service
+	LegacyChatSessionMigration, and services always run after MigrationService. Migration ordering
+	therefore cannot express "run after the conversion" directly. Two mechanisms make the drop safe
+	anyway:
+
+	1. This version's only predecessor is Issue_228_rename_module_tl_ai_agent_to_tl_ai_execution,
+	   so it can only be applied to a database whose stored tl-ai-core version is that one. That
+	   version was introduced after LegacyChatSessionMigration had already shipped, so any build
+	   able to bring a database to it contains the conversion service.
+
+	2. require-empty-table below refuses the drop when the table still holds current rows - the
+	   conversion is best effort and logs failures instead of stopping the boot, so it can leave
+	   rows behind. The migration then fails and startup is refused, which keeps the rows
+	   recoverable instead of silently deleting them.
+
+	DATABASES THIS MIGRATION DOES NOT REACH
+	A database older than Issue_228 has no stored tl-ai-core version and is not migrated at all. It
+	is not left broken either: DynamicModelService notices the undeclared module and drops it in its
+	incremental model upgrade, and MigrationService.recoverMetaDefinitions re-creates a schema
+	definition for the orphaned table (WEB-INF/autoconf/inapp-schema-N.meta.xml). Such a database
+	boots, but keeps the empty ChatSession table and the generated recovery files. If it still holds
+	unconverted rows, the incremental upgrade fails instead (DeletedObjectAccess on
+	tl.ai.chat:ChatSession) and startup is refused - again without deleting anything. The fix is the
+	same as for the guard below: boot the previous release once to let the rows be converted.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Issue_230_remove_module_tl_ai_chat"
+		module="tl-ai-core"
+	/>
+	<dependencies>
+		<!--
+			The predecessor in this module's own chain. This is what defines the order: without it
+			MigrationUtil cannot chain the two tl-ai-core versions and reports "Multiple versions
+			with same base version".
+		-->
+		<dependency name="Issue_228_rename_module_tl_ai_agent_to_tl_ai_execution"
+			module="tl-ai-core"
+		/>
+		<dependency name="Ticket_29221_Remove_security_domain"
+			module="tl"
+		/>
+		<dependency name="Ticket_29088_Add_PersistentView"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<pre-processors>
+		<!--
+			Guard: never drop rows that the startup conversion has not converted yet.
+		-->
+		<processor class="com.top_logic.tl.ai.core.migration.RequireEmptyTableProcessor"
+			table="ChatSession"
+			hint="Boot the previous release once so that LegacyChatSessionMigration converts the remaining legacy chat sessions into agent sessions, then upgrade again."
+		/>
+
+		<!--
+			Drops the table and removes it from the persistent schema. Has to happen here, because
+			the application no longer declares WEB-INF/kbase/ChatMeta.xml.
+		-->
+		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">
+			<tables>
+				<table object_name="ChatSession"/>
+			</tables>
+		</processor>
+
+		<!--
+			The class has attributes (title, messages, createdAt, lastUpdated, metadata), so
+			fail-on-existing-attributes must stay off; delete-class removes the parts, the
+			generalization to tl.accounts:WithOwner and the model baseline entry.
+		-->
+		<delete-class name="tl.ai.chat:ChatSession"/>
+
+		<!--
+			Fails rather than deleting silently: anything left in the module at this point is a
+			type this migration failed to remove, and dropping it would drop model parts.
+		-->
+		<delete-module name="tl.ai.chat"
+			fail-on-existing-types="true"
+		/>
+	</pre-processors>
+</migration>

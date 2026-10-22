@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -172,7 +173,7 @@ public class TLScriptEditorReactControl extends ReactControl {
 
 	private Runnable _blurCallback;
 
-	private final List<String> _contextVariables;
+	private final Supplier<List<String>> _contextVariables;
 
 	/**
 	 * Whether the value callback is currently publishing a value the client sent.
@@ -196,10 +197,33 @@ public class TLScriptEditorReactControl extends ReactControl {
 	 */
 	public TLScriptEditorReactControl(ReactContext context, String value, boolean readOnly,
 			List<String> contextVariables) {
+		this(context, value, readOnly, constant(Objects.requireNonNull(contextVariables)));
+	}
+
+	/**
+	 * Creates a {@link TLScriptEditorReactControl} whose context variables depend on the state of
+	 * its surroundings.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param value
+	 *        The initial TL-Script text, may be {@code null}.
+	 * @param readOnly
+	 *        Whether the editor is read-only.
+	 * @param contextVariables
+	 *        Computes the names of the variables in scope for completion; asked on every completion
+	 *        request. Must not be {@code null} and must not answer {@code null}.
+	 */
+	public TLScriptEditorReactControl(ReactContext context, String value, boolean readOnly,
+			Supplier<List<String>> contextVariables) {
 		super(context, null, "TLScriptEditor");
 		putState(VALUE, value != null ? value : "");
 		putState(READ_ONLY, Boolean.valueOf(readOnly));
 		_contextVariables = Objects.requireNonNull(contextVariables);
+	}
+
+	private static Supplier<List<String>> constant(List<String> contextVariables) {
+		return () -> contextVariables;
 	}
 
 	/**
@@ -293,7 +317,7 @@ public class TLScriptEditorReactControl extends ReactControl {
 		String requestId = (String) arguments.get(ARG_REQUEST_ID);
 
 		List<CodeCompletion> completions = TLScriptCompletionService.computeCompletions(displayContext(), line,
-			prefix, textToCursor, _contextVariables, false);
+			prefix, textToCursor, _contextVariables.get(), false);
 
 		List<Map<String, Object>> items = new ArrayList<>();
 		for (CodeCompletion c : completions) {

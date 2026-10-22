@@ -42,11 +42,20 @@ function formatSize(size: number): string {
  * Renders a collection of files as chips (part `Chip`): file icon, name, size as detail, pressed to
  * download where the file has data. In edit mode, each chip offers to remove its file, and files can
  * be added via the add button (part `Button`) or by dropping them onto the control; uploads go to the
- * server control's upload endpoint.
+ * server control's upload endpoint. In little room, a table cell for instance, the control keeps to one
+ * line: the chips scroll sideways, each name ends with an ellipsis where it is too long, the sizes
+ * are left out, and the add button stays at the end of the line, showing its icon alone, its label
+ * being its tooltip.
  *
  * State:
  * - chips: [{ key, name, size, hasData }]
  * - editable: boolean
+ * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
+ * - maxUploadSize: number, the size limit of each single file in bytes (0: none); useTLUpload
+ *   refuses a selection holding a larger file before transmitting it
+ * - error: string, the message of the last failed upload; absent after a successful one. Hidden
+ *   from the moment the next upload starts until the server reports its outcome.
+ * - compact: boolean, whether the field is displayed in little room (see FieldState)
  */
 const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
@@ -60,10 +69,16 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
 
   const chips = (state.chips as FileChip[] | null) ?? [];
   const editable = state.editable === true;
+  const accept = (state.accept as string | null) ?? '';
+  const serverError = (state.error as string | null) ?? null;
+  const compact = state.compact === true;
 
   const [uploading, setUploading] = React.useState(false);
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  // The state at the start of the latest upload: its error belongs to an earlier upload and is
+  // hidden until the server sends the next state.
+  const [stateAtUpload, setStateAtUpload] = React.useState<object | null>(null);
 
   const doUpload = React.useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files);
@@ -71,6 +86,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     setUploading(true);
+    setStateAtUpload(state);
     try {
       const formData = new FormData();
       for (const file of list) {
@@ -80,7 +96,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
     } finally {
       setUploading(false);
     }
-  }, [upload]);
+  }, [upload, state]);
 
   const doDownload = React.useCallback(async (chip: FileChip) => {
     if (!chip.hasData) {
@@ -150,6 +166,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
     'tlFileChips',
     editable ? 'tlFileChips--editable' : '',
     isDragOver ? 'tlFileChips--dragover' : '',
+    compact ? 'tlFileChips--compact' : '',
   ].filter(Boolean).join(' ');
 
   return (
@@ -162,37 +179,46 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <div className="tlFileChips__chips">
       {chips.map(chip => (
         <Chip
           key={chip.key}
+          className="tlFileChips__chip"
           icon={FILE_ICON}
           label={chip.name}
-          detail={chip.size != null ? formatSize(chip.size) : undefined}
+          detail={chip.size != null && !compact ? formatSize(chip.size) : undefined}
           tooltip={chip.hasData ? t['js.download.file'].replace('{0}', chip.name) : chip.name}
           onClick={chip.hasData ? () => doDownload(chip) : undefined}
           onRemove={editable ? () => sendCommand(CMD_REMOVE_CHIP, { [ARG_KEY]: chip.key }) : undefined}
           removeLabel={t['js.fileChips.remove'].replace('{0}', chip.name)}
         />
       ))}
+      </div>
       {editable && (
         <>
           <input
             ref={fileInputRef}
             type="file"
             multiple
+            accept={accept || undefined}
             onChange={handleFileChange}
             style={{ display: 'none' }}
           />
           <Button
             label={uploading ? t['js.uploading'] : t['js.fileChips.add']}
             image={ADD_ICON}
-            display="icon-label"
+            display={compact ? 'icon-only' : 'icon-label'}
+            small={compact}
             appearance="secondary"
             disabled={uploading}
             className={uploading ? 'tlFileChips__add tlFileChips__add--uploading' : 'tlFileChips__add'}
             onClick={handleAddClick}
           />
         </>
+      )}
+      {serverError && state !== stateAtUpload && (
+        <span className="tlFileChips__error tl-file-upload__status tl-type-label" role="alert"
+          title={compact ? serverError : undefined}>{serverError}</span>
       )}
     </div>
   );

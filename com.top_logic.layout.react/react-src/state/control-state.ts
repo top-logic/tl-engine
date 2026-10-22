@@ -138,6 +138,12 @@ export interface FieldStateJson extends ControlStateJson {
 	 * Whether pressing Enter in the field sends the submit command with the value typed.
 	 */
 	submitOnEnter: boolean;
+
+	/**
+	 * Whether the field is displayed in little room, a table cell for instance: the height of a
+	 * single line of text, with spacing reduced to what keeps its parts apart.
+	 */
+	compact: boolean;
 }
 
 /**
@@ -442,6 +448,34 @@ export interface TextInputStateJson extends TypingFieldStateJson {
 	 * The number of visible rows of a {@link TextInputStateJson.multiline} field.
 	 */
 	rows: number;
+
+	/**
+	 * Whether the field offers suggestions while the user types. Absent: the field offers none.
+	 *
+	 * The field asks for them with the command `suggest`, giving the text typed as argument
+	 * `text` and the caret position in it as argument `caret`; the answer arrives in
+	 * {@link TextInputStateJson.suggestions}. Asking never changes the value of the field; a suggestion the user
+	 * picks is entered like any other text.
+	 */
+	offersSuggestions: boolean;
+
+	/**
+	 * The suggestions computed for the text {@link TextInputStateJson.suggestionsText} with the caret at
+	 * {@link TextInputStateJson.suggestionsCaret}, in the order they are offered. The list is shown as it is, without
+	 * filtering it further.
+	 */
+	suggestions: SuggestionEntryJson[];
+
+	/**
+	 * The text the {@link TextInputStateJson.suggestions} were computed for. A client that has been typed into since
+	 * it asked ignores suggestions computed for another text or caret position.
+	 */
+	suggestionsText: string;
+
+	/**
+	 * The caret position in {@link TextInputStateJson.suggestionsText} the {@link TextInputStateJson.suggestions} were computed for.
+	 */
+	suggestionsCaret: number;
 }
 
 export namespace TextInputStateJson {
@@ -469,6 +503,38 @@ export namespace TextInputStateJson {
 		 * A search term.
 		 */
 		| 'search';
+}
+
+/**
+ * A suggestion offered for a text being typed: a replacement for a range of that text.
+ *
+ * Picking the suggestion replaces the characters {@link SuggestionEntryJson.from} (inclusive) to {@link SuggestionEntryJson.to}
+ * (exclusive) of the text it was computed for by {@link SuggestionEntryJson.text}, and puts the caret behind the
+ * inserted text. With {@link SuggestionEntryJson.from} equal to {@link SuggestionEntryJson.to}, the suggestion inserts its text at that
+ * position.
+ */
+export interface SuggestionEntryJson {
+	/**
+	 * What the list of suggestions shows for this suggestion.
+	 */
+	label: string;
+
+	/**
+	 * The text replacing the range {@link SuggestionEntryJson.from} to {@link SuggestionEntryJson.to}.
+	 */
+	text: string;
+
+	/**
+	 * The position of the first character replaced, a character offset in the text the suggestion
+	 * was computed for.
+	 */
+	from: number;
+
+	/**
+	 * The position behind the last character replaced, a character offset in the text the
+	 * suggestion was computed for.
+	 */
+	to: number;
 }
 
 /**

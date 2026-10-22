@@ -38,6 +38,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.element.FieldElement;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -231,7 +232,7 @@ public class TestEditorCommands extends TestCase {
 
 		assertEquals(INSERT_CHANNEL, editor.getInsertChannel());
 		assertEquals(1, editor.getCommands().size());
-		assertEquals(VIEW_CHANNEL, editor.getCommands().get(0).getInput().getChannelName());
+		assertEquals(VIEW_CHANNEL, editor.getCommands().get(0).getInputs().get(0).getChannel().getChannelName());
 	}
 
 	/**
@@ -241,7 +242,7 @@ public class TestEditorCommands extends TestCase {
 		GenericViewCommand.Config command = TypedConfiguration.newConfigItem(GenericViewCommand.Config.class);
 		set(command, ViewCommand.Config.PLACEMENT, CommandPlacement.TOOLBAR);
 		if (input != null) {
-			set(command, ViewCommand.Config.INPUT, new ChannelRef(input));
+			set(command, ViewCommand.Config.INPUTS, List.of(new InputRef(new ChannelRef(input))));
 		}
 		return command;
 	}

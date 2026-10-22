@@ -41,7 +41,7 @@
 					</label>
 					<notify
 						display="dialog"
-						expr="x -> #('This entry is contributed by the overlay of the user menu in the TopLogic React demo (WEB-INF/views/user-menu.view.xml of com.top_logic.demo.react).'@en, 'Dieser Eintrag stammt aus dem Overlay des Benutzermenüs in der TopLogic-React-Demo (WEB-INF/views/user-menu.view.xml von com.top_logic.demo.react).'@de)"
+						expr="#('This entry is contributed by the overlay of the user menu in the TopLogic React demo (WEB-INF/views/user-menu.view.xml of com.top_logic.demo.react).'@en, 'Dieser Eintrag stammt aus dem Overlay des Benutzermenüs in der TopLogic-React-Demo (WEB-INF/views/user-menu.view.xml von com.top_logic.demo.react).'@de)"
 					/>
 				</generic-command>
 			</group>

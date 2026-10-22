@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.htmlpages">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.core.htmlpages.model.impl"
+				interface-package="com.top_logic.tl.ai.core.htmlpages.model"
+			/>
+		</annotations>
+		<types>
+			<class name="GeneratedHtmlPage">
+				<annotations>
+					<table name="GeneratedHtmlPage"/>
+				</annotations>
+				<attributes>
+					<property name="id"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="title"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="htmlContent"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					/>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

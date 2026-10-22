@@ -141,6 +141,12 @@ public class TypingFieldState_Impl extends com.top_logic.layout.react.state.impl
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.TypingFieldState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.TypingFieldState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;

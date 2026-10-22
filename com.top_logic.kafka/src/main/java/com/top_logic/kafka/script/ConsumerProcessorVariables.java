@@ -30,11 +30,7 @@ public class ConsumerProcessorVariables implements ScriptContextVariablesProvide
 	 */
 	@Override
 	public List<String> getVariables(ValueModel valueModel) {
-		return List.of(
-			ConsumerProcessorByExpression.MESSAGE,
-			ConsumerProcessorByExpression.KEY,
-			ConsumerProcessorByExpression.HEADERS,
-			ConsumerProcessorByExpression.TOPIC);
+		return ConsumerProcessorByExpression.VARIABLES;
 	}
 
 }

@@ -1,0 +1,33 @@
+<handler>
+	<tag name="data">
+		<dispatch>
+			<tag name="item">
+				<object model-type="test.com.top_logic.xio.importer.test11:Item" id-attribute="id">
+					<property name="name" xml-attribute="id"/>
+					<linking>
+						<list-linking name="test.com.top_logic.xio.importer.test11:Container#elements"/>
+					</linking>
+					<dispatch>
+						<tag name="child">
+							<object model-type="test.com.top_logic.xio.importer.test11:Item" id-attribute="id">
+								<property name="name" xml-attribute="id"/>
+								<linking>
+									<list-linking name="test.com.top_logic.xio.importer.test11:Item#children"/>
+								</linking>
+								<dispatch/>
+							</object>
+						</tag>
+						<tag name="child-ref">
+							<object-ref id-attribute="ref">
+								<linking>
+									<list-linking name="test.com.top_logic.xio.importer.test11:Item#children"/>
+								</linking>
+								<dispatch/>
+							</object-ref>
+						</tag>
+					</dispatch>
+				</object>
+			</tag>
+		</dispatch>
+	</tag>
+</handler>

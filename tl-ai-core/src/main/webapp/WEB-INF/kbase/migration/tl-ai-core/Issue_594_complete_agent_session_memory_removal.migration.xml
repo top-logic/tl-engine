@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Repeats Issue_487_remove_agent_session_memory for the databases on which that one never ran.
+
+	Issue_487 named Ticket_29221 as its `tl` dependency. An application with a migration of its own
+	that depends on Issue_230 and on a later `tl` version - every application that wrote one on
+	tl-ai 2.0.2 to 2.0.4, all on 8.0.0-alpha8 - had that dependency moved up to Issue_487 by
+	MigrationUtil, so Issue_487 counted as applied and was skipped: the MEMORY column stayed and the
+	stored tl-ai-core version stayed at Issue_230 (#594). Issue_487 now names the right `tl` version,
+	which fixes every database that has not started on tl-ai 2.0.5 yet. A database that did start on
+	2.0.5, and whose application migrations were then moved to depend on Issue_487 to satisfy the
+	consistency check, still counts Issue_487 as applied, and only a new migration reaches it.
+
+	Such a database has not always kept the column in its persistent schema: the schema stored in
+	the database is replaced by the application's own whenever any migration runs, and the
+	application's no longer declares `memory`. Consulting's database, which ran its own migrations
+	on 2.0.5, is in that state. drop-column, which finds the column through that schema, then skips
+	it, and drop-orphaned-column asks the database itself.
+
+	Every processor skips what is already gone, with a warning: on a database on which Issue_487 did
+	run, this migration changes nothing.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Issue_594_complete_agent_session_memory_removal"
+		module="tl-ai-core"
+	/>
+	<dependencies>
+		<dependency name="Issue_487_remove_agent_session_memory"
+			module="tl-ai-core"
+		/>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_29088_Add_PersistentView"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29092_multi_factor_authentication"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<processors>
+		<drop-column table="AgentSession"
+			column="memory"
+		/>
+		<processor class="com.top_logic.tl.ai.core.migration.DropOrphanedColumnProcessor"
+			table="AgentSession"
+			column="memory"
+		/>
+
+		<delete-property name="tl.ai.execution:AgentSession#memory"/>
+	</processors>
+</migration>

@@ -34,7 +34,8 @@ public class PasswordInputControlProvider implements ReactFieldControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
-		return new ReactPasswordInputControl(context, model);
+		ReactPasswordInputControl control = new ReactPasswordInputControl(context, model);
+		return control;
 	}
 
 	@Override

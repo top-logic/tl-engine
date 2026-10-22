@@ -1,0 +1,52 @@
+package com.top_logic.tl.ai.core.tools.config.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * Information about a layout template definition.
+ */
+message LayoutTemplateInfo {
+	/**
+	 * Template name (definition file identifier).
+	 */
+	string name;
+
+	/**
+	 * Localized label for the template.
+	 */
+	string label;
+
+	/**
+	 * Groups this template belongs to.
+	 */
+	repeated string groups;
+}
+
+/**
+ * Response containing a list of available layout templates.
+ */
+message LayoutTemplateListResponse {
+	/**
+	 * Array of layout template information.
+	 */
+	repeated LayoutTemplateInfo templates;
+}
+
+/**
+ * Response for a layout creation operation.
+ */
+message LayoutCreateResponse {
+	/**
+	 * Whether the creation was successful.
+	 */
+	bool success;
+
+	/**
+	 * The layout key of the created layout.
+	 */
+	string layoutKey;
+}

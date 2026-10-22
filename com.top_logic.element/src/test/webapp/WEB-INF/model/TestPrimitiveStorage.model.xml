@@ -39,6 +39,27 @@
 							ordered="true"
 							type="tl.core:Binary"
 						/>
+						<property name="primitiveBlobs"
+							bag="true"
+							multiple="true"
+							ordered="true"
+							type="tl.core:Binary"
+						>
+							<annotations>
+								<storage-algorithm>
+									<primitive-storage/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="flag"
+							type="tl.core:Boolean"
+						/>
+						<property name="tristate"
+							type="tl.core:Tristate"
+						/>
+						<property name="number"
+							type="tl.core:Long"
+						/>
 					</attributes>
 					<generalizations>
 						<generalization type="tl.model:TLObject"/>

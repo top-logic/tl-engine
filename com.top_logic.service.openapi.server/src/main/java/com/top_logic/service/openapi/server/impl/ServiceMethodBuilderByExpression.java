@@ -20,7 +20,6 @@ import com.top_logic.layout.form.component.Editor;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.search.ui.TLScriptPropertyEditor;
@@ -111,17 +110,9 @@ public class ServiceMethodBuilderByExpression extends AbstractConfiguredInstance
 
 	@Override
 	public ServiceMethod build(String path, List<String> parameters) {
-		Expr expr = getConfig().getOperation();
-
-		// Note: The last argument is passed to the innermost function. Therefore, the lambdas must
-		// be constructed in reverse order.
-		for (int n = parameters.size() - 1; n >= 0; n--) {
-			expr = Define.create(parameters.get(n), expr);
-		}
-
 		QueryExecutor operation;
 		try {
-			operation = QueryExecutor.compile(expr);
+			operation = QueryExecutor.compile(getConfig().getOperation(), parameters);
 		} catch (RuntimeException ex) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_COMPILING_EXPRESSION__PATH_PARAMETERS.fill(path, parameters), ex);

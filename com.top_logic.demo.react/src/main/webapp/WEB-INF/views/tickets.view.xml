@@ -40,8 +40,8 @@
 	list reads the status through its <inputs> and narrows its rows by it.
 	
 	The jump-to box in the app bar demonstrates the submit hook: pressing Enter writes the entered
-	text to the jump channel and then runs the <on-submit> command over it. The command keeps the
-	entered text as its value and branches on the ticket of that name: there is one, and it is
+	text to the jump channel and then runs the <on-submit> command over it. The command sees the
+	entered text as $value and branches on the ticket of that name: there is one, and it is
 	written to the ticket channel - so the list shows it selected -, or there is none, and the
 	list is shown searched for the text. That is what <show-view> does: it brings this very view
 	into view and writes the values its channels receive, the preset all onto activeFilter and the
@@ -70,8 +70,8 @@
 	closes it and dragging it back reopens it, which is what each list's <drop> does with the
 	tickets dropped on it. Dragging a selected row drags the whole selection, so several
 	tickets close in one gesture. The Involve list below them is a row target instead: a
-	ticket dropped onto one of its rows gets a comment by that person, and the person dropped
-	on arrives on the dropPerson channel that the drop's script reads.
+	ticket dropped onto one of its rows gets a comment by that person: the drop names the person
+	dropped on $person and the dragged tickets $tickets, and its scripts read them.
 	
 	Rules restrict where a ticket may be dragged and dropped. The <executability> of both lists'
 	<drag> and <drop> admits only a logged-in user, so an anonymous session can neither pick a
@@ -112,24 +112,23 @@
 		<channel name="searchTerm"/>
 		<channel name="status"/>
 		<channel name="jump"/>
-		<channel name="dropPerson"/>
 		<channel name="ticketEditMode"/>
 		<derived-channel name="ticketId"
-			expr="t -> objectId($t)"
+			expr="objectId($ticket)"
 			inputs="ticket"
-			reverse="id -> $id.objectResolve(`demo.tickets:Ticket`)"
+			reverse="$value.objectResolve(`demo.tickets:Ticket`)"
 		/>
 		<derived-channel name="ticketState"
-			expr="t -> if($t == null, '', if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
+			expr="if($ticket == null, '', if($ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
 			inputs="ticket"
 		/>
 		<derived-channel name="viewedTicket"
-			expr="t -> editing -> if($editing == true, null, $t)"
-			inputs="ticket,ticketEditMode"
+			expr="if($editing == true, null, $ticket)"
+			inputs="ticket, ticketEditMode as editing"
 		/>
 		<derived-channel name="editedTicket"
-			expr="t -> editing -> if($editing == true, $t, null)"
-			inputs="ticket,ticketEditMode"
+			expr="if($editing == true, $ticket, null)"
+			inputs="ticket, ticketEditMode as editing"
 		/>
 	</channels>
 	<param-bindings>
@@ -169,22 +168,25 @@
 						<de>Zu Ticket springen</de>
 					</placeholder>
 					<on-submit>
-						<if test="name -> $name != null &amp;&amp; $name != ''">
+						<if test="$value != null &amp;&amp; $value != ''">
 							<then>
-								<if test="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement() != null">
+								<if test="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement() != null">
 									<then>
-										<execute-script function="name -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $name).firstElement()"/>
-										<write-channel name="ticket"/>
+										<execute-script function="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#name`) == $value).firstElement()">
+											<with-result>
+												<write-channel name="ticket"/>
+											</with-result>
+										</execute-script>
 									</then>
 									<else>
 										<show-view view="tickets.view.xml">
 											<bind
 												channel="activeFilter"
-												expr="term -> 'all'"
+												expr="'all'"
 											/>
 											<bind
 												channel="searchTerm"
-												expr="term -> $term"
+												expr="$value"
 											/>
 										</show-view>
 									</else>
@@ -194,7 +196,7 @@
 					</on-submit>
 				</value-input>
 				<visible-if
-					expr="t -> $t != null"
+					expr="$ticket != null"
 					input="ticket"
 				>
 					<text
@@ -235,7 +237,7 @@
 									/>
 								</executability>
 								<with-transaction>
-									<execute-script function="x -> { areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
+									<execute-script function="{ areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command
@@ -246,20 +248,23 @@
 									<en>New</en>
 									<de>Neu</de>
 								</label>
-								<create-transient type="demo.tickets:Ticket"/>
-								<open-dialog
-									bind-input-to="model"
-									dialog-view="tickets-create.view.xml"
-								>
-									<bind
-										channel="selection"
-										to="ticket"
-									/>
-								</open-dialog>
+								<create-transient type="demo.tickets:Ticket">
+									<with-result>
+										<open-dialog
+											bind-input-to="model"
+											dialog-view="tickets-create.view.xml"
+										>
+											<bind
+												channel="selection"
+												to="ticket"
+											/>
+										</open-dialog>
+									</with-result>
+								</create-transient>
 							</generic-command>
 							<generic-command
 								image="css:bi bi-trash"
-								input="ticket"
+								inputs="ticket"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -268,14 +273,16 @@
 								</label>
 								<executability>
 									<null-input-disabled/>
-									<disabled-if expr="t -> if($t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
+									<disabled-if expr="if($ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, #('Closed tickets cannot be deleted.'@en, 'Geschlossene Tickets können nicht gelöscht werden.'@de), null)"/>
 								</executability>
 								<delete-object/>
-								<write-channel name="ticket"/>
+								<write-channel name="ticket"
+									clear="true"
+								/>
 							</generic-command>
 							<generic-command name="closeTicket"
 								image="css:bi bi-check2-circle"
-								input="ticket"
+								inputs="ticket"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -283,15 +290,15 @@
 									<de>Schließen</de>
 								</label>
 								<executability>
-									<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
+									<visible-if expr="$ticket != null &amp;&amp; $ticket.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`"/>
 								</executability>
 								<with-transaction>
-									<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+									<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command name="reopenTicket"
 								image="css:bi bi-arrow-counterclockwise"
-								input="ticket"
+								inputs="ticket"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -299,15 +306,15 @@
 									<de>Wiedereröffnen</de>
 								</label>
 								<executability>
-									<visible-if expr="t -> $t != null &amp;&amp; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
+									<visible-if expr="$ticket != null &amp;&amp; $ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`"/>
 								</executability>
 								<with-transaction>
-									<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+									<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command name="toggleTicket"
 								image="css:bi bi-toggles"
-								input="ticket"
+								inputs="ticket"
 								placement="TOOLBAR"
 							>
 								<label>
@@ -317,14 +324,14 @@
 								<executability>
 									<null-input-disabled/>
 								</executability>
-								<switch value="t -> $t.get(`demo.tickets:Ticket#status`)">
+								<switch value="$ticket.get(`demo.tickets:Ticket#status`)">
 									<case match="`demo.tickets:TicketStatus#closed`">
 										<with-transaction>
 											<commitMessage>
 												<en>Reopened ticket {0}.</en>
 												<de>Ticket {0} wiedereröffnet.</de>
 											</commitMessage>
-											<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
+											<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`)"/>
 										</with-transaction>
 									</case>
 									<default>
@@ -333,7 +340,7 @@
 												<en>Closed ticket {0}.</en>
 												<de>Ticket {0} geschlossen.</de>
 											</commitMessage>
-											<execute-script function="t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
+											<execute-script function="$ticket.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`)"/>
 										</with-transaction>
 									</default>
 								</switch>
@@ -346,9 +353,9 @@
 								input="ticketState"
 							/>
 							<progress
-								done="x -> all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
+								done="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`).size()"
 								observed-types="demo.tickets:Ticket"
-								total="x -> all(`demo.tickets:Ticket`).size()"
+								total="all(`demo.tickets:Ticket`).size()"
 							/>
 							<fields>
 								<value-input
@@ -390,7 +397,10 @@
 										<authenticated-only/>
 									</executability>
 								</drag>
-								<drop accept="ticket">
+								<drop
+									accept="ticket"
+									as="tickets"
+								>
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -399,7 +409,7 @@
 											<en>Set tickets {0} to open.</en>
 											<de>Tickets {0} auf offen gesetzt.</de>
 										</commitMessage>
-										<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`))"/>
+										<execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#open`))"/>
 									</with-transaction>
 								</drop>
 								<inputs>
@@ -458,7 +468,7 @@
 											<en>Comments</en>
 											<de>Kommentare</de>
 										</label>
-										<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).size()</value>
+										<value>$row.get(`demo.tickets:Ticket#comments`).size()</value>
 									</computed-column>
 									<computed-column name="commentedByMe"
 										type="tl.core:Boolean"
@@ -467,12 +477,12 @@
 											<en>Commented by me</en>
 											<de>Von mir kommentiert</de>
 										</label>
-										<value>t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
+										<value>$row.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == currentUser()).size() &gt; 0</value>
 									</computed-column>
 								</columns>
-								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<rows>{ tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($status == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $status)); }</rows>
 								<!-- Tints the tickets in progress; the class follows the status of each ticket. -->
-								<row-class>state -&gt; row -&gt; $row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
+								<row-class>$row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
 							</table>
 						</panel>
 						<panel fill="false">
@@ -491,10 +501,13 @@
 										<authenticated-only/>
 									</executability>
 									<row-executability>
-										<disabled-if expr="t -> $t.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
+										<disabled-if expr="$row.get(`demo.tickets:Ticket#comments`).filter(c -> $c.get(`demo.tickets:Comment#author`) == currentUser()).size() == 0"/>
 									</row-executability>
 								</drag>
-								<drop accept="ticket">
+								<drop
+									accept="ticket"
+									as="tickets"
+								>
 									<executability>
 										<authenticated-only/>
 									</executability>
@@ -503,7 +516,7 @@
 											<en>Closed tickets {0}.</en>
 											<de>Tickets {0} geschlossen.</de>
 										</commitMessage>
-										<execute-script function="tickets -> $tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
+										<execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, `demo.tickets:TicketStatus#closed`))"/>
 									</with-transaction>
 								</drop>
 								<inputs>
@@ -514,7 +527,7 @@
 									<column attribute="status"/>
 									<column attribute="statusLabel"/>
 								</columns>
-								<rows>state -&gt; { tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($state == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $state)); }</rows>
+								<rows>{ tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`); if($status == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $status)); }</rows>
 							</table>
 						</panel>
 						<panel fill="false">
@@ -525,20 +538,17 @@
 							<table types="tl.accounts:Person">
 								<drop
 									accept="ticket"
+									as="tickets"
 									target="row"
-									target-channel="dropPerson"
+									target-as="person"
 								>
-									<refuse-if>tickets -&gt; person -&gt; { commented = $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == $person).size() &gt; 0).firstElement(); if($commented == null, null, #('{0} has already commented on the ticket "{1}".'@en, '{0} hat das Ticket "{1}" bereits kommentiert.'@de).fill(label($person), label($commented))); }</refuse-if>
+									<refuse-if>{ commented = $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#comments`).filter(c -&gt; $c.get(`demo.tickets:Comment#author`) == $person).size() &gt; 0).firstElement(); if($commented == null, null, #('{0} has already commented on the ticket "{1}".'@en, '{0} hat das Ticket "{1}" bereits kommentiert.'@de).fill(label($person), label($commented))); }</refuse-if>
 									<with-transaction>
 										<commitMessage>
 											<en>Involved a person in tickets {0}.</en>
 											<de>Person an Tickets {0} beteiligt.</de>
 										</commitMessage>
-										<execute-script function="person -> tickets -> $tickets.foreach(t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, $person); $c.set(`demo.tickets:Comment#content`, &quot;Please have a look.&quot;); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); })">
-											<inputs>
-												<input channel="dropPerson"/>
-											</inputs>
-										</execute-script>
+										<execute-script function="$tickets.foreach(t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, $person); $c.set(`demo.tickets:Comment#content`, &quot;Please have a look.&quot;); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); })"/>
 									</with-transaction>
 								</drop>
 								<columns>
@@ -571,7 +581,7 @@
 							<commands>
 								<generic-command
 									image="css:bi bi-pencil"
-									input="viewedTicket"
+									inputs="viewedTicket"
 									placement="TOOLBAR"
 								>
 									<label>
@@ -585,7 +595,7 @@
 								</generic-command>
 								<generic-command
 									image="css:bi bi-check-lg"
-									input="editedTicket"
+									inputs="editedTicket as ticket"
 									placement="TOOLBAR"
 								>
 									<label>
@@ -601,13 +611,13 @@
 											<de>Ticket {0} aktualisiert.</de>
 										</commitMessage>
 										<store-form-state/>
-										<execute-script function="t -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#author`, currentUser()); $c.set(`demo.tickets:Comment#content`, 'Ticket updated.'); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); $t; }"/>
+										<execute-script function="{ c = new(`demo.tickets:Comment`, $ticket); $c.set(`demo.tickets:Comment#author`, currentUser()); $c.set(`demo.tickets:Comment#content`, 'Ticket updated.'); $c.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $c); }"/>
 									</with-transaction>
 									<leave-edit-mode/>
 								</generic-command>
 								<generic-command
 									image="css:bi bi-x-lg"
-									input="editedTicket"
+									inputs="editedTicket"
 									placement="TOOLBAR"
 								>
 									<label>
@@ -622,13 +632,14 @@
 							</commands>
 						</form>
 						<object-list
+							element-as="comment"
 							element-channel="comment"
 							element-type="demo.tickets:Comment"
 							inputs="ticket"
-							items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
-							link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+							items="$ticket.get(`demo.tickets:Ticket#comments`)"
+							link="{ persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); $persistent; }"
 							new-element-channel="newComment"
-							remove="ticket -> comment -> $comment.delete()"
+							remove="$comment.delete()"
 						>
 							<item>
 								<view-ref view="tickets/comment.view.xml">

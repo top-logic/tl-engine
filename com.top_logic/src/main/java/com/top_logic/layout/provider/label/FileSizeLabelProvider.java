@@ -114,7 +114,7 @@ public class FileSizeLabelProvider implements LabelProvider {
 
 		double convertedFileSize = (long) object;
 		int i = 0;
-		while ((convertedFileSize > 1024) && (i < (units.length - 1))) {
+		while ((convertedFileSize >= 1024) && (i < (units.length - 1))) {
 			convertedFileSize /= 1024;
 			i++;
 		}

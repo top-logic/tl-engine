@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" class="tlaidemo-working">
+  <!--
+    The demo's example of <chat-conversation working-indicator="…">: a neutral animation, not a
+    brand. It is placed into the page rather than shown as an <img>, so it draws the track in
+    currentColor and the moving parts in the theme's primary colour, and fits the light and the
+    dark theme alike. Its style rules apply to the whole page, hence the "tlaidemo-" prefix.
+  -->
+  <style>
+    .tlaidemo-working .tlaidemo-track { stroke: currentColor; opacity: 0.25; }
+    .tlaidemo-working .tlaidemo-arc,
+    .tlaidemo-working .tlaidemo-spark { transform-box: view-box; transform-origin: 12px 12px; }
+    .tlaidemo-working .tlaidemo-arc {
+      stroke: var(--button-primary, #2968c8);
+      animation: tlaidemo-spin 1.2s linear infinite;
+    }
+    .tlaidemo-working .tlaidemo-spark {
+      fill: var(--button-primary, #2968c8);
+      animation: tlaidemo-pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes tlaidemo-spin { to { transform: rotate(360deg); } }
+    @keyframes tlaidemo-pulse { 50% { transform: scale(0.6); opacity: 0.55; } }
+    @media (prefers-reduced-motion: reduce) {
+      .tlaidemo-working .tlaidemo-arc,
+      .tlaidemo-working .tlaidemo-spark { animation: none; }
+    }
+  </style>
+  <circle class="tlaidemo-track" cx="12" cy="12" r="9.5" fill="none" stroke-width="2.5"/>
+  <circle class="tlaidemo-arc" cx="12" cy="12" r="9.5" fill="none" stroke-width="2.5"
+    stroke-linecap="round" stroke-dasharray="15 45"/>
+  <path class="tlaidemo-spark" d="M12 7.2 13.3 10.7 16.8 12 13.3 13.3 12 16.8 10.7 13.3 7.2 12 10.7 10.7Z"/>
+</svg>

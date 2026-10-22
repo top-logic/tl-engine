@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="demo.events">
+		<enum name="DocumentKind">
+			<classifier name="AGENDA"/>
+			<classifier name="SLIDES"/>
+			<classifier name="CONTRACT"/>
+			<classifier name="PHOTO"/>
+			<classifier name="OTHER"/>
+		</enum>
+		<enum name="EventStatus">
+			<classifier name="DRAFT"/>
+			<classifier name="PLANNED"/>
+			<classifier name="OPEN_FOR_REGISTRATION"/>
+			<classifier name="SOLD_OUT"/>
+			<classifier name="RUNNING"/>
+			<classifier name="COMPLETED"/>
+			<classifier name="CANCELLED"/>
+		</enum>
+		<enum name="InvoiceDirection">
+			<classifier name="INCOMING"/>
+			<classifier name="OUTGOING"/>
+		</enum>
+		<enum name="InvoiceStatus">
+			<classifier name="RECEIVED"/>
+			<classifier name="CHECKED"/>
+			<classifier name="APPROVED"/>
+			<classifier name="PAID"/>
+			<classifier name="REJECTED"/>
+		</enum>
+		<enum name="RegistrationStatus">
+			<classifier name="PENDING"/>
+			<classifier name="CONFIRMED"/>
+			<classifier name="CHECKED_IN"/>
+			<classifier name="CANCELLED"/>
+		</enum>
+		<enum name="SessionFormat">
+			<classifier name="KEYNOTE"/>
+			<classifier name="TALK"/>
+			<classifier name="WORKSHOP"/>
+			<classifier name="PANEL"/>
+			<classifier name="BREAK"/>
+		</enum>
+		<enum name="SpeakerRole">
+			<classifier name="MAIN_SPEAKER"/>
+			<classifier name="CO_SPEAKER"/>
+			<classifier name="MODERATOR"/>
+		</enum>
+		<enum name="SponsorLevel">
+			<classifier name="BRONZE"/>
+			<classifier name="SILVER"/>
+			<classifier name="GOLD"/>
+			<classifier name="PLATINUM"/>
+		</enum>
+		<class name="Address">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label><![CDATA[a -> ($a.get(`demo.events:Address#street`) + ", " + $a.get(`demo.events:Address#postalCode`) + " " + $a.get(`demo.events:Address#city`))]]></label>
+					</label-provider>
+				</label>
+			</annotations>
+			<attributes>
+				<property name="street"
+					type="tl.core:String"
+				/>
+				<property name="postalCode"
+					type="tl.core:String"
+				/>
+				<property name="city"
+					type="tl.core:String"
+				/>
+				<property name="country"
+					type="tl.util:Country"
+				/>
+			</attributes>
+		</class>
+		<interface name="Documented">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="attachments"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Attachment"
+				/>
+				<reference name="comments"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="tl.comments:Comment"
+				/>
+			</attributes>
+		</interface>
+		<class name="Invoice">
+			<generalizations>
+				<generalization type="Documented"/>
+			</generalizations>
+			<annotations>
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label><![CDATA[i -> $i.get(`demo.events:Invoice#invoiceNumber`)]]></label>
+					</label-provider>
+				</label>
+			</annotations>
+			<attributes>
+				<property name="invoiceNumber"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="invoiceDate"
+					mandatory="true"
+					type="tl.core:Date"
+				/>
+				<property name="dueDate"
+					type="tl.core:Date"
+				/>
+				<property name="taxRate"
+					type="tl.core:Double"
+				/>
+				<property name="scan"
+					type="tl.core:Binary"
+				/>
+				<reference name="lines"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="InvoiceLine"
+				/>
+				<reference name="direction"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="InvoiceDirection"
+				/>
+				<reference name="status"
+					kind="forwards"
+					navigate="true"
+					type="InvoiceStatus"
+				/>
+				<reference name="counterparty"
+					kind="forwards"
+					navigate="true"
+					type="Contacts:CompanyContact"
+				/>
+				<reference name="currency"
+					kind="forwards"
+					navigate="true"
+					type="tl.units:Currency"
+				/>
+				<!--
+					The event the invoice belongs to. An invoice is a part of its event
+					(`Event#invoices`), so this is its container, made readable for the invoice table
+					and for a query that starts at the invoice.
+				-->
+				<reference name="event"
+					kind="forwards"
+					navigate="true"
+					type="Event"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="i -> $i.container()"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<!--
+					The computed amounts are rounded to cents, here and on Event and InvoiceLine: a sum of
+					doubles otherwise shows its binary remainder (a balance of -6794.299999999999).
+				-->
+				<property name="netAmount"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="i -> round($i.get(`demo.events:Invoice#lines`).map(l -> $l.get(`demo.events:InvoiceLine#lineTotal`)).sum(), 2)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="grossAmount"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="i -> { n = $i.get(`demo.events:Invoice#netAmount`); t = $i.get(`demo.events:Invoice#taxRate`); $t == null ? $n : round($n * (1 + $t / 100), 2) }"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="isOverdue"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[i -> { d = $i.get(`demo.events:Invoice#dueDate`); s = $i.get(`demo.events:Invoice#status`); $d != null && $d < today() && $s != `demo.events:InvoiceStatus#PAID` && $s != `demo.events:InvoiceStatus#REJECTED` }]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="InvoiceLine">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label><![CDATA[l -> $l.get(`demo.events:InvoiceLine#description`)]]></label>
+					</label-provider>
+				</label>
+			</annotations>
+			<attributes>
+				<property name="description"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="quantity"
+					type="tl.core:Double"
+				/>
+				<property name="unitPrice"
+					type="tl.core:Double"
+				/>
+				<property name="lineTotal"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="l -> { q = $l.get(`demo.events:InvoiceLine#quantity`); p = $l.get(`demo.events:InvoiceLine#unitPrice`); ($q == null || $p == null) ? 0.0 : round($q * $p, 2) }"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<interface name="Named">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.core:Text"
+				/>
+			</attributes>
+		</interface>
+		<class name="Attachment">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes>
+				<property name="file"
+					mandatory="true"
+					type="tl.core:Binary"
+				/>
+				<property name="uploadedAt"
+					type="tl.core:DateTime"
+				/>
+				<reference name="kind"
+					kind="forwards"
+					navigate="true"
+					type="DocumentKind"
+				/>
+			</attributes>
+		</class>
+		<class name="Event">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="Documented"/>
+			</generalizations>
+			<attributes>
+				<property name="startDate"
+					mandatory="true"
+					type="tl.core:Date"
+				/>
+				<property name="endDate"
+					type="tl.core:Date"
+				/>
+				<property name="ticketPrice"
+					type="tl.core:Double"
+				/>
+				<property name="maxParticipants"
+					type="tl.core:Integer"
+				/>
+				<property name="themeColor"
+					type="tl.util:Color"
+				/>
+				<reference name="status"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="EventStatus"
+				/>
+				<reference name="sessions"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Session"
+				/>
+				<reference name="registrations"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Registration"
+				/>
+				<reference name="sponsorships"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Sponsorship"
+				/>
+				<reference name="invoices"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Invoice"
+				/>
+				<reference name="currency"
+					kind="forwards"
+					navigate="true"
+					type="tl.units:Currency"
+				/>
+				<reference name="venue"
+					kind="forwards"
+					navigate="true"
+					type="Venue"
+				/>
+				<reference name="organizer"
+					kind="forwards"
+					navigate="true"
+					type="orgStructure:OrgUnit"
+				/>
+				<reference name="manager"
+					kind="forwards"
+					navigate="true"
+					type="tl.accounts:Person"
+				/>
+				<property name="registrationCount"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="e -> $e.get(`demo.events:Event#registrations`).filter(r -> $r.get(`demo.events:Registration#status`) != `demo.events:RegistrationStatus#CANCELLED`).size()"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="remainingCapacity"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="e -> { m = $e.get(`demo.events:Event#maxParticipants`); $m == null ? null : $m - $e.get(`demo.events:Event#registrationCount`) }"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="revenue"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="e -> round(sum($e.get(`demo.events:Event#registrations`).filter(r -> $r.get(`demo.events:Registration#status`) != `demo.events:RegistrationStatus#CANCELLED`).map(r -> $r.get(`demo.events:Registration#pricePaid`)).sum(), $e.get(`demo.events:Event#sponsorships`).map(s -> $s.get(`demo.events:Sponsorship#amount`)).sum()), 2)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="totalExpenses"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="e -> round($e.get(`demo.events:Event#invoices`).filter(i -> $i.get(`demo.events:Invoice#direction`) == `demo.events:InvoiceDirection#INCOMING` &amp;&amp; $i.get(`demo.events:Invoice#status`) != `demo.events:InvoiceStatus#REJECTED`).map(i -> $i.get(`demo.events:Invoice#grossAmount`)).sum(), 2)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="balance"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="e -> round($e.get(`demo.events:Event#revenue`) - $e.get(`demo.events:Event#totalExpenses`), 2)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Room">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes>
+				<property name="capacity"
+					type="tl.core:Integer"
+				/>
+				<property name="hasProjector"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
+		<class name="Session">
+			<generalizations>
+				<generalization type="Named"/>
+				<generalization type="Documented"/>
+			</generalizations>
+			<attributes>
+				<property name="startTime"
+					type="tl.core:DateTime"
+				/>
+				<property name="durationMinutes"
+					type="tl.core:Integer"
+				/>
+				<reference name="speakers"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="SpeakerAssignment"
+				/>
+				<reference name="format"
+					kind="forwards"
+					navigate="true"
+					type="SessionFormat"
+				/>
+				<reference name="room"
+					kind="forwards"
+					navigate="true"
+					type="Room"
+				/>
+			</attributes>
+		</class>
+		<class name="Venue">
+			<generalizations>
+				<generalization type="Named"/>
+			</generalizations>
+			<attributes>
+				<property name="capacity"
+					type="tl.core:Integer"
+				/>
+				<property name="website"
+					type="tl.util:URL"
+				/>
+				<property name="email"
+					type="tl.core:String"
+				/>
+				<property name="phone"
+					type="tl.core:String"
+				/>
+				<reference name="address"
+					composite="true"
+					kind="forwards"
+					navigate="true"
+					type="Address"
+				/>
+				<reference name="rooms"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Room"
+				/>
+			</attributes>
+		</class>
+		<class name="Registration">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label><![CDATA[r -> $r.get(`demo.events:Registration#participant`).label()]]></label>
+					</label-provider>
+				</label>
+			</annotations>
+			<attributes>
+				<property name="registeredAt"
+					type="tl.core:DateTime"
+				/>
+				<property name="pricePaid"
+					type="tl.core:Double"
+				/>
+				<property name="notes"
+					type="tl.core:Text"
+				/>
+				<reference name="participant"
+					inverse-reference="registrations"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Contacts:PersonContact"
+				/>
+				<reference name="status"
+					kind="forwards"
+					navigate="true"
+					type="RegistrationStatus"
+				/>
+			</attributes>
+		</class>
+		<class name="SpeakerAssignment">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label><![CDATA[s -> $s.get(`demo.events:SpeakerAssignment#person`).label()]]></label>
+					</label-provider>
+				</label>
+			</annotations>
+			<attributes>
+				<property name="fee"
+					type="tl.core:Double"
+				/>
+				<reference name="person"
+					inverse-reference="speakerAssignments"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Contacts:PersonContact"
+				/>
+				<reference name="role"
+					kind="forwards"
+					navigate="true"
+					type="SpeakerRole"
+				/>
+			</attributes>
+		</class>
+		<class name="Sponsorship">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label><![CDATA[s -> $s.get(`demo.events:Sponsorship#sponsor`).label()]]></label>
+					</label-provider>
+				</label>
+			</annotations>
+			<attributes>
+				<property name="amount"
+					type="tl.core:Double"
+				/>
+				<property name="contractSigned"
+					type="tl.core:Boolean"
+				/>
+				<reference name="sponsor"
+					inverse-reference="sponsorships"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Contacts:CompanyContact"
+				/>
+				<reference name="level"
+					kind="forwards"
+					navigate="true"
+					type="SponsorLevel"
+				/>
+				<reference name="invoice"
+					kind="forwards"
+					navigate="true"
+					type="Invoice"
+				/>
+			</attributes>
+		</class>
+	</module>
+	<!--
+		The back references Albert named on the framework's contact types: from a person to the
+		sessions they speak in and the events they registered for, from a company to what it
+		sponsors. They belong to `Contacts`, so they are declared as an extension of that module,
+		which the model service merges with the framework's own declaration.
+	-->
+	<module name="Contacts">
+		<class name="PersonContact">
+			<attributes>
+				<reference name="speakerAssignments"
+					inverse-reference="person"
+					kind="backwards"
+					multiple="true"
+					type="demo.events:SpeakerAssignment"
+				/>
+				<reference name="registrations"
+					inverse-reference="participant"
+					kind="backwards"
+					multiple="true"
+					type="demo.events:Registration"
+				/>
+			</attributes>
+		</class>
+		<class name="CompanyContact">
+			<attributes>
+				<reference name="sponsorships"
+					inverse-reference="sponsor"
+					kind="backwards"
+					multiple="true"
+					type="demo.events:Sponsorship"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

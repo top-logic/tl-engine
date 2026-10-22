@@ -1,0 +1,212 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-ai-core</artifactId>
+  <name>${project.artifactId}</name>
+  <description>AI agent framework: the streaming agent loop, multi-provider LLM access (OpenAI, Anthropic, Mistral, xAI), the tool system, MCP client, multi-agent delegation, memory and compaction, and the TL-Script bindings.</description>
+  <url>https://github.com/top-logic/tl-engine/</url>
+
+  <dependencies>
+    <!-- msgbuf JSON streaming (JsonWriter/JsonReader) -->
+    <dependency>
+      <groupId>de.haumacher.msgbuf</groupId>
+      <artifactId>msgbuf-api</artifactId>
+    </dependency>
+
+    <!-- TopLogic kernel (KB transactions, locking, security) -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-tool-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-contact</artifactId>
+    </dependency>
+
+    <!-- TL-Script: AttributeByExpression backs the derived attributes of the
+         tl.ai.execution model, and 12 classes compile against
+         com.top_logic.model.search. Declared explicitly rather than relying on
+         the transitive path through tl-contact. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search</artifactId>
+    </dependency>
+
+    <!-- The authentication of the agent endpoints (EndpointAuthentication, personal access
+         tokens): the engine's pluggable, Person-resolving HTTP authentication framework. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-service-openapi-server</artifactId>
+    </dependency>
+    <!-- The views that create, list and revoke personal access tokens extend the engine's
+         settings dialog and administration by same-path overlays, which the ViewLoader merges in
+         dependency order - so this module has to come after the one that declares them. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
+
+    <!-- Chart.js component: the four charts of the agent activity monitor
+         (admin/agentActivity) are the one panel that answers "is this getting
+         worse" rather than "how much now". Declared explicitly rather than
+         relying on tl-ai-demo pulling it in: the layouts ship inside this
+         module, so an application that depends on tl-ai-core alone would
+         otherwise get a view that cannot render. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-chart-chartjs</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.vladsch.flexmark</groupId>
+      <artifactId>flexmark-html2md-converter</artifactId>
+    </dependency>
+
+    <!-- HTML parsing / text extraction for web_fetch -->
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+    </dependency>
+
+    <!-- PDF text extraction for webFetch (Apache-2.0). The parent
+         excludes commons-logging from pdfbox, so its logging goes through jcl-over-slf4j. -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+    </dependency>
+
+    <!-- MCP SDK (client for connecting to external MCP servers) -->
+    <dependency>
+      <groupId>io.modelcontextprotocol.sdk</groupId>
+      <artifactId>mcp-core</artifactId>
+    </dependency>
+
+    <!-- Headless-browser web tool: drives a real Chromium so the agent can read
+         JavaScript-rendered pages that the static webFetch cannot. The Chromium binary is
+         installed separately (see the module README). -->
+    <dependency>
+      <groupId>com.microsoft.playwright</groupId>
+      <artifactId>playwright</artifactId>
+    </dependency>
+
+    <!-- Tests -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--
+        Which test classes a build runs.
+
+        tl-parent-core configures surefire with the single include "test/TestAll.java". That names
+        the engine's generic suite, which additionally collects everything below
+        src/test/java/test - so a test in the "test" package root runs by itself. The first include
+        below names the same class. The AI modules keep most of their tests in packages that mirror
+        the production code instead - a test for com.top_logic.tl.ai.core.agent sits in
+        com.top_logic.tl.ai.core.agent, not in test.com.top_logic.tl.ai.core.agent.
+
+        The second include picks them up by their location. It has to be a %regex[] pattern: a
+        path pattern like com/**/Test*.java is implicitly prefixed with "**/" by surefire, which
+        would match the engine's own test classes inside the tl-basic test jar named in
+        dependenciesToScan, and would match this module's own test/com/... classes a second
+        time. A %regex[] include is anchored at the start of the path, so it matches exactly the
+        two package roots the AI modules own and nothing else.
+
+        Both includes are %regex[] patterns, the first one too, and each accepts a class in two
+        spellings: as the class file path (com/top_logic/.../TestX.class) and as the class name
+        (com.top_logic....TestX). The plugin selects the classes by their path. Surefire 3.6.0
+        then filters that selection again in the test JVM. There it matches a %regex[] include
+        against the class name, and when Ant and %regex[] includes are both configured, it keeps
+        only a class that matches one of each kind. With the path spelling alone, or with
+        "test/TestAll.java" next to a regex, the build runs no test at all and passes with
+        "Tests run: 0". The second filter can only remove classes from the selection, so the
+        class-name spelling selects nothing that the path does not. Surefire 3.6.1 matches the
+        path in both places (apache/maven-surefire#3465); once the build uses it, the class-name
+        spelling can go.
+
+        Whether every test file is in fact reachable this way is asserted by
+        TestSuiteReachability, so a test class in a package nobody scans fails the build instead
+        of silently not running. Every AI module repeats these two includes in its own POM.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>%regex[test[/.]TestAll(\.class)?]</include>
+            <include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
+          </includes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>de.haumacher.msgbuf</groupId>
+        <artifactId>msgbuf-generator-maven-plugin</artifactId>
+        <version>${msgbuf.version}</version>
+        <executions>
+          <execution>
+            <id>generate-protocols</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.top-logic</groupId>
+        <artifactId>tl-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-binding</id>
+            <phase>none</phase>
+            <goals>
+              <goal>generate-java</goal>
+            </goals>
+            <configuration>
+              <modules>tl.ai.core,tl.ai.htmlpages,tl.ai.execution,tl.ai.screenshots,tl.ai.cookiepool,tl.ai.access</modules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

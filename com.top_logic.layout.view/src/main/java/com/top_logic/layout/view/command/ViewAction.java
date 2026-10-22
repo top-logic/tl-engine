@@ -14,16 +14,20 @@ import com.top_logic.layout.react.control.button.ButtonTone;
  * <p>
  * Unlike {@link ViewCommand}, a {@link ViewAction} has no configuration for label, image,
  * executability, or other presentation concerns. It is purely functional: takes an input, produces
- * an output. Actions are chained in a {@link GenericViewCommand} where each action's return value
- * becomes the next action's input.
+ * a result. Actions are chained in a {@link GenericViewCommand}; all actions of a chain run with
+ * the same {@link ActionArguments arguments}, supplied by what triggered the chain. The result of
+ * an action does not reach the actions following it, but its follow-up actions (see
+ * {@link WithResultActions}).
  * </p>
  *
  * <p>
- * The chain always drives actions through {@link #execute(ReactContext, Object, Continuation)}. A
- * regular action only implements the synchronous {@link #execute(ReactContext, Object)} and is
- * adapted automatically. An action that needs to <em>suspend</em> the chain (e.g. to await a
- * confirmation dialog) extends {@link InterruptibleViewAction} and implements the
- * {@link Continuation}-based form instead.
+ * The chain always drives actions through
+ * {@link #execute(ReactContext, ActionArguments, Continuation)}. A regular action processes a single
+ * value - the {@link ActionArguments#value() default argument} - and only implements the
+ * synchronous {@link #execute(ReactContext, Object)}; it is adapted automatically. An action that
+ * needs to <em>suspend</em> the chain (e.g. to await a confirmation dialog) extends
+ * {@link InterruptibleViewAction} and implements the {@link Continuation}-based form instead. An
+ * action working on all arguments extends {@link ArgumentsViewAction}.
  * </p>
  */
 public interface ViewAction {
@@ -34,9 +38,9 @@ public interface ViewAction {
 	 * @param context
 	 *        The React context.
 	 * @param input
-	 *        The input value, typically the output of the previous action in the chain, or
-	 *        {@code null} for the first action.
-	 * @return The result to pass to the next action, or the final result of the chain.
+	 *        The value this action processes: the {@link ActionArguments#value() default argument} of
+	 *        the chain, or the argument selected by {@link WithValueArgument}.
+	 * @return The result of this action, seen by its follow-up actions.
 	 */
 	Object execute(ReactContext context, Object input);
 
@@ -53,12 +57,34 @@ public interface ViewAction {
 	 * @param context
 	 *        The React context.
 	 * @param input
-	 *        The input value (output of the previous action, or {@code null} for the first).
+	 *        The value this action processes, see {@link #execute(ReactContext, Object)}.
 	 * @param continuation
 	 *        Used to continue (or cancel) the chain.
 	 */
 	default void execute(ReactContext context, Object input, Continuation continuation) {
 		continuation.resume(execute(context, input));
+	}
+
+	/**
+	 * Executes this action with the arguments of its chain.
+	 *
+	 * <p>
+	 * This is the method the chain calls. The default processes the
+	 * {@link ActionArguments#value() default argument} with
+	 * {@link #execute(ReactContext, Object, Continuation)}. Actions working on all arguments
+	 * override it (see {@link ArgumentsViewAction}).
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param arguments
+	 *        The arguments of the chain; {@code null} is taken as {@link ActionArguments#NONE}.
+	 * @param continuation
+	 *        Used to continue (or cancel) the chain, {@link Continuation#resume(Object) resumed} with
+	 *        the result of this action.
+	 */
+	default void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		execute(context, arguments == null ? null : arguments.value(), continuation);
 	}
 
 	/**
@@ -91,7 +117,7 @@ public interface ViewAction {
 	 *
 	 * <p>
 	 * The rule decides before the command runs. It therefore receives the <em>command's</em> input,
-	 * not the value the previous action of the chain hands to this action when the chain runs.
+	 * not the value this action processes when the chain runs.
 	 * </p>
 	 *
 	 * @return A rule of this action's own, {@link ViewExecutabilityRule#ALWAYS_EXECUTABLE} for an
@@ -119,5 +145,27 @@ public interface ViewAction {
 	 */
 	default ButtonTone getTone() {
 		return ButtonTone.DEFAULT;
+	}
+
+	/**
+	 * Whether this action changes the state of the view rather than (or in addition to) the model:
+	 * it writes a channel, opens or closes a dialog, navigates, tells the user something, hands
+	 * something to the client, or switches the session.
+	 *
+	 * <p>
+	 * Such an action must not run inside the transaction of a {@link WithTransactionAction}: when
+	 * the commit fails, the model changes are rolled back, but the view would keep what the action
+	 * did - e.g. a channel holding an object that does not exist. Configuring it there is reported
+	 * as an error; it belongs to the actions run after the commit (see
+	 * {@link WithTransactionAction.Config#getWithResult()}).
+	 * </p>
+	 *
+	 * @return {@code false} for an action that only reads or modifies the model, which is the
+	 *         default.
+	 *
+	 * @see ActionScope#isTransactional()
+	 */
+	default boolean changesViewState() {
+		return false;
 	}
 }

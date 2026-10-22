@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The shipped read policy for the perceivable binaries this module stores (issue #227): screenshots,
+	cookie pools, the web pages agent runs read, and the research runs it keeps (issues #764, #827),
+	whose report is rendered as a binary.
+
+	A screenshot is a picture of a page somebody drove a browser to while logged in somewhere, and a
+	cookie pool is that login itself. Both are reachable through "viewDocument", which loads a
+	"tl.core:Binary" attribute into a model's context, so "who may read one" is not a question this
+	module may leave to whoever deploys it.
+
+	THE POLICY: the owner, plus administrators. A binary whose owner cannot be resolved - one an
+	unattended run captured, with no Person to name - is readable by administrators and by code
+	running in a system context, and by nobody else. That is the safe direction rather than an
+	oversight: an orphan with undefined access is the one outcome this policy must not produce.
+
+	HOW IT IS BUILT, in the three pieces below. None of them is a check of its own: the enforcement
+	is the engine's "ModelAccessRights", which "ViewDocumentTool" asks through
+	"ModelSecurity.canRead", so this file only says which roles that check is to find.
+
+	  1. The role "AiBinaryOwner" exists. It is a technical role and means one thing: "this object
+	     belongs to you". Nobody holds it globally - see 2.
+	  2. Two role rules DERIVE it, per object, from the object's own "owner" reference. A rule of
+	     type "reference" navigates a path of business attributes to the accounts that are to hold
+	     the role; a path ending at a Person resolves to that Person's representative group
+	     automatically. An object whose "owner" is empty therefore produces no role holder at all,
+	     which is exactly the null-owner rule - written as the absence of a holder rather than as a
+	     denial nobody could have read.
+	  3. The <security-config> grants Read to that role, per type. Model access is deny-by-default:
+	     a type with no grant for an operation resolves to an empty role set and every check against
+	     it is false, so nothing here has to write a denial, and Write, Delete and Create stay with
+	     the administrators they are already with.
+
+	Administrators and code in a system context bypass the check above all of this
+	(SecurityConfigurationService.isAllowedBypass), which is where the "plus administrators" half of
+	the policy comes from; it is not granted here, because a grant would be a second place saying
+	it.
+
+	WHAT THIS DOES NOT DECIDE. A shared cookie pool (CookiePool#shared) is selectable by every user
+	and every agent session - that is what sharing a login means, and CookiePoolService enforces it
+	on the selection path, which never asks model security. Sharing a login is not the same as
+	letting a model READ the stored session state, so the read policy stays owner-plus-administrator
+	for a shared pool too.
+
+	AN INSTALLATION THAT WANTS A WIDER RULE states one: add its own role to the grants below, or a
+	role rule of its own that puts "AiBinaryOwner" on the objects a reporting role is to reach. It
+	never has to narrow anything here, because nothing here grants more than ownership.
+
+	See the developer article ai/security/administration (the shipped read policy for perceivable
+	binaries) and tl-ai-core/doc/screenshots.md.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<!--
+						Described by "role.description.AiBinaryOwner" in this module's application
+						bundle; InitialRolesManager copies that text onto the role when it creates
+						it, so an administrator meeting the role in the role list is told what it
+						is for.
+					-->
+					<role name="AiBinaryOwner"/>
+				</roles>
+			</instance>
+		</config>
+
+		<!--
+			The two rules that put the role on an object, contributed additively to whatever access
+			manager the application runs. No "class" is named on purpose: replacing the configured
+			access manager from a library module would change far more than this policy is allowed
+			to.
+
+			"inherit" is set on both: a specialization of a screenshot is still a screenshot, and a
+			policy that stopped at the shipped type would be silently absent for the application
+			that specialized it.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="tl.ai.screenshots.owner"
+							inherit="true"
+							meta-element="tl.ai.screenshots:Screenshot"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.screenshots:Screenshot#owner"/>
+							</path>
+						</rule>
+
+						<!--
+							A research run (Issue #764, #827) is its owner's like a screenshot, and so
+							are its parts: a source or a finding gets the role through the run that
+							holds it, so that the owner reads the run's tables too.
+						-->
+						<rule id="tl.ai.research.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchRun"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.research.sources.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchSource"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#sources" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.research.findings.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ResearchFinding"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchRun#findings" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+
+						<!--
+							An archived web page is the account's whose run read it, and the
+							/archived-page/ route asks the same (PageArchive.mayRead). A page a research
+							run's source references is also the run owner's, so that the owner reads
+							every part of the run its sources lead to.
+						-->
+						<rule id="tl.ai.archivedpage.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ArchivedPage"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ArchivedPage#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.archivedpage.research.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:ArchivedPage"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:ResearchSource#page" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#sources" inverse="true"/>
+								<step attribute="tl.ai.execution:ResearchRun#owner"/>
+							</path>
+						</rule>
+
+						<rule id="tl.ai.cookiepool.owner"
+							inherit="true"
+							meta-element="tl.ai.cookiepool:CookiePool"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.cookiepool:CookiePool#owner"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+
+		<!--
+			Read, and only Read. What an owner may do with their own screenshot beyond looking at it
+			- delete it, hand it to somebody - is a question this ticket did not answer, and a grant
+			written on a guess is harder to take back than one that was never there.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.ai.screenshots:Screenshot">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchRun">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchSource">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ResearchFinding">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:ArchivedPage">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+					<class name="tl.ai.cookiepool:CookiePool">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
+	</services>
+</application>

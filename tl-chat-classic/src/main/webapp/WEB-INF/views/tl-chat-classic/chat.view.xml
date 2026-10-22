@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The chat of the classic "Albert" tab (tl-chat/chat/agent.layout.xml), displayed by
+	com.top_logic.ai.chat.classic.ReactViewComponent.
+
+	Generic on purpose: the user's chats on the left, the conversation in the middle, the agent's plan
+	and its sources in a rail on the right, and the rail's pane, in which the agent shows what the user
+	asked to see. Nothing here knows the application. An application that wants its own agent, facts
+	about its classic selection or its own rail sections points the component's `view` attribute at a
+	view of its own - this file is the example to start from.
+
+	A copy has to keep three parts together, or "show me all X as a table" breaks (#649):
+
+	- the "paneObject" channel;
+	- present="paneObject" on <chat-conversation>: the one channel the agent's `present` tool may
+	  write. Deny by default - without it the agent is not offered `present` at all and answers in
+	  text;
+	- input="paneObject" on <chat-rail>: the pane that renders what stands on the channel. Without it
+	  the agent shows a table on a channel nothing displays, and tells the user they see it.
+
+	<selection channel="paneObject"> is the fourth part worth keeping: it tells the agent which object
+	the pane shows, so that "change its date" works on the object the user opened from a table.
+
+	`chat-id="classic"` names the conversation of this tab. It is not the `chat` id of a React page, so
+	a user who has both open has two independent conversations rather than one conversation shown in
+	two windows that do not know of each other.
+-->
+<view>
+	<channels>
+		<channel name="chatSession"/>
+		<!--
+			What the rail's pane shows: what the agent presented - a table, a chart or a form, of any
+			type - and an object the user opens from it. Empty means the rail shows its sections; the
+			pane's close button empties it again.
+		-->
+		<channel name="paneObject"/>
+		<channel name="progressBadge"/>
+		<channel name="sourcesBadge"/>
+	</channels>
+	<chat chat-id="classic"
+		direction="row"
+	>
+		<!--
+			The session list and the conversation share the "chatSession" channel: the list writes the
+			chat the user picks, the conversation writes back the chat it creates. "New chat" clears it.
+		-->
+		<data-list
+			collapsible="true"
+			observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
+			row-actions="hover"
+			row-channel="session"
+			search="true"
+			selection="chatSession"
+		>
+			<commands>
+				<generic-command image="css:bi bi-plus-lg">
+					<label>
+						<en>New chat</en>
+						<de>Neuer Chat</de>
+					</label>
+					<write-channel name="chatSession"/>
+				</generic-command>
+			</commands>
+			<empty-text>
+				<en>No chats yet</en>
+				<de>Noch keine Chats</de>
+			</empty-text>
+			<lines>
+				<line attribute="title"/>
+				<!--
+					What goes on in the chat while the user looks elsewhere (#744): something waits for
+					them, a subagent finished since they last had the chat open, or an agent works there.
+					The list observes executions and interaction requests so that the line follows.
+				-->
+				<line emphasis="secondary">
+					<value><![CDATA[s -> {
+						activity = chatActivity($s);
+						switch {
+							$activity == "waiting": #("Waiting for you"@en, "Wartet auf dich"@de);
+							$activity == "news": #("New result"@en, "Neues Ergebnis"@de);
+							$activity == "running": #("Working …"@en, "Arbeitet …"@de);
+							default: null;
+						}
+					}]]></value>
+				</line>
+			</lines>
+			<row-css-class><![CDATA[s -> {
+				activity = chatActivity($s);
+				switch {
+					$activity == "waiting": "is-waiting";
+					$activity == "news": "has-news";
+					$activity == "running": "is-working";
+					default: null;
+				}
+			}]]></row-css-class>
+			<row-commands>
+				<generic-command
+					clique="delete"
+					image="css:bi bi-trash"
+					inputs="session"
+				>
+					<label>
+						<en>Delete</en>
+						<de>Löschen</de>
+					</label>
+					<!-- A chat that is still being answered is not one anyone means to throw away. -->
+					<executability>
+						<visible-if>
+							<expr><![CDATA[isEmpty($session)
+								|| $session.referers(`tl.ai.execution:AgentExecution#session`)
+									.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
+										== `tl.ai.execution:ExecutionStatus#RUNNING`)
+									.isEmpty()]]></expr>
+						</visible-if>
+					</executability>
+					<confirm>
+						<cancel-label>
+							<en>Keep</en>
+							<de>Behalten</de>
+						</cancel-label>
+						<confirm-label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</confirm-label>
+						<title>
+							<en>Delete chat</en>
+							<de>Chat löschen</de>
+						</title>
+						<expr><![CDATA[{
+							title = $session.get(`tl.ai.execution:AgentSession#title`);
+							{
+								"en": "Delete “" + $title + "”? This cannot be undone.",
+								"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
+							}.internationalize();
+						}]]></expr>
+					</confirm>
+					<!-- Clears the open conversation only when it is the deleted chat. -->
+					<execute-script>
+						<inputs>
+							<input
+								as="open"
+								channel="chatSession"
+							/>
+						</inputs>
+						<function><![CDATA[{
+							aiSessionDelete($session);
+							ifElse($session == $open, null, $open);
+						}]]></function>
+						<with-result>
+							<write-channel name="chatSession"/>
+						</with-result>
+					</execute-script>
+				</generic-command>
+			</row-commands>
+			<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
+				.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+				.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
+				.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
+			<title>
+				<en>Chats</en>
+				<de>Chats</de>
+			</title>
+		</data-list>
+		<!-- The panel bounds the conversation's height, so the transcript scrolls inside it. -->
+		<panel fill="true">
+			<!--
+				`present` names the one channel of this view the agent may write: "show me all X as a
+				table" ends as that table in the rail's pane, in one tool call.
+			-->
+			<chat-conversation
+				input="chatSession"
+				present="paneObject"
+			>
+				<actions rate="true"/>
+				<controls
+					attachments="true"
+					auto-approve="true"
+					enter-hint="true"
+					model-picker="true"
+					thinking="true"
+				/>
+				<!-- Which object the user has open in the pane: its label, type and identifier. -->
+				<selection name="Open object"
+					channel="paneObject"
+				/>
+			</chat-conversation>
+		</panel>
+		<!--
+			While "paneObject" holds something, the rail shows it in its pane in place of the sections:
+			a table, a chart or a form, for any type. A row clicked in a table opens that object's form,
+			and the pane's "back" returns to the table as it was.
+		-->
+		<chat-rail input="paneObject"
+			strip="true"
+		>
+			<section name="progress"
+				badge="progressBadge"
+				icon="css:bi bi-list-check"
+				open="true"
+			>
+				<label>
+					<en>Progress</en>
+					<de>Fortschritt</de>
+				</label>
+				<!-- The agent's plan: the AgentTask objects the run of the open chat writes. -->
+				<data-list
+					collapsible="false"
+					count="progressBadge"
+					observed-types="tl.ai.execution:AgentTask"
+					search="false"
+				>
+					<row-css-class><![CDATA[t -> switch {
+						$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
+						$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
+						default: "is-pending";
+					}]]></row-css-class>
+					<empty-text>
+						<en>Nothing planned yet</en>
+						<de>Noch nichts geplant</de>
+					</empty-text>
+					<inputs>
+						<input channel="chatSession"/>
+					</inputs>
+					<lines>
+						<line attribute="subject"/>
+					</lines>
+					<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
+						$session.referers(`tl.ai.execution:AgentTask#session`)
+							.sort((t -> $t.get(`tl.ai.execution:AgentTask#ordinal`)).comparator()))]]></rows>
+				</data-list>
+			</section>
+			<section name="sources"
+				badge="sourcesBadge"
+				icon="css:bi bi-quote"
+			>
+				<label>
+					<en>Sources</en>
+					<de>Quellen</de>
+				</label>
+				<chat-sources badge="sourcesBadge"/>
+			</section>
+		</chat-rail>
+	</chat>
+</view>

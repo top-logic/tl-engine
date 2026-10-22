@@ -53,6 +53,7 @@ import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldControlRegistry;
@@ -60,6 +61,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.DatePickerState.Precision;
+import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.react.state.TypingFieldState;
@@ -103,6 +105,9 @@ import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
@@ -231,8 +236,20 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final int MANDATORY_TEXT_ON_CHANGE = 18;
 
+	/**
+	 * Position of the input of the test view choosing a text from the options its expression
+	 * computes.
+	 */
+	private static final int COMPUTED_OPTIONS = 19;
+
+	/**
+	 * Position of the input of the test view choosing a text from the options its expression
+	 * computes, offered sorted by their labels.
+	 */
+	private static final int COMPUTED_OPTIONS_BY_LABEL = 20;
+
 	/** The number of inputs in the test view. */
-	private static final int INPUT_COUNT = 19;
+	private static final int INPUT_COUNT = 21;
 
 	/** The enumeration the choice inputs of the test view choose from, part of the application model. */
 	private static final String CHANGE_TYPE = "tl.changelog:ChangeType";
@@ -364,7 +381,7 @@ public class TestValueInputElement extends TestCase {
 		assertTrue("Several owners are chosen at once.", owners.getMultiple());
 		assertNotNull("The options expression must reach the configuration.", owners.getOptions());
 		assertEquals("The options depend on one channel.", 1, owners.getInputs().size());
-		assertEquals("project", owners.getInputs().get(0).getChannelName());
+		assertEquals("project", owners.getInputs().get(0).getChannel().getChannelName());
 	}
 
 	/** A text is written in a text input, on a channel as in an attribute. */
@@ -916,6 +933,38 @@ public class TestValueInputElement extends TestCase {
 	}
 
 	/**
+	 * The options an expression computes are offered in the order it computes them, not sorted by
+	 * their labels.
+	 */
+	public void testComputedOptionsAreOfferedInTheirOrder() throws Exception {
+		assertEquals(List.of("No day", "Monday", "Tuesday"), offeredLabels(COMPUTED_OPTIONS));
+	}
+
+	/**
+	 * The options an expression computes are offered sorted by their labels where the input states
+	 * {@link OptionOrder#BY_LABEL}.
+	 */
+	public void testComputedOptionsAreSortedByLabelOnRequest() throws Exception {
+		assertEquals(List.of("Monday", "No day", "Tuesday"), offeredLabels(COMPUTED_OPTIONS_BY_LABEL));
+	}
+
+	/**
+	 * The labels of the options the select input at the given position hands to its client, in the
+	 * order handed over.
+	 */
+	private List<String> offeredLabels(int position) throws Exception {
+		Map<String, Object> state = select(input(position)).scriptingScalarState();
+
+		assertEquals("The chips are handed their options.", Boolean.TRUE,
+			state.get(DropdownSelectState.OPTIONS_LOADED__PROP));
+		List<String> labels = new ArrayList<>();
+		for (Object option : (List<?>) state.get(DropdownSelectState.OPTIONS__PROP)) {
+			labels.add((String) ((Map<?, ?>) option).get(DropdownSelectState.Option.LABEL__PROP));
+		}
+		return labels;
+	}
+
+	/**
 	 * An annotation the input does not state is taken from the type; one it states wins over the
 	 * type.
 	 */
@@ -1208,9 +1257,9 @@ public class TestValueInputElement extends TestCase {
 			inputControl(inputs, 6, NumberInputControlProvider.Config.class);
 		assertEquals(NumberDisplay.SLIDER, dragged.getDisplay());
 		assertEquals("The bounds of the range must reach the configuration.",
-			Double.valueOf(0.0), dragged.getMin());
-		assertEquals(Double.valueOf(10.0), dragged.getMax());
-		assertEquals(Double.valueOf(1.0), dragged.getStep());
+			Double.valueOf(0.0), evaluated(dragged.getMin()));
+		assertEquals(Double.valueOf(10.0), evaluated(dragged.getMax()));
+		assertEquals(Double.valueOf(1.0), evaluated(dragged.getStep()));
 
 		BooleanControlProvider.Config flipped =
 			inputControl(inputs, 7, BooleanControlProvider.Config.class);
@@ -1400,16 +1449,28 @@ public class TestValueInputElement extends TestCase {
 		return config;
 	}
 
+	/** The number the given constant expression computes. */
+	private static Double evaluated(Expr expr) {
+		return Double.valueOf(((Number) QueryExecutor.compile(expr).execute()).doubleValue());
+	}
+
+	/** The given TL-Script expression. */
+	private static Expr script(String source) {
+		try {
+			return ExprFormat.INSTANCE.getValue(NumberInputControlProvider.Config.MIN, source);
+		} catch (ConfigurationException ex) {
+			throw new AssertionError("Not a TL-Script expression: " + source, ex);
+		}
+	}
+
 	/** A number control dragging its value along a track of a small range. */
 	private static PolymorphicConfiguration<? extends ReactFieldControlProvider> sliderDisplay() {
 		NumberInputControlProvider.Config config =
 			TypedConfiguration.newConfigItem(NumberInputControlProvider.Config.class);
 		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.DISPLAY),
 			NumberDisplay.SLIDER);
-		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MIN),
-			Double.valueOf(0.0));
-		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MAX),
-			Double.valueOf(10.0));
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MIN), script("0.0"));
+		config.update(config.descriptor().getProperty(NumberInputControlProvider.Config.MAX), script("10.0"));
 		return config;
 	}
 

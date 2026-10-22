@@ -466,6 +466,15 @@ public class MySQLHelper extends DBHelper {
 		return true;
 	}
 
+	/**
+	 * The MySQL reference manual on <code>UPDATE</code>: "Single-table UPDATE assignments are
+	 * generally evaluated from left to right."
+	 */
+	@Override
+	public boolean updateAssignmentsSeeNewValues() {
+		return true;
+	}
+
 	@Override
 	public final boolean supportsLimitStart() {
 		return true;

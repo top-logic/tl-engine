@@ -14,11 +14,11 @@
 				view="tiles/person-detail.view.xml"
 			>
 				<param name="person"
-					expr="p -> objectId($p)"
-					reverse="id -> $id.objectResolve(`tl.accounts:Person`)"
+					expr="objectId($person)"
+					reverse="$value.objectResolve(`tl.accounts:Person`)"
 				/>
 				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="p -> $p.get(`tl.accounts:Person#name`)"
+					expr="$person.get(`tl.accounts:Person#name`)"
 					inputs="person"
 				/>
 			</frame>

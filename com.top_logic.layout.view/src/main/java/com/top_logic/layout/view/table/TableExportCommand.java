@@ -47,16 +47,20 @@ import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.table.export.ExcelExportHandler;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.InputsOf;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.command.CommandCliques;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.element.AbstractTableElement;
 import com.top_logic.layout.view.element.JobStatusElement;
 import com.top_logic.layout.view.job.JobMonitor;
 import com.top_logic.layout.view.job.JobRunner;
 import com.top_logic.layout.view.job.JobStatus;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.TableView;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.export.ExcelCellRenderer;
@@ -153,17 +157,20 @@ public class TableExportCommand implements ViewCommand {
 		String getClique();
 
 		/**
-		 * TL-Script function computing the name the exported file is saved under.
+		 * TL-Script expression computing the name the exported file is saved under.
 		 *
 		 * <p>
-		 * Called with the values of the table's {@code inputs}, in declaration order - the same
-		 * values its rows are computed from. The result is a text or an internationalized text; a
+		 * The expression sees the values of the table's {@code inputs} as variables named after
+		 * their channels, or by their {@code as} names - the same values its rows are computed from.
+		 * The result is a text or an internationalized text; a
 		 * name without extension gets the one of the Excel format. Without a function, or for an
 		 * empty result, the name consists of the date, "Export data" and the name of the
 		 * application.
 		 * </p>
 		 */
 		@Name(DOWNLOAD_NAME)
+		@ScriptContextVariables(InputScript.Variables.class)
+		@InputsOf(AbstractTableElement.Config.class)
 		Expr getDownloadName();
 
 		/**
@@ -306,8 +313,7 @@ public class TableExportCommand implements ViewCommand {
 	 */
 	public TableExportCommand(Config config) {
 		_config = config;
-		Expr downloadName = config.getDownloadName();
-		_downloadName = downloadName == null ? null : QueryExecutor.compile(downloadName);
+		_downloadName = InputScript.compile(config, Config.DOWNLOAD_NAME);
 	}
 
 	/**

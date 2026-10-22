@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The account's own preferences for the AI assistant.
+
+	It sits on the account rather than on a chat session because it is about the person, not about
+	one conversation: it follows the user through every agent, every chat and every headless run
+	they trigger. It is free text on purpose (Gitea #437) - a first version that lets a user write
+	"call me Frau Dr. Meier and keep answers to three sentences" without anybody having to guess in
+	advance which knobs to offer.
+
+	The text goes into every request of that account, so its length is capped. The cap is
+	configuration, not a model constant, which is why it is checked by a constraint class rather
+	than by a size annotation.
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.accounts">
+		<class name="Person">
+			<attributes>
+				<property name="aiPreferences"
+					type="tl.core:Text"
+				>
+					<annotations>
+						<label-position value="above-value"/>
+						<constraints>
+							<constraint class="com.top_logic.tl.ai.core.agent.environment.PreferencesLengthConstraint"/>
+						</constraints>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -65,7 +65,7 @@ public class CheckConfigFormAction implements ViewAction {
 	}
 
 	/**
-	 * @return The given input, for the next action, when all forms may be saved.
+	 * @return The given input, when all forms may be saved.
 	 * @throws TopLogicException
 	 *         When a form refuses to be saved.
 	 */

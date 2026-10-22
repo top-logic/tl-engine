@@ -8,6 +8,8 @@ package com.top_logic.layout.view.command;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
@@ -25,6 +27,33 @@ import com.top_logic.layout.view.ViewContext;
  * @see ToolbarBuilder Arranging the resulting models into a toolbar.
  */
 public class ViewCommands {
+
+	/**
+	 * Instantiates a command run by a trigger that supplies a value of its own - the row of a table
+	 * activation, the target of a link.
+	 *
+	 * <p>
+	 * The command is instantiated in the {@link ActionScope#single(String) scope} of the trigger's
+	 * value, so that its actions are compiled against that name in addition to its inputs. The model
+	 * running it is created with the same name, see
+	 * {@link ViewCommandModel#forCommand(ViewContext, ViewCommand, ViewCommand.Config, String)}.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context to instantiate the command in.
+	 * @param config
+	 *        The configuration of the command, {@code null} for none.
+	 * @param trigger
+	 *        The name of the value the trigger supplies.
+	 * @return The command, {@code null} without a configuration or when it cannot be created.
+	 */
+	public static ViewCommand instantiate(InstantiationContext context,
+			PolymorphicConfiguration<? extends ViewCommand> config, String trigger) {
+		if (config == null) {
+			return null;
+		}
+		return ActionScope.single(trigger).bind(context).getInstance(config);
+	}
 
 	/**
 	 * Builds {@link ViewCommandModel}s for the given commands, resolving per-command input

@@ -28,6 +28,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.EnterEditModeAction;
 import com.top_logic.layout.view.command.I18NConstants;
 import com.top_logic.layout.view.command.LeaveEditModeAction;
@@ -56,6 +57,8 @@ public class TestEditModeActions extends AbstractModelAccessTest {
 
 	private static final String CHANGED_NAME = "changed name";
 
+	private static final String PROJECT = "project";
+
 	/**
 	 * A chain storing the form state and then leaving edit mode stores the change and ends in view
 	 * mode.
@@ -65,11 +68,10 @@ public class TestEditModeActions extends AbstractModelAccessTest {
 		FormControl form = editingForm(_project);
 		form.getOverlay().tUpdateByName(NAME, CHANGED_NAME);
 
-		Object result = run(form,
+		run(form,
 			"<" + WITH_TRANSACTION + "><" + STORE_FORM_STATE + "/></" + WITH_TRANSACTION + ">",
 			"<" + LEAVE + "/>");
 
-		assertSame(_project, result);
 		assertEquals(CHANGED_NAME, _project.tValueByName(NAME));
 		assertFalse(form.isEditMode());
 		assertFalse(form.isDirty());
@@ -102,9 +104,8 @@ public class TestEditModeActions extends AbstractModelAccessTest {
 		FormControl form = newForm(_project);
 
 		ViewAction action = action("<" + LEAVE + "/>");
-		Object result = action.execute(viewContext(form), _project);
+		action.execute(viewContext(form), _project);
 
-		assertSame(_project, result);
 		assertFalse(form.isEditMode());
 	}
 
@@ -116,9 +117,8 @@ public class TestEditModeActions extends AbstractModelAccessTest {
 		FormControl form = newForm(_project);
 
 		ViewAction action = action("<" + ENTER + "/>");
-		Object result = action.execute(viewContext(form), _project);
+		action.execute(viewContext(form), _project);
 
-		assertSame(_project, result);
 		assertTrue(form.isEditMode());
 		assertNotNull(form.getOverlay());
 	}
@@ -132,9 +132,8 @@ public class TestEditModeActions extends AbstractModelAccessTest {
 		form.getOverlay().tUpdateByName(NAME, CHANGED_NAME);
 
 		ViewAction action = action("<" + ENTER + "/>");
-		Object result = action.execute(viewContext(form), _project);
+		action.execute(viewContext(form), _project);
 
-		assertSame(_project, result);
 		assertTrue(form.isEditMode());
 		assertTrue(form.isDirty());
 		assertEquals(CHANGED_NAME, form.getOverlay().tValueByName(NAME));
@@ -176,7 +175,7 @@ public class TestEditModeActions extends AbstractModelAccessTest {
 
 		List<ViewAction> actions = List.of(action("<" + ENTER + "/>"), recorder);
 		assertFails(I18NConstants.ERROR_FORM_NOT_EDITABLE,
-			() -> ViewActionChain.run(viewContext(form), actions, _project, null));
+			() -> ViewActionChain.run(viewContext(form), actions, arguments(), null));
 		assertFalse(form.isEditMode());
 		assertEquals(List.of(), laterInputs);
 	}
@@ -198,19 +197,23 @@ public class TestEditModeActions extends AbstractModelAccessTest {
 
 	/**
 	 * Runs the actions given by their XML definitions as one action chain on the given form, with
-	 * the project as input.
-	 *
-	 * @return The result of the last action.
+	 * the project as default argument, and checks that the chain completes.
 	 */
-	private Object run(FormControl form, String... xmls) throws ConfigurationException {
+	private void run(FormControl form, String... xmls) throws ConfigurationException {
 		List<ViewAction> actions = new ArrayList<>();
 		for (String xml : xmls) {
 			actions.add(action(xml));
 		}
-		List<Object> result = new ArrayList<>();
-		ViewActionChain.run(viewContext(form), actions, _project, result::add);
-		assertEquals(1, result.size());
-		return result.get(0);
+		List<Object> completions = new ArrayList<>();
+		ViewActionChain.run(viewContext(form), actions, arguments(), completions::add);
+		assertEquals(1, completions.size());
+	}
+
+	/**
+	 * The arguments of a chain run on the project.
+	 */
+	private ActionArguments arguments() {
+		return ActionArguments.of(PROJECT, _project);
 	}
 
 	private static FormControl newForm(TLObject object) {

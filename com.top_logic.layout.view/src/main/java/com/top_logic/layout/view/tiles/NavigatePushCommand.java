@@ -36,7 +36,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * Resolves the target stack from the {@link ViewContext} - the command must be
  * executed from within a frame that was mounted by a {@link TileStackElement &lt;tile-stack&gt;}.
- * Captured at execution time: the command's {@link Config#getInput() input} (mapped onto a named
+ * Captured at execution time: the command's main argument (mapped onto a named
  * channel of the new frame, if {@link Config#getBindInputTo() bind-input-to} is set) and the
  * current value of every channel referenced by a {@code <bind>}.
  * </p>
@@ -49,7 +49,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * &lt;button&gt;
  *   &lt;action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
  *     view="products/detail.view.xml"
- *     input="selectedProduct"
+ *     inputs="selectedProduct"
  *     bind-input-to="product"
  *     frame-label="product.detail.crumb"/&gt;
  *   &lt;label&gt;&lt;en&gt;Open&lt;/en&gt;&lt;/label&gt;
@@ -109,7 +109,7 @@ public class NavigatePushCommand implements ViewCommand {
 
 		/**
 		 * Name of the channel in the pushed view that should receive the command's
-		 * {@link #getInput() input} value.
+		 * main argument.
 		 *
 		 * <p>
 		 * Convenience for the common case where the drill-down target is a single business object

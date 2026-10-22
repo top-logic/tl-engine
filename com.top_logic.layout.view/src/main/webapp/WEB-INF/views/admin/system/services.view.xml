@@ -26,7 +26,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-play"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -34,19 +34,25 @@
 					<de>Starten</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'INACTIVE'"/>
+					<visible-if expr="$state == 'INACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="START"
 					selection="selection"
-				/>
-				<write-channel name="services"/>
-				<execute-script function="'ACTIVE'"/>
-				<write-channel name="state"/>
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+				<execute-script function="'ACTIVE'">
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-stop"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -54,19 +60,25 @@
 					<de>Stoppen</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
+					<visible-if expr="$state == 'ACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="STOP"
 					selection="selection"
-				/>
-				<write-channel name="services"/>
-				<execute-script function="'INACTIVE'"/>
-				<write-channel name="state"/>
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+				<execute-script function="'INACTIVE'">
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-repeat"
-				input="state"
+				inputs="state"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -74,15 +86,21 @@
 					<de>Neustart</de>
 				</label>
 				<executability>
-					<visible-if expr="state -> $state == 'ACTIVE'"/>
+					<visible-if expr="$state == 'ACTIVE'"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="RESTART"
 					selection="selection"
-				/>
-				<write-channel name="services"/>
-				<execute-script function="'ACTIVE'"/>
-				<write-channel name="state"/>
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+				<execute-script function="'ACTIVE'">
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
+				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
@@ -94,8 +112,11 @@
 				</label>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="REFRESH"
-				/>
-				<write-channel name="services"/>
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
 			</generic-command>
 		</commands>
 		<child id="table"

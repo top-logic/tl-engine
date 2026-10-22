@@ -29,8 +29,7 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * A form that still holds unsaved changes is not switched: the action throws a
  * {@link TopLogicException}, which aborts the action chain, and the form stays in edit mode with
- * all its input. Outside edit mode and outside a form, the action has no effect. The input is
- * passed on unchanged.
+ * all its input. Outside edit mode and outside a form, the action has no effect.
  * </p>
  *
  * @implNote Delegates to {@link FormControl#leaveEditMode()}.
@@ -75,5 +74,13 @@ public class LeaveEditModeAction implements ViewAction {
 
 		((FormControl) formModel).leaveEditMode();
 		return input;
+	}
+
+	/**
+	 * Ends the edit session of the form.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

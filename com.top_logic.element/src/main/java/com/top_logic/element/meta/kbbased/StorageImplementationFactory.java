@@ -20,6 +20,7 @@ import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.StorageImplementation;
+import com.top_logic.element.meta.kbbased.storage.BinaryCollectionStorage;
 import com.top_logic.element.meta.kbbased.storage.DocumentStorage;
 import com.top_logic.element.meta.kbbased.storage.ImageGalleryStorage;
 import com.top_logic.element.meta.kbbased.storage.ListStorage;
@@ -34,6 +35,7 @@ import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
@@ -118,7 +120,7 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 				return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
 			}
 
-			private boolean unversionedStorage(TLReference model) {
+			private boolean unversionedStorage(TLStructuredTypePart model) {
 				if (model.tTransient()) {
 					// May happen during wrapper generation.
 					return true;
@@ -128,7 +130,7 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 
 				if (table == null) {
 					Logger.warn(
-						"Unknown table " + tableName + " for owner  " + model.getOwner() + " of reference " + model
+						"Unknown table " + tableName + " for owner  " + model.getOwner() + " of attribute " + model
 								+ ".",
 						StorageImplementationFactory.class);
 					return false;
@@ -137,10 +139,14 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 					return !clazz.isVersioned();
 				}
 				Logger.warn(
-					"Table " + table + " for owner  " + model.getOwner() + " of reference " + model
+					"Table " + table + " for owner  " + model.getOwner() + " of attribute " + model
 							+ " is not a class.",
 					StorageImplementationFactory.class);
 				return false;
+			}
+
+			private boolean isBinary(TLType type) {
+				return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.BINARY;
 			}
 
 			@Override
@@ -158,7 +164,11 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 				TLStorage annotation = (model.getType()).getAnnotation(TLStorage.class);
 				PolymorphicConfiguration<? extends StorageImplementation> config;
 				if (annotation == null) {
-					config = PRIMITIVE_STORAGE_CONFIG;
+					if (model.isMultiple() && isBinary(model.getType())) {
+						config = BinaryCollectionStorage.defaultConfig(unversionedStorage(model));
+					} else {
+						config = PRIMITIVE_STORAGE_CONFIG;
+					}
 				} else {
 					config = annotation.getImplementation();
 				}

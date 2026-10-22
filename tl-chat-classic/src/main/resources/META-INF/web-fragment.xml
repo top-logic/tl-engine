@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd"
+	version="3.1">
+	<name>tl-chat-classic</name>
+
+	<!--
+		Temporary workaround for the classic-UI bridge (E4, see CLAUDE.md): serializes the React
+		commands of a classic window with its classic AJAX requests. Remove with the filter class.
+	-->
+	<filter>
+		<filter-name>reactCommandLockFilter</filter-name>
+		<filter-class>com.top_logic.ai.chat.classic.ReactCommandLockFilter</filter-class>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>reactCommandLockFilter</filter-name>
+		<url-pattern>/react-api/command</url-pattern>
+	</filter-mapping>
+</web-fragment>

@@ -8,6 +8,7 @@ package com.top_logic.layout.react.field;
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.layout.LabelProvider;
@@ -49,6 +50,8 @@ public final class FieldSpec {
 
 	private Long _debounce;
 
+	private boolean _sendValueOnBlur;
+
 	private boolean _mandatory;
 
 	private boolean _editable = true;
@@ -69,6 +72,8 @@ public final class FieldSpec {
 
 	private Orientation _selectOrientation = Orientation.VERTICAL;
 
+	private Comparator<?> _optionOrder;
+
 	private ReactDatePickerControl.Kind _dateKind = ReactDatePickerControl.Kind.DATE;
 
 	private Format _numberFormat;
@@ -78,6 +83,10 @@ public final class FieldSpec {
 	private List<?> _options;
 
 	private LabelProvider _optionLabels;
+
+	private String _acceptedTypes;
+
+	private long _maxUploadSize;
 
 	private FieldSpec(Class<?> valueType, String label) {
 		_valueType = valueType;
@@ -242,6 +251,31 @@ public final class FieldSpec {
 	 */
 	public FieldSpec setDebounce(Long debounce) {
 		_debounce = debounce;
+		return this;
+	}
+
+	/**
+	 * Whether a typed value is held back until the field is left.
+	 *
+	 * <p>
+	 * For a field whose model rewrites what it is given - a text it trims, a rule it prints in its
+	 * canonical notation. Sending the value while the user types would bring back the rewritten
+	 * value and replace what is being typed, so the input sends its value when the field is left,
+	 * see {@link com.top_logic.layout.react.control.form.ReactFormFieldControl#setSendValueOnBlur(boolean)}.
+	 * The text, number and password inputs honour it.
+	 * </p>
+	 */
+	public boolean isSendValueOnBlur() {
+		return _sendValueOnBlur;
+	}
+
+	/**
+	 * Sets whether the field {@link #isSendValueOnBlur() sends its value on blur}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setSendValueOnBlur(boolean sendValueOnBlur) {
+		_sendValueOnBlur = sendValueOnBlur;
 		return this;
 	}
 
@@ -425,6 +459,30 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The order the options of a value chosen from options are offered in, or {@code null} to offer
+	 * them as given.
+	 *
+	 * <p>
+	 * The source of the options decides: options with an order of their own - the classifiers of an
+	 * enumeration, the result of an options expression keeping the order it computes - are offered
+	 * as given, the instances of a class sorted by their labels.
+	 * </p>
+	 */
+	public Comparator<?> getOptionOrder() {
+		return _optionOrder;
+	}
+
+	/**
+	 * Sets the {@link #getOptionOrder() order} the options are offered in.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setOptionOrder(Comparator<?> optionOrder) {
+		_optionOrder = optionOrder;
+		return this;
+	}
+
+	/**
 	 * Whether a boolean value keeps a state of its own for "no value".
 	 */
 	public boolean isTriState() {
@@ -538,6 +596,56 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The types of files a binary value may be uploaded from, or {@code null} for every file.
+	 *
+	 * <p>
+	 * A comma separated list of MIME types like <code>image/*</code> or <code>image/jpeg</code> and
+	 * file patterns like <code>*.xml</code>, the form of the accepted types annotation of a binary
+	 * attribute ({@link com.top_logic.model.annotate.ui.TLAcceptedTypes}). The file picker of the
+	 * control offers only files of these types.
+	 * </p>
+	 */
+	public String getAcceptedTypes() {
+		return _acceptedTypes;
+	}
+
+	/**
+	 * Sets the {@link #getAcceptedTypes() accepted file types}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setAcceptedTypes(String acceptedTypes) {
+		_acceptedTypes = acceptedTypes;
+		return this;
+	}
+
+	/**
+	 * The maximum size in bytes of one file a binary value may be uploaded from, or {@code 0} if the
+	 * field sets no limit of its own.
+	 *
+	 * <p>
+	 * The limit of the maximum upload size annotation of a binary attribute
+	 * ({@link com.top_logic.model.annotate.TLMaxUploadSize}). It applies to each file on its own, and
+	 * the application-wide limit of the upload configuration still caps it: the control accepts
+	 * files up to the {@link com.top_logic.layout.react.control.upload.UploadSupport#effectiveMaxUploadSize(long)
+	 * smaller} of both.
+	 * </p>
+	 */
+	public long getMaxUploadSize() {
+		return _maxUploadSize;
+	}
+
+	/**
+	 * Sets the {@link #getMaxUploadSize() maximum upload size}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setMaxUploadSize(long maxUploadSize) {
+		_maxUploadSize = maxUploadSize;
+		return this;
+	}
+
+	/**
 	 * This specification describing a single one of the values of a
 	 * {@link #isMultiple() multi-valued} field.
 	 *
@@ -574,6 +682,7 @@ public final class FieldSpec {
 		result._icon = _icon;
 		result._clearable = _clearable;
 		result._debounce = _debounce;
+		result._sendValueOnBlur = _sendValueOnBlur;
 		result._mandatory = _mandatory;
 		result._editable = _editable;
 		result._multiple = _multiple;
@@ -584,11 +693,14 @@ public final class FieldSpec {
 		result._triState = _triState;
 		result._selectDisplay = _selectDisplay;
 		result._selectOrientation = _selectOrientation;
+		result._optionOrder = _optionOrder;
 		result._dateKind = _dateKind;
 		result._numberFormat = _numberFormat;
 		result._dateFormat = _dateFormat;
 		result._options = _options;
 		result._optionLabels = _optionLabels;
+		result._acceptedTypes = _acceptedTypes;
+		result._maxUploadSize = _maxUploadSize;
 		return result;
 	}
 

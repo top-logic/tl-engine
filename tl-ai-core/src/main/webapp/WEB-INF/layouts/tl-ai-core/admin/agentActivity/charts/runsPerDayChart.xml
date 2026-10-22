@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Läufe im Zeitverlauf", stacked by outcome. The one panel of this view that answers "is this
+	getting worse" rather than "how much right now": a failure rate that climbs over a fortnight is
+	invisible in any table of the current rows, however it is sorted.
+	
+	The period is the value of the tab's period control, delivered on this component's model channel;
+	ChartJsComponent re-evaluates this whole expression when that model changes and animates into the
+	new shape. 30 days when the channel carries nothing, which is what the chart showed while its
+	window was hardcoded.
+	
+	The title no longer names the bucket width, because the bucket width is no longer fixed: one bar
+	per day while the period is one that a reader can count in days, one bar per month beyond that.
+	"Alle" and a long custom range are the two options that can reach the second case, and they have
+	to - a monitor that has been collecting for a year would otherwise draw four hundred hairlines.
+	
+	Empty buckets keep their slot on the axis. A gap is as much of a finding as a spike - a scheduled
+	job that stopped running produces exactly that shape - and dropping empty days would quietly
+	compress it away.
+	
+	The series colours are the theme's reserved status colours, the same ones the tables use, rather
+	than the component's default Tableau10 scheme: a reader who has learnt that red means ERROR in
+	the Läufe table must not have to learn a second mapping here.
+-->
+<chartjs name="aiRunsPerDayChart"
+	model="model(aiOverviewPeriod)"
+	securityObject="securityRoot"
+	titleKey="admin.ai.agentActivity.charts.runsPerDay"
+	toolbar="true"
+>
+	<data><![CDATA[
+		model -> {
+			period = ifElse(isEmpty($model),
+				new(`tl.ai.monitor:Period`, transient: true)
+					..set(`tl.ai.monitor:Period#preset`, 30),
+				$model);
+			executions = all(`tl.ai.execution:AgentExecution`);
+			startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+			cal = d -> $d.toSystemCalendar();
+
+			// The two edges of the axis, as whole days, and the exclusive upper bound - all three
+			// read off the period rather than derived here a second time. That is what makes this
+			// chart and the counting tiles of the same tab agree exactly: both now cover
+			// [firstDay, windowEnd), where the tiles used to count back from the current hour and
+			// only this chart started at a midnight.
+			//
+			// The fallback is for a period with no left edge at all - one that was never filled -
+			// and is the oldest run there is, which a period cannot know without reading the table.
+			last = $period.get(`tl.ai.monitor:Period#lastDay`);
+			bounded = $period.get(`tl.ai.monitor:Period#firstDay`);
+			first = ifElse(!isEmpty($bounded), $bounded,
+				ifElse(isEmpty($executions), $last,
+					$executions.map(e -> $startedAt($e)).sort().firstElement().roundDay()));
+			axisEnd = $period.get(`tl.ai.monitor:Period#windowEnd`);
+
+			// One bar per day while a reader can still count the bars, one bar per month beyond
+			// that. A year of days would otherwise be four hundred hairlines.
+			monthly = ($last.toMillis() - $first.toMillis()) / 86400000 > 120;
+
+			// The buckets, oldest first. The month count is exact calendar arithmetic rather than a
+			// division of the day span: a span of a few weeks can straddle three months, and an
+			// undershoot would drop a whole month of runs without a trace. The day count is a
+			// millisecond division, deliberately generous by one and then trimmed against the left
+			// edge, because that division comes out one short across a daylight-saving shift.
+			depth = ifElse($monthly,
+				($cal($last).year() - $cal($first).year()) * 12
+					+ $cal($last).month() - $cal($first).month(),
+				($last.toMillis() - $first.toMillis()) / 86400000 + 1);
+			buckets = ifElse($monthly,
+				$cal($last).withDay(1).toDate().roundDay()
+					.recursion(d -> $cal($d).withMonthAdded(-1).toDate(), 0, $depth)
+					.reverse(),
+				$last.recursion(d -> $cal($d).withDayAdded(-1).toDate().roundDay(), 0, $depth)
+					.reverse()
+					.filter(b -> $b >= $first));
+			bucketOf = d -> ifElse($monthly, $cal($d).withDay(1).toDate().roundDay(), $d.roundDay());
+
+			// Trimmed against the day edges, not against the first bucket: in the monthly case the
+			// first bucket starts on the 1st, which for a custom range can lie before the range
+			// does, and the leftmost bar would then count days the reader did not ask for.
+			byBucket = $executions
+				.filter(e -> $startedAt($e) >= $first && $startedAt($e) < $axisEnd)
+				.groupBy(e -> $bucketOf($startedAt($e)));
+			counts = status -> $buckets.map(b -> {
+				runs = $byBucket[$b];
+				ifElse(isEmpty($runs), 0,
+					$runs.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`) == $status).size());
+			});
+			bar = status -> color -> {
+				'label': $status.label(),
+				'data': $counts($status),
+				'backgroundColor': $color
+			};
+			{
+				'type': 'bar',
+				'data': {
+					'labels': $buckets.map(b -> ifElse($monthly,
+						dateFormat('MM.yyyy').format($b),
+						dateFormat('dd.MM.').format($b))),
+					'datasets': list(
+						$bar(`tl.ai.execution:ExecutionStatus#COMPLETE`)('#04a38d'),
+						$bar(`tl.ai.execution:ExecutionStatus#ERROR`)('#d3181b'),
+						$bar(`tl.ai.execution:ExecutionStatus#REJECTED`)('#d3a118'),
+						$bar(`tl.ai.execution:ExecutionStatus#CANCELLED`)('#8a8a8a'),
+						$bar(`tl.ai.execution:ExecutionStatus#RUNNING`)('#2968c8')
+					)
+				},
+				'options': {
+					'maintainAspectRatio': false,
+					'plugins': {
+						'legend': { 'position': 'bottom' },
+						// A row of empty day slots is a perfectly plausible chart - a quiet
+						// fortnight looks like that - so the case where every slot is empty has to
+						// name itself rather than let the axis imply that the days were quiet.
+						'title': {
+							'display': isEmpty($byBucket),
+							'text': ifElse($first > now().roundDay(),
+								#('The selected period lies in the future.'@en,
+									'Der gewählte Zeitraum liegt in der Zukunft.'@de).localize(),
+								#('No runs in the selected period.'@en,
+									'Keine Läufe im gewählten Zeitraum.'@de).localize()),
+							'color': '#8a8a8a'
+						}
+					},
+					'scales': {
+						'x': { 'stacked': true },
+						'y': { 'stacked': true, 'beginAtZero': true }
+					}
+				}
+			};
+		}
+	]]></data>
+</chartjs>

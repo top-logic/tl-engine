@@ -92,4 +92,11 @@ public class EnrollMfaAction implements ViewAction {
 		return input;
 	}
 
+	/**
+	 * Opens the enrollment dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- The page the window opens on. -->
+<view>
+	<text>
+		<label>
+			<en>Welcome</en>
+		</label>
+	</text>
+</view>

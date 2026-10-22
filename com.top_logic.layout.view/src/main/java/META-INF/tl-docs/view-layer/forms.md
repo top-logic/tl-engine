@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -22,7 +22,8 @@ ask for it. The shapes showing every option suit a handful of options; a long li
 dropdown. `radio` offers every option as a radio button (a checkbox where several values can be
 chosen), laid out by `orientation` (`vertical`, the default, or `horizontal`). `filter="false"`
 drops the filter input of the dropdown, which then jumps to an option by typing the beginning of its
-label.
+label. `order` (`OptionOrder`) states the order the options are offered in, whatever the shape:
+`by-label` sorts them by their labels, `as-given` keeps the order their source gives them.
 
 Where `display` and `orientation` say nothing, the field decides: `FieldSpec.getSelectDisplay()` and
 `FieldSpec.getSelectOrientation()`, which `FieldControlService` takes from the model annotations
@@ -30,6 +31,13 @@ Where `display` and `orientation` say nothing, the field decides: `FieldSpec.get
 `<reference-display value="radio|radio-inline"/>` (a reference) - at the attribute, else at its
 type. `radio` and `checklist` give vertical radio buttons, `radio-inline` horizontal ones, every other
 presentation the dropdown.
+
+Where `order` says nothing, the source of the options decides through `FieldSpec.getOptionOrder()`
+(`null` for the order as given): the classifiers of an enumeration and the constants of an enum
+datatype are offered as given, the options of an expression (`<value-input options="…">`) in the
+order it computes (unless the `<value-input>` states an `option-order` of its own), those of an `options-by-expression` annotation as its `alphabetical-order` says
+(by label unless it is `false`), the instances of a class and the values of an option provider
+configured at the control by label.
 
 ```xml
 <field attribute="priority">
@@ -44,8 +52,10 @@ default) takes any number the format of the field reads, `slider` drags a handle
 between `min` and `max`, snapping to `step` (whole numbers where nothing is stated). A slider needs
 its bounds, which `@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)` demands of
 the configuration - `min` and `max` are mandatory as soon as `display` is `slider` and ignored
-otherwise - and `@ComparisonDependency` keeps `min` below `max`. The slider exchanges its value as a
-number rather than as formatted text, so no locale format reads it.
+otherwise. The slider exchanges its value as a number rather than as formatted text, so no locale
+format reads it. `unit` is written after the value and after both bounds (`12,5 %`).
+
+`min`, `max`, `step` and `unit` are TL-Script expressions. A literal is a constant range:
 
 ```xml
 <value-input
@@ -60,6 +70,26 @@ number rather than as formatted text, so no locale format reads it.
 	/>
 </value-input>
 ```
+
+With `inputs` (channels, optionally renamed with `as`), the expressions read the channel values as
+variables without declaring them, and the range is computed again whenever one of the channels
+changes - here from a dictionary the channel `target` holds:
+
+```xml
+<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+	display="slider"
+	inputs="target"
+	max="$target['max']"
+	min="$target['min']"
+	unit="$target['unit']"
+/>
+```
+
+A range a slider cannot travel - a bound that is no number, `min` not below `max`, `step` not above
+zero - is refused when the configuration is instantiated if it is constant. A range computed from
+inputs may be unusable for a while, e.g. while a channel is still empty: the slider is then
+disabled until the channels yield a usable range. A slider with inputs resolves its channels in
+the view it is created in; created outside of a view, it is refused.
 
 **A truth value** — `BooleanControlProvider`, option `display` (`BooleanPresentation`): the box that
 is ticked by default, `switch` for a handle sliding between the two states, `radio` and `select` for
@@ -105,6 +135,43 @@ annotation). Neither writes seconds, so an attribute edits minutes unless its fo
 A `<value-input type="tl.core:Time">` without a `<format>` takes the type's `short-time` format as
 well and edits minutes; a `<format>` inside the `<value-input>` sets display and precision there.
 
+**A text** — `TextInputControlProvider`, option `suggestions`: a TL-Script function
+`self -> text -> caret -> entries` offering suggestions while the user types. `self` is the edited
+object (empty in a field editing no attribute of an object, such as a `<value-input>`), `text` the
+text typed so far, `caret` the position of the caret in it. An entry is a dictionary
+`{"label": …, "text": …, "from": …, "to": …}` - its text replaces the characters from `from` up to
+(excluding) `to`, the list shows its label - or a plain string inserted at the caret; the label
+defaults to the text, the positions to the caret, and a malformed entry is skipped. The function
+alone decides what fits: it filters by what is typed and names the range a suggestion replaces, the
+field shows its entries as given, in their order. Typing asks for suggestions after a short pause,
+Alt+ArrowDown and Ctrl+Space ask at once; ArrowUp and ArrowDown move through the list, Enter or a
+click picks the active entry, Escape closes the list. Picking an entry enters its text as if it
+were typed - the field treats it like any other input - and the value is never restricted to
+the suggestions. The list is the part `Listbox` (see [parts](doc:view-layer/parts)), so a component
+library draws it in its own style.
+
+```xml
+<field attribute="alarmCondition">
+	<input-control class="com.top_logic.layout.view.form.TextInputControlProvider">
+		<suggestions><![CDATA[self -> text -> caret -> {
+	before = $text.subString(0, $caret);
+	// An unfinished sensor reference: @ or @" followed by a name without closing quote.
+	reference = regex('@"?([^"@]*)$').regexSearch($before).firstElement();
+	if($reference == null, [],
+		$self.get(`demo.temperature:DemoSite#sensors`)
+			.map(sensor -> $sensor.get(`demo.temperature:DemoSensor#name`))
+			.filter(name -> $name.stringContains($reference.regexGroup(1)))
+			.map(name -> {
+				"label": $name,
+				"text": '@"' + $name + '"',
+				"from": $reference.regexStart(),
+				"to": $caret
+			}))
+}]]></suggestions>
+	</input-control>
+</field>
+```
+
 **Three ways to choose the provider**, in the order `FieldControlService` tries them:
 
 1. `<input-control class="…Provider" …/>` inside a `<field>` (`FieldElement.Config.getInputControl()`)
@@ -118,6 +185,42 @@ well and edits minutes; a `<format>` inside the `<value-input>` sets display and
    `SelectControlProvider` the same way.
 3. The type map of `FieldControlService` and, failing that, the `FieldControlRegistry` entry for the
    kind of value the type holds.
+
+**Files** — a value of `tl.core:Binary` is a file. A single file is one file field
+(`FieldControlRegistry.BINARY`, `ReactBinaryFieldControl`): an upload area while the field is
+editable, a download link otherwise. The files of a multi-valued binary attribute are shown as file
+chips by default (`FieldControlRegistry.FILE_CHIPS`, `ReactFileChipsControl`, client `TLFileChips`):
+one chip per file, a button and a drop area adding several files at once. The model annotation
+`<binary-display presentation="list"/>` (`BinaryDisplay.BinaryPresentation.LIST`) shows them as a
+list with one file field per file instead (`ReactValueListControl` over `FieldControlRegistry.BINARY`),
+whose add button uploads several files at once, one value per file. `data-item` (the default) and
+`image-upload` both give the chips. The annotation `<accepted-types value="image/*, *.pdf"/>`
+(`TLAcceptedTypes`, MIME types or file patterns) limits the files the file picker offers, for a
+single and a multi-valued value alike. The annotation `<max-upload-size value="5m"/>`
+(`TLMaxUploadSize`) limits the size of each file uploaded to the attribute; the application-wide
+`max-upload-size` of the upload configuration still caps it, so the smaller of both applies. These
+annotations are read at the attribute, else at its type, and act on a `<value-input>` of type
+`tl.core:Binary` through its `<annotations>` as well. A
+mandatory multi-valued binary value shows the required marker at the chips and, after a refused
+save, the message of the mandatory check under them. In a table cell the chips render inline, while
+the list presentation shows the file names and opens its file fields in a dialog. A multi-valued
+binary attribute is persistent: its files are stored one row per file in the generic table
+`BinaryAttributeValue` by `BinaryCollectionStorage`, the storage chosen automatically for a
+multi-valued `tl.core:Binary` property.
+
+```xml
+<property name="attachments"
+	mandatory="true"
+	multiple="true"
+	type="tl.core:Binary"
+>
+	<annotations>
+		<accepted-types value="*.pdf"/>
+		<binary-display presentation="list"/>
+	</annotations>
+</property>
+```
+
 
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
 the headless projection, so a scripted test reads the same options and the same value in every shape.
@@ -192,25 +295,72 @@ The rule counts only errors on display: an error the user cannot see yet leaves 
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
 
+## Normalizing an entered value
+
+An attribute annotated with `<value-normalizer>` (`TLValueNormalizer`) brings an entered value into its canonical form before it reaches the form's overlay: a code is trimmed, a rule is printed in its canonical notation. The annotation lists normalizers, applied in the given order, each one to the result of the one before. The field shows the canonical form once the input is left. A value a normalizer cannot canonicalize - a rule text that does not parse - stays as it was typed, and the constraints of the attribute report it.
+
+```xml
+<property name="code"
+	type="tl.core:String"
+>
+	<annotations>
+		<value-normalizer>
+			<trim/>
+			<upper-case/>
+		</value-normalizer>
+	</annotations>
+</property>
+```
+
+The built-in normalizers (`com.top_logic.model.normalize`) rewrite a text:
+
+| Tag | Result |
+|---|---|
+| `<trim/>` | the text without white space at its beginning and end |
+| `<collapse-whitespace/>` | the trimmed text, each inner run of white space (line breaks and tabs included) replaced by one space |
+| `<lower-case/>`, `<upper-case/>` | the text in lower / upper case, independent of the user's language |
+| `<empty-to-null/>` | no value for an empty text; after `<trim/>`, a blank entry is stored as no value |
+
+A value that is not a text - a number, a date, an object, no value - is kept. The values of a multiple attribute are normalized one by one: a list stays a list in its order, a set stays a set, and an element normalized to no value stays in the collection as `null`.
+
+Any other normalization is a script, one entry of the list like the built-ins:
+
+```xml
+<value-normalizer>
+	<normalize-by-expression function="value -> obj -> $value.trim()"/>
+</value-normalizer>
+```
+
+The function receives the entered value and the form's overlay of the edited object as `obj`, so it reads the values entered for the other attributes, not the stored ones. Only a value the user enters is normalized: the stored value is shown as it is, even if it is not in canonical form.
+
+A `<value-input>` declares the normalizers in its own `<annotations>`; a script receives `null` as `obj`, since the input is bound to no object.
+
+A text or password field with a normalizer sends its value when the input is left, not while the user types: a canonical form sent back mid-typing would replace what is being typed (a number field always does so).
+
+A normalizer written in Java implements `ValueNormalizer`; it receives the edited object and the attribute (both `null` for a `<value-input>`) and returns the value unchanged when it cannot canonicalize it, instead of throwing. A text normalizer extends `TextNormalizer`, which handles non-text values and collections.
+
 ## Saving with an action chain
 
-A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-and-the-chain-can-branch)). The chain runs in the form's context and starts without a value; `<read-form-object/>` puts the object the form displays into the chain, and `<store-form-state/>` continues with the object it stored. Save stays disabled while the form displays an error.
+A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The chain runs in the form's context without arguments; `<read-form-object/>` results in the object the form displays, and `<store-form-state/>` in the object it stored, which their follow-up actions in `<with-result>` see (see [actions with a result](doc:view-layer/commands#actions-with-a-result-with-result)). Save stays disabled while the form displays an error.
 
 Four actions work on the edit session of the form they run in:
 
-- `<store-form-state/>` (`StoreFormStateAction`) checks the input, reveals every error and aborts the chain while one remains; otherwise it stores the input and continues with the stored object. The edit session goes on, now without unsaved changes. Inside a `<with-transaction>`, the storing joins that transaction, and the scripts after it in the same `<with-transaction>` are committed together with the stored values - or not at all.
+- `<store-form-state/>` (`StoreFormStateAction`) checks the input, reveals every error and aborts the chain while one remains; otherwise it stores the input and results in the stored object. The edit session goes on, now without unsaved changes. Inside a `<with-transaction>`, the storing joins that transaction, and the scripts of its `<with-result>` and after it in the same `<with-transaction>` are committed together with the stored values - or not at all.
 - `<leave-edit-mode/>` (`LeaveEditModeAction`) ends the edit session without storing or dropping anything. A form that still holds unsaved changes refuses: the chain aborts and the form stays in edit mode with its input.
 - `<discard-form-state/>` (`DiscardFormStateAction`) drops the input and ends the edit session.
 - `<enter-edit-mode/>` (`EnterEditModeAction`) starts the edit session like the form's own Edit button: it locks the object and is subject to the edit permission, the right to write the object and the rules of `<edit-executability>`. A form that shows no object, or whose permission refuses, aborts the chain, so no later action runs on a form that cannot be edited. A form already in edit mode keeps its session.
 
-A save that post-processes the stored values stores them and runs its script in one transaction, and leaves the edit mode after it:
+A save that post-processes the stored values stores them and runs its script over the stored object in one transaction, and leaves the edit mode after it:
 
 ```xml
 <form input="ticket">
 	<save-action>
 		<with-transaction>
-			<store-form-state/>
-			<execute-script function="t -> ..."/>
+			<store-form-state>
+				<with-result as="ticket">
+					<execute-script function="... $ticket ..."/>
+				</with-result>
+			</store-form-state>
 		</with-transaction>
 		<leave-edit-mode/>
 	</save-action>
@@ -218,42 +368,42 @@ A save that post-processes the stored values stores them and runs its script in 
 </form>
 ```
 
-`<leave-edit-mode/>` belongs outside the `<with-transaction>`: inside it, the form would show view mode before the commit, and a commit that fails would have ended the edit session already. After it, a failed commit aborts the chain before the form leaves edit mode, so the form stays in edit mode.
+`<leave-edit-mode/>` belongs outside the `<with-transaction>`: inside it, the form would show view mode before the commit, and a commit that fails would have ended the edit session already. Like `<enter-edit-mode/>` and `<discard-form-state/>`, it changes the state of the view, so placing it inside the transaction is reported as a configuration error (see [transactions](doc:view-layer/commands#transactions-with-transaction)). After it, a failed commit aborts the chain before the form leaves edit mode, so the form stays in edit mode.
 
-The actions find the form only where the form runs them: in its `<save-action>` and `<cancel-action>`, and in the commands of its own `<commands>`. A command in the `<commands>` of a surrounding `<panel>` runs outside the form, and the four actions have no effect there. A form with `mode-switch="false"` offers no Edit, Save and Cancel of its own, so its `<commands>` can provide them with these actions. The form publishes its mode on the channel named by `editMode`, and the commands decide on it whether they are shown. The tickets demo derives the ticket in view mode and in edit mode from that channel and hides each command while its input is empty:
+The actions find the form only where the form runs them: in its `<save-action>` and `<cancel-action>`, and in the commands of its own `<commands>`. A command in the `<commands>` of a surrounding `<panel>` runs outside the form, and the four actions have no effect there. A form with `mode-switch="false"` offers no Edit, Save and Cancel of its own, so its `<commands>` can provide them with these actions. The form publishes its mode on the channel named by `editMode`, and the commands decide on it whether they are shown. The tickets demo derives the ticket in view mode and in edit mode from that channel and hides each command while its main argument is empty:
 
 ```xml
 <channels>
 	<channel name="ticket"/>
 	<channel name="ticketEditMode"/>
 	<derived-channel name="viewedTicket"
-		expr="t -> editing -> if($editing == true, null, $t)"
-		inputs="ticket,ticketEditMode"
+		expr="if($editing == true, null, $ticket)"
+		inputs="ticket, ticketEditMode as editing"
 	/>
 	<derived-channel name="editedTicket"
-		expr="t -> editing -> if($editing == true, $t, null)"
-		inputs="ticket,ticketEditMode"
+		expr="if($editing == true, $ticket, null)"
+		inputs="ticket, ticketEditMode as editing"
 	/>
 </channels>
 ...
 <form editMode="ticketEditMode" input="ticket" mode-switch="false">
 	<field attribute="name"/>
 	<commands>
-		<generic-command input="viewedTicket" placement="TOOLBAR">
+		<generic-command inputs="viewedTicket" placement="TOOLBAR">
 			<label><en>Edit</en></label>
 			<executability><null-input-hidden/></executability>
 			<enter-edit-mode/>
 		</generic-command>
-		<generic-command input="editedTicket" placement="TOOLBAR">
+		<generic-command inputs="editedTicket as ticket" placement="TOOLBAR">
 			<label><en>Save</en></label>
 			<executability><null-input-hidden/></executability>
 			<with-transaction>
 				<store-form-state/>
-				<execute-script function="t -> ..."/>
+				<execute-script function="... $ticket ..."/>
 			</with-transaction>
 			<leave-edit-mode/>
 		</generic-command>
-		<generic-command input="editedTicket" placement="TOOLBAR">
+		<generic-command inputs="editedTicket" placement="TOOLBAR">
 			<label><en>Cancel</en></label>
 			<executability><null-input-hidden/></executability>
 			<discard-form-state/>

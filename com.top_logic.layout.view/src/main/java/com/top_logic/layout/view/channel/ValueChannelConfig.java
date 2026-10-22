@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -29,7 +30,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * <pre>
  * &lt;channel name="budget"
  *   inputs="project"
- *   init="p -&gt; $p.get(`tl.demo.projectManagement:ProjectScope#budget`)"
+ *   init="$project.get(`tl.demo.projectManagement:ProjectScope#budget`)"
  * /&gt;
  * </pre>
  */
@@ -50,8 +51,8 @@ public interface ValueChannelConfig extends ChannelConfig, Inputs {
 	 * TL-Script function computing the value the channel is filled with.
 	 *
 	 * <p>
-	 * The function receives the values of the {@link #getInputs() inputs} as positional arguments,
-	 * like the expression of a derived channel. It is applied when the channel is created, whenever
+	 * The function sees the values of the {@link #getInputs() inputs} as variables named after their
+	 * channels, like the expression of a derived channel, see {@link InputScript}. It is applied when the channel is created, whenever
 	 * an input takes a new value, and whenever an object an input holds (or an object of one of the
 	 * {@link #getObservedTypes() observed types}) is changed in a way that changes its result. The
 	 * channel stays writable: between two fills it holds the value an element or action last wrote.
@@ -69,6 +70,7 @@ public interface ValueChannelConfig extends ChannelConfig, Inputs {
 	 */
 	@Name(INIT)
 	@Label("Initialization")
+	@ScriptContextVariables(InputScript.Variables.class)
 	Expr getInit();
 
 	/**

@@ -152,43 +152,43 @@ public class TestViewExecutabilityRules extends TestCase {
 	}
 
 	/**
-	 * Tests that {@link DisabledIf#stateFor(Object)} keeps the command executable without a reason.
+	 * Tests that {@link DisabledIf#reasonState(Object)} keeps the command executable without a reason.
 	 */
 	public void testDisabledIfWithoutReason() {
-		assertSame(ExecutableState.EXECUTABLE, DisabledIf.stateFor(null));
+		assertSame(ExecutableState.EXECUTABLE, DisabledIf.reasonState(null));
 	}
 
 	/**
-	 * Tests that {@link DisabledIf#stateFor(Object)} keeps the command executable for
+	 * Tests that {@link DisabledIf#reasonState(Object)} keeps the command executable for
 	 * {@link Boolean#FALSE}.
 	 */
 	public void testDisabledIfWithFalse() {
-		assertSame(ExecutableState.EXECUTABLE, DisabledIf.stateFor(Boolean.FALSE));
+		assertSame(ExecutableState.EXECUTABLE, DisabledIf.reasonState(Boolean.FALSE));
 	}
 
 	/**
-	 * Tests that {@link DisabledIf#stateFor(Object)} disables with the generic reason for
+	 * Tests that {@link DisabledIf#reasonState(Object)} disables with the generic reason for
 	 * {@link Boolean#TRUE}.
 	 */
 	public void testDisabledIfWithTrue() {
-		ExecutableState state = DisabledIf.stateFor(Boolean.TRUE);
+		ExecutableState state = DisabledIf.reasonState(Boolean.TRUE);
 
 		assertEquals(ExecutableState.createDisabledState(ExecutableState.NOT_EXEC_DISABLED_REASON), state);
 	}
 
 	/**
-	 * Tests that {@link DisabledIf#stateFor(Object)} disables with a given {@link ResKey} reason.
+	 * Tests that {@link DisabledIf#reasonState(Object)} disables with a given {@link ResKey} reason.
 	 */
 	public void testDisabledIfWithResKey() {
 		ResKey reason = ResKey.text("Not yet.");
 
-		assertEquals(ExecutableState.createDisabledState(reason), DisabledIf.stateFor(reason));
+		assertEquals(ExecutableState.createDisabledState(reason), DisabledIf.reasonState(reason));
 	}
 
 	/**
-	 * Tests that {@link DisabledIf#stateFor(Object)} disables with a given text as reason.
+	 * Tests that {@link DisabledIf#reasonState(Object)} disables with a given text as reason.
 	 */
 	public void testDisabledIfWithText() {
-		assertEquals(ExecutableState.createDisabledState(ResKey.text("Not yet.")), DisabledIf.stateFor("Not yet."));
+		assertEquals(ExecutableState.createDisabledState(ResKey.text("Not yet.")), DisabledIf.reasonState("Not yet."));
 	}
 }

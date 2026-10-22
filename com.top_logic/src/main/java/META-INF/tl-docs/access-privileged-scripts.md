@@ -188,9 +188,9 @@ The command "Approve" in `views/projects/milestone-list.view.xml` calls the func
 by `canCall`:
 
 ```xml
-<disabled-if expr="m -> if(canCall(approveMilestone($m)), null, #('You may not approve this milestone.'@en))"/>
+<disabled-if expr="if(canCall(approveMilestone($milestone)), null, #('You may not approve this milestone.'@en))"/>
 ...
-<execute-script function="m -> approveMilestone($m)"/>
+<execute-script function="approveMilestone($milestone)"/>
 ```
 
 | Call | Result |

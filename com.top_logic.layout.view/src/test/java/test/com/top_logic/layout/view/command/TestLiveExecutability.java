@@ -13,6 +13,9 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.layout.view.model.DeletableItem;
 
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.command.CommandArguments;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.LiveExecutability;
@@ -27,6 +30,9 @@ import com.top_logic.tool.execution.ExecutableState;
  */
 public class TestLiveExecutability extends TestCase {
 
+	/** Name of the input channel. */
+	private static final String INPUT = "input";
+
 	private ViewChannel _input;
 
 	/** The number of times the change callback ran. */
@@ -35,7 +41,7 @@ public class TestLiveExecutability extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_input = new DefaultViewChannel("input");
+		_input = new DefaultViewChannel(INPUT);
 		_changes = 0;
 	}
 
@@ -157,7 +163,8 @@ public class TestLiveExecutability extends TestCase {
 	}
 
 	private LiveExecutability live(ViewExecutabilityRule rule) {
-		return new LiveExecutability(rule, _input, Set.of(), () -> _changes++);
+		return new LiveExecutability(rule, new CommandArguments(List.of(new InputRef(new ChannelRef(INPUT))), null),
+			List.of(_input), Set.of(), () -> _changes++);
 	}
 
 	/**

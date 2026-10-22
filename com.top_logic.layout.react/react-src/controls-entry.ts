@@ -20,6 +20,7 @@ import BadgePart from './controls/chip/BadgePart';
 import DividerPart from './controls/divider/DividerPart';
 import ProgressBarPart from './controls/progress/ProgressBarPart';
 import SpinnerPart from './controls/progress/SpinnerPart';
+import ListboxPart from './controls/listbox/ListboxPart';
 
 import TLTextInput from './controls/TLTextInput';
 import TLPasswordInput from './controls/TLPasswordInput';
@@ -117,6 +118,7 @@ registerPart('Badge', BadgePart);
 registerPart('Divider', DividerPart);
 registerPart('ProgressBar', ProgressBarPart);
 registerPart('Spinner', SpinnerPart);
+registerPart('Listbox', ListboxPart);
 
 register('TLButton', TLButton);
 register('TLUploadButton', TLUploadButton);

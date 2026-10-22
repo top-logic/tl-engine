@@ -594,6 +594,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-credential-azure</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-dob</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

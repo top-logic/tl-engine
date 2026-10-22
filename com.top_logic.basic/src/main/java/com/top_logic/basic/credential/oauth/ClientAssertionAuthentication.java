@@ -36,7 +36,9 @@ import com.top_logic.basic.credential.SecretSourceFormat;
  *
  * <p>
  * In Azure AKS with workload identity, the token file is named by the environment variable
- * <code>AZURE_FEDERATED_TOKEN_FILE</code>: <code>path="${env:AZURE_FEDERATED_TOKEN_FILE}"</code>.
+ * <code>AZURE_FEDERATED_TOKEN_FILE</code>, referenced through an alias
+ * (<code>path="%AZURE_FEDERATED_TOKEN_FILE%"</code>) defined in the application configuration as
+ * <code>&lt;entry name="%AZURE_FEDERATED_TOKEN_FILE%" value="${env:AZURE_FEDERATED_TOKEN_FILE}"/&gt;</code>.
  * </p>
  */
 public class ClientAssertionAuthentication extends AbstractConfiguredInstance<ClientAssertionAuthentication.Config>

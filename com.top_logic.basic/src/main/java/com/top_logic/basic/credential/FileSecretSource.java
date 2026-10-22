@@ -69,7 +69,9 @@ public class FileSecretSource extends AbstractConfiguredInstance<FileSecretSourc
 		 *
 		 * <p>
 		 * Like any configuration value, the path may contain aliases, e.g.
-		 * <code>${env:SECRETS_DIR}/my-api-key</code>.
+		 * <code>%SECRETS_DIR%/my-api-key</code>. An alias takes its value from an environment
+		 * variable in its definition in the application configuration:
+		 * <code>&lt;entry name="%SECRETS_DIR%" value="${env:SECRETS_DIR}"/&gt;</code>.
 		 * </p>
 		 */
 		@Name(PATH)

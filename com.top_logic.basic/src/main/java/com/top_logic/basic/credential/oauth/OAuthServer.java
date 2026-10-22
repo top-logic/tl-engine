@@ -246,7 +246,29 @@ public class OAuthServer {
 		return Collections.emptyMap();
 	}
 
-	private static AccessToken parseToken(String url, Map<String, Object> response, long issuedAt) {
+	/**
+	 * Parses a token response (RFC 6749 §5.1).
+	 *
+	 * <p>
+	 * Also usable for token responses of endpoints that are no OAuth 2.0 authorization servers but
+	 * answer in the same format, e.g. the managed identity endpoint of a cloud platform.
+	 * </p>
+	 *
+	 * @param url
+	 *        The URL the response came from, for the error message.
+	 * @param response
+	 *        The fields of the JSON object in the response.
+	 * @param issuedAt
+	 *        Time in milliseconds since the epoch when the request was sent, see
+	 *        {@link AccessToken#getIssuedAt()}.
+	 * @return The issued token. A missing {@link OAuthConstants#TOKEN_TYPE} is taken as
+	 *         {@link CredentialProvider#BEARER}, a missing {@link OAuthConstants#EXPIRES_IN} as
+	 *         unspecified lifetime.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the response contains no access token or a malformed lifetime.
+	 */
+	public static AccessToken parseToken(String url, Map<String, Object> response, long issuedAt) {
 		Object value = response.get(OAuthConstants.ACCESS_TOKEN);
 		if (!(value instanceof String) || ((String) value).isEmpty()) {
 			throw new I18NRuntimeException(I18NConstants.ERROR_MALFORMED_RESPONSE__URL.fill(url));
@@ -273,7 +295,7 @@ public class OAuthServer {
 	 * @throws I18NRuntimeException
 	 *         If the value is not a number.
 	 */
-	static Long parseSeconds(String url, Object value) {
+	public static Long parseSeconds(String url, Object value) {
 		if (value == null) {
 			return null;
 		}

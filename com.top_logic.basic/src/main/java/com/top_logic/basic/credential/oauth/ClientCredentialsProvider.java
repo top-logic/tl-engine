@@ -44,8 +44,9 @@ import com.top_logic.basic.credential.RequestAuthentication;
  * Azure AKS workload identity is the same setup against
  * <code>token-url="https://login.microsoftonline.com/&lt;tenant&gt;/oauth2/v2.0/token"</code> with
  * <code>scope="&lt;resource&gt;/.default"</code>, the assertion read from the file named by the
- * environment variable <code>AZURE_FEDERATED_TOKEN_FILE</code>
- * (<code>path="${env:AZURE_FEDERATED_TOKEN_FILE}"</code>).
+ * environment variable <code>AZURE_FEDERATED_TOKEN_FILE</code> through an alias
+ * (<code>path="%AZURE_FEDERATED_TOKEN_FILE%"</code>, defined as
+ * <code>&lt;entry name="%AZURE_FEDERATED_TOKEN_FILE%" value="${env:AZURE_FEDERATED_TOKEN_FILE}"/&gt;</code>).
  * </p>
  *
  * <p>

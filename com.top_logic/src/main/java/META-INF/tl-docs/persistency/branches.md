@@ -136,39 +136,22 @@ The engine ships the configuration for a single branch in tl-core:
 	<type-systems>
 		<type-system name="Default"
 			multiple-branches="false"
-		>
-			<declarations>
-				<declaration resource="webinf://kbase/singleBranchMeta.xml"/>
-			</declarations>
-		</type-system>
+		/>
 	</type-systems>
 </config>
 ```
 
-and the declaration `WEB-INF/kbase/singleBranchMeta.xml` it adds to the `Default` type system. It
-redefines `_branch` of `Item` as a computed attribute without a column (`TrunkStorage` always
-answers `TLContext.TRUNK_ID`) and removes it from the primary key:
+The flag alone switches the type system: when the types are created, the `_branch` attribute of
+`Item` (and of every other knowledge item type declaring it) becomes a computed attribute without a
+column (`TrunkStorage` always answers `TLContext.TRUNK_ID`), and it no longer contributes to the
+primary key (`DefaultMOFactory.adaptAttribute`, called by `MORepositoryBuilder` for every
+declared attribute). With `multiple-branches="true"` it is the stored `BRANCH` column
+(`BranchStorage`) leading the primary key, as declared in `BasicMeta.xml`. This holds
+for every definition of `Item`, including a stored schema of an existing database that still
+contains the former single-branch redefinition. `WEB-INF/kbase/singleBranchMeta.xml` is empty and
+only kept for type system configurations that still declare it.
 
-```xml
-<metaobject object_name="Item">
-	<attributes>
-		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute"
-			att_name="_branch"
-		>
-			<storage class="com.top_logic.knowledge.service.db2.TrunkStorage"/>
-		</mo_attribute>
-	</attributes>
-	<primary-key>
-		<index-parts>
-			<index_part name="_branch"
-				config:operation="remove"
-			/>
-		</index-parts>
-	</primary-key>
-</metaobject>
-```
-
-An application enables both by adding one line to its `WEB-INF/conf/metaConf.txt`:
+An application enables it by adding one line to its `WEB-INF/conf/metaConf.txt`:
 
 ```
 top-logic.singleBranch.config.xml
@@ -188,8 +171,7 @@ new branch shares all data with its base.
 No application shipped with TopLogic uses this configuration. The engine's knowledge base tests run
 it: `AbstractDBKnowledgeBaseTest.suite(...)` runs every test that does not declare `needsBranches`
 a second time as a *"no branches"* variant on freshly created tables (`MultipleBranchSetup`,
-`SchemaTestSetup.updateMultipleBranches`, which sets the flag and adds `singleBranchMeta.xml`
-exactly like the configuration above).
+`SchemaTestSetup.updateMultipleBranches`, which sets the flag exactly like the configuration above).
 
 ## Index options of DefaultIndexColumnsStrategy
 
@@ -220,7 +202,7 @@ and all its subtypes that do not declare their own (`SchemaSetup.getIndexStrateg
 To set an option, the strategy is written as a nested element, the same form `BasicMeta.xml` uses
 for other annotations such as `<implementation-factory class="..."/>`. Annotations of a metaobject
 are identified by their `config:interface`, so a declaration of the application that redefines
-`Item` - the way `singleBranchMeta.xml` does - replaces the strategy for all tables:
+`Item` replaces the strategy for all tables:
 
 ```xml
 <metaobject object_name="Item">
@@ -247,7 +229,7 @@ tables (`AlignTableLayoutProcessor`, see
 [conversion of an existing database](doc:persistency/table-layout#conversion-of-an-existing-database)):
 
 - Switching to a single branch drops the `BRANCH` column and the reference branch columns of all
-  tables and replaces `_branch` by the computed attribute of `singleBranchMeta.xml`. This requires
+  tables; `_branch` becomes the computed trunk attribute. This requires
   that the database contains only the trunk. If the table `Branch` lists another branch or a branch
   column holds a value other than the trunk, nothing is changed and startup fails with an error
   naming the tables, columns and branches found.

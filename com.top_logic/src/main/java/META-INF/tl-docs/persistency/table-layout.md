@@ -127,9 +127,9 @@ the `AlignTableLayoutProcessor` (tag `align-table-layout`) before it creates the
 types:
 
 1. It computes the table definitions of all stored types twice, with the stored and with the
-   configured options. When `multiple-branches` changes, the definition of `Item` is taken from the
-   configuration (with or without `singleBranchMeta.xml`); all other type definitions stay as
-   stored.
+   configured options. The type definitions stay as stored; the `_branch` attribute follows
+   `multiple-branches` when the types are created (see
+   [switching to a single branch](doc:persistency/branches#switching-to-a-single-branch)).
 2. For every existing table whose definition differs, it
    - drops the primary key and the indexes whose columns change,
    - adds missing branch columns (`BRANCH`, `<REF>_BRC`) and fills them with the trunk (`1`; a
@@ -150,8 +150,9 @@ index strategy options - are not applied, see
   `Branch` has no other branch, and no dropped branch column holds another value. Otherwise the
   processor changes nothing and startup fails with an error naming the tables, columns and branches
   found.
-- Switching `multiple-branches` needs the matching declaration as well: an application switching
-  to a single branch adds `top-logic.singleBranch.config.xml`, one switching back removes it.
+- Switching `multiple-branches` only changes the flag: an application switching to a single
+  branch adds `top-logic.singleBranch.config.xml` (or sets the flag in its own configuration), one
+  switching back removes it.
 
 **Database specifics.**
 

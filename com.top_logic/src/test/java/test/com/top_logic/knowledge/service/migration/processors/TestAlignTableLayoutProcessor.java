@@ -27,11 +27,13 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.ResourceDeclaration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.db.model.DBColumnRef;
 import com.top_logic.basic.db.model.DBIndex;
+import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
@@ -45,6 +47,7 @@ import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.MORepository;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -59,6 +62,7 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
+import com.top_logic.knowledge.service.db2.DBKnowledgeTypeFactory;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.processors.AlignTableLayoutProcessor;
@@ -127,6 +131,12 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 
 	/** Historic reference of {@link #VERSION_TYPE}. */
 	private static final String DOC_REFERENCE = "doc";
+
+	/**
+	 * Declaration redefining the branch attribute of {@link BasicTypes#ITEM_TYPE_NAME} for a single
+	 * branch, as contained in the stored schemas of existing single-branch databases.
+	 */
+	private static final String LEGACY_SINGLE_BRANCH_META = "webinf://kbase/TestLegacySingleBranchMeta.xml";
 
 	/** Branch column of {@link #DOC_REFERENCE}. */
 	private static final String DOC_BRANCH_COLUMN = "DOC_BRC";
@@ -345,16 +355,116 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 		assertEquals(Boolean.TRUE, target.getBranchLast());
 		assertNotSame(configured, target);
 		assertEquals("Stored schema not modified.", Boolean.FALSE, configured.getBranchLast());
-		assertEquals("Types only change with multiple-branches.", item(configured), item(target));
+		assertEquals("Type definitions are kept.", item(configured), item(target));
 
 		SchemaConfiguration single = AlignTableLayoutProcessor.withConfiguredLayout(configured, singleBranch);
 		assertFalse(single.hasMultipleBranches());
-		assertEquals(item(singleBranch), item(single));
-		assertFalse(item(configured).equals(item(single)));
+		assertEquals("Type definitions are kept.", item(configured), item(single));
+		assertEquals("The flag alone selects a single branch.", item(singleBranch), item(single));
 
 		SchemaConfiguration multi = AlignTableLayoutProcessor.withConfiguredLayout(single, configured);
 		assertTrue(multi.hasMultipleBranches());
 		assertEquals(item(configured), item(multi));
+	}
+
+	/**
+	 * A schema with a single branch has no branch column without declaring anything but the flag.
+	 */
+	public void testSingleBranchByFlag() throws Exception {
+		for (boolean branchLast : new boolean[] { false, true }) {
+			SchemaConfiguration schema = configuredSchema(false, branchLast);
+			assertTrue("No declaration needed.", schema.getDeclarations().isEmpty());
+			DBTable label = createTable(schema, LABEL_TYPE);
+			assertNull(label.getColumn(BRANCH));
+			assertEquals(asList(IDENTIFIER, REV_MAX), primaryKey(label));
+
+			DBTable multiLabel = createTable(configuredSchema(true, branchLast), LABEL_TYPE);
+			assertNotNull(multiLabel.getColumn(BRANCH));
+			assertEquals(key(true, branchLast, IDENTIFIER), primaryKey(multiLabel));
+		}
+	}
+
+	/**
+	 * The repository of the stored schema used by migration processors follows a stored
+	 * <code>multiple-branches="false"</code> without a declaration redefining the branch attribute.
+	 */
+	public void testPersistentRepositorySingleBranch() throws Exception {
+		String storedBefore = storedSchemaRaw();
+		PooledConnection connection = _pool.borrowWriteConnection();
+		try {
+			KBSchemaUtil.storeSchema(connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME,
+				configuredSchema(false, _defaultBranchLast));
+			MigrationContext context = new MigrationContext(new AssertProtocol(), connection);
+			assertFalse(context.hasBranchSupport());
+
+			MORepository types = context.getPersistentRepository();
+			assertFalse(types.multipleBranches());
+			DBTable label = SchemaSetup.createTable((MOClass) types.getTypeOrNull(LABEL_TYPE));
+			assertNull(label.getColumn(BRANCH));
+			assertEquals(asList(IDENTIFIER, REV_MAX), primaryKey(label));
+			DBTable flexData =
+				SchemaSetup.createTable((MOClass) types.getTypeOrNull(AbstractFlexDataManager.FLEX_DATA));
+			assertNull(flexData.getColumn(BRANCH));
+		} finally {
+			KBSchemaUtil.storeSchemaRaw(connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME, storedBefore);
+			connection.commit();
+			_pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * A database whose stored schema redefines the branch attribute of {@link BasicTypes#ITEM_TYPE_NAME}
+	 * for a single branch boots unchanged and converts to multiple branches.
+	 */
+	public void testConvertLegacySingleBranchSchema() throws Exception {
+		try {
+			align(false, _defaultBranchLast);
+			assertLayout(false, _defaultBranchLast);
+
+			SchemaConfiguration legacy = legacySingleBranchSchema(_defaultBranchLast);
+			PooledConnection connection = _pool.borrowWriteConnection();
+			try {
+				KBSchemaUtil.storeSchema(connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME, legacy);
+				connection.commit();
+			} finally {
+				_pool.releaseWriteConnection(connection);
+			}
+			assertFalse("Stored schema redefines the branch attribute.",
+				item(storedSchema()).equals(item(configuredSchema(false, _defaultBranchLast))));
+			assertData(false, _defaultBranchLast);
+
+			align(true, _defaultBranchLast);
+			assertLayout(true, _defaultBranchLast);
+			assertStored(true, _defaultBranchLast);
+			assertTrunk(tableName(LABEL_TYPE), BRANCH, 1);
+			assertData(true, _defaultBranchLast);
+		} finally {
+			restoreDefaultLayout();
+		}
+	}
+
+	/**
+	 * The resolved schema of a single-branch database created with a type system that redefines
+	 * the branch attribute of {@link BasicTypes#ITEM_TYPE_NAME}.
+	 */
+	private SchemaConfiguration legacySingleBranchSchema(boolean branchLast) throws ConfigurationException {
+		SchemaConfiguration schema = KBUtils.getSchemaConfig(_kbConfig).getConfig();
+		schema = SchemaTestSetup.updateMultipleBranches(schema, Decision.FALSE);
+		schema = SchemaTestSetup.updateBranchLast(schema, decision(branchLast));
+		ResourceDeclaration declaration = TypedConfiguration.newConfigItem(ResourceDeclaration.class);
+		declaration.setResource(LEGACY_SINGLE_BRANCH_META);
+		schema.getDeclarations().add(declaration);
+		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
+		return context.getInstance(schema).resolve(context).getConfig();
+	}
+
+	private DBTable createTable(SchemaConfiguration schema, String typeName) throws Exception {
+		SchemaSetup setup = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(schema);
+		MORepository types = setup.createMORepository(_pool.getSQLDialect(), new DBKnowledgeTypeFactory());
+		DBSchema dbSchema = DBSchemaFactory.createDBSchema();
+		DBTable result = SchemaSetup.createTable((MOClass) types.getTypeOrNull(typeName));
+		dbSchema.getTables().add(result);
+		return result;
 	}
 
 	private static String item(SchemaConfiguration schema) {

@@ -40,7 +40,6 @@ import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MORepository;
-import com.top_logic.dob.schema.config.MetaObjectName;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.BranchSupport;
@@ -97,19 +96,6 @@ public class AlignTableLayoutProcessor extends AbstractConfiguredInstance<AlignT
 		List.of(SchemaConfiguration.BRANCH_LAST_ATTRIBUTE, SchemaConfiguration.MULTIPLE_BRANCHES_ATTRIBUTE);
 
 	/**
-	 * Names of the types whose definitions depend on {@link SchemaConfiguration#hasMultipleBranches()}.
-	 *
-	 * <p>
-	 * A single-branch schema declares <code>singleBranchMeta.xml</code>, which replaces the branch
-	 * attribute of {@link BasicTypes#ITEM_TYPE_NAME} by a computed attribute and removes it from its
-	 * primary key. Since the stored schema contains the resolved type definitions, the definitions of
-	 * these types are taken from the configured schema, if
-	 * {@link SchemaConfiguration#MULTIPLE_BRANCHES_ATTRIBUTE} changes.
-	 * </p>
-	 */
-	public static final List<String> BRANCH_DEPENDENT_TYPES = List.of(BasicTypes.ITEM_TYPE_NAME);
-
-	/**
 	 * Configuration options of {@link AlignTableLayoutProcessor}.
 	 */
 	@TagName(Config.TAG_NAME)
@@ -157,8 +143,8 @@ public class AlignTableLayoutProcessor extends AbstractConfiguredInstance<AlignT
 	 * {@link #LAYOUT_OPTIONS} of the given configured schema.
 	 *
 	 * <p>
-	 * If {@link SchemaConfiguration#hasMultipleBranches()} differs, the definitions of the
-	 * {@link #BRANCH_DEPENDENT_TYPES} are taken from the configured schema as well.
+	 * The type definitions are kept: the branch attribute of the types follows
+	 * {@link SchemaConfiguration#hasMultipleBranches()} when the types are created.
 	 * </p>
 	 *
 	 * @param stored
@@ -172,18 +158,6 @@ public class AlignTableLayoutProcessor extends AbstractConfiguredInstance<AlignT
 		for (String option : LAYOUT_OPTIONS) {
 			PropertyDescriptor property = result.descriptor().getProperty(option);
 			result.update(property, value(configured, option));
-		}
-		if (stored.hasMultipleBranches() != configured.hasMultipleBranches()) {
-			Map<String, MetaObjectName> resultTypes = result.getMetaObjects().getTypes();
-			Map<String, MetaObjectName> configuredTypes = configured.getMetaObjects().getTypes();
-			for (String typeName : BRANCH_DEPENDENT_TYPES) {
-				MetaObjectName configuredType = configuredTypes.get(typeName);
-				if (configuredType == null) {
-					resultTypes.remove(typeName);
-				} else {
-					resultTypes.put(typeName, TypedConfiguration.copy(configuredType));
-				}
-			}
 		}
 		return result;
 	}

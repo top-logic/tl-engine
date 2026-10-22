@@ -47,12 +47,66 @@ public interface WorkspaceProvider extends AutoCloseable {
 	void ensureImage(String image) throws InterruptedException;
 
 	/**
+	 * Makes sure that an image built from the given context is available to create containers
+	 * from, building it if necessary.
+	 *
+	 * <p>
+	 * The image is tagged with the {@link ImageContext#contentHash() content hash} of the context.
+	 * If an image of this tag exists, it is reused without building, so a changed context leads to
+	 * a new image and an unchanged one does not.
+	 * </p>
+	 *
+	 * @param repository
+	 *        The name of the image without tag, e.g. {@code tl-factory-workspace}.
+	 * @param context
+	 *        The files to build the image from.
+	 * @param output
+	 *        Receiver of the output of the build while it runs.
+	 * @return The reference of the image, the repository followed by {@code :} and the content
+	 *         hash.
+	 */
+	String buildImage(String repository, ImageContext context, ExecOutput output) throws InterruptedException;
+
+	/**
+	 * Makes sure that a {@link VolumeMount#isShared() shared} volume exists, creating it empty if
+	 * necessary.
+	 *
+	 * <p>
+	 * A shared volume belongs to no workspace: neither {@link #remove(String)} nor
+	 * {@link #cleanup(Collection)} removes it, only {@link #removeSharedVolume(String)} does.
+	 * </p>
+	 *
+	 * @param name
+	 *        The logical name of the volume, see {@link VolumeMount#getName()}.
+	 */
+	void ensureSharedVolume(String name);
+
+	/**
+	 * The logical names of all {@link VolumeMount#isShared() shared} volumes of this provider.
+	 */
+	List<String> listSharedVolumes();
+
+	/**
+	 * Removes a {@link VolumeMount#isShared() shared} volume.
+	 *
+	 * <p>
+	 * Removing a volume that does not exist does nothing. A volume mounted by a workspace that
+	 * still has a container cannot be removed.
+	 * </p>
+	 *
+	 * @param name
+	 *        The logical name of the volume, see {@link VolumeMount#getName()}.
+	 */
+	void removeSharedVolume(String name);
+
+	/**
 	 * Creates the container and the volumes of a workspace without starting it.
 	 *
 	 * <p>
 	 * The image is pulled if it is not available. Volumes of the same workspace that remain from
 	 * an earlier container are reused, so that a workspace can be created anew on its persisted
-	 * state.
+	 * state. {@link VolumeMount#isShared() Shared} volumes must exist, see
+	 * {@link #ensureSharedVolume(String)}.
 	 * </p>
 	 *
 	 * @return The workspace in state {@link WorkspaceState#CREATED}.

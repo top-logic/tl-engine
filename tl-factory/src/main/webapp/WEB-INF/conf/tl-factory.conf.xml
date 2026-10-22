@@ -7,5 +7,9 @@
 		<entry name="%FACTORY_PUBLIC_HOST%" value="${env:tl_factory_public_host:localhost}" comment="Host name under which a browser reaches the published workspace ports."/>
 		<entry name="%FACTORY_HOST_PORT_MIN%" value="${env:tl_factory_host_port_min:20000}" comment="Lowest host port a workspace port is published on."/>
 		<entry name="%FACTORY_HOST_PORT_MAX%" value="${env:tl_factory_host_port_max:20999}" comment="Highest host port a workspace port is published on."/>
+		<entry name="%FACTORY_ENGINE_VERSION%" value="${env:tl_factory_engine_version:8.0.0-alpha11}" comment="TopLogic version a new application is built on."/>
+		<entry name="%FACTORY_IMAGE_REPOSITORY%" value="${env:tl_factory_image_repository:tl-factory-workspace}" comment="Name (without tag) of the image the application workspaces run."/>
+		<entry name="%FACTORY_REPOSITORY_URL%" value="${env:tl_factory_repository_url:https://dev.top-logic.com/nexus/repository/toplogic/}" comment="Maven repository the TopLogic releases are taken from."/>
+		<entry name="%FACTORY_START_TIMEOUT%" value="${env:tl_factory_start_timeout:600}" comment="Seconds to wait for a started application to answer."/>
 	</alias>
 </root>

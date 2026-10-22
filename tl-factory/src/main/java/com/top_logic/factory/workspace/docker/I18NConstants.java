@@ -35,6 +35,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_FOREIGN_CONTAINER__NAME;
 
+	/**
+	 * @en The image "{0}" could not be built: {1}
+	 */
+	public static ResKey2 ERROR_IMAGE_BUILD_FAILED__IMAGE_MESSAGE;
+
+	/**
+	 * @en There is no shared volume "{0}".
+	 */
+	public static ResKey1 ERROR_UNKNOWN_SHARED_VOLUME__NAME;
+
+	/**
+	 * @en The shared volume "{0}" is still used by a workspace.
+	 */
+	public static ResKey1 ERROR_SHARED_VOLUME_IN_USE__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

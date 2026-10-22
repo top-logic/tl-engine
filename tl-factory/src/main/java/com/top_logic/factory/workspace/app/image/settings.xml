@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+
+	Maven settings of an application workspace: the TopLogic release repository is available for
+	dependencies and plugins, so that the archetype and the engine artifacts are found.
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+	<profiles>
+		<profile>
+			<id>toplogic</id>
+			<repositories>
+				<repository>
+					<id>tl-releases</id>
+					<url>@REPOSITORY_URL@</url>
+					<releases>
+						<enabled>true</enabled>
+					</releases>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+			</repositories>
+			<pluginRepositories>
+				<pluginRepository>
+					<id>tl-releases</id>
+					<url>@REPOSITORY_URL@</url>
+					<releases>
+						<enabled>true</enabled>
+					</releases>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</pluginRepository>
+			</pluginRepositories>
+		</profile>
+	</profiles>
+	<activeProfiles>
+		<activeProfile>toplogic</activeProfile>
+	</activeProfiles>
+</settings>

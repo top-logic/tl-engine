@@ -6,6 +6,8 @@
 package com.top_logic.factory.workspace.docker;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,9 +26,11 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.command.InspectVolumeResponse;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
+import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
@@ -52,8 +56,10 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
+import com.top_logic.factory.workspace.ImageContext;
 import com.top_logic.factory.workspace.VolumeMount;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceProvider;
@@ -76,8 +82,9 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * Everything the provider creates carries labels in the {@link Config#getLabelNamespace() label
  * namespace}: containers and volumes the label {@link #LABEL_WORKSPACE} with the workspace
- * identifier, the network the label {@link #LABEL_NETWORK}. The provider finds its objects by
- * these labels only, never by name.
+ * identifier, shared volumes the label {@link #LABEL_SHARED} with their logical name, built images
+ * the label {@link #LABEL_IMAGE} with their repository, the network the label
+ * {@link #LABEL_NETWORK}. The provider finds its objects by these labels only, never by name.
  * </p>
  *
  * <p>
@@ -319,6 +326,34 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	public static final String LABEL_NETWORK = "network";
 
 	/**
+	 * Key suffix of the label carrying the logical name of a shared volume, set on shared volumes.
+	 *
+	 * @see VolumeMount#isShared()
+	 */
+	public static final String LABEL_SHARED = "shared";
+
+	/**
+	 * Key suffix of the label carrying the repository of an image the provider built, set on
+	 * built images.
+	 */
+	public static final String LABEL_IMAGE = "image";
+
+	/**
+	 * Part of the name of a shared volume between the name prefix and the logical name.
+	 */
+	private static final String SHARED_NAME_PART = "shared";
+
+	/**
+	 * Separator between the repository and the tag of an image reference.
+	 */
+	private static final String TAG_SEPARATOR = ":";
+
+	/**
+	 * Prefix of the temporary directory an image context is written to for building.
+	 */
+	private static final String IMAGE_CONTEXT_DIR_PREFIX = "tl-factory-image";
+
+	/**
 	 * Separator between the label namespace and a key suffix.
 	 */
 	private static final String LABEL_SEPARATOR = ".";
@@ -442,6 +477,113 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	}
 
 	@Override
+	public String buildImage(String repository, ImageContext context, ExecOutput output)
+			throws InterruptedException {
+		if (!context.getFiles().containsKey(ImageContext.DOCKERFILE)) {
+			throw new IllegalArgumentException("The image context has no " + ImageContext.DOCKERFILE + ".");
+		}
+		String image = repository + TAG_SEPARATOR + context.contentHash();
+		try {
+			_client.inspectImageCmd(image).exec();
+			return image;
+		} catch (NotFoundException ex) {
+			// Build below.
+		} catch (RuntimeException ex) {
+			throw requestFailed(ex);
+		}
+
+		Logger.info("Building image " + image + ".", DockerWorkspaceProvider.class);
+		Path dir = null;
+		try {
+			dir = Files.createTempDirectory(IMAGE_CONTEXT_DIR_PREFIX);
+			for (Map.Entry<String, byte[]> file : context.getFiles().entrySet()) {
+				Path target = dir.resolve(file.getKey());
+				Files.createDirectories(target.getParent());
+				Files.write(target, file.getValue());
+			}
+			BuildCallback callback = new BuildCallback(output);
+			_client.buildImageCmd()
+				.withBaseDirectory(dir.toFile())
+				.withDockerfile(dir.resolve(ImageContext.DOCKERFILE).toFile())
+				.withTags(Collections.singleton(image))
+				.withLabels(Collections.singletonMap(labelKey(LABEL_IMAGE), repository))
+				.withPull(true)
+				.withRemove(true)
+				.exec(callback)
+				.awaitCompletion();
+			if (callback.getError() != null) {
+				throw new TopLogicException(
+					I18NConstants.ERROR_IMAGE_BUILD_FAILED__IMAGE_MESSAGE.fill(image, callback.getError()));
+			}
+			_client.inspectImageCmd(image).exec();
+		} catch (IOException | DockerClientException | NotFoundException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_IMAGE_BUILD_FAILED__IMAGE_MESSAGE.fill(image, message(ex)),
+				ex);
+		} catch (RuntimeException ex) {
+			throw requestFailed(ex);
+		} finally {
+			if (dir != null) {
+				FileUtilities.deleteR(dir.toFile());
+			}
+		}
+		return image;
+	}
+
+	@Override
+	public void ensureSharedVolume(String name) {
+		checkName(name);
+		request(() -> {
+			String volumeName = sharedVolumeName(name);
+			try {
+				InspectVolumeResponse existing = _client.inspectVolumeCmd(volumeName).exec();
+				Map<String, String> labels = existing.getLabels();
+				if (labels == null || !name.equals(labels.get(labelKey(LABEL_SHARED)))) {
+					throw new TopLogicException(I18NConstants.ERROR_FOREIGN_VOLUME__NAME.fill(volumeName));
+				}
+				return null;
+			} catch (NotFoundException ex) {
+				// Create below.
+			}
+			_client.createVolumeCmd()
+				.withName(volumeName)
+				.withLabels(Collections.singletonMap(labelKey(LABEL_SHARED), name))
+				.exec();
+			Logger.info("Created shared volume " + volumeName + ".", DockerWorkspaceProvider.class);
+			return null;
+		});
+	}
+
+	@Override
+	public List<String> listSharedVolumes() {
+		return request(() -> {
+			String sharedLabel = labelKey(LABEL_SHARED);
+			List<String> result = new ArrayList<>();
+			for (InspectVolumeResponse volume : listVolumes(sharedLabel)) {
+				result.add(volume.getLabels().get(sharedLabel));
+			}
+			Collections.sort(result);
+			return result;
+		});
+	}
+
+	@Override
+	public void removeSharedVolume(String name) {
+		request(() -> {
+			for (InspectVolumeResponse volume : findSharedVolumes(name)) {
+				try {
+					_client.removeVolumeCmd(volume.getName()).exec();
+				} catch (NotFoundException ex) {
+					// Removed concurrently.
+				} catch (ConflictException ex) {
+					throw new TopLogicException(I18NConstants.ERROR_SHARED_VOLUME_IN_USE__NAME.fill(name), ex);
+				}
+				Logger.info("Removed shared volume " + volume.getName() + ".", DockerWorkspaceProvider.class);
+			}
+			return null;
+		});
+	}
+
+	@Override
 	public WorkspaceInfo create(WorkspaceSpec spec) throws InterruptedException {
 		String workspaceId = checkName(spec.getWorkspaceId());
 		for (VolumeMount volume : spec.getVolumes()) {
@@ -460,7 +602,7 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 
 			List<Mount> mounts = new ArrayList<>();
 			for (VolumeMount volume : spec.getVolumes()) {
-				String volumeName = ensureVolume(spec, volume);
+				String volumeName = volume.isShared() ? requireSharedVolume(volume.getName()) : ensureVolume(spec, volume);
 				mounts.add(new Mount()
 					.withType(MountType.VOLUME)
 					.withSource(volumeName)
@@ -762,6 +904,18 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		return result;
 	}
 
+	private List<InspectVolumeResponse> findSharedVolumes(String name) {
+		return listVolumes(labelKey(LABEL_SHARED) + "=" + name);
+	}
+
+	private String requireSharedVolume(String name) {
+		List<InspectVolumeResponse> volumes = findSharedVolumes(name);
+		if (volumes.isEmpty()) {
+			throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_SHARED_VOLUME__NAME.fill(name));
+		}
+		return volumes.get(0).getName();
+	}
+
 	private String ensureVolume(WorkspaceSpec spec, VolumeMount volume) {
 		String workspaceId = spec.getWorkspaceId();
 		String volumeName = volumeName(workspaceId, volume.getName());
@@ -826,6 +980,10 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		return containerName(workspaceId) + NAME_SEPARATOR + volume;
 	}
 
+	private String sharedVolumeName(String name) {
+		return getConfig().getNamePrefix() + NAME_SEPARATOR + SHARED_NAME_PART + NAME_SEPARATOR + name;
+	}
+
 	private static String checkName(String name) {
 		if (!NAME_PATTERN.matcher(name).matches()) {
 			throw new IllegalArgumentException(
@@ -863,6 +1021,42 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 			cause = cause.getCause();
 		}
 		return cause.getMessage() != null ? cause.getMessage() : cause.getClass().getName();
+	}
+
+	/**
+	 * Forwards the output of an image build to an {@link ExecOutput} and records the error the
+	 * build reports.
+	 */
+	private static final class BuildCallback extends ResultCallback.Adapter<BuildResponseItem> {
+
+		private final ExecOutput _output;
+
+		private String _error;
+
+		BuildCallback(ExecOutput output) {
+			_output = output;
+		}
+
+		@Override
+		public void onNext(BuildResponseItem item) {
+			String stream = item.getStream();
+			if (stream != null && !stream.isEmpty()) {
+				_output.stdout(stream);
+			}
+			if (item.isErrorIndicated()) {
+				_error = item.getErrorDetail() != null && item.getErrorDetail().getMessage() != null
+					? item.getErrorDetail().getMessage()
+					: item.getError();
+				_output.stderr(_error + "\n");
+			}
+		}
+
+		/**
+		 * The error the build reported, {@code null} if it succeeded.
+		 */
+		String getError() {
+			return _error;
+		}
 	}
 
 	/**

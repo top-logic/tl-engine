@@ -11,6 +11,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
 
 /**
@@ -44,9 +45,27 @@ public class WorkspaceService extends ConfiguredManagedClass<WorkspaceService.Co
 		@ItemDefault(DockerWorkspaceProvider.Config.class)
 		PolymorphicConfiguration<? extends WorkspaceProvider> getProvider();
 
+		/**
+		 * Configuration property name of {@link #getApplications()}.
+		 *
+		 * @see #getApplications()
+		 */
+		String APPLICATIONS = "applications";
+
+		/**
+		 * How workspaces holding a TopLogic application are set up.
+		 *
+		 * @see #APPLICATIONS
+		 */
+		@Name(APPLICATIONS)
+		@ItemDefault
+		ApplicationWorkspaces.Config getApplications();
+
 	}
 
 	private final WorkspaceProvider _provider;
+
+	private final ApplicationWorkspaces _applications;
 
 	/**
 	 * Creates a {@link WorkspaceService} from configuration.
@@ -59,6 +78,7 @@ public class WorkspaceService extends ConfiguredManagedClass<WorkspaceService.Co
 	public WorkspaceService(InstantiationContext context, Config<?> config) {
 		super(context, config);
 		_provider = context.getInstance(config.getProvider());
+		_applications = new ApplicationWorkspaces(config.getApplications(), _provider);
 	}
 
 	/**
@@ -66,6 +86,14 @@ public class WorkspaceService extends ConfiguredManagedClass<WorkspaceService.Co
 	 */
 	public WorkspaceProvider getProvider() {
 		return _provider;
+	}
+
+	/**
+	 * The workspaces holding a TopLogic application, created by the {@link #getProvider()
+	 * provider}.
+	 */
+	public ApplicationWorkspaces getApplications() {
+		return _applications;
 	}
 
 	@Override

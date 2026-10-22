@@ -29,6 +29,8 @@ public class FieldState_Impl extends com.top_logic.layout.react.state.impl.Contr
 
 	private boolean _submitOnEnter = false;
 
+	private boolean _compact = false;
+
 	/**
 	 * Creates a {@link FieldState_Impl} instance.
 	 *
@@ -236,6 +238,22 @@ public class FieldState_Impl extends com.top_logic.layout.react.state.impl.Contr
 	}
 
 	@Override
+	public final boolean isCompact() {
+		return _compact;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.FieldState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isCompact()} without chain call utility. */
+	protected final void internalSetCompact(boolean value) {
+		_compact = value;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.FieldState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;
@@ -281,6 +299,8 @@ public class FieldState_Impl extends com.top_logic.layout.react.state.impl.Contr
 		out.value(getPlaceholder());
 		out.name(SUBMIT_ON_ENTER__PROP);
 		out.value(isSubmitOnEnter());
+		out.name(COMPACT__PROP);
+		out.value(isCompact());
 	}
 
 	@Override
@@ -298,6 +318,7 @@ public class FieldState_Impl extends com.top_logic.layout.react.state.impl.Contr
 			case TOOLTIP__PROP: setTooltip(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case PLACEHOLDER__PROP: setPlaceholder(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case SUBMIT_ON_ENTER__PROP: setSubmitOnEnter(in.nextBoolean()); break;
+			case COMPACT__PROP: setCompact(in.nextBoolean()); break;
 			default: super.readField(in, field);
 		}
 	}

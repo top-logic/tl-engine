@@ -138,6 +138,12 @@ export interface FieldStateJson extends ControlStateJson {
 	 * Whether pressing Enter in the field sends the submit command with the value typed.
 	 */
 	submitOnEnter: boolean;
+
+	/**
+	 * Whether the field is displayed in little room, a table cell for instance: the height of a
+	 * single line of text, with spacing reduced to what keeps its parts apart.
+	 */
+	compact: boolean;
 }
 
 /**

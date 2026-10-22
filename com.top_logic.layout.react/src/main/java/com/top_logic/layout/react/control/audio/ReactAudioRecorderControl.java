@@ -41,8 +41,6 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 	/** State key for the current status. */
 	private static final String STATUS = "status";
 
-	/** State key for an error message. */
-	private static final String ERROR = "error";
 
 	private final BinaryDataValue _model;
 
@@ -64,7 +62,7 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 	}
 
 	private void setError(String error) {
-		putState(ERROR, error);
+		putState(UploadSupport.ERROR, error);
 	}
 
 	@Override

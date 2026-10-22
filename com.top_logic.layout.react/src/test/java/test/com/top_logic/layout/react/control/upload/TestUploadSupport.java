@@ -34,6 +34,31 @@ public class TestUploadSupport extends TestCase {
 		assertEquals("512 B", UploadSupport.sizeLabel(512));
 	}
 
+	/** A field without a limit of its own accepts files up to the application-wide limit. */
+	public void testNoFieldLimitTakesTheGlobalLimit() {
+		assertEquals(1000, UploadSupport.effectiveMaxUploadSize(0, 1000));
+		assertEquals(1000, UploadSupport.effectiveMaxUploadSize(-1, 1000));
+		assertEquals(UploadSupport.maxUploadSize(), UploadSupport.effectiveMaxUploadSize(0));
+	}
+
+	/** Without an application-wide limit, the limit of the field applies. */
+	public void testNoGlobalLimitTakesTheFieldLimit() {
+		assertEquals(500, UploadSupport.effectiveMaxUploadSize(500, 0));
+		assertEquals(500, UploadSupport.effectiveMaxUploadSize(500, -1));
+	}
+
+	/** Where both limits are set, the smaller one applies. */
+	public void testBothLimitsTakeTheSmallerOne() {
+		assertEquals(500, UploadSupport.effectiveMaxUploadSize(500, 1000));
+		assertEquals(1000, UploadSupport.effectiveMaxUploadSize(2000, 1000));
+		assertEquals(1024, UploadSupport.effectiveMaxUploadSize(1024));
+	}
+
+	/** Without any limit, files of every size are accepted. */
+	public void testNoLimitAtAll() {
+		assertEquals(0, UploadSupport.effectiveMaxUploadSize(0, 0));
+	}
+
 	/**
 	 * The test suite, started with the resource bundles the number format of a size label needs.
 	 */

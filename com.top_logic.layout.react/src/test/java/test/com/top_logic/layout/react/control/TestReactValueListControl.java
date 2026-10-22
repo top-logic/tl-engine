@@ -17,6 +17,8 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -28,6 +30,7 @@ import com.top_logic.layout.react.control.form.MoveElementArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
 import com.top_logic.layout.react.control.form.RemoveElementArguments;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
@@ -394,6 +397,88 @@ public class TestReactValueListControl extends TestCase {
 		assertEquals(Collections.singletonList(null), list.getFieldModel().getValue());
 	}
 
+	/**
+	 * A list of files takes several files in one upload and appends one value per file, in the
+	 * order they were sent, after the files already there.
+	 */
+	public void testUploadAppendsValues() {
+		BinaryData a = BinaryDataFactory.createBinaryData("A".getBytes(), "text/plain", "a.txt");
+		ValueList list = list(new AbstractFieldModel(Arrays.asList(a)), files(), FieldControlRegistry.BINARY);
+		ReactControl first = list.elements().get(0);
+
+		list.handleUpload(null, Arrays.asList(
+			TestReactFileChipsControl.part("c.txt", "C"),
+			TestReactFileChipsControl.part("d.txt", "DD"),
+			TestReactFileChipsControl.part("e.txt", "EEE")));
+
+		List<?> value = (List<?>) list.getFieldModel().getValue();
+		assertEquals(4, value.size());
+		assertSame(a, value.get(0));
+		assertEquals("c.txt", ((BinaryData) value.get(1)).getName());
+		assertEquals("d.txt", ((BinaryData) value.get(2)).getName());
+		assertEquals("e.txt", ((BinaryData) value.get(3)).getName());
+		assertEquals(4, list.elements().size());
+		assertSame("The value already there keeps its control", first, list.elements().get(0));
+	}
+
+	/**
+	 * The first upload into an empty list of files creates the collection.
+	 */
+	public void testUploadIntoEmptyList() {
+		ValueList list = list(new AbstractFieldModel(null), files(), FieldControlRegistry.BINARY);
+
+		list.handleUpload(null, Arrays.asList(TestReactFileChipsControl.part("c.txt", "C")));
+
+		assertEquals(1, ((List<?>) list.getFieldModel().getValue()).size());
+		assertEquals(1, list.elements().size());
+	}
+
+	/**
+	 * A list of files tells its client that values are added by upload, and which files its file
+	 * picker offers.
+	 */
+	public void testUploadAnnounced() {
+		ValueList list = list(new AbstractFieldModel(null), files().setAcceptedTypes("*.pdf, image/*"),
+			FieldControlRegistry.BINARY);
+
+		assertEquals(Boolean.TRUE, list.state(ReactValueListControl.UPLOAD));
+		assertEquals("image/*,.pdf", list.state(UploadSupport.ACCEPT));
+		assertNotNull(list.state(UploadSupport.MAX_UPLOAD_SIZE));
+	}
+
+	/**
+	 * Values that are not created from files are added empty: the list announces no upload and
+	 * ignores one.
+	 */
+	public void testNoUploadForTexts() {
+		ValueList list = list(Arrays.asList("T1"), FieldSpec.of(String.class, "Texts").setMultiple(true));
+
+		assertEquals(Boolean.FALSE, list.state(ReactValueListControl.UPLOAD));
+		assertNull(list.state(UploadSupport.ACCEPT));
+
+		list.handleUpload(null, Arrays.asList(TestReactFileChipsControl.part("c.txt", "C")));
+
+		assertEquals(Arrays.asList("T1"), list.getFieldModel().getValue());
+	}
+
+	/**
+	 * A list of files that is only displayed takes no upload.
+	 */
+	public void testUploadNotEditable() {
+		AbstractFieldModel model = new AbstractFieldModel(null);
+		model.setEditable(false);
+		ValueList list = list(model, files(), FieldControlRegistry.BINARY);
+
+		list.handleUpload(null, Arrays.asList(TestReactFileChipsControl.part("c.txt", "C")));
+
+		assertNull(list.getFieldModel().getValue());
+		assertEquals(0, list.elements().size());
+	}
+
+	private static FieldSpec files() {
+		return FieldSpec.of(BinaryData.class, "Files").setMultiple(true);
+	}
+
 	private static FieldSpec ordered() {
 		return FieldSpec.of(String.class, "Texts").setOrdered(true);
 	}
@@ -411,9 +496,13 @@ public class TestReactValueListControl extends TestCase {
 	}
 
 	private static ValueList list(FieldModel model, FieldSpec spec) {
+		return list(model, spec, FieldControlRegistry.TEXT);
+	}
+
+	private static ValueList list(FieldModel model, FieldSpec spec, ReactFieldControlProvider elementProvider) {
 		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
 			new ReactWindowRegistry("test"));
-		return new ValueList(context, model, spec, FieldControlRegistry.TEXT);
+		return new ValueList(context, model, spec, elementProvider);
 	}
 
 	/**
@@ -435,6 +524,11 @@ public class TestReactValueListControl extends TestCase {
 		/** How the values are arranged. */
 		Object layout() {
 			return getState(LAYOUT);
+		}
+
+		/** The value of the given state property. */
+		Object state(String key) {
+			return getState(key);
 		}
 
 		/** Whether the client offers arranging the values. */

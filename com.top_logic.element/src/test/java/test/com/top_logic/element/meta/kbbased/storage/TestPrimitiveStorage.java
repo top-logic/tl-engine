@@ -8,6 +8,8 @@ package test.com.top_logic.element.meta.kbbased.storage;
 import static com.top_logic.knowledge.service.KBUtils.*;
 import static java.util.Arrays.*;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -22,7 +24,11 @@ import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.kbbased.storage.BinaryCollectionStorage;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.model.TLClass;
@@ -56,6 +62,8 @@ public class TestPrimitiveStorage extends BasicTestCase {
 	private static final String NAMES_ATTRIBUTE = "names";
 
 	private static final String BLOBS_ATTRIBUTE = "blobs";
+
+	private static final String PRIMITIVE_BLOBS_ATTRIBUTE = "primitiveBlobs";
 
 	private static final String FLAG_ATTRIBUTE = "flag";
 
@@ -136,9 +144,33 @@ public class TestPrimitiveStorage extends BasicTestCase {
 		assertEquals(asList("foo", "42", ""), load(NAMES_ATTRIBUTE));
 	}
 
+	public void testBinaries() throws IOException {
+		BinaryData first = BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 }, "application/x-first", "first.bin");
+		BinaryData second = BinaryDataFactory.createBinaryData(new byte[] { 4, 5 }, "text/plain", "second.txt");
+
+		store(BLOBS_ATTRIBUTE, asList(first, second));
+
+		assertInstanceof(AttributeOperations.getStorageImplementation(getNodeType().getPart(BLOBS_ATTRIBUTE)),
+			BinaryCollectionStorage.class);
+		List<?> loaded = load(BLOBS_ATTRIBUTE);
+		assertEquals(2, loaded.size());
+		assertBinary(first, (BinaryData) loaded.get(0));
+		assertBinary(second, (BinaryData) loaded.get(1));
+	}
+
+	private static void assertBinary(BinaryData expected, BinaryData actual) throws IOException {
+		assertEquals(expected.getName(), actual.getName());
+		assertEquals(expected.getContentType(), actual.getContentType());
+		assertEquals(expected.getSize(), actual.getSize());
+		assertTrue(Arrays.equals(StreamUtilities.readStreamContents(expected), StreamUtilities.readStreamContents(actual)));
+	}
+
+	/**
+	 * Tests that {@link PrimitiveStorage} cannot store several binary values in one column.
+	 */
 	public void testUnsupportedStorageType() {
 		try {
-			store(BLOBS_ATTRIBUTE, asList(BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 })));
+			store(PRIMITIVE_BLOBS_ATTRIBUTE, asList(BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 })));
 			fail("A binary value cannot be stored in a multi-valued attribute.");
 		} catch (TopLogicException ex) {
 			Throwable cause = rootCause(ex);

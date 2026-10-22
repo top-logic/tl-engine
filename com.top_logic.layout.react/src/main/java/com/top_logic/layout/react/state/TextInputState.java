@@ -200,6 +200,9 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	com.top_logic.layout.react.state.TextInputState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.TextInputState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.TextInputState setHidden(boolean value);
 
 	@Override

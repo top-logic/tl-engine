@@ -334,7 +334,155 @@ services.form = {
 		var dropTypes = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
 		return dropTypes != null && dropTypes.split(" ").indexOf(dropType) >= 0;
 	},
-	
+
+	/**
+	 * Starts a drag operation from a table or tree.
+	 *
+	 * @param draggedElements The DOM elements of the dragged rows or nodes.
+	 * @param dataId The client-side ID of the dragged data.
+	 */
+	_startDrag: function(event, controlElement, draggedElements, dataId) {
+		var dnd = services.ajax.mainLayout.tlDnD = {
+			/**
+			 * For Chrome the dataTransfer data is only available during the drop event handling.
+			 */
+			data: "dnd://" + services.ajax.COMPONENT_ID + "|" + controlElement.id + "|" + dataId,
+			sourceID: dataId,
+			image: services.form._createDragImageElement(draggedElements),
+
+			/**
+			 * The drop target {targetID, position} for which the drop marker is requested last.
+			 */
+			current: null
+		};
+
+		event.dataTransfer.setData("text", dnd.data);
+		event.dataTransfer.setDragImage(dnd.image, 0, 0);
+		event.dataTransfer.effectAllowed = "all";
+		return true;
+	},
+
+	/**
+	 * Handles a dragover event over a table or tree.
+	 *
+	 * Whether a drop is possible is decided by the server. Its answer is cached per drag operation.
+	 *
+	 * @param control The client-side control (table or tree) that provides the functions
+	 *     getDropTarget(controlElement, event), displayDropMarkerInternal(element, position) and
+	 *     resetMarker().
+	 */
+	_handleDragOver: function(control, event, controlElement) {
+		event.preventDefault();
+
+		var dnd = services.ajax.mainLayout.tlDnD;
+		if (!dnd) {
+			event.dataTransfer.dropEffect = "none";
+			return false;
+		}
+
+		var dropTarget = control.getDropTarget(controlElement, event);
+		var targetID = dropTarget.node.id;
+		var position = dropTarget.position;
+		dnd.current = {
+			targetID: targetID,
+			position: position
+		};
+
+		if (dnd.cache !== undefined) {
+			var isDropable = dnd.cache.get(dnd.sourceID, targetID, position);
+			if (isDropable !== undefined) {
+				if (isDropable) {
+					control.displayDropMarkerInternal(dropTarget.node, position);
+					event.dataTransfer.dropEffect = "move";
+				} else {
+					control.resetMarker();
+					event.dataTransfer.dropEffect = "none";
+				}
+				return false;
+			}
+		}
+
+		// A marker of another target must not stay visible, otherwise a drop would happen there.
+		control.resetMarker();
+
+		if (!controlElement.isDragOverHandled) {
+			controlElement.isDragOverHandled = true;
+
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand : "dragOver",
+				controlID : controlElement.id,
+				data: dnd.data,
+				id: targetID,
+				pos: position
+			}, true);
+
+			setTimeout(function() {
+				controlElement.isDragOverHandled = false;
+			}, 50);
+		}
+		return false;
+	},
+
+	/**
+	 * Handles the server answer to a dragover request.
+	 *
+	 * The answer is cached. The drop marker is only updated, if the answer is for the drop target
+	 * currently under the mouse. An answer may arrive after the mouse has moved on.
+	 */
+	_handleDropability: function(control, targetID, position, dropable) {
+		var dnd = services.ajax.mainLayout.tlDnD;
+		if (!dnd) {
+			// The drag has ended before the server answer is applied.
+			control.resetMarker();
+			return false;
+		}
+		services.form._putToDnDCache(dnd.sourceID, targetID, position, dropable);
+
+		var current = dnd.current;
+		if (current == null || current.targetID != targetID || current.position != position) {
+			return false;
+		}
+		if (dropable) {
+			control.displayDropMarkerInternal(document.getElementById(targetID), position);
+		} else {
+			control.resetMarker();
+		}
+		return false;
+	},
+
+	/**
+	 * Handles a dragleave event of a table or tree.
+	 *
+	 * Moving between the elements within the control also produces dragleave events. Only leaving
+	 * the control as a whole removes the drop marker.
+	 */
+	_handleDragLeave: function(control, event, controlElement) {
+		event.preventDefault();
+
+		var related = event.relatedTarget;
+		if (related != null && controlElement.contains(related)) {
+			return false;
+		}
+
+		control.resetMarker();
+		var dnd = services.ajax.mainLayout.tlDnD;
+		if (dnd) {
+			dnd.current = null;
+		}
+		return false;
+	},
+
+	/**
+	 * Handles a dragend event of a table or tree.
+	 */
+	_handleDragEnd: function() {
+		var dnd = services.ajax.mainLayout.tlDnD;
+		if (dnd) {
+			dnd.image.remove();
+			delete services.ajax.mainLayout.tlDnD;
+		}
+	},
+
 	_createDragImageElement: function(draggedObjects) {
 		var dragImageElement = document.createElement("div");
 		dragImageElement.classList.add("dragImage");
@@ -345,7 +493,7 @@ services.form = {
 			var draggedObjectListItem = document.createElement("li");
 			draggedObjectList.appendChild(draggedObjectListItem);
 			var draggedObjectImage = BAL.DOM.getAttribute(draggedObjects[i], "data-drag-image");
-			draggedObjectListItem.insertAdjacentHTML("beforebegin", draggedObjectImage);
+			draggedObjectListItem.insertAdjacentHTML("afterbegin", draggedObjectImage);
 		}
 		
 		dragImageElement.style.position = "absolute";
@@ -559,83 +707,50 @@ services.form = {
 		},
 		
 		handleOnDragStart: function(event, controlElement) {
-			var event = BAL.getEvent(event);
+			event = BAL.getEvent(event);
 			var rowElement = this.getRow(controlElement, event.target);
-
-			if(!rowElement.draggable) {
+			if (rowElement == null || !rowElement.draggable) {
 				return false;
 			}
 
 			var dataId;
-			var draggedRows = [];
-
-			if(BAL.DOM.containsClass(rowElement, "tblSelected")) {
-				/*
-				 * When one of the selected rows is dragged, the whole selection is dragged.
-				 */
+			var draggedRows;
+			if (BAL.DOM.containsClass(rowElement, "tblSelected")) {
+				// When one of the selected rows is dragged, the whole selection is dragged.
 				dataId = "selection-" + rowElement.id;
-				for (const selectedRow of controlElement.querySelectorAll('tr.tblSelected')) {
-					if(!draggedRows.includes(selectedRow)) {
-						draggedRows.push(selectedRow);
-					}
-				}
+				draggedRows = Array.from(controlElement.querySelectorAll("tr.tblSelected"));
 			} else {
 				dataId = rowElement.id;
-				draggedRows.push(rowElement);
+				draggedRows = [rowElement];
 			}
 
-			var scope = services.ajax.COMPONENT_ID;
-			var dragImageElement = services.form._createDragImageElement(draggedRows);
-
-			services.ajax.mainLayout.tlDnD = {
-				/**
-				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
-				 */
-				data: "dnd://" + scope + "|" + controlElement.id + "|" + dataId,
-				sourceID: dataId,
-				image: dragImageElement
-			};
-
-			event.dataTransfer.setData("text", services.ajax.mainLayout.tlDnD.data);
-			event.dataTransfer.setDragImage(services.ajax.mainLayout.tlDnD.image, 0, 0);
-			event.dataTransfer.effectAllowed = "all";
-			
-			return true;
+			return services.form._startDrag(event, controlElement, draggedRows, dataId);
 		},
 		
 		handleOnDrop: function(event, controlElement) {
-			var event = BAL.getEvent(event);
+			event = BAL.getEvent(event);
 			event.preventDefault();
 
-			var targetId;
-			var pos;
-			var success;
-			{
-				var rowElement = this.currentInsertionMarker;
-				success = rowElement != null;
-				if (success) {
-					targetId = rowElement.id;
-					if (rowElement == controlElement) {
-						pos = "onto";
-					} else if (BAL.DOM.containsClass(rowElement, "dndInsertAbove")) {
-						pos = "above";
-					} else if (BAL.DOM.containsClass(rowElement, "dndInsertBelow")) {
-						pos = "below";
-					} else if (BAL.DOM.containsClass(rowElement, "dndInsertInto")) {
-						pos = "onto";
-					} else {
-						success = false;
-					}
+			var rowElement = this.currentInsertionMarker;
+			var pos = null;
+			if (rowElement == controlElement) {
+				pos = "onto";
+			} else if (rowElement != null) {
+				if (BAL.DOM.containsClass(rowElement, "dndInsertAbove")) {
+					pos = "above";
+				} else if (BAL.DOM.containsClass(rowElement, "dndInsertBelow")) {
+					pos = "below";
+				} else if (BAL.DOM.containsClass(rowElement, "dndInsertInto")) {
+					pos = "onto";
 				}
 			}
 			
-			if (success) {
-				var data = services.ajax.mainLayout.tlDnD.data;
+			if (pos != null) {
 				services.ajax.execute("dispatchControlCommand", {
 					controlCommand : "dndDrop",
 					controlID : controlElement.id,
-					data : data,
-					id: targetId,
+					data : services.ajax.mainLayout.tlDnD.data,
+					id: rowElement.id,
 					pos: pos
 				}, services.ajax.USE_WAIT_PANE_IN_FORMULA);
 			}
@@ -645,56 +760,25 @@ services.form = {
 		},
 		
 		handleOnDragOver: function(event, controlElement) {
-			var event = BAL.getEvent(event);
-			event.preventDefault();
-			
-			if(!services.ajax.mainLayout.tlDnD){
-				event.dataTransfer.dropEffect = 'none';
-				return;
+			return services.form._handleDragOver(this, BAL.getEvent(event), controlElement);
+		},
+		
+		/**
+		 * The row and the position relative to it, where a drop at the current mouse position
+		 * happens.
+		 */
+		getDropTarget: function(controlElement, event) {
+			var row = this.getRow(controlElement, event.target);
+			if (row == null) {
+				return {
+					node: controlElement,
+					position: "onto"
+				};
 			}
-			
-			if(!controlElement.isDragOverHandled) {
-				var row = this.getRow(controlElement, event.target);
-				var position; 
-				if (row == null) {
-					row = controlElement;
-					position = "onto";
-				} else {
-					position = services.form.TableControl._getDropPosition(event, controlElement, row);
-				}
-
-				{
-					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.sourceID, row.id, position);
-						
-						if(isDropable !== undefined) {
-							if(isDropable) {
-								this.displayDropMarkerInternal(row, position);
-								event.dataTransfer.dropEffect = "move";
-							} else {
-								this.resetMarker();
-								event.dataTransfer.dropEffect = 'none';
-							}
-							
-							return;
-						} 
-					}
-					
-					controlElement.isDragOverHandled = true;
-					
-					services.ajax.execute("dispatchControlCommand", {
-						controlCommand : "dragOver",
-						controlID : controlElement.id,
-						data: services.ajax.mainLayout.tlDnD.data,
-						id: row.id,
-						pos: position
-					}, true);
-					
-					setTimeout(function() {
-						controlElement.isDragOverHandled = false;
-					}, 50);
-				}
-			}
+			return {
+				node: row,
+				position: this._getDropPosition(event, controlElement, row)
+			};
 		},
 		
 		_getDropPosition: function(event, controlElement, row) {
@@ -721,28 +805,11 @@ services.form = {
 		},
 		
 		changeToNoDropCursor: function(targetID, position) {
-			this.resetMarker();
-			if (!services.ajax.mainLayout.tlDnD) {
-				// No DnD data found. That may happen when the user has 
-				// ended drag before the server answer is applied.
-				return;
-			}
-			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
-			services.form._putToDnDCache(sourceID, targetID, position, false);
+			return services.form._handleDropability(this, targetID, position, false);
 		},
 		
 		displayDropMarker: function(targetID, position) {
-			if (!services.ajax.mainLayout.tlDnD) {
-				// No DnD data found. That may happen when the user has 
-				// ended drag before the server answer is applied.
-				this.resetMarker();
-				return false;
-			}
-			this.displayDropMarkerInternal(document.getElementById(targetID), position);
-			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
-			services.form._putToDnDCache(sourceID, targetID, position, true);
-
-			return false;
+			return services.form._handleDropability(this, targetID, position, true);
 		},
 		
 		displayDropMarkerInternal: function(rowElement, position) {
@@ -750,7 +817,7 @@ services.form = {
 			
 			if (position == "below") {
 				this.addMarkerClass(rowElement, "dndInsertBelow");
-			} else if(position == "above"){
+			} else if (position == "above") {
 				this.addMarkerClass(rowElement, "dndInsertAbove");
 			} else {
 				this.addMarkerClass(rowElement, "dndInsertInto");
@@ -758,39 +825,31 @@ services.form = {
 		},
 		
 		handleOnDragEnter: function(event, controlElement) {
-			var event = BAL.getEvent(event);
-			event.preventDefault();
+			BAL.getEvent(event).preventDefault();
 			return false;
 		},
 		
 		handleOnDragLeave: function(event, controlElement) {
-			var event = BAL.getEvent(event);
-			event.preventDefault();
-			
-			this.resetMarker();
-			
-			return false;
+			return services.form._handleDragLeave(this, BAL.getEvent(event), controlElement);
 		},
 		
 		handleOnDragEnd: function(event, controlElement) {
-			services.ajax.mainLayout.tlDnD.image.remove();
-			
-			delete services.ajax.mainLayout.tlDnD;
+			services.form._handleDragEnd();
 		},
 		
 		getRow: function(controlElement, targetElement) {
 			var element = targetElement;
-            while (element != null && element != controlElement) {
-            	if (BAL.DOM.containsClass(element, "tl-table__row")) {
-            		if (BAL.DOM.containsClass(element, "header") || BAL.DOM.containsClass(element, "footer")) {
-            			return null;
-            		}
-            		return element;
-            	}
+			while (element != null && element != controlElement) {
+				if (BAL.DOM.containsClass(element, "tl-table__row")) {
+					if (BAL.DOM.containsClass(element, "header") || BAL.DOM.containsClass(element, "footer")) {
+						return null;
+					}
+					return element;
+				}
 
-            	element = element.parentNode;
-            }
-            return null;
+				element = element.parentNode;
+			}
+			return null;
 		},
 		
 		addMarkerClass: function(markerElement, hoverClass) {
@@ -912,20 +971,25 @@ services.form = {
 	
 	ContentControl: {
 		handleOnDragOver: function(event, controlElement) {
-			var event = BAL.getEvent(event);
+			event = BAL.getEvent(event);
 			event.preventDefault();
 			
-			if(!services.ajax.mainLayout.tlDnD){
-				event.dataTransfer.dropEffect = 'none';
-				return;
+			if (!services.ajax.mainLayout.tlDnD) {
+				event.dataTransfer.dropEffect = "none";
 			}
 			
 			return false;
 		},
 		
 		handleOnDragEnter: function(event, controlElement) {
-			var event = BAL.getEvent(event);
+			event = BAL.getEvent(event);
 			event.preventDefault();
+
+			if (!services.ajax.mainLayout.tlDnD) {
+				// Not a drag from within the application.
+				event.dataTransfer.dropEffect = "none";
+				return false;
+			}
 
 			event.dataTransfer.dropEffect = "move";
 			BAL.DOM.addClass(controlElement, "dndInsertInto");
@@ -934,7 +998,7 @@ services.form = {
 		},
 		
 		handleOnDragLeave: function(event, controlElement) {
-			var event = BAL.getEvent(event);
+			event = BAL.getEvent(event);
 			var source = BAL.getEventSource(event);
 			if (!BAL.DOM.containsClass(source, "dropPane")) {
 				return true;
@@ -947,15 +1011,17 @@ services.form = {
 		},
 		
 		handleOnDrop: function(event, controlElement) {
-			var event = BAL.getEvent(event);
+			event = BAL.getEvent(event);
 			event.preventDefault();
 
-			var data = services.ajax.mainLayout.tlDnD.data;
-			services.ajax.execute("dispatchControlCommand", {
-				controlCommand : "dndDrop",
-				controlID : controlElement.id,
-				data : data
-			}, services.ajax.USE_WAIT_PANE_IN_FORMULA);
+			var dnd = services.ajax.mainLayout.tlDnD;
+			if (dnd) {
+				services.ajax.execute("dispatchControlCommand", {
+					controlCommand : "dndDrop",
+					controlID : controlElement.id,
+					data : dnd.data
+				}, services.ajax.USE_WAIT_PANE_IN_FORMULA);
+			}
 			
 			this.resetMarker(controlElement);
 			return false;
@@ -1121,143 +1187,65 @@ services.form = {
 		},
 		
 		handleOnDragStart: function(event, controlElement) {
-			var event = BAL.getEvent(event);
+			event = BAL.getEvent(event);
 			var nodeElement = this.getNode(controlElement, event.target);
-
-			var draggedNodeIDs;
-			var draggedNodes;
-			
-			if(services.form.TreeControl._isSelected(nodeElement)) {
-				draggedNodes = services.form.TreeControl.getSelectedNodes(controlElement);
-				draggedNodeIDs = services.form.TreeControl.getSelectedNodes(controlElement).map(node => node.id).join();
-			} else {
-				draggedNodes = [nodeElement];
-				draggedNodeIDs = nodeElement.id;
+			if (nodeElement == null) {
+				return false;
 			}
 
-			var scope = services.ajax.COMPONENT_ID;
+			var draggedNodes;
+			if (services.form.TreeControl._isSelected(nodeElement)) {
+				draggedNodes = services.form.TreeControl.getSelectedNodes(controlElement);
+			} else {
+				draggedNodes = [nodeElement];
+			}
+			var draggedNodeIDs = draggedNodes.map(node => node.id).join();
 
-			var dragImageElement = services.form._createDragImageElement(draggedNodes);
-			
-			services.ajax.mainLayout.tlDnD = {
-				/**
-				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
-				 */
-				data: "dnd://" + scope + "|" + controlElement.id + "|" + draggedNodeIDs,
-				sourceID: draggedNodeIDs,
-				image: dragImageElement
-			};
-			
-			event.dataTransfer.setData("text", services.ajax.mainLayout.tlDnD.data);
-			event.dataTransfer.setDragImage(services.ajax.mainLayout.tlDnD.image, 0, 0);
-			event.dataTransfer.effectAllowed = "all";
-			
-			return true;
+			return services.form._startDrag(event, controlElement, draggedNodes, draggedNodeIDs);
 		},
 		
 		handleOnDragOver: function(event, controlElement) {
-			var event = BAL.getEvent(event);
-			event.preventDefault();
-			
-			if(!services.ajax.mainLayout.tlDnD){
-				event.dataTransfer.dropEffect = 'none';
-				return;
-			}
-			
-			if(!controlElement.isDragOverHandled) {
-				var dropTarget = this.getDropTarget(controlElement, event);
-				var node;
-				var position;
-				if (dropTarget !== undefined) {
-					node = dropTarget.node;
-					position = dropTarget.position;
-				} else {
-					// control element is used as placeholder for root element which might not be visible.
-					node = controlElement;
-					position = "within";
-				}
-				
-				{
-					if(services.ajax.mainLayout.tlDnD.cache !== undefined) {
-						var isDropable = services.ajax.mainLayout.tlDnD.cache.get(services.ajax.mainLayout.tlDnD.sourceID, node.id, position);
-						
-						if(isDropable !== undefined) {
-							if(isDropable) {
-								this.displayDropMarkerInternal(node, position);
-								event.dataTransfer.dropEffect = "move";
-							} else {
-								this.resetMarker();
-								event.dataTransfer.dropEffect = 'none';
-							}
-							
-							return;
-						}
-					}
-					
-					controlElement.isDragOverHandled = true;
-					
-					services.ajax.execute("dispatchControlCommand", {
-						controlCommand : "dragOver",
-						controlID : controlElement.id,
-						data: services.ajax.mainLayout.tlDnD.data,
-						id: node.id,
-						pos: position
-					}, true);
-					
-					setTimeout(function() {
-						controlElement.isDragOverHandled = false;
-					}, 50);
-				}
-			}
+			return services.form._handleDragOver(this, BAL.getEvent(event), controlElement);
 		},
 		
 		changeToNoDropCursor: function(targetID, pos) {
-			this.resetMarker();
-			if (!services.ajax.mainLayout.tlDnD) {
-				// No DnD data found. That may happen when the user has 
-				// ended drag before the server answer is applied.
-				return;
-			}
-			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
-			services.form._putToDnDCache(sourceID, targetID, pos, false);
+			return services.form._handleDropability(this, targetID, pos, false);
 		},
 		
 		displayDropMarker: function(targetID, pos) {
-			if (!services.ajax.mainLayout.tlDnD) {
-				// No DnD data found. That may happen when the user has 
-				// ended drag before the server answer is applied.
-				this.resetMarker();
-				return false;
-			}
-			this.displayDropMarkerInternal(document.getElementById(targetID), pos);
-			var sourceID = services.ajax.mainLayout.tlDnD.sourceID;
-			services.form._putToDnDCache(sourceID, targetID, pos, true);
-
-			return false;
+			return services.form._handleDropability(this, targetID, pos, true);
 		},
 		
+		/**
+		 * The node and the position relative to it, where a drop at the current mouse position
+		 * happens.
+		 */
 		getDropTarget: function(controlElement, event) {
-			var node =  this.getNode(controlElement, event.target);
-			
-			if(node != null) {
+			var node = this.getNode(controlElement, event.target);
+			if (node != null) {
 				return this._getDropTargetInternal(event, controlElement, node);
-			} else {
-				if (services.form._hasDropType(controlElement, "ORDERED")) {
-					// Below the last visible node.
-					var container = BAL.DOM.getLastElementChild(controlElement);
-					if (container != null) {
-						var lastNode = this.lastNode(container);
-						if (lastNode != null) {
-							return {
-								node: lastNode,
-								position: "below"
-							};
-						} 
+			}
+
+			if (services.form._hasDropType(controlElement, "ORDERED")) {
+				// Below the last visible node.
+				var container = BAL.DOM.getLastElementChild(controlElement);
+				if (container != null) {
+					var lastNode = this.lastNode(container);
+					if (lastNode != null) {
+						return {
+							node: lastNode,
+							position: "below"
+						};
 					}
 				}
-				
-				return undefined;
 			}
+
+			// The control element is used as placeholder for the root node, which might not be
+			// visible.
+			return {
+				node: controlElement,
+				position: "within"
+			};
 		},
 		
 		_getDropTargetInternal: function(event, controlElement, nodeElement) {
@@ -1327,15 +1315,10 @@ services.form = {
 						position: "above"
 					};
 				}
-			} else if (child) {
-				return {
-					node: nodeElement,
-					position: "onto"
-				};
 			} else {
 				return {
 					node: nodeElement,
-					position: "within"
+					position: "onto"
 				};
 			}
 		},
@@ -1371,24 +1354,16 @@ services.form = {
 		},
 		
 		handleOnDragEnter: function(event, controlElement) {
-			var event = BAL.getEvent(event);
-			event.preventDefault();
-			
+			BAL.getEvent(event).preventDefault();
 			return false;
 		},
 		
 		handleOnDragLeave: function(event, controlElement) {
-			var event = BAL.getEvent(event);
-			event.preventDefault();
-			
-			this.resetMarker();
-			return false;
+			return services.form._handleDragLeave(this, BAL.getEvent(event), controlElement);
 		},
 		
 		handleOnDragEnd: function(event, controlElement) {
-			services.ajax.mainLayout.tlDnD.image.remove();
-			
-			delete services.ajax.mainLayout.tlDnD;
+			services.form._handleDragEnd();
 		},
 		
 		getDropPositionFromElement: function(controlElement, nodeElement) {
@@ -1408,18 +1383,17 @@ services.form = {
 		},
 		
 		handleOnDrop: function(event, controlElement) {
-			var event = BAL.getEvent(event);
+			event = BAL.getEvent(event);
 			event.preventDefault();
 
 			var node = this.currentInsertionMarker;
-			if(node != null) {
+			if (node != null) {
 				var position = this.getDropPositionFromElement(controlElement, node);
-				var data = services.ajax.mainLayout.tlDnD.data;
 				
 				services.ajax.execute("dispatchControlCommand", {
 					controlCommand : "dndTreeDrop",
 					controlID : controlElement.id,
-					data : data,
+					data : services.ajax.mainLayout.tlDnD.data,
 					id: node.id,
 					pos: position
 				}, services.ajax.USE_WAIT_PANE_IN_FORMULA);

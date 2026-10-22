@@ -6,6 +6,7 @@
 package com.top_logic.dev.tools.model;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -29,6 +30,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Please select the value type of the new attribute.
 	 */
 	public static ResKey ERROR_MISSING_TYPE;
+
+	/**
+	 * @en Attributes of type "{0}" cannot hold multiple values.
+	 */
+	public static ResKey1 ERROR_MULTIPLE_NOT_SUPPORTED__TYPE;
 
 	static {
 		initConstants(I18NConstants.class);

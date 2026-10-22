@@ -26,6 +26,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
 import com.top_logic.basic.format.DecimalFormatDefinition;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.AttributeColumn;
@@ -262,9 +263,10 @@ public class TestColumnDeclarations extends TestCase {
 	 */
 	public void testInputsOfTheDeclarations() {
 		ComputedColumn.Config total = computedColumn("total", null);
-		set(total, Inputs.INPUTS, List.of(new ChannelRef("selected"), new ChannelRef("factor")));
+		set(total, Inputs.INPUTS,
+			List.of(new InputRef(new ChannelRef("selected")), new InputRef(new ChannelRef("factor"))));
 		ComputedColumn.Config share = computedColumn("share", null);
-		set(share, Inputs.INPUTS, List.of(new ChannelRef("factor")));
+		set(share, Inputs.INPUTS, List.of(new InputRef(new ChannelRef("factor"))));
 
 		List<ColumnDeclaration> declarations = instantiate(attributeColumn("count", null), total, share);
 
@@ -280,7 +282,7 @@ public class TestColumnDeclarations extends TestCase {
 		AttributeColumn.Config count = attributeColumn("count", null);
 		set(count, AttributeColumn.Config.FILTER, inputFilter("threshold"));
 		ComputedColumn.Config total = computedColumn("total", null);
-		set(total, Inputs.INPUTS, List.of(new ChannelRef("factor")));
+		set(total, Inputs.INPUTS, List.of(new InputRef(new ChannelRef("factor"))));
 		set(total, ComputedColumn.Config.FILTER, inputFilter("selected"));
 
 		List<ColumnDeclaration> declarations = instantiate(count, total);
@@ -291,11 +293,11 @@ public class TestColumnDeclarations extends TestCase {
 			names(ColumnDeclarations.inputs(declarations)));
 	}
 
-	/** The names of the given channel references, in order. */
-	private static List<String> names(List<ChannelRef> refs) {
+	/** The argument names of the given input references, in order. */
+	private static List<String> names(List<InputRef> refs) {
 		List<String> result = new ArrayList<>();
-		for (ChannelRef ref : refs) {
-			result.add(ref.getChannelName());
+		for (InputRef ref : refs) {
+			result.add(ref.getName());
 		}
 		return result;
 	}
@@ -303,7 +305,7 @@ public class TestColumnDeclarations extends TestCase {
 	/** The configuration of an {@link InputFilter} reading the given channel. */
 	private static InputFilter.Config inputFilter(String channel) {
 		InputFilter.Config config = TypedConfiguration.newConfigItem(InputFilter.Config.class);
-		set(config, Inputs.INPUTS, List.of(new ChannelRef(channel)));
+		set(config, Inputs.INPUTS, List.of(new InputRef(new ChannelRef(channel))));
 		return config;
 	}
 
@@ -322,7 +324,7 @@ public class TestColumnDeclarations extends TestCase {
 			Class<? extends InputFilter> getImplementationClass();
 		}
 
-		private final List<ChannelRef> _inputs;
+		private final List<InputRef> _inputs;
 
 		/**
 		 * Creates an {@link InputFilter} from configuration.
@@ -338,7 +340,7 @@ public class TestColumnDeclarations extends TestCase {
 		}
 
 		@Override
-		public List<ChannelRef> inputs() {
+		public List<InputRef> inputs() {
 			return _inputs;
 		}
 	}

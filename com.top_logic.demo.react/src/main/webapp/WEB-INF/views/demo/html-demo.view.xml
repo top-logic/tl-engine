@@ -171,7 +171,7 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 ]]></expr>
 		</derived-channel>
 		<channel name="expose"
-			init="documents -> $documents[0]"
+			init="$exposes[0]"
 			inputs="exposes"
 		/>
 	</channels>
@@ -236,7 +236,7 @@ th, td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d3e0d7; }
 								<object-list
 									gap="default"
 									inputs="exposes"
-									items="exposes -> $exposes"
+									items="$exposes"
 									layout="grid"
 									max-columns="3"
 									min-column-width="8rem"

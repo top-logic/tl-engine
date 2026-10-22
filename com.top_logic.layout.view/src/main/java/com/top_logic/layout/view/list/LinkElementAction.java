@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.list;
 
+import com.top_logic.layout.view.command.WithValueArgument;
+import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -25,14 +27,17 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * Runs the list's configured link function with the values of the list's inputs and the element in
  * a transaction, then resets the list's new-element channel to a fresh transient element. Typical
- * usage in a new-element template, after the entered field values have been written to the
- * transient element:
+ * usage in a new-element template, over the transient element the entered field values have been
+ * written to:
  * </p>
  *
  * <pre>
  * &lt;generic-command placement="TOOLBAR"&gt;
- *   &lt;store-form-state/&gt;
- *   &lt;link-element/&gt;
+ *   &lt;store-form-state&gt;
+ *     &lt;with-result&gt;
+ *       &lt;link-element/&gt;
+ *     &lt;/with-result&gt;
+ *   &lt;/store-form-state&gt;
  * &lt;/generic-command&gt;
  * </pre>
  */
@@ -43,7 +48,7 @@ public class LinkElementAction implements ViewAction {
 	 * Configuration for {@link LinkElementAction}.
 	 */
 	@TagName("link-element")
-	public interface Config extends PolymorphicConfiguration<LinkElementAction> {
+	public interface Config extends PolymorphicConfiguration<LinkElementAction>, WithResultActions, WithValueArgument {
 
 		@Override
 		@ClassDefault(LinkElementAction.class)
@@ -89,4 +94,11 @@ public class LinkElementAction implements ViewAction {
 		return scope;
 	}
 
+	/**
+	 * Ends the edit session of the form and resets the channel of the new element.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

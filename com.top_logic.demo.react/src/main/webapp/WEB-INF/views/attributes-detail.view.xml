@@ -131,6 +131,8 @@
 				<field attribute="phone"/>
 				<field attribute="json"/>
 				<field attribute="image"/>
+				<field attribute="attachments"/>
+				<field attribute="documents"/>
 			</group>
 			<group
 				border="subtle"

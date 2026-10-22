@@ -27,13 +27,14 @@
 		</form>
 		<inset>
 			<object-list
+				element-as="comment"
 				element-channel="comment"
 				element-type="demo.tickets:Comment"
 				inputs="ticket"
-				items="ticket -> $ticket.get(`demo.tickets:Ticket#comments`)"
-				link="ticket -> comment -> { persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
+				items="$ticket.get(`demo.tickets:Ticket#comments`)"
+				link="{ persistent = $comment.copy(transient: false); $persistent.set(`demo.tickets:Comment#author`, currentUser()); $persistent.set(`demo.tickets:Comment#date`, now()); $ticket.add(`demo.tickets:Ticket#comments`, $persistent); }"
 				new-element-channel="newComment"
-				remove="ticket -> comment -> $comment.delete()"
+				remove="$comment.delete()"
 			>
 				<item>
 					<view-ref view="tickets/comment.view.xml">

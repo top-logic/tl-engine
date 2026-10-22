@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -127,6 +127,42 @@ well and edits minutes; a `<format>` inside the `<value-input>` sets display and
 3. The type map of `FieldControlService` and, failing that, the `FieldControlRegistry` entry for the
    kind of value the type holds.
 
+**Files** — a value of `tl.core:Binary` is a file. A single file is one file field
+(`FieldControlRegistry.BINARY`, `ReactBinaryFieldControl`): an upload area while the field is
+editable, a download link otherwise. The files of a multi-valued binary attribute are shown as file
+chips by default (`FieldControlRegistry.FILE_CHIPS`, `ReactFileChipsControl`, client `TLFileChips`):
+one chip per file, a button and a drop area adding several files at once. The model annotation
+`<binary-display presentation="list"/>` (`BinaryDisplay.BinaryPresentation.LIST`) shows them as a
+list with one file field per file instead (`ReactValueListControl` over `FieldControlRegistry.BINARY`),
+whose add button uploads several files at once, one value per file. `data-item` (the default) and
+`image-upload` both give the chips. The annotation `<accepted-types value="image/*, *.pdf"/>`
+(`TLAcceptedTypes`, MIME types or file patterns) limits the files the file picker offers, for a
+single and a multi-valued value alike. The annotation `<max-upload-size value="5m"/>`
+(`TLMaxUploadSize`) limits the size of each file uploaded to the attribute; the application-wide
+`max-upload-size` of the upload configuration still caps it, so the smaller of both applies. These
+annotations are read at the attribute, else at its type, and act on a `<value-input>` of type
+`tl.core:Binary` through its `<annotations>` as well. A
+mandatory multi-valued binary value shows the required marker at the chips and, after a refused
+save, the message of the mandatory check under them. In a table cell the chips render inline, while
+the list presentation shows the file names and opens its file fields in a dialog. A multi-valued
+binary attribute is persistent: its files are stored one row per file in the generic table
+`BinaryAttributeValue` by `BinaryCollectionStorage`, the storage chosen automatically for a
+multi-valued `tl.core:Binary` property.
+
+```xml
+<property name="attachments"
+	mandatory="true"
+	multiple="true"
+	type="tl.core:Binary"
+>
+	<annotations>
+		<accepted-types value="*.pdf"/>
+		<binary-display presentation="list"/>
+	</annotations>
+</property>
+```
+
+
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
 the headless projection, so a scripted test reads the same options and the same value in every shape.
 
@@ -246,23 +282,26 @@ A normalizer written in Java implements `ValueNormalizer`; it receives the edite
 
 ## Saving with an action chain
 
-A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-and-the-chain-can-branch)). The chain runs in the form's context and starts without a value; `<read-form-object/>` puts the object the form displays into the chain, and `<store-form-state/>` continues with the object it stored. Save stays disabled while the form displays an error.
+A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The chain runs in the form's context without arguments; `<read-form-object/>` results in the object the form displays, and `<store-form-state/>` in the object it stored, which their follow-up actions in `<with-result>` see (see [actions with a result](doc:view-layer/commands#actions-with-a-result-with-result)). Save stays disabled while the form displays an error.
 
 Four actions work on the edit session of the form they run in:
 
-- `<store-form-state/>` (`StoreFormStateAction`) checks the input, reveals every error and aborts the chain while one remains; otherwise it stores the input and continues with the stored object. The edit session goes on, now without unsaved changes. Inside a `<with-transaction>`, the storing joins that transaction, and the scripts after it in the same `<with-transaction>` are committed together with the stored values - or not at all.
+- `<store-form-state/>` (`StoreFormStateAction`) checks the input, reveals every error and aborts the chain while one remains; otherwise it stores the input and results in the stored object. The edit session goes on, now without unsaved changes. Inside a `<with-transaction>`, the storing joins that transaction, and the scripts of its `<with-result>` and after it in the same `<with-transaction>` are committed together with the stored values - or not at all.
 - `<leave-edit-mode/>` (`LeaveEditModeAction`) ends the edit session without storing or dropping anything. A form that still holds unsaved changes refuses: the chain aborts and the form stays in edit mode with its input.
 - `<discard-form-state/>` (`DiscardFormStateAction`) drops the input and ends the edit session.
 - `<enter-edit-mode/>` (`EnterEditModeAction`) starts the edit session like the form's own Edit button: it locks the object and is subject to the edit permission, the right to write the object and the rules of `<edit-executability>`. A form that shows no object, or whose permission refuses, aborts the chain, so no later action runs on a form that cannot be edited. A form already in edit mode keeps its session.
 
-A save that post-processes the stored values stores them and runs its script in one transaction, and leaves the edit mode after it:
+A save that post-processes the stored values stores them and runs its script over the stored object in one transaction, and leaves the edit mode after it:
 
 ```xml
 <form input="ticket">
 	<save-action>
 		<with-transaction>
-			<store-form-state/>
-			<execute-script function="t -> ..."/>
+			<store-form-state>
+				<with-result as="ticket">
+					<execute-script function="... $ticket ..."/>
+				</with-result>
+			</store-form-state>
 		</with-transaction>
 		<leave-edit-mode/>
 	</save-action>
@@ -270,42 +309,42 @@ A save that post-processes the stored values stores them and runs its script in 
 </form>
 ```
 
-`<leave-edit-mode/>` belongs outside the `<with-transaction>`: inside it, the form would show view mode before the commit, and a commit that fails would have ended the edit session already. After it, a failed commit aborts the chain before the form leaves edit mode, so the form stays in edit mode.
+`<leave-edit-mode/>` belongs outside the `<with-transaction>`: inside it, the form would show view mode before the commit, and a commit that fails would have ended the edit session already. Like `<enter-edit-mode/>` and `<discard-form-state/>`, it changes the state of the view, so placing it inside the transaction is reported as a configuration error (see [transactions](doc:view-layer/commands#transactions-with-transaction)). After it, a failed commit aborts the chain before the form leaves edit mode, so the form stays in edit mode.
 
-The actions find the form only where the form runs them: in its `<save-action>` and `<cancel-action>`, and in the commands of its own `<commands>`. A command in the `<commands>` of a surrounding `<panel>` runs outside the form, and the four actions have no effect there. A form with `mode-switch="false"` offers no Edit, Save and Cancel of its own, so its `<commands>` can provide them with these actions. The form publishes its mode on the channel named by `editMode`, and the commands decide on it whether they are shown. The tickets demo derives the ticket in view mode and in edit mode from that channel and hides each command while its input is empty:
+The actions find the form only where the form runs them: in its `<save-action>` and `<cancel-action>`, and in the commands of its own `<commands>`. A command in the `<commands>` of a surrounding `<panel>` runs outside the form, and the four actions have no effect there. A form with `mode-switch="false"` offers no Edit, Save and Cancel of its own, so its `<commands>` can provide them with these actions. The form publishes its mode on the channel named by `editMode`, and the commands decide on it whether they are shown. The tickets demo derives the ticket in view mode and in edit mode from that channel and hides each command while its main argument is empty:
 
 ```xml
 <channels>
 	<channel name="ticket"/>
 	<channel name="ticketEditMode"/>
 	<derived-channel name="viewedTicket"
-		expr="t -> editing -> if($editing == true, null, $t)"
-		inputs="ticket,ticketEditMode"
+		expr="if($editing == true, null, $ticket)"
+		inputs="ticket, ticketEditMode as editing"
 	/>
 	<derived-channel name="editedTicket"
-		expr="t -> editing -> if($editing == true, $t, null)"
-		inputs="ticket,ticketEditMode"
+		expr="if($editing == true, $ticket, null)"
+		inputs="ticket, ticketEditMode as editing"
 	/>
 </channels>
 ...
 <form editMode="ticketEditMode" input="ticket" mode-switch="false">
 	<field attribute="name"/>
 	<commands>
-		<generic-command input="viewedTicket" placement="TOOLBAR">
+		<generic-command inputs="viewedTicket" placement="TOOLBAR">
 			<label><en>Edit</en></label>
 			<executability><null-input-hidden/></executability>
 			<enter-edit-mode/>
 		</generic-command>
-		<generic-command input="editedTicket" placement="TOOLBAR">
+		<generic-command inputs="editedTicket as ticket" placement="TOOLBAR">
 			<label><en>Save</en></label>
 			<executability><null-input-hidden/></executability>
 			<with-transaction>
 				<store-form-state/>
-				<execute-script function="t -> ..."/>
+				<execute-script function="... $ticket ..."/>
 			</with-transaction>
 			<leave-edit-mode/>
 		</generic-command>
-		<generic-command input="editedTicket" placement="TOOLBAR">
+		<generic-command inputs="editedTicket" placement="TOOLBAR">
 			<label><en>Cancel</en></label>
 			<executability><null-input-hidden/></executability>
 			<discard-form-state/>

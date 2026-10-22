@@ -6,7 +6,7 @@
 	</channels>
 
 	<tree
-		children="node -> []"
+		children="[]"
 		root="'root'"
 	>
 		<drop
@@ -14,21 +14,21 @@
 			parent-channel="ch"
 			target="tree"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="item"
 			parent-channel="ch"
 			target="node"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="item"
 			target="ordered"
 			target-channel="ch"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 	</tree>
 </view>

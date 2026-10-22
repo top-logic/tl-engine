@@ -213,6 +213,12 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.SliderState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.SliderState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;

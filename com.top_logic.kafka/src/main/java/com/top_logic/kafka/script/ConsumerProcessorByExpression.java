@@ -35,7 +35,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -128,10 +127,8 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 					return;
 				}
 
-				Define testExpr = prefixWithParameters(expr);
-
 				try {
-					ModelReferenceChecker.checkModelElements(testExpr);
+					ModelReferenceChecker.checkModelElements(expr, VARIABLES);
 				} catch (I18NRuntimeException ex) {
 					propertyModel.setProblemDescription(ex.getErrorKey());
 				}
@@ -160,6 +157,12 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 	 */
 	public static final String TOPIC = "topic";
 
+	/**
+	 * The variables defined in {@link Config#getProcessor()}, in the order of their values in the
+	 * argument list.
+	 */
+	public static final List<String> VARIABLES = List.of(MESSAGE, KEY, HEADERS, TOPIC);
+
 	private final QueryExecutor _processor;
 
 	private final boolean _transaction;
@@ -167,7 +170,7 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 	/** {@link TypedConfiguration} constructor for {@link ConsumerProcessorByExpression}. */
 	public ConsumerProcessorByExpression(InstantiationContext context, Config config) {
 		super(context, config);
-		_processor = QueryExecutor.compile(prefixWithParameters(config.getProcessor()));
+		_processor = QueryExecutor.compile(config.getProcessor(), VARIABLES);
 
 		// Messages are processed in a system context (see ConsumerDispatcher) without a logged-in
 		// user. The processing is backend logic that must operate on all data and must not be
@@ -175,13 +178,6 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 		// is no current user. Therefore security is switched off.
 		_processor.disableSecurity();
 		_transaction = config.getTransaction();
-	}
-
-	private static Define prefixWithParameters(Expr scriptBody) {
-		Define withTopic = Define.create(TOPIC, scriptBody);
-		Define withHeaders = Define.create(HEADERS, withTopic);
-		Define withKey = Define.create(KEY, withHeaders);
-		return Define.create(MESSAGE, withKey);
 	}
 
 	@Override

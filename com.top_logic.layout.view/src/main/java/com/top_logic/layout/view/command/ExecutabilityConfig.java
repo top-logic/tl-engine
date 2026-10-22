@@ -13,25 +13,22 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
- * Configuration of an operation guarded by {@link ViewExecutabilityRule}s: the input the rules
- * decide over, the rules themselves, and the types whose changes let them decide anew.
+ * Configuration of an operation guarded by {@link ViewExecutabilityRule}s: the rules themselves,
+ * and the types whose changes let them decide anew.
  *
  * <p>
- * A {@link ViewCommand} is such an operation. While its UI is displayed, the rules are followed
- * live by a {@link LiveExecutability}.
+ * A {@link ViewCommand} is such an operation; its rules decide over its arguments, see
+ * {@link CommandArguments}. While its UI is displayed, the rules are followed live by a
+ * {@link LiveExecutability}.
  * </p>
+ *
+ * @see InputExecutabilityConfig
  */
 @Abstract
 public interface ExecutabilityConfig extends ConfigurationItem {
-
-	/** Configuration name for {@link #getInput()}. */
-	String INPUT = "input";
 
 	/** Configuration name for {@link #getExecutability()}. */
 	String EXECUTABILITY = "executability";
@@ -43,15 +40,6 @@ public interface ExecutabilityConfig extends ConfigurationItem {
 	String RULE = "rule";
 
 	/**
-	 * Reference to a channel whose value is the input of the operation: the value it works on, and
-	 * the value its {@link #getExecutability() executability} rules decide over.
-	 */
-	@Name(INPUT)
-	@Nullable
-	@Format(ChannelRefFormat.class)
-	ChannelRef getInput();
-
-	/**
 	 * Rules that determine when the operation is executable.
 	 */
 	@Name(EXECUTABILITY)
@@ -60,8 +48,8 @@ public interface ExecutabilityConfig extends ConfigurationItem {
 
 	/**
 	 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
-	 * {@link #getExecutability() executability}, in addition to the {@link #getInput() input}
-	 * object, which is always observed.
+	 * {@link #getExecutability() executability}, in addition to the input object the rules decide
+	 * over, which is always observed.
 	 *
 	 * <p>
 	 * Configure this only for a rule that navigates beyond the input object, e.g. one deciding by an

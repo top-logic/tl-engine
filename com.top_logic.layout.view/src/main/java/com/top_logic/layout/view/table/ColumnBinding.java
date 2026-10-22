@@ -9,7 +9,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.layout.react.control.table.TableViewControl;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 
@@ -70,7 +70,7 @@ public interface ColumnBinding {
 	 *
 	 * @see ColumnDeclaration#inputs()
 	 */
-	default List<ChannelRef> inputs() {
+	default List<InputRef> inputs() {
 		return List.of();
 	}
 

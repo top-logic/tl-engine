@@ -13,7 +13,7 @@
 			<inputs>
 				<input channel="transactions"/>
 			</inputs>
-			<rows>txs -&gt; $txs</rows>
+			<rows>$transactions</rows>
 		</table>
 		<actions>
 			<button>

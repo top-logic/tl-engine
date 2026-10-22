@@ -133,6 +133,9 @@ public interface SelectState extends com.top_logic.layout.react.state.FieldState
 	com.top_logic.layout.react.state.SelectState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.SelectState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.SelectState setHidden(boolean value);
 
 	@Override

@@ -48,17 +48,20 @@
 								<en>New Project Scope</en>
 								<de>Neuer Projekt-Scope</de>
 							</label>
-							<create-transient type="tl.demo.projectManagement:ProjectScope"/>
-							<execute-script function="p -> { $p.set(`tl.demo.projectManagement:ProjectScope#admins`, [currentUser()]); $p; }"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="demo/create-project-scope.view.xml"
-							>
-								<bind
-									channel="selection"
-									to="selectedScope"
-								/>
-							</open-dialog>
+							<create-transient type="tl.demo.projectManagement:ProjectScope">
+								<with-result as="p">
+									<execute-script function="$p.set(`tl.demo.projectManagement:ProjectScope#admins`, [currentUser()])"/>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-project-scope.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedScope"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
 						</generic-command>
 					</commands>
 					<table
@@ -87,7 +90,7 @@
 							<commands>
 								<generic-command
 									image="css:bi bi-plus-lg"
-									input="selectedScope"
+									inputs="selectedScope"
 									placement="TOOLBAR"
 								>
 									<label>
@@ -101,20 +104,23 @@
 										container="selectedScope"
 										reference="milestones"
 										type="tl.demo.projectManagement:Milestone"
-									/>
-									<open-dialog
-										bind-input-to="model"
-										dialog-view="demo/create-milestone.view.xml"
 									>
-										<bind
-											channel="container"
-											to="selectedScope"
-										/>
-										<bind
-											channel="selection"
-											to="selectedMilestone"
-										/>
-									</open-dialog>
+										<with-result>
+											<open-dialog
+												bind-input-to="model"
+												dialog-view="demo/create-milestone.view.xml"
+											>
+												<bind
+													channel="container"
+													to="selectedScope"
+												/>
+												<bind
+													channel="selection"
+													to="selectedMilestone"
+												/>
+											</open-dialog>
+										</with-result>
+									</create-transient>
 								</generic-command>
 							</commands>
 							<table
@@ -128,7 +134,7 @@
 								<inputs>
 									<input channel="selectedScope"/>
 								</inputs>
-								<rows>scope -&gt; if($scope == null, list(), $scope.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+								<rows>if($selectedScope == null, list(), $selectedScope.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
 							</table>
 						</panel>
 					</selector>

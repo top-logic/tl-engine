@@ -112,6 +112,9 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     const flexAfter = after?.style.flex ?? '';
     const startPos = isHorizontal ? e.clientX : e.clientY;
     const total = sizes[index] + sizes[index + 1];
+    // The size of the pane before the handle at the press: each move places the handle at the pointer's distance from
+    // the press position, measured from this size.
+    const startBefore = sizes[index];
     const minBefore = children[index].minSize || 0;
     const minAfter = children[index + 1].minSize || 0;
 
@@ -119,7 +122,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
       cursor: isHorizontal ? 'col-resize' : 'row-resize',
       onMove: (moveEvent) => {
         const delta = (isHorizontal ? moveEvent.clientX : moveEvent.clientY) - startPos;
-        const size = Math.min(total - minAfter, Math.max(minBefore, sizes[index] + delta));
+        const size = Math.min(total - minAfter, Math.max(minBefore, startBefore + delta));
         sizes[index] = size;
         sizes[index + 1] = total - size;
         if (before) before.style.flex = `0 0 ${size}px`;

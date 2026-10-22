@@ -22,7 +22,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-play-fill"
-				input="script"
+				inputs="script"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -31,12 +31,15 @@
 				</label>
 				<action class="com.top_logic.model.search.react.EvaluateDynamicScriptAction"
 					transaction="false"
-				/>
-				<write-channel name="result"/>
+				>
+					<with-result>
+						<write-channel name="result"/>
+					</with-result>
+				</action>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-database-fill-check"
-				input="script"
+				inputs="script"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -45,8 +48,11 @@
 				</label>
 				<action class="com.top_logic.model.search.react.EvaluateDynamicScriptAction"
 					transaction="true"
-				/>
-				<write-channel name="result"/>
+				>
+					<with-result>
+						<write-channel name="result"/>
+					</with-result>
+				</action>
 			</generic-command>
 		</commands>
 		<split-panel

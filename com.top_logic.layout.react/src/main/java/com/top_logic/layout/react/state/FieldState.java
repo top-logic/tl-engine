@@ -51,6 +51,9 @@ public interface FieldState extends com.top_logic.layout.react.state.ControlStat
 	/** @see #isSubmitOnEnter() */
 	String SUBMIT_ON_ENTER__PROP = "submitOnEnter";
 
+	/** @see #isCompact() */
+	String COMPACT__PROP = "compact";
+
 	/**
 	 * The value of the field. Its JSON form depends on the kind of the field, see the state of the
 	 * concrete field component.
@@ -178,6 +181,17 @@ public interface FieldState extends com.top_logic.layout.react.state.ControlStat
 	 * @see #isSubmitOnEnter()
 	 */
 	com.top_logic.layout.react.state.FieldState setSubmitOnEnter(boolean value);
+
+	/**
+	 * Whether the field is displayed in little room, a table cell for instance: the height of a
+	 * single line of text, with spacing reduced to what keeps its parts apart.
+	 */
+	boolean isCompact();
+
+	/**
+	 * @see #isCompact()
+	 */
+	com.top_logic.layout.react.state.FieldState setCompact(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.FieldState setHidden(boolean value);

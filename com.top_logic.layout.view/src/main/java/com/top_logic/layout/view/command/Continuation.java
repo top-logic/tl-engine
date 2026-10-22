@@ -21,7 +21,9 @@ import com.top_logic.layout.react.control.button.ButtonTone;
 public interface Continuation {
 
 	/**
-	 * Continues the chain; {@code value} becomes the input of the next action.
+	 * Continues the chain; {@code value} is the result of the action, seen by its follow-up actions
+	 * (see {@link WithResultActions}). The actions following it run with the unchanged arguments of
+	 * the chain.
 	 *
 	 * <p>
 	 * Must be called at most once per action, and is mutually exclusive with {@link #abort()}.

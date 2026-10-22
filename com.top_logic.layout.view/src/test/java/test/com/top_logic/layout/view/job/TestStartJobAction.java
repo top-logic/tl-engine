@@ -27,8 +27,11 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.layout.view.command.WithResultActions;
+import com.top_logic.layout.view.command.ActionStep;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.ViewAction;
@@ -157,11 +160,17 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
-	 * Tests that a completed job continues the command with its result, and that the last state
+	 * Tests that a completed job runs its follow-up actions with its result, and that the last state
 	 * carries the result as well.
 	 */
 	public void testACompletedJobContinuesTheCommandWithItsResult() throws Exception {
-		run(List.of(job(body((job, arguments) -> "produced"), false, List.of()), record("after")));
+		List<Object> seen = Collections.synchronizedList(new ArrayList<>());
+		ViewAction followUp = (context, value) -> {
+			seen.add(value);
+			return value;
+		};
+		run(List.of(new ActionStep(job(body((job, arguments) -> "produced"), false, List.of()), null,
+			WithResultActions.RESULT, List.of(followUp, record("after")))));
 
 		JobState last = awaitFinished();
 
@@ -169,20 +178,21 @@ public class TestStartJobAction extends AbstractJobTest {
 		assertEquals("produced", last.result());
 		assertNotNull("A finished job says when it finished.", last.finishedAt());
 		assertEquals(List.of("after"), _log);
-		assertEquals("The result of the job is the value the command continues with.",
+		assertEquals("The follow-up actions see the result of the job.", List.of("produced"), seen);
+		assertEquals("The result of the job is the completion value of the command.",
 			List.of("produced"), _completions);
 	}
 
 	/**
-	 * Tests that the values the job is started with are the input channels followed by the value of
-	 * the command.
+	 * Tests that the values the job is started with are the arguments of the chain followed by the
+	 * values of the input channels.
 	 */
 	public void testTheJobIsStartedWithTheInputsAndTheValueOfTheCommand() throws Exception {
 		_context.resolveChannel(new ChannelRef(CONTEXT)).set("the context");
 		AtomicReference<List<Object>> seen = new AtomicReference<>();
 
-		StartJobAction action = new StartJobAction(new ChannelRef(JOB), List.of(new ChannelRef(CONTEXT)),
-			List.of(), false, 0, body((job, arguments) -> {
+		StartJobAction action = new StartJobAction(new ChannelRef(JOB), ARGUMENTS,
+			List.of(new InputRef(new ChannelRef(CONTEXT))), List.of(), false, 0, body((job, arguments) -> {
 				seen.set(arguments);
 				return null;
 			}));
@@ -190,19 +200,19 @@ public class TestStartJobAction extends AbstractJobTest {
 
 		awaitFinished();
 
-		assertEquals(List.of("the context", INPUT), seen.get());
+		assertEquals(List.of(INPUT, "the context"), seen.get());
 	}
 
 	/**
-	 * Tests that a job written as a TL-Script function is called with the monitor of the job first,
-	 * then the inputs, then the value of the command.
+	 * Tests that a job written as a TL-Script function is called with the arguments of the chain,
+	 * then the inputs, then the monitor of the job.
 	 */
-	public void testAScriptJobIsCalledWithTheMonitorFirst() throws Exception {
+	public void testAScriptJobIsCalledWithTheMonitorLast() throws Exception {
 		_context.resolveChannel(new ChannelRef(CONTEXT)).set("the context");
 		AtomicReference<List<Object>> seen = new AtomicReference<>();
 
-		StartJobAction action = new StartJobAction(new ChannelRef(JOB), List.of(new ChannelRef(CONTEXT)),
-			List.of(), false, 0, new ScriptJobBody(script(arguments -> {
+		StartJobAction action = new StartJobAction(new ChannelRef(JOB), ARGUMENTS,
+			List.of(new InputRef(new ChannelRef(CONTEXT))), List.of(), false, 0, new ScriptJobBody(script(arguments -> {
 				seen.set(arguments);
 				return "produced";
 			})));
@@ -212,10 +222,10 @@ public class TestStartJobAction extends AbstractJobTest {
 
 		List<Object> arguments = seen.get();
 		assertEquals(3, arguments.size());
-		assertSame("The monitor of the job leads the arguments of the function.",
-			last.control(), arguments.get(0));
+		assertEquals(INPUT, arguments.get(0));
 		assertEquals("the context", arguments.get(1));
-		assertEquals(INPUT, arguments.get(2));
+		assertSame("The monitor of the job follows the arguments of the function.",
+			last.control(), arguments.get(2));
 		assertEquals("produced", last.result());
 	}
 
@@ -355,7 +365,7 @@ public class TestStartJobAction extends AbstractJobTest {
 	 */
 	public void testCancellingAScriptJobEndsItAsCancelled() throws Exception {
 		run(List.of(compensate("read"),
-			job(new ScriptJobBody(compile("job -> x -> { sleep(10000); $job.jobProgress(1, 2); 'done' }")),
+			job(new ScriptJobBody(compile("x -> job -> { sleep(10000); $job.jobProgress(1, 2); 'done' }")),
 				true, List.of()),
 			record("after")));
 
@@ -502,7 +512,7 @@ public class TestStartJobAction extends AbstractJobTest {
 		StartJobAction.Config config = TypedConfiguration.newConfigItem(StartJobAction.Config.class);
 		update(config, StartJobAction.Config.JOB, new ChannelRef(JOB));
 		if (function) {
-			update(config, StartJobAction.Config.FUNCTION, expr("job -> x -> null"));
+			update(config, StartJobAction.Config.FUNCTION, expr("x -> job -> null"));
 		}
 		if (body) {
 			PolymorphicConfiguration<JobBody> bodyConfig =

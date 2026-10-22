@@ -25,11 +25,6 @@ import com.top_logic.layout.view.command.ViewAction;
  * empties the stack (the {@link TileStackElement.Config#getInitial() initial} view is shown
  * again). Values larger than the current depth are no-ops.
  * </p>
- *
- * <p>
- * Passes the input through as output, so an action following it in the chain still sees the object
- * the chain works on.
- * </p>
  */
 @InApp
 public class NavigatePopToAction implements ViewAction {
@@ -82,5 +77,13 @@ public class NavigatePopToAction implements ViewAction {
 	public Object execute(ReactContext context, Object input) {
 		TileStackScope.lookup(context, Config.TAG_NAME).popTo(_depth);
 		return input;
+	}
+
+	/**
+	 * Changes the frames of the tile stack.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

@@ -36,22 +36,29 @@ public class ChannelInputs {
 	 * @param refs
 	 *        The declared references, see {@link Inputs#getInputs()}.
 	 */
-	public static List<ViewChannel> resolve(ViewContext context, List<ChannelRef> refs) {
+	public static List<ViewChannel> resolve(ViewContext context, List<InputRef> refs) {
 		List<ViewChannel> result = new ArrayList<>(refs.size());
-		for (ChannelRef ref : refs) {
-			result.add(context.resolveChannel(ref));
+		for (InputRef ref : refs) {
+			result.add(context.resolveChannel(ref.getChannel()));
 		}
 		return result;
 	}
 
 	/**
-	 * The arguments a function is called with: the current values of the given channels, in
-	 * declaration order, and the arguments the function takes behind them.
+	 * The values a script is evaluated with: the current values of the given channels, in
+	 * declaration order, followed by the given values.
+	 *
+	 * <p>
+	 * For a script compiled with {@link InputScript#compile(com.top_logic.basic.config.ConfigurationItem, String)},
+	 * these are the values of its variables: the inputs followed by the values the element supplies,
+	 * in the order of {@link InputScript#variables(com.top_logic.basic.config.ConfigurationItem, com.top_logic.basic.config.PropertyDescriptor)}.
+	 * </p>
 	 *
 	 * @param inputs
-	 *        The channels leading the argument list.
+	 *        The channels whose values lead the list.
 	 * @param trailing
-	 *        The arguments behind the inputs, in the order the function takes them.
+	 *        The values behind the inputs, for a script with implicit variables the values of the
+	 *        supplied variables in their declaration order.
 	 */
 	public static Object[] arguments(List<ViewChannel> inputs, Object... trailing) {
 		Object[] arguments = new Object[inputs.size() + trailing.length];

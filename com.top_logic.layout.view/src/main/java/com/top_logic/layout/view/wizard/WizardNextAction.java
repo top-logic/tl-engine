@@ -22,11 +22,6 @@ import com.top_logic.layout.view.command.ViewAction;
  * {@link WizardHasNext &lt;wizard-has-next&gt;} rule to hide the button on that step instead of
  * offering one that does nothing.
  * </p>
- *
- * <p>
- * Passes the input through as output, so an action following it in the chain still sees the object
- * the chain works on - which is what makes "store what was entered, then move on" one command.
- * </p>
  */
 @InApp
 public class WizardNextAction implements ViewAction {
@@ -64,5 +59,13 @@ public class WizardNextAction implements ViewAction {
 	public Object execute(ReactContext context, Object input) {
 		WizardScope.lookup(context, Config.TAG_NAME).next();
 		return input;
+	}
+
+	/**
+	 * Changes the displayed step of the wizard.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

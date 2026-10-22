@@ -154,6 +154,9 @@ public interface SliderState extends com.top_logic.layout.react.state.FieldState
 	com.top_logic.layout.react.state.SliderState setSubmitOnEnter(boolean value);
 
 	@Override
+	com.top_logic.layout.react.state.SliderState setCompact(boolean value);
+
+	@Override
 	com.top_logic.layout.react.state.SliderState setHidden(boolean value);
 
 	@Override

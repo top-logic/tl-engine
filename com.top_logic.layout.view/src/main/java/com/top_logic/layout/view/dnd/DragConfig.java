@@ -7,7 +7,7 @@ package com.top_logic.layout.view.dnd;
 
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.layout.view.command.ExecutabilityConfig;
+import com.top_logic.layout.view.command.InputExecutabilityConfig;
 
 /**
  * Configuration of the {@code <drag>} of an element: that its items may be dragged, the kind of
@@ -22,7 +22,7 @@ import com.top_logic.layout.view.command.ExecutabilityConfig;
  *
  * @see DragSourceBinding
  */
-public interface DragConfig extends ExecutabilityConfig {
+public interface DragConfig extends InputExecutabilityConfig {
 
 	/** Configuration name for {@link #getKind()}. */
 	String KIND = "kind";

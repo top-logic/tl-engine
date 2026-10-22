@@ -386,6 +386,13 @@
 				<type>test-jar</type>
 				<scope>test</scope>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-view</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
 
 			<!-- TopLogic -->
 			<dependency>
@@ -1054,7 +1061,7 @@
 			<dependency>
 				<groupId>jakarta.websocket</groupId>
 				<artifactId>jakarta.websocket-api</artifactId>
-				<version>2.1.1</version>
+				<version>2.2.0</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.websocket</groupId>
@@ -1154,7 +1161,7 @@
 			<dependency>
 			    <groupId>commons-codec</groupId>
 			    <artifactId>commons-codec</artifactId>
-			    <version>1.22.1</version>
+			    <version>1.23.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.commons</groupId>

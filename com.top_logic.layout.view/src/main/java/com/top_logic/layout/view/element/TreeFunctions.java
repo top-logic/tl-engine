@@ -16,6 +16,7 @@ import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.NodeLocator;
 import com.top_logic.layout.view.model.ObservableTreeModel;
@@ -44,19 +45,14 @@ public final class TreeFunctions {
 	private final QueryExecutor _parentsExecutor;
 
 	/**
-	 * Compiles the functions of the given configuration.
-	 *
-	 * <p>
-	 * If services like {@code PersistencyLayer} are not yet active,
-	 * {@link QueryExecutor#compile(com.top_logic.model.search.expr.config.dom.Expr)} returns an
-	 * executor that compiles on first execution.
-	 * </p>
+	 * Compiles the functions of the given configuration against the names of the element's inputs
+	 * and of the node, see {@link InputScript}.
 	 */
 	public TreeFunctions(TreeStructureConfig config) {
 		_config = config;
-		_rootExecutor = QueryExecutor.compile(config.getRoot());
-		_childrenExecutor = QueryExecutor.compile(config.getChildren());
-		_parentsExecutor = QueryExecutor.compileOptional(config.getParents());
+		_rootExecutor = InputScript.compile(config, TreeStructureConfig.ROOT);
+		_childrenExecutor = InputScript.compile(config, TreeStructureConfig.CHILDREN);
+		_parentsExecutor = InputScript.compile(config, TreeStructureConfig.PARENTS);
 	}
 
 	/**
@@ -76,7 +72,7 @@ public final class TreeFunctions {
 	 * @param builder
 	 *        The builder computing the children, see {@link #builder(List)}.
 	 * @param inputChannels
-	 *        The channels whose values the root function is called with.
+	 *        The channels whose values the root function sees.
 	 */
 	public DefaultTreeUINodeModel treeModel(TreeBuilder<DefaultTreeUINode> builder, List<ViewChannel> inputChannels) {
 		return new DefaultTreeUINodeModel(builder, root(ChannelInputs.arguments(inputChannels)));
@@ -86,8 +82,7 @@ public final class TreeFunctions {
 	 * The builder computing the children of a node with the children function.
 	 *
 	 * @param inputChannels
-	 *        The channels whose values the function is called with, followed by the node's
-	 *        business object.
+	 *        The channels whose values the function sees, besides the node's business object.
 	 */
 	public TreeBuilder<DefaultTreeUINode> builder(List<ViewChannel> inputChannels) {
 		return new TreeBuilder<>() {
@@ -100,7 +95,7 @@ public final class TreeFunctions {
 
 			@Override
 			public List<DefaultTreeUINode> createChildList(DefaultTreeUINode node) {
-				Object[] args = appendArg(ChannelInputs.arguments(inputChannels), node.getBusinessObject());
+				Object[] args = ChannelInputs.arguments(inputChannels, node.getBusinessObject());
 				Collection<?> children = toCollection(_childrenExecutor.execute(args));
 
 				List<DefaultTreeUINode> childNodes = new ArrayList<>(children.size());
@@ -125,14 +120,14 @@ public final class TreeFunctions {
 	 * {@link TreeStructureConfig#getParents()} function.
 	 *
 	 * @param inputChannels
-	 *        The channels whose values the function is called with, followed by the object.
+	 *        The channels whose values the function sees, besides the object.
 	 */
 	public Function<Object, Object> parentFunction(List<ViewChannel> inputChannels) {
 		if (_parentsExecutor == null) {
 			return null;
 		}
 		return businessObject -> singleObject(
-			_parentsExecutor.execute(appendArg(ChannelInputs.arguments(inputChannels), businessObject)));
+			_parentsExecutor.execute(ChannelInputs.arguments(inputChannels, businessObject)));
 	}
 
 	/**
@@ -161,13 +156,6 @@ public final class TreeFunctions {
 		if (result instanceof Collection<?> collection) {
 			return collection.isEmpty() ? null : collection.iterator().next();
 		}
-		return result;
-	}
-
-	private static Object[] appendArg(Object[] base, Object extra) {
-		Object[] result = new Object[base.length + 1];
-		System.arraycopy(base, 0, result, 0, base.length);
-		result[base.length] = extra;
 		return result;
 	}
 

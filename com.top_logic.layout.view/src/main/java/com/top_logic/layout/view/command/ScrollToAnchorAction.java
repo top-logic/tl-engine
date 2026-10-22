@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.command;
 
+import java.util.List;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -18,7 +20,7 @@ import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * {@link ViewAction} that scrolls the browser to an {@link com.top_logic.layout.view.element.AnchorElement
@@ -42,7 +44,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *           {@link com.top_logic.layout.view.element.ScrollLinkElement &lt;scroll-link&gt;} uses.
  */
 @InApp
-public class ScrollToAnchorAction implements ViewAction {
+public class ScrollToAnchorAction extends ArgumentsViewAction {
 
 	/** Client-side global holding the scroll helper. */
 	private static final String CLIENT_NAMESPACE = "TLReact";
@@ -54,7 +56,7 @@ public class ScrollToAnchorAction implements ViewAction {
 	 * Configuration for {@link ScrollToAnchorAction}.
 	 */
 	@TagName("scroll-to-anchor")
-	public interface Config extends PolymorphicConfiguration<ScrollToAnchorAction> {
+	public interface Config extends PolymorphicConfiguration<ScrollToAnchorAction>, WithValueArgument {
 
 		/** Configuration name for {@link #getTarget()}. */
 		String TARGET = "target";
@@ -64,31 +66,34 @@ public class ScrollToAnchorAction implements ViewAction {
 		Class<? extends ScrollToAnchorAction> getImplementationClass();
 
 		/**
-		 * TL-Script function computing the scroll target from the chain's current input value:
-		 * {@code input -> target}.
+		 * TL-Script computing the scroll target.
 		 *
 		 * <p>
-		 * The result is a model object (scrolled to by its anchor id) or a string (a literal anchor
-		 * name). When unset, the chain's input value is used as the target directly.
+		 * Uses the arguments of the chain as variables named after them, without declaring them. The
+		 * result is a model object (scrolled to by its anchor id) or a string (a literal anchor
+		 * name). When unset, the value this action processes is the target.
 		 * </p>
 		 */
 		@Name(TARGET)
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getTarget();
 	}
 
-	private final QueryExecutor _target;
+	private final ActionScript _target;
 
 	/**
 	 * Creates a new {@link ScrollToAnchorAction}.
 	 */
 	@CalledByReflection
 	public ScrollToAnchorAction(InstantiationContext context, Config config) {
-		_target = config.getTarget() == null ? null : QueryExecutor.compile(config.getTarget());
+		_target = config.getTarget() == null ? null
+			: ActionScript.compile(config.getTarget(), ActionScope.of(context), List.of());
 	}
 
 	@Override
-	public Object execute(ReactContext context, Object input) {
-		Object target = _target == null ? input : _target.execute(input);
+	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+		Object input = arguments.value();
+		Object target = _target == null ? input : _target.execute(context, arguments);
 		String key = anchorKey(target);
 		if (key != null) {
 			SSEUpdateQueue queue = context.getSSEQueue();
@@ -99,7 +104,7 @@ public class ScrollToAnchorAction implements ViewAction {
 					.setArguments(jsonArguments(key)));
 			}
 		}
-		return input;
+		continuation.resume(input);
 	}
 
 	private static String anchorKey(Object target) {
@@ -142,4 +147,11 @@ public class ScrollToAnchorAction implements ViewAction {
 		return buffer.append("\"]").toString();
 	}
 
+	/**
+	 * Scrolls the client.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

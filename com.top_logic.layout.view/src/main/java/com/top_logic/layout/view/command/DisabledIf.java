@@ -11,15 +11,16 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * {@link ViewExecutabilityRule} that disables a command while a configured TL-Script function,
- * evaluated on the command's input, reports a reason preventing the execution.
+ * {@link ViewExecutabilityRule} that disables a command while a configured TL-Script over the
+ * command's arguments reports a reason preventing the execution.
  *
  * <p>
  * The result of the function decides: no value or <code>false</code> keeps the command executable,
@@ -34,8 +35,9 @@ import com.top_logic.tool.execution.ExecutableState;
  * </p>
  *
  * <p>
- * The rule is evaluated whenever the command's input changes. A function that inspects objects
- * beyond the input object must announce their types in the command's
+ * The script uses the arguments of the command as variables, see {@link ScriptedRule}. The rule is
+ * evaluated whenever one of the command's inputs changes. A script that inspects objects beyond the
+ * input objects must announce their types in the command's
  * {@link ViewCommand.Config#getObservedTypes()}, because a change of such an object is otherwise
  * invisible to the command.
  * </p>
@@ -45,16 +47,21 @@ import com.top_logic.tool.execution.ExecutableState;
  * </p>
  *
  * <pre>
- * &lt;disabled-if expr="t -&gt; if($t.get(`demo.tickets:Ticket#status`) == null, #('Please assign a status first.'@en))"/&gt;
+ * &lt;generic-command inputs="selection as ticket"&gt;
+ *   &lt;executability&gt;
+ *     &lt;disabled-if expr="if($ticket.get(`demo.tickets:Ticket#status`) == null, #('Please assign a status first.'@en))"/&gt;
+ *   &lt;/executability&gt;
+ *   ...
+ * &lt;/generic-command&gt;
  * </pre>
  */
-public class DisabledIf implements ViewExecutabilityRule {
+public class DisabledIf extends ScriptedRule {
 
 	/**
 	 * Configuration for {@link DisabledIf}.
 	 */
 	@TagName("disabled-if")
-	public interface Config extends ViewExecutabilityRule.Config {
+	public interface Config extends ViewExecutabilityRule.Config, ConfigPart {
 
 		/** Configuration name for {@link #getExpr()}. */
 		String EXPR = "expr";
@@ -64,8 +71,12 @@ public class DisabledIf implements ViewExecutabilityRule {
 		Class<? extends ViewExecutabilityRule> getImplementationClass();
 
 		/**
-		 * TL-Script function called with the command's current input value, computing the reason
-		 * why the command must not be executed.
+		 * TL-Script computing the reason why the command must not be executed.
+		 *
+		 * <p>
+		 * The script uses the arguments of the command as variables, like the predicate
+		 * {@link VisibleIf.Config#getExpr()}.
+		 * </p>
 		 *
 		 * <p>
 		 * No value or <code>false</code> keeps the command executable. A resource key or a text is
@@ -75,35 +86,34 @@ public class DisabledIf implements ViewExecutabilityRule {
 		 */
 		@Name(EXPR)
 		@Mandatory
+		@ScriptContextVariables(ActionScriptVariables.class)
 		Expr getExpr();
 	}
-
-	private final QueryExecutor _reason;
 
 	/**
 	 * Creates a new {@link DisabledIf} from configuration.
 	 */
 	@CalledByReflection
 	public DisabledIf(InstantiationContext context, Config config) {
-		_reason = QueryExecutor.compile(config.getExpr());
+		super(context, config.getExpr());
 	}
 
 	@Override
-	public ExecutableState isExecutable(Object input) {
-		return stateFor(_reason.execute(input));
+	protected ExecutableState stateFor(Object result) {
+		return reasonState(result);
 	}
 
 	/**
 	 * The {@link ExecutableState} described by the given reason value.
 	 *
 	 * @param reason
-	 *        The value computed by the configured {@link Config#EXPR} function.
+	 *        The value computed by the configured {@link Config#EXPR} script.
 	 * @return {@link ExecutableState#EXECUTABLE}, if the reason is <code>null</code> or
 	 *         <code>false</code>. A disabled state explained by
 	 *         {@link ExecutableState#NOT_EXEC_DISABLED_REASON} for <code>true</code>, by the given
 	 *         {@link ResKey}, or by the given value rendered as text.
 	 */
-	public static ExecutableState stateFor(Object reason) {
+	public static ExecutableState reasonState(Object reason) {
 		if (reason == null || Boolean.FALSE.equals(reason)) {
 			return ExecutableState.EXECUTABLE;
 		}

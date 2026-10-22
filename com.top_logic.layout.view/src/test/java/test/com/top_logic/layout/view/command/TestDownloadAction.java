@@ -20,6 +20,8 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.command.ViewActionChain;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -67,7 +69,7 @@ public class TestDownloadAction extends TestCase {
 	public void testDeliversFile() {
 		BinaryData file = file("report.txt");
 
-		Object result = new DownloadAction(null).execute(context(), file);
+		Object result = run(new DownloadAction(null), context(), file);
 
 		assertSame("The chain continues with the file.", file, result);
 		assertEquals(1, _window._delivered.size());
@@ -79,9 +81,9 @@ public class TestDownloadAction extends TestCase {
 	 * Tests that a configured name replaces the name of the file, the content staying the same.
 	 */
 	public void testRenames() throws IOException {
-		DownloadAction action = new DownloadAction((context, file) -> ResKey.text("tickets.txt"));
+		DownloadAction action = new DownloadAction((context, arguments, additional) -> ResKey.text("tickets.txt"));
 
-		action.execute(context(), file("data.txt"));
+		run(action, context(), file("data.txt"));
 
 		BinaryData delivered = _window._delivered.get(0);
 		assertEquals("tickets.txt", delivered.getName());
@@ -100,7 +102,7 @@ public class TestDownloadAction extends TestCase {
 
 	private void assertFails(ResKey expected, Object input) {
 		try {
-			new DownloadAction(null).execute(context(), input);
+			run(new DownloadAction(null), context(), input);
 			fail("A download of '" + StringServices.toString(input) + "' must fail.");
 		} catch (TopLogicException ex) {
 			assertEquals(expected, ex.getErrorKey());
@@ -144,7 +146,7 @@ public class TestDownloadAction extends TestCase {
 			}
 		};
 
-		assertSame(file, new DownloadAction(null).execute(headless, file));
+		assertSame(file, run(new DownloadAction(null), headless, file));
 	}
 
 	/**
@@ -217,4 +219,10 @@ public class TestDownloadAction extends TestCase {
 			ServiceTestSetup.createStarterFactoryForModules(LabelProviderService.Module.INSTANCE));
 	}
 
+	/** Runs the given action on the given value, returning its result. */
+	private static Object run(DownloadAction action, ReactContext context, Object value) {
+		Object[] result = new Object[1];
+		ViewActionChain.run(context, List.of(action), ActionArguments.of("file", value), done -> result[0] = done);
+		return result[0];
+	}
 }

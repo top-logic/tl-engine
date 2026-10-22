@@ -5,14 +5,16 @@
  */
 package com.top_logic.layout.view.table;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.filter.ComparisonOperator;
 
 /**
@@ -28,15 +30,15 @@ import com.top_logic.table.filter.ComparisonOperator;
  * </p>
  *
  * <p>
- * The values a criterion selects by are TL-Script expressions, evaluated with the input values of
- * the table, so that a criterion can select by what is displayed elsewhere - the object selected in
+ * The values a criterion selects by are TL-Script expressions seeing the inputs of the table as
+ * variables, named after their channels or by their {@code as} names, so that a criterion can select by what is displayed elsewhere - the object selected in
  * another table, the current user - while everything that decides the <em>shape</em> of the
  * criterion (which comparison, whether the pattern is a regular expression) is fixed by the
  * declaration.
  * </p>
  */
 @Abstract
-public interface FilterStateConfig extends ConfigurationItem {
+public interface FilterStateConfig extends ConfigPart {
 
 	/**
 	 * A criterion for a column filtered by a text pattern.
@@ -77,6 +79,7 @@ public interface FilterStateConfig extends ConfigurationItem {
 		@Name(PATTERN)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getPattern();
 
 		/**
@@ -134,6 +137,7 @@ public interface FilterStateConfig extends ConfigurationItem {
 		@Name(PRIMARY)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getPrimary();
 
 		/**
@@ -142,6 +146,7 @@ public interface FilterStateConfig extends ConfigurationItem {
 		 */
 		@Name(SECONDARY)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getSecondary();
 	}
 
@@ -171,6 +176,7 @@ public interface FilterStateConfig extends ConfigurationItem {
 		@Name(SELECTED)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getSelected();
 	}
 
@@ -199,6 +205,7 @@ public interface FilterStateConfig extends ConfigurationItem {
 		@Name(ACCEPT)
 		@Mandatory
 		@NonNullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getAccept();
 	}
 

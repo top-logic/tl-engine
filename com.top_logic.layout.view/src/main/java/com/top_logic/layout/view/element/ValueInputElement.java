@@ -5,9 +5,17 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.function.Function;
 
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -44,6 +52,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -55,6 +64,8 @@ import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.ChannelFieldBinding;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
@@ -65,6 +76,7 @@ import com.top_logic.model.config.AttributeConfigBase;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -119,6 +131,12 @@ import com.top_logic.util.Resources;
  * that is picked from options runs it with every choice. Whenever the command runs, the value has
  * already reached the channel.
  * </p>
+ *
+ * <p>
+ * Inside a {@code <form>}, the input follows the form's edit mode: the value can be changed only
+ * while the form is edited. An {@link Config#getEditMode() edit mode channel} decides instead of
+ * the form, and {@link Config#getReadonly() readonly} keeps the input unchangeable in any case.
+ * </p>
  */
 @InApp
 public class ValueInputElement implements UIElement {
@@ -132,7 +150,17 @@ public class ValueInputElement implements UIElement {
 	 * Configuration for {@link ValueInputElement}.
 	 */
 	@TagName("value-input")
-	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase {
+	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Configuration name for {@link #getOnSubmitAs()}. */
+		String SUBMIT_AS = "submit-as";
+
+		/** Name of the value the submitted value when no other name is given. */
+		String DEFAULT_SUBMIT_AS = "value";
+
 
 		@Override
 		@ClassDefault(ValueInputElement.class)
@@ -174,6 +202,9 @@ public class ValueInputElement implements UIElement {
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
 
+		/** Configuration name for {@link #getEditMode()}. */
+		String EDIT_MODE = "edit-mode";
+
 		/** Configuration name for {@link #getLabelPosition()}. */
 		String LABEL_POSITION = "label-position";
 
@@ -211,9 +242,9 @@ public class ValueInputElement implements UIElement {
 		 * The values to choose from.
 		 *
 		 * <p>
-		 * Called with the values of the {@link #getInputs() input channels} as its arguments, so
-		 * that the options can depend on what the rest of the view shows; without inputs, an
-		 * expression computing the options directly.
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, so that the options can depend on what the
+		 * rest of the view shows.
 		 * </p>
 		 *
 		 * <p>
@@ -234,6 +265,7 @@ public class ValueInputElement implements UIElement {
 		 */
 		@Name(OPTIONS)
 		@Nullable
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getOptions();
 
 		/**
@@ -370,6 +402,28 @@ public class ValueInputElement implements UIElement {
 		boolean getReadonly();
 
 		/**
+		 * The channel deciding whether the value can be changed: it can while the channel holds
+		 * {@code true}, and cannot otherwise.
+		 *
+		 * <p>
+		 * Without a channel, an input inside a {@code <form>} can be changed while the form is in
+		 * edit mode, and an input outside a form can always be changed. With a channel, the
+		 * form's mode is ignored: an input whose value belongs to the view rather than to the
+		 * edited object - a filter above a list shown in the form, a choice made while viewing -
+		 * names a channel that always holds {@code true}, or the channel of its own edit state.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link #getReadonly() Readonly} wins over this channel: a read-only input is never
+		 * changed.
+		 * </p>
+		 */
+		@Name(EDIT_MODE)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getEditMode();
+
+		/**
 		 * Where the input renders its label relative to itself, e.g. {@code hide-label} for a
 		 * label-less input.
 		 *
@@ -402,6 +456,30 @@ public class ValueInputElement implements UIElement {
 		@ImplementationClassDefault(GenericViewCommand.class)
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnSubmit();
+
+		/**
+		 * The name of the argument holding the submitted value, the main argument of the
+		 * {@link #getOnSubmit() command}.
+		 *
+		 * <p>
+		 * The command sees it in addition to its own inputs; its scripts refer to it by this name.
+		 * </p>
+		 */
+		@Name(SUBMIT_AS)
+		@StringDefault(DEFAULT_SUBMIT_AS)
+		String getOnSubmitAs();
+
+		/**
+		 * The {@link #getOnSubmit() command} runs with the submitted value as argument named by
+		 * {@link #getOnSubmitAs()}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getOnSubmit()) {
+				return ActionScope.single(getOnSubmitAs());
+			}
+			return outer;
+		}
 
 		/**
 		 * When the {@link #getOnSubmit() submit command} runs on a value the user types - a text, a
@@ -454,7 +532,7 @@ public class ValueInputElement implements UIElement {
 
 	private final QueryExecutor _options;
 
-	private final List<ChannelRef> _inputRefs;
+	private final List<InputRef> _inputRefs;
 
 	private final OptionOrder _optionOrder;
 
@@ -478,9 +556,13 @@ public class ValueInputElement implements UIElement {
 
 	private final boolean _readonly;
 
+	private final ChannelRef _editModeRef;
+
 	private final LabelPosition _labelPosition;
 
 	private final ViewCommand _submitCommand;
+
+	private final String _submitAs;
 
 	private final ViewCommand.Config _submitCommandConfig;
 
@@ -497,7 +579,7 @@ public class ValueInputElement implements UIElement {
 	public ValueInputElement(InstantiationContext context, Config config) {
 		_valueRef = config.getValue();
 		_typeRef = config.getType();
-		_options = QueryExecutor.compileOptional(config.getOptions());
+		_options = InputScript.compile(config, Config.OPTIONS);
 		_inputRefs = config.getInputs();
 		_optionOrder = config.getOptionOrder();
 		_multiple = config.getMultiple();
@@ -510,11 +592,14 @@ public class ValueInputElement implements UIElement {
 		_clearable = config.getClearable();
 		_debounce = config.getDebounce();
 		_readonly = config.getReadonly();
+		_editModeRef = config.getEditMode();
 		_labelPosition = config.getLabelPosition();
 
 		PolymorphicConfiguration<? extends ViewCommand> submitConfig = config.getOnSubmit();
 		_submitCommandConfig = submitConfig instanceof ViewCommand.Config commandConfig ? commandConfig : null;
-		_submitCommand = _submitCommandConfig == null ? null : context.getInstance(submitConfig);
+		_submitCommand = _submitCommandConfig == null ? null
+			: ViewCommands.instantiate(context, submitConfig, config.getOnSubmitAs());
+		_submitAs = config.getOnSubmitAs();
 		_submitOn = config.getSubmitOn();
 		_inputControl = config.getInputControl();
 		_cssClass = config.getCssClass();
@@ -530,7 +615,9 @@ public class ValueInputElement implements UIElement {
 		AbstractFieldModel field = options == null
 			? new AbstractFieldModel(null)
 			: new SimpleSelectFieldModel(null, options, _multiple);
-		field.setEditable(!_readonly);
+		ViewChannel editModeChannel = _editModeRef == null ? null : context.resolveChannel(_editModeRef);
+		FormModel form = editModeChannel == null ? context.getFormModel() : null;
+		field.setEditable(!_readonly && editMode(editModeChannel, form));
 		field.setMandatory(_mandatory);
 
 		// Bound before the control is built, so that the control is built over the value the
@@ -572,13 +659,73 @@ public class ValueInputElement implements UIElement {
 
 		if (_label == null && _labelPosition == null) {
 			input.setCssClass(_cssClass);
+			followEditMode(editModeChannel, form, field, input, null);
 			return input;
 		}
+		boolean editable = field.isEditable();
 		ReactFormFieldChromeControl chrome =
-			new ReactFormFieldChromeControl(context, label, field.isMandatory(), false, null, null,
-				AttributeFieldControl.wirePosition(_labelPosition, !_readonly), false, true, input);
+			new ReactFormFieldChromeControl(context, label, _mandatory && editable, false, null, null,
+				AttributeFieldControl.wirePosition(_labelPosition, editable), false, true, input);
 		chrome.setCssClass(_cssClass);
+		followEditMode(editModeChannel, form, field, input, chrome);
 		return chrome;
+	}
+
+	/**
+	 * Whether the value can be changed, as far as the edit mode decides.
+	 *
+	 * @param editModeChannel
+	 *        The {@link Config#getEditMode() edit mode channel}, or {@code null} if none is
+	 *        configured.
+	 * @param form
+	 *        The enclosing form, or {@code null} if the input stands outside a form or the edit
+	 *        mode channel decides.
+	 */
+	private static boolean editMode(ViewChannel editModeChannel, FormModel form) {
+		if (editModeChannel != null) {
+			return Boolean.TRUE.equals(editModeChannel.get());
+		}
+		if (form != null) {
+			return form.isEditMode();
+		}
+		return true;
+	}
+
+	/**
+	 * Makes the input follow the edit mode of the {@link Config#getEditMode() edit mode channel}
+	 * respectively of the enclosing form.
+	 *
+	 * <p>
+	 * The mandatory mark and an edit-dependent label position follow the editability, as they do
+	 * for the field of an attribute. A {@link Config#getReadonly() read-only} input follows
+	 * nothing.
+	 * </p>
+	 *
+	 * @param chrome
+	 *        The chrome around the input, or {@code null} if the input stands alone.
+	 */
+	private void followEditMode(ViewChannel editModeChannel, FormModel form, AbstractFieldModel field,
+			ReactControl input, ReactFormFieldChromeControl chrome) {
+		if (_readonly) {
+			return;
+		}
+		Runnable update = () -> {
+			boolean editable = editMode(editModeChannel, form);
+			field.setEditable(editable);
+			if (chrome != null) {
+				chrome.setRequired(_mandatory && editable);
+				chrome.setLabelPosition(AttributeFieldControl.wirePosition(_labelPosition, editable));
+			}
+		};
+		if (editModeChannel != null) {
+			Registration registration =
+				editModeChannel.addListener((sender, oldValue, newValue) -> update.run());
+			input.addCleanupAction(registration::dispose);
+		} else if (form != null) {
+			FormModelListener listener = source -> update.run();
+			form.addFormModelListener(listener);
+			input.addCleanupAction(() -> form.removeFormModelListener(listener));
+		}
 	}
 
 	/**
@@ -610,7 +757,8 @@ public class ValueInputElement implements UIElement {
 	 */
 	private void followSubmit(ViewContext context, ReactControl input, AbstractFieldModel field,
 			ChannelFieldBinding binding) {
-		ViewCommandModel model = ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig);
+		ViewCommandModel model =
+			ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig, _submitAs);
 		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
 			Function<Object, HandlerResult> submit = value -> {
 				if (missingValue(value) != null) {

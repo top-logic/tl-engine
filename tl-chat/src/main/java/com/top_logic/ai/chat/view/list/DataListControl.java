@@ -39,8 +39,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.layout.view.command.ViewExecutabilityRules;
+import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
@@ -189,14 +188,9 @@ public class DataListControl extends ReactControl {
 			String rowChannelName = blankToDefault(config.getRowChannel(), "row");
 			_rowChannel = new DefaultViewChannel(rowChannelName);
 			context.registerChannel(rowChannelName, _rowChannel);
-			for (int i = 0; i < rowCommands.size() && i < rowCommandConfigs.size(); i++) {
-				ViewCommand.Config cmdConfig = rowCommandConfigs.get(i);
-				ViewChannel commandInput =
-					cmdConfig.getInput() == null ? _rowChannel : context.resolveChannel(cmdConfig.getInput());
-				ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig.getExecutability(), context);
-				_rowCommandModels.add(
-					ViewCommandModel.create(context, rowCommands.get(i), cmdConfig, commandInput, rule));
-			}
+			// A row command names the row channel in its inputs, like a command of a <context-menu>
+			// names its target channel.
+			_rowCommandModels.addAll(ViewCommands.buildCommandModels(context, rowCommands, rowCommandConfigs));
 			// Wrapped, so each command runs in *this* list's context. The opener dispatches with the
 			// frame's own ReactContext, which is not a ViewContext and does not hold this list's row
 			// channel - under it an <execute-script> with <inputs> throws, a <write-channel> silently

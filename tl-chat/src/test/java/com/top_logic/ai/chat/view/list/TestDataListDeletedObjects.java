@@ -53,8 +53,8 @@ import com.top_logic.util.model.ModelService;
 public class TestDataListDeletedObjects extends BasicTestCase {
 
 	/** Navigates from the row, as the chat list's own rule does. */
-	private static final String RULE = "s -> isEmpty($s)"
-		+ " || $s.referers(`tl.ai.execution:AgentExecution#session`).isEmpty()";
+	private static final String RULE = "isEmpty($session)"
+		+ " || $session.referers(`tl.ai.execution:AgentExecution#session`).isEmpty()";
 
 	private static Person owner;
 
@@ -113,7 +113,7 @@ public class TestDataListDeletedObjects extends BasicTestCase {
 				+ "<rows><![CDATA[o -> t -> all(`tl.ai.execution:AgentSession`)"
 				+ ".filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == $o)]]></rows>"
 				+ "<row-commands>"
-				+ "<generic-command input='session'>"
+				+ "<generic-command inputs='session'>"
 				+ "<label><en>Delete</en></label>"
 				+ "<executability><visible-if><expr><![CDATA[" + RULE + "]]></expr></visible-if></executability>"
 				+ "</generic-command>"

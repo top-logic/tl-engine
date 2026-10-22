@@ -292,8 +292,9 @@ public class DataListElement implements UIElement {
 		 * with the same label, image, clique, tooltip, executability and action chain - a rename
 		 * behind an {@code <open-dialog>}, a delete behind a {@code <confirm>}. The row it was
 		 * opened on reaches the command through the {@link #getRowChannel() row channel}, which is
-		 * what a command names in its {@code input}, so an {@code <executability>} rule sees the row
-		 * as well and re-evaluates before the menu opens.
+		 * what a command names in its {@code inputs}: the scripts of its chain and its
+		 * {@code <executability>} rules see the row as a variable named after the channel, and the
+		 * rules re-evaluate before the menu opens.
 		 * </p>
 		 *
 		 * <p>

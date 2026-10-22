@@ -123,7 +123,7 @@ public class TestDataListElementConfig extends TestCase {
 	}
 
 	/**
-	 * A {@code <row-commands>} entry parses as a standard view command, with its own input and
+	 * A {@code <row-commands>} entry parses as a standard view command, with its own inputs and
 	 * executability - which is what lets a row command decide on the row the menu was opened on.
 	 */
 	public void testRowCommandsParse() throws Exception {
@@ -132,12 +132,12 @@ public class TestDataListElementConfig extends TestCase {
 			+ " row-channel='session' row-actions='always'>"
 			+ "<rows>all(`tl.ai.execution:AgentSession`)</rows>"
 			+ "<row-commands>"
-			+ "<generic-command image='css:bi bi-pencil' input='session'>"
+			+ "<generic-command image='css:bi bi-pencil' inputs='session'>"
 			+ "<open-dialog dialog-view='demo/rename.view.xml'/>"
 			+ "</generic-command>"
-			+ "<generic-command image='css:bi bi-trash' input='session'>"
-			+ "<executability><visible-if expr='s -> true'/></executability>"
-			+ "<execute-script function='s -> aiSessionDelete($s)'/>"
+			+ "<generic-command image='css:bi bi-trash' inputs='session'>"
+			+ "<executability><visible-if expr='true'/></executability>"
+			+ "<execute-script function='aiSessionDelete($session)'/>"
 			+ "</generic-command>"
 			+ "</row-commands>"
 			+ "</data-list>";

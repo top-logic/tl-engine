@@ -2790,6 +2790,22 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Whether this database seeks an index for a condition with an <code>IN</code> list only, if
+	 * the list values are given for the first column of the index.
+	 * 
+	 * <p>
+	 * On such a database, a search for a list of identifiers scans the whole table, if the index
+	 * starts with a column that has the same value in all searched rows, such as the branch column
+	 * of a table with versioned objects. Therefore, the branch column of the indexes should follow
+	 * the identifying columns. The value is the default for the <code>branch-last</code> option of
+	 * the type system, if it is not configured explicitly.
+	 * </p>
+	 */
+	public boolean seeksInListOnFirstIndexColumnOnly() {
+		return false;
+	}
+
+	/**
 	 * Whether executing a batch update provided detailed information about the updated rows.
 	 * 
 	 * <p>

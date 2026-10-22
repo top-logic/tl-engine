@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.schema.config.MetaObjectsConfig;
@@ -40,7 +41,13 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	boolean DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE = true;
 
 	/**
-	 * Default of {@link #isBranchLast()}
+	 * Value of {@link #getBranchLast()} for a schema stored in a database without an explicit
+	 * value.
+	 * 
+	 * <p>
+	 * A database whose stored schema has no explicit value was created with the branch column in
+	 * front of the indexes.
+	 * </p>
 	 */
 	boolean DEFAULT_BRANCH_LAST_ATTRIBUTE = false;
 
@@ -58,7 +65,7 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	/** @see #hasMultipleBranches() */
 	String MULTIPLE_BRANCHES_ATTRIBUTE = "multiple-branches";
 
-	/** @see #isBranchLast() */
+	/** @see #getBranchLast() */
 	String BRANCH_LAST_ATTRIBUTE = "branch-last";
 
 	/** @see #getMetaObjects() */
@@ -122,8 +129,8 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	 * reference indexes of the tables.
 	 * 
 	 * <p>
-	 * By default, the branch column leads each index. This allows databases with index prefix
-	 * compression (Oracle) to store the branch only once per index block. With this option, the
+	 * Without this option, the branch column leads each index. This allows databases with index
+	 * prefix compression (Oracle) to store the branch only once per index block. With this option, the
 	 * branch column is placed directly before the trailing revision column instead (or at the end
 	 * of an index without revision column), e.g. the primary key of an object table becomes
 	 * <code>(IDENTIFIER, BRANCH, REV_MAX)</code> and the index of a reference
@@ -138,6 +145,11 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	 * </p>
 	 * 
 	 * <p>
+	 * If no value is set, the database decides: the branch column is placed last on H2 and leads
+	 * the indexes on all other databases. A set value overrides this default.
+	 * </p>
+	 * 
+	 * <p>
 	 * Indexes declared with an explicit column list (custom indexes) keep their declared column
 	 * order. In the other declared indexes, the branch column follows the declared columns.
 	 * </p>
@@ -146,10 +158,16 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	 * Changing the value for an existing database converts the primary keys and indexes of its
 	 * tables to the configured layout when the application starts.
 	 * </p>
+	 * 
+	 * @see SchemaSetup#isBranchLast(SchemaConfiguration, DBHelper)
 	 */
-	@BooleanDefault(DEFAULT_BRANCH_LAST_ATTRIBUTE)
 	@Name(BRANCH_LAST_ATTRIBUTE)
-	boolean isBranchLast();
+	Boolean getBranchLast();
+
+	/**
+	 * @see #getBranchLast()
+	 */
+	void setBranchLast(Boolean value);
 
 	/**
 	 * No longer used: All {@link KeyAttributes} indexed by type for this

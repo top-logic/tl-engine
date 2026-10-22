@@ -141,14 +141,15 @@ public class SchemaTestSetup extends RearrangableTestSetup {
 
 	/**
 	 * Returns a {@link SchemaConfiguration} where the value of
-	 * {@link SchemaConfiguration#isBranchLast()} is updated with the value of the given
+	 * {@link SchemaConfiguration#getBranchLast()} is pinned to the value of the given
 	 * {@link Decision}.
 	 * 
 	 * @param schemaConfig
 	 *        The {@link SchemaConfiguration} to update.
 	 * @param branchLast
-	 *        New value of {@link SchemaConfiguration#isBranchLast()}. If {@link Decision#DEFAULT}
-	 *        the call is a no-op.
+	 *        New value of {@link SchemaConfiguration#getBranchLast()}. If {@link Decision#DEFAULT}
+	 *        the call is a no-op, i.e. the configured value or the default of the SQL dialect
+	 *        applies.
 	 * @return The given {@link SchemaConfiguration}, or a copy of it with the desired value.
 	 */
 	public static SchemaConfiguration updateBranchLast(SchemaConfiguration schemaConfig, Decision branchLast) {
@@ -158,8 +159,7 @@ public class SchemaTestSetup extends RearrangableTestSetup {
 		/* Copy the configuration because this is the "static" one from the application
 		 * configuration, which should not be modified. */
 		SchemaConfiguration result = TypedConfiguration.copy(schemaConfig);
-		result.update(result.descriptor().getProperty(SchemaConfiguration.BRANCH_LAST_ATTRIBUTE),
-			branchLast.toBoolean(SchemaConfiguration.DEFAULT_BRANCH_LAST_ATTRIBUTE));
+		result.setBranchLast(Boolean.valueOf(branchLast == Decision.TRUE));
 		return result;
 	}
 

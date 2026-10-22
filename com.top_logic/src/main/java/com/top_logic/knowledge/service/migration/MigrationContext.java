@@ -23,6 +23,7 @@ import com.top_logic.basic.config.format.PrimitiveBooleanFormat;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
@@ -37,6 +38,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
+import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.DBKnowledgeTypeFactory;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
@@ -58,6 +60,8 @@ public class MigrationContext extends TypedAnnotationContainer {
 
 	private PooledConnection _connection;
 
+	private final DBHelper _sqlDialect;
+
 	private boolean _branchSupport;
 
 	private final Log _log;
@@ -74,6 +78,11 @@ public class MigrationContext extends TypedAnnotationContainer {
 	public MigrationContext(Log log, PooledConnection connection) {
 		_connection = connection;
 		try {
+			_sqlDialect = connection.getSQLDialect();
+		} catch (SQLException ex) {
+			throw new KnowledgeBaseRuntimeException("Unable to access the SQL dialect of the database.", ex);
+		}
+		try {
 			_factoryConfig = (KnowledgeBaseFactoryConfig) ApplicationConfig.getInstance()
 				.getServiceConfiguration(KnowledgeBaseFactory.class);
 		} catch (ConfigurationException ex) {
@@ -81,9 +90,9 @@ public class MigrationContext extends TypedAnnotationContainer {
 		}
 		_kbConfig = _factoryConfig.getKnowledgeBases().get(PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
 		_applicationSetup = KBUtils.getSchemaConfigResolved(_kbConfig);
-		_applicationSchema = _applicationSetup.getConfig();
+		_applicationSchema = SchemaSetup.withExplicitLayout(_applicationSetup.getConfig(), _sqlDialect);
 		MOFactory factory = new DBKnowledgeTypeFactory();
-		_schemaRepository = _applicationSetup.createMORepository(factory);
+		_schemaRepository = _applicationSetup.createMORepository(_sqlDialect, factory);
 
 		_log = log;
 		reloadPersistentSchemaState();
@@ -135,7 +144,7 @@ public class MigrationContext extends TypedAnnotationContainer {
 		SchemaConfiguration persistentSchema = getPersistentSchema();
 		SchemaSetup setup =
 			new SchemaSetup(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, persistentSchema);
-		return setup.createMORepository(DefaultMOFactory.INSTANCE);
+		return setup.createMORepository(_sqlDialect, DefaultMOFactory.INSTANCE);
 	}
 
 	/**
@@ -146,7 +155,19 @@ public class MigrationContext extends TypedAnnotationContainer {
 	}
 
 	/**
+	 * The SQL dialect of the database to migrate.
+	 */
+	public DBHelper getSQLDialect() {
+		return _sqlDialect;
+	}
+
+	/**
 	 * The schema read from the application configuration.
+	 * 
+	 * <p>
+	 * The layout options are set to their effective values for the database to migrate, see
+	 * {@link SchemaSetup#withExplicitLayout(SchemaConfiguration, DBHelper)}.
+	 * </p>
 	 */
 	public SchemaConfiguration getApplicationSchema() {
 		return _applicationSchema;

@@ -117,7 +117,7 @@ so a query such as the search for objects referring to deleted objects (`Referen
 `DBKnowledgeBase.anyRefereesQuery`) scans the whole association table instead of using the index
 on `SOURCE_ID`. In an application on H2, the same deletion took 21 s with and 2.3 s without the
 branch column (Trac #29876). An application that keeps its branches avoids the scan with
-`branch-last`, which moves `BRANCH` behind the identifying columns, see
+`branch-last`, which moves `BRANCH` behind the identifying columns and is on by default on H2, see
 [table layout](doc:persistency/table-layout). The
 [database notes](doc:persistency/database-notes) list this and further DBMS-specific effects of the
 generated SQL.

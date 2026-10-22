@@ -29,6 +29,8 @@ import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.ApplicationTypes;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.sql.DBHelper;
+import com.top_logic.basic.sql.H2Helper;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MORepository;
@@ -38,7 +40,7 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeTypeFactory;
 
 /**
  * Test of the column order of the primary keys and indexes created for the tables of a type
- * system, depending on {@link SchemaConfiguration#isBranchLast()}.
+ * system, depending on {@link SchemaConfiguration#getBranchLast()}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -161,11 +163,13 @@ public class TestBranchLastIndexes extends TestCase {
 		SchemaConfiguration schemaConfig = types.getTypeSystem(SchemaConfiguration.DEFAULT_NAME).getConfig();
 		schemaConfig = SchemaTestSetup.updateMultipleBranches(schemaConfig, Decision.TRUE);
 		schemaConfig = SchemaTestSetup.updateBranchLast(schemaConfig, branchLast);
-		assertEquals(branchLast == Decision.TRUE, schemaConfig.isBranchLast());
+		assertEquals(Boolean.valueOf(branchLast == Decision.TRUE), schemaConfig.getBranchLast());
 
 		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
 		SchemaSetup setup = context.getInstance(schemaConfig).resolve(context);
-		return setup.createMORepository(new DBKnowledgeTypeFactory(true));
+		// The explicit value overrides the default of the dialect.
+		return setup.createMORepository(DBHelper.createDefaultInstance(H2Helper.class),
+			new DBKnowledgeTypeFactory(true));
 	}
 
 	private static List<String> primaryKey(DBTable table) {

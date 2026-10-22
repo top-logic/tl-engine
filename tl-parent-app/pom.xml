@@ -107,7 +107,7 @@
 			<id>with-h2</id>
 			
 			<properties>
-				<tl.app.metaConfAddons>db-h2.xml,top-logic.branchLast.config.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons>db-h2.xml</tl.app.metaConfAddons>
 			</properties>
 
 			<dependencies>

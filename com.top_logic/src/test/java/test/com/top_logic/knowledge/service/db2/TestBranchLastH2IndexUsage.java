@@ -34,7 +34,7 @@ import com.top_logic.knowledge.service.Transaction;
 
 /**
  * Test that H2 uses an index for the queries of the knowledge base that search with a list of
- * identifiers, if {@link SchemaConfiguration#isBranchLast()} is set.
+ * identifiers, if {@link SchemaConfiguration#getBranchLast()} is set.
  *
  * <p>
  * H2 uses an <code>IN</code> list for an index lookup only if the list values are given for the

@@ -17,7 +17,11 @@ import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 
 /**
  * {@link RearrangableTestSetup} that decides about the value of
- * {@link SchemaConfiguration#isBranchLast()} in tests.
+ * {@link SchemaConfiguration#getBranchLast()} in tests.
+ * 
+ * <p>
+ * Without a decision, the default of the SQL dialect of the test database applies.
+ * </p>
  * 
  * @see SchemaTestSetup#updateBranchLast(SchemaConfiguration, Decision)
  * @see MultipleBranchSetup
@@ -65,10 +69,11 @@ public class BranchLastSetup extends RearrangableTestSetup {
 	}
 
 	/**
-	 * Decision for {@link SchemaConfiguration#isBranchLast()}.
+	 * Decision for {@link SchemaConfiguration#getBranchLast()}.
 	 * 
 	 * <ul>
-	 * <li>If {@link Decision#DEFAULT}: Use the configured value.</li>
+	 * <li>If {@link Decision#DEFAULT}: Use the configured value, or the default of the SQL dialect,
+	 * if no value is configured.</li>
 	 * <li>If {@link Decision#TRUE}: Set value to <code>true</code>.</li>
 	 * <li>If {@link Decision#FALSE}: Set value to <code>false</code>.</li>
 	 * </ul>

@@ -58,7 +58,8 @@ import com.top_logic.util.TLContext;
  * The layout options of the type system (whether multiple branches are supported and whether the
  * branch column follows the identifying columns of primary keys and indexes) determine how the
  * tables are built from the type definitions. The processor compares the layout options of the
- * schema stored in the database with the ones of the application configuration. If they differ,
+ * schema stored in the database with the ones of the application configuration, both with their
+ * effective values for the database. If they differ,
  * the table definitions of all types of the stored schema are computed once with the stored and
  * once with the configured layout options, and the existing tables are adapted: Branch columns
  * missing in a table are added and filled with the trunk, branch columns not part of the target
@@ -80,6 +81,7 @@ import com.top_logic.util.TLContext;
  * @see #LAYOUT_OPTIONS
  * @see MigrationContext#getPersistentSchema()
  * @see MigrationContext#getApplicationSchema()
+ * @see KBSchemaUtil#parseSchema(String)
  * @see #withConfiguredLayout(SchemaConfiguration, SchemaConfiguration)
  * @see DBSchemaUtils#alignTable(Log, PooledConnection, DBTable, DBTable, java.util.Collection, Map)
  *

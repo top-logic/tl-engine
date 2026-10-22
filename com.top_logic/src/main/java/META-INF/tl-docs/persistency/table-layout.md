@@ -1,5 +1,5 @@
 ---
-description: Read before choosing the column order of primary keys and indexes, or before changing branch-last or multiple-branches for an application whose database already exists - the type system option branch-last (IDENTIFIER, BRANCH, REV_MAX) and why H2 needs it, its relation to the DefaultIndexColumnsStrategy options, the FLEX_DATA primary key, and the automatic conversion of existing tables at startup (AlignTableLayoutProcessor, align-table-layout) with its preconditions.
+description: Read before choosing the column order of primary keys and indexes, or before changing branch-last or multiple-branches for an application whose database already exists - the type system option branch-last (IDENTIFIER, BRANCH, REV_MAX), its default from the SQL dialect (on for H2, DBHelper.seeksInListOnFirstIndexColumnOnly) and why H2 needs it, the explicit value in the stored schema, its relation to the DefaultIndexColumnsStrategy options, the FLEX_DATA primary key, and the automatic conversion of existing tables at startup (AlignTableLayoutProcessor, align-table-layout) with its preconditions.
 order: 25
 ---
 
@@ -13,14 +13,16 @@ tables when the application starts.
 
 ## The option `branch-last`
 
-`branch-last` is an attribute of the type system (`SchemaConfiguration.isBranchLast()`, default
-`false`). tl-core ships the file `WEB-INF/conf/top-logic.branchLast.config.xml` that switches it on:
+`branch-last` is an attribute of the type system (`SchemaConfiguration.getBranchLast()`). Without
+a value, the SQL dialect of the database decides (`DBHelper.seeksInListOnFirstIndexColumnOnly()`):
+on H2 the branch column is placed last, on all other databases it leads the keys. An application
+overrides the dialect by setting the attribute on its type system:
 
 ```xml
 <config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
 	<type-systems>
 		<type-system name="Default"
-			branch-last="true"
+			branch-last="false"
 		/>
 	</type-systems>
 </config>
@@ -28,15 +30,19 @@ tables when the application starts.
 
 The type system list is keyed by `name`, so this partial entry only sets the flag of the `Default`
 type system that the modules declare elsewhere, the same way `top-logic.singleBranch.config.xml`
-sets `multiple-branches`. An application enables it with a line in its `WEB-INF/conf/metaConf.txt`:
+sets `multiple-branches`.
 
-```
-top-logic.branchLast.config.xml
-```
+The schema stored in the database (see [the stored schema](doc:persistency/type-systems#the-stored-schema))
+always contains the effective value: the engine resolves it against the database before storing
+the schema (`SchemaSetup.withExplicitLayout()`, called by `KBSchemaUtil.storeSchema()`). A stored
+schema without the attribute - written before the option existed - describes tables with the branch
+in front (`DEFAULT_BRANCH_LAST_ATTRIBUTE`), on every database. An existing H2 database therefore
+differs from the configuration at its next start and is converted to the branch-last layout, see
+[conversion](#conversion-of-an-existing-database); databases of all other DBMS stay unchanged.
 
-By default the branch leads every key. With `branch-last="true"`, the branch column moves directly
-before the revision column `REV_MAX` (or to the end of a key without one); all other columns keep
-their order:
+Without the option, the branch leads every key. With `branch-last="true"`, the branch column moves
+directly before the revision column `REV_MAX` (or to the end of a key without one); all other
+columns keep their order:
 
 | Key | Default | `branch-last="true"` |
 |---|---|---|
@@ -69,14 +75,12 @@ With `branch-last="true"`, the identifier is the first index column and H2 seeks
 301 rows of the association table with the branch in front and 21 rows with the branch last.
 The mechanism and the measured deletion times are described in the
 [database notes](doc:persistency/database-notes#h2-an-in-list-seeks-an-index-only-on-its-first-column).
-Applications on H2 get the option together with the H2 configuration: the `with-h2` profile of
-the application parent POM (`tl-parent-app`) adds `db-h2.xml` and `top-logic.branchLast.config.xml`
-to the generated `metaConf.txt` (`tl.app.metaConfAddons`). A start configuration that lists
-`db-h2.xml` in its own `metaConf.txt`, such as `deploy/local/webapp/WEB-INF/conf/metaConf.txt`,
-adds `top-logic.branchLast.config.xml` there as well. The development start configurations of the
-engine modules do not list it, since a module's tests read its `deploy/local` configuration and run
-on every supported database. An existing H2 database is converted at the next
-start, see [conversion](#conversion-of-an-existing-database).
+Since H2 is unusable for larger data without the option, `H2Helper` switches it on by default; no
+configuration is needed. Because the default follows the database and not a configuration file,
+the knowledge base tests of the engine, which run on H2 by default, use the branch-last layout,
+while the same tests on the other databases use the branch-first layout.
+`TestBranchFirstKnowledgeBase` runs a selection of them with the branch-first layout on the
+default database.
 
 ### Relation to the options of `DefaultIndexColumnsStrategy`
 
@@ -117,7 +121,8 @@ The knowledge base boots on the schema stored in the database (`TL_PROPERTIES`, 
 [the stored schema](doc:persistency/type-systems#the-stored-schema)). At startup,
 `MigrationService.executeAutomaticSchemaMigrations` (the automatic schema update, which is skipped
 in dry-run mode and with `tl_noAutomaticalDatabaseSetup`) compares `branch-last` and
-`multiple-branches` of the stored schema with the configured ones. If one of them differs, it runs
+`multiple-branches` of the stored schema with the configured ones (for `branch-last` the
+configured value, or the default of the SQL dialect without one). If one of them differs, it runs
 the `AlignTableLayoutProcessor` (tag `align-table-layout`) before it creates the tables of new
 types:
 

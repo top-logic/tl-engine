@@ -35,6 +35,7 @@ import com.top_logic.basic.db.model.DBIndex;
 import com.top_logic.basic.db.model.DBSchemaFactory;
 import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
+import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
@@ -65,13 +66,13 @@ import com.top_logic.util.TLContext;
 
 /**
  * Test of {@link AlignTableLayoutProcessor} converting the tables of an existing database between
- * the layouts of {@link SchemaConfiguration#isBranchLast()} and
+ * the layouts of {@link SchemaConfiguration#getBranchLast()} and
  * {@link SchemaConfiguration#hasMultipleBranches()}.
  *
  * <p>
  * The test works on a separate knowledge base in the database
- * {@link DatabaseTestSetup#MIGRATION_POOL_NAME}, created with the configured layout (multiple
- * branches, branch column first).
+ * {@link DatabaseTestSetup#MIGRATION_POOL_NAME}, created with the configured layout: multiple
+ * branches, and the branch position of the SQL dialect of the database.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -148,12 +149,19 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 
 	private ObjectKey _versionKey;
 
+	/**
+	 * The branch position of the configured schema on the test database.
+	 */
+	private boolean _defaultBranchLast;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
 		_kbConfig = migrationKBConfig();
 		_pool = ConnectionPoolRegistry.getConnectionPool(_kbConfig.getConnectionPool());
+		_defaultBranchLast =
+			SchemaSetup.isBranchLast(KBUtils.getSchemaConfig(_kbConfig).getConfig(), _pool.getSQLDialect());
 		_setup = new SetupKBHelper(_kbConfig);
 		_kb = _setup.setup();
 
@@ -202,7 +210,7 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 			_pool.releaseWriteConnection(connection);
 		}
 		assertTrue(storedSchema().hasMultipleBranches());
-		assertFalse(storedSchema().isBranchLast());
+		assertEquals(Boolean.valueOf(_defaultBranchLast), storedSchema().getBranchLast());
 	}
 
 	@Override
@@ -216,23 +224,24 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
-	 * Converts the tables to the branch-last layout and back.
+	 * Converts the tables to the other branch position and back.
 	 */
 	public void testConvertBranchLast() throws Exception {
+		boolean other = !_defaultBranchLast;
 		try {
-			assertLayout(true, false);
+			assertLayout(true, _defaultBranchLast);
 
-			BufferingProtocol log = align(true, true);
+			BufferingProtocol log = align(true, other);
 			assertTrue("No tables changed: " + log.getInfos(),
 				log.getInfos().stream().anyMatch(info -> info.contains("Changed primary key")));
-			assertLayout(true, true);
-			assertStored(true, true);
-			assertData(true, true);
+			assertLayout(true, other);
+			assertStored(true, other);
+			assertData(true, other);
 
-			align(true, false);
-			assertLayout(true, false);
-			assertStored(true, false);
-			assertData(true, false);
+			align(true, _defaultBranchLast);
+			assertLayout(true, _defaultBranchLast);
+			assertStored(true, _defaultBranchLast);
+			assertData(true, _defaultBranchLast);
 		} finally {
 			restoreDefaultLayout();
 		}
@@ -243,18 +252,18 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 	 */
 	public void testConvertSingleBranch() throws Exception {
 		try {
-			align(false, false);
-			assertLayout(false, false);
-			assertStored(false, false);
-			assertData(false, false);
+			align(false, _defaultBranchLast);
+			assertLayout(false, _defaultBranchLast);
+			assertStored(false, _defaultBranchLast);
+			assertData(false, _defaultBranchLast);
 
-			align(true, false);
-			assertLayout(true, false);
+			align(true, _defaultBranchLast);
+			assertLayout(true, _defaultBranchLast);
 			assertTrunk(tableName(LABEL_TYPE), BRANCH, 1);
 			assertTrunk(AbstractFlexDataManager.FLEX_DATA_DB_NAME, BRANCH, 1);
 			assertTrunk(tableName(VERSION_TYPE), DOC_BRANCH_COLUMN, 1);
-			assertStored(true, false);
-			assertData(true, false);
+			assertStored(true, _defaultBranchLast);
+			assertData(true, _defaultBranchLast);
 			assertCreateBranch();
 		} finally {
 			restoreDefaultLayout();
@@ -265,16 +274,17 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 	 * Converts both layout options at once.
 	 */
 	public void testCombinedConversion() throws Exception {
+		boolean other = !_defaultBranchLast;
 		try {
-			align(false, true);
-			assertLayout(false, true);
-			assertStored(false, true);
-			assertData(false, true);
+			align(false, other);
+			assertLayout(false, other);
+			assertStored(false, other);
+			assertData(false, other);
 
-			align(true, true);
-			assertLayout(true, true);
-			assertStored(true, true);
-			assertData(true, true);
+			align(true, other);
+			assertLayout(true, other);
+			assertStored(true, other);
+			assertData(true, other);
 		} finally {
 			restoreDefaultLayout();
 		}
@@ -289,11 +299,11 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 		assertTrue(branch.getBranchId() != TLContext.TRUNK_ID);
 		String storedBefore = storedSchemaRaw();
 
-		BufferingProtocol log = align(false, false, true);
+		BufferingProtocol log = align(false, _defaultBranchLast, true);
 		assertTrue("Missing error: " + log.getErrors(), log.getErrors().stream()
 			.anyMatch(error -> error.contains(Long.toString(branch.getBranchId()))));
 		assertEquals("Stored schema changed.", storedBefore, storedSchemaRaw());
-		assertLayout(true, false);
+		assertLayout(true, _defaultBranchLast);
 	}
 
 	/**
@@ -311,11 +321,11 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 			_pool.releaseWriteConnection(connection);
 		}
 
-		BufferingProtocol log = align(true, false);
+		BufferingProtocol log = align(true, _defaultBranchLast);
 		assertFalse("No changes expected: " + log.getInfos(),
 			log.getInfos().stream().anyMatch(info -> info.contains("layout") || info.contains("Changed")));
 		assertEquals(storedBefore, storedSchemaRaw());
-		assertLayout(true, false);
+		assertLayout(true, _defaultBranchLast);
 	}
 
 	/**
@@ -332,9 +342,9 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 		assertTrue(AlignTableLayoutProcessor.hasLayoutChange(configured, singleBranch));
 
 		SchemaConfiguration target = AlignTableLayoutProcessor.withConfiguredLayout(configured, branchLast);
-		assertTrue(target.isBranchLast());
+		assertEquals(Boolean.TRUE, target.getBranchLast());
 		assertNotSame(configured, target);
-		assertFalse("Stored schema not modified.", configured.isBranchLast());
+		assertEquals("Stored schema not modified.", Boolean.FALSE, configured.getBranchLast());
 		assertEquals("Types only change with multiple-branches.", item(configured), item(target));
 
 		SchemaConfiguration single = AlignTableLayoutProcessor.withConfiguredLayout(configured, singleBranch);
@@ -353,8 +363,8 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 
 	private void restoreDefaultLayout() throws Exception {
 		SchemaConfiguration stored = storedSchema();
-		if (!stored.hasMultipleBranches() || stored.isBranchLast()) {
-			align(true, false);
+		if (!stored.hasMultipleBranches() || stored.getBranchLast().booleanValue() != _defaultBranchLast) {
+			align(true, _defaultBranchLast);
 		}
 	}
 
@@ -411,7 +421,7 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 	private void assertStored(boolean multipleBranches, boolean branchLast) {
 		SchemaConfiguration stored = storedSchema();
 		assertEquals(multipleBranches, stored.hasMultipleBranches());
-		assertEquals(branchLast, stored.isBranchLast());
+		assertEquals(Boolean.valueOf(branchLast), stored.getBranchLast());
 	}
 
 	private void assertLayout(boolean multipleBranches, boolean branchLast) throws SQLException {

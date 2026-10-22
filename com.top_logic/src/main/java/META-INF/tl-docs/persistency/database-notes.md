@@ -14,7 +14,7 @@ slow query can be recognized as a property of the generated SQL on that DBMS.
 
 | DBMS | Dialect | Configuration file |
 |---|---|---|
-| H2 | `H2Helper` | `db-h2.config.xml`, with `top-logic.branchLast.config.xml` (see below) |
+| H2 | `H2Helper` | `db-h2.config.xml`; places the branch column last by default (see below) |
 | MySQL / MariaDB | `MySQLHelper`, `MySQL55Helper` | `db-mysql.config.xml`, `db-mysql55.config.xml` |
 | PostgreSQL | `PostgreSQLHelper` | `db-postgresql.config.xml` |
 | Oracle | `Oracle10Helper`, `Oracle12Helper`, `Oracle12toLowerHelper` | `db-oracle.config.xml`, `db-oracle-10.config.xml` |
@@ -82,8 +82,9 @@ the same limit on the primary key `(BRANCH, IDENTIFIER, REV_MAX)` and the refere
   (SOURCE_ID, META_ATTRIBUTE_ID, BRANCH, REV_MAX)`, see [table layout](doc:persistency/table-layout).
   H2 then seeks on the IN list: in `TestBranchLastH2IndexUsage`, the referrer search for 20 of 300
   objects reads 21 instead of 301 rows of the association table, and the bulk loads by identifier
-  read only the requested rows. An application built with the `with-h2` profile gets the option
-  through `top-logic.branchLast.config.xml`, which the profile adds next to `db-h2.xml`.
+  read only the requested rows. On H2 the option is on by default: without a configured value,
+  `H2Helper.seeksInListOnFirstIndexColumnOnly()` decides, and an existing H2 database is converted
+  at its next start.
 - An application that does not use branches runs single-branch
   (`top-logic.singleBranch.config.xml`); its tables have no `BRANCH` column at all. With the
   single-branch configuration, the deletions measured above took 2.3 s / 0.9 s / 0.8 s instead of

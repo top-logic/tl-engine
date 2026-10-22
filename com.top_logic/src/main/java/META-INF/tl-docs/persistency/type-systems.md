@@ -47,7 +47,7 @@ The tables of the knowledge base form a *type system*: a named set of table decl
 | `schemas` | `SchemaConfiguration` | `<schema name="…" resource="schema://…"/>` entries: low-level tables that are not object types (locks, cluster state, journal, `TL_PROPERTIES`). |
 | `providers` | `SchemaConfiguration` | `TypeProvider`s that create types programmatically. |
 | `multiple-branches` | `SchemaConfiguration` | Whether the tables support branches other than trunk; default `true`. See the article on branches of this chapter. |
-| `branch-last` | `SchemaConfiguration` | Whether the branch column follows the identifying columns in primary keys and indexes instead of leading them; default `false`, switched on by `top-logic.branchLast.config.xml`, which H2 applications load. See [table layout](doc:persistency/table-layout). |
+| `branch-last` | `SchemaConfiguration` | Whether the branch column follows the identifying columns in primary keys and indexes instead of leading them; without a value, the SQL dialect decides (`true` on H2, `false` on all other databases); a set value overrides the dialect. See [table layout](doc:persistency/table-layout). |
 | `data` | `TypeSystemConfiguration` | `<definition resource="…"/>` entries: initial objects imported once, when the database is created. |
 
 The configuration is a typed-configuration list keyed by `name`, so every module adds to the same type system from its own configuration file instead of redefining it. `com.top_logic.element` adds its declarations in `ElementConf.config.xml`, `com.top_logic.basic.db.schema` adds the `TL_PROPERTIES` table in `basicDbSchemaConf.config.xml`:
@@ -204,14 +204,14 @@ The consequence: a change in `*.model.xml` alone - a new class, a new attribute,
 
 At the first start, when the sequence table does not exist yet, `InitialTableSetup` runs the configured setup actions: it creates all tables of the type system, imports the initial `data`, stores the resolved schema in the database and records the current migration versions. The automatic setup can be suppressed with the system property or environment variable `tl_noAutomaticalDatabaseSetup`.
 
-The resolved schema is stored as XML in the table `TL_PROPERTIES` (`DBProperties`) under the key `KnowledgeBase.Default.schemaSetup` (`KBSchemaUtil`). On every later start `DBKnowledgeBase` reads its tables from this stored schema, not from the `*Meta.xml` files. The `KnowledgeBaseConfiguration` property `override-persistent-type-definitions` makes it use the configuration files instead; it changes no table.
+The resolved schema is stored as XML in the table `TL_PROPERTIES` (`DBProperties`) under the key `KnowledgeBase.Default.schemaSetup` (`KBSchemaUtil`). The stored schema states the layout option `branch-last` explicitly, resolved against the database when it is stored; a stored schema without it describes the branch-first layout. On every later start `DBKnowledgeBase` reads its tables from this stored schema, not from the `*Meta.xml` files. The `KnowledgeBaseConfiguration` property `override-persistent-type-definitions` makes it use the configuration files instead; it changes no table.
 
 Before the knowledge base starts, `MigrationService` compares the configured schema with the stored one, type by type:
 
 - A table that is configured but not stored is created automatically (`AddApplicationTypesProcessor`).
 - A table that is stored but no longer configured is kept. Its declaration is written to `WEB-INF/autoconf/inapp-schema-<n>.meta.xml` together with an `inapp-schema-<n>.config.xml` that adds it to the type system `Default` again, so the declaration is not lost.
 - A table that exists in both is not compared. A new or changed column, index, primary key or flag in its declaration is not applied to the database.
-- If the type system options `multiple-branches` or `branch-last` differ, the existing tables are converted to the configured layout before new tables are created (`AlignTableLayoutProcessor`, see [table layout](doc:persistency/table-layout#conversion-of-an-existing-database)).
+- If the type system options `multiple-branches` or `branch-last` (configured value, or the default of the database's SQL dialect) differ, the existing tables are converted to the configured layout before new tables are created (`AlignTableLayoutProcessor`, see [table layout](doc:persistency/table-layout#conversion-of-an-existing-database)).
 
 After an explicit migration has run, the configured schema replaces the stored one (`StoreTypeConfiguration`). An edited declaration without the matching migration processor therefore leaves the knowledge base believing in a column that the table does not have. Until then, a column added only to the declaration is unknown to the knowledge base, and the attribute's values go to `FLEX_DATA`.
 

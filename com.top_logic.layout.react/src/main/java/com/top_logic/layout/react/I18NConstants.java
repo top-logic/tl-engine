@@ -77,6 +77,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FILE_UPLOAD_FAILED;
 
 	/**
+	 * @en No file data received.
+	 */
+	public static ResKey ERROR_NO_FILE_DATA_RECEIVED;
+
+	/**
 	 * @en Download data cleared.
 	 */
 	public static ResKey REACT_DOWNLOAD_CLEAR;
@@ -496,6 +501,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.valueList.add")
 	public static ResKey JS_VALUE_LIST_ADD;
+
+	/**
+	 * @en Add files
+	 */
+	@CustomKey("js.valueList.addFiles")
+	public static ResKey JS_VALUE_LIST_ADD_FILES;
 
 	/**
 	 * @en Remove this value

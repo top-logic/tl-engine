@@ -317,6 +317,8 @@
 							<column attribute="ratios"/>
 							<column attribute="deadlines"/>
 							<column attribute="flags"/>
+							<column attribute="attachments"/>
+							<column attribute="documents"/>
 							<column attribute="owner"/>
 							<column attribute="url"/>
 							<!-- Contact data is displayed, but does not leave the application in an export. -->
@@ -495,6 +497,8 @@
 									<field attribute="phone"/>
 									<field attribute="json"/>
 									<field attribute="image"/>
+									<field attribute="attachments"/>
+									<field attribute="documents"/>
 									<field attribute="priority"/>
 									<field attribute="tags"/>
 									<field attribute="owner"/>
@@ -555,6 +559,8 @@
 								<column attribute="active"/>
 								<column attribute="amount"/>
 								<column attribute="date"/>
+								<column attribute="attachments"/>
+								<column attribute="documents"/>
 								<column
 									attribute="owner"
 									readonly="true"

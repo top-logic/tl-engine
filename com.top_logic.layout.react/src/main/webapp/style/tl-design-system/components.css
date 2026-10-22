@@ -3015,9 +3015,11 @@ a.tl-field-value:hover {
 }
 .tl-file-upload[hidden] { display: none; }
 
-/* Eine Regel für beide Drop-Zonen (Welle 5b §6): das Datei-Feld und die Chip-Gruppe von TLFileChips. */
+/* Eine Regel für alle Drop-Zonen (Welle 5b §6): das Datei-Feld, die Chip-Gruppe von TLFileChips und die
+   Werteliste, die ihre Werte durch Hochladen anfügt (#29852). */
 .tl-file-upload[data-tl-state~="dragover"],
-.tl-chip-group[data-tl-state~="dragover"] {
+.tl-chip-group[data-tl-state~="dragover"],
+.tl-value-list[data-tl-state~="dragover"] {
   outline: var(--tl-border-width-md) dashed var(--tl-border-interactive);
   outline-offset: var(--tl-focus-offset);
 }
@@ -3033,6 +3035,55 @@ a.tl-field-value:hover {
 /* In der umbrechenden Chip-Gruppe von TLFileChips bricht die Fehlerzeile unter die Chips (Spec 5b §6.5). */
 .tl-chip-group > .tl-file-upload__status {
   flex-basis: 100%;
+}
+
+/* Die Chips stehen in der Zeile der Gruppe; die Hülle gibt es nur, damit sie im kompakten Feld rollen. */
+.tl-chip-group__chips {
+  display: contents;
+}
+
+/* Kompakt, etwa in der Tabellenzelle (#29852): eine Zeile, nicht höher als ein Chip. Die Chips rollen seitwärts —
+   mit Rad und Trackpad, ohne eigenen Balken wie der Kopf der Tabelle —, der Knopf bleibt am Ende der Zeile außerhalb
+   der rollenden Reihe. */
+.tl-chip-group[data-tl-state~="compact"] {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tl-chip-group[data-tl-state~="compact"] > .tl-chip-group__chips {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+/* Ein Chip (tl-chip, ohne Daten tl-pill) behält seine Breite, während die Reihe rollt; ein langer Name endet mit
+   Ellipse in der sichtbaren Breite (max-width beider: 100 %). */
+.tl-chip-group[data-tl-state~="compact"] > .tl-chip-group__chips > *,
+.tl-chip-group[data-tl-state~="compact"] > .tl-button {
+  flex-shrink: 0;
+}
+
+/* Die Reihe schneidet, was über sie hinausragt, die Tabellenzelle ebenso: die Ringe liegen innen, wie beim
+   Compact field (compact-field.css). */
+.tl-chip-group[data-tl-state~="compact"] :focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Der Fehler bleibt in der Zeile, gekürzt; sein ganzer Text ist sein Tooltip. */
+.tl-chip-group[data-tl-state~="compact"] > .tl-file-upload__status {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* --- icon-picker/icon-picker.css --- */
@@ -6099,18 +6150,30 @@ button.tl-swatch:not(:disabled):hover {
    ist der Knoten positioniert), aria-selected die Fläche — kein Balken links. Der Einzug je Ebene ist die
    Breite des Toggles, inline aus dem TSX; ein Blatt hält ihren Platz mit tl-tree__spacer frei. Ein
    Knoten, dessen Kinder kommen, trägt aria-busy; unter ihm steht eine tl-status-Zeile mit unbestimmtem
-   tl-progress — selbst ein treeitem eine Ebene tiefer, benannt „Lädt“ (js.tree.loading). Ziehen und
+   tl-progress — selbst ein treeitem eine Ebene tiefer, benannt „Lädt“ (js.tree.loading). Ein Knoten
+   bricht nicht um und endet nicht mit Ellipse: ist er breiter als der Baum, rollt der Baum waagerecht.
+   Der Baum ist ein Raster aus einer Spalte, so breit wie der breiteste Knoten, mindestens aber so breit
+   wie sichtbar; jeder Knoten und die Ladezeile füllen sie, so reichen Fläche beim Zeigen und Auswählen
+   und die Ablagemarken über die ganze gerollte Breite. Die Spalte ist minmax(max-content, 100%), nicht
+   umgekehrt: eine Spur wächst über ihr Minimum nur in freien Platz, und ein Rollkasten hat keinen —
+   minmax(100%, max-content) bliebe bei 100 %. So ist max-content das Minimum; liegt 100 % darunter, zählt
+   als Maximum das Minimum, und ein schmalerer Inhalt wächst bis 100 % in die sichtbare Breite.
+   align-content: start hält die Zeilen oben, wenn der Baum kürzer ist als sein Kasten. Ziehen und
    Ablegen zeichnet drag.css. */
 
 .tl-tree {
+  display: grid;
+  grid-template-columns: minmax(max-content, 100%);
+  align-content: start;
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
+  overflow: auto;
   isolation: isolate;
   list-style: none;
   color: var(--tl-text-primary);
 }
+.tl-tree[hidden] { display: none; }
 
 .tl-tree__node {
   position: relative;
@@ -6138,11 +6201,16 @@ button.tl-swatch:not(:disabled):hover {
   width: var(--tl-size-control-sm);
 }
 
+/* Eine Zeile, ungekürzt; die automatische Mindestbreite des Flex-Elements (mit nowrap die Breite des
+   Texts) hält es so breit wie seinen Inhalt. */
 .tl-tree__content {
   flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ein tl-text als Inhalt bleibt auf seiner Zeile. (0,2,0): text.css setzt pre-line mit (0,1,0) und steht
+   im Bundle danach — wie in der Tabellenzelle. */
+.tl-tree__content > .tl-text {
   white-space: nowrap;
 }
 
@@ -6281,4 +6349,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:2d4a6e06ebe59c5e62bbd18401e4e333f8a3f7b4f47f8e9122aaa240f7b6b372 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:1ec735d30c1ef08abfde08ce7c779eb42b6b539630438e58bbb25dc37e2d286b — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

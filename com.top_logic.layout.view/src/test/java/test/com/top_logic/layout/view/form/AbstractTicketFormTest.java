@@ -171,7 +171,7 @@ public abstract class AbstractTicketFormTest extends BasicTestCase {
 	 * A mapping storing the values as they are, as the core datatypes of that application type use
 	 * it.
 	 */
-	private static StorageMapping<?> directMapping(Class<?> applicationType) throws ConfigurationException {
+	protected static StorageMapping<?> directMapping(Class<?> applicationType) throws ConfigurationException {
 		PolymorphicConfiguration<?> config =
 			TypedConfiguration.createConfigItemForImplementationClass(DirectMapping.class);
 		config.update(config.descriptor().getProperty(DirectMapping.Config.APPLICATION_TYPE), applicationType);

@@ -41,8 +41,6 @@ public class ReactPhotoCaptureControl extends ReactControl implements UploadHand
 	/** State key for the current status. */
 	private static final String STATUS = "status";
 
-	/** State key for an error message. */
-	private static final String ERROR = "error";
 
 	private final BinaryDataValue _model;
 
@@ -69,7 +67,7 @@ public class ReactPhotoCaptureControl extends ReactControl implements UploadHand
 				.orElse(null);
 
 			if (photoPart == null) {
-				putState(ERROR, "No photo data received.");
+				putState(UploadSupport.ERROR, "No photo data received.");
 				putState(STATUS, "idle");
 				return HandlerResult.DEFAULT_RESULT;
 			}
@@ -88,11 +86,11 @@ public class ReactPhotoCaptureControl extends ReactControl implements UploadHand
 			BinaryData data = BinaryDataFactory.createBinaryData(photoData, contentType, fileName);
 			_model.setData(data);
 
-			putState(ERROR, null);
+			putState(UploadSupport.ERROR, null);
 			putState(STATUS, "idle");
 		} catch (IOException ex) {
 			Logger.error("Failed to process photo upload.", ex, ReactPhotoCaptureControl.class);
-			putState(ERROR, ex.getMessage());
+			putState(UploadSupport.ERROR, ex.getMessage());
 			putState(STATUS, "idle");
 		}
 		return HandlerResult.DEFAULT_RESULT;

@@ -328,28 +328,15 @@ function oversizedFile(formData: FormData, limit: number): File | null {
 }
 
 /**
- * The total size of all files in the given form data.
- */
-function totalFileSize(formData: FormData): number {
-  let total = 0;
-  for (const value of formData.values()) {
-    if (value instanceof File) {
-      total += value.size;
-    }
-  }
-  return total;
-}
-
-/**
  * Returns a function to upload a FormData to the server for the enclosing control.
  *
  * <p>The control ID and window name are appended automatically. The server dispatches
  * to controls implementing the {@code UploadHandler} interface.</p>
  *
- * <p>A selection larger than the control's {@link STATE_MAX_UPLOAD_SIZE} limit - either a single
- * file or the selection as a whole - is not transmitted at all. Instead, the
- * {@link CMD_UPLOAD_REJECTED} command tells the server about the refusal, which reports the limit
- * to the user.</p>
+ * <p>A selection holding a file larger than the control's {@link STATE_MAX_UPLOAD_SIZE} limit is
+ * not transmitted at all. The limit applies to each file on its own, not to the selection as a
+ * whole. Instead of the upload, the {@link CMD_UPLOAD_REJECTED} command tells the server about the
+ * refusal, which reports the limit to the user.</p>
  */
 export function useTLUpload(): (formData: FormData) => Promise<void> {
   const ctx = useContext(TLControlContext);
@@ -365,15 +352,14 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
       const limit = Number(store.getSnapshot()[STATE_MAX_UPLOAD_SIZE] ?? 0);
       if (limit > 0) {
         const oversized = oversizedFile(formData, limit);
-        const total = totalFileSize(formData);
-        if (oversized !== null || total > limit) {
+        if (oversized !== null) {
           await enqueueCommand(getApiBase() + 'react-api/command', {
             controlId,
             command: CMD_UPLOAD_REJECTED,
             windowName,
             arguments: {
-              fileName: oversized !== null ? oversized.name : '',
-              size: oversized !== null ? oversized.size : total,
+              fileName: oversized.name,
+              size: oversized.size,
             },
           });
           return;

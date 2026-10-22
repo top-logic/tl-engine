@@ -124,6 +124,12 @@ public class CheckboxState_Impl extends com.top_logic.layout.react.state.impl.Fi
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.CheckboxState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.CheckboxState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;

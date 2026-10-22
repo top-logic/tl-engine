@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The signed-in account's own settings for the assistant (Issue #437).
+
+	One field: the free text the user writes about how they want to be served - how to address them,
+	how long an answer should be, which language to prefer when several would do. It is an attribute
+	of tl.accounts:Person, added by tl-ai-core, so every agent the user talks to reads the same text,
+	in the chat and in a scheduled run alike. The harness renders it into the environment block of
+	the system prompt, below what the application itself states, and tells the model that the
+	application wins where the two disagree.
+
+	The length cap is configuration (AgentPolicyService, max-preferences-length), so it is
+	enforced by a constraint on the attribute rather than by this form: a text above it is refused
+	here with a message naming the limit, because the text is sent with every single request.
+
+	The form binds to a derived channel of its own rather than to the shell's "currentPerson":
+	a view is self-contained, and the same file then works wherever it is referenced.
+-->
+<view>
+	<channels>
+		<derived-channel name="account"
+			expr="currentUser()"
+		/>
+	</channels>
+
+	<stack direction="column">
+		<panel>
+			<title>
+				<en>My settings</en>
+				<de>Meine Einstellungen</de>
+			</title>
+			<form input="account" with-inset="true">
+				<field attribute="aiPreferences"/>
+			</form>
+		</panel>
+		<!--
+			The personal access tokens an MCP client acts as this account with (Issue #671). The demo
+			has no settings dialog, where tl-ai-core contributes the same view as a tab, so it
+			stands here.
+		-->
+		<view-ref view="tl-ai-core/access-tokens.view.xml"/>
+	</stack>
+</view>

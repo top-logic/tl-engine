@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	An English event among the German ones, for the hybrid search of ai-index.config.xml: a German
+	question about it shares no word with its text, so only the meaning side can find it.
+-->
+<objects>
+	<resolvers>
+		<resolver type="tl.units:Currency">
+			<impl class="com.top_logic.ai.demo.data.CurrencyResolver"/>
+		</resolver>
+		<resolver type="tl.accounts:Person">
+			<impl class="com.top_logic.model.instance.importer.resolver.AccountResolver"/>
+		</resolver>
+	</resolvers>
+	<object id="event-cold-chain" type="demo.events:Event">
+		<attribute name="name" value="Cold Chain Logistics Forum 2027"/>
+		<attribute name="description" value="A one-day forum on keeping vaccines and fresh food cold from the factory to the pharmacy: temperature loggers, refrigerated trucks, and what to do when the cooling fails on the way."/>
+		<attribute name="status"><model-ref name="demo.events:EventStatus#PLANNED"/></attribute>
+		<attribute name="startDate" value="2027-05-06T00:00:00.000Z"/>
+		<attribute name="ticketPrice" value="180.0"/>
+		<attribute name="maxParticipants" value="120"/>
+		<attribute name="themeColor" value="#0a8f7a"/>
+		<attribute name="currency"><global-ref kind="tl.units:Currency" id="EUR"/></attribute>
+		<attribute name="manager"><global-ref kind="tl.accounts:Person" id="root"/></attribute>
+		<attribute name="sessions">
+			<object id="s-cc-excursions" type="demo.events:Session">
+				<attribute name="name" value="When the reefer fails"/>
+				<attribute name="description" value="Handling temperature excursions during transport: who decides whether a pallet of vaccine doses can still be used, and how the data logger proves it."/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#TALK"/></attribute>
+				<attribute name="startTime" value="2027-05-06T08:30:00.000Z"/>
+				<attribute name="durationMinutes" value="45"/>
+			</object>
+			<object id="s-cc-last-mile" type="demo.events:Session">
+				<attribute name="name" value="The last mile to the pharmacy"/>
+				<attribute name="description" value="Insulated boxes, dry ice and electric vans for the final delivery of temperature-sensitive medicines."/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#WORKSHOP"/></attribute>
+				<attribute name="startTime" value="2027-05-06T10:00:00.000Z"/>
+				<attribute name="durationMinutes" value="90"/>
+			</object>
+		</attribute>
+	</object>
+</objects>

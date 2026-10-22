@@ -1,0 +1,1081 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.execution">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.core.execution.model.impl"
+				interface-package="com.top_logic.tl.ai.core.execution.model"
+			/>
+		</annotations>
+		<types>
+
+			<enum name="SessionKind">
+				<classifier name="CHAT"/>
+				<classifier name="BACKGROUND"/>
+				<classifier name="SCHEDULED"/>
+				<classifier name="SCRIPT"/>
+			</enum>
+
+			<enum name="ExecutionStatus">
+				<classifier name="RUNNING"/>
+				<classifier name="COMPLETE"/>
+				<classifier name="ERROR"/>
+				<classifier name="CANCELLED"/>
+				<classifier name="REJECTED"/>
+			</enum>
+
+			<enum name="InteractionType">
+				<classifier name="APPROVAL"/>
+				<classifier name="QUESTION"/>
+				<classifier name="CHOICE"/>
+			</enum>
+
+			<!--
+				What kind of thing the agent kept about the user. The user reads this label in the
+				memory list, so the three are told apart by what the user can do about them, not by
+				where they came from: a wish, a statement of fact, a judgement about the work.
+			-->
+			<enum name="MemoryKind">
+				<classifier name="PREFERENCE"/>
+				<classifier name="FACT"/>
+				<classifier name="FEEDBACK"/>
+			</enum>
+
+			<!-- How much a research run set out to read (Issue #827). -->
+			<enum name="ResearchEffort">
+				<classifier name="QUICK"/>
+				<classifier name="STANDARD"/>
+				<classifier name="DEEP"/>
+			</enum>
+
+			<!-- Whether a research run answered its question or stopped before (Issue #827). -->
+			<enum name="ResearchStatus">
+				<classifier name="COMPLETE"/>
+				<classifier name="PARTIAL"/>
+			</enum>
+
+			<enum name="InteractionState">
+				<classifier name="PENDING"/>
+				<classifier name="RESOLVED"/>
+				<classifier name="TIMED_OUT"/>
+				<classifier name="CANCELLED"/>
+			</enum>
+
+			<!--
+				Durable context + cumulative working state + presentation.
+				A chat is kind=CHAT with a Person owner and a title; a background job is
+				kind=BACKGROUND with a system principal.
+			-->
+			<class name="AgentSession">
+				<annotations>
+					<table name="AgentSession"/>
+					<id-column value="displayName"/>
+					<main-properties properties="title,kind,status,lastUpdated"/>
+				</annotations>
+				<attributes>
+					<!--
+						Readable identity. Sessions started by a background job, a schedule or a
+						script never get a title, so fall back to the owner and the creation time.
+						Derived rather than stored: the value is composed and is correct for rows
+						that already exist, without a backfill.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										s -> {
+											title = $s.get(`tl.ai.execution:AgentSession#title`);
+											owner = $s.get(`tl.ai.execution:AgentSession#owner`);
+											createdAt = $s.get(`tl.ai.execution:AgentSession#createdAt`);
+											fallback =
+												ifElse(isEmpty($owner), "", $owner.label() + ifElse(isEmpty($createdAt), "", " - "))
+												+ ifElse(isEmpty($createdAt), "", dateFormat("yyyy-MM-dd HH:mm:ss").format($createdAt));
+											ifElse(isEmpty($title), $fallback, $title);
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<reference name="kind"
+						type="tl.ai.execution:SessionKind"
+						mandatory="true"
+					/>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					/>
+					<!--
+						What the conversation is about (Issue #508).
+
+						Any model object, because the host decides what a conversation belongs to -
+						a project, an invoice, a contract. It is what lets a page scope its session
+						list to the object the user has open:
+
+							$subject.referers(`tl.ai.execution:AgentSession#subject`)
+
+						Written once, when the element that opened the conversation had an object on
+						its subject channel; a session that was started without one keeps none, and
+						is simply not in any scoped list. Deleting the object only clears this
+						reference (the default deletion policy) - the conversation about a project
+						outlives the project, and drops out of that project's list.
+
+						Navigating back from the deleted object itself is another matter, and is
+						the engine's rather than this attribute's: referers() refuses a lookup from
+						a deleted object. See TestSessionSubject.
+					-->
+					<reference name="subject"
+						type="tl.model:TLObject"
+					/>
+					<property name="title"
+						type="tl.core:String"
+					/>
+					<property name="status"
+						type="tl.core:String"
+					/>
+					<property name="metadata"
+						type="tl.core:Text"
+					/>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<property name="lastUpdated"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				One agent-loop invocation. Sub-agents are AgentExecutions with parentExecution set.
+				Token counts are summable columns; SUM over the parentExecution subtree yields the
+				true parent+children total.
+			-->
+			<class name="AgentExecution">
+				<annotations>
+					<table name="AgentExecution"/>
+					<id-column value="displayName"/>
+					<main-properties properties="runId,agentName,status,startedAt"/>
+				</annotations>
+				<attributes>
+					<!--
+						Readable identity. The run ID alone is an opaque UUID; leading with the agent
+						and the start time makes the row readable, and a short run-ID suffix keeps it
+						a discriminator: parallel sub-agent spawns can start within the same second.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										e -> {
+											agentName = $e.get(`tl.ai.execution:AgentExecution#agentName`);
+											startedAt = $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+											runId = $e.get(`tl.ai.execution:AgentExecution#runId`);
+											shortId = ifElse(length($runId) > 6, $runId.subString(0, 6), $runId);
+											$agentName
+												+ ifElse(isEmpty($startedAt), "", " - " + dateFormat("yyyy-MM-dd HH:mm:ss").format($startedAt))
+												+ ifElse(isEmpty($shortId), "", " (" + $shortId + ")");
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<reference name="session"
+						type="tl.ai.execution:AgentSession"
+						mandatory="true"
+					/>
+					<reference name="parentExecution"
+						type="tl.ai.execution:AgentExecution"
+					/>
+					<property name="runId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="agentName"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="model"
+						type="tl.core:String"
+					/>
+					<property name="provider"
+						type="tl.core:String"
+					/>
+					<reference name="status"
+						type="tl.ai.execution:ExecutionStatus"
+						mandatory="true"
+					/>
+					<property name="stopReason"
+						type="tl.core:String"
+					/>
+					<property name="errorMessage"
+						type="tl.core:Text"
+					/>
+					<!--
+						What this run told the model about the situation it happened in: the filled
+						<environment> block, written as the run starts.
+
+						It is a field of its own rather than a slice of the transcript because it is
+						not part of the conversation: it sits in the system prompt, which nothing else
+						records, and an administrator asking "why did it answer in English" has no other
+						place to look. Written at run start, so a run that is still going or that
+						crashed has it too.
+					-->
+					<property name="environment"
+						type="tl.core:Text"
+					/>
+					<property name="inputTokens"
+						type="tl.core:Long"
+					/>
+					<property name="outputTokens"
+						type="tl.core:Long"
+					/>
+					<property name="cacheReadTokens"
+						type="tl.core:Long"
+					/>
+					<property name="cacheWriteTokens"
+						type="tl.core:Long"
+					/>
+					<property name="thinkingTokens"
+						type="tl.core:Long"
+					/>
+					<!--
+						What the run cost, in US dollars: its tokens times the prices of the model that
+						answered each request, which models.dev and the model overrides state in US
+						dollars. Written with the token counts, when the run finishes. Empty for a run
+						recorded before costs were. A model without a price costs 0. Four decimals,
+						because a single short run often costs less than a cent.
+					-->
+					<property name="cost"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<format>
+								<decimal pattern="#,##0.00##"/>
+							</format>
+						</annotations>
+					</property>
+					<!--
+						What the run cost in the currency the agent activity monitor shows: cost
+						converted into the application's system currency at the exchange rate of the
+						currency USD for the day the run started - a dated rate, else the currency's
+						conversion factor (Administration > Basisadministration > Währungen) unless it
+						is 1 - or cost itself, in US dollars, while there is no such rate. Computed,
+						not stored, so a run is shown in the system currency as soon as a rate is
+						entered. See CostConversion.
+					-->
+					<property name="displayCost"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<format>
+								<decimal pattern="#,##0.00##"/>
+							</format>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[e -> aiCost($e)]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<!-- The ISO 4217 code of displayCost: the system currency, or USD without a rate. -->
+					<property name="displayCurrency"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[e -> aiCostCurrency($e)]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="transcript"
+						type="tl.core:Text"
+					/>
+					<!--
+						The transcript rendered as HTML, for the "Transkript" group of the agent
+						activity monitor.
+
+						Derived attribute rather than a form element: a macro attribute needs nothing
+						but tl-model-search, which is already on the classpath, whereas a <macro> form
+						element would pull tl-layout-formeditor into every application that uses
+						tl-ai-core. As a side effect the rendering is reusable outside that one view.
+
+						Two facts the panel states rather than hides: the transcript is written when a
+						run finishes (AgentExecutionStore.finishExecution), so a running or a crashed
+						run has none; and the column allows 10 MB, so a blob beyond maxChars is
+						reported by its size instead of being parsed in the rendering thread.
+					-->
+					<property name="transcriptHtml"
+						type="tl.model.search:Macro"
+					>
+						<annotations>
+							<storage-algorithm>
+								<macro>
+									<expr><![CDATA[
+										e -> {
+											raw = $e.get(`tl.ai.execution:AgentExecution#transcript`);
+											maxChars = 500000;
+											time = dateFormat("HH:mm:ss");
+											stamp = ms -> ifElse(isEmpty($ms), "", $time.format($ms.toDate()));
+
+											// The discriminator of a part is a JSON token; the panel names the kind.
+											kindLabels = {
+												'text': #('Text'@en, 'Text'@de),
+												'thinking': #('Thinking'@en, 'Denken'@de),
+												'tool_call': #('Tool call'@en, 'Tool-Aufruf'@de),
+												'approval': #('Approval'@en, 'Freigabe'@de),
+												'interaction': #('Question'@en, 'Rückfrage'@de),
+												'compaction': #('Compaction'@en, 'Verdichtung'@de),
+												'error': #('Error'@en, 'Fehler'@de),
+												'transaction': #('Transaction'@en, 'Transaktion'@de),
+												'delegation': #('Delegation'@en, 'Delegation'@de),
+												'system': #('System'@en, 'System'@de)
+											};
+											kind = t -> ifElse(isEmpty($kindLabels[$t]), $t, $kindLabels[$t]);
+
+											// One expression per class attribute rather than literal text plus an embedding: the macro
+											// writer separates the parts of an attribute value with a space, which would break the
+											// modifier class in two.
+											stateClass = v -> 'aiTrState aiTrState-' + ifElse(isEmpty($v), 'UNKNOWN', $v);
+
+											// Everything a part can carry except the nested parts of a delegation.
+											// Shared by the top-level renderer and the renderer for a sub-agent's
+											// parts, so a tool call looks the same wherever it appears.
+											body = p -> {
+												text = $p['textData'];
+												thinking = $p['thinkingData'];
+												call = $p['toolCallData'];
+												approval = $p['approvalData'];
+												ask = $p['interactionData'];
+												compaction = $p['compactionData'];
+												error = $p['errorData'];
+												transaction = $p['transactionData'];
+												delegation = $p['delegationData'];
+												system = $p['systemData'];
+												{{{
+													<div class="aiTrHead">
+														<span class="aiTrKind">{$kind($p['type'])}</span>
+														<span class="aiTrTime">{$stamp($p['timestamp'])}</span>
+													</div>
+													{ isEmpty($text) ? "" : {{{
+														<div class="aiTrText">{$text['text']}</div>
+													}}} }
+													{ isEmpty($thinking) ? "" : {{{
+														<div class="aiTrThinking">{$thinking['text']}</div>
+													}}} }
+													{ isEmpty($system) ? "" : {{{
+														<div class="aiTrLine"><b>{$system['eventType']}</b> {$system['details']}</div>
+													}}} }
+													{ isEmpty($call) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$call['toolName']}</code>
+															<span class="{$stateClass($call['status'])}">{$call['status']}</span>
+															<span class="aiTrTime">{$call['durationMs']} ms</span>
+														</div>
+														{ isEmpty($call['argsJson']) ? "" : {{{
+															<pre class="aiTrCode">{$call['argsJson']}</pre>
+														}}} }
+														{ isEmpty($call['result']) ? "" : {{{
+															<pre class="aiTrCode">{$call['result']}</pre>
+														}}} }
+														{ isEmpty($call['resultRef']) ? "" : {{{
+															<div class="aiTrLine">{$call['resultRef']}</div>
+														}}} }
+														{ isEmpty($call['errorMessage']) ? "" : {{{
+															<div class="aiTrAlert">{$call['errorMessage']}</div>
+														}}} }
+														{ isEmpty($call['denyReason']) ? "" : {{{
+															<div class="aiTrWarn">{$call['denyReason']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($approval) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$approval['toolName']}</code>
+															<span class="{$stateClass($approval['decision'])}">{$approval['decision']}</span>
+														</div>
+														{ isEmpty($approval['displayReason']) ? "" : {{{
+															<div class="aiTrText">{$approval['displayReason']}</div>
+														}}} }
+														{ isEmpty($approval['argsJson']) ? "" : {{{
+															<pre class="aiTrCode">{$approval['argsJson']}</pre>
+														}}} }
+														{ isEmpty($approval['userComment']) ? "" : {{{
+															<div class="aiTrAnswer">{$approval['userComment']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($ask) ? "" : {{{
+														<div class="aiTrLine">
+															<b>{$ask['header']}</b>
+															<span class="aiTrState">{$ask['interactionType']}</span>
+														</div>
+														<div class="aiTrText">{$ask['question']}</div>
+														{ isEmpty($ask['options']) ? "" : {{{
+															<div class="aiTrLine">{foreach($ask['options'], o -> {{{ <span class="aiTrOption">{$o}</span> }}})}</div>
+														}}} }
+														{ isEmpty($ask['userResponse']) ? "" : {{{
+															<div class="aiTrAnswer">{$ask['userResponse']}</div>
+														}}} }
+													}}} }
+													{ isEmpty($transaction) ? "" : {{{
+														<div class="aiTrLine">
+															<span class="{$stateClass($transaction['type'])}">{$transaction['type']}</span>
+															<span class="aiTrTime">r{$transaction['revisionNumber']}</span>
+															{$transaction['reason']}
+														</div>
+													}}} }
+													{ isEmpty($compaction) ? "" : {{{
+														<div class="aiTrLine">
+															{$compaction['tokensBefore']} → {$compaction['tokensAfter']} Token
+															<span class="aiTrState">{$compaction['trigger']}</span>
+														</div>
+													}}} }
+													{ isEmpty($error) ? "" : {{{
+														<div class="aiTrAlert"><b>{$error['kind']}</b> {$error['errorMessage']}</div>
+													}}} }
+													{ isEmpty($delegation) ? "" : {{{
+														<div class="aiTrLine">
+															<code class="aiTrName">{$delegation['fromAgent']}</code>
+															→
+															<code class="aiTrName">{$delegation['toAgent']}</code>
+															<span class="{$stateClass($delegation['stopReason'])}">{$delegation['stopReason']}</span>
+														</div>
+														{ isEmpty($delegation['inputSummary']) ? "" : {{{
+															<div class="aiTrText">{$delegation['inputSummary']}</div>
+														}}} }
+														{ isEmpty($delegation['resultSummary']) ? "" : {{{
+															<div class="aiTrAnswer">{$delegation['resultSummary']}</div>
+														}}} }
+													}}} }
+												}}};
+											};
+
+											// A sub-agent's own parts. A delegation nested inside one of them is
+											// only announced by its header line: rendering it in full would need a
+											// self-referencing function, and a TL-Script closure captures its
+											// context before the name it would refer to is bound.
+											nested = p -> {{{
+												<div class="aiTrPart aiTrNested">{$body($p)}</div>
+											}}};
+
+											part = p -> {
+												children = ifElse(isEmpty($p['delegationData']), list(), $p['delegationData']['childParts']);
+												{{{
+													<div class="aiTrPart">
+														{$body($p)}
+														{ isEmpty($children) ? "" : {{{
+															<details class="aiTrChildren">
+																<summary>{#('{0} nested parts of the sub-agent'@en, '{0} verschachtelte Teile des Teilagenten'@de).fill($children.size())}</summary>
+																{foreach($children, c -> $nested($c))}
+															</details>
+														}}} }
+													</div>
+												}}};
+											};
+
+											turn = t -> {
+												usage = $t['usage'];
+												// What the host stated about this turn. Shown with the turn and not with the
+												// user's parts, because it is not the user's text: it travels beside it.
+												context = $t['turnContext'];
+												{{{
+													<details class="aiTrTurn" open="open">
+														<summary>
+															<span class="aiTrTurnNo">{#('Turn {0}'@en, 'Turn {0}'@de).fill($t['turnNumber'])}</span>
+															<span class="aiTrTime">{$stamp($t['timestamp'])}</span>
+															<span class="aiTrTime">{$t['model']}</span>
+															{ isEmpty($usage) ? "" : {{{
+																<span class="aiTrTime">{$usage['inputTokens'] + $usage['outputTokens']} Token</span>
+															}}} }
+														</summary>
+														{ isEmpty($context) ? "" : {{{
+															<div class="aiTrContext">
+																<div class="aiTrHead">
+																	<span class="aiTrKind">{#('Turn context'@en, 'Turn-Kontext'@de)}</span>
+																</div>
+																<pre class="aiTrCode">{$context}</pre>
+															</div>
+														}}} }
+														{foreach($t['userParts'], p -> {{{ <div class="aiTrUser">{$part($p)}</div> }}})}
+														{foreach($t['assistantParts'], p -> $part($p))}
+													</details>
+												}}};
+											};
+
+											isEmpty($raw) ? {{{
+												<div class="aiTrNote">{#('No transcript. It is written when the run finishes, so a running or a crashed run has none.'@en, 'Kein Transkript. Es wird beim Abschluss des Laufs geschrieben - ein laufender oder abgestürzter Lauf hat keines.'@de)}</div>
+											}}} : (length($raw) > $maxChars ? {{{
+												<div class="aiTrNote aiTrWarn">{#('The transcript is {0} characters long and is not rendered here. The raw value is in the group below.'@en, 'Das Transkript ist {0} Zeichen lang und wird hier nicht dargestellt. Der Rohwert steht in der Gruppe darunter.'@de).fill(length($raw))}</div>
+											}}} : {
+												turns = parseJson($raw)['turns'];
+												{{{
+													<div class="aiTr">
+														<div class="aiTrNote">{#('Recorded turns: {0}'@en, 'Aufgezeichnete Turns: {0}'@de).fill($turns.size())}</div>
+														{foreach($turns, t -> $turn($t))}
+													</div>
+												}}};
+											});
+										}
+									]]></expr>
+								</macro>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="response"
+						type="tl.core:Text"
+					/>
+					<property name="cancelRequested"
+						type="tl.core:Boolean"
+					/>
+					<property name="startedAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<property name="endedAt"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				Generalized human-in-the-loop request. Unifies the former ApprovalRequest and
+				UserInteractionRequest. Query by (responder, state=PENDING) for the approval inbox
+				across chats and background jobs.
+			-->
+			<class name="InteractionRequest">
+				<annotations>
+					<table name="AgentInteractionRequest"/>
+					<id-column value="displayName"/>
+					<main-properties properties="requestId,type,state,createdAt"/>
+				</annotations>
+				<attributes>
+					<!--
+						Readable identity: what is being asked, about what, and when. The subject is
+						the header, or the beginning of the prompt when no header was given; the
+						prompt is free text, so its line breaks are collapsed.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										r -> {
+											header = $r.get(`tl.ai.execution:InteractionRequest#header`);
+											prompt = regex("\\s+").regexReplace($r.get(`tl.ai.execution:InteractionRequest#prompt`), " ");
+											excerpt = ifElse(length($prompt) > 60, $prompt.subString(0, 60) + "...", $prompt);
+											subject = ifElse(isEmpty($header), $excerpt, $header);
+											type = $r.get(`tl.ai.execution:InteractionRequest#type`);
+											createdAt = $r.get(`tl.ai.execution:InteractionRequest#createdAt`);
+											ifElse(isEmpty($type), "", $type.label())
+												+ ifElse(isEmpty($subject), "", ": " + $subject)
+												+ ifElse(isEmpty($createdAt), "", " (" + dateFormat("yyyy-MM-dd HH:mm:ss").format($createdAt) + ")");
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<reference name="execution"
+						type="tl.ai.execution:AgentExecution"
+						mandatory="true"
+					/>
+					<property name="requestId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<reference name="type"
+						type="tl.ai.execution:InteractionType"
+						mandatory="true"
+					/>
+					<reference name="state"
+						type="tl.ai.execution:InteractionState"
+						mandatory="true"
+					/>
+					<property name="header"
+						type="tl.core:String"
+					/>
+					<property name="prompt"
+						type="tl.core:Text"
+					/>
+					<property name="payload"
+						type="tl.core:Text"
+					/>
+					<reference name="responder"
+						type="tl.accounts:Person"
+					/>
+					<property name="resolution"
+						type="tl.core:Text"
+					/>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<property name="resolvedAt"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				The agent todo plan. Session-scoped: cumulative across every execution in the
+				conversation, a sibling of AgentSession.memory. (TaskStore lives in the session
+				state today and persists in the session metadata.) lastTouchedByExecution is
+				attribution only.
+			-->
+			<class name="AgentTask">
+				<annotations>
+					<table name="AgentTask"/>
+					<id-column value="displayName"/>
+					<main-properties properties="taskId,subject,status,ordinal"/>
+				</annotations>
+				<attributes>
+					<!--
+						Readable identity: the position in the plan plus the subject. Falls back to
+						the task ID for a task that has no subject yet.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										t -> {
+											ordinal = $t.get(`tl.ai.execution:AgentTask#ordinal`);
+											subject = $t.get(`tl.ai.execution:AgentTask#subject`);
+											ifElse(isEmpty($ordinal), "", $ordinal + ". ")
+												+ ifElse(isEmpty($subject), $t.get(`tl.ai.execution:AgentTask#taskId`), $subject);
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<reference name="session"
+						type="tl.ai.execution:AgentSession"
+						mandatory="true"
+					/>
+					<reference name="lastTouchedByExecution"
+						type="tl.ai.execution:AgentExecution"
+					/>
+					<property name="taskId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="subject"
+						type="tl.core:String"
+					/>
+					<property name="content"
+						type="tl.core:Text"
+					/>
+					<property name="status"
+						type="tl.core:String"
+					/>
+					<property name="ordinal"
+						type="tl.core:Integer"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				One thing the agent keeps about one user (Issue #439).
+
+				Private to its owner: every list over this type filters by owner, the tool that
+				writes one writes it for the acting account, and the delete function refuses a row
+				of somebody else. A memory is a model object rather than a line in a text blob so
+				that the user can see it, sort it and throw it away one at a time.
+			-->
+			<class name="UserMemory">
+				<annotations>
+					<table name="UserMemory"/>
+					<id-column value="displayName"/>
+					<main-properties properties="text,kind,createdAt"/>
+				</annotations>
+				<attributes>
+					<!--
+						Readable identity: the kind and the beginning of the text. The text is free
+						prose, so its line breaks are collapsed - the same treatment the interaction
+						request gives its prompt.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										m -> {
+											text = regex("\\s+").regexReplace($m.get(`tl.ai.execution:UserMemory#text`), " ");
+											excerpt = ifElse(length($text) > 80, $text.subString(0, 80) + "...", $text);
+											kind = $m.get(`tl.ai.execution:UserMemory#kind`);
+											ifElse(isEmpty($kind), "", $kind.label() + ": ") + $excerpt;
+										}
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<reference name="owner"
+						type="tl.accounts:Person"
+						mandatory="true"
+					/>
+					<reference name="kind"
+						type="tl.ai.execution:MemoryKind"
+						mandatory="true"
+					/>
+					<property name="text"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!--
+						Where the memory came from, so the user can go back and read the exchange
+						that produced it. Optional: a memory written from a headless run belongs to
+						no chat, and deleting the chat only clears this reference (the default
+						deletion policy) - a memory outlives the conversation it came out of.
+					-->
+					<reference name="session"
+						type="tl.ai.execution:AgentSession"
+					/>
+					<property name="runId"
+						type="tl.core:String"
+					/>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				A web page as a tool of an agent run read it (#617): the text webFetch or the browser
+				extracted, its title, address and fetch time. Stored when the page enters a run's
+				reading list, so that a citation of it still shows what it said after the page changed
+				or disappeared, and a quote can be checked against it. Readable by the account whose
+				run fetched it, and by administrators - a fetched page can be an intranet page.
+
+				The text is a Binary on purpose: it is the attribute kind the engine's blob store will
+				take over, so moving the archive there is a storage change, not a model change.
+			-->
+			<class name="ArchivedPage">
+				<annotations>
+					<table name="ArchivedPage"/>
+					<main-properties properties="title,url,fetchedAt"/>
+				</annotations>
+				<attributes>
+					<!--
+						The unguessable handle the /archived-page/{handle} route addresses this copy
+						by.
+					-->
+					<property name="handle"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="url"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="title"
+						type="tl.core:String"
+					/>
+					<property name="fetchedAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+					<!-- SHA-256 of the text, so the same page read twice is stored once. -->
+					<property name="contentHash"
+						type="tl.core:String"
+					/>
+					<property name="content"
+						mandatory="true"
+						type="tl.core:Binary"
+					/>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				One research run, kept when its lead has written the report (Issue #764, #827): the
+				question, the report, the sources the run tree read and the findings it recorded.
+
+				The report is the one source of truth: the document the side pane shows and the user
+				downloads is rendered from it and from the sources whenever it is read (document),
+				never stored. What the run spent is read from the execution tree (tokens), never
+				copied.
+
+				Private to its owner: the role rules in tl-ai-core.binarySecurity.config.xml give the
+				owner, and only the owner, the right to read the run, its parts and the archived pages
+				its sources reference; administrators read everything anyway. Written by ResearchRuns
+				on its own thread, never by a user.
+
+				Deleting the run deletes its sources and findings, never an archived page or an object
+				of the application. Deleting the chat the run came from only clears execution (the
+				default deletion policy): the run outlives the conversation, like a user memory.
+			-->
+			<class name="ResearchRun">
+				<annotations>
+					<id-column value="question"/>
+					<main-properties properties="question,status,finished"/>
+				</annotations>
+				<attributes>
+					<property name="question"
+						mandatory="true"
+						type="tl.core:Text"
+					/>
+					<reference name="effort"
+						type="tl.ai.execution:ResearchEffort"
+					/>
+					<reference name="status"
+						type="tl.ai.execution:ResearchStatus"
+					/>
+					<!-- When the run tree read its first source. -->
+					<property name="started"
+						type="tl.core:DateTime"
+					/>
+					<property name="finished"
+						type="tl.core:DateTime"
+					/>
+					<!--
+						The report as an HTML document: the text with its footnotes and the sources it
+						cites, linked. Rendered from report and sources on every read, so that the
+						side pane and the download always show what the run holds now, with links
+						relative to the context path of this application.
+					-->
+					<property name="document"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<storage-algorithm>
+								<derived-storage>
+									<expression-evaluation>
+										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchRunImpl#computeDocument()"/>
+									</expression-evaluation>
+								</derived-storage>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="plan"
+						type="tl.core:Text"
+					/>
+					<!--
+						What the lead run and every run below it spent: the tokens the providers read
+						and wrote. Empty when the run's chat was deleted.
+					-->
+					<property name="tokens"
+						type="tl.core:Long"
+					>
+						<annotations>
+							<storage-algorithm>
+								<derived-storage>
+									<expression-evaluation>
+										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchRunImpl#computeTokens()"/>
+									</expression-evaluation>
+								</derived-storage>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<!--
+						The report as the lead wrote it, Markdown with links to its sources: the one
+						source of truth of the document.
+					-->
+					<property name="report"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<!-- The lead run; its session is the chat the research ran in. -->
+					<reference name="execution"
+						type="tl.ai.execution:AgentExecution"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+					<reference name="owner"
+						type="tl.accounts:Person"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+					<!--
+						Every source the run tree read: the cited ones first, in the order of their
+						footnotes, then the others in the order they were read. Shown through
+						citedSources and alsoRead.
+					-->
+					<reference name="sources"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						ordered="true"
+						type="ResearchSource"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+					<!-- The sources the report cites, in the order of its footnotes. -->
+					<reference name="citedSources"
+						multiple="true"
+						ordered="true"
+						type="ResearchSource"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										r -> $r.get(`tl.ai.execution:ResearchRun#sources`)
+											.filter(s -> $s.get(`tl.ai.execution:ResearchSource#cited`))
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</reference>
+					<reference name="findings"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						ordered="true"
+						type="ResearchFinding"
+					/>
+					<!-- The sources the run tree read that the report does not cite. -->
+					<reference name="alsoRead"
+						multiple="true"
+						ordered="true"
+						type="ResearchSource"
+					>
+						<annotations>
+							<collapsed/>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[
+										r -> $r.get(`tl.ai.execution:ResearchRun#sources`)
+											.filter(s -> !$s.get(`tl.ai.execution:ResearchSource#cited`))
+									]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
+			<!--
+				A source a research run read: a web page, an object of the application, or a record an
+				application put on the reading list.
+
+				A web page references its archived copy (page), an object the object itself (object).
+				url and title are set for a source no reference applies to - a page that was not
+				archived, an application record that is no model object - and, for an object, hold its
+				id and the label it had when it was read.
+
+				Deletion: both references keep the default deletion policy, which clears the reference.
+				An object of the application may be deleted at any time; its source then shows the
+				label it was read with, marked as deleted, and the report's footnote of it keeps its
+				number, because url still holds the id the report cites. An archived page a source
+				references is not deleted by the archive's retention; a page an administrator deletes
+				leaves a source named as a deleted page. The run and its document never break for it.
+				(stabilise-reference is no option: on a model reference it maps to a table that does
+				not stabilise, and the reference is cleared all the same.)
+			-->
+			<class name="ResearchSource">
+				<annotations>
+					<id-column value="displayName"/>
+					<main-properties properties="displayName,readAt"/>
+				</annotations>
+				<attributes>
+					<!--
+						What the source is called: the page's title, the object's label, or the title,
+						marked as deleted when the page or the object was deleted.
+					-->
+					<property name="displayName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<derived-storage>
+									<expression-evaluation>
+										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchSourceImpl#computeDisplayName()"/>
+									</expression-evaluation>
+								</derived-storage>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<reference name="page"
+						type="tl.ai.execution:ArchivedPage"
+					/>
+					<reference name="object"
+						type="tl.model:TLObject"
+					/>
+					<property name="url"
+						type="tl.core:String"
+					/>
+					<property name="title"
+						type="tl.core:String"
+					/>
+					<!-- The source kind of the reading list: web, object, or one an application declared. -->
+					<property name="kind"
+						type="tl.core:String"
+					/>
+					<!-- Whether the report cites it. -->
+					<property name="cited"
+						type="tl.core:Boolean"
+					/>
+					<!-- The number of its footnote in the report; empty for a source the report does not cite. -->
+					<property name="footnote"
+						type="tl.core:Integer"
+					/>
+					<property name="readAt"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				A finding a research run recorded: a claim and the words of its source. A table of
+				findings shows the claim and its source - what a reader scans; the id is the model's and
+				the quote is offered in the column selection.
+			-->
+			<class name="ResearchFinding">
+				<annotations>
+					<id-column value="findingId"/>
+					<main-properties properties="claim,source"/>
+				</annotations>
+				<attributes>
+					<property name="findingId"
+						type="tl.core:String"
+					/>
+					<property name="claim"
+						type="tl.core:Text"
+					/>
+					<property name="quote"
+						type="tl.core:Text"
+					/>
+					<!-- The source the quote is from: one of the sources of the same run. -->
+					<reference name="source"
+						type="ResearchSource"
+					/>
+					<!-- The run that recorded the finding, usually a research worker's. -->
+					<reference name="recordedBy"
+						type="tl.ai.execution:AgentExecution"
+					/>
+				</attributes>
+			</class>
+
+		</types>
+	</module>
+</model>

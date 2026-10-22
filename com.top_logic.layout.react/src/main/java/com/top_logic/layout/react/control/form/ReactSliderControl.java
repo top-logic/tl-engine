@@ -35,6 +35,14 @@ import com.top_logic.layout.react.state.SliderState;
  * </p>
  *
  * <p>
+ * The range is a {@link SliderRange} and can be exchanged at any time ({@link #setRange(SliderRange)}).
+ * A range that is not {@link SliderRange#usable() usable} - a bound missing, the lower bound not
+ * below the upper one, or a step not above zero - leaves the slider disabled without bounds until a
+ * usable range is set. The {@link SliderRange#unit() unit} of the range is written after the value
+ * and after both bounds, separated by a non-breaking space ({@code 12,5 %}).
+ * </p>
+ *
+ * <p>
  * The state is described by {@link SliderState}.
  * </p>
  *
@@ -49,7 +57,12 @@ public class ReactSliderControl extends ReactFormFieldControl {
 
 	private static final String REACT_MODULE = "TLSlider";
 
+	/** Separator between a number and its unit: a non-breaking space keeps them on one line. */
+	private static final char UNIT_SEPARATOR = '\u00A0';
+
 	private final Format _format;
+
+	private SliderRange _range;
 
 	/**
 	 * Creates a new {@link ReactSliderControl}.
@@ -60,29 +73,74 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	 *        The field model.
 	 * @param format
 	 *        The format the value is displayed in.
-	 * @param min
-	 *        The smallest value that can be set.
-	 * @param max
-	 *        The largest value that can be set, greater than {@code min}.
-	 * @param step
-	 *        The distance between two values that can be set, greater than zero.
+	 * @param range
+	 *        The range the handle travels, see {@link #setRange(SliderRange)}.
 	 */
-	public ReactSliderControl(ReactContext context, FieldModel model, Format format, double min, double max,
-			double step) {
+	public ReactSliderControl(ReactContext context, FieldModel model, Format format, SliderRange range) {
 		super(context, model, REACT_MODULE);
-		if (min >= max) {
-			throw new IllegalArgumentException("A slider needs a range to travel: " + min + " is not below " + max);
-		}
-		if (step <= 0) {
-			throw new IllegalArgumentException("A slider needs a step to move by: " + step + " is not above zero.");
-		}
 		_format = format;
-		putState(SliderState.MIN__PROP, Double.valueOf(min));
-		putState(SliderState.MAX__PROP, Double.valueOf(max));
-		putState(SliderState.STEP__PROP, Double.valueOf(step));
-		putState(SliderState.MIN_LABEL__PROP, format(Double.valueOf(min)));
-		putState(SliderState.MAX_LABEL__PROP, format(Double.valueOf(max)));
-		putState(SliderState.VALUE_LABEL__PROP, format(model.getValue()));
+		setRange(range);
+	}
+
+	/**
+	 * The range the handle currently travels.
+	 */
+	public SliderRange getRange() {
+		return _range;
+	}
+
+	/**
+	 * Sets the range the handle travels and writes the value and the bounds as text with the
+	 * range's unit.
+	 *
+	 * <p>
+	 * A range that is not {@link SliderRange#usable() usable} sends no bounds and disables the
+	 * slider until a usable range is set.
+	 * </p>
+	 *
+	 * @param range
+	 *        The range to travel, {@link SliderRange#NONE} if there is none.
+	 */
+	public void setRange(SliderRange range) {
+		_range = range == null ? SliderRange.NONE : range;
+		if (_range.usable()) {
+			putState(SliderState.MIN__PROP, _range.min());
+			putState(SliderState.MAX__PROP, _range.max());
+			putState(SliderState.STEP__PROP, Double.valueOf(_range.effectiveStep()));
+			putState(SliderState.MIN_LABEL__PROP, format(_range.min()));
+			putState(SliderState.MAX_LABEL__PROP, format(_range.max()));
+		} else {
+			putState(SliderState.MIN__PROP, null);
+			putState(SliderState.MAX__PROP, null);
+			putState(SliderState.STEP__PROP, null);
+			putState(SliderState.MIN_LABEL__PROP, null);
+			putState(SliderState.MAX_LABEL__PROP, null);
+		}
+		putState(SliderState.VALUE_LABEL__PROP, format(getFieldModel().getValue()));
+		setDisabled(getFieldModel().isDisabled());
+	}
+
+	/**
+	 * The slider is disabled when its field is, and while its {@link #getRange() range} is not
+	 * {@link SliderRange#usable() usable}.
+	 */
+	@Override
+	protected void setDisabled(boolean disabled) {
+		super.setDisabled(disabled || !hasUsableRange());
+	}
+
+	/**
+	 * A slider without a {@link SliderRange#usable() usable} range cannot be moved, so it takes no
+	 * value from the client.
+	 */
+	@Override
+	protected boolean acceptsClientValue() {
+		return super.acceptsClientValue() && hasUsableRange();
+	}
+
+	private boolean hasUsableRange() {
+		// The range is not yet set while the base class initializes the field state.
+		return _range != null && _range.usable();
 	}
 
 	/**
@@ -150,7 +208,12 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	}
 
 	private String format(Object value) {
-		return value instanceof Number ? _format.format(value) : null;
+		if (!(value instanceof Number)) {
+			return null;
+		}
+		String text = _format.format(value);
+		String unit = _range == null ? null : _range.unit();
+		return unit == null || unit.isEmpty() ? text : text + UNIT_SEPARATOR + unit;
 	}
 
 }

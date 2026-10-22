@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.element;
 
 import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.dnd.DropBinding;
+import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.dnd.DropSignature;
 
 /**
@@ -22,8 +24,10 @@ public enum TreeDropTargetMode implements ExternallyNamed {
 	 * The tree as a whole is the target.
 	 *
 	 * <p>
-	 * A drop anywhere on the tree applies, and the action chain is told nothing beyond the dropped
-	 * objects - what the drop means is the same wherever it was made.
+	 * A drop anywhere on the tree applies. Beside the dropped objects, the drop's
+	 * {@value DropConfig#REFUSE_IF} and action chain see the reference
+	 * {@value DropArguments#TARGET} (renamed with {@value DropConfig#TARGET_AS}), which holds no
+	 * value - what the drop means is the same wherever it was made.
 	 * </p>
 	 */
 	TREE("tree", DropSignature.CONTROL),
@@ -32,9 +36,12 @@ public enum TreeDropTargetMode implements ExternallyNamed {
 	 * A single node is the target.
 	 *
 	 * <p>
-	 * A drop applies to the object of the node it was made on, which is what the drop's
-	 * {@code target-channel} carries into the action chain; a drop beside the nodes applies to
-	 * nothing. The nodes are highlighted individually while such a drag moves over the tree.
+	 * A drop applies to the object of the node it was made on; a drop beside the nodes applies to
+	 * nothing. The object is the reference {@value DropArguments#TARGET} (renamed with
+	 * {@value DropConfig#TARGET_AS}), which the drop's {@value DropConfig#REFUSE_IF} and action
+	 * chain see as a variable beside the dropped objects, and which the optional
+	 * {@value DropConfig#TARGET_CHANNEL} receives as well. The nodes are highlighted individually
+	 * while such a drag moves over the tree.
 	 * </p>
 	 */
 	NODE("node", DropSignature.ONTO),
@@ -53,10 +60,13 @@ public enum TreeDropTargetMode implements ExternallyNamed {
 	 * </p>
 	 *
 	 * <p>
-	 * The object whose children the dropped objects become is what the drop's
-	 * {@code parent-channel} carries into the action chain, the child they are inserted before is
-	 * what its {@code before-channel} carries; its {@code refuse-if} receives both after the dragged
-	 * objects, {@code objects -> parent -> before -> reason}. The parent of the top-level nodes is
+	 * The object whose children the dropped objects become is the reference
+	 * {@value DropArguments#PARENT} (renamed with {@value DropConfig#PARENT_AS}), the child they are
+	 * inserted before the reference {@value DropArguments#BEFORE} (renamed with
+	 * {@value DropConfig#BEFORE_AS}); the drop's {@value DropConfig#REFUSE_IF} and action chain see
+	 * both as variables beside the dropped objects, and the optional
+	 * {@value DropConfig#PARENT_CHANNEL} and
+	 * {@value DropConfig#BEFORE_CHANNEL} receive them as well. The parent of the top-level nodes is
 	 * the object the tree is built from ({@code null} where that object is displayed as a node
 	 * itself), and {@code before} is {@code null} for an insertion as the last children. Which
 	 * structure the insertion changes is up to the action chain - typically the list the

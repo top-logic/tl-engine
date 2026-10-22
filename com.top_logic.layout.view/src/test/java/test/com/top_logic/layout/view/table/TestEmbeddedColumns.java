@@ -18,6 +18,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.I18NConstants;
@@ -458,8 +459,15 @@ public class TestEmbeddedColumns extends TestCase {
 		return String.join("\n", log.getErrors());
 	}
 
-	/** The {@code <columns>} of a table declaring the given column. */
+	/**
+	 * The {@code <columns>} of a table declaring the given column, the ones it is already part of
+	 * when asked a second time.
+	 */
 	private static ColumnsConfig columns(PolymorphicConfiguration<? extends ColumnDeclaration> config) {
+		ConfigurationItem container = ((ConfigPart) config).container();
+		if (container instanceof ColumnsConfig table && !(container instanceof ColumnDeclaration.Config)) {
+			return table;
+		}
 		ColumnsConfig result = TypedConfiguration.newConfigItem(ColumnsConfig.class);
 		result.getColumns().add(config);
 		return result;

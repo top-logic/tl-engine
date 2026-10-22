@@ -11,7 +11,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.model.ObservedTypes;
-import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -28,7 +27,7 @@ public class ValueChannelFactory implements ChannelFactory {
 
 	private final String _name;
 
-	private final List<ChannelRef> _inputRefs;
+	private final List<InputRef> _inputRefs;
 
 	/**
 	 * The compiled initialization function, {@code null} for a channel that starts empty.
@@ -45,8 +44,7 @@ public class ValueChannelFactory implements ChannelFactory {
 		_name = config.getName();
 		_inputRefs = config.getInputs();
 		_observedTypeRefs = config.getObservedTypes();
-		Expr init = config.getInit();
-		_init = init != null ? QueryExecutor.compile(init) : null;
+		_init = InputScript.compile(config, ValueChannelConfig.INIT);
 		if (_init == null && (!_inputRefs.isEmpty() || !_observedTypeRefs.isEmpty())) {
 			context.error("Channel '" + _name + "' declares '" + Inputs.INPUTS + "' or '"
 				+ ValueChannelConfig.OBSERVED_TYPES + "' without '" + ValueChannelConfig.INIT

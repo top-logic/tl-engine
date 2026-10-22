@@ -37,9 +37,9 @@
 					<de>Fortschritt</de>
 				</title>
 				<progress
-					done="x -> 42"
-					label="x -> #('42 of 100 done'@en, '42 von 100 erledigt'@de)"
-					total="x -> 100"
+					done="42"
+					label="#('42 of 100 done'@en, '42 von 100 erledigt'@de)"
+					total="100"
 				/>
 				<text>
 					<label>

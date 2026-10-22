@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<component class="com.top_logic.ai.chat.classic.ReactViewComponent"
+	name="AgentContent"
+	resPrefix="chat.layout.agent"
+	view="tl-chat-classic/chat.view.xml"
+/>

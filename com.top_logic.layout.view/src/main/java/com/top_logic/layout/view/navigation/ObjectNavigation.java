@@ -20,6 +20,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.OpenDialogAction;
 import com.top_logic.layout.view.tiles.TileFrame;
@@ -100,37 +101,39 @@ public final class ObjectNavigation {
 		if (target == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_DISPLAY_TARGET__TYPE.fill(type));
 		}
-		new Display(origin, hint, targets::getMounts, target.shows(), shown, continuation).start();
+		new Display(origin, hint, targets::getMounts, target.shows(),
+			ActionArguments.of(DisplayTargetService.OBJECT, shown), continuation).start();
 	}
 
 	/**
 	 * Displays the given views in turn, each with the values its bindings compute from the given
-	 * value.
+	 * arguments.
 	 *
 	 * <p>
 	 * The views are brought into view the same way a target's views are, so a view is looked for
 	 * within the view the show before it displayed first, and only then within the window as a
-	 * whole. The value takes the place the object takes when a target is displayed: it is what the
-	 * bindings and the label expressions are applied to, and what the continuation is resumed with.
-	 * Any value does, a business object as well as a text a filter is set to.
+	 * whole. The arguments take the place the object takes when a target is displayed: they are
+	 * what the bindings and the label expressions are evaluated over, a binding without expression
+	 * receives the default argument, and the continuation is resumed with it. Any value does, a
+	 * business object as well as a text a filter is set to.
 	 * </p>
 	 *
 	 * @param context
 	 *        Where the request comes from; decides which of several places is the nearest one.
 	 * @param shows
 	 *        The views to display, outermost first.
-	 * @param value
+	 * @param arguments
 	 *        What the bindings compute their values from.
 	 * @param continuation
-	 *        Resumed with the value once the views are displayed, aborted when the user declined to
-	 *        give up unsaved changes on the way.
+	 *        Resumed with the default argument once the views are displayed, aborted when the user
+	 *        declined to give up unsaved changes on the way.
 	 * @throws TopLogicException
 	 *         If one of the views cannot be reached.
 	 */
-	public static void show(ReactContext context, List<ShowStep> shows, Object value,
+	public static void show(ReactContext context, List<ShowStep> shows, ActionArguments arguments,
 			Continuation continuation) {
 		ViewContext origin = viewContext(context);
-		new Display(origin, hint(origin), windowMounts(origin), shows, value, continuation).start();
+		new Display(origin, hint(origin), windowMounts(origin), shows, arguments, continuation).start();
 	}
 
 	/**
@@ -178,7 +181,7 @@ public final class ObjectNavigation {
 		 */
 		private final Supplier<ViewMounts> _declaredMounts;
 
-		private final Object _value;
+		private final ActionArguments _arguments;
 
 		private final Continuation _continuation;
 
@@ -214,12 +217,12 @@ public final class ObjectNavigation {
 		private boolean _mountsResolved;
 
 		Display(ViewContext origin, MountPath hint, Supplier<ViewMounts> declaredMounts, List<ShowStep> shows,
-				Object value, Continuation continuation) {
+				ActionArguments arguments, Continuation continuation) {
 			_origin = origin;
 			_hint = hint;
 			_declaredMounts = declaredMounts;
 			_shows = shows;
-			_value = value;
+			_arguments = arguments;
 			_continuation = continuation;
 			_current = origin;
 			_registry = origin.getRevealRegistry();
@@ -234,7 +237,7 @@ public final class ObjectNavigation {
 		 */
 		private void step(int index) {
 			if (index >= _shows.size()) {
-				_continuation.resume(_value);
+				_continuation.resume(_arguments.value());
 				return;
 			}
 
@@ -341,7 +344,7 @@ public final class ObjectNavigation {
 					.fill(binding.channel(), show.viewRef()));
 			}
 			ViewChannel channel = instance.resolveChannel(new ChannelRef(binding.channel()));
-			Object value = binding.evaluate(_value);
+			Object value = binding.evaluate(_arguments);
 			guarded(() -> channel.set(value), () -> bind(show, instance, index + 1, onDone));
 		}
 
@@ -366,9 +369,9 @@ public final class ObjectNavigation {
 
 			Map<String, Object> params = new LinkedHashMap<>();
 			for (Binding binding : show.bindings()) {
-				params.put(binding.channel(), binding.evaluate(_value));
+				params.put(binding.channel(), binding.evaluate(_arguments));
 			}
-			TileFrame wanted = new TileFrame(show.viewRef(), show.labelFor(_value), params);
+			TileFrame wanted = new TileFrame(show.viewRef(), show.labelFor(_arguments), params);
 
 			List<TileFrame> current = stack.getPath();
 			int position = _frames.size();
@@ -420,7 +423,7 @@ public final class ObjectNavigation {
 		private void openDialog(ShowStep show) {
 			Map<String, Object> channelValues = new LinkedHashMap<>();
 			for (Binding binding : show.bindings()) {
-				channelValues.put(binding.channel(), binding.evaluate(_value));
+				channelValues.put(binding.channel(), binding.evaluate(_arguments));
 			}
 			OpenDialogAction.openDialog(_current, ViewLoader.fullPath(show.viewRef()),
 				OpenDialogAction.Config.CLOSE_ON_BACKDROP_DEFAULT, channelValues, List.of());

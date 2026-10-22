@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for an event, opened from events.view.xml. It asks for what an event needs to be
+	planned; the programme, registrations, sponsors and invoices are added on the event afterwards.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+
+	<window width="640px">
+		<title>
+			<en>New event</en>
+			<de>Neue Veranstaltung</de>
+		</title>
+		<form initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<field attribute="status"/>
+			<field attribute="startDate"/>
+			<field attribute="endDate"/>
+			<field attribute="venue"/>
+			<field attribute="maxParticipants"/>
+			<field attribute="ticketPrice"/>
+			<field attribute="currency"/>
+			<field attribute="manager"/>
+			<field attribute="description"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					inputs="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<execute-script function="$model.copy(transient: false)"/>
+						<with-result>
+							<write-channel name="selection"/>
+						</with-result>
+					</with-transaction>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

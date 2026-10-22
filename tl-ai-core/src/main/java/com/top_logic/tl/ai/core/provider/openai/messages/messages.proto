@@ -1,0 +1,107 @@
+package com.top_logic.tl.ai.core.provider.openai.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/** Shared envelope for event type dispatch. */
+message OpenAIEventEnvelope {
+	/** The event type identifier. */
+	string type [Name = "type"];
+}
+
+/** {@code response.created}, {@code response.completed}, {@code response.incomplete}, {@code response.failed}. */
+message ResponseLifecycleEvent {
+	/** The event type identifier. */
+	string type [Name = "type"];
+	/** The response metadata. */
+	ResponseInfo response [Name = "response"];
+}
+
+/** Basic response fields. */
+message ResponseInfo {
+	/** The response identifier. */
+	string id [Name = "id"];
+	/** The model that produced the response. */
+	string model [Name = "model"];
+	/** The response status (completed, incomplete, failed). */
+	string status [Name = "status"];
+	/** Token usage statistics. */
+	json usage [Name = "usage"];
+	/** Error details if the response failed. */
+	json error [Name = "error"];
+}
+
+/** {@code response.output_item.added} and {@code response.output_item.done}. */
+message OutputItemEvent {
+	/** The event type identifier. */
+	string type [Name = "type"];
+	/** The index of the output item. */
+	int output_index [Name = "output_index"];
+	/** The output item details. */
+	OutputItemInfo item [Name = "item"];
+}
+
+/** Details of an output item in the response. */
+message OutputItemInfo {
+	/** The item type (message, function_call). */
+	string type [Name = "type"];
+	/** The tool call identifier. */
+	string call_id [Name = "call_id"];
+	/** The tool name. */
+	string name [Name = "name"];
+	/** The item identifier. */
+	string id [Name = "id"];
+	/** The accumulated function call arguments. */
+	string arguments [Name = "arguments"];
+	/** Encrypted content for thinking continuity. */
+	string encrypted_content [Name = "encrypted_content"];
+}
+
+/** {@code response.output_text.delta} and {@code response.reasoning_text.delta}. */
+message TextDeltaEvent {
+	/** The event type identifier. */
+	string type [Name = "type"];
+	/** The index of the output item. */
+	int output_index [Name = "output_index"];
+	/** The text fragment. */
+	string delta [Name = "delta"];
+}
+
+/** {@code response.function_call_arguments.delta}. */
+message FunctionCallArgsDeltaEvent {
+	/** The event type identifier. */
+	string type [Name = "type"];
+	/** The index of the output item. */
+	int output_index [Name = "output_index"];
+	/** The partial arguments fragment. */
+	string delta [Name = "delta"];
+}
+
+// --- Request types ---
+
+/** <code>OpenAI</code> Responses API request body. */
+message OpenAIResponsesRequest {
+	/** The model identifier. */
+	string model [Name = "model"];
+	/** Maximum number of output tokens. */
+	int max_output_tokens [Name = "max_output_tokens"];
+	/** Whether to stream the response. */
+	bool stream [Name = "stream"];
+	/** Whether to store the response. */
+	bool store [Name = "store"];
+	/** System instructions. */
+	json instructions [Name = "instructions"];
+	/** Reasoning configuration. */
+	json reasoning [Name = "reasoning"];
+	/** The conversation input. */
+	json input [Name = "input"];
+	/** Tool definitions. */
+	json tools [Name = "tools"];
+	/** Text output configuration. */
+	json text [Name = "text"];
+	/** Tool choice configuration. */
+	json tool_choice [Name = "tool_choice"];
+}

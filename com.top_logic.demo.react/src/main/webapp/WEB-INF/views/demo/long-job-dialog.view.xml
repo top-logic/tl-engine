@@ -27,14 +27,14 @@
 		<button>
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
 				image="css:bi bi-play-fill"
-				input="job"
+				inputs="job as jobState"
 			>
 				<label>
 					<en>Start job</en>
 					<de>Auftrag starten</de>
 				</label>
 				<executability>
-					<disabled-if expr="s -> if(jobIsRunning($s), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
 				</executability>
 				<start-job
 					cancelable="true"
@@ -61,7 +61,7 @@
 							</label>
 						</phase>
 					</phases>
-					<function><![CDATA[job -> x -> {
+					<function><![CDATA[{
 	$job.jobPhase('collect');
 	$job.jobMessage(#('Collecting the source records.'@en, 'Die Quelldatensätze werden gesammelt.'@de));
 	count(1, 6).foreach(i -> {

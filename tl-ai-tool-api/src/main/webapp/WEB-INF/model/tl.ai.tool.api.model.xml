@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.ai.tool.api">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.tl.ai.tool.api.model.impl"
+				interface-package="com.top_logic.tl.ai.tool.api.model"
+			/>
+		</annotations>
+	</module>
+</model>

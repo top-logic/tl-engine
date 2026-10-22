@@ -22,7 +22,7 @@
 				</title>
 			</card>
 			<action class="test.com.top_logic.layout.view.element.TestDashboardElement$OpeningCommand"
-				input="ch"
+				inputs="ch"
 			>
 				<executability>
 					<null-input-disabled/>

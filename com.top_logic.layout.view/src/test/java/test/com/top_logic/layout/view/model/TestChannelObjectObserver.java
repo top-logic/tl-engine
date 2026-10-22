@@ -16,6 +16,9 @@ import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.knowledge.service.db2.AbstractDBKnowledgeBaseTest;
 import test.com.top_logic.knowledge.wrap.SimpleWrapperFactoryTestScenario.BObj;
 
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.command.CommandArguments;
 import com.top_logic.basic.Protocol;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateChain;
@@ -246,7 +249,9 @@ public class TestChannelObjectObserver extends AbstractDBKnowledgeBaseTest {
 		BObj b1 = create("b1");
 		_input.set(b1);
 		_input.attach(_scope);
-		LiveExecutability live = new LiveExecutability(NullInputDisabled.INSTANCE, _input, Set.of(), () -> _reported++);
+		LiveExecutability live = new LiveExecutability(NullInputDisabled.INSTANCE,
+			new CommandArguments(List.of(new InputRef(new ChannelRef("input"))), null), List.of(_input), Set.of(),
+			() -> _reported++);
 		live.attach(_scope);
 		assertTrue("The command is executable over the object.", live.getState().isExecutable());
 

@@ -8,23 +8,25 @@ package com.top_logic.layout.view.channel;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * The channels a configured element or action reads the leading arguments of its functions from.
+ * The channels whose values a configured element, channel, command or action reads as named
+ * values.
  *
  * <p>
- * A function of a view computes its result from more than the value it is applied to: from what is
+ * A script of a view computes its result from more than the value it is applied to: from what is
  * selected elsewhere, from what a filter above it holds, from the object a dialog was opened for.
- * Such a value comes from a {@link ViewChannel} the configuration names as an input, and every
- * function of that configuration receives the values of those channels ahead of the arguments it
- * is called with.
+ * Such a value comes from a {@link ViewChannel} the configuration names as an input. Each input is
+ * a variable of the configuration's scripts, named after the channel, or by the name given with
+ * {@value CommaSeparatedInputRefs#AS}. A script refers to it as <code>$name</code> without declaring
+ * it.
  * </p>
  *
- * @implNote {@link ChannelInputs} resolves the declared references against the session and builds
- *           the argument arrays the functions are called with.
+ * @see InputScript
+ * @see NamedInputs
  */
 public interface Inputs extends ConfigurationItem {
 
@@ -32,20 +34,22 @@ public interface Inputs extends ConfigurationItem {
 	String INPUTS = "inputs";
 
 	/**
-	 * References to the {@link ViewChannel}s whose current values become the leading positional
-	 * arguments of this configuration's TL-Script functions, in declaration order.
+	 * The channels whose current values the scripts of this configuration see as variables, in
+	 * declaration order.
 	 *
 	 * <p>
-	 * The channels are read whenever a function is applied, so what a function computes follows
-	 * what the referenced channels currently hold.
+	 * Each value is a variable named after its channel, or by the name given with
+	 * {@value CommaSeparatedInputRefs#AS}. The channels are read whenever a script is evaluated, so
+	 * what a script computes follows what the referenced channels currently hold.
 	 * </p>
 	 *
 	 * <p>
-	 * The references are written either as a comma-separated attribute:
+	 * The channels are written either as a comma-separated attribute, an entry optionally renaming
+	 * its variable:
 	 * </p>
 	 *
 	 * <pre>
-	 * inputs="selectedCustomer, editMode"
+	 * inputs="selection as ticket, editMode"
 	 * </pre>
 	 *
 	 * <p>
@@ -54,14 +58,14 @@ public interface Inputs extends ConfigurationItem {
 	 *
 	 * <pre>
 	 * &lt;inputs&gt;
-	 *   &lt;input channel="selectedCustomer"/&gt;
+	 *   &lt;input channel="selection" as="ticket"/&gt;
 	 *   &lt;input channel="editMode"/&gt;
 	 * &lt;/inputs&gt;
 	 * </pre>
 	 */
 	@Name(INPUTS)
-	@Format(CommaSeparatedChannelRefs.class)
-	@ListBinding(format = ChannelRefFormat.class, tag = "input", attribute = "channel")
-	List<ChannelRef> getInputs();
+	@Format(CommaSeparatedInputRefs.class)
+	@Binding(InputRefsBinding.class)
+	List<InputRef> getInputs();
 
 }

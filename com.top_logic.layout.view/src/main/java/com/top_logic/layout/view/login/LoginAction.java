@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.login;
 
+import com.top_logic.layout.view.command.WithValueArgument;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -43,7 +44,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Expects its input to be a (transient) object carrying {@code name} and {@code password}
- * attributes, e.g. the model of the login {@code <form>} after {@code <store-form-state/>}. On
+ * attributes, e.g. the model of the login {@code <form>} as the result of an enclosing {@code <store-form-state>}. On
  * success the actual session swap is deferred to the reload via {@link PendingSessionAction}; on
  * failure a {@link TopLogicException} is raised so the form shows the error.
  * </p>
@@ -104,7 +105,7 @@ public class LoginAction implements ViewAction {
 	 * Configuration for {@link LoginAction}.
 	 */
 	@TagName("login")
-	public interface Config extends PolymorphicConfiguration<LoginAction> {
+	public interface Config extends PolymorphicConfiguration<LoginAction>, WithValueArgument {
 
 		@Override
 		@ClassDefault(LoginAction.class)
@@ -293,4 +294,11 @@ public class LoginAction implements ViewAction {
 		return value == null || value.isEmpty();
 	}
 
+	/**
+	 * Switches the session to the authenticated user or opens a dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
+	}
 }

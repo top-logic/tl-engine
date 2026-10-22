@@ -88,15 +88,15 @@ Consequences:
 ## Example
 
 A status report of a project with title, agenda, key figures, a timeline, a chart and a table of open tickets that
-continues on further slides when it is long (the full version is the "Status report (PowerPoint)" command in
-`com.top_logic.demo.react`, `projects/overview.view.xml`):
+continues on further slides when it is long, over the project `$project` (the full version is the "Status
+report (PowerPoint)" command in `com.top_logic.demo.react`, `projects/overview.view.xml`):
 
 ```
-p -> {
-	tickets = $p.get(`my.module:Project#tickets`);
+{
+	tickets = $project.get(`my.module:Project#tickets`);
 	open = $tickets.filter(t -> !$t.get(`my.module:Ticket#done`));
-	pptDeck($p.get(`my.module:Project#reportTemplate`), [
-		pptTitle($p.get(`my.module:Project#name`), "Status report", notes: "Status at a glance."),
+	pptDeck($project.get(`my.module:Project#reportTemplate`), [
+		pptTitle($project.get(`my.module:Project#name`), "Status report", notes: "Status at a glance."),
 		pptAgenda(["Key figures", "Open tickets"]),
 		pptContent("Key figures", null, [
 			pptRow([
@@ -118,10 +118,12 @@ p -> {
 ## Download from a view
 
 In a `.view.xml`, a command runs the script with `<execute-script>` and hands the resulting file to the browser
-with `<download/>` (`DownloadAction`):
+with `<download/>` (`DownloadAction`), placed into the `<with-result>` of `<execute-script>` as the follow-up action of its
+result.
+The script uses the command's input as the variable `$project`:
 
 ```xml
-<generic-command image="css:bi bi-file-earmark-slides" input="project" placement="TOOLBAR">
+<generic-command image="css:bi bi-file-earmark-slides" inputs="project" placement="TOOLBAR">
 	<label>
 		<en>Status report (PowerPoint)</en>
 		<de>Statusbericht (PowerPoint)</de>
@@ -130,9 +132,11 @@ with `<download/>` (`DownloadAction`):
 		<null-input-disabled/>
 	</executability>
 	<execute-script>
-		<function><![CDATA[ p -> pptDeck(...) ]]></function>
+		<function><![CDATA[ pptDeck(...) ]]></function>
+		<with-result>
+			<download/>
+		</with-result>
 	</execute-script>
-	<download/>
 </generic-command>
 ```
 

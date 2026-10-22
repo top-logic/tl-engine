@@ -16,7 +16,7 @@ import java.util.Set;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -102,11 +102,11 @@ public class ColumnDeclarations {
 	 * The channels the functions of the given declarations read, see
 	 * {@link ColumnDeclaration#inputs()}, each once, in declaration order.
 	 */
-	public static List<ChannelRef> inputs(List<ColumnDeclaration> declarations) {
-		Map<String, ChannelRef> result = new LinkedHashMap<>();
+	public static List<InputRef> inputs(List<ColumnDeclaration> declarations) {
+		Map<String, InputRef> result = new LinkedHashMap<>();
 		for (ColumnDeclaration declaration : declarations) {
-			for (ChannelRef input : declaration.inputs()) {
-				result.putIfAbsent(input.getChannelName(), input);
+			for (InputRef input : declaration.inputs()) {
+				result.putIfAbsent(input.getChannel().getChannelName(), input);
 			}
 		}
 		return new ArrayList<>(result.values());

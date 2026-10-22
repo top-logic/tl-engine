@@ -9,7 +9,7 @@
 
 	<object-list
 		inputs="catalogue, season"
-		items="catalogue -> season -> [$catalogue, $season]"
+		items="[$catalogue, $season]"
 		layout="grid"
 		max-columns="3"
 		min-column-width="18rem"

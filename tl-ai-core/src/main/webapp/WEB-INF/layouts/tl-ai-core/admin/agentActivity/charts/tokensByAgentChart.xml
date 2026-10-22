@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	"Token nach Agent", billable tokens per agent over the period the tab's control names. Together
+	with "Aktivste Agenten" on the Überblick it separates the two questions that a single ranking
+	confuses: which agent runs most often, and which agent costs most. They are frequently not the
+	same one.
+-->
+<chartjs name="aiTokensByAgentChart"
+	model="model(aiUsagePeriod)"
+	securityObject="securityRoot"
+	titleKey="admin.ai.agentActivity.charts.tokensByAgent"
+	toolbar="true"
+>
+	<data><![CDATA[
+		model -> {
+			period = ifElse(isEmpty($model),
+				new(`tl.ai.monitor:Period`, transient: true)
+					..set(`tl.ai.monitor:Period#preset`, 30),
+				$model);
+			executions = all(`tl.ai.execution:AgentExecution`);
+			startedAt = e -> $e.get(`tl.ai.execution:AgentExecution#startedAt`);
+			billable = e -> ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#inputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#inputTokens`))
+				+ ifElse(isEmpty($e.get(`tl.ai.execution:AgentExecution#outputTokens`)), 0, $e.get(`tl.ai.execution:AgentExecution#outputTokens`));
+			start = $period.get(`tl.ai.monitor:Period#windowStart`);
+			end = $period.get(`tl.ai.monitor:Period#windowEnd`);
+			recent = $executions.filter(e -> (isEmpty($start) || $startedAt($e) >= $start)
+				&& (isEmpty($end) || $startedAt($e) < $end));
+			byAgent = $recent.groupBy(e -> $e.get(`tl.ai.execution:AgentExecution#agentName`));
+			ranked = $byAgent.keySet().toList().sort(desc(comparator(a -> $byAgent[$a].map(e -> $billable($e)).sum())));
+			names = ifElse($ranked.size() > 10, $ranked.subList(0, 10), $ranked);
+			{
+				'type': 'bar',
+				'data': {
+					'labels': $names,
+					'datasets': list({
+						'label': #('Billable tokens'@en, 'Abrechenbare Token'@de).localize(),
+						'data': $names.map(a -> $byAgent[$a].map(e -> $billable($e)).sum()),
+						'backgroundColor': '#2968c8',
+						'maxBarThickness': 26
+					})
+				},
+				'options': {
+					'indexAxis': 'y',
+					'maintainAspectRatio': false,
+					'plugins': {
+						'legend': { 'display': false },
+						// See the note in topAgentsChart.xml: an empty plot area has to say why it
+						// is empty, because "no data" and "no consumption" look the same.
+						'title': {
+							'display': isEmpty($recent),
+							'text': ifElse(!isEmpty($start) && $start > now(),
+								#('The selected period lies in the future.'@en,
+									'Der gewählte Zeitraum liegt in der Zukunft.'@de).localize(),
+								#('No runs in the selected period.'@en,
+									'Keine Läufe im gewählten Zeitraum.'@de).localize()),
+							'color': '#8a8a8a'
+						}
+					},
+					'scales': { 'x': { 'beginAtZero': true } }
+				}
+			};
+		}
+	]]></data>
+</chartjs>

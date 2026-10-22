@@ -1,0 +1,413 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.tl.ai.core.execution;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.tl.ai.core.agent.AgentResult;
+import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.tl.ai.core.cost.Money;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.provider.LLMProviderService;
+import com.top_logic.tl.ai.tool.api.RunInfo;
+
+/**
+ * {@link AgentEventListener} decorator that records an agent run as an {@link AgentExecution}.
+ *
+ * <p>
+ * On {@code RunStarted} it creates the execution row with status
+ * {@link ExecutionStatus#RUNNING} — capturing the loop-generated run id — and publishes it via
+ * the run's {@link ExecutionHandle}. On {@code RunCompleted} it captures the terminal
+ * {@link AgentResult}. The caller finalizes the row by invoking
+ * {@link #complete(String, Throwable)} after the loop returns (or throws), supplying the
+ * serialized transcript.
+ * </p>
+ *
+ * <p>
+ * Given the run's transcript as a supplier, it also writes that transcript while the run is still
+ * going (#598): when the run starts, so that the user's message is on record, and whenever the run
+ * is about to wait for a person - see {@link ExecutionHandle#checkpoint()}, which it installs. A
+ * process that ends while the run waits then leaves the turn behind as far as the user saw it,
+ * and the startup sweep closes it as interrupted. See
+ * {@link AgentExecutionStore#checkpointTranscript(AgentExecution, Supplier)}.
+ * </p>
+ *
+ * <p>
+ * Deliberately not at every step: every write of the row keeps a version of it, transcript
+ * included, and a run that is not waiting is minutes from writing its final transcript anyway.
+ * </p>
+ *
+ * <p>
+ * Recording is best-effort: persistence failures are logged and never disturb the run. All
+ * events are forwarded to the wrapped listener unchanged.
+ * </p>
+ */
+public final class ExecutionRecorder implements AgentEventListener {
+
+	private final AgentEventListener _delegate;
+
+	private final AgentSession _session;
+
+	private final String _agentName;
+
+	private final AgentExecution _parent;
+
+	private final ExecutionHandle _handle;
+
+	private final Supplier<String> _transcript;
+
+	/**
+	 * Whether a checkpoint is queued and has not yet taken the transcript.
+	 *
+	 * <p>
+	 * A boundary reached meanwhile queues nothing: the queued checkpoint writes the state as of when
+	 * it is carried out, which includes that boundary.
+	 * </p>
+	 */
+	private final AtomicBoolean _checkpointQueued = new AtomicBoolean();
+
+	private volatile AgentExecution _execution;
+
+	private volatile String _runId;
+
+	private volatile String _lastErrorKind;
+
+	private volatile String _lastErrorMessage;
+
+	private volatile AgentResult _result;
+
+	/** What the run cost, as its completion event reported it; <code>null</code> before that. */
+	private volatile Money _cost;
+
+	/**
+	 * Creates an {@link ExecutionRecorder}.
+	 *
+	 * @param session
+	 *        The session the recorded execution belongs to; must not be <code>null</code>.
+	 * @param agentName
+	 *        Name of the agent handling the run; must not be <code>null</code>.
+	 * @param parent
+	 *        The delegating execution for sub-agent runs; <code>null</code> for top-level runs.
+	 * @param handle
+	 *        The run's execution holder (from the tool context); the created execution is
+	 *        published here so tools can attribute their work to it.
+	 * @param delegate
+	 *        The listener to forward all events to.
+	 */
+	public ExecutionRecorder(AgentSession session, String agentName, AgentExecution parent,
+			ExecutionHandle handle, AgentEventListener delegate) {
+		this(session, agentName, parent, handle, delegate, null);
+	}
+
+	/**
+	 * Creates an {@link ExecutionRecorder} that also checkpoints the run's transcript while it runs.
+	 *
+	 * @param transcript
+	 *        The run's transcript as it stands, the same text {@link #complete(String, Throwable)}
+	 *        is given at the end; <code>null</code> for a run without one, which then is written only
+	 *        when it ends. Asked on the store's writer thread, so it must be safe to call while the
+	 *        run goes on.
+	 *
+	 * @see #ExecutionRecorder(AgentSession, String, AgentExecution, ExecutionHandle,
+	 *      AgentEventListener)
+	 */
+	public ExecutionRecorder(AgentSession session, String agentName, AgentExecution parent,
+			ExecutionHandle handle, AgentEventListener delegate, Supplier<String> transcript) {
+		_session = session;
+		_agentName = agentName;
+		_parent = parent;
+		_handle = handle;
+		_delegate = delegate;
+		_transcript = transcript;
+		if (handle != null && transcript != null) {
+			handle.setCheckpoint(this::checkpoint);
+		}
+
+		// Publish a stable conversation id on the handle at run setup, so per-conversation resources
+		// (the interactive browser session) are reused across all runs/messages of one conversation.
+		// Derived here - on the setup thread, before the loop starts and before beginExecution creates
+		// the revision-sensitive AgentExecution row - as a plain String, so no tool ever dereferences
+		// the persistent wrapper on an execution thread reading at an older revision.
+		if (handle != null) {
+			handle.setConversationId(conversationIdOf(session));
+		}
+	}
+
+	/**
+	 * The stable conversation id of {@code session} as a plain String (its persistent object id, as
+	 * used to look the session back up), or <code>null</code> when no session is given or its id
+	 * cannot be read. Best-effort: any failure degrades to <code>null</code> (the browser tool then
+	 * falls back to per-run keying) rather than disturbing the run.
+	 */
+	public static String conversationIdOf(AgentSession session) {
+		if (session == null) {
+			return null;
+		}
+		try {
+			return KBUtils.getWrappedObjectName(session).toString();
+		} catch (RuntimeException ex) {
+			Logger.info("Could not derive a conversation id for the browser session key: " + ex.getMessage(),
+				ExecutionRecorder.class);
+			return null;
+		}
+	}
+
+	@Override
+	public void onEvent(AgentEvent event) {
+		if (event instanceof AgentEvent.RunStarted e) {
+			_runId = e.runId();
+			// Publish what identifies the run on the shared handle before any tool runs, so tools
+			// read it as plain data instead of dereferencing the persistent execution wrapper,
+			// which their revision need not include (Gitea #405). Done unconditionally (even when
+			// execution recording is inactive) so the facts are there whether or not the run is
+			// persisted. AgentLoop publishes the same run id and model just before emitting this
+			// event; repeating them here covers an emitter other than the loop, with the same
+			// values. The agent name is published here rather than only by AgentFactory because a
+			// run whose loop was built by hand - the aiChat script function's "ai.chat" - passes no
+			// factory, and this recorder is the only place that knows the name.
+			if (_handle != null) {
+				_handle.setRunId(_runId);
+				_handle.setAgentName(_agentName);
+				_handle.setModel(e.model(), resolveProviderId(e.model()));
+			}
+			beginRecording(e);
+		} else if (event instanceof AgentEvent.EnvironmentComposed e) {
+			recordEnvironment(e);
+		} else if (event instanceof AgentEvent.ProviderError e) {
+			_lastErrorKind = e.kind();
+			_lastErrorMessage = e.message();
+		} else if (event instanceof AgentEvent.ModelSwitched e) {
+			recordModelSwitch(e);
+		} else if (event instanceof AgentEvent.RunCompleted e) {
+			// The completion event carries no failure detail - it is the same event for every stop
+			// reason - so the last provider error seen is what names the failure on the result.
+			boolean failed = e.reason() != StopReason.COMPLETE;
+			_result = new AgentResult(e.reason(), e.turnNumber(), e.totalUsage(),
+				failed ? _lastErrorKind : null, failed ? _lastErrorMessage : null);
+			_cost = e.totalCost();
+		}
+		_delegate.onEvent(event);
+		if (event instanceof AgentEvent.RunStarted) {
+			// After the delegate: the conversation log is one of the listeners behind it, and the
+			// turn it holds now carries the user's message and the run's model.
+			checkpoint();
+		}
+	}
+
+	/**
+	 * Queues a checkpoint of the run's transcript, unless one is queued already.
+	 *
+	 * <p>
+	 * A queued checkpoint takes the transcript when the writer carries it out, so a second request
+	 * meanwhile would write the same state again.
+	 * </p>
+	 */
+	private void checkpoint() {
+		AgentExecution execution = _execution;
+		if (execution == null || _transcript == null || !_checkpointQueued.compareAndSet(false, true)) {
+			return;
+		}
+		boolean queued = AgentExecutionStore.getInstance().checkpointTranscript(execution, () -> {
+			// Cleared before the transcript is taken: a boundary reached from here on is not in it,
+			// and must queue a checkpoint of its own.
+			_checkpointQueued.set(false);
+			return _transcript.get();
+		});
+		if (!queued) {
+			_checkpointQueued.set(false);
+		}
+	}
+
+	private void beginRecording(AgentEvent.RunStarted e) {
+		if (!AgentExecutionStore.Module.INSTANCE.isActive()) {
+			Logger.info("Agent run " + e.runId() + " not recorded: AgentExecutionStore is not active.",
+				ExecutionRecorder.class);
+			return;
+		}
+		try {
+			String provider = _handle != null ? _handle.runInfo().provider() : resolveProviderId(e.model());
+			_execution = AgentExecutionStore.getInstance()
+				.beginExecution(_session, e.runId(), _agentName, e.model(), provider, _parent);
+			if (_handle != null) {
+				_handle.set(_execution);
+			}
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to record start of agent run " + e.runId() + ": " + ex.getMessage(),
+				ex, ExecutionRecorder.class);
+		}
+	}
+
+	/**
+	 * Writes the run's environment block onto the execution row.
+	 *
+	 * <p>
+	 * A failure here is logged and dropped: the block is what an administrator reads afterwards, and
+	 * losing it is never a reason to fail the run the user is waiting for.
+	 * </p>
+	 */
+	private void recordEnvironment(AgentEvent.EnvironmentComposed e) {
+		AgentExecution execution = _execution;
+		if (execution == null) {
+			return;
+		}
+		try {
+			AgentExecutionStore.getInstance().saveEnvironment(execution, e.environment());
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to record the environment of agent run " + e.runId() + ": "
+				+ ex.getMessage(), ex, ExecutionRecorder.class);
+		}
+	}
+
+	/**
+	 * Follows a run that moved to another model, so that the record names what answered.
+	 *
+	 * <p>
+	 * The model on the row is read as "this is what produced these tokens", and after a failover
+	 * the configured model produced none of them.
+	 * </p>
+	 *
+	 * <p>
+	 * The identifiers come from the handle, not from the event: the event carries the labels a
+	 * human reads - a model qualified by its provider entry where one was named - and the loop has
+	 * already published the resolved model and catalog provider on the handle, one statement before
+	 * it emitted this. An emitter that is not the loop therefore records nothing here rather than
+	 * writing a display label into a field every query reads as an identifier. Best-effort like
+	 * every other write in this class: losing it never disturbs the run.
+	 * </p>
+	 */
+	private void recordModelSwitch(AgentEvent.ModelSwitched e) {
+		AgentExecution execution = _execution;
+		if (execution == null || _handle == null) {
+			return;
+		}
+		RunInfo info = _handle.runInfo();
+		if (info == null || info.model() == null) {
+			return;
+		}
+		try {
+			AgentExecutionStore.getInstance().saveModel(execution, info.model(), info.provider());
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to record the model switch of agent run " + e.runId() + ": "
+				+ ex.getMessage(), ex, ExecutionRecorder.class);
+		}
+	}
+
+	/**
+	 * Finalizes the execution row after the loop returned or threw, without a final answer.
+	 *
+	 * @see #complete(String, String, Throwable)
+	 */
+	public void complete(String transcript, Throwable failure) {
+		complete(transcript, null, failure);
+	}
+
+	/**
+	 * Finalizes the execution row after the loop returned or threw.
+	 *
+	 * <p>
+	 * No-op when run recording never started (store inactive or begin failed).
+	 * </p>
+	 *
+	 * @param transcript
+	 *        The serialized transcript of this run's turns; may be <code>null</code>.
+	 * @param response
+	 *        The agent's final answer text (the value the synchronous entry points return); may be
+	 *        <code>null</code> when the run produced no answer.
+	 * @param failure
+	 *        The exception the loop threw, or <code>null</code> if it returned normally.
+	 */
+	public void complete(String transcript, String response, Throwable failure) {
+		completeWithLatestTranscript(() -> transcript, response, failure);
+	}
+
+	/**
+	 * Finalizes the execution row with the transcript as it stands when the row is written.
+	 *
+	 * @param transcript
+	 *        The run's transcript, asked on the store's writer thread.
+	 *
+	 * @see #complete(String, String, Throwable)
+	 * @see AgentExecutionStore#finishExecutionWithLatestTranscript(AgentExecution, ExecutionStatus,
+	 *      StopReason, String, TokenUsage, Money, Supplier, String)
+	 */
+	public void completeWithLatestTranscript(Supplier<String> transcript, String response, Throwable failure) {
+		AgentExecution execution = _execution;
+		if (execution == null) {
+			return;
+		}
+		try {
+			AgentResult result = _result;
+			StopReason stopReason = result != null ? result.stopReason()
+				: (failure != null ? StopReason.ERROR : null);
+			TokenUsage usage = result != null ? result.totalUsage() : TokenUsage.EMPTY;
+			Money cost = result != null ? _cost : null;
+			AgentExecutionStore.getInstance().finishExecutionWithLatestTranscript(execution,
+				statusFor(stopReason, failure), stopReason, errorMessage(failure), usage, cost, transcript,
+				response);
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to record end of agent run " + _runId + ": " + ex.getMessage(),
+				ex, ExecutionRecorder.class);
+		}
+	}
+
+	/** The recorded execution, or <code>null</code> when recording is off. */
+	public AgentExecution execution() {
+		return _execution;
+	}
+
+	/** The loop-generated run id, or <code>null</code> before {@code RunStarted}. */
+	public String runId() {
+		return _runId;
+	}
+
+	/** The terminal {@link AgentResult}, or <code>null</code> before {@code RunCompleted}. */
+	public AgentResult result() {
+		return _result;
+	}
+
+	private String errorMessage(Throwable failure) {
+		if (failure != null) {
+			return failure.getMessage() != null ? failure.getMessage() : failure.getClass().getName();
+		}
+		return _lastErrorMessage;
+	}
+
+	private static ExecutionStatus statusFor(StopReason stopReason, Throwable failure) {
+		if (stopReason == null) {
+			return failure != null ? ExecutionStatus.ERROR : ExecutionStatus.COMPLETE;
+		}
+		return switch (stopReason) {
+			case COMPLETE, MAX_TURNS -> ExecutionStatus.COMPLETE;
+			case ERROR, CONTEXT_OVERFLOW -> ExecutionStatus.ERROR;
+			// A run cut off by the account's budget did not deliver its answer, and it is not an
+			// error either: the same family as a response the validator refused, which is what
+			// REJECTED names. Which of the two it was is on the stop reason beside it.
+			// A run whose model stopped without an answer, or was cut off in the middle of one, did
+			// not deliver either - which is also why the synchronous script functions fail on it.
+			case REJECTED, BUDGET_EXHAUSTED, NO_ANSWER, OUTPUT_LIMIT -> ExecutionStatus.REJECTED;
+			case ABORTED -> ExecutionStatus.CANCELLED;
+		};
+	}
+
+	private static String resolveProviderId(String model) {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		try {
+			return LLMProviderService.getInstance().getProviderId(model);
+		} catch (RuntimeException ex) {
+			return null;
+		}
+	}
+}

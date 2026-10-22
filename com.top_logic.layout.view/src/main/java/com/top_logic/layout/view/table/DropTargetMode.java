@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.table;
 
 import com.top_logic.basic.config.ExternallyNamed;
+import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.dnd.DropBinding;
+import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.dnd.DropSignature;
 
 /**
@@ -30,8 +32,10 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * The table as a whole is the target.
 	 *
 	 * <p>
-	 * A drop anywhere on the table applies, and the action chain is told nothing beyond the dropped
-	 * objects - what the drop means is the same wherever it was made.
+	 * A drop anywhere on the table applies. Beside the dropped objects, the drop's
+	 * {@value DropConfig#REFUSE_IF} and action chain see the reference
+	 * {@value DropArguments#TARGET} (renamed with {@value DropConfig#TARGET_AS}), which holds no
+	 * value - what the drop means is the same wherever it was made.
 	 * </p>
 	 */
 	TABLE("table", DropSignature.CONTROL, DropSignature.CONTROL),
@@ -40,9 +44,11 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * A single row is the target.
 	 *
 	 * <p>
-	 * A drop applies to the row it was made on, which is what the drop's
-	 * {@code target-channel} carries into the action chain; a drop beside the rows applies to
-	 * nothing. The rows are highlighted individually while such a drag moves over the table.
+	 * A drop applies to the row it was made on; a drop beside the rows applies to nothing. The row
+	 * is the reference {@value DropArguments#TARGET} (renamed with {@value DropConfig#TARGET_AS}),
+	 * which the drop's {@value DropConfig#REFUSE_IF} and action chain see as a variable beside the
+	 * dropped objects, and which the optional {@value DropConfig#TARGET_CHANNEL} receives as well.
+	 * The rows are highlighted individually while such a drag moves over the table.
 	 * </p>
 	 */
 	ROW("row", DropSignature.ONTO, DropSignature.ONTO),
@@ -54,10 +60,12 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * While such a drag moves over the table, an insertion line is drawn between the rows: a drop in
 	 * the upper half of a row inserts before that row, a drop in its lower half before the row
 	 * following it, and a drop beside the rows appends at the end. The row the objects are inserted
-	 * before is what the drop's {@code before-channel} carries into the action chain, and what its
-	 * {@code refuse-if} receives after the dragged objects, {@code objects -> before -> reason}; it is
-	 * {@code null} for an insertion at the end. Which order the insertion changes is up to the
-	 * action chain - typically the list the {@code rows} of the table are computed from.
+	 * before is the reference {@value DropArguments#BEFORE} (renamed with
+	 * {@value DropConfig#BEFORE_AS}), which the drop's {@value DropConfig#REFUSE_IF} and action
+	 * chain see as a variable beside the dropped objects, and which the optional
+	 * {@value DropConfig#BEFORE_CHANNEL} receives as well; it is {@code null} for an insertion at the end. Which order the insertion
+	 * changes is up to the action chain - typically the list the {@code rows} of the table are
+	 * computed from.
 	 * </p>
 	 *
 	 * <p>
@@ -73,10 +81,10 @@ public enum DropTargetMode implements ExternallyNamed {
 	 * into thirds, a drop in the upper third inserts before the row among its siblings, in the
 	 * middle third as the first children of the row, in the lower third as the first children of an
 	 * expanded row with children and after the row among its siblings otherwise, and beside the rows
-	 * as the last top-level rows. The row the objects are inserted under is what the drop's
-	 * {@code parent-channel} carries, the object the top-level rows are the children of for an
-	 * insertion among them; {@code refuse-if} receives it before the row to insert before,
-	 * {@code objects -> parent -> before -> reason}. An insertion declared first takes the middle
+	 * as the last top-level rows. The row the objects are inserted under is the further reference
+	 * {@value DropArguments#PARENT} (renamed with {@value DropConfig#PARENT_AS}, received by the
+	 * optional {@value DropConfig#PARENT_CHANNEL} as well) - for an insertion among the top-level
+	 * rows the object they are the children of. An insertion declared first takes the middle
 	 * third of a row as an insertion into it, and leaves it to a {@code row} drop only where it
 	 * refuses.
 	 * </p>

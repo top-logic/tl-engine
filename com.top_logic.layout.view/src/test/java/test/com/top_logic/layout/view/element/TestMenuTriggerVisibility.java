@@ -62,7 +62,7 @@ public class TestMenuTriggerVisibility extends TestCase {
 
 	/** A command hidden while {@link #FLAG_CHANNEL} is empty. */
 	private static final String HIDDEN_WHILE_EMPTY = """
-			<generic-command name="hiddenWhileEmpty" input="%s">
+			<generic-command name="hiddenWhileEmpty" inputs="%s">
 				<executability>
 					<null-input-hidden/>
 				</executability>
@@ -71,7 +71,7 @@ public class TestMenuTriggerVisibility extends TestCase {
 
 	/** A command disabled, but still shown, while {@link #FLAG_CHANNEL} is empty. */
 	private static final String DISABLED_WHILE_EMPTY = """
-			<generic-command name="disabledWhileEmpty" input="%s">
+			<generic-command name="disabledWhileEmpty" inputs="%s">
 				<executability>
 					<null-input-disabled/>
 				</executability>
@@ -162,7 +162,7 @@ public class TestMenuTriggerVisibility extends TestCase {
 				<context-menu>
 					<text/>
 					<commands>
-						<generic-command name="hiddenWhileEmpty" input="%s" placement="CONTEXT_MENU">
+						<generic-command name="hiddenWhileEmpty" inputs="%s" placement="CONTEXT_MENU">
 							<executability>
 								<null-input-hidden/>
 							</executability>

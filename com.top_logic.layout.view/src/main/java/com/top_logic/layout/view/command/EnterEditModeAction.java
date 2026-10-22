@@ -30,7 +30,7 @@ import com.top_logic.util.error.TopLogicException;
  * When the form displays no object or the edit permission denies editing it, the action throws a
  * {@link TopLogicException}, which aborts the action chain, so that no later action of the chain
  * runs on a form that cannot be edited. A form already in edit mode keeps its edit session and its
- * input; outside a form, the action has no effect. The input is passed on unchanged.
+ * input; outside a form, the action has no effect.
  * </p>
  *
  * @implNote Delegates to {@link FormControl#enterEditMode()} after checking
@@ -83,5 +83,13 @@ public class EnterEditModeAction implements ViewAction {
 		}
 		form.enterEditMode();
 		return input;
+	}
+
+	/**
+	 * Starts the edit session of the form.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

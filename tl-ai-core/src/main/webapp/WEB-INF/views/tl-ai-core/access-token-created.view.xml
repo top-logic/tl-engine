@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The one time a personal access token is shown (Issue #671). Only its hash is stored, so once this
+	dialog is closed nobody - the owner, an administrator, the application - can show it again; a lost
+	token is revoked and replaced.
+-->
+<view>
+	<channels>
+		<!-- The transient AccessTokenRequest the token was written onto. -->
+		<channel name="model"/>
+	</channels>
+	<window
+		resizable="false"
+		width="560px"
+	>
+		<title>
+			<en>Copy your access token</en>
+			<de>Zugriffstoken kopieren</de>
+		</title>
+		<form
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<text>
+				<label>
+					<en>Copy the token now. It is not shown again.</en>
+					<de>Kopieren Sie das Token jetzt. Es wird nicht wieder angezeigt.</de>
+				</label>
+			</text>
+			<field attribute="name"/>
+			<field attribute="token"/>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-check-lg"
+				>
+					<label>
+						<en>Done</en>
+						<de>Fertig</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

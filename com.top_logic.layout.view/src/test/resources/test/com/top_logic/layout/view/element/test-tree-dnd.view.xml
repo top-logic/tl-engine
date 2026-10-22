@@ -8,29 +8,29 @@
 	</channels>
 
 	<tree
-		children="node -> if($node == 'root', ['a', 'b'], if($node == 'a', ['a1', 'a2'], []))"
+		children="if($node == 'root', ['a', 'b'], if($node == 'a', ['a1', 'a2'], []))"
 		root="'root'"
 	>
 		<drag kind="item">
 			<node-executability>
-				<disabled-if expr="node -> $node == 'b'"/>
+				<disabled-if expr="$node == 'b'"/>
 			</node-executability>
 		</drag>
 		<drop
 			accept="item"
 			before-channel="before"
 			parent-channel="parent"
-			refuse-if="objects -> parent -> before -> $parent == 'b' || $objects.size() != 1"
+			refuse-if="$parent == 'b' || $objects.size() != 1"
 			target="ordered"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 		<drop
 			accept="item"
 			target="node"
 			target-channel="target"
 		>
-			<execute-script function="objects -> $objects"/>
+			<execute-script function="$objects"/>
 		</drop>
 	</tree>
 </view>

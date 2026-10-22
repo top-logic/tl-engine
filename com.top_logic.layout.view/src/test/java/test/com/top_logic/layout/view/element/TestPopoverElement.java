@@ -186,8 +186,7 @@ public class TestPopoverElement extends TestCase {
 	}
 
 	/**
-	 * Tests that a {@code <close-popover/>} closes the innermost popover enclosing it, and passes its
-	 * input on.
+	 * Tests that a {@code <close-popover/>} closes the innermost popover enclosing it.
 	 */
 	public void testCloseInnermostPopover() {
 		ReactPopoverControl outer = create(0);
@@ -195,8 +194,7 @@ public class TestPopoverElement extends TestCase {
 		ReactPopoverControl inner = create(1);
 		inner.open();
 
-		Object input = new Object();
-		assertSame(input, closeAction().execute(PROBED.get(1), input));
+		closeAction().execute(PROBED.get(1), null);
 
 		assertFalse(inner.isOpen());
 		assertTrue("The outer popover is left open.", outer.isOpen());
@@ -209,8 +207,7 @@ public class TestPopoverElement extends TestCase {
 		ReactPopoverControl popover = create(0);
 		popover.open();
 
-		Object input = new Object();
-		assertSame(input, closeAction().execute(_context, input));
+		closeAction().execute(_context, null);
 		assertTrue("A popover is closed only from within.", popover.isOpen());
 	}
 

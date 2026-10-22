@@ -28,7 +28,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-check-lg"
-				input="rule"
+				inputs="rule"
 				placement="BUTTON_BAR"
 			>
 				<label>
@@ -41,9 +41,12 @@
 				<check-config-form/>
 				<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
 					mode="SAVE_ROLE_RULE"
-				/>
-				<write-channel name="pending"/>
-				<close-dialog/>
+				>
+					<with-result>
+						<write-channel name="pending"/>
+						<close-dialog/>
+					</with-result>
+				</action>
 			</generic-command>
 		</commands>
 		<inset>

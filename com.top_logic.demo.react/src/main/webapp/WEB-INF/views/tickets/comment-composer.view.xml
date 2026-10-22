@@ -30,7 +30,7 @@
 						<commands>
 							<generic-command
 								image="css:ri-links-line"
-								input="ticket"
+								inputs="ticket"
 							>
 								<label>
 									<en>Reference ticket...</en>
@@ -75,16 +75,25 @@
 								reference="comments"
 							/>
 						</executability>
-						<store-form-state/>
-						<link-element/>
-						<with-transaction>
-							<execute-script
-								function="files -> comment -> demoTicketsStoreAttachments($comment, $files)"
-								inputs="files"
-							/>
-						</with-transaction>
-						<execute-script function="comment -> []"/>
-						<write-channel name="files"/>
+						<store-form-state>
+							<with-result>
+								<link-element>
+									<with-result as="comment">
+										<with-transaction>
+											<execute-script
+												function="demoTicketsStoreAttachments($comment, $files)"
+												inputs="files"
+											/>
+										</with-transaction>
+										<execute-script function="[]">
+											<with-result>
+												<write-channel name="files"/>
+											</with-result>
+										</execute-script>
+									</with-result>
+								</link-element>
+							</with-result>
+						</store-form-state>
 					</generic-command>
 				</commands>
 			</form>

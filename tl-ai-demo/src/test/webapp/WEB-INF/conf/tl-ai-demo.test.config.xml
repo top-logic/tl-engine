@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Configuration options for testing tl-ai-demo with JUnit.
+ -->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!-- Disable the MCP server in unit tests: it requires a servlet context that is not available. -->
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<module key="com.top_logic.ai.mcp.server.MCPServerService$Module" value="false"/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+				<providers>
+					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
+						name="mistral"
+						api-key="unencrypted:xxx"
+						base-url="https://api.mistral.ai/v1"
+						models="mistral-large-latest"
+					/>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						name="anthropic"
+						api-key="unencrypted:xxx"
+						base-url="https://api.anthropic.com"
+						models="claude-sonnet-4-5-20250929"
+					/>
+				</providers>
+				<model-catalog fetch-remote-catalog="false">
+					<llm-configuration>
+						<model name="mistral-large-latest"
+							context-window="131072"
+							max-output="8192"
+							reasoning="false"
+							tool-call="true"
+							temperature="true"
+						/>
+						<model name="claude-sonnet-4-5-20250929"
+							context-window="200000"
+							max-output="64000"
+							reasoning="true"
+							tool-call="true"
+							temperature="true"
+						/>
+					</llm-configuration>
+				</model-catalog>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+			<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService"
+				default-model="mistral-large-latest"
+			/>
+		</config>
+	</services>
+	<configs>
+		<config config:interface="test.com.top_logic.basic.util.AbstractBasicTestAll$GlobalConfig"
+			test-layouts-normalized="true"
+			test-jsp-content="true"
+		/>
+		
+		<config config:interface="test.com.top_logic.basic.TestComment$Config">
+				<ignore>
+					<entry value="com.top_logic.ai.demo.test.agent.judge.messages" />
+				</ignore>
+			</config>
+		
+	</configs>
+</application>

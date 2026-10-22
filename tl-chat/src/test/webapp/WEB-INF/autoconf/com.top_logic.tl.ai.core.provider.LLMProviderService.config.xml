@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Two models, for TestChatRunAccess, and a scripted one, for the tests that run an agent.
+
+	No request ever leaves the test - the key is a placeholder and nothing calls a provider. What the
+	models are there for is that "which models may this account choose" is answered against the
+	configured list, and a list of none cannot tell a filtered answer from an empty one. The agents
+	are assigned "test-assigned-model", which makes "test-other-model" exactly the model a request may
+	not choose while no role grants it: the shipped default of the model section, asserted rather than
+	assumed.
+
+	"test-scripted-model" is answered by ScriptedModel, whose replies a test writes. Only the test
+	agents that com.top_logic.tl.ai.core.agent.AgentRuntimeService.config.xml assigns it run on it.
+
+	The default model the agents run on is in com.top_logic.tl.ai.core.agent.AgentRuntimeService.config.xml
+	next to this file.
+-->
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+				<providers>
+					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+						api-key="unencrypted:test-key-never-used"
+						models="test-assigned-model, test-other-model"
+						name="anthropic"
+					/>
+					<provider class="com.top_logic.ai.chat.layout.ScriptedModel"
+						models="test-scripted-model"
+						name="scripted"
+					/>
+				</providers>
+				<model-catalog fetch-remote-catalog="false">
+					<model-overrides>
+						<model name="test-scripted-model"
+							context-window="200000"
+							max-output="8192"
+							reasoning="false"
+							temperature="false"
+							tool-call="true"
+						/>
+					</model-overrides>
+				</model-catalog>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -265,10 +265,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			}
 			// A group in a mode that does not accept input offers nothing to add or remove.
 			boolean groupEditable = _editable && (display == null || display.isAccepting());
-			if (!isSupportedKind(config, property)) {
-				continue;
-			}
-			if (isHidden(property)) {
+			if (!isDisplayed(config, property)) {
 				continue;
 			}
 			if (skipTreeProperties && isTreeProperty(property)) {
@@ -549,6 +546,46 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *        The configuration item holding the property - a format answers for the value the
 	 *        property currently holds, so the item is part of the question.
 	 */
+	/**
+	 * Whether a {@link ConfigEditorControl} over the given item displays anything at all.
+	 *
+	 * <p>
+	 * An item without a {@link #isDisplayed(ConfigurationItem, PropertyDescriptor) displayed}
+	 * property is shown as an empty form, which has nothing to offer for editing either.
+	 * </p>
+	 *
+	 * @param config
+	 *        The item to display.
+	 * @return Whether the item has a property the editor displays.
+	 */
+	public static boolean hasDisplayedProperty(ConfigurationItem config) {
+		for (PropertyDescriptor property : displayProperties(config)) {
+			if (isDisplayed(config, property)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether a {@link ConfigEditorControl} displays the given property of the given item, unless a
+	 * form hides it in particular.
+	 *
+	 * <p>
+	 * Not displayed are a {@link Hidden} property, a {@link PropertyKind#DERIVED derived} one and a
+	 * {@link PropertyKind#COMPLEX complex} one without a text form.
+	 * </p>
+	 *
+	 * @param config
+	 *        The item holding the property.
+	 * @param property
+	 *        The property to display.
+	 * @return Whether the editor has a field or a group for the property.
+	 */
+	public static boolean isDisplayed(ConfigurationItem config, PropertyDescriptor property) {
+		return isSupportedKind(config, property) && !isHidden(property);
+	}
+
 	private static boolean isSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM

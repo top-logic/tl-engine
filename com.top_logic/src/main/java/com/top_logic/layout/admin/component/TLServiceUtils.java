@@ -258,8 +258,8 @@ public class TLServiceUtils {
 	 *
 	 * @param module
 	 *        The module of the service.
-	 * @return Whether the stored configuration has been restored. <code>false</code>, if it has not
-	 *         been changed since the start of the service.
+	 * @return Whether the restored configuration differs from the discarded one.
+	 *         <code>false</code>, if it has not been changed since the start of the service.
 	 * @throws TopLogicException
 	 *         When the stored configuration cannot be restored.
 	 */
@@ -270,14 +270,14 @@ public class TLServiceUtils {
 				return false;
 			}
 			boolean changed = baseline.isChanged();
-			if (changed) {
-				try {
-					baseline.restore();
-				} catch (IOException exception) {
-					throw new TopLogicException(I18NConstants.SERVICE_CONFIG_RESTORE_ERROR, exception);
-				}
-				reloadConfigurations();
+			// Also a stored configuration equal in content to the one in use is restored, so that the
+			// stored state is exactly the one the service was started with.
+			try {
+				baseline.restore();
+			} catch (IOException exception) {
+				throw new TopLogicException(I18NConstants.SERVICE_CONFIG_RESTORE_ERROR, exception);
 			}
+			reloadConfigurations();
 			module.discardConfigurationBaseline();
 			return changed;
 		}

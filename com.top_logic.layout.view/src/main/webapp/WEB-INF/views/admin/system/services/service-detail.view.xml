@@ -21,9 +21,10 @@
 	- "Remove in-app configuration" removes the stored configuration, so that the configuration of
 	the application's configuration files applies after a restart.
 	- Discard and Remove write the configuration that is stored afterwards to the config channel.
-	- A service whose configuration cannot be edited (no configuration, or an implementation
-	refusing a configuration changed in the application) shows its configuration in a form that
-	does not offer Edit, or the message that it has none.
+	- A service without settings - no configuration, or none with a property a configuration form
+	displays (serviceHasSettings) - shows a message instead of an empty form. A service whose
+	implementation refuses a configuration changed in the application shows its settings in a form
+	that does not offer Edit.
 -->
 <view>
 	<channels>
@@ -38,9 +39,17 @@
 			expr="serviceLabel($module)"
 			inputs="module"
 		/>
+		<derived-channel name="settings"
+			expr="serviceHasSettings($module)"
+			inputs="module"
+		/>
 		<derived-channel name="editable"
 			expr="serviceConfigurationEditable($module)"
 			inputs="module"
+		/>
+		<derived-channel name="readOnly"
+			expr="$settings == true &amp;&amp; $editable != true"
+			inputs="settings, editable"
 		/>
 		<derived-channel name="active"
 			expr="serviceActive($module)"
@@ -201,18 +210,25 @@
 			</config-form>
 		</visible-if>
 		<visible-if
-			expr="$editable != true"
-			input="editable"
+			expr="$readOnly == true"
+			input="readOnly"
 		>
 			<config-form input="config">
-				<noModelMessage>
-					<en>This service has no configuration.</en>
-					<de>Dieser Dienst hat keine Konfiguration.</de>
-				</noModelMessage>
 				<edit-executability>
 					<visible-if expr="false"/>
 				</edit-executability>
 			</config-form>
+		</visible-if>
+		<visible-if
+			expr="$settings != true"
+			input="settings"
+		>
+			<text>
+				<label>
+					<en>This service has no configurable settings.</en>
+					<de>Dieser Dienst hat keine einstellbaren Eigenschaften.</de>
+				</label>
+			</text>
 		</visible-if>
 	</panel>
 </view>

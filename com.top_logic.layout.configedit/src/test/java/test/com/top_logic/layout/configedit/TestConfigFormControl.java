@@ -49,8 +49,10 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
+import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -71,6 +73,16 @@ public class TestConfigFormControl extends TestCase {
 
 		/** @see #getName() */
 		void setName(String value);
+	}
+
+	/** A configuration with a boolean property, drawn as a checkbox. */
+	public interface FlagConfig extends ConfigurationItem {
+
+		/** Property name for {@link #isEnabled()}. */
+		String ENABLED = "enabled";
+
+		@Name(ENABLED)
+		boolean isEnabled();
 	}
 
 	/** A configuration with a mandatory property, for the refused-Apply tests. */
@@ -1389,6 +1401,36 @@ public class TestConfigFormControl extends TestCase {
 
 		assertTrue("Edit mode makes the field editable again.",
 			fieldOf(form, TestConfig.NAME).isEditable());
+	}
+
+	/**
+	 * In view mode, the checkbox of a boolean property is told that its field accepts no input,
+	 * like every other field of the form.
+	 */
+	public void testViewModeCheckboxIsNotEditable() {
+		FlagConfig config = TypedConfiguration.newConfigItem(FlagConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+
+		ReactCheckboxControl checkbox = findCheckbox(form);
+		assertNotNull("A boolean property is drawn as a checkbox.", checkbox);
+		assertEquals(Boolean.FALSE, checkbox.scriptingScalarState().get(FieldState.EDITABLE__PROP));
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+
+		assertEquals(Boolean.TRUE, findCheckbox(form).scriptingScalarState().get(FieldState.EDITABLE__PROP));
+	}
+
+	private static ReactCheckboxControl findCheckbox(ReactControl control) {
+		if (control instanceof ReactCheckboxControl checkbox) {
+			return checkbox;
+		}
+		for (ReactControl child : control.scriptingChildren()) {
+			ReactCheckboxControl found = findCheckbox(child);
+			if (found != null) {
+				return found;
+			}
+		}
+		return null;
 	}
 
 	/**

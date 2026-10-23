@@ -264,6 +264,27 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 	}
 
 	/**
+	 * Storing the configuration a service was started with is no change, even though a stored
+	 * configuration did not exist before; a different value is a change, and discarding removes the
+	 * stored configuration again.
+	 */
+	public void testStoreUnchangedValues() throws ModuleException {
+		ConfiguredService.Module module = startedModule();
+		assertFalse(storedFile(module).exists());
+
+		storeCount(module, 1);
+		assertTrue(storedFile(module).exists());
+		assertFalse("The stored values are the ones in use.", module.isConfigurationChanged());
+
+		storeCount(module, 2);
+		assertTrue(module.isConfigurationChanged());
+
+		assertTrue(TLServiceUtils.discardConfigurationChanges(module));
+		assertFalse(storedFile(module).exists());
+		assertFalse(module.isConfigurationChanged());
+	}
+
+	/**
 	 * A configuration violating its constraints is not stored.
 	 */
 	public void testStoreInvalid() {

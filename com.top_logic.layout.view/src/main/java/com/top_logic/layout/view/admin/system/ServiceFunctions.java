@@ -16,6 +16,7 @@ import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.version.SoftwareModule;
 import com.top_logic.layout.admin.component.TLServiceUtils;
+import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -242,15 +243,34 @@ public class ServiceFunctions extends TLScriptFunctions {
 	 *
 	 * @param module
 	 *        The module of the service.
-	 * @return Whether the service has a configuration and its implementation does not refuse a
-	 *         configuration changed in the application, <code>false</code> without a module.
+	 * @return Whether the service {@link #hasSettings(BasicRuntimeModule) has settings} and its
+	 *         implementation does not refuse a configuration changed in the application,
+	 *         <code>false</code> without a module.
 	 *
 	 * @see TLServiceUtils#isInAppEditable(BasicRuntimeModule)
 	 */
 	@Label("Whether the configuration of a service can be edited")
 	public static boolean configurationEditable(BasicRuntimeModule<?> module) {
-		return module != null && TLServiceUtils.isInAppEditable(module)
-			&& TLServiceUtils.hasServiceConfiguration(module);
+		return module != null && TLServiceUtils.isInAppEditable(module) && hasSettings(module);
+	}
+
+	/**
+	 * Whether the given service has settings a configuration form displays.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return Whether the service has a configuration with a property a configuration form
+	 *         displays, <code>false</code> without a module.
+	 *
+	 * @see ConfigEditorControl#hasDisplayedProperty(com.top_logic.basic.config.ConfigurationItem)
+	 */
+	@Label("Whether a service has settings")
+	public static boolean hasSettings(BasicRuntimeModule<?> module) {
+		if (module == null) {
+			return false;
+		}
+		ServiceConfiguration<?> config = TLServiceUtils.getServiceConfiguration(module);
+		return config != null && ConfigEditorControl.hasDisplayedProperty(config);
 	}
 
 	/**

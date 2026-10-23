@@ -6,6 +6,7 @@
 package com.top_logic.layout.tree.dnd;
 
 import com.top_logic.layout.tree.TreeData;
+import com.top_logic.layout.tree.dnd.TreeDropEvent.Position;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
@@ -29,18 +30,44 @@ public interface TreeDropTarget {
 		 * 
 		 * @see TreeDropEvent#getPos()
 		 */
-		ORDERED,
+		ORDERED {
+			@Override
+			public boolean accepts(TreeDropEvent event) {
+				return event.getPos() != Position.ONTO;
+			}
+		},
 
 		/**
 		 * A drop is only possible "within" a {@link TreeDropEvent#getRefNode() reference node}.
 		 */
-		CHILD,
+		CHILD {
+			@Override
+			public boolean accepts(TreeDropEvent event) {
+				Position pos = event.getPos();
+				return pos == Position.ONTO || pos == Position.WITHIN;
+			}
+		},
 
 		;
+
+		/**
+		 * Whether the position of the given event describes a drop of this type.
+		 * 
+		 * <p>
+		 * A tree may have {@link TreeDropTarget}s of different types. A drop event is only passed
+		 * to those targets, whose type accepts the event's position.
+		 * </p>
+		 */
+		public abstract boolean accepts(TreeDropEvent event);
 	}
 
 	/**
-	 * HTML data attribute that transports the {@link #getDropType()} to the client.
+	 * HTML data attribute that transports the {@link #getDropType()}s of all drop targets of a
+	 * tree to the client.
+	 * 
+	 * <p>
+	 * The value is a space separated list of {@link DropType} names.
+	 * </p>
 	 */
 	String TL_DROPTYPE_ATTR = HTMLConstants.DATA_ATTRIBUTE_PREFIX + "droptype";
 

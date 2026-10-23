@@ -6,9 +6,12 @@
 package com.top_logic.layout.tree;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.AJAXConstants;
 import com.top_logic.base.services.simpleajax.ClientAction;
@@ -25,6 +28,7 @@ import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.View;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.tree.dnd.TreeDropTarget;
+import com.top_logic.layout.tree.dnd.TreeDropTarget.DropType;
 import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.layout.tree.renderer.TreeContentRenderer;
@@ -92,8 +96,8 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 				out.endAttribute();
 			}
 
-			TreeDropTarget firstEnabledDropTarget = getFirstEnabledDropTarget(data.getDropTargets(), data);
-			if (firstEnabledDropTarget != null) {
+			Set<DropType> dropTypes = getEnabledDropTypes(data.getDropTargets(), data);
+			if (!dropTypes.isEmpty()) {
 				out.beginAttribute(ONDROP_ATTR);
 				out.append("return services.form.TreeControl.handleOnDrop(event, this);");
 				out.endAttribute();
@@ -107,7 +111,7 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 				out.append("return services.form.TreeControl.handleOnDragLeave(event, this);");
 				out.endAttribute();
 
-				out.writeAttribute(TreeDropTarget.TL_DROPTYPE_ATTR, firstEnabledDropTarget.getDropType().name());
+				out.writeAttribute(TreeDropTarget.TL_DROPTYPE_ATTR, toAttributeValue(dropTypes));
 			}
 		} else {
 			treeControl.writeLegacyDragAndDropSupport(context, out);
@@ -115,14 +119,18 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 
 	}
 
-	private TreeDropTarget getFirstEnabledDropTarget(List<TreeDropTarget> dropTargets, TreeData data) {
+	private Set<DropType> getEnabledDropTypes(List<TreeDropTarget> dropTargets, TreeData data) {
+		Set<DropType> result = EnumSet.noneOf(DropType.class);
 		for (TreeDropTarget dropTarget : dropTargets) {
 			if (dropTarget.dropEnabled(data)) {
-				return dropTarget;
+				result.add(dropTarget.getDropType());
 			}
 		}
+		return result;
+	}
 
-		return null;
+	private static String toAttributeValue(Set<DropType> dropTypes) {
+		return dropTypes.stream().map(DropType::name).collect(Collectors.joining(" "));
 	}
 
 	private void writeOnClick(TagWriter out, TreeControl treeControl) throws IOException {

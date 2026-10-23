@@ -1733,6 +1733,58 @@ describe('the calendar (spec §3: tl-calendar)', () => {
         .toEqual([[CMD_CREATE_SLOT, { start: at(0), end: at(0) + MS_DAY, allDay: true, title: 'Neu' }]]);
     });
 
+    it('keeps the new event and the focus in its field on a press on the event beside the field', async () => {
+      const sent = mountAdapter(TLCalendar, calendar('WEEK', WEEK));
+      await settle();
+
+      await userEvent.click(allDayCell(0));
+      await settle();
+      await userEvent.keyboard('Neu');
+      const field = document.activeElement as HTMLInputElement;
+
+      await userEvent.click(field.parentElement!);
+      await settle();
+
+      expect(document.querySelector('.tl-calendar__create')).toBe(field);
+      expect(document.activeElement).toBe(field);
+      expect(field.value).toBe('Neu');
+      expect(sentOf(sent, CMD_CREATE_SLOT)).toEqual([]);
+    });
+
+    it('creates the new event with the title entered on a press elsewhere, and discards it without a title', async () => {
+      const sent = mountAdapter(TLCalendar, calendar('WEEK', WEEK));
+      await settle();
+
+      await userEvent.click(allDayCell(0));
+      await settle();
+      await userEvent.keyboard('Neu');
+      await userEvent.click(allDayCell(3));
+      await settle();
+
+      expect(sentOf(sent, CMD_CREATE_SLOT))
+        .toEqual([[CMD_CREATE_SLOT, { start: at(0), end: at(0) + MS_DAY, allDay: true, title: 'Neu' }]]);
+
+      // The press has opened a new event at the other day; left without a title, it is gone.
+      expect((document.activeElement as HTMLElement).classList).toContain('tl-calendar__create');
+      await userEvent.click(allDayCell(5));
+      await settle();
+      expect(sentOf(sent, CMD_CREATE_SLOT)).toHaveLength(1);
+    });
+
+    it('creates the new event with the title entered when a slot is pulled open in the grid of hours', async () => {
+      const sent = mountAdapter(TLCalendar, calendar('WEEK', WEEK));
+      await settle();
+
+      await userEvent.click(allDayCell(0));
+      await settle();
+      await userEvent.keyboard('Neu');
+      await userEvent.pointer({ keys: '[MouseLeft>]', target: document.querySelectorAll<HTMLElement>('.tl-calendar__column')[2] });
+      await settle();
+
+      expect(sentOf(sent, CMD_CREATE_SLOT))
+        .toEqual([[CMD_CREATE_SLOT, { start: at(0), end: at(0) + MS_DAY, allDay: true, title: 'Neu' }]]);
+    });
+
     it('discards only the new event by Escape inside a window, which stays open (review focus 4)', async () => {
       register('PlanenTestCalendar', TLCalendar);
       const child = { controlId: 'cal', module: 'PlanenTestCalendar', state: calendar('WEEK', WEEK) };

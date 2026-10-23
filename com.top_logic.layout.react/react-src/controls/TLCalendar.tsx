@@ -404,7 +404,9 @@ type PendingCreate = { start: number; end: number; allDay: boolean };
 
 /**
  * Title input of an event that is not created yet: Enter creates it with the entered title,
- * Escape and losing the focus drop the stub without contacting the server.
+ * Escape drops the stub without contacting the server. Leaving the input, e.g. by a press elsewhere,
+ * creates the event if a title is entered and drops the stub otherwise. A press on the stub beside
+ * the input keeps it: it neither reaches the grid below nor takes the focus from the input.
  *
  * Escape reaches the stub through the keyboard dispatcher: while the stub exists, a scope of its
  * own binds Escape to dropping the stub - and to nothing else, so a window around the calendar
@@ -415,35 +417,48 @@ const CreateStub: React.FC<{
   style?: React.CSSProperties;
   onCommit: (title: string) => void;
   onDiscard: () => void;
-}> = ({ placeholder, style, onCommit, onDiscard }) => {
+  onLeave: () => void;
+  onTitle: (title: string) => void;
+}> = ({ placeholder, style, onCommit, onDiscard, onLeave, onTitle }) => {
   // Enter both commits and blurs the input: whichever event arrives first decides.
   const settled = useRef(false);
-  const settle = (title: string | null) => {
+  const settle = (end: () => void) => {
     if (settled.current) {
       return;
     }
     settled.current = true;
-    if (title === null) {
-      onDiscard();
-    } else {
-      onCommit(title);
-    }
+    end();
   };
+  const inputRef = useRef<HTMLInputElement>(null);
   useStandaloneKeyboardScope(true, {
     ESCAPE: () => {
-      settle(null);
+      settle(onDiscard);
       return true;
     },
   });
   return (
-    <div className="tl-calendar__event tl-type-label" data-tl-state="preview" style={style}>
+    <div
+      className="tl-calendar__event tl-type-label"
+      data-tl-state="preview"
+      style={style}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        inputRef.current?.focus();
+      }}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={(e) => e.stopPropagation()}
+    >
       <input
+        ref={inputRef}
         className="tl-field tl-calendar__create tl-type-label"
         autoFocus
         placeholder={placeholder}
         aria-label={placeholder}
         onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
+        onChange={(e) => onTitle(e.currentTarget.value)}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
             // The dispatcher's: the binding of the stub drops it (see above).
@@ -451,34 +466,51 @@ const CreateStub: React.FC<{
           }
           e.stopPropagation();
           if (e.key === 'Enter') {
-            settle(e.currentTarget.value);
+            const title = e.currentTarget.value;
+            settle(() => onCommit(title));
           }
         }}
-        onBlur={() => settle(null)}
+        onBlur={() => settle(onLeave)}
       />
     </div>
   );
 };
 
-/** The slot a grid currently offers for creation, and the ways to end that state. */
+/**
+ * The slot a grid currently offers for creation, and the ways to end that state: committing it with a
+ * title, discarding it, or leaving it - which commits it if a title is entered. Each ends the slot
+ * once: an end reaching a slot already ended, e.g. the blur of the input removed by it, does nothing.
+ */
 const usePendingCreate = (send: Ctx['send']) => {
   const [pending, setPending] = useState<PendingCreate | null>(null);
-  // Read through a ref so that committing does not have to be re-created per keystroke.
+  // Read through refs so that ending does not have to be re-created per keystroke.
   const pendingRef = useRef<PendingCreate | null>(null);
   pendingRef.current = pending;
-  const open = useCallback((slot: PendingCreate) => setPending(slot), []);
-  const discard = useCallback(() => setPending(null), []);
-  const commit = useCallback(
-    (title: string) => {
+  const titleRef = useRef('');
+  const open = useCallback((slot: PendingCreate) => {
+    pendingRef.current = slot;
+    titleRef.current = '';
+    setPending(slot);
+  }, []);
+  const end = useCallback(
+    (title: string | null) => {
       const slot = pendingRef.current;
-      if (slot) {
+      pendingRef.current = null;
+      titleRef.current = '';
+      if (slot && title !== null) {
         send('createSlot', { ...slot, title });
       }
       setPending(null);
     },
     [send]
   );
-  return { pending, open, commit, discard };
+  const commit = useCallback((title: string) => end(title), [end]);
+  const discard = useCallback(() => end(null), [end]);
+  const leave = useCallback(() => end(titleRef.current.trim() === '' ? null : titleRef.current), [end]);
+  const setTitle = useCallback((title: string) => {
+    titleRef.current = title;
+  }, []);
+  return { pending, open, commit, discard, leave, setTitle };
 };
 
 const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularity }> = ({
@@ -537,7 +569,7 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
   // dragRef, which every render keeps current - so they always act on the state the grid shows.
   const beginDrag = (e: React.PointerEvent, initial: TimeDrag, cursor?: string) => {
     e.preventDefault();
-    create.discard();
+    create.leave();
     dragRef.current = initial;
     setDrag(initial);
 
@@ -728,6 +760,8 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                   placeholder={i18n['js.calendar.newEventTitle']}
                   onCommit={create.commit}
                   onDiscard={create.discard}
+                  onLeave={create.leave}
+                  onTitle={create.setTitle}
                 />
               )}
               {allDayByDay[di].map((ev, k) => (
@@ -824,6 +858,8 @@ const TimeGrid: React.FC<{ ctx: Ctx; rangeStart: number; granularity: Granularit
                         }}
                         onCommit={create.commit}
                         onDiscard={create.discard}
+                        onLeave={create.leave}
+                        onTitle={create.setTitle}
                       />
                     )}
 
@@ -1022,6 +1058,8 @@ const MonthGrid: React.FC<{ ctx: Ctx; rangeStart: number; anchorMonth: number }>
                           placeholder={i18n['js.calendar.newEventTitle']}
                           onCommit={create.commit}
                           onDiscard={create.discard}
+                          onLeave={create.leave}
+                          onTitle={create.setTitle}
                         />
                       )}
                     </div>

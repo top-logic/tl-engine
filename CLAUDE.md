@@ -230,9 +230,9 @@ The demo application's default developer login is `root` / `root1234`. For the d
 
 ### Version Management
 
-- Central version is defined in `tl-parent-all` — read it from there when needed.
+- Central version is defined in `tl-bom` — read it from there when needed.
 - Use `${tl.version}` property for internal dependencies
-- External dependencies versioned via properties (e.g., `${jetty.version}`)
+- External dependencies versioned via properties of `tl-bom` (e.g., `${jetty.version}`), the parent of `tl-parent-all`
 
 ### New Module Setup
 

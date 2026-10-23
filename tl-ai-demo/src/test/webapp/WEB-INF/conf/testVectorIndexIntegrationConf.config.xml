@@ -7,9 +7,10 @@
 				vector-store-type="jvector"
 				vector-index-models="demo.events:Event"
 				mistral-embed-model="mistral-embed"
-				mistral-api-key="%MISTRAL_API_KEY%"
 				embedding-model-type="mistral"
-			/>
+			>
+				<mistral-api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_mistral_api_key"/>
+			</instance>
 		</config>
 	</services>
 	
@@ -19,8 +20,9 @@
 			vector-store-type="jvector"
 			vector-index-models="demo.events:Event"
 			mistral-embed-model="mistral-embed"
-			mistral-api-key="%MISTRAL_API_KEY%"
 			embedding-model-type="mistral"
-		/>
+		>
+			<mistral-api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_mistral_api_key"/>
+		</config>
 	</configs>
 </application>

@@ -23,7 +23,8 @@ variable (`<api-key class="com.top_logic.basic.credential.EnvironmentSecretSourc
 read at each request: the configuration holds the variable name, not the key, so saving the providers in
 the Service Editor never writes the key into the file. The variables `tl_mistral_api_key`,
 `tl_openai_api_key` and `tl_xai_api_key` work alike; a provider whose variable is not set fails only
-when it is called.
+when it is called. The vector index reads `tl_mistral_api_key` when it starts; without it, the vector index
+is disabled and the application starts anyway.
 
 The first start creates the H2 database under `tmp/` and prints the initial password of the `root`
 account to the console:

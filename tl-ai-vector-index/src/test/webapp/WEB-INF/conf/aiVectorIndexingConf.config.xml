@@ -22,9 +22,10 @@
 		<!-- Production Vector Store Configuration overriding Java defaults -->
 		<config service-class="com.top_logic.ai.vector.index.VectorIndex">
 			<instance class="com.top_logic.ai.vector.index.VectorIndex"
-				mistral-api-key="%MISTRAL_API_KEY%"
 				embedding-model-type="local"
-			/>
+			>
+				<mistral-api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_mistral_api_key"/>
+			</instance>
 		</config>
 		<config service-class="com.top_logic.knowledge.indexing.DefaultIndexingService" >
 			<instance class="com.top_logic.ai.vector.index.VectorIndexingService">

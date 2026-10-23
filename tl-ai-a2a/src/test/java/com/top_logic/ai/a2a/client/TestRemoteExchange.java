@@ -30,6 +30,8 @@ import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.protocol.TaskState;
 import com.top_logic.ai.a2a.server.A2ARequestHandler;
 import com.top_logic.ai.a2a.server.A2ATask;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.credential.CredentialProvider;
 
 /**
  * Test case for {@link RemoteExchange} and {@link A2AClient}: the client side over real HTTP and
@@ -68,8 +70,10 @@ public class TestRemoteExchange extends TestCase {
 		_server.start();
 
 		System.setProperty("a2a_test_token", TOKEN);
-		_agents = new RemoteAgents(List.of());
-		_agents.add(new RemoteAgent("alpha", base + "/a2a/alpha/agent-card.json", "a2a_test_token"));
+		_agents = new RemoteAgents(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, List.of());
+		_agents.add(new RemoteAgent("alpha", base + "/a2a/alpha/agent-card.json",
+			request -> request.setHeader(CredentialProvider.AUTHORIZATION,
+				CredentialProvider.BEARER + " " + System.getProperty("a2a_test_token"))));
 		_contexts = new ContextBook();
 	}
 

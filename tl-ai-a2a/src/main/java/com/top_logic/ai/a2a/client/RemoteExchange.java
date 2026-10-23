@@ -214,7 +214,7 @@ public final class RemoteExchange {
 		if (wait && outcome._state != null && !outcome._state.endsWait()) {
 			long start = System.currentTimeMillis();
 			try {
-				_agents.client().stream(_agents.endpoint(agent), agent.token(), "SubscribeToTask", Json.map("id", taskId),
+				_agents.client().stream(_agents.endpoint(agent), agent.credentials(), "SubscribeToTask", Json.map("id", taskId),
 					follower(outcome, agent), _waitMillis, _cancelled);
 			} catch (A2AError ex) {
 				if (ex.code() != A2AError.UNSUPPORTED_OPERATION) {
@@ -247,7 +247,7 @@ public final class RemoteExchange {
 	}
 
 	private Object call(RemoteAgent agent, String method, String taskId) throws IOException, InterruptedException {
-		return _agents.client().call(_agents.endpoint(agent), agent.token(), method, Json.map("id", taskId), CALL_TIMEOUT);
+		return _agents.client().call(_agents.endpoint(agent), agent.credentials(), method, Json.map("id", taskId), CALL_TIMEOUT);
 	}
 
 	private Outcome exchange(RemoteAgent agent, Map<String, Object> message, Outcome outcome)
@@ -260,7 +260,7 @@ public final class RemoteExchange {
 		observe(A2AExchange.Kind.MESSAGE_SENT, outcome, message);
 
 		long start = System.currentTimeMillis();
-		_agents.client().stream(_agents.endpoint(agent), agent.token(), "SendStreamingMessage",
+		_agents.client().stream(_agents.endpoint(agent), agent.credentials(), "SendStreamingMessage",
 			Json.map("message", message), follower(outcome, agent), _waitMillis, _cancelled);
 		outcome._waitedSeconds = (System.currentTimeMillis() - start) / 1000;
 

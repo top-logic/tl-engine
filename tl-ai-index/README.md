@@ -29,10 +29,11 @@ Depend on `tl-ai-index`, switch the module on and configure the types:
 		<embedder class="com.top_logic.tl.ai.index.embed.OpenAiCompatibleEmbedder"
 			base-url="https://embed.example.eu"
 			model="Snowflake/snowflake-arctic-embed-m-v2.0"
-			api-key="unencrypted:%EMBED_API_KEY%"
 			dimensions="768"
 			query-prefix="query: "
-		/>
+		>
+			<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_embed_api_key"/>
+		</embedder>
 		<chunking max-chars="1200" overlap-sentences="1" page-marker="^\[p\.(\d+)\]$"/>
 		<types>
 			<type name="my:Statement" scope="s -> $s.get(`my:Statement#project`)">
@@ -73,7 +74,12 @@ Then give an agent the tools `index.search` and `index.similar`.
 
 - `OpenAiCompatibleEmbedder` - `POST <base-url>/v1/embeddings`, one batch per request, retries on
   network errors, 429 and 5xx. vLLM, text-embeddings-inference, llama.cpp's server and Ollama serve this
-  route. `send-dimensions="true"` asks the server to cut the vector (OpenAI API).
+  route. `send-dimensions="true"` asks the server to cut the vector (OpenAI API). `api-key` is sent as
+  `Authorization: Bearer`; best as `<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+  name="tl_embed_api_key"/>`, the variable holding the plain key (the attribute form `api-key="…"` is an
+  encrypted key or one with the prefix `unencrypted:`). Instead of a key, `<credentials>` take any
+  `CredentialProvider`, e.g. an OAuth2 access token; configuring both is an error. A request rejected with
+  401 is repeated once with fresh credentials.
 - `OnnxEmbedder` (module `tl-ai-index-onnx`, ONNX Runtime 1.30.0 MIT + DJL tokenizers 0.38.0
   Apache-2.0, about 73 MB of native libraries) - runs the model in the application's JVM on the CPU.
   It is the default the owner chose (2026-10-14): `snowflake-arctic-embed-m-v2.0` int8; the option for

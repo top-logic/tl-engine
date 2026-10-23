@@ -33,8 +33,11 @@ Both are closed until an application configures them. `tl-ai-demo` carries a rea
 		</agents>
 		<!-- Whom local agents may call. -->
 		<remote-agents>
-			<remote-agent name="other" card-url="https://example.com/other/a2a/agent/agent-card.json"
-				token-env="OTHER_A2A_TOKEN"/>
+			<remote-agent name="other" card-url="https://example.com/other/a2a/agent/agent-card.json">
+				<credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer">
+					<secret class="com.top_logic.basic.credential.EnvironmentSecretSource" name="OTHER_A2A_TOKEN"/>
+				</credentials>
+			</remote-agent>
 		</remote-agents>
 	</instance>
 </config>
@@ -47,7 +50,7 @@ Both are closed until an application configures them. `tl-ai-demo` carries a rea
 | `max-blocking-seconds` | Longest wait of a blocking `SendMessage` and of `askAgent` (default 1500). |
 | `<authentications>`, `<secrets>` | As on `MCPServerService` (the developer article `ai/security/mcp-endpoint`). A calling application uses a personal access token of the account its requests should act as. Nothing configured: every call is answered 503. |
 | `<agent>` | `path` is the URL name, `agent` the tl-ai agent, `model` an optional override. `allow-writes="true"` lets A2A runs use the tools that change the application, without approval; otherwise those tools are not offered. The first agent also answers `/.well-known/agent-card.json`. |
-| `<remote-agent>` | `card-url` of the remote agent; `token-env` names the environment variable (or system property) whose value is sent as `Authorization: Bearer`. |
+| `<remote-agent>` | `card-url` of the remote agent; `<credentials>` authenticate the calls, typically a personal access token of the remote application sent as `Authorization: Bearer` from an environment variable or a file (any `CredentialProvider`, see "Configuring the LLM providers" in the developer article `ai/index`). Without credentials the calls carry none. A call whose credentials are rejected (401) is repeated once with fresh ones. |
 
 Give an agent the client tools by adding `a2a.listAgents`, `a2a.askAgent`, `a2a.replyAgent`,
 `a2a.getAgentTask`, `a2a.listAgentConversations` and `a2a.fetchArtifact` to its tool list.

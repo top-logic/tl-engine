@@ -10,11 +10,14 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.table.Aggregator;
+import com.top_logic.table.CellContent;
+import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
 import com.top_logic.table.Sort;
 import com.top_logic.table.impl.DelegatingColumn;
@@ -64,6 +67,10 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        Whether the column is displayed only once the user selects it in the column selection.
  * @param export
  *        How the column takes part in an export of the table.
+ * @param tooltip
+ *        The tooltip of a cell, computed from its row and its value, or {@code null} for a column
+ *        whose cells have none. In the header row of a group, the row is {@code null} and the value
+ *        is the value the group is formed by.
  */
 public record ColumnSetup(
 		String name,
@@ -77,7 +84,21 @@ public record ColumnSetup(
 		Function<List<Object>, Object> aggregate,
 		Comparator<Object> comparator,
 		boolean hiddenByDefault,
-		ColumnExport export) {
+		ColumnExport export,
+		BiFunction<Object, Object, String> tooltip) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column whose cells have no tooltip.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, null);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column that is exported by the renderer of its type.
@@ -106,7 +127,8 @@ public record ColumnSetup(
 	 * The runtime column for this descriptor: the column its {@link #binding()} builds, displayed
 	 * in the {@link #width() configured width} when there is one, showing the
 	 * {@link #aggregate()} in the header row of a group when it computes one, sorting by the
-	 * {@link #comparator()} when it declares one, and left out of exports when its
+	 * {@link #comparator()} when it declares one, with the {@link #tooltip()} on its cells and on
+	 * the header rows of the groups it forms when it computes one, and left out of exports when its
 	 * {@link #export()} says so.
 	 */
 	public Column<Object, ?> buildColumn() {
@@ -142,10 +164,43 @@ public record ColumnSetup(
 				}
 			};
 		}
+		if (tooltip != null) {
+			result = withTooltip(result, tooltip);
+		}
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
 		}
 		return result;
+	}
+
+	/**
+	 * The given column with the given tooltip on its cells.
+	 *
+	 * <p>
+	 * A data cell gets the tooltip computed from its row and its value; a value rendered without a
+	 * row - the value of a group in the header row of the group - the one computed from no row and
+	 * that value. A cell the user may not read has no tooltip.
+	 * </p>
+	 */
+	private static <V> Column<Object, V> withTooltip(Column<Object, V> column,
+			BiFunction<Object, Object, String> tooltip) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public CellContent renderCell(Object row) {
+				V cellValue = super.value(row);
+				CellContent content = super.renderCell(row);
+				if (cellValue == ColumnProviderService.UNREADABLE) {
+					return content;
+				}
+				return CellContent.withTooltip(content, tooltip.apply(row, cellValue));
+			}
+
+			@Override
+			public CellRenderer<V> renderer() {
+				CellRenderer<V> inner = super.renderer();
+				return groupValue -> CellContent.withTooltip(inner.render(groupValue), tooltip.apply(null, groupValue));
+			}
+		};
 	}
 
 	/**

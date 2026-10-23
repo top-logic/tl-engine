@@ -129,20 +129,46 @@ public class ServiceFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * The tooltip of a service category given by its label.
+	 *
+	 * @param label
+	 *        The label of the category, see {@link #category(BasicRuntimeModule)}.
+	 * @return The description of the category, <code>null</code> if the label names no category or
+	 *         the category has no description.
+	 */
+	@Label("Tooltip of a service category")
+	public static String categoryTooltip(String label) {
+		Class<? extends ServiceCategory> category = categoryOf(label);
+		if (category == null) {
+			return null;
+		}
+		return Resources.getInstance().getString(ServiceCategory.label(category).tooltipOptional());
+	}
+
+	/**
 	 * The position of the category with the given label in the current language.
 	 */
 	private static int categoryOrder(String label) {
-		if (label != null) {
-			for (Class<?> type : TypeIndex.getInstance().getSpecializations(ServiceCategory.class, true, true,
-				true)) {
-				@SuppressWarnings("unchecked")
-				Class<? extends ServiceCategory> category = (Class<? extends ServiceCategory>) type;
-				if (label.equals(categoryLabel(category))) {
-					return ServiceCategory.order(category);
-				}
+		Class<? extends ServiceCategory> category = categoryOf(label);
+		return category == null ? ServiceCategory.DEFAULT_ORDER : ServiceCategory.order(category);
+	}
+
+	/**
+	 * The category with the given label in the current language, <code>null</code> if there is
+	 * none.
+	 */
+	private static Class<? extends ServiceCategory> categoryOf(String label) {
+		if (label == null) {
+			return null;
+		}
+		for (Class<?> type : TypeIndex.getInstance().getSpecializations(ServiceCategory.class, true, true, true)) {
+			@SuppressWarnings("unchecked")
+			Class<? extends ServiceCategory> category = (Class<? extends ServiceCategory>) type;
+			if (label.equals(categoryLabel(category))) {
+				return category;
 			}
 		}
-		return ServiceCategory.DEFAULT_ORDER;
+		return null;
 	}
 
 	private static String categoryLabel(Class<? extends ServiceCategory> category) {

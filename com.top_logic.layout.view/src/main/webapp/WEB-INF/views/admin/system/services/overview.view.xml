@@ -10,8 +10,9 @@
 	inputs - shows the status the snapshot recorded (serviceStatus), the category column the functional category
 	of the service (serviceCategory, see ServiceCategory), the module column the software module the
 	service is delivered with (serviceModule). The table starts grouped by category, the groups in
-	the order the categories declare (serviceCategoryCompare); its filter bar searches the displayed
-	columns.
+	the order the categories declare (serviceCategoryCompare), each cell and group header with the
+	description of the category as tooltip (serviceCategoryTooltip); its filter bar searches the
+	displayed columns.
 	- The table writes the selected module to the selection channel; the derived active channel
 	tells whether it runs, so Start (while stopped) and Stop / Restart (while running) are
 	mutually exclusive. Each command runs the ServiceLifecycleAction (which reads the module from
@@ -159,6 +160,7 @@
 					</label>
 					<value>serviceCategory($row)</value>
 					<comparator>serviceCategoryCompare($left, $right)</comparator>
+					<tooltip>serviceCategoryTooltip($value)</tooltip>
 				</computed-column>
 				<computed-column name="module"
 					type="tl.core:String"

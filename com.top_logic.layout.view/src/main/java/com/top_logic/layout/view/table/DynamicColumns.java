@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -132,6 +133,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getComparator()}. */
 		String COMPARATOR = "comparator";
+
+		/** Configuration name for {@link #getTooltip()}. */
+		String TOOLTIP = AbstractColumnDeclaration.Config.TOOLTIP;
 
 		@Override
 		@ClassDefault(DynamicColumns.class)
@@ -378,6 +382,26 @@ public class DynamicColumns implements ColumnDeclaration {
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getComparator();
 
+		/**
+		 * The tooltip of a cell of every column: an expression computing what the user reads when
+		 * pointing at the cell.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getValue() value} - the row and the
+		 * object the column stands for - and the value of the cell as the variable
+		 * {@value ValueAsConfig#DEFAULT_VALUE_AS}, or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}. In the header row of a group formed by a column, it is
+		 * evaluated for the value of the group, without a row. It yields a text or an
+		 * internationalized text; nothing at all leaves the cell without a tooltip.
+		 * </p>
+		 */
+		@Name(TOOLTIP)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getTooltip();
+
 	}
 
 	private final String _name;
@@ -513,7 +537,7 @@ public class DynamicColumns implements ColumnDeclaration {
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
-				set.comparator(column), !set.visible(column), _export));
+				set.comparator(column), !set.visible(column), _export, set.tooltip(column)));
 		}
 		return result;
 	}
@@ -537,6 +561,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		private final QueryExecutor _comparator;
 
+		private final QueryExecutor _tooltip;
+
 		private final ColumnFunctions _functions;
 
 		private final TLModelPartRef _typeRef;
@@ -556,6 +582,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			_columnVisible = InputScript.compile(config, Config.COLUMN_VISIBLE);
 			_aggregate = InputScript.compile(config, Config.AGGREGATE);
 			_comparator = InputScript.compile(config, Config.COMPARATOR);
+			_tooltip = InputScript.compile(config, Config.TOOLTIP);
 			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
 			_typeRef = config.getType();
 			_multiple = config.getMultiple();
@@ -668,6 +695,16 @@ public class DynamicColumns implements ColumnDeclaration {
 				QueryExecutor comparator = _comparator;
 				return AbstractColumnDeclaration
 					.order((value1, value2) -> comparator.execute(_cells.inputs(value1, value2)));
+			}
+
+			@Override
+			public BiFunction<Object, Object, String> tooltip(Object column) {
+				if (_tooltip == null) {
+					return null;
+				}
+				QueryExecutor tooltip = _tooltip;
+				return (row, value) -> AbstractColumnDeclaration
+					.tooltipText(tooltip.execute(_cells.inputs(row, column, value)));
 			}
 
 		}

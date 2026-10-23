@@ -9,7 +9,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "dompurify": "^3.2.4",
+    "dompurify": "^3.4.17",
     "highlight.js": "^11.12.0",
     "marked": "^15.0.7"
   },

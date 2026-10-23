@@ -139,7 +139,9 @@ until they are created anew.
 ### Control application in a container
 
 Access to the Docker API is root access to the host. A control application running in a container
-therefore never gets the raw socket:
+therefore never gets the raw socket of the system daemon. On a Docker server shared with other
+applications, use a dedicated rootless daemon; [the Docker server article](doc:factory/docker-server)
+explains why and how to set it up. The remaining options:
 
 - **Socket proxy**: mount the socket into a proxy container (e.g. a docker socket proxy) that only
   lets through the API calls the provider uses - containers, exec, images (build), volumes,

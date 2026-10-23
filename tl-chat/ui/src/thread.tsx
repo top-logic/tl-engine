@@ -1374,6 +1374,7 @@ export const Thread = React.memo(function Thread({
   canCopy = true,
   canRate = true,
   canRegenerate = true,
+  canEdit = true,
   citationMarkers = true,
   showTimestamp = true,
   workingIndicator = DOTS,
@@ -1411,6 +1412,8 @@ export const Thread = React.memo(function Thread({
   canCopy?: boolean
   canRate?: boolean
   canRegenerate?: boolean
+  /** Whether a sent message offers to be edited and sent again. */
+  canEdit?: boolean
   citationMarkers?: boolean
   showTimestamp?: boolean
   /** What stands in the answer's place until its first word; the dots unless configured. */
@@ -1522,7 +1525,7 @@ export const Thread = React.memo(function Thread({
                       edited={user.edited}
                       labels={labels}
                       editing={editingId === user.id}
-                      onStartEdit={busy ? undefined : () => setEditingId(user.id)}
+                      onStartEdit={busy || !canEdit ? undefined : () => setEditingId(user.id)}
                       onCancelEdit={() => setEditingId(null)}
                       onSubmitEdit={(text) => {
                         setEditingId(null)

@@ -1,4 +1,5 @@
 import { React } from 'tl-react-bridge'
+import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
 import type { ReactNode } from 'react'
 import {
   autoTitle,
@@ -465,6 +466,12 @@ export interface ChatState {
   autoApprove: boolean
   traceMode: TraceMode
 
+  /**
+   * Which functions beyond sending the open conversation supports, as the server stated it with the
+   * conversation or the last send; everything for a new chat.
+   */
+  features: ConversationFeatures
+
   // Transcript.
   messages: ChatMessage[]
   feedback: MessageFeedback[]
@@ -594,6 +601,7 @@ const EMPTY_CONVERSATION: Pick<
   | 'notice'
   | 'noticeDetail'
   | 'noticeTone'
+  | 'features'
 > = {
   subagents: [],
   subagentBudget: undefined,
@@ -604,6 +612,7 @@ const EMPTY_CONVERSATION: Pick<
   notice: '',
   noticeDetail: '',
   noticeTone: 'warn',
+  features: ALL_FEATURES,
 }
 
 /** What a send needs from the element that triggered it. */
@@ -2145,6 +2154,7 @@ export class ChatStore {
           sessions: withTitle(this.state.sessions, id, detail.title),
           messages: turnsJsonToMessages(detail.turnsJson),
           feedback: detail.feedback ?? [],
+          features: readFeatures(detail.features),
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),
           // The switch shows the mode the server now runs this chat with, not the one the
           // previous chat or the page load left behind (#658); a chat that stores none is
@@ -2268,7 +2278,7 @@ export class ChatStore {
         this.patch({ busy: true })
         this.setRun((s) => ({ ...s, busy: true }))
         try {
-          await sendMessage(at, {
+          const accepted = await sendMessage(at, {
             text: outbound,
             sessionId: active,
             agent: this.state.agent,
@@ -2281,6 +2291,11 @@ export class ChatStore {
             // The turn runs with what the switch shows now, not with what reached the server.
             approvalMode: this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
           })
+          // The send is where a new chat learns who answers it: its session is created by this send.
+          if (accepted?.features && this.state.sessionId === active) {
+            const features = readFeatures(accepted.features)
+            if (!sameFeatures(features, this.state.features)) this.patch({ features })
+          }
           expectFrames()
         } catch (err) {
           this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })

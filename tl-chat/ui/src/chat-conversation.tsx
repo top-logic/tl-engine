@@ -19,6 +19,7 @@ import {
 import { ThemeIcon } from './theme-icon'
 import { Thread } from './thread'
 import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
+import { gateComposerControls, gateThreadConfig } from './features'
 
 const { useCallback, useEffect, useMemo, useRef } = React
 
@@ -333,8 +334,12 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // Where this conversation's requests go. Memoised, because the composer is `React.memo`d and a
   // fresh object on every render would defeat that.
   const at = useMemo(() => ({ windowId: chat.windowId, chatId }), [chat.windowId, chatId])
-  const config = useMemo(() => readThreadConfig(state), [state])
-  const controls = useMemo(() => readComposerControls(state), [state])
+  // What the element configured, as far as the open conversation supports it.
+  const config = useMemo(() => gateThreadConfig(readThreadConfig(state), chat.features), [state, chat.features])
+  const controls = useMemo(
+    () => gateComposerControls(readComposerControls(state), chat.features),
+    [state, chat.features],
+  )
   const selected = typeof state.selected === 'string' ? state.selected : ''
   const corrections = typeof state.selectedCorrections === 'number' ? state.selectedCorrections : 0
   const hasInput = state.hasInput === true
@@ -631,6 +636,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           canCopy={config.copy}
           canRate={config.rate}
           canRegenerate={config.regenerate}
+          canEdit={chat.features.editMessages}
           citationMarkers={config.citationMarkers}
           showTimestamp={config.timestamp}
           workingIndicator={workingIndicator}

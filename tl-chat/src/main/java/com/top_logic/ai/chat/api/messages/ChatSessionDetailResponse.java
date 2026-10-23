@@ -51,6 +51,9 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getInFlight() */
 	public static final String IN_FLIGHT__PROP = "inFlight";
 
+	/** @see #getFeatures() */
+	public static final String FEATURES__PROP = "features";
+
 	private String _id = "";
 
 	private String _title = "";
@@ -74,6 +77,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	private com.top_logic.ai.chat.api.messages.ContextCompositionEvent _lastComposition = null;
 
 	private com.top_logic.ai.chat.api.messages.InFlightRunDto _inFlight = null;
+
+	private com.top_logic.ai.chat.api.messages.ConversationFeaturesDto _features = null;
 
 	/**
 	 * Creates a {@link ChatSessionDetailResponse} instance.
@@ -381,6 +386,33 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		return _inFlight != null;
 	}
 
+	/**
+	 * Which functions beyond sending this conversation supports.
+	 */
+	public final com.top_logic.ai.chat.api.messages.ConversationFeaturesDto getFeatures() {
+		return _features;
+	}
+
+	/**
+	 * @see #getFeatures()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setFeatures(com.top_logic.ai.chat.api.messages.ConversationFeaturesDto value) {
+		internalSetFeatures(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFeatures()} without chain call utility. */
+	protected final void internalSetFeatures(com.top_logic.ai.chat.api.messages.ConversationFeaturesDto value) {
+		_features = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getFeatures()} has a value.
+	 */
+	public final boolean hasFeatures() {
+		return _features != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SESSION_DETAIL_RESPONSE__TYPE;
@@ -400,7 +432,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			LAST_EFFORT__PROP, 
 			APPROVAL_MODE__PROP, 
 			LAST_COMPOSITION__PROP, 
-			IN_FLIGHT__PROP);
+			IN_FLIGHT__PROP, 
+			FEATURES__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -437,6 +470,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case APPROVAL_MODE__PROP: return getApprovalMode();
 			case LAST_COMPOSITION__PROP: return getLastComposition();
 			case IN_FLIGHT__PROP: return getInFlight();
+			case FEATURES__PROP: return getFeatures();
 			default: return null;
 		}
 	}
@@ -456,6 +490,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case APPROVAL_MODE__PROP: internalSetApprovalMode((String) value); break;
 			case LAST_COMPOSITION__PROP: internalSetLastComposition((com.top_logic.ai.chat.api.messages.ContextCompositionEvent) value); break;
 			case IN_FLIGHT__PROP: internalSetInFlight((com.top_logic.ai.chat.api.messages.InFlightRunDto) value); break;
+			case FEATURES__PROP: internalSetFeatures((com.top_logic.ai.chat.api.messages.ConversationFeaturesDto) value); break;
 		}
 	}
 
@@ -508,6 +543,10 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			out.name(IN_FLIGHT__PROP);
 			getInFlight().writeTo(out);
 		}
+		if (hasFeatures()) {
+			out.name(FEATURES__PROP);
+			getFeatures().writeTo(out);
+		}
 	}
 
 	@Override
@@ -534,6 +573,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case APPROVAL_MODE__PROP: setApprovalMode(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LAST_COMPOSITION__PROP: setLastComposition(com.top_logic.ai.chat.api.messages.ContextCompositionEvent.readContextCompositionEvent(in)); break;
 			case IN_FLIGHT__PROP: setInFlight(com.top_logic.ai.chat.api.messages.InFlightRunDto.readInFlightRunDto(in)); break;
+			case FEATURES__PROP: setFeatures(com.top_logic.ai.chat.api.messages.ConversationFeaturesDto.readConversationFeaturesDto(in)); break;
 			default: super.readField(in, field);
 		}
 	}

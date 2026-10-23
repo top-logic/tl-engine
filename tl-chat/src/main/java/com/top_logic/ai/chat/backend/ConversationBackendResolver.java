@@ -22,8 +22,11 @@ public interface ConversationBackendResolver {
 	 * The backend that answers the given conversation.
 	 *
 	 * <p>
-	 * Called on the chat worker thread before every run of the conversation, in the context of the
-	 * account the conversation belongs to.
+	 * Called on the chat worker thread before every run of the conversation, and on a request thread
+	 * whenever the chat asks what the conversation supports - loading it, sending into it,
+	 * regenerating or editing a message. Always in the context of the account the conversation
+	 * belongs to, and often: the answer is expected to be cheap and the same for the same
+	 * conversation.
 	 * </p>
 	 *
 	 * @param session

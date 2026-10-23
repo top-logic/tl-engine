@@ -1,3 +1,4 @@
+import type { ConversationFeatures } from './features'
 import { argsSummary } from './plain-text'
 import { draftToText, parseDraft, referenceSummary } from './reference'
 import { chatFetch } from './stale-window'
@@ -183,6 +184,8 @@ export interface SessionDetail {
    * had got, in the count every `text_delta` carries as `end`. Absent when no run was in flight.
    */
   inFlight?: { streamedChars?: number }
+  /** Which functions beyond sending this conversation supports; read with `readFeatures`. */
+  features?: Partial<ConversationFeatures>
 }
 
 export async function loadSession(at: ChatAddress, id: string): Promise<SessionDetail> {
@@ -201,7 +204,10 @@ export async function deleteSession(at: ChatAddress, id: string): Promise<void> 
   if (!res.ok) throw new Error(`delete failed (${res.status})`)
 }
 
-export async function sendMessage(at: ChatAddress, payload: SendPayload): Promise<{ taskId?: string; status: string }> {
+export async function sendMessage(
+  at: ChatAddress,
+  payload: SendPayload,
+): Promise<{ taskId?: string; status: string; features?: Partial<ConversationFeatures> }> {
   const res = await chatFetch(withWindow('/chat/send', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -214,14 +220,18 @@ export async function sendMessage(at: ChatAddress, payload: SendPayload): Promis
   if (res.status === 429) {
     throw await refused(res)
   }
-  const data = (await res.json()) as { taskId?: string; status?: string }
+  const data = (await res.json()) as {
+    taskId?: string
+    status?: string
+    features?: Partial<ConversationFeatures>
+  }
   if (res.status === 409 || data.status === 'busy') {
     throw new Error('busy')
   }
   if (!res.ok || data.status === 'error') {
     throw new Error(data.status ?? `send failed (${res.status})`)
   }
-  return { taskId: data.taskId, status: data.status ?? 'processing' }
+  return { taskId: data.taskId, status: data.status ?? 'processing', features: data.features }
 }
 
 /**

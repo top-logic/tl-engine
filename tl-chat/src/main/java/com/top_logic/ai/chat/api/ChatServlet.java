@@ -30,6 +30,7 @@ import com.top_logic.ai.chat.api.messages.ChatSendRequest;
 import com.top_logic.ai.chat.api.messages.ChatSendResponse;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
+import com.top_logic.ai.chat.api.messages.ConversationFeaturesDto;
 import com.top_logic.ai.chat.api.messages.FactDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackRequest;
@@ -55,6 +56,9 @@ import com.top_logic.ai.chat.api.messages.SubagentListResponse;
 import com.top_logic.ai.chat.api.messages.SubagentMessageRequest;
 import com.top_logic.ai.chat.api.messages.SubagentMessageResponse;
 import com.top_logic.ai.chat.api.messages.UpdateTitleRequest;
+import com.top_logic.ai.chat.backend.BackendFeatures;
+import com.top_logic.ai.chat.backend.ConversationBackend;
+import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
@@ -92,6 +96,7 @@ import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.util.Resources;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -462,7 +467,15 @@ public class ChatServlet extends TopLogicServlet {
 			body.isMcpOverride(),
 			body.getMcpServers(),
 			effort);
-		Refusal refusal = runRefusal(person, options);
+		// The chat the message goes to: the one it names, else the one the window shows.
+		String chatId = activeSessionId != null ? activeSessionId : tracker.getActiveSessionId();
+		ConversationBackend backend = backendOf(chatId, person);
+		// A conversation a backend answers runs no agent of this application, so what the agent
+		// policy says about the account's agents does not apply to it; what the backend supports does.
+		Refusal refusal = backend == null
+			? runRefusal(person, options)
+			: (hasAttachments ? unsupported(backend.features().attachments(),
+				com.top_logic.ai.chat.backend.I18NConstants.ATTACHMENTS_NOT_SUPPORTED) : null);
 		if (refusal != null) {
 			writeRefused(resp, refusal,
 				ChatSendResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
@@ -470,6 +483,7 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, subSession, userName,
 			messageText, attachments, options, facts(body.getFacts()));
+		ConversationFeaturesDto features = chatId != null ? featuresDto(backend) : null;
 
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(CONTENT_TYPE_JSON);
@@ -489,7 +503,8 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		ChatSendResponse sendResponse = ChatSendResponse.create()
 			.setTaskId(result.getTaskId())
-			.setStatus("processing");
+			.setStatus("processing")
+			.setFeatures(features);
 		resp.getWriter().write(DtoMapper.toJson(sendResponse));
 	}
 
@@ -559,7 +574,11 @@ public class ChatServlet extends TopLogicServlet {
 			body.isMcpOverride(), body.getMcpServers(), blankToNull(body.getEffort()));
 		// Before the turn is removed, not after: a regenerate that is refused must leave the answer it
 		// was going to replace where it is.
-		Refusal refusal = runRefusal(resolveCurrentPerson(req), options);
+		ConversationBackend backend = backendOf(sessionId, resolveCurrentPerson(req));
+		Refusal refusal = backend == null
+			? runRefusal(resolveCurrentPerson(req), options)
+			: unsupported(backend.features().regenerate(),
+				com.top_logic.ai.chat.backend.I18NConstants.REGENERATE_NOT_SUPPORTED);
 		if (refusal != null) {
 			writeRefused(resp, refusal,
 				TruncateResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
@@ -640,6 +659,15 @@ public class ChatServlet extends TopLogicServlet {
 			return;
 		}
 		Person person = resolveCurrentPerson(req);
+		ConversationBackend backend = backendOf(sessionId, person);
+		Refusal refusal = backend == null ? null
+			: unsupported(backend.features().editMessages(),
+				com.top_logic.ai.chat.backend.I18NConstants.EDIT_NOT_SUPPORTED);
+		if (refusal != null) {
+			writeRefused(resp, refusal,
+				TruncateResponse.create().setStatus(FORBIDDEN).setReason(refusal.reason()));
+			return;
+		}
 		ChatState chat = tracker.getSessionManager().chatStateFor(sessionId, person);
 		Removed removed = removeTurnsFrom(tracker, chat, person, body.getFromTurn());
 		writeTruncateResponse(resp, TruncateResponse.create()
@@ -776,6 +804,58 @@ public class ChatServlet extends TopLogicServlet {
 		resp.setContentType(CONTENT_TYPE_JSON);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.getWriter().write("{\"status\":\"ok\"}");
+	}
+
+	/**
+	 * The backend that answers the given chat of the given account, or <code>null</code> when the
+	 * framework's own agent answers it - also for a chat that is not the account's.
+	 */
+	private static ConversationBackend backendOf(String sessionId, Person person) {
+		if (sessionId == null || person == null) {
+			return null;
+		}
+		return backendOf(ChatHistoryService.findOwnedSessionById(sessionId, person));
+	}
+
+	/** The backend that answers the given chat, or <code>null</code> for the framework's own agent. */
+	private static ConversationBackend backendOf(TLObject session) {
+		if (!(session instanceof AgentSession agentSession)) {
+			return null;
+		}
+		try {
+			return ConversationBackendService.backendFor(agentSession);
+		} catch (RuntimeException ex) {
+			// The run asks again and fails there, where the user is told; a request that only reads
+			// the conversation must not break on it.
+			Logger.warn("Could not ask which backend answers chat " + getObjectId(session) + ".", ex,
+				ChatServlet.class);
+			return null;
+		}
+	}
+
+	/**
+	 * What the chat offers in a conversation answered by the given backend, or by the framework's
+	 * own agent for <code>null</code>.
+	 */
+	static ConversationFeaturesDto featuresDto(ConversationBackend backend) {
+		BackendFeatures features = backend == null ? BackendFeatures.INTERNAL : backend.features();
+		return ConversationFeaturesDto.create()
+			.setRegenerate(features.regenerate())
+			.setEditMessages(features.editMessages())
+			.setAgentPicker(features.agentPicker())
+			.setModelPicker(features.modelPicker())
+			.setEffortPicker(features.effortPicker())
+			.setMcpPicker(features.mcpPicker())
+			.setAttachments(features.attachments())
+			.setApprovals(features.approvals());
+	}
+
+	/**
+	 * The refusal of a function the conversation's backend does not support, or <code>null</code>
+	 * when it does.
+	 */
+	private static Refusal unsupported(boolean supported, ResKey reason) {
+		return supported ? null : forbidden(Resources.getInstance().getString(reason));
 	}
 
 	/**
@@ -1744,7 +1824,8 @@ public class ChatServlet extends TopLogicServlet {
 			// Build response with structured entries
 			ChatSessionDetailResponse response = ChatSessionDetailResponse.create()
 				.setId(sessionId)
-				.setTitle(ChatHistoryService.getTitle(session));
+				.setTitle(ChatHistoryService.getTitle(session))
+				.setFeatures(featuresDto(backendOf(session)));
 
 			// What this conversation looks like right now, in three descending preferences.
 			//

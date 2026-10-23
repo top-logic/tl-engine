@@ -893,6 +893,24 @@
 				<version>${tl.version}</version>
 				<type>pom</type>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-starter-classic</artifactId>
+				<version>${tl.version}</version>
+				<type>pom</type>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-starter-ai</artifactId>
+				<version>${tl.version}</version>
+				<type>pom</type>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-starter-ai-search</artifactId>
+				<version>${tl.version}</version>
+				<type>pom</type>
+			</dependency>
 
 			<!-- Supported DB drivers -->
 			<dependency>

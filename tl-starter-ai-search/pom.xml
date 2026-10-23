@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<!--
+		Feature starter: the TopLogic modules of the hybrid (full-text and semantic) search over the application
+		data as a single dependency. An application enables the search by depending on this POM:
+
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-starter-ai-search</artifactId>
+				<type>pom</type>
+			</dependency>
+
+		The parent is tl-parent-all, not tl-parent-core: a starter contributes no code and no resources, so it
+		needs only the version management and publishing settings, but none of the module build of a
+		TopLogic fragment.
+
+		The search builds on the agent framework tl-ai-core, which it brings along as dependency.
+	-->
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-all</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<artifactId>tl-starter-ai-search</artifactId>
+
+	<name>${project.artifactId}</name>
+	<description>Feature starter bundling the TopLogic modules of the hybrid search (index and ONNX embeddings).</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>pom</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-index</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-index-onnx</artifactId>
+		</dependency>
+	</dependencies>
+</project>

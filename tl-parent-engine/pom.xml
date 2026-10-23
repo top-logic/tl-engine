@@ -155,6 +155,9 @@
 
 		<!-- Feature starters -->
 		<module>../tl-starter-react</module>
+		<module>../tl-starter-classic</module>
+		<module>../tl-starter-ai</module>
+		<module>../tl-starter-ai-search</module>
 
 		<!-- Supported DB drivers -->
 		<module>../ext.com.ibm.db2</module>

@@ -48,24 +48,33 @@
 						name="scripted"
 					/>
 					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						api-key="%ANTHROPIC_API_KEY%"
 						catalog-provider-id=""
 						models="claude-sonnet-4-6, claude-haiku-4-5-20251001"
 						name="anthropic"
-					/>
+					>
+						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+							name="tl_anthropic_api_key"
+						/>
+					</provider>
 					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-						api-key="%OPENAI_API_KEY%"
 						catalog-provider-id=""
 						models="gpt-5.6-luna"
 						name="openai"
-					/>
+					>
+						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+							name="tl_openai_api_key"
+						/>
+					</provider>
 					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAICompatibleProviderConfig"
-						api-key="%QWEN_API_KEY%"
 						base-url="http://ki.bos.local:8080"
 						catalog-provider-id=""
 						models="qwen3.8-27b"
 						name="qwen"
-					/>
+					>
+						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+							name="tl_qwen_api_key"
+						/>
+					</provider>
 				</providers>
 				<model-catalog fetch-remote-catalog="false">
 					<model-overrides>

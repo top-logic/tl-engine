@@ -45,7 +45,7 @@ A test that needs a knowledge base is still a unit test: wrap it in the H2 setup
 | `tl.ai.vector.e2e=true` | `VectorIndexE2e` | `VectorIndexIntegrationTest` in `tl-ai-demo` - real Mistral embeddings stored in a real JVector index | an embedding key |
 | `tl.ai.index.model.e2e=true` | `OnnxModelE2e` | the model test of `tl-ai-index-onnx` with a real embedding model | `-Dtl.ai.index.model.dir=` naming a directory with the model files, which no build downloads |
 | `tl.ai.eval=true` | `EvalE2e` | `TestEvalPmMatrix` - the model eval with real models | provider keys (`tl_anthropic_api_key` or `ANTHROPIC_API_KEY`, ...) and money |
-| `tl.ai.research.e2e=true` | `ResearchE2e` | `TestResearchEval` - the research questions with real models and the real web | `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_brave_api_key`, each `unencrypted:<key>` |
+| `tl.ai.research.e2e=true` | `ResearchE2e` | `TestResearchEval` - the research questions with real models and the real web | `tl_openai_api_key` and `tl_anthropic_api_key` with the plain key, `tl_brave_api_key` as `unencrypted:<key>` |
 
 Without its property, a gated test reports as skipped, never as passed. Examples:
 
@@ -84,7 +84,7 @@ The CSV lands in `tl-ai-eval/target/eval/`. How to add a scenario, how to read t
 `research-scenarios.config.xml` in `tl-ai-eval` puts research questions to the assistant with `TL_deepResearch` and grades the answer: `<citations>` deterministically (read sources cited, hosts, links to unread pages), `<judge>` by a pinned judge model of another family against a rubric. Real models and the real web, so behind `-Dtl.ai.research.e2e=true`; the graders run in every build against a scripted model and judge (`TestResearchPlumbing`). An arm can put the workers on another model than the lead (`<agent-models>`, `subagent-workers` for a server that takes one request at a time); the CSV's `subagent*` columns count what the workers spent. `-Dtl.ai.research.arms=` selects arms, `-Dtl.ai.research.scenarios=` scenarios and `-Dtl.ai.research.repeats=` the repetitions.
 
 ```bash
-export tl_openai_api_key=unencrypted:... tl_anthropic_api_key=unencrypted:... tl_brave_api_key=unencrypted:...
+export tl_openai_api_key=... tl_anthropic_api_key=... tl_brave_api_key=unencrypted:...
 mvn test -DskipTests=false -pl tl-ai-eval -Dtl.ai.research.e2e=true \
     -Dtest=com.top_logic.tl.ai.eval.TestResearchEval \
     -Dtl.ai.research.scenarios=fact-nobel-phd -Dtl.ai.research.repeats=1

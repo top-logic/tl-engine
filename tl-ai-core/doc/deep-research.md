@@ -112,12 +112,15 @@ in the model catalog, because no public catalog knows a local model:
 	<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 		<providers>
 			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAICompatibleProviderConfig"
-				api-key="%QWEN_API_KEY%"
 				base-url="http://ki.bos.local:8080"
 				catalog-provider-id=""
 				models="qwen3.8-27b"
 				name="qwen"
-			/>
+			>
+				<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+					name="tl_qwen_api_key"
+				/>
+			</provider>
 		</providers>
 		<model-catalog>
 			<model-overrides>
@@ -144,8 +147,8 @@ background subagent run at a time - the other workers wait in the queue:
 ```
 
 `subagent-workers` applies to every background subagent of the installation, not only to research
-workers. `%QWEN_API_KEY%` is an alias the application declares for the environment variable that
-holds the key (prefix `unencrypted:`).
+workers. The provider names the environment variable `tl_qwen_api_key`, which holds the plain key; the
+configuration holds the variable name, not the key.
 
 How the two compare on the research questions is measured with the eval (`tl-ai-eval`, arms
 `albert-gpt` and `albert-gpt-worker-qwen`); the results are in #784.

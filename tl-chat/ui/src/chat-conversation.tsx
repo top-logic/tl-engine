@@ -211,24 +211,6 @@ function followSelection(
 }
 
 /**
- * What a `publishSession` report says: which chat is open here, and whether this window is what
- * brought it into being.
- *
- * `created` is the half the server cannot work out for itself. It sees a session id arrive either
- * way, and a reload re-opens the chat this window had, so "the session has no subject yet" is not
- * the same question: a conversation started elsewhere and opened here must keep the subject it was
- * started with, and one that never had a subject must not be given the page's current one
- * (#508).
- */
-export function sessionReport(
-  sessionId: string | null,
-  createdSessionId: string | null,
-): { id: string; created: boolean } {
-  const id = sessionId ?? ''
-  return { id, created: id !== '' && id === createdSessionId }
-}
-
-/**
  * One write of the `reference` or the `quote` channel, out of the control state.
  *
  * Both carry the same thing - a token for the composer to insert at the caret - and differ only in
@@ -343,9 +325,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const selected = typeof state.selected === 'string' ? state.selected : ''
   const corrections = typeof state.selectedCorrections === 'number' ? state.selectedCorrections : 0
   const hasInput = state.hasInput === true
-  // Whether the element names a subject channel. The server needs the session id of a chat created
-  // here even when nothing else on the page follows the selection, so this publishes it too.
-  const hasSubject = state.hasSubject === true
   const placeholder = typeof state.placeholder === 'string' ? state.placeholder : ''
   // Keyed on the string, not on the state: a fresh form object on every state change would
   // re-render the memoised transcript for nothing.
@@ -430,10 +409,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // Write-back: publish the store's own session onto the channel (two-way), so a session list
   // highlights it after the store creates one on first send or restores one on reload.
   //
-  // `created` is the other half: the server stamps a conversation with what the page is about only
-  // when this window is what brought it into being. It cannot tell that from the id alone - a reload
-  // re-opens the chat this window had, and that one must keep the subject it was started with.
-  //
   // It starts from "no chat" rather than from nothing. An element mounts with an empty store while
   // the chat its channel names is still loading, and reporting that emptiness cleared the channel
   // the host had just set - the host then answered the clear, and the page showed whatever it
@@ -441,12 +416,12 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // is only sent after a chat was reported.
   const published = useRef<string | null>('')
   useEffect(() => {
-    if (!hasInput && !hasSubject) return
-    const report = sessionReport(chat.sessionId, chat.createdSessionId)
-    if (published.current === report.id) return
-    published.current = report.id
-    void command('publishSession', report)
-  }, [hasInput, hasSubject, chat.sessionId, chat.createdSessionId, command])
+    if (!hasInput) return
+    const id = chat.sessionId ?? ''
+    if (published.current === id) return
+    published.current = id
+    void command('publishSession', { id })
+  }, [hasInput, chat.sessionId, command])
 
   useEffect(() => {
     void command('setBusy', { busy: chat.busy })

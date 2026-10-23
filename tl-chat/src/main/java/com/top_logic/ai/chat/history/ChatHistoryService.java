@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.UnaryOperator;
 
 import com.top_logic.ai.chat.api.DtoMapper;
@@ -22,6 +24,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
@@ -118,6 +121,27 @@ public class ChatHistoryService {
 	}
 
 	/**
+	 * Creates a new chat session with the given owner and approval mode, about the given subject.
+	 *
+	 * <p>
+	 * The subject is written before the session is returned, so that the first message sent into it
+	 * is already answered by whatever the subject decides - a
+	 * {@link com.top_logic.ai.chat.backend.ConversationBackend} resolved from it.
+	 * </p>
+	 *
+	 * @param subject
+	 *        What the chat is about, <code>null</code> for nothing.
+	 * @return the created session object, or null on failure.
+	 */
+	public static TLObject createSession(String title, Person owner, ApprovalMode mode, TLObject subject) {
+		TLObject session = createSession(title, owner, mode);
+		if (session != null && subject != null) {
+			store().setSubject((AgentSession) session, subject);
+		}
+		return session;
+	}
+
+	/**
 	 * Changes the session metadata in one step, see
 	 * {@link AgentExecutionStore#updateMetadata(AgentSession, UnaryOperator)}.
 	 *
@@ -191,6 +215,38 @@ public class ChatHistoryService {
 			Logger.error("Failed to truncate chat session: " + ex.getMessage(), ex, ChatHistoryService.class);
 			return 0;
 		}
+	}
+
+	/**
+	 * What the recorded runs of a conversation cost, in US dollars, by the ID of the last turn each
+	 * of them wrote. A run that reported no cost, and a subagent's run, are not included.
+	 */
+	public static Map<String, Money> runCosts(TLObject session) {
+		Map<String, Money> result = new HashMap<>();
+		try {
+			for (AgentExecution execution : store().executionsOf((AgentSession) session)) {
+				Double cost = execution.getCost();
+				String transcript = execution.getTranscript();
+				if (execution.getParentExecution() != null || cost == null || transcript == null
+					|| transcript.isEmpty()) {
+					continue;
+				}
+				try {
+					List<PersistedTurn> turns = PersistedConversationV2
+						.readPersistedConversationV2(new JsonReader(new StringR(transcript))).getTurns();
+					if (!turns.isEmpty()) {
+						result.put(turns.get(turns.size() - 1).getId(), new Money(cost.doubleValue(), Money.USD));
+					}
+				} catch (IOException | RuntimeException ex) {
+					Logger.warn("Skipping unreadable transcript of run " + execution.getRunId()
+						+ ": " + ex.getMessage(), ChatHistoryService.class);
+				}
+			}
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to read the costs of a conversation: " + ex.getMessage(), ex,
+				ChatHistoryService.class);
+		}
+		return result;
 	}
 
 	/**

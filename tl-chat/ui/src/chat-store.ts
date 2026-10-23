@@ -446,15 +446,6 @@ export interface ChatState {
   sessionsLoading: boolean
   sessionsError: string
   sessionId: string | null
-  /**
-   * The chat this window brought into being, as opposed to one it opened.
-   *
-   * Only the browser knows which of the two a chat is: the server sees a session id arrive either
-   * way, and a reload re-opens what this window had. A host that stamps a new conversation with what
-   * the page is about (`<chat-conversation subject>`) needs the difference, and this is where it is
-   * known. Never cleared - ids are unique, and it says what happened to this one id.
-   */
-  createdSessionId: string | null
   sessionTitle: string
 
   // Turn settings.
@@ -1052,7 +1043,6 @@ export class ChatStore {
       sessionsLoading: true,
       sessionsError: '',
       sessionId: null,
-      createdSessionId: null,
       sessionTitle: '',
       agent: '',
       model: '',
@@ -1755,7 +1745,12 @@ export class ChatStore {
         if (data.turnUsage) setTokens(data.contextWindow, undefined, data.turnUsage)
       })
       on('run_completed', (e) => {
-        const data = frameData<{ reason?: string }>(e.data, {})
+        const data = frameData<{ reason?: string; totalCost?: number; currency?: string }>(e.data, {})
+        // What the run cost, when it reported it - whoever answered: the framework's agent or a
+        // backend.
+        if (this.runId && data.currency && data.totalCost !== undefined) {
+          this.dispatch({ type: 'SET_RUN_COST', runId: this.runId, cost: data.totalCost, currency: data.currency })
+        }
         // A run the user stopped is not a failure, and the server does not report it as one
         // (#549). It says so once, in the transcript where the answer stops - the same line the
         // server records for a reload or another window - and not a second time in the strip.
@@ -2063,7 +2058,7 @@ export class ChatStore {
       const detail = await loadSession(at, sessionId)
       // The user may have moved to another chat while this was in flight.
       if (this.state.sessionId !== sessionId) return
-      this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson) })
+      this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson, detail.runCosts) })
     } catch {
       // Best effort: what is on screen is a turn of this conversation either way.
     }
@@ -2152,7 +2147,7 @@ export class ChatStore {
         this.patch({
           sessionId: id,
           sessions: withTitle(this.state.sessions, id, detail.title),
-          messages: turnsJsonToMessages(detail.turnsJson),
+          messages: turnsJsonToMessages(detail.turnsJson, detail.runCosts),
           feedback: detail.feedback ?? [],
           features: readFeatures(detail.features),
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),
@@ -2250,7 +2245,7 @@ export class ChatStore {
           }
           active = created.id
           createdHere = true
-          this.patch({ sessionId: active, createdSessionId: active })
+          this.patch({ sessionId: active })
           await this.refreshSessions()
         }
         this.showNotice('')

@@ -4920,6 +4920,18 @@
   white-space: nowrap;
 }
 
+/* What the run cost, after the line; it is never cut. */
+.run-summary-cost,
+.run-meta-cost {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.run-summary-cost::before {
+  content: "\00B7";
+  margin-inline-end: 0.35rem;
+}
+
 .run-summary-body {
   margin-top: 0.35rem;
   padding-inline-start: 0.5rem;

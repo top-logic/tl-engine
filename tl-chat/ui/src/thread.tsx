@@ -10,6 +10,7 @@ import {
 } from './subagent-card'
 import type { CitationRender, MessageAction, PaneOpenOptions } from './extensions'
 import { Markdown } from './markdown'
+import { formatMoney } from './money'
 import { sameFields, sameItems, sameMembers, useStable } from './use-stable'
 import { AnswerSources, citedSources } from './sources'
 import { parseDraft, referenceSummary, withoutContextPrefix, type ReferenceToken } from './reference'
@@ -862,6 +863,7 @@ function RunSummary({
   busy,
   stopped = false,
   startOpen = false,
+  cost = '',
 }: {
   events: ChatMessage[]
   results: Map<string, ToolResult>
@@ -869,6 +871,8 @@ function RunSummary({
   busy: boolean
   stopped?: boolean
   startOpen?: boolean
+  /** What the run cost, formatted; empty while unknown. */
+  cost?: string
 }) {
   const [open, setOpen] = useState(startOpen)
   if (events.length === 0) return null
@@ -886,6 +890,7 @@ function RunSummary({
               ? labels.runStepsStopped(steps)
               : labels.runSteps(steps)}
         </span>
+        {cost && !busy ? <span className="run-summary-cost">{cost}</span> : null}
         <span className={`run-summary-caret${open ? ' is-open' : ''}`} aria-hidden="true" />
       </button>
       {open ? (
@@ -1114,23 +1119,34 @@ function RunMetaLine({
   meta,
   summary,
   busy,
+  cost,
   labels,
 }: {
   meta: RunMeta | null
   summary: string
   busy: boolean
+  /** What the run cost, formatted; empty while unknown. */
+  cost: string
   labels: Labels
 }) {
   const worked = meta?.durationMs != null ? labels.workedFor(formatDuration(meta.durationMs)) : ''
   const label = worked || (busy ? labels.working : '')
-  if (!label && !summary) return null
+  if (!label && !summary && !cost) return null
   return (
     <div className="run-meta">
       {label ? <span className={busy && !worked ? 'is-live' : undefined}>{label}</span> : null}
       {label && summary ? <span className="run-meta-dot" aria-hidden="true" /> : null}
       {summary ? <span className="run-meta-summary">{summary}</span> : null}
+      {cost && (label || summary) ? <span className="run-meta-dot" aria-hidden="true" /> : null}
+      {cost ? <span className="run-meta-cost">{cost}</span> : null}
     </div>
   )
+}
+
+/** What a run cost, in the user's language; empty while it has not reported a cost. */
+function runCostText(meta: RunMeta | null, language: string): string {
+  if (!meta || meta.cost === undefined || !meta.currency || meta.cost <= 0) return ''
+  return formatMoney(meta.cost, meta.currency, language)
 }
 
 interface AgentRunProps {
@@ -1199,6 +1215,7 @@ const AgentRun = React.memo(function AgentRun({
   const events = traceEvents(turn.events)
   const tools = toolsOf(turn.events)
   const meta = runMetaOf(turn.events)
+  const cost = runCostText(meta, language)
   const summaryLine = traceMode === 'summary' ? overviewLine(tools, labels) : ''
   // The summary line counts what the agent *did*. An error is not a step it took, and it has its
   // own card below in this mode - counted, a failed turn would claim to be "done in 1 step".
@@ -1220,9 +1237,10 @@ const AgentRun = React.memo(function AgentRun({
           labels={labels}
           busy={busy}
           stopped={notices(turn.events, 'cancelled').length + notices(turn.events, 'interrupted').length > 0}
+          cost={cost}
         />
       ) : (
-        <RunMetaLine meta={meta} summary={summaryLine} busy={busy} labels={labels} />
+        <RunMetaLine meta={meta} summary={summaryLine} busy={busy} cost={cost} labels={labels} />
       )}
       {traceMode === 'detailed' && events.length > 0 ? (
         <DetailedTrace events={events} results={results} labels={labels} effort={effort} model={''} />

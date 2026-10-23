@@ -673,6 +673,26 @@ message ChatSessionDetailResponse {
 	 * Which functions beyond sending this conversation supports.
 	 */
 	ConversationFeaturesDto features;
+
+	/**
+	 * What the runs of the conversation cost, by the turn of <code>turnsJson</code> each run ended
+	 * with. A run that reported no cost is not listed.
+	 */
+	repeated RunCostDto runCosts;
+}
+
+/**
+ * What one run of a conversation cost.
+ */
+message RunCostDto {
+	/** ID of the last turn the run wrote, as in <code>turnsJson</code>. */
+	string turnId;
+
+	/** The cost in {@link #currency}. */
+	double cost;
+
+	/** The ISO 4217 code of the currency of {@link #cost}. */
+	string currency;
 }
 
 /**

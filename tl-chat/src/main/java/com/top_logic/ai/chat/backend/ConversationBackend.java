@@ -55,6 +55,22 @@ public interface ConversationBackend {
 	BackendFeatures features();
 
 	/**
+	 * The context window, in tokens, of the model answering the conversation, as the backend knows
+	 * it - e.g. from what its process reported about its last run.
+	 *
+	 * <p>
+	 * The chat measures the context of a conversation against this window. The model of a backend
+	 * is not one of this application's, so the chat does not know its window otherwise; while this
+	 * is zero, the chat shows no context measure for the conversation.
+	 * </p>
+	 *
+	 * @return The window, zero while it is unknown.
+	 */
+	default int contextWindow() {
+		return 0;
+	}
+
+	/**
 	 * Answers one user message.
 	 *
 	 * <p>

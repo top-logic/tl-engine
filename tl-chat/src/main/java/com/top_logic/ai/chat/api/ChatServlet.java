@@ -50,6 +50,7 @@ import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
+import com.top_logic.ai.chat.api.messages.RunCostDto;
 import com.top_logic.ai.chat.api.messages.SubagentBudgetDto;
 import com.top_logic.ai.chat.api.messages.SubagentJobDto;
 import com.top_logic.ai.chat.api.messages.SubagentListResponse;
@@ -70,6 +71,7 @@ import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.chat.view.ChatViewBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.cost.Money;
@@ -86,17 +88,10 @@ import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
-import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.util.Resources;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -472,9 +467,9 @@ public class ChatServlet extends TopLogicServlet {
 		ConversationBackend backend = backendOf(chatId, person);
 		// A conversation a backend answers runs no agent of this application, so what the agent
 		// policy says about the account's agents does not apply to it; what the backend supports does.
-		Refusal refusal = backend == null
-			? runRefusal(person, options)
-			: (hasAttachments ? unsupported(backend.features().attachments(),
+		SendRefusal refusal = backend == null
+			? SendRefusal.forRun(person, options)
+			: (hasAttachments ? SendRefusal.unsupported(backend.features().attachments(),
 				com.top_logic.ai.chat.backend.I18NConstants.ATTACHMENTS_NOT_SUPPORTED) : null);
 		if (refusal != null) {
 			writeRefused(resp, refusal,
@@ -491,7 +486,7 @@ public class ChatServlet extends TopLogicServlet {
 		if (result.isRejected()) {
 			// Neither forbidden nor broken: this installation has no room for the run right now, and
 			// the client shows the sentence rather than a failure.
-			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, result.getReason()),
+			writeRefused(resp, new SendRefusal(SC_TOO_MANY_REQUESTS, result.getReason()),
 				ChatSendResponse.create().setStatus(REJECTED).setReason(result.getReason()));
 			return;
 		}
@@ -575,9 +570,9 @@ public class ChatServlet extends TopLogicServlet {
 		// Before the turn is removed, not after: a regenerate that is refused must leave the answer it
 		// was going to replace where it is.
 		ConversationBackend backend = backendOf(sessionId, resolveCurrentPerson(req));
-		Refusal refusal = backend == null
-			? runRefusal(resolveCurrentPerson(req), options)
-			: unsupported(backend.features().regenerate(),
+		SendRefusal refusal = backend == null
+			? SendRefusal.forRun(resolveCurrentPerson(req), options)
+			: SendRefusal.unsupported(backend.features().regenerate(),
 				com.top_logic.ai.chat.backend.I18NConstants.REGENERATE_NOT_SUPPORTED);
 		if (refusal != null) {
 			writeRefused(resp, refusal,
@@ -591,7 +586,7 @@ public class ChatServlet extends TopLogicServlet {
 		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
 		String noRoom = ChatProcessor.noRoomReason(tracker, spendReading);
 		if (noRoom != null) {
-			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, noRoom),
+			writeRefused(resp, new SendRefusal(SC_TOO_MANY_REQUESTS, noRoom),
 				TruncateResponse.create().setStatus(REJECTED).setReason(noRoom));
 			return;
 		}
@@ -618,7 +613,7 @@ public class ChatServlet extends TopLogicServlet {
 			.setRemovedTurns(removed.turns())
 			.setText(removed.text());
 		if (result.isRejected()) {
-			writeRefused(resp, new Refusal(SC_TOO_MANY_REQUESTS, result.getReason()),
+			writeRefused(resp, new SendRefusal(SC_TOO_MANY_REQUESTS, result.getReason()),
 				response.setStatus(REJECTED).setReason(result.getReason()));
 			return;
 		}
@@ -660,8 +655,8 @@ public class ChatServlet extends TopLogicServlet {
 		}
 		Person person = resolveCurrentPerson(req);
 		ConversationBackend backend = backendOf(sessionId, person);
-		Refusal refusal = backend == null ? null
-			: unsupported(backend.features().editMessages(),
+		SendRefusal refusal = backend == null ? null
+			: SendRefusal.unsupported(backend.features().editMessages(),
 				com.top_logic.ai.chat.backend.I18NConstants.EDIT_NOT_SUPPORTED);
 		if (refusal != null) {
 			writeRefused(resp, refusal,
@@ -850,151 +845,15 @@ public class ChatServlet extends TopLogicServlet {
 			.setApprovals(features.approvals());
 	}
 
-	/**
-	 * The refusal of a function the conversation's backend does not support, or <code>null</code>
-	 * when it does.
-	 */
-	private static Refusal unsupported(boolean supported, ResKey reason) {
-		return supported ? null : forbidden(Resources.getInstance().getString(reason));
-	}
-
-	/**
-	 * Why the acting account may not make this request, in their language.
-	 *
-	 * <p>
-	 * The friendly half of the agent security policy: {@code AgentFactory} refuses the run whatever
-	 * this says, and this exists so that the refusal reaches the user as a sentence rather than as a
-	 * turn that failed. Answers <code>null</code> while nothing can be asked - no account behind the
-	 * request, or the policy service not running - and the run is then refused where it starts.
-	 * </p>
-	 */
-	private Refusal runRefusal(Person person, ChatProcessor.ChatRunOptions options) {
-		String named = blankToNull(options.agent());
-		if (named != null) {
-			Refusal notAPersona = personaRefusal(named.trim());
-			if (notAPersona != null) {
-				return notAPersona;
-			}
-		}
-		Refusal denial = policyRefusal(person, options);
-		if (denial != null) {
-			return denial;
-		}
-		if (named != null && !agentExists(named.trim())) {
-			// A name no agent has. Answered here rather than accepted and left to fail in the
-			// background thread, where it reached the user as a turn that stopped and the
-			// administrator as an ERROR with a stack trace. Not a refusal: the request is wrong,
-			// not forbidden, so it is 404 and not 403.
-			return new Refusal(HttpServletResponse.SC_NOT_FOUND, Resources.getInstance()
-				.getString(com.top_logic.tl.ai.core.security.I18NConstants.UNKNOWN_AGENT__AGENT
-					.fill(named.trim())));
-		}
-		return null;
-	}
-
-	/**
-	 * Why the named agent is nobody's conversation partner, or <code>null</code> if it is one.
-	 *
-	 * <p>
-	 * An {@link AgentDefinition#infrastructure()} agent is one the application runs <em>for</em> the
-	 * user - the prompt improver rewrites their draft. Naming it in a send is refused whatever
-	 * {@code <agent-access>} grants, so this is asked before {@link #policyRefusal} and without the
-	 * policy service: under {@code default="all"} that service permits it, and with the service off
-	 * there is no policy to ask at all (#397). The run itself is refused again where it starts -
-	 * {@code AgentFactory} asks the same question of the run's security context.
-	 * </p>
-	 */
-	private static Refusal personaRefusal(String agentName) {
-		AgentDefinition agentDef;
-		try {
-			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
-		} catch (RuntimeException ex) {
-			// Cannot read it, so cannot judge it: leave the request to the run, as before.
-			Logger.warn("Could not check whether '" + agentName + "' is a conversation partner.", ex,
-				ChatServlet.class);
-			return null;
-		}
-		if (agentDef == null || !agentDef.infrastructure()) {
-			return null;
-		}
-		return forbidden(Resources.getInstance().getString(
-			com.top_logic.tl.ai.core.security.I18NConstants.AGENT_NOT_A_PERSONA__AGENT.fill(agentName)));
-	}
-
-	/** Whether this application has an agent of that name, assuming it has while it cannot say. */
-	private static boolean agentExists(String agentName) {
-		try {
-			return AgentDefinitionQuery.getInstance().findAgentByName(agentName) != null;
-		} catch (RuntimeException ex) {
-			// Cannot enumerate, so cannot judge: leave the request to the run, as before.
-			Logger.warn("Could not check whether an agent '" + agentName + "' exists.", ex,
-				ChatServlet.class);
-			return true;
-		}
-	}
-
-	/** Why the agent security policy refuses this request, or <code>null</code> if it does not. */
-	private Refusal policyRefusal(Person person, ChatProcessor.ChatRunOptions options) {
-		if (person == null || !AiToolAccessService.Module.INSTANCE.isActive()) {
-			return null;
-		}
-		RunAuthorization access;
-		String agentName;
-		try {
-			access = AiToolAccessService.effectiveRunAccessFor(person);
-			agentName = options.agent() != null && !options.agent().isBlank()
-				? options.agent().trim()
-				: AgentFactory.defaultAgentFor(access);
-		} catch (RuntimeException ex) {
-			// A pre-check is a courtesy; a failure in it must not stop a request the run would accept.
-			Logger.warn("Could not pre-check what this account may run.", ex, ChatServlet.class);
-			return null;
-		}
-		if (agentName == null) {
-			// A request that names no agent, from an account that may run none. Its own sentence: the
-			// name of the agent they may not have says nothing they can act on.
-			return forbidden(Resources.getInstance().getString(
-				com.top_logic.tl.ai.core.security.I18NConstants.NO_AGENT_AVAILABLE));
-		}
-		List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
-		AgentFactory.RunOverrides overrides =
-			new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());
-		Decision.Denied denied;
-		try {
-			denied = AgentFactory.runRefusal(access, agentName, overrides);
-		} catch (RuntimeException ex) {
-			Logger.warn("Could not pre-check what '" + agentName + "' may run.", ex, ChatServlet.class);
-			return null;
-		}
-		return denied == null ? null : forbidden(Resources.getInstance().getString(denied.reason()));
-	}
-
-	/**
-	 * Why a request cannot be carried out, and the status that says which kind of "cannot" it is.
-	 *
-	 * @param status
-	 *        The HTTP status to answer with.
-	 * @param reason
-	 *        The sentence the client shows, in the user's language.
-	 */
-	private record Refusal(int status, String reason) {
-		// Nothing.
-	}
-
-	/** A refusal by the agent security policy. */
-	private static Refusal forbidden(String reason) {
-		return new Refusal(HttpServletResponse.SC_FORBIDDEN, reason);
-	}
-
 	/** Answers a send that is refused, with the reason the client shows. */
-	private static void writeRefused(HttpServletResponse resp, Refusal refusal, ChatSendResponse response)
+	private static void writeRefused(HttpServletResponse resp, SendRefusal refusal, ChatSendResponse response)
 			throws IOException {
 		refused(resp, refusal.status());
 		resp.getWriter().write(DtoMapper.toJson(response));
 	}
 
 	/** Answers a regenerate that is refused, with the reason the client shows. */
-	private static void writeRefused(HttpServletResponse resp, Refusal refusal, TruncateResponse response)
+	private static void writeRefused(HttpServletResponse resp, SendRefusal refusal, TruncateResponse response)
 			throws IOException {
 		refused(resp, refusal.status());
 		resp.getWriter().write(DtoMapper.toJson(response));
@@ -1822,10 +1681,11 @@ public class ChatServlet extends TopLogicServlet {
 			}
 
 			// Build response with structured entries
+			ConversationBackend backend = backendOf(session);
 			ChatSessionDetailResponse response = ChatSessionDetailResponse.create()
 				.setId(sessionId)
 				.setTitle(ChatHistoryService.getTitle(session))
-				.setFeatures(featuresDto(backendOf(session)));
+				.setFeatures(featuresDto(backend));
 
 			// What this conversation looks like right now, in three descending preferences.
 			//
@@ -1866,6 +1726,12 @@ public class ChatServlet extends TopLogicServlet {
 				}
 				response.setTurnsJson(serializeTurns(conv.getTurns()));
 				describeLastPrompt(response, conv.getTurns());
+				describeRunCosts(response, session, conv.getTurns());
+			}
+			if (backend != null) {
+				// The model of a backend is not one of this application's: the window is the one the
+				// backend reports, none while it reports none.
+				response.setContextWindow(backend.contextWindow());
 			}
 
 			// The ratings, the effort and the approval mode come from the session's metadata bag,
@@ -1919,7 +1785,11 @@ public class ChatServlet extends TopLogicServlet {
 			}
 		}
 
-		TLObject session = ChatHistoryService.createSession(sessionTitle, person, approvalMode);
+		// What the page shows the chat beside, stamped before the browser sends the first message.
+		InteractionContext interaction = TLContextManager.getInteraction();
+		TLObject subject = ChatViewBinding.subjectOf(TLContextManager.getSubSession(),
+			interaction == null ? "" : interaction.get(REQUEST_CONVERSATION));
+		TLObject session = ChatHistoryService.createSession(sessionTitle, person, approvalMode, subject);
 		if (session == null) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create session");
 			return;
@@ -2290,6 +2160,29 @@ public class ChatServlet extends TopLogicServlet {
 				response.setContextWindow(contextWindowOf(model));
 			}
 			return;
+		}
+	}
+
+	/**
+	 * Adds what the recorded runs of the conversation cost, by the turn each of them ended with, in
+	 * the currency the chat shows costs in ({@link CostConversion}).
+	 */
+	private static void describeRunCosts(ChatSessionDetailResponse response, TLObject session,
+			List<PersistedTurn> turns) {
+		Map<String, Money> costs = ChatHistoryService.runCosts(session);
+		if (costs.isEmpty()) {
+			return;
+		}
+		for (PersistedTurn turn : turns) {
+			Money cost = costs.get(turn.getId());
+			if (cost == null) {
+				continue;
+			}
+			Money shown = CostConversion.shown(cost, null);
+			response.addRunCost(RunCostDto.create()
+				.setTurnId(turn.getId())
+				.setCost(shown.amount())
+				.setCurrency(shown.currency()));
 		}
 	}
 

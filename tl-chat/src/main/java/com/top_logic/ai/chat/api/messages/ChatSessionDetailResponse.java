@@ -54,6 +54,9 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getFeatures() */
 	public static final String FEATURES__PROP = "features";
 
+	/** @see #getRunCosts() */
+	public static final String RUN_COSTS__PROP = "runCosts";
+
 	private String _id = "";
 
 	private String _title = "";
@@ -79,6 +82,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	private com.top_logic.ai.chat.api.messages.InFlightRunDto _inFlight = null;
 
 	private com.top_logic.ai.chat.api.messages.ConversationFeaturesDto _features = null;
+
+	private final java.util.List<com.top_logic.ai.chat.api.messages.RunCostDto> _runCosts = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link ChatSessionDetailResponse} instance.
@@ -413,6 +418,49 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 		return _features != null;
 	}
 
+	/**
+	 * What the runs of the conversation cost, by the turn of <code>turnsJson</code> each run ended
+	 * with. A run that reported no cost is not listed.
+	 */
+	public final java.util.List<com.top_logic.ai.chat.api.messages.RunCostDto> getRunCosts() {
+		return _runCosts;
+	}
+
+	/**
+	 * @see #getRunCosts()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setRunCosts(java.util.List<? extends com.top_logic.ai.chat.api.messages.RunCostDto> value) {
+		internalSetRunCosts(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRunCosts()} without chain call utility. */
+	protected final void internalSetRunCosts(java.util.List<? extends com.top_logic.ai.chat.api.messages.RunCostDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'runCosts' cannot be null.");
+		_runCosts.clear();
+		_runCosts.addAll(value);
+	}
+
+	/**
+	 * Adds a value to the {@link #getRunCosts()} list.
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse addRunCost(com.top_logic.ai.chat.api.messages.RunCostDto value) {
+		internalAddRunCost(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addRunCost(com.top_logic.ai.chat.api.messages.RunCostDto)} without chain call utility. */
+	protected final void internalAddRunCost(com.top_logic.ai.chat.api.messages.RunCostDto value) {
+		_runCosts.add(value);
+	}
+
+	/**
+	 * Removes a value from the {@link #getRunCosts()} list.
+	 */
+	public final void removeRunCost(com.top_logic.ai.chat.api.messages.RunCostDto value) {
+		_runCosts.remove(value);
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SESSION_DETAIL_RESPONSE__TYPE;
@@ -433,7 +481,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			APPROVAL_MODE__PROP, 
 			LAST_COMPOSITION__PROP, 
 			IN_FLIGHT__PROP, 
-			FEATURES__PROP);
+			FEATURES__PROP, 
+			RUN_COSTS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -471,6 +520,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_COMPOSITION__PROP: return getLastComposition();
 			case IN_FLIGHT__PROP: return getInFlight();
 			case FEATURES__PROP: return getFeatures();
+			case RUN_COSTS__PROP: return getRunCosts();
 			default: return null;
 		}
 	}
@@ -491,6 +541,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_COMPOSITION__PROP: internalSetLastComposition((com.top_logic.ai.chat.api.messages.ContextCompositionEvent) value); break;
 			case IN_FLIGHT__PROP: internalSetInFlight((com.top_logic.ai.chat.api.messages.InFlightRunDto) value); break;
 			case FEATURES__PROP: internalSetFeatures((com.top_logic.ai.chat.api.messages.ConversationFeaturesDto) value); break;
+			case RUN_COSTS__PROP: internalSetRunCosts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.RunCostDto.class, value)); break;
 		}
 	}
 
@@ -547,6 +598,12 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			out.name(FEATURES__PROP);
 			getFeatures().writeTo(out);
 		}
+		out.name(RUN_COSTS__PROP);
+		out.beginArray();
+		for (com.top_logic.ai.chat.api.messages.RunCostDto x : getRunCosts()) {
+			x.writeTo(out);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -574,6 +631,16 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_COMPOSITION__PROP: setLastComposition(com.top_logic.ai.chat.api.messages.ContextCompositionEvent.readContextCompositionEvent(in)); break;
 			case IN_FLIGHT__PROP: setInFlight(com.top_logic.ai.chat.api.messages.InFlightRunDto.readInFlightRunDto(in)); break;
 			case FEATURES__PROP: setFeatures(com.top_logic.ai.chat.api.messages.ConversationFeaturesDto.readConversationFeaturesDto(in)); break;
+			case RUN_COSTS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.RunCostDto> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.ai.chat.api.messages.RunCostDto.readRunCostDto(in));
+				}
+				in.endArray();
+				setRunCosts(newValue);
+			}
+			break;
 			default: super.readField(in, field);
 		}
 	}

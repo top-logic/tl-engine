@@ -22,6 +22,19 @@ describe('a persisted turn', () => {
       },
     ])
 
+  /** The cost of a recorded run is on the line of the turn it ended with, whoever answered it. */
+  it('restores what a run cost', () => {
+    const json = transcript([{ id: 'a1', type: 'text', timestamp: 1100, textData: { text: 'Erledigt.' } }])
+    const turnId = (JSON.parse(json) as { id: string }[])[0].id
+    const costed = turnsJsonToMessages(json, [{ turnId, cost: 0.0025, currency: 'USD' }])
+    const meta = costed.find((m) => m.type === 'run_meta')
+    expect(meta && 'cost' in meta ? [meta.cost, meta.currency] : []).toEqual([0.0025, 'USD'])
+
+    const plain = turnsJsonToMessages(json, [{ turnId: 'another turn', cost: 1, currency: 'USD' }])
+    const unknown = plain.find((m) => m.type === 'run_meta')
+    expect(unknown && 'cost' in unknown ? unknown.cost : undefined).toBeUndefined()
+  })
+
   it('restores a rolled-back transaction as a notice of that turn', () => {
     const messages = turnsJsonToMessages(
       transcript([

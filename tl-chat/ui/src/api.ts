@@ -172,6 +172,8 @@ export interface SessionDetail {
   /** Context window of the model that ran the last turn; zero when that model is unknown here. */
   contextWindow?: number
   lastModel?: string
+  /** What the recorded runs cost, by the last turn each of them wrote. */
+  runCosts?: RunCost[]
   /** Answer ratings recorded in this session, so a reopened chat shows them again. */
   feedback?: MessageFeedback[]
   lastEffort?: string
@@ -559,7 +561,7 @@ export async function loadSubagentTranscript(at: ChatAddress, id: string, runId?
       credentials: 'include',
     }),
   )
-  return turnsJsonToMessages(detail.turnsJson)
+  return turnsJsonToMessages(detail.turnsJson, detail.runCosts)
 }
 
 export function fileToAttachment(file: File): Promise<Attachment> {
@@ -760,7 +762,20 @@ function opensWithSubagentNews(turn: PersistedTurn): boolean {
   return first?.type === 'system' && first.systemData?.eventType === 'SUBAGENT_RESULT'
 }
 
-export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[] {
+/** The cost fields of the run that ended with the given turn, none when it reported no cost. */
+function costOf(runCosts: RunCost[] | undefined, turnId: string): { cost?: number; currency?: string } {
+  const found = runCosts?.find((item) => item.turnId === turnId)
+  return found && found.currency ? { cost: found.cost, currency: found.currency } : {}
+}
+
+/** What one recorded run cost, by the last turn it wrote. */
+export interface RunCost {
+  turnId: string
+  cost: number
+  currency: string
+}
+
+export function turnsJsonToMessages(turnsJson: string | undefined, runCosts?: RunCost[]): ChatMessage[] {
   if (!turnsJson) return []
   let turns: PersistedTurn[]
   try {
@@ -805,6 +820,7 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
         runId: turn.id,
         startedAt: turn.timestamp,
         durationMs: lastPartAt - turn.timestamp,
+        ...costOf(runCosts, turn.id),
         timestamp: turn.timestamp,
       })
     }

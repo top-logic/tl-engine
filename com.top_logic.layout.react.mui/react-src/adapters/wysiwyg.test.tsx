@@ -241,6 +241,24 @@ describe('rich text editor', () => {
     expect(toolbar.querySelectorAll('.tl-toolbar__group:has(> .tl-toolbar)')).toHaveLength(1);
   });
 
+  it('leaving the edit mode together with a new value shows the new value as prose, without an error', async () => {
+    // A detail view switching to another row ends the edit mode and brings the text of that row in one
+    // patch: the editor is built anew, and the old one, already destroyed, must not be read any more.
+    await mountEditor({ value: TEXT, editable: true });
+
+    patchState({ editable: false, value: '<p>Other row</p>' });
+    await settle();
+
+    const root = document.getElementById(CONTROL_ID)!;
+    expect(root.classList.contains('tl-prose')).toBe(true);
+    expect(root.querySelector('p')?.textContent).toBe('Other row');
+
+    // And back into the edit mode: the editor shows the text of the row.
+    patchState({ editable: true });
+    await settle();
+    expect(document.querySelector('.ProseMirror')?.textContent).toBe('Other row');
+  });
+
   it('the view is prose without frame', async () => {
     mountAdapter(registeredEditor(), { value: TEXT, editable: false });
     await settle();

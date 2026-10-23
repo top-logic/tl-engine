@@ -192,10 +192,12 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [editor, editorProps]);
 
-  // Sync external value changes into the editor.
+  // Sync external value changes into the editor. A change of the edit mode builds the editor anew:
+  // in the render that brings the change, the editor at hand is the old one, already destroyed, and
+  // the next render brings the new one - every effect below leaves a destroyed editor alone.
   React.useEffect(() => {
     currentHtmlRef.current = value;
-    if (editor && !editor.isFocused) {
+    if (editor && !editor.isDestroyed && !editor.isFocused) {
       const currentHtml = editorHtml(editor);
       if (currentHtml !== value) {
         editor.commands.setContent(value, { emitUpdate: false });
@@ -208,7 +210,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Handle one-shot imageUrl from server (after upload).
   React.useEffect(() => {
-    if (editor && imageUrl) {
+    if (editor && !editor.isDestroyed && imageUrl) {
       const imgSrc = dataUrl + '&key=' + encodeURIComponent(imageUrl);
       editor.chain().focus().setImage({ src: imgSrc }).run();
     }
@@ -217,7 +219,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   // The markup the server asks for goes in at the cursor, once per request. Reporting the text
   // it produced is what tells the server the request is answered.
   React.useEffect(() => {
-    if (!editor || !insertRequest || insertRequest.seq <= insertedSeqRef.current) {
+    if (!editor || editor.isDestroyed || !insertRequest || insertRequest.seq <= insertedSeqRef.current) {
       return;
     }
     insertedSeqRef.current = insertRequest.seq;

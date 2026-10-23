@@ -10,7 +10,7 @@ import java.util.List;
 import junit.framework.Test;
 
 import com.top_logic.ai.demo.SecDemoPersonaTest;
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService.PersonaConfig;
+import com.top_logic.ai.demo.secdemo.SecDemoSetup.PersonaConfig;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -24,11 +24,10 @@ import com.top_logic.knowledge.service.Transaction;
  * (#626).
  *
  * <p>
- * The application starts every service inside one start-up transaction. On the first boot of a
- * fresh database the fixture's own commit is therefore nested, and the check that followed it
- * reported every persona and project as missing, while the second boot on the same database was
- * silent. Here the start runs inside an enclosing transaction of the test, which is that situation,
- * and creates one new persona.
+ * The startup hook runs the setup inside its own transaction, so the setup's own commit is nested.
+ * Checked right after that commit, every persona and project created by this run would be reported
+ * as missing. Here the setup runs inside an enclosing transaction of the test, which is that
+ * situation, and creates one new persona.
  * </p>
  */
 public class SecDemoFixtureStartTest extends SecDemoPersonaTest {
@@ -38,28 +37,28 @@ public class SecDemoFixtureStartTest extends SecDemoPersonaTest {
 	 * finds the new persona's role.
 	 */
 	public void testAStartInsideATransactionChecksAfterItsCommit() {
-		SecDemoSetupService service = new SecDemoSetupService(
+		SecDemoSetup setup = new SecDemoSetup(
 			new DefaultInstantiationContext(SecDemoFixtureStartTest.class), withPersona("fred"));
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		// One system interaction around the start, as the application's start has: the fixture's
-		// setup joins it, and with it the enclosing transaction.
+		// One system interaction around the setup, as the startup hook has: the setup joins it, and
+		// with it the enclosing transaction.
 		ThreadContext.inSystemContext(SecDemoFixtureStartTest.class, () -> {
 			try (Transaction startup = kb.beginTransaction()) {
-				service.startUp();
+				setup.perform();
 				assertNull("Nothing the start created is committed yet, so nothing may be judged: "
-					+ service.lastProblems(), service.lastProblems());
+					+ setup.lastProblems(), setup.lastProblems());
 				startup.commit();
 			}
 		});
 
 		assertEquals("Checked once the start-up transaction committed, the new persona holds its role.",
-			List.of(), service.lastProblems());
+			List.of(), setup.lastProblems());
 	}
 
 	/** The shipped configuration of the fixture, with one more partner persona. */
-	private static SecDemoSetupService.Config<?> withPersona(String login) {
-		SecDemoSetupService.Config<?> config = TypedConfiguration.copy(SecDemoSetupService.getInstance().getConfig());
+	private static SecDemoSetup.Config<?> withPersona(String login) {
+		SecDemoSetup.Config<?> config = TypedConfiguration.copy(secDemoConfig());
 		PersonaConfig persona = TypedConfiguration.newConfigItem(PersonaConfig.class);
 		TypedConfigUtil.setProperty(persona, PersonaConfig.LOGIN, login);
 		TypedConfigUtil.setProperty(persona, PersonaConfig.GROUPS, List.of("projectPartners"));

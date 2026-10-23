@@ -12,7 +12,6 @@ import java.util.TreeMap;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.EffectiveToolAccess;
@@ -293,7 +292,7 @@ public class SecDemoEffectiveAccessTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testTheQueryAgreesWithTheGate() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			for (Boolean background : List.of(Boolean.FALSE, Boolean.TRUE)) {
 				boolean unattended = background.booleanValue();
 				EffectiveToolAccess access = accessFor(login, unattended);

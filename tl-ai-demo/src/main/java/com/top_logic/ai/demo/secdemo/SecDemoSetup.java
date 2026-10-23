@@ -8,22 +8,21 @@ package com.top_logic.ai.demo.secdemo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.services.InitialGroupManager;
-import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
@@ -31,9 +30,6 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.module.ConfiguredManagedClass;
-import com.top_logic.basic.module.ServiceDependencies;
-import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -43,8 +39,8 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
+import com.top_logic.knowledge.service.migration.StartupAction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -57,14 +53,14 @@ import com.top_logic.tool.boundsec.config.AccessConfiguration;
 import com.top_logic.tool.boundsec.config.AccessConfiguration.ProfileConfig;
 import com.top_logic.tool.boundsec.config.AccessConfiguration.ProfileConfig.ViewConfig;
 import com.top_logic.tool.boundsec.config.AccessConfiguration.ProfileConfig.ViewConfig.CommandGroupRef;
-import com.top_logic.tool.boundsec.config.AccessConfigurationSetupService;
+import com.top_logic.tool.boundsec.config.AccessConfigurationSetup;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
-import com.top_logic.util.LayoutBasedSecurity;
+import com.top_logic.util.StartupHooks;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -74,9 +70,9 @@ import com.top_logic.util.model.ModelService;
  * matrix claims.
  *
  * <p>
- * The service is only started when the opt-in aspect {@code WEB-INF/conf/secdemo.config.xml} is
- * listed in {@code WEB-INF/conf/metaConf.txt}. All steps are idempotent, so restarting the
- * application does not duplicate anything.
+ * The setup runs as {@link StartupHooks startup hook} only when the opt-in aspect
+ * {@code WEB-INF/conf/secdemo.config.xml} is listed in {@code WEB-INF/conf/metaConf.txt}. All steps
+ * are idempotent, so restarting the application does not duplicate anything.
  * </p>
  *
  * <p>
@@ -86,16 +82,17 @@ import com.top_logic.util.model.ModelService;
  * deriving the scope from {@code pm:Project#partners}. Assigning them from Java taught no
  * configuration idiom and, worse, hid the failure the tier/scope split makes possible: a role rule
  * that produces nothing. So the matrix states which roles each persona is <em>expected</em> to hold
- * and this service checks, after the seed data is committed, whether the rules delivered them.
+ * and this setup checks, after the seed data is committed, whether the rules delivered them.
  * </p>
  *
  * <p>
  * What has no declarative counterpart in the engine, and is therefore still here: creating accounts,
  * joining them to groups, creating example instances, and applying component access. The engine's
- * {@link AccessConfigurationSetupService} reads component access declaratively, but only from one
- * fixed path, and its import <em>resets</em> the access of every view in the application before
- * applying that file. An opt-in aspect must not do either, so this service applies the very same
- * {@link AccessConfiguration} format additively.
+ * {@link AccessConfigurationSetup} reads component access declaratively, but only from one fixed
+ * path, and its import <em>resets</em> the access of every view in the application before applying
+ * that file. An opt-in aspect must not do either, so this setup applies the very same
+ * {@link AccessConfiguration} format additively. The engine's import is a startup hook as well,
+ * this setup must therefore be configured after it.
  * </p>
  *
  * @see com.top_logic.model.security.SecurityConfigurationService
@@ -103,20 +100,7 @@ import com.top_logic.util.model.ModelService;
  * @see Config#getProjects()
  * @see Config#getComponentAccess()
  */
-@ServiceDependencies({
-	ModelService.Module.class,
-	PersonManager.Module.class,
-	TLSecurityDeviceManager.Module.class,
-	InitialRolesManager.Module.class,
-	InitialGroupManager.Module.class,
-	AccessManager.Module.class,
-	BoundHelper.Module.class,
-	CommandGroupRegistry.Module.class,
-	SecurityComponentCache.Module.class,
-	LayoutBasedSecurity.Module.class,
-	AccessConfigurationSetupService.Module.class,
-})
-public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupService.Config<?>> {
+public class SecDemoSetup extends AbstractConfiguredInstance<SecDemoSetup.Config<?>> implements StartupAction {
 
 	/** Qualified name of the type the scope rule reads its partners from. */
 	public static final String PROJECT_TYPE = "pm:Project";
@@ -138,9 +122,9 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	private static final String EVERY_PERSONA_ROLE = "*";
 
 	/**
-	 * Configuration options for {@link SecDemoSetupService}.
+	 * Configuration options for {@link SecDemoSetup}.
 	 */
-	public interface Config<I extends SecDemoSetupService> extends ConfiguredManagedClass.Config<I> {
+	public interface Config<I extends SecDemoSetup> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * Configuration property name for the initial password.
@@ -290,9 +274,9 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		 * security root</b>.
 		 *
 		 * <p>
-		 * Not an assignment. Nothing in this service grants a role - the {@code <singleton-rule>}
+		 * Not an assignment. Nothing in this setup grants a role - the {@code <singleton-rule>}
 		 * entries of the aspect do, from {@link #getGroups() group membership}. This is the claim the
-		 * matrix makes, and {@link SecDemoSetupService} checks it after boot so that a rule which
+		 * matrix makes, and {@link SecDemoSetup} checks it after boot so that a rule which
 		 * produces nothing is a warning naming the persona rather than a silently narrow agent.
 		 * </p>
 		 */
@@ -395,7 +379,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	}
 
 	/**
-	 * Creates a {@link SecDemoSetupService} from configuration.
+	 * Creates a {@link SecDemoSetup} from configuration.
 	 *
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -403,7 +387,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public SecDemoSetupService(InstantiationContext context, Config<?> config) {
+	public SecDemoSetup(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
@@ -416,18 +400,16 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	 * What the last check of the persona matrix found and logged.
 	 *
 	 * @return One sentence per problem; empty when the rules produced the whole matrix;
-	 *         <code>null</code> if this service has not checked yet - on the first boot of a fresh
-	 *         database it checks only once the application's start-up transaction has committed.
+	 *         <code>null</code> if this setup has not checked yet - when it runs inside an enclosing
+	 *         transaction, it checks only once that transaction has committed.
 	 */
 	public List<String> lastProblems() {
 		return _lastProblems;
 	}
 
 	@Override
-	protected void startUp() {
-		super.startUp();
-
-		ThreadContext.inSystemContext(SecDemoSetupService.class, () -> setup());
+	public void perform() {
+		ThreadContext.inSystemContext(SecDemoSetup.class, () -> setup());
 	}
 
 	private void setup() {
@@ -445,10 +427,9 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		}
 
 		if (enclosed && !written.isEmpty()) {
-			// The application starts every service inside one start-up transaction, so on the first
-			// boot of a fresh database the commit above is nested and persists nothing yet: checked
-			// now, every persona and project would be reported missing (#626). Checked instead once a
-			// commit has persisted what this setup wrote.
+			// The startup hook runs this setup inside its own transaction, so the commit above is nested
+			// and persists nothing yet: checked now, every persona and project would be reported
+			// missing (#626). Checked instead once a commit has persisted what this setup wrote.
 			kb.addUpdateListener(new UpdateListener() {
 				@Override
 				public void notifyUpdate(KnowledgeBase sender, UpdateEvent event) {
@@ -483,10 +464,10 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 		List<String> problems = matrixProblems();
 		_lastProblems = problems;
 		for (String problem : problems) {
-			Logger.warn(problem, SecDemoSetupService.class);
+			Logger.warn(problem, SecDemoSetup.class);
 		}
 		Logger.info("Security demo: checked the roles of " + getConfig().getPersonas().size()
-			+ " personas against the aspect's role rules.", SecDemoSetupService.class);
+			+ " personas against the aspect's role rules.", SecDemoSetup.class);
 	}
 
 	/**
@@ -505,7 +486,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 				setInitialPassword(device, account);
 				Logger.info("Created security demo persona '" + login + "' (expects role(s) "
 					+ persona.getRoles() + " from the tier rules): " + purposeOf(persona),
-					SecDemoSetupService.class);
+					SecDemoSetup.class);
 				written.add(account.tId());
 			}
 
@@ -603,7 +584,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	 *
 	 * @see Config#getComponentAccess()
 	 */
-	private void grantComponentAccess() {
+	void grantComponentAccess() {
 		for (ProfileConfig profile : getConfig().getComponentAccess().getProfiles()) {
 			for (String roleName : rolesOfProfile(profile)) {
 				BoundedRole role = role(roleName);
@@ -649,7 +630,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 
 			if (securityComponent.addAccess(commandGroup, role)) {
 				Logger.info("Granted '" + commandGroupName + "' on view '" + viewName + "' to role '"
-					+ role.getName() + "'.", SecDemoSetupService.class);
+					+ role.getName() + "'.", SecDemoSetup.class);
 			}
 		}
 	}
@@ -662,7 +643,7 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 	private void setInitialPassword(AuthenticationDevice device, Person account) {
 		if (device == null || !device.allowPwdChange()) {
 			Logger.warn("The authentication device does not allow setting a password; the security demo account '"
-				+ account.getName() + "' needs a password assigned manually.", SecDemoSetupService.class);
+				+ account.getName() + "' needs a password assigned manually.", SecDemoSetup.class);
 			return;
 		}
 
@@ -741,10 +722,10 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 
 			Logger.info("Created project '" + projectConfig.getName() + "' with partners "
 				+ projectConfig.getPartners() + " and " + tickets.size() + " ticket(s).",
-				SecDemoSetupService.class);
+				SecDemoSetup.class);
 		}
 		Logger.info("Created " + getConfig().getProjects().size() + " example projects with "
-			+ ticketCount + " tickets.", SecDemoSetupService.class);
+			+ ticketCount + " tickets.", SecDemoSetup.class);
 	}
 
 	private static TLClass type(String qualifiedName) {
@@ -766,59 +747,6 @@ public class SecDemoSetupService extends ConfiguredManagedClass<SecDemoSetupServ
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * The logins of the configured personas, in configuration order.
-	 *
-	 * <p>
-	 * For tests that want to walk the whole matrix without repeating it: the fixture is the aspect
-	 * file, and a test that hard-codes the list can silently stop covering a persona that was added
-	 * there.
-	 * </p>
-	 *
-	 * @return The logins, never <code>null</code>.
-	 */
-	public static List<String> personaLogins() {
-		List<String> logins = new ArrayList<>();
-		for (PersonaConfig persona : getInstance().getConfig().getPersonas()) {
-			logins.add(persona.getLogin());
-		}
-		return logins;
-	}
-
-	/**
-	 * The roles each configured persona is expected to hold on the security root, indexed by login.
-	 *
-	 * @return The mapping, never <code>null</code>.
-	 */
-	public static Map<String, List<String>> personaRoles() {
-		Map<String, List<String>> roles = new LinkedHashMap<>();
-		for (PersonaConfig persona : getInstance().getConfig().getPersonas()) {
-			roles.put(persona.getLogin(), persona.getRoles());
-		}
-		return roles;
-	}
-
-	/**
-	 * The singleton {@link SecDemoSetupService} instance.
-	 */
-	public static SecDemoSetupService getInstance() {
-		return Module.INSTANCE.getImplementationInstance();
-	}
-
-	/**
-	 * Module for {@link SecDemoSetupService}.
-	 */
-	public static final class Module extends TypedRuntimeModule<SecDemoSetupService> {
-
-		/** Singleton {@link Module} instance. */
-		public static final Module INSTANCE = new Module();
-
-		@Override
-		public Class<SecDemoSetupService> getImplementation() {
-			return SecDemoSetupService.class;
-		}
 	}
 
 }

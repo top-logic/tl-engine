@@ -41,7 +41,7 @@ fully configured, with four personas whose differences are **two role assignment
 tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt              the on/off switch
 tl-ai-demo/src/main/webapp/WEB-INF/conf/secdemo.config.xml        the fixture: model, roles, rules, policies, personas
 tl-ai-demo/src/main/webapp/WEB-INF/model/pm.model.xml             the business model
-tl-ai-demo/src/main/java/.../secdemo/SecDemoSetupService.java     seeds accounts, projects, views; VERIFIES the roles
+tl-ai-demo/src/main/java/.../secdemo/SecDemoSetup.java            seeds accounts, projects, views; VERIFIES the roles
 tl-ai-demo/doc/secdemo/testbed.md                                 this page
 tl-ai-demo/doc/secdemo/harness/*.tlscript                         the four console scripts - section 4
 tl-ai-demo/src/test/java/.../SecDemo*Test.java                    the deterministic backbone - section 7
@@ -77,7 +77,7 @@ security *ancestors*, never its children. Hence:
   the fixture still looks fine: the tools are all there, they all run, they all return nothing.
 
 The five rules are in `secdemo.config.xml`, explained in
-the role-rules section of the developer article `ai/security/role-model-worked-example`. Nothing in `SecDemoSetupService`
+the role-rules section of the developer article `ai/security/role-model-worked-example`. Nothing in `SecDemoSetup`
 *assigns* a role: it states which roles the matrix expects and checks after boot that the rules delivered
 them.
 
@@ -115,7 +115,8 @@ views the personas do *not* get (model editor, service editor, layout editor, ac
 components of their own with no grant, so they stay closed. What the console grant means, and why it is
 deliberate, is [4.2](#42-the-script-console-grant).
 
-The configuration lives on `SecDemoSetupService`, in exactly the format the engine uses for
+The configuration lives on `SecDemoSetup`, the startup hook `secdemo` of the aspect, in exactly the
+format the engine uses for
 `WEB-INF/conf/security.xml`:
 
 ```xml
@@ -129,7 +130,7 @@ The configuration lives on `SecDemoSetupService`, in exactly the format the engi
 </component-access>
 ```
 
-The profile name `*` is expanded by `SecDemoSetupService` to every role a configured `<persona>` is
+The profile name `*` is expanded by `SecDemoSetup` to every role a configured `<persona>` is
 expected to hold; a profile named after a single role also works, for a persona that deliberately needs
 different views. Every persona role gets the *same* view access, which is what `*` says out loud - what
 distinguishes two personas is their model rights and their tool grants, and keeping the UI identical is
@@ -137,9 +138,10 @@ what makes the allow/deny pairs of [section 5](#5-the-scenarios) comparable.
 
 **Why not `WEB-INF/conf/security.xml` directly?** That path is fixed, read on every boot, and the
 engine's importer *resets* the access of every view in the application before applying the file. An
-opt-in aspect must not do either. `SecDemoSetupService` applies the same configuration **additively**
+opt-in aspect must not do either. `SecDemoSetup` applies the same configuration **additively**
 instead: nothing outside the list above is touched, so switching the aspect off leaves the demo exactly
-as shipped. Unknown roles, views or command groups fail the boot rather than silently producing an empty
+as shipped. Since the engine's import is a startup hook as well, the hook `secdemo` runs after it
+(`access-configuration`), so a changed `security.xml` cannot reset the access granted here. Unknown roles, views or command groups fail the boot rather than silently producing an empty
 application.
 
 > If a persona logs in and the content area says *"No tabs to choose from."*, the `<component-access>`
@@ -173,7 +175,7 @@ Two lines in `tl-ai-demo/tmp/app-data/logs/top-logic.tl-ai.log`, and every numbe
 off the aspect:
 
 ```
-SecDemoSetupService - Security demo: checked the roles of 4 personas against the aspect's role rules.
+SecDemoSetup - Security demo: checked the roles of 4 personas against the aspect's role rules.
 AiToolAccessService - Agent tool access: roles=2 baseline=0(+interaction+introspection) backgroundAllowlist=3
 ```
 
@@ -244,11 +246,17 @@ Inventing a third role to produce those shapes would make the fixture stop being
 **To change the seeded password**, name it on the aspect:
 
 ```xml
-<config service-class="com.top_logic.ai.demo.secdemo.SecDemoSetupService">
-    <instance class="com.top_logic.ai.demo.secdemo.SecDemoSetupService"
-        initial-password="My-Own-Pwd-1"
-    >
-        <!-- ... keep the <component-access> block from the shipped aspect ... -->
+<config service-class="com.top_logic.util.StartupHooks">
+    <instance>
+        <hooks>
+            <hook id="secdemo">
+                <action class="com.top_logic.ai.demo.secdemo.SecDemoSetup"
+                    initial-password="My-Own-Pwd-1"
+                >
+                    <!-- ... keep the <component-access> block from the shipped aspect ... -->
+                </action>
+            </hook>
+        </hooks>
     </instance>
 </config>
 ```

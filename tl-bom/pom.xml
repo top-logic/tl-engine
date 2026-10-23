@@ -1691,6 +1691,23 @@
 		</snapshotRepository>
 	</distributionManagement>
 
+	<build>
+		<pluginManagement>
+			<plugins>
+				<!--
+					Managed here and not only in tl-parent-all, because this POM is the first project of the engine
+					reactor: Maven resolves the prefix of a goal given on the command line (e.g. spotbugs:spotbugs)
+					against the plugins of that project.
+				-->
+				<plugin>
+					<groupId>com.github.spotbugs</groupId>
+					<artifactId>spotbugs-maven-plugin</artifactId>
+					<version>4.10.5.0</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
 	<profiles>
 		<profile>
 			<id>maven-central</id>

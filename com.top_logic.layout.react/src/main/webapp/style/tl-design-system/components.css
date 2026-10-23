@@ -5609,6 +5609,9 @@ button.tl-swatch:not(:disabled):hover {
    Statusfarbe (3a-Gate). Warnung vor Fehler: der Fehler steht später und gewinnt. */
 .tl-table__cell:has(.tl-field) {
   padding: 0;
+  /* Gestreckt, nicht mittig: das Feld steckt in Hüllen (TLChild, tl-field-group), deren height: 100% nur
+     gegen eine gestreckte Höhe greift — mittig blieb das Feld so hoch wie sein Text (Sichtprüfung 23.10.). */
+  align-items: stretch;
 }
 
 .tl-table__cell .tl-field {
@@ -5621,6 +5624,18 @@ button.tl-swatch:not(:disabled):hover {
 
 .tl-table__cell .tl-field:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Ein Feld, in das man schreiben kann, zeigt sich durch eine Linie unten in der Rahmenfarbe der Felder —
+   randlos und durchsichtig sah die Zelle im Bearbeiten-Modus aus wie im Lesen. Auf gezeigter und
+   ausgewählter Zeile hielte border-control 3:1 nicht (bis 2,44), dort trägt border-interactive die Linie.
+   Gleich spezifisch wie Warnung und Fehler, die danach stehen und mit ihrem Rahmen gewinnen. */
+.tl-table__cell .tl-field:not(:disabled, [readonly]) {
+  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-control);
+}
+
+:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly]) {
+  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-interactive);
 }
 
 .tl-table__cell .tl-field[data-tl-state~="warning"] {
@@ -6358,4 +6373,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:1c81f4e0c82bcd5f814ae1601eb6d5b00d0a592b531985b41b3e12a9206d70d9 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:5eee426e61fb6a821f76758694a780695f8f380a9f5fecf1ac3e1bce9c3b9ef7 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

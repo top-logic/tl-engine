@@ -1493,12 +1493,33 @@
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
-											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Passwort"
-											>
-												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+												<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
 												/>
+												<path>
+													<labeled-member label="Dienst-Konfiguration"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Geheimnisse"/>
+													<named-member name="content"/>
+													<object>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+															value="1"
+														/>
+													</object>
+													<labeled-member label="HTTP-Authentifizierung (BasicAuth)"/>
+													<labeled-member label="Anmeldung"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Passwort"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Wert"/>
+												</path>
 											</field>
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 												value="TestOpenAPI1234"
@@ -1795,6 +1816,10 @@
 													<named-member name="contentContainer"/>
 													<named-member name="content"/>
 													<labeled-member label="Passwort"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Wert"/>
 												</path>
 											</field>
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
@@ -2531,7 +2556,7 @@
 											user-id="root"
 										>
 											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Passwort"
+												label="Wert"
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
@@ -2578,7 +2603,7 @@
 											user-id="root"
 										>
 											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Passwort"
+												label="Wert"
 											>
 												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
@@ -2689,7 +2714,7 @@
 											user-id="root"
 										>
 											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Passwort"
+												label="Wert"
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>

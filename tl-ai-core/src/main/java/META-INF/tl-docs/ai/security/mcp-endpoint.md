@@ -54,13 +54,17 @@ Enabling the module is not enough, deliberately.
         </authentications>
         <secrets>
             <api-key-server-secret domain="mcp"
-                api-key="..."
                 user-id="mcp-service"
-                description="The MCP client of the reporting pipeline."/>
+                description="The MCP client of the reporting pipeline."
+            >
+                <api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MCP_API_KEY"/>
+            </api-key-server-secret>
         </secrets>
     </instance>
 </config>
 ```
+
+The key is read from its secret source at each check, here the environment variable `MCP_API_KEY`, so it can be rotated without a restart and the configuration never holds it. A key kept in the configuration itself is the attribute `api-key="..."` with an encrypted value (or `unencrypted:` followed by the key); the service editor generates such a key with *Update token*.
 
 Four schemes are available, and a caller may present any one of the configured ones:
 

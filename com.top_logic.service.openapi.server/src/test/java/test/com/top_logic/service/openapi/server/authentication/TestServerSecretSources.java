@@ -26,9 +26,14 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
+import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
+import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthenticator;
+import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthentication;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicTechnicalAuthenticator;
 import com.top_logic.service.openapi.server.authentication.http.basic.I18NConstants;
@@ -36,7 +41,7 @@ import com.top_logic.service.openapi.server.authentication.http.basic.ServerBasi
 import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentialSecret;
 
 /**
- * Test that the server reads the secrets requests are verified against from their secret sources,
+ * Test that the server reads the secrets (passwords and API keys) requests are verified against from their secret sources,
  * at each verification.
  */
 @SuppressWarnings("javadoc")
@@ -47,6 +52,10 @@ public class TestServerSecretSources extends TestCase {
 	private static final String USER = "technical-user";
 
 	private static final String PASSWORD = "user-s3cr3t";
+
+	private static final String API_KEY = "api-k3y";
+
+	private static final String HEADER = "X-API-Key";
 
 	private static final String VARIABLE = "TL_TEST_OPENAPI_SERVER_SECRET";
 
@@ -111,6 +120,42 @@ public class TestServerSecretSources extends TestCase {
 		assertWrongData(authenticator, basicRequest(USER, "wrong"));
 	}
 
+	public void testAPIKeyAttributeForm() throws Exception {
+		Authenticator authenticator = apiKeyAuthenticator("api-key='unencrypted:" + API_KEY + "'", "");
+
+		assertNull(authenticator.authenticate(apiKeyRequest(API_KEY), null));
+		assertInvalidKey(authenticator, apiKeyRequest("wrong"));
+	}
+
+	public void testAPIKeyEncryptedAttributeForm() throws Exception {
+		Authenticator authenticator =
+			apiKeyAuthenticator("api-key='" + ConfigurationEncryption.encrypt(API_KEY) + "'", "");
+
+		assertNull(authenticator.authenticate(apiKeyRequest(API_KEY), null));
+		assertInvalidKey(authenticator, apiKeyRequest(API_KEY + "x"));
+	}
+
+	public void testAPIKeyEnvironmentReadAtVerification() throws Exception {
+		System.setProperty(VARIABLE, API_KEY);
+		Authenticator authenticator = apiKeyAuthenticator("",
+			"<api-key class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>");
+
+		assertNull(authenticator.authenticate(apiKeyRequest(API_KEY), null));
+		assertInvalidKey(authenticator, apiKeyRequest("wrong"));
+
+		System.setProperty(VARIABLE, "rotated");
+		assertNull("A rotated key must be accepted without restart.",
+			authenticator.authenticate(apiKeyRequest("rotated"), null));
+		assertInvalidKey(authenticator, apiKeyRequest(API_KEY));
+	}
+
+	public void testAPIKeyUnavailableRejects() throws Exception {
+		Authenticator authenticator = apiKeyAuthenticator("",
+			"<api-key class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>");
+
+		assertInvalidKey(authenticator, apiKeyRequest(API_KEY));
+	}
+
 	public void testClientSecretAttributeForm() throws Exception {
 		ServerCredentialSecret secret = parse("client-credentials-server-secret", ServerCredentialSecret.class,
 			"<client-credentials-server-secret domain='" + DOMAIN + "'>"
@@ -120,6 +165,49 @@ public class TestServerSecretSources extends TestCase {
 		assertEquals("my-app", secret.getClientSecret().getClientId());
 		LiteralSecretSource.Config password = (LiteralSecretSource.Config) secret.getClientSecret().getPassword();
 		assertEquals("client-s3cr3t", password.getValue());
+	}
+
+	private static void assertInvalidKey(Authenticator authenticator, HttpServletRequest request) {
+		try {
+			authenticator.authenticate(request, null);
+			fail("Authentication must fail.");
+		} catch (AuthenticationFailure ex) {
+			assertEquals(invalidAPIKey(), ex.getErrorKey());
+		}
+	}
+
+	private static ResKey invalidAPIKey() {
+		return com.top_logic.service.openapi.server.authentication.apikey.I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER
+			.fill(HEADER);
+	}
+
+	private static Authenticator apiKeyAuthenticator(String keyAttribute, String keyElement)
+			throws ConfigurationException {
+		APIKeyAuthentication.Config<?> authentication =
+			TypedConfiguration.newConfigItem(APIKeyAuthentication.Config.class);
+		authentication.setDomain(DOMAIN);
+		authentication.setPosition(APIKeyPosition.HEADER);
+		authentication.setParameterName(HEADER);
+		ServerAPIKeySecret secret = parse("api-key-server-secret", ServerAPIKeySecret.class,
+			"<api-key-server-secret domain='" + DOMAIN + "' " + keyAttribute + ">" + keyElement
+				+ "</api-key-server-secret>");
+		Authenticator result = TypedConfigUtil.createInstance(authentication).createAuthenticator(List.of(secret));
+		assertTrue(result instanceof APIKeyAuthenticator);
+		return result;
+	}
+
+	/**
+	 * A {@link HttpServletRequest} that carries the given API key in the {@link #HEADER} header.
+	 */
+	private static HttpServletRequest apiKeyRequest(String apiKey) {
+		return (HttpServletRequest) Proxy.newProxyInstance(HttpServletRequest.class.getClassLoader(),
+			new Class<?>[] { HttpServletRequest.class },
+			(proxy, method, args) -> {
+				if ("getHeader".equals(method.getName())) {
+					return HEADER.equals(args[0]) ? apiKey : null;
+				}
+				throw new UnsupportedOperationException(method.getName());
+			});
 	}
 
 	private static void assertWrongData(Authenticator authenticator, HttpServletRequest request) {

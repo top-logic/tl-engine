@@ -54,6 +54,11 @@ import com.top_logic.tl.ai.core.access.EndpointSecret;
 public class TestMcpSecrets extends TestCase {
 
 	/**
+	 * The environment variable holding the key in {@link #DOCUMENTED_API_KEY_CONFIGURATION}.
+	 */
+	private static final String API_KEY_VARIABLE = "MCP_API_KEY";
+
+	/**
 	 * The API-key configuration of the developer article {@code ai/security/mcp-endpoint}: the content
 	 * of the {@code <instance>} element of {@code MCPServerService}.
 	 */
@@ -63,10 +68,32 @@ public class TestMcpSecrets extends TestCase {
 		+ "  </authentications>\n"
 		+ "  <secrets>\n"
 		+ "    <api-key-server-secret domain=\"mcp\"\n"
-		+ "      api-key=\"unencrypted:some-key\"\n"
 		+ "      user-id=\"mcp-service\"\n"
-		+ "      description=\"The MCP client of the reporting pipeline.\"/>\n"
+		+ "      description=\"The MCP client of the reporting pipeline.\"\n"
+		+ "    >\n"
+		+ "      <api-key class=\"com.top_logic.basic.credential.EnvironmentSecretSource\" name=\""
+		+ API_KEY_VARIABLE + "\"/>\n"
+		+ "    </api-key-server-secret>\n"
 		+ "  </secrets>";
+
+	/**
+	 * The API-key configuration with the key given as attribute in the configuration.
+	 */
+	public static final String ATTRIBUTE_API_KEY_CONFIGURATION = ""
+		+ "  <authentications>\n"
+		+ "    <api-key-authentication domain=\"mcp\" position=\"header\" parameter-name=\"X-Api-Key\"/>\n"
+		+ "  </authentications>\n"
+		+ "  <secrets>\n"
+		+ "    <api-key-server-secret domain=\"mcp\"\n"
+		+ "      api-key=\"unencrypted:some-key\"\n"
+		+ "      user-id=\"mcp-service\"/>\n"
+		+ "  </secrets>";
+
+	@Override
+	protected void tearDown() throws Exception {
+		System.clearProperty(API_KEY_VARIABLE);
+		super.tearDown();
+	}
 
 	/**
 	 * Reading a configuration resolves its types through the TypeIndex, and the refusal messages
@@ -80,12 +107,25 @@ public class TestMcpSecrets extends TestCase {
 	 * The documented API-key configuration is read from XML, and its key is the one checked.
 	 */
 	public void testDocumentedApiKeyConfigurationIsRead() throws Exception {
-		MCPServerService.Config<?> config = read(DOCUMENTED_API_KEY_CONFIGURATION);
+		System.setProperty(API_KEY_VARIABLE, "some-key");
+		assertApiKeyConfiguration(DOCUMENTED_API_KEY_CONFIGURATION);
+	}
+
+	/**
+	 * A key given as attribute in the configuration is read and checked as well.
+	 */
+	public void testAttributeApiKeyConfigurationIsRead() throws Exception {
+		assertApiKeyConfiguration(ATTRIBUTE_API_KEY_CONFIGURATION);
+	}
+
+	private void assertApiKeyConfiguration(String xml) throws Exception {
+		MCPServerService.Config<?> config = read(xml);
 
 		assertEquals(1, config.getSecrets().size());
 		EndpointSecret.ApiKey secret = (EndpointSecret.ApiKey) config.getSecrets().get(0);
 		assertEquals("mcp", secret.getDomain());
-		assertEquals("some-key", secret.getAPIKey());
+		assertEquals("some-key",
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(secret.getAPIKey()).getSecret());
 		assertEquals("mcp-service", secret.getUserId());
 
 		Authenticator authenticator =

@@ -118,7 +118,7 @@ public final class EndpointAuthentication {
 		if (secret instanceof EndpointSecret.ApiKey apiKey) {
 			ServerAPIKeySecret result = TypedConfiguration.newConfigItem(ServerAPIKeySecret.class);
 			TypedConfigUtil.setProperty(result, APIKeySecret.DOMAIN, apiKey.getDomain());
-			TypedConfigUtil.setProperty(result, APIKeySecret.API_KEY, apiKey.getAPIKey());
+			TypedConfigUtil.setProperty(result, APIKeySecret.API_KEY, TypedConfiguration.copy(apiKey.getAPIKey()));
 			TypedConfigUtil.setProperty(result, ServerAPIKeySecret.USER_ID, apiKey.getUserId());
 			TypedConfigUtil.setProperty(result, APIKeySecret.DESCRIPTION, apiKey.getDescription());
 			return result;

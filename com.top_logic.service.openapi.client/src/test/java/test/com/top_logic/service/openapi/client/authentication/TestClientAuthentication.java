@@ -151,24 +151,58 @@ public class TestClientAuthentication extends TestCase {
 	}
 
 	public void testAPIKeyHeader() throws Exception {
-		SecurityEnhancer enhancer = enhancer(apiKeyConfig("header"));
+		System.setProperty(VARIABLE, API_KEY);
+		SecurityEnhancer enhancer = enhancer(apiKeyConfig("header", "", environmentKey()));
 
 		assertEquals(200, call(enhancer));
 		assertEquals(API_KEY, lastApiRequest().header(HEADER));
+
+		System.setProperty(VARIABLE, "rotated");
+		assertEquals(200, call(enhancer));
+		assertEquals("A rotated key must be used without restart.", "rotated", lastApiRequest().header(HEADER));
 	}
 
 	public void testAPIKeyQuery() throws Exception {
-		SecurityEnhancer enhancer = enhancer(apiKeyConfig("query"));
+		System.setProperty(VARIABLE, API_KEY);
+		SecurityEnhancer enhancer = enhancer(apiKeyConfig("query", "", environmentKey()));
 
 		assertEquals(200, call(enhancer));
 		assertEquals(HEADER + "=" + API_KEY, lastApiRequest()._query);
 	}
 
 	public void testAPIKeyCookie() throws Exception {
-		SecurityEnhancer enhancer = enhancer(apiKeyConfig("cookie"));
+		System.setProperty(VARIABLE, API_KEY);
+		SecurityEnhancer enhancer = enhancer(apiKeyConfig("cookie", "", environmentKey()));
 
 		assertEquals(200, call(enhancer));
 		assertEquals(HEADER + "=" + API_KEY, lastApiRequest().header("Cookie"));
+	}
+
+	public void testAPIKeyAttributeForm() throws Exception {
+		SecurityEnhancer enhancer =
+			enhancer(apiKeyConfig("header", "api-key='" + ConfigurationEncryption.encrypt(API_KEY) + "'", ""));
+
+		assertEquals(200, call(enhancer));
+		assertEquals(API_KEY, lastApiRequest().header(HEADER));
+	}
+
+	public void testWriteAPIKeyReference() throws Exception {
+		System.setProperty(VARIABLE, API_KEY);
+		ServiceMethodRegistry.Config<?> config = parse(apiKeyConfig("header", "", environmentKey()));
+
+		String xml = toXML(config);
+		assertFalse("Secret written: " + xml, xml.contains(API_KEY));
+		assertTrue("Reference not written: " + xml, xml.contains(VARIABLE));
+	}
+
+	public void testWriteAPIKeyLiteralEncrypted() throws Exception {
+		ServiceMethodRegistry.Config<?> config =
+			parse(apiKeyConfig("header", "api-key='unencrypted:" + API_KEY + "'", ""));
+
+		String xml = toXML(config);
+		assertFalse("Secret written in plain text: " + xml, xml.contains(API_KEY));
+		assertTrue("Not written as encrypted attribute: " + xml,
+			xml.contains("api-key=\"" + ConfigurationEncryption.AUTHENTICATED_PREFIX));
 	}
 
 	public void testBasicAuthAttributeForm() throws Exception {
@@ -289,11 +323,16 @@ public class TestClientAuthentication extends TestCase {
 		assertEquals(CLIENT_SECRET, password.getValue());
 	}
 
-	private String apiKeyConfig(String position) {
+	private static String apiKeyConfig(String position, String keyAttribute, String keyElement) {
 		return registry(
 			"<api-key-authentication domain='" + DOMAIN + "' parameter-name='" + HEADER + "' position='"
 				+ position + "'/>",
-			"<api-key-client-secret domain='" + DOMAIN + "' api-key='unencrypted:" + API_KEY + "'/>");
+			"<api-key-client-secret domain='" + DOMAIN + "' " + keyAttribute + ">" + keyElement
+				+ "</api-key-client-secret>");
+	}
+
+	private static String environmentKey() {
+		return "<api-key class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>";
 	}
 
 	private String basicConfig(String passwordAttribute, String passwordElement) {

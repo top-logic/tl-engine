@@ -7,7 +7,6 @@ package test.com.top_logic.service.openapi.server.authentication;
 
 import java.lang.reflect.Proxy;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -32,6 +31,7 @@ import com.top_logic.service.openapi.server.authentication.AuthenticationFailure
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthenticator;
+import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthenticator.AllowedKey;
 import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
 import com.top_logic.service.openapi.server.authentication.conf.ServerSecret;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthentication;
@@ -115,7 +115,8 @@ public class TestEmptySecrets extends TestCase {
 	}
 
 	public void testAPIKeyEmptyKeyRejectedAtRequest() {
-		Authenticator authenticator = new APIKeyAuthenticator(APIKeyPosition.HEADER, HEADER, Map.of("", ""));
+		Authenticator authenticator = new APIKeyAuthenticator(APIKeyPosition.HEADER, HEADER,
+			List.of(new AllowedKey(TypedConfigUtil.createInstance(literal("")), "")));
 
 		assertFails(authenticator, apiKeyRequest(""), invalidAPIKey());
 	}
@@ -181,7 +182,7 @@ public class TestEmptySecrets extends TestCase {
 	private static ServerSecret apiKeySecret(String apiKey) {
 		ServerAPIKeySecret secret = TypedConfiguration.newConfigItem(ServerAPIKeySecret.class);
 		set(secret, APIKeySecret.DOMAIN, DOMAIN);
-		set(secret, APIKeySecret.API_KEY, apiKey);
+		set(secret, APIKeySecret.API_KEY, apiKey.isEmpty() ? null : literal(apiKey));
 		return secret;
 	}
 

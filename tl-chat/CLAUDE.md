@@ -348,7 +348,7 @@ upstream as one clean diff.
 | `rows` | TL-Script producing the row objects, the way `<table>` binds its rows. Mandatory. |
 | `<inputs><input channel="…"/>` | Channel values passed to `rows` as positional arguments. |
 | `observed-types` | Types whose create/update/delete re-runs `rows`, so the list follows the model. |
-| `<lines><line attribute=…\|<value>…` | What a row shows, top to bottom - a table's columns, stacked. `emphasis` is `primary` / `secondary`. |
+| `<lines><line attribute=…\|<value>…` | What a row shows, top to bottom - a table's columns, stacked. An attribute holding a point in time is written in the format a form field and a table cell show it in (`FieldControlService.dateFormat`), so a `tl.core:DateTime` shows its time of day. `emphasis` is `primary` / `secondary`. |
 | `group-by` | TL-Script of one row giving its group header; unset means a flat list. |
 | `row-css-class` | TL-Script of one row giving extra classes on the row element - its *state* (`is-done`, `is-running`, `is-pending` are the ones the stylesheet defines). Called `css-class` up to 2.0.5; that name is now the engine's class of the list itself, and a row function written under it is refused at startup. |
 | `css-class` | A class on the list's root element, as on every view element of the engine. |

@@ -10,6 +10,7 @@ import java.util.Collection;
 import jakarta.servlet.http.Part;
 
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.ReactServlet;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -34,5 +35,25 @@ public interface UploadHandler {
 	 * @return The result of handling the upload.
 	 */
 	HandlerResult handleUpload(DisplayContext context, Collection<Part> parts);
+
+	/**
+	 * The maximum size in bytes of one file this control accepts, <code>0</code> if it accepts
+	 * files of any size.
+	 *
+	 * <p>
+	 * The {@link ReactServlet} refuses an upload holding a larger file before it reaches
+	 * {@link #handleUpload(DisplayContext, Collection)}. The limit applies to each file on its own:
+	 * several files uploaded at once each may have this size.
+	 * </p>
+	 *
+	 * <p>
+	 * By default the application-wide {@link UploadSupport#maxUploadSize() limit}. A control with a
+	 * limit of its own reports the {@link UploadSupport#effectiveMaxUploadSize(long) smaller} of
+	 * both and publishes it to its client under {@link UploadSupport#MAX_UPLOAD_SIZE}.
+	 * </p>
+	 */
+	default long maxUploadSize() {
+		return UploadSupport.maxUploadSize();
+	}
 
 }

@@ -67,7 +67,7 @@ public class TestDerivedChannelConfig extends TestCase {
 
 		DerivedChannelConfig derived = (DerivedChannelConfig) second;
 		assertEquals("Should have 1 input", 1, derived.getInputs().size());
-		assertEquals("selectedItem", derived.getInputs().get(0).getChannelName());
+		assertEquals("selectedItem", derived.getInputs().get(0).getChannel().getChannelName());
 		assertNotNull("Expression should be parsed", derived.getExpr());
 	}
 
@@ -184,8 +184,8 @@ public class TestDerivedChannelConfig extends TestCase {
 		DerivedChannelConfig derived = (DerivedChannelConfig) config.getChannels().get(2);
 		assertEquals("combined", derived.getName());
 		assertEquals("Should have 2 inputs", 2, derived.getInputs().size());
-		assertEquals("firstName", derived.getInputs().get(0).getChannelName());
-		assertEquals("lastName", derived.getInputs().get(1).getChannelName());
+		assertEquals("firstName", derived.getInputs().get(0).getChannel().getChannelName());
+		assertEquals("lastName", derived.getInputs().get(1).getChannel().getChannelName());
 	}
 
 	private ViewElement.Config parseTestView() throws Exception {

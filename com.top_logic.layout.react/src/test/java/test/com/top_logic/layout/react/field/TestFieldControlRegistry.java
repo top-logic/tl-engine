@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.react.field;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
@@ -15,17 +16,22 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
+import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
+import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
@@ -73,6 +79,103 @@ public class TestFieldControlRegistry extends TestCase {
 		ReactControl control = _registry.createControl(context(), FieldSpec.of(BinaryDataSource.class, "File"),
 			new AbstractFieldModel(null));
 		assertInstanceof(ReactBinaryFieldControl.class, control);
+	}
+
+	/**
+	 * The files of a multi-valued binary field are displayed as chips by default, edited as a whole
+	 * by one control.
+	 */
+	public void testMultipleBinaryValuesAreChips() {
+		FieldSpec field = FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true);
+
+		ReactControl control = _registry.createControl(context(), field, new AbstractFieldModel(null));
+
+		assertInstanceof(ReactFileChipsControl.class, control);
+		assertTrue("The chips edit the whole collection",
+			_registry.lookup(BinaryDataSource.class).editsCollections());
+	}
+
+	/**
+	 * The provider editing one file at a time displays a multi-valued binary field as a list of
+	 * single-file controls.
+	 */
+	public void testMultipleBinaryValuesAsList() {
+		FieldSpec field = FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true);
+
+		ReactControl control = _registry.createControl(context(), field,
+			new AbstractFieldModel(List.of(file("a.txt"))), FieldControlRegistry.BINARY);
+
+		assertInstanceof(ReactValueListControl.class, control);
+	}
+
+	/**
+	 * In a compact display, a table cell for instance, the chips of a multi-valued binary field are
+	 * displayed in place, told that they have little room; the names of the files remain their
+	 * preview.
+	 */
+	public void testCompactMultipleBinaryValues() {
+		FieldSpec field = FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true).setCompact(true);
+		ReactFieldControlProvider provider = _registry.lookup(BinaryDataSource.class);
+		List<BinaryData> files = List.of(file("a.txt"), file("b.xml"));
+
+		assertFalse("The chips wrap within a cell", FieldControlRegistry.isLarge(field, provider));
+		ReactControl control = _registry.createControl(context(), field, new AbstractFieldModel(files));
+		assertInstanceof(ReactFileChipsControl.class, control);
+		assertTrue("The chips know they are in little room", ((ReactFileChipsControl) control).isCompact());
+
+		assertEquals("a.txt, b.xml", FieldControlRegistry.previewText(field, provider, files));
+		assertFalse(FieldControlRegistry.isEmpty(field, provider, files));
+		assertTrue(FieldControlRegistry.isEmpty(field, provider, List.of()));
+
+		FieldSpec single = FieldSpec.of(BinaryDataSource.class, "File").setCompact(true);
+		assertFalse("A single file fits a line", FieldControlRegistry.isLarge(single, provider));
+		assertEquals("a.txt", FieldControlRegistry.previewText(single, provider, file("a.txt")));
+	}
+
+	/**
+	 * In a compact display, the list of one file control per file needs more room than a cell: the
+	 * cell shows the names of the files and opens the list in a dialog.
+	 */
+	public void testCompactMultipleBinaryValuesAsList() {
+		FieldSpec field = FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true).setCompact(true);
+
+		ReactControl control = _registry.createControl(context(), field,
+			new AbstractFieldModel(List.of(file("a.txt"), file("b.xml"))), FieldControlRegistry.BINARY);
+
+		assertInstanceof(ReactCompactFieldControl.class, control);
+		assertEquals("a.txt, b.xml", ((ReactCompactFieldControl) control).getPreviewText());
+	}
+
+	/**
+	 * A field that is not compact has all the room it needs.
+	 */
+	public void testFieldWithRoomIsNotCompact() {
+		ReactControl control = _registry.createControl(context(),
+			FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true), new AbstractFieldModel(null));
+
+		assertFalse(((ReactFileChipsControl) control).isCompact());
+	}
+
+	/**
+	 * The accepted file types of the field restrict the file picker of the created control, as an
+	 * HTML accept attribute.
+	 */
+	public void testAcceptedTypesReachTheControl() {
+		FieldSpec multiple =
+			FieldSpec.of(BinaryDataSource.class, "Files").setMultiple(true).setAcceptedTypes("*.xml,image/*");
+		ReactControl chips = _registry.createControl(context(), multiple, new AbstractFieldModel(null));
+		assertEquals("image/*,.xml", chips.scriptingScalarState().get(UploadSupport.ACCEPT));
+
+		FieldSpec single = FieldSpec.of(BinaryDataSource.class, "File").setAcceptedTypes("*.pdf");
+		ReactControl binary = _registry.createControl(context(), single, new AbstractFieldModel(null));
+		assertEquals(".pdf", binary.scriptingScalarState().get(UploadSupport.ACCEPT));
+
+		assertEquals("An element is described like the field", "*.xml,image/*",
+			multiple.elementSpec().getAcceptedTypes());
+	}
+
+	private static BinaryData file(String name) {
+		return BinaryDataFactory.createBinaryData(name.getBytes(StandardCharsets.UTF_8), "text/plain", name);
 	}
 
 	/**
@@ -179,7 +282,8 @@ public class TestFieldControlRegistry extends TestCase {
 			.setTooltip("What they are called")
 			.setIcon(SEARCH_ICON)
 			.setClearable(true)
-			.setDebounce(Long.valueOf(250));
+			.setDebounce(Long.valueOf(250))
+			.setSendValueOnBlur(true);
 
 		FieldSpec element = field.elementSpec();
 
@@ -192,6 +296,7 @@ public class TestFieldControlRegistry extends TestCase {
 		assertTrue("An element is displayed like the field", element.isClearable());
 		assertEquals("An element reports at the pace of the field", Long.valueOf(250),
 			element.getDebounce());
+		assertTrue("An element holds a typed value back like the field", element.isSendValueOnBlur());
 		assertTrue("The field itself is untouched", field.isMultiple());
 	}
 
@@ -207,6 +312,7 @@ public class TestFieldControlRegistry extends TestCase {
 			field.isClearable());
 		assertNull("A field reports at the pace of its control unless it states a span",
 			field.getDebounce());
+		assertFalse("A field sends what is typed unless it states otherwise", field.isSendValueOnBlur());
 	}
 
 	private static ReactControl createControl(FieldSpec field, ReactFieldControlProvider provider) {
@@ -259,6 +365,7 @@ public class TestFieldControlRegistry extends TestCase {
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestFieldControlRegistry.class, ResourcesModule.Module.INSTANCE));
+			ServiceTestSetup.createSetup(TestFieldControlRegistry.class, ThemeFactory.Module.INSTANCE,
+				ResourcesModule.Module.INSTANCE));
 	}
 }

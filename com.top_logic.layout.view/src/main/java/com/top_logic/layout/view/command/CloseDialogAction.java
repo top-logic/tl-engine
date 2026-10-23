@@ -17,11 +17,6 @@ import com.top_logic.layout.react.control.overlay.DialogResult;
 
 /**
  * {@link ViewAction} that closes the topmost dialog.
- *
- * <p>
- * Passes the input through as output so it can be used in a chain where a subsequent action needs
- * the result.
- * </p>
  */
 @InApp
 public class CloseDialogAction implements ViewAction {
@@ -52,5 +47,13 @@ public class CloseDialogAction implements ViewAction {
 			mgr.closeTopDialog(DialogResult.cancelled());
 		}
 		return input;
+	}
+
+	/**
+	 * Closes a dialog.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

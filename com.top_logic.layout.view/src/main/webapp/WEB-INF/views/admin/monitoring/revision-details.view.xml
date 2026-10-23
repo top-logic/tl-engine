@@ -15,7 +15,7 @@
 	<channels>
 		<channel name="changeSet"/>
 		<derived-channel name="revision"
-			expr="cs -> toString($cs.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`))"
+			expr="toString($changeSet.get(`tl.changelog:ChangeSet#revision`).get(`tl.core:Revision#revision`))"
 			inputs="changeSet"
 		/>
 	</channels>
@@ -57,7 +57,7 @@
 						<en>Kind</en>
 						<de>Art</de>
 					</label>
-					<value><![CDATA[row -> $row["kind"]]]></value>
+					<value><![CDATA[$row["kind"]]]></value>
 				</computed-column>
 				<computed-column name="object"
 					type="tl.model:TLObject"
@@ -67,7 +67,7 @@
 						<en>Object</en>
 						<de>Objekt</de>
 					</label>
-					<value><![CDATA[row -> $row["object"]]]></value>
+					<value><![CDATA[$row["object"]]]></value>
 				</computed-column>
 				<computed-column name="attribute"
 					type="tl.model:TLStructuredTypePart"
@@ -77,7 +77,7 @@
 						<en>Attribute</en>
 						<de>Attribut</de>
 					</label>
-					<value><![CDATA[row -> $row["attribute"]]]></value>
+					<value><![CDATA[$row["attribute"]]]></value>
 				</computed-column>
 				<computed-column name="oldValue"
 					width="200"
@@ -86,7 +86,7 @@
 						<en>Old value</en>
 						<de>Alter Wert</de>
 					</label>
-					<value><![CDATA[row -> $row["oldValue"]]]></value>
+					<value><![CDATA[$row["oldValue"]]]></value>
 				</computed-column>
 				<computed-column name="newValue"
 					width="200"
@@ -95,10 +95,10 @@
 						<en>New value</en>
 						<de>Neuer Wert</de>
 					</label>
-					<value><![CDATA[row -> $row["newValue"]]]></value>
+					<value><![CDATA[$row["newValue"]]]></value>
 				</computed-column>
 			</columns>
-			<rows><![CDATA[cs -> $cs.get(`tl.changelog:ChangeSet#changes`).flatMap(c -> switch {
+			<rows><![CDATA[$changeSet.get(`tl.changelog:ChangeSet#changes`).flatMap(c -> switch {
 	$c.instanceOf(`tl.changelog:Update`):
 		$c.get(`tl.changelog:Update#modifications`).map(m -> {
 			"kind": `tl.changelog:ChangeType#UPDATE`,

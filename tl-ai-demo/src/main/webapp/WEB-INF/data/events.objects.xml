@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The event-management demo data, so the application shows a living business on its first start:
+	three venues with their rooms, four events in four different states, their programme, the
+	people who speak and register, two sponsors and the invoices on both sides of the budget.
+
+	The dates are chosen around the autumn of 2026 so that one event is over, one is open for
+	registration, one is planned and one is a draft - and so that one incoming invoice is overdue,
+	which is the question the overdue column and the chat are there to answer.
+
+	Load-once: the initial data import (InitialDataSetup) records the file name, so editing this file
+	changes nothing in a database that already read it (rename it to re-import).
+-->
+<objects>
+	<resolvers>
+		<resolver type="tl.units:Currency">
+			<impl class="com.top_logic.ai.demo.data.CurrencyResolver"/>
+		</resolver>
+		<resolver type="tl.accounts:Person">
+			<impl class="com.top_logic.model.instance.importer.resolver.AccountResolver"/>
+		</resolver>
+	</resolvers>
+	<object id="c-nordlicht" type="Contacts:CompanyContact">
+		<attribute name="name" value="Nordlicht Software GmbH"/>
+		<attribute name="street" value="Großer Burstah 12"/>
+		<attribute name="ZIPCode" value="20457"/>
+		<attribute name="city" value="Hamburg"/>
+		<attribute name="country" value="DE"/>
+		<attribute name="email" value="info@nordlicht.example"/>
+		<attribute name="supplier" value="false"/>
+		<attribute name="client" value="true"/>
+	</object>
+	<object id="c-datenwerk" type="Contacts:CompanyContact">
+		<attribute name="name" value="Datenwerk AG"/>
+		<attribute name="street" value="Leopoldstraße 88"/>
+		<attribute name="ZIPCode" value="80802"/>
+		<attribute name="city" value="München"/>
+		<attribute name="country" value="DE"/>
+		<attribute name="email" value="kontakt@datenwerk.example"/>
+		<attribute name="supplier" value="false"/>
+		<attribute name="client" value="true"/>
+	</object>
+	<object id="c-gruenraum" type="Contacts:CompanyContact">
+		<attribute name="name" value="Grünraum Catering GmbH"/>
+		<attribute name="street" value="Venloer Straße 210"/>
+		<attribute name="ZIPCode" value="50823"/>
+		<attribute name="city" value="Köln"/>
+		<attribute name="country" value="DE"/>
+		<attribute name="email" value="service@gruenraum.example"/>
+		<attribute name="supplier" value="true"/>
+		<attribute name="client" value="false"/>
+	</object>
+	<object id="c-technikrent" type="Contacts:CompanyContact">
+		<attribute name="name" value="Technik Rent Rheinland GmbH"/>
+		<attribute name="street" value="Industriestraße 5"/>
+		<attribute name="ZIPCode" value="50735"/>
+		<attribute name="city" value="Köln"/>
+		<attribute name="country" value="DE"/>
+		<attribute name="email" value="miete@technikrent.example"/>
+		<attribute name="supplier" value="true"/>
+		<attribute name="client" value="false"/>
+	</object>
+	<object id="c-druckhaus" type="Contacts:CompanyContact">
+		<attribute name="name" value="Druckhaus Mayer KG"/>
+		<attribute name="street" value="Spinnereistraße 7"/>
+		<attribute name="ZIPCode" value="04179"/>
+		<attribute name="city" value="Leipzig"/>
+		<attribute name="country" value="DE"/>
+		<attribute name="email" value="auftrag@druckhaus-mayer.example"/>
+		<attribute name="supplier" value="true"/>
+		<attribute name="client" value="false"/>
+	</object>
+	<object id="p-berger" type="Contacts:PersonContact">
+		<attribute name="name" value="Berger"/>
+		<attribute name="firstname" value="Anna"/>
+		<attribute name="email" value="anna.berger@example.org"/>
+		<attribute name="company"><ref id="c-nordlicht"/></attribute>
+	</object>
+	<object id="p-weber" type="Contacts:PersonContact">
+		<attribute name="name" value="Weber"/>
+		<attribute name="firstname" value="Jonas"/>
+		<attribute name="email" value="jonas.weber@example.org"/>
+	</object>
+	<object id="p-schulz" type="Contacts:PersonContact">
+		<attribute name="name" value="Schulz"/>
+		<attribute name="firstname" value="Miriam"/>
+		<attribute name="email" value="miriam.schulz@example.org"/>
+	</object>
+	<object id="p-klein" type="Contacts:PersonContact">
+		<attribute name="name" value="Klein"/>
+		<attribute name="firstname" value="Tobias"/>
+		<attribute name="email" value="tobias.klein@example.org"/>
+	</object>
+	<object id="p-hoffmann" type="Contacts:PersonContact">
+		<attribute name="name" value="Hoffmann"/>
+		<attribute name="firstname" value="Lea"/>
+		<attribute name="email" value="lea.hoffmann@example.org"/>
+	</object>
+	<object id="p-neumann" type="Contacts:PersonContact">
+		<attribute name="name" value="Neumann"/>
+		<attribute name="firstname" value="David"/>
+		<attribute name="email" value="david.neumann@example.org"/>
+	</object>
+	<object id="p-wagner" type="Contacts:PersonContact">
+		<attribute name="name" value="Wagner"/>
+		<attribute name="firstname" value="Sophie"/>
+		<attribute name="email" value="sophie.wagner@example.org"/>
+	</object>
+	<object id="p-braun" type="Contacts:PersonContact">
+		<attribute name="name" value="Braun"/>
+		<attribute name="firstname" value="Felix"/>
+		<attribute name="email" value="felix.braun@example.org"/>
+	</object>
+	<object id="p-yilmaz" type="Contacts:PersonContact">
+		<attribute name="name" value="Yilmaz"/>
+		<attribute name="firstname" value="Elif"/>
+		<attribute name="email" value="elif.yilmaz@example.org"/>
+	</object>
+	<object id="p-fischer" type="Contacts:PersonContact">
+		<attribute name="name" value="Fischer"/>
+		<attribute name="firstname" value="Paul"/>
+		<attribute name="email" value="paul.fischer@example.org"/>
+	</object>
+	<object id="venue-koeln" type="demo.events:Venue">
+		<attribute name="name" value="Kongresszentrum Rheinufer"/>
+		<attribute name="description" value="Tagungszentrum direkt am Rhein, mit großem Saal und zwei Seminarräumen."/>
+		<attribute name="capacity" value="1200"/>
+		<attribute name="website" value="https://rheinufer.example"/>
+		<attribute name="email" value="events@rheinufer.example"/>
+		<attribute name="phone" value="+49 221 555 0100"/>
+		<attribute name="address">
+			<object id="venue-koeln-a" type="demo.events:Address">
+				<attribute name="street" value="Rheinuferstraße 1"/>
+				<attribute name="postalCode" value="50679"/>
+				<attribute name="city" value="Köln"/>
+				<attribute name="country" value="DE"/>
+			</object>
+		</attribute>
+		<attribute name="rooms">
+			<object id="room-rhein" type="demo.events:Room">
+				<attribute name="name" value="Saal Rhein"/>
+				<attribute name="capacity" value="800"/>
+				<attribute name="hasProjector" value="true"/>
+			</object>
+			<object id="room-dom" type="demo.events:Room">
+				<attribute name="name" value="Raum Dom"/>
+				<attribute name="capacity" value="120"/>
+				<attribute name="hasProjector" value="true"/>
+			</object>
+			<object id="room-hafen" type="demo.events:Room">
+				<attribute name="name" value="Raum Hafen"/>
+				<attribute name="capacity" value="40"/>
+				<attribute name="hasProjector" value="false"/>
+			</object>
+		</attribute>
+	</object>
+	<object id="venue-leipzig" type="demo.events:Venue">
+		<attribute name="name" value="Alte Spinnerei"/>
+		<attribute name="description" value="Ehemalige Baumwollspinnerei mit Halle und Werkstatt, ideal für Community-Events."/>
+		<attribute name="capacity" value="300"/>
+		<attribute name="website" value="https://spinnerei.example"/>
+		<attribute name="email" value="hallo@spinnerei.example"/>
+		<attribute name="phone" value="+49 341 555 0200"/>
+		<attribute name="address">
+			<object id="venue-leipzig-a" type="demo.events:Address">
+				<attribute name="street" value="Spinnereistraße 7"/>
+				<attribute name="postalCode" value="04179"/>
+				<attribute name="city" value="Leipzig"/>
+				<attribute name="country" value="DE"/>
+			</object>
+		</attribute>
+		<attribute name="rooms">
+			<object id="room-halle" type="demo.events:Room">
+				<attribute name="name" value="Halle 1"/>
+				<attribute name="capacity" value="250"/>
+				<attribute name="hasProjector" value="true"/>
+			</object>
+			<object id="room-werkstatt" type="demo.events:Room">
+				<attribute name="name" value="Werkstatt"/>
+				<attribute name="capacity" value="30"/>
+				<attribute name="hasProjector" value="false"/>
+			</object>
+		</attribute>
+	</object>
+	<object id="venue-hamburg" type="demo.events:Venue">
+		<attribute name="name" value="Hafenforum Hamburg"/>
+		<attribute name="description" value="Konferenzhaus in der HafenCity mit Blick auf die Elbe."/>
+		<attribute name="capacity" value="500"/>
+		<attribute name="website" value="https://hafenforum.example"/>
+		<attribute name="email" value="booking@hafenforum.example"/>
+		<attribute name="phone" value="+49 40 555 0300"/>
+		<attribute name="address">
+			<object id="venue-hamburg-a" type="demo.events:Address">
+				<attribute name="street" value="Am Sandtorkai 40"/>
+				<attribute name="postalCode" value="20457"/>
+				<attribute name="city" value="Hamburg"/>
+				<attribute name="country" value="DE"/>
+			</object>
+		</attribute>
+		<attribute name="rooms">
+			<object id="room-kaisaal" type="demo.events:Room">
+				<attribute name="name" value="Kaisaal"/>
+				<attribute name="capacity" value="400"/>
+				<attribute name="hasProjector" value="true"/>
+			</object>
+			<object id="room-elbblick" type="demo.events:Room">
+				<attribute name="name" value="Elbblick"/>
+				<attribute name="capacity" value="60"/>
+				<attribute name="hasProjector" value="true"/>
+			</object>
+		</attribute>
+	</object>
+	<object id="event-ki" type="demo.events:Event">
+		<attribute name="name" value="KI im Mittelstand 2026"/>
+		<attribute name="description" value="Zweitägige Konferenz über Agenten, Datenmodelle und Verantwortung beim Einsatz von KI in mittelständischen Unternehmen."/>
+		<attribute name="status"><model-ref name="demo.events:EventStatus#OPEN_FOR_REGISTRATION"/></attribute>
+		<attribute name="startDate" value="2026-11-12T00:00:00.000Z"/>
+		<attribute name="endDate" value="2026-11-13T00:00:00.000Z"/>
+		<attribute name="ticketPrice" value="290.0"/>
+		<attribute name="maxParticipants" value="400"/>
+		<attribute name="themeColor" value="#1f6feb"/>
+		<attribute name="currency"><global-ref kind="tl.units:Currency" id="EUR"/></attribute>
+		<attribute name="venue"><ref id="venue-koeln"/></attribute>
+		<attribute name="manager"><global-ref kind="tl.accounts:Person" id="root"/></attribute>
+		<attribute name="sessions">
+			<object id="s-ki-keynote" type="demo.events:Session">
+				<attribute name="name" value="Agenten statt Assistenten"/>
+				<attribute name="description" value="Was sich ändert, wenn eine KI nicht nur antwortet, sondern in der Anwendung handelt."/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#KEYNOTE"/></attribute>
+				<attribute name="startTime" value="2026-11-12T08:00:00.000Z"/>
+				<attribute name="durationMinutes" value="45"/>
+				<attribute name="room"><ref id="room-rhein"/></attribute>
+				<attribute name="speakers">
+					<object id="s-ki-keynote-s1" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-berger"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#MAIN_SPEAKER"/></attribute>
+						<attribute name="fee" value="1500.0"/>
+					</object>
+				</attribute>
+			</object>
+			<object id="s-ki-model" type="demo.events:Session">
+				<attribute name="name" value="Datenmodelle, die eine KI versteht"/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#TALK"/></attribute>
+				<attribute name="startTime" value="2026-11-12T09:15:00.000Z"/>
+				<attribute name="durationMinutes" value="30"/>
+				<attribute name="room"><ref id="room-dom"/></attribute>
+				<attribute name="speakers">
+					<object id="s-ki-model-s1" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-weber"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#MAIN_SPEAKER"/></attribute>
+						<attribute name="fee" value="600.0"/>
+					</object>
+					<object id="s-ki-model-s2" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-schulz"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#CO_SPEAKER"/></attribute>
+						<attribute name="fee" value="300.0"/>
+					</object>
+				</attribute>
+			</object>
+			<object id="s-ki-lunch" type="demo.events:Session">
+				<attribute name="name" value="Mittagspause"/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#BREAK"/></attribute>
+				<attribute name="startTime" value="2026-11-12T11:00:00.000Z"/>
+				<attribute name="durationMinutes" value="60"/>
+				<attribute name="room"><ref id="room-rhein"/></attribute>
+			</object>
+			<object id="s-ki-workshop" type="demo.events:Session">
+				<attribute name="name" value="Prompting für Fachabteilungen"/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#WORKSHOP"/></attribute>
+				<attribute name="startTime" value="2026-11-12T12:30:00.000Z"/>
+				<attribute name="durationMinutes" value="120"/>
+				<attribute name="room"><ref id="room-hafen"/></attribute>
+				<attribute name="speakers">
+					<object id="s-ki-workshop-s1" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-klein"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#MAIN_SPEAKER"/></attribute>
+						<attribute name="fee" value="900.0"/>
+					</object>
+				</attribute>
+			</object>
+			<object id="s-ki-panel" type="demo.events:Session">
+				<attribute name="name" value="Wer haftet für den Agenten?"/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#PANEL"/></attribute>
+				<attribute name="startTime" value="2026-11-12T15:00:00.000Z"/>
+				<attribute name="durationMinutes" value="60"/>
+				<attribute name="room"><ref id="room-rhein"/></attribute>
+				<attribute name="speakers">
+					<object id="s-ki-panel-s1" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-hoffmann"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#MODERATOR"/></attribute>
+						<attribute name="fee" value="400.0"/>
+					</object>
+					<object id="s-ki-panel-s2" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-berger"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#CO_SPEAKER"/></attribute>
+						<attribute name="fee" value="0.0"/>
+					</object>
+					<object id="s-ki-panel-s3" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-neumann"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#CO_SPEAKER"/></attribute>
+						<attribute name="fee" value="350.0"/>
+					</object>
+				</attribute>
+			</object>
+		</attribute>
+		<attribute name="registrations">
+			<object id="r-ki-1" type="demo.events:Registration">
+				<attribute name="participant"><ref id="p-wagner"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:RegistrationStatus#CONFIRMED"/></attribute>
+				<attribute name="registeredAt" value="2026-09-03T10:12:00.000Z"/>
+				<attribute name="pricePaid" value="290.0"/>
+			</object>
+			<object id="r-ki-2" type="demo.events:Registration">
+				<attribute name="participant"><ref id="p-braun"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:RegistrationStatus#CONFIRMED"/></attribute>
+				<attribute name="registeredAt" value="2026-08-21T16:40:00.000Z"/>
+				<attribute name="pricePaid" value="249.0"/>
+				<attribute name="notes" value="Frühbucherpreis"/>
+			</object>
+			<object id="r-ki-3" type="demo.events:Registration">
+				<attribute name="participant"><ref id="p-yilmaz"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:RegistrationStatus#PENDING"/></attribute>
+				<attribute name="registeredAt" value="2026-09-28T09:05:00.000Z"/>
+				<attribute name="notes" value="Rechnung an die Firma, Bestellnummer folgt."/>
+			</object>
+			<object id="r-ki-4" type="demo.events:Registration">
+				<attribute name="participant"><ref id="p-fischer"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:RegistrationStatus#CANCELLED"/></attribute>
+				<attribute name="registeredAt" value="2026-09-10T13:30:00.000Z"/>
+				<attribute name="pricePaid" value="290.0"/>
+				<attribute name="notes" value="Storniert wegen Terminkonflikt, Erstattung veranlasst."/>
+			</object>
+			<object id="r-ki-5" type="demo.events:Registration">
+				<attribute name="participant"><ref id="p-schulz"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:RegistrationStatus#CONFIRMED"/></attribute>
+				<attribute name="registeredAt" value="2026-09-15T11:00:00.000Z"/>
+				<attribute name="pricePaid" value="0.0"/>
+				<attribute name="notes" value="Co-Referentin, kostenfrei."/>
+			</object>
+		</attribute>
+		<attribute name="sponsorships">
+			<object id="sp-ki-nordlicht" type="demo.events:Sponsorship">
+				<attribute name="sponsor"><ref id="c-nordlicht"/></attribute>
+				<attribute name="level"><model-ref name="demo.events:SponsorLevel#GOLD"/></attribute>
+				<attribute name="amount" value="15000.0"/>
+				<attribute name="contractSigned" value="true"/>
+				<attribute name="invoice"><ref id="inv-ki-ar031"/></attribute>
+			</object>
+			<object id="sp-ki-datenwerk" type="demo.events:Sponsorship">
+				<attribute name="sponsor"><ref id="c-datenwerk"/></attribute>
+				<attribute name="level"><model-ref name="demo.events:SponsorLevel#SILVER"/></attribute>
+				<attribute name="amount" value="7500.0"/>
+				<attribute name="contractSigned" value="false"/>
+			</object>
+		</attribute>
+		<attribute name="invoices">
+			<object id="inv-ki-catering" type="demo.events:Invoice">
+				<attribute name="invoiceNumber" value="GC-2026-4711"/>
+				<attribute name="direction"><model-ref name="demo.events:InvoiceDirection#INCOMING"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:InvoiceStatus#APPROVED"/></attribute>
+				<attribute name="invoiceDate" value="2026-09-15T00:00:00.000Z"/>
+				<attribute name="dueDate" value="2026-10-15T00:00:00.000Z"/>
+				<attribute name="taxRate" value="19.0"/>
+				<attribute name="counterparty"><ref id="c-gruenraum"/></attribute>
+				<attribute name="currency"><global-ref kind="tl.units:Currency" id="EUR"/></attribute>
+				<attribute name="lines">
+					<object id="inv-ki-catering-l1" type="demo.events:InvoiceLine">
+						<attribute name="description" value="Mittagsbuffet, 400 Personen an 2 Tagen"/>
+						<attribute name="quantity" value="800"/>
+						<attribute name="unitPrice" value="18.5"/>
+					</object>
+					<object id="inv-ki-catering-l2" type="demo.events:InvoiceLine">
+						<attribute name="description" value="Kaffeepausen vormittags und nachmittags"/>
+						<attribute name="quantity" value="1600"/>
+						<attribute name="unitPrice" value="4.2"/>
+					</object>
+				</attribute>
+			</object>
+			<object id="inv-ki-technik" type="demo.events:Invoice">
+				<attribute name="invoiceNumber" value="TR-2026-118"/>
+				<attribute name="direction"><model-ref name="demo.events:InvoiceDirection#INCOMING"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:InvoiceStatus#CHECKED"/></attribute>
+				<attribute name="invoiceDate" value="2026-08-20T00:00:00.000Z"/>
+				<attribute name="dueDate" value="2026-09-19T00:00:00.000Z"/>
+				<attribute name="taxRate" value="19.0"/>
+				<attribute name="counterparty"><ref id="c-technikrent"/></attribute>
+				<attribute name="currency"><global-ref kind="tl.units:Currency" id="EUR"/></attribute>
+				<attribute name="lines">
+					<object id="inv-ki-technik-l1" type="demo.events:InvoiceLine">
+						<attribute name="description" value="Beamer-Paket inkl. Leinwand"/>
+						<attribute name="quantity" value="3"/>
+						<attribute name="unitPrice" value="450.0"/>
+					</object>
+					<object id="inv-ki-technik-l2" type="demo.events:InvoiceLine">
+						<attribute name="description" value="Tontechnik Saal Rhein, 2 Tage"/>
+						<attribute name="quantity" value="1"/>
+						<attribute name="unitPrice" value="2200.0"/>
+					</object>
+				</attribute>
+			</object>
+			<object id="inv-ki-ar031" type="demo.events:Invoice">
+				<attribute name="invoiceNumber" value="AR-2026-031"/>
+				<attribute name="direction"><model-ref name="demo.events:InvoiceDirection#OUTGOING"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:InvoiceStatus#RECEIVED"/></attribute>
+				<attribute name="invoiceDate" value="2026-09-01T00:00:00.000Z"/>
+				<attribute name="dueDate" value="2026-10-31T00:00:00.000Z"/>
+				<attribute name="taxRate" value="19.0"/>
+				<attribute name="counterparty"><ref id="c-nordlicht"/></attribute>
+				<attribute name="currency"><global-ref kind="tl.units:Currency" id="EUR"/></attribute>
+				<attribute name="lines">
+					<object id="inv-ki-ar031-l1" type="demo.events:InvoiceLine">
+						<attribute name="description" value="Gold-Sponsoring KI im Mittelstand 2026"/>
+						<attribute name="quantity" value="1"/>
+						<attribute name="unitPrice" value="15000.0"/>
+					</object>
+				</attribute>
+			</object>
+		</attribute>
+	</object>
+	<object id="event-sommerfest" type="demo.events:Event">
+		<attribute name="name" value="Open Source Sommerfest"/>
+		<attribute name="description" value="Ein Tag mit Lightning Talks, Grill und Hackspace für die Leipziger Community."/>
+		<attribute name="status"><model-ref name="demo.events:EventStatus#COMPLETED"/></attribute>
+		<attribute name="startDate" value="2026-07-03T00:00:00.000Z"/>
+		<attribute name="endDate" value="2026-07-03T00:00:00.000Z"/>
+		<attribute name="ticketPrice" value="49.0"/>
+		<attribute name="maxParticipants" value="250"/>
+		<attribute name="themeColor" value="#2da44e"/>
+		<attribute name="currency"><global-ref kind="tl.units:Currency" id="EUR"/></attribute>
+		<attribute name="venue"><ref id="venue-leipzig"/></attribute>
+		<attribute name="manager"><global-ref kind="tl.accounts:Person" id="root"/></attribute>
+		<attribute name="sessions">
+			<object id="s-so-talks" type="demo.events:Session">
+				<attribute name="name" value="Lightning Talks"/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#TALK"/></attribute>
+				<attribute name="startTime" value="2026-07-03T13:00:00.000Z"/>
+				<attribute name="durationMinutes" value="90"/>
+				<attribute name="room"><ref id="room-halle"/></attribute>
+				<attribute name="speakers">
+					<object id="s-so-talks-s1" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-hoffmann"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#MODERATOR"/></attribute>
+						<attribute name="fee" value="0.0"/>
+					</object>
+					<object id="s-so-talks-s2" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-weber"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#MAIN_SPEAKER"/></attribute>
+						<attribute name="fee" value="0.0"/>
+					</object>
+				</attribute>
+			</object>
+			<object id="s-so-hack" type="demo.events:Session">
+				<attribute name="name" value="Hackspace: Bring dein Projekt mit"/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#WORKSHOP"/></attribute>
+				<attribute name="startTime" value="2026-07-03T15:00:00.000Z"/>
+				<attribute name="durationMinutes" value="180"/>
+				<attribute name="room"><ref id="room-werkstatt"/></attribute>
+				<attribute name="speakers">
+					<object id="s-so-hack-s1" type="demo.events:SpeakerAssignment">
+						<attribute name="person"><ref id="p-klein"/></attribute>
+						<attribute name="role"><model-ref name="demo.events:SpeakerRole#MAIN_SPEAKER"/></attribute>
+						<attribute name="fee" value="250.0"/>
+					</object>
+				</attribute>
+			</object>
+		</attribute>
+		<attribute name="registrations">
+			<object id="r-so-1" type="demo.events:Registration">
+				<attribute name="participant"><ref id="p-wagner"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:RegistrationStatus#CHECKED_IN"/></attribute>
+				<attribute name="registeredAt" value="2026-06-02T19:20:00.000Z"/>
+				<attribute name="pricePaid" value="49.0"/>
+			</object>
+			<object id="r-so-2" type="demo.events:Registration">
+				<attribute name="participant"><ref id="p-neumann"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:RegistrationStatus#CHECKED_IN"/></attribute>
+				<attribute name="registeredAt" value="2026-06-11T08:45:00.000Z"/>
+				<attribute name="pricePaid" value="49.0"/>
+			</object>
+			<object id="r-so-3" type="demo.events:Registration">
+				<attribute name="participant"><ref id="p-yilmaz"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:RegistrationStatus#CHECKED_IN"/></attribute>
+				<attribute name="registeredAt" value="2026-06-20T21:10:00.000Z"/>
+				<attribute name="pricePaid" value="39.0"/>
+				<attribute name="notes" value="Studierendenrabatt"/>
+			</object>
+		</attribute>
+		<attribute name="invoices">
+			<object id="inv-so-druck" type="demo.events:Invoice">
+				<attribute name="invoiceNumber" value="DM-26-0612"/>
+				<attribute name="direction"><model-ref name="demo.events:InvoiceDirection#INCOMING"/></attribute>
+				<attribute name="status"><model-ref name="demo.events:InvoiceStatus#PAID"/></attribute>
+				<attribute name="invoiceDate" value="2026-06-12T00:00:00.000Z"/>
+				<attribute name="dueDate" value="2026-07-12T00:00:00.000Z"/>
+				<attribute name="taxRate" value="7.0"/>
+				<attribute name="counterparty"><ref id="c-druckhaus"/></attribute>
+				<attribute name="currency"><global-ref kind="tl.units:Currency" id="EUR"/></attribute>
+				<attribute name="lines">
+					<object id="inv-so-druck-l1" type="demo.events:InvoiceLine">
+						<attribute name="description" value="Plakate A1"/>
+						<attribute name="quantity" value="40"/>
+						<attribute name="unitPrice" value="3.9"/>
+					</object>
+					<object id="inv-so-druck-l2" type="demo.events:InvoiceLine">
+						<attribute name="description" value="Programmhefte, 16 Seiten"/>
+						<attribute name="quantity" value="300"/>
+						<attribute name="unitPrice" value="0.85"/>
+					</object>
+				</attribute>
+			</object>
+		</attribute>
+	</object>
+	<object id="event-summit" type="demo.events:Event">
+		<attribute name="name" value="Hamburg Data Summit 2027"/>
+		<attribute name="description" value="Fachkonferenz zu Datenplattformen und Datenqualität, im Frühjahr in der HafenCity."/>
+		<attribute name="status"><model-ref name="demo.events:EventStatus#PLANNED"/></attribute>
+		<attribute name="startDate" value="2027-03-18T00:00:00.000Z"/>
+		<attribute name="endDate" value="2027-03-19T00:00:00.000Z"/>
+		<attribute name="ticketPrice" value="390.0"/>
+		<attribute name="maxParticipants" value="450"/>
+		<attribute name="themeColor" value="#8250df"/>
+		<attribute name="currency"><global-ref kind="tl.units:Currency" id="EUR"/></attribute>
+		<attribute name="venue"><ref id="venue-hamburg"/></attribute>
+		<attribute name="manager"><global-ref kind="tl.accounts:Person" id="root"/></attribute>
+		<attribute name="sessions">
+			<object id="s-su-keynote" type="demo.events:Session">
+				<attribute name="name" value="Eröffnungskeynote"/>
+				<attribute name="format"><model-ref name="demo.events:SessionFormat#KEYNOTE"/></attribute>
+				<attribute name="startTime" value="2027-03-18T08:30:00.000Z"/>
+				<attribute name="durationMinutes" value="45"/>
+				<attribute name="room"><ref id="room-kaisaal"/></attribute>
+			</object>
+		</attribute>
+		<attribute name="sponsorships">
+			<object id="sp-su-datenwerk" type="demo.events:Sponsorship">
+				<attribute name="sponsor"><ref id="c-datenwerk"/></attribute>
+				<attribute name="level"><model-ref name="demo.events:SponsorLevel#PLATINUM"/></attribute>
+				<attribute name="amount" value="25000.0"/>
+				<attribute name="contractSigned" value="false"/>
+			</object>
+		</attribute>
+	</object>
+	<object id="event-workshop" type="demo.events:Event">
+		<attribute name="name" value="Teamworkshop Herbst"/>
+		<attribute name="description" value="Interner Workshop zur Planung des nächsten Jahres. Ort und Programm stehen noch aus."/>
+		<attribute name="status"><model-ref name="demo.events:EventStatus#DRAFT"/></attribute>
+		<attribute name="startDate" value="2026-11-27T00:00:00.000Z"/>
+		<attribute name="maxParticipants" value="25"/>
+		<attribute name="manager"><global-ref kind="tl.accounts:Person" id="root"/></attribute>
+	</object>
+</objects>

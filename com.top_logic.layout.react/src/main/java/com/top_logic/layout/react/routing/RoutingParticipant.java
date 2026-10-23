@@ -115,6 +115,27 @@ public interface RoutingParticipant {
 		// The state stands: what the URL does not name is what the view establishes itself.
 	}
 
+	/**
+	 * Whether what this participant displays below itself is addressed by the URL.
+	 *
+	 * <p>
+	 * A participant showing an item that is explicitly not routed - a navigation item or tab with
+	 * {@code route="none"} - displays a part of the application that has no URL. The participants
+	 * inside it keep working, but contribute nothing to the URL and are not offered its segments:
+	 * a segment they contributed would stand where the segment of the unrouted item belongs, and
+	 * the URL could not be resolved back to the display it was composed from. The URL then names
+	 * only what lies above, and a reload of the window keeps the display, because the URL names no
+	 * route that would have to be reset.
+	 * </p>
+	 *
+	 * <p>
+	 * The default is {@code true}: the content of a participant is part of the URL.
+	 * </p>
+	 */
+	default boolean routesContent() {
+		return true;
+	}
+
     /**
      * Registers a {@link RouteChangeListener} to be notified when this participant's active route
      * changes.

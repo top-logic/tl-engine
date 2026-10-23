@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Contributes the "KI-Agenten" view to Administration -> Monitor.
+	
+	Placed with the other monitors rather than next to the Agent Editor under Entwicklung, because
+	this view answers operational questions - what is running, what failed, what is waiting for a
+	human - and that is what an administrator opens the Monitor area for. The editor stays where it
+	is; it answers what an agent *is*, not what it *did*.
+	
+	Appended rather than positioned relative to an existing entry: the reference would have to name
+	a layout another web fragment contributes to the same tabbar, and the order in which fragments
+	are applied is not ours to rely on.
+-->
+<arguments>
+	<components>
+		<layout-reference resource="tl-ai-core/admin/agentActivity/agentActivityView.layout.xml"/>
+	</components>
+</arguments>

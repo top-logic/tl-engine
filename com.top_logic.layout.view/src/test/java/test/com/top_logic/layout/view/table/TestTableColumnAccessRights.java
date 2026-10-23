@@ -88,11 +88,11 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	private static final String SCRIPTED_COLUMNS = "<columns>"
 		+ "<column attribute='" + BUDGET + "'>"
 		+ "<filter class='com.top_logic.layout.view.table.ScriptedFilter' model='" + MODULE + ":" + PROJECT
-		+ "' match='p -> v -> r -> true'/>"
+		+ "' match='true'/>"
 		+ "</column>"
 		+ "<column attribute='" + SPONSOR + "'>"
 		+ "<filter class='com.top_logic.layout.view.table.ScriptedFilter' model='" + MODULE + ":" + PROJECT
-		+ "' match='p -> v -> r -> true'/>"
+		+ "' match='true'/>"
 		+ "</column>"
 		+ "</columns>";
 
@@ -116,7 +116,7 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 		+ "<column attribute='" + SPONSOR + "'/>"
 		+ "<embedded-columns reference='" + SPONSOR + "'><column attribute='" + NAME + "'/></embedded-columns>"
 		+ "<computed-column name='" + COMPUTED_BUDGET + "' type='tl.core:String'>"
-		+ "<value>row -> $row.get(`" + MODULE + ":" + PROJECT + "#" + BUDGET + "`)</value>"
+		+ "<value>$row.get(`" + MODULE + ":" + PROJECT + "#" + BUDGET + "`)</value>"
 		+ "</computed-column>"
 		+ "</columns>";
 

@@ -33,14 +33,20 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ObservingChannels;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
  * One step of a {@link WizardElement &lt;wizard&gt;} per element of a list a channel holds.
@@ -73,7 +79,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * &lt;wizard current-step="currentStep"&gt;
  *   &lt;step id="welcome" label="wizard.welcome"&gt;...&lt;/step&gt;
  *   &lt;dynamic-steps steps="questions"
- *     label="q -&gt; $q.get(`demo:Question#title`)"
+ *     step-as="question"
+ *     label="$question.get(`demo:Question#title`)"
  *   &gt;
  *     &lt;switch input="element"&gt;...&lt;/switch&gt;
  *   &lt;/dynamic-steps&gt;
@@ -88,7 +95,7 @@ public class DynamicStepsSource implements WizardStepSource {
 	 * Configuration for {@link DynamicStepsSource}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends WizardStepSource.Config {
+	public interface Config extends WizardStepSource.Config, Inputs {
 
 		/** Configuration tag of a {@link DynamicStepsSource}. */
 		String TAG_NAME = "dynamic-steps";
@@ -104,6 +111,12 @@ public class DynamicStepsSource implements WizardStepSource {
 
 		/** Configuration name for {@link #getIcon()}. */
 		String ICON = "icon";
+
+		/** Configuration name for {@link #getStepAs()}. */
+		String STEP_AS = "step-as";
+
+		/** Name of the variable holding the element of a step when no other name is given. */
+		String DEFAULT_STEP_AS = "step";
 
 		/** Configuration name for {@link #getContent()}. */
 		String CONTENT = "content";
@@ -137,7 +150,33 @@ public class DynamicStepsSource implements WizardStepSource {
 		String getElementChannel();
 
 		/**
-		 * TL-Script function naming a step in the step indicator: {@code element -> text}.
+		 * The name of the variable holding the element of a step in the scripts computing its
+		 * {@link #getLabel() label}, {@link #getIcon() icon} and {@link #getAutoAdvance() time}.
+		 *
+		 * <p>
+		 * Unset, the variable is named {@value #DEFAULT_STEP_AS}. With
+		 * <code>step-as="question"</code>, a step is labeled by
+		 * <code>$question.get(`my:Question#title`)</code>. The scripts see the element behind the
+		 * values of their {@link #getInputs() inputs}; an input of the same name is a configuration
+		 * error and is renamed with <code>as</code>.
+		 * </p>
+		 */
+		@Name(STEP_AS)
+		@Nullable
+		String getStepAs();
+
+		/**
+		 * TL-Script expression naming a step in the step indicator.
+		 *
+		 * <p>
+		 * The expression sees the values of the {@link #getInputs() inputs} as variables named after
+		 * their channels, or by their {@code as} names, and the element of the step as the variable
+		 * {@value #DEFAULT_STEP_AS}, or by the name given with {@value #STEP_AS}:
+		 * </p>
+		 *
+		 * <pre>
+		 * $step.get(`my:Question#title`)
+		 * </pre>
 		 *
 		 * <p>
 		 * Without one, the element is named as it is named everywhere else in the application.
@@ -145,27 +184,34 @@ public class DynamicStepsSource implements WizardStepSource {
 		 */
 		@Name(LABEL)
 		@Nullable
+		@Supplies(value = DEFAULT_STEP_AS, renamedBy = STEP_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getLabel();
 
 		/**
-		 * TL-Script function choosing the icon shown beside the label:
-		 * {@code element -> "css:fa-solid fa-user"}.
+		 * TL-Script expression choosing the icon shown beside the label, e.g.
+		 * <code>"css:fa-solid fa-user"</code>.
 		 *
 		 * <p>
-		 * Without one, the steps carry no icon.
+		 * The expression sees the values of the {@link #getInputs() inputs} and the element of the
+		 * step as variables, like the {@link #getLabel() label}. Without one, the steps carry no
+		 * icon.
 		 * </p>
 		 */
 		@Name(ICON)
 		@Nullable
+		@Supplies(value = DEFAULT_STEP_AS, renamedBy = STEP_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getIcon();
 
 		/**
-		 * TL-Script function saying how long a step is displayed before the wizard moves on by
-		 * itself: {@code element -> millis}.
+		 * TL-Script expression saying how long a step is displayed before the wizard moves on by
+		 * itself, in milliseconds.
 		 *
 		 * <p>
-		 * An element the function answers nothing for is a step the user leaves; without a function
-		 * that is every step.
+		 * The expression sees the values of the {@link #getInputs() inputs} and the element of the
+		 * step as variables, like the {@link #getLabel() label}. An element the expression answers
+		 * nothing for is a step the user leaves; without an expression that is every step.
 		 * </p>
 		 *
 		 * <p>
@@ -175,6 +221,8 @@ public class DynamicStepsSource implements WizardStepSource {
 		 */
 		@Name(AUTO_ADVANCE)
 		@Nullable
+		@Supplies(value = DEFAULT_STEP_AS, renamedBy = STEP_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getAutoAdvance();
 
 		/**
@@ -195,6 +243,8 @@ public class DynamicStepsSource implements WizardStepSource {
 
 	private final ChannelRef _stepsRef;
 
+	private final List<InputRef> _inputs;
+
 	private final String _elementChannelName;
 
 	private final QueryExecutor _label;
@@ -212,9 +262,10 @@ public class DynamicStepsSource implements WizardStepSource {
 	public DynamicStepsSource(InstantiationContext context, Config config) {
 		_stepsRef = config.getSteps();
 		_elementChannelName = config.getElementChannel();
-		_label = config.getLabel() == null ? null : QueryExecutor.compile(config.getLabel());
-		_icon = config.getIcon() == null ? null : QueryExecutor.compile(config.getIcon());
-		_autoAdvance = config.getAutoAdvance() == null ? null : QueryExecutor.compile(config.getAutoAdvance());
+		_inputs = config.getInputs();
+		_label = InputScript.compile(config, Config.LABEL);
+		_icon = InputScript.compile(config, Config.ICON);
+		_autoAdvance = InputScript.compile(config, Config.AUTO_ADVANCE);
 		_content = config.getContent().stream()
 			.map(context::getInstance)
 			.collect(Collectors.toList());
@@ -223,17 +274,25 @@ public class DynamicStepsSource implements WizardStepSource {
 	@Override
 	public List<WizardStep> steps(ViewContext context) {
 		List<Object> elements = elements(context.resolveChannel(_stepsRef).get());
+		List<ViewChannel> inputs = ChannelInputs.resolve(context, _inputs);
 		List<WizardStep> result = new ArrayList<>(elements.size());
 		for (Object element : elements) {
-			result.add(new WizardStep(element, label(element), icon(element),
-				stepContext -> content(stepContext, element), autoAdvance(element)));
+			result.add(new WizardStep(element, label(inputs, element), icon(inputs, element),
+				stepContext -> content(stepContext, element), autoAdvance(inputs, element)));
 		}
 		return result;
 	}
 
+	/**
+	 * The channel holding the elements, followed by the {@link Config#getInputs() inputs} the
+	 * scripts naming the steps read.
+	 */
 	@Override
 	public List<ViewChannel> observedChannels(ViewContext context) {
-		return List.of(context.resolveChannel(_stepsRef));
+		List<ViewChannel> result = new ArrayList<>();
+		result.add(context.resolveChannel(_stepsRef));
+		result.addAll(ChannelInputs.resolve(context, _inputs));
+		return result;
 	}
 
 	@Override
@@ -256,19 +315,20 @@ public class DynamicStepsSource implements WizardStepSource {
 	 * The name of the given element's step: what the label function answers, or how the element is
 	 * named everywhere else in the application.
 	 */
-	private ResKey label(Object element) {
-		String text = _label != null ? asText(_label.execute(element)) : MetaLabelProvider.INSTANCE.getLabel(element);
+	private ResKey label(List<ViewChannel> inputs, Object element) {
+		String text = _label != null ? asText(_label.execute(ChannelInputs.arguments(inputs, element)))
+			: MetaLabelProvider.INSTANCE.getLabel(element);
 		return StringServices.isEmpty(text) ? null : ResKey.text(text);
 	}
 
 	/**
 	 * The encoded icon of the given element's step, {@code null} for a step without one.
 	 */
-	private String icon(Object element) {
+	private String icon(List<ViewChannel> inputs, Object element) {
 		if (_icon == null) {
 			return null;
 		}
-		String encoded = asText(_icon.execute(element));
+		String encoded = asText(_icon.execute(ChannelInputs.arguments(inputs, element)));
 		return StringServices.isEmpty(encoded) ? null : encoded;
 	}
 
@@ -276,11 +336,11 @@ public class DynamicStepsSource implements WizardStepSource {
 	 * How long the given element's step is displayed before the wizard moves on by itself,
 	 * {@code null} for a step the user leaves.
 	 */
-	private Long autoAdvance(Object element) {
+	private Long autoAdvance(List<ViewChannel> inputs, Object element) {
 		if (_autoAdvance == null) {
 			return null;
 		}
-		Object millis = _autoAdvance.execute(element);
+		Object millis = _autoAdvance.execute(ChannelInputs.arguments(inputs, element));
 		return millis instanceof Number number ? Long.valueOf(number.longValue()) : null;
 	}
 

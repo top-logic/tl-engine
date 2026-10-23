@@ -1,0 +1,724 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The chat built from view elements (Issue #415; the one-element form went with #487).
+
+	The page is one <chat chat-id="chat">: it names the conversation once, and every chat element
+	inside it joins that one without repeating the id, so two of them can no longer be written to
+	disagree. In every other respect it is the <stack direction="row"> that held the three columns
+	before: a <data-list> of this user's chats on the left (a generic list - it reaches the
+	conversation over the "chatSession" channel, not by chat-id, and would work the same outside the
+	<chat>), the <chat-conversation/> (transcript plus prompt field) in the middle, and a
+	<chat-rail/> on the right. The rail is a shell - what it shows is configured here, and the
+	"Veranstaltungen" section is an ordinary <data-list>, which is the point: any view element is a
+	section, so an application puts its own views beside the transcript without the chat knowing
+	about them.
+-->
+<view>
+	<channels>
+		<channel name="chatSession"/>
+		<!--
+			What the rail's pane is showing, written by the "Veranstaltungen" list, by the agent's
+			`present` tool, by a row the user opens in the pane, or by the pane's own "back". Empty
+			means the sections; the pane's close button empties it again. It holds one object, several,
+			or what the agent presented - a table or a chart of any type (#616). The rail renders all
+			of them; nothing on this page wires the pane to a type.
+		-->
+		<channel name="paneObject"/>
+		<!--
+			The one object open in the pane, and nothing while it shows a table or a chart: the
+			object a new chat is about, and the one the chat list on the left is scoped to.
+		-->
+		<derived-channel name="paneItem"
+			inputs="paneObject"
+		>
+			<expr><![CDATA[ifElse($paneObject.instanceOf(`tl.model:TLObject`), $paneObject, null)]]></expr>
+		</derived-channel>
+		<!-- The counts the rail shows on the section headers and the strip icons. -->
+		<channel name="progressBadge"/>
+		<channel name="sourcesBadge"/>
+		<channel name="memoriesBadge"/>
+		<!--
+			The composer's unsent text, the object a command puts into it as a reference token, and
+			the passage of one a command quotes into it.
+			Declared here so this page works on its own; app.view.xml binds its own "chatDraft" over
+			this one (<view-ref><bind/></view-ref>), which is what lets the Events page write it too -
+			see "Writing a channel across a view boundary" in tl-chat/CLAUDE.md.
+		-->
+		<channel name="chatDraft"/>
+		<channel name="chatReference"/>
+		<channel name="chatQuote"/>
+	</channels>
+	<chat chat-id="chat"
+		direction="row"
+	>
+		<!--
+			The session list and the conversation share one two-way "chatSession" channel: the list
+			writes the picked session, the conversation follows it and writes its own session back (so a
+			new chat is highlighted). "Neuer Chat" just clears the channel (create-action); the
+			conversation shows its empty state when nothing is selected - no extra binding element.
+		-->
+		<data-list
+			collapsible="true"
+			observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
+			row-actions="hover"
+			row-channel="session"
+			search="true"
+			selection="chatSession"
+		>
+			<!--
+				The "New chat" button is an ordinary view command: it writes null to the selection
+				channel, which deselects the list and shows the conversation's empty state. Any custom
+				action (execute-script, open-dialog, with-transaction, ...) can be configured the same way.
+			-->
+			<commands>
+				<generic-command image="css:bi bi-plus-lg">
+					<label>
+						<en>New chat</en>
+						<de>Neuer Chat</de>
+					</label>
+					<write-channel name="chatSession"/>
+				</generic-command>
+			</commands>
+			<empty-text>
+				<en>No chats yet</en>
+				<de>Noch keine Chats</de>
+			</empty-text>
+			<!--
+				isDateEqual and isDateGreater compare dates: handed a calendar, they compare nothing
+				and every chat lands under "Today". So the calendar is only for the day arithmetic,
+				and each bound goes back to a date with toDate().
+			-->
+			<group-by><![CDATA[s -> {
+				d = $s.get(`tl.ai.execution:AgentSession#lastUpdated`);
+				t = today().toSystemCalendar();
+				switch {
+					$d.isDateEqual($t.toDate()): #("Today"@en, "Heute"@de);
+					$d.isDateEqual($t.withDayAdded(-1).toDate()): #("Yesterday"@en, "Gestern"@de);
+					$d.isDateGreater($t.withDayAdded(-7).toDate()): #("Previous 7 days"@en, "Letzte 7 Tage"@de);
+					default: #("Older"@en, "Älter"@de);
+				}
+			}]]></group-by>
+			<lines>
+				<line attribute="title"/>
+				<!--
+					What goes on in the chat while the user looks elsewhere (#744): something waits for
+					them, a subagent finished since they last had the chat open, or an agent works there.
+					The list observes executions and interaction requests so that the line follows.
+				-->
+				<line emphasis="secondary">
+					<value><![CDATA[s -> {
+						activity = chatActivity($s);
+						switch {
+							$activity == "waiting": #("Waiting for you"@en, "Wartet auf dich"@de);
+							$activity == "news": #("New result"@en, "Neues Ergebnis"@de);
+							$activity == "running": #("Working …"@en, "Arbeitet …"@de);
+							default: null;
+						}
+					}]]></value>
+				</line>
+			</lines>
+			<row-css-class><![CDATA[s -> {
+				activity = chatActivity($s);
+				switch {
+					$activity == "waiting": "is-waiting";
+					$activity == "news": "has-news";
+					$activity == "running": "is-working";
+					default: null;
+				}
+			}]]></row-css-class>
+			<!--
+				What a row offers besides being opened. Ordinary view commands: they reach the row
+				the menu was opened on over the "session" channel this list registers, so an
+				<executability> rule sees it too. Both write through the aiSession* functions rather
+				than touching the attribute, because those are what bump the chat's lastUpdated - its
+				group in this very list - and tell a second browser tab.
+			-->
+			<row-commands>
+				<generic-command
+					image="css:bi bi-pencil"
+					inputs="session"
+				>
+					<label>
+						<en>Rename</en>
+						<de>Umbenennen</de>
+					</label>
+					<open-dialog close-on-backdrop="false"
+						bind-input-to="model"
+						dialog-view="tl-ai-demo/rename-session.view.xml"
+					/>
+				</generic-command>
+				<generic-command
+					clique="delete"
+					image="css:bi bi-trash"
+					inputs="session"
+				>
+					<label>
+						<en>Delete</en>
+						<de>Löschen</de>
+					</label>
+					<!--
+						Hidden while the chat still has a run in it. Deleting one is safe - the
+						function asks the run to stop first - but a chat that is being answered is
+						not a chat anyone means to throw away, and the rule re-evaluates every time
+						the menu opens.
+					-->
+					<executability>
+						<visible-if>
+							<expr><![CDATA[isEmpty($session)
+								|| $session.referers(`tl.ai.execution:AgentExecution#session`)
+									.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
+										== `tl.ai.execution:ExecutionStatus#RUNNING`)
+									.isEmpty()]]></expr>
+						</visible-if>
+					</executability>
+					<!-- Names the chat, and names the outcomes rather than answering Yes/No. -->
+					<confirm>
+						<cancel-label>
+							<en>Keep</en>
+							<de>Behalten</de>
+						</cancel-label>
+						<confirm-label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</confirm-label>
+						<title>
+							<en>Delete chat</en>
+							<de>Chat löschen</de>
+						</title>
+						<expr><![CDATA[{
+							title = $session.get(`tl.ai.execution:AgentSession#title`);
+							{
+								"en": "Delete “" + $title + "”? This cannot be undone.",
+								"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
+							}.internationalize();
+						}]]></expr>
+					</confirm>
+					<!--
+						Clears the open conversation only when it *is* the deleted chat: the result
+						of the script is what <write-channel> writes, so deleting some other chat
+						writes the open one back unchanged and the transcript stays put.
+					-->
+					<execute-script>
+						<inputs>
+							<input
+								as="open"
+								channel="chatSession"
+							/>
+						</inputs>
+						<function><![CDATA[{
+							aiSessionDelete($session);
+							ifElse($session == $open, null, $open);
+						}]]></function>
+						<with-result>
+							<write-channel name="chatSession"/>
+						</with-result>
+					</execute-script>
+				</generic-command>
+			</row-commands>
+			<!--
+				Which chats this list offers, and the one place the page's rule about that is written
+				(Issue #508). With an object open in the pane it is that object's conversations; with
+				none open it is every chat of this account, which is what this page showed before there
+				was a subject at all.
+
+				Two things are worth reading off it. A host needs no remembered id, because the
+				conversation says in the database what it is about. And a chat that was started with
+				nothing open simply is not in the scoped list: there is no backfill, and the unscoped
+				list is where it is still found.
+
+				The input is the pane's single object, and the pane cannot tell who put it there: the
+				user opening an invoice, or the agent presenting a research run or any other object of
+				its own (#868). Two rules keep the latter from emptying the list. An object that is the
+				subject of no chat scopes nothing - the list falls back to every chat, because a
+				research run is what a chat produced, not what one is about. And a scoped list always
+				keeps the open chat, so whatever the agent presents, the chat the user is reading
+				never leaves the list while it stays open.
+
+				The chats are asked for their subject rather than the object for its referers: the
+				account's chats are needed for the fallback anyway, and asking the object would throw
+				when it is deleted while the pane still holds it.
+			-->
+			<inputs>
+				<input channel="paneItem"/>
+				<input channel="chatSession"/>
+			</inputs>
+			<rows><![CDATA[object -> open -> {
+				chats = all(`tl.ai.execution:AgentSession`)
+					.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+					.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`);
+				about = ifElse(isEmpty($object), list(),
+					$chats.filter(s -> $s.get(`tl.ai.execution:AgentSession#subject`) == $object));
+				ifElse($about.isEmpty(),
+					$chats,
+					ifElse(isEmpty($open), $about,
+						$about.filter(s -> $s != $open).union(list($open))))
+					.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc());
+			}]]></rows>
+			<title>
+				<en>Chats</en>
+				<de>Chats</de>
+			</title>
+		</data-list>
+		<!--
+			The <panel> is what bounds the conversation's height so it scrolls inside its column
+			rather than growing with the transcript. It has no title and no command, so tl-chat's
+			stylesheet hides the empty header the engine still draws for it (#589).
+		-->
+		<panel fill="true">
+			<!--
+				`present` is the allow list of the tool of the same name: it names the one channel
+				this page lets the agent write. "Show me all events as a table" then ends as that
+				table in the rail's pane, in one tool call. Deny by default - without this attribute
+				no run reaches any channel of this view, and a `present` call naming another channel
+				is refused.
+
+				`subject` is the other half of the scoped list above: a chat this element creates -
+				the first send of a fresh conversation - is stamped with the object the pane is
+				showing, and is found again from that object for as long as it exists. Nothing on
+				the way in: which conversation is shown stays the "chatSession" channel's business,
+				and picking one stays the <data-list>'s.
+
+				`working-indicator` is what stands where the answer will appear while the agent works:
+				here the demo's own example animation instead of the chat's three dots. An SVG is
+				placed into the page, so it draws in the theme's colours in the light and the dark
+				theme alike. The dock in app.view.xml configures none and keeps the dots.
+			-->
+			<chat-conversation
+				citations="true"
+				draft="chatDraft"
+				input="chatSession"
+				present="paneObject"
+				prompt-improver-agent="TL_PromptImprover"
+				quote="chatQuote"
+				reference="chatReference"
+				subject="paneItem"
+				trace="summary"
+				working-indicator="/images/tl-ai-demo-working.svg"
+			>
+				<!--
+					The composer's idle invitation, in this application's own words (Issue #420). The
+					chat's own German addresses the user with "du", which an application that says
+					"Sie" everywhere else cannot have on its most-read control. Idle only: while the
+					agent works the field keeps saying "Nächste Nachricht schreiben …", which is
+					about the run rather than about this application.
+				-->
+				<placeholder>
+					<en>Ask about the events, their programme, registrations, sponsors or invoices.</en>
+					<de>Frag nach den Veranstaltungen, ihrem Programm, Anmeldungen, Sponsoren oder Rechnungen.</de>
+				</placeholder>
+				<actions rate="true"/>
+				<controls
+					agent-picker="true"
+					attachments="true"
+					auto-approve="true"
+					enter-hint="true"
+					mcp="true"
+					model-picker="true"
+					thinking="true"
+					trace-picker="true"
+				/>
+				<!--
+					What this page states about the situation the user is asking in (Issue #437). The
+					server evaluates these when the page's channels change and they travel with every
+					message; the message text itself is never touched.
+
+					"Application" is stable, so it is rendered into the environment block of the system
+					prompt - which has to stay byte-identical across the turns of one conversation, or
+					the provider's prompt cache misses on every one of them. "Open event" follows the
+					user's clicks in the rail, so it is not: it goes into the per-turn <turn-context>
+					block, which travels in the turn itself, beside the user's text (#438).
+
+					The dock in app.view.xml states the same facts, because it is the same conversation:
+					a page that states them and a dock that does not would flip the environment block
+					between the turns of one chat, and would leave every question asked from the dock
+					without the selection (#494).
+
+					Every fact takes the <inputs> as its leading arguments, the way <data-list> binds
+					its rows - which is why the stable one names the channel it does not use.
+				-->
+				<context>
+					<inputs>
+						<input channel="paneObject"/>
+					</inputs>
+					<fact name="Application"
+						stable="true"
+					>
+						<value><![CDATA[open -> "Event management demo (tl-ai-demo)"]]></value>
+					</fact>
+					<fact name="Open event"
+						stable="false"
+					>
+						<value><![CDATA[open -> ifElse(isEmpty($open) || !$open.instanceOf(`demo.events:Event`), "none",
+							$open.get(`demo.events:Named#name`)
+								+ ": " + $open.get(`demo.events:Event#registrationCount`) + " active registrations, balance "
+								+ $open.get(`demo.events:Event#balance`))]]></value>
+					</fact>
+				</context>
+				<!--
+					The first questions this page offers (Issue #529). The same binding as the
+					<context> above - the <inputs> are the leading arguments of every card's
+					expression, evaluated on the server and re-evaluated when the pane changes - so a
+					card can name the object the user has open rather than only a fixed sentence.
+
+					A click FILLS the composer and stops there. The user reads the sentence and
+					presses send, which is the rule the draft, reference and quote channels already
+					follow, and the reason a card may offer a longer and more precise question than
+					anyone would type.
+
+					They stand under the greeting of a NEW chat and nowhere else - the one screen
+					with nothing to react to - and a chat opened from the list on the left never
+					shows them, whatever it holds. The third card is the one that is worth having:
+					with an object open it asks about that object by name, and with none open it
+					asks the question that still makes sense.
+				-->
+				<prompts>
+					<inputs>
+						<input channel="paneItem"/>
+					</inputs>
+					<prompt icon="css:bi bi-people">
+						<label>
+							<en>Which events are filling up?</en>
+							<de>Welche Veranstaltungen sind fast voll?</de>
+						</label>
+						<value><![CDATA[open -> {
+							"en": "Which events have the fewest seats left, and how much has each of them earned so far?",
+							"de": "Welche Veranstaltungen haben die wenigsten freien Plätze, und was hat jede bisher eingenommen?"
+						}.internationalize()]]></value>
+					</prompt>
+					<prompt icon="css:bi bi-exclamation-triangle">
+						<label>
+							<en>Overdue invoices</en>
+							<de>Überfällige Rechnungen</de>
+						</label>
+						<value><![CDATA[open -> {
+							"en": "Which incoming invoices are overdue and not paid yet? Show them to me.",
+							"de": "Welche eingehenden Rechnungen sind überfällig und noch nicht bezahlt? Zeig sie mir."
+						}.internationalize()]]></value>
+					</prompt>
+					<prompt icon="css:bi bi-question-circle">
+						<label>
+							<en>Explain what is open</en>
+							<de>Das Geöffnete erklären</de>
+						</label>
+						<value><![CDATA[open -> ifElse(isEmpty($open),
+							{
+								"en": "Open the next upcoming event and summarise its programme and budget.",
+								"de": "Öffne die nächste anstehende Veranstaltung und fasse Programm und Budget zusammen."
+							}.internationalize(),
+							{
+								"en": "Please explain “",
+								"de": "Bitte erkläre „"
+							}.internationalize()
+								+ $open.label()
+								+ {"en": "” and what still needs to be done.", "de": "“ und was noch zu tun ist."}.internationalize())]]></value>
+					</prompt>
+				</prompts>
+				<!--
+					And the one line that says WHICH object the user is looking at (Issue #494). It
+					states the same channel the pane renders - label, type and the identifier every
+					tool reads back - so "what have I selected?" is answered and "change its date" is
+					possible. The <fact> above could have said the label; it could not have said the
+					identifier without this page knowing how this product spells one.
+				-->
+				<selection name="Open object"
+					channel="paneObject"
+				/>
+				<!--
+					Declarative @-mention: typing "@" offers this application's events, venues and
+					invoices, no TypeScript. Each mention carries the object's id and puts its label
+					into the message as the quoted text the agent reads.
+				-->
+				<mention observed-types="demo.events:Event,demo.events:Venue,demo.events:Invoice">
+					<rows><![CDATA[all(`demo.events:Event`)
+						.sort((e -> $e.get(`demo.events:Event#startDate`)).comparator().desc())
+						.union(all(`demo.events:Venue`).sort((v -> $v.get(`demo.events:Named#name`)).comparator()))
+						.union(all(`demo.events:Invoice`).sort((i -> $i.get(`demo.events:Invoice#invoiceDate`)).comparator().desc()))]]></rows>
+					<label><![CDATA[o -> $o.label()]]></label>
+					<text><![CDATA[o -> $o.label() + " (" + $o.type().label() + ")"]]></text>
+				</mention>
+			</chat-conversation>
+		</panel>
+		<!--
+			The rail. Its badge channels carry the counts that the transcript's rail button adds up,
+			so a closed rail still says how much is new. While "paneObject" holds something, the rail
+			shows it in its pane in place of the sections - for any type, as a form, a table or a
+			chart, with a history the pane's "Zurück" walks back - and nothing about that is
+			configured here but the channel.
+		-->
+		<chat-rail input="paneObject"
+			open="true"
+			strip="true"
+		>
+			<section name="progress"
+				badge="progressBadge"
+				icon="css:bi bi-list-check"
+				open="true"
+			>
+				<label>
+					<en>Progress</en>
+					<de>Fortschritt</de>
+				</label>
+				<!--
+					The agent's plan, as an ordinary <data-list> over the AgentTask objects the run
+					writes - no chat-specific element, no badge round trip through the browser, and
+					the same rows after a reload. The rows are reached from the session the
+					conversation is showing, so this list can only ever show what that session owns.
+				-->
+				<data-list
+					collapsible="false"
+					count="progressBadge"
+					observed-types="tl.ai.execution:AgentTask"
+					search="false"
+				>
+					<!--
+						The row's state as a CSS class. <data-list> knows nothing about tasks; the
+						three class names are the generic row states its stylesheet defines.
+					-->
+					<row-css-class><![CDATA[t -> switch {
+						$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
+						$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
+						default: "is-pending";
+					}]]></row-css-class>
+					<empty-text>
+						<en>Nothing planned yet</en>
+						<de>Noch nichts geplant</de>
+					</empty-text>
+					<inputs>
+						<input channel="chatSession"/>
+					</inputs>
+					<lines>
+						<line attribute="subject"/>
+						<line emphasis="secondary">
+							<value><![CDATA[t -> switch {
+								$t.get(`tl.ai.execution:AgentTask#status`) == "completed": #("Done"@en, "Erledigt"@de);
+								$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": #("In progress"@en, "Läuft"@de);
+								default: #("Pending"@en, "Offen"@de);
+							}]]></value>
+						</line>
+					</lines>
+					<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
+						$session.referers(`tl.ai.execution:AgentTask#session`)
+							.sort((t -> $t.get(`tl.ai.execution:AgentTask#ordinal`)).comparator()))]]></rows>
+				</data-list>
+			</section>
+			<section name="sources"
+				badge="sourcesBadge"
+				icon="css:bi bi-quote"
+			>
+				<label>
+					<en>Sources</en>
+					<de>Quellen</de>
+				</label>
+				<chat-sources badge="sourcesBadge"/>
+			</section>
+			<!--
+				Nothing chat-specific: an ordinary <data-list> of this application's own objects, in a
+				rail section. Picking one writes it to "paneObject", which is what opens the pane.
+			-->
+			<section name="events"
+				icon="css:bi bi-calendar-event"
+			>
+				<label>
+					<en>Events</en>
+					<de>Veranstaltungen</de>
+				</label>
+				<data-list
+					collapsible="false"
+					observed-types="demo.events:Event"
+					row-actions="hover"
+					row-channel="event"
+					search="false"
+					selection="paneObject"
+				>
+					<empty-text>
+						<en>No events yet</en>
+						<de>Noch keine Veranstaltungen</de>
+					</empty-text>
+					<!--
+						What issue #440 is about: ordinary view commands put a question about this
+						row into the composer, with no chat-specific code and no new command class.
+						The first writes a whole sentence to the "chatDraft" channel; the second
+						writes the event itself to "chatReference", which the composer turns into one
+						atomic reference token at the caret - what picking it with "@" does. Neither
+						sends: the user reads the sentence and presses send.
+
+						The last two are issue #509: a passage *of* the event rather than the event.
+						"chatQuote" takes the token itself, so the command says which piece the user
+						marked - here the description, there the balance - and the composer inserts
+						the same atomic token with that text and that location. Two commands rather
+						than one, because that is the case the channel exists for: two passages of
+						the SAME object, each inserting at the caret, which a channel carrying only
+						the object could not tell apart. The location is written as a text per
+						language, the way the sentence above is, and the control resolves it in the
+						user's own.
+					-->
+					<row-commands>
+						<generic-command
+							image="css:bi bi-chat-left-text"
+							inputs="event"
+						>
+							<label>
+								<en>Ask about this</en>
+								<de>Dazu fragen</de>
+							</label>
+							<execute-script>
+								<function><![CDATA[{
+									"en": "How is the event “" + $event.get(`demo.events:Named#name`)
+										+ "” doing - registrations, budget and open invoices?",
+									"de": "Wie steht die Veranstaltung „" + $event.get(`demo.events:Named#name`)
+										+ "“ - Anmeldungen, Budget und offene Rechnungen?"
+								}.internationalize()]]></function>
+								<with-result>
+									<write-channel name="chatDraft"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-quote"
+							inputs="event"
+						>
+							<label>
+								<en>Quote in the message</en>
+								<de>In die Nachricht übernehmen</de>
+							</label>
+							<write-channel name="chatReference"/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-card-text"
+							inputs="event"
+						>
+							<label>
+								<en>Quote the description</en>
+								<de>Beschreibung zitieren</de>
+							</label>
+							<execute-script>
+								<function><![CDATA[{
+									"id": $event,
+									"location": {"en": "Description", "de": "Beschreibung"}.internationalize(),
+									"text": $event.get(`demo.events:Named#description`)
+								}]]></function>
+								<with-result>
+									<write-channel name="chatQuote"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-cash-coin"
+							inputs="event"
+						>
+							<label>
+								<en>Quote the balance</en>
+								<de>Saldo zitieren</de>
+							</label>
+							<execute-script>
+								<function><![CDATA[{
+									"id": $event,
+									"location": {"en": "Balance", "de": "Saldo"}.internationalize(),
+									"text": numberFormat("#,##0.00").format($event.get(`demo.events:Event#balance`))
+								}]]></function>
+								<with-result>
+									<write-channel name="chatQuote"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+					</row-commands>
+					<lines>
+						<line attribute="name"/>
+						<line attribute="startDate"
+							emphasis="secondary"
+						/>
+					</lines>
+					<rows><![CDATA[all(`demo.events:Event`)
+						.sort((e -> $e.get(`demo.events:Event#startDate`)).comparator().desc())]]></rows>
+				</data-list>
+			</section>
+			<!--
+				What the agent has kept about this user (Issue #439), as an ordinary <data-list> over
+				the UserMemory objects - no chat-specific element. The rows are filtered by owner, so
+				this list can only ever show what belongs to the account looking at it, and the Delete
+				command goes through aiMemoryDelete, which refuses a row of somebody else even when a
+				channel happens to hold one.
+
+				A memory written during this conversation shows up here at once - the store tells the
+				open windows - while the agent is told about it only in the NEXT conversation: the
+				environment block it sits in has to stay byte-identical across the turns of one
+				conversation, or the provider's prompt cache misses on every one of them.
+			-->
+			<section name="memories"
+				badge="memoriesBadge"
+				icon="css:bi bi-bookmark-heart"
+			>
+				<label>
+					<en>Memory</en>
+					<de>Gedächtnis</de>
+				</label>
+				<data-list
+					collapsible="false"
+					count="memoriesBadge"
+					observed-types="tl.ai.execution:UserMemory"
+					row-actions="hover"
+					row-channel="memory"
+					search="false"
+				>
+					<empty-text>
+						<en>Nothing remembered yet</en>
+						<de>Noch nichts gemerkt</de>
+					</empty-text>
+					<lines>
+						<line attribute="text"/>
+						<line emphasis="secondary">
+							<value><![CDATA[m -> {
+								kind = $m.get(`tl.ai.execution:UserMemory#kind`);
+								created = $m.get(`tl.ai.execution:UserMemory#createdAt`);
+								ifElse(isEmpty($kind), "", $kind.label())
+									+ ifElse(isEmpty($created), "",
+										" - " + dateFormat("yyyy-MM-dd").format($created));
+							}]]></value>
+						</line>
+					</lines>
+					<row-commands>
+						<generic-command
+							clique="delete"
+							image="css:bi bi-trash"
+							inputs="memory"
+						>
+							<label>
+								<en>Forget</en>
+								<de>Vergessen</de>
+							</label>
+							<!-- Names what is about to be forgotten rather than asking Yes/No. -->
+							<confirm>
+								<cancel-label>
+									<en>Keep</en>
+									<de>Behalten</de>
+								</cancel-label>
+								<confirm-label>
+									<en>Forget</en>
+									<de>Vergessen</de>
+								</confirm-label>
+								<title>
+									<en>Forget this</en>
+									<de>Das vergessen</de>
+								</title>
+								<expr><![CDATA[{
+									text = $memory.get(`tl.ai.execution:UserMemory#text`);
+									{
+										"en": "Forget “" + $text + "”? Albert will no longer know it.",
+										"de": "„" + $text + "“ vergessen? Albert weiß es dann nicht mehr."
+									}.internationalize();
+								}]]></expr>
+							</confirm>
+							<execute-script>
+								<function><![CDATA[aiMemoryDelete($memory)]]></function>
+							</execute-script>
+						</generic-command>
+					</row-commands>
+					<rows><![CDATA[all(`tl.ai.execution:UserMemory`)
+						.filter(m -> $m.get(`tl.ai.execution:UserMemory#owner`) == currentUser())
+						.sort((m -> $m.get(`tl.ai.execution:UserMemory#createdAt`)).comparator().desc())]]></rows>
+				</data-list>
+			</section>
+		</chat-rail>
+	</chat>
+</view>

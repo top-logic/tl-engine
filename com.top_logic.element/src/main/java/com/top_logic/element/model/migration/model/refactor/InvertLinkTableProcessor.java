@@ -7,9 +7,14 @@ package com.top_logic.element.model.migration.model.refactor;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -17,14 +22,19 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.db.sql.Batch;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLFactory;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -49,6 +59,11 @@ public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertL
 		 * Name of the link table to invert links in.
 		 */
 		String getTable();
+
+		/**
+		 * @see #getTable()
+		 */
+		void setTable(String value);
 
 		/**
 		 * The name of the source end of the association.
@@ -129,39 +144,111 @@ public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertL
 			TypePart reference =
 				invertedReference == null ? null : util.getTLTypePartOrFail(connection, invertedReference);
 
-			String srcTypeCol = srcRef.getColumn(ReferencePart.type).getDBName();
-			String srcIdCol = srcRef.getColumn(ReferencePart.name).getDBName();
-			String destTypeCol = destRef.getColumn(ReferencePart.type).getDBName();
-			String destIdCol = destRef.getColumn(ReferencePart.name).getDBName();
-
-			CompiledStatement sql = query(
-				update(
-					table(table.getDBMapping().getDBName()),
-					reference == null || metaRef == null ? 
-						SQLFactory.literalTrueLogical() : 
-						eqSQL(column(metaRef.getColumn(ReferencePart.name).getDBName()),
-							literal(DBType.ID, reference.getDefinition())),
-					columnNames(
-						// columnDef(srcRef.getColumn(ReferencePart.branch).getDBName()),
-						// columnDef(srcRef.getColumn(ReferencePart.revision).getDBName()),
-						srcTypeCol,
-						srcIdCol,
-						// columnDef(destRef.getColumn(ReferencePart.branch).getDBName()),
-						// columnDef(destRef.getColumn(ReferencePart.revision).getDBName()),
-						destTypeCol,
-						destIdCol),
-					expressions(
-						column(destTypeCol),
-						column(destIdCol),
-						column(srcTypeCol),
-						column(srcIdCol))))
-				.toSql(connection.getSQLDialect());
-
-			int cnt = sql.executeUpdate(connection);
+			int cnt = invertLinks(util, connection, table, srcRef, destRef,
+				reference == null || metaRef == null ? 
+					SQLFactory.literalTrueLogical() : 
+					eqSQL(column(metaRef.getColumn(ReferencePart.name).getDBName()),
+						literal(DBType.ID, reference.getDefinition())));
 			log.info("Inverted " + cnt + " links in table '" + table.getName() + "'.");
 		} catch (SQLException | MigrationException ex) {
 			log.error("Failed to invert links in table '" + table.getName() + "': " + ex.getMessage());
 		}
+	}
+
+	/**
+	 * Exchanges the source and destination columns of all rows of the given table matching the
+	 * given condition.
+	 * 
+	 * <p>
+	 * The rows are read and each row is written back with explicitly exchanged values. An
+	 * <code>UPDATE</code> assigning the columns to each other is not dialect-neutral: MySQL
+	 * evaluates the assignments of a single-table <code>UPDATE</code> from left to right and sees
+	 * the values already assigned to the row, which would make both ends the old destination.
+	 * </p>
+	 * 
+	 * @return The number of inverted links.
+	 */
+	private int invertLinks(Util sqlUtil, PooledConnection connection, MOStructure table, MOReference srcRef,
+			MOReference destRef, SQLExpression condition) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		String tableName = table.getDBMapping().getDBName();
+
+		DBAttribute srcTypeCol = srcRef.getColumn(ReferencePart.type);
+		DBAttribute srcIdCol = srcRef.getColumn(ReferencePart.name);
+		DBAttribute destTypeCol = destRef.getColumn(ReferencePart.type);
+		DBAttribute destIdCol = destRef.getColumn(ReferencePart.name);
+
+		CompiledStatement select = query(
+			select(
+				columns(
+					sqlUtil.branchColumnDef(),
+					columnDef(BasicTypes.IDENTIFIER_DB_NAME),
+					columnDef(BasicTypes.REV_MIN_DB_NAME),
+					columnDef(srcTypeCol.getDBName()),
+					columnDef(srcIdCol.getDBName()),
+					columnDef(destTypeCol.getDBName()),
+					columnDef(destIdCol.getDBName())),
+				table(tableName),
+				condition)).toSql(sqlDialect);
+
+		List<Object[]> rows = new ArrayList<>();
+		try (ResultSet result = select.executeQuery(connection)) {
+			while (result.next()) {
+				rows.add(new Object[] {
+					Long.valueOf(result.getLong(1)),
+					IdentifierUtil.getId(result, 2),
+					Long.valueOf(result.getLong(3)),
+					sqlDialect.mapToJava(result, 4, srcTypeCol.getSQLType()),
+					sqlDialect.mapToJava(result, 5, srcIdCol.getSQLType()),
+					sqlDialect.mapToJava(result, 6, destTypeCol.getSQLType()),
+					sqlDialect.mapToJava(result, 7, destIdCol.getSQLType()),
+				});
+			}
+		}
+
+		CompiledStatement update = query(Arrays.asList(
+			sqlUtil.branchParamDef(),
+			parameterDef(DBType.ID, "id"),
+			parameterDef(DBType.LONG, "revMin"),
+			parameterDef(srcTypeCol.getSQLType(), "srcType"),
+			parameterDef(srcIdCol.getSQLType(), "srcId"),
+			parameterDef(destTypeCol.getSQLType(), "destType"),
+			parameterDef(destIdCol.getSQLType(), "destId")),
+			update(table(tableName),
+				and(
+					sqlUtil.eqBranch(),
+					eq(column(BasicTypes.IDENTIFIER_DB_NAME), parameter(DBType.ID, "id")),
+					eq(column(BasicTypes.REV_MIN_DB_NAME), parameter(DBType.LONG, "revMin"))),
+				columnNames(
+					srcTypeCol.getDBName(),
+					srcIdCol.getDBName(),
+					destTypeCol.getDBName(),
+					destIdCol.getDBName()),
+				expressions(
+					parameter(srcTypeCol.getSQLType(), "srcType"),
+					parameter(srcIdCol.getSQLType(), "srcId"),
+					parameter(destTypeCol.getSQLType(), "destType"),
+					parameter(destIdCol.getSQLType(), "destId")))).toSql(sqlDialect);
+
+		int batchSize = 0;
+		int maxBatchSize = sqlDialect.getMaxBatchSize(7);
+		int totalUpdates = 0;
+		try (Batch batch = update.createBatch(connection)) {
+			for (Object[] row : rows) {
+				// Exchange the read source values (entries 3, 4) and destination values (entries 5, 6).
+				batch.addBatch(row[0], row[1], row[2], row[5], row[6], row[3], row[4]);
+				if (++batchSize >= maxBatchSize) {
+					batch.executeBatch();
+					totalUpdates += batchSize;
+					batchSize = 0;
+				}
+			}
+			if (batchSize > 0) {
+				batch.executeBatch();
+				totalUpdates += batchSize;
+			}
+		}
+		return totalUpdates;
 	}
 
 }

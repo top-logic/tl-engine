@@ -131,7 +131,7 @@ public class TestAlertElement extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that computed title and message receive all input channels and follow a new value of
+	 * Tests that computed title and message see all input channels and follow a new value of
 	 * either of them.
 	 */
 	public void testFunctionsFollowTheInputChannels() throws ConfigurationException {
@@ -139,8 +139,8 @@ public class TestAlertElement extends BasicTestCase {
 		_other.set("B");
 		ReactAlertControl alert = alert(
 			"<alert inputs='state, other'"
-				+ " title-expr='s -> o -> $s'"
-				+ " message-expr='s -> o -> $s + \"/\" + $o'/>");
+				+ " title-expr='$state'"
+				+ " message-expr='$state + \"/\" + $other'/>");
 
 		assertEquals("A", alert.getTitle());
 		assertEquals("A/B", alert.getMessage());
@@ -159,7 +159,7 @@ public class TestAlertElement extends BasicTestCase {
 	public void testConditionHidesAndShows() throws ConfigurationException {
 		_state.set("on");
 		ReactAlertControl alert = alert(
-			"<alert inputs='state' visible-if=\"s -> $s == 'on'\" message-expr='s -> $s'/>");
+			"<alert inputs='state' visible-if=\"$state == 'on'\" message-expr='$state'/>");
 
 		assertFalse(alert.isHidden());
 
@@ -195,8 +195,8 @@ public class TestAlertElement extends BasicTestCase {
 		_state.set(state);
 		ReactAlertControl alert = alert(
 			"<alert inputs='state' closable='true'"
-				+ " visible-if=\"s -> $s['" + SHOW + "']\""
-				+ " message-expr=\"s -> $s['" + TEXT + "']\"/>");
+				+ " visible-if=\"$state['" + SHOW + "']\""
+				+ " message-expr=\"$state['" + TEXT + "']\"/>");
 		alert.attach();
 
 		dismiss(alert);
@@ -219,8 +219,8 @@ public class TestAlertElement extends BasicTestCase {
 		_state.set(state);
 		ReactAlertControl alert = alert(
 			"<alert inputs='state' closable='true'"
-				+ " visible-if=\"s -> $s['" + SHOW + "']\""
-				+ " message-expr=\"s -> $s['" + TEXT + "']\"/>");
+				+ " visible-if=\"$state['" + SHOW + "']\""
+				+ " message-expr=\"$state['" + TEXT + "']\"/>");
 		alert.attach();
 
 		dismiss(alert);

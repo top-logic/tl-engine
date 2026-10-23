@@ -41,7 +41,7 @@ function classes(...names: (string | false | undefined)[]): string {
  * `aria-required` and `data-tl-state` (see fieldStateAttrs).</p>
  */
 const TextInputPart: React.FC<TextInputPartProps> = ({
-  id, ref, value, type, inputMode, placeholder, multiline, rows, icon, action, disabled, readOnly, required,
+  id, ref, role, value, type, inputMode, placeholder, multiline, rows, icon, action, disabled, readOnly, required,
   validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
   ...attributes
 }) => {
@@ -52,6 +52,7 @@ const TextInputPart: React.FC<TextInputPartProps> = ({
 
   const common = {
     id,
+    role,
     name,
     value,
     placeholder,
@@ -61,6 +62,7 @@ const TextInputPart: React.FC<TextInputPartProps> = ({
     maxLength,
     inputMode,
     onChange: handleChange,
+    onKeyDown,
     onFocus,
     onBlur,
     ...fieldStateAttrs({
@@ -98,7 +100,6 @@ const TextInputPart: React.FC<TextInputPartProps> = ({
         min={min}
         max={max}
         className={FIELD_CLASS}
-        onKeyDown={onKeyDown}
         {...common}
       />
       {action}

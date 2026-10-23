@@ -9,6 +9,7 @@ import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
   CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, VALUE_DEBOUNCE_MS, TOOLTIP_ATTR, fieldLabel, replacePart,
+  CMD_SUGGEST, ARG_SUGGEST_TEXT, ARG_SUGGEST_CARET, SUGGEST_DEBOUNCE_MS,
 } from 'tl-react-bridge';
 import type { TextInputStateJson } from 'tl-react-bridge';
 import TLTextInput from '../../../com.top_logic.layout.react/react-src/controls/TLTextInput';
@@ -23,7 +24,8 @@ import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiFieldValueAdapter from './MuiFieldValueAdapter';
-import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, patchState, settle } from './wire-test-support';
+import MuiListboxAdapter from './MuiListboxAdapter';
 import type { MountOptions } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
@@ -40,6 +42,8 @@ replacePart('Chip', MuiChipAdapter);
 // The dropdown shows a bar while its options are being loaded, the icon popup a spinner.
 replacePart('ProgressBar', MuiProgressBarAdapter);
 replacePart('Spinner', MuiSpinnerAdapter);
+// A text field offering suggestions shows them in a list.
+replacePart('Listbox', MuiListboxAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} and {@link CMD_SUBMIT} holding the text. */
 const ARG_VALUE = 'value';
@@ -408,6 +412,208 @@ describe('a text field as MUI TextField', () => {
 
     expect(screen.queryByRole('textbox')).toBeNull();
   });
+});
+
+describe('a text field offering suggestions as MUI TextField', () => {
+  /** The suggestions of a rule text: a sensor name replacing the started term, or an operator. */
+  const KITCHEN = { label: 'Kitchen', text: '@"Kitchen"', from: 0, to: 4 };
+  const SERVER = { label: 'Server room', text: '@"Server room"', from: 0, to: 4 };
+
+  function mountSuggesting(state: Partial<TextInputStateJson>, options?: MountOptions) {
+    return mountAdapter(TLTextInput, { value: '', offersSuggestions: true, ...state }, options);
+  }
+
+  function suggest(text: string, caret: number) {
+    return [CMD_SUGGEST, { [ARG_SUGGEST_TEXT]: text, [ARG_SUGGEST_CARET]: caret }];
+  }
+
+  /** The answer of the server: the given suggestions for the given text and caret. */
+  function answer(entries: typeof KITCHEN[], text: string, caret: number) {
+    patchState({ suggestions: entries, suggestionsText: text, suggestionsCaret: caret });
+  }
+
+  function combobox(): HTMLInputElement {
+    return screen.getByRole('combobox') as HTMLInputElement;
+  }
+
+  it('is a combobox controlling no list while nothing is suggested', () => {
+    mountSuggesting({});
+
+    const box = combobox();
+    expect(box.id).toBe(INPUT_ID);
+    expect(box.getAttribute('aria-autocomplete')).toBe('list');
+    expect(box.getAttribute('aria-expanded')).toBe('false');
+    expect(box.hasAttribute('aria-controls')).toBe(false);
+    expectMuiBox(box);
+  });
+
+  it('stays a plain text box without offersSuggestions', () => {
+    mountText({ value: '' });
+
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(input().hasAttribute('aria-autocomplete')).toBe(false);
+  });
+
+  it('asks for suggestions once the user pauses, without sending the value early', async () => {
+    fakeDebounceTimers();
+    const sent = mountSuggesting({});
+
+    fireEvent.change(combobox(), { target: { value: '@"K' } });
+    vi.advanceTimersByTime(SUGGEST_DEBOUNCE_MS - 1);
+    fireEvent.change(combobox(), { target: { value: '@"Ki' } });
+    vi.advanceTimersByTime(SUGGEST_DEBOUNCE_MS);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([suggest('@"Ki', 4)]);
+
+    vi.advanceTimersByTime(VALUE_DEBOUNCE_MS);
+    await settle();
+    expect(sent.mock.calls).toEqual([suggest('@"Ki', 4), changedTo('@"Ki')]);
+  });
+
+  it('does not send a value held back until the field is left when asking for suggestions', async () => {
+    fakeDebounceTimers();
+    const sent = mountSuggesting({ sendValueOnBlur: true });
+
+    fireEvent.change(combobox(), { target: { value: '@"Ki' } });
+    vi.advanceTimersByTime(SUGGEST_DEBOUNCE_MS);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([suggest('@"Ki', 4)]);
+  });
+
+  it('shows the suggestions computed for the text and caret, and ignores outdated ones', () => {
+    mountSuggesting({});
+
+    fireEvent.change(combobox(), { target: { value: '@"Ki' } });
+    // An answer to an earlier question: the user typed on since.
+    answer([KITCHEN, SERVER], '@"K', 3);
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(combobox().getAttribute('aria-expanded')).toBe('false');
+
+    answer([KITCHEN, SERVER], '@"Ki', 4);
+    const list = screen.getByRole('listbox');
+    expect(screen.getAllByRole('option').map(option => option.textContent)).toEqual(['Kitchen', 'Server room']);
+    expect(combobox().getAttribute('aria-expanded')).toBe('true');
+    expect(combobox().getAttribute('aria-controls')).toBe(list.id);
+    expect(combobox().hasAttribute('aria-activedescendant')).toBe(false);
+
+    // An empty answer closes the list.
+    answer([], '@"Ki', 4);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('asks at once on Ctrl+Space and Alt+ArrowDown', async () => {
+    const sent = mountSuggesting({ value: '@"Ki > 25' });
+
+    combobox().setSelectionRange(4, 4);
+    fireEvent.keyDown(combobox(), { key: ' ', ctrlKey: true });
+    combobox().setSelectionRange(9, 9);
+    fireEvent.keyDown(combobox(), { key: 'ArrowDown', altKey: true });
+    await settle();
+
+    expect(sent.mock.calls).toEqual([suggest('@"Ki > 25', 4), suggest('@"Ki > 25', 9)]);
+  });
+
+  it('moves the active entry with the arrow keys and picks it with Enter, not submitting the field', async () => {
+    const sent = mountSuggesting({ value: '@"Ki > 25', submitOnEnter: true });
+    const box = combobox();
+    box.setSelectionRange(4, 4);
+    fireEvent.keyDown(box, { key: ' ', ctrlKey: true });
+    answer([KITCHEN, SERVER], '@"Ki > 25', 4);
+
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+    const options = screen.getAllByRole('option');
+    expect(box.getAttribute('aria-activedescendant')).toBe(options[0].id);
+    expect(options.map(option => option.getAttribute('aria-selected'))).toEqual(['true', 'false']);
+    fireEvent.keyDown(box, { key: 'ArrowUp' });
+    expect(box.getAttribute('aria-activedescendant')).toBe(options[1].id);
+    fireEvent.keyDown(box, { key: 'ArrowDown' });
+
+    const enter = fireEvent.keyDown(box, { key: 'Enter' });
+    expect(enter).toBe(false);
+    expect(box.value).toBe('@"Kitchen" > 25');
+    expect(box.selectionStart).toBe(10);
+    expect(box.selectionEnd).toBe(10);
+    // The list computed for the text before is outdated.
+    expect(screen.queryByRole('listbox')).toBeNull();
+    await settle();
+    expect(sent.mock.calls.filter(call => call[0] !== CMD_VALUE_CHANGED)).toEqual([
+      suggest('@"Ki > 25', 4),
+      suggest('@"Kitchen" > 25', 10),
+    ]);
+  });
+
+  it('leaves Enter to the field while no entry is active', async () => {
+    const sent = mountSuggesting({ value: 'a', submitOnEnter: true });
+    fireEvent.keyDown(combobox(), { key: ' ', ctrlKey: true });
+    answer([KITCHEN], 'a', 1);
+
+    fireEvent.keyDown(combobox(), { key: 'Enter' });
+    await settle();
+
+    expect(sent.mock.calls).toEqual([suggest('a', 1), [CMD_SUBMIT, { [ARG_VALUE]: 'a' }]]);
+  });
+
+  it('picks an entry by click, keeping the focus in the input', async () => {
+    mountSuggesting({ value: '@"Ki' });
+    const box = combobox();
+    box.focus();
+    fireEvent.keyDown(box, { key: ' ', ctrlKey: true });
+    answer([KITCHEN, SERVER], '@"Ki', 4);
+
+    await userEvent.click(screen.getByRole('option', { name: 'Server room' }));
+
+    expect(box.value).toBe('@"Server room"');
+    expect(document.activeElement).toBe(box);
+  });
+
+  it('closes the list with Escape, which does not reach a dialog around', () => {
+    const outer = vi.fn();
+    mountSuggesting({ value: 'a' }, { outer: { gesture: 'ESCAPE', onGesture: outer } });
+    fireEvent.keyDown(combobox(), { key: ' ', ctrlKey: true });
+    answer([KITCHEN], 'a', 1);
+
+    fireEvent.keyDown(combobox(), { key: 'Escape' });
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(outer).not.toHaveBeenCalled();
+
+    // A closed list leaves Escape to the dialog.
+    fireEvent.keyDown(combobox(), { key: 'Escape' });
+    expect(outer).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes the list when the field is left', () => {
+    mountSuggesting({ value: 'a' });
+    fireEvent.keyDown(combobox(), { key: ' ', ctrlKey: true });
+    answer([KITCHEN], 'a', 1);
+
+    fireEvent.blur(combobox());
+
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('picks an entry in a text area with Enter, where Enter otherwise is text', () => {
+    mountSuggesting({ value: 'a', multiline: true });
+    const area = combobox();
+    expect(area.tagName).toBe('TEXTAREA');
+    area.setSelectionRange(1, 1);
+    fireEvent.keyDown(area, { key: ' ', ctrlKey: true });
+    answer([{ label: 'and', text: ' and ', from: 1, to: 1 }], 'a', 1);
+
+    // No entry active: Enter is left to the text area.
+    expect(fireEvent.keyDown(area, { key: 'Enter' })).toBe(true);
+    fireEvent.keyDown(area, { key: 'ArrowDown' });
+    expect(fireEvent.keyDown(area, { key: 'Enter' })).toBe(false);
+
+    expect(area.value).toBe('a and ');
+  });
+
+  function mountText(state: Partial<TextInputStateJson>) {
+    return mountAdapter(TLTextInput, state);
+  }
 });
 
 describe('a password field as MUI TextField', () => {

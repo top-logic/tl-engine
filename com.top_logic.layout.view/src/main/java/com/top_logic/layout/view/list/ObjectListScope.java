@@ -46,11 +46,11 @@ public class ObjectListScope {
 	 *        The channels whose values lead the arguments of the link / remove functions, in
 	 *        declaration order.
 	 * @param link
-	 *        The compiled link function {@code ...inputs -> element -> ...}, or {@code null} when
-	 *        the list has no link function configured.
+	 *        The compiled link function taking the values of the inputs followed by the element, or
+	 *        {@code null} when the list has no link function configured.
 	 * @param remove
-	 *        The compiled remove function {@code ...inputs -> element -> ...}, or {@code null} when
-	 *        the list has no remove function configured.
+	 *        The compiled remove function taking the values of the inputs followed by the element,
+	 *        or {@code null} when the list has no remove function configured.
 	 */
 	public ObjectListScope(List<ViewChannel> inputs, QueryExecutor link, QueryExecutor remove) {
 		_inputs = inputs;

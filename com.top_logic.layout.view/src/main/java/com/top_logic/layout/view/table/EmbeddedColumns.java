@@ -21,8 +21,10 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
@@ -32,6 +34,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.SortColumn;
@@ -146,15 +149,20 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		TLModelPartRef getType();
 
 		/**
-		 * The function computing the embedded object, receiving the row as its last argument.
+		 * The expression computing the embedded object of a row.
 		 *
 		 * <p>
-		 * The values of the declared inputs come first, in declaration order. The function yields
-		 * the one object whose columns are embedded, of the declared type.
+		 * The expression sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the
+		 * name the table gives it with {@value RowAsConfig#ROW_AS}, and the values of the
+		 * {@link #getInputs() inputs} as variables named after their channels or by their
+		 * <code>as</code> names. It yields the one object whose columns are embedded, of the
+		 * declared type.
 		 * </p>
 		 */
 		@Name(OBJECT)
 		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getObject();
 
 		/**
@@ -217,7 +225,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 
 	private final boolean _multiple;
 
-	private final List<ChannelRef> _inputs;
+	private final List<InputRef> _inputs;
 
 	private final ResKey _label;
 
@@ -231,7 +239,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		String reference = config.getReference();
 		_path = reference == null ? List.of() : List.of(reference.split("\\" + NAME_SEPARATOR));
 		_typeRef = config.getType();
-		_object = QueryExecutor.compileOptional(config.getObject());
+		_object = InputScript.compile(config, Config.OBJECT);
 		_multiple = config.getMultiple();
 		_inputs = config.getInputs();
 		_label = config.getLabel();
@@ -296,8 +304,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * </p>
 	 */
 	@Override
-	public List<ChannelRef> inputs() {
-		List<ChannelRef> result = new ArrayList<>(_inputs);
+	public List<InputRef> inputs() {
+		List<InputRef> result = new ArrayList<>(_inputs);
 		result.addAll(ColumnDeclarations.inputs(_columns));
 		return result;
 	}

@@ -5,12 +5,19 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -45,6 +52,7 @@ import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DragSourceBinding;
 import com.top_logic.layout.view.model.ObservableTreeModel;
@@ -95,7 +103,17 @@ public class TreeElement implements UIElement {
 	 * Configuration for {@link TreeElement}.
 	 */
 	@TagName("tree")
-	public interface Config extends UIElement.Config, Inputs, TreeStructureConfig {
+	public interface Config extends UIElement.Config, Inputs, TreeStructureConfig, ActionScopeDefinition {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Configuration name for {@link #getOnActivateAs()}. */
+		String ACTIVATE_AS = "activate-as";
+
+		/** Name of the value the business object of the activated node when no other name is given. */
+		String DEFAULT_ACTIVATE_AS = "node";
+
 
 		@Override
 		@ClassDefault(TreeElement.class)
@@ -123,12 +141,14 @@ public class TreeElement implements UIElement {
 		String DROPS = "drops";
 
 		/**
-		 * Optional TL-Script function computing what holds an object in the tree.
+		 * Optional TL-Script expression computing what holds an object in the tree.
 		 *
 		 * <p>
-		 * Takes the input channel values followed by an object as last argument, and returns the object
-		 * whose child list holds it - nothing for the object the tree is built from, and for an object
-		 * belonging to no tree at all.
+		 * The expression sees the values of the inputs as variables named after their channels, or
+		 * by their <code>as</code> names, and the object as the variable
+		 * {@value NodeAsConfig#DEFAULT_NODE_AS}, or by the name given with
+		 * {@value NodeAsConfig#NODE_AS}. It returns the object whose child list holds it - nothing
+		 * for the object the tree is built from, and for an object belonging to no tree at all.
 		 * </p>
 		 *
 		 * <p>
@@ -229,6 +249,35 @@ public class TreeElement implements UIElement {
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
+
+		/**
+		 * The name of the argument holding the business object of the activated node, the main argument of the
+		 * {@link #getOnActivate() command}.
+		 *
+		 * <p>
+		 * The command sees it in addition to its own inputs; its scripts refer to it by this name.
+		 * </p>
+		 */
+		@Name(ACTIVATE_AS)
+		@StringDefault(DEFAULT_ACTIVATE_AS)
+		String getOnActivateAs();
+
+		/**
+		 * The {@link #getOnActivate() command} runs with the business object of the activated node
+		 * as argument named by {@link #getOnActivateAs()}, a {@link #getDrops() drop} with the
+		 * {@link DropArguments arguments} of its signature.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getOnActivate()) {
+				return ActionScope.single(getOnActivateAs());
+			}
+			ActionScope drop = DropArguments.scopeOf(part, getDrops(), dropConfig -> dropConfig.getTarget().signature());
+			if (drop != null) {
+				return drop;
+			}
+			return outer;
+		}
 
 		/**
 		 * How a node of the tree is displayed.
@@ -332,7 +381,7 @@ public class TreeElement implements UIElement {
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
-		_onActivate = context.getInstance(onActivate);
+		_onActivate = ViewCommands.instantiate(context, onActivate, config.getOnActivateAs());
 
 		_drops = compileDrops(context, config.getDrops());
 	}
@@ -376,7 +425,7 @@ public class TreeElement implements UIElement {
 				control.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getNodeExecutability());
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), TreeDragConfig.NODE_EXECUTABILITY);
 	}
 
 	@Override
@@ -433,7 +482,8 @@ public class TreeElement implements UIElement {
 
 		// 8. Wire the activation command, which runs with the activated node's business object.
 		if (_onActivate != null && _onActivateConfig != null) {
-			ViewCommandModel activation = ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+			ViewCommandModel activation =
+				ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig, _config.getOnActivateAs());
 			treeControl.setActivationHandler(node -> activation.execute(context, TreeFunctions.businessObject(node)));
 		}
 

@@ -15,6 +15,14 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 
 	private int _rows = 0;
 
+	private boolean _offersSuggestions = false;
+
+	private final java.util.List<com.top_logic.layout.react.state.SuggestionEntry> _suggestions = new java.util.ArrayList<>();
+
+	private String _suggestionsText = "";
+
+	private int _suggestionsCaret = 0;
+
 	/**
 	 * Creates a {@link TextInputState_Impl} instance.
 	 *
@@ -103,6 +111,88 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 	/** Internal setter for {@link #getRows()} without chain call utility. */
 	protected final void internalSetRows(int value) {
 		_rows = value;
+	}
+
+	@Override
+	public final boolean isOffersSuggestions() {
+		return _offersSuggestions;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.TextInputState setOffersSuggestions(boolean value) {
+		internalSetOffersSuggestions(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isOffersSuggestions()} without chain call utility. */
+	protected final void internalSetOffersSuggestions(boolean value) {
+		_offersSuggestions = value;
+	}
+
+	@Override
+	public final java.util.List<com.top_logic.layout.react.state.SuggestionEntry> getSuggestions() {
+		return _suggestions;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.TextInputState setSuggestions(java.util.List<? extends com.top_logic.layout.react.state.SuggestionEntry> value) {
+		internalSetSuggestions(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSuggestions()} without chain call utility. */
+	protected final void internalSetSuggestions(java.util.List<? extends com.top_logic.layout.react.state.SuggestionEntry> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'suggestions' cannot be null.");
+		_suggestions.clear();
+		_suggestions.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.TextInputState addSuggestion(com.top_logic.layout.react.state.SuggestionEntry value) {
+		internalAddSuggestion(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addSuggestion(com.top_logic.layout.react.state.SuggestionEntry)} without chain call utility. */
+	protected final void internalAddSuggestion(com.top_logic.layout.react.state.SuggestionEntry value) {
+		_suggestions.add(value);
+	}
+
+	@Override
+	public final void removeSuggestion(com.top_logic.layout.react.state.SuggestionEntry value) {
+		_suggestions.remove(value);
+	}
+
+	@Override
+	public final String getSuggestionsText() {
+		return _suggestionsText;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.TextInputState setSuggestionsText(String value) {
+		internalSetSuggestionsText(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSuggestionsText()} without chain call utility. */
+	protected final void internalSetSuggestionsText(String value) {
+		_suggestionsText = value;
+	}
+
+	@Override
+	public final int getSuggestionsCaret() {
+		return _suggestionsCaret;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.TextInputState setSuggestionsCaret(int value) {
+		internalSetSuggestionsCaret(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSuggestionsCaret()} without chain call utility. */
+	protected final void internalSetSuggestionsCaret(int value) {
+		_suggestionsCaret = value;
 	}
 
 	@Override
@@ -196,6 +286,12 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.TextInputState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.TextInputState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;
@@ -225,6 +321,18 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 		out.value(isMultiline());
 		out.name(ROWS__PROP);
 		out.value(getRows());
+		out.name(OFFERS_SUGGESTIONS__PROP);
+		out.value(isOffersSuggestions());
+		out.name(SUGGESTIONS__PROP);
+		out.beginArray();
+		for (com.top_logic.layout.react.state.SuggestionEntry x : getSuggestions()) {
+			x.writeTo(out);
+		}
+		out.endArray();
+		out.name(SUGGESTIONS_TEXT__PROP);
+		out.value(getSuggestionsText());
+		out.name(SUGGESTIONS_CARET__PROP);
+		out.value(getSuggestionsCaret());
 	}
 
 	@Override
@@ -235,6 +343,19 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 			case CLEARABLE__PROP: setClearable(in.nextBoolean()); break;
 			case MULTILINE__PROP: setMultiline(in.nextBoolean()); break;
 			case ROWS__PROP: setRows(in.nextInt()); break;
+			case OFFERS_SUGGESTIONS__PROP: setOffersSuggestions(in.nextBoolean()); break;
+			case SUGGESTIONS__PROP: {
+				java.util.List<com.top_logic.layout.react.state.SuggestionEntry> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.layout.react.state.SuggestionEntry.readSuggestionEntry(in));
+				}
+				in.endArray();
+				setSuggestions(newValue);
+			}
+			break;
+			case SUGGESTIONS_TEXT__PROP: setSuggestionsText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case SUGGESTIONS_CARET__PROP: setSuggestionsCaret(in.nextInt()); break;
 			default: super.readField(in, field);
 		}
 	}

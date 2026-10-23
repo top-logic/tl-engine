@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,6 +18,12 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
@@ -60,6 +68,7 @@ import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.DeclaredFilters;
 import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
+import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.layout.view.table.TableDragConfig;
 import com.top_logic.model.TLModel;
@@ -68,6 +77,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
@@ -115,7 +125,17 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * Configuration of an {@link AbstractTableElement}: what a table displays of its rows, how they are
 	 * selected, filtered, activated and dragged - whatever computes the rows.
 	 */
-	public interface Config extends UIElement.Config, Inputs {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, RowAsConfig {
+
+	/** Access to the default methods of this interface for the configuration proxy. */
+	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** Configuration name for {@link #getOnActivateAs()}. */
+		String ACTIVATE_AS = "activate-as";
+
+		/** Name of the value the activated row when no other name is given. */
+		String DEFAULT_ACTIVATE_AS = "row";
+
 
 		/** Configuration name for {@link #getTypes()}. */
 		String TYPES = "types";
@@ -225,7 +245,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 *
 		 * <p>
 		 * The activated row becomes the table's selection first, then the command runs with that row
-		 * as its input. The command's own executability rules decide over the row, so a row the
+		 * as its main argument, named by {@link #getOnActivateAs() activate-as}. The command's own executability rules decide over the row, so a row the
 		 * rules reject activates nothing. Without a command, activating a row only selects it.
 		 * </p>
 		 *
@@ -237,6 +257,30 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
+
+		/**
+		 * The name of the argument holding the activated row, the main argument of the
+		 * {@link #getOnActivate() command}.
+		 *
+		 * <p>
+		 * The command sees it in addition to its own inputs; its scripts refer to it by this name.
+		 * </p>
+		 */
+		@Name(ACTIVATE_AS)
+		@StringDefault(DEFAULT_ACTIVATE_AS)
+		String getOnActivateAs();
+
+		/**
+		 * The {@link #getOnActivate() command} runs with the activated row as argument named by
+		 * {@link #getOnActivateAs()}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (part != null && part == getOnActivate()) {
+				return ActionScope.single(getOnActivateAs());
+			}
+			return outer;
+		}
 
 		/**
 		 * Whether every row shows a button running the {@link #getOnActivate() activation command}
@@ -354,7 +398,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * Container for the list of {@link PresetConfig}s of a table.
 	 */
-	public interface PresetsConfig extends ConfigurationItem {
+	public interface PresetsConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getInitial()}. */
 		String INITIAL = "initial";
@@ -392,7 +436,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * A filter criterion a table offers under a name.
 	 */
 	@TagName("preset")
-	public interface PresetConfig extends ConfigurationItem {
+	public interface PresetConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -443,7 +487,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * </p>
 	 */
 	@TagName("criterion")
-	public interface CriterionConfig extends ConfigurationItem {
+	public interface CriterionConfig extends ConfigPart {
 
 		/** Configuration name for {@link #getColumn()}. */
 		String COLUMN = "column";
@@ -473,10 +517,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 *
 		 * <p>
 		 * It is evaluated when the table is built and whenever one of its
-		 * {@link Config#getInputs() inputs} changes, with the input values as its arguments - so an
-		 * expression like {@code currentUser()} yields a preset that means something different to
-		 * every user, and one over an input yields a preset that follows what is displayed
-		 * elsewhere. Which value the expression may yield depends on the filter of the column: a
+		 * {@link Config#getInputs() inputs} changes, and it sees the values of the inputs as
+		 * variables named after their channels, or by their {@code as} names - so an expression like
+		 * {@code currentUser()} yields a preset that means something different to every user, and
+		 * one over an input yields a preset that follows what is displayed elsewhere. Which value the expression may yield depends on the filter of the column: a
 		 * text filter accepts any single value and matches its text, a selection filter accepts one
 		 * of the values to select or a list of them, a boolean filter accepts {@code true} or
 		 * {@code false}, and a range filter accepts a single value to match exactly or a list of two
@@ -490,6 +534,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * </p>
 		 */
 		@Name(EXPR)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getExpr();
 
 		/**
@@ -646,7 +691,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		PolymorphicConfiguration<? extends ViewCommand> onActivate = config.getOnActivate();
 		_onActivateConfig = onActivate instanceof ViewCommand.Config activateConfig ? activateConfig : null;
-		_onActivate = context.getInstance(onActivate);
+		_onActivate = ViewCommands.instantiate(context, onActivate, config.getOnActivateAs());
 	}
 
 	/**
@@ -951,7 +996,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 				control.refreshDragSource();
 			}
 		};
-		DragSourceBinding.install(context, control, source, drag, drag.getKind(), drag.getRowExecutability());
+		DragSourceBinding.install(context, control, source, drag, drag.getKind(), TableDragConfig.ROW_EXECUTABILITY);
 	}
 
 	/**
@@ -1008,7 +1053,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			return null;
 		}
 		return new CompiledCriterion(criterionConfig.getColumn(),
-			expr == null ? null : QueryExecutor.compile(expr),
+			InputScript.compile(criterionConfig, CriterionConfig.EXPR),
 			state == null ? null : FilterStateTemplate.compile(state),
 			criterionConfig.getInverted());
 	}
@@ -1097,7 +1142,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (_onActivate == null || _onActivateConfig == null) {
 			return null;
 		}
-		return ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig);
+		return ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig, _config.getOnActivateAs());
 	}
 
 	/**

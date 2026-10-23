@@ -6,13 +6,22 @@
 package com.top_logic.layout.react.control.form;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.suggest.SuggestArguments;
+import com.top_logic.layout.react.control.suggest.Suggestion;
+import com.top_logic.layout.react.control.suggest.SuggestionSource;
 import com.top_logic.layout.react.state.TextInputState;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ReactFormFieldControl} for text input fields.
@@ -29,10 +38,19 @@ import com.top_logic.layout.react.state.TextInputState;
  * field is left, and a text that is no absolute address at all is rejected with
  * {@link I18NConstants#ERROR_INVALID_URL__VALUE}.
  * </p>
+ *
+ * <p>
+ * With a {@link #setSuggestionSource(SuggestionSource) suggestion source}, the field offers
+ * suggestions while the user types: the client asks for them with the command
+ * {@link SuggestArguments#COMMAND}, and receives them in {@link TextInputState#SUGGESTIONS__PROP}
+ * together with the text and caret position they were computed for.
+ * </p>
  */
 public class ReactTextInputControl extends ReactFormFieldControl {
 
 	private InputType _inputType = InputType.TEXT;
+
+	private SuggestionSource _suggestionSource;
 
 	/**
 	 * Creates a new {@link ReactTextInputControl}.
@@ -74,6 +92,81 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 		if (inputType == InputType.URL) {
 			setSendValueOnBlur(true);
 		}
+	}
+
+	/**
+	 * The source of the suggestions the field offers while the user types, {@code null} if it
+	 * offers none.
+	 *
+	 * @see #setSuggestionSource(SuggestionSource)
+	 */
+	public SuggestionSource getSuggestionSource() {
+		return _suggestionSource;
+	}
+
+	/**
+	 * Sets the {@link #getSuggestionSource() source of the suggestions} the field offers.
+	 *
+	 * @param source
+	 *        The source of the suggestions, {@code null} for a field offering none.
+	 */
+	public void setSuggestionSource(SuggestionSource source) {
+		boolean offered = _suggestionSource != null;
+		_suggestionSource = source;
+		if (source != null) {
+			putState(TextInputState.OFFERS_SUGGESTIONS__PROP, Boolean.TRUE);
+		} else if (offered) {
+			Object tx = beginUpdate();
+			putState(TextInputState.OFFERS_SUGGESTIONS__PROP, null);
+			putState(TextInputState.SUGGESTIONS__PROP, null);
+			putState(TextInputState.SUGGESTIONS_TEXT__PROP, null);
+			putState(TextInputState.SUGGESTIONS_CARET__PROP, null);
+			commitUpdate(tx);
+		}
+	}
+
+	/**
+	 * Handles the command {@link SuggestArguments#COMMAND}: computes the suggestions for the given
+	 * text and caret position and sends them to the client, together with the text and caret
+	 * position they are computed for.
+	 *
+	 * <p>
+	 * Computing suggestions leaves the value of the field alone. A suggestion whose range does not
+	 * {@link Suggestion#fits(String) fit} the text is dropped and logged. When the source fails,
+	 * the client receives no suggestions for the text and the failure is reported.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = SuggestArguments.COMMAND, technical = true)
+	HandlerResult handleSuggest(SuggestArguments args) {
+		SuggestionSource source = _suggestionSource;
+		if (source == null) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		String text = args.getText() == null ? "" : args.getText();
+		int caret = Math.max(0, Math.min(args.getCaret(), text.length()));
+
+		List<Map<String, Object>> entries = new ArrayList<>();
+		HandlerResult result = HandlerResult.DEFAULT_RESULT;
+		try {
+			for (Suggestion suggestion : source.suggest(text, caret)) {
+				if (!suggestion.fits(text)) {
+					Logger.warn("Dropping a suggestion not fitting the text '" + text + "': " + suggestion, this);
+					continue;
+				}
+				entries.add(suggestion.toState());
+			}
+		} catch (RuntimeException ex) {
+			Logger.error("Failed to compute the suggestions for the text '" + text + "'.", ex, this);
+			entries.clear();
+			result = HandlerResult.error(I18NConstants.ERROR_SUGGESTIONS_FAILED);
+		}
+
+		Object tx = beginUpdate();
+		putState(TextInputState.SUGGESTIONS__PROP, entries);
+		putState(TextInputState.SUGGESTIONS_TEXT__PROP, text);
+		putState(TextInputState.SUGGESTIONS_CARET__PROP, caret);
+		commitUpdate(tx);
+		return result;
 	}
 
 	/**

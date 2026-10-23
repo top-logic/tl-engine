@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.ai.vector.index.VectorIndex" config:override="true">
+			<instance class="com.top_logic.ai.vector.index.VectorIndex"
+				local-store-path="tmp/test-jvector"
+				vector-store-type="jvector"
+				vector-index-models="demo.events:Event"
+				mistral-embed-model="mistral-embed"
+				mistral-api-key="%MISTRAL_API_KEY%"
+				embedding-model-type="mistral"
+			/>
+		</config>
+	</services>
+	
+	<configs>
+		<config config:interface="com.top_logic.ai.vector.index.VectorIndex$VectorIndexingConfig"
+			local-store-path="tmp/test-jvector"
+			vector-store-type="jvector"
+			vector-index-models="demo.events:Event"
+			mistral-embed-model="mistral-embed"
+			mistral-api-key="%MISTRAL_API_KEY%"
+			embedding-model-type="mistral"
+		/>
+	</configs>
+</application>

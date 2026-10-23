@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.list;
 
+import com.top_logic.layout.view.channel.Supplies;
 import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -34,11 +35,18 @@ public interface KanbanDragConfig extends DragConfig {
 	 * over.
 	 *
 	 * <p>
+	 * A script rule sees the card's object as the variable
+	 * {@value ElementAsConfig#DEFAULT_ELEMENT_AS}, or by the name the board gives it with
+	 * {@value ElementAsConfig#ELEMENT_AS}.
+	 * </p>
+	 *
+	 * <p>
 	 * A card the rules refuse offers no drag. Empty (default) lets every card be dragged while the
 	 * board-wide {@link #getExecutability() executability} allows dragging at all.
 	 * </p>
 	 */
 	@Name(CARD_EXECUTABILITY)
+	@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
 	@EntryTag(RULE)
 	List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getCardExecutability();
 

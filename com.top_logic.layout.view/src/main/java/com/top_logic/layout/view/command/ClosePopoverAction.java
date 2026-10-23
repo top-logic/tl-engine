@@ -25,11 +25,6 @@ import com.top_logic.layout.view.element.PopoverElement;
  * nothing, just as closing a dialog does nothing where no dialog is open.
  * </p>
  *
- * <p>
- * Passes the input through as output, so an action following it in the chain still sees the object
- * the chain works on - which is what makes "apply what was entered, then close" one command.
- * </p>
- *
  * @implNote The popover is found in the {@link ViewContext#getScope(Class) scope}
  *           {@link ReactPopoverControl} that the popover establishes for its content.
  */
@@ -67,5 +62,13 @@ public class ClosePopoverAction implements ViewAction {
 			}
 		}
 		return input;
+	}
+
+	/**
+	 * Closes a popover.
+	 */
+	@Override
+	public boolean changesViewState() {
+		return true;
 	}
 }

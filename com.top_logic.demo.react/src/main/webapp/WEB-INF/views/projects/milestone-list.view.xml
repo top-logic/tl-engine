@@ -27,7 +27,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-plus-lg"
-				input="project"
+				inputs="project"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -41,24 +41,27 @@
 					container="project"
 					reference="milestones"
 					type="tl.demo.projectManagement:Milestone"
-				/>
-				<open-dialog
-					bind-input-to="model"
-					dialog-view="demo/create-milestone.view.xml"
 				>
-					<bind
-						channel="container"
-						to="project"
-					/>
-					<bind
-						channel="selection"
-						to="milestone"
-					/>
-				</open-dialog>
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-milestone.view.xml"
+						>
+							<bind
+								channel="container"
+								to="project"
+							/>
+							<bind
+								channel="selection"
+								to="milestone"
+							/>
+						</open-dialog>
+					</with-result>
+				</create-transient>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-trash"
-				input="milestone"
+				inputs="milestone"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -68,13 +71,15 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="m -> { due = $m.get(`tl.demo.projectManagement:Milestone#dueDate`); #('Delete milestone {0}?\nDue: {1}\nTickets: {2}'@en, 'Meilenstein {0} löschen?\nFällig: {1}\nTickets: {2}'@de).fill($m.get(`tl.demo.projectManagement:Milestone#name`), if($due == null, '–', dateFormat('dd.MM.yyyy').format($due)), $m.get(`tl.demo.projectManagement:Milestone#tickets`).size()) }"/>
+				<confirm expr="{ due = $milestone.get(`tl.demo.projectManagement:Milestone#dueDate`); #('Delete milestone {0}?\nDue: {1}\nTickets: {2}'@en, 'Meilenstein {0} löschen?\nFällig: {1}\nTickets: {2}'@de).fill($milestone.get(`tl.demo.projectManagement:Milestone#name`), if($due == null, '–', dateFormat('dd.MM.yyyy').format($due)), $milestone.get(`tl.demo.projectManagement:Milestone#tickets`).size()) }"/>
 				<delete-object/>
-				<write-channel name="milestone"/>
+				<write-channel name="milestone"
+					clear="true"
+				/>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-patch-check"
-				input="milestone"
+				inputs="milestone"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -83,10 +88,10 @@
 				</label>
 				<executability>
 					<null-input-disabled/>
-					<disabled-if expr="m -> if(canCall(approveMilestone($m)), null, #('You may not approve this milestone.'@en, 'Sie dürfen diesen Meilenstein nicht freigeben.'@de))"/>
+					<disabled-if expr="if(canCall(approveMilestone($milestone)), null, #('You may not approve this milestone.'@en, 'Sie dürfen diesen Meilenstein nicht freigeben.'@de))"/>
 				</executability>
 				<with-transaction>
-					<execute-script function="m -> approveMilestone($m)"/>
+					<execute-script function="approveMilestone($milestone)"/>
 				</with-transaction>
 			</generic-command>
 		</commands>
@@ -103,13 +108,13 @@
 			<inputs>
 				<input channel="project"/>
 			</inputs>
-			<rows>p -&gt; if($p == null, [], $p.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+			<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="milestone"
 				view="projects/tickets.view.xml"
 			>
 				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="m -> $m.get(`tl.demo.projectManagement:Milestone#name`)"
+					expr="$milestone.get(`tl.demo.projectManagement:Milestone#name`)"
 					inputs="milestone"
 				/>
 			</on-activate>

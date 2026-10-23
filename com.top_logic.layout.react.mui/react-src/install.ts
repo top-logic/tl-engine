@@ -18,6 +18,7 @@ import MuiBadgeAdapter from './adapters/MuiBadgeAdapter';
 import MuiDividerAdapter from './adapters/MuiDividerAdapter';
 import MuiProgressBarAdapter from './adapters/MuiProgressBarAdapter';
 import MuiSpinnerAdapter from './adapters/MuiSpinnerAdapter';
+import MuiListboxAdapter from './adapters/MuiListboxAdapter';
 import MuiDatePickerAdapter from './adapters/MuiDatePickerAdapter';
 import MuiSelectAdapter from './adapters/MuiSelectAdapter';
 import MuiDropdownSelectAdapter from './adapters/MuiDropdownSelectAdapter';
@@ -55,7 +56,7 @@ import MuiSliderAdapter from './adapters/MuiSliderAdapter';
  * toolbar menu and between the items of the sidebar, the part `ProgressBar` the progress controls
  * (TLProgress), the bar of a job status and the loading options of a dropdown, the part `Spinner`
  * the busy indicator of a disclosure toggle whose content is being loaded and of the icon popup
- * loading its icons.
+ * loading its icons, the part `Listbox` the suggestions offered under a text field (TLTextInput).
  */
 const PART_ADAPTERS = {
   Button: MuiButtonAdapter,
@@ -69,6 +70,7 @@ const PART_ADAPTERS = {
   Divider: MuiDividerAdapter,
   ProgressBar: MuiProgressBarAdapter,
   Spinner: MuiSpinnerAdapter,
+  Listbox: MuiListboxAdapter,
 } as const satisfies { [K in PartName]?: PartComponent<K> };
 
 /** The adapter around MUI components for each TopLogic component this module replaces. */

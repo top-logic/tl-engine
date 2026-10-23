@@ -21,6 +21,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.basic.DefaultFileManager;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.io.FileUtilities;
@@ -343,7 +344,7 @@ public class TestTileStackDirtyCheck extends TestCase {
 		int writesBefore = _writes;
 		Recorder chain = new Recorder();
 
-		ObjectNavigation.show(_inStack, List.of(formShow()), edited, chain);
+		ObjectNavigation.show(_inStack, List.of(formShow()), ActionArguments.of(EDITED, edited), chain);
 
 		assertEquals("Nothing is dropped, so nothing is asked.", 0, _dialogs.opened());
 		assertEquals("The path is not written.", writesBefore, _writes);
@@ -367,7 +368,7 @@ public class TestTileStackDirtyCheck extends TestCase {
 		MockTLObject shown = new MockTLObject();
 		Recorder chain = new Recorder();
 
-		ObjectNavigation.show(_inStack, List.of(formShow()), shown, chain);
+		ObjectNavigation.show(_inStack, List.of(formShow()), ActionArguments.of(EDITED, shown), chain);
 
 		assertEquals("The user is asked about the frame holding unsaved input.", 1, _dialogs.opened());
 		assertSame("Until they answered, the path stays.", pathBefore, _path.get());

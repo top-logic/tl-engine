@@ -30,7 +30,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests that a script body enters the steps of its job by name. */
 	public void testTheScriptEntersTheStepsOfTheJob() throws Exception {
-		script("job -> x -> { $job.jobPhase('read'); $job.jobPhase('write'); 'done'; }",
+		script("x -> job -> { $job.jobPhase('read'); $job.jobPhase('write'); 'done'; }",
 			List.of(JobPhase.named("read"), JobPhase.named("check"), JobPhase.named("write")));
 
 		JobState last = awaitFinished();
@@ -43,7 +43,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests that naming a step the job did not announce ends the job. */
 	public void testTheScriptCannotEnterAnUnannouncedStep() throws Exception {
-		script("job -> x -> $job.jobPhase('unannounced')", List.of(JobPhase.named("read")));
+		script("x -> job -> $job.jobPhase('unannounced')", List.of(JobPhase.named("read")));
 
 		JobState last = awaitFinished();
 
@@ -54,7 +54,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests that a script announces the steps of its job as a list of names. */
 	public void testAListOfNamesAnnouncesTheStepsOfTheJob() throws Exception {
-		script("job -> x -> { $job.jobPhases(['read', 'write']); $job.jobPhase('write'); }", List.of());
+		script("x -> job -> { $job.jobPhases(['read', 'write']); $job.jobPhase('write'); }", List.of());
 
 		awaitFinished();
 
@@ -67,7 +67,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests that a script announces steps with what the reader sees, given as a map. */
 	public void testAMapAnnouncesWhatTheReaderSeesForEachStep() throws Exception {
-		script("job -> x -> $job.jobPhases({'read': #('Reading'@en), 'write': 'Writing'})", List.of());
+		script("x -> job -> $job.jobPhases({'read': #('Reading'@en), 'write': 'Writing'})", List.of());
 
 		awaitFinished();
 
@@ -82,7 +82,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests that a script reports its progress as the two counts it is the ratio of. */
 	public void testTheScriptReportsItsProgress() throws Exception {
-		script("job -> x -> { $job.jobProgress(1, 4); $job.jobIndeterminate(); }", List.of());
+		script("x -> job -> { $job.jobProgress(1, 4); $job.jobIndeterminate(); }", List.of());
 
 		awaitFinished();
 
@@ -92,7 +92,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests that a script reports what it is doing, as a text and internationalized. */
 	public void testTheScriptReportsWhatItIsDoing() throws Exception {
-		script("job -> x -> { $job.jobMessage('reading'); $job.jobMessage(#('Writing'@en)); }", List.of());
+		script("x -> job -> { $job.jobMessage('reading'); $job.jobMessage(#('Writing'@en)); }", List.of());
 
 		awaitFinished();
 

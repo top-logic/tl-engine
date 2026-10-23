@@ -132,6 +132,23 @@
 		<module>../tl-service-jms-ibmmq</module>
 		<module>../tl-security-selfservice</module>
 
+		<!-- AI modules -->
+		<module>../tl-ai-tool-api</module>
+		<module>../tl-ai-core</module>
+		<module>../tl-ai-mcp-server</module>
+		<module>../tl-ai-a2a</module>
+		<module>../tl-chat</module>
+		<module>../tl-chat-classic</module>
+		<module>../tl-ai-views</module>
+		<module>../tl-ai-vector-index</module>
+		<module>../tl-ai-index</module>
+		<module>../tl-ai-index-onnx</module>
+		<module>../tl-ai-eval</module>
+
+		<!-- Control application for applications built by agents -->
+		<module>../tl-factory</module>
+		<module>../tl-factory-app</module>
+
 		<!-- Migration utilities -->
 		<module>../com.top_logic.migrate.tl</module>
 		<module>../com.top_logic.migrate.tl_580</module>
@@ -163,6 +180,7 @@
 		<module>../com.top_logic.demo</module>
 		<module>../com.top_logic.demo.react</module>
 		<module>../com.top_logic.demo.react.mui</module>
+		<module>../tl-ai-demo</module>
 		<module>../com.top_logic.kafka.demo</module>
 		<module>../test.com.top_logic.kafka.demo</module>
 	</modules>

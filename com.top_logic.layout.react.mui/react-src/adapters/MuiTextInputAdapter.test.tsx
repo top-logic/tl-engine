@@ -95,7 +95,7 @@ describe('the part TextInput as MUI TextField', () => {
     expect(frame.contains(action)).toBe(true);
   });
 
-  it('draws a text area of the given rows, with neither icon, action nor key handler', () => {
+  it('draws a text area of the given rows, without icon and action, passing its keys', () => {
     const onKeyDown = vi.fn();
     draw({ multiline: true, rows: 5, value: 'a\nb', icon: 'css:my-icon', action: <button type="button">X</button>,
       onKeyDown });
@@ -106,7 +106,28 @@ describe('the part TextInput as MUI TextField', () => {
     expect(document.querySelector('.my-icon')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
     fireEvent.keyDown(area, { key: 'Enter' });
-    expect(onKeyDown).not.toHaveBeenCalled();
+    expect(onKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['Enter']);
+  });
+
+  it('puts the combobox role and attributes of a box offering suggestions on the input', () => {
+    draw({ role: 'combobox', 'aria-autocomplete': 'list', 'aria-expanded': true, 'aria-controls': 'l1',
+      'aria-activedescendant': 'l1-0' });
+
+    const box = screen.getByRole('combobox');
+    expect(box).toBe(input());
+    expect(box.tagName).toBe('INPUT');
+    expect(box.getAttribute('aria-autocomplete')).toBe('list');
+    expect(box.getAttribute('aria-expanded')).toBe('true');
+    expect(box.getAttribute('aria-controls')).toBe('l1');
+    expect(box.getAttribute('aria-activedescendant')).toBe('l1-0');
+  });
+
+  it('puts the combobox role on a text area offering suggestions', () => {
+    draw({ multiline: true, role: 'combobox', 'aria-expanded': false });
+
+    const area = screen.getByRole('combobox');
+    expect(area.tagName).toBe('TEXTAREA');
+    expect(area.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('draws a multi-line box of three rows where it names none', () => {

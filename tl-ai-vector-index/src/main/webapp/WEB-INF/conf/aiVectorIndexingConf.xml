@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Main configuration file -->
+<root>
+	<alias>
+		<entry name="%MISTRAL_API_KEY%" value="${env:tl_mistral_api_key:}"/>
+	</alias>
+</root>

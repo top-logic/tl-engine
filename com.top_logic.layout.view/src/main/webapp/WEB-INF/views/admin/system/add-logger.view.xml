@@ -42,13 +42,19 @@
 						<en>Add</en>
 						<de>Hinzufügen</de>
 					</label>
-					<store-form-state/>
-					<action class="com.top_logic.layout.view.admin.system.LoggerLevelAction"
-						mode="ADD"
-						model="model"
-					/>
-					<write-channel name="loggers"/>
-					<close-dialog/>
+					<store-form-state>
+						<with-result>
+							<action class="com.top_logic.layout.view.admin.system.LoggerLevelAction"
+								mode="ADD"
+								model="model"
+							>
+								<with-result>
+									<write-channel name="loggers"/>
+									<close-dialog/>
+								</with-result>
+							</action>
+						</with-result>
+					</store-form-state>
 				</generic-command>
 			</commands>
 		</form>

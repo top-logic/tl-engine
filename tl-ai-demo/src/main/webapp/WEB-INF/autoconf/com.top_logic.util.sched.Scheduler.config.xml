@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance class="com.top_logic.util.sched.Scheduler">
+				<tasks>
+					<!--
+						One AgentTask, so that the path exists in a running application and can be
+						tried by hand: Administration > Scheduler > Tasks > DailyEventBriefing >
+						"Start task".
+
+						Disabled, because every run of it costs a real model call and this is a demo
+						that is started for a minute at a time. Set enabled="true" to have it run at
+						18:00 as configured; it then writes its sitting into root's chat history,
+						where it can be opened and continued like any other conversation.
+
+						It names no agent, so the application's entry-point agent answers - the same
+						one a chat message without an explicit choice runs.
+					-->
+					<task class="com.top_logic.ai.chat.sched.AgentTask"
+						name="DailyEventBriefing"
+						enabled="false"
+						run-as="root"
+						session-title="Tagesbericht Veranstaltungen"
+					>
+						<prompt>Fasse den Stand der Veranstaltungen zusammen: welche in den nächsten 30 Tagen stattfinden, wie viele freie Plätze sie noch haben, wie ihr Saldo steht und welche eingehenden Rechnungen überfällig sind. Wenn nichts davon zutrifft, schreibe genau das. Frage nicht nach - zu diesem Lauf gibt es niemanden, der antworten könnte.</prompt>
+						<schedules>
+							<daily time-of-day="18:00"/>
+						</schedules>
+					</task>
+				</tasks>
+			</instance>
+		</config>
+	</services>
+</application>

@@ -87,7 +87,6 @@
 					<separator id="system-separator"/>
 					<nav-item id="administration"
 						icon="css:bi bi-shield-lock"
-						route="none"
 					>
 						<access-control scope="administration"/>
 						<view-ref view="admin/admin.view.xml"/>

@@ -13,7 +13,6 @@ import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.ui.ModelReferenceChecker;
 
 /**
@@ -49,15 +48,12 @@ public class CheckExprWithAdditionalParams extends GenericValueDependency<Expr, 
 		if (testExpr == null) {
 			return;
 		}
-		List<? extends NamedConfiguration> additionals = CollectionUtil.nonNull(additionalVariables.getValue());
-		for (int i = additionals.size() - 1; i >= 0; i--) {
-			String name = additionals.get(i).getName();
-			if (!name.isEmpty() && !name.isBlank()) {
-				testExpr = Define.create(name, testExpr);
-			}
-		}
+		List<String> names = CollectionUtil.nonNull(additionalVariables.getValue()).stream()
+			.map(NamedConfiguration::getName)
+			.filter(name -> !name.isBlank())
+			.toList();
 		try {
-			ModelReferenceChecker.checkModelElements(testExpr);
+			ModelReferenceChecker.checkModelElements(testExpr, names);
 		} catch (I18NRuntimeException ex) {
 			self.setProblemDescription(ex.getErrorKey());
 		}

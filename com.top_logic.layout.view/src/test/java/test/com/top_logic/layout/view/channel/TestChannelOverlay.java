@@ -20,6 +20,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelConfig;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.DerivedChannelConfig;
 import com.top_logic.layout.view.channel.ValueChannelConfig;
 import com.top_logic.model.search.expr.config.ExprFormat;
@@ -58,7 +59,7 @@ public class TestChannelOverlay extends TestCase {
 			<view>
 				<channels>
 					<channel name="%1$s"/>
-					<derived-channel name="%2$s" inputs="%1$s" expr="x -> '%3$s'"/>
+					<derived-channel name="%2$s" inputs="%1$s" expr="'%3$s'"/>
 				</channels>
 			</view>
 			""".formatted(SOURCE, ACCOUNT, BASE_VALUE);
@@ -72,7 +73,7 @@ public class TestChannelOverlay extends TestCase {
 		ViewElement.Config view = merge(BASE_VIEW, """
 				<view>
 					<channels>
-						<derived-channel name="%s" expr="x -> '%s'"/>
+						<derived-channel name="%s" expr="'%s'"/>
 					</channels>
 				</view>
 				""".formatted(ACCOUNT, OVERLAY_VALUE));
@@ -81,7 +82,7 @@ public class TestChannelOverlay extends TestCase {
 		DerivedChannelConfig account = (DerivedChannelConfig) channel(view, ACCOUNT);
 		assertExpr(OVERLAY_VALUE, account);
 		assertEquals("A property the overlay leaves unset keeps the value of the base.",
-			List.of(new ChannelRef(SOURCE)), account.getInputs());
+			List.of(new InputRef(new ChannelRef(SOURCE))), account.getInputs());
 	}
 
 	/**
@@ -92,7 +93,7 @@ public class TestChannelOverlay extends TestCase {
 		ViewElement.Config view = merge(BASE_VIEW, """
 				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 					<channels>
-						<derived-channel name="%s" expr="x -> '%s'" config:override="true"/>
+						<derived-channel name="%s" expr="'%s'" config:override="true"/>
 					</channels>
 				</view>
 				""".formatted(ACCOUNT, OVERLAY_VALUE));
@@ -114,7 +115,7 @@ public class TestChannelOverlay extends TestCase {
 				""".formatted(ACCOUNT), """
 				<view>
 					<channels>
-						<derived-channel name="%s" expr="x -> '%s'"/>
+						<derived-channel name="%s" expr="'%s'"/>
 					</channels>
 				</view>
 				""".formatted(ACCOUNT, OVERLAY_VALUE));
@@ -162,7 +163,7 @@ public class TestChannelOverlay extends TestCase {
 				<view>
 					<channels>
 						<channel name="%1$s"/>
-						<derived-channel name="%1$s" expr="x -> '%2$s'"/>
+						<derived-channel name="%1$s" expr="'%2$s'"/>
 					</channels>
 				</view>
 				""".formatted(ACCOUNT, BASE_VALUE);

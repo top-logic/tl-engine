@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="term"/>
+		<channel name="editing"/>
+		<channel name="files"/>
+	</channels>
+
+	<panel>
+		<children>
+			<value-input value="term">
+				<label>
+					<en>Term</en>
+				</label>
+			</value-input>
+			<value-input
+				readonly="true"
+				value="term"
+			>
+				<label>
+					<en>Term</en>
+				</label>
+			</value-input>
+			<value-input
+				edit-mode="editing"
+				value="term"
+			>
+				<label>
+					<en>Term</en>
+				</label>
+			</value-input>
+			<value-input
+				edit-mode="editing"
+				readonly="true"
+				value="term"
+			>
+				<label>
+					<en>Term</en>
+				</label>
+			</value-input>
+			<value-input
+				mandatory="true"
+				multiple="true"
+				type="tl.core:Binary"
+				value="files"
+			>
+				<label>
+					<en>Files</en>
+				</label>
+				<annotations>
+					<accepted-types value="*.pdf"/>
+				</annotations>
+			</value-input>
+			<value-input
+				multiple="true"
+				type="tl.core:Binary"
+				value="files"
+			>
+				<annotations>
+					<binary-display presentation="list"/>
+				</annotations>
+			</value-input>
+		</children>
+	</panel>
+</view>

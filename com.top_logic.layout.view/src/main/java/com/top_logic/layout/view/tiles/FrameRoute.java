@@ -19,7 +19,7 @@ import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
-import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -86,15 +86,13 @@ public final class FrameRoute {
 		Map<String, Function<Object, String>> toUrl = new HashMap<>();
 		Map<String, Function<String, Object>> fromUrl = new HashMap<>();
 		for (FrameParamConfig param : config.getParams()) {
-			Expr expr = param.getExpr();
+			QueryExecutor expr = InputScript.compile(param, FrameParamConfig.EXPR);
 			if (expr != null) {
-				QueryExecutor executor = QueryExecutor.compile(expr);
-				toUrl.put(param.getName(), value -> asText(executor.execute(value)));
+				toUrl.put(param.getName(), value -> asText(expr.execute(value)));
 			}
-			Expr reverse = param.getReverse();
+			QueryExecutor reverse = InputScript.compile(param, FrameParamConfig.REVERSE);
 			if (reverse != null) {
-				QueryExecutor executor = QueryExecutor.compile(reverse);
-				fromUrl.put(param.getName(), text -> executor.execute(text));
+				fromUrl.put(param.getName(), text -> reverse.execute(text));
 			}
 		}
 		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = config.getLabel();

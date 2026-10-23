@@ -336,15 +336,21 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 
 	/**
 	 * Reports the route of the selected item to the {@link RouteChangeListener}s.
+	 *
+	 * <p>
+	 * An item without a route is reported as well, with an empty segment: the address bar has to
+	 * leave the item selected before, whose segment no longer describes the display.
+	 * </p>
 	 */
 	private void notifyRouteListeners() {
 		NavigationItem newItem = findNavItem(_activeItemId, _items);
-		if (newItem != null && newItem.getRoute() != null) {
-			RoutePattern pattern = RoutePattern.compile(newItem.getRoute(), newItem.getId());
-			RouteSegment segment = new RouteSegment(pattern.produce(Map.of()));
-			for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
-				listener.onRouteChange(this, segment);
-			}
+		if (newItem == null) {
+			return;
+		}
+		RouteSegment segment = activeRouteSegment();
+		RouteSegment reported = segment != null ? segment : new RouteSegment("");
+		for (RouteChangeListener listener : new ArrayList<>(_routeChangeListeners)) {
+			listener.onRouteChange(this, reported);
 		}
 	}
 
@@ -541,6 +547,15 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return new RouteSegment(pattern.produce(Map.of()));
 		}
 		return null;
+	}
+
+	/**
+	 * The content of a selected item without a route has no URL.
+	 */
+	@Override
+	public boolean routesContent() {
+		NavigationItem activeItem = findNavItem(_activeItemId, _items);
+		return activeItem == null || activeItem.getRoute() != null;
 	}
 
 	@Override

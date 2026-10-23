@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Rückfragen: the queue of everything an agent asked a human. Sorted oldest first, because that
+	turns a report into a work list - the waiting time is the thing to act on, not the count.
+	
+	No answer button. Answering means waking the blocked agent thread through the interaction store,
+	not writing RESOLVED into a row; a UI transaction would change the database and leave the run
+	hanging forever. Until that command exists the row leads into its run, which is where the
+	conversation is.
+-->
+<securityLayout name="aiAgentInteractionsView"
+	titleKey="admin.ai.agentActivity.interactions.tabber"
+	useDefaultChecker="false"
+>
+	<tabInfo label="admin.ai.agentActivity.interactions.tabber"/>
+	<components>
+		<layout name="aiAgentInteractionsLayout"
+			horizontal="true"
+			resizable="true"
+		>
+			<components>
+				<include name="tl-ai-core/admin/agentActivity/interactionsTable.xml"/>
+				<layout-reference resource="tl-ai-core/admin/agentActivity/interactionDetail.layout.xml"/>
+			</components>
+		</layout>
+	</components>
+</securityLayout>

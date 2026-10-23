@@ -3,6 +3,7 @@
 <view>
 	<channels>
 		<channel name="selectedObject"/>
+		<channel name="normalizedValue"/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -25,20 +26,23 @@
 								<en>New</en>
 								<de>Neu</de>
 							</label>
-							<create-transient type="test.constraints:ConstraintTestType"/>
-							<open-dialog
-								bind-input-to="model"
-								dialog-view="demo/create-constraint-test.view.xml"
-							>
-								<bind
-									channel="selection"
-									to="selectedObject"
-								/>
-							</open-dialog>
+							<create-transient type="test.constraints:ConstraintTestType">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-constraint-test.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedObject"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
 						</generic-command>
 						<generic-command
 							image="css:bi bi-pencil"
-							input="selectedObject"
+							inputs="selectedObject"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -55,7 +59,7 @@
 						</generic-command>
 						<generic-command
 							image="css:bi bi-trash"
-							input="selectedObject"
+							inputs="selectedObject"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -65,9 +69,11 @@
 							<executability>
 								<null-input-disabled/>
 							</executability>
-							<confirm expr="obj -> if($obj != null, #(&quot;Delete the selected object?&quot;@en, &quot;Das ausgewählte Objekt löschen?&quot;@de), null)"/>
+							<confirm expr="if($selectedObject != null, #(&quot;Delete the selected object?&quot;@en, &quot;Das ausgewählte Objekt löschen?&quot;@de), null)"/>
 							<delete-object/>
-							<write-channel name="selectedObject"/>
+							<write-channel name="selectedObject"
+								clear="true"
+							/>
 						</generic-command>
 					</commands>
 					<table
@@ -98,15 +104,43 @@
 				size="70"
 				unit="%"
 			>
-				<panel>
+				<panel with-inset="true">
 					<title>
 						<en>Constraint Test Form</en>
 						<de>Constraint-Test-Formular</de>
 					</title>
-					<form
-						input="selectedObject"
-						with-inset="true"
+					<fields>
+						<value-input
+							type="tl.core:String"
+							value="normalizedValue"
+						>
+							<label>
+								<en>Normalized input (view value)</en>
+								<de>Normalisierte Eingabe (Wert der View)</de>
+							</label>
+							<annotations>
+								<value-normalizer>
+									<normalize-by-expression function="value -> obj -> $value.trim()"/>
+								</value-normalizer>
+							</annotations>
+						</value-input>
+					</fields>
+					<stack
+						direction="row"
+						gap="default"
 					>
+						<text variant="label">
+							<label>
+								<en>On the channel:</en>
+								<de>Auf dem Kanal:</de>
+							</label>
+						</text>
+						<text
+							input="normalizedValue"
+							tone="helper"
+						/>
+					</stack>
+					<form input="selectedObject">
 						<field attribute="name"/>
 						<field attribute="uniqueName"/>
 						<field attribute="sizedString"/>
@@ -117,6 +151,7 @@
 						<field attribute="rangedDouble"/>
 						<field attribute="uppercaseStart"/>
 						<field attribute="warningField"/>
+						<field attribute="normalizedText"/>
 						<field attribute="freeText"/>
 						<field attribute="category"/>
 						<field attribute="codeInCategory"/>

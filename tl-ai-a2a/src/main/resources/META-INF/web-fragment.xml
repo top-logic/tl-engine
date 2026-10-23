@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-fragment_3_1.xsd"
+	version="3.1">
+	<name>tl-ai-a2a</name>
+
+	<!--
+		A2A endpoint, agent cards and artifacts. The servlet authenticates JSON-RPC calls and artifact
+		reads itself (see A2AService <authentications>); cards are public.
+	-->
+	<servlet>
+		<servlet-name>A2AServlet</servlet-name>
+		<servlet-class>com.top_logic.ai.a2a.A2AServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>A2AServlet</servlet-name>
+		<url-pattern>/a2a/*</url-pattern>
+		<url-pattern>/a2a-artifacts</url-pattern>
+		<url-pattern>/.well-known/agent-card.json</url-pattern>
+	</servlet-mapping>
+</web-fragment>

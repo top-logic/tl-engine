@@ -16,7 +16,7 @@
 		<channel name="ticket"/>
 		<channel name="result"/>
 		<derived-channel name="contextLabel"
-			expr="t -> if($t == null, &quot;&quot;, #(&quot;Referenz im Kommentar zu {0}&quot;@de, &quot;Reference in the comment on {0}&quot;@en).fill(label($t)))"
+			expr="if($context == null, &quot;&quot;, #(&quot;Referenz im Kommentar zu {0}&quot;@de, &quot;Reference in the comment on {0}&quot;@en).fill(label($context)))"
 			inputs="context"
 		/>
 	</channels>
@@ -44,7 +44,7 @@
 		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.GenericViewCommand"
-					input="ticket"
+					inputs="ticket"
 				>
 					<label>
 						<en>Insert</en>
@@ -53,9 +53,12 @@
 					<executability>
 						<null-input-disabled/>
 					</executability>
-					<execute-script function="t -> htmlObjectLink($t)"/>
-					<write-channel name="result"/>
-					<close-dialog/>
+					<execute-script function="htmlObjectLink($ticket)">
+						<with-result>
+							<write-channel name="result"/>
+							<close-dialog/>
+						</with-result>
+					</execute-script>
 				</action>
 			</button>
 			<button>

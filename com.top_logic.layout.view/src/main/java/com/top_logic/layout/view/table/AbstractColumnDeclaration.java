@@ -20,12 +20,17 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.Supplies;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
@@ -50,7 +55,26 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 *        The declaration this configuration describes.
 	 */
 	public interface Config<I extends AbstractColumnDeclaration>
-			extends ColumnDeclaration.Config<I>, ColumnExportConfig, AnnotatedConfig<TLAttributeAnnotation> {
+			extends ColumnDeclaration.Config<I>, ColumnExportConfig, AnnotatedConfig<TLAttributeAnnotation>,
+			ValueAsConfig {
+
+		/**
+		 * Name of the variable holding the member rows of a group in the {@link #getAggregate()
+		 * aggregate}.
+		 */
+		String MEMBERS_VARIABLE = "members";
+
+		/**
+		 * Name of the variable holding the first of the values the {@link #getComparator()
+		 * comparator} compares.
+		 */
+		String LEFT_VARIABLE = "left";
+
+		/**
+		 * Name of the variable holding the second of the values the {@link #getComparator()
+		 * comparator} compares.
+		 */
+		String RIGHT_VARIABLE = "right";
 
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
@@ -125,17 +149,21 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		int getWidth();
 
 		/**
-		 * What this column shows for a group of rows: a function over the member rows of the group,
-		 * whose result is displayed in the group's header row.
+		 * What this column shows for a group of rows: an expression over the member rows of the
+		 * group, whose result is displayed in the group's header row.
 		 *
 		 * <p>
-		 * The function receives the list of the rows in the group and yields one value of the kind
-		 * the column holds - the sum of a number column, the earliest of a date column - which is
-		 * then displayed exactly as a cell of that column is. Unset (the default) leaves the
-		 * column's group cell empty.
+		 * The expression sees the list of the rows in the group as the variable
+		 * {@value #MEMBERS_VARIABLE} and yields one value of the kind the column holds - the sum of
+		 * a number column, the earliest of a date column - which is then displayed exactly as a cell
+		 * of that column is. It sees the values of the inputs of the column as well, of the table
+		 * for a column without inputs of its own. Unset (the default) leaves the column's group cell
+		 * empty.
 		 * </p>
 		 */
 		@Name(AGGREGATE)
+		@Supplies(MEMBERS_VARIABLE)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getAggregate();
 
 		/**
@@ -152,21 +180,26 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		boolean getVisible();
 
 		/**
-		 * The order of this column's values: a function comparing two cell values, by which the
+		 * The order of this column's values: an expression comparing two cell values, by which the
 		 * column sorts the rows and orders the groups it forms.
 		 *
 		 * <p>
-		 * The function receives two values of the column and yields a negative number, zero, or a
-		 * positive number, as the first value comes before, together with, or after the second one
-		 * - the contract of the comparator of TL-Script's <code>sort</code> function. An order by
-		 * a key of the values is written
-		 * <code>comparator(p -&gt; $p.get(`m:Page#position`))</code>. The function is never passed
-		 * an empty value; rows without a value are ordered apart from it, a group without a value
-		 * comes last. Unset (the default) keeps the order derived from the type of the column's
-		 * values.
+		 * The expression sees the two values of the column as the variables
+		 * {@value #LEFT_VARIABLE} and {@value #RIGHT_VARIABLE} and yields a negative number, zero,
+		 * or a positive number, as the first value comes before, together with, or after the second
+		 * one - the result of TL-Script's <code>compare</code> function. An order by a key of the
+		 * values is written
+		 * <code>compare($left.get(`m:Page#position`), $right.get(`m:Page#position`))</code>. It
+		 * sees the values of the inputs of the column as well, of the table for a column without
+		 * inputs of its own. The values are never empty; rows without a value are ordered apart
+		 * from them, a group without a value comes last. Unset (the default) keeps the order derived
+		 * from the type of the column's values.
 		 * </p>
 		 */
 		@Name(COMPARATOR)
+		@Supplies(LEFT_VARIABLE)
+		@Supplies(RIGHT_VARIABLE)
+		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getComparator();
 
 	}
@@ -181,9 +214,15 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final int _width;
 
-	private final Function<List<Object>, Object> _aggregate;
+	private final QueryExecutor _aggregate;
 
-	private final Comparator<Object> _comparator;
+	private final QueryExecutor _comparator;
+
+	/**
+	 * The inputs whose values the {@link #_aggregate} and the {@link #_comparator} see, empty for
+	 * a declaration without them.
+	 */
+	private final List<InputRef> _scriptInputs;
 
 	private final boolean _hiddenByDefault;
 
@@ -206,8 +245,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_readonly = config.getReadonly();
 		_sort = config.getSort();
 		_width = config.getWidth();
-		_aggregate = aggregate(config.getAggregate());
-		_comparator = comparator(config.getComparator());
+		_aggregate = InputScript.compile(config, Config.AGGREGATE);
+		_comparator = InputScript.compile(config, Config.COMPARATOR);
+		_scriptInputs = InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE));
 		_hiddenByDefault = !config.getVisible();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
@@ -221,7 +261,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * </p>
 	 */
 	@Override
-	public List<ChannelRef> inputs() {
+	public List<InputRef> inputs() {
 		return _binding.inputs();
 	}
 
@@ -243,6 +283,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_width = 0;
 		_aggregate = null;
 		_comparator = null;
+		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
 		_export = ColumnExport.DEFAULT;
 		_annotations = null;
@@ -290,8 +331,12 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
+		List<ViewChannel> inputs = _aggregate == null && _comparator == null
+			? List.of()
+			: ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
-			_width, _readonly ? null : editing, _aggregate, _comparator, _hiddenByDefault, _export);
+			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
+			_hiddenByDefault, _export);
 	}
 
 	/**
@@ -319,41 +364,41 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * The function computing the column's group cell, {@code null} for a column that aggregates
 	 * nothing.
 	 *
-	 * <p>
-	 * The expression is compiled once here and applied to the member rows of every group.
-	 * </p>
+	 * @param executor
+	 *        The compiled {@link Config#getAggregate()}, applied to the member rows of every group.
+	 * @param inputs
+	 *        The channels of its inputs.
 	 */
-	private static Function<List<Object>, Object> aggregate(Expr expr) {
-		if (expr == null) {
+	private static Function<List<Object>, Object> aggregate(QueryExecutor executor, List<ViewChannel> inputs) {
+		if (executor == null) {
 			return null;
 		}
-		QueryExecutor executor = QueryExecutor.compile(expr);
-		return members -> executor.execute(members);
+		return members -> executor.execute(ChannelInputs.arguments(inputs, members));
 	}
 
 	/**
-	 * The order the given comparison function establishes, {@code null} for a column keeping its
+	 * The order the given comparison establishes, {@code null} for a column keeping its
 	 * type-derived order.
 	 *
-	 * <p>
-	 * The expression is compiled once here and applied to every pair of values compared.
-	 * </p>
+	 * @param executor
+	 *        The compiled {@link Config#getComparator()}, applied to every pair of values compared.
+	 * @param inputs
+	 *        The channels of its inputs.
 	 */
-	private static Comparator<Object> comparator(Expr expr) {
-		if (expr == null) {
+	private static Comparator<Object> comparator(QueryExecutor executor, List<ViewChannel> inputs) {
+		if (executor == null) {
 			return null;
 		}
-		QueryExecutor executor = QueryExecutor.compile(expr);
-		return order((value1, value2) -> executor.execute(value1, value2));
+		return order((value1, value2) -> executor.execute(ChannelInputs.arguments(inputs, value1, value2)));
 	}
 
 	/**
-	 * The order a TL-Script comparison function establishes, in the contract of the comparator of
-	 * TL-Script's <code>sort</code> function: the number it yields, taken as an integer, decides,
-	 * and no result counts as equal.
+	 * The order a TL-Script comparison establishes, in the contract of TL-Script's
+	 * <code>compare</code> function: the number it yields, taken as an integer, decides, and no
+	 * result counts as equal.
 	 *
 	 * @param comparison
-	 *        Applies the comparison function to two values.
+	 *        Applies the comparison to two values.
 	 */
 	static Comparator<Object> order(BiFunction<Object, Object, Object> comparison) {
 		return (value1, value2) -> {

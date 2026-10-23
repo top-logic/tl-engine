@@ -30,6 +30,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -305,7 +306,7 @@ public class TestVerifyIdentityAction extends TestCase {
 		ViewActionChain.run(context, List.of(guard, (ctx, value) -> {
 			_downstream.add(value);
 			return value;
-		}), input, _completions::add);
+		}), args(input), _completions::add);
 	}
 
 	/**
@@ -315,7 +316,7 @@ public class TestVerifyIdentityAction extends TestCase {
 	private void runFailing(ViewAction guard, RuntimeException failure) {
 		ViewActionChain.run(dialogContext(sink()), List.of(guard, (ctx, value) -> {
 			throw failure;
-		}), "in", _completions::add);
+		}), args("in"), _completions::add);
 	}
 
 	/** A guard whose session an identity provider answers for. */
@@ -642,5 +643,10 @@ public class TestVerifyIdentityAction extends TestCase {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestVerifyIdentityAction.class, TypeIndex.Module.INSTANCE,
 				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
+	}
+
+	/** The given value as the single argument of a chain. */
+	private static ActionArguments args(Object value) {
+		return ActionArguments.of("input", value);
 	}
 }

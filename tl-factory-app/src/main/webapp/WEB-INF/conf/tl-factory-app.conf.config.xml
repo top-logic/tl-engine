@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<configs>
+		<!-- A React-only application: its entry point is the view shell at /view/. -->
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<startPage>/view/</startPage>
+		</config>
+		<!--
+			The control application shows nothing to a session without an account: whatever URL is
+			asked for, the login page is displayed, and the requested URL is the one the user lands
+			on after the login.
+		-->
+		<config config:interface="com.top_logic.layout.view.ViewConfig"
+			login-view="login-page.view.xml"
+		/>
+	</configs>
+</application>

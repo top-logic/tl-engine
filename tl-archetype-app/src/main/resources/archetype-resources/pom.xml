@@ -71,11 +71,61 @@
 #end
 
 		<!-- TopLogic -->
+#if ($ui != "classic")
+		<!-- React UI: the views of tl-layout-view, entry point /view/. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view-contact</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-react-codeedit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-react-wysiwyg</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-wysiwyg</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-search-react</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-react-flow-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-dev-tools</artifactId>
+		</dependency>
+#if ($useSelfService == "true")
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view-selfservice</artifactId>
+		</dependency>
+#end
+#if ($useChartJS == "true")
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-react-chartjs</artifactId>
+		</dependency>
+#end
+#end
+#if ($ui != "react")
+		<!-- Classic UI: the layouts of the LayoutServlet. -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-themes-core</artifactId>
 		</dependency>
 #if ($useBPE == "true")
+		<!-- The process engine has a classic UI only. -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-bpe-app</artifactId>
@@ -128,6 +178,7 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-chart-chartjs</artifactId>
 		</dependency>
+#end
 #end
 #if ($useApiClient == "true")
 		<!-- Allow to integrate REST services through OpenAPI interface definitions. -->

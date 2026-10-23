@@ -675,23 +675,36 @@ message ChatSessionDetailResponse {
 	ConversationFeaturesDto features;
 
 	/**
-	 * What the runs of the conversation cost, by the turn of <code>turnsJson</code> each run ended
-	 * with. A run that reported no cost is not listed.
+	 * The recorded runs of the conversation, by the turn of <code>turnsJson</code> each run ended
+	 * with.
 	 */
-	repeated RunCostDto runCosts;
+	repeated RecordedRunDto runs;
 }
 
 /**
- * What one run of a conversation cost.
+ * What the history of a conversation knows about one of its runs.
  */
-message RunCostDto {
+message RecordedRunDto {
 	/** ID of the last turn the run wrote, as in <code>turnsJson</code>. */
 	string turnId;
 
-	/** The cost in {@link #currency}. */
+	/**
+	 * When the run started, in milliseconds since the epoch; zero if not recorded.
+	 *
+	 * <p>
+	 * The moment the run reported its start, which is what a live chat measures the run from: a
+	 * turn starts with the user's message, possibly before the process answering it is running.
+	 * </p>
+	 */
+	long startedAt;
+
+	/** When the run ended, in milliseconds since the epoch; zero while it has not ended. */
+	long endedAt;
+
+	/** The cost in {@link #currency}; zero without a {@link #currency}. */
 	double cost;
 
-	/** The ISO 4217 code of the currency of {@link #cost}. */
+	/** The ISO 4217 code of the currency of {@link #cost}; empty if the run reported no cost. */
 	string currency;
 }
 

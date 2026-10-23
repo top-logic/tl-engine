@@ -38,7 +38,9 @@ import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
  * <ol>
  * <li>{@link #open(String, AgentSession, AgentExecution, ExecutionHandle, ConversationLog, AgentEventListener)}
  * before the first event. A user turn the caller started in the log beforehand (the user's message)
- * belongs to this run.</li>
+ * belongs to this run. A run whose transcript is kept elsewhere, or not at all, opens with
+ * {@link #open(String, AgentSession, AgentExecution, ExecutionHandle, Supplier, AgentEventListener)}
+ * instead.</li>
  * <li>{@link #onEvent(AgentEvent)} for every event of the run, starting with
  * {@link AgentEvent.RunStarted} and ending with {@link AgentEvent.RunCompleted}. Each event is
  * recorded into the log and forwarded to the caller's listener.</li>
@@ -82,17 +84,24 @@ public final class RunRecording implements AgentEventListener {
 
 	private final ExecutionHandle _handle;
 
-	private final ConversationLog _log;
+	/**
+	 * The run's transcript as it stands, or <code>null</code> if the run keeps none.
+	 */
+	private final Supplier<String> _transcript;
 
-	private final int _turnsBefore;
+	/**
+	 * Fixes the run's final transcript when the run ends; the result is asked when the row is
+	 * written.
+	 */
+	private final Supplier<Supplier<String>> _finalTranscript;
 
 	private RunRecording(AgentEventListener listener, ExecutionRecorder recorder, ExecutionHandle handle,
-			ConversationLog log, int turnsBefore) {
+			Supplier<String> transcript, Supplier<Supplier<String>> finalTranscript) {
 		_listener = listener;
 		_recorder = recorder;
 		_handle = handle;
-		_log = log;
-		_turnsBefore = turnsBefore;
+		_transcript = transcript;
+		_finalTranscript = finalTranscript;
 	}
 
 	/**
@@ -126,14 +135,59 @@ public final class RunRecording implements AgentEventListener {
 			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
 			: 0;
 
+		if (log == null) {
+			return create(agentName, session, parentExecution, runHandle, null, () -> () -> null, downstream);
+		}
+		return create(agentName, session, parentExecution, runHandle, () -> transcriptOf(log, turnsBefore),
+			() -> finalTranscript(log, turnsBefore), downstream);
+	}
+
+	/**
+	 * Opens the recording of a run that is about to start and whose transcript is not recorded from
+	 * its events into a {@link ConversationLog}.
+	 *
+	 * <p>
+	 * The events of the run reach {@code listener} unchanged. The transcript written with the row is
+	 * the one {@code transcript} supplies: while the run waits for a person, and when the run ends.
+	 * </p>
+	 *
+	 * @param agentName
+	 *        See {@link #open(String, AgentSession, AgentExecution, ExecutionHandle, ConversationLog, AgentEventListener)}.
+	 * @param session
+	 *        See {@link #open(String, AgentSession, AgentExecution, ExecutionHandle, ConversationLog, AgentEventListener)}.
+	 * @param parentExecution
+	 *        See {@link #open(String, AgentSession, AgentExecution, ExecutionHandle, ConversationLog, AgentEventListener)}.
+	 * @param handle
+	 *        See {@link #open(String, AgentSession, AgentExecution, ExecutionHandle, ConversationLog, AgentEventListener)}.
+	 * @param transcript
+	 *        The run's serialized transcript as it stands, asked when the run ends; <code>null</code>
+	 *        keeps no transcript.
+	 * @param listener
+	 *        Receives every event of the run after it is recorded; may be <code>null</code>.
+	 */
+	public static RunRecording open(String agentName, AgentSession session, AgentExecution parentExecution,
+			ExecutionHandle handle, Supplier<String> transcript, AgentEventListener listener) {
+		ExecutionHandle runHandle = handle != null ? handle : new ExecutionHandle();
+		Supplier<Supplier<String>> finalTranscript = transcript == null
+			? () -> () -> null
+			: () -> {
+				String text = transcript.get();
+				return () -> text;
+			};
+		return create(agentName, session, parentExecution, runHandle, transcript, finalTranscript, listener);
+	}
+
+	private static RunRecording create(String agentName, AgentSession session, AgentExecution parentExecution,
+			ExecutionHandle handle, Supplier<String> transcript, Supplier<Supplier<String>> finalTranscript,
+			AgentEventListener downstream) {
 		ExecutionRecorder recorder = null;
 		if (session != null) {
-			recorder = new ExecutionRecorder(session, agentName, parentExecution, runHandle, downstream,
-				log == null ? null : () -> transcriptOf(log, turnsBefore));
+			recorder = new ExecutionRecorder(session, agentName, parentExecution, handle, downstream, transcript);
 		} else {
 			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.", RunRecording.class);
 		}
-		return new RunRecording(recorder != null ? recorder : downstream, recorder, runHandle, log, turnsBefore);
+		return new RunRecording(recorder != null ? recorder : downstream, recorder, handle, transcript,
+			finalTranscript);
 	}
 
 	@Override
@@ -164,7 +218,7 @@ public final class RunRecording implements AgentEventListener {
 	 */
 	public void finish(String response) {
 		if (_recorder != null) {
-			_recorder.completeWithLatestTranscript(finalTranscript(), response, null);
+			_recorder.completeWithLatestTranscript(_finalTranscript.get(), response, null);
 		}
 	}
 
@@ -182,8 +236,16 @@ public final class RunRecording implements AgentEventListener {
 	 */
 	public void fail(Throwable failure) {
 		if (_recorder != null) {
-			_recorder.complete(transcriptOf(_log, _turnsBefore), failure);
+			_recorder.complete(_transcript != null ? _transcript.get() : null, failure);
 		}
+	}
+
+	/**
+	 * The id of the recorded run, as its {@link AgentEvent.RunStarted} named it; <code>null</code>
+	 * before that event and when the run is not recorded.
+	 */
+	public String runId() {
+		return _recorder != null ? _recorder.runId() : null;
 	}
 
 	/**
@@ -249,11 +311,8 @@ public final class RunRecording implements AgentEventListener {
 	 *
 	 * @see ExecutionRecorder#completeWithLatestTranscript(Supplier, String, Throwable)
 	 */
-	private Supplier<String> finalTranscript() {
-		if (_log == null) {
-			return () -> null;
-		}
-		List<Turn> runTurns = List.copyOf(runTurns(_log, _turnsBefore));
+	private static Supplier<String> finalTranscript(ConversationLog log, int turnsBefore) {
+		List<Turn> runTurns = List.copyOf(runTurns(log, turnsBefore));
 		return () -> serialize(runTurns);
 	}
 
@@ -264,12 +323,9 @@ public final class RunRecording implements AgentEventListener {
 
 	/**
 	 * Serializes the turns the run appended to the log, open turn included, or <code>null</code> if
-	 * there is no log or serialization fails.
+	 * serialization fails.
 	 */
 	private static String transcriptOf(ConversationLog log, int turnsBefore) {
-		if (log == null) {
-			return null;
-		}
 		return serialize(runTurns(log, turnsBefore));
 	}
 

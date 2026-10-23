@@ -35,6 +35,24 @@ describe('a persisted turn', () => {
     expect(unknown && 'cost' in unknown ? unknown.cost : undefined).toBeUndefined()
   })
 
+  /**
+   * A restored run lasts what it lasted live: from the moment it reported its start to its end, not
+   * from the user's message, before which an external process may have been starting.
+   */
+  it('measures a restored run from its recorded start', () => {
+    const json = transcript([{ id: 'a1', type: 'text', timestamp: 6500, textData: { text: 'Erledigt.' } }])
+    const measured = turnsJsonToMessages(json, [{ turnId: 't1', startedAt: 4100, endedAt: 6600 }])
+    const meta = measured.find((m) => m.type === 'run_meta')
+    expect(meta && meta.type === 'run_meta' ? [meta.startedAt, meta.durationMs] : []).toEqual([4100, 2500])
+
+    // Without recorded times the turn's own stamps are what there is.
+    const unrecorded = turnsJsonToMessages(json, [{ turnId: 't1', cost: 1, currency: 'USD' }])
+    const fallback = unrecorded.find((m) => m.type === 'run_meta')
+    expect(fallback && fallback.type === 'run_meta' ? [fallback.startedAt, fallback.durationMs] : []).toEqual([
+      1000, 5500,
+    ])
+  })
+
   it('restores a rolled-back transaction as a notice of that turn', () => {
     const messages = turnsJsonToMessages(
       transcript([

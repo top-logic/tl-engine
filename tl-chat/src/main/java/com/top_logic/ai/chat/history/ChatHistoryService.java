@@ -218,24 +218,40 @@ public class ChatHistoryService {
 	}
 
 	/**
-	 * What the recorded runs of a conversation cost, in US dollars, by the ID of the last turn each
-	 * of them wrote. A run that reported no cost, and a subagent's run, are not included.
+	 * What the history of a conversation knows about one of its recorded runs.
+	 *
+	 * @param startedAt
+	 *        When the run started - when its {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.RunStarted}
+	 *        was recorded, which is after whatever the run's producer did before (starting an
+	 *        external process, say); <code>null</code> if not recorded.
+	 * @param endedAt
+	 *        When the run's end was recorded; <code>null</code> for a run that has not ended.
+	 * @param cost
+	 *        What the run cost, in US dollars; <code>null</code> if it reported no cost.
 	 */
-	public static Map<String, Money> runCosts(TLObject session) {
-		Map<String, Money> result = new HashMap<>();
+	public record RecordedRun(Date startedAt, Date endedAt, Money cost) {
+		// Pure data.
+	}
+
+	/**
+	 * The recorded runs of a conversation, by the ID of the last turn each of them wrote. A
+	 * subagent's run, and a run that wrote no turn, are not included.
+	 */
+	public static Map<String, RecordedRun> recordedRuns(TLObject session) {
+		Map<String, RecordedRun> result = new HashMap<>();
 		try {
 			for (AgentExecution execution : store().executionsOf((AgentSession) session)) {
-				Double cost = execution.getCost();
 				String transcript = execution.getTranscript();
-				if (execution.getParentExecution() != null || cost == null || transcript == null
-					|| transcript.isEmpty()) {
+				if (execution.getParentExecution() != null || transcript == null || transcript.isEmpty()) {
 					continue;
 				}
 				try {
 					List<PersistedTurn> turns = PersistedConversationV2
 						.readPersistedConversationV2(new JsonReader(new StringR(transcript))).getTurns();
 					if (!turns.isEmpty()) {
-						result.put(turns.get(turns.size() - 1).getId(), new Money(cost.doubleValue(), Money.USD));
+						Double cost = execution.getCost();
+						result.put(turns.get(turns.size() - 1).getId(), new RecordedRun(execution.getStartedAt(),
+							execution.getEndedAt(), cost == null ? null : new Money(cost.doubleValue(), Money.USD)));
 					}
 				} catch (IOException | RuntimeException ex) {
 					Logger.warn("Skipping unreadable transcript of run " + execution.getRunId()
@@ -243,7 +259,7 @@ public class ChatHistoryService {
 				}
 			}
 		} catch (RuntimeException ex) {
-			Logger.error("Failed to read the costs of a conversation: " + ex.getMessage(), ex,
+			Logger.error("Failed to read the runs of a conversation: " + ex.getMessage(), ex,
 				ChatHistoryService.class);
 		}
 		return result;

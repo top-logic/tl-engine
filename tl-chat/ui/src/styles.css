@@ -682,9 +682,10 @@
  * The configured content is the panel's own flex child, and is given the panel's bounded height.
  *
  * The engine's fill contract gives a control the class `tlFill` only while it or a child reports
- * filling, and the dock body is no fill host of that contract. A `<chat>` (a `tl-stack`) or a
- * `<panel>` placed here therefore takes the body's height by this rule rather than by its own
- * report, and the conversation scrolls inside it instead of growing with its transcript.
+ * filling, and the dock body ends that chain (a `FillBarrier`): it is laid out apart from the page,
+ * which must not react to what fills inside. A `<chat>` (a `tl-stack`), a stack combining several
+ * children or a `<panel>` placed here therefore takes the body's height by this rule rather than by
+ * its own report, and the conversation scrolls inside it instead of growing with its transcript.
  */
 .tl-chat-dock__body > .tl-stack,
 .tl-chat-dock__body > .tl-panel {

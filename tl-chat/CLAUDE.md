@@ -531,7 +531,7 @@ Rules to know when touching this:
 **Browser support.** `container-type`, `@container` and the container query units (`cqi`) are
 Baseline **Widely available**, across browsers since **February 2023** (MDN). They raise no floor
 this product did not already have: the engine's React layer and this application's own shell are
-written with `:has()` - `.tlStack:has(> .tlPanel--fill)`, `button:has(.bi-moon-stars)` - which is
+written with `:has()` - `.tl-item:has(> .tlFill)`, `button:has(.bi-moon-stars)` - which is
 Baseline Widely available only since **December 2023**, ten months later. The repo's own browser
 tests run current Chromium (`tools/web`, Playwright); there is no listed minimum browser beyond
 that.
@@ -868,9 +868,10 @@ conversation and nothing in the product says so.
 ```
 
 `<chat>` is a `<stack>` that carries an id: same `direction`, `gap` and `align`, no chrome of its
-own, and any element may sit inside it. **Put it where the stack was** rather than adding a level:
-the engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a `<panel fill="true">`
-that stops being a direct child of the page's stack loses its height.
+own, and any element may sit inside it. **Put it where the stack was** rather than adding a level
+that does nothing. Like every stack it takes part in the view layer's fill contract as a container
+(`useFillHost`): a `<panel fill="true">` inside makes the `<chat>` fill its own container, however
+deep it is nested.
 
 That panel is there for the height alone and carries no title. Its header, which the engine draws
 anyway (padding, a tinted band and a border line), is hidden by a rule in `styles.css` for as long
@@ -1533,7 +1534,7 @@ a mounting point, nothing more: the dock is `position: fixed`, so it takes no ro
 
 | Surface | Kind | |
 |--|--|--|
-| *(content)* | nested elements | Write **one**. The engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a second child adds a wrapping stack and the conversation loses its bounded height. |
+| *(content)* | nested elements | Normally one `<chat>`. The dock body ends the view layer's fill chain (a `FillBarrier`) and its stylesheet stretches a `<chat>`, a `<stack>` or a `<panel>` over the panel, so the conversation's `<panel fill="true">` takes the panel's height and scrolls inside it. Several children are combined into one stack (`ContentControls`), which is stretched alike; the filling ones among them share the height the others leave. |
 | `chat-id` | String, `@Nullable` | **Repeated**, not inherited - see above. Needed only so the launcher can read `badgeTotal` / `badgeSeen` / `busy` from the browser store. |
 | `icon` | ThemeImage | The launcher's glyph, default `css:bi bi-chat-dots`. An open dock shows a close cross instead. |
 | `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |

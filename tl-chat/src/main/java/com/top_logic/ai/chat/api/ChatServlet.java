@@ -50,7 +50,7 @@ import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionsResponse;
-import com.top_logic.ai.chat.api.messages.RunCostDto;
+import com.top_logic.ai.chat.api.messages.RecordedRunDto;
 import com.top_logic.ai.chat.api.messages.SubagentBudgetDto;
 import com.top_logic.ai.chat.api.messages.SubagentJobDto;
 import com.top_logic.ai.chat.api.messages.SubagentListResponse;
@@ -1726,7 +1726,7 @@ public class ChatServlet extends TopLogicServlet {
 				}
 				response.setTurnsJson(serializeTurns(conv.getTurns()));
 				describeLastPrompt(response, conv.getTurns());
-				describeRunCosts(response, session, conv.getTurns());
+				describeRuns(response, session, conv.getTurns());
 			}
 			if (backend != null) {
 				// The model of a backend is not one of this application's: the window is the one the
@@ -2164,25 +2164,30 @@ public class ChatServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Adds what the recorded runs of the conversation cost, by the turn each of them ended with, in
-	 * the currency the chat shows costs in ({@link CostConversion}).
+	 * Adds the recorded runs of the conversation, by the turn each of them ended with: when they
+	 * started and ended, and what they cost in the currency the chat shows costs in
+	 * ({@link CostConversion}).
 	 */
-	private static void describeRunCosts(ChatSessionDetailResponse response, TLObject session,
+	private static void describeRuns(ChatSessionDetailResponse response, TLObject session,
 			List<PersistedTurn> turns) {
-		Map<String, Money> costs = ChatHistoryService.runCosts(session);
-		if (costs.isEmpty()) {
+		Map<String, ChatHistoryService.RecordedRun> runs = ChatHistoryService.recordedRuns(session);
+		if (runs.isEmpty()) {
 			return;
 		}
 		for (PersistedTurn turn : turns) {
-			Money cost = costs.get(turn.getId());
-			if (cost == null) {
+			ChatHistoryService.RecordedRun run = runs.get(turn.getId());
+			if (run == null) {
 				continue;
 			}
-			Money shown = CostConversion.shown(cost, null);
-			response.addRunCost(RunCostDto.create()
+			RecordedRunDto dto = RecordedRunDto.create()
 				.setTurnId(turn.getId())
-				.setCost(shown.amount())
-				.setCurrency(shown.currency()));
+				.setStartedAt(run.startedAt() == null ? 0 : run.startedAt().getTime())
+				.setEndedAt(run.endedAt() == null ? 0 : run.endedAt().getTime());
+			if (run.cost() != null) {
+				Money shown = CostConversion.shown(run.cost(), null);
+				dto.setCost(shown.amount()).setCurrency(shown.currency());
+			}
+			response.addRun(dto);
 		}
 	}
 

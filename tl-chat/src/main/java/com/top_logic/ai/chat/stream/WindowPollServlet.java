@@ -82,7 +82,6 @@ public class WindowPollServlet extends HttpServlet {
 			response.sendError(HttpServletResponse.SC_GONE, "Unknown window.");
 			return;
 		}
-		registry.noteActivity(session);
 		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
 		PolledWindow window = PolledWindow.create(queue);
 		response.setHeader("X-TL-Window-Token", window.token());

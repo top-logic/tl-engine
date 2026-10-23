@@ -2058,7 +2058,7 @@ export class ChatStore {
       const detail = await loadSession(at, sessionId)
       // The user may have moved to another chat while this was in flight.
       if (this.state.sessionId !== sessionId) return
-      this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson, detail.runCosts) })
+      this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson, detail.runs) })
     } catch {
       // Best effort: what is on screen is a turn of this conversation either way.
     }
@@ -2147,7 +2147,7 @@ export class ChatStore {
         this.patch({
           sessionId: id,
           sessions: withTitle(this.state.sessions, id, detail.title),
-          messages: turnsJsonToMessages(detail.turnsJson, detail.runCosts),
+          messages: turnsJsonToMessages(detail.turnsJson, detail.runs),
           feedback: detail.feedback ?? [],
           features: readFeatures(detail.features),
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),

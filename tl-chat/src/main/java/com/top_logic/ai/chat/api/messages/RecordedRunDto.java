@@ -1,22 +1,28 @@
 package com.top_logic.ai.chat.api.messages;
 
 /**
- * What one run of a conversation cost.
+ * What the history of a conversation knows about one of its runs.
  */
-public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
+public class RecordedRunDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
 	/**
-	 * Creates a {@link com.top_logic.ai.chat.api.messages.RunCostDto} instance.
+	 * Creates a {@link com.top_logic.ai.chat.api.messages.RecordedRunDto} instance.
 	 */
-	public static com.top_logic.ai.chat.api.messages.RunCostDto create() {
-		return new com.top_logic.ai.chat.api.messages.RunCostDto();
+	public static com.top_logic.ai.chat.api.messages.RecordedRunDto create() {
+		return new com.top_logic.ai.chat.api.messages.RecordedRunDto();
 	}
 
-	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.RunCostDto} type in JSON format. */
-	public static final String RUN_COST_DTO__TYPE = "RunCostDto";
+	/** Identifier for the {@link com.top_logic.ai.chat.api.messages.RecordedRunDto} type in JSON format. */
+	public static final String RECORDED_RUN_DTO__TYPE = "RecordedRunDto";
 
 	/** @see #getTurnId() */
 	public static final String TURN_ID__PROP = "turnId";
+
+	/** @see #getStartedAt() */
+	public static final String STARTED_AT__PROP = "startedAt";
+
+	/** @see #getEndedAt() */
+	public static final String ENDED_AT__PROP = "endedAt";
 
 	/** @see #getCost() */
 	public static final String COST__PROP = "cost";
@@ -26,16 +32,20 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 
 	private String _turnId = "";
 
+	private long _startedAt = 0L;
+
+	private long _endedAt = 0L;
+
 	private double _cost = 0.0d;
 
 	private String _currency = "";
 
 	/**
-	 * Creates a {@link RunCostDto} instance.
+	 * Creates a {@link RecordedRunDto} instance.
 	 *
-	 * @see com.top_logic.ai.chat.api.messages.RunCostDto#create()
+	 * @see com.top_logic.ai.chat.api.messages.RecordedRunDto#create()
 	 */
-	protected RunCostDto() {
+	protected RecordedRunDto() {
 		super();
 	}
 
@@ -49,7 +59,7 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	/**
 	 * @see #getTurnId()
 	 */
-	public com.top_logic.ai.chat.api.messages.RunCostDto setTurnId(String value) {
+	public com.top_logic.ai.chat.api.messages.RecordedRunDto setTurnId(String value) {
 		internalSetTurnId(value);
 		return this;
 	}
@@ -60,7 +70,52 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	}
 
 	/**
-	 * The cost in {@link #getCurrency()}.
+	 * When the run started, in milliseconds since the epoch; zero if not recorded.
+	 *
+	 * <p>
+	 * The moment the run reported its start, which is what a live chat measures the run from: a
+	 * turn starts with the user's message, possibly before the process answering it is running.
+	 * </p>
+	 */
+	public final long getStartedAt() {
+		return _startedAt;
+	}
+
+	/**
+	 * @see #getStartedAt()
+	 */
+	public com.top_logic.ai.chat.api.messages.RecordedRunDto setStartedAt(long value) {
+		internalSetStartedAt(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStartedAt()} without chain call utility. */
+	protected final void internalSetStartedAt(long value) {
+		_startedAt = value;
+	}
+
+	/**
+	 * When the run ended, in milliseconds since the epoch; zero while it has not ended.
+	 */
+	public final long getEndedAt() {
+		return _endedAt;
+	}
+
+	/**
+	 * @see #getEndedAt()
+	 */
+	public com.top_logic.ai.chat.api.messages.RecordedRunDto setEndedAt(long value) {
+		internalSetEndedAt(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getEndedAt()} without chain call utility. */
+	protected final void internalSetEndedAt(long value) {
+		_endedAt = value;
+	}
+
+	/**
+	 * The cost in {@link #getCurrency()}; zero without a {@link #getCurrency()}.
 	 */
 	public final double getCost() {
 		return _cost;
@@ -69,7 +124,7 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	/**
 	 * @see #getCost()
 	 */
-	public com.top_logic.ai.chat.api.messages.RunCostDto setCost(double value) {
+	public com.top_logic.ai.chat.api.messages.RecordedRunDto setCost(double value) {
 		internalSetCost(value);
 		return this;
 	}
@@ -80,7 +135,7 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	}
 
 	/**
-	 * The ISO 4217 code of the currency of {@link #getCost()}.
+	 * The ISO 4217 code of the currency of {@link #getCost()}; empty if the run reported no cost.
 	 */
 	public final String getCurrency() {
 		return _currency;
@@ -89,7 +144,7 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	/**
 	 * @see #getCurrency()
 	 */
-	public com.top_logic.ai.chat.api.messages.RunCostDto setCurrency(String value) {
+	public com.top_logic.ai.chat.api.messages.RecordedRunDto setCurrency(String value) {
 		internalSetCurrency(value);
 		return this;
 	}
@@ -101,13 +156,15 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 
 	@Override
 	public String jsonType() {
-		return RUN_COST_DTO__TYPE;
+		return RECORDED_RUN_DTO__TYPE;
 	}
 
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			TURN_ID__PROP, 
+			STARTED_AT__PROP, 
+			ENDED_AT__PROP, 
 			COST__PROP, 
 			CURRENCY__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
@@ -135,6 +192,8 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	public Object get(String field) {
 		switch (field) {
 			case TURN_ID__PROP: return getTurnId();
+			case STARTED_AT__PROP: return getStartedAt();
+			case ENDED_AT__PROP: return getEndedAt();
 			case COST__PROP: return getCost();
 			case CURRENCY__PROP: return getCurrency();
 			default: return null;
@@ -145,14 +204,16 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	public void set(String field, Object value) {
 		switch (field) {
 			case TURN_ID__PROP: internalSetTurnId((String) value); break;
+			case STARTED_AT__PROP: internalSetStartedAt((long) value); break;
+			case ENDED_AT__PROP: internalSetEndedAt((long) value); break;
 			case COST__PROP: internalSetCost((double) value); break;
 			case CURRENCY__PROP: internalSetCurrency((String) value); break;
 		}
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static com.top_logic.ai.chat.api.messages.RunCostDto readRunCostDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
-		com.top_logic.ai.chat.api.messages.RunCostDto result = new com.top_logic.ai.chat.api.messages.RunCostDto();
+	public static com.top_logic.ai.chat.api.messages.RecordedRunDto readRecordedRunDto(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.ai.chat.api.messages.RecordedRunDto result = new com.top_logic.ai.chat.api.messages.RecordedRunDto();
 		result.readContent(in);
 		return result;
 	}
@@ -167,6 +228,10 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 		super.writeFields(out);
 		out.name(TURN_ID__PROP);
 		out.value(getTurnId());
+		out.name(STARTED_AT__PROP);
+		out.value(getStartedAt());
+		out.name(ENDED_AT__PROP);
+		out.value(getEndedAt());
 		out.name(COST__PROP);
 		out.value(getCost());
 		out.name(CURRENCY__PROP);
@@ -177,6 +242,8 @@ public class RunCostDto extends de.haumacher.msgbuf.data.AbstractDataObject impl
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case TURN_ID__PROP: setTurnId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case STARTED_AT__PROP: setStartedAt(in.nextLong()); break;
+			case ENDED_AT__PROP: setEndedAt(in.nextLong()); break;
 			case COST__PROP: setCost(in.nextDouble()); break;
 			case CURRENCY__PROP: setCurrency(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);

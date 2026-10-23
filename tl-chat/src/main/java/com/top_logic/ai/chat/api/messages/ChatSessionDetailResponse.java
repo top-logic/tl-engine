@@ -54,8 +54,8 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	/** @see #getFeatures() */
 	public static final String FEATURES__PROP = "features";
 
-	/** @see #getRunCosts() */
-	public static final String RUN_COSTS__PROP = "runCosts";
+	/** @see #getRuns() */
+	public static final String RUNS__PROP = "runs";
 
 	private String _id = "";
 
@@ -83,7 +83,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 
 	private com.top_logic.ai.chat.api.messages.ConversationFeaturesDto _features = null;
 
-	private final java.util.List<com.top_logic.ai.chat.api.messages.RunCostDto> _runCosts = new java.util.ArrayList<>();
+	private final java.util.List<com.top_logic.ai.chat.api.messages.RecordedRunDto> _runs = new java.util.ArrayList<>();
 
 	/**
 	 * Creates a {@link ChatSessionDetailResponse} instance.
@@ -419,46 +419,46 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 	}
 
 	/**
-	 * What the runs of the conversation cost, by the turn of <code>turnsJson</code> each run ended
-	 * with. A run that reported no cost is not listed.
+	 * The recorded runs of the conversation, by the turn of <code>turnsJson</code> each run ended
+	 * with.
 	 */
-	public final java.util.List<com.top_logic.ai.chat.api.messages.RunCostDto> getRunCosts() {
-		return _runCosts;
+	public final java.util.List<com.top_logic.ai.chat.api.messages.RecordedRunDto> getRuns() {
+		return _runs;
 	}
 
 	/**
-	 * @see #getRunCosts()
+	 * @see #getRuns()
 	 */
-	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setRunCosts(java.util.List<? extends com.top_logic.ai.chat.api.messages.RunCostDto> value) {
-		internalSetRunCosts(value);
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse setRuns(java.util.List<? extends com.top_logic.ai.chat.api.messages.RecordedRunDto> value) {
+		internalSetRuns(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getRunCosts()} without chain call utility. */
-	protected final void internalSetRunCosts(java.util.List<? extends com.top_logic.ai.chat.api.messages.RunCostDto> value) {
-		if (value == null) throw new IllegalArgumentException("Property 'runCosts' cannot be null.");
-		_runCosts.clear();
-		_runCosts.addAll(value);
+	/** Internal setter for {@link #getRuns()} without chain call utility. */
+	protected final void internalSetRuns(java.util.List<? extends com.top_logic.ai.chat.api.messages.RecordedRunDto> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'runs' cannot be null.");
+		_runs.clear();
+		_runs.addAll(value);
 	}
 
 	/**
-	 * Adds a value to the {@link #getRunCosts()} list.
+	 * Adds a value to the {@link #getRuns()} list.
 	 */
-	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse addRunCost(com.top_logic.ai.chat.api.messages.RunCostDto value) {
-		internalAddRunCost(value);
+	public com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse addRun(com.top_logic.ai.chat.api.messages.RecordedRunDto value) {
+		internalAddRun(value);
 		return this;
 	}
 
-	/** Implementation of {@link #addRunCost(com.top_logic.ai.chat.api.messages.RunCostDto)} without chain call utility. */
-	protected final void internalAddRunCost(com.top_logic.ai.chat.api.messages.RunCostDto value) {
-		_runCosts.add(value);
+	/** Implementation of {@link #addRun(com.top_logic.ai.chat.api.messages.RecordedRunDto)} without chain call utility. */
+	protected final void internalAddRun(com.top_logic.ai.chat.api.messages.RecordedRunDto value) {
+		_runs.add(value);
 	}
 
 	/**
-	 * Removes a value from the {@link #getRunCosts()} list.
+	 * Removes a value from the {@link #getRuns()} list.
 	 */
-	public final void removeRunCost(com.top_logic.ai.chat.api.messages.RunCostDto value) {
-		_runCosts.remove(value);
+	public final void removeRun(com.top_logic.ai.chat.api.messages.RecordedRunDto value) {
+		_runs.remove(value);
 	}
 
 	@Override
@@ -482,7 +482,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			LAST_COMPOSITION__PROP, 
 			IN_FLIGHT__PROP, 
 			FEATURES__PROP, 
-			RUN_COSTS__PROP);
+			RUNS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -520,7 +520,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_COMPOSITION__PROP: return getLastComposition();
 			case IN_FLIGHT__PROP: return getInFlight();
 			case FEATURES__PROP: return getFeatures();
-			case RUN_COSTS__PROP: return getRunCosts();
+			case RUNS__PROP: return getRuns();
 			default: return null;
 		}
 	}
@@ -541,7 +541,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_COMPOSITION__PROP: internalSetLastComposition((com.top_logic.ai.chat.api.messages.ContextCompositionEvent) value); break;
 			case IN_FLIGHT__PROP: internalSetInFlight((com.top_logic.ai.chat.api.messages.InFlightRunDto) value); break;
 			case FEATURES__PROP: internalSetFeatures((com.top_logic.ai.chat.api.messages.ConversationFeaturesDto) value); break;
-			case RUN_COSTS__PROP: internalSetRunCosts(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.RunCostDto.class, value)); break;
+			case RUNS__PROP: internalSetRuns(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.RecordedRunDto.class, value)); break;
 		}
 	}
 
@@ -598,9 +598,9 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			out.name(FEATURES__PROP);
 			getFeatures().writeTo(out);
 		}
-		out.name(RUN_COSTS__PROP);
+		out.name(RUNS__PROP);
 		out.beginArray();
-		for (com.top_logic.ai.chat.api.messages.RunCostDto x : getRunCosts()) {
+		for (com.top_logic.ai.chat.api.messages.RecordedRunDto x : getRuns()) {
 			x.writeTo(out);
 		}
 		out.endArray();
@@ -631,14 +631,14 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 			case LAST_COMPOSITION__PROP: setLastComposition(com.top_logic.ai.chat.api.messages.ContextCompositionEvent.readContextCompositionEvent(in)); break;
 			case IN_FLIGHT__PROP: setInFlight(com.top_logic.ai.chat.api.messages.InFlightRunDto.readInFlightRunDto(in)); break;
 			case FEATURES__PROP: setFeatures(com.top_logic.ai.chat.api.messages.ConversationFeaturesDto.readConversationFeaturesDto(in)); break;
-			case RUN_COSTS__PROP: {
-				java.util.List<com.top_logic.ai.chat.api.messages.RunCostDto> newValue = new java.util.ArrayList<>();
+			case RUNS__PROP: {
+				java.util.List<com.top_logic.ai.chat.api.messages.RecordedRunDto> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					newValue.add(com.top_logic.ai.chat.api.messages.RunCostDto.readRunCostDto(in));
+					newValue.add(com.top_logic.ai.chat.api.messages.RecordedRunDto.readRecordedRunDto(in));
 				}
 				in.endArray();
-				setRunCosts(newValue);
+				setRuns(newValue);
 			}
 			break;
 			default: super.readField(in, field);

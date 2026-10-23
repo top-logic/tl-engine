@@ -1,4 +1,4 @@
-import { React, rootClassName, TLChild, useTLState } from 'tl-react-bridge'
+import { FillBarrier, React, rootClassName, TLChild, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
@@ -167,7 +167,9 @@ export function TLChatDock({ controlId }: TLCellProps) {
         hidden={!open}
       >
         <div className="tl-chat-dock__body">
-          {content != null && settled ? <TLChild control={content} /> : null}
+          <FillBarrier>
+            {content != null && settled ? <TLChild control={content} /> : null}
+          </FillBarrier>
         </div>
       </div>
 

@@ -314,6 +314,30 @@ public class TestTileFrameRouteParticipant extends TestCase {
 	}
 
 	/**
+	 * Tests that the content of a frame keeps out of the title exactly while the frame naming the
+	 * page has a route declared the final title.
+	 */
+	public void testFinalTitleFrameKeepsContentOutOfTitle() {
+		assertTrue("A stack showing its initial view names no page and keeps nothing out of the title.",
+			participant(finalTitleScope(path())).titlesContent());
+
+		ViewChannel person = path(frame(PERSON_VIEW, "1"));
+		assertTrue("By default, what a frame displays refines the title.",
+			participant(scope(person)).titlesContent());
+		assertFalse("The content of a frame declared the final title renamed the page.",
+			participant(finalTitleScope(person)).titlesContent());
+
+		ViewChannel order = path(frame(PERSON_VIEW, "1"), frame(ORDER_VIEW, "7"));
+		assertTrue("The order frame names the page, and its route is not declared the final title.",
+			participant(finalTitleScope(order)).titlesContent());
+
+		ViewChannel unlabeled = path(frame(PERSON_VIEW, "1"),
+			new TileFrame(ORDER_VIEW, null, Map.of("order", "7")));
+		assertFalse("The person frame names the page, the unlabeled frame above leaves it to it.",
+			participant(finalTitleScope(unlabeled)).titlesContent());
+	}
+
+	/**
 	 * Tests that a frame pushed with a label of its own keeps it.
 	 */
 	public void testPushedLabelWinsOverDeclaration() {
@@ -357,12 +381,14 @@ public class TestTileFrameRouteParticipant extends TestCase {
 		assertNotNull("The value is named in the URL by an expression.", param.getExpr());
 		assertNotNull("The name in the URL is resolved back by an expression.", param.getReverse());
 		assertEquals(ScriptedTileLabel.class, personFrame.getLabel().getImplementationClass());
+		assertTrue("The label of the person frame is the final title.", personFrame.getFinalTitle());
 
 		FrameRouteConfig noteFrame = stack.getFrames().get(1);
 		assertEquals("note", noteFrame.getRoute());
 		assertEquals("A frame without a parameter is named by static segments alone.",
 			List.of(), noteFrame.getParams());
 		assertNull("A frame may be named by whoever pushes it.", noteFrame.getLabel());
+		assertFalse("By default, what a frame displays refines the title.", noteFrame.getFinalTitle());
 	}
 
 	/**
@@ -375,6 +401,22 @@ public class TestTileFrameRouteParticipant extends TestCase {
 				toUrl("person", value -> value == null ? null : "p-" + value),
 				fromUrl("person", text -> known(text, "p-")),
 				label("Person ", "person")),
+			new FrameRoute(ORDER_VIEW, "order/:order",
+				toUrl("order", value -> value == null ? null : "o-" + value),
+				fromUrl("order", text -> known(text, "o-")),
+				label("Order ", "order"))));
+	}
+
+	/**
+	 * The {@link #scope(ViewChannel) stack of the tests} with the route of the person frame declared
+	 * the final title.
+	 */
+	private static TileStackScope finalTitleScope(ViewChannel path) {
+		return new TileStackScope(path, List.of(
+			new FrameRoute(PERSON_VIEW, "person/:person",
+				toUrl("person", value -> value == null ? null : "p-" + value),
+				fromUrl("person", text -> known(text, "p-")),
+				label("Person ", "person"), true),
 			new FrameRoute(ORDER_VIEW, "order/:order",
 				toUrl("order", value -> value == null ? null : "o-" + value),
 				fromUrl("order", text -> known(text, "o-")),

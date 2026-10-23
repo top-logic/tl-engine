@@ -9,6 +9,7 @@
 	<param-bindings>
 		<bind
 			channel="ticketId"
+			final-title="true"
 			prefix="ticket"
 			route-param="ticket"
 		>

@@ -166,6 +166,35 @@ public interface RoutingParticipant {
 		return true;
 	}
 
+	/**
+	 * Whether the participants inside what this participant displays refine the title of the page.
+	 *
+	 * <p>
+	 * The page is titled after the innermost participant of the display that reports a
+	 * {@link #activeRouteLabel() label}. Where this participant names the page completely - a frame
+	 * showing an object, whose tabs only divide what is shown of it - the label of a tab inside it
+	 * would rename the page after a part of it: the browser tab would read "Details" instead of the
+	 * name of the object. A participant answering {@code false} keeps the labels of the participants
+	 * inside its content out of the title, which then is its own label or, where it reports none,
+	 * whatever the participants around it name.
+	 * </p>
+	 *
+	 * <p>
+	 * The URL is not affected: the participants inside still contribute their segments and are
+	 * offered the segments of a URL that is opened.
+	 * </p>
+	 *
+	 * <p>
+	 * The default is {@code true}: what is displayed inside a participant names the page more
+	 * precisely than the participant itself.
+	 * </p>
+	 *
+	 * @see RouteManager#setTitlingParticipants(java.util.function.Supplier)
+	 */
+	default boolean titlesContent() {
+		return true;
+	}
+
     /**
      * Registers a {@link RouteChangeListener} to be notified when this participant's active route
      * changes.

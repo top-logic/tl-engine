@@ -56,6 +56,8 @@ public class ParamBindingParticipant implements RoutingParticipant {
 
 	private final ViewContext _labelContext;
 
+	private final boolean _finalTitle;
+
 	private final List<RouteChangeListener> _listeners = new ArrayList<>();
 
 	/**
@@ -110,10 +112,37 @@ public class ParamBindingParticipant implements RoutingParticipant {
 	 */
 	public ParamBindingParticipant(String prefix, String routeParamName, ViewChannel channel,
 			TileLabelProvider label, ViewContext labelContext) {
+		this(prefix, routeParamName, channel, label, labelContext, false);
+	}
+
+	/**
+	 * Creates a new {@link ParamBindingParticipant} naming the page by a label that may be the final
+	 * title of the page.
+	 *
+	 * @param prefix
+	 *        Static path segments placed in front of the value, or {@code null} for a route that is
+	 *        the value segment alone.
+	 * @param routeParamName
+	 *        The route parameter name (e.g., "companyId").
+	 * @param channel
+	 *        The view channel bound to this parameter.
+	 * @param label
+	 *        The provider of the label naming the page while the binding contributes a segment, or
+	 *        {@code null} for a binding that names no page.
+	 * @param labelContext
+	 *        The context the label is computed in, the context of the view declaring the binding.
+	 *        May be {@code null} where no label is given.
+	 * @param finalTitle
+	 *        Whether the routes inside the view declaring the binding keep their labels out of the
+	 *        title while the binding contributes a segment, see {@link #titlesContent()}.
+	 */
+	public ParamBindingParticipant(String prefix, String routeParamName, ViewChannel channel,
+			TileLabelProvider label, ViewContext labelContext, boolean finalTitle) {
 		_routeParamName = routeParamName;
 		_channel = channel;
 		_label = label;
 		_labelContext = labelContext;
+		_finalTitle = finalTitle;
 		_pattern = RoutePattern.compile(pattern(prefix, routeParamName), routeParamName);
 
 		// Listen to channel changes (forward: selection -> URL). A cleared channel is reported as
@@ -175,6 +204,20 @@ public class ParamBindingParticipant implements RoutingParticipant {
 			return null;
 		}
 		return _label.compute(_labelContext);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A binding declared the {@link ParamBindingConfig#getFinalTitle() final title} keeps the routes
+	 * inside its view out of the title while it contributes a segment: without a value, the binding
+	 * names no page, and the routes inside name it instead.
+	 * </p>
+	 */
+	@Override
+	public boolean titlesContent() {
+		return !_finalTitle || activeRouteSegment() == null;
 	}
 
 	/**

@@ -200,3 +200,26 @@ The title of the browser tab follows what the display shows: it is the label of 
 	</bind>
 </param-bindings>
 ```
+
+### Final title
+
+A route inside the content of a labelled route renames the page, because the innermost label wins. In a tile stack whose person frame contains tabs, the title would read `Details – …` instead of the person's name. Setting `final-title="true"` on the outer declaration makes its label the final title: the routes inside its content keep their URL segments, but their labels no longer reach the title.
+
+```xml
+<tile-stack initial="accounts/overview.view.xml" path="navPath">
+	<frame route="person/:person" view="accounts/person-detail.view.xml" final-title="true">
+		<param name="person"
+			expr="objectId($person)"
+			reverse="$value.objectResolve(`tl.accounts:Person`)"
+		/>
+		<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+			expr="$person.get(`tl.accounts:Person#name`)"
+			inputs="person"
+		/>
+	</frame>
+</tile-stack>
+```
+
+With tabs inside `person-detail.view.xml`, the URL is `…/person/4711/details` and the title stays `Anna Meier – …`.
+
+`final-title` (`WithFinalTitle`, default `false`) is available on every declaration that gives a route a label: `<nav-item>`, `<tab>`, `<frame>` and `<bind>`. It takes effect only while the declaration is part of the URL — not for `route="none"`, not for a `<bind>` whose channel holds no value — and for a tile stack it is the `<frame>` the title is taken from that decides. A declaration with `final-title` but without a label of its own leaves the title to the routes around it. Technically, the participant answers `RoutingParticipant.titlesContent()` with `false`, and `SSEUpdateQueue` leaves everything below it out of the participants `RouteManager.setTitlingParticipants()` supplies; "below" means inside the visible children of the control the participant belongs to or is anchored at (a tile stack anchors the participant of its path, a view the participants of its bindings).

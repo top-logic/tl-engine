@@ -270,6 +270,27 @@ public class TestParamBindingParticipant extends TestCase {
 	}
 
 	/**
+	 * Tests that a binding declared the final title keeps the routes inside its view out of the
+	 * title exactly while it contributes its segment, and that a binding refines nothing by default.
+	 */
+	public void testFinalTitleWhileValueIsBound() {
+		LabelFixture plain = new LabelFixture(false);
+		plain._key.set("TL-1234");
+		assertTrue("By default, the routes inside a view refine the title.", plain._participant.titlesContent());
+
+		LabelFixture fixture = new LabelFixture(true);
+		assertTrue("Without a value, the binding names no page and leaves the title to the routes inside.",
+			fixture._participant.titlesContent());
+
+		fixture._key.set("TL-1234");
+		assertFalse("The routes inside a binding declared the final title renamed the page.",
+			fixture._participant.titlesContent());
+
+		fixture._key.set(null);
+		assertTrue(fixture._participant.titlesContent());
+	}
+
+	/**
 	 * Tests that a {@code <bind>} declares its label as a nested {@code <label>}, and that the label
 	 * is optional.
 	 */
@@ -287,6 +308,8 @@ public class TestParamBindingParticipant extends TestCase {
 		assertEquals(2, bindings.size());
 		assertEquals(ScriptedTileLabel.class, bindings.get(0).getLabel().getImplementationClass());
 		assertNull("A binding may name no page.", bindings.get(1).getLabel());
+		assertTrue("The label of the ticket binding is the final title.", bindings.get(0).getFinalTitle());
+		assertFalse("By default, the routes inside a view refine the title.", bindings.get(1).getFinalTitle());
 	}
 
 	/**
@@ -303,6 +326,10 @@ public class TestParamBindingParticipant extends TestCase {
 		final ParamBindingParticipant _participant;
 
 		LabelFixture() {
+			this(false);
+		}
+
+		LabelFixture(boolean finalTitle) {
 			ViewContext context = new DefaultViewContext(null);
 			context.registerChannel("ticket", _ticket);
 			TileLabelProvider label = new TileLabelProvider() {
@@ -317,7 +344,7 @@ public class TestParamBindingParticipant extends TestCase {
 					return List.of(labelContext.resolveChannel(new ChannelRef("ticket")));
 				}
 			};
-			_participant = new ParamBindingParticipant("ticket", "ticket", _key, label, context);
+			_participant = new ParamBindingParticipant("ticket", "ticket", _key, label, context, finalTitle);
 		}
 	}
 

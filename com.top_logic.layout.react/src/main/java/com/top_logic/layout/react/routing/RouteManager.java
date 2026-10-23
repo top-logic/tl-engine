@@ -55,8 +55,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Together with the URL, the manager composes the {@link #currentTitle() title} of the page it
- * names, from the {@link RoutingParticipant#activeRouteLabel() labels} of the same participants, and
- * reports it with every URL change. A change of the title alone - the display renames what it shows
+ * names, from the {@link RoutingParticipant#activeRouteLabel() labels} of the same participants -
+ * except those a participant around them keeps out of the title, see
+ * {@link #setTitlingParticipants(Supplier)} - and reports it with every URL change. A change of the title alone - the display renames what it shows
  * without moving away from it - is reported as a replacement of the URL the client shows already.
  * </p>
  *
@@ -97,6 +98,8 @@ public final class RouteManager {
 	private ResKey _applicationTitle;
 
 	private Supplier<List<RoutingParticipant>> _displayedParticipants;
+
+	private Supplier<List<RoutingParticipant>> _titlingParticipants;
 
 	private boolean _adopting;
 
@@ -230,6 +233,25 @@ public final class RouteManager {
 	 */
 	public void setDisplayedParticipants(Supplier<List<RoutingParticipant>> source) {
 		_displayedParticipants = source;
+	}
+
+	/**
+	 * Installs the source of the participants the {@link #currentTitle() title of the page} is
+	 * composed from, in display order.
+	 *
+	 * <p>
+	 * These are the {@link #setDisplayedParticipants(Supplier) displayed participants} except those
+	 * inside the content of a participant whose {@link RoutingParticipant#titlesContent()} is
+	 * {@code false}: what such a participant displays below itself does not rename the page it
+	 * names.
+	 * </p>
+	 *
+	 * @param source
+	 *        Supplier of the participants that title the page, or {@code null} to title it from the
+	 *        participants the URL is composed from.
+	 */
+	public void setTitlingParticipants(Supplier<List<RoutingParticipant>> source) {
+		_titlingParticipants = source;
 	}
 
 	/**
@@ -617,7 +639,8 @@ public final class RouteManager {
 	 *
 	 * <p>
 	 * The page is named by the {@link RoutingParticipant#activeRouteLabel() label} of the innermost
-	 * participant of the display that reports one - the last one in display order - followed by the
+	 * participant of the display that reports one - the last one in display order of the
+	 * {@link #setTitlingParticipants(Supplier) participants titling the page} - followed by the
 	 * {@link #setApplicationTitle(ResKey) application title}, joined by
 	 * {@link I18NConstants#PAGE_TITLE__LABEL_APP}. Without a label, the title is the application
 	 * title alone; without an application title, the label alone.
@@ -631,7 +654,7 @@ public final class RouteManager {
 	 * @return The title, resolved in the current locale, empty where neither a label nor an
 	 *         application title is given.
 	 *
-	 * @see #setDisplayedParticipants(Supplier)
+	 * @see #setTitlingParticipants(Supplier)
 	 */
 	public String currentTitle() {
 		ResKey label = _holding ? null : activeLabel();
@@ -656,7 +679,7 @@ public final class RouteManager {
 	 */
 	private ResKey activeLabel() {
 		ResKey result = null;
-		for (RoutingParticipant participant : composingParticipants()) {
+		for (RoutingParticipant participant : titlingParticipants()) {
 			ResKey label = participant.activeRouteLabel();
 			if (label != null) {
 				result = label;
@@ -840,6 +863,11 @@ public final class RouteManager {
 	private List<RoutingParticipant> composingParticipants() {
 		Supplier<List<RoutingParticipant>> source = _displayedParticipants;
 		return source == null ? _participants : source.get();
+	}
+
+	private List<RoutingParticipant> titlingParticipants() {
+		Supplier<List<RoutingParticipant>> source = _titlingParticipants;
+		return source == null ? composingParticipants() : source.get();
 	}
 
 	/**

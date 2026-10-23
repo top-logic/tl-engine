@@ -327,6 +327,16 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 		return findTab(_activeTabId).getRoute() != null;
 	}
 
+	/**
+	 * The content of an active tab with a route that is declared the
+	 * {@link TabDefinition#isFinalTitle() final title} does not rename the page.
+	 */
+	@Override
+	public boolean titlesContent() {
+		TabDefinition activeTab = findTab(_activeTabId);
+		return activeTab.getRoute() == null || !activeTab.isFinalTitle();
+	}
+
 	@Override
 	public void addRouteChangeListener(RouteChangeListener listener) {
 		_routeChangeListeners.add(listener);

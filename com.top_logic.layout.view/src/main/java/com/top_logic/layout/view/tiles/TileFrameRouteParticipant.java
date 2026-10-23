@@ -41,7 +41,9 @@ import com.top_logic.layout.view.channel.ViewChannel;
  *
  * <p>
  * The page is named by the frame the path leads to: the label of a frame is fixed when the frame is
- * put on the path, so the title changes with the path and is reported with it.
+ * put on the path, so the title changes with the path and is reported with it. A frame whose route
+ * is declared the {@link FrameRoute#isFinalTitle() final title} keeps that title against whatever
+ * it displays inside.
  * </p>
  */
 public class TileFrameRouteParticipant implements RoutingParticipant {
@@ -175,12 +177,38 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 	 */
 	@Override
 	public ResKey activeRouteLabel() {
+		TileFrame frame = titleFrame();
+		return frame == null ? null : frame.getLabel();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * What the frame naming the page displays does not rename it where the route of that frame is
+	 * declared the {@link FrameRoute#isFinalTitle() final title}.
+	 * </p>
+	 */
+	@Override
+	public boolean titlesContent() {
+		TileFrame frame = titleFrame();
+		if (frame == null) {
+			return true;
+		}
+		FrameRoute route = _scope.frameRoute(frame.getViewRef());
+		return route == null || !route.isFinalTitle();
+	}
+
+	/**
+	 * The innermost frame the address describes that has a label, or {@code null} if there is none.
+	 */
+	private TileFrame titleFrame() {
 		List<TileFrame> path = _scope.getPath();
-		ResKey result = null;
+		TileFrame result = null;
 		for (int n = 0, cnt = addressedSegments().size(); n < cnt; n++) {
-			ResKey label = path.get(n).getLabel();
-			if (label != null) {
-				result = label;
+			TileFrame frame = path.get(n);
+			if (frame.getLabel() != null) {
+				result = frame;
 			}
 		}
 		return result;

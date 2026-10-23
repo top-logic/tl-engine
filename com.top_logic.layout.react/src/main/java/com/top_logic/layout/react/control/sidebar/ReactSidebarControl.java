@@ -577,6 +577,16 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 		return activeItem == null || activeItem.getRoute() != null;
 	}
 
+	/**
+	 * The content of a selected item with a route that is declared the
+	 * {@link NavigationItem#isFinalTitle() final title} does not rename the page.
+	 */
+	@Override
+	public boolean titlesContent() {
+		NavigationItem activeItem = findNavItem(_activeItemId, _items);
+		return activeItem == null || activeItem.getRoute() == null || !activeItem.isFinalTitle();
+	}
+
 	@Override
 	public void addRouteChangeListener(RouteChangeListener listener) {
 		_routeChangeListeners.add(listener);

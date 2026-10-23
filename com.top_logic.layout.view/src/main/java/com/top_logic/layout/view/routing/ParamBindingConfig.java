@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.routing;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -37,7 +36,7 @@ import com.top_logic.layout.view.tiles.TileLabelProvider;
  * </p>
  */
 @TagName("bind")
-public interface ParamBindingConfig extends ConfigurationItem {
+public interface ParamBindingConfig extends WithFinalTitle {
 
 	/** Configuration name for {@link #getChannel()}. */
 	String CHANNEL = "channel";

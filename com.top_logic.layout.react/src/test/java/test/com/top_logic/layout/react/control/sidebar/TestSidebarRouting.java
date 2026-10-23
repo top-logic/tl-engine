@@ -25,6 +25,8 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
+import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
+import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.react.routing.RouteChangeListener;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
@@ -226,6 +228,49 @@ public class TestSidebarRouting extends TestCase {
 		render(sidebar);
 		assertEquals("first/one", routeManager.currentUrl());
 		assertEquals("First – Demo", routeManager.currentTitle());
+	}
+
+	/**
+	 * The labels of the routes inside an item declared the final title do not rename the page,
+	 * while their segments stay in the URL; the content of another item refines the title.
+	 *
+	 * <p>
+	 * The tab bar is the content of the sidebar - a visible child of its control - and so lies
+	 * inside the participant the sidebar is.
+	 * </p>
+	 */
+	public void testFinalTitleItemKeepsContentLabelsOutOfTitle() {
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		ReactContext context = new DefaultReactContext("", "test", queue, new ReactWindowRegistry("test"));
+		RouteManager routeManager = context.getRouteManager();
+		queue.setRouteManager(routeManager);
+		routeManager.setApplicationTitle(ResKey.text("Demo"));
+		List<String> titles = new ArrayList<>();
+		routeManager.setUrlChangeHandler((url, title, replace) -> titles.add(title));
+
+		Supplier<ReactControl> tabs = () -> new ReactTabBarControl(context, null,
+			List.of(new TabDefinition("details", "Details",
+				() -> new ReactControl(context, null, "TestContent"), null).withRoute("details")),
+			"details");
+		List<SidebarItem> items = List.of(
+			new NavigationItem("person", "Anna Meier", null, tabs).withRoute("person").withFinalTitle(true),
+			new NavigationItem("plain", "Plain", null, tabs).withRoute("plain"));
+
+		ReactSidebarControl sidebar =
+			new ReactSidebarControl(context, items, "person", false, null, null);
+		queue.setRootControl(sidebar);
+		sidebar.attach();
+		render(sidebar);
+		assertEquals("The tab inside the item left the URL.", "person/details", routeManager.currentUrl());
+		assertEquals("The tab inside an item declared the final title renamed the page.",
+			"Anna Meier – Demo", routeManager.currentTitle());
+		assertEquals("Anna Meier – Demo", titles.get(titles.size() - 1));
+
+		sidebar.selectItem("plain");
+		render(sidebar);
+		assertEquals("plain/details", routeManager.currentUrl());
+		assertEquals("The tab inside an item refines the title by default.", "Details – Demo",
+			routeManager.currentTitle());
 	}
 
 	/**

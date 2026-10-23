@@ -340,7 +340,7 @@ public class ViewElement implements UIElement {
 		for (ParamBinding binding : _paramBindings) {
 			ParamBindingConfig config = binding.config();
 			result.add(new ParamBindingParticipant(config.getPrefix(), config.getRouteParam(),
-				channel(context, config.getChannel()), binding.label(), context));
+				channel(context, config.getChannel()), binding.label(), context, config.getFinalTitle()));
 		}
 		for (QueryBindingConfig binding : _queryBindings) {
 			result.add(new QueryBindingParticipant(binding.getQueryParam(),

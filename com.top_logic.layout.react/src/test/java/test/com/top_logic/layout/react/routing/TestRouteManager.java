@@ -38,6 +38,8 @@ public class TestRouteManager extends TestCase {
 
 		ResKey _label;
 
+		boolean _titlesContent = true;
+
 		private RouteMatch _lastActivation;
 
 		private final List<RouteChangeListener> _listeners = new ArrayList<>();
@@ -66,6 +68,11 @@ public class TestRouteManager extends TestCase {
 		@Override
 		public ResKey activeRouteLabel() {
 			return _label;
+		}
+
+		@Override
+		public boolean titlesContent() {
+			return _titlesContent;
 		}
 
 		/**
@@ -1185,6 +1192,39 @@ public class TestRouteManager extends TestCase {
 		rm.navigateToRoute("explore");
 		rm.finishAdoption();
 		assertEquals("An unchanged title was delivered again.", List.of(), deliveries);
+	}
+
+	/**
+	 * Tests that the participants inside one that keeps its content out of the title contribute
+	 * their segments to the URL but not their labels to the title, and that the title is composed
+	 * from the displayed participants while no titling source is installed.
+	 */
+	public void testFinalTitleHidesInnerLabels() {
+		RouteManager rm = new RouteManager();
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		List<Delivery> deliveries = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> deliveries.add(new Delivery(url, title, replace)));
+
+		MockParticipant frame = labelled("Anna Meier", RoutePattern.compile("/person", "person"));
+		MockParticipant tabs = labelled("Details", RoutePattern.compile("/details", "details"));
+		rm.setDisplayedParticipants(() -> List.of(frame, tabs));
+		rm.register(frame);
+		rm.register(tabs);
+		frame.simulateNavigation("person", Map.of());
+		tabs.simulateNavigation("details", Map.of());
+		assertEquals("Without a titling source, the displayed participants title the page.",
+			"Details – Demo", rm.currentTitle());
+
+		// The source a display installs: the tabs lie inside the frame.
+		rm.setTitlingParticipants(() -> frame.titlesContent() ? List.of(frame, tabs) : List.of(frame));
+		assertEquals("By default, the content refines the title.", "Details – Demo", rm.currentTitle());
+
+		frame._titlesContent = false;
+		frame.rename("Anna Meier");
+		assertEquals("Anna Meier – Demo", rm.currentTitle());
+		Delivery last = deliveries.get(deliveries.size() - 1);
+		assertEquals("The URL lost the segment of the participant inside.", "person/details", last.url());
+		assertEquals("Anna Meier – Demo", last.title());
 	}
 
 	/**

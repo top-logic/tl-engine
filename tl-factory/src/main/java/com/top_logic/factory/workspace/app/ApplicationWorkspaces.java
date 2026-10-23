@@ -99,6 +99,13 @@ public class ApplicationWorkspaces {
 		String START_TIMEOUT = "start-timeout";
 
 		/**
+		 * Configuration property name of {@link #getBuildTimeout()}.
+		 *
+		 * @see #getBuildTimeout()
+		 */
+		String BUILD_TIMEOUT = "build-timeout";
+
+		/**
 		 * Name of the workspace image without tag.
 		 *
 		 * <p>
@@ -139,6 +146,21 @@ public class ApplicationWorkspaces {
 		@Name(START_TIMEOUT)
 		@IntDefault(600)
 		int getStartTimeout();
+
+		/**
+		 * Seconds a Maven run may take: generating an application, building it, filling a release
+		 * repository.
+		 *
+		 * <p>
+		 * A run that takes longer is terminated and fails the operation.
+		 * </p>
+		 *
+		 * @see #BUILD_TIMEOUT
+		 * @see ExecCommand#getTimeout()
+		 */
+		@Name(BUILD_TIMEOUT)
+		@IntDefault(1800)
+		int getBuildTimeout();
 
 	}
 
@@ -367,11 +389,12 @@ public class ApplicationWorkspaces {
 		_provider.start(workspaceId);
 
 		step(progress, "Generating application " + spec.getGroupId() + ":" + spec.getArtifactId() + " " + version);
-		run(workspaceId, generateCommand(version, spec.getGroupId(), spec.getArtifactId()).setWorkingDir(SOURCE_PATH),
-			progress);
+		run(workspaceId, generateCommand(version, spec.getGroupId(), spec.getArtifactId()).setWorkingDir(SOURCE_PATH)
+			.setTimeout(buildTimeout()), progress);
 
 		step(progress, "Building application");
-		run(workspaceId, ExecCommand.of("mvn", "-B", "install").setWorkingDir(appDir), progress);
+		run(workspaceId, ExecCommand.of("mvn", "-B", "install").setWorkingDir(appDir).setTimeout(buildTimeout()),
+			progress);
 
 		run(workspaceId, ExecCommand.of("touch", builtMarker()), progress);
 		step(progress, "Application built, starting it");
@@ -523,9 +546,12 @@ public class ApplicationWorkspaces {
 				String appDir = RESOLVER_DIR + PATH_SEPARATOR + RESOLVER_ARTIFACT_ID;
 				run(resolverId, ExecCommand.of("rm", "-rf", appDir), progress);
 				run(resolverId,
-					generateCommand(version, RESOLVER_GROUP_ID, RESOLVER_ARTIFACT_ID).setWorkingDir(RESOLVER_DIR),
+					generateCommand(version, RESOLVER_GROUP_ID, RESOLVER_ARTIFACT_ID).setWorkingDir(RESOLVER_DIR)
+						.setTimeout(buildTimeout()),
 					progress);
-				run(resolverId, ExecCommand.of(resolveCommand(version)).setWorkingDir(appDir), progress);
+				run(resolverId,
+					ExecCommand.of(resolveCommand(version)).setWorkingDir(appDir).setTimeout(buildTimeout()),
+					progress);
 				run(resolverId, ExecCommand.of("touch", marker), progress);
 				return volume;
 			} finally {
@@ -601,6 +627,10 @@ public class ApplicationWorkspaces {
 	private String engineVersion(ApplicationSpec spec) {
 		String version = spec.getEngineVersion();
 		return version == null || version.isEmpty() ? _config.getEngineVersion() : version;
+	}
+
+	private Duration buildTimeout() {
+		return Duration.ofSeconds(_config.getBuildTimeout());
 	}
 
 	private static String builtMarker() {

@@ -10,12 +10,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -37,9 +40,12 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
+import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.I18NConstants;
+import com.top_logic.factory.workspace.LogFollower;
 import com.top_logic.factory.workspace.VolumeMount;
 import com.top_logic.factory.workspace.WorkspaceInfo;
+import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.WorkspaceState;
 import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
@@ -73,6 +79,33 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	private static final String PAGE_CONTENT = "workspace-ok";
 
 	private static final String DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
+
+	/**
+	 * Host name the containers resolve to {@link #EXTRA_HOST_ADDRESS}.
+	 */
+	private static final String EXTRA_HOST_NAME = "tl-factory-test-host";
+
+	/**
+	 * An address of the documentation range, never assigned.
+	 */
+	private static final String EXTRA_HOST_ADDRESS = "192.0.2.17";
+
+	private static final String GATEWAY_HOST_NAME = "host.docker.internal";
+
+	private static final String HOST_GATEWAY = "host-gateway";
+
+	private static final Duration WAIT = Duration.ofSeconds(20);
+
+	/**
+	 * File whose content the main process of {@link #chattySpec(String)} prints and deletes.
+	 */
+	private static final String SAY_FILE = "/tmp/say";
+
+	/**
+	 * Command line matching the long-running commands of the tests, written so that it does not
+	 * match the command looking for them.
+	 */
+	private static final String SLEEPER_PATTERN = "sleep 60[0-9]";
 
 	private String _suffix;
 
@@ -252,6 +285,193 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		assertEquals(Arrays.asList("keep"), ids(_provider.list()));
 	}
 
+	/**
+	 * A started command reads what is written to it and ends when its input is closed.
+	 */
+	public void testStdinRoundTrip() throws Exception {
+		String id = "stdin";
+		_provider.create(httpdSpec(id));
+		_provider.start(id);
+
+		CollectingOutput output = new CollectingOutput();
+		try (ExecProcess process = _provider.startExec(id, ExecCommand.of("cat"), output)) {
+			process.write("hello\n");
+			process.flush();
+			output.awaitStdout("hello\n", WAIT);
+			assertTrue(process.isAlive());
+
+			process.write("w\u00F6rld \u2713\n".getBytes(StandardCharsets.UTF_8));
+			process.closeStdin();
+			assertTrue("Command did not end after its input was closed.", process.waitFor(WAIT));
+			assertEquals(0, process.exitCode());
+			assertEquals("hello\nw\u00F6rld \u2713\n", output.stdout());
+			assertEquals("", output.stderr());
+
+			try {
+				process.write("late");
+				process.flush();
+				fail("Writing to a closed input must fail.");
+			} catch (IOException ex) {
+				// Expected.
+			}
+		}
+	}
+
+	/**
+	 * Terminating a command ends it and the processes it started; a command ignoring the request
+	 * is killed after the grace period.
+	 */
+	public void testTerminate() throws Exception {
+		String id = "terminate";
+		_provider.create(httpdSpec(id));
+		_provider.start(id);
+
+		CollectingOutput output = new CollectingOutput();
+		try (ExecProcess process = _provider.startExec(id,
+			ExecCommand.of("sh", "-c", "sleep 601 & echo started; sleep 600"), output)) {
+			output.awaitStdout("started\n", WAIT);
+			assertEquals(2, sleepers(id));
+			assertFalse(process.waitFor(Duration.ofMillis(200)));
+			assertTrue(process.isAlive());
+
+			process.terminate();
+			assertFalse(process.isAlive());
+			assertEquals(128 + 15, process.exitCode());
+			assertEquals("Processes left after terminate.", 0, sleepers(id));
+		}
+
+		CollectingOutput stubborn = new CollectingOutput();
+		try (ExecProcess process = _provider.startExec(id,
+			ExecCommand.of("sh", "-c", "trap '' TERM; sleep 602 & echo started; wait"), stubborn)) {
+			stubborn.awaitStdout("started\n", WAIT);
+			long start = System.nanoTime();
+			process.terminate();
+			Duration took = Duration.ofNanos(System.nanoTime() - start);
+			assertTrue("Killed before the grace period: " + took, took.compareTo(Duration.ofSeconds(2)) >= 0);
+			assertEquals(128 + 9, process.exitCode());
+			assertEquals("Processes left after kill.", 0, sleepers(id));
+		}
+	}
+
+	/**
+	 * A blocking command that exceeds its timeout is terminated and fails.
+	 */
+	public void testExecTimeout() throws Exception {
+		String id = "timeout";
+		_provider.create(httpdSpec(id));
+		_provider.start(id);
+
+		ExecCommand command = ExecCommand.of("sleep", "603").setTimeout(Duration.ofSeconds(2));
+		long start = System.nanoTime();
+		assertErrorKey(I18NConstants.ERROR_COMMAND_TIMEOUT__WORKSPACE_COMMAND_SECONDS.fill(id, "sleep 603", 2L),
+			() -> _provider.exec(id, command, ExecOutput.NONE));
+		Duration took = Duration.ofNanos(System.nanoTime() - start);
+		assertTrue("Timeout not respected: " + took, took.compareTo(Duration.ofSeconds(2)) >= 0
+			&& took.compareTo(Duration.ofSeconds(15)) < 0);
+		assertEquals("Command left after timeout.", 0, sleepers(id));
+	}
+
+	/**
+	 * The output of the main process of a workspace is delivered, the existing and the following.
+	 */
+	public void testFollowLog() throws Exception {
+		String id = "log";
+		_provider.create(chattySpec(id));
+		_provider.start(id);
+
+		CollectingOutput all = new CollectingOutput();
+		try (LogFollower follower = _provider.followLog(id, WorkspaceProvider.ALL_LINES, null, all)) {
+			all.awaitStdout("started\n", WAIT);
+			all.awaitStderr("complaint\n", WAIT);
+
+			say(id, "first");
+			all.awaitStdout("started\nfirst\n", WAIT);
+			assertFalse(follower.awaitEnd(Duration.ZERO));
+
+			CollectingOutput recent = new CollectingOutput();
+			try (LogFollower tail = _provider.followLog(id, 1, Instant.now().minusSeconds(3600), recent)) {
+				recent.awaitStdout("first\n", WAIT);
+				say(id, "second");
+				recent.awaitStdout("first\nsecond\n", WAIT);
+			}
+			all.awaitStdout("started\nfirst\nsecond\n", WAIT);
+
+			CollectingOutput none = new CollectingOutput();
+			try (LogFollower future = _provider.followLog(id, 0, null, none)) {
+				say(id, "third");
+				none.awaitStdout("third\n", WAIT);
+			}
+
+			_provider.stop(id);
+			assertTrue("Log delivery did not end with the main process.", follower.awaitEnd(WAIT));
+		}
+
+		CollectingOutput stopped = new CollectingOutput();
+		try (LogFollower follower = _provider.followLog(id, WorkspaceProvider.ALL_LINES, null, stopped)) {
+			assertTrue("Log of a stopped workspace did not end.", follower.awaitEnd(WAIT));
+			assertTrue(stopped.stdout(), stopped.stdout().startsWith("started\nfirst\nsecond\nthird\n"));
+		}
+	}
+
+	/**
+	 * The extra hosts of the provider configuration are resolved inside the workspace.
+	 */
+	public void testExtraHosts() throws Exception {
+		String id = "hosts";
+		_provider.create(httpdSpec(id));
+		_provider.start(id);
+
+		CollectingOutput hosts = new CollectingOutput();
+		assertEquals(0, _provider.exec(id, ExecCommand.of("cat", "/etc/hosts"), hosts));
+		assertTrue(hosts.stdout(),
+			hosts.stdout().matches("(?s).*\\n" + Pattern.quote(EXTRA_HOST_ADDRESS) + "\\s+"
+				+ Pattern.quote(EXTRA_HOST_NAME) + "\\n.*"));
+		assertTrue(hosts.stdout(),
+			hosts.stdout().matches("(?s).*\\n[0-9a-f.:]+\\s+" + Pattern.quote(GATEWAY_HOST_NAME) + "\\n.*"));
+
+		// The resolver of the container uses the entry: ping names the address before it tries it.
+		CollectingOutput ping = new CollectingOutput();
+		_provider.exec(id, ExecCommand.of("ping", "-c", "1", "-W", "1", EXTRA_HOST_NAME), ping);
+		assertTrue(ping.stdout() + ping.stderr(),
+			ping.stdout().contains(EXTRA_HOST_NAME + " (" + EXTRA_HOST_ADDRESS + ")"));
+	}
+
+	/**
+	 * The number of processes of the tests' long-running commands in a workspace.
+	 */
+	private int sleepers(String id) throws InterruptedException {
+		CollectingOutput ps = new CollectingOutput();
+		assertEquals(0, _provider.exec(id, ExecCommand.of("ps", "-o", "args"), ps));
+		int result = 0;
+		for (String line : ps.stdout().split("\n")) {
+			if (line.trim().matches(SLEEPER_PATTERN)) {
+				result++;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Lets the main process of a {@link #chattySpec(String)} workspace print a line.
+	 */
+	private void say(String id, String line) throws InterruptedException {
+		assertEquals(0, _provider.exec(id,
+			ExecCommand.of("sh", "-c", "echo \"$0\" > " + SAY_FILE + ".new && mv " + SAY_FILE + ".new " + SAY_FILE,
+				line),
+			ExecOutput.NONE));
+	}
+
+	/**
+	 * A workspace whose main process prints a line and an error line when started, and afterwards
+	 * the lines given by {@link #say(String, String)}.
+	 */
+	private WorkspaceSpec chattySpec(String id) {
+		return new WorkspaceSpec(id, IMAGE)
+			.setCommand(Arrays.asList("sh", "-c",
+				"echo started; echo complaint >&2; while true; do if [ -f " + SAY_FILE + " ]; then cat " + SAY_FILE
+					+ "; rm " + SAY_FILE + "; fi; sleep 0.1; done"));
+	}
+
 	private WorkspaceSpec httpdSpec(String id) {
 		return new WorkspaceSpec(id, IMAGE)
 			.setCommand(Arrays.asList("sh", "-c",
@@ -313,6 +533,9 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.HOST_PORT_MIN, HOST_PORT_MIN);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.HOST_PORT_MAX, HOST_PORT_MAX);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.STOP_TIMEOUT, 2);
+		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.TERMINATE_TIMEOUT, 2);
+		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.EXTRA_HOSTS,
+			Arrays.asList(EXTRA_HOST_NAME + ":" + EXTRA_HOST_ADDRESS, GATEWAY_HOST_NAME + ":" + HOST_GATEWAY));
 		return (DockerWorkspaceProvider) TypedConfigUtil.createInstance(config);
 	}
 
@@ -355,7 +578,7 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	}
 
 	/**
-	 * {@link ExecOutput} collecting the output of a command.
+	 * {@link ExecOutput} collecting the output of a command, which another thread may wait for.
 	 */
 	private static final class CollectingOutput implements ExecOutput {
 
@@ -364,21 +587,49 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		private final StringBuilder _stderr = new StringBuilder();
 
 		@Override
-		public void stdout(String text) {
+		public synchronized void stdout(String text) {
 			_stdout.append(text);
+			notifyAll();
 		}
 
 		@Override
-		public void stderr(String text) {
+		public synchronized void stderr(String text) {
 			_stderr.append(text);
+			notifyAll();
 		}
 
-		String stdout() {
+		synchronized String stdout() {
 			return _stdout.toString();
 		}
 
-		String stderr() {
+		synchronized String stderr() {
 			return _stderr.toString();
+		}
+
+		/**
+		 * Waits until the standard output is the given text.
+		 */
+		void awaitStdout(String expected, Duration timeout) throws InterruptedException {
+			await(_stdout, expected, timeout);
+		}
+
+		/**
+		 * Waits until the error output is the given text.
+		 */
+		void awaitStderr(String expected, Duration timeout) throws InterruptedException {
+			await(_stderr, expected, timeout);
+		}
+
+		private synchronized void await(StringBuilder buffer, String expected, Duration timeout)
+				throws InterruptedException {
+			long deadline = System.nanoTime() + timeout.toNanos();
+			while (!buffer.toString().equals(expected)) {
+				long left = deadline - System.nanoTime();
+				if (left <= 0) {
+					assertEquals("Output not received in time.", expected, buffer.toString());
+				}
+				wait(Math.max(1, left / 1_000_000));
+			}
 		}
 
 	}

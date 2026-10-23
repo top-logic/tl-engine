@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.factory.project;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -19,7 +20,9 @@ import com.top_logic.factory.project.WorkspaceReconciliation.Outcome;
 import com.top_logic.factory.project.WorkspaceStatus;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
+import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.ImageContext;
+import com.top_logic.factory.workspace.LogFollower;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceSpec;
@@ -273,7 +276,12 @@ public class TestWorkspaceReconciliation extends TestCase {
 		}
 
 		@Override
-		public int exec(String workspaceId, ExecCommand command, ExecOutput output) {
+		public ExecProcess startExec(String workspaceId, ExecCommand command, ExecOutput output) {
+			throw unsupported();
+		}
+
+		@Override
+		public LogFollower followLog(String workspaceId, int tailLines, Instant since, ExecOutput output) {
 			throw unsupported();
 		}
 

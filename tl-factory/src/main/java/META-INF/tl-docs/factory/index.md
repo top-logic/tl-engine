@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway).
 ---
 
 # Control application (tl-factory)
@@ -21,7 +21,7 @@ gets access to the container platform itself.
 
 | Class | Role |
 |---|---|
-| `WorkspaceProvider` | Platform-neutral lifecycle of a workspace container: create, start, stop, remove, status, list, cleanup, exec, image build, shared volumes. |
+| `WorkspaceProvider` | Platform-neutral lifecycle of a workspace container: create, start, stop, remove, status, list, cleanup, commands in the container, the log of its main process, image build, shared volumes. |
 | `DockerWorkspaceProvider` | The implementation on the Docker Engine API. |
 | `WorkspaceService` | Service holding the configured provider and the `ApplicationWorkspaces`. |
 | `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace, builds it and runs it as the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
@@ -43,6 +43,38 @@ it is changed in the application.
 The output of the application itself - the main process of the container - goes to the log of the
 container in the container platform (`docker logs <container>`); the control application only
 shows the output of its own operations.
+
+## Commands and the log of a workspace
+
+`WorkspaceProvider.startExec` starts a command in a running workspace and returns an `ExecProcess`:
+the caller writes to the standard input of the command (`write`, `flush`, `closeStdin`), receives
+its output incrementally through an `ExecOutput`, waits for it (`waitFor` with a timeout,
+`exitCode`) and ends it (`terminate`). `close` releases the handle and kills a command that still
+runs. A long-lived command reading requests from its input - an agent process, for example - is run
+this way.
+
+`WorkspaceProvider.exec` runs a command to its end on top of this handle: the command reads an
+empty input, and a command that exceeds the timeout of its `ExecCommand` (`ExecCommand.DEFAULT_TIMEOUT`,
+ten minutes, if it sets none) is terminated and fails the call with a timeout error. The Maven runs
+of `ApplicationWorkspaces` (generating, building, filling a release repository) use the
+`build-timeout` instead.
+
+`WorkspaceProvider.followLog` delivers the output of the main process of a workspace - the
+application - from a number of last lines and/or a point in time on, and then what it writes while
+it runs, until the returned `LogFollower` is closed or the main process ends.
+
+In the Docker provider:
+
+- The Docker API has no way to signal an exec instance. A command therefore runs under a short
+  `sh` script that writes the process ID of the command as first line of its output (the provider
+  removes the line) and replaces itself by the command. A process started by `docker exec` leads its
+  own process group, so `terminate` runs `kill -TERM -<pid>` in the container (as root) for the
+  whole group, and `kill -KILL -<pid>` if the group has not ended after `terminate-timeout`
+  seconds. The workspace image needs `sh` and `kill`.
+- The input of a command is written over a connection to the daemon that the provider opens itself
+  (Unix socket or TCP, with TLS if `tls-cert-path` is set): the daemon closes the input of the
+  command only when the client half-closes the connection, which the Docker client library does
+  not do.
 
 An operation is started from a command: the function stores the state the operation is in and
 returns; a worker thread of `ProjectWorkspaces` runs the operation in a system context. Its output
@@ -77,11 +109,13 @@ then.
 | `tl_factory_image_repository` | `tl-factory-workspace` | Name of the workspace image; the tag is the content hash of its files. |
 | `tl_factory_repository_url` | TopLogic Nexus | Maven repository the TopLogic releases are taken from. |
 | `tl_factory_start_timeout` | `600` | Seconds a started application has to answer. |
+| `tl_factory_build_timeout` | `1800` | Seconds a Maven run in a workspace (generate, build, fill a release repository) may take before it is terminated. |
+| `tl_factory_docker_extra_hosts` | *(empty)* | Comma separated `<host>:<address>` entries added to the host names of new workspace containers, e.g. `host.docker.internal:host-gateway`. |
 | `tl_factory_log_flush_interval` | `1000` | Milliseconds between two commits of the output of a running operation. |
 | `tl_factory_max_log_size` | `65536` | Characters of the output of an operation that are stored. |
 
 Further properties of the Docker provider (`tls-cert-path`, `connect-timeout`, `label-namespace`,
-`name-prefix`, `stop-timeout`) are set in the configuration of `WorkspaceService` of the
+`name-prefix`, `stop-timeout`, `terminate-timeout`) are set in the configuration of `WorkspaceService` of the
 application.
 
 ## Operation modes
@@ -93,6 +127,14 @@ with a Docker daemon and talks to it through the default socket `unix:///var/run
 user running it must be allowed to use the socket. Preview links point to
 `http://localhost:<host port>/<artifact ID>/`; for access from other machines,
 `tl_factory_public_host` names the host as the browsers see it.
+
+A workspace container reaches the control application through the gateway of the daemon: with
+`tl_factory_docker_extra_hosts=host.docker.internal:host-gateway`, new containers resolve
+`host.docker.internal` to the address of the host on their network, and reach the control
+application under `http://host.docker.internal:<port of the control application>/`. The control
+application must listen on that address, not only on `127.0.0.1`, and a firewall of the host must
+let the workspace network through. Containers created before the setting keep their host names
+until they are created anew.
 
 ### Control application in a container
 
@@ -118,6 +160,11 @@ In both cases:
   well as for the browsers.
 - **Public host.** `tl_factory_public_host` is the name browsers use to reach the published ports
   of the daemon host.
+- **Reaching the control application.** A workspace container reaches the control application by
+  the name of its container on the workspace network, e.g. `http://tl-factory-app:8080/`, once the
+  control application's container is connected to that network (see above). No extra host is
+  needed then; `host-gateway` names the daemon host, which reaches the control application only
+  through a port it publishes there.
 - **Ownership by labels.** The provider marks everything it creates with labels in its
   `label-namespace` and lists, cleans up and removes only objects carrying them - never by name. The
   control application's own container carries no such label and is never touched; two control

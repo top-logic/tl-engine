@@ -5,6 +5,8 @@
  */
 package com.top_logic.factory.workspace;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -180,7 +182,19 @@ public interface WorkspaceProvider extends AutoCloseable {
 	List<String> cleanup(Collection<String> keep);
 
 	/**
+	 * Value of the number of lines of {@link #followLog(String, int, Instant, ExecOutput)} that
+	 * delivers the whole log.
+	 */
+	int ALL_LINES = -1;
+
+	/**
 	 * Runs a command inside the container of a running workspace and waits for it to finish.
+	 *
+	 * <p>
+	 * The command reads an empty standard input. If it does not finish within its
+	 * {@link ExecCommand#getTimeout() timeout}, it is {@link ExecProcess#terminate() terminated}
+	 * and the call fails. If the waiting thread is interrupted, the command is killed.
+	 * </p>
 	 *
 	 * @param workspaceId
 	 *        The workspace to run the command in.
@@ -190,7 +204,64 @@ public interface WorkspaceProvider extends AutoCloseable {
 	 *        Receiver of the output of the command while it runs.
 	 * @return The exit code of the command.
 	 */
-	int exec(String workspaceId, ExecCommand command, ExecOutput output) throws InterruptedException;
+	default int exec(String workspaceId, ExecCommand command, ExecOutput output) throws InterruptedException {
+		try (ExecProcess process = startExec(workspaceId, command, output)) {
+			try {
+				process.closeStdin();
+			} catch (IOException ex) {
+				// The command has ended before its input was closed, its exit code tells how.
+			}
+			if (!process.waitFor(command.getTimeout())) {
+				process.terminate();
+				throw new TopLogicException(I18NConstants.ERROR_COMMAND_TIMEOUT__WORKSPACE_COMMAND_SECONDS
+					.fill(workspaceId, command.toString(), command.getTimeout().toSeconds()));
+			}
+			return process.exitCode();
+		}
+	}
+
+	/**
+	 * Starts a command inside the container of a running workspace and returns without waiting
+	 * for it.
+	 *
+	 * <p>
+	 * The command reads its standard input from the returned handle, which also waits for and
+	 * terminates the command. The {@link ExecCommand#getTimeout() timeout} of the command does
+	 * not apply, the command runs until it ends, is terminated, or the workspace stops.
+	 * </p>
+	 *
+	 * @param workspaceId
+	 *        The workspace to run the command in.
+	 * @param command
+	 *        The command to run.
+	 * @param output
+	 *        Receiver of the output of the command while it runs.
+	 * @return The handle of the running command, to be closed by the caller.
+	 */
+	ExecProcess startExec(String workspaceId, ExecCommand command, ExecOutput output);
+
+	/**
+	 * Delivers the output of the main process of a workspace: what it has written so far and,
+	 * while it runs, what it writes from now on.
+	 *
+	 * <p>
+	 * The output of a stopped workspace is the one of its last run; its delivery ends after the
+	 * existing output.
+	 * </p>
+	 *
+	 * @param workspaceId
+	 *        The workspace whose output is delivered.
+	 * @param tailLines
+	 *        The number of the last lines of the existing output to deliver, {@link #ALL_LINES} for
+	 *        all of them.
+	 * @param since
+	 *        The time from which on existing output is delivered, {@code null} for all of it. The
+	 *        precision is a second.
+	 * @param output
+	 *        Receiver of the output, called from a thread of the provider.
+	 * @return The handle of the delivery, to be closed by the caller.
+	 */
+	LogFollower followLog(String workspaceId, int tailLines, Instant since, ExecOutput output);
 
 	/**
 	 * Releases the connection to the container platform. The workspaces are not affected.

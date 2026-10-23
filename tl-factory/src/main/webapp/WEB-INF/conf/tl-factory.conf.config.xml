@@ -19,12 +19,14 @@
 					public-host="%FACTORY_PUBLIC_HOST%"
 					host-port-min="%FACTORY_HOST_PORT_MIN%"
 					host-port-max="%FACTORY_HOST_PORT_MAX%"
+					extra-hosts="%FACTORY_DOCKER_EXTRA_HOSTS%"
 				/>
 				<applications
 					engine-version="%FACTORY_ENGINE_VERSION%"
 					image-repository="%FACTORY_IMAGE_REPOSITORY%"
 					repository-url="%FACTORY_REPOSITORY_URL%"
 					start-timeout="%FACTORY_START_TIMEOUT%"
+					build-timeout="%FACTORY_BUILD_TIMEOUT%"
 				/>
 			</instance>
 		</config>

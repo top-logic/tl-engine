@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,6 +18,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -26,6 +29,7 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.command.InspectVolumeResponse;
+import com.github.dockerjava.api.command.LogContainerCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
@@ -50,6 +54,8 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -59,7 +65,9 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
+import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.ImageContext;
+import com.top_logic.factory.workspace.LogFollower;
 import com.top_logic.factory.workspace.VolumeMount;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceProvider;
@@ -93,6 +101,18 @@ import com.top_logic.util.error.TopLogicException;
  * published on a port of the range from {@link Config#getHostPortMin()} to
  * {@link Config#getHostPortMax()}, which the daemon chooses anew on every start among the ports of
  * the range that are free at that time.
+ * </p>
+ *
+ * <p>
+ * The {@link Config#getExtraHosts() extra hosts} are added to the host names a workspace container
+ * resolves, e.g. to reach the application on the daemon host through the gateway of the daemon.
+ * </p>
+ *
+ * <p>
+ * A {@link #startExec(String, ExecCommand, ExecOutput) command run in a workspace} needs a
+ * {@code sh} with {@code kill} in the image: the command is run under a {@link #PID_SCRIPT shell
+ * script} reporting its process ID, and terminating it sends signals to its process group by
+ * {@code kill}.
  * </p>
  */
 public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWorkspaceProvider.Config<?>>
@@ -172,6 +192,20 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		 * @see #getStopTimeout()
 		 */
 		String STOP_TIMEOUT = "stop-timeout";
+
+		/**
+		 * Configuration property name of {@link #getTerminateTimeout()}.
+		 *
+		 * @see #getTerminateTimeout()
+		 */
+		String TERMINATE_TIMEOUT = "terminate-timeout";
+
+		/**
+		 * Configuration property name of {@link #getExtraHosts()}.
+		 *
+		 * @see #getExtraHosts()
+		 */
+		String EXTRA_HOSTS = "extra-hosts";
 
 		@Override
 		@ClassDefault(DockerWorkspaceProvider.class)
@@ -300,6 +334,34 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		@IntDefault(30)
 		int getStopTimeout();
 
+		/**
+		 * Seconds a command run in a workspace gets to finish when it is terminated, before it is
+		 * killed.
+		 *
+		 * @see #TERMINATE_TIMEOUT
+		 * @see ExecProcess#terminate()
+		 */
+		@Name(TERMINATE_TIMEOUT)
+		@IntDefault(10)
+		int getTerminateTimeout();
+
+		/**
+		 * Entries added to the host names a workspace container resolves, each a host name and an
+		 * address separated by a colon.
+		 *
+		 * <p>
+		 * The address {@code host-gateway} stands for the address of the daemon host as the
+		 * containers see it: {@code host.docker.internal:host-gateway} lets a workspace reach a
+		 * service on the daemon host, e.g. an application that runs there directly, under the name
+		 * {@code host.docker.internal}. The entries apply to containers created afterwards.
+		 * </p>
+		 *
+		 * @see #EXTRA_HOSTS
+		 */
+		@Name(EXTRA_HOSTS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getExtraHosts();
+
 	}
 
 	/**
@@ -383,9 +445,44 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 
 	private static final String LABEL_FILTER = "label";
 
+	/**
+	 * Shell script a command run in a workspace is run under: it writes its process ID as first
+	 * line of its standard output and replaces itself by the command, given as its arguments.
+	 *
+	 * @see DockerExecProcess
+	 */
+	static final String PID_SCRIPT = "echo $$; exec \"$@\"";
+
+	/**
+	 * Signal asking a command to terminate.
+	 */
+	static final String SIGNAL_TERM = "TERM";
+
+	/**
+	 * Signal killing a command.
+	 */
+	static final String SIGNAL_KILL = "KILL";
+
+	private static final String SHELL = "sh";
+
+	private static final String SHELL_COMMAND_OPTION = "-c";
+
+	/**
+	 * The user sending signals to commands, the root user by its ID, so that it needs no entry in
+	 * the user database of the image.
+	 */
+	private static final String SIGNAL_USER = "0";
+
+	/**
+	 * Seconds to wait for a {@code kill} run in a container.
+	 */
+	private static final long SIGNAL_TIMEOUT_SECONDS = 30;
+
 	private static final long EXEC_EXIT_POLL_MILLIS = 50;
 
 	private static final int EXEC_EXIT_POLL_ATTEMPTS = 100;
+
+	private final DockerClientConfig _clientConfig;
 
 	private final DockerClient _client;
 
@@ -407,10 +504,11 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 			throw new IllegalArgumentException("Invalid host port range " + config.getHostPortMin() + "-"
 				+ config.getHostPortMax() + " of the Docker workspace provider.");
 		}
-		_client = createClient(config);
+		_clientConfig = createClientConfig(config);
+		_client = createClient(config, _clientConfig);
 	}
 
-	private static DockerClient createClient(Config<?> config) {
+	private static DockerClientConfig createClientConfig(Config<?> config) {
 		DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
 			.withDockerHost(config.getDockerHost());
 		String certPath = config.getTlsCertPath();
@@ -419,7 +517,10 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		} else {
 			builder.withDockerTlsVerify(false);
 		}
-		DockerClientConfig clientConfig = builder.build();
+		return builder.build();
+	}
+
+	private static DockerClient createClient(Config<?> config, DockerClientConfig clientConfig) {
 		ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
 			.dockerHost(clientConfig.getDockerHost())
 			.sslConfig(clientConfig.getSSLConfig())
@@ -629,6 +730,7 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 				.withHostConfig(HostConfig.newHostConfig()
 					.withNetworkMode(getConfig().getNetwork())
 					.withMounts(mounts)
+					.withExtraHosts(getConfig().getExtraHosts().toArray(new String[0]))
 					.withPortBindings(new PortBinding(
 						Ports.Binding.bindPortRange(getConfig().getHostPortMin(), getConfig().getHostPortMax()),
 						port)));
@@ -761,8 +863,8 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	}
 
 	@Override
-	public int exec(String workspaceId, ExecCommand command, ExecOutput output) throws InterruptedException {
-		String execId = request(() -> {
+	public ExecProcess startExec(String workspaceId, ExecCommand command, ExecOutput output) {
+		String[] execIds = request(() -> {
 			Container container = requireContainer(workspaceId);
 			if (!STATE_RUNNING.equals(container.getState())) {
 				throw new TopLogicException(
@@ -772,8 +874,16 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 			for (Map.Entry<String, String> entry : command.getEnv().entrySet()) {
 				env.add(entry.getKey() + "=" + entry.getValue());
 			}
-			return _client.execCreateCmd(container.getId())
-				.withCmd(command.getCommand().toArray(new String[0]))
+			List<String> cmd = new ArrayList<>();
+			cmd.add(SHELL);
+			cmd.add(SHELL_COMMAND_OPTION);
+			cmd.add(PID_SCRIPT);
+			// The name of the script, $0.
+			cmd.add(SHELL);
+			cmd.addAll(command.getCommand());
+			String execId = _client.execCreateCmd(container.getId())
+				.withCmd(cmd.toArray(new String[0]))
+				.withAttachStdin(true)
 				.withAttachStdout(true)
 				.withAttachStderr(true)
 				.withWorkingDir(command.getWorkingDir())
@@ -781,17 +891,28 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 				.withEnv(env)
 				.exec()
 				.getId();
+			return new String[] { container.getId(), execId };
 		});
 
-		ExecCallback callback = new ExecCallback(output);
+		HijackedConnection connection;
 		try {
-			_client.execStartCmd(execId).exec(callback).awaitCompletion();
-		} catch (RuntimeException ex) {
-			throw requestFailed(ex);
-		} finally {
-			callback.flush();
+			connection = HijackedConnection.startExec(_clientConfig,
+				Duration.ofSeconds(getConfig().getConnectTimeout()), execIds[1]);
+		} catch (IOException ex) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_DOCKER_REQUEST_FAILED__HOST_MESSAGE.fill(getConfig().getDockerHost(), message(ex)),
+				ex);
 		}
+		DockerExecProcess process =
+			new DockerExecProcess(this, workspaceId, execIds[0], execIds[1], command, connection, output);
+		process.startReading();
+		return process;
+	}
 
+	/**
+	 * Waits for the exit code of an exec instance whose output has ended.
+	 */
+	int awaitExitCode(String execId, ExecCommand command, String workspaceId) throws InterruptedException {
 		for (int attempt = 0; attempt < EXEC_EXIT_POLL_ATTEMPTS; attempt++) {
 			InspectExecResponse exec = request(() -> _client.inspectExecCmd(execId).exec());
 			if (!Boolean.TRUE.equals(exec.isRunning()) && exec.getExitCodeLong() != null) {
@@ -802,6 +923,105 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		}
 		throw new IllegalStateException("No exit code reported for command '" + command + "' in workspace '"
 			+ workspaceId + "'.");
+	}
+
+	/**
+	 * Sends a signal to a process group in a container.
+	 *
+	 * <p>
+	 * Failures are logged only: the group may have ended in the meantime.
+	 * </p>
+	 *
+	 * @param containerId
+	 *        The container the processes run in.
+	 * @param processGroup
+	 *        The ID of the process group, the process ID of its leader.
+	 * @param signal
+	 *        The name of the signal, {@link #SIGNAL_TERM} or {@link #SIGNAL_KILL}.
+	 */
+	void signal(String containerId, int processGroup, String signal) {
+		try {
+			String execId = _client.execCreateCmd(containerId)
+				.withCmd(SHELL, SHELL_COMMAND_OPTION, "kill -" + signal + " -" + processGroup)
+				.withUser(SIGNAL_USER)
+				.withAttachStdout(true)
+				.withAttachStderr(true)
+				.exec()
+				.getId();
+			StringBuilder messages = new StringBuilder();
+			FrameCallback callback = new FrameCallback(new ExecOutput() {
+				@Override
+				public void stdout(String text) {
+					messages.append(text);
+				}
+
+				@Override
+				public void stderr(String text) {
+					messages.append(text);
+				}
+			});
+			try {
+				if (!_client.execStartCmd(execId).exec(callback).awaitCompletion(SIGNAL_TIMEOUT_SECONDS,
+					TimeUnit.SECONDS)) {
+					Logger.warn("Sending " + signal + " to process group " + processGroup + " in container "
+						+ containerId + " did not finish.", DockerWorkspaceProvider.class);
+				}
+			} finally {
+				callback.close();
+			}
+			if (messages.length() > 0) {
+				Logger.info("Sending " + signal + " to process group " + processGroup + " in container " + containerId
+					+ ": " + messages.toString().trim(), DockerWorkspaceProvider.class);
+			}
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		} catch (IOException | RuntimeException ex) {
+			Logger.warn("Sending " + signal + " to process group " + processGroup + " in container " + containerId
+				+ " failed: " + message(ex), DockerWorkspaceProvider.class);
+		}
+	}
+
+	/**
+	 * The time a terminated command gets before it is killed.
+	 *
+	 * @see Config#getTerminateTimeout()
+	 */
+	Duration getTerminateTimeout() {
+		return Duration.ofSeconds(getConfig().getTerminateTimeout());
+	}
+
+	@Override
+	public LogFollower followLog(String workspaceId, int tailLines, Instant since, ExecOutput output) {
+		return request(() -> {
+			LogContainerCmd cmd = _client.logContainerCmd(requireContainer(workspaceId).getId())
+				.withStdOut(true)
+				.withStdErr(true)
+				.withFollowStream(true);
+			if (tailLines == ALL_LINES) {
+				cmd.withTailAll();
+			} else {
+				cmd.withTail(tailLines);
+			}
+			if (since != null) {
+				cmd.withSince((int) since.getEpochSecond());
+			}
+			FrameCallback callback = cmd.exec(new FrameCallback(output));
+			return new LogFollower() {
+				@Override
+				public boolean awaitEnd(Duration timeout) throws InterruptedException {
+					return callback.awaitEnd(timeout);
+				}
+
+				@Override
+				public void close() {
+					try {
+						callback.close();
+					} catch (IOException ex) {
+						// Nothing left to release.
+					}
+				}
+			};
+		});
 	}
 
 	@Override
@@ -1061,9 +1281,15 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	}
 
 	/**
-	 * Forwards the frames of the output of a command to an {@link ExecOutput}.
+	 * Forwards frames of output to an {@link ExecOutput}.
+	 *
+	 * <p>
+	 * After {@link #close()}, arriving frames are dropped. Unlike
+	 * {@link #awaitCompletion(long, TimeUnit)}, {@link #awaitEnd(Duration)} does not close the
+	 * callback when the time is up.
+	 * </p>
 	 */
-	private static final class ExecCallback extends ResultCallback.Adapter<Frame> {
+	private static final class FrameCallback extends ResultCallback.Adapter<Frame> {
 
 		private final ExecOutput _output;
 
@@ -1071,12 +1297,19 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 
 		private final TextChunkDecoder _stderr = new TextChunkDecoder();
 
-		ExecCallback(ExecOutput output) {
+		private final CountDownLatch _ended = new CountDownLatch(1);
+
+		private volatile boolean _closed;
+
+		FrameCallback(ExecOutput output) {
 			_output = output;
 		}
 
 		@Override
 		public void onNext(Frame frame) {
+			if (_closed) {
+				return;
+			}
 			switch (frame.getStreamType()) {
 				case STDERR:
 					emitStderr(_stderr.decode(frame.getPayload()));
@@ -1090,7 +1323,47 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 			}
 		}
 
-		void flush() {
+		@Override
+		public void onComplete() {
+			try {
+				flush();
+				super.onComplete();
+			} finally {
+				_ended.countDown();
+			}
+		}
+
+		@Override
+		public void onError(Throwable throwable) {
+			try {
+				flush();
+				super.onError(throwable);
+			} finally {
+				_ended.countDown();
+			}
+		}
+
+		@Override
+		public void close() throws IOException {
+			_closed = true;
+			try {
+				super.close();
+			} finally {
+				_ended.countDown();
+			}
+		}
+
+		/**
+		 * Waits until the stream has ended or the callback is closed, at most for the given time.
+		 */
+		boolean awaitEnd(Duration timeout) throws InterruptedException {
+			return _ended.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+		}
+
+		private void flush() {
+			if (_closed) {
+				return;
+			}
 			emitStdout(_stdout.finish());
 			emitStderr(_stderr.finish());
 		}

@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.admin.system;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -21,6 +22,7 @@ import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLCollator;
 
 /**
  * TL-Script functions about the application services (runtime modules): what a view administering
@@ -50,6 +52,9 @@ public class ServiceFunctions extends TLScriptFunctions {
 
 	/** Prefix all function names of this class start with. */
 	public static final String PREFIX = "service";
+
+	/** Marker of an entry in a list of services in a message. */
+	private static final String LIST_ITEM = "\u2022 ";
 
 	/**
 	 * The services of the given snapshot, sorted by their label.
@@ -120,12 +125,12 @@ public class ServiceFunctions extends TLScriptFunctions {
 	 *         the same position, or after the second.
 	 */
 	@Label("Compare service categories")
-	public static int categoryCompare(String left, String right) {
+	public static double categoryCompare(String left, String right) {
 		int byOrder = Integer.compare(categoryOrder(left), categoryOrder(right));
 		if (byOrder != 0) {
 			return byOrder;
 		}
-		return String.valueOf(left).compareTo(String.valueOf(right));
+		return Integer.signum(String.valueOf(left).compareTo(String.valueOf(right)));
 	}
 
 	/**
@@ -247,6 +252,33 @@ public class ServiceFunctions extends TLScriptFunctions {
 	@Label("Whether a service is running")
 	public static boolean active(BasicRuntimeModule<?> module) {
 		return module != null && module.isActive();
+	}
+
+	/**
+	 * The services stopped and started together with the given service, because they depend on it
+	 * directly or indirectly.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return The labels of the dependent services in alphabetical order, one per line and each
+	 *         marked as a list item, for a confirmation message; <code>null</code> if no service
+	 *         depends on the given one, or without a module.
+	 */
+	@Label("Services depending on a service")
+	public static String dependents(BasicRuntimeModule<?> module) {
+		if (module == null) {
+			return null;
+		}
+		List<String> labels = ModuleUtil.INSTANCE.getAllDependents(module, false).stream()
+			.map(ServiceSnapshot::label)
+			.sorted(new TLCollator())
+			.toList();
+		if (labels.isEmpty()) {
+			return null;
+		}
+		return labels.stream()
+			.map(label -> LIST_ITEM + label)
+			.collect(Collectors.joining("\n"));
 	}
 
 	/**

@@ -97,7 +97,7 @@
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-repeat"
-				inputs="active"
+				inputs="active, module"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -111,6 +111,11 @@
 				<executability>
 					<visible-if expr="$active == true"/>
 				</executability>
+				<if test="serviceDependents($module) != null">
+					<then>
+						<confirm expr="#('Restarting {0} also restarts the services depending on it:\n{1}\n\nRestart them all?'@en, 'Beim Neustart von {0} werden auch die davon abhängigen Dienste neu gestartet:\n{1}\n\nAlle neu starten?'@de).fill(serviceLabel($module), serviceDependents($module))"/>
+					</then>
+				</if>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="RESTART"
 					selection="module"

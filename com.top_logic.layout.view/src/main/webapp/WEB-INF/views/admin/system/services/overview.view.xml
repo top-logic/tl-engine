@@ -18,7 +18,9 @@
 	tells whether it runs, so Start (while stopped) and Stop / Restart (while running) are
 	mutually exclusive. Each command runs the ServiceLifecycleAction (which reads the module from
 	the selection channel) and writes the refreshed snapshot to the services channel, which
-	recomputes the rows, the status and the active channel.
+	recomputes the rows, the status and the active channel. Stop and Restart first ask for
+	confirmation when other services depend on the selected one, listing them
+	(serviceDependents), since they are stopped and started with it.
 	- Activating a row - a double-click, Enter, or the row's chevron button - pushes the detail
 	frame of its service, with the module as its "module" channel.
 	- A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar
@@ -74,6 +76,11 @@
 				<executability>
 					<visible-if expr="$active == true"/>
 				</executability>
+				<if test="serviceDependents($selection) != null">
+					<then>
+						<confirm expr="#('Stopping {0} also stops the services depending on it:\n{1}\n\nStop them all?'@en, 'Beim Stoppen von {0} werden auch die davon abhängigen Dienste gestoppt:\n{1}\n\nAlle stoppen?'@de).fill(serviceLabel($selection), serviceDependents($selection))"/>
+					</then>
+				</if>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="STOP"
 					selection="selection"
@@ -95,6 +102,11 @@
 				<executability>
 					<visible-if expr="$active == true"/>
 				</executability>
+				<if test="serviceDependents($selection) != null">
+					<then>
+						<confirm expr="#('Restarting {0} also restarts the services depending on it:\n{1}\n\nRestart them all?'@en, 'Beim Neustart von {0} werden auch die davon abhängigen Dienste neu gestartet:\n{1}\n\nAlle neu starten?'@de).fill(serviceLabel($selection), serviceDependents($selection))"/>
+					</then>
+				</if>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="RESTART"
 					selection="selection"

@@ -6023,7 +6023,7 @@ button.tl-swatch:not(:disabled):hover {
    ihnen, wann sie kompakt sind (iconOnly) — keine Regel hier liest tl-button__label. Trenner sind
    tl-divider--vertical (Part Divider, #29787) und tragen die Marke tl-toolbar__separator, an der das Control
    ihre Breite misst — ohne eigene Regel. Zustände sind Attribute: data-tl-overflow (kollabiert an diesem Ende),
-   data-tl-compact (Icons statt Label). */
+   data-tl-compact (Icons statt Label), data-tl-break (Trenner am Umbruch einer umbrechenden Leiste). */
 
 .tl-toolbar {
   display: flex;
@@ -6051,6 +6051,12 @@ button.tl-swatch:not(:disabled):hover {
    nächste Zeile; der Abstand zwischen den Zeilen ist der zwischen den Einträgen. */
 .tl-toolbar--wrap {
   flex-wrap: wrap;
+}
+
+/* Ein Trenner, an dem die Leiste umbricht, trennt nichts: er steht am Zeilenende. Das Control misst die Zeilen und
+   setzt data-tl-break; der Trenner behält seinen Platz, damit das Verbergen keinen neuen Umbruch auslöst. */
+.tl-toolbar--wrap > .tl-divider[data-tl-break] {
+  visibility: hidden;
 }
 
 .tl-toolbar__group {
@@ -6349,4 +6355,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:625dddd4a70e8e0e3bc33bf4f4e3e05502429e5d5162098bf4dacfb7d442b856 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:235cdebd34cbdf99af1b9c8ea51ccb4b3ef066cca085ef39f63328c181890cf5 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

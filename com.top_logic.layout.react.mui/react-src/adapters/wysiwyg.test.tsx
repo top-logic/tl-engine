@@ -176,6 +176,24 @@ describe('rich text editor', () => {
     expect(leftovers()).toEqual([]);
   });
 
+  it('a divider at which the toolbar breaks into the next row is marked, the others not', async () => {
+    // The first two groups stand in the first row, the others in the second.
+    const rect = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      const groups = this.parentElement ? Array.from(this.parentElement.querySelectorAll(':scope > .tl-toolbar__group')) : [];
+      const top = groups.indexOf(this) >= 2 ? 32 : 0;
+      return { top, bottom: top + 24, left: 0, right: 0, width: 0, height: 24, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
+    });
+    try {
+      await mountEditor({ value: TEXT, editable: true });
+
+      const toolbar = screen.getByRole('toolbar', { name: 'js.wysiwyg.toolbar' });
+      const marks = Array.from(toolbar.querySelectorAll(':scope > .tl-divider')).map(divider => divider.hasAttribute('data-tl-break'));
+      expect(marks).toEqual([false, true, false, false]);
+    } finally {
+      rect.mockRestore();
+    }
+  });
+
   it('an error marks the frame and the textbox aria-invalid, not a class', async () => {
     await mountEditor({ value: TEXT, editable: true, hasError: true });
 

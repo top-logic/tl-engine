@@ -8,7 +8,7 @@ import {
 import { useEditorState } from '@tiptap/react';
 import type { Editor, EditorStateSnapshot } from '@tiptap/react';
 
-const { useCallback, useEffect, useId, useRef, useState } = React;
+const { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } = React;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -190,8 +190,10 @@ interface ToolButtonProps {
 
 /**
  * A button of the toolbar: the part `Button` in the appearance the toolbar gives its buttons
- * (ghost, icon alone), drawn small like every button of the toolbar: the toolbar is part of a field.
- * A toggle reports whether it is pressed (`aria-pressed`).
+ * (ghost, icon alone), drawn small like every button of the toolbar. A deliberate exception to the
+ * standard icon button, which a button showing its icon alone otherwise is: this toolbar is part of
+ * a field, not a bar over a region (rich-text.contract.md). A toggle reports whether it is pressed
+ * (`aria-pressed`).
  */
 const ToolButton: React.FC<ToolButtonProps> = ({ icon, label, checked, disabled, onPress }) => {
   const Button = usePart('Button');
@@ -475,17 +477,52 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
 // ---------------------------------------------------------------------------
 
 /**
+ * Marks the dividers of the wrapping toolbar at which it breaks into the next row (`data-tl-break`,
+ * toolbar.contract.md): the group after such a divider starts the next row, the divider would stand
+ * alone at the end of its row. Measured after every render and whenever the toolbar or one of its
+ * entries changes its size; the package hides a marked divider but keeps its place, so marking it
+ * causes no new break.
+ */
+function useBreakDividers(): React.RefObject<HTMLDivElement | null> {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const mark = () => {
+      root.querySelectorAll(':scope > .tl-divider').forEach(divider => {
+        const before = divider.previousElementSibling;
+        const after = divider.nextElementSibling;
+        const breaks = before !== null && after !== null
+          && after.getBoundingClientRect().top >= before.getBoundingClientRect().bottom;
+        divider.toggleAttribute('data-tl-break', breaks);
+      });
+    };
+    mark();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(mark);
+    observer.observe(root);
+    Array.from(root.children).forEach(child => observer.observe(child));
+    return () => observer.disconnect();
+  });
+
+  return ref;
+}
+
+/**
  * The toolbar of the rich text editor (rich-text.contract.md): a wrapping `tl-toolbar` whose
  * groups are divided by vertical dividers. Its buttons are the part `Button`, ghost, icon alone and
  * small, as are its menu triggers; the paragraph format is a menu of radio entries, the list kind a menu of checkbox entries
  * (the checked one switches the list off), the link a popup. The commands the editor is configured
  * with form a toolbar of their own inside. Where the editor offers source editing, a toggle shows the
- * HTML source in place of the formatted text; while it is shown, the toggle is the only button.
+ * HTML source in place of the formatted text; while it is shown, the toggle is the only button. A
+ * divider at which the toolbar breaks into the next row is hidden ({@link useBreakDividers}).
  */
 const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, sourceMode, onToggleSource, toolbar }) => {
   const labels = useI18N(I18N_KEYS);
   const state = useEditorState({ editor, selector: selectToolbarState });
   const Divider = usePart('Divider');
+  const toolbarRef = useBreakDividers();
 
   if (!editor || !state) return null;
 
@@ -599,7 +636,7 @@ const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, sourceM
 
   return (
     <ButtonDefaults appearance="ghost" iconOnly>
-      <div className="tl-toolbar tl-toolbar--wrap" role="toolbar" aria-label={t(labels, 'toolbar')}>
+      <div ref={toolbarRef} className="tl-toolbar tl-toolbar--wrap" role="toolbar" aria-label={t(labels, 'toolbar')}>
         {groups.map((group, index) => (
           <React.Fragment key={index}>
             {index > 0 && <Divider orientation="vertical" />}

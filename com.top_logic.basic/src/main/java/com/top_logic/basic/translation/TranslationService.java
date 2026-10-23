@@ -16,13 +16,17 @@ import javax.net.ssl.HttpsURLConnection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MemorySizeFormat;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -74,8 +78,11 @@ public abstract class TranslationService<C extends TranslationService.Config> ex
 		/** @see #getApiHost() */
 		String API_HOST = "api-host";
 
-		/** The API key to authenticate the request. */
+		/** @see #getApiKey() */
 		String API_KEY = "api-key";
+
+		/** @see #getCredentials() */
+		String CREDENTIALS = "credentials";
 
 		/** @see #getMaxAccumulatedTranslationSize() */
 		String MAX_ACCUMULATED_TRANSLATION_SIZE = "max-accumulated-translation-size";
@@ -93,14 +100,46 @@ public abstract class TranslationService<C extends TranslationService.Config> ex
 		/** @see #getApiHost() */
 		void setApiHost(String apiHost);
 
-		/** The API key to authenticate the requests. */
+		/**
+		 * The API key to authenticate the requests.
+		 *
+		 * <p>
+		 * Recommended is a reference to the variable or file holding the key, so that the key is
+		 * not part of the configuration:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="translation_api_key"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * An attribute value is an encrypted key, or a plain key with the prefix
+		 * <code>unencrypted:</code>. Configuring both an API key and {@link #getCredentials()
+		 * credentials} is an error.
+		 * </p>
+		 */
 		@Name(API_KEY)
-		@Mandatory
-		@Encrypted
-		String getApiKey();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getApiKey();
 
 		/** @see #getApiKey() */
-		void setApiKey(String apiKey);
+		void setApiKey(PolymorphicConfiguration<? extends SecretSource> apiKey);
+
+		/**
+		 * How the requests to the translation API are authenticated, if not with an
+		 * {@link #getApiKey() API key}.
+		 *
+		 * <p>
+		 * E.g. no credentials at all, when a gateway in between adds them. Configuring both
+		 * credentials and an API key is an error.
+		 * </p>
+		 */
+		@Name(CREDENTIALS)
+		@Nullable
+		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
+
+		/** @see #getCredentials() */
+		void setCredentials(PolymorphicConfiguration<? extends CredentialProvider> credentials);
 
 		/**
 		 * The maximum accumulated size of translations.

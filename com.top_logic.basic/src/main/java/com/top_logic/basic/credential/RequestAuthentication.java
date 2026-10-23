@@ -5,6 +5,7 @@
  */
 package com.top_logic.basic.credential;
 
+import java.net.HttpURLConnection;
 import java.net.http.HttpRequest;
 
 /**
@@ -13,11 +14,12 @@ import java.net.http.HttpRequest;
  *
  * <p>
  * A consumer adapts the request object of its HTTP client library to this interface, e.g.
- * <code>request::setHeader</code> for an Apache HTTP client request or
- * <code>connection::setRequestProperty</code> for a {@link java.net.HttpURLConnection}.
+ * <code>request::setHeader</code> for an Apache HTTP client request. The requests of the JDK
+ * clients are adapted by {@link #of(HttpRequest.Builder)} and {@link #of(HttpURLConnection)}.
  * </p>
  *
  * @see #of(HttpRequest.Builder)
+ * @see #of(HttpURLConnection)
  */
 @FunctionalInterface
 public interface RequestAuthentication {
@@ -41,6 +43,17 @@ public interface RequestAuthentication {
 	 */
 	static RequestAuthentication of(HttpRequest.Builder builder) {
 		return builder::setHeader;
+	}
+
+	/**
+	 * Adapts a {@link HttpURLConnection} to a {@link RequestAuthentication}.
+	 *
+	 * @param connection
+	 *        The connection to authenticate, not yet connected.
+	 * @return A {@link RequestAuthentication} setting request properties of the given connection.
+	 */
+	static RequestAuthentication of(HttpURLConnection connection) {
+		return connection::setRequestProperty;
 	}
 
 }

@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, the workspace token in ANTHROPIC_AUTH_TOKEN, ANTHROPIC_BASE_URL, tl_factory_llm_proxy_url), and before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, the workspace token in ANTHROPIC_AUTH_TOKEN, ANTHROPIC_BASE_URL, tl_factory_llm_proxy_url), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated).
 ---
 
 # Control application (tl-factory)
@@ -21,20 +21,20 @@ gets access to the container platform itself.
 
 | Class | Role |
 |---|---|
-| `WorkspaceProvider` | Platform-neutral lifecycle of a workspace container: create, start, stop, remove, status, list, cleanup, commands in the container, the log of its main process, image build, shared volumes. |
+| `WorkspaceProvider` | Platform-neutral lifecycle of a workspace container: create, start, stop, remove, create anew on another image (`recreate`), status, list, cleanup, commands in the container, the log of its main process, image build, shared volumes. |
 | `DockerWorkspaceProvider` | The implementation on the Docker Engine API. |
 | `WorkspaceService` | Service holding the configured provider and the `ApplicationWorkspaces`. |
 | `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace, builds it and runs it as the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
 | `ProjectWorkspaces` | Service running the operations on the workspaces of the stored projects in the background and storing their state and output; reconciles the stored states with the existing containers after a restart. |
 | `LLMProxyService` / `LLMProxyServlet` | Access of the workspaces to the Anthropic Messages API through the control application, see [LLM access](#llm-access). |
-| `FactoryFunctions` | The TL-Script functions the views call: `factoryCreateWorkspace`, `factoryStart`, `factoryStop`, `factoryCleanup`, `factoryEngineVersion`, `factoryCheckGroupId`, `factoryCheckArtifactId`. |
+| `FactoryFunctions` | The TL-Script functions the views call: `factoryCreateWorkspace`, `factoryStart`, `factoryStop`, `factoryCleanup`, `factoryUpdate`, `factoryImageOutdated`, `factoryEngineVersion`, `factoryCheckGroupId`, `factoryCheckArtifactId`. |
 
 The model module `tl.factory` has the classes `Project` (name, group ID, artifact ID, engine
 version, the workspace as a composition) and `Workspace` (workspace ID, status, host port,
-preview URL, initial root password, the hash of its LLM token, the output of the last operation
-as `log`) and the
+preview URL, initial root password, the hash of its LLM token, the image its container was created
+from, the output of the last operation as `log`) and the
 enumeration `WorkspaceStatus`: *Created*, *Building*, *Starting*, *Running*, *Stopping*,
-*Stopped*, *Cleaning up*, *Error*, *Unknown*.
+*Stopped*, *Cleaning up*, *Updating*, *Error*, *Unknown*.
 
 A new workspace gets a random initial password, which the container passes to the application in
 the environment variable `tl_initial_password` (`ApplicationWorkspaces.ENV_INITIAL_PASSWORD`); the
@@ -76,10 +76,73 @@ belongs to `tl` as well.
 Workspaces and release repositories of images that ran as root:
 
 - A **workspace** keeps the image it was created with and runs as root further on; the provider
-  never deletes an image. Its volumes belong to root, so it cannot be moved to the current image;
-  clean it up and create the workspace anew to get the agent tools.
+  never deletes an image. Its volumes belong to root, so [updating it](#updating-a-workspace) does
+  not help - the user `tl` cannot write its sources; clean it up and create the workspace anew to
+  get the agent tools.
 - A **release repository** filled by root stays usable: the workspaces mount it read-only. Before
   a release repository is filled, the resolver takes it over for `tl` (`chown -R` as root).
+
+### Pinned versions
+
+Every tool version of the image is pinned in the `Dockerfile` - `MAVEN_VERSION`, `NODE_VERSION`,
+`CLAUDE_CODE_VERSION`, `PLAYWRIGHT_MCP_VERSION` and the commit `TL_CLAUDE_TOOLS_COMMIT` of the
+plugin; the base image `eclipse-temurin:21-jdk` is the one exception and follows its tag. Nothing is
+installed as "latest":
+
+- **The tag is the content hash.** An image is built again only when a file of its context changes.
+  With an unpinned version, a release of a tool would never reach an existing image, and two
+  control applications building the same files at different times would run different tools under
+  the same tag.
+- **The output of Claude Code is parsed.** The control application reads the stream-json output of
+  Claude Code; a new version may change it, so it is tested before workspaces use it.
+- **Supply chain.** What runs in a workspace changes only by a reviewed change of the repository;
+  Claude Code updates neither itself nor its plugins (`DISABLE_AUTOUPDATER`).
+
+Renovate proposes the updates. Each pinned `ARG` has a comment above it naming its source,
+`# renovate: datasource=<datasource> depName=<name>` - `maven` for Maven
+(`org.apache.maven:apache-maven`), `node-version` for Node, `npm` for Claude Code and
+`@playwright/mcp`, and `git-refs` with `packageName=<repository URL> currentValue=main` for the
+plugin, whose commit Renovate moves to the head of `main`. The `customManagers` of `renovate.json`
+read these comments; its `packageRules` group the updates into one pull request *workspace image
+tools* per week (a major update in a pull request of its own) - each update needs the integration
+test below, so a batch is tested once - and restrict Node to LTS lines from 22 on, the version
+Claude Code needs.
+
+An update is taken over like this:
+
+1. Renovate opens the pull request changing the `ARG`s.
+2. Before merging, run the integration test locally - CI does not run it, it needs a Docker daemon
+   and takes minutes:
+   `mvn test -DskipTests=false -pl tl-factory -Dtest=test.com.top_logic.factory.workspace.app.TestApplicationWorkspaces -Dtl.factory.integration=true`.
+   It builds the new image, creates an application, checks Claude Code in the pinned version, the
+   plugin, the Playwright MCP server with its browser, and updates the workspace to another image.
+   A new Claude Code version additionally needs a check of the stream-json parsing.
+3. Merge. The control application builds the new image on the next creation or update of a
+   workspace; existing workspaces show *Image outdated* and are moved with *Update workspace*.
+
+### Updating a workspace
+
+A workspace container keeps the image it was created from. The workspace records this image
+(`image`, `FactoryModel.WORKSPACE_IMAGE`); a workspace whose image is not the current one -
+`ApplicationWorkspaces.currentImage()`, the repository tagged with the content hash of the image
+context - or that has no image recorded is outdated (`factoryImageOutdated`). The detail view then
+shows *Image outdated*, and the command *Update workspace* (`factoryUpdate`,
+`ProjectWorkspaces.update`) is enabled while no operation runs on the workspace.
+
+The update is an operation like the others, in state *Updating* with its output in the log:
+
+- It builds the current image if needed, makes sure the release repository is complete and creates
+  the container anew (`WorkspaceProvider.recreate`): the provider makes the image available,
+  removes the old container - stopping it if it runs - and creates the new one from the same spec
+  on the existing named volumes. Sources, Maven repository and database stay, so does the initial
+  password of the workspace. A workspace whose container is lost but whose volumes exist gets a
+  container again this way.
+- If the proxy is switched on, the new container gets a **new LLM token**: the old token is not
+  stored anywhere and cannot be passed on. The hash of the new token replaces the old one when the
+  container is created, so the old token is no longer accepted. A workspace created before the
+  proxy existed gets its first token this way.
+- A workspace that was running is started again and waited for like by *Start*; otherwise it ends
+  in *Created*. A failure ends in *Error* with the reason in the log; the update can be repeated.
 
 ## Commands and the log of a workspace
 

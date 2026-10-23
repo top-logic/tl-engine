@@ -78,6 +78,12 @@ public class FactoryModel {
 	 */
 	public static final String WORKSPACE_LLM_TOKEN_HASH = "llmTokenHash";
 
+	/**
+	 * Attribute of a {@link #WORKSPACE}: the image its container was created from, see
+	 * {@link com.top_logic.factory.workspace.WorkspaceInfo#getImage()}.
+	 */
+	public static final String WORKSPACE_IMAGE = "image";
+
 	/** Attribute of a {@link #WORKSPACE}: the output of its last operation. */
 	public static final String WORKSPACE_LOG = "log";
 

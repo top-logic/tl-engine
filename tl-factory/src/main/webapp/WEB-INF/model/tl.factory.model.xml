@@ -15,6 +15,7 @@
 				<classifier name="STOPPING"/>
 				<classifier name="STOPPED"/>
 				<classifier name="REMOVING"/>
+				<classifier name="UPDATING"/>
 				<classifier name="ERROR"/>
 				<classifier name="UNKNOWN"/>
 			</enum>
@@ -137,6 +138,17 @@
 					>
 						<annotations>
 							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<!--
+						The image the container of the workspace was created from. A workspace without
+						image or with another one than the current workspace image is outdated.
+					-->
+					<property name="image"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
 						</annotations>
 					</property>
 					<property name="log"

@@ -13,5 +13,42 @@
   },
   "postUpdateOptions": [
     "npmDedupe"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Tool versions pinned in the workspace image of tl-factory, each ARG annotated by a preceding '# renovate:' comment.",
+      "managerFilePatterns": [
+        "/(^|/)tl-factory/src/main/java/com/top_logic/factory/workspace/app/image/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+ARG [A-Z0-9_]+=(?<currentValue>\\S+)",
+        "# renovate: datasource=(?<datasource>git-refs) depName=(?<depName>\\S+) packageName=(?<packageName>\\S+) currentValue=(?<currentValue>\\S+)\\s+ARG [A-Z0-9_]+=(?<currentDigest>[0-9a-f]{40})"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "The tools of the workspace image are updated together: every update needs the integration test of tl-factory (with -Dtl.factory.integration=true) before it is merged, which CI does not run.",
+      "matchFileNames": [
+        "tl-factory/src/main/java/com/top_logic/factory/workspace/app/image/Dockerfile"
+      ],
+      "groupName": "workspace image tools",
+      "schedule": [
+        "* 0-5 * * 1"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Node of the workspace image: only LTS lines - the node versioning proposes LTS releases only, the allowed versions exclude the odd majors and those below 22, which Claude Code needs at least.",
+      "matchFileNames": [
+        "tl-factory/src/main/java/com/top_logic/factory/workspace/app/image/Dockerfile"
+      ],
+      "matchDepNames": [
+        "node"
+      ],
+      "versioning": "node",
+      "allowedVersions": "/^v?(2[2468]|[3-9][02468])\\./"
+    }
   ]
 }

@@ -211,6 +211,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		run(workspace, "Creating application " + groupId + ":" + artifactId + " " + version + ".", log -> {
 			WorkspaceInfo info = applications().create(spec, log);
 			log.update(w -> {
+				w.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());
 				FactoryModel.setStatus(w, WorkspaceStatus.STARTING);
 				FactoryModel.setEndpoint(w, port(info), null);
 			});
@@ -253,21 +254,137 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 *        The identifier of the container of the workspace.
 	 */
 	public static NewWorkspace commitNewWorkspace(TLObject project, String workspaceId) {
-		String groupId = FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID);
-		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
-		String version = FactoryModel.getString(project, FactoryModel.PROJECT_ENGINE_VERSION);
 		String initialPassword = SecureRandomService.getInstance().getRandomString();
 		LLMProxyService llmProxy = LLMProxyService.getInstance();
 		LLMProxyService.WorkspaceToken llmToken = llmProxy == null ? null : llmProxy.issueToken();
 		TLObject workspace = commitInRequest(() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword,
 			llmToken == null ? null : llmToken.hash(), WorkspaceStatus.BUILDING));
-		ApplicationSpec spec = new ApplicationSpec(workspaceId, groupId, artifactId)
-			.setEngineVersion(version)
+		return new NewWorkspace(workspace, applicationSpec(project, workspaceId, initialPassword, llmProxy, llmToken));
+	}
+
+	/**
+	 * The description of the application of a workspace, with the environment its container gets.
+	 */
+	private static ApplicationSpec applicationSpec(TLObject project, String workspaceId, String initialPassword,
+			LLMProxyService llmProxy, LLMProxyService.WorkspaceToken llmToken) {
+		ApplicationSpec spec = new ApplicationSpec(workspaceId,
+			FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID),
+			FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID))
+			.setEngineVersion(FactoryModel.getString(project, FactoryModel.PROJECT_ENGINE_VERSION))
 			.setInitialPassword(initialPassword);
 		if (llmToken != null) {
 			spec.putEnv(llmProxy.containerEnv(llmToken));
 		}
-		return new NewWorkspace(workspace, spec);
+		return spec;
+	}
+
+	/**
+	 * Creates the container of the workspace of a project anew on the current workspace image in
+	 * the background, keeping its sources, its Maven repository and its database.
+	 *
+	 * <p>
+	 * The container gets the {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password} of
+	 * the workspace and, if the {@link LLMProxyService LLM proxy} is switched on, a new token for
+	 * the proxy; the token of the old container is no longer valid afterwards. A workspace that was
+	 * running is started again and waited for like by {@link #start(TLObject)}.
+	 * </p>
+	 *
+	 * @param project
+	 *        A project with a workspace on which no operation runs.
+	 * @see #isImageOutdated(TLObject)
+	 */
+	public void update(TLObject project) {
+		TLObject existing = FactoryModel.getWorkspace(project);
+		// Prepared before the state is stored, so that a failure leaves the workspace as it is.
+		WorkspaceUpdate update = existing == null ? null : prepareUpdate(existing);
+		TLObject workspace = begin(project, WorkspaceStatus.UPDATING, WorkspaceStatus.values());
+		String workspaceId = FactoryModel.getWorkspaceId(workspace);
+		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
+		run(workspace, "Updating the workspace to the current image.", log -> {
+			boolean wasRunning =
+				applications().getProvider().status(workspaceId).getState() == WorkspaceState.RUNNING;
+			WorkspaceInfo info = applications().update(update.spec(), log);
+			log.line("Container created on image " + info.getImage() + ".");
+			log.update(w -> {
+				recordUpdate(w, update, info);
+				FactoryModel.setStatus(w, wasRunning ? WorkspaceStatus.STARTING : WorkspaceStatus.of(info.getState()));
+				FactoryModel.setEndpoint(w, null, null);
+			});
+			if (wasRunning) {
+				WorkspaceInfo started = applications().start(workspaceId);
+				log.update(w -> FactoryModel.setEndpoint(w, port(started), null));
+				awaitApplication(log, workspaceId, artifactId);
+			}
+		});
+	}
+
+	/**
+	 * What the container of an updated workspace gets: the description of its application with
+	 * the environment of the container, and the hash of its new token for the LLM proxy.
+	 *
+	 * @param spec
+	 *        The application of the workspace, including the environment the container gets.
+	 * @param llmTokenHash
+	 *        The hash of the token in the environment, {@code null} if the proxy is switched off.
+	 */
+	public record WorkspaceUpdate(ApplicationSpec spec, String llmTokenHash) {
+		@Override
+		public String toString() {
+			// The environment of the spec holds secrets.
+			return "WorkspaceUpdate[" + spec.getWorkspaceId() + "]";
+		}
+	}
+
+	/**
+	 * Describes the container of an updated workspace without storing anything.
+	 *
+	 * <p>
+	 * The workspace keeps its {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}. If
+	 * the {@link LLMProxyService LLM proxy} is switched on, a new token is issued for it, which
+	 * becomes valid when the update is {@link #recordUpdate(TLObject, WorkspaceUpdate, WorkspaceInfo)
+	 * recorded}.
+	 * </p>
+	 *
+	 * @param workspace
+	 *        The stored workspace.
+	 */
+	public static WorkspaceUpdate prepareUpdate(TLObject workspace) {
+		LLMProxyService llmProxy = LLMProxyService.getInstance();
+		LLMProxyService.WorkspaceToken llmToken = llmProxy == null ? null : llmProxy.issueToken();
+		ApplicationSpec spec = applicationSpec(FactoryModel.getProject(workspace),
+			FactoryModel.getWorkspaceId(workspace),
+			FactoryModel.getString(workspace, FactoryModel.WORKSPACE_INITIAL_PASSWORD), llmProxy, llmToken);
+		return new WorkspaceUpdate(spec, llmToken == null ? null : llmToken.hash());
+	}
+
+	/**
+	 * Stores in the current transaction that the container of a workspace was created anew: the
+	 * {@link FactoryModel#WORKSPACE_IMAGE image} of the container and the
+	 * {@link FactoryModel#WORKSPACE_LLM_TOKEN_HASH hash} of its token, which replaces the token of
+	 * the old container.
+	 *
+	 * @param workspace
+	 *        The stored workspace.
+	 * @param update
+	 *        What the new container got, see {@link #prepareUpdate(TLObject)}.
+	 * @param info
+	 *        The workspace in its new container.
+	 */
+	public static void recordUpdate(TLObject workspace, WorkspaceUpdate update, WorkspaceInfo info) {
+		workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());
+		workspace.tUpdateByName(FactoryModel.WORKSPACE_LLM_TOKEN_HASH, update.llmTokenHash());
+	}
+
+	/**
+	 * Whether the container of a workspace runs another image than the
+	 * {@link ApplicationWorkspaces#currentImage() current workspace image}, or one that is not
+	 * known.
+	 *
+	 * @see #update(TLObject)
+	 */
+	public static boolean isImageOutdated(TLObject workspace) {
+		String image = FactoryModel.getString(workspace, FactoryModel.WORKSPACE_IMAGE);
+		return image == null || !image.equals(applications().currentImage());
 	}
 
 	/**

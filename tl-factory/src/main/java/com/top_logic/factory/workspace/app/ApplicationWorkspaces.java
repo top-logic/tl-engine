@@ -361,6 +361,8 @@ public class ApplicationWorkspaces {
 
 	private final Map<String, Object> _releaseLocks = new ConcurrentHashMap<>();
 
+	private volatile String _currentImage;
+
 	/**
 	 * Creates {@link ApplicationWorkspaces}.
 	 *
@@ -410,22 +412,8 @@ public class ApplicationWorkspaces {
 		String releaseVolume = ensureReleaseRepository(image, version, progress);
 
 		String workspaceId = spec.getWorkspaceId();
-		String appDir = SOURCE_PATH + PATH_SEPARATOR + spec.getArtifactId();
-		WorkspaceSpec workspace = new WorkspaceSpec(workspaceId, image)
-			.addVolume(new VolumeMount(SOURCE_VOLUME, SOURCE_PATH))
-			.addVolume(new VolumeMount(REPOSITORY_VOLUME, REPOSITORY_PATH))
-			.addVolume(VolumeMount.shared(releaseVolume, RELEASE_PATH, true))
-			.putEnv(ENV_MAVEN_ARGS, String.join(" ", workspaceMavenArgs()))
-			.putEnv(ENV_APP_DIR, appDir)
-			.putEnv(ENV_BUILT_MARKER, builtMarker())
-			.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT))
-			.putEnv(ENV_BROWSER, BROWSER_NONE);
-		String initialPassword = spec.getInitialPassword();
-		if (initialPassword != null) {
-			workspace.putEnv(ENV_INITIAL_PASSWORD, initialPassword);
-		}
-		spec.getEnv().forEach(workspace::putEnv);
-		_provider.create(workspace);
+		String appDir = appDir(spec);
+		_provider.create(workspaceSpec(spec, image, releaseVolume));
 		_provider.start(workspaceId);
 
 		step(progress, "Generating application " + spec.getGroupId() + ":" + spec.getArtifactId() + " " + version);
@@ -439,6 +427,50 @@ public class ApplicationWorkspaces {
 		run(workspaceId, ExecCommand.of("touch", builtMarker()), progress);
 		step(progress, "Application built, starting it");
 		return _provider.status(workspaceId);
+	}
+
+	/**
+	 * Creates the container of an existing workspace anew on the current workspace image, keeping
+	 * its application, its database and its Maven repository.
+	 *
+	 * <p>
+	 * The image is built if necessary, the release repository of the engine version is filled if
+	 * it is not complete. The container gets the environment of the given spec, which must
+	 * describe the application the workspace was created with. A running workspace is stopped; the
+	 * new container is not started.
+	 * </p>
+	 *
+	 * @param spec
+	 *        The application of the workspace.
+	 * @param progress
+	 *        Receiver of the output of all steps while they run.
+	 * @return The workspace in its new container, see {@link WorkspaceInfo#getImage()}.
+	 * @see WorkspaceProvider#recreate(WorkspaceSpec)
+	 */
+	public WorkspaceInfo update(ApplicationSpec spec, ExecOutput progress) throws InterruptedException {
+		String image = ensureImage(progress);
+		String releaseVolume = ensureReleaseRepository(image, engineVersion(spec), progress);
+		step(progress, "Creating the container anew on image " + image);
+		return _provider.recreate(workspaceSpec(spec, image, releaseVolume));
+	}
+
+	/**
+	 * The reference of the image new and updated workspaces run, whether or not it is built yet.
+	 *
+	 * <p>
+	 * A workspace whose container runs another image is outdated, see
+	 * {@link #update(ApplicationSpec, ExecOutput)}.
+	 * </p>
+	 *
+	 * @see #ensureImage(ExecOutput)
+	 */
+	public String currentImage() {
+		String result = _currentImage;
+		if (result == null) {
+			result = workspaceImageContext().imageReference(_config.getImageRepository());
+			_currentImage = result;
+		}
+		return result;
 	}
 
 	/**
@@ -540,9 +572,18 @@ public class ApplicationWorkspaces {
 	 */
 	public String ensureImage(ExecOutput progress) throws InterruptedException {
 		synchronized (_imageLock) {
-			return _provider.buildImage(_config.getImageRepository(), imageContext(_config.getRepositoryUrl()),
-				progress);
+			return _provider.buildImage(_config.getImageRepository(), workspaceImageContext(), progress);
 		}
+	}
+
+	/**
+	 * The files the image of the workspaces is built from.
+	 *
+	 * @implSpec The {@link #imageContext(String) workspace image context} for the configured
+	 *           {@link Config#getRepositoryUrl() repository URL}.
+	 */
+	protected ImageContext workspaceImageContext() {
+		return imageContext(_config.getRepositoryUrl());
 	}
 
 	/**
@@ -668,6 +709,31 @@ public class ApplicationWorkspaces {
 		result.add("install");
 		result.add("exec:java");
 		return result;
+	}
+
+	/**
+	 * The description of the container of the application of a workspace.
+	 */
+	private WorkspaceSpec workspaceSpec(ApplicationSpec spec, String image, String releaseVolume) {
+		WorkspaceSpec workspace = new WorkspaceSpec(spec.getWorkspaceId(), image)
+			.addVolume(new VolumeMount(SOURCE_VOLUME, SOURCE_PATH))
+			.addVolume(new VolumeMount(REPOSITORY_VOLUME, REPOSITORY_PATH))
+			.addVolume(VolumeMount.shared(releaseVolume, RELEASE_PATH, true))
+			.putEnv(ENV_MAVEN_ARGS, String.join(" ", workspaceMavenArgs()))
+			.putEnv(ENV_APP_DIR, appDir(spec))
+			.putEnv(ENV_BUILT_MARKER, builtMarker())
+			.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT))
+			.putEnv(ENV_BROWSER, BROWSER_NONE);
+		String initialPassword = spec.getInitialPassword();
+		if (initialPassword != null) {
+			workspace.putEnv(ENV_INITIAL_PASSWORD, initialPassword);
+		}
+		spec.getEnv().forEach(workspace::putEnv);
+		return workspace;
+	}
+
+	private static String appDir(ApplicationSpec spec) {
+		return SOURCE_PATH + PATH_SEPARATOR + spec.getArtifactId();
 	}
 
 	private String engineVersion(ApplicationSpec spec) {

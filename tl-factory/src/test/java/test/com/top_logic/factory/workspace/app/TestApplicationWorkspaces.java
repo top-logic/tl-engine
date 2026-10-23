@@ -53,7 +53,8 @@ import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
 /**
  * Integration test of {@link ApplicationWorkspaces}: an application is generated, built and run in
  * a Docker workspace with a given initial password of its account root, the tools of an agent are
- * checked in the workspace, the workspace is stopped, started again and removed.
+ * checked in the workspace, the workspace is stopped, started again, updated to another image and
+ * removed.
  *
  * <p>
  * The test downloads the workspace base image, Maven and the TopLogic release artifacts and takes
@@ -119,6 +120,12 @@ public class TestApplicationWorkspaces extends TestCase {
 	private static final Duration WAIT = Duration.ofSeconds(30);
 
 	/**
+	 * File added to the image context to get another workspace image for the update. The
+	 * Dockerfile does not copy it, so the image is built from the cached layers.
+	 */
+	private static final String CHANGED_IMAGE_FILE = "it-changed";
+
+	/**
 	 * Declaration of the Claude Code version in the Dockerfile of the workspace image.
 	 */
 	private static final Pattern CLAUDE_CODE_VERSION =
@@ -154,6 +161,11 @@ public class TestApplicationWorkspaces extends TestCase {
 
 	private String _workspaceId;
 
+	/**
+	 * Images the test built in addition to the workspace image, removed after the test.
+	 */
+	private final List<String> _builtImages = new ArrayList<>();
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -169,6 +181,13 @@ public class TestApplicationWorkspaces extends TestCase {
 		try {
 			_provider.cleanup(Collections.emptyList());
 			assertTrue("Workspaces left after cleanup.", _provider.list().isEmpty());
+			for (String image : _builtImages) {
+				try {
+					_docker.removeImageCmd(image).exec();
+				} catch (NotFoundException ex) {
+					// Not built.
+				}
+			}
 		} finally {
 			_provider.close();
 			_docker.close();
@@ -178,7 +197,8 @@ public class TestApplicationWorkspaces extends TestCase {
 
 	/**
 	 * Creates an application, checks that it serves its login page, stops and starts it again on
-	 * the same volumes and removes it, keeping the release repository.
+	 * the same volumes, updates it to another image on the same volumes with the same initial
+	 * password and removes it, keeping the release repository.
 	 */
 	public void testApplicationLifecycle() throws Exception {
 		String version = _applications.getConfig().getEngineVersion();
@@ -231,6 +251,25 @@ public class TestApplicationWorkspaces extends TestCase {
 		}));
 		assertEquals("The source volume did not survive the restart.", DATA_CONTENT + "\n", data.toString());
 
+		long update = System.currentTimeMillis();
+		ApplicationWorkspaces changed = changedImage();
+		String updatedImage = changed.currentImage();
+		assertFalse("The changed image context has the same tag.", updatedImage.equals(_applications.currentImage()));
+		_builtImages.add(updatedImage);
+		WorkspaceInfo updated = changed.update(
+			new ApplicationSpec(_workspaceId, GROUP_ID, ARTIFACT_ID).setInitialPassword(INITIAL_PASSWORD), progress);
+		assertEquals(WorkspaceState.CREATED, updated.getState());
+		assertEquals(updatedImage, updated.getImage());
+		assertEquals(created.getVolumes(), updated.getVolumes());
+		assertFalse(created.getContainerId().equals(updated.getContainerId()));
+		changed.start(_workspaceId);
+		assertLoginPage(changed.awaitApplication(_workspaceId, ARTIFACT_ID));
+		long reachableUpdated = System.currentTimeMillis();
+		assertEquals("The initial password is not kept.", INITIAL_PASSWORD + "\n",
+			output(ExecCommand.of("printenv", ApplicationWorkspaces.ENV_INITIAL_PASSWORD)));
+		assertEquals("The source volume did not survive the update.", DATA_CONTENT + "\n",
+			output(ExecCommand.of("cat", DATA_FILE)));
+
 		_applications.remove(_workspaceId);
 		WorkspaceInfo removed = _provider.status(_workspaceId);
 		assertEquals(WorkspaceState.MISSING, removed.getState());
@@ -255,6 +294,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		System.out.println("Create (image, release repository, generate, build): " + seconds(start, built) + " s");
 		System.out.println("First start until reachable: " + seconds(built, reachable) + " s");
 		System.out.println("Restart until reachable: " + seconds(restart, reachableAgain) + " s");
+		System.out.println("Update until reachable: " + seconds(update, reachableUpdated) + " s");
 	}
 
 	/**
@@ -359,6 +399,19 @@ public class TestApplicationWorkspaces extends TestCase {
 			server.terminate();
 			assertFalse(server.isAlive());
 		}
+	}
+
+	/**
+	 * {@link ApplicationWorkspaces} with the configuration of the tested ones whose image context
+	 * has an additional file, so that its current image is another one.
+	 */
+	private ApplicationWorkspaces changedImage() {
+		return new ApplicationWorkspaces(_applications.getConfig(), _provider) {
+			@Override
+			protected ImageContext workspaceImageContext() {
+				return super.workspaceImageContext().add(CHANGED_IMAGE_FILE, _workspaceId);
+			}
+		};
 	}
 
 	/**

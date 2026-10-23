@@ -64,8 +64,8 @@ public interface WorkspaceProvider extends AutoCloseable {
 	 *        The files to build the image from.
 	 * @param output
 	 *        Receiver of the output of the build while it runs.
-	 * @return The reference of the image, the repository followed by {@code :} and the content
-	 *         hash.
+	 * @return The reference of the image, the repository tagged with the content hash, see
+	 *         {@link ImageContext#imageReference(String)}.
 	 */
 	String buildImage(String repository, ImageContext context, ExecOutput output) throws InterruptedException;
 
@@ -116,6 +116,34 @@ public interface WorkspaceProvider extends AutoCloseable {
 	WorkspaceInfo create(WorkspaceSpec spec) throws InterruptedException;
 
 	/**
+	 * Creates the container of an existing workspace anew from the given spec, keeping its
+	 * volumes.
+	 *
+	 * <p>
+	 * The container the workspace has is stopped and removed, its volumes are kept and mounted by
+	 * the new container, which may use another {@link WorkspaceSpec#getImage() image} and another
+	 * environment. The image is made available before the container is removed, so that a
+	 * workspace whose image cannot be pulled keeps its container. A workspace that has lost its
+	 * container but still has volumes gets a container again. The new container is not started.
+	 * </p>
+	 *
+	 * @param spec
+	 *        The workspace to create anew, addressed by its {@link WorkspaceSpec#getWorkspaceId()
+	 *        identifier}.
+	 * @return The workspace in state {@link WorkspaceState#CREATED}.
+	 */
+	default WorkspaceInfo recreate(WorkspaceSpec spec) throws InterruptedException {
+		String workspaceId = spec.getWorkspaceId();
+		WorkspaceInfo existing = status(workspaceId);
+		if (existing.getState() == WorkspaceState.MISSING && existing.getVolumes().isEmpty()) {
+			throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_WORKSPACE__ID.fill(workspaceId));
+		}
+		ensureImage(spec.getImage());
+		removeContainer(workspaceId);
+		return create(spec);
+	}
+
+	/**
 	 * Starts the container of a workspace and publishes its
 	 * {@link WorkspaceSpec#getContainerPort() container port} on a free port of the host.
 	 *
@@ -149,6 +177,18 @@ public interface WorkspaceProvider extends AutoCloseable {
 	 * </p>
 	 */
 	void remove(String workspaceId);
+
+	/**
+	 * Removes the container of a workspace and keeps its volumes.
+	 *
+	 * <p>
+	 * A running container is stopped first. Removing the container of a workspace that has none
+	 * does nothing.
+	 * </p>
+	 *
+	 * @see #recreate(WorkspaceSpec)
+	 */
+	void removeContainer(String workspaceId);
 
 	/**
 	 * The current state of a workspace.

@@ -42,6 +42,7 @@ import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.I18NConstants;
+import com.top_logic.factory.workspace.ImageContext;
 import com.top_logic.factory.workspace.LogFollower;
 import com.top_logic.factory.workspace.VolumeMount;
 import com.top_logic.factory.workspace.WorkspaceInfo;
@@ -95,6 +96,23 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	private static final String HOST_GATEWAY = "host-gateway";
 
 	private static final Duration WAIT = Duration.ofSeconds(20);
+
+	/**
+	 * File of the images of {@link #testRecreate()} holding their variant.
+	 */
+	private static final String VARIANT_FILE = "/variant";
+
+	/**
+	 * Environment variable a recreated container of {@link #testRecreate()} gets.
+	 */
+	private static final String VARIANT_ENV = "VARIANT";
+
+	/**
+	 * Label given by the spec in {@link #testRecreate()}, beside the labels of the provider.
+	 */
+	private static final String EXTRA_LABEL = "test.extra";
+
+	private static final String EXTRA_LABEL_VALUE = "kept";
 
 	/**
 	 * File whose content the main process of {@link #chattySpec(String)} prints and deletes.
@@ -213,6 +231,81 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	}
 
 	/**
+	 * Creating a workspace anew on another image replaces its container and keeps its volume with
+	 * its content, its labels and its ownership.
+	 */
+	public void testRecreate() throws Exception {
+		String repository = _namePrefix + "-image";
+		String imageA = _provider.buildImage(repository, variantContext("a"), ExecOutput.NONE);
+		String imageB = _provider.buildImage(repository, variantContext("b"), ExecOutput.NONE);
+		assertFalse(imageA.equals(imageB));
+		try {
+			String id = "recreate";
+			WorkspaceInfo created = _provider.create(httpdSpec(id, imageA).putLabel(EXTRA_LABEL, EXTRA_LABEL_VALUE));
+			assertEquals(imageA, created.getImage());
+			_provider.start(id);
+			assertEquals(0, _provider.exec(id, ExecCommand.of("sh", "-c", "echo persisted > " + DATA_PATH + "/marker"),
+				ExecOutput.NONE));
+
+			WorkspaceInfo recreated = _provider.recreate(
+				httpdSpec(id, imageB).putLabel(EXTRA_LABEL, EXTRA_LABEL_VALUE).putEnv(VARIANT_ENV, "b"));
+			assertEquals(WorkspaceState.CREATED, recreated.getState());
+			assertEquals(imageB, recreated.getImage());
+			assertFalse("The container is not replaced.", created.getContainerId().equals(recreated.getContainerId()));
+			assertEquals(created.getVolumes(), recreated.getVolumes());
+			try {
+				_docker.inspectContainerCmd(created.getContainerId()).exec();
+				fail("Old container not removed: " + created.getContainerId());
+			} catch (NotFoundException ex) {
+				// Expected.
+			}
+			String workspaceLabel = labelNamespace(_suffix) + "." + DockerWorkspaceProvider.LABEL_WORKSPACE;
+			List<Container> containers = _docker.listContainersCmd().withShowAll(true)
+				.withNameFilter(Collections.singletonList(_namePrefix)).exec();
+			assertEquals("Containers: " + containers, 1, containers.size());
+			Container container = containers.get(0);
+			assertEquals(recreated.getContainerId(), container.getId());
+			assertEquals(id, container.getLabels().get(workspaceLabel));
+			assertEquals(EXTRA_LABEL_VALUE, container.getLabels().get(EXTRA_LABEL));
+			for (String volume : recreated.getVolumes()) {
+				assertEquals("Volume lost its owner: " + volume, id,
+					_docker.inspectVolumeCmd(volume).exec().getLabels().get(workspaceLabel));
+			}
+
+			WorkspaceInfo started = _provider.start(id);
+			assertEquals(WorkspaceState.RUNNING, started.getState());
+			assertTrue(httpGet(started.getPreviewUrl()).contains(PAGE_CONTENT));
+			CollectingOutput marker = new CollectingOutput();
+			assertEquals(0, _provider.exec(id, ExecCommand.of("cat", DATA_PATH + "/marker"), marker));
+			assertEquals("The volume did not survive the new container.", "persisted\n", marker.stdout());
+			CollectingOutput variant = new CollectingOutput();
+			assertEquals(0, _provider.exec(id, ExecCommand.of("cat", VARIANT_FILE), variant));
+			assertEquals("b\n", variant.stdout());
+			CollectingOutput env = new CollectingOutput();
+			assertEquals(0, _provider.exec(id, ExecCommand.of("sh", "-c", "echo $" + VARIANT_ENV), env));
+			assertEquals("The new environment is not applied.", "b\n", env.stdout());
+
+			_provider.removeContainer(id);
+			WorkspaceInfo containerRemoved = _provider.status(id);
+			assertEquals(WorkspaceState.MISSING, containerRemoved.getState());
+			assertEquals("Volumes removed with the container.", created.getVolumes(), containerRemoved.getVolumes());
+			WorkspaceInfo again = _provider.recreate(httpdSpec(id, imageA));
+			assertEquals("A workspace with volumes only gets a container again.", WorkspaceState.CREATED,
+				again.getState());
+			assertEquals(imageA, again.getImage());
+		} finally {
+			_provider.cleanup(Collections.emptyList());
+			for (String image : Arrays.asList(imageA, imageB)) {
+				try {
+					_docker.removeImageCmd(image).withForce(true).exec();
+				} catch (NotFoundException ex) {
+					// Already removed.
+				}
+			}
+		}
+	}
+
+	/**
 	 * Operations on a workspace that does not exist report it as missing or fail with a clear
 	 * error.
 	 */
@@ -227,6 +320,9 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		assertErrorKey(unknown, () -> _provider.stop(id));
 		assertErrorKey(unknown, () -> _provider.remove(id));
 		assertErrorKey(unknown, () -> _provider.exec(id, ExecCommand.of("true"), ExecOutput.NONE));
+		assertErrorKey(unknown, () -> _provider.recreate(httpdSpec(id)));
+		// Nothing to remove.
+		_provider.removeContainer(id);
 	}
 
 	/**
@@ -473,10 +569,23 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	}
 
 	private WorkspaceSpec httpdSpec(String id) {
-		return new WorkspaceSpec(id, IMAGE)
+		return httpdSpec(id, IMAGE);
+	}
+
+	private WorkspaceSpec httpdSpec(String id, String image) {
+		return new WorkspaceSpec(id, image)
 			.setCommand(Arrays.asList("sh", "-c",
 				"echo " + PAGE_CONTENT + " > " + DATA_PATH + "/index.html && exec httpd -f -p 8080 -h " + DATA_PATH))
 			.addVolume(new VolumeMount(DATA_VOLUME, DATA_PATH));
+	}
+
+	/**
+	 * Context of an image based on {@link #IMAGE} holding the given variant in
+	 * {@link #VARIANT_FILE}.
+	 */
+	private static ImageContext variantContext(String variant) {
+		return new ImageContext().add(ImageContext.DOCKERFILE,
+			"FROM " + IMAGE + "\nRUN echo " + variant + " > " + VARIANT_FILE + "\n");
 	}
 
 	private static List<String> ids(List<WorkspaceInfo> workspaces) {
@@ -523,13 +632,16 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		return host == null || host.isEmpty() ? DEFAULT_DOCKER_HOST : host;
 	}
 
+	private static String labelNamespace(String suffix) {
+		return "test.tl-factory." + suffix;
+	}
+
 	private static DockerWorkspaceProvider createProvider(String suffix) {
 		DockerWorkspaceProvider.Config<?> config = TypedConfiguration.newConfigItem(DockerWorkspaceProvider.Config.class);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.DOCKER_HOST, dockerHost());
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.NETWORK, "tl-factory-test-" + suffix);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.NAME_PREFIX, "tl-factory-test-" + suffix);
-		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.LABEL_NAMESPACE,
-			"test.tl-factory." + suffix);
+		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.LABEL_NAMESPACE, labelNamespace(suffix));
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.HOST_PORT_MIN, HOST_PORT_MIN);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.HOST_PORT_MAX, HOST_PORT_MAX);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.STOP_TIMEOUT, 2);

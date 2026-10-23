@@ -271,6 +271,11 @@ public class TestWorkspaceReconciliation extends TestCase {
 		}
 
 		@Override
+		public void removeContainer(String workspaceId) {
+			throw unsupported();
+		}
+
+		@Override
 		public List<String> cleanup(Collection<String> keep) {
 			throw unsupported();
 		}

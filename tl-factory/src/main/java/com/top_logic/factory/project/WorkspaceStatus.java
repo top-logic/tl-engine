@@ -55,6 +55,11 @@ public enum WorkspaceStatus {
 	REMOVING(true),
 
 	/**
+	 * The container is being created anew on the current workspace image, keeping the volumes.
+	 */
+	UPDATING(true),
+
+	/**
 	 * The last operation failed, or the container got lost; the log tells why.
 	 */
 	ERROR(false),

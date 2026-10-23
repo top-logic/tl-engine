@@ -29,6 +29,10 @@
 			expr="$workspace.get(`tl.factory:Workspace#status`)"
 			inputs="workspace"
 		/>
+		<derived-channel name="outdated"
+			expr="if($workspace == null, false, factoryImageOutdated($workspace))"
+			inputs="workspace"
+		/>
 		<derived-channel name="previewLink"
 			inputs="workspace"
 		>
@@ -124,6 +128,23 @@
 							</executability>
 							<execute-script function="factoryStop($project)"/>
 						</generic-command>
+						<generic-command name="updateWorkspace"
+							clique="edit"
+							image="css:bi bi-arrow-repeat"
+							inputs="project, status, outdated"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Update workspace</en>
+								<de>Workspace aktualisieren</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated, null, #('The workspace runs on the current image.'@en, 'Der Workspace läuft auf dem aktuellen Image.'@de))))"/>
+							</executability>
+							<confirm expr="#('Create the container of {0} anew on the current image? Sources, Maven repository and database are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image neu anlegen? Quellen, Maven-Repository und Datenbank bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
+							<execute-script function="factoryUpdate($project)"/>
+						</generic-command>
 						<generic-command name="cleanupWorkspace"
 							clique="delete"
 							image="css:bi bi-eraser"
@@ -136,7 +157,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), null))"/>
+								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), null))"/>
 							</executability>
 							<confirm expr="#('Remove the workspace of {0} with its container, sources and database? The project is kept.'@en, 'Den Workspace von {0} mit Container, Quellen und Datenbank entfernen? Das Projekt bleibt erhalten.'@de).fill($project)"/>
 							<execute-script function="factoryCleanup($project)"/>
@@ -196,7 +217,7 @@
 	status = $row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#status`);
 	if($status == `tl.factory:WorkspaceStatus#ERROR`, 'tl-status-error',
 		if($status == `tl.factory:WorkspaceStatus#RUNNING`, 'tl-status-success',
-			if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`].containsElement($status), 'tl-status-info', null)));
+			if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), 'tl-status-info', null)));
 }]]></row-class>
 					</table>
 				</panel>
@@ -220,6 +241,20 @@
 						<field attribute="engineVersion"/>
 					</form>
 					<html input="previewLink"/>
+					<alert
+						inputs="outdated"
+						severity="warning"
+						visible-if="$outdated == true"
+					>
+						<title>
+							<en>Image outdated</en>
+							<de>Image veraltet</de>
+						</title>
+						<message>
+							<en>The container of the workspace runs another image than the current workspace image and misses its tools. "Update workspace" creates the container anew on the current image and keeps sources, Maven repository and database.</en>
+							<de>Der Container des Workspaces läuft auf einem anderen als dem aktuellen Workspace-Image und hat dessen Werkzeuge nicht. "Workspace aktualisieren" legt den Container auf dem aktuellen Image neu an und behält Quellen, Maven-Repository und Datenbank.</de>
+						</message>
+					</alert>
 					<form
 						input="workspace"
 						mode-switch="false"
@@ -228,6 +263,7 @@
 						<field attribute="status"/>
 						<field attribute="workspaceId"/>
 						<field attribute="hostPort"/>
+						<field attribute="image"/>
 						<field attribute="log"/>
 					</form>
 				</panel>

@@ -23,11 +23,12 @@ import com.top_logic.factory.workspace.WorkspaceState;
  *
  * <p>
  * An operation that was running when the control application stopped did not finish: a workspace
- * stored as {@link WorkspaceStatus#BUILDING} or {@link WorkspaceStatus#REMOVING} is in an
- * undefined state and becomes {@link WorkspaceStatus#ERROR}; one stored as
+ * stored as {@link WorkspaceStatus#BUILDING}, {@link WorkspaceStatus#REMOVING} or
+ * {@link WorkspaceStatus#UPDATING} is in an undefined state and becomes
+ * {@link WorkspaceStatus#ERROR}; one stored as
  * {@link WorkspaceStatus#STARTING} or {@link WorkspaceStatus#STOPPING} takes the state of its
  * container. A workspace in state {@link WorkspaceStatus#ERROR} stays there, since the error is
- * only cleared by removing the workspace. Every other workspace takes the state of its container;
+ * only cleared by an operation on the workspace. Every other workspace takes the state of its container;
  * a workspace whose container is gone becomes {@link WorkspaceStatus#ERROR}. When the container
  * platform cannot be asked, every workspace becomes {@link WorkspaceStatus#UNKNOWN}.
  * </p>
@@ -139,6 +140,7 @@ public class WorkspaceReconciliation {
 		switch (stored) {
 			case BUILDING:
 			case REMOVING:
+			case UPDATING:
 				return new Outcome(WorkspaceStatus.ERROR, null, null,
 					"The operation was interrupted by a restart of the control application.");
 			case ERROR:

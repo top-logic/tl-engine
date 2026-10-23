@@ -406,11 +406,6 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	private static final String SHARED_NAME_PART = "shared";
 
 	/**
-	 * Separator between the repository and the tag of an image reference.
-	 */
-	private static final String TAG_SEPARATOR = ":";
-
-	/**
 	 * Prefix of the temporary directory an image context is written to for building.
 	 */
 	private static final String IMAGE_CONTEXT_DIR_PREFIX = "tl-factory-image";
@@ -583,7 +578,7 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		if (!context.getFiles().containsKey(ImageContext.DOCKERFILE)) {
 			throw new IllegalArgumentException("The image context has no " + ImageContext.DOCKERFILE + ".");
 		}
-		String image = repository + TAG_SEPARATOR + context.contentHash();
+		String image = context.imageReference(repository);
 		try {
 			_client.inspectImageCmd(image).exec();
 			return image;
@@ -785,18 +780,7 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 				throw unknownWorkspace(workspaceId);
 			}
 			if (container != null) {
-				if (STATE_RUNNING.equals(container.getState())) {
-					try {
-						_client.stopContainerCmd(container.getId()).withTimeout(getConfig().getStopTimeout()).exec();
-					} catch (NotModifiedException | NotFoundException ex) {
-						// Stopped or removed concurrently.
-					}
-				}
-				try {
-					_client.removeContainerCmd(container.getId()).withForce(true).withRemoveVolumes(false).exec();
-				} catch (NotFoundException ex) {
-					// Removed concurrently.
-				}
+				removeContainer(container);
 			}
 			for (InspectVolumeResponse volume : volumes) {
 				try {
@@ -808,6 +792,36 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 			Logger.info("Removed workspace " + workspaceId + ".", DockerWorkspaceProvider.class);
 			return null;
 		});
+	}
+
+	@Override
+	public void removeContainer(String workspaceId) {
+		request(() -> {
+			Container container = findContainer(workspaceId);
+			if (container != null) {
+				removeContainer(container);
+				Logger.info("Removed the container of workspace " + workspaceId + ".", DockerWorkspaceProvider.class);
+			}
+			return null;
+		});
+	}
+
+	/**
+	 * Stops a running container and removes it without its volumes.
+	 */
+	private void removeContainer(Container container) {
+		if (STATE_RUNNING.equals(container.getState())) {
+			try {
+				_client.stopContainerCmd(container.getId()).withTimeout(getConfig().getStopTimeout()).exec();
+			} catch (NotModifiedException | NotFoundException ex) {
+				// Stopped or removed concurrently.
+			}
+		}
+		try {
+			_client.removeContainerCmd(container.getId()).withForce(true).withRemoveVolumes(false).exec();
+		} catch (NotFoundException ex) {
+			// Removed concurrently.
+		}
 	}
 
 	@Override

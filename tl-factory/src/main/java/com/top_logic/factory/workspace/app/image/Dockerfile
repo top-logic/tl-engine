@@ -13,11 +13,19 @@
 
 FROM eclipse-temurin:21-jdk
 
+# The tool versions are pinned and updated by Renovate through the "# renovate:" comments (see the
+# customManagers in renovate.json). The output of Claude Code is parsed, so a new version is
+# tested before it is used, see the article factory/index.
+# renovate: datasource=maven depName=org.apache.maven:apache-maven
 ARG MAVEN_VERSION=3.9.11
+# renovate: datasource=node-version depName=node
 ARG NODE_VERSION=22.23.4
+# renovate: datasource=npm depName=@anthropic-ai/claude-code
 ARG CLAUDE_CODE_VERSION=2.1.309
+# renovate: datasource=npm depName=@playwright/mcp
 ARG PLAYWRIGHT_MCP_VERSION=0.0.83
 ARG TL_CLAUDE_TOOLS_REPOSITORY=https://github.com/top-logic/tl-claude-tools.git
+# renovate: datasource=git-refs depName=tl-claude-tools packageName=https://github.com/top-logic/tl-claude-tools.git currentValue=main
 ARG TL_CLAUDE_TOOLS_COMMIT=aecc9e529a70e0b7b2664575af544964d1b5cbe0
 ARG WORKSPACE_UID=1000
 

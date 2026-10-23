@@ -112,6 +112,33 @@ public class FactoryFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Creates the container of the workspace of a project anew on the current workspace image. The
+	 * sources, the Maven repository, the database and the initial password of the workspace are
+	 * kept; a running workspace is started again.
+	 *
+	 * @param project
+	 *        A project whose workspace is not busy.
+	 */
+	@Label("Update the workspace of a project")
+	public static void update(@Mandatory TLObject project) {
+		ProjectWorkspaces.getInstance().update(project);
+	}
+
+	/**
+	 * Whether the container of a workspace runs another image than the current workspace image,
+	 * so that it misses changes of the tools in the image until it is updated.
+	 *
+	 * @param workspace
+	 *        The workspace of a project.
+	 * @return Whether the workspace is outdated.
+	 */
+	@Label("Workspace image outdated")
+	@SideEffectFree
+	public static boolean imageOutdated(@Mandatory TLObject workspace) {
+		return ProjectWorkspaces.isImageOutdated(workspace);
+	}
+
+	/**
 	 * Removes the workspace of a project with its container and all its data. The project is
 	 * kept and may create a new workspace afterwards.
 	 *

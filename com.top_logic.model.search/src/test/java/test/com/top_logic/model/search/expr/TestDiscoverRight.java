@@ -366,20 +366,31 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * R4: An undiscoverable object passed as input is not visible to the script.
+	 * R4: The inputs of a script are not filtered, the caller delivering them is the object source
+	 * responsible for their discoverability. The result of the script is filtered nevertheless.
 	 */
-	public void testInputFiltered() throws Exception {
+	public void testInputNotFiltered() throws Exception {
 		becomeUser(_pathUser);
+		assertEquals(Boolean.TRUE, eval("x -> $x != null", _a2));
 		assertNull(eval("x -> $x", _a2));
 	}
 
 	/**
-	 * R4: Objects nested in an input collection are filtered, too.
+	 * R4: Objects nested in an input collection are not filtered either, only those in the result.
 	 */
-	public void testNestedInputFiltered() throws Exception {
+	public void testNestedInputNotFiltered() throws Exception {
 		becomeUser(_pathUser);
+		assertEquals(Double.valueOf(2), eval("x -> $x.size()", Arrays.asList(_a1, _a2)));
 		assertEquals(Arrays.asList(_a1), eval("x -> $x", Arrays.asList(_a1, _a2)));
-		assertEquals(Double.valueOf(1), eval("x -> $x.size()", Arrays.asList(_a1, _a2)));
+	}
+
+	/**
+	 * R4: An undiscoverable input does not make its attributes readable, the attribute access checks
+	 * the read right.
+	 */
+	public void testAttributeOfUndiscoverableInputNotReadable() throws Exception {
+		becomeUser(_pathUser);
+		assertNull(eval("x -> $x.get(`TestTLScriptSecurity:PathNode#name`)", _a2));
 	}
 
 	/**
@@ -549,7 +560,28 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		return ((TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className)).getPart(partName);
 	}
 
-	private static final String NAME_SCRIPT = "x -> $x.get(`TestTLScriptSecurity:PathNode#name`)";
+	/**
+	 * R12: A derived attribute is computed unsecured, its value does not depend on the reader: the
+	 * object it is computed for is not withheld from its script, also for a reader that must not
+	 * discover it.
+	 */
+	public void testDerivedAttributeOfUndiscoverableObject() throws Exception {
+		becomeUser(_stranger);
+		assertEquals("a2", _a2.tValueByName("computedName"));
+		becomeUser(_pathUser);
+		assertEquals("a2", _a2.tValueByName("computedName"));
+	}
+
+	/**
+	 * R12: The objects in the value of a derived attribute are not filtered by its computation, but
+	 * when a secured evaluation reads the value (R4).
+	 */
+	public void testDerivedReferenceUnfiltered() throws Exception {
+		becomeUser(_pathUser);
+		assertEquals(Arrays.asList(_b1, _b2), _a1.tValueByName("computedBs"));
+	}
+
+	private static final String NAME_SCRIPT ="x -> $x.get(`TestTLScriptSecurity:PathNode#name`)";
 
 	public void testLabelScriptUnsecured() throws Exception {
 		LabelProviderByExpression.Config<?> config =

@@ -24,6 +24,8 @@
 	<properties>
 		<!-- Speed up build by suppressing WAR file generation. -->
 		<tl.app.skip>true</tl.app.skip>
+		<!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+		<tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
 	</properties>
 
 	<build>

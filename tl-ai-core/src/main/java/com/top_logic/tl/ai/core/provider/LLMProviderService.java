@@ -81,7 +81,7 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * Provides model names from the running {@link LLMProviderService} instance.
 	 *
 	 * <p>
-	 * Unlike {@link ConfiguredModelOptions}, this does not require a {@link Container @Container}
+	 * This does not require a {@link com.top_logic.basic.config.annotation.Container @Container}
 	 * chain to resolve the provider map. This makes it suitable for contexts where the container
 	 * reference is not yet set, such as during creation of a new {@link AgentRuntimeService.AgentOverride} entry in a
 	 * keyed map.
@@ -101,8 +101,8 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * Provides provider names from the running {@link LLMProviderService} instance.
 	 *
 	 * <p>
-	 * The {@link Container @Container}-free counterpart of {@link ConfiguredProviderOptions}, for
-	 * contexts where the container reference is not yet set - such as creating a new
+	 * Does not require a {@link com.top_logic.basic.config.annotation.Container @Container} chain, so
+	 * it serves contexts where the container reference is not yet set - such as creating a new
 	 * {@link AgentRuntimeService.AgentOverride} entry in a keyed map.
 	 * </p>
 	 */

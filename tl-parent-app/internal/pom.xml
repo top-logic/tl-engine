@@ -21,6 +21,11 @@
 
 	<packaging>pom</packaging>
 	
+	<properties>
+		<!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+		<tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+	</properties>
+
 	<dependencies>
 		<!-- Alternative databases for test. -->
 

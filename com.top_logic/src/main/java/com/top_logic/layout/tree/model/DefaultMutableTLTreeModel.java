@@ -12,7 +12,7 @@ package com.top_logic.layout.tree.model;
  * 
  * @see #getRoot() The starting point for building a tree.
  * @see StructureTreeModel An alternative implementation with nodes that implement
- *      {@link #equals(Object)} based on {@link #getBusinessObject(DefaultMutableTLTreeNode)}.
+ *      {@link #equals(Object)} based on {@link #getBusinessObject(Object)}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

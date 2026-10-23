@@ -13,6 +13,11 @@
 	<description>Interface to server-side functionality for GWT-based client code.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
+  <properties>
+    <!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+    <tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>

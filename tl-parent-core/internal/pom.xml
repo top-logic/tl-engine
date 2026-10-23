@@ -27,6 +27,8 @@
 		<!-- For framework modules, combine all JavaDoc to its deploy location. -->
 		<javadocOutput>${tl.javadoc.aggregateDir}</javadocOutput>
 		<tl.javadoc.glossaries>de:en:tl-de-en; en:de:tl-en-de</tl.javadoc.glossaries>
+		<!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+		<tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
 	</properties>
 
 	<dependencies>

@@ -13,6 +13,11 @@
 	<description>Code shared between server and GWT-based client libraries for displaying graphs such as the UML model.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
+  <properties>
+    <!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+    <tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>

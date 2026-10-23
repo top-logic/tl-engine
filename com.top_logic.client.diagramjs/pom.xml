@@ -13,6 +13,11 @@
 	<description>GWT-adapter to diagramjs.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
+  <properties>
+    <!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+    <tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.gwtproject</groupId>

@@ -8,8 +8,6 @@ package com.top_logic.basic.io.binary;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import javax.print.AttributeException;
-
 
 /**
  * {@link BinaryData} implemented with byte array contents.
@@ -63,8 +61,6 @@ public class MemoryBinaryData extends AbstractBinaryData {
 	
 	/**
 	 * the size of {@link #_data}.
-	 * @throws AttributeException
-	 *         is not thrown in this implementation
 	 * 
 	 * @see BinaryData#getSize()
 	 */

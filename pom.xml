@@ -56,6 +56,12 @@
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 
+		<!-- 
+			JavaDoc check of javac. Engine modules set it to "-Xdoclint:reference/private" to fail on 
+			JavaDoc references ({@link}, @see, @throws, {@value}) that do not resolve. 
+		-->
+		<tl.javac.doclint>-Xdoclint:none</tl.javac.doclint>
+
 		<skipTests>true</skipTests>
 		<skipDependencyCheck>false</skipDependencyCheck>
 		<skipNormalizeLayouts>true</skipNormalizeLayouts>
@@ -1856,6 +1862,7 @@
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
 					<compilerArgs>
 	                    <arg>-parameters</arg>
+	                    <arg>${tl.javac.doclint}</arg>
 	                </compilerArgs>
 				</configuration>
 			</plugin>

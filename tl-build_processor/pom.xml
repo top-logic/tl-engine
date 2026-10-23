@@ -10,6 +10,11 @@
   <artifactId>tl-build-processor</artifactId>
 	<name>${project.artifactId}</name>
 	<url>https://github.com/top-logic/tl-engine/</url>
+  <properties>
+    <!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+    <tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>

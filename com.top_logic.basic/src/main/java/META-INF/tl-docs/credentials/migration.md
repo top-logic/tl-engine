@@ -77,18 +77,16 @@ An `autoconf` file the Service Editor wrote from such a configuration holds the 
 
 ## A key given as element content
 
-A secret was an encrypted `String` property, which also accepted the value as element content. An element of a secret property is now a secret source, so the content form is written as attribute or as reference:
+A value given as element content is read like an attribute value, aliases included, so this form keeps working:
 
 ```xml
-<!-- Before -->
-<search-engine class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
-	<api-key>unencrypted:BSA...</api-key>
-</search-engine>
+<secret>%PAC_SECRET%</secret>
+```
 
-<!-- After -->
-<search-engine class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
-	<api-key name="tl_brave_api_key"/>
-</search-engine>
+As with an attribute, the alias must resolve to an encrypted value or to a value with the prefix `unencrypted:`. Referencing the variable avoids both:
+
+```xml
+<secret name="tl_pac_secret"/>
 ```
 
 The `api-key` of the search engines is no longer mandatory: a search engine may take `<credentials>` instead.

@@ -73,6 +73,20 @@ public class TestOidcClientSecret extends AbstractTypedConfigurationTestCase {
 		assertEquals(SECRET, clientSecret(read(xml("secret='unencrypted:" + SECRET + "'", ""))));
 	}
 
+	/**
+	 * The secret given as element text, as in the configurations shipped with the module
+	 * (<code>&lt;secret&gt;%PAC_SECRET%&lt;/secret&gt;</code>), keeps working.
+	 */
+	public void testUnencryptedElementText() throws Exception {
+		assertEquals(SECRET, clientSecret(read(xml("", "<secret>unencrypted:" + SECRET + "</secret>"))));
+	}
+
+	/** An encrypted value given as element text keeps working. */
+	public void testEncryptedElementText() throws Exception {
+		assertEquals(SECRET,
+			clientSecret(read(xml("", "<secret>" + ConfigurationEncryption.encrypt(SECRET) + "</secret>"))));
+	}
+
 	/** An encrypted attribute keeps working. */
 	public void testEncryptedAttribute() throws Exception {
 		assertEquals(SECRET, clientSecret(read(xml("secret='" + ConfigurationEncryption.encrypt(SECRET) + "'", ""))));

@@ -873,7 +873,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 						if (buffer == null) {
 							buffer = new StringBuilder();
 						}
-						buffer.append(reader.getTextCharacters(), reader.getTextStart(), reader.getTextLength());
+						buffer.append(reader.getText());
 						break;
 
 					case XMLStreamConstants.START_ELEMENT:

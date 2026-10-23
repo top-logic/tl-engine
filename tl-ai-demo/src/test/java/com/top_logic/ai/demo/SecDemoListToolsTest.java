@@ -11,7 +11,6 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -102,7 +101,7 @@ public class SecDemoListToolsTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testEveryPersonaMayCallIt() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			SecurityContext security = securityFor(login);
 			String reason = security.toolDenialReason(listTools());
 			assertNull(login + " must be allowed to call listTools, but: " + reason, reason);
@@ -111,7 +110,7 @@ public class SecDemoListToolsTest extends SecDemoPersonaTest {
 
 	/** ...and its schema really reaches the provider, which is the other half of "available". */
 	public void testItsSchemaReachesTheProviderForEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			SecurityContext security = securityFor(login);
 			List<String> names = catalogFor(security).toolSchemas(new ToolPermissionFilter(security))
 				.stream().map(ToolSchema::name).toList();
@@ -129,7 +128,7 @@ public class SecDemoListToolsTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testAnUnattendedRunKeepsIt() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			SecurityContext background = securityFor(login, true);
 			assertNull("An unattended run of " + login + " must keep listTools: "
 				+ background.toolDenialReason(listTools()),

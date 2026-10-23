@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.SkillDefinition;
@@ -127,7 +126,7 @@ public class SecDemoCapabilityNoticeTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testToollessSkillSurvivesForEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			assertNull("A skill with no tools must survive for " + login + ".",
 				capabilitiesOf(login).unusableReason(skill(TOOLLESS_SKILL)));
 		}

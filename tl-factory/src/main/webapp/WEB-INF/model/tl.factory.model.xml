@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.factory">
+		<types>
+			<!--
+				The state of a workspace: the states of its container, the operations running on it,
+				and the error that ended an operation. Mirrors com.top_logic.factory.project.WorkspaceStatus.
+			-->
+			<enum name="WorkspaceStatus">
+				<classifier name="CREATED"/>
+				<classifier name="BUILDING"/>
+				<classifier name="STARTING"/>
+				<classifier name="RUNNING"/>
+				<classifier name="STOPPING"/>
+				<classifier name="STOPPED"/>
+				<classifier name="REMOVING"/>
+				<classifier name="ERROR"/>
+				<classifier name="UNKNOWN"/>
+			</enum>
+
+			<!-- A TopLogic application managed by the control application. -->
+			<class name="Project">
+				<annotations>
+					<main-properties properties="name,groupId,artifactId,engineVersion,workspace"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="groupId"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<default-value>
+								<default-by-expression value="ctx -> 'com.example'"/>
+							</default-value>
+							<constraints>
+								<constraint-by-expression>
+									<check>value -&gt; object -&gt; factoryCheckGroupId($value)</check>
+								</constraint-by-expression>
+							</constraints>
+						</annotations>
+					</property>
+					<property name="artifactId"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<constraints>
+								<constraint-by-expression>
+									<check>value -&gt; object -&gt; factoryCheckArtifactId($value)</check>
+								</constraint-by-expression>
+							</constraints>
+						</annotations>
+					</property>
+					<property name="engineVersion"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<default-value>
+								<default-by-expression value="ctx -> factoryEngineVersion()"/>
+							</default-value>
+						</annotations>
+					</property>
+					<reference name="workspace"
+						composite="true"
+						kind="forwards"
+						type="Workspace"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
+			<!-- The container the application of a project is built and run in. -->
+			<class name="Workspace">
+				<annotations>
+					<id-column value="workspaceId"/>
+					<main-properties properties="workspaceId,status,previewUrl"/>
+				</annotations>
+				<attributes>
+					<property name="workspaceId"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<reference name="status"
+						mandatory="true"
+						type="WorkspaceStatus"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
+					<property name="hostPort"
+						type="tl.core:Integer"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="previewUrl"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!--
+						The initial password of the account root of the application of a development
+						workspace. It is no longer valid once the password is changed in the application.
+					-->
+					<property name="initialPassword"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="log"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

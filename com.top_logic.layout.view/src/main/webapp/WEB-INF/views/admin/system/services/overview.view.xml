@@ -7,9 +7,11 @@
 	tile-stack, so a command of the detail frame refreshes it as well. The rows are the modules of
 	the snapshot (serviceList, a live snapshot while the channel is empty), the status column - which
 	declares the services channel as its input, since a column script sees only the row and its own
-	inputs - shows the status the snapshot recorded (serviceStatus), the module column the software module the
-	service is delivered with (serviceModule); the table starts grouped by that module, and its
-	filter bar searches the displayed columns.
+	inputs - shows the status the snapshot recorded (serviceStatus), the category column the functional category
+	of the service (serviceCategory, see ServiceCategory), the module column the software module the
+	service is delivered with (serviceModule). The table starts grouped by category, the groups in
+	the order the categories declare (serviceCategoryCompare); its filter bar searches the displayed
+	columns.
 	- The table writes the selected module to the selection channel; the derived active channel
 	tells whether it runs, so Start (while stopped) and Stop / Restart (while running) are
 	mutually exclusive. Each command runs the ServiceLifecycleAction (which reads the module from
@@ -123,7 +125,7 @@
 		</commands>
 		<table id="table"
 			filter-bar="true"
-			group-by="module"
+			group-by="category"
 			inputs="services"
 			personalization-key="admin-services"
 			selection="selection"
@@ -147,6 +149,16 @@
 						<de>Dienst</de>
 					</label>
 					<value>serviceLabel($row)</value>
+				</computed-column>
+				<computed-column name="category"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Category</en>
+						<de>Kategorie</de>
+					</label>
+					<value>serviceCategory($row)</value>
+					<comparator>serviceCategoryCompare($left, $right)</comparator>
 				</computed-column>
 				<computed-column name="module"
 					type="tl.core:String"

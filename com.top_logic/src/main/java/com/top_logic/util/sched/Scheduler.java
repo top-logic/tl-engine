@@ -52,8 +52,10 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 import com.top_logic.basic.sched.ScheduledThread;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
@@ -118,6 +120,7 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 	ThreadContextManager.Module.class,
 })
 @Label("Task scheduler")
+@ServiceCategory.Of(OperationsCategory.class)
 public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implements Reloadable, Runnable, Suspendable {
 
 	/**

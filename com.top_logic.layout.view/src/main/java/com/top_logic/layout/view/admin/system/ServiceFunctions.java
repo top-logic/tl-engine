@@ -12,6 +12,8 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.version.SoftwareModule;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
@@ -80,6 +82,70 @@ public class ServiceFunctions extends TLScriptFunctions {
 		ServiceSnapshot.Status status =
 			snapshot == null ? ServiceSnapshot.Status.of(module) : snapshot.status(module);
 		return Resources.getInstance().getString(status.getLabel());
+	}
+
+	/**
+	 * The functional category of the given service.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return The label of the category the implementation of the service is assigned to,
+	 *         <code>null</code> without a module.
+	 *
+	 * @see ServiceCategory
+	 * @see #categoryCompare(String, String)
+	 */
+	@Label("Category of a service")
+	public static String category(BasicRuntimeModule<?> module) {
+		if (module == null) {
+			return null;
+		}
+		return categoryLabel(ServiceCategory.of(module.getImplementation()));
+	}
+
+	/**
+	 * Compares two service categories given by their labels, in the order the categories declare.
+	 *
+	 * <p>
+	 * Categories of the same position are ordered by their labels. A label that names no category is
+	 * ordered like a category without a declared position.
+	 * </p>
+	 *
+	 * @param left
+	 *        The label of the first category, see {@link #category(BasicRuntimeModule)}.
+	 * @param right
+	 *        The label of the second category.
+	 * @return A negative number, zero, or a positive number, if the first category comes before, at
+	 *         the same position, or after the second.
+	 */
+	@Label("Compare service categories")
+	public static int categoryCompare(String left, String right) {
+		int byOrder = Integer.compare(categoryOrder(left), categoryOrder(right));
+		if (byOrder != 0) {
+			return byOrder;
+		}
+		return String.valueOf(left).compareTo(String.valueOf(right));
+	}
+
+	/**
+	 * The position of the category with the given label in the current language.
+	 */
+	private static int categoryOrder(String label) {
+		if (label != null) {
+			for (Class<?> type : TypeIndex.getInstance().getSpecializations(ServiceCategory.class, true, true,
+				true)) {
+				@SuppressWarnings("unchecked")
+				Class<? extends ServiceCategory> category = (Class<? extends ServiceCategory>) type;
+				if (label.equals(categoryLabel(category))) {
+					return ServiceCategory.order(category);
+				}
+			}
+		}
+		return ServiceCategory.DEFAULT_ORDER;
+	}
+
+	private static String categoryLabel(Class<? extends ServiceCategory> category) {
+		return Resources.getInstance().getString(ServiceCategory.label(category));
 	}
 
 	/**

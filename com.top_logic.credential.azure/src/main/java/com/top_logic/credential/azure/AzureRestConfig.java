@@ -13,7 +13,9 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 
 /**
- * Configuration of the connection to an Azure REST endpoint.
+ * Configuration of the HTTP connection of an Azure SDK client to an Azure endpoint.
+ *
+ * @see AzureHttpClients#create(AzureRestConfig)
  */
 @Abstract
 public interface AzureRestConfig extends ConfigurationItem {

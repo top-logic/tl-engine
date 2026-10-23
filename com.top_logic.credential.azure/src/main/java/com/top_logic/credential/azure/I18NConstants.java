@@ -29,6 +29,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey4 ERROR_TOKEN_REQUEST_FAILED__RESOURCE_URL_STATUS_DETAIL;
 
 	/**
+	 * @en No access token of the managed identity is available for the resource "{0}". {1}
+	 */
+	public static ResKey2 ERROR_TOKEN_UNAVAILABLE__RESOURCE_DETAIL;
+
+	/**
 	 * @en The key vault "{0}" cannot be reached.
 	 */
 	public static ResKey1 ERROR_VAULT_UNREACHABLE__URL;

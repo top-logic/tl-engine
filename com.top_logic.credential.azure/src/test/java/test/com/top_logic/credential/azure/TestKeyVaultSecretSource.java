@@ -18,22 +18,26 @@ import com.top_logic.credential.azure.KeyVaultSecretSource;
 import com.top_logic.credential.azure.ManagedIdentityCredentials;
 
 /**
- * Test case for {@link KeyVaultSecretSource} against a mock key vault.
+ * Test case for {@link KeyVaultSecretSource} against a mock key vault and a mock of the instance
+ * metadata service.
  */
 @SuppressWarnings("javadoc")
 public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 
-	private static final String TOKEN_PATH = "/token";
+	private static final String TOKEN_PATH = IMDS_PATH;
 
 	private static final String SECRET_NAME = "db-password";
 
 	private static final String SECRET_PATH = "/secrets/" + SECRET_NAME;
 
+	private String _resource;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+		_resource = uniqueResource(KeyVaultSecretSource.KEY_VAULT_RESOURCE);
 		respond(TOKEN_PATH, (count, request) -> new Object[] { 200,
-			TestManagedIdentityCredentials.imdsToken("vault-token-" + count, "3600") });
+			TestManagedIdentityCredentials.imdsToken("vault-token-" + count, 3600) });
 		respond(SECRET_PATH, (count, request) -> new Object[] { 200, secretBundle("value-" + count) });
 	}
 
@@ -48,8 +52,12 @@ public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 	}
 
 	private String credentials() {
-		return "<credentials class='" + ManagedIdentityCredentials.class.getName()
-			+ "' resource='https://vault.azure.net' endpoint='" + url(TOKEN_PATH) + "'/>";
+		return "<credentials class='" + ManagedIdentityCredentials.class.getName() + "' resource='" + _resource
+			+ "'/>";
+	}
+
+	private static String testingCredentials() {
+		return "<credentials class='" + TestingCredentials.class.getName() + "'/>";
 	}
 
 	private SecretSource vault(String attributes, String content) throws Exception {
@@ -66,10 +74,8 @@ public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 		assertEquals(1, requests(SECRET_PATH).size());
 		Received request = requests(SECRET_PATH).get(0);
 		assertEquals("Bearer vault-token-1", request.header("Authorization"));
-		Map<String, String> expected = new LinkedHashMap<>();
-		expected.put("api-version", "7.4");
-		assertEquals(expected, request._query);
-		assertEquals("https://vault.azure.net", requests(TOKEN_PATH).get(0).parameter("resource"));
+		assertNotNull(request.parameter("api-version"));
+		assertEquals(_resource, requests(TOKEN_PATH).get(0).parameter("resource"));
 	}
 
 	public void testSecretVersion() throws Exception {
@@ -79,7 +85,7 @@ public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 
 		assertEquals("old-value", source.getSecret());
 		assertEquals(1, requests(versionPath).size());
-		assertEquals("7.4", requests(versionPath).get(0).parameter("api-version"));
+		assertNotNull(requests(versionPath).get(0).parameter("api-version"));
 		assertEquals(0, requests(SECRET_PATH).size());
 	}
 
@@ -105,18 +111,18 @@ public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 		respond(SECRET_PATH, (count, request) -> count == 1
 			? new Object[] { 401, "{\"error\":{\"code\":\"Unauthorized\",\"message\":\"Token expired.\"}}" }
 			: new Object[] { 200, secretBundle("value-" + count) });
-		SecretSource source = vault("", credentials());
+		SecretSource source = vault("", testingCredentials());
 
 		assertEquals("value-2", source.getSecret());
 		assertEquals(2, requests(SECRET_PATH).size());
-		assertEquals("Bearer vault-token-1", requests(SECRET_PATH).get(0).header("Authorization"));
-		assertEquals("Bearer vault-token-2", requests(SECRET_PATH).get(1).header("Authorization"));
+		assertEquals("Bearer token-1", requests(SECRET_PATH).get(0).header("Authorization"));
+		assertEquals("Bearer token-2", requests(SECRET_PATH).get(1).header("Authorization"));
 	}
 
 	public void testUnauthorizedOnlyOneRetry() throws Exception {
 		respond(SECRET_PATH, (count, request) -> new Object[] { 401,
 			"{\"error\":{\"code\":\"Unauthorized\",\"message\":\"Access denied.\"}}" });
-		SecretSource source = vault("", credentials());
+		SecretSource source = vault("", testingCredentials());
 
 		try {
 			source.getSecret();
@@ -174,23 +180,37 @@ public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 	}
 
 	public void testDefaultCredentials() throws Exception {
-		System.setProperty(ManagedIdentityCredentials.ENV_IDENTITY_ENDPOINT, url(TOKEN_PATH));
-		System.setProperty(ManagedIdentityCredentials.ENV_IDENTITY_HEADER, "identity-header-value");
 		SecretSource source = vault("", "");
 
 		assertEquals("value-1", source.getSecret());
 
 		assertEquals(1, requests(TOKEN_PATH).size());
 		Received tokenRequest = requests(TOKEN_PATH).get(0);
-		assertEquals("https://vault.azure.net", tokenRequest.parameter("resource"));
-		assertEquals("identity-header-value", tokenRequest.header("X-IDENTITY-HEADER"));
+		assertEquals(KeyVaultSecretSource.KEY_VAULT_RESOURCE, tokenRequest.parameter("resource"));
 		assertNull(tokenRequest.parameter("client_id"));
 		assertEquals("Bearer vault-token-1", requests(SECRET_PATH).get(0).header("Authorization"));
 	}
 
+	public void testCredentialsFailure() throws Exception {
+		respond(TOKEN_PATH, (count, request) -> new Object[] { 400,
+			"{\"error\":\"invalid_request\",\"error_description\":\"Identity not found\"}" });
+		SecretSource source = vault("", credentials());
+
+		try {
+			source.getSecret();
+			fail("Missing identity not reported.");
+		} catch (I18NRuntimeException ex) {
+			assertEquals(I18NConstants.ERROR_TOKEN_REQUEST_FAILED__RESOURCE_URL_STATUS_DETAIL.fill(_resource,
+				"http://" + ImdsRedirectHttpClientProvider.IMDS_HOST + TOKEN_PATH, 400,
+				"invalid_request: Identity not found"), ex.getErrorKey());
+		}
+		assertEquals(0, requests(SECRET_PATH).size());
+	}
+
 	public void testUnreachable() throws Exception {
 		SecretSource source = secret("<secret class='" + KeyVaultSecretSource.class.getName()
-			+ "' vault-url='http://localhost:1' secret-name='x' connect-timeout='500ms'>" + credentials() + "</secret>");
+			+ "' vault-url='http://localhost:1' secret-name='x' connect-timeout='500ms'>" + testingCredentials()
+			+ "</secret>");
 
 		try {
 			source.getSecret();

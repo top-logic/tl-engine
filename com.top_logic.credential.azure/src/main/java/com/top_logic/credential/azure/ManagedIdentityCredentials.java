@@ -6,16 +6,24 @@
 package com.top_logic.credential.azure;
 
 import java.io.IOException;
-import java.net.http.HttpResponse;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.net.URL;
+import java.time.Duration;
 
-import net.minidev.json.JSONObject;
+import com.azure.core.credential.AccessToken;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.credential.TokenRequestContext;
+import com.azure.core.http.HttpClient;
+import com.azure.core.http.HttpPipelineCallContext;
+import com.azure.core.http.HttpPipelineNextPolicy;
+import com.azure.core.http.HttpPipelineNextSyncPolicy;
+import com.azure.core.http.HttpPipelinePosition;
+import com.azure.core.http.HttpResponse;
+import com.azure.core.http.policy.HttpPipelinePolicy;
+import com.azure.core.http.policy.RetryPolicy;
+import com.azure.core.http.policy.RetryStrategy;
+import com.azure.identity.ManagedIdentityCredentialBuilder;
 
-import com.nimbusds.oauth2.sdk.ParseException;
-import com.nimbusds.oauth2.sdk.token.AccessToken;
-import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
-import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
+import reactor.core.publisher.Mono;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -28,37 +36,37 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.format.MillisFormat;
-import com.top_logic.basic.core.workspace.Environment;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.exception.I18NRuntimeException;
-import com.top_logic.credential.oauth.ClientCredentialsProvider;
-import com.top_logic.credential.oauth.IssuedToken;
-import com.top_logic.credential.oauth.OAuthServer;
-import com.top_logic.credential.oauth.TokenCache;
 
 /**
  * {@link CredentialProvider} authenticating requests with an access token of the Azure managed
- * identity of the machine or app the application runs on.
+ * identity of the machine, app or pod the application runs on.
  *
  * <p>
- * Azure issues the token to the identity assigned to the virtual machine, App Service, Function or
- * Container App, so the application owns no secret at all. Access is granted to the identity in
- * Azure (role assignment), e.g. the role <code>Cognitive Services OpenAI User</code> for a language model
- * deployed in Azure AI services.
+ * Azure issues the token to the identity assigned to the virtual machine, App Service, Function,
+ * Container App or Kubernetes workload, so the application owns no secret at all. Access is granted
+ * to the identity in Azure (role assignment), e.g. the role
+ * <code>Cognitive Services OpenAI User</code> for a language model deployed in Azure AI services.
  * </p>
  *
  * <p>
- * The token is fetched from the identity endpoint of the platform: In an App Service, a Function or
- * a Container App, the platform announces the endpoint in the environment variables
- * <code>IDENTITY_ENDPOINT</code> and <code>IDENTITY_HEADER</code>. Elsewhere, e.g. on a virtual
- * machine or a scale set, the token comes from the instance metadata service (IMDS) at
- * <code>http://169.254.169.254</code>. The token is cached and renewed before it expires (see
- * {@link TokenCache}).
+ * The token is requested with the <code>ManagedIdentityCredential</code> of the Azure Identity
+ * library, which finds the identity endpoint of the platform from the environment variables Azure
+ * sets: <code>IDENTITY_ENDPOINT</code> and <code>IDENTITY_HEADER</code> in an App Service, a
+ * Function or a Container App; <code>AZURE_TENANT_ID</code>, <code>AZURE_CLIENT_ID</code> and
+ * <code>AZURE_FEDERATED_TOKEN_FILE</code> in a pod of the Azure Kubernetes Service (AKS) with
+ * workload identity, whose service account token is exchanged at Microsoft Entra ID; otherwise,
+ * e.g. on a virtual machine or a scale set, the instance metadata service (IMDS) at
+ * <code>http://169.254.169.254</code>, or the host given in
+ * <code>AZURE_POD_IDENTITY_AUTHORITY_HOST</code>. The library caches the token and renews it
+ * shortly before it expires.
  * </p>
  *
  * <p>
- * A language model in Azure AI services with the system-assigned identity:
+ * A language model in Azure AI services with the system-assigned identity, or in AKS with the
+ * workload identity of the pod:
  * </p>
  *
  * <pre>
@@ -79,36 +87,7 @@ import com.top_logic.credential.oauth.TokenCache;
  * </pre>
  *
  * <p>
- * In Azure Kubernetes Service (AKS), a pod authenticates with workload identity instead: Its
- * projected service account token is exchanged at Microsoft Entra ID for an access token with the
- * {@link ClientCredentialsProvider}, using the variables <code>AZURE_TENANT_ID</code>,
- * <code>AZURE_CLIENT_ID</code> and <code>AZURE_FEDERATED_TOKEN_FILE</code> that the workload
- * identity webhook sets in the pod. The configuration references them through aliases defined in
- * the application configuration:
- * </p>
- *
- * <pre>
- * &lt;alias&gt;
- *   &lt;entry name="%AZURE_TENANT_ID%" value="${env:AZURE_TENANT_ID}"/&gt;
- *   &lt;entry name="%AZURE_CLIENT_ID%" value="${env:AZURE_CLIENT_ID}"/&gt;
- *   &lt;entry name="%AZURE_FEDERATED_TOKEN_FILE%" value="${env:AZURE_FEDERATED_TOKEN_FILE}"/&gt;
- * &lt;/alias&gt;
- * </pre>
- *
- * <pre>
- * &lt;credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
- *   token-url="https://login.microsoftonline.com/%AZURE_TENANT_ID%/oauth2/v2.0/token"
- *   client-id="%AZURE_CLIENT_ID%"
- *   scope="https://cognitiveservices.azure.com/.default"
- * &gt;
- *   &lt;client-authentication class="com.top_logic.credential.oauth.ClientAssertionAuthentication"&gt;
- *     &lt;assertion class="com.top_logic.basic.credential.FileSecretSource" path="%AZURE_FEDERATED_TOKEN_FILE%"/&gt;
- *   &lt;/client-authentication&gt;
- * &lt;/credentials&gt;
- * </pre>
- *
- * <p>
- * A request answered with a status that Azure documents as transient (404 and 410 while the
+ * A token request answered with a status that Azure documents as transient (404 and 410 while the
  * metadata service is updating, 429 when throttling, 5xx) is repeated a few times with growing
  * delay. An endpoint that cannot be reached at all is reported at once, since the application then
  * does not run on Azure.
@@ -118,72 +97,10 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 		implements CredentialProvider {
 
 	/**
-	 * Environment variable with the URL of the identity endpoint in an App Service, a Function or a
-	 * Container App.
+	 * Suffix of the scope requesting a token with the permissions granted to the identity for a
+	 * resource.
 	 */
-	public static final String ENV_IDENTITY_ENDPOINT = "IDENTITY_ENDPOINT";
-
-	/**
-	 * Environment variable with the value of the {@link #HEADER_IDENTITY} header for requests to the
-	 * {@link #ENV_IDENTITY_ENDPOINT}.
-	 */
-	public static final String ENV_IDENTITY_HEADER = "IDENTITY_HEADER";
-
-	/**
-	 * Request header proving to the {@link #ENV_IDENTITY_ENDPOINT} that the request comes from
-	 * within the app.
-	 */
-	public static final String HEADER_IDENTITY = "X-IDENTITY-HEADER";
-
-	/**
-	 * Request header required by the instance metadata service, with the value
-	 * {@link #METADATA_TRUE}.
-	 */
-	public static final String HEADER_METADATA = "Metadata";
-
-	/**
-	 * Value of the {@link #HEADER_METADATA} header.
-	 */
-	public static final String METADATA_TRUE = "true";
-
-	/**
-	 * Token endpoint of the instance metadata service.
-	 */
-	public static final String IMDS_ENDPOINT = "http://169.254.169.254/metadata/identity/oauth2/token";
-
-	/**
-	 * Version of the token API of the instance metadata service.
-	 */
-	public static final String IMDS_API_VERSION = "2018-02-01";
-
-	/**
-	 * Version of the token API of the {@link #ENV_IDENTITY_ENDPOINT}.
-	 */
-	public static final String APP_SERVICE_API_VERSION = "2019-08-01";
-
-	/**
-	 * Query parameter with the resource the token is requested for.
-	 */
-	public static final String PARAM_RESOURCE = "resource";
-
-	/**
-	 * Query parameter selecting a user-assigned identity by its client ID.
-	 */
-	public static final String PARAM_CLIENT_ID = "client_id";
-
-	/**
-	 * Field of the token response with the end of the token's lifetime in seconds since the epoch.
-	 *
-	 * <p>
-	 * The identity endpoint of an App Service sends no <code>expires_in</code>, only this field.
-	 * </p>
-	 */
-	public static final String FIELD_EXPIRES_ON = "expires_on";
-
-	/**
-	 * Lifetime in milliseconds of a token whose lifetime the endpoint does not specify.
-	 */
-	private static final long DEFAULT_TOKEN_LIFETIME = 5 * 60 * 1000;
+	public static final String DEFAULT_SCOPE_SUFFIX = "/.default";
 
 	/**
 	 * Configuration options for {@link ManagedIdentityCredentials}.
@@ -205,16 +122,6 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 		 * @see #getClientId()
 		 */
 		String CLIENT_ID = "client-id";
-
-		/**
-		 * @see #getEndpoint()
-		 */
-		String ENDPOINT = "endpoint";
-
-		/**
-		 * @see #getRenewalMargin()
-		 */
-		String RENEWAL_MARGIN = "renewal-margin";
 
 		/**
 		 * @see #getMaxAttempts()
@@ -245,7 +152,8 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 		 *
 		 * <p>
 		 * If empty, the system-assigned identity is used, or the only user-assigned identity if
-		 * there is no system-assigned one.
+		 * there is no system-assigned one. In AKS, the client ID of the workload identity is taken
+		 * from the environment variable <code>AZURE_CLIENT_ID</code>.
 		 * </p>
 		 */
 		@Name(CLIENT_ID)
@@ -255,40 +163,6 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 		 * @see #getClientId()
 		 */
 		void setClientId(String value);
-
-		/**
-		 * URL of a token endpoint answering like the instance metadata service.
-		 *
-		 * <p>
-		 * If empty, the endpoint is found automatically: the endpoint announced in the
-		 * environment of an App Service, a Function or a Container App, otherwise the instance
-		 * metadata service.
-		 * </p>
-		 */
-		@Name(ENDPOINT)
-		String getEndpoint();
-
-		/**
-		 * @see #getEndpoint()
-		 */
-		void setEndpoint(String value);
-
-		/**
-		 * Time before the end of the lifetime of an access token when it is renewed.
-		 *
-		 * <p>
-		 * At most half of the token's lifetime is used as margin.
-		 * </p>
-		 */
-		@Name(RENEWAL_MARGIN)
-		@Format(MillisFormat.class)
-		@FormattedDefault("5min")
-		long getRenewalMargin();
-
-		/**
-		 * @see #getRenewalMargin()
-		 */
-		void setRenewalMargin(long value);
 
 		/**
 		 * Maximum number of attempts of a token request answered with a transient error.
@@ -318,9 +192,21 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 
 	}
 
-	private final AzureRestClient _client;
+	private final HttpClient _httpClient;
 
-	private final TokenCache _tokens;
+	private final TokenRequestContext _request;
+
+	private final HttpPipelinePolicy _recorder = new OutcomeRecorder();
+
+	/**
+	 * The outcome of the last request of the Azure Identity library to an identity endpoint.
+	 */
+	private volatile Outcome _lastOutcome;
+
+	/**
+	 * The credential of the Azure Identity library, replaced on {@link #invalidate()}.
+	 */
+	private volatile TokenCredential _credential;
 
 	/**
 	 * Creates a {@link ManagedIdentityCredentials} from configuration.
@@ -332,127 +218,263 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 	 */
 	public ManagedIdentityCredentials(InstantiationContext context, Config config) {
 		super(context, config);
-		_client = new AzureRestClient(config);
-		_tokens = new TokenCache(config.getRenewalMargin(), DEFAULT_TOKEN_LIFETIME);
+		_httpClient = AzureHttpClients.create(config);
+		_request = new TokenRequestContext().addScopes(scope(config.getResource()));
+		_credential = createCredential();
+	}
+
+	private static String scope(String resource) {
+		return resource.endsWith(DEFAULT_SCOPE_SUFFIX) ? resource : resource + DEFAULT_SCOPE_SUFFIX;
+	}
+
+	private TokenCredential createCredential() {
+		Config config = getConfig();
+		return new ManagedIdentityCredentialBuilder()
+			.clientId(StringServices.nonEmpty(config.getClientId()))
+			.httpClient(_httpClient)
+			.addPolicy(_recorder)
+			.retryPolicy(new RetryPolicy(new TransientErrorRetry(config.getMaxAttempts(), config.getRetryDelay())))
+			.build();
 	}
 
 	@Override
 	public void authenticate(RequestAuthentication request) {
-		IssuedToken token = _tokens.getToken(last -> fetchToken());
-		request.setHeader(AUTHORIZATION, token.getAuthorization());
+		request.setHeader(AUTHORIZATION, BEARER + ' ' + fetchToken().getToken());
 	}
 
+	/**
+	 * Drops the per-credential state of the Azure Identity library, such as the token of the
+	 * workload identity in AKS, so that the next request fetches a fresh one.
+	 *
+	 * <p>
+	 * A token from the instance metadata service or the identity endpoint of an App Service is
+	 * kept by the library in a cache shared by the whole application and by the endpoint itself;
+	 * such a token is renewed when it is about to expire. Since these endpoints do not revoke a
+	 * token before its end of life, a rejection of such a token means a missing role assignment
+	 * rather than a stale token.
+	 * </p>
+	 */
 	@Override
 	public void invalidate() {
-		_tokens.invalidate();
+		_credential = createCredential();
 	}
 
-	private IssuedToken fetchToken() {
-		Config config = getConfig();
-		Map<String, String> headers = new LinkedHashMap<>();
-		Map<String, String> query = new LinkedHashMap<>();
-		String endpoint = StringServices.nonEmpty(config.getEndpoint());
-		if (endpoint == null) {
-			String identityEndpoint = Environment.getSystemPropertyOrEnvironmentVariable(ENV_IDENTITY_ENDPOINT, null);
-			String identityHeader = Environment.getSystemPropertyOrEnvironmentVariable(ENV_IDENTITY_HEADER, null);
-			if (!StringServices.isEmpty(identityEndpoint) && !StringServices.isEmpty(identityHeader)) {
-				endpoint = identityEndpoint;
-				headers.put(HEADER_IDENTITY, identityHeader);
-				query.put(AzureRestClient.PARAM_API_VERSION, APP_SERVICE_API_VERSION);
-			}
-		}
-		if (headers.isEmpty()) {
-			if (endpoint == null) {
-				endpoint = IMDS_ENDPOINT;
-			}
-			headers.put(HEADER_METADATA, METADATA_TRUE);
-			query.put(AzureRestClient.PARAM_API_VERSION, IMDS_API_VERSION);
-		}
-		query.put(PARAM_RESOURCE, config.getResource());
-		String clientId = StringServices.nonEmpty(config.getClientId());
-		if (clientId != null) {
-			query.put(PARAM_CLIENT_ID, clientId);
-		}
-		return requestToken(endpoint, AzureRestClient.withQuery(endpoint, query), headers);
-	}
-
-	private IssuedToken requestToken(String endpoint, String url, Map<String, String> headers) {
-		Config config = getConfig();
-		int maxAttempts = Math.max(1, config.getMaxAttempts());
-		long delay = config.getRetryDelay();
-		for (int attempt = 1;; attempt++) {
-			long issuedAt = System.currentTimeMillis();
-			HttpResponse<String> response = send(endpoint, url, headers);
-			if (AzureRestClient.isSuccess(response)) {
-				return parseToken(endpoint, response.body(), issuedAt);
-			}
-			int status = response.statusCode();
-			if (attempt >= maxAttempts || !isTransient(status) || !sleep(delay)) {
-				throw new I18NRuntimeException(I18NConstants.ERROR_TOKEN_REQUEST_FAILED__RESOURCE_URL_STATUS_DETAIL
-					.fill(config.getResource(), endpoint, status, AzureRestClient.errorText(response.body())));
-			}
-			delay *= 2;
-		}
-	}
-
-	private HttpResponse<String> send(String endpoint, String url, Map<String, String> headers) {
+	private AccessToken fetchToken() {
+		_lastOutcome = null;
 		try {
-			return _client.get(url, headers);
-		} catch (IOException ex) {
-			throw new I18NRuntimeException(I18NConstants.ERROR_IDENTITY_ENDPOINT_UNREACHABLE__URL.fill(endpoint), ex);
-		} catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
-			throw new I18NRuntimeException(I18NConstants.ERROR_IDENTITY_ENDPOINT_UNREACHABLE__URL.fill(endpoint), ex);
+			return _credential.getTokenSync(_request);
+		} catch (RuntimeException ex) {
+			throw error(ex);
 		}
 	}
 
 	/**
-	 * Whether a request answered with the given status should be repeated.
+	 * The error reported for a failed token request.
+	 *
+	 * <p>
+	 * The exceptions of the Azure Identity library may quote the response of the identity endpoint,
+	 * which may carry a token. When the endpoint answered, the error is therefore described by the
+	 * {@link Outcome} of the request alone, without the exception of the library as cause.
+	 * </p>
+	 */
+	private I18NRuntimeException error(RuntimeException ex) {
+		String resource = getConfig().getResource();
+		Outcome outcome = _lastOutcome;
+		if (outcome == null) {
+			// No request has been sent, the library itself refused the request.
+			return new I18NRuntimeException(
+				I18NConstants.ERROR_TOKEN_UNAVAILABLE__RESOURCE_DETAIL.fill(resource, ex.getMessage()), ex);
+		}
+		if (outcome.getFailure() != null) {
+			return new I18NRuntimeException(
+				I18NConstants.ERROR_IDENTITY_ENDPOINT_UNREACHABLE__URL.fill(outcome.getEndpoint()),
+				outcome.getFailure());
+		}
+		if (outcome.getStatus() / 100 == 2) {
+			return new I18NRuntimeException(I18NConstants.ERROR_MALFORMED_RESPONSE__URL.fill(outcome.getEndpoint()));
+		}
+		return new I18NRuntimeException(I18NConstants.ERROR_TOKEN_REQUEST_FAILED__RESOURCE_URL_STATUS_DETAIL
+			.fill(resource, outcome.getEndpoint(), outcome.getStatus(), outcome.getDetail()));
+	}
+
+	/**
+	 * {@link RetryStrategy} repeating a token request answered with a transient error.
 	 *
 	 * <p>
 	 * The instance metadata service answers 404 and 410 while it is updating, 429 when throttling.
+	 * A request that fails without response is not repeated.
 	 * </p>
 	 */
-	private static boolean isTransient(int status) {
-		return status == 404 || status == 410 || status == 429 || status >= 500;
-	}
+	private static final class TransientErrorRetry implements RetryStrategy {
 
-	private static boolean sleep(long delay) {
-		try {
-			Thread.sleep(delay);
-			return true;
-		} catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
+		private final int _maxRetries;
+
+		private final long _delay;
+
+		TransientErrorRetry(int maxAttempts, long delay) {
+			_maxRetries = Math.max(0, maxAttempts - 1);
+			_delay = delay;
+		}
+
+		@Override
+		public int getMaxRetries() {
+			return _maxRetries;
+		}
+
+		@Override
+		public Duration calculateRetryDelay(int retryAttempts) {
+			return Duration.ofMillis(_delay << Math.min(Math.max(0, retryAttempts), 20));
+		}
+
+		@Override
+		public boolean shouldRetry(HttpResponse response) {
+			int status = response.getStatusCode();
+			return status == 404 || status == 410 || status == 429 || status >= 500;
+		}
+
+		@Override
+		public boolean shouldRetryException(Throwable throwable) {
 			return false;
 		}
+
 	}
 
-	private static IssuedToken parseToken(String endpoint, String body, long issuedAt) {
-		JSONObject response;
-		try {
-			response = JSONObjectUtils.parse(body);
-		} catch (ParseException ex) {
-			// The cause is not reported, its message could quote the token.
-			throw new I18NRuntimeException(I18NConstants.ERROR_MALFORMED_RESPONSE__URL.fill(endpoint));
+	/**
+	 * Outcome of a request to an identity endpoint, as far as it may be reported.
+	 */
+	private static final class Outcome {
+
+		private final String _endpoint;
+
+		private final int _status;
+
+		private final String _detail;
+
+		private final IOException _failure;
+
+		Outcome(String endpoint, int status, String detail, IOException failure) {
+			_endpoint = endpoint;
+			_status = status;
+			_detail = detail;
+			_failure = failure;
 		}
-		IssuedToken token = OAuthServer.parseToken(endpoint, response, issuedAt);
-		if (token.getLifetime() > 0) {
-			return token;
+
+		/**
+		 * URL of the endpoint without query.
+		 */
+		String getEndpoint() {
+			return _endpoint;
 		}
-		Object expiresOnValue = response.get(FIELD_EXPIRES_ON);
-		if (expiresOnValue == null) {
-			return token;
+
+		/**
+		 * HTTP status of the response, 0 if there is none.
+		 */
+		int getStatus() {
+			return _status;
 		}
-		long expiresOn;
-		try {
-			expiresOn = Long.parseLong(expiresOnValue.toString());
-		} catch (NumberFormatException ex) {
-			throw new I18NRuntimeException(I18NConstants.ERROR_MALFORMED_RESPONSE__URL.fill(endpoint));
+
+		/**
+		 * Error code and description of an error response, see
+		 * {@link AzureErrorResponse#describe(String)}.
+		 */
+		String getDetail() {
+			return _detail;
 		}
-		long expiresIn = Math.max(0, expiresOn - issuedAt / 1000);
-		AccessToken accessToken = token.getAccessToken();
-		return new IssuedToken(new BearerAccessToken(accessToken.getValue(), expiresIn, accessToken.getScope()), null,
-			issuedAt);
+
+		/**
+		 * The error that prevented a response, <code>null</code> if the endpoint answered.
+		 */
+		IOException getFailure() {
+			return _failure;
+		}
+
+	}
+
+	/**
+	 * {@link HttpPipelinePolicy} recording the {@link Outcome} of the requests to the identity
+	 * endpoint in {@link ManagedIdentityCredentials#_lastOutcome}.
+	 */
+	private final class OutcomeRecorder implements HttpPipelinePolicy {
+
+		@Override
+		public HttpPipelinePosition getPipelinePosition() {
+			// Sees the final response after all retries.
+			return HttpPipelinePosition.PER_CALL;
+		}
+
+		@Override
+		public Mono<HttpResponse> process(HttpPipelineCallContext context, HttpPipelineNextPolicy next) {
+			String endpoint = endpoint(context);
+			return next.process()
+				.flatMap(response -> {
+					if (isSuccess(response)) {
+						record(endpoint, response.getStatusCode(), "");
+						return Mono.just(response);
+					}
+					HttpResponse buffered = response.buffer();
+					return buffered.getBodyAsString().defaultIfEmpty("").map(body -> {
+						record(endpoint, buffered.getStatusCode(), AzureErrorResponse.describe(body));
+						return buffered;
+					});
+				})
+				.doOnError(ex -> recordFailure(endpoint, ex));
+		}
+
+		@Override
+		public HttpResponse processSync(HttpPipelineCallContext context, HttpPipelineNextSyncPolicy next) {
+			String endpoint = endpoint(context);
+			HttpResponse response;
+			try {
+				response = next.processSync();
+			} catch (RuntimeException ex) {
+				recordFailure(endpoint, ex);
+				throw ex;
+			}
+			if (isSuccess(response)) {
+				record(endpoint, response.getStatusCode(), "");
+				return response;
+			}
+			HttpResponse buffered = response.buffer();
+			record(endpoint, buffered.getStatusCode(), AzureErrorResponse.describe(buffered.getBodyAsBinaryData().toString()));
+			return buffered;
+		}
+
+		private boolean isSuccess(HttpResponse response) {
+			return response.getStatusCode() / 100 == 2;
+		}
+
+		private String endpoint(HttpPipelineCallContext context) {
+			URL url = context.getHttpRequest().getUrl();
+			return url.getProtocol() + "://" + url.getAuthority() + url.getPath();
+		}
+
+		private void record(String endpoint, int status, String detail) {
+			_lastOutcome = new Outcome(endpoint, status, detail, null);
+		}
+
+		private void recordFailure(String endpoint, Throwable ex) {
+			IOException failure = ioCause(ex);
+			if (failure != null) {
+				_lastOutcome = new Outcome(endpoint, 0, "", failure);
+			}
+		}
+
+	}
+
+	/**
+	 * The {@link IOException} in the cause chain of the given exception, <code>null</code> if there
+	 * is none.
+	 */
+	static IOException ioCause(Throwable ex) {
+		for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+			if (cause instanceof IOException) {
+				return (IOException) cause;
+			}
+			if (cause.getCause() == cause) {
+				break;
+			}
+		}
+		return null;
 	}
 
 }

@@ -1,5 +1,5 @@
 ---
-description: Read before configuring how an application authenticates its requests to an external HTTP service (the <credentials> of LLM providers, web search, MCP client, A2A remote agents, embedder, DeepL, OpenAPI client, Gitea tool), or before writing an own HTTP consumer - HeaderCredentials, BasicCredentials, NoCredentials, ClientCredentialsProvider of tl-credential-oauth on the Nimbus SDK (client_secret, private_key_jwt, Kubernetes service account token), ManagedIdentityCredentials of tl-credential-azure, DeviceLoginProvider for developers, CredentialProvider.create, RequestAuthentication, 401 handling.
+description: Read before configuring how an application authenticates its requests to an external HTTP service (the <credentials> of LLM providers, web search, MCP client, A2A remote agents, embedder, DeepL, OpenAPI client, Gitea tool), or before writing an own HTTP consumer - HeaderCredentials, BasicCredentials, NoCredentials, ClientCredentialsProvider of tl-credential-oauth on the Nimbus SDK (client_secret, private_key_jwt, Kubernetes service account token), ManagedIdentityCredentials of tl-credential-azure on the Azure SDK (App Service, AKS workload identity, instance metadata service), DeviceLoginProvider for developers, CredentialProvider.create, RequestAuthentication, 401 handling.
 order: 20
 ---
 
@@ -159,7 +159,13 @@ The assertion is read from the file for each token request, so the renewed token
 
 ## Azure managed identity
 
-Module `tl-credential-azure`. `ManagedIdentityCredentials` fetches a token for the managed identity of the virtual machine, App Service, Function or Container App - from the endpoint the platform announces in `IDENTITY_ENDPOINT` / `IDENTITY_HEADER`, otherwise from the instance metadata service:
+Module `tl-credential-azure`, based on the Azure SDK for Java: `ManagedIdentityCredentials` requests the token with the `ManagedIdentityCredential` of `azure-identity`, which finds the identity of the platform from the environment variables Azure sets:
+
+- App Service, Functions, Container Apps: `IDENTITY_ENDPOINT` / `IDENTITY_HEADER`.
+- AKS with workload identity: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`, set by the workload identity webhook in the pod; the pod's service account token is exchanged at Microsoft Entra ID (`AZURE_AUTHORITY_HOST` selects another cloud).
+- Otherwise (virtual machines, scale sets): the instance metadata service at `169.254.169.254`, or the host in `AZURE_POD_IDENTITY_AUTHORITY_HOST`.
+
+The SDK reads these as environment variables (the AKS variables also as Java system properties), so the configuration names only the resource:
 
 ```xml
 <credentials class="com.top_logic.credential.azure.ManagedIdentityCredentials"
@@ -167,31 +173,12 @@ Module `tl-credential-azure`. `ManagedIdentityCredentials` fetches a token for t
 />
 ```
 
-`client-id` selects a user-assigned identity. Access is granted in Azure by a role assignment, e.g. *Cognitive Services OpenAI User* for Azure OpenAI. Transient answers of the endpoint (404/410 during updates, 429, 5xx) are retried `max-attempts` times with growing delay.
-
-In AKS, a pod uses workload identity instead: the `ClientCredentialsProvider` exchanges the federated token at Microsoft Entra ID, with the variables the workload identity webhook sets in the pod referenced through aliases:
-
-```xml
-<alias>
-	<entry name="%AZURE_TENANT_ID%" value="${env:AZURE_TENANT_ID}"/>
-	<entry name="%AZURE_CLIENT_ID%" value="${env:AZURE_CLIENT_ID}"/>
-	<entry name="%AZURE_FEDERATED_TOKEN_FILE%" value="${env:AZURE_FEDERATED_TOKEN_FILE}"/>
-</alias>
-```
-
-```xml
-<credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
-	token-url="https://login.microsoftonline.com/%AZURE_TENANT_ID%/oauth2/v2.0/token"
-	client-id="%AZURE_CLIENT_ID%"
-	scope="https://cognitiveservices.azure.com/.default"
->
-	<client-authentication class="com.top_logic.credential.oauth.ClientAssertionAuthentication">
-		<assertion class="com.top_logic.basic.credential.FileSecretSource" path="%AZURE_FEDERATED_TOKEN_FILE%"/>
-	</client-authentication>
-</credentials>
-```
-
-These aliases carry no secret - a tenant id, a client id and a file path - so resolving them at startup is harmless.
+- `resource` is the service the token is for; the token is requested for the scope `<resource>/.default`.
+- `client-id` selects a user-assigned identity; in AKS it overrides `AZURE_CLIENT_ID`.
+- Access is granted in Azure by a role assignment, e.g. *Cognitive Services OpenAI User* for Azure OpenAI.
+- Transient answers of the endpoint (404/410 during updates, 429, 5xx) are retried `max-attempts` times (default 3), starting with `retry-delay` (default `1s`) and doubling; an unreachable endpoint is reported at once. `connect-timeout` and `request-timeout` limit each request.
+- The SDK caches the token, for the managed identity shared by all instances in the JVM, and renews it five minutes before it expires. `invalidate()` after a 401 rebuilds the SDK credential, which drops the token of the workload identity; a token of the metadata service or an App Service stays until its renewal, since these endpoints cache it themselves and never revoke it early.
+- Error messages name the endpoint, the HTTP status and the error code and description of the response, never other content. The SDK's own log messages (logger `com.microsoft.aad.msal4j`) may quote a failed response.
 
 ## Device login for developers
 

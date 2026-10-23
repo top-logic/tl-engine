@@ -1,5 +1,5 @@
 ---
-description: Read before configuring where a password, API key or token comes from (EnvironmentSecretSource, FileSecretSource, LiteralSecretSource, KeyVaultSecretSource of tl-credential-azure, CryptSupportSecretSource), or before adding a secret property to an own service - SecretSourceFormat, PolymorphicConfiguration<? extends SecretSource>, reading the secret at use, SecretSource#matches for constant-time comparison, TokenEditor for generated tokens.
+description: Read before configuring where a password, API key or token comes from (EnvironmentSecretSource, FileSecretSource, LiteralSecretSource, KeyVaultSecretSource of tl-credential-azure on the Azure SDK, CryptSupportSecretSource), or before adding a secret property to an own service - SecretSourceFormat, PolymorphicConfiguration<? extends SecretSource>, reading the secret at use, SecretSource#matches for constant-time comparison, TokenEditor for generated tokens.
 order: 10
 ---
 
@@ -85,7 +85,7 @@ This is the form every encrypted `String` property had, so existing configuratio
 
 ## KeyVaultSecretSource (Azure)
 
-Module `tl-credential-azure` (`com.top-logic:tl-credential-azure`). Reads a secret from Azure Key Vault, authenticated by default with the managed identity of the machine or container app the application runs on; that identity needs the role *Key Vault Secrets User* on the vault or the secret:
+Module `tl-credential-azure` (`com.top-logic:tl-credential-azure`), based on the Azure SDK for Java (`SecretClient` of `azure-security-keyvault-secrets`, sending with the JDK HTTP client). Reads a secret from Azure Key Vault, authenticated by default with the managed identity of the machine, container app or pod the application runs on; that identity needs the role *Key Vault Secrets User* on the vault or the secret:
 
 ```xml
 <api-key class="com.top_logic.credential.azure.KeyVaultSecretSource"
@@ -96,7 +96,8 @@ Module `tl-credential-azure` (`com.top-logic:tl-credential-azure`). Reads a secr
 
 - `secret-version` pins a version; without it, the current version is read.
 - `cache-time` (default `5min`) is how long a read secret is kept; after it the secret is fetched again, so a rotation in the vault takes effect without a restart.
-- `<credentials>` selects another identity, e.g. a user-assigned managed identity by its client id:
+- `connect-timeout` (default `10s`) and `request-timeout` (default `30s`) limit the requests to the vault.
+- `<credentials>` selects another identity, e.g. a user-assigned managed identity by its client id. Any credential provider works here, also a `ClientCredentialsProvider` with the client secret of a service principal for an application outside Azure; a request the vault rejects with 401 is repeated once after the provider has dropped its token:
 
 ```xml
 <api-key class="com.top_logic.credential.azure.KeyVaultSecretSource"
@@ -110,7 +111,7 @@ Module `tl-credential-azure` (`com.top-logic:tl-credential-azure`). Reads a secr
 </api-key>
 ```
 
-In AKS with workload identity, the `<credentials>` are a `ClientCredentialsProvider` exchanging the pod's federated token, see [credential providers](doc:credentials/credential-providers#azure-managed-identity).
+In AKS with workload identity, the default credentials already use the pod's federated token, see [credential providers](doc:credentials/credential-providers#azure-managed-identity).
 
 ## CryptSupportSecretSource (LDAP)
 

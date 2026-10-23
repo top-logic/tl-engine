@@ -33,7 +33,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.exception.I18NRuntimeException;
-import com.top_logic.credential.azure.ManagedIdentityCredentials;
 
 /**
  * Base class for tests against a mock of Azure endpoints (managed identity endpoints, Key Vault).
@@ -42,6 +41,17 @@ import com.top_logic.credential.azure.ManagedIdentityCredentials;
 public abstract class AbstractAzureMockTest extends AbstractTypedConfigurationTestCase {
 
 	private static final String ROOT_TAG = "config";
+
+	static {
+		// Read once by the Azure SDK, when it first creates an HTTP client.
+		System.setProperty(com.azure.core.util.Configuration.PROPERTY_AZURE_HTTP_CLIENT_IMPLEMENTATION,
+			ImdsRedirectHttpClientProvider.class.getName());
+	}
+
+	/**
+	 * Path of the token endpoint of the instance metadata service.
+	 */
+	protected static final String IMDS_PATH = "/metadata/identity/oauth2/token";
 
 	public interface Config extends ConfigurationItem {
 
@@ -117,19 +127,23 @@ public abstract class AbstractAzureMockTest extends AbstractTypedConfigurationTe
 		_baseUrl = "http://localhost:" + _server.getAddress().getPort();
 		_server.createContext("/", this::handle);
 		_server.start();
+		ImdsRedirectHttpClientProvider.setTarget(_baseUrl);
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
 		_server.stop(0);
 		_executor.shutdownNow();
-		System.clearProperty(ManagedIdentityCredentials.ENV_IDENTITY_ENDPOINT);
-		System.clearProperty(ManagedIdentityCredentials.ENV_IDENTITY_HEADER);
+		ImdsRedirectHttpClientProvider.setTarget(null);
 		super.tearDown();
 	}
 
 	private void handle(HttpExchange exchange) throws IOException {
 		String path = exchange.getRequestURI().getPath();
+		if (path.length() > 1 && path.endsWith("/")) {
+			// The Azure SDK requests the current version of a secret with an empty version segment.
+			path = path.substring(0, path.length() - 1);
+		}
 		Map<String, String> headers = new HashMap<>();
 		exchange.getRequestHeaders().forEach((name, values) -> headers.put(name.toLowerCase(), values.get(0)));
 		Received request = new Received(path, parseQuery(exchange.getRequestURI().getRawQuery()), headers);
@@ -172,6 +186,25 @@ public abstract class AbstractAzureMockTest extends AbstractTypedConfigurationTe
 	protected List<Received> requests(String path) {
 		List<Received> result = _requests.get(path);
 		return result == null ? Collections.emptyList() : result;
+	}
+
+	/**
+	 * Redirects the requests to the instance metadata service to the given base URL.
+	 */
+	protected static void redirectImds(String baseUrl) {
+		ImdsRedirectHttpClientProvider.setTarget(baseUrl);
+	}
+
+	/**
+	 * A resource identifier unique to the running test.
+	 *
+	 * <p>
+	 * The Azure Identity library caches the tokens of the managed identity for the whole JVM by
+	 * resource, so each test requests tokens for its own resource.
+	 * </p>
+	 */
+	protected String uniqueResource(String resource) {
+		return resource + "/" + getName();
 	}
 
 	/**

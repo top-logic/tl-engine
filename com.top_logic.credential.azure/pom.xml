@@ -19,8 +19,39 @@
       <artifactId>tl-basic</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-credential-oauth</artifactId>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-identity</artifactId>
+      <exclusions>
+        <exclusion>
+          <!-- Persistent token caches of developer logins, not used by the managed identity. -->
+          <groupId>com.microsoft.azure</groupId>
+          <artifactId>msal4j-persistence-extension</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>net.java.dev.jna</groupId>
+          <artifactId>jna-platform</artifactId>
+        </exclusion>
+        <exclusion>
+          <!-- The JDK HTTP client is used instead, see azure-core-http-jdk-httpclient. -->
+          <groupId>com.azure</groupId>
+          <artifactId>azure-core-http-netty</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-security-keyvault-secrets</artifactId>
+      <exclusions>
+        <exclusion>
+          <!-- The JDK HTTP client is used instead, see azure-core-http-jdk-httpclient. -->
+          <groupId>com.azure</groupId>
+          <artifactId>azure-core-http-netty</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-core-http-jdk-httpclient</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

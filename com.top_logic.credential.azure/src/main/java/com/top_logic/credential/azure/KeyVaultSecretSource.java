@@ -6,9 +6,14 @@
 package com.top_logic.credential.azure;
 
 import java.io.IOException;
-import java.net.http.HttpResponse;
-import java.util.LinkedHashMap;
-import java.util.Map;
+
+import com.azure.core.exception.HttpResponseException;
+import com.azure.core.http.HttpPipeline;
+import com.azure.core.http.HttpPipelineBuilder;
+import com.azure.core.util.BinaryData;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.SecretClientBuilder;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -33,6 +38,13 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * managed identity (see {@link ManagedIdentityCredentials}), so the configuration names only
  * where the secret is kept. The identity needs the role "Key Vault Secrets User" on the vault or
  * the secret.
+ * </p>
+ *
+ * <p>
+ * The secret is read with the <code>SecretClient</code> of the Azure Key Vault library. Its
+ * requests are authenticated by the configured {@link CredentialProvider} (see
+ * {@link CredentialProviderPolicy}), so that any provider works, e.g. also the OAuth client
+ * credentials of a service principal.
  * </p>
  *
  * <p>
@@ -75,21 +87,6 @@ public class KeyVaultSecretSource extends AbstractConfiguredInstance<KeyVaultSec
 	 * credentials is requested.
 	 */
 	public static final String KEY_VAULT_RESOURCE = "https://vault.azure.net";
-
-	/**
-	 * Version of the Key Vault REST API.
-	 */
-	public static final String API_VERSION = "7.4";
-
-	/**
-	 * Path segment of the secrets collection of a key vault.
-	 */
-	public static final String SECRETS_PATH = "secrets";
-
-	/**
-	 * Field of a secret bundle with the value of the secret.
-	 */
-	public static final String FIELD_VALUE = "value";
 
 	/**
 	 * Configuration options for {@link KeyVaultSecretSource}.
@@ -202,13 +199,9 @@ public class KeyVaultSecretSource extends AbstractConfiguredInstance<KeyVaultSec
 
 	}
 
-	private final CredentialProvider _credentials;
-
-	private final AzureRestClient _client;
+	private final SecretClient _client;
 
 	private final String _vaultUrl;
-
-	private final String _url;
 
 	private final Object _lock = new Object();
 
@@ -231,18 +224,19 @@ public class KeyVaultSecretSource extends AbstractConfiguredInstance<KeyVaultSec
 		if (credentials == null) {
 			credentials = defaultCredentials();
 		}
-		_credentials = context.getInstance(credentials);
-		_client = new AzureRestClient(config);
+		CredentialProvider provider = context.getInstance(credentials);
 		_vaultUrl = stripTrailingSlash(config.getVaultUrl());
-		StringBuilder url = new StringBuilder(_vaultUrl).append('/').append(SECRETS_PATH)
-			.append('/').append(config.getSecretName());
-		String version = StringServices.nonEmpty(config.getSecretVersion());
-		if (version != null) {
-			url.append('/').append(version);
+		HttpPipeline pipeline = new HttpPipelineBuilder()
+			.httpClient(AzureHttpClients.create(config))
+			.policies(new CredentialProviderPolicy(provider))
+			.build();
+		SecretClientBuilder builder = new SecretClientBuilder().pipeline(pipeline);
+		try {
+			builder.vaultUrl(_vaultUrl);
+		} catch (IllegalArgumentException ex) {
+			throw new I18NRuntimeException(I18NConstants.ERROR_INVALID_URL__URL.fill(_vaultUrl), ex);
 		}
-		Map<String, String> query = new LinkedHashMap<>();
-		query.put(AzureRestClient.PARAM_API_VERSION, API_VERSION);
-		_url = AzureRestClient.withQuery(url.toString(), query);
+		_client = builder.buildClient();
 	}
 
 	private static ManagedIdentityCredentials.Config defaultCredentials() {
@@ -273,40 +267,42 @@ public class KeyVaultSecretSource extends AbstractConfiguredInstance<KeyVaultSec
 
 	private String fetchSecret() {
 		Config config = getConfig();
-		HttpResponse<String> response = send();
-		if (response.statusCode() == 401) {
-			// The token may have been revoked before its end of life.
-			_credentials.invalidate();
-			response = send();
-		}
-		if (!AzureRestClient.isSuccess(response)) {
+		String name = config.getSecretName();
+		String version = StringServices.nonNull(config.getSecretVersion());
+		KeyVaultSecret secret;
+		try {
+			secret = _client.getSecret(name, version);
+		} catch (HttpResponseException ex) {
+			// The cause is not reported, its message quotes the response.
 			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_REQUEST_FAILED__NAME_VAULT_STATUS_DETAIL
-				.fill(config.getSecretName(), _vaultUrl, response.statusCode(),
-					AzureRestClient.errorText(response.body())));
-		}
-		Map<String, Object> bundle = AzureRestClient.parseObject(response.body());
-		if (bundle == null) {
+				.fill(name, _vaultUrl, ex.getResponse().getStatusCode(), errorText(ex)));
+		} catch (I18NRuntimeException ex) {
+			// No credentials for the key vault.
+			throw ex;
+		} catch (RuntimeException ex) {
+			IOException failure = ManagedIdentityCredentials.ioCause(ex);
+			if (failure != null) {
+				throw new I18NRuntimeException(I18NConstants.ERROR_VAULT_UNREACHABLE__URL.fill(_vaultUrl), failure);
+			}
+			// The cause is not reported, its message could quote the response.
 			throw new I18NRuntimeException(I18NConstants.ERROR_MALFORMED_RESPONSE__URL.fill(_vaultUrl));
 		}
-		Object value = bundle.get(FIELD_VALUE);
-		if (!(value instanceof String) || ((String) value).isEmpty()) {
-			throw new I18NRuntimeException(
-				I18NConstants.ERROR_SECRET_EMPTY__NAME_VAULT.fill(config.getSecretName(), _vaultUrl));
+		String value = secret.getValue();
+		if (StringServices.isEmpty(value)) {
+			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_EMPTY__NAME_VAULT.fill(name, _vaultUrl));
 		}
-		return (String) value;
+		return value;
 	}
 
-	private HttpResponse<String> send() {
-		Map<String, String> headers = new LinkedHashMap<>();
-		_credentials.authenticate(headers::put);
-		try {
-			return _client.get(_url, headers);
-		} catch (IOException ex) {
-			throw new I18NRuntimeException(I18NConstants.ERROR_VAULT_UNREACHABLE__URL.fill(_vaultUrl), ex);
-		} catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
-			throw new I18NRuntimeException(I18NConstants.ERROR_VAULT_UNREACHABLE__URL.fill(_vaultUrl), ex);
+	private static String errorText(HttpResponseException ex) {
+		Object value = ex.getValue();
+		if (value instanceof BinaryData) {
+			return AzureErrorResponse.describe(value.toString());
 		}
+		if (value instanceof String) {
+			return AzureErrorResponse.describe((String) value);
+		}
+		return AzureErrorResponse.describeJson(value);
 	}
 
 	private static String stripTrailingSlash(String url) {

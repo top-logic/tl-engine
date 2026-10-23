@@ -42,15 +42,17 @@ public class ServiceConfigurationAction implements ViewAction {
 	 */
 	public enum Mode {
 		/**
-		 * Store the configuration given as input of the action in the application, see
-		 * {@link TLServiceUtils#storeServiceConfiguration(BasicRuntimeModule, ServiceConfiguration)}.
+		 * Store the configuration given as input of the action in the application.
+		 *
+		 * @see TLServiceUtils#storeServiceConfiguration(BasicRuntimeModule, ServiceConfiguration)
 		 */
 		SAVE,
 
 		/**
 		 * Remove the configuration stored in the application, so that the configuration of the
-		 * application's configuration files becomes effective again, see
-		 * {@link TLServiceUtils#resetServiceConfiguration(BasicRuntimeModule)}.
+		 * application's configuration files becomes effective again.
+		 *
+		 * @see TLServiceUtils#resetServiceConfiguration(BasicRuntimeModule)
 		 */
 		RESET;
 	}

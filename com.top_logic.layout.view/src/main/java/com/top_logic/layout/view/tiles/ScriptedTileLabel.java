@@ -20,6 +20,7 @@ import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -85,5 +86,13 @@ public class ScriptedTileLabel implements TileLabelProvider {
 	public ResKey compute(ViewContext context) {
 		Object[] args = ChannelInputs.arguments(ChannelInputs.resolve(context, _inputs));
 		return TileLabelProvider.toLabel(_executor.execute(args));
+	}
+
+	/**
+	 * The {@link Config#getInputs() inputs} the expression reads.
+	 */
+	@Override
+	public List<ViewChannel> observedChannels(ViewContext context) {
+		return ChannelInputs.resolve(context, _inputs);
 	}
 }

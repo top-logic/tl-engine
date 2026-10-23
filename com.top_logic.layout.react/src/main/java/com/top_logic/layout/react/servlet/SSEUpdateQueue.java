@@ -296,6 +296,7 @@ public class SSEUpdateQueue {
 		_routeManager = routeManager;
 		if (routeManager != null) {
 			routeManager.setDisplayedParticipants(this::displayedParticipants);
+			routeManager.setTitlingParticipants(this::titlingParticipants);
 		}
 	}
 
@@ -312,27 +313,70 @@ public class SSEUpdateQueue {
 	 * @see RouteManager#setDisplayedParticipants(java.util.function.Supplier)
 	 */
 	private List<RoutingParticipant> displayedParticipants() {
+		return collectParticipants(false);
+	}
+
+	/**
+	 * The {@link #displayedParticipants() displayed participants} that title the page, in display
+	 * order.
+	 *
+	 * <p>
+	 * The content of a participant that keeps it out of the title (see
+	 * {@link RoutingParticipant#titlesContent()}) contributes none of its participants.
+	 * </p>
+	 *
+	 * @see RouteManager#setTitlingParticipants(java.util.function.Supplier)
+	 */
+	private List<RoutingParticipant> titlingParticipants() {
+		return collectParticipants(true);
+	}
+
+	private List<RoutingParticipant> collectParticipants(boolean titling) {
 		List<RoutingParticipant> result = new ArrayList<>();
 		ReactControl root = _rootControl;
 		if (root != null) {
-			collectParticipants(root, result);
+			collectParticipants(root, titling, result);
 		}
 		return result;
 	}
 
-	private static void collectParticipants(ReactControl control, List<RoutingParticipant> result) {
-		boolean routesContent = true;
+	/**
+	 * Collects the participants of the given control and, where they let it, of the content it
+	 * displays.
+	 *
+	 * <p>
+	 * The participants of a control - the control itself and those
+	 * {@link ReactControl#addRouteParticipant(RoutingParticipant) anchored} at it - stand at the
+	 * level of the control: what they display is the content of the control, its
+	 * {@link ReactControl#visibleChildren() visible children}. A tile stack anchors the participant
+	 * of its drill-down path, a view the participants of its bindings, and the frames of the stack
+	 * respectively the elements of the view lie inside them.
+	 * </p>
+	 *
+	 * @param titling
+	 *        Whether to stop as well at a participant that keeps its content out of the title of the
+	 *        page.
+	 */
+	private static void collectParticipants(ReactControl control, boolean titling, List<RoutingParticipant> result) {
+		boolean descend = true;
 		if (control instanceof RoutingParticipant participant) {
 			result.add(participant);
-			routesContent = participant.routesContent();
+			descend = includesContent(participant, titling);
 		}
-		result.addAll(control.routeParticipants());
-		if (!routesContent) {
+		for (RoutingParticipant participant : control.routeParticipants()) {
+			result.add(participant);
+			descend &= includesContent(participant, titling);
+		}
+		if (!descend) {
 			return;
 		}
 		for (ReactControl child : control.visibleChildren()) {
-			collectParticipants(child, result);
+			collectParticipants(child, titling, result);
 		}
+	}
+
+	private static boolean includesContent(RoutingParticipant participant, boolean titling) {
+		return participant.routesContent() && (!titling || participant.titlesContent());
 	}
 
 	/**

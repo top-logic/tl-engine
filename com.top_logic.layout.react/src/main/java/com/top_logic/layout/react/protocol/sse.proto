@@ -193,6 +193,12 @@ message RouteChangeEvent extends SSEEvent {
 
 	/** If true, use {@code replaceState} instead of {@code pushState} (no new history entry). */
 	boolean replace;
+
+	/**
+	 * The title of the page the URL names, shown in the browser tab and recorded with the history
+	 * entry; empty where the display names none, which leaves the page the title it was loaded with.
+	 */
+	string title;
 }
 
 /**

@@ -10,6 +10,7 @@
 			path="navPath"
 		>
 			<frame
+				final-title="true"
 				route="person/:person"
 				view="tiles/person-detail.view.xml"
 			>

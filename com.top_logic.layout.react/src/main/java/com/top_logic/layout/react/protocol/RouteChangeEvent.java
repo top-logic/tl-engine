@@ -22,6 +22,9 @@ public interface RouteChangeEvent extends com.top_logic.layout.react.protocol.SS
 	/** @see #isReplace() */
 	String REPLACE__PROP = "replace";
 
+	/** @see #getTitle() */
+	String TITLE__PROP = "title";
+
 	/**
 	 * The new URL path to display in the browser address bar (relative to view base).
 	 */
@@ -41,6 +44,17 @@ public interface RouteChangeEvent extends com.top_logic.layout.react.protocol.SS
 	 * @see #isReplace()
 	 */
 	com.top_logic.layout.react.protocol.RouteChangeEvent setReplace(boolean value);
+
+	/**
+	 * The title of the page the URL names, shown in the browser tab and recorded with the history
+	 * entry; empty where the display names none, which leaves the page the title it was loaded with.
+	 */
+	String getTitle();
+
+	/**
+	 * @see #getTitle()
+	 */
+	com.top_logic.layout.react.protocol.RouteChangeEvent setTitle(String value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.layout.react.protocol.RouteChangeEvent readRouteChangeEvent(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

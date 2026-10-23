@@ -23,6 +23,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.layout.react.theme.UITheme;
@@ -122,6 +123,16 @@ public class ViewServlet extends TopLogicServlet {
 	 * @see ReactWindowRegistry#issuePageLoad(String)
 	 */
 	private static final String PAGE_LOAD_ATTRIBUTE = "data-page-load";
+
+	/**
+	 * The title of a page whose application has no {@link ViewConfig#getTitle() title}.
+	 *
+	 * <p>
+	 * The page is loaded with it and shows it while its display names no labeled route: the title
+	 * the display composes takes its place as soon as there is one.
+	 * </p>
+	 */
+	public static final String DEFAULT_TITLE = "TopLogic";
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -632,6 +643,13 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * The {@link ViewConfig#getTitle() title of the application}, or {@code null} if it has none.
+	 */
+	private static ResKey applicationTitle() {
+		return ApplicationConfig.getInstance().getConfig(ViewConfig.class).getTitle();
+	}
+
+	/**
 	 * Wires the {@link RouteManager} from the given context to the SSE queue.
 	 *
 	 * <p>
@@ -664,9 +682,11 @@ public class ViewServlet extends TopLogicServlet {
 			routeManager.adoptUrl(requestedRoute);
 		}
 
-		routeManager.setUrlChangeHandler((url, replace) -> {
+		routeManager.setApplicationTitle(applicationTitle());
+		routeManager.setUrlChangeHandler((url, title, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
 				.setUrl(url)
+				.setTitle(title)
 				.setReplace(replace);
 			sseQueue.enqueue(event);
 		});
@@ -939,7 +959,11 @@ public class ViewServlet extends TopLogicServlet {
 		out.endEmptyTag();
 		out.beginBeginTag(HTMLConstants.TITLE);
 		out.endBeginTag();
-		out.writeText("TopLogic View");
+		// The application title: the page title the display composes is sent once the route of the
+		// page is adopted.
+		ResKey applicationTitle = applicationTitle();
+		out.writeText(
+			applicationTitle == null ? DEFAULT_TITLE : Resources.getInstance().getString(applicationTitle));
 		out.endTag(HTMLConstants.TITLE);
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath);

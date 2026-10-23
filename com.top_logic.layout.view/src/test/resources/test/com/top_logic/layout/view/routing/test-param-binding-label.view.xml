@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="ticket"/>
+		<channel name="ticketId"/>
+		<channel name="step"/>
+	</channels>
+	<param-bindings>
+		<bind
+			channel="ticketId"
+			final-title="true"
+			prefix="ticket"
+			route-param="ticket"
+		>
+			<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+				expr="$ticket"
+				inputs="ticket"
+			/>
+		</bind>
+		<bind
+			channel="step"
+			route-param="step"
+		/>
+	</param-bindings>
+	<panel title="Param Binding Label Test"/>
+</view>

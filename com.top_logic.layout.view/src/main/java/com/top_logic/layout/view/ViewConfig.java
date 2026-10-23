@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Application-level configuration for the view system.
@@ -35,6 +36,28 @@ public interface ViewConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getLoginView()}. */
 	String LOGIN_VIEW = "login-view";
+
+	/** Configuration name for {@link #getTitle()}. */
+	String TITLE = "title";
+
+	/**
+	 * The title of the application, naming it in the browser tab.
+	 *
+	 * <p>
+	 * The tab title is composed of the label of the innermost route the display shows that has one
+	 * - the item a sidebar selects, the tab a tab bar shows, the frame a tile stack drills into, the
+	 * object a route parameter names - followed by this title, e.g. "Ticket 4711 – My Application".
+	 * A page whose display names no labeled route is titled by this title alone.
+	 * </p>
+	 *
+	 * <p>
+	 * Unset for an application without a title of its own: the tab is then titled by the label of
+	 * the displayed route alone, and by {@link ViewServlet#DEFAULT_TITLE} where there is none.
+	 * </p>
+	 */
+	@Name(TITLE)
+	@Nullable
+	ResKey getTitle();
 
 	/**
 	 * The name of the default view file loaded when the {@link ViewServlet} is accessed without a

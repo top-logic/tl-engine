@@ -681,29 +681,29 @@
 /*
  * The configured content is the panel's own flex child, and is given the panel's bounded height.
  *
- * This is where a dock would otherwise collapse the conversation: the engine's fill rule
- * (`.tlStack:has(> .tlPanel--fill)`) looks one level deep, so a `<chat>` that is not the direct
- * child of a box with a definite height grows with its transcript instead of scrolling inside one.
- * One level is all this can repair - hence the one-element rule on `<chat-dock>`'s content.
+ * The engine's fill contract gives a control the class `tlFill` only while it or a child reports
+ * filling, and the dock body is no fill host of that contract. A `<chat>` (a `tl-stack`) or a
+ * `<panel>` placed here therefore takes the body's height by this rule rather than by its own
+ * report, and the conversation scrolls inside it instead of growing with its transcript.
  */
-.tl-chat-dock__body > .tlStack,
-.tl-chat-dock__body > .tlPanel {
+.tl-chat-dock__body > .tl-stack,
+.tl-chat-dock__body > .tl-panel {
   flex: 1;
   min-width: 0;
   min-height: 0;
 }
 
 /*
- * The header of a panel that only bounds a conversation, while it has nothing to show.
+ * The title bar of a panel that only bounds a conversation, while it has nothing to show.
  *
  * A host wraps `<chat-conversation>` in an untitled `<panel fill="true">` for the bounded height
- * alone, and the engine still draws that panel's header: padding, a tinted background and a
- * border line, a band above the conversation's own header (#589). It goes away for as long as it
- * holds no title, no title content and no command, so a host that gives the panel a title or a
- * command keeps its header. Once the engine renders no empty header, this rule matches nothing.
+ * alone. The engine leaves out the title bar of a panel without title, title content, toolbar and
+ * buttons, but a `<panel>` of a view always has a toolbar, also an empty one, so its title bar is
+ * drawn: padding and a border line, a band above the conversation's own header (#589). The bar goes away for as long as it holds no title, no title content and no button, so a
+ * host that gives the panel a title or a command keeps it.
  */
-.tlPanel:has(> .tlPanel__content > .tl-chat-conversation)
-  > .tlPanel__header:not(:has(.tlPanel__title, .tlPanel__titleContent, button)) {
+.tl-panel:has(> .tl-panel__body > .tl-chat-conversation)
+  > .tl-titlebar:not(:has(.tl-titlebar__title, .tl-titlebar__content, button)) {
   display: none;
 }
 
@@ -714,11 +714,11 @@
  * so the reader saw it twice. The table's header goes while it holds no command; its title goes in
  * any case.
  */
-.tlPanel.tl-chat-pane__grouped-table > .tlPanel__header:not(:has(button)) {
+.tl-panel.tl-chat-pane__grouped-table > .tl-titlebar:not(:has(button)) {
   display: none;
 }
 
-.tlPanel.tl-chat-pane__grouped-table > .tlPanel__header .tlPanel__title {
+.tl-panel.tl-chat-pane__grouped-table > .tl-titlebar .tl-titlebar__title {
   display: none;
 }
 

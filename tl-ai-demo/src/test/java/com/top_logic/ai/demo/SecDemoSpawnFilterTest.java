@@ -10,7 +10,6 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -98,7 +97,7 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 	 */
 	public void testSpawnIsRefusedWhereTheRoleMayNotRunTheAgent() {
 		int restrictedPersonas = 0;
-		for (Map.Entry<String, List<String>> persona : SecDemoSetupService.personaRoles().entrySet()) {
+		for (Map.Entry<String, List<String>> persona : personaRoles().entrySet()) {
 			String login = persona.getKey();
 			boolean restricted = persona.getValue().contains(RESTRICTED_ROLE);
 
@@ -129,7 +128,7 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 			+ " refused and this test asserts only the permissive half.", restrictedPersonas > 0);
 		assertTrue("The fixture must leave at least one persona unrestricted, otherwise nothing shows"
 			+ " that the refusal follows the role.",
-			restrictedPersonas < SecDemoSetupService.personaLogins().size());
+			restrictedPersonas < personaLogins().size());
 	}
 
 	/** An unenforced run spawns whatever it is asked for, as it did before this filter existed. */
@@ -170,7 +169,7 @@ public class SecDemoSpawnFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testDelegationIsRefusedWithTheSameCause() {
-		for (Map.Entry<String, List<String>> persona : SecDemoSetupService.personaRoles().entrySet()) {
+		for (Map.Entry<String, List<String>> persona : personaRoles().entrySet()) {
 			String login = persona.getKey();
 			if (!persona.getValue().contains(RESTRICTED_ROLE)) {
 				continue;

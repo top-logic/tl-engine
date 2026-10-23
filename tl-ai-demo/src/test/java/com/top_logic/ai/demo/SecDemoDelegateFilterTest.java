@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -86,7 +85,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	 * <p>
 	 * Written out rather than read back from the policy, so that this test states what
 	 * {@code secdemo.config.xml} is meant to configure instead of restating what it happens to say.
-	 * Which personas hold it is looked up ({@link SecDemoSetupService#personaRoles()}), because a
+	 * Which personas hold it is looked up ({@link SecDemoPersonaTest#personaRoles()}), because a
 	 * persona added to the aspect must be covered without an edit here.
 	 * </p>
 	 */
@@ -130,7 +129,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 	 */
 	public void testDelegatesAreOfferedAsAgentAccessLeavesThem() {
 		int restrictedPersonas = 0;
-		for (Map.Entry<String, List<String>> persona : SecDemoSetupService.personaRoles().entrySet()) {
+		for (Map.Entry<String, List<String>> persona : personaRoles().entrySet()) {
 			String login = persona.getKey();
 			boolean restricted = persona.getValue().contains(RESTRICTED_ROLE);
 
@@ -151,7 +150,7 @@ public class SecDemoDelegateFilterTest extends SecDemoPersonaTest {
 			+ " demonstrated at all.", restrictedPersonas > 0);
 		assertTrue("The fixture must leave at least one persona unrestricted, otherwise nothing shows"
 			+ " that the restriction is what makes the difference.",
-			restrictedPersonas < SecDemoSetupService.personaLogins().size());
+			restrictedPersonas < personaLogins().size());
 	}
 
 	/** An unenforced run keeps every declared delegate, whatever its principal may do. */

@@ -20,7 +20,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.service.db2.InitialDataSetupService;
 import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -32,11 +31,9 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * The agents of an application are its configured ones and its {@code tl.ai.core:Agent} records,
- * and the initial data import creates records from {@code WEB-INF/data/agents.objects.xml}. Nothing
- * orders {@link AiToolAccessService} after that import, so on a fresh database a policy that grants
- * such an agent was refused at start-up whenever the access service happened to start first. The
- * initial data import is not started here, which is that situation: the access service starts
- * before the record exists.
+ * and the initial data import creates records from {@code WEB-INF/data/agents.objects.xml}. The
+ * import is a startup hook that runs after all services, so {@link AiToolAccessService} always
+ * starts before the record exists, and {@link AgentNameCheck} judges the agent names afterwards.
  * </p>
  */
 public class TestAgentNameCheck extends BasicTestCase {
@@ -59,8 +56,6 @@ public class TestAgentNameCheck extends BasicTestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		assertFalse("This test is about a start before the initial data import.",
-			InitialDataSetupService.Module.INSTANCE.isActive());
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		if (BoundedRole.getRoleByName(kb, ROLE) == null) {
 			try (Transaction tx = kb.beginTransaction()) {

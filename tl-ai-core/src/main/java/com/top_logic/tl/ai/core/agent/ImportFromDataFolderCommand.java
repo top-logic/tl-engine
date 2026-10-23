@@ -235,8 +235,8 @@ public class ImportFromDataFolderCommand extends AbstractCommandHandler {
 
 	/**
 	 * Stamps the {@code initial-data.<fileName>} flag in {@link DBProperties} so the
-	 * {@code InitialDataSetupService} skips this file on the next startup, matching the
-	 * post-startup-load behaviour and avoiding a second re-import on the next boot.
+	 * {@link com.top_logic.knowledge.service.db2.InitialDataSetup} skips this file on the next startup,
+	 * matching the post-startup-load behaviour and avoiding a second re-import on the next boot.
 	 *
 	 * <p>
 	 * If the marker was already "loaded" (the typical case) it stays loaded. If the sibling

@@ -196,6 +196,9 @@ export interface MenuTriggerPartProps extends PartAttributes {
   /** The icon of an icon-only trigger, a theme image in its encoded form (see `ThemeIcon`). */
   icon?: string;
 
+  /** Whether the trigger is drawn small; applies to a trigger showing its icon alone, like the part `Button`. */
+  small?: boolean;
+
   /** Free content of the trigger, drawn instead of label and icon. */
   children?: React.ReactNode;
 

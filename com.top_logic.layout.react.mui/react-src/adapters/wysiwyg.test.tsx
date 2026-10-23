@@ -154,7 +154,8 @@ describe('rich text editor', () => {
       expect(divider.getAttribute('aria-orientation')).toBe('vertical');
     });
 
-    // The toggles say whether they are pressed; every button of the toolbar is a ghost icon button of the package.
+    // The toggles say whether they are pressed; every button of the toolbar is a small ghost icon
+    // button of the package with a small icon: the toolbar is part of a field.
     const toggles = within(toolbar).getAllByRole('button').filter(button => button.hasAttribute('aria-pressed'));
     expect(toggles.map(button => button.getAttribute('aria-label'))).toEqual(TOGGLES);
     expect(toggles.map(button => button.getAttribute('aria-pressed'))).toEqual(TOGGLES.map(() => 'false'));
@@ -162,6 +163,8 @@ describe('rich text editor', () => {
       expect(button.className).toMatch(/\btl-button\b/);
       expect(button.className).toMatch(/\btl-button--ghost\b/);
       expect(button.className).toMatch(/\btl-button--icon\b/);
+      expect(button.className).toMatch(/\btl-button--sm\b/);
+      expect(button.querySelector('.tl-button__icon')!.classList.contains('tl-icon-sm')).toBe(true);
     });
 
     // The writing surface of the library carries the prose of the package; without an error it states none.

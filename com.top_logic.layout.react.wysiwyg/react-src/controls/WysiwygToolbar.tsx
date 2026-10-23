@@ -190,7 +190,8 @@ interface ToolButtonProps {
 
 /**
  * A button of the toolbar: the part `Button` in the appearance the toolbar gives its buttons
- * (ghost, icon alone). A toggle reports whether it is pressed (`aria-pressed`).
+ * (ghost, icon alone), drawn small like every button of the toolbar: the toolbar is part of a field.
+ * A toggle reports whether it is pressed (`aria-pressed`).
  */
 const ToolButton: React.FC<ToolButtonProps> = ({ icon, label, checked, disabled, onPress }) => {
   const Button = usePart('Button');
@@ -201,6 +202,7 @@ const ToolButton: React.FC<ToolButtonProps> = ({ icon, label, checked, disabled,
       label={label}
       display={defaults.iconOnly === false ? 'icon-label' : 'icon-only'}
       appearance={defaults.appearance ?? 'ghost'}
+      small
       checked={checked}
       disabled={disabled}
       onMouseDown={keepFocus}
@@ -309,6 +311,7 @@ const ChoiceMenu: React.FC<ChoiceMenuProps> = ({ editor, label, icon, choices, r
         expanded={open}
         label={label}
         icon={icon}
+        small
         onMouseDown={keepFocus}
         onClick={toggle}
       />
@@ -416,6 +419,7 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
         haspopup="dialog"
         label={linkLabel}
         icon={ICON_LINK}
+        small
         onMouseDown={keepFocus}
         onClick={toggle}
       />
@@ -472,8 +476,8 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
 
 /**
  * The toolbar of the rich text editor (rich-text.contract.md): a wrapping `tl-toolbar` whose
- * groups are divided by vertical dividers. Its buttons are the part `Button`, ghost and icon
- * alone; the paragraph format is a menu of radio entries, the list kind a menu of checkbox entries
+ * groups are divided by vertical dividers. Its buttons are the part `Button`, ghost, icon alone and
+ * small, as are its menu triggers; the paragraph format is a menu of radio entries, the list kind a menu of checkbox entries
  * (the checked one switches the list off), the link a popup. The commands the editor is configured
  * with form a toolbar of their own inside. Where the editor offers source editing, a toggle shows the
  * HTML source in place of the formatted text; while it is shown, the toggle is the only button.

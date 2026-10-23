@@ -66,7 +66,7 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 				WorkspaceService.getInstance().getApplications().getConfig(), provider);
 			NewWorkspace created = ProjectWorkspaces.commitNewWorkspace(project, WORKSPACE_ID);
 			TLObject workspace = created.workspace();
-			assertTrue("A workspace without image is outdated.", ProjectWorkspaces.isImageOutdated(workspace));
+			assertFalse("A workspace without container is not outdated.", ProjectWorkspaces.isImageOutdated(workspace));
 
 			WorkspaceInfo createdInfo = applications.create(created.spec(), ExecOutput.NONE);
 			commit(() -> workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, createdInfo.getImage()));

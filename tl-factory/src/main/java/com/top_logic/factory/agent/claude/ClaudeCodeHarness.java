@@ -34,7 +34,8 @@ import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
  *
  * <pre>
  * claude -p --input-format stream-json --output-format stream-json --verbose --include-partial-messages
- *     --permission-mode bypassPermissions [--model &lt;model&gt;] [--resume &lt;session ID&gt;] [&lt;extra args&gt;]
+ *     --permission-mode bypassPermissions [--thinking-display &lt;display&gt;] [--model &lt;model&gt;]
+ *     [--resume &lt;session ID&gt;] [&lt;extra args&gt;]
  * </pre>
  *
  * <p>
@@ -65,6 +66,9 @@ public class ClaudeCodeHarness extends AbstractConfiguredInstance<ClaudeCodeHarn
 		/** Configuration property name for {@link #getExtraArgs()}. */
 		String EXTRA_ARGS = "extra-args";
 
+		/** Configuration property name for {@link #getThinkingDisplay()}. */
+		String THINKING_DISPLAY = "thinking-display";
+
 		/**
 		 * The program of Claude Code in the workspace image.
 		 */
@@ -79,6 +83,16 @@ public class ClaudeCodeHarness extends AbstractConfiguredInstance<ClaudeCodeHarn
 		@Name(MODEL)
 		@Nullable
 		String getModel();
+
+		/**
+		 * How the thinking of the model appears in the output of Claude Code:
+		 * {@value ClaudeCodeHarness#THINKING_DISPLAY_SUMMARIZED} for a summary of it, which the chat
+		 * shows; {@code omitted} for no text; empty for the default of Claude Code, which omits it
+		 * in print mode.
+		 */
+		@Name(THINKING_DISPLAY)
+		@StringDefault(THINKING_DISPLAY_SUMMARIZED)
+		String getThinkingDisplay();
 
 		/**
 		 * Further arguments appended to the command line, e.g. {@code --max-turns,50}.
@@ -119,6 +133,19 @@ public class ClaudeCodeHarness extends AbstractConfiguredInstance<ClaudeCodeHarn
 	/** Mode of {@link #OPTION_PERMISSION_MODE}: no prompts; the container is the boundary. */
 	public static final String PERMISSION_MODE_BYPASS = "bypassPermissions";
 
+	/**
+	 * Option: how the thinking of the model appears in the output.
+	 *
+	 * <p>
+	 * Without it, Claude Code in print mode asks the API to omit the text of the thinking: its
+	 * blocks are streamed with their signature only.
+	 * </p>
+	 */
+	public static final String OPTION_THINKING_DISPLAY = "--thinking-display";
+
+	/** Display of {@link #OPTION_THINKING_DISPLAY}: a summary of the thinking, streamed as text. */
+	public static final String THINKING_DISPLAY_SUMMARIZED = "summarized";
+
 	/** Option: the model. */
 	public static final String OPTION_MODEL = "--model";
 
@@ -151,6 +178,11 @@ public class ClaudeCodeHarness extends AbstractConfiguredInstance<ClaudeCodeHarn
 		command.add(OPTION_INCLUDE_PARTIAL_MESSAGES);
 		command.add(OPTION_PERMISSION_MODE);
 		command.add(PERMISSION_MODE_BYPASS);
+		String thinkingDisplay = config.getThinkingDisplay();
+		if (thinkingDisplay != null && !thinkingDisplay.isBlank()) {
+			command.add(OPTION_THINKING_DISPLAY);
+			command.add(thinkingDisplay.strip());
+		}
 		String model = config.getModel();
 		if (model != null && !model.isBlank()) {
 			command.add(OPTION_MODEL);

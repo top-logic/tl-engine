@@ -64,6 +64,7 @@
 				<harness class="com.top_logic.factory.agent.claude.ClaudeCodeHarness"
 					extra-args="%FACTORY_AGENT_EXTRA_ARGS%"
 					model="%FACTORY_AGENT_MODEL%"
+					thinking-display="%FACTORY_AGENT_THINKING_DISPLAY%"
 				/>
 			</instance>
 		</config>

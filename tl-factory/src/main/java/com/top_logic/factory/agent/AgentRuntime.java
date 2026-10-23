@@ -9,9 +9,12 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
 
+import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.factory.llm.LLMTokens;
 import com.top_logic.factory.workspace.WorkspaceProvider;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * What the {@link WorkspaceAgent}s of the control application share.
@@ -39,10 +42,14 @@ import com.top_logic.factory.workspace.WorkspaceProvider;
  *        Runs the threads waiting for the end of the agent processes.
  * @param clock
  *        The time source.
+ * @param messages
+ *        The messages to the user a run is done for, in the language of the user; the user is
+ *        {@code null} when the run names none.
  */
 public record AgentRuntime(AgentHarness harness, WorkspaceProvider provider, LLMTokens tokens,
 		Duration idleTimeout, Duration tokenLifetime, Duration interruptTimeout, Duration stopTimeout,
-		ScheduledExecutorService scheduler, Executor watchers, Clock clock) {
+		ScheduledExecutorService scheduler, Executor watchers, Clock clock,
+		Function<Person, ? extends I18NBundle> messages) {
 
 	// Plain data.
 

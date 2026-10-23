@@ -57,6 +57,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey COMMIT_CONVERSATION;
 
+	/**
+	 * @en The LLM proxy of the control application refused the access of the agent (HTTP {0}). The
+	 *     next message starts the agent anew with a new token.
+	 */
+	public static ResKey1 ERROR_LLM_ACCESS_REFUSED__STATUS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

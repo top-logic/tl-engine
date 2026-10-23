@@ -36,6 +36,8 @@ public class TestWorkspaceReconciliation extends TestCase {
 
 	private static final String URL_SUFFIX = "app/";
 
+	private static final String IMAGE = "tl-factory-workspace:0123456789abcdef";
+
 	/**
 	 * A workspace that runs is stored as running with the address of its application, one that is
 	 * stopped as stopped without address.
@@ -69,6 +71,31 @@ public class TestWorkspaceReconciliation extends TestCase {
 		assertNull("An unchanged state needs no explanation.", c.message());
 
 		assertEquals(WorkspaceStatus.UNKNOWN, result.get("d").status());
+	}
+
+	/**
+	 * The image of an existing container is reported, so that a workspace whose image was not
+	 * recorded learns it; a workspace without container and one whose platform cannot be asked
+	 * report none.
+	 */
+	public void testImage() {
+		FakeProvider provider = new FakeProvider()
+			.add(running("a", 20006))
+			.add(info("b", WorkspaceState.STOPPED))
+			.add(WorkspaceInfo.missing("c", Collections.emptyList()));
+
+		Map<String, Outcome> result = reconcile(provider,
+			"a", WorkspaceStatus.RUNNING,
+			"b", WorkspaceStatus.BUILDING,
+			"c", WorkspaceStatus.STOPPED);
+
+		assertEquals(IMAGE, result.get("a").image());
+		assertEquals("Also after an interrupted operation.", IMAGE, result.get("b").image());
+		assertNull(result.get("c").image());
+
+		Map<String, Outcome> unknown = reconcile(new FakeProvider().setReachable(false),
+			"a", WorkspaceStatus.RUNNING);
+		assertNull(unknown.get("a").image());
 	}
 
 	/**
@@ -174,12 +201,12 @@ public class TestWorkspaceReconciliation extends TestCase {
 	}
 
 	private static WorkspaceInfo running(String id, int port) {
-		return new WorkspaceInfo(id, WorkspaceState.RUNNING, "container-" + id, "image", port,
+		return new WorkspaceInfo(id, WorkspaceState.RUNNING, "container-" + id, IMAGE, port,
 			"http://localhost:" + port + "/", Collections.emptyList());
 	}
 
 	private static WorkspaceInfo info(String id, WorkspaceState state) {
-		return new WorkspaceInfo(id, state, "container-" + id, "image", WorkspaceInfo.NO_PORT, null,
+		return new WorkspaceInfo(id, state, "container-" + id, IMAGE, WorkspaceInfo.NO_PORT, null,
 			Collections.emptyList());
 	}
 

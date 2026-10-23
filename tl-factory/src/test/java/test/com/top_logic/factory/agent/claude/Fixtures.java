@@ -24,6 +24,8 @@ import java.util.List;
  * <li>{@value #INTERRUPT}: a long answer interrupted by a control request after its first text.</li>
  * <li>{@value #RESUME}: the first message of a new process resuming the conversation.</li>
  * <li>{@value #LOGIN_FAILED}: a message to a process whose token the LLM proxy refuses.</li>
+ * <li>{@value #THINKING}: a question the default model thinks about, its thinking displayed as
+ * summary.</li>
  * </ul>
  */
 public final class Fixtures {
@@ -45,6 +47,9 @@ public final class Fixtures {
 
 	/** Fixture of a message to a process the LLM proxy refuses. */
 	public static final String LOGIN_FAILED = "login-failed.jsonl";
+
+	/** Fixture of an answer with the summary of the thinking of the model. */
+	public static final String THINKING = "thinking.jsonl";
 
 	private Fixtures() {
 		// Static access only.

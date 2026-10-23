@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Collectors;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -25,6 +26,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.factory.agent.EventLog;
+import test.com.top_logic.factory.agent.KeyBundle;
 import test.com.top_logic.factory.agent.MemoryConversation;
 import test.com.top_logic.factory.agent.MemoryTokens;
 
@@ -130,6 +132,9 @@ public class TestClaudeCodeIntegration extends TestCase {
 	private static final String PROMPT_OK = "Antworte nur mit OK.";
 
 	private static final String PROMPT_TOOL = "Lies die Datei pom.xml und nenne nur die artifactId.";
+
+	private static final String PROMPT_THINK =
+		"Wie viele Primzahlen liegen zwischen 100 und 150? Überlege gründlich und antworte nur mit der Zahl.";
 
 	private static final String PROMPT_LONG =
 		"Zähle langsam von 1 bis 200, jede Zahl in einer eigenen Zeile mit einem kurzen Satz dazu.";
@@ -270,6 +275,37 @@ public class TestClaudeCodeIntegration extends TestCase {
 	}
 
 	/**
+	 * Records the stream of a question the default model of Claude Code thinks about: with the
+	 * thinking display of {@link ClaudeCodeHarness}, the thinking reaches the output as text.
+	 */
+	public void testRecordThinking() throws Exception {
+		ClaudeCodeHarness harness = harness(null);
+		AgentProtocol protocol = harness.newProtocol();
+		String content;
+		try (Recorder recorder = new Recorder()) {
+			String token = _tokens.issue(_workspaceId, Duration.ofHours(1));
+			ExecProcess process =
+				_provider.startExec(_workspaceId, harness.command(new AgentLaunch(APP_DIR, null, token)), recorder);
+			try {
+				content = recorder.turn(process, Fixtures.THINKING, protocol.userMessage(PROMPT_THINK));
+				process.closeStdin();
+				assertTrue(process.waitFor(WAIT));
+			} finally {
+				process.close();
+			}
+		}
+		EventLog events = new EventLog();
+		protocol.startRun("thinking", KeyBundle.INSTANCE, events);
+		for (String line : content.lines().toList()) {
+			protocol.onLine(line);
+		}
+		assertEquals(StopReason.COMPLETE, events.reason());
+		String thinking = events.of(AgentEvent.ThinkingDelta.class).stream().map(AgentEvent.ThinkingDelta::text)
+			.collect(Collectors.joining());
+		assertFalse("No thinking text in: " + content, thinking.isBlank());
+	}
+
+	/**
 	 * A conversation through {@link WorkspaceAgent}: an answer, the same conversation continued by
 	 * a new process, and an answer stopped by the user.
 	 */
@@ -280,7 +316,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 		try {
 			AgentRuntime runtime = new AgentRuntime(harness(BACKEND_MODEL), _provider, _tokens,
 				Duration.ofMinutes(10), Duration.ofHours(1), Duration.ofSeconds(30), Duration.ofSeconds(10),
-				scheduler, watchers, Clock.systemUTC());
+				scheduler, watchers, Clock.systemUTC(), user -> KeyBundle.INSTANCE);
 			MemoryConversation conversation = new MemoryConversation(_workspaceId, APP_DIR);
 			WorkspaceAgent agent = new WorkspaceAgent(runtime, conversation);
 
@@ -366,11 +402,16 @@ public class TestClaudeCodeIntegration extends TestCase {
 			_stderr.append(text);
 		}
 
-		void turn(ExecProcess process, String phase, String input) throws Exception {
+		/**
+		 * Writes a message and waits for its result.
+		 *
+		 * @return The output of the phase.
+		 */
+		String turn(ExecProcess process, String phase, String input) throws Exception {
 			startPhase(phase);
 			write(process, input);
 			await(RESULT_LINE);
-			endPhase();
+			return endPhase();
 		}
 
 		synchronized void startPhase(String phase) {
@@ -401,7 +442,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 			return _all.substring(start, _all.indexOf("\"", start));
 		}
 
-		synchronized void endPhase() throws IOException {
+		synchronized String endPhase() throws IOException {
 			String content = _all.substring(_phaseStart);
 			for (String token : _tokens.issued()) {
 				assertFalse("Token in the output.", content.contains(token));
@@ -412,6 +453,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 				Files.createDirectories(path.getParent());
 				Files.writeString(path, content, StandardCharsets.UTF_8);
 			}
+			return content;
 		}
 
 		@Override

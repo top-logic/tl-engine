@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, idle timeout, token per process, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
 ---
 
 # Control application (tl-factory)
@@ -125,11 +125,16 @@ An update is taken over like this:
 ### Updating a workspace
 
 A workspace container keeps the image it was created from. The workspace records this image
-(`image`, `FactoryModel.WORKSPACE_IMAGE`); a workspace whose image is not the current one -
+(`image`, `FactoryModel.WORKSPACE_IMAGE`) when its container is created; a workspace whose
+container was created from another image than the current one -
 `ApplicationWorkspaces.currentImage()`, the repository tagged with the content hash of the image
-context - or that has no image recorded is outdated (`factoryImageOutdated`). The detail view then
-shows *Image outdated*, and the command *Update workspace* (`factoryUpdate`,
-`ProjectWorkspaces.update`) is enabled while no operation runs on the workspace.
+context - is outdated (`factoryImageOutdated`). A workspace without recorded image has no container
+yet - it is being built, or its build failed before - and is not outdated. After a restart, the
+comparison with the containers (`WorkspaceReconciliation`) takes over the image of every existing
+container, so that a container created before the image was recorded is judged by its image as
+well. An outdated workspace shows *Image outdated* in the detail view, and the command *Update
+workspace* (`factoryUpdate`, `ProjectWorkspaces.update`) is enabled while no operation runs on the
+workspace.
 
 The update is an operation like the others, in state *Updating* with its output in the log:
 
@@ -231,6 +236,7 @@ then.
 | `tl_factory_llm_allowed_sources` | *(empty)* | Comma separated client addresses the LLM proxy accepts: CIDR ranges (IPv4 or IPv6) or `workspace-network`; empty accepts every address, see [LLM access](#llm-access). |
 | `tl_factory_llm_provider` | `anthropic` | Name of the Anthropic provider of `LLMProviderService` whose API key, base URL, version and timeouts the proxy uses. |
 | `tl_factory_agent_model` | *(empty)* | Model the coding agent works with, e.g. `claude-sonnet-4-6` or `sonnet`; empty for the default of Claude Code. |
+| `tl_factory_agent_thinking_display` | `summarized` | How the thinking of the agent appears in its output: `summarized` for a summary the chat shows, `omitted` for none, empty for the default of Claude Code (none in print mode). |
 | `tl_factory_agent_extra_args` | *(empty)* | Comma separated further arguments of the command line of the agent, e.g. `--max-turns,50`. |
 | `tl_factory_agent_idle_timeout` | `15min` | How long the process of an agent conversation is kept after its last answer. |
 | `tl_factory_agent_token_lifetime` | `4h` | Lifetime of the proxy token of an agent process, at most `max-token-lifetime` of the proxy. |
@@ -324,7 +330,8 @@ gives it to the agent: `factoryCreateConversation(workspace, task)` creates the 
 the task (`task`), and `chatStart('workspace-agent', conversation, task)` of `tl-chat` creates the
 chat session of the current user about it and sends the task as its first message through the chat
 `workspace-agent` of the window, the chat of the tab *Agent*; the session is put on that chat's
-`input` channel, so the tab shows the run while it is written. The command is offered while
+`input` channel, and `<show-view view="factory/workspace-agent.view.xml"/>` brings the tab *Agent*
+into view, so it shows the run while it is written. The command is offered while
 `factoryAgentUnavailable(workspace)` names no reason: the workspace runs on the current image, the
 agent service runs and the LLM proxy is switched on. The tab *Agent* (`factory/workspace-agent.view.xml`)
 lists the conversations of the workspace, newest first, beside the chat of the selected one; its
@@ -337,7 +344,8 @@ the same for every harness. One process serves one conversation:
 
 - It is started on the first message, as `claude -p --input-format stream-json
   --output-format stream-json --verbose --include-partial-messages --permission-mode
-  bypassPermissions [--model <model>] [--resume <session ID>] [<extra args>]`, as the user `tl` in
+  bypassPermissions [--thinking-display <display>] [--model <model>] [--resume <session ID>]
+  [<extra args>]`, as the user `tl` in
   the directory of the application (`/workspace/<artifact ID>`). The workspace must be running;
   otherwise the message is refused with a sentence saying so.
 - **Token per process.** The process gets a token of the LLM proxy of its own, issued for
@@ -360,6 +368,18 @@ the same for every harness. One process serves one conversation:
   `error_during_execution`, which ends the run as `ABORTED`. The process is kept. A process that
   does not stop within `interrupt-timeout` is terminated.
 - A process that ends during a run ends the run with a `ProviderError` `PROCESS_EXIT` and `ERROR`.
+- **Refused token.** A request the proxy refuses with 401 or 403 ends the run at once with a
+  `ProviderError` `API_401` / `API_403` and `ERROR`, saying that the next message starts the agent
+  anew (`I18NConstants.ERROR_LLM_ACCESS_REFUSED__STATUS`). Claude Code would repeat the request
+  with the same token up to ten times over about three minutes; the protocol reports the process
+  as spent (`AgentProtocol.isSpent`), and `WorkspaceAgent` terminates it. The next message starts a
+  new process with a new token.
+- **Thinking.** In print mode, Claude Code asks the API to omit the text of the thinking: the
+  thinking blocks of the stream carry their signature only, and the chat would show no thinking.
+  `--thinking-display summarized` (`thinking-display` of `ClaudeCodeHarness`,
+  `tl_factory_agent_thinking_display`, the default) asks for the summary of the thinking, which
+  arrives as `thinking_delta` text. The option is not listed by `claude --help` of the pinned
+  version (2.1.309); it is checked by `TestClaudeCodeIntegration.testRecordThinking`.
 
 **The mapping** (`ClaudeCodeProtocol`, from the stream-json output of the pinned Claude Code
 version):
@@ -372,7 +392,7 @@ version):
 | `stream_event` `message_delta` | Its usage becomes the usage of the turn. |
 | `assistant` | `ToolCallStarted` per `tool_use` block, with its complete input. Text blocks were streamed already and are skipped - except in a message that was not streamed, e.g. the one Claude Code writes when the proxy refuses its token. |
 | `user` with `tool_result` | `ToolCallCompleted`, or `ToolCallFailed` for `is_error`. |
-| `system/api_retry` | `RetryScheduled` with the HTTP status as kind (`API_401`), the attempt and the delay. Claude Code repeats a failed request up to ten times with growing delays - for a token the proxy refuses, about three minutes - before the run ends in an error. |
+| `system/api_retry` | `RetryScheduled` with the HTTP status as kind (`API_529`), the attempt and the delay; Claude Code repeats a failed request up to ten times with growing delays. For 401 and 403 - the token is refused - the run ends instead, see *Refused token* above. |
 | `system/compact_boundary` | `CompactionStarted` and `CompactionCompleted`. |
 | `result` | `TurnCompleted` of the last request, `RunCompleted`: `COMPLETE` for `success`, `MAX_TURNS`, `BUDGET_EXHAUSTED`, `ABORTED` after a stop, otherwise `ProviderError` (`API_<status>` or the subtype) and `ERROR`. The usage is the one of the result, the cost the sum of `model_usage_since_last_result` - `total_cost_usd` counts the whole session over all its processes. Its `contextWindow` is what `WorkspaceAgent.contextWindow()` reports to the chat from then on. |
 

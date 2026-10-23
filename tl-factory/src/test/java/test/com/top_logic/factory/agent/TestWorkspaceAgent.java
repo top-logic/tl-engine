@@ -34,6 +34,7 @@ import com.top_logic.basic.sched.DaemonThreadFactory;
 import com.top_logic.factory.agent.AgentRuntime;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.claude.ClaudeCodeHarness;
+import com.top_logic.factory.agent.claude.ClaudeCodeProtocol;
 import com.top_logic.factory.agent.claude.StreamJson;
 import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.workspace.ExecCommand;
@@ -239,6 +240,32 @@ public class TestWorkspaceAgent extends TestCase {
 	}
 
 	/**
+	 * A process whose token the proxy refuses ends the run at once and is terminated; its token is
+	 * revoked, and the next message starts a new process with a new token.
+	 */
+	public void testCredentialsRefused() throws Exception {
+		_answers = line -> Fixtures.lines(Fixtures.LOGIN_FAILED);
+		WorkspaceAgent agent = agent();
+		EventLog events = new EventLog();
+		agent.send(turn("Antworte nur mit OK."), events, new CancellationToken());
+
+		assertEquals(StopReason.ERROR, events.reason());
+		List<AgentEvent.ProviderError> errors = events.of(AgentEvent.ProviderError.class);
+		assertEquals(1, errors.size());
+		assertEquals(ClaudeCodeProtocol.ERROR_KIND_API_PREFIX + 401, errors.get(0).kind());
+		assertTrue(_provider.only().isTerminated());
+		awaitRevoked(_tokens.issued().get(0));
+		assertFalse(agent.hasProcess());
+
+		_answers = TestWorkspaceAgent::answerByFixture;
+		EventLog next = new EventLog();
+		agent.send(turn("Antworte nur mit OK."), next, new CancellationToken());
+		assertEquals(StopReason.COMPLETE, next.reason());
+		assertEquals(2, _provider.processes().size());
+		assertEquals(2, _tokens.issued().size());
+	}
+
+	/**
 	 * A stop of the user is sent to Claude Code as interrupt; the run ends as stopped, and the
 	 * process is kept.
 	 */
@@ -326,7 +353,7 @@ public class TestWorkspaceAgent extends TestCase {
 		ClaudeCodeHarness harness = (ClaudeCodeHarness) TypedConfigUtil
 			.createInstance(TypedConfiguration.newConfigItem(ClaudeCodeHarness.Config.class));
 		AgentRuntime runtime = new AgentRuntime(harness, _provider, _tokens, _idleTimeout, LONG,
-			_interruptTimeout, WAIT, _scheduler, _watchers, _clock);
+			_interruptTimeout, WAIT, _scheduler, _watchers, _clock, user -> KeyBundle.INSTANCE);
 		return new WorkspaceAgent(runtime, _conversation);
 	}
 

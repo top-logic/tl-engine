@@ -43,6 +43,8 @@ import com.top_logic.util.error.TopLogicException;
  * <li>A stop of the user asks the agent to stop (see {@link AgentProtocol#interrupt()}); a process
  * that cannot be asked, or does not stop within {@link AgentRuntime#interruptTimeout()}, is
  * terminated. A process that ends during a run ends the run in an error.</li>
+ * <li>A process whose protocol reports it {@link AgentProtocol#isSpent() spent} after a run - its
+ * token is refused - is terminated; the next message starts a new process.</li>
  * </ul>
  */
 public class WorkspaceAgent implements ConversationBackend {
@@ -117,9 +119,10 @@ public class WorkspaceAgent implements ConversationBackend {
 	@Override
 	public String send(BackendTurn turn, AgentEventListener sink, CancellationToken cancel) throws Exception {
 		AgentProcess process = begin();
+		boolean spent = false;
 		try {
 			AgentProtocol protocol = process.protocol();
-			protocol.startRun(UUID.randomUUID().toString(), sink);
+			protocol.startRun(UUID.randomUUID().toString(), _runtime.messages().apply(turn.owner()), sink);
 			try (CancellationToken.Registration registration = cancel.onCancel(process::cancel)) {
 				try {
 					process.write(protocol.userMessage(turn.text()));
@@ -130,13 +133,19 @@ public class WorkspaceAgent implements ConversationBackend {
 				}
 				drain(process, protocol);
 			}
+			spent = protocol.isSpent();
+			if (spent) {
+				Logger.info("Agent in workspace '" + _workspaceId
+					+ "' cannot reach its model with its token, terminating it.", WorkspaceAgent.class);
+				process.terminate();
+			}
 			int window = protocol.contextWindow();
 			if (window > 0) {
 				_contextWindow = window;
 			}
 			return protocol.answer();
 		} finally {
-			end();
+			end(spent);
 		}
 	}
 
@@ -262,9 +271,15 @@ public class WorkspaceAgent implements ConversationBackend {
 			_runtime.tokens(), harness.newProtocol(), _runtime.watchers());
 	}
 
-	private synchronized void end() {
+	/**
+	 * Ends a run.
+	 *
+	 * @param discard
+	 *        Whether the process of the run is to be dropped, although it may not have ended yet.
+	 */
+	private synchronized void end(boolean discard) {
 		_running = false;
-		if (_process != null && _process.isEnded()) {
+		if (_process != null && (discard || _process.isEnded())) {
 			_process = null;
 		}
 		if (_process != null) {

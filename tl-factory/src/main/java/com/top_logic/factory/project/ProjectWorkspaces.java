@@ -360,15 +360,21 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
-	 * Whether the container of a workspace runs another image than the
-	 * {@link ApplicationWorkspaces#currentImage() current workspace image}, or one that is not
-	 * known.
+	 * Whether the container of a workspace was created from another image than the
+	 * {@link ApplicationWorkspaces#currentImage() current workspace image}.
+	 *
+	 * <p>
+	 * A workspace without recorded image has no container yet - it is being built, or its build
+	 * failed before the container was created - and is not outdated. The image of a container
+	 * created before images were recorded is taken over when the states are compared with the
+	 * containers after a restart (see {@link WorkspaceReconciliation}).
+	 * </p>
 	 *
 	 * @see #update(TLObject)
 	 */
 	public static boolean isImageOutdated(TLObject workspace) {
 		String image = FactoryModel.getString(workspace, FactoryModel.WORKSPACE_IMAGE);
-		return image == null || !image.equals(applications().currentImage());
+		return image != null && !image.equals(applications().currentImage());
 	}
 
 	/**
@@ -608,6 +614,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 					WorkspaceReconciliation.Outcome outcome = entry.getValue();
 					FactoryModel.setStatus(workspace, outcome.status());
 					FactoryModel.setEndpoint(workspace, outcome.hostPort(), outcome.previewUrl());
+					if (outcome.image() != null) {
+						workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, outcome.image());
+					}
 					if (outcome.message() != null) {
 						String log = FactoryModel.getString(workspace, FactoryModel.WORKSPACE_LOG);
 						workspace.tUpdateByName(FactoryModel.WORKSPACE_LOG,

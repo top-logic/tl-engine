@@ -14,8 +14,10 @@ import java.util.stream.Collectors;
 import junit.framework.TestCase;
 
 import test.com.top_logic.factory.agent.EventLog;
+import test.com.top_logic.factory.agent.KeyBundle;
 
 import com.top_logic.basic.json.JSON;
+import com.top_logic.factory.agent.I18NConstants;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.claude.ClaudeCodeProtocol;
 import com.top_logic.factory.agent.claude.StreamJson;
@@ -113,7 +115,7 @@ public class TestClaudeCodeProtocol extends TestCase {
 	 * Line ends inside and at the start of the streamed pieces of text reach the deltas unchanged.
 	 */
 	public void testLineEndsInDeltas() {
-		_protocol.startRun(RUN_ID, _events);
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
 		for (String line : Fixtures.lines(Fixtures.OK)) {
 			if (line.contains("\"text_delta\"")) {
 				_protocol.onLine(line.replace("\"text\":\"OK\"", "\"text\":\"1\\n2\""));
@@ -143,7 +145,7 @@ public class TestClaudeCodeProtocol extends TestCase {
 	 * far and the usage of its request.
 	 */
 	public void testInterrupted() throws Exception {
-		_protocol.startRun(RUN_ID, _events);
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
 		List<String> lines = Fixtures.lines(Fixtures.INTERRUPT);
 		for (int n = 0; n < lines.size(); n++) {
 			if (n == 1) {
@@ -170,23 +172,60 @@ public class TestClaudeCodeProtocol extends TestCase {
 	}
 
 	/**
-	 * A process the proxy refuses answers with an error naming the HTTP status; its message is not
-	 * streamed and reaches the chat once.
+	 * The summary of the thinking of the model reaches the run as thinking deltas, apart from the
+	 * text of the answer.
+	 */
+	public void testThinking() throws Exception {
+		run(Fixtures.THINKING);
+		assertEquals(StopReason.COMPLETE, _events.reason());
+		String thinking = _events.of(AgentEvent.ThinkingDelta.class).stream().map(AgentEvent.ThinkingDelta::text)
+			.collect(Collectors.joining());
+		assertFalse("No thinking.", thinking.isBlank());
+		assertEquals(_protocol.answer(), _events.text());
+		assertFalse("The thinking is not part of the answer.", _protocol.answer().contains(thinking));
+	}
+
+	/**
+	 * A request the proxy refuses for its token ends the run at once with an error naming the HTTP
+	 * status, instead of waiting for the repetitions of Claude Code; the process is spent.
 	 */
 	public void testLoginFailed() throws Exception {
-		run(Fixtures.LOGIN_FAILED);
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
+		List<String> lines = Fixtures.lines(Fixtures.LOGIN_FAILED);
+		int firstRetry = indexOf(lines, "\"" + StreamJson.SUBTYPE_API_RETRY + "\"");
+		for (int n = 0; n < lines.size(); n++) {
+			boolean done = _protocol.onLine(lines.get(n));
+			assertEquals("Line " + n, n == firstRetry, done);
+		}
+		assertTrue(_protocol.isSpent());
 		assertEquals(StopReason.ERROR, _events.reason());
 		List<AgentEvent.ProviderError> errors = _events.of(AgentEvent.ProviderError.class);
 		assertEquals(1, errors.size());
 		assertEquals(ClaudeCodeProtocol.ERROR_KIND_API_PREFIX + 401, errors.get(0).kind());
-		assertFalse(errors.get(0).message().isEmpty());
-		assertEquals("The message Claude Code wrote itself.", errors.get(0).message(), _events.text());
+		assertEquals(KeyBundle.INSTANCE.getString(I18NConstants.ERROR_LLM_ACCESS_REFUSED__STATUS.fill(401)),
+			errors.get(0).message());
+		assertTrue("Not repeated.", _events.of(AgentEvent.RetryScheduled.class).isEmpty());
 		assertEquals(0, _events.completion().totalCost().amount(), 0);
+		assertEquals("The run ends with its first refused request.", AgentEvent.RunCompleted.class,
+			_events.events().get(_events.events().size() - 1).getClass());
+	}
 
+	/**
+	 * A request that failed for another reason than its credentials is repeated by Claude Code;
+	 * the repetitions are reported and the process is kept.
+	 */
+	public void testRetry() throws Exception {
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
+		for (String line : Fixtures.lines(Fixtures.LOGIN_FAILED)) {
+			if (line.contains("\"" + StreamJson.SUBTYPE_API_RETRY + "\"")) {
+				assertFalse(_protocol.onLine(line.replace("\"" + StreamJson.ERROR_STATUS + "\":401", "\"" + StreamJson.ERROR_STATUS + "\":529")));
+			}
+		}
+		assertFalse(_protocol.isSpent());
 		List<AgentEvent.RetryScheduled> retries = _events.of(AgentEvent.RetryScheduled.class);
-		assertFalse("Claude Code repeats the request.", retries.isEmpty());
+		assertFalse(retries.isEmpty());
 		for (int n = 0; n < retries.size(); n++) {
-			assertEquals(ClaudeCodeProtocol.ERROR_KIND_API_PREFIX + 401, retries.get(n).kind());
+			assertEquals(ClaudeCodeProtocol.ERROR_KIND_API_PREFIX + 529, retries.get(n).kind());
 			assertEquals(n + 1, retries.get(n).attempt());
 			assertTrue(retries.get(n).waitMs() > 0);
 		}
@@ -196,7 +235,7 @@ public class TestClaudeCodeProtocol extends TestCase {
 	 * A process that ends before its result ends the run in an error.
 	 */
 	public void testProcessEnded() throws Exception {
-		_protocol.startRun(RUN_ID, _events);
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
 		List<String> lines = Fixtures.lines(Fixtures.OK);
 		for (String line : lines.subList(0, lines.size() - 1)) {
 			assertFalse(_protocol.onLine(line));
@@ -215,7 +254,7 @@ public class TestClaudeCodeProtocol extends TestCase {
 	 * A tool call that is running when the process ends gets its end as failed.
 	 */
 	public void testProcessEndedDuringToolCall() throws Exception {
-		_protocol.startRun(RUN_ID, _events);
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
 		for (String line : Fixtures.lines(Fixtures.TOOL)) {
 			if (line.contains("\"" + StreamJson.BLOCK_TOOL_RESULT + "\"")) {
 				break;
@@ -236,7 +275,7 @@ public class TestClaudeCodeProtocol extends TestCase {
 	 * A run ended without any line of the process still starts and completes.
 	 */
 	public void testEndedBeforeStart() {
-		_protocol.startRun(RUN_ID, _events);
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
 		_protocol.endRun(StopReason.ABORTED, null, null);
 		assertEquals(StopReason.ABORTED, _events.reason());
 		assertEquals("", _protocol.answer());
@@ -258,7 +297,7 @@ public class TestClaudeCodeProtocol extends TestCase {
 	 * Lines that are no JSON are skipped.
 	 */
 	public void testNoJson() {
-		_protocol.startRun(RUN_ID, _events);
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
 		assertFalse(_protocol.onLine("not json"));
 		assertFalse(_protocol.onLine("[1, 2]"));
 		assertFalse(_protocol.onLine(""));
@@ -295,12 +334,21 @@ public class TestClaudeCodeProtocol extends TestCase {
 	}
 
 	private void run(String fixture) {
-		_protocol.startRun(RUN_ID, _events);
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
 		List<String> lines = Fixtures.lines(fixture);
 		for (int n = 0; n < lines.size(); n++) {
 			boolean done = _protocol.onLine(lines.get(n));
 			assertEquals("Line " + n + " of " + fixture, n == lines.size() - 1, done);
 		}
+	}
+
+	private static int indexOf(List<String> lines, String text) {
+		for (int n = 0; n < lines.size(); n++) {
+			if (lines.get(n).contains(text)) {
+				return n;
+			}
+		}
+		throw new AssertionError("No line with " + text);
 	}
 
 	private static Set<String> ids(java.util.stream.Stream<String> ids) {

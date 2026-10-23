@@ -70,6 +70,15 @@ The proxy narrows the attack surface (no swarm, secrets, plugins, system setting
 server it does not separate the factory from the other applications. It is fine on a server that
 runs nothing but the factory.
 
+On such a server, `tecnativa/docker-socket-proxy` needs the sections `CONTAINERS`, `EXEC`, `IMAGES`,
+`BUILD`, `VOLUMES`, `NETWORKS` and `POST` switched on (`=1`); the ping is allowed by default. The
+commands in a workspace pass the proxy unchanged: the start of an exec instance switches the
+connection to the raw streams (`Upgrade: tcp`, status 101), and the end of the input of a command
+is the client half-closing its side of the connection - the proxy (HAProxy in tunnel mode) passes
+both on. `TestDockerWorkspaceProvider.testExecThroughSocketProxy` checks this with the pinned
+version `v0.5.0` (`-Dtl.factory.integration=true`); `testExecOverTcp` and `testExecOverTls` check
+plain TCP and TLS with client certificates through a forwarder of the test to the local socket.
+
 ### Why a dedicated rootless daemon is
 
 A rootless Docker daemon runs as an ordinary user. Everything it starts runs in a user namespace of

@@ -19,6 +19,8 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.util.I18NBundle;
+import com.top_logic.factory.agent.I18NConstants;
 import com.top_logic.factory.agent.AgentProtocol;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
@@ -52,7 +54,10 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
  * <tr><td>{@code user}</td><td>{@link AgentEvent.ToolCallCompleted}, or
  * {@link AgentEvent.ToolCallFailed} for {@code is_error}, per {@code tool_result} block.</td></tr>
  * <tr><td>{@code system/api_retry}</td><td>{@link AgentEvent.RetryScheduled} with the HTTP status
- * as kind, e.g. {@code API_401}.</td></tr>
+ * as kind, e.g. {@code API_429}. A request refused for its credentials (401, 403) is not repeated:
+ * the run ends with {@link AgentEvent.ProviderError} {@code API_401} or {@code API_403} and
+ * {@code ERROR}, and the process is {@link #isSpent() spent} - a repetition with the same token
+ * fails again.</td></tr>
  * <tr><td>{@code system/compact_boundary}</td><td>{@link AgentEvent.CompactionStarted} and
  * {@link AgentEvent.CompactionCompleted}.</td></tr>
  * <tr><td>{@code result}</td><td>{@link AgentEvent.TurnCompleted} of the last request,
@@ -89,6 +94,12 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 
 	private static final String TOOL_ABANDONED = "The run ended before the tool returned.";
 
+	/**
+	 * HTTP statuses of a request refused for its credentials, which no repetition with the same
+	 * token changes.
+	 */
+	private static final Set<Integer> CREDENTIALS_REFUSED = Set.of(401, 403);
+
 	private final Clock _clock;
 
 	private String _sessionId;
@@ -96,6 +107,9 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 	private int _interrupts;
 
 	private double _lastTotalCost;
+
+	/** Whether the process cannot serve another run, see {@link #isSpent()}. */
+	private boolean _spent;
 
 	/** The context window of the model of the last result, zero before one reported it. */
 	private int _contextWindow;
@@ -107,6 +121,8 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 	private String _runId;
 
 	private AgentEventListener _sink;
+
+	private I18NBundle _messages;
 
 	private boolean _started;
 
@@ -171,9 +187,10 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 	}
 
 	@Override
-	public void startRun(String runId, AgentEventListener sink) {
+	public void startRun(String runId, I18NBundle messages, AgentEventListener sink) {
 		_running = true;
 		_runId = runId;
+		_messages = messages;
 		_sink = sink;
 		_started = false;
 		_cancelRequested = false;
@@ -200,6 +217,11 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 	@Override
 	public int contextWindow() {
 		return _contextWindow;
+	}
+
+	@Override
+	public boolean isSpent() {
+		return _spent;
 	}
 
 	@Override
@@ -239,8 +261,7 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 		boolean main = json.get(PARENT_TOOL_USE_ID) == null;
 		switch (type) {
 			case TYPE_SYSTEM:
-				onSystem(json);
-				return false;
+				return onSystem(json);
 			case TYPE_STREAM_EVENT:
 				if (main) {
 					onStreamEvent(map(json, EVENT));
@@ -260,13 +281,22 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 		}
 	}
 
-	private void onSystem(Map<?, ?> json) {
+	/**
+	 * Maps a system line.
+	 *
+	 * @return Whether the line ended the run.
+	 */
+	private boolean onSystem(Map<?, ?> json) {
 		String subtype = string(json, SUBTYPE);
 		if (SUBTYPE_INIT.equals(subtype)) {
 			ensureStarted(string(json, MODEL));
 		} else if (SUBTYPE_API_RETRY.equals(subtype)) {
 			ensureStarted(null);
 			Object status = json.get(ERROR_STATUS);
+			if (status instanceof Number number && CREDENTIALS_REFUSED.contains(Integer.valueOf(number.intValue()))) {
+				credentialsRefused(number.intValue());
+				return true;
+			}
 			String error = string(json, ERROR);
 			String kind = status instanceof Number number ? ERROR_KIND_API_PREFIX + number.intValue()
 				: error != null ? error.toUpperCase(Locale.ROOT) : ERROR_KIND_RUN_FAILED;
@@ -285,6 +315,17 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 			emit(new AgentEvent.CompactionCompleted(_runId, _turn, now(),
 				new CompactionResult(List.of(), 0, before, 0, trigger)));
 		}
+		return false;
+	}
+
+	/**
+	 * Ends the run whose request the API refused for its credentials, instead of waiting for the
+	 * repetitions Claude Code makes with the same token.
+	 */
+	private void credentialsRefused(int status) {
+		_spent = true;
+		endRun(StopReason.ERROR, ERROR_KIND_API_PREFIX + status,
+			_messages.getString(I18NConstants.ERROR_LLM_ACCESS_REFUSED__STATUS.fill(status)));
 	}
 
 	private void onStreamEvent(Map<?, ?> event) {
@@ -411,6 +452,7 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 		emit(new AgentEvent.RunCompleted(_runId, _turn, now(), reason, usage, cost));
 		_running = false;
 		_sink = null;
+		_messages = null;
 	}
 
 	private void ensureStarted(String model) {

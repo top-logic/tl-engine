@@ -69,9 +69,14 @@
 			expr="$workspace.get(`tl.factory:Workspace#status`)"
 			inputs="workspace"
 		/>
+		<!--
+			Whether the container of the workspace was created from an older image than the current
+			one; false while it has no container.
+		-->
 		<derived-channel name="outdated"
 			expr="if($workspace == null, false, factoryImageOutdated($workspace))"
 			inputs="workspace"
+			observed-types="tl.factory:Workspace"
 		/>
 		<derived-channel name="previewLink"
 			inputs="workspace"

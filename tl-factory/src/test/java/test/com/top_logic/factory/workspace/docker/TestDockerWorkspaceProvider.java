@@ -6,19 +6,25 @@
 package test.com.top_logic.factory.workspace.docker;
 
 import java.io.IOException;
+import java.net.SocketAddress;
+import java.net.UnixDomainSocketAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -28,7 +34,14 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.AccessMode;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Ports;
+import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -81,6 +94,34 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	private static final String PAGE_CONTENT = "workspace-ok";
 
 	private static final String DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
+
+	private static final String UNIX_SCHEME = "unix";
+
+	private static final String LOOPBACK = "127.0.0.1";
+
+	/**
+	 * System property switching on the tests that pull images from a registry.
+	 */
+	private static final String INTEGRATION_PROPERTY = "tl.factory.integration";
+
+	/**
+	 * The Docker socket proxy of {@link #testExecThroughSocketProxy()}, pinned.
+	 */
+	private static final String SOCKET_PROXY_IMAGE = "tecnativa/docker-socket-proxy:v0.5.0";
+
+	private static final int SOCKET_PROXY_PORT = 2375;
+
+	/**
+	 * Where the socket proxy expects the socket of the daemon.
+	 */
+	private static final String SOCKET_PROXY_SOCKET = "/var/run/docker.sock";
+
+	/**
+	 * The sections of the API the socket proxy lets through: those the provider uses (see the
+	 * article factory/docker-server), with the requests that change something ({@code POST}).
+	 */
+	private static final List<String> SOCKET_PROXY_ENV = List.of("CONTAINERS=1", "EXEC=1", "IMAGES=1",
+		"BUILD=1", "VOLUMES=1", "NETWORKS=1", "POST=1");
 
 	/**
 	 * Host name the containers resolve to {@link #EXTRA_HOST_ADDRESS}.
@@ -389,9 +430,108 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		String id = "stdin";
 		_provider.create(httpdSpec(id));
 		_provider.start(id);
+		assertStdinRoundTrip(_provider, id);
+	}
 
+	/**
+	 * Standard input, its end and the termination of a command work over a TCP connection to the
+	 * daemon, here through a forwarder to its Unix socket.
+	 */
+	public void testExecOverTcp() throws Exception {
+		SocketAddress daemon = unixDaemon();
+		if (daemon == null) {
+			return;
+		}
+		String id = "tcp";
+		_provider.create(httpdSpec(id));
+		_provider.start(id);
+		try (SocketForwarder forwarder = SocketForwarder.start(daemon, null);
+				DockerWorkspaceProvider provider = createProvider(_suffix, forwarder.dockerHost(), null)) {
+			assertStdinRoundTrip(provider, id);
+			assertTerminate(provider, id);
+		}
+	}
+
+	/**
+	 * Standard input, its end and the termination of a command work over a TLS connection to the
+	 * daemon with client certificates, here through a TLS forwarder to its Unix socket.
+	 */
+	public void testExecOverTls() throws Exception {
+		SocketAddress daemon = unixDaemon();
+		if (daemon == null) {
+			return;
+		}
+		String id = "tls";
+		_provider.create(httpdSpec(id));
+		_provider.start(id);
+		Path certs = Files.createTempDirectory("tl-factory-test-certs");
+		try {
+			DaemonCertificates certificates = DaemonCertificates.create(certs);
+			try (SocketForwarder forwarder = SocketForwarder.start(daemon, certificates.server());
+					DockerWorkspaceProvider provider =
+						createProvider(_suffix, forwarder.dockerHost(), certificates.clientDir().toString())) {
+				assertStdinRoundTrip(provider, id);
+				assertTerminate(provider, id);
+			}
+		} finally {
+			deleteTree(certs);
+		}
+	}
+
+	/**
+	 * Standard input, its end and the termination of a command work through a Docker socket proxy
+	 * that lets through the API calls of the provider (see the article factory/docker-server).
+	 *
+	 * <p>
+	 * Pulls the image {@value #SOCKET_PROXY_IMAGE}, so it runs only with
+	 * {@code -Dtl.factory.integration=true}.
+	 * </p>
+	 */
+	public void testExecThroughSocketProxy() throws Exception {
+		if (!Boolean.getBoolean(INTEGRATION_PROPERTY)) {
+			return;
+		}
+		SocketAddress daemon = unixDaemon();
+		if (daemon == null) {
+			return;
+		}
+		String id = "proxy";
+		_provider.create(httpdSpec(id));
+		_provider.start(id);
+
+		ensureImage(SOCKET_PROXY_IMAGE);
+		String socket = ((UnixDomainSocketAddress) daemon).getPath().toString();
+		ExposedPort proxyPort = ExposedPort.tcp(SOCKET_PROXY_PORT);
+		String proxy = _docker.createContainerCmd(SOCKET_PROXY_IMAGE)
+			.withName(_namePrefix + "-socket-proxy")
+			.withEnv(SOCKET_PROXY_ENV)
+			.withExposedPorts(proxyPort)
+			.withHostConfig(HostConfig.newHostConfig()
+				.withBinds(new Bind(socket, new Volume(SOCKET_PROXY_SOCKET), AccessMode.ro))
+				.withPortBindings(new PortBinding(Ports.Binding.bindIp(LOOPBACK), proxyPort)))
+			.exec().getId();
+		try {
+			_docker.startContainerCmd(proxy).exec();
+			Ports.Binding[] bindings = _docker.inspectContainerCmd(proxy).exec()
+				.getNetworkSettings().getPorts().getBindings().get(proxyPort);
+			String host = "tcp://" + LOOPBACK + ":" + bindings[0].getHostPortSpec();
+			try (DockerWorkspaceProvider provider = createProvider(_suffix, host, null)) {
+				awaitPing(provider);
+				assertStdinRoundTrip(provider, id);
+				assertTerminate(provider, id);
+			}
+		} finally {
+			_docker.removeContainerCmd(proxy).withForce(true).exec();
+		}
+	}
+
+	/**
+	 * Checks that a command started through the given provider reads its input and ends when its
+	 * input is closed.
+	 */
+	private static void assertStdinRoundTrip(WorkspaceProvider provider, String id) throws Exception {
 		CollectingOutput output = new CollectingOutput();
-		try (ExecProcess process = _provider.startExec(id, ExecCommand.of("cat"), output)) {
+		try (ExecProcess process = provider.startExec(id, ExecCommand.of("cat"), output)) {
 			process.write("hello\n");
 			process.flush();
 			output.awaitStdout("hello\n", WAIT);
@@ -410,6 +550,67 @@ public class TestDockerWorkspaceProvider extends TestCase {
 				fail("Writing to a closed input must fail.");
 			} catch (IOException ex) {
 				// Expected.
+			}
+		}
+	}
+
+	/**
+	 * Checks that a command started through the given provider, which waits for its input, ends
+	 * when it is terminated.
+	 */
+	private static void assertTerminate(WorkspaceProvider provider, String id) throws Exception {
+		CollectingOutput output = new CollectingOutput();
+		try (ExecProcess process = provider.startExec(id, ExecCommand.of("sh", "-c", "echo started; cat"), output)) {
+			output.awaitStdout("started\n", WAIT);
+			assertFalse(process.waitFor(Duration.ofMillis(200)));
+			process.terminate();
+			assertFalse(process.isAlive());
+			assertEquals(128 + 15, process.exitCode());
+		}
+	}
+
+	/**
+	 * The Unix socket of the daemon of the test, {@code null} if it is reached otherwise.
+	 */
+	private static SocketAddress unixDaemon() {
+		URI host = URI.create(dockerHost());
+		if (!UNIX_SCHEME.equals(host.getScheme())) {
+			System.err.println("Skipping a test forwarding to the Unix socket of the daemon: " + host);
+			return null;
+		}
+		return UnixDomainSocketAddress.of(host.getPath());
+	}
+
+	private void ensureImage(String image) throws InterruptedException {
+		try {
+			_docker.inspectImageCmd(image).exec();
+		} catch (NotFoundException ex) {
+			_docker.pullImageCmd(image).start().awaitCompletion();
+		}
+	}
+
+	/**
+	 * Waits until the daemon answers through the given provider, e.g. a proxy that has just
+	 * started.
+	 */
+	private static void awaitPing(DockerWorkspaceProvider provider) throws InterruptedException {
+		RuntimeException problem = null;
+		for (int attempt = 0; attempt < 50; attempt++) {
+			try {
+				provider.list();
+				return;
+			} catch (RuntimeException ex) {
+				problem = ex;
+			}
+			Thread.sleep(200);
+		}
+		throw problem;
+	}
+
+	private static void deleteTree(Path dir) throws IOException {
+		try (Stream<Path> files = Files.walk(dir)) {
+			for (Path file : files.sorted(Comparator.reverseOrder()).toList()) {
+				Files.delete(file);
 			}
 		}
 	}
@@ -660,8 +861,22 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	}
 
 	private static DockerWorkspaceProvider createProvider(String suffix) {
+		return createProvider(suffix, dockerHost(), null);
+	}
+
+	/**
+	 * A provider of the workspaces of the test with the given suffix, reaching the daemon under
+	 * the given URI.
+	 *
+	 * @param certPath
+	 *        The directory with the client certificates for TLS, {@code null} without TLS.
+	 */
+	private static DockerWorkspaceProvider createProvider(String suffix, String dockerHost, String certPath) {
 		DockerWorkspaceProvider.Config<?> config = TypedConfiguration.newConfigItem(DockerWorkspaceProvider.Config.class);
-		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.DOCKER_HOST, dockerHost());
+		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.DOCKER_HOST, dockerHost);
+		if (certPath != null) {
+			TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.TLS_CERT_PATH, certPath);
+		}
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.NETWORK, "tl-factory-test-" + suffix);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.NAME_PREFIX, "tl-factory-test-" + suffix);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.LABEL_NAMESPACE, labelNamespace(suffix));

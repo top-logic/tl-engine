@@ -60,6 +60,10 @@ import com.top_logic.util.model.ModelService;
  */
 public class TestAgentTasks extends BasicTestCase {
 
+	/** An image other than the current workspace image. */
+	private static final String OLD_IMAGE = "tl-factory-workspace:0000000000000000";
+
+
 	private static final String WORKSPACE_ID = "agent-tasks-test-1";
 
 	private static final long TIMEOUT_MILLIS = 60_000;
@@ -111,6 +115,7 @@ public class TestAgentTasks extends BasicTestCase {
 			AgentTasks.unavailable(_workspace));
 
 		setStatus(WorkspaceStatus.RUNNING);
+		setImage(OLD_IMAGE);
 		assertEquals(I18NConstants.ERROR_AGENT_TOOLS_OUTDATED__WORKSPACE.fill("Agent tasks test"),
 			AgentTasks.unavailable(_workspace));
 
@@ -200,7 +205,10 @@ public class TestAgentTasks extends BasicTestCase {
 	}
 
 	private void setCurrentImage() {
-		String image = WorkspaceService.getInstance().getApplications().currentImage();
+		setImage(WorkspaceService.getInstance().getApplications().currentImage());
+	}
+
+	private void setImage(String image) {
 		commit(() -> {
 			_workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, image);
 			return null;

@@ -5,6 +5,7 @@
  */
 package com.top_logic.factory.agent;
 
+import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
@@ -20,7 +21,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
  * </p>
  *
  * <p>
- * A run starts with {@link #startRun(String, AgentEventListener)} and ends either with a line for
+ * A run starts with {@link #startRun(String, I18NBundle, AgentEventListener)} and ends either with a line for
  * which {@link #onLine(String)} answers {@code true}, or with
  * {@link #endRun(StopReason, String, String)}. Either way the run
  * has emitted {@link AgentEvent.RunStarted} first and {@link AgentEvent.RunCompleted} last.
@@ -46,10 +47,12 @@ public interface AgentProtocol {
 	 *
 	 * @param runId
 	 *        The ID of the run, carried by all its events.
+	 * @param messages
+	 *        The language the messages of the run to the user are written in.
 	 * @param sink
 	 *        Receives the events of the run.
 	 */
-	void startRun(String runId, AgentEventListener sink);
+	void startRun(String runId, I18NBundle messages, AgentEventListener sink);
 
 	/**
 	 * Notes that the user asked to stop the run; the run ends as stopped.
@@ -74,6 +77,17 @@ public interface AgentProtocol {
 	 *        What happened, {@code null} if the run did not fail.
 	 */
 	void endRun(StopReason reason, String errorKind, String errorMessage);
+
+	/**
+	 * Whether the process can serve no further run: the run that ended found that the agent cannot
+	 * reach its model with the token of the process, e.g. because the LLM proxy refuses it.
+	 *
+	 * <p>
+	 * The process is terminated when such a run has ended; the next message starts a new one with
+	 * a new token.
+	 * </p>
+	 */
+	boolean isSpent();
 
 	/**
 	 * The answer of the last run: its final text, what it answered so far for a run that did not

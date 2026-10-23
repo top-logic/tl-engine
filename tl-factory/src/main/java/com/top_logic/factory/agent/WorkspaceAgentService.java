@@ -26,11 +26,14 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sched.DaemonThreadFactory;
+import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -165,7 +168,14 @@ public class WorkspaceAgentService extends ConfiguredManagedClass<WorkspaceAgent
 			llmAccess ? proxy : null,
 			Duration.ofMillis(config.getIdleTimeout()), tokenLifetime,
 			Duration.ofMillis(config.getInterruptTimeout()), Duration.ofMillis(config.getStopTimeout()),
-			_scheduler, _watchers, Clock.systemUTC());
+			_scheduler, _watchers, Clock.systemUTC(), WorkspaceAgentService::messages);
+	}
+
+	/**
+	 * The messages to the given user in the user's language, in the default language for no user.
+	 */
+	private static I18NBundle messages(Person user) {
+		return user == null ? Resources.getSystemInstance() : Resources.getInstance(Resources.findBestLocale(user));
 	}
 
 	@Override

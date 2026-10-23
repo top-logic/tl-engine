@@ -5,7 +5,8 @@
 	conversation in "model". Giving the task creates the conversation in the workspace and starts
 	the chat about it with the task as its first message (chatStart), through the chat
 	"workspace-agent" of the window; the conversation is written to "conversation" and the chat
-	session to "agentSession", so that the Agent tab shows the run while it is written.
+	session to "agentSession", and the view of the conversations (the tab "Agent") is brought into
+	view, so that it shows the run while it is written.
 -->
 <view>
 	<channels>
@@ -55,6 +56,7 @@
 										</with-result>
 									</execute-script>
 									<close-dialog/>
+									<show-view view="factory/workspace-agent.view.xml"/>
 								</with-result>
 							</execute-script>
 						</with-result>

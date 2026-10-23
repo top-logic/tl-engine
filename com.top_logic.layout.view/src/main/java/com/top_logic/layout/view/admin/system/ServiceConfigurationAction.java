@@ -27,7 +27,7 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The service is the module held by the configured {@link Config#getModule() module channel}. A
  * changed configuration becomes effective with the next start of the service; until then, its module
- * is {@link BasicRuntimeModule#isConfigurationChanged() marked as changed}. The returned
+ * {@link BasicRuntimeModule#isConfigurationChanged() reports a changed configuration}. The returned
  * {@link ServiceSnapshot} is meant to be written to the channel feeding a {@link ServiceTable}, which
  * then shows the changed state.
  * </p>

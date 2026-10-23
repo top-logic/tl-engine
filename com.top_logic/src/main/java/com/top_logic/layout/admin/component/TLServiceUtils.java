@@ -19,12 +19,14 @@ import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.i18n.log.BufferingI18NLog;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.module.ConfigurationBaseline;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.autoconf.InAppServiceConfigBaseline;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
 import com.top_logic.util.error.TopLogicException;
 
@@ -35,8 +37,12 @@ import com.top_logic.util.error.TopLogicException;
  * Besides starting and restarting services, this class provides the operations for inspecting and
  * changing the configuration a service is started with. A configuration stored in the application
  * is kept in the autoconf folder of the top level module (see {@link InAppServiceConfigStore}) and
- * becomes effective when the service is started the next time. Until then, its module is
- * {@link BasicRuntimeModule#isConfigurationChanged() marked as changed}.
+ * becomes effective when the service is started the next time. Before the first change since the
+ * start of a service, the state of its stored configuration is recorded as
+ * {@link BasicRuntimeModule#getConfigurationBaseline() baseline}. As long as the stored
+ * configuration differs from this baseline, the module
+ * {@link BasicRuntimeModule#isConfigurationChanged() reports a changed configuration}, and
+ * {@link #discardConfigurationChanges(BasicRuntimeModule)} restores the baseline.
  * </p>
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
@@ -174,9 +180,9 @@ public class TLServiceUtils {
 	 *
 	 * <p>
 	 * The stored configuration replaces the configuration of the underlying configuration layers.
-	 * After storing, the application configuration is reloaded and the module is
-	 * {@link BasicRuntimeModule#markConfigurationChanged() marked as changed}. The configuration
-	 * becomes effective with the next start of the service.
+	 * After storing, the application configuration is reloaded. The configuration becomes
+	 * effective with the next start of the service, until then the module
+	 * {@link BasicRuntimeModule#isConfigurationChanged() reports a changed configuration}.
 	 * </p>
 	 *
 	 * @param module
@@ -189,26 +195,29 @@ public class TLServiceUtils {
 	public static void storeServiceConfiguration(BasicRuntimeModule<?> module, ServiceConfiguration<?> config) {
 		checkConstraints(config);
 
-		File file;
-		try {
-			file = InAppServiceConfigStore.store(module, config, OVERRIDE_BASE_CONFIG);
-		} catch (Exception exception) {
-			throw new TopLogicException(I18NConstants.SERVICE_CONFIG_SAVE_ERROR, exception);
-		}
-		Logger.info(file.getAbsolutePath() + " successfully written.", TLServiceUtils.class);
+		synchronized (module) {
+			File file;
+			try {
+				recordBaseline(module);
+				file = InAppServiceConfigStore.store(module, config, OVERRIDE_BASE_CONFIG);
+			} catch (Exception exception) {
+				throw new TopLogicException(I18NConstants.SERVICE_CONFIG_SAVE_ERROR, exception);
+			}
+			Logger.info(file.getAbsolutePath() + " successfully written.", TLServiceUtils.class);
 
-		reloadConfigurations();
-		module.markConfigurationChanged();
+			reloadConfigurations();
+		}
 	}
 
 	/**
 	 * Removes the configuration of the service of the given module stored in the application.
 	 *
 	 * <p>
-	 * When a stored configuration has been removed, the application configuration is reloaded and
-	 * the module is {@link BasicRuntimeModule#markConfigurationChanged() marked as changed}. The
+	 * When a stored configuration has been removed, the application configuration is reloaded. The
 	 * configuration of the underlying configuration layers becomes effective with the next start of
-	 * the service.
+	 * the service, until then the module
+	 * {@link BasicRuntimeModule#isConfigurationChanged() reports a changed configuration}, unless
+	 * the service was started without a stored configuration.
 	 * </p>
 	 *
 	 * @param module
@@ -219,19 +228,63 @@ public class TLServiceUtils {
 	 * @see #hasInAppConfiguration(BasicRuntimeModule)
 	 */
 	public static boolean resetServiceConfiguration(BasicRuntimeModule<?> module) {
-		File file = InAppServiceConfigStore.fileFor(module);
-		if (!file.exists()) {
-			return false;
-		}
-		if (!file.delete()) {
-			Logger.error("In-App service configuration file " + file.getAbsolutePath() + " could not be deleted.",
-				TLServiceUtils.class);
-			return false;
-		}
+		synchronized (module) {
+			File file = InAppServiceConfigStore.fileFor(module);
+			if (!file.exists()) {
+				return false;
+			}
+			recordBaseline(module);
+			if (!file.delete()) {
+				Logger.error("In-App service configuration file " + file.getAbsolutePath() + " could not be deleted.",
+					TLServiceUtils.class);
+				return false;
+			}
 
-		reloadConfigurations();
-		module.markConfigurationChanged();
-		return true;
+			reloadConfigurations();
+			return true;
+		}
+	}
+
+	/**
+	 * Discards the changes of the stored configuration of the service of the given module made since
+	 * the service was started.
+	 *
+	 * <p>
+	 * Restores the stored configuration to the recorded
+	 * {@link BasicRuntimeModule#getConfigurationBaseline() baseline}, reloads the application
+	 * configuration, and drops the baseline. Afterwards, the stored configuration is the one the
+	 * running service was started with.
+	 * </p>
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return Whether the stored configuration has been restored. <code>false</code>, if it has not
+	 *         been changed since the start of the service.
+	 * @throws TopLogicException
+	 *         When the stored configuration cannot be restored.
+	 */
+	public static boolean discardConfigurationChanges(BasicRuntimeModule<?> module) {
+		synchronized (module) {
+			ConfigurationBaseline baseline = module.getConfigurationBaseline();
+			if (baseline == null) {
+				return false;
+			}
+			boolean changed = baseline.isChanged();
+			if (changed) {
+				try {
+					baseline.restore();
+				} catch (IOException exception) {
+					throw new TopLogicException(I18NConstants.SERVICE_CONFIG_RESTORE_ERROR, exception);
+				}
+				reloadConfigurations();
+			}
+			module.discardConfigurationBaseline();
+			return changed;
+		}
+	}
+
+	private static void recordBaseline(BasicRuntimeModule<?> module) {
+		module.recordConfigurationBaseline(() -> InAppServiceConfigBaseline.capture(module));
 	}
 
 	/**

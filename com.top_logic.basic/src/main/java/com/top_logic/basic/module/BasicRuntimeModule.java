@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Label;
@@ -28,7 +29,7 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 
 	private List<ServiceDependency<M>> _dynamicDependencies = new CopyOnWriteArrayList<>();
 
-	private volatile boolean _configurationChanged;
+	private volatile ConfigurationBaseline _configurationBaseline;
 
 	/**
 	 * Convenience constant for the implementation of {@link #getDependencies()} in
@@ -101,23 +102,59 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 	 * 
 	 * <p>
 	 * A changed configuration becomes effective with the next {@link #startUp() start} of this
-	 * module, which resets this flag.
+	 * module.
 	 * </p>
 	 * 
-	 * @see #markConfigurationChanged()
+	 * @return Whether a {@link #getConfigurationBaseline() baseline} has been recorded and the
+	 *         stored configuration {@link ConfigurationBaseline#isChanged() differs} from it.
 	 */
 	public boolean isConfigurationChanged() {
-		return _configurationChanged;
+		ConfigurationBaseline baseline = _configurationBaseline;
+		return baseline != null && baseline.isChanged();
 	}
 
 	/**
-	 * Records that the stored configuration of this service has been changed and differs from the
-	 * configuration the running instance was started with.
+	 * The stored configuration of this service in the state the running instance was started with.
 	 * 
-	 * @see #isConfigurationChanged()
+	 * @return The baseline recorded since the last {@link #startUp() start} of this module, or
+	 *         <code>null</code>, if the stored configuration has not been changed since then.
+	 * 
+	 * @see #recordConfigurationBaseline(Supplier)
 	 */
-	public void markConfigurationChanged() {
-		_configurationChanged = true;
+	public ConfigurationBaseline getConfigurationBaseline() {
+		return _configurationBaseline;
+	}
+
+	/**
+	 * Records the state of the stored configuration of this service before it is changed.
+	 * 
+	 * <p>
+	 * Must be called before each change of the stored configuration. Only the first call after a
+	 * {@link #startUp() start} of this module records a baseline, later calls keep the state the
+	 * running instance was started with. A start of this module drops the baseline.
+	 * </p>
+	 * 
+	 * @param baseline
+	 *        Captures the current state of the stored configuration. Only called, if no baseline
+	 *        has been recorded yet.
+	 * @return The recorded baseline.
+	 */
+	public synchronized ConfigurationBaseline recordConfigurationBaseline(
+			Supplier<? extends ConfigurationBaseline> baseline) {
+		ConfigurationBaseline result = _configurationBaseline;
+		if (result == null) {
+			result = baseline.get();
+			_configurationBaseline = result;
+		}
+		return result;
+	}
+
+	/**
+	 * Drops the recorded {@link #getConfigurationBaseline() baseline}, e.g. after the stored
+	 * configuration has been restored to it.
+	 */
+	public synchronized void discardConfigurationBaseline() {
+		_configurationBaseline = null;
 	}
 
 	/**
@@ -208,7 +245,7 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 			throw ex;
 		}
 		// The started instance uses the current configuration.
-		_configurationChanged = false;
+		discardConfigurationBaseline();
 	}
 
 	/**

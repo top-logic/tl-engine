@@ -6,6 +6,8 @@
 package test.com.top_logic.layout.admin.component;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collection;
 
 import junit.framework.Test;
@@ -25,6 +27,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
 import com.top_logic.util.error.TopLogicException;
@@ -77,6 +80,13 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 		}
 
 		/**
+		 * Creates a {@link ConfiguredService} started by the test.
+		 */
+		ConfiguredService() {
+			super();
+		}
+
+		/**
 		 * Module of {@link ConfiguredService}.
 		 */
 		public static final class Module extends TestModule<ConfiguredService> {
@@ -86,6 +96,11 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 
 			private Module() {
 				super(ConfiguredService.class);
+			}
+
+			@Override
+			protected ConfiguredService newImplementationInstance() throws ModuleException {
+				return new ConfiguredService();
 			}
 		}
 
@@ -108,14 +123,19 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 			private Module() {
 				super(FixedService.class);
 			}
+
+			@Override
+			protected FixedService newImplementationInstance() throws ModuleException {
+				throw new UnsupportedOperationException("Test module is not started.");
+			}
 		}
 
 	}
 
 	/**
-	 * Module of a test service that is never started.
+	 * Module of a test service.
 	 */
-	static class TestModule<M extends ManagedClass> extends BasicRuntimeModule<M> {
+	abstract static class TestModule<M extends ManagedClass> extends BasicRuntimeModule<M> {
 
 		private final Class<M> _implementation;
 
@@ -131,11 +151,6 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 		@Override
 		public Class<M> getImplementation() {
 			return _implementation;
-		}
-
-		@Override
-		protected M newImplementationInstance() throws ModuleException {
-			throw new UnsupportedOperationException("Test module is not started.");
 		}
 	}
 
@@ -153,6 +168,7 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 		_formerAutoconf = System.getProperty(XMLProperties.Setting.AUTO_CONF);
 		System.setProperty(XMLProperties.Setting.AUTO_CONF, _autoconf.getAbsolutePath());
 		TLServiceUtils.reloadConfigurations();
+		ConfiguredService.Module.INSTANCE.discardConfigurationBaseline();
 
 		assertEquals("Autoconf folder not redirected, test would write to the application.",
 			_autoconf.getAbsoluteFile(), XMLProperties.Setting.resolveAutoconfFolder().getAbsoluteFile());
@@ -160,6 +176,9 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
+		if (ConfiguredService.Module.INSTANCE.isActive()) {
+			ModuleUtil.INSTANCE.shutDown(ConfiguredService.Module.INSTANCE);
+		}
 		FileUtilities.deleteR(_autoconf);
 		if (_formerAutoconf == null) {
 			System.clearProperty(XMLProperties.Setting.AUTO_CONF);
@@ -171,11 +190,11 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 	}
 
 	/**
-	 * Storing and resetting a configuration changes the effective configuration and marks the
-	 * module as changed.
+	 * Storing and resetting a configuration changes the effective configuration; the module reports
+	 * a change only while the stored configuration differs from the one it was started with.
 	 */
-	public void testStoreAndReset() {
-		ConfiguredService.Module module = ConfiguredService.Module.INSTANCE;
+	public void testStoreAndReset() throws ModuleException {
+		ConfiguredService.Module module = startedModule();
 		assertTrue(TLServiceUtils.hasServiceConfiguration(module));
 		assertTrue(TLServiceUtils.isInAppEditable(module));
 		assertFalse(TLServiceUtils.hasInAppConfiguration(module));
@@ -189,14 +208,59 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 
 		TLServiceUtils.storeServiceConfiguration(module, config);
 		assertTrue(TLServiceUtils.hasInAppConfiguration(module));
-		assertTrue(new File(_autoconf, InAppServiceConfigStore.fileName(module)).exists());
+		assertTrue(storedFile(module).exists());
 		assertEquals(42, effectiveCount(module));
 		assertTrue(module.isConfigurationChanged());
 
 		assertTrue(TLServiceUtils.resetServiceConfiguration(module));
 		assertFalse(TLServiceUtils.hasInAppConfiguration(module));
 		assertEquals(1, effectiveCount(module));
+		assertFalse("Back to the state the service was started with.", module.isConfigurationChanged());
+		assertFalse("Nothing to discard.", TLServiceUtils.discardConfigurationChanges(module));
+	}
+
+	/**
+	 * Discarding the changes of a service started without stored configuration removes the stored
+	 * configuration.
+	 */
+	public void testDiscardToAbsent() throws ModuleException {
+		ConfiguredService.Module module = startedModule();
+		storeCount(module, 42);
+		storeCount(module, 43);
 		assertTrue(module.isConfigurationChanged());
+
+		assertTrue(TLServiceUtils.discardConfigurationChanges(module));
+		assertFalse(storedFile(module).exists());
+		assertEquals(1, effectiveCount(module));
+		assertFalse(module.isConfigurationChanged());
+		assertNull(module.getConfigurationBaseline());
+		assertFalse("Nothing left to discard.", TLServiceUtils.discardConfigurationChanges(module));
+	}
+
+	/**
+	 * Discarding the changes of a service started with a stored configuration restores that
+	 * configuration; a restart drops the baseline.
+	 */
+	public void testDiscardToContent() throws Exception {
+		ConfiguredService.Module module = startedModule();
+		storeCount(module, 5);
+		assertTrue(module.isConfigurationChanged());
+
+		ModuleUtil.INSTANCE.restart(module, null);
+		assertNull("Restart applies the stored configuration.", module.getConfigurationBaseline());
+		assertFalse(module.isConfigurationChanged());
+		byte[] startContent = Files.readAllBytes(storedFile(module).toPath());
+
+		storeCount(module, 42);
+		assertTrue(module.isConfigurationChanged());
+		assertTrue(TLServiceUtils.resetServiceConfiguration(module));
+		assertTrue("Reset removes the configuration the service was started with.",
+			module.isConfigurationChanged());
+
+		assertTrue(TLServiceUtils.discardConfigurationChanges(module));
+		assertTrue(Arrays.equals(startContent, Files.readAllBytes(storedFile(module).toPath())));
+		assertEquals(5, effectiveCount(module));
+		assertFalse(module.isConfigurationChanged());
 	}
 
 	/**
@@ -215,6 +279,7 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 		}
 		assertFalse(TLServiceUtils.hasInAppConfiguration(module));
 		assertEquals(1, effectiveCount(module));
+		assertFalse("A failed store is no change.", module.isConfigurationChanged());
 	}
 
 	/**
@@ -222,6 +287,22 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 	 */
 	public void testNotInAppEditable() {
 		assertFalse(TLServiceUtils.isInAppEditable(FixedService.Module.INSTANCE));
+	}
+
+	private static ConfiguredService.Module startedModule() throws ModuleException {
+		ConfiguredService.Module module = ConfiguredService.Module.INSTANCE;
+		ModuleUtil.INSTANCE.startUp(module);
+		return module;
+	}
+
+	private static void storeCount(ConfiguredService.Module module, int count) {
+		ConfiguredService.Config<?> config = editableConfig(module);
+		config.setCount(count);
+		TLServiceUtils.storeServiceConfiguration(module, config);
+	}
+
+	private static File storedFile(ConfiguredService.Module module) {
+		return InAppServiceConfigStore.fileFor(module);
 	}
 
 	private static ConfiguredService.Config<?> editableConfig(ConfiguredService.Module module) {

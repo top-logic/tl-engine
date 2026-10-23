@@ -50,7 +50,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
@@ -60,6 +60,8 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.func.IfTrue;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -81,6 +83,11 @@ import com.top_logic.util.error.TopLogicException;
 public final class MailSenderService extends ConfiguredManagedClass<MailSenderService.Config> implements Reloadable {
 
 	private Config _config;
+
+	/**
+	 * Source of {@link Config#getPassword()}, <code>null</code> if no password is configured.
+	 */
+	private final SecretSource _password;
 
 	private ObjectPool _transports;
     
@@ -204,11 +211,26 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 
 		/**
 		 * The password to authenticate this system to the SMTP server.
+		 * 
+		 * <p>
+		 * Recommended is a reference to the variable or file holding the password, so that the
+		 * password is not part of the configuration, e.g. <code>&lt;password name="SMTP_PASSWORD"/&gt;</code>
+		 * for an environment variable holding the plain password. An attribute value is an
+		 * encrypted password, or a plain password with the prefix <code>unencrypted:</code>.
+		 * </p>
+		 * 
+		 * <p>
+		 * The password is read each time a new connection to the SMTP server is opened.
+		 * </p>
 		 */
 		@Name(PASSWORD)
-		@Encrypted
-		@Nullable
-		String getPassword();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getPassword();
+
+		/**
+		 * @see #getPassword()
+		 */
+		void setPassword(PolymorphicConfiguration<? extends SecretSource> value);
 		
 		/**
 		 * A comma separated list of e-mail address to send a startup notification mail to.
@@ -261,6 +283,7 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 	public MailSenderService(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_config = config;
+		_password = context.getInstance(config.getPassword());
 
 		GenericObjectPool.Config poolConfig = new GenericObjectPool.Config();
 
@@ -873,6 +896,13 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 		return MailSenderService.Module.INSTANCE.isActive() && MailSenderService.getInstance().isActivated();
     }
     
+	/**
+	 * The current value of the configured password, the empty string if none is configured.
+	 */
+	private String password() {
+		return _password == null ? StringServices.EMPTY_STRING : _password.getSecret();
+	}
+
     /**
      * The PooledTransportFactory will create, connect and disconnect a {@link Transport} 
      * 
@@ -899,7 +929,7 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
         @Override
 		public Object makeObject() throws Exception {
 			Transport result = getSession().getTransport();
-			result.connect(_server, _config.getPort(), _config.getUser(), _config.getPassword());
+			result.connect(_server, _config.getPort(), _config.getUser(), password());
 			return result;
         }
         

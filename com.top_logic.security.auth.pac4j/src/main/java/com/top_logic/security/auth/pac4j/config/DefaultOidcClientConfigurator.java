@@ -30,7 +30,7 @@ import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -40,6 +40,8 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 
 /**
  * Base class for {@link ClientConfigurator}s allowing to configure common properties.
@@ -62,6 +64,11 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	 * happened before the request.
 	 */
 	private static final int MAX_AGE_IMMEDIATE = 0;
+
+	/**
+	 * Source of {@link Config#getSecret()}.
+	 */
+	private final SecretSource _secret;
 
 	/**
 	 * Configuration options for {@link DefaultOidcClientConfigurator}.
@@ -164,12 +171,35 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		public String getScope();
 
 		/**
+		 * @see #getSecret()
+		 */
+		String SECRET = "secret";
+
+		/**
+		 * The client secret to authenticate this application at the identity provider.
+		 * 
+		 * <p>
+		 * Recommended is a reference to the variable or file holding the secret, so that the
+		 * secret is not part of the configuration, e.g. <code>&lt;secret name="OIDC_CLIENT_SECRET"/&gt;</code>
+		 * for an environment variable holding the plain secret. An attribute value is an
+		 * encrypted secret, or a plain secret with the prefix <code>unencrypted:</code>.
+		 * </p>
+		 * 
+		 * <p>
+		 * The secret is read when the client is created at startup.
+		 * </p>
+		 * 
 		 * @see OidcConfiguration#getSecret()
 		 */
-		@Name("secret")
+		@Name(SECRET)
 		@Mandatory
-		@Encrypted
-		public String getSecret();
+		@Format(SecretSourceFormat.class)
+		public PolymorphicConfiguration<? extends SecretSource> getSecret();
+
+		/**
+		 * @see #getSecret()
+		 */
+		void setSecret(PolymorphicConfiguration<? extends SecretSource> value);
 
 		/**
 		 * @see OidcConfiguration#getStateGenerator()
@@ -261,6 +291,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	@CalledByReflection
 	public DefaultOidcClientConfigurator(InstantiationContext context, C config) {
 		super(context, config);
+		_secret = context.getInstance(config.getSecret());
 	}
 
 	@Override
@@ -359,7 +390,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		odic.setResponseMode(config.getResponseMode());
 		odic.setResponseType(config.getResponseType());
 		odic.setScope(config.getScope());
-		odic.setSecret(config.getSecret());
+		odic.setSecret(_secret.getSecret());
 		ValueGenerator stateGenerator = config.getStateGenerator();
 		if (stateGenerator != null) {
 			odic.setStateGenerator(stateGenerator);

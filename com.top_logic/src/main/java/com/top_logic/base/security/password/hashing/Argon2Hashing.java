@@ -18,9 +18,11 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.encryption.SecureRandomService;
 
 /**
@@ -202,15 +204,28 @@ public class Argon2Hashing extends AbstractConfiguredInstance<Argon2Hashing.Conf
 		 * <p>
 		 * <b>WARNING:</b> After changing the pepper, all formerly created hash values are invalid.
 		 * </p>
+		 * 
+		 * <p>
+		 * Recommended is a reference to the variable or file holding the pepper, so that the pepper
+		 * is not part of the configuration, e.g. <code>&lt;pepper name="PASSWORD_PEPPER"/&gt;</code>
+		 * for an environment variable holding the plain pepper. An attribute value is an encrypted
+		 * pepper, or a plain pepper with the prefix <code>unencrypted:</code>. Without a pepper, the
+		 * hash is computed without secret.
+		 * </p>
+		 * 
+		 * <p>
+		 * The pepper is read once, when the algorithm is created at startup, so that all hashes of
+		 * a running application are computed with the same pepper.
+		 * </p>
 		 */
 		@Name(PEPPER)
-		@Encrypted
-		String getPepper();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getPepper();
 
 		/**
 		 * Setter for {@link #getPepper()}.
 		 */
-		void setPepper(String pepper);
+		void setPepper(PolymorphicConfiguration<? extends SecretSource> pepper);
 	}
 
 	static final int DEFAULT_ARGON2_VERSION = Argon2Parameters.ARGON2_VERSION_13;
@@ -227,15 +242,14 @@ public class Argon2Hashing extends AbstractConfiguredInstance<Argon2Hashing.Conf
 	 */
 	public Argon2Hashing(InstantiationContext context, Config config) {
 		super(context, config);
-		_secret = getSecret(config);
+		_secret = getSecret(context.getInstance(config.getPepper()));
 	}
 
-	private byte[] getSecret(Config config) {
-		String pepper = config.getPepper();
-		if (pepper.isEmpty()) {
+	private static byte[] getSecret(SecretSource pepper) {
+		if (pepper == null) {
 			return null;
 		}
-		return pepper.getBytes(StringServices.CHARSET_UTF_8);
+		return pepper.getSecret().getBytes(StringServices.CHARSET_UTF_8);
 	}
 
 	@Override

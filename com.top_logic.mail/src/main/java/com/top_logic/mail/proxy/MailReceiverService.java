@@ -42,7 +42,7 @@ public class MailReceiverService extends ManagedClass {
 		super(context, config);
 		_activated = config.isActivated();
 		if (_activated) {
-			_server = new MailReceiver(config);
+			_server = new MailReceiver(context, config);
 		}
 	}
 

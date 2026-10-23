@@ -315,7 +315,8 @@ public class LoggingDataSourceProxy extends DefaultDataSourceProxy {
 	@CalledByReflection
 	public LoggingDataSourceProxy(InstantiationContext context, Config config)
 			throws SQLException, ConfigurationException {
-		super(null, DefaultDataSourceFactory.genericDriverOptions(config));
+		super(DefaultDataSourceFactory.createDataSource(context, config,
+			options -> createImplementation(null, DefaultDataSourceFactory.genericDriverOptions(config, options))));
 
 		if (config.getEnableOnStartup()) {
 			_analyzer = new LoggingAnalyzer(context, config);

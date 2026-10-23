@@ -886,6 +886,14 @@
 				<version>${tl.version}</version>
 			</dependency>
 
+			<!-- Feature starters -->
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-starter-react</artifactId>
+				<version>${tl.version}</version>
+				<type>pom</type>
+			</dependency>
+
 			<!-- Supported DB drivers -->
 			<dependency>
 			    <groupId>com.h2database</groupId>

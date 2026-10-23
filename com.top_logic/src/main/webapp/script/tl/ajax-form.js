@@ -325,6 +325,16 @@ services.form = {
 		services.ajax.mainLayout.tlDnD.cache.set(sourceID, targetID, position, dropability);
 	},
 	
+	/**
+	 * Whether the given drop control (table or tree) has a drop target of the given type.
+	 * 
+	 * The attribute "data-droptype" contains the space separated types of all drop targets.
+	 */
+	_hasDropType: function(controlElement, dropType) {
+		var dropTypes = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
+		return dropTypes != null && dropTypes.split(" ").indexOf(dropType) >= 0;
+	},
+	
 	_createDragImageElement: function(draggedObjects) {
 		var dragImageElement = document.createElement("div");
 		dragImageElement.classList.add("dragImage");
@@ -597,7 +607,6 @@ services.form = {
 			var event = BAL.getEvent(event);
 			event.preventDefault();
 
-			var dropType = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
 			var targetId;
 			var pos;
 			var success;
@@ -608,16 +617,14 @@ services.form = {
 					targetId = rowElement.id;
 					if (rowElement == controlElement) {
 						pos = "onto";
-					} else if (dropType == "ORDERED") {
-						if (BAL.DOM.containsClass(rowElement, "dndInsertAbove")) {
-							pos = "above";
-						} else if (BAL.DOM.containsClass(rowElement, "dndInsertBelow")) {
-							pos = "below";
-						} else {
-							success = false;
-						}
-					} else {
+					} else if (BAL.DOM.containsClass(rowElement, "dndInsertAbove")) {
+						pos = "above";
+					} else if (BAL.DOM.containsClass(rowElement, "dndInsertBelow")) {
+						pos = "below";
+					} else if (BAL.DOM.containsClass(rowElement, "dndInsertInto")) {
 						pos = "onto";
+					} else {
+						success = false;
 					}
 				}
 			}
@@ -691,16 +698,26 @@ services.form = {
 		},
 		
 		_getDropPosition: function(event, controlElement, row) {
-			var dropType = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
-
-			if (dropType == "ORDERED") {
-				var coordinates = BAL.relativeMouseCoordinates(event, row);
-				var height = BAL.getElementHeight(row);
-				
-				return coordinates.y > (height / 2) ? "below" : "above";
-			} else {
+			if (!services.form._hasDropType(controlElement, "ORDERED")) {
 				return "onto";
 			}
+
+			var coordinates = BAL.relativeMouseCoordinates(event, row);
+			var height = BAL.getElementHeight(row);
+
+			if (services.form._hasDropType(controlElement, "ROW")) {
+				// Ordered drops and drops onto a row are possible: The middle third of a row is a
+				// drop onto the row, the outer thirds are drops before or after it.
+				if (coordinates.y < height / 3) {
+					return "above";
+				} else if (coordinates.y > 2 * height / 3) {
+					return "below";
+				} else {
+					return "onto";
+				}
+			}
+
+			return coordinates.y > (height / 2) ? "below" : "above";
 		},
 		
 		changeToNoDropCursor: function(targetID, position) {
@@ -1220,13 +1237,12 @@ services.form = {
 		},
 		
 		getDropTarget: function(controlElement, event) {
-			var dropType = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
 			var node =  this.getNode(controlElement, event.target);
 			
 			if(node != null) {
-				return this._getDropTargetInternal(event, controlElement, node, dropType);
+				return this._getDropTargetInternal(event, controlElement, node);
 			} else {
-				if (dropType == "ORDERED") {
+				if (services.form._hasDropType(controlElement, "ORDERED")) {
 					// Below the last visible node.
 					var container = BAL.DOM.getLastElementChild(controlElement);
 					if (container != null) {
@@ -1244,11 +1260,29 @@ services.form = {
 			}
 		},
 		
-		_getDropTargetInternal: function(event, controlElement, nodeElement, dropType) {
-			if (dropType == "ORDERED") {
+		_getDropTargetInternal: function(event, controlElement, nodeElement) {
+			var ordered = services.form._hasDropType(controlElement, "ORDERED");
+			var child = services.form._hasDropType(controlElement, "CHILD");
+			if (ordered) {
 				var coordinates = BAL.relativeMouseCoordinates(event, nodeElement);
-			 	height = BAL.getElementHeight(nodeElement);
-			 	var within = coordinates.y > (height / 2);
+				var height = BAL.getElementHeight(nodeElement);
+				var within;
+				if (child) {
+					// Ordered drops and drops onto a node are possible: The middle third of a node
+					// is a drop onto the node, the outer thirds are ordered drops.
+					if (coordinates.y < height / 3) {
+						within = false;
+					} else if (coordinates.y > 2 * height / 3) {
+						within = true;
+					} else {
+						return {
+							node: nodeElement,
+							position: "onto"
+						};
+					}
+				} else {
+					within = coordinates.y > (height / 2);
+				}
 				
 				if (within) {
 					var expanded = BAL.DOM.containsClass(nodeElement, "tcrExpanded");
@@ -1293,7 +1327,7 @@ services.form = {
 						position: "above"
 					};
 				}
-			} else if(dropType == "CHILD") {
+			} else if (child) {
 				return {
 					node: nodeElement,
 					position: "onto"
@@ -1362,16 +1396,12 @@ services.form = {
 				// control element is used as placeholder for root element which might not be visible.
 				return "within";
 			}
-			var dropType = BAL.DOM.getNonStandardAttribute(controlElement, "data-droptype");
-			
-			if (dropType == "ORDERED") {
-				if (BAL.DOM.containsClass(nodeElement, "dndInsertAbove")) {
-					return "above";
-				} else if (BAL.DOM.containsClass(nodeElement, "dndInsertBelow")) {
-					return "below";
-				} else {
-					return "within";
-				}
+			if (BAL.DOM.containsClass(nodeElement, "dndInsertAbove")) {
+				return "above";
+			} else if (BAL.DOM.containsClass(nodeElement, "dndInsertBelow")) {
+				return "below";
+			} else if (BAL.DOM.containsClass(nodeElement, "dndInsertInto")) {
+				return "onto";
 			} else {
 				return "within";
 			}

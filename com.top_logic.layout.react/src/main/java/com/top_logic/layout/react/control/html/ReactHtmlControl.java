@@ -150,7 +150,7 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 	 * @param print
 	 *        Whether a document is shown with a button that prints it.
 	 * @param cssClass
-	 *        Additional CSS class to append to the default {@code tlHtml} class, or {@code null}.
+	 *        Additional CSS class to append to the classes of the design system, or {@code null}.
 	 * @param thumbnailWidth
 	 *        The width in CSS pixels a thumbnail lays its content out at.
 	 * @param thumbnailHeight

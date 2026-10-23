@@ -191,7 +191,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                 display="icon-only"
                 appearance="ghost"
                 small
-                className="tl-reorder-list__handle"
+                className="tl-reorder-list__handle tl-reveal-on-hover"
                 {...handle}
               />
               <span className="tl-reorder-list__label">{entry.label}</span>
@@ -204,7 +204,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   display="icon-only"
                   appearance="ghost"
                   small
-                  className="tl-reorder-list__lock"
+                  className="tl-reorder-list__lock tl-reveal-on-hover"
                   onClick={(event) => handleLock(entry.name, !entry.locked, event)}
                 />
                 <Button
@@ -216,7 +216,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   appearance="ghost"
                   small
                   disabled={lastVisible}
-                  className="tl-reorder-list__eye"
+                  className="tl-reorder-list__eye tl-reveal-on-hover"
                   onClick={(event) => handleToggle(entry.name, !entry.visible, event)}
                 />
               </span>

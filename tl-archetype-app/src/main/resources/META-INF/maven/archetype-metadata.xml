@@ -29,14 +29,23 @@
 		<requiredProperty key="CopyrightHolder">
 			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}My Company</defaultValue>
 		</requiredProperty>
+		<!--
+			The user interface of the application: react (the views of tl-layout-view, entry point
+			/view/), classic (the layouts of the LayoutServlet), or both (the React entry point, the
+			classic UI reachable at /servlet/LayoutServlet).
+		-->
+		<requiredProperty key="ui">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}react</defaultValue>
+		</requiredProperty>
 		<requiredProperty key="useChartJS">
 			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
 		</requiredProperty>
 		<requiredProperty key="useSelfService">
 			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
 		</requiredProperty>
+		<!-- The process engine has no React UI: off by default for ui=react. -->
 		<requiredProperty key="useBPE">
-			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}#if($ui == "react")false#{else}true#{end}</defaultValue>
 		</requiredProperty>
 		<requiredProperty key="useApiClient">
 			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}true</defaultValue>

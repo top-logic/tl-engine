@@ -13,7 +13,7 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
  *
  * <ul>
  * <li>free content → a `Button` around that content;</li>
- * <li>an icon → an `IconButton` named by the label, which is also its tooltip;</li>
+ * <li>an icon → an `IconButton` named by the label, which is also its tooltip; small → size `small`;</li>
  * <li>otherwise → a `Button` showing the label, with a chevron as `endIcon`.</li>
  * </ul>
  *
@@ -21,7 +21,7 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
  * and `aria-expanded` while that surface is open.</p>
  */
 const MuiMenuTriggerAdapter: React.FC<MenuTriggerPartProps> = ({
-  id, ref, appearance, expanded, haspopup = 'menu', label, icon, children, className, style, onClick, onMouseDown, ...attributes
+  id, ref, appearance, expanded, haspopup = 'menu', label, icon, small, children, className, style, onClick, onMouseDown, ...attributes
 }) => {
   const common = {
     id,
@@ -36,7 +36,7 @@ const MuiMenuTriggerAdapter: React.FC<MenuTriggerPartProps> = ({
 
   if (children === undefined && icon) {
     return (
-      <IconButton {...common} color={iconButtonColor(appearance, false)} aria-label={label} {...tooltipProps(label)} {...attributes}>
+      <IconButton {...common} size={small ? 'small' : 'medium'} color={iconButtonColor(appearance, false)} aria-label={label} {...tooltipProps(label)} {...attributes}>
         <ThemeIcon encoded={icon} className={ICON_ALONE_CLASS} />
       </IconButton>
     );

@@ -10,19 +10,21 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
  * with the classes of the design system ({@link buttonClassName}) in the appearance of the buttons
  * beside it.
  *
- * <p>An icon-only trigger is a square icon button named by its label, which is also its tooltip. A
+ * <p>An icon-only trigger is a square icon button named by its label, which is also its tooltip;
+ * drawn small, it carries a small icon. A
  * labeled trigger shows its label followed by a small chevron. The button names the kind of surface
  * it opens in `aria-haspopup`.</p>
  */
 const MenuTriggerPart: React.FC<MenuTriggerPartProps> = ({
-  id, ref, appearance, expanded, haspopup = 'menu', label, icon, children, className, style, onClick, onMouseDown, ...attributes
+  id, ref, appearance, expanded, haspopup = 'menu', label, icon, small, children, className, style, onClick, onMouseDown, ...attributes
 }) => {
   const iconOnly = children === undefined && !!icon;
+  const smallIcon = small === true && iconOnly;
   let content: React.ReactNode;
   if (children !== undefined) {
     content = children;
   } else if (iconOnly) {
-    content = <ThemeIcon encoded={icon} className="tl-button__icon tl-icon-md" />;
+    content = <ThemeIcon encoded={icon} className={'tl-button__icon ' + (smallIcon ? 'tl-icon-sm' : 'tl-icon-md')} />;
   } else {
     content = (
       <>
@@ -37,7 +39,7 @@ const MenuTriggerPart: React.FC<MenuTriggerPartProps> = ({
       type="button"
       id={id}
       ref={ref}
-      className={buttonClassName({ appearance, icon: iconOnly, extra: className })}
+      className={buttonClassName({ appearance, small: smallIcon, icon: iconOnly, extra: className })}
       style={style}
       onClick={onClick}
       onMouseDown={onMouseDown}

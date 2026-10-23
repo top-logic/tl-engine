@@ -1,6 +1,6 @@
 import { React, useTLState, TLChild, useCloseOnOutsidePress, useFocusTrap, useI18N, rootClassName, createPortal, usePopover, useMergeRefs, anchoredOverlayProps, ButtonDefaults, useButtonDefaults, usePart, tokenPx, useChildStates } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { MenuSeparator, useRovingMenu } from './menu/Menu';
+import { MenuSeparator, useRovingMenu } from 'tl-react-bridge';
 
 const { useCallback, useRef, useState, useEffect, useLayoutEffect, useMemo } = React;
 

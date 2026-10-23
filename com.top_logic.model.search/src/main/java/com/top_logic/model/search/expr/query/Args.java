@@ -6,7 +6,6 @@
 package com.top_logic.model.search.expr.query;
 
 import java.util.NoSuchElementException;
-import java.util.function.UnaryOperator;
 
 import com.top_logic.model.search.expr.SearchExpression;
 
@@ -82,20 +81,6 @@ public abstract class Args {
 	 * @see #value()
 	 */
 	public abstract Args next();
-
-	/**
-	 * Creates new {@link Args} with every value of these arguments mapped by the given function.
-	 *
-	 * @param fun
-	 *        The function to apply to each argument value.
-	 * @return The mapped arguments.
-	 */
-	public Args map(UnaryOperator<Object> fun) {
-		if (!hasValue()) {
-			return this;
-		}
-		return cons(fun.apply(value()), next().map(fun));
-	}
 
 	@Override
 	public String toString() {

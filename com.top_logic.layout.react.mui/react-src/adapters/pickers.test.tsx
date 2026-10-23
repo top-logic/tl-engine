@@ -1,0 +1,872 @@
+// The pickers of wave 5a (spec 2026-10-17). This file starts with the shared keyboard of tab lists, useTabList, and
+// the tab bar that runs on it. The tab bar draws icons through ThemeIcon, which needs no part.
+
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { React, useTabList, register, replacePart, fieldLabel } from 'tl-react-bridge';
+import { popoverMiddleware } from '../../../com.top_logic.layout.react/react-src/bridge/popover';
+import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
+import ColorMixer from '../../../com.top_logic.layout.react/react-src/controls/color/ColorMixer';
+import { PickerPopover } from '../../../com.top_logic.layout.react/react-src/controls/picker/PickerPopover';
+import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
+import TLTabBar from '../../../com.top_logic.layout.react/react-src/controls/TLTabBar';
+import TLColorInput from '../../../com.top_logic.layout.react/react-src/controls/TLColorInput';
+import TLSlider from '../../../com.top_logic.layout.react/react-src/controls/TLSlider';
+import TLIconSelect from '../../../com.top_logic.layout.react/react-src/controls/TLIconSelect';
+import IconSelectPopup from '../../../com.top_logic.layout.react/react-src/controls/icon/IconSelectPopup';
+import MuiButtonAdapter from './MuiButtonAdapter';
+import MuiTextInputAdapter from './MuiTextInputAdapter';
+import MuiSpinnerAdapter from './MuiSpinnerAdapter';
+import MuiFieldValueAdapter from './MuiFieldValueAdapter';
+import MuiDividerAdapter from './MuiDividerAdapter';
+import { childControl, mountAdapter, settle } from './wire-test-support';
+
+// The test registry has no parts of its own: the parts the pickers look up are the MUI ones.
+replacePart('Button', MuiButtonAdapter);
+replacePart('TextInput', MuiTextInputAdapter);
+replacePart('Spinner', MuiSpinnerAdapter);
+replacePart('FieldValue', MuiFieldValueAdapter);
+replacePart('Divider', MuiDividerAdapter);
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+const IDS = ['a', 'b', 'c'];
+
+function Tabs({ selected, onSelect }: { selected: string; onSelect: (id: string) => void }) {
+  const list = useTabList({ idPrefix: 'tt', ids: IDS, selected, onSelect });
+  return (
+    <div>
+      <div role="tablist" onKeyDown={list.onListKeyDown}>
+        {IDS.map(id => (
+          <button key={id} {...list.tabProps(id)}>{id}</button>
+        ))}
+        <button type="button">extra</button>
+      </div>
+      {IDS.map(id => (
+        <div key={id} {...list.panelProps(id)}>Panel {id}</div>
+      ))}
+    </div>
+  );
+}
+
+function tab(name: string): HTMLElement {
+  return screen.getByRole('tab', { name });
+}
+
+describe('useTabList', () => {
+  it('ArrowRight on the last tab focuses and selects the first', () => {
+    const onSelect = vi.fn();
+    render(<Tabs selected="c" onSelect={onSelect} />);
+    tab('c').focus();
+    fireEvent.keyDown(tab('c'), { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(tab('a'));
+    expect(onSelect).toHaveBeenCalledWith('a');
+  });
+
+  it('ArrowLeft on the first tab goes to the last', () => {
+    const onSelect = vi.fn();
+    render(<Tabs selected="a" onSelect={onSelect} />);
+    tab('a').focus();
+    fireEvent.keyDown(tab('a'), { key: 'ArrowLeft' });
+    expect(document.activeElement).toBe(tab('c'));
+    expect(onSelect).toHaveBeenCalledWith('c');
+  });
+
+  it('Home and End go to the first and the last tab', () => {
+    const onSelect = vi.fn();
+    render(<Tabs selected="b" onSelect={onSelect} />);
+    tab('b').focus();
+    fireEvent.keyDown(tab('b'), { key: 'End' });
+    expect(document.activeElement).toBe(tab('c'));
+    expect(onSelect).toHaveBeenLastCalledWith('c');
+    fireEvent.keyDown(tab('c'), { key: 'Home' });
+    expect(document.activeElement).toBe(tab('a'));
+    expect(onSelect).toHaveBeenLastCalledWith('a');
+  });
+
+  it('puts only the selected tab into the tab order', () => {
+    render(<Tabs selected="b" onSelect={() => {}} />);
+    expect(tab('a').tabIndex).toBe(-1);
+    expect(tab('b').tabIndex).toBe(0);
+    expect(tab('c').tabIndex).toBe(-1);
+    expect(tab('b').getAttribute('aria-selected')).toBe('true');
+    expect(tab('a').getAttribute('aria-selected')).toBe('false');
+  });
+
+  it('puts the first tab into the tab order while none is selected', () => {
+    render(<Tabs selected="" onSelect={() => {}} />);
+    expect(tab('a').tabIndex).toBe(0);
+    expect(tab('b').tabIndex).toBe(-1);
+  });
+
+  it('points aria-controls at the panel that points back with aria-labelledby', () => {
+    render(<Tabs selected="a" onSelect={() => {}} />);
+    for (const id of IDS) {
+      const panel = document.getElementById(tab(id).getAttribute('aria-controls')!)!;
+      expect(panel.getAttribute('role')).toBe('tabpanel');
+      expect(panel.getAttribute('aria-labelledby')).toBe(tab(id).id);
+    }
+  });
+
+  it('hides the panels of the tabs that are not selected', () => {
+    render(<Tabs selected="b" onSelect={() => {}} />);
+    expect(document.getElementById('tt-panel-a')!.hidden).toBe(true);
+    expect(document.getElementById('tt-panel-b')!.hidden).toBe(false);
+  });
+
+  it('prevents a key it handles and leaves another alone', () => {
+    render(<Tabs selected="a" onSelect={() => {}} />);
+    tab('a').focus();
+    expect(fireEvent.keyDown(tab('a'), { key: 'ArrowRight' })).toBe(false);
+    expect(fireEvent.keyDown(tab('a'), { key: 'a' })).toBe(true);
+  });
+
+  it('ignores a key from a button in the list that is not a tab', () => {
+    const onSelect = vi.fn();
+    render(<Tabs selected="b" onSelect={onSelect} />);
+    const extra = screen.getByRole('button', { name: 'extra' });
+    extra.focus();
+    expect(fireEvent.keyDown(extra, { key: 'ArrowRight' })).toBe(true);
+    expect(document.activeElement).toBe(extra);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('selects on a click', () => {
+    const onSelect = vi.fn();
+    render(<Tabs selected="a" onSelect={onSelect} />);
+    fireEvent.click(tab('b'));
+    expect(onSelect).toHaveBeenCalledWith('b');
+  });
+});
+
+describe('TLTabBar', () => {
+  const STATE = {
+    tabs: [{ id: 't1', label: 'Eins' }, { id: 't2', label: 'Zwei' }],
+    activeTabId: 't1',
+  };
+
+  it('sends selectTab with the next id on ArrowRight', async () => {
+    const sent = mountAdapter(TLTabBar, STATE);
+    await settle();
+    tab('Eins').focus();
+    fireEvent.keyDown(tab('Eins'), { key: 'ArrowRight' });
+    await settle();
+    expect(sent).toHaveBeenCalledWith('selectTab', { tabId: 't2' });
+    expect(document.activeElement).toBe(tab('Zwei'));
+  });
+
+  it('sends nothing when the tab reached is the selected one', async () => {
+    const sent = mountAdapter(TLTabBar, { ...STATE, activeTabId: 't2' });
+    await settle();
+    tab('Zwei').focus();
+    fireEvent.keyDown(tab('Zwei'), { key: 'End' });
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('selectTab', expect.anything());
+  });
+
+  it('points every tab at the one panel', async () => {
+    mountAdapter(TLTabBar, STATE);
+    await settle();
+    const panel = screen.getByRole('tabpanel');
+    expect(tab('Eins').getAttribute('aria-controls')).toBe(panel.id);
+    expect(tab('Zwei').getAttribute('aria-controls')).toBe(panel.id);
+    expect(panel.getAttribute('aria-labelledby')).toBe(tab('Eins').id);
+  });
+});
+
+describe('PickerPopover', () => {
+  // jsdom lays nothing out; the focus search skips elements without a client rect.
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
+  });
+
+  function Host({ onClose, initialFocus = 'first' }: { onClose: () => void; initialFocus?: 'first' | ((root: HTMLElement) => HTMLElement | null) }) {
+    const anchor = React.useRef<HTMLButtonElement | null>(null);
+    const [open, setOpen] = React.useState(true);
+    return (
+      <div>
+        <button ref={anchor} type="button">Anker</button>
+        <button type="button" onClick={() => setOpen(o => !o)}>Umschalter</button>
+        <span>Aussen</span>
+        {open && (
+          <PickerPopover anchorRef={anchor} label="Farbe" initialFocus={initialFocus} onClose={onClose}>
+            <button type="button">Eins</button>
+            <button type="button">Zwei</button>
+            <button type="button">Drei</button>
+          </PickerPopover>
+        )}
+      </div>
+    );
+  }
+
+  it('renders a named dialog under the body with the focus on the first content', () => {
+    const { container } = render(<Host onClose={() => {}} />);
+    const dialog = screen.getByRole('dialog', { name: 'Farbe' });
+    expect(dialog.parentElement).toBe(document.body);
+    expect(container.contains(dialog)).toBe(false);
+    expect(dialog.classList.contains('tl-popover')).toBe(true);
+    expect(dialog.classList.contains('tl-picker')).toBe(true);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Eins' }));
+  });
+
+  it('lets a function as initialFocus win', () => {
+    render(<Host onClose={() => {}} initialFocus={root => root.querySelectorAll<HTMLElement>('button')[1]} />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Zwei' }));
+  });
+
+  it('pulls the focus back into the popup when it leaves past the last element', () => {
+    render(<Host onClose={() => {}} />);
+    screen.getByRole('button', { name: 'Drei' }).focus();
+    // The trap listens to focusin: Tab past the edge reaches the next element of the page (jsdom's Tab goes to the body
+    // instead and fires no focusin), and the trap pulls the focus back to its first element.
+    screen.getByRole('button', { name: 'Umschalter' }).focus();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Eins' }));
+  });
+
+  it('calls onClose once on Escape', async () => {
+    const onClose = vi.fn();
+    render(<Host onClose={onClose} />);
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onClose on a press outside, not on a press inside', () => {
+    const onClose = vi.fn();
+    render(<Host onClose={onClose} />);
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Zwei' }));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.pointerDown(screen.getByText('Aussen'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns the focus to the anchor focused before the mount', () => {
+    function Late() {
+      const anchor = React.useRef<HTMLButtonElement | null>(null);
+      const [open, setOpen] = React.useState(false);
+      return (
+        <div>
+          <button ref={anchor} type="button" onClick={() => setOpen(true)}>Anker</button>
+          {open && (
+            <PickerPopover anchorRef={anchor} label="Farbe" initialFocus="first" onClose={() => setOpen(false)}>
+              <button type="button">Eins</button>
+            </PickerPopover>
+          )}
+        </div>
+      );
+    }
+    render(<Late />);
+    const anchor = screen.getByRole('button', { name: 'Anker' });
+    anchor.focus();
+    fireEvent.click(anchor);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Eins' }));
+    fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(anchor);
+  });
+
+  it('gives the focus to the anchor when it was not focused before the mount', async () => {
+    function Unfocused() {
+      const anchor = React.useRef<HTMLButtonElement | null>(null);
+      const [open, setOpen] = React.useState(false);
+      return (
+        <div>
+          <button ref={anchor} type="button">Anker</button>
+          <button type="button" onClick={() => setOpen(true)}>Oeffnen</button>
+          {open && (
+            <PickerPopover anchorRef={anchor} label="Farbe" initialFocus="first" onClose={() => setOpen(false)}>
+              <button type="button">Eins</button>
+            </PickerPopover>
+          )}
+        </div>
+      );
+    }
+    render(<Unfocused />);
+    // A click that does not focus the opener: the focus is on the body when the picker mounts.
+    fireEvent.click(screen.getByRole('button', { name: 'Oeffnen' }));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Eins' }));
+    fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Anker' }));
+  });
+
+  it('closes only the picker on Escape inside a window', async () => {
+    const onClose = vi.fn();
+    const Inner: React.FC = () => {
+      const anchor = React.useRef<HTMLButtonElement | null>(null);
+      const [open, setOpen] = React.useState(false);
+      return (
+        <div>
+          <button ref={anchor} type="button" onClick={() => setOpen(true)}>Waehlen</button>
+          {open && (
+            <PickerPopover anchorRef={anchor} label="Farbe" initialFocus="first" onClose={() => { onClose(); setOpen(false); }}>
+              <button type="button">Eins</button>
+            </PickerPopover>
+          )}
+        </div>
+      );
+    };
+    register('PickersInnerPicker', Inner);
+    const inner = { controlId: 'ip', module: 'PickersInnerPicker', state: {} } as ReturnType<typeof childControl>;
+    const sent = mountAdapter(TLWindow, { title: 'Fenster', child: inner, closable: true });
+    await settle();
+    await userEvent.click(screen.getByRole('button', { name: 'Waehlen' }));
+    await settle();
+    expect(screen.getByRole('dialog', { name: 'Farbe' })).toBeTruthy();
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(sent).not.toHaveBeenCalledWith('close', expect.anything());
+    // Positive control: with the picker gone, the same key reaches the window.
+    expect(screen.queryByRole('dialog', { name: 'Farbe' })).toBeNull();
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('close', {});
+  });
+});
+
+describe('TLColorInput', () => {
+  // jsdom lays nothing out; the focus search skips elements without a client rect.
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
+  });
+
+  const PALETTE = ['#e53935', '#fb8c00', '#fdd835', null];
+  const STATE = {
+    value: '#fb8c00',
+    editable: true,
+    palette: PALETTE,
+    paletteColumns: 4,
+    defaultPalette: PALETTE,
+    canReset: true,
+  };
+
+  function field(): HTMLElement {
+    return document.querySelector('button.tl-swatch')!;
+  }
+
+  async function open(state: Record<string, unknown> = STATE) {
+    const sent = mountAdapter(TLColorInput, state);
+    await settle();
+    await userEvent.click(field());
+    await settle();
+    return sent;
+  }
+
+  async function openMixer(state: Record<string, unknown> = STATE) {
+    const sent = await open(state);
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'js.colorInput.paletteTab' }), { key: 'ArrowRight' });
+    await settle();
+    return sent;
+  }
+
+  function neu(): HTMLElement {
+    return screen.getByRole('img', { name: /^js\.colorInput\.new: / });
+  }
+
+  /** The channels of a color the way jsdom reports an inline background. */
+  function rgbOf(el: HTMLElement): number[] {
+    return /rgb\((\d+), (\d+), (\d+)\)/.exec(el.style.backgroundColor)!.slice(1).map(Number);
+  }
+
+  function slider(name: string): HTMLElement {
+    return screen.getByRole('slider', { name });
+  }
+
+  function press(el: HTMLElement, key: string, times = 1) {
+    for (let i = 0; i < times; i++) fireEvent.keyDown(el, { key });
+  }
+
+  it('draws the field as a color swatch button, empty without a value', async () => {
+    mountAdapter(TLColorInput, STATE);
+    await settle();
+    const full = field();
+    expect(full.classList.contains('tl-swatch--color')).toBe(true);
+    expect(full.getAttribute('data-tl-state')).toBeNull();
+    cleanup();
+    mountAdapter(TLColorInput, { ...STATE, value: null });
+    await settle();
+    expect(field().getAttribute('data-tl-state')).toBe('empty');
+    expect(screen.getByRole('button', { name: 'js.colorInput.noColor' })).toBe(field());
+  });
+
+  it('names the swatch by its value without a field label', async () => {
+    mountAdapter(TLColorInput, STATE);
+    await settle();
+    expect(screen.getByRole('button', { name: '#FB8C00' })).toBe(field());
+    expect(field().getAttribute('aria-haspopup')).toBe('dialog');
+  });
+
+  describe('in a form field', () => {
+    let label: HTMLElement;
+    beforeEach(() => {
+      label = document.createElement('span');
+      label.id = 'f1-label';
+      label.textContent = 'Akzent';
+      document.body.appendChild(label);
+    });
+    afterEach(() => label.remove());
+
+    it('is named by the field label and its own value', async () => {
+      mountAdapter(TLColorInput, STATE, { fieldLabel: fieldLabel('f1', 'c1', vi.fn()) });
+      await settle();
+      expect(screen.getByRole('button', { name: 'Akzent #FB8C00' })).toBe(field());
+    });
+
+    it('is named by the field label and that it holds no color', async () => {
+      mountAdapter(TLColorInput, { ...STATE, value: null }, { fieldLabel: fieldLabel('f1', 'c1', vi.fn()) });
+      await settle();
+      expect(screen.getByRole('button', { name: 'Akzent js.colorInput.noColor' })).toBe(field());
+    });
+  });
+
+  it('carries the field state as attributes', async () => {
+    mountAdapter(TLColorInput, { ...STATE, hasError: true, mandatory: true });
+    await settle();
+    expect(field().getAttribute('aria-invalid')).toBe('true');
+    expect(field().getAttribute('aria-required')).toBe('true');
+  });
+
+  it('shows a read-only value as a span without a button (review focus 5)', async () => {
+    mountAdapter(TLColorInput, { ...STATE, editable: false });
+    await settle();
+    expect(document.querySelector('button')).toBeNull();
+    const swatch = document.querySelector('span.tl-swatch')!;
+    expect(swatch.classList.contains('tl-swatch--color')).toBe(true);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('draws a disabled field as a disabled button that opens nothing (review focus 5)', async () => {
+    mountAdapter(TLColorInput, { ...STATE, editable: false, disabled: true });
+    await settle();
+    expect(field().hasAttribute('disabled')).toBe(true);
+    await userEvent.click(field());
+    await settle();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('opens a dialog with the focus on the selected tab, and the arrow switches to the mixer', async () => {
+    await open();
+    expect(screen.getByRole('dialog', { name: 'js.colorInput.chooseColor' })).toBeTruthy();
+    const palette = screen.getByRole('tab', { name: 'js.colorInput.paletteTab' });
+    expect(document.activeElement).toBe(palette);
+    fireEvent.keyDown(palette, { key: 'ArrowRight' });
+    await settle();
+    const mixer = screen.getByRole('tab', { name: 'js.colorInput.mixerTab' });
+    expect(mixer.getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(mixer);
+    expect(slider('js.colorInput.hue')).toBeTruthy();
+  });
+
+  it('has one tab stop in the palette, moves by arrow, takes a color by Space and confirms by Enter', async () => {
+    const sent = await open();
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(3);
+    expect(options.filter(o => o.tabIndex === 0)).toEqual([options[1]]);
+    options[1].focus();
+    fireEvent.keyDown(options[1], { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(options[2]);
+    fireEvent.keyDown(options[2], { key: ' ' });
+    expect(rgbOf(neu())).toEqual([253, 216, 53]);
+    expect(options[2].getAttribute('aria-selected')).toBe('true');
+    expect(sent).not.toHaveBeenCalledWith('valueChanged', expect.anything());
+    fireEvent.keyDown(options[2], { key: 'Enter' });
+    await settle();
+    expect(sent).toHaveBeenCalledWith('valueChanged', { value: '#fdd835' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(field());
+  });
+
+  it('has no tab stop and does not throw for a palette without a filled cell (review focus 3)', async () => {
+    await open({ ...STATE, value: null, palette: [null, null, null] });
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    const list = screen.getByRole('listbox', { name: 'js.colorInput.colors' });
+    expect(list.querySelector('[tabindex="0"]')).toBeNull();
+    // The empty cells are only drop targets: hidden from assistive technology, not role-less listbox children.
+    const cells = list.querySelectorAll('.tl-swatch');
+    expect(cells).toHaveLength(3);
+    cells.forEach(cell => expect(cell.getAttribute('aria-hidden')).toBe('true'));
+  });
+
+  it('gives the mixer field a slider role whose arrows change the saturation by 1 %', async () => {
+    await openMixer({ ...STATE, value: '#cc6666' });
+    const sb = slider('js.colorInput.saturationBrightness');
+    expect(sb.getAttribute('aria-valuetext')).toContain('js.colorInput.saturationBrightnessValue');
+    expect(sb.getAttribute('aria-valuenow')).toBe('50');
+    sb.focus();
+    press(sb, 'ArrowRight');
+    expect(sb.getAttribute('aria-valuenow')).toBe('51');
+    press(sb, 'ArrowLeft', 2);
+    expect(sb.getAttribute('aria-valuenow')).toBe('49');
+  });
+
+  it('names the previews with their color', async () => {
+    await open({ ...STATE, value: null });
+    expect(screen.getByRole('img', { name: 'js.colorInput.current: js.colorInput.noColor' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'js.colorInput.new: js.colorInput.noColor' })).toBeTruthy();
+  });
+
+  it('keeps the hue over black, so that lifting the brightness is not red (review focus 4)', async () => {
+    await openMixer({ ...STATE, value: '#000000' });
+    const hue = slider('js.colorInput.hue');
+    hue.focus();
+    press(hue, 'PageUp', 12);
+    expect(hue.getAttribute('aria-valuenow')).toBe('120');
+    const sb = slider('js.colorInput.saturationBrightness');
+    sb.focus();
+    press(sb, 'ArrowRight', 20);
+    press(sb, 'PageUp');
+    const [r, g, b] = rgbOf(neu());
+    expect(g).toBeGreaterThan(r);
+    expect(g).toBeGreaterThan(b);
+    expect(hue.getAttribute('aria-valuenow')).toBe('120');
+  });
+
+  it('stays at 0 and at 100 at the edge of the field (review focus 4)', async () => {
+    await openMixer({ ...STATE, value: '#000000' });
+    const sb = slider('js.colorInput.saturationBrightness');
+    sb.focus();
+    press(sb, 'ArrowDown', 3);
+    press(sb, 'ArrowLeft', 3);
+    expect(rgbOf(neu())).toEqual([0, 0, 0]);
+    expect(sb.getAttribute('aria-valuenow')).toBe('0');
+    cleanup();
+    await openMixer({ ...STATE, value: '#ff0000' });
+    const red = slider('js.colorInput.saturationBrightness');
+    red.focus();
+    press(red, 'ArrowUp', 3);
+    press(red, 'ArrowRight', 3);
+    expect(rgbOf(neu())).toEqual([255, 0, 0]);
+    expect(red.getAttribute('aria-valuenow')).toBe('100');
+  });
+
+  it('confirms by Enter in the hex field when the value is valid (U1)', async () => {
+    const sent = await open();
+    const hex = screen.getByRole('textbox', { name: 'js.colorInput.hex' });
+    await userEvent.clear(hex);
+    await userEvent.type(hex, '#43a047{Enter}');
+    await settle();
+    // Enter confirms the draft like OK does, which also files it into the first free cell of the palette.
+    expect(sent).toHaveBeenCalledWith('valueChanged', { value: '#43a047' });
+    expect(sent).toHaveBeenCalledWith('paletteChanged', { palette: ['#e53935', '#fb8c00', '#fdd835', '#43A047'] });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('does not confirm by Enter in the hex field while the value is invalid (U1)', async () => {
+    const sent = await open();
+    const hex = screen.getByRole('textbox', { name: 'js.colorInput.hex' });
+    await userEvent.clear(hex);
+    await userEvent.type(hex, '#43a{Enter}');
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('valueChanged', expect.anything());
+    expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+});
+
+describe('ColorMixer texts', () => {
+  afterEach(() => clearI18NCache());
+
+  it('puts the percentages into the value text of the field', async () => {
+    clearI18NCache();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      'js.colorInput.saturationBrightness': 'Saettigung und Helligkeit',
+      'js.colorInput.saturationBrightnessValue': 'Saettigung {0} %, Helligkeit {1} %',
+      'js.colorInput.hue': 'Farbton',
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } })));
+    render(<ColorMixer color="#cc6666" onColorChange={() => {}} />);
+    await settle();
+    expect(screen.getByRole('slider', { name: 'Saettigung und Helligkeit' }).getAttribute('aria-valuetext'))
+      .toBe('Saettigung 50 %, Helligkeit 80 %');
+  });
+});
+
+describe('TLIconSelect', () => {
+  // jsdom lays nothing out; the focus search skips elements without a client rect.
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
+  });
+
+  const ICONS = [
+    { prefix: 'house', label: 'Haus', variants: [{ encoded: 'css:fa-solid fa-house' }] },
+    { prefix: 'star', label: 'Stern', variants: [{ encoded: 'css:fa-solid fa-star' }] },
+    { prefix: 'gear', label: 'Zahnrad', variants: [{ encoded: 'css:fa-solid fa-gear' }] },
+  ];
+  const STATE = { value: 'css:fa-solid fa-star', editable: true, icons: ICONS, iconsLoaded: true };
+
+  function field(): HTMLElement {
+    return document.querySelector('button.tl-swatch')!;
+  }
+
+  async function open(state: Record<string, unknown> = STATE) {
+    const sent = mountAdapter(TLIconSelect, state);
+    await settle();
+    await userEvent.click(field());
+    await settle();
+    return sent;
+  }
+
+  it('draws the field as a swatch button that shows the icon, empty with the choose icon', async () => {
+    mountAdapter(TLIconSelect, STATE);
+    await settle();
+    expect(field().getAttribute('data-tl-state')).toBeNull();
+    expect(field().getAttribute('aria-haspopup')).toBe('dialog');
+    expect(field().querySelector('i.fa-star')).not.toBeNull();
+    expect(field().querySelector('i.fa-star')!.classList.contains('tl-icon-md')).toBe(true);
+    cleanup();
+    mountAdapter(TLIconSelect, { ...STATE, value: null });
+    await settle();
+    expect(field().getAttribute('data-tl-state')).toBe('empty');
+    expect(field().querySelector('i.fa-solid.fa-icons')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'js.iconSelect.noIcon' })).toBe(field());
+  });
+
+  it('names the swatch by the label of its icon, else by a name made of its class', async () => {
+    mountAdapter(TLIconSelect, STATE);
+    await settle();
+    expect(screen.getByRole('button', { name: 'Stern' })).toBe(field());
+    cleanup();
+    mountAdapter(TLIconSelect, { ...STATE, value: 'css:fa-solid fa-moon' });
+    await settle();
+    expect(screen.getByRole('button', { name: 'moon' })).toBe(field());
+    cleanup();
+    mountAdapter(TLIconSelect, { ...STATE, value: 'css:fa-solid fa-arrow-left', icons: [], iconsLoaded: false });
+    await settle();
+    expect(screen.getByRole('button', { name: 'arrow left' })).toBe(field());
+    cleanup();
+    mountAdapter(TLIconSelect, { ...STATE, value: 'css:bi bi-star-fill', icons: [], iconsLoaded: false });
+    await settle();
+    expect(screen.getByRole('button', { name: 'star fill' })).toBe(field());
+  });
+
+  describe('in a form field', () => {
+    let label: HTMLElement;
+    beforeEach(() => {
+      label = document.createElement('span');
+      label.id = 'f1-label';
+      label.textContent = 'Symbol';
+      document.body.appendChild(label);
+    });
+    afterEach(() => label.remove());
+
+    it('is named by the field label and its own value', async () => {
+      mountAdapter(TLIconSelect, STATE, { fieldLabel: fieldLabel('f1', 'c1', vi.fn()) });
+      await settle();
+      expect(screen.getByRole('button', { name: 'Symbol Stern' })).toBe(field());
+    });
+  });
+
+  it('carries the field state as attributes', async () => {
+    mountAdapter(TLIconSelect, { ...STATE, hasError: true, mandatory: true });
+    await settle();
+    expect(field().getAttribute('aria-invalid')).toBe('true');
+    expect(field().getAttribute('aria-required')).toBe('true');
+  });
+
+  it('shows a read-only value as a span without a button (review focus 5)', async () => {
+    mountAdapter(TLIconSelect, { ...STATE, editable: false });
+    await settle();
+    expect(document.querySelector('button')).toBeNull();
+    expect(document.querySelector('span.tl-swatch i.fa-star')).not.toBeNull();
+    expect(document.querySelector('span.tl-swatch i.fa-star')!.classList.contains('tl-icon-md')).toBe(true);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('draws a disabled field as a disabled button that opens nothing (review focus 5)', async () => {
+    mountAdapter(TLIconSelect, { ...STATE, editable: false, disabled: true });
+    await settle();
+    expect(field().hasAttribute('disabled')).toBe(true);
+    await userEvent.click(field());
+    await settle();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('opens a dialog with the focus in the filter', async () => {
+    await open();
+    expect(screen.getByRole('dialog', { name: 'js.iconSelect.chooseIcon' })).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'js.iconSelect.filterPlaceholder' }));
+    expect(field().getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('has one tab stop in the grid, moves by arrow, marks the chosen icon and sends it by Enter', async () => {
+    const sent = await open();
+    expect(screen.getByRole('listbox', { name: 'js.iconSelect.icons' })).toBeTruthy();
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(3);
+    expect(options.filter(o => o.tabIndex === 0)).toEqual([options[1]]);
+    expect(options[1].getAttribute('aria-selected')).toBe('true');
+    expect(options[0].getAttribute('aria-selected')).toBe('false');
+    options[1].focus();
+    fireEvent.keyDown(options[1], { key: 'ArrowRight' });
+    expect(document.activeElement).toBe(options[2]);
+    expect(sent).not.toHaveBeenCalledWith('valueChanged', expect.anything());
+    fireEvent.keyDown(options[2], { key: 'Enter' });
+    await settle();
+    expect(sent).toHaveBeenCalledWith('valueChanged', { value: 'css:fa-solid fa-gear' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(field());
+  });
+
+  it('asks the server for the icons when they are not loaded', async () => {
+    const sent = await open({ ...STATE, icons: [], iconsLoaded: false });
+    expect(sent).toHaveBeenCalledWith('loadIcons', expect.anything());
+    const status = document.querySelector('.tl-status')!;
+    expect(status.querySelector('[role="progressbar"]')).not.toBeNull();
+  });
+
+  it('shows no hits as a status row', async () => {
+    await open();
+    await userEvent.type(screen.getByRole('textbox', { name: 'js.iconSelect.filterPlaceholder' }), 'xyz');
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    expect(document.querySelector('.tl-status')!.textContent).toContain('js.iconSelect.noResults');
+  });
+
+  it('puts the class into the field by Enter in the advanced tab and sends it by OK', async () => {
+    const sent = await open();
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'js.iconSelect.simpleTab' }), { key: 'ArrowRight' });
+    await settle();
+    expect(screen.getByRole('tab', { name: 'js.iconSelect.advancedTab' }).getAttribute('aria-selected')).toBe('true');
+    const options = screen.getAllByRole('option');
+    options[0].focus();
+    fireEvent.keyDown(options[0], { key: 'Enter' });
+    await settle();
+    expect(sent).not.toHaveBeenCalledWith('valueChanged', expect.anything());
+    expect((screen.getByRole('textbox', { name: 'js.iconSelect.classLabel' }) as HTMLInputElement).value)
+      .toBe('css:fa-solid fa-house');
+    await userEvent.click(screen.getByRole('button', { name: 'js.iconSelect.ok' }));
+    await settle();
+    expect(sent).toHaveBeenCalledWith('valueChanged', { value: 'css:fa-solid fa-house' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('has the actions only in the advanced tab', async () => {
+    await open();
+    expect(screen.queryByRole('button', { name: 'js.iconSelect.ok' })).toBeNull();
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'js.iconSelect.simpleTab' }), { key: 'ArrowRight' });
+    await settle();
+    expect(screen.getByRole('button', { name: 'js.iconSelect.cancel' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'js.iconSelect.clear' })).toBeTruthy();
+  });
+
+  it('closes on Escape in a filter that holds text, sends nothing, and gives the focus to the field (review focus 1)', async () => {
+    const sent = await open();
+    const filter = screen.getByRole('textbox', { name: 'js.iconSelect.filterPlaceholder' });
+    await userEvent.type(filter, 'ste');
+    expect(document.activeElement).toBe(filter);
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sent).not.toHaveBeenCalledWith('valueChanged', expect.anything());
+    expect(document.activeElement).toBe(field());
+  });
+
+  it('puts the focus into the filter when the icons arrive after the popup opened', async () => {
+    let arrive: () => void = () => {};
+    const anchorRef = { current: document.createElement('button') };
+    document.body.appendChild(anchorRef.current);
+    mountAdapter(() => {
+      const [loaded, setLoaded] = React.useState(false);
+      arrive = () => setLoaded(true);
+      return (
+        <IconSelectPopup anchorRef={anchorRef} currentValue={null} icons={loaded ? ICONS : []} iconsLoaded={loaded}
+          onSelect={() => {}} onCancel={() => {}} onLoadIcons={async () => {}} />
+      );
+    }, {});
+    await settle();
+    expect(screen.queryAllByRole('option')).toHaveLength(0);
+    (document.activeElement as HTMLElement).blur();
+    arrive();
+    await settle();
+    expect(screen.getAllByRole('option')).toHaveLength(3);
+    expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'js.iconSelect.filterPlaceholder' }));
+    anchorRef.current.remove();
+  });
+
+  describe('the popup, when the loading failed', () => {
+    it('shows an alert row with a retry button that loads again', async () => {
+      const onLoadIcons = vi.fn<() => Promise<void>>().mockRejectedValueOnce(new Error('down')).mockResolvedValue(undefined);
+      const anchorRef = { current: document.createElement('button') };
+      document.body.appendChild(anchorRef.current);
+      mountAdapter(() => (
+        <IconSelectPopup anchorRef={anchorRef} currentValue={null} icons={[]} iconsLoaded={false}
+          onSelect={() => {}} onCancel={() => {}} onLoadIcons={onLoadIcons} />
+      ), {});
+      await settle();
+      const alert = screen.getByRole('alert');
+      expect(alert.classList.contains('tl-status')).toBe(true);
+      expect(alert.textContent).toContain('js.iconSelect.loadError');
+      expect(document.querySelector('a[href="#"]')).toBeNull();
+      const retry = screen.getByRole('button', { name: 'js.iconSelect.retry' });
+      expect(alert.contains(retry)).toBe(true);
+      expect(onLoadIcons).toHaveBeenCalledTimes(1);
+      await userEvent.click(retry);
+      await settle();
+      expect(onLoadIcons).toHaveBeenCalledTimes(2);
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'js.iconSelect.filterPlaceholder' }));
+      anchorRef.current.remove();
+    });
+  });
+});
+
+describe('TLSlider', () => {
+  const STATE = { value: 25, min: 0, max: 100, step: 1, valueLabel: '25 %', minLabel: '0 %', maxLabel: '100 %', editable: true };
+
+  function input(): HTMLInputElement {
+    return document.querySelector('input.tl-slider__input')!;
+  }
+
+  it('draws the fill as an element sized inline, without a custom property', () => {
+    mountAdapter(TLSlider, STATE);
+    const root = document.querySelector('span.tl-slider')!;
+    const fill = root.querySelector('span.tl-slider__track > span.tl-slider__fill') as HTMLElement;
+    expect(fill.style.inlineSize).toBe('25%');
+    expect(input().getAttribute('style') ?? '').not.toContain('fill');
+    expect(root.querySelector('output.tl-slider__value .tl-slider__text')!.textContent).toBe('25 %');
+    expect(root.querySelectorAll('.tl-slider__sizer')).toHaveLength(2);
+  });
+
+  it('sizes the fill by the position of the value within min and max, and not at all without a value', () => {
+    mountAdapter(TLSlider, { ...STATE, min: 10, max: 30, value: 20 });
+    const fill = () => document.querySelector('span.tl-slider__fill') as HTMLElement;
+    expect(fill().style.inlineSize).toBe('50%');
+    cleanup();
+    mountAdapter(TLSlider, { ...STATE, min: 10, max: 30, value: null });
+    expect(fill().style.inlineSize).toBe('0%');
+  });
+
+  it('carries an error as aria-invalid on the input and mandatory as aria-required, without a class', () => {
+    mountAdapter(TLSlider, { ...STATE, hasError: true, mandatory: true });
+    expect(input().getAttribute('aria-invalid')).toBe('true');
+    expect(input().getAttribute('aria-required')).toBe('true');
+    expect(document.querySelector('.tl-slider')!.hasAttribute('data-tl-state')).toBe(false);
+    expect(document.querySelector('.tl-slider')!.className).toBe('tl-slider');
+  });
+
+  it('carries a warning as data-tl-state on the root', () => {
+    mountAdapter(TLSlider, { ...STATE, hasWarnings: true });
+    expect(document.querySelector('.tl-slider')!.getAttribute('data-tl-state')).toBe('warning');
+    expect(input().hasAttribute('aria-invalid')).toBe(false);
+    expect(document.querySelector('.tl-slider')!.className).toBe('tl-slider');
+  });
+
+  it('sets no state on a field without one', () => {
+    mountAdapter(TLSlider, STATE);
+    expect(document.querySelector('.tl-slider')!.hasAttribute('data-tl-state')).toBe(false);
+    expect(input().hasAttribute('aria-invalid')).toBe(false);
+    expect(input().hasAttribute('aria-required')).toBe(false);
+  });
+});
+
+describe('popover placement', () => {
+  it('shifts along the main axis too, so a surface that fits neither below nor above stays on screen', () => {
+    const shift = popoverMiddleware(8).find(m => m.name === 'shift');
+    expect((shift?.options as unknown[])[0]).toMatchObject({ padding: 8, crossAxis: true });
+  });
+});

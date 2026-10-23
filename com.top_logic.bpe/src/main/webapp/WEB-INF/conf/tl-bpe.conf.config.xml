@@ -3,11 +3,15 @@
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
 	
-		<config service-class="com.top_logic.basic.module.ModuleSystem">
+		<config service-class="com.top_logic.util.StartupHooks">
 			<instance>
-				<modules>
-				   <module key="com.top_logic.bpe.execution.engine.InitialProcessSetupService$Module" value="true"/>
-				</modules>
+				<hooks>
+					<hook id="initial-workflows"
+						on-error="log-error"
+					>
+						<action class="com.top_logic.bpe.execution.engine.InitialProcessSetup"/>
+					</hook>
+				</hooks>
 			</instance>
 		</config>
 	

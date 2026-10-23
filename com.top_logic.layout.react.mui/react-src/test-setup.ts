@@ -27,6 +27,16 @@ const globalCss = (globalThis as { CSS?: { escape?: (value: string) => string } 
 globalCss.CSS ??= {};
 globalCss.CSS.escape ??= (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, ch => '\\' + ch);
 
+// jsdom lays nothing out and gives a range no boxes. ProseMirror (the rich text editor) reads the
+// boxes of a range to scroll the selection into view; an empty box list answers that there is
+// nothing to scroll to.
+const emptyRect = () => new DOMRect(0, 0, 0, 0);
+Range.prototype.getBoundingClientRect ??= emptyRect;
+Range.prototype.getClientRects ??= () => {
+  const rects: DOMRect[] = [];
+  return Object.assign(rects, { item: (index: number) => rects[index] ?? null }) as unknown as DOMRectList;
+};
+
 // The emotion cache of the root wrapper puts the rules of Material UI into a CSS cascade layer (`@layer mui { … }`, see
 // MuiRoot). jsdom parses layer blocks, but its computed style only looks into the rules of a sheet
 // and into media blocks for the screen. A layer block answering the media list of the screen makes

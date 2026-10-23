@@ -28,6 +28,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.providers.ConstraintCheckByExpression;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -133,17 +134,21 @@ public class TestConstraintCheckUncheckedSecurity extends AbstractSearchExpressi
 
 	/**
 	 * A user who may not read the referenced employee can commit a change: the commit check sees
-	 * the derived reference, while a read of that user outside the check is filtered.
+	 * the derived reference. The value of a derived attribute does not depend on the reader (R12 of
+	 * the Discover specification), only a secured evaluation reading it is filtered (R4).
 	 */
-	public void testModifyAsUserWithoutReadRight() {
-		TLContextManager.inPersonContext(_user, () -> {
-			assertNull("The derived reference is filtered for the user's read rights.",
+	public void testModifyAsUserWithoutReadRight() throws ParseException {
+		TLContextManager.<Void, ParseException, RuntimeException> inPersonContext(_user, () -> {
+			assertSame("The derived reference does not depend on the reader.", _a,
 				_t.tValueByName(DERIVED_REF));
+			assertNull("A secured script of the user does not see the derived reference.",
+				eval("t -> $t.get(`" + MODULE + ":ConstrainedRecord#" + DERIVED_REF + "`)", _t));
 
 			rename("t2");
 
-			assertNull("The derived reference is still filtered for the user's read rights.",
+			assertSame("The derived reference still does not depend on the reader.", _a,
 				_t.tValueByName(DERIVED_REF));
+			return null;
 		});
 
 		assertEquals("t2", _t.tValueByName(NAME));

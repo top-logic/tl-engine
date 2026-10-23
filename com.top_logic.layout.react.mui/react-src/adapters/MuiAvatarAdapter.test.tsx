@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
-import { avatarCategory, tooltipProps } from 'tl-react-bridge';
+import { categoryOf, tooltipProps } from 'tl-react-bridge';
 import type { AvatarStateJson } from 'tl-react-bridge';
 import type { ThemeOptions } from '@mui/material/styles';
 import MuiAvatarAdapter, { CATEGORY_ATTRIBUTE, SIZE_ATTRIBUTE } from './MuiAvatarAdapter';
@@ -10,7 +10,7 @@ import { CONTROL_ID, mountAdapter, styleRules } from './wire-test-support';
 
 /** A display name and the category it maps to. */
 const NAME = 'Ada Lovelace';
-const CATEGORY = avatarCategory(NAME);
+const CATEGORY = categoryOf(NAME);
 
 /** The attribute and value of the tooltip of the name. */
 const [TOOLTIP_ATTR, TOOLTIP] = Object.entries(tooltipProps(NAME))[0];

@@ -463,7 +463,7 @@ an application that depends on `tl-chat` needs no entry of its own:
 
 ```xml
 <module-script name="tl-react-agent-chat" resource="/script/tl-chat-ui.js" requires="tl-react-bridge"/>
-<stylesheet name="tl-react-agent-chat-css" resource="/script/tl-chat-ui.css" requires="tl-react-controls-css"/>
+<stylesheet name="tl-react-agent-chat-css" resource="/script/tl-chat-ui.css" requires="tl-design-system-components"/>
 ```
 
 The `resources` list is keyed by `name`, so an application that still declares one of these names

@@ -100,8 +100,18 @@ public interface SecurityConfig extends ConfigurationItem {
 		 *        The {@link Config} to create {@link ViewConfig} for.
 		 */
 		static ViewConfig newInstance(Config view) {
+			return newInstance(view.getName());
+		}
+
+		/**
+		 * Creates a new {@link ViewConfig} for the security object with the given name.
+		 *
+		 * @param name
+		 *        The name of the security object to create a {@link ViewConfig} for.
+		 */
+		static ViewConfig newInstance(ComponentName name) {
 			ViewConfig result = TypedConfiguration.newConfigItem(ViewConfig.class);
-			result.setName(view.getName());
+			result.setName(name);
 			return result;
 		}
 

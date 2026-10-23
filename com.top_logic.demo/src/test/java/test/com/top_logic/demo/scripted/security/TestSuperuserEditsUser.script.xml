@@ -1,0 +1,885 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Superuser anlegen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Alle loeschen.xml"
+					template-name-comment="Variable Alle löschen"
+				/>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="ergebnis"
+							value="usuper"
+						/>
+						<parameter name="Loginname"
+							value="usuper"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Passwort setzen.xml"
+					template-name-comment="Passwort setzen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="usuper"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Unternehmen anlegen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Fach. Administration > Unternehmen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neu..."
+							command-name="displayDialog_addCompanyContactDialog"
+							component-implementation-comment="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+							component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Name"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="SuperuserTestFirma"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Straße"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Test"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Postleitzahl"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Test"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Stadt"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Test"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Land"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Deutschland"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.contact.layout.company.CompanyContactCreateHandler"
+							command-label="Anlegen"
+							command-name="companyContactCreate"
+							component-implementation-comment="com.top_logic.contact.layout.company.CreateCompanyContactComponent"
+							component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#addCompanyContact"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+							component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Gruppe Superusers zuweisen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Benutzerverwaltung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="usuper"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Gruppen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Superusers"
+									/>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Benutzer"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Als Superuser einen Benutzer anlegen, bearbeiten und löschen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer anmelden.xml"
+					template-name-comment="Nutzer anmelden"
+				>
+					<parameters>
+						<parameter name="Username"
+							value="usuper"
+						/>
+						<parameter name="ProcessId"
+							value="usuper"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Action-Nutzer-Anlegen.xml"
+					template-name-comment="Nutzer Anlegen"
+				>
+					<parameters>
+						<parameter name="Loginname"
+							value="uedited"
+						/>
+						<parameter name="Tester"
+							value="usuper"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Alle Attribute bearbeiten"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="usuper"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Benutzerverwaltung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="usuper"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="uedited"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+							command-label="Bearbeiten"
+							command-name="customEdit"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+							user-id="usuper"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Vorname"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Erika"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Name"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Mustermann"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Titel"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Dr."
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="E-Mail"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="erika.mustermann@example.com"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Telefon"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="+49 721 1234-0"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Telefon mobil"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="+49 170 1234567"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Tel. privat"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="+49 721 7654321"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Fax"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="+49 721 1234-99"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Bemerkungen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Von einem Superuser bearbeitet."
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Eingeschränktes Benutzerkonto"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="MFA Anforderung"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Erforderlich"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Gruppen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Benutzer"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Stellvertreter"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="usuper, usuper"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Zeitzone"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="(UTC-03:00) Araguaina"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Sprache"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Englisch"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Land"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Österreich"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="usuper"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Unternehmen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="SuperuserTestFirma (Test)"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+							command-label="Speichern"
+							command-name="defaultSave"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+							user-id="usuper"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Vorname"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Erika"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Name"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Mustermann"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Titel"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Dr."
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="E-Mail"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="erika.mustermann@example.com"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Telefon"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="+49 721 1234-0"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Telefon mobil"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="+49 170 1234567"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Tel. privat"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="+49 721 7654321"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Fax"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="+49 721 1234-99"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Bemerkungen"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Von einem Superuser bearbeitet."
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="usuper"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+								<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+									label="Eingeschränktes Benutzerkonto"
+								>
+									<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Berechtigungen > Benutzerverwaltung > Details"
+									/>
+								</model>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="true"
+							/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Benutzer löschen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="usuper"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Berechtigungen > Benutzerverwaltung"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="usuper"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="Mustermann"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Berechtigungen > Benutzerverwaltung > Benutzer"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+							command-label="Zugang entfernen"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+							user-id="usuper"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+							command-label="Benutzer löschen"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="admin/security/accounts/detailsForm.layout.xml#Form"
+							user-id="usuper"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Nutzer/Nutzer abmelden.xml"
+					template-name-comment="Nutzer abmelden"
+					user-id="usuper"
+				/>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Cleanup"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Unternehmen löschen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Fach. Administration > Unternehmen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+									name="SuperuserTestFirma"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactTable"
+									tab-path="Administration > Fach. Administration > Unternehmen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler"
+							command-label="Löschen"
+							command-name="companyContactDelete"
+							component-implementation-comment="com.top_logic.contact.layout.company.EditCompanyContactComponent"
+							component-name="com.top_logic.contact/admin/companyContacts/companyContactView.layout.xml#companyContactEdit"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:Nutzer/Nutzer-loeschen-byName.xml"
+					template-name-comment="Nutzer loeschen byName"
+				>
+					<parameters>
+						<parameter name="userName"
+							value="usuper"
+						/>
+					</parameters>
+				</action>
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Variable/Action-Variable-Loeschen.xml"
+					template-name-comment="Variable Loeschen"
+				>
+					<parameters>
+						<parameter name="Name"
+							value="usuper"
+						/>
+					</parameters>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

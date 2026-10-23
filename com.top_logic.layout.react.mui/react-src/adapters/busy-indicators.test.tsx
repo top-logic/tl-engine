@@ -86,7 +86,7 @@ describe('the bar of a job status (TLJobStatus) as MUI progress bar', () => {
     const bar = screen.getByRole('progressbar');
     expectMuiBar(bar);
     expect(bar.getAttribute('aria-valuenow')).toBe('40');
-    expect(bar.closest('.tlJobStatus__bar')).not.toBeNull();
+    expect(bar.closest('.tl-job-status__bar')).not.toBeNull();
   });
 
   it('draws a running job without a share as an indeterminate MUI bar', () => {
@@ -180,7 +180,7 @@ describe('the busy indicator of the icon popup as MUI spinner', () => {
     const spinner = screen.getByRole('progressbar', { name: LABEL_ICONS_LOADING });
     expect(spinner.classList).toContain('MuiCircularProgress-root');
     expect(spinner.style.width).toBe('24px');
-    expect(spinner.closest('.tlIconSelect__loading')).not.toBeNull();
+    expect(spinner.closest('.tl-status')).not.toBeNull();
     expect(document.querySelector('.tl-spinner')).toBeNull();
   });
 

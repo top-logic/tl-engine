@@ -8,9 +8,11 @@ package com.top_logic.ai.demo;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import junit.extensions.TestSetup;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -18,7 +20,15 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
+import com.top_logic.ai.demo.secdemo.SecDemoSetup;
+import com.top_logic.ai.demo.secdemo.SecDemoSetup.PersonaConfig;
+import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.services.InitialGroupManager;
+import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -39,6 +49,13 @@ import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.tool.boundsec.BoundHelper;
+import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
+import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
+import com.top_logic.util.LayoutBasedSecurity;
+import com.top_logic.util.StartupHooks;
+import com.top_logic.util.StartupHooks.HookConfig;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -48,7 +65,7 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * Every subclass runs against a real application boot of the opt-in aspect
  * {@code WEB-INF/conf/secdemo.config.xml}: real roles from {@code InitialRolesManager}, real group
- * memberships and accounts from {@link SecDemoSetupService}, the shipped {@code <tool-access>}
+ * memberships and accounts from {@link SecDemoSetup}, the shipped {@code <tool-access>}
  * policy, and the running {@code ToolRegistryService} with the {@code @ToolMethod(group = ...)}
  * declarations of every registered tool. Nothing is stubbed - a test that passes here is a statement
  * about the deployed configuration, not about a hand-built policy object.
@@ -57,7 +74,7 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * The persona names are deliberately written out in each test rather than looked up, so that a
  * failure message names the persona whose behaviour changed. What is looked up is the <em>set</em> of
- * personas ({@link SecDemoSetupService#personaLogins()}), for the tests that must cover all of them:
+ * personas ({@link #personaLogins()}), for the tests that must cover all of them:
  * a test that hard-coded the list would silently stop covering a persona added to the aspect.
  * </p>
  *
@@ -323,12 +340,75 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	}
 
 	/**
+	 * The {@link HookConfig#getId() ID} of the {@link StartupHooks startup hook} that sets up the test
+	 * bed.
+	 */
+	public static final String SECDEMO_HOOK = "secdemo";
+
+	/**
+	 * The configuration of the test bed, as configured for the {@link #SECDEMO_HOOK startup hook}.
+	 */
+	public static SecDemoSetup.Config<?> secDemoConfig() {
+		StartupHooks.Config hooks;
+		try {
+			hooks = (StartupHooks.Config) ApplicationConfig.getInstance().getServiceConfiguration(StartupHooks.class);
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
+		for (HookConfig hook : hooks.getHooks()) {
+			if (SECDEMO_HOOK.equals(hook.getId())) {
+				return (SecDemoSetup.Config<?>) hook.getAction();
+			}
+		}
+		throw new AssertionError("No startup hook '" + SECDEMO_HOOK + "' in 'secdemo.config.xml'.");
+	}
+
+	/**
+	 * A {@link SecDemoSetup} with the {@link #secDemoConfig() configuration of the test bed}.
+	 */
+	public static SecDemoSetup secDemoSetup() {
+		return TypedConfigUtil.createInstance(secDemoConfig());
+	}
+
+	/**
+	 * The logins of the configured personas, in configuration order.
+	 *
+	 * <p>
+	 * For tests that want to walk the whole matrix without repeating it: the fixture is the aspect
+	 * file, and a test that hard-codes the list can silently stop covering a persona that was added
+	 * there.
+	 * </p>
+	 *
+	 * @return The logins, never <code>null</code>.
+	 */
+	public static List<String> personaLogins() {
+		List<String> logins = new ArrayList<>();
+		for (PersonaConfig persona : secDemoConfig().getPersonas()) {
+			logins.add(persona.getLogin());
+		}
+		return logins;
+	}
+
+	/**
+	 * The roles each configured persona is expected to hold on the security root, indexed by login.
+	 *
+	 * @return The mapping, never <code>null</code>.
+	 */
+	public static Map<String, List<String>> personaRoles() {
+		Map<String, List<String>> roles = new LinkedHashMap<>();
+		for (PersonaConfig persona : secDemoConfig().getPersonas()) {
+			roles.put(persona.getLogin(), persona.getRoles());
+		}
+		return roles;
+	}
+
+	/**
 	 * The seeded project of the given name, asserted to exist.
 	 */
 	protected static TLObject project(String name) {
-		TLObject project = SecDemoSetupService.projectByName(name);
+		TLObject project = SecDemoSetup.projectByName(name);
 		assertNotNull("The project '" + name + "' must have been seeded by "
-			+ SecDemoSetupService.class.getSimpleName() + "; check <projects> in 'secdemo.config.xml'.",
+			+ SecDemoSetup.class.getSimpleName() + "; check <projects> in 'secdemo.config.xml'.",
 			project);
 		return project;
 	}
@@ -366,7 +446,7 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 	protected static Person account(String login) {
 		Person account = Person.byName(login);
 		assertNotNull("The persona '" + login + "' must have been seeded by "
-			+ SecDemoSetupService.class.getSimpleName() + "; check the <personas> list in"
+			+ SecDemoSetup.class.getSimpleName() + "; check the <personas> list in"
 			+ " 'secdemo.config.xml'.", account);
 		assertFalse("The persona '" + login + "' must not be an administrator, otherwise it would"
 			+ " bypass the checks under test.", account.isAdmin());
@@ -409,16 +489,33 @@ public abstract class SecDemoPersonaTest extends BasicTestCase {
 		modules.add(ModelService.Module.INSTANCE);
 		modules.add(LabelProviderService.Module.INSTANCE);
 		modules.add(PersonManager.Module.INSTANCE);
-		modules.add(SecDemoSetupService.Module.INSTANCE);
+		// The services the test bed's setup requires.
+		modules.add(TLSecurityDeviceManager.Module.INSTANCE);
+		modules.add(InitialRolesManager.Module.INSTANCE);
+		modules.add(InitialGroupManager.Module.INSTANCE);
+		modules.add(AccessManager.Module.INSTANCE);
+		modules.add(BoundHelper.Module.INSTANCE);
+		modules.add(CommandGroupRegistry.Module.INSTANCE);
+		modules.add(SecurityComponentCache.Module.INSTANCE);
+		modules.add(LayoutBasedSecurity.Module.INSTANCE);
 		modules.add(ToolRegistryService.Module.INSTANCE);
 		modules.add(AiToolAccessService.Module.INSTANCE);
 		for (BasicRuntimeModule<?> module : additionalModules) {
 			modules.add(module);
 		}
 
+		// In the application, the setup runs as startup hook after all services are started.
+		Test fixture = new TestSetup(new TestSuite(testClass)) {
+			@Override
+			protected void setUp() throws Exception {
+				super.setUp();
+				secDemoSetup().perform();
+			}
+		};
+
 		return KBSetup.getSingleKBTest(
 			ServiceTestSetup.createSetup(
-				new TestSuite(testClass),
+				fixture,
 				modules.toArray(new BasicRuntimeModule<?>[modules.size()])));
 	}
 

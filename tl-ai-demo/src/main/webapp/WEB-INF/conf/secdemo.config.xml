@@ -31,7 +31,7 @@
 	    tool of the third deliberately left unclassified,
 	  * the component (layout) access every persona needs to reach the agent chat and the
 	    TL-Script console,
-	  * SecDemoSetupService, which seeds the persona accounts, the example projects and tickets, and
+	  * SecDemoSetup, which seeds the persona accounts, the example projects and tickets, and
 	    verifies at boot that the declarative rules actually produced the roles the matrix claims.
 
 	What it deliberately does NOT wire: "use-default-security-parent". The engine default is false and
@@ -566,7 +566,7 @@
 			"Script console"), hence three entries; the sibling views on those levels stay closed
 			because they are security components of their own with no grant.
 
-			The profile is named "*", which SecDemoSetupService expands to every role a configured
+			The profile is named "*", which SecDemoSetup expands to every role a configured
 			persona is expected to hold. Every persona therefore sees exactly the same UI, which is what
 			makes the allow/deny pairs comparable: the only thing that differs between two personas is
 			the policy, never what they can reach.
@@ -578,106 +578,110 @@
 			save changes" button is bound to "Write" and stays disabled - the agent runs started from
 			the console do their own writes in their own transaction on the background thread.
 		-->
-		<config service-class="com.top_logic.ai.demo.secdemo.SecDemoSetupService">
-			<instance class="com.top_logic.ai.demo.secdemo.SecDemoSetupService">
-				<!--
-					The persona matrix. One row per account: which groups it joins, which role the tier
-					rule is therefore expected to give it on the security root, which projects it
-					partners on, and what the persona is here to demonstrate.
-
-					The roles are NOT assigned here - the declarative rules above do that, and that is
-					the whole difference from the previous version of this fixture. They are stated so
-					that the boot log is a readable index of the fixture, and so that the service can
-					*verify* the rules produced them. A mismatch is a warning naming the persona and the
-					role, which is exactly the failure a hand-assigned role used to hide.
-				-->
-				<personas>
-					<persona login="anna"
-						groups="projectPartners"
-						roles="projectPartner"
-						partner-of="Alpha"
-						purpose="tier and scope: write tools globally, and only project Alpha to write them on"
-					/>
-					<persona login="ben"
-						groups="ticketReaders"
-						roles="ticketReader"
-						purpose="reads every ticket, writes none, and is refused a ticket creation at L1 - the loud case"
-					/>
-					<persona login="cara"
-						groups="projectPartners, ticketReaders"
-						roles="projectPartner, ticketReader"
-						partner-of="Beta"
-						purpose="both roles: partner of Beta, reader of every ticket - reads a ticket of Alpha and cannot edit it"
-					/>
-					<persona login="dora"
-						groups="projectPartners"
-						roles="projectPartner"
-						purpose="the failure mode: holds the tier, scopes nothing. Write tools and nothing to write, and reads come back empty rather than denied"
-					/>
-				</personas>
-
-				<!--
-					The example projects. Each one names the partners it grants the scope role to, by
-					login, and the tickets it contains. Anna partners on Alpha, Cara on Beta, and Dora
-					on nothing - which is what makes her the failure mode rather than a fourth partner.
-				-->
-				<projects>
-					<project name="Alpha"
-						partners="anna"
-					>
-						<tickets>
-							<ticket title="Alpha: cut the release branch"
-								body="Tag the build, then update the changelog."
-							/>
-							<ticket title="Alpha: fix the login timeout"
-								body="Sessions expire after 30s instead of 30min."
-							/>
-						</tickets>
-					</project>
-					<project name="Beta"
-						partners="cara"
-					>
-						<tickets>
-							<ticket title="Beta: import the customer list"
-								body="The CSV export of the old system has a BOM."
-							/>
-						</tickets>
-					</project>
-				</projects>
-
-				<component-access>
-					<profile name="*">
-						<!-- The "Albert" tab. -->
-						<view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
-							<commandGroup name="Read"/>
-						</view>
-						<!-- The chat itself, a security component of its own. -->
-						<view name="tl-chat/chat/agent.layout.xml#agent">
-							<commandGroup name="Read"/>
-						</view>
-						<!-- The three nested tabs leading to the script console. -->
-						<view name="admin/index.layout.xml#adminView">
-							<commandGroup name="Read"/>
-						</view>
-						<view name="admin/studio/index.layout.xml#studioView">
-							<commandGroup name="Read"/>
-						</view>
-						<view name="com.top_logic.model.search/admin/scriptConsole.layout.xml#view">
-							<commandGroup name="Read"/>
-						</view>
-					</profile>
-				</component-access>
-			</instance>
-		</config>
-
-		<config service-class="com.top_logic.basic.module.ModuleSystem">
+		<config service-class="com.top_logic.util.StartupHooks">
 			<instance>
-				<modules>
-					<!-- Seeds the persona accounts, their group memberships and the example data. -->
-					<module key="com.top_logic.ai.demo.secdemo.SecDemoSetupService$Module"
-						value="true"
-					/>
-				</modules>
+				<hooks>
+					<!--
+						Seeds the persona accounts, their group memberships and the example data, and grants the
+						component access. After the import of the application's access configuration, which
+						resets the access of every view when the configuration has changed.
+					-->
+					<hook id="secdemo"
+						config:position="after"
+						config:reference="access-configuration"
+						on-error="fail"
+					>
+						<action class="com.top_logic.ai.demo.secdemo.SecDemoSetup">
+							<!--
+								The persona matrix. One row per account: which groups it joins, which role the tier
+								rule is therefore expected to give it on the security root, which projects it
+								partners on, and what the persona is here to demonstrate.
+
+								The roles are NOT assigned here - the declarative rules above do that, and that is
+								the whole difference from the previous version of this fixture. They are stated so
+								that the boot log is a readable index of the fixture, and so that the service can
+								*verify* the rules produced them. A mismatch is a warning naming the persona and the
+								role, which is exactly the failure a hand-assigned role used to hide.
+							-->
+							<personas>
+								<persona login="anna"
+									groups="projectPartners"
+									roles="projectPartner"
+									partner-of="Alpha"
+									purpose="tier and scope: write tools globally, and only project Alpha to write them on"
+								/>
+								<persona login="ben"
+									groups="ticketReaders"
+									roles="ticketReader"
+									purpose="reads every ticket, writes none, and is refused a ticket creation at L1 - the loud case"
+								/>
+								<persona login="cara"
+									groups="projectPartners, ticketReaders"
+									roles="projectPartner, ticketReader"
+									partner-of="Beta"
+									purpose="both roles: partner of Beta, reader of every ticket - reads a ticket of Alpha and cannot edit it"
+								/>
+								<persona login="dora"
+									groups="projectPartners"
+									roles="projectPartner"
+									purpose="the failure mode: holds the tier, scopes nothing. Write tools and nothing to write, and reads come back empty rather than denied"
+								/>
+							</personas>
+
+							<!--
+								The example projects. Each one names the partners it grants the scope role to, by
+								login, and the tickets it contains. Anna partners on Alpha, Cara on Beta, and Dora
+								on nothing - which is what makes her the failure mode rather than a fourth partner.
+							-->
+							<projects>
+								<project name="Alpha"
+									partners="anna"
+								>
+									<tickets>
+										<ticket title="Alpha: cut the release branch"
+											body="Tag the build, then update the changelog."
+										/>
+										<ticket title="Alpha: fix the login timeout"
+											body="Sessions expire after 30s instead of 30min."
+										/>
+									</tickets>
+								</project>
+								<project name="Beta"
+									partners="cara"
+								>
+									<tickets>
+										<ticket title="Beta: import the customer list"
+											body="The CSV export of the old system has a BOM."
+										/>
+									</tickets>
+								</project>
+							</projects>
+
+							<component-access>
+								<profile name="*">
+									<!-- The "Albert" tab. -->
+									<view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
+										<commandGroup name="Read"/>
+									</view>
+									<!-- The chat itself, a security component of its own. -->
+									<view name="tl-chat/chat/agent.layout.xml#agent">
+										<commandGroup name="Read"/>
+									</view>
+									<!-- The three nested tabs leading to the script console. -->
+									<view name="admin/index.layout.xml#adminView">
+										<commandGroup name="Read"/>
+									</view>
+									<view name="admin/studio/index.layout.xml#studioView">
+										<commandGroup name="Read"/>
+									</view>
+									<view name="com.top_logic.model.search/admin/scriptConsole.layout.xml#view">
+										<commandGroup name="Read"/>
+									</view>
+								</profile>
+							</component-access>
+						</action>
+					</hook>
+				</hooks>
 			</instance>
 		</config>
 	</services>

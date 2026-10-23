@@ -214,6 +214,8 @@ describe('the TopLogic drawing of the parts', () => {
     render(<>
       <MenuTriggerPart {...props} />
       <MenuTriggerPart {...props} label="Aktionen" icon="css:bi bi-three-dots" expanded />
+      <MenuTriggerPart {...props} label="Format" icon="css:bi bi-type" small />
+      <MenuTriggerPart {...props} label="Ansicht" small />
     </>);
 
     const labeled = screen.getByRole('button', { name: 'Mehr' });
@@ -225,6 +227,13 @@ describe('the TopLogic drawing of the parts', () => {
     expect(iconOnly.className).toBe('tl-button tl-button--ghost tl-type-body tl-button--icon');
     expect(iconOnly.getAttribute('aria-expanded')).toBe('true');
     expect(iconOnly.textContent).toBe('');
+    expect(iconOnly.querySelector('i')!.classList.contains('tl-icon-md')).toBe(true);
+
+    // Small applies to the icon alone, like the part Button.
+    const small = screen.getByRole('button', { name: 'Format' });
+    expect(small.className).toBe('tl-button tl-button--ghost tl-type-body tl-button--sm tl-button--icon');
+    expect(small.querySelector('i')!.classList.contains('tl-icon-sm')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Ansicht' }).className).toBe('tl-button tl-button--ghost tl-type-body');
   });
 
   it('draws a disclosure toggle as the toggle of the design system, named by its label', async () => {

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The projects of the control application and their workspaces: a list of the projects with the
+	state of each workspace and the address of its running application, and beside it the selected
+	project with its workspace and the output of the last operation on it.
+	
+	The operations on a workspace run in the background (ProjectWorkspaces) and commit their output
+	and state while they run. The source channel "commits" brings these commits to the window as
+	soon as they are made, so the list, the state and the output follow the operation without a
+	click. The commands are offered according to the state of the selected workspace.
+-->
+<view>
+	<channels>
+		<channel name="project"/>
+		<source-channel name="commits"
+			update-interval="1000"
+		>
+			<source class="com.top_logic.layout.view.channel.CommitSource"
+				types="tl.factory:Project, tl.factory:Workspace"
+			/>
+		</source-channel>
+		<derived-channel name="workspace"
+			expr="$project.get(`tl.factory:Project#workspace`)"
+			inputs="project"
+			observed-types="tl.factory:Workspace"
+		/>
+		<derived-channel name="status"
+			expr="$workspace.get(`tl.factory:Workspace#status`)"
+			inputs="workspace"
+		/>
+		<derived-channel name="previewLink"
+			inputs="workspace"
+		>
+			<expr><![CDATA[{
+	url = $workspace.get(`tl.factory:Workspace#previewUrl`);
+	if($url == null, null, {{{<a href="{$url}" target="_blank" rel="noopener">{$url}</a>}}});
+}]]></expr>
+		</derived-channel>
+	</channels>
+
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="320"
+				size="45"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Projects</en>
+						<de>Projekte</de>
+					</title>
+					<commands>
+						<generic-command name="createApplication"
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Create application</en>
+								<de>Anwendung anlegen</de>
+							</label>
+							<create-transient type="tl.factory:Project">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="factory/create-project.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="project"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+						<generic-command name="createWorkspace"
+							clique="edit"
+							image="css:bi bi-box-seam"
+							inputs="project, workspace"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Create workspace</en>
+								<de>Workspace anlegen</de>
+							</label>
+							<executability>
+								<visible-if expr="$project != null &amp;&amp; $workspace == null"/>
+							</executability>
+							<execute-script function="factoryCreateWorkspace($project)"/>
+						</generic-command>
+						<generic-command name="startWorkspace"
+							clique="edit"
+							image="css:bi bi-play-fill"
+							inputs="project, status"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Start</en>
+								<de>Starten</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if([`tl.factory:WorkspaceStatus#STOPPED`, `tl.factory:WorkspaceStatus#CREATED`, `tl.factory:WorkspaceStatus#UNKNOWN`].containsElement($status), null, #('The workspace is not stopped.'@en, 'Der Workspace ist nicht gestoppt.'@de))"/>
+							</executability>
+							<execute-script function="factoryStart($project)"/>
+						</generic-command>
+						<generic-command name="stopWorkspace"
+							clique="edit"
+							image="css:bi bi-stop-fill"
+							inputs="project, status"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Stop</en>
+								<de>Stoppen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if([`tl.factory:WorkspaceStatus#RUNNING`, `tl.factory:WorkspaceStatus#UNKNOWN`, `tl.factory:WorkspaceStatus#ERROR`].containsElement($status), null, #('The workspace is not running.'@en, 'Der Workspace läuft nicht.'@de))"/>
+							</executability>
+							<execute-script function="factoryStop($project)"/>
+						</generic-command>
+						<generic-command name="cleanupWorkspace"
+							clique="delete"
+							image="css:bi bi-eraser"
+							inputs="project, status"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Clean up</en>
+								<de>Aufräumen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), null))"/>
+							</executability>
+							<confirm expr="#('Remove the workspace of {0} with its container, sources and database? The project is kept.'@en, 'Den Workspace von {0} mit Container, Quellen und Datenbank entfernen? Das Projekt bleibt erhalten.'@de).fill($project)"/>
+							<execute-script function="factoryCleanup($project)"/>
+						</generic-command>
+						<generic-command name="deleteProject"
+							clique="delete"
+							image="css:bi bi-trash"
+							inputs="project, workspace"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete project</en>
+								<de>Projekt löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($workspace != null, #('Clean up the workspace first.'@en, 'Zuerst den Workspace aufräumen.'@de), null)"/>
+							</executability>
+							<confirm expr="#('Delete project {0}?'@en, 'Projekt {0} löschen?'@de).fill($project)"/>
+							<delete-object/>
+							<write-channel name="project"
+								clear="true"
+							/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="tl.factory:Project, tl.factory:Workspace"
+						personalization-key="tl-factory-projects"
+						selection="project"
+						types="tl.factory:Project"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="artifactId"/>
+							<column attribute="engineVersion"/>
+							<computed-column name="status"
+								type="tl.factory:WorkspaceStatus"
+							>
+								<label>
+									<en>Status</en>
+									<de>Status</de>
+								</label>
+								<value>$row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#status`)</value>
+							</computed-column>
+							<computed-column name="preview"
+								type="tl.core:String"
+							>
+								<label>
+									<en>Preview</en>
+									<de>Vorschau</de>
+								</label>
+								<value>$row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#previewUrl`)</value>
+							</computed-column>
+						</columns>
+						<rows>all(`tl.factory:Project`)</rows>
+						<row-class><![CDATA[{
+	status = $row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#status`);
+	if($status == `tl.factory:WorkspaceStatus#ERROR`, 'tl-status-error',
+		if($status == `tl.factory:WorkspaceStatus#RUNNING`, 'tl-status-success',
+			if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`].containsElement($status), 'tl-status-info', null)));
+}]]></row-class>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="55"
+				unit="%"
+			>
+				<panel with-inset="true">
+					<title>
+						<en>Project</en>
+						<de>Projekt</de>
+					</title>
+					<form
+						input="project"
+						mode-switch="false"
+					>
+						<field attribute="name"/>
+						<field attribute="groupId"/>
+						<field attribute="artifactId"/>
+						<field attribute="engineVersion"/>
+					</form>
+					<html input="previewLink"/>
+					<form
+						input="workspace"
+						mode-switch="false"
+					>
+						<field attribute="initialPassword"/>
+						<field attribute="status"/>
+						<field attribute="workspaceId"/>
+						<field attribute="hostPort"/>
+						<field attribute="log"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

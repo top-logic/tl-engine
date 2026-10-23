@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,6 +62,13 @@ import com.top_logic.util.error.TopLogicException;
  * that builds a throwaway application of the same archetype into it, so that building an
  * application downloads (almost) nothing. The file {@link #RELEASE_COMPLETE_MARKER} records that
  * the repository is complete; a repository without it is filled again.
+ * </p>
+ *
+ * <p>
+ * The entry script and all commands run as the {@link #WORKSPACE_USER}, which is not root. The
+ * image creates the mount points of all volumes owned by this user, so that a fresh volume belongs
+ * to it as well. Root is used only explicitly: to take over a release repository that was filled
+ * by root before it is filled again.
  * </p>
  */
 public class ApplicationWorkspaces {
@@ -244,6 +252,37 @@ public class ApplicationWorkspaces {
 	 * Value of {@link #ENV_BROWSER} opening no browser.
 	 */
 	public static final String BROWSER_NONE = "none";
+
+	/**
+	 * The user in the workspace image that runs the entry script and all commands.
+	 */
+	public static final String WORKSPACE_USER = "tl";
+
+	/**
+	 * The root user by its ID, for the commands that need it.
+	 */
+	public static final String ROOT_USER = "0";
+
+	/**
+	 * Placeholder in the {@link ImageContext#DOCKERFILE} of the image replaced by the
+	 * {@link #WORKSPACE_USER}.
+	 */
+	public static final String WORKSPACE_USER_PLACEHOLDER = "@WORKSPACE_USER@";
+
+	/**
+	 * Placeholder in the {@link ImageContext#DOCKERFILE} of the image replaced by the mount paths
+	 * of all volumes, separated by spaces.
+	 *
+	 * @see #VOLUME_PATHS
+	 */
+	public static final String VOLUME_PATHS_PLACEHOLDER = "@VOLUME_PATHS@";
+
+	/**
+	 * The mount paths of all volumes a workspace of this class has, the paths the image creates
+	 * owned by the {@link #WORKSPACE_USER}.
+	 */
+	public static final List<String> VOLUME_PATHS =
+		Collections.unmodifiableList(Arrays.asList(SOURCE_PATH, REPOSITORY_PATH, RELEASE_PATH));
 
 	/**
 	 * Placeholder in the Maven settings of the image replaced by the
@@ -543,6 +582,9 @@ public class ApplicationWorkspaces {
 				}
 
 				step(progress, "Filling the release repository of TopLogic " + version);
+				// A repository filled by an image whose commands ran as root.
+				run(resolverId, ExecCommand.of("chown", "-R", WORKSPACE_USER + ":" + WORKSPACE_USER, RELEASE_PATH)
+					.setUser(ROOT_USER), progress);
 				String appDir = RESOLVER_DIR + PATH_SEPARATOR + RESOLVER_ARTIFACT_ID;
 				run(resolverId, ExecCommand.of("rm", "-rf", appDir), progress);
 				run(resolverId,
@@ -576,8 +618,11 @@ public class ApplicationWorkspaces {
 	 */
 	public static ImageContext imageContext(String repositoryUrl) {
 		String settings = resource(SETTINGS_FILE).replace(REPOSITORY_URL_PLACEHOLDER, xmlText(repositoryUrl));
+		String dockerfile = resource(ImageContext.DOCKERFILE)
+			.replace(WORKSPACE_USER_PLACEHOLDER, WORKSPACE_USER)
+			.replace(VOLUME_PATHS_PLACEHOLDER, String.join(" ", VOLUME_PATHS));
 		return new ImageContext()
-			.add(ImageContext.DOCKERFILE, resource(ImageContext.DOCKERFILE))
+			.add(ImageContext.DOCKERFILE, dockerfile)
 			.add(ENTRY_SCRIPT, resource(ENTRY_SCRIPT))
 			.add(SETTINGS_FILE, settings);
 	}

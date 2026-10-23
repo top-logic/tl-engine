@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), and before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root).
 ---
 
 # Control application (tl-factory)
@@ -43,6 +43,41 @@ it is changed in the application.
 The output of the application itself - the main process of the container - goes to the log of the
 container in the container platform (`docker logs <container>`); the control application only
 shows the output of its own operations.
+
+## The workspace image
+
+`ApplicationWorkspaces.imageContext()` holds the files the image is built from (the `Dockerfile`,
+the entry script and the Maven settings in the package `com.top_logic.factory.workspace.app.image`);
+the tag of the image is the hash of these files, so a change of a pinned version in the
+`Dockerfile` leads to a new image. On top of `eclipse-temurin:21-jdk` it contains:
+
+- Maven, git, and Node with npm from the Node.js distribution.
+- **Claude Code** (`ARG CLAUDE_CODE_VERSION`), installed with npm. The image sets
+  `DISABLE_AUTOUPDATER`, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, `DISABLE_TELEMETRY`,
+  `DISABLE_ERROR_REPORTING`, `CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY` and
+  `CLAUDE_CODE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL`: Claude Code neither updates itself nor its
+  plugins and sends nothing but its model requests. The image holds no credentials.
+- The Claude Code plugin **`tl-claude-tools`** (skills and the `tl-mcp` server) from its public
+  repository at the commit `ARG TL_CLAUDE_TOOLS_COMMIT`, checked out to `/opt/tl-claude-tools` and
+  registered as a local marketplace `toplogic` for the workspace user.
+- The **Playwright MCP server** (`ARG PLAYWRIGHT_MCP_VERSION`), registered for the workspace user as
+  MCP server `playwright`, with the headless shell of Chromium and its system libraries. Snapshots
+  and screenshots of the server go to `/tmp/playwright-mcp`, not into the sources.
+
+The entry script and every command run as the user `tl` (`ApplicationWorkspaces.WORKSPACE_USER`,
+uid 1000), not as root - Claude Code refuses to bypass its permission prompts as root. A command
+runs as root only if its `ExecCommand` says so (`setUser(ApplicationWorkspaces.ROOT_USER)`); the
+Docker provider signals commands as root. The image creates the mount points of all volumes
+(`ApplicationWorkspaces.VOLUME_PATHS`) owned by `tl`, so that a fresh named volume mounted there
+belongs to `tl` as well.
+
+Workspaces and release repositories of images that ran as root:
+
+- A **workspace** keeps the image it was created with and runs as root further on; the provider
+  never deletes an image. Its volumes belong to root, so it cannot be moved to the current image;
+  clean it up and create the workspace anew to get the agent tools.
+- A **release repository** filled by root stays usable: the workspaces mount it read-only. Before
+  a release repository is filled, the resolver takes it over for `tl` (`chown -R` as root).
 
 ## Commands and the log of a workspace
 

@@ -12,9 +12,15 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -36,6 +42,8 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
+import com.top_logic.factory.workspace.ExecProcess;
+import com.top_logic.factory.workspace.ImageContext;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceState;
 import com.top_logic.factory.workspace.app.ApplicationSpec;
@@ -44,8 +52,8 @@ import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
 
 /**
  * Integration test of {@link ApplicationWorkspaces}: an application is generated, built and run in
- * a Docker workspace with a given initial password of its account root, stopped, started again and
- * removed.
+ * a Docker workspace with a given initial password of its account root, the tools of an agent are
+ * checked in the workspace, the workspace is stopped, started again and removed.
  *
  * <p>
  * The test downloads the workspace base image, Maven and the TopLogic release artifacts and takes
@@ -108,6 +116,36 @@ public class TestApplicationWorkspaces extends TestCase {
 	 */
 	private static final String RANDOM_PASSWORD = "Initial password for 'root': ";
 
+	private static final Duration WAIT = Duration.ofSeconds(30);
+
+	/**
+	 * Declaration of the Claude Code version in the Dockerfile of the workspace image.
+	 */
+	private static final Pattern CLAUDE_CODE_VERSION =
+		Pattern.compile("^ARG CLAUDE_CODE_VERSION=(\\S+)$", Pattern.MULTILINE);
+
+	private static final String TL_PLUGIN = "tl-claude-tools@toplogic";
+
+	private static final String PLAYWRIGHT_MCP_SERVER = "playwright";
+
+	private static final String MCP_CONNECTED = "Connected";
+
+	private static final String MCP_COMMAND_LINE = "Command:";
+
+	private static final String MCP_ARGS_LINE = "Args:";
+
+	private static final String BROWSER_CHECK_TITLE = "headless-ok";
+
+	private static final String MCP_INITIALIZE = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\","
+		+ "\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},"
+		+ "\"clientInfo\":{\"name\":\"tl-factory-it\",\"version\":\"1\"}}}";
+
+	private static final String MCP_INITIALIZED = "{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}";
+
+	private static final String MCP_NAVIGATE = "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/call\","
+		+ "\"params\":{\"name\":\"browser_navigate\","
+		+ "\"arguments\":{\"url\":\"data:text/html,<title>" + BROWSER_CHECK_TITLE + "</title>\"}}}";
+
 	private DockerWorkspaceProvider _provider;
 
 	private ApplicationWorkspaces _applications;
@@ -169,6 +207,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		long reachable = System.currentTimeMillis();
 		assertLoginPage(url);
 		assertInitialPassword(created.getContainerId());
+		assertAgentTools();
 		assertEquals(0, _provider.exec(_workspaceId,
 			ExecCommand.of("sh", "-c", "echo " + DATA_CONTENT + " > " + DATA_FILE), ExecOutput.NONE));
 
@@ -244,6 +283,148 @@ public class TestApplicationWorkspaces extends TestCase {
 			}).awaitCompletion();
 		assertTrue("Initial password not taken from the environment.", log.indexOf(PASSWORD_FROM_ENV) >= 0);
 		assertTrue("Random initial password chosen.", log.indexOf(RANDOM_PASSWORD) < 0);
+	}
+
+	/**
+	 * The workspace runs its commands as the non-root {@link ApplicationWorkspaces#WORKSPACE_USER},
+	 * has Claude Code in the version of the image with the TopLogic plugin and the Playwright MCP
+	 * server, whose headless Chromium opens a page, and has no API key in its environment; a command of the
+	 * workspace user reads its input and is terminated.
+	 */
+	private void assertAgentTools() throws Exception {
+		assertEquals(ApplicationWorkspaces.WORKSPACE_USER + "\n", output(ExecCommand.of("id", "-un")));
+		assertFalse("Commands run as root.", "0\n".equals(output(ExecCommand.of("id", "-u"))));
+		assertEquals("0\n", output(ExecCommand.of("id", "-u").setUser(ApplicationWorkspaces.ROOT_USER)));
+
+		assertTrue("Unexpected Claude Code version.",
+			output(ExecCommand.of("claude", "--version")).startsWith(claudeCodeVersion() + " "));
+		String plugins = output(ExecCommand.of("claude", "plugin", "list"));
+		assertTrue("TopLogic plugin not installed: " + plugins, plugins.contains(TL_PLUGIN));
+		assertBrowserThroughMcp();
+
+		String env = output(ExecCommand.of("env"));
+		for (String line : env.split("\n")) {
+			String name = line.split("=", 2)[0];
+			assertFalse("Credential in the environment: " + name,
+				name.startsWith("ANTHROPIC_") || name.contains("API_KEY"));
+		}
+
+		CollectingOutput echo = new CollectingOutput();
+		try (ExecProcess process = _provider.startExec(_workspaceId, ExecCommand.of("cat"), echo)) {
+			process.write("ping\n");
+			process.closeStdin();
+			assertTrue("Command did not end after its input was closed.", process.waitFor(WAIT));
+			assertEquals(0, process.exitCode());
+			assertEquals("ping\n", echo.stdout());
+		}
+
+		CollectingOutput sleeper = new CollectingOutput();
+		try (ExecProcess process = _provider.startExec(_workspaceId,
+			ExecCommand.of("sh", "-c", "id -un; sleep 600"), sleeper)) {
+			sleeper.awaitStdout(ApplicationWorkspaces.WORKSPACE_USER + "\n");
+			process.terminate();
+			assertFalse(process.isAlive());
+			assertEquals(128 + 15, process.exitCode());
+		}
+	}
+
+	/**
+	 * The Playwright MCP server registered for Claude Code answers requests on its standard input,
+	 * opening a page in its headless Chromium.
+	 */
+	private void assertBrowserThroughMcp() throws Exception {
+		String registration = output(ExecCommand.of("claude", "mcp", "get", PLAYWRIGHT_MCP_SERVER));
+		assertTrue("Playwright MCP server not connected: " + registration,
+			registration.contains(MCP_CONNECTED));
+		List<String> command = new ArrayList<>();
+		for (String line : registration.split("\n")) {
+			String entry = line.trim();
+			if (entry.startsWith(MCP_COMMAND_LINE)) {
+				command.add(entry.substring(MCP_COMMAND_LINE.length()).trim());
+			} else if (entry.startsWith(MCP_ARGS_LINE)) {
+				command.addAll(Arrays.asList(entry.substring(MCP_ARGS_LINE.length()).trim().split(" +")));
+			}
+		}
+		assertFalse("No command of the Playwright MCP server: " + registration, command.isEmpty());
+
+		CollectingOutput responses = new CollectingOutput();
+		try (ExecProcess server = _provider.startExec(_workspaceId, ExecCommand.of(command), responses)) {
+			server.write(MCP_INITIALIZE + "\n");
+			server.flush();
+			responses.awaitStdoutContaining("\"id\":1");
+			server.write(MCP_INITIALIZED + "\n");
+			server.write(MCP_NAVIGATE + "\n");
+			server.flush();
+			responses.awaitStdoutContaining("Page Title: " + BROWSER_CHECK_TITLE);
+			server.terminate();
+			assertFalse(server.isAlive());
+		}
+	}
+
+	/**
+	 * The Claude Code version the workspace image installs.
+	 */
+	private String claudeCodeVersion() {
+		String dockerfile = new String(
+			ApplicationWorkspaces.imageContext(_applications.getConfig().getRepositoryUrl()).getFiles()
+				.get(ImageContext.DOCKERFILE),
+			StandardCharsets.UTF_8);
+		Matcher matcher = CLAUDE_CODE_VERSION.matcher(dockerfile);
+		assertTrue("No Claude Code version in the Dockerfile.", matcher.find());
+		return matcher.group(1);
+	}
+
+	private String output(ExecCommand command) throws InterruptedException {
+		CollectingOutput output = new CollectingOutput();
+		int exitCode = _provider.exec(_workspaceId, command, output);
+		assertEquals("Failed: " + command + "\n" + output.stdout() + output.stderr(), 0, exitCode);
+		return output.stdout();
+	}
+
+	/**
+	 * {@link ExecOutput} collecting the output of a command.
+	 */
+	private static final class CollectingOutput implements ExecOutput {
+
+		private final StringBuilder _stdout = new StringBuilder();
+
+		private final StringBuilder _stderr = new StringBuilder();
+
+		@Override
+		public synchronized void stdout(String text) {
+			_stdout.append(text);
+			notifyAll();
+		}
+
+		@Override
+		public synchronized void stderr(String text) {
+			_stderr.append(text);
+		}
+
+		synchronized String stdout() {
+			return _stdout.toString();
+		}
+
+		synchronized String stderr() {
+			return _stderr.toString();
+		}
+
+		synchronized void awaitStdout(String expected) throws InterruptedException {
+			await(stdout -> stdout.equals(expected), expected);
+		}
+
+		synchronized void awaitStdoutContaining(String expected) throws InterruptedException {
+			await(stdout -> stdout.contains(expected), expected);
+		}
+
+		private void await(Predicate<String> test, String expected) throws InterruptedException {
+			long deadline = System.currentTimeMillis() + WAIT.toMillis();
+			while (!test.test(_stdout.toString())) {
+				long left = deadline - System.currentTimeMillis();
+				assertTrue("Expected output not received: " + expected + ", got: " + _stdout + _stderr, left > 0);
+				wait(left);
+			}
+		}
 	}
 
 	private static long seconds(long from, long to) {

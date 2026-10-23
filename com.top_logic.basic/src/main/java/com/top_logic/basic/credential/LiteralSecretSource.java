@@ -24,8 +24,13 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * </p>
  *
  * <pre>
- * &lt;my-service api-key="unencrypted:%MY_API_KEY%"/&gt;
+ * &lt;my-service api-key="unencrypted:my-secret-key"/&gt;
  * </pre>
+ *
+ * <p>
+ * A secret from the environment is referenced by an {@link EnvironmentSecretSource} instead: the
+ * configuration then holds the name of the variable, not the secret.
+ * </p>
  */
 public class LiteralSecretSource extends AbstractConfiguredInstance<LiteralSecretSource.Config>
 		implements SecretSource {

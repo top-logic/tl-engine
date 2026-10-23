@@ -13,14 +13,17 @@ registrations, two sponsors and invoices on both sides of the budget.
 ```bash
 mvn -pl tl-chat,tl-chat-classic -am -DskipTests install   # the chat bundle must exist before the app starts
 cd tl-ai-demo
-tl_anthropic_api_key="unencrypted:$ANTHROPIC_API_KEY" mvn tl:resolve compile exec:java
+tl_anthropic_api_key="$ANTHROPIC_API_KEY" mvn tl:resolve compile exec:java
 ```
 
 Then open <http://localhost:8080/tl-ai-demo/>. Pass `-Dtl.port=…` to use another port.
 
-The `%ANTHROPIC_API_KEY%` placeholder in the `LLMProviderService` configuration resolves from the environment
-variable `tl_anthropic_api_key`; the `unencrypted:` prefix is what marks the value as a literal
-rather than an encrypted one.
+The `LLMProviderService` configuration references each provider's key by the name of its environment
+variable (`<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_anthropic_api_key"/>`),
+read at each request: the configuration holds the variable name, not the key, so saving the providers in
+the Service Editor never writes the key into the file. The variables `tl_mistral_api_key`,
+`tl_openai_api_key` and `tl_xai_api_key` work alike; a provider whose variable is not set fails only
+when it is called.
 
 The first start creates the H2 database under `tmp/` and prints the initial password of the `root`
 account to the console:

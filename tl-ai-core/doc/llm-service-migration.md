@@ -101,7 +101,9 @@ and merges by key, so a file of the application adds to what tl-ai ships instead
   <instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
     <providers>
       <provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-        name="anthropic" api-key="%ANTHROPIC_API_KEY%" models="claude-sonnet-4-6"/>
+        name="anthropic" models="claude-sonnet-4-6">
+        <api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_anthropic_api_key"/>
+      </provider>
     </providers>
   </instance>
 </config>
@@ -135,6 +137,11 @@ and merges by key, so a file of the application adds to what tl-ai ships instead
 ```
 
 Each block sits in the usual `<application><services>...</services></application>` frame.
+
+The provider names the environment variable of its key (an `EnvironmentSecretSource`, the variable
+holding the plain key without `unencrypted:` prefix) instead of the alias `%ANTHROPIC_API_KEY%`: the
+configuration then holds the variable name, not the key, while a key resolved from an alias ends up in
+the file the Service Editor stores.
 
 ## Java API
 

@@ -614,10 +614,10 @@ other way round, Ben and Dora neither.
 `probe.tlscript`, `reset.tlscript`, `aiCallTool(...)`, plain TL-Script in the console and the `SecDemo*`
 tests need **no** key - the tool check happens before any model call. The chat (**Albert** tab) and
 `fire.tlscript` / `collect.tlscript` need one. The demo reads it from the environment variable
-**`tl_anthropic_api_key`**, with a literal `unencrypted:` prefix, **not** from `ANTHROPIC_API_KEY`:
+**`tl_anthropic_api_key`** (the plain key, no prefix), **not** from `ANTHROPIC_API_KEY`:
 
 ```bash
-tl_anthropic_api_key='unencrypted:sk-ant-...' mvn -B     # in tl-ai-demo/
+tl_anthropic_api_key='sk-ant-...' mvn -B     # in tl-ai-demo/
 ```
 
 `x-api-key header is required` in a run's errors means the key is missing - a setup problem, not a

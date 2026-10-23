@@ -35,21 +35,29 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * </p>
  *
  * <ul>
+ * <li>An element selects any {@link SecretSource} implementation by its class, e.g. an
+ * {@link EnvironmentSecretSource} naming the variable that holds the secret, or a
+ * {@link FileSecretSource}:
+ *
+ * <pre>
+ * &lt;my-service&gt;
+ *   &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="my_api_key"/&gt;
+ * &lt;/my-service&gt;
+ *
+ * &lt;my-service&gt;
+ *   &lt;api-key class="com.top_logic.basic.credential.FileSecretSource" path="/run/secrets/my-api-key"/&gt;
+ * &lt;/my-service&gt;
+ * </pre>
+ *
+ * This is the recommended form for a secret from the environment: the configuration holds the
+ * name of the variable, not the secret, whereas a secret resolved from an alias is part of the
+ * effective configuration and ends up in a file the service editor stores.</li>
  * <li>An attribute value is an encrypted secret (or a value with the prefix
  * <code>unencrypted:</code>) and stands for a {@link LiteralSecretSource}. This is the form of an
  * encrypted {@link String} property, so existing configurations keep working:
  *
  * <pre>
- * &lt;my-service api-key="unencrypted:%MY_API_KEY%"/&gt;
- * </pre>
- *
- * </li>
- * <li>An element selects any {@link SecretSource} implementation by its class:
- *
- * <pre>
- * &lt;my-service&gt;
- *   &lt;api-key class="com.top_logic.basic.credential.FileSecretSource" path="/run/secrets/my-api-key"/&gt;
- * &lt;/my-service&gt;
+ * &lt;my-service api-key="unencrypted:my-secret-key"/&gt;
  * </pre>
  *
  * </li>

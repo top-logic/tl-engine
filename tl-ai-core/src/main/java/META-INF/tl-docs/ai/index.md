@@ -40,29 +40,33 @@ The providers are configured on `LLMProviderService` (service editor: *LLM provi
 		<providers>
 			<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
 				name="anthropic"
-				api-key="%ANTHROPIC_API_KEY%"
 				models="claude-haiku-4-5-20251001,claude-sonnet-4-6"
-			/>
-			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-				name="openai"
-				api-key="%OPENAI_API_KEY%"
-			/>
+			>
+				<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_anthropic_api_key"/>
+			</provider>
+			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig" name="openai">
+				<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_openai_api_key"/>
+			</provider>
 		</providers>
 		<model-catalog/>
 	</instance>
 </config>
 ```
 
-The API keys come from environment variables. `tl-ai-core.conf.xml` defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` from the variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key`. An `api-key` is an encrypted configuration value, so a key given in plain text carries the prefix `unencrypted:` - with no space after the colon, which would become part of the key:
+The API keys come from environment variables: an `EnvironmentSecretSource` reads the variable it names (a system property or an environment variable) at each request, and the variable holds the plain key:
 
 ```bash
-export tl_openai_api_key="unencrypted:sk-..."
-export tl_anthropic_api_key="unencrypted:sk-ant-..."
-export tl_mistral_api_key="unencrypted:..."
-export tl_xai_api_key="unencrypted:..."
+export tl_openai_api_key="sk-..."
+export tl_anthropic_api_key="sk-ant-..."
 ```
 
-An `api-key` is a shorthand: the provider sends the key in the header its API expects (`x-api-key` for Anthropic, `api-key` for Azure OpenAI with `auth-scheme="API_KEY"`, otherwise `Authorization: Bearer`). The attribute form above is a literal key; an `<api-key>` element selects another secret source (`SecretSource`), read at each request, e.g. a mounted secret file:
+This is the recommended form, because the configuration then holds the variable name, not the key: a key resolved from an alias such as `api-key="%ANTHROPIC_API_KEY%"` is part of the effective configuration, and the Service Editor writes it into the file it stores. A variable that is not set does not stop the application; only a request of that provider fails.
+
+`tl-ai-core.conf.xml` also defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` from the same variables; a configuration using them needs the variable value with the prefix `unencrypted:`.
+
+A key given directly in the configuration is an `api-key` attribute. It is an encrypted configuration value, so a key in plain text carries the prefix `unencrypted:` - with no space after the colon, which would become part of the key: `api-key="unencrypted:sk-..."`.
+
+An `api-key` is a shorthand: the provider sends the key in the header its API expects (`x-api-key` for Anthropic, `api-key` for Azure OpenAI with `auth-scheme="API_KEY"`, otherwise `Authorization: Bearer`). The attribute form is a literal key; an `<api-key>` element selects a secret source (`SecretSource`), read at each request, like the variable above or a mounted secret file:
 
 ```xml
 <provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig" name="openai">

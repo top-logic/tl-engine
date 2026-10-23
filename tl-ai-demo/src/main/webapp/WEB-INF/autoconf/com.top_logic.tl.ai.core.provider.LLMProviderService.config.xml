@@ -10,22 +10,34 @@
 			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 				<providers>
 					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						api-key="%ANTHROPIC_API_KEY%"
 						models="claude-haiku-4-5-20251001,claude-opus-4-7,claude-sonnet-4-6"
 						name="anthropic"
-					/>
+					>
+						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+							name="tl_anthropic_api_key"
+						/>
+					</provider>
 					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
-						api-key="%MISTRAL_API_KEY%"
 						name="mistral"
-					/>
+					>
+						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+							name="tl_mistral_api_key"
+						/>
+					</provider>
 					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-						api-key="%OPENAI_API_KEY%"
 						name="openai"
-					/>
+					>
+						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+							name="tl_openai_api_key"
+						/>
+					</provider>
 					<provider class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
-						api-key="%XAI_API_KEY%"
 						name="xai"
-					/>
+					>
+						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+							name="tl_xai_api_key"
+						/>
+					</provider>
 				</providers>
 				<model-catalog/>
 			</instance>

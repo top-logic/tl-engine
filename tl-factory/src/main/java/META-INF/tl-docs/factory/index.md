@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), and before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, the workspace token in ANTHROPIC_AUTH_TOKEN, ANTHROPIC_BASE_URL, tl_factory_llm_proxy_url), and before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root).
 ---
 
 # Control application (tl-factory)
@@ -26,11 +26,13 @@ gets access to the container platform itself.
 | `WorkspaceService` | Service holding the configured provider and the `ApplicationWorkspaces`. |
 | `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace, builds it and runs it as the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
 | `ProjectWorkspaces` | Service running the operations on the workspaces of the stored projects in the background and storing their state and output; reconciles the stored states with the existing containers after a restart. |
+| `LLMProxyService` / `LLMProxyServlet` | Access of the workspaces to the Anthropic Messages API through the control application, see [LLM access](#llm-access). |
 | `FactoryFunctions` | The TL-Script functions the views call: `factoryCreateWorkspace`, `factoryStart`, `factoryStop`, `factoryCleanup`, `factoryEngineVersion`, `factoryCheckGroupId`, `factoryCheckArtifactId`. |
 
 The model module `tl.factory` has the classes `Project` (name, group ID, artifact ID, engine
 version, the workspace as a composition) and `Workspace` (workspace ID, status, host port,
-preview URL, initial root password, the output of the last operation as `log`) and the
+preview URL, initial root password, the hash of its LLM token, the output of the last operation
+as `log`) and the
 enumeration `WorkspaceStatus`: *Created*, *Building*, *Starting*, *Running*, *Stopping*,
 *Stopped*, *Cleaning up*, *Error*, *Unknown*.
 
@@ -146,12 +148,49 @@ then.
 | `tl_factory_start_timeout` | `600` | Seconds a started application has to answer. |
 | `tl_factory_build_timeout` | `1800` | Seconds a Maven run in a workspace (generate, build, fill a release repository) may take before it is terminated. |
 | `tl_factory_docker_extra_hosts` | *(empty)* | Comma separated `<host>:<address>` entries added to the host names of new workspace containers, e.g. `host.docker.internal:host-gateway`. |
+| `tl_factory_llm_proxy_url` | *(empty)* | URL of the LLM proxy as the workspace containers reach it, e.g. `http://host.docker.internal:8080/tl-factory-app/llm-proxy`; empty switches the proxy off, see [LLM access](#llm-access). |
+| `tl_factory_llm_provider` | `anthropic` | Name of the Anthropic provider of `LLMProviderService` whose API key, base URL, version and timeouts the proxy uses. |
 | `tl_factory_log_flush_interval` | `1000` | Milliseconds between two commits of the output of a running operation. |
 | `tl_factory_max_log_size` | `65536` | Characters of the output of an operation that are stored. |
 
 Further properties of the Docker provider (`tls-cert-path`, `connect-timeout`, `label-namespace`,
 `name-prefix`, `stop-timeout`, `terminate-timeout`) are set in the configuration of `WorkspaceService` of the
 application.
+
+## LLM access
+
+Claude Code in a workspace talks to the Anthropic Messages API, but no API key ever enters a
+workspace container: whatever runs in the container - the agent, the generated application, a
+dependency of it - could read it. The container talks to the API through the control application
+instead.
+
+- **The token.** When a workspace is created and the proxy is switched on, `ProjectWorkspaces`
+  issues a token of its own for it: `tlwst_` followed by a random secret of about 256 bits
+  (`SecretTokens` of `tl-ai-core`). The workspace object stores only its SHA-256
+  (`llmTokenHash`, not shown in the views); the token itself is passed to the container in the
+  environment variable `ANTHROPIC_AUTH_TOKEN`, together with `ANTHROPIC_BASE_URL` set to
+  `tl_factory_llm_proxy_url`. Claude Code sends the token as `Authorization: Bearer <token>` to
+  that URL. Cleaning up the workspace deletes the hash and with it the token; a workspace created
+  while the proxy was off has no token.
+- **The proxy.** `LLMProxyServlet` at `/llm-proxy/*` of the control application forwards `POST`
+  of `/v1/messages` and `/v1/messages/count_tokens` (with their query string) to the base URL of
+  the configured provider; every other path and method is answered with 404, a missing or
+  unknown token with 401. It drops the credentials (`Authorization`, `x-api-key`), cookies, `Host`,
+  `Accept-Encoding` and the hop-by-hop headers of the request, sets `x-api-key` to the API key of
+  the provider and `anthropic-version` to its version, unless the client sent one; a client's
+  `anthropic-beta` is kept. Status, headers and body of the answer are passed back, the body
+  flushed as it arrives, so that a streamed answer (server-sent events) reaches the agent while it
+  is produced. The API key appears neither in a log nor in an answer.
+- **The key.** It is the `api-key` of the Anthropic provider named by `tl_factory_llm_provider` in
+  the `LLMProviderService` of `tl-ai-core`. `tl-factory-app` configures a provider `anthropic`
+  without models whose key is read from the environment variable `tl_anthropic_api_key`.
+
+The workspace containers must reach the URL of the proxy, see *Reaching the control application*
+in the operation modes below: e.g. `http://host.docker.internal:8080/tl-factory-app/llm-proxy`
+with the extra host `host.docker.internal:host-gateway` when the control application runs on the
+host, or `http://tl-factory-app:8080/tl-factory-app/llm-proxy` when its container is connected to
+the workspace network. The proxy answers any valid token, whatever state its workspace is in; it
+neither limits nor counts the requests.
 
 ## Operation modes
 

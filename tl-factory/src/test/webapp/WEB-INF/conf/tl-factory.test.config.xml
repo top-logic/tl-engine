@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Configuration options for testing tl-factory with JUnit.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!-- The LLM proxy switched on, so that new workspaces get a token. -->
+		<config service-class="com.top_logic.factory.llm.LLMProxyService">
+			<instance class="com.top_logic.factory.llm.LLMProxyService"
+				proxy-url="http://llm-proxy.test/llm-proxy"
+			/>
+		</config>
+	</services>
+</application>

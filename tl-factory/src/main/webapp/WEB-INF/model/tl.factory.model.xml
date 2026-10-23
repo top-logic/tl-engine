@@ -127,6 +127,18 @@
 							<visibility value="read-only"/>
 						</annotations>
 					</property>
+					<!--
+						The SHA-256 of the token the container of the workspace authenticates with at the
+						LLM proxy of the control application. The token itself is stored nowhere but in the
+						environment of the container.
+					-->
+					<property name="llmTokenHash"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
 					<property name="log"
 						type="tl.core:Text"
 					>

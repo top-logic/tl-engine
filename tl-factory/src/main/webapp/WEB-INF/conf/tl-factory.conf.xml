@@ -13,6 +13,8 @@
 		<entry name="%FACTORY_START_TIMEOUT%" value="${env:tl_factory_start_timeout:600}" comment="Seconds to wait for a started application to answer."/>
 		<entry name="%FACTORY_BUILD_TIMEOUT%" value="${env:tl_factory_build_timeout:1800}" comment="Seconds a Maven run in a workspace may take."/>
 		<entry name="%FACTORY_DOCKER_EXTRA_HOSTS%" value="${env:tl_factory_docker_extra_hosts:}" comment="Comma separated host:address entries added to the host names a workspace container resolves, e.g. host.docker.internal:host-gateway."/>
+		<entry name="%FACTORY_LLM_PROXY_URL%" value="${env:tl_factory_llm_proxy_url:}" comment="URL of the LLM proxy as the workspace containers reach it, e.g. http://host.docker.internal:8080/tl-factory-app/llm-proxy; empty switches the proxy off."/>
+		<entry name="%FACTORY_LLM_PROVIDER%" value="${env:tl_factory_llm_provider:anthropic}" comment="Name of the Anthropic provider of the LLMProviderService whose API key the LLM proxy adds to the requests of the workspaces."/>
 		<entry name="%FACTORY_LOG_FLUSH_INTERVAL%" value="${env:tl_factory_log_flush_interval:1000}" comment="Milliseconds between two commits of the output of a running workspace operation."/>
 		<entry name="%FACTORY_MAX_LOG_SIZE%" value="${env:tl_factory_max_log_size:65536}" comment="Number of characters of the output of a workspace operation that are stored."/>
 	</alias>

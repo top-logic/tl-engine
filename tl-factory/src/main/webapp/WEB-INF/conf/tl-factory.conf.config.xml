@@ -7,6 +7,7 @@
 				<modules>
 					<module key="com.top_logic.factory.workspace.WorkspaceService$Module" value="true"/>
 					<module key="com.top_logic.factory.project.ProjectWorkspaces$Module" value="true"/>
+					<module key="com.top_logic.factory.llm.LLMProxyService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -35,6 +36,17 @@
 			<instance class="com.top_logic.factory.project.ProjectWorkspaces"
 				log-flush-interval="%FACTORY_LOG_FLUSH_INTERVAL%"
 				max-log-size="%FACTORY_MAX_LOG_SIZE%"
+			/>
+		</config>
+
+		<!--
+			The LLM proxy of the workspaces: the API key of the named provider of the
+			LLMProviderService is added to their requests, no workspace container gets it.
+		-->
+		<config service-class="com.top_logic.factory.llm.LLMProxyService">
+			<instance class="com.top_logic.factory.llm.LLMProxyService"
+				provider="%FACTORY_LLM_PROVIDER%"
+				proxy-url="%FACTORY_LLM_PROXY_URL%"
 			/>
 		</config>
 

@@ -29,6 +29,7 @@ import com.top_logic.basic.sched.DaemonThreadFactory;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.factory.workspace.WorkspaceState;
@@ -68,6 +69,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	SchedulerService.Module.class,
 	SecureRandomService.Module.class,
+	LLMProxyService.Module.class,
 })
 public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.Config<?>> {
 
@@ -166,7 +168,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 *
 	 * <p>
 	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password},
-	 * which the application in it sets for its account {@code root}.
+	 * which the application in it sets for its account {@code root}. If the
+	 * {@link LLMProxyService LLM proxy} is switched on, it also gets a token of its own for the
+	 * proxy, of which only the {@link FactoryModel#WORKSPACE_LLM_TOKEN_HASH hash} is stored; the
+	 * container gets the token and the URL of the proxy in its environment.
 	 * </p>
 	 *
 	 * @param project
@@ -194,18 +199,15 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		if (!_busy.add(workspaceId)) {
 			throw new TopLogicException(I18NConstants.ERROR_WORKSPACE_BUSY__PROJECT.fill(project));
 		}
-		String initialPassword = SecureRandomService.getInstance().getRandomString();
-		TLObject workspace;
+		NewWorkspace created;
 		try {
-			workspace = commitInRequest(
-				() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING));
+			created = commitNewWorkspace(project, workspaceId);
 		} catch (RuntimeException ex) {
 			_busy.remove(workspaceId);
 			throw ex;
 		}
-		ApplicationSpec spec = new ApplicationSpec(workspaceId, groupId, artifactId)
-			.setEngineVersion(version)
-			.setInitialPassword(initialPassword);
+		TLObject workspace = created.workspace();
+		ApplicationSpec spec = created.spec();
 		run(workspace, "Creating application " + groupId + ":" + artifactId + " " + version + ".", log -> {
 			WorkspaceInfo info = applications().create(spec, log);
 			log.update(w -> {
@@ -215,6 +217,57 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			awaitApplication(log, workspaceId, artifactId);
 		});
 		return workspace;
+	}
+
+	/**
+	 * A workspace that is stored and the description of the application to create in it.
+	 *
+	 * @param workspace
+	 *        The stored workspace.
+	 * @param spec
+	 *        The application to create in the container of the workspace, including the
+	 *        environment the container gets.
+	 */
+	public record NewWorkspace(TLObject workspace, ApplicationSpec spec) {
+		@Override
+		public String toString() {
+			// The environment of the spec holds secrets.
+			return "NewWorkspace[" + workspace + "]";
+		}
+	}
+
+	/**
+	 * Stores a new workspace of a project in state {@link WorkspaceStatus#BUILDING}, in a
+	 * transaction of its own, without creating its container.
+	 *
+	 * <p>
+	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}
+	 * and, if the {@link LLMProxyService LLM proxy} is switched on, a token for the proxy, of which
+	 * only the {@link FactoryModel#WORKSPACE_LLM_TOKEN_HASH hash} is stored. Password, token and
+	 * URL of the proxy are in the returned {@link NewWorkspace#spec() spec}.
+	 * </p>
+	 *
+	 * @param project
+	 *        A project without workspace whose group, artifact and engine version are valid.
+	 * @param workspaceId
+	 *        The identifier of the container of the workspace.
+	 */
+	public static NewWorkspace commitNewWorkspace(TLObject project, String workspaceId) {
+		String groupId = FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID);
+		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
+		String version = FactoryModel.getString(project, FactoryModel.PROJECT_ENGINE_VERSION);
+		String initialPassword = SecureRandomService.getInstance().getRandomString();
+		LLMProxyService llmProxy = LLMProxyService.getInstance();
+		LLMProxyService.WorkspaceToken llmToken = llmProxy == null ? null : llmProxy.issueToken();
+		TLObject workspace = commitInRequest(() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword,
+			llmToken == null ? null : llmToken.hash(), WorkspaceStatus.BUILDING));
+		ApplicationSpec spec = new ApplicationSpec(workspaceId, groupId, artifactId)
+			.setEngineVersion(version)
+			.setInitialPassword(initialPassword);
+		if (llmToken != null) {
+			spec.putEnv(llmProxy.containerEnv(llmToken));
+		}
+		return new NewWorkspace(workspace, spec);
 	}
 
 	/**

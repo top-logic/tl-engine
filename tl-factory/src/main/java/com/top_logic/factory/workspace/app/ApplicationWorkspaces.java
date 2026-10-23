@@ -424,6 +424,7 @@ public class ApplicationWorkspaces {
 		if (initialPassword != null) {
 			workspace.putEnv(ENV_INITIAL_PASSWORD, initialPassword);
 		}
+		spec.getEnv().forEach(workspace::putEnv);
 		_provider.create(workspace);
 		_provider.start(workspaceId);
 

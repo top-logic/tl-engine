@@ -24,6 +24,10 @@
 	link without the parameters says nothing about the filtering and leaves the list as it
 	establishes itself.
 	
+	The <label> of the binding names the browser tab after the selected ticket ("Login broken -
+	TopLogic React Demo"). It reads the ticketName channel, which observes the ticket, so the tab
+	title follows a rename of the displayed ticket as well.
+	
 	The two parameters describe the displayed rows together: a chip selects the rows and the
 	search narrows them within that selection, so typing into the search field keeps the chip
 	marked and adds q beside filter. Picking a chip, on the other hand, replaces the whole
@@ -118,6 +122,10 @@
 			inputs="ticket"
 			reverse="$value.objectResolve(`demo.tickets:Ticket`)"
 		/>
+		<derived-channel name="ticketName"
+			expr="$ticket.get(`demo.tickets:Ticket#name`)"
+			inputs="ticket"
+		/>
 		<derived-channel name="ticketState"
 			expr="if($ticket == null, '', if($ticket.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#closed`, 'closed', 'open'))"
 			inputs="ticket"
@@ -136,7 +144,12 @@
 			channel="ticketId"
 			prefix="ticket"
 			route-param="ticket"
-		/>
+		>
+			<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+				expr="$name"
+				inputs="ticketName as name"
+			/>
+		</bind>
 	</param-bindings>
 	<query-bindings>
 		<bind

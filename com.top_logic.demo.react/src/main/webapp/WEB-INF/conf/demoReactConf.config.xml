@@ -836,6 +836,10 @@
 		<config config:interface="com.top_logic.layout.view.ViewConfig"
 			login-view="demo-login-page.view.xml"
 		>
+			<title>
+				<en>TopLogic React Demo</en>
+				<de>TopLogic React Demo</de>
+			</title>
 			<!--
 				A second view a URL may load top-level, besides the default view: the document viewer
 				is self-contained, so it shows the same thing in a browser tab of its own as it does

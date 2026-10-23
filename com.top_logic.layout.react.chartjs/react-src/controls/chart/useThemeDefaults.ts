@@ -2,7 +2,7 @@
 import { React, useTokenSwitch } from 'tl-react-bridge';
 import type { Chart, Plugin } from 'chart.js';
 
-/** The categories of the design system the series are coloured with: `--tl-category-1-surface` to `-8-surface`. */
+/** The marks of the design system the series are coloured with: `--tl-category-1-mark` to `-8-mark`. */
 const CATEGORIES = 8;
 
 /** The role of the grid lines. */
@@ -11,23 +11,26 @@ const GRID = '--tl-border-separator';
 /** The role of the labels and tick marks. */
 const TEXT = '--tl-text-secondary';
 
-/** The surface behind the labels of a radial scale (what the ticks of a radar sit on), see {@link BACKDROP_ALPHA}. */
-const BACKDROP = '--tl-surface-layer';
+/**
+ * The layer surface: behind the labels of a radial scale (what the ticks of a radar sit on, see {@link BACKDROP_ALPHA}),
+ * and the seam between the segments of a ring, a pie, a polar area.
+ */
+const LAYER = '--tl-surface-layer';
 
 /** The colours of the theme a chart paints with, as `#RRGGBB`; undefined where a token is not declared or not a colour. */
 interface ThemeColors {
-  /** The category colours, one entry per category: the series index stays aligned with the category. */
+  /** The mark colours, one entry per category: the series index stays aligned with the category. */
   palette: (string | undefined)[];
   gridColor?: string;
   textColor?: string;
+  /** The layer surface with the alpha of {@link BACKDROP_ALPHA}: the backdrop of the tick labels of a radial scale. */
   backdropColor?: string;
+  /** The layer surface as it is: the seam between the segments of a ring, a pie, a polar area. */
+  layerColor?: string;
 }
 
-/** Alpha of the fill of a bar, an area of a pie: the colour with a hex suffix. */
-const FILL_ALPHA = 'cc';
-
-/** Alpha of the points of a line or radar. */
-const POINT_ALPHA = '33';
+/** Alpha of the area under a line or a radar (when the server turns the fill on): the colour with a hex suffix. */
+const AREA_ALPHA = '33';
 
 /** Alpha of the backdrop of the tick labels of a radial scale (Chart.js draws it white at 75 % by default). */
 const BACKDROP_ALPHA = 'bf';
@@ -60,17 +63,19 @@ function toHex(value: string): string | undefined {
 function readThemeColors(): ThemeColors {
   const root = getComputedStyle(document.documentElement);
   const read = (name: string) => toHex(root.getPropertyValue(name));
-  const backdrop = read(BACKDROP);
+  const layer = read(LAYER);
   return {
-    palette: Array.from({ length: CATEGORIES }, (_, i) => read(`--tl-category-${i + 1}-surface`)),
+    palette: Array.from({ length: CATEGORIES }, (_, i) => read(`--tl-category-${i + 1}-mark`)),
     gridColor: read(GRID),
     textColor: read(TEXT),
-    backdropColor: backdrop === undefined ? undefined : backdrop + BACKDROP_ALPHA,
+    backdropColor: layer === undefined ? undefined : layer + BACKDROP_ALPHA,
+    layerColor: layer,
   };
 }
 
 const sameColors = (a: ThemeColors, b: ThemeColors) =>
   a.gridColor === b.gridColor && a.textColor === b.textColor && a.backdropColor === b.backdropColor
+  && a.layerColor === b.layerColor
   && a.palette.every((color, i) => color === b.palette[i]);
 
 /**
@@ -140,10 +145,13 @@ function scalePainter(painting: { current: Painting }): Plugin {
 
 /**
  * Merges the colours of the theme into a Chart.js config: the series that have no colour of their own take the
- * categories of the theme in turn (the ninth series the first again), grid, axis lines, tick labels and titles of every
- * scale the separator and the secondary text, the legend, the title and the subtitle the secondary text. Colours in
- * the config - of a series, a scale, a plugin - take precedence. A category that is not a readable colour gives its
- * series the neutral separator colour; it does not shift the others. Without any readable category nothing is coloured,
+ * marks of the theme in turn (the ninth series the first again), grid, axis lines, tick labels and titles of every
+ * scale the separator and the secondary text, the legend, the title and the subtitle the secondary text. Bars and
+ * segments are filled opaque in the colour of their series; the points of a line or a radar are filled in it as well,
+ * the area under them (where the server turns `fill` on) takes it with 20 % alpha. Between the segments of a ring, a
+ * pie and a polar area a seam of the layer surface stands (`borderColor`; none where the theme has no such colour).
+ * Colours in the config - of a series, a scale, a plugin - take precedence. A mark that is not a readable colour gives
+ * its series the neutral separator colour; it does not shift the others. Without any readable category nothing is coloured,
  * and the Colors plugin of Chart.js, which would make a palette up, is off unless the server turns it on.
  *
  * The scales of the config stay as the server sent them, so Chart.js builds the same scales as without the theme; the
@@ -166,11 +174,11 @@ export function useThemeDefaults(config: any): any {
   return React.useMemo(() => {
     if (!config) return config;
 
-    const { palette, gridColor, textColor } = theme;
+    const { palette, gridColor, textColor, layerColor } = theme;
     const merged = { ...config };
     const data = merged.data ? { ...merged.data } : {};
 
-    // Apply the categories to datasets that don't have explicit colors. A category that is not a readable colour gives
+    // Apply the marks to datasets that don't have explicit colors. A mark that is not a readable colour gives
     // its series or point the neutral separator colour, so it stays visibly uncategorised and the others keep their
     // index; with no readable category at all (no design system) nothing is made up.
     if (data.datasets && palette.some(color => color !== undefined)) {
@@ -186,9 +194,10 @@ export function useThemeDefaults(config: any): any {
             const points = Array.from({ length: dataLen }, (_, j) => categoryColor(j));
             // No colour at all for a point (no neutral colour either): the dataset is left alone, no array holds a gap.
             if (points.some(color => color === undefined)) return result;
-            result.backgroundColor = points.map(color => color + FILL_ALPHA);
-            if (!result.borderColor) {
-              result.borderColor = points;
+            result.backgroundColor = points;
+            // The seam between the segments: Chart.js draws it with `borderColor` (`borderWidth` 2 by default).
+            if (!result.borderColor && layerColor !== undefined) {
+              result.borderColor = layerColor;
             }
           } else {
             // Bar/line/etc.: one color per dataset.
@@ -197,13 +206,17 @@ export function useThemeDefaults(config: any): any {
             const isLineType = merged.type === 'line' || merged.type === 'radar'
               || ds.type === 'line' || ds.type === 'radar';
             if (isLineType) {
-              // Line/radar: no fill by default, use transparent background for points.
-              result.backgroundColor = color + POINT_ALPHA;
+              // Line/radar: no fill by default; the area (where the server turns it on) is the colour at 20 %, the
+              // points are filled in the colour itself.
+              result.backgroundColor = color + AREA_ALPHA;
+              if (result.pointBackgroundColor === undefined) {
+                result.pointBackgroundColor = color;
+              }
               if (result.fill === undefined) {
                 result.fill = false;
               }
             } else {
-              result.backgroundColor = color + FILL_ALPHA;
+              result.backgroundColor = color;
             }
             if (!result.borderColor) {
               result.borderColor = color;

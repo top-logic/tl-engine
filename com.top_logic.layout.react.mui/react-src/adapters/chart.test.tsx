@@ -1,5 +1,6 @@
-// The chart (spec 2026-10-20 wave 5d §8): its series take their colours from the categories of the theme, grid and
-// labels from the border and text roles, and the chart reads them again when the mode switches. Chart.js paints onto a
+// The chart (spec 2026-10-20 wave 5d §8): its series take their colours from the computed marks of the theme
+// (`--tl-category-N-mark`), grid and labels from the border and text roles, the seam between the segments of a ring from
+// the layer surface, and the chart reads them again when the mode switches. Chart.js paints onto a
 // canvas, which jsdom cannot (no 2D context), so the colours are checked where the control computes them
 // (useThemeDefaults, from custom properties at the document root, as textOn is checked), and the DOM around the canvas
 // through the control: status lines, the name of the canvas, the tooltip and the reset button.
@@ -38,7 +39,7 @@ type Mode = keyof typeof COLORS;
 /** The custom properties of a mode at the document root, as the stylesheets of the package declare them. */
 function applyTokens(mode: Mode) {
   const root = document.documentElement;
-  COLORS[mode].categories.forEach((color, i) => root.style.setProperty(`--tl-category-${i + 1}-surface`, color));
+  COLORS[mode].categories.forEach((color, i) => root.style.setProperty(`--tl-category-${i + 1}-mark`, color));
   root.style.setProperty('--tl-border-separator', COLORS[mode].grid);
   root.style.setProperty('--tl-text-secondary', COLORS[mode].text);
   root.style.setProperty('--tl-surface-layer', COLORS[mode].layer);
@@ -128,7 +129,7 @@ describe('chart colours', () => {
     const datasets = result.current.data.datasets;
     datasets.forEach((dataset: any, i: number) => {
       expect(dataset.borderColor, `series ${i + 1}`).toBe(LIGHT[i % 8]);
-      expect(dataset.backgroundColor, `series ${i + 1}`).toBe(LIGHT[i % 8] + 'cc');
+      expect(dataset.backgroundColor, `series ${i + 1}`).toBe(LIGHT[i % 8]);
     });
     expect(datasets[8].borderColor).toBe(datasets[0].borderColor);
     expect(datasets[9].borderColor).toBe(datasets[1].borderColor);
@@ -145,7 +146,7 @@ describe('chart colours', () => {
     const datasets = result.current.data.datasets;
     datasets.forEach((dataset: any, i: number) => {
       expect(dataset.borderColor, `series ${i + 1}`).toBe(DARK[i % 8]);
-      expect(dataset.backgroundColor, `series ${i + 1}`).toBe(DARK[i % 8] + 'cc');
+      expect(dataset.backgroundColor, `series ${i + 1}`).toBe(DARK[i % 8]);
     });
     expect(datasets[8].borderColor).toBe(DARK[0]);
     expect(datasets[9].borderColor).toBe(DARK[1]);
@@ -159,7 +160,7 @@ describe('chart colours', () => {
     const { result } = renderHook(() => useThemeDefaults(config));
 
     act(() => {
-      document.documentElement.style.setProperty('--tl-category-1-surface', '#123456');
+      document.documentElement.style.setProperty('--tl-category-1-mark', '#123456');
       document.documentElement.setAttribute('data-tl-theme', 'customer');
     });
 
@@ -180,38 +181,74 @@ describe('chart colours', () => {
   });
 
   it('an unreadable category gives its series the neutral separator colour and does not shift the others', () => {
-    document.documentElement.style.setProperty('--tl-category-2-surface', 'not-a-colour');
+    document.documentElement.style.setProperty('--tl-category-2-mark', 'not-a-colour');
     const { result } = renderHook(() => useThemeDefaults(barChart(10)));
 
     const datasets = result.current.data.datasets;
     expect(datasets[1].borderColor).toBe(COLORS.light.grid);
-    expect(datasets[1].backgroundColor).toBe(COLORS.light.grid + 'cc');
+    expect(datasets[1].backgroundColor).toBe(COLORS.light.grid);
     expect(datasets[2].borderColor).toBe(LIGHT[2]);
     expect(datasets[8].borderColor).toBe(LIGHT[0]);
     expect(datasets[9].borderColor).toBe(COLORS.light.grid);
   });
 
   it('a pie with one unreadable category draws that point neutral, and no array holds a gap', () => {
-    document.documentElement.style.setProperty('--tl-category-2-surface', 'not-a-colour');
+    document.documentElement.style.setProperty('--tl-category-2-mark', 'not-a-colour');
     const pie = { type: 'pie', data: { labels: ['a', 'b', 'c'], datasets: [{ data: [1, 2, 3] }] } };
     const { result } = renderHook(() => useThemeDefaults(pie));
 
     const dataset = result.current.data.datasets[0];
-    expect(dataset.borderColor).toEqual([LIGHT[0], COLORS.light.grid, LIGHT[2]]);
-    expect(dataset.backgroundColor).toEqual([LIGHT[0] + 'cc', COLORS.light.grid + 'cc', LIGHT[2] + 'cc']);
+    expect(dataset.backgroundColor).toEqual([LIGHT[0], COLORS.light.grid, LIGHT[2]]);
+    expect(dataset.borderColor).toBe(COLORS.light.layer);
   });
 
-  it('a pie takes one category per data point, a line draws its points transparent', () => {
+  it('a pie takes one category per data point and a seam of the layer surface, a line fills its points', () => {
     const pie = { type: 'pie', data: { labels: ['a', 'b', 'c'], datasets: [{ data: [1, 2, 3] }] } };
     const { result: pieResult } = renderHook(() => useThemeDefaults(pie));
-    expect(pieResult.current.data.datasets[0].borderColor).toEqual([LIGHT[0], LIGHT[1], LIGHT[2]]);
-    expect(pieResult.current.data.datasets[0].backgroundColor).toEqual([LIGHT[0] + 'cc', LIGHT[1] + 'cc', LIGHT[2] + 'cc']);
+    expect(pieResult.current.data.datasets[0].backgroundColor).toEqual([LIGHT[0], LIGHT[1], LIGHT[2]]);
+    expect(pieResult.current.data.datasets[0].borderColor).toBe(COLORS.light.layer);
 
     const line = { type: 'line', data: { datasets: [{ data: [1, 2] }] } };
     const { result: lineResult } = renderHook(() => useThemeDefaults(line));
     expect(lineResult.current.data.datasets[0].borderColor).toBe(LIGHT[0]);
     expect(lineResult.current.data.datasets[0].backgroundColor).toBe(LIGHT[0] + '33');
+    expect(lineResult.current.data.datasets[0].pointBackgroundColor).toBe(LIGHT[0]);
     expect(lineResult.current.data.datasets[0].fill).toBe(false);
+  });
+
+  it('doughnut and polar area seam their segments like a pie, in the layer surface of the mode', async () => {
+    for (const type of ['doughnut', 'polarArea']) {
+      const config = { type, data: { labels: ['a', 'b'], datasets: [{ data: [1, 2] }] } };
+      const { result } = renderHook(() => useThemeDefaults(config));
+      expect(result.current.data.datasets[0].backgroundColor, type).toEqual([LIGHT[0], LIGHT[1]]);
+      expect(result.current.data.datasets[0].borderColor, type).toBe(COLORS.light.layer);
+
+      switchMode('dark');
+      await waitFor(() => expect(result.current.data.datasets[0].borderColor, type).toBe(COLORS.dark.layer));
+      expect(result.current.data.datasets[0].backgroundColor, type).toEqual([DARK[0], DARK[1]]);
+      switchMode('light');
+      await waitFor(() => expect(result.current.data.datasets[0].borderColor, type).toBe(COLORS.light.layer));
+    }
+  });
+
+  it('a pie without a readable layer surface sets no seam, and a radar fills its points like a line', () => {
+    document.documentElement.style.setProperty('--tl-surface-layer', 'not-a-colour');
+    const pie = { type: 'pie', data: { labels: ['a', 'b'], datasets: [{ data: [1, 2] }] } };
+    const { result: pieResult } = renderHook(() => useThemeDefaults(pie));
+    expect(pieResult.current.data.datasets[0].backgroundColor).toEqual([LIGHT[0], LIGHT[1]]);
+    expect('borderColor' in pieResult.current.data.datasets[0]).toBe(false);
+
+    const radar = { type: 'radar', data: { datasets: [{ data: [1, 2] }] } };
+    const { result: radarResult } = renderHook(() => useThemeDefaults(radar));
+    expect(radarResult.current.data.datasets[0].backgroundColor).toBe(LIGHT[0] + '33');
+    expect(radarResult.current.data.datasets[0].pointBackgroundColor).toBe(LIGHT[0]);
+  });
+
+  it('a line whose server set the colour of the points keeps it', () => {
+    const line = { type: 'line', data: { datasets: [{ data: [1, 2], pointBackgroundColor: '#112233' }] } };
+    const { result } = renderHook(() => useThemeDefaults(line));
+    expect(result.current.data.datasets[0].pointBackgroundColor).toBe('#112233');
+    expect(result.current.data.datasets[0].borderColor).toBe(LIGHT[0]);
   });
 
   it('without a design system no colour is made up: no array, no key, the Colors plugin of Chart.js off', () => {
@@ -245,8 +282,8 @@ describe('chart colours', () => {
   });
 
   it('a token written as rgb() or a short hex is read as a hex colour', () => {
-    document.documentElement.style.setProperty('--tl-category-1-surface', 'rgb(18, 52, 86)');
-    document.documentElement.style.setProperty('--tl-category-2-surface', '#abc');
+    document.documentElement.style.setProperty('--tl-category-1-mark', 'rgb(18, 52, 86)');
+    document.documentElement.style.setProperty('--tl-category-2-mark', '#abc');
     const { result } = renderHook(() => useThemeDefaults(barChart(2)));
 
     expect(result.current.data.datasets[0].borderColor).toBe('#123456');

@@ -6,6 +6,7 @@
 package com.top_logic.factory.project;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.top_logic.element.meta.MetaElementUtil;
@@ -81,6 +82,28 @@ public class FactoryModel {
 	/** Attribute of a {@link #WORKSPACE}: the output of its last operation. */
 	public static final String WORKSPACE_LOG = "log";
 
+	/**
+	 * Attribute of a {@link #WORKSPACE}: its {@link #AGENT_CONVERSATION}s, a composition.
+	 */
+	public static final String WORKSPACE_CONVERSATIONS = "conversations";
+
+	/**
+	 * Name of the type of a conversation with the coding agent of a workspace.
+	 */
+	public static final String AGENT_CONVERSATION = "AgentConversation";
+
+	/** Attribute of an {@link #AGENT_CONVERSATION}: the {@link #WORKSPACE} it belongs to. */
+	public static final String CONVERSATION_WORKSPACE = "workspace";
+
+	/** Attribute of an {@link #AGENT_CONVERSATION}: when it was started. */
+	public static final String CONVERSATION_CREATED_AT = "createdAt";
+
+	/**
+	 * Attribute of an {@link #AGENT_CONVERSATION}: the ID under which the agent keeps the
+	 * conversation.
+	 */
+	public static final String CONVERSATION_SESSION_ID = "sessionId";
+
 	private FactoryModel() {
 		// Constants and static accessors only.
 	}
@@ -97,6 +120,47 @@ public class FactoryModel {
 	 */
 	public static TLClass workspaceType() {
 		return (TLClass) TLModelUtil.findType(MODULE, WORKSPACE);
+	}
+
+	/**
+	 * The type of a conversation with the coding agent of a workspace.
+	 */
+	public static TLClass conversationType() {
+		return (TLClass) TLModelUtil.findType(MODULE, AGENT_CONVERSATION);
+	}
+
+	/**
+	 * Whether the given object is an {@link #AGENT_CONVERSATION}.
+	 */
+	public static boolean isConversation(Object object) {
+		return object instanceof TLObject conversation && conversation.tValid()
+			&& conversation.tType() == conversationType();
+	}
+
+	/**
+	 * Creates a conversation with the coding agent of the given workspace in the current
+	 * transaction.
+	 */
+	public static TLObject createConversation(TLObject workspace) {
+		TLObject conversation = ModelService.getInstance().getFactory().createObject(conversationType(), workspace);
+		conversation.tUpdateByName(CONVERSATION_CREATED_AT, new Date());
+		workspace.tAddByName(WORKSPACE_CONVERSATIONS, conversation);
+		return conversation;
+	}
+
+	/**
+	 * The workspace the given conversation belongs to.
+	 */
+	public static TLObject getConversationWorkspace(TLObject conversation) {
+		return conversation.tContainer();
+	}
+
+	/**
+	 * The ID under which the agent keeps the given conversation, {@code null} before its first
+	 * answer.
+	 */
+	public static String getSessionId(TLObject conversation) {
+		return getString(conversation, CONVERSATION_SESSION_ID);
 	}
 
 	/**

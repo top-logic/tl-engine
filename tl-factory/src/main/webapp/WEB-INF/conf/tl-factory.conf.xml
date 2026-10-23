@@ -16,6 +16,10 @@
 		<entry name="%FACTORY_LLM_PROXY_URL%" value="${env:tl_factory_llm_proxy_url:}" comment="URL of the LLM proxy as the workspace containers reach it, e.g. http://host.docker.internal:8080/tl-factory-app/llm-proxy; empty switches the proxy off."/>
 		<entry name="%FACTORY_LLM_PROVIDER%" value="${env:tl_factory_llm_provider:anthropic}" comment="Name of the Anthropic provider of the LLMProviderService whose API key the LLM proxy adds to the requests of the workspaces."/>
 		<entry name="%FACTORY_LLM_ALLOWED_SOURCES%" value="${env:tl_factory_llm_allowed_sources:}" comment="Comma separated client addresses the LLM proxy accepts requests from: CIDR ranges (IPv4 or IPv6) or workspace-network for the network of the workspace containers; empty accepts every address."/>
+		<entry name="%FACTORY_AGENT_MODEL%" value="${env:tl_factory_agent_model:}" comment="Model the coding agent of the workspaces works with, e.g. claude-sonnet-4-6; empty for the default of Claude Code."/>
+		<entry name="%FACTORY_AGENT_EXTRA_ARGS%" value="${env:tl_factory_agent_extra_args:}" comment="Comma separated further arguments of the command line of the coding agent, e.g. --max-turns,50."/>
+		<entry name="%FACTORY_AGENT_IDLE_TIMEOUT%" value="${env:tl_factory_agent_idle_timeout:15min}" comment="How long the process of an agent conversation is kept after its last answer."/>
+		<entry name="%FACTORY_AGENT_TOKEN_LIFETIME%" value="${env:tl_factory_agent_token_lifetime:4h}" comment="Lifetime of the LLM proxy token of an agent process; at most the longest token lifetime of the proxy."/>
 		<entry name="%FACTORY_LOG_FLUSH_INTERVAL%" value="${env:tl_factory_log_flush_interval:1000}" comment="Milliseconds between two commits of the output of a running workspace operation."/>
 		<entry name="%FACTORY_MAX_LOG_SIZE%" value="${env:tl_factory_max_log_size:65536}" comment="Number of characters of the output of a workspace operation that are stored."/>
 	</alias>

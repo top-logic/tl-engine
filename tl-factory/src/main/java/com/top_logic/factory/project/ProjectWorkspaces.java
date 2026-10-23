@@ -29,6 +29,7 @@ import com.top_logic.basic.sched.DaemonThreadFactory;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.agent.WorkspaceAgentService;
 import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceService;
@@ -440,7 +441,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * then the workspace itself; the project is kept.
 	 *
 	 * <p>
-	 * The tokens the {@link LLMProxyService LLM proxy} issued for the workspace are revoked first.
+	 * The agents working in the workspace are stopped and the tokens the {@link LLMProxyService LLM
+	 * proxy} issued for the workspace are revoked first; the agent conversations are removed with the
+	 * workspace.
 	 * </p>
 	 *
 	 * @param project
@@ -450,6 +453,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		TLObject workspace = begin(project, WorkspaceStatus.REMOVING, WorkspaceStatus.values());
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
 		run(workspace, "Removing the workspace.", log -> {
+			WorkspaceAgentService agents = WorkspaceAgentService.getInstance();
+			if (agents != null) {
+				agents.stopAll(workspaceId);
+			}
 			LLMProxyService llmProxy = LLMProxyService.getInstance();
 			if (llmProxy != null) {
 				llmProxy.revokeAll(workspaceId);

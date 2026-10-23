@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, idle timeout, token per process, interrupt, tl_factory_agent_*).
 ---
 
 # Control application (tl-factory)
@@ -27,6 +27,7 @@ gets access to the container platform itself.
 | `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace, builds it and runs it as the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
 | `ProjectWorkspaces` | Service running the operations on the workspaces of the stored projects in the background and storing their state and output; reconciles the stored states with the existing containers after a restart. |
 | `LLMProxyService` / `LLMProxyServlet` | Access of the workspaces to the Anthropic Messages API through the control application, see [LLM access](#llm-access). |
+| `WorkspaceAgentService` / `WorkspaceAgent` | The coding agent of a workspace answering a chat, see [the agent in the workspace](#the-agent-in-the-workspace). |
 | `FactoryFunctions` | The TL-Script functions the views call: `factoryCreateWorkspace`, `factoryStart`, `factoryStop`, `factoryCleanup`, `factoryUpdate`, `factoryImageOutdated`, `factoryEngineVersion`, `factoryCheckGroupId`, `factoryCheckArtifactId`. |
 
 The model module `tl.factory` has the classes `Project` (name, group ID, artifact ID, engine
@@ -116,7 +117,8 @@ An update is taken over like this:
    `mvn test -DskipTests=false -pl tl-factory -Dtest=test.com.top_logic.factory.workspace.app.TestApplicationWorkspaces -Dtl.factory.integration=true`.
    It builds the new image, creates an application, checks Claude Code in the pinned version, the
    plugin, the Playwright MCP server with its browser, and updates the workspace to another image.
-   A new Claude Code version additionally needs a check of the stream-json parsing.
+   A new Claude Code version additionally needs a check of the stream-json parsing, see [the agent in
+   the workspace](#the-agent-in-the-workspace).
 3. Merge. The control application builds the new image on the next creation or update of a
    workspace; existing workspaces show *Image outdated* and are moved with *Update workspace*.
 
@@ -211,6 +213,10 @@ then.
 | `tl_factory_llm_proxy_url` | *(empty)* | URL of the LLM proxy as the workspace containers reach it, e.g. `http://host.docker.internal:8080/tl-factory-app/llm-proxy`; empty switches the proxy off, see [LLM access](#llm-access). |
 | `tl_factory_llm_allowed_sources` | *(empty)* | Comma separated client addresses the LLM proxy accepts: CIDR ranges (IPv4 or IPv6) or `workspace-network`; empty accepts every address, see [LLM access](#llm-access). |
 | `tl_factory_llm_provider` | `anthropic` | Name of the Anthropic provider of `LLMProviderService` whose API key, base URL, version and timeouts the proxy uses. |
+| `tl_factory_agent_model` | *(empty)* | Model the coding agent works with, e.g. `claude-sonnet-4-6` or `sonnet`; empty for the default of Claude Code. |
+| `tl_factory_agent_extra_args` | *(empty)* | Comma separated further arguments of the command line of the agent, e.g. `--max-turns,50`. |
+| `tl_factory_agent_idle_timeout` | `15min` | How long the process of an agent conversation is kept after its last answer. |
+| `tl_factory_agent_token_lifetime` | `4h` | Lifetime of the proxy token of an agent process, at most `max-token-lifetime` of the proxy. |
 | `tl_factory_log_flush_interval` | `1000` | Milliseconds between two commits of the output of a running operation. |
 | `tl_factory_max_log_size` | `65536` | Characters of the output of an operation that are stored. |
 
@@ -284,6 +290,73 @@ Which setting fits depends on how a request of a workspace reaches the control a
 In the last case an address list cannot tell workspaces from other clients. Leave it empty and
 block the path `/llm-proxy/` for clients from outside at the reverse proxy in front of the
 control application instead; the token remains the check.
+
+## The agent in the workspace
+
+A chat whose subject is an `AgentConversation` (`tl.factory`) is answered by the coding agent
+working in the conversation's workspace instead of the agent of the control application: the
+`AgentConversationResolver`, registered in the `ConversationBackendService` of `tl-chat`, hands it
+to the `WorkspaceAgent` of the conversation, which `WorkspaceAgentService` keeps per conversation
+(see [a conversation answered from outside](doc:ai/chat-ui#a-conversation-answered-from-outside)).
+The chat offers nothing beyond sending a message (`BackendFeatures.NONE`). Cleaning up a workspace
+stops its agents and deletes its conversations with it; the chat sessions about them stay without
+subject.
+
+**The process.** The agent is described by an `AgentHarness` - its command line and its
+protocol -, `ClaudeCodeHarness` for Claude Code; the process itself is handled by `WorkspaceAgent`
+the same for every harness. One process serves one conversation:
+
+- It is started on the first message, as `claude -p --input-format stream-json
+  --output-format stream-json --verbose --include-partial-messages --permission-mode
+  bypassPermissions [--model <model>] [--resume <session ID>] [<extra args>]`, as the user `tl` in
+  the directory of the application (`/workspace/<artifact ID>`). The workspace must be running;
+  otherwise the message is refused with a sentence saying so.
+- **Token per process.** The process gets a token of the LLM proxy of its own, issued for
+  `token-lifetime` and passed only in `ANTHROPIC_AUTH_TOKEN` of its command; it is revoked when the
+  process ends. A process whose token has less than half of its lifetime left is replaced before
+  the next message.
+- It is kept between the messages and stopped after `idle-timeout` without a message (its input is
+  closed, after `stop-timeout` it is terminated).
+- **Resume.** Claude Code keeps the conversation under a session ID, which `system/init` reports;
+  it is stored in `sessionId` of the conversation in a transaction of its own as soon as it is
+  known. A new process - after the idle timeout, a token renewal, a crash or a restart of the
+  control application - continues the conversation with `--resume <session ID>`; the session ID
+  stays the same.
+- A message is one line `{"type":"user","message":{"role":"user","content":[{"type":"text","text":...}]}}`
+  on the input of the process. The output is split into lines by a thread of the provider and
+  queued; the run drains the queue on the chat's thread until the `result` line, so that every
+  event reaches the chat on that thread. Error output is logged.
+- **Stop.** A stop of the user writes `{"type":"control_request","request_id":...,"request":{"subtype":"interrupt"}}`;
+  Claude Code answers with a `control_response` and ends the run with a `result` of subtype
+  `error_during_execution`, which ends the run as `ABORTED`. The process is kept. A process that
+  does not stop within `interrupt-timeout` is terminated.
+- A process that ends during a run ends the run with a `ProviderError` `PROCESS_EXIT` and `ERROR`.
+
+**The mapping** (`ClaudeCodeProtocol`, from the stream-json output of the pinned Claude Code
+version):
+
+| Line of Claude Code | Event |
+|---|---|
+| `system/init` | `RunStarted` with the model, once per message; the session ID is stored. |
+| `stream_event` `message_start` | `TurnCompleted` of the previous request, `TurnStarted`: a turn is one request of the model with the tools it calls. |
+| `stream_event` `content_block_delta` | `TextDelta` for `text_delta`, `ThinkingDelta` for a non-empty `thinking_delta`. |
+| `stream_event` `message_delta` | Its usage becomes the usage of the turn. |
+| `assistant` | `ToolCallStarted` per `tool_use` block, with its complete input. Text blocks were streamed already and are skipped - except in a message that was not streamed, e.g. the one Claude Code writes when the proxy refuses its token. |
+| `user` with `tool_result` | `ToolCallCompleted`, or `ToolCallFailed` for `is_error`. |
+| `system/api_retry` | `RetryScheduled` with the HTTP status as kind (`API_401`), the attempt and the delay. Claude Code repeats a failed request up to ten times with growing delays - for a token the proxy refuses, about three minutes - before the run ends in an error. |
+| `system/compact_boundary` | `CompactionStarted` and `CompactionCompleted`. |
+| `result` | `TurnCompleted` of the last request, `RunCompleted`: `COMPLETE` for `success`, `MAX_TURNS`, `BUDGET_EXHAUSTED`, `ABORTED` after a stop, otherwise `ProviderError` (`API_<status>` or the subtype) and `ERROR`. The usage is the one of the result, the cost the sum of `model_usage_since_last_result` - `total_cost_usd` counts the whole session over all its processes. |
+
+Lines of a subagent (`parent_tool_use_id` set) contribute their tool calls only; its answer reaches
+the main agent as the result of its tool call. Hooks, status lines and control responses are
+ignored. A tool call still open when the run ends gets a `ToolCallFailed`.
+
+The test fixtures of the mapping are recorded from the pinned Claude Code version by
+`TestClaudeCodeIntegration` (`-Dtl.factory.integration=true`, the API key in
+`tl_anthropic_api_key`, `-Dtl.factory.record=<fixtures directory>`), which runs Claude Code in a
+workspace container against an `LLMProxyServlet` of the test and a conversation through
+`WorkspaceAgent`. A new Claude Code version is checked by recording the fixtures anew and running
+`TestClaudeCodeProtocol` and `TestWorkspaceAgent` on them.
 
 ## Operation modes
 

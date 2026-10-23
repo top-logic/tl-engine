@@ -150,6 +150,59 @@
 							<visibility value="read-only"/>
 						</annotations>
 					</property>
+					<!-- The conversations with the coding agent working in the workspace. -->
+					<reference name="conversations"
+						composite="true"
+						inverse-reference="workspace"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						ordered="true"
+						type="AgentConversation"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
+			<!--
+				A conversation with the coding agent of a workspace: the subject of the chat that talks
+				to the agent. The agent keeps the conversation itself; a new process of it continues
+				the conversation stored under the session ID.
+			-->
+			<class name="AgentConversation">
+				<annotations>
+					<main-properties properties="createdAt,sessionId"/>
+				</annotations>
+				<attributes>
+					<reference name="workspace"
+						aggregate="true"
+						inverse-reference="conversations"
+						kind="backwards"
+						navigate="true"
+						type="Workspace"
+					/>
+					<property name="createdAt"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!--
+						The ID under which the agent keeps the conversation, empty before its first
+						answer.
+					-->
+					<property name="sessionId"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
 				</attributes>
 			</class>
 		</types>

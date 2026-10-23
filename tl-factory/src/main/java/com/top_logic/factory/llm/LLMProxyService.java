@@ -69,7 +69,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	WorkspaceService.Module.class,
 })
-public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Config<?>> implements LLMProxy {
+public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Config<?>> implements LLMProxy, LLMTokens {
 
 	/**
 	 * Configuration of {@link LLMProxyService}.
@@ -248,6 +248,7 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	 *        lifetime}.
 	 * @return The token, {@code null} if the proxy is not {@link #isEnabled() switched on}.
 	 */
+	@Override
 	public String issue(String workspaceId, Duration lifetime) {
 		if (!isEnabled()) {
 			return null;
@@ -266,6 +267,7 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	 *
 	 * @return The end of its lifetime, {@code null} if it is not valid.
 	 */
+	@Override
 	public Instant expiresAt(String token) {
 		if (!SecretTokens.hasFormat(TOKEN_PREFIX, token)) {
 			return null;
@@ -277,6 +279,7 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	/**
 	 * Revokes a token: the next request presenting it is refused.
 	 */
+	@Override
 	public void revoke(String token) {
 		if (SecretTokens.hasFormat(TOKEN_PREFIX, token)) {
 			_grants.remove(SecretTokens.hash(token));

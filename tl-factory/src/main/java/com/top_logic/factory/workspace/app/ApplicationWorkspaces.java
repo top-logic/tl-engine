@@ -733,7 +733,15 @@ public class ApplicationWorkspaces {
 	}
 
 	private static String appDir(ApplicationSpec spec) {
-		return SOURCE_PATH + PATH_SEPARATOR + spec.getArtifactId();
+		return appDir(spec.getArtifactId());
+	}
+
+	/**
+	 * The directory in a workspace holding the sources of the application with the given artifact
+	 * ID.
+	 */
+	public static String appDir(String artifactId) {
+		return SOURCE_PATH + PATH_SEPARATOR + artifactId;
 	}
 
 	private String engineVersion(ApplicationSpec spec) {

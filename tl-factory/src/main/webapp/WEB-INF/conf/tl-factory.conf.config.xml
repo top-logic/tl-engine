@@ -8,6 +8,7 @@
 					<module key="com.top_logic.factory.workspace.WorkspaceService$Module" value="true"/>
 					<module key="com.top_logic.factory.project.ProjectWorkspaces$Module" value="true"/>
 					<module key="com.top_logic.factory.llm.LLMProxyService$Module" value="true"/>
+					<module key="com.top_logic.factory.agent.WorkspaceAgentService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -49,6 +50,30 @@
 				provider="%FACTORY_LLM_PROVIDER%"
 				proxy-url="%FACTORY_LLM_PROXY_URL%"
 			/>
+		</config>
+
+		<!--
+			The coding agent of the workspaces: Claude Code, one process per agent conversation,
+			answering the chats whose subject is a tl.factory:AgentConversation.
+		-->
+		<config service-class="com.top_logic.factory.agent.WorkspaceAgentService">
+			<instance class="com.top_logic.factory.agent.WorkspaceAgentService"
+				idle-timeout="%FACTORY_AGENT_IDLE_TIMEOUT%"
+				token-lifetime="%FACTORY_AGENT_TOKEN_LIFETIME%"
+			>
+				<harness class="com.top_logic.factory.agent.claude.ClaudeCodeHarness"
+					extra-args="%FACTORY_AGENT_EXTRA_ARGS%"
+					model="%FACTORY_AGENT_MODEL%"
+				/>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.ai.chat.backend.ConversationBackendService">
+			<instance>
+				<resolvers>
+					<resolver class="com.top_logic.factory.agent.AgentConversationResolver"/>
+				</resolvers>
+			</instance>
 		</config>
 
 		<config service-class="com.top_logic.util.model.ModelService">

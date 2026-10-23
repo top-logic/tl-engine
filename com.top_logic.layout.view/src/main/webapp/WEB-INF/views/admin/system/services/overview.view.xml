@@ -2,23 +2,32 @@
 
 <!--
 	Initial frame of the services drill-down (see ../services.view.xml): list the application
-	services (runtime modules) and start / stop / restart the selected one. The ServiceTable shows
-	the ServiceSnapshot of the services channel - bound by the enclosing tile-stack, so a command of
-	the detail frame refreshes it as well - or a live snapshot while the channel is empty. It writes
-	the selected module to the selection channel and its running status ('ACTIVE' / 'INACTIVE') to
-	the state channel; the commands gate on that state via the reusable <visible-if> rule so Start
-	(while stopped) and Stop / Restart (while running) are mutually exclusive. Each command runs the
-	ServiceLifecycleAction (which reads the module from the selection channel), writes the refreshed
-	snapshot to the services channel, then writes the new state. Activating a row - a double-click,
-	Enter, or the row's chevron button - pushes the detail frame of its service, with the module as
-	its "module" channel. A titled <panel> is used (not the chrome-less <full-page>) because the view
-	carries toolbar commands.
+	services (runtime modules) and start / stop / restart the selected one.
+	- The services channel holds the ServiceSnapshot the table displays - bound by the enclosing
+	tile-stack, so a command of the detail frame refreshes it as well. The rows are the modules of
+	the snapshot (serviceList, a live snapshot while the channel is empty), the status column - which
+	declares the services channel as its input, since a column script sees only the row and its own
+	inputs - shows the status the snapshot recorded (serviceStatus), the module column the software module the
+	service is delivered with (serviceModule); the table starts grouped by that module, and its
+	filter bar searches the displayed columns.
+	- The table writes the selected module to the selection channel; the derived active channel
+	tells whether it runs, so Start (while stopped) and Stop / Restart (while running) are
+	mutually exclusive. Each command runs the ServiceLifecycleAction (which reads the module from
+	the selection channel) and writes the refreshed snapshot to the services channel, which
+	recomputes the rows, the status and the active channel.
+	- Activating a row - a double-click, Enter, or the row's chevron button - pushes the detail
+	frame of its service, with the module as its "module" channel.
+	- A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar
+	commands.
 -->
 <view>
 	<channels>
 		<channel name="services"/>
 		<channel name="selection"/>
-		<channel name="state"/>
+		<derived-channel name="active"
+			expr="serviceActive($selection)"
+			inputs="selection, services"
+		/>
 	</channels>
 	<panel id="panel"
 		fill="true"
@@ -30,7 +39,7 @@
 		<commands>
 			<generic-command
 				image="css:bi bi-play"
-				inputs="state"
+				inputs="selection, active"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -38,7 +47,7 @@
 					<de>Starten</de>
 				</label>
 				<executability>
-					<visible-if expr="$state == 'INACTIVE'"/>
+					<visible-if expr="$selection != null &amp;&amp; $active == false"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="START"
@@ -48,15 +57,10 @@
 						<write-channel name="services"/>
 					</with-result>
 				</action>
-				<execute-script function="'ACTIVE'">
-					<with-result>
-						<write-channel name="state"/>
-					</with-result>
-				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-stop"
-				inputs="state"
+				inputs="selection, active"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -64,7 +68,7 @@
 					<de>Stoppen</de>
 				</label>
 				<executability>
-					<visible-if expr="$state == 'ACTIVE'"/>
+					<visible-if expr="$active == true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="STOP"
@@ -74,15 +78,10 @@
 						<write-channel name="services"/>
 					</with-result>
 				</action>
-				<execute-script function="'INACTIVE'">
-					<with-result>
-						<write-channel name="state"/>
-					</with-result>
-				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-repeat"
-				inputs="state"
+				inputs="selection, active"
 				placement="TOOLBAR"
 			>
 				<label>
@@ -90,7 +89,7 @@
 					<de>Neustart</de>
 				</label>
 				<executability>
-					<visible-if expr="$state == 'ACTIVE'"/>
+					<visible-if expr="$active == true"/>
 				</executability>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="RESTART"
@@ -100,11 +99,6 @@
 						<write-channel name="services"/>
 					</with-result>
 				</action>
-				<execute-script function="'ACTIVE'">
-					<with-result>
-						<write-channel name="state"/>
-					</with-result>
-				</execute-script>
 			</generic-command>
 			<generic-command
 				image="css:bi bi-arrow-clockwise"
@@ -127,16 +121,57 @@
 				</action>
 			</generic-command>
 		</commands>
-		<child id="table"
-			class="com.top_logic.layout.view.admin.system.ServiceTable"
-			input="services"
+		<table id="table"
+			filter-bar="true"
+			group-by="module"
+			inputs="services"
+			personalization-key="admin-services"
 			selection="selection"
-			state="state"
 		>
+			<columns>
+				<computed-column name="status"
+					inputs="services"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Status</en>
+						<de>Status</de>
+					</label>
+					<value>serviceStatus($services, $row)</value>
+				</computed-column>
+				<computed-column name="name"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Service</en>
+						<de>Dienst</de>
+					</label>
+					<value>serviceLabel($row)</value>
+				</computed-column>
+				<computed-column name="module"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Module</en>
+						<de>Modul</de>
+					</label>
+					<value>serviceModule($row)</value>
+				</computed-column>
+				<computed-column name="implementation"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Implementation</en>
+						<de>Implementierung</de>
+					</label>
+					<value>serviceName($row)</value>
+				</computed-column>
+			</columns>
+			<rows>serviceList($services)</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="module"
 				view="admin/system/services/service-detail.view.xml"
 			/>
-		</child>
+		</table>
 	</panel>
 </view>

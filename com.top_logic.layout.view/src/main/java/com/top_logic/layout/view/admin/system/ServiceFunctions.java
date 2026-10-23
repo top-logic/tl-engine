@@ -5,23 +5,27 @@
  */
 package com.top_logic.layout.view.admin.system;
 
+import java.util.List;
+
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.version.SoftwareModule;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.util.Resources;
 
 /**
  * TL-Script functions about the application services (runtime modules): what a view administering
  * a service displays of it.
  *
  * <p>
- * A service is given by its module, e.g. the row of a {@link ServiceTable} a command was activated
- * for. Every function accepts no module at all and answers with nothing, so that a channel computed
+ * A service is given by its module, e.g. the row of a table of the services a command was
+ * activated for. Every function accepts no module at all and answers with nothing, so that a channel computed
  * from a module that is not yet known stays empty.
  * </p>
  *
@@ -43,6 +47,56 @@ public class ServiceFunctions extends TLScriptFunctions {
 
 	/** Prefix all function names of this class start with. */
 	public static final String PREFIX = "service";
+
+	/**
+	 * The services of the given snapshot, sorted by their label.
+	 *
+	 * @param snapshot
+	 *        The services as read at one point in time, e.g. the value a service command wrote to a
+	 *        channel.
+	 * @return The modules of the services; the ones of a snapshot taken now without a snapshot.
+	 */
+	@Label("Services of a snapshot")
+	public static List<BasicRuntimeModule<?>> list(ServiceSnapshot snapshot) {
+		return (snapshot == null ? ServiceSnapshot.current() : snapshot).getModules();
+	}
+
+	/**
+	 * The status of the given service as the given snapshot recorded it: running, running but
+	 * requiring a restart to apply a changed configuration, or stopped.
+	 *
+	 * @param snapshot
+	 *        The services as read at one point in time; without a snapshot, the current status is
+	 *        given.
+	 * @param module
+	 *        The module of the service.
+	 * @return What the user reads for the status, <code>null</code> without a module.
+	 */
+	@Label("Status of a service")
+	public static String status(ServiceSnapshot snapshot, BasicRuntimeModule<?> module) {
+		if (module == null) {
+			return null;
+		}
+		ServiceSnapshot.Status status =
+			snapshot == null ? ServiceSnapshot.Status.of(module) : snapshot.status(module);
+		return Resources.getInstance().getString(status.getLabel());
+	}
+
+	/**
+	 * The software module the given service is delivered with.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return The name of the software module providing the implementation of the service - its
+	 *         human-readable name, if the application knows one, otherwise its artifact name;
+	 *         <code>null</code> without a module.
+	 *
+	 * @see SoftwareModule
+	 */
+	@Label("Software module of a service")
+	public static String module(BasicRuntimeModule<?> module) {
+		return module == null ? null : SoftwareModule.of(module.getImplementation()).label();
+	}
 
 	/**
 	 * The label of the given service, the configured label of its implementation class.

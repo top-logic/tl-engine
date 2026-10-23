@@ -24,14 +24,13 @@ import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.WithResultActions;
 
 /**
- * {@link ViewAction} returning the current application services for display in a {@link ServiceTable},
- * and optionally starting, stopping or restarting the selected service first.
+ * {@link ViewAction} returning the current application services for display in a table, and
+ * optionally starting, stopping or restarting the selected service first.
  *
  * <p>
- * The returned {@link ServiceSnapshot} is meant to be written to the channel feeding the
- * {@link ServiceTable}. The service to act on is read from the configured
- * {@link Config#getSelection() selection channel} (not the command input, which carries the running
- * state used to gate the command). Dependent services are started / stopped / restarted automatically.
+ * The returned {@link ServiceSnapshot} is meant to be written to the channel feeding the table of
+ * the services. The service to act on is read from the configured
+ * {@link Config#getSelection() selection channel} when the action runs. Dependent services are started / stopped / restarted automatically.
  * </p>
  *
  * @implNote Enumeration uses {@link ModuleUtil#getAllModules()}; lifecycle delegates to

@@ -45,21 +45,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LOCK_COLUMN_NODE;
 
 	/**
-	 * @en Status
-	 */
-	public static ResKey SERVICE_COLUMN_STATUS;
-
-	/**
-	 * @en Service
-	 */
-	public static ResKey SERVICE_COLUMN_NAME;
-
-	/**
-	 * @en Implementation
-	 */
-	public static ResKey SERVICE_COLUMN_TECHNICAL_NAME;
-
-	/**
 	 * @en Running
 	 */
 	public static ResKey SERVICE_STATE_ACTIVE;

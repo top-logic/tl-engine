@@ -135,11 +135,15 @@ public class ServiceConfigurationAction implements ViewAction {
 					throw new TopLogicException(I18NConstants.ERROR_NO_SERVICE_CONFIGURATION);
 				}
 				TLServiceUtils.storeServiceConfiguration(module, config);
-				ViewMessages.info(context, I18NConstants.SERVICE_CONFIGURATION_SAVED);
+				ViewMessages.info(context, module.isConfigurationChanged()
+					? I18NConstants.SERVICE_CONFIGURATION_SAVED
+					: I18NConstants.SERVICE_CONFIGURATION_SAVED_UNCHANGED);
 				break;
 			case RESET:
 				if (TLServiceUtils.resetServiceConfiguration(module)) {
-					ViewMessages.info(context, I18NConstants.SERVICE_CONFIGURATION_RESET);
+					ViewMessages.info(context, module.isConfigurationChanged()
+						? I18NConstants.SERVICE_CONFIGURATION_RESET
+						: I18NConstants.SERVICE_CONFIGURATION_RESET_UNCHANGED);
 				}
 				break;
 			case DISCARD:

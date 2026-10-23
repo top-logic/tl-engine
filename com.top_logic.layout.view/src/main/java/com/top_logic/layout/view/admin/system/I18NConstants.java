@@ -65,10 +65,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SERVICE_CONFIGURATION_SAVED;
 
 	/**
+	 * @en Configuration saved. It matches the configuration the service is running with, no
+	 *     restart is necessary.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_SAVED_UNCHANGED;
+
+	/**
 	 * @en In-app configuration removed. Restart the service to apply the configuration of the
 	 *     application's configuration files.
 	 */
 	public static ResKey SERVICE_CONFIGURATION_RESET;
+
+	/**
+	 * @en In-app configuration removed. The configuration of the application's configuration
+	 *     files matches the one the service is running with, no restart is necessary.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_RESET_UNCHANGED;
 
 	/**
 	 * @en Changes discarded. The configuration the service is running with is in effect again.

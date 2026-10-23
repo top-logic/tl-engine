@@ -1473,7 +1473,7 @@
 /* --- chart/chart.css --- */
 /* Chart — Spec 2026-10-20 Welle 5d §8 (Plan-Review K12, Ruling R3). Das Diagramm (Chart.js, TLChart) zeichnet seine
    Reihen, Gitter und Beschriftung auf ein Canvas; die Farben liest das Control im Browser aus den Kategorien
-   (--tl-category-N-surface), --tl-border-separator und --tl-text-secondary. Hier steht, was im DOM um das Canvas
+   (--tl-category-N-mark), --tl-border-separator und --tl-text-secondary. Hier steht, was im DOM um das Canvas
    liegt: die Wurzel, der Tooltip am Datenpunkt, der Knopf zum Zurücksetzen des Zooms, und leer oder Fehler als
    tl-status. Die Schrift tragen die Typo-Klassen am Element. */
 
@@ -6349,4 +6349,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:1ec735d30c1ef08abfde08ce7c779eb42b6b539630438e58bbb25dc37e2d286b — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:625dddd4a70e8e0e3bc33bf4f4e3e05502429e5d5162098bf4dacfb7d442b856 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

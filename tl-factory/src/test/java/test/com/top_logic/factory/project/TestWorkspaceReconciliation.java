@@ -208,6 +208,11 @@ public class TestWorkspaceReconciliation extends TestCase {
 		}
 
 		@Override
+		public List<String> networkSubnets() {
+			return Collections.emptyList();
+		}
+
+		@Override
 		public List<WorkspaceInfo> list() {
 			if (!_reachable) {
 				throw new IllegalStateException("Container platform not reachable.");

@@ -169,9 +169,8 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * <p>
 	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password},
 	 * which the application in it sets for its account {@code root}. If the
-	 * {@link LLMProxyService LLM proxy} is switched on, it also gets a token of its own for the
-	 * proxy, of which only the {@link FactoryModel#WORKSPACE_LLM_TOKEN_HASH hash} is stored; the
-	 * container gets the token and the URL of the proxy in its environment.
+	 * {@link LLMProxyService LLM proxy} is switched on, the container gets the URL of the proxy in
+	 * its environment.
 	 * </p>
 	 *
 	 * @param project
@@ -242,10 +241,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * transaction of its own, without creating its container.
 	 *
 	 * <p>
-	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}
-	 * and, if the {@link LLMProxyService LLM proxy} is switched on, a token for the proxy, of which
-	 * only the {@link FactoryModel#WORKSPACE_LLM_TOKEN_HASH hash} is stored. Password, token and
-	 * URL of the proxy are in the returned {@link NewWorkspace#spec() spec}.
+	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
+	 * The password and, if the {@link LLMProxyService LLM proxy} is switched on, the URL of the
+	 * proxy are in the environment of the returned {@link NewWorkspace#spec() spec}.
 	 * </p>
 	 *
 	 * @param project
@@ -255,25 +253,23 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 */
 	public static NewWorkspace commitNewWorkspace(TLObject project, String workspaceId) {
 		String initialPassword = SecureRandomService.getInstance().getRandomString();
-		LLMProxyService llmProxy = LLMProxyService.getInstance();
-		LLMProxyService.WorkspaceToken llmToken = llmProxy == null ? null : llmProxy.issueToken();
-		TLObject workspace = commitInRequest(() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword,
-			llmToken == null ? null : llmToken.hash(), WorkspaceStatus.BUILDING));
-		return new NewWorkspace(workspace, applicationSpec(project, workspaceId, initialPassword, llmProxy, llmToken));
+		TLObject workspace = commitInRequest(
+			() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING));
+		return new NewWorkspace(workspace, applicationSpec(project, workspaceId, initialPassword));
 	}
 
 	/**
 	 * The description of the application of a workspace, with the environment its container gets.
 	 */
-	private static ApplicationSpec applicationSpec(TLObject project, String workspaceId, String initialPassword,
-			LLMProxyService llmProxy, LLMProxyService.WorkspaceToken llmToken) {
+	private static ApplicationSpec applicationSpec(TLObject project, String workspaceId, String initialPassword) {
 		ApplicationSpec spec = new ApplicationSpec(workspaceId,
 			FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID),
 			FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID))
 			.setEngineVersion(FactoryModel.getString(project, FactoryModel.PROJECT_ENGINE_VERSION))
 			.setInitialPassword(initialPassword);
-		if (llmToken != null) {
-			spec.putEnv(llmProxy.containerEnv(llmToken));
+		LLMProxyService llmProxy = LLMProxyService.getInstance();
+		if (llmProxy != null) {
+			spec.putEnv(llmProxy.containerEnv());
 		}
 		return spec;
 	}
@@ -284,9 +280,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 *
 	 * <p>
 	 * The container gets the {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password} of
-	 * the workspace and, if the {@link LLMProxyService LLM proxy} is switched on, a new token for
-	 * the proxy; the token of the old container is no longer valid afterwards. A workspace that was
-	 * running is started again and waited for like by {@link #start(TLObject)}.
+	 * the workspace and, if the {@link LLMProxyService LLM proxy} is switched on, its current URL.
+	 * A workspace that was running is started again and waited for like by
+	 * {@link #start(TLObject)}.
 	 * </p>
 	 *
 	 * @param project
@@ -306,7 +302,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			WorkspaceInfo info = applications().update(update.spec(), log);
 			log.line("Container created on image " + info.getImage() + ".");
 			log.update(w -> {
-				recordUpdate(w, update, info);
+				recordUpdate(w, info);
 				FactoryModel.setStatus(w, wasRunning ? WorkspaceStatus.STARTING : WorkspaceStatus.of(info.getState()));
 				FactoryModel.setEndpoint(w, null, null);
 			});
@@ -319,15 +315,12 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
-	 * What the container of an updated workspace gets: the description of its application with
-	 * the environment of the container, and the hash of its new token for the LLM proxy.
+	 * What the container of an updated workspace gets.
 	 *
 	 * @param spec
 	 *        The application of the workspace, including the environment the container gets.
-	 * @param llmTokenHash
-	 *        The hash of the token in the environment, {@code null} if the proxy is switched off.
 	 */
-	public record WorkspaceUpdate(ApplicationSpec spec, String llmTokenHash) {
+	public record WorkspaceUpdate(ApplicationSpec spec) {
 		@Override
 		public String toString() {
 			// The environment of the spec holds secrets.
@@ -339,40 +332,30 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * Describes the container of an updated workspace without storing anything.
 	 *
 	 * <p>
-	 * The workspace keeps its {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}. If
-	 * the {@link LLMProxyService LLM proxy} is switched on, a new token is issued for it, which
-	 * becomes valid when the update is {@link #recordUpdate(TLObject, WorkspaceUpdate, WorkspaceInfo)
-	 * recorded}.
+	 * The workspace keeps its {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
 	 * </p>
 	 *
 	 * @param workspace
 	 *        The stored workspace.
 	 */
 	public static WorkspaceUpdate prepareUpdate(TLObject workspace) {
-		LLMProxyService llmProxy = LLMProxyService.getInstance();
-		LLMProxyService.WorkspaceToken llmToken = llmProxy == null ? null : llmProxy.issueToken();
 		ApplicationSpec spec = applicationSpec(FactoryModel.getProject(workspace),
 			FactoryModel.getWorkspaceId(workspace),
-			FactoryModel.getString(workspace, FactoryModel.WORKSPACE_INITIAL_PASSWORD), llmProxy, llmToken);
-		return new WorkspaceUpdate(spec, llmToken == null ? null : llmToken.hash());
+			FactoryModel.getString(workspace, FactoryModel.WORKSPACE_INITIAL_PASSWORD));
+		return new WorkspaceUpdate(spec);
 	}
 
 	/**
 	 * Stores in the current transaction that the container of a workspace was created anew: the
-	 * {@link FactoryModel#WORKSPACE_IMAGE image} of the container and the
-	 * {@link FactoryModel#WORKSPACE_LLM_TOKEN_HASH hash} of its token, which replaces the token of
-	 * the old container.
+	 * {@link FactoryModel#WORKSPACE_IMAGE image} of the container.
 	 *
 	 * @param workspace
 	 *        The stored workspace.
-	 * @param update
-	 *        What the new container got, see {@link #prepareUpdate(TLObject)}.
 	 * @param info
 	 *        The workspace in its new container.
 	 */
-	public static void recordUpdate(TLObject workspace, WorkspaceUpdate update, WorkspaceInfo info) {
+	public static void recordUpdate(TLObject workspace, WorkspaceInfo info) {
 		workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());
-		workspace.tUpdateByName(FactoryModel.WORKSPACE_LLM_TOKEN_HASH, update.llmTokenHash());
 	}
 
 	/**
@@ -456,6 +439,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * Removes the container and the volumes of the workspace of a project in the background, and
 	 * then the workspace itself; the project is kept.
 	 *
+	 * <p>
+	 * The tokens the {@link LLMProxyService LLM proxy} issued for the workspace are revoked first.
+	 * </p>
+	 *
 	 * @param project
 	 *        A project with a workspace on which no operation runs.
 	 */
@@ -463,6 +450,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		TLObject workspace = begin(project, WorkspaceStatus.REMOVING, WorkspaceStatus.values());
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
 		run(workspace, "Removing the workspace.", log -> {
+			LLMProxyService llmProxy = LLMProxyService.getInstance();
+			if (llmProxy != null) {
+				llmProxy.revokeAll(workspaceId);
+			}
 			WorkspaceInfo info = applications().getProvider().status(workspaceId);
 			if (info.getState() != WorkspaceState.MISSING || !info.getVolumes().isEmpty()) {
 				applications().remove(workspaceId);

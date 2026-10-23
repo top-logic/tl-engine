@@ -43,6 +43,7 @@ import com.top_logic.basic.listener.Listener;
 import com.top_logic.factory.llm.LLMProxy;
 import com.top_logic.factory.llm.LLMProxyServlet;
 import com.top_logic.factory.llm.LLMUpstream;
+import com.top_logic.factory.llm.SourceFilter;
 
 /**
  * Test of {@link LLMProxyServlet} over HTTP: the servlet runs in an embedded Jetty, the Anthropic
@@ -69,6 +70,8 @@ public class TestLLMProxyServlet extends TestCase {
 	private boolean _enabled = true;
 
 	private LLMUpstream _upstreamConfig;
+
+	private SourceFilter _sources;
 
 	private final List<Recorded> _received = new CopyOnWriteArrayList<>();
 
@@ -98,11 +101,17 @@ public class TestLLMProxyServlet extends TestCase {
 		_upstream = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
 		_upstream.start();
 		_upstreamConfig = upstreamAt("http://127.0.0.1:" + _upstream.getAddress().getPort());
+		_sources = new SourceFilter(List.of(), Collections::emptyList);
 
 		LLMProxy proxy = new LLMProxy() {
 			@Override
 			public boolean isEnabled() {
 				return _enabled;
+			}
+
+			@Override
+			public boolean isAllowedSource(String remoteAddress) {
+				return _sources.allows(remoteAddress);
 			}
 
 			@Override
@@ -279,6 +288,40 @@ public class TestLLMProxyServlet extends TestCase {
 				.statusCode());
 		assertEquals(404, send(authorized("").POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY))).statusCode());
 		assertEquals(Collections.emptyList(), _received);
+	}
+
+	/**
+	 * A request from an address that is not accepted is refused before its token is looked at,
+	 * whatever a forwarding header claims; the refusal is logged with the address.
+	 */
+	public void testForeignSourceRefused() throws Exception {
+		upstreamAnswers(LLMProxyServlet.MESSAGES_PATH, 200, "{}");
+		_sources = new SourceFilter(List.of("10.0.0.0/8", "fd00::/8"), Collections::emptyList);
+
+		HttpResponse<String> response = send(authorized(LLMProxyServlet.MESSAGES_PATH)
+			.header("X-Forwarded-For", "10.1.2.3")
+			.POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+		assertEquals(403, response.statusCode());
+		assertTrue(response.body(), response.body().contains(LLMProxyServlet.PERMISSION_ERROR));
+		assertEquals(Collections.emptyList(), _received);
+		assertTrue("The refusal is logged with the address: " + _logged,
+			_logged.stream().anyMatch(message -> message.contains("127.0.0.1")));
+		for (String message : _logged) {
+			assertFalse("No token in the log.", message.contains(VALID_TOKEN));
+		}
+	}
+
+	/**
+	 * A request from an accepted range is forwarded.
+	 */
+	public void testAcceptedSourceForwarded() throws Exception {
+		upstreamAnswers(LLMProxyServlet.MESSAGES_PATH, 200, "{}");
+		_sources = new SourceFilter(List.of("127.0.0.0/8"), Collections::emptyList);
+
+		HttpResponse<String> response =
+			send(authorized(LLMProxyServlet.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+		assertEquals(200, response.statusCode());
+		assertEquals(1, _received.size());
 	}
 
 	/**

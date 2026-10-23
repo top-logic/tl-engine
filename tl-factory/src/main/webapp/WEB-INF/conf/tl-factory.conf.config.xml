@@ -45,6 +45,7 @@
 		-->
 		<config service-class="com.top_logic.factory.llm.LLMProxyService">
 			<instance class="com.top_logic.factory.llm.LLMProxyService"
+				allowed-sources="%FACTORY_LLM_ALLOWED_SOURCES%"
 				provider="%FACTORY_LLM_PROVIDER%"
 				proxy-url="%FACTORY_LLM_PROXY_URL%"
 			/>

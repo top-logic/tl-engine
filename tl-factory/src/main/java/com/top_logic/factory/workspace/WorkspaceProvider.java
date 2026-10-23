@@ -198,6 +198,20 @@ public interface WorkspaceProvider extends AutoCloseable {
 	WorkspaceInfo status(String workspaceId);
 
 	/**
+	 * The address ranges of the network the workspace containers are attached to, as CIDR
+	 * strings, e.g. {@code 172.18.0.0/16} or {@code fd00:1::/64}.
+	 *
+	 * <p>
+	 * A request from one of these addresses comes from a workspace container (or from another
+	 * container attached to that network).
+	 * </p>
+	 *
+	 * @return The ranges, empty if the network does not exist yet or the platform does not report
+	 *         them.
+	 */
+	List<String> networkSubnets();
+
+	/**
 	 * All workspaces of this provider, including those that have only volumes left.
 	 *
 	 * <p>

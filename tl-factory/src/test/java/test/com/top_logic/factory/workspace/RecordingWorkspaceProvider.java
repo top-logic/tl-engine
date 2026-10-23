@@ -39,6 +39,16 @@ public class RecordingWorkspaceProvider implements WorkspaceProvider {
 
 	private final Map<String, WorkspaceInfo> _workspaces = new LinkedHashMap<>();
 
+	private List<String> _networkSubnets = Collections.emptyList();
+
+	/**
+	 * Sets the address ranges reported by {@link #networkSubnets()}.
+	 */
+	public synchronized RecordingWorkspaceProvider setNetworkSubnets(String... subnets) {
+		_networkSubnets = List.of(subnets);
+		return this;
+	}
+
 	/**
 	 * The spec of the container last created for the given workspace.
 	 */
@@ -132,6 +142,11 @@ public class RecordingWorkspaceProvider implements WorkspaceProvider {
 	public synchronized WorkspaceInfo status(String workspaceId) {
 		WorkspaceInfo result = _workspaces.get(workspaceId);
 		return result != null ? result : WorkspaceInfo.missing(workspaceId, Collections.emptyList());
+	}
+
+	@Override
+	public synchronized List<String> networkSubnets() {
+		return _networkSubnets;
 	}
 
 	@Override

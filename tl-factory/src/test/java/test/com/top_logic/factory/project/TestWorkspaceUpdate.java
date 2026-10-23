@@ -34,13 +34,12 @@ import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.access.SecretTokens;
 import com.top_logic.util.model.ModelService;
 
 /**
  * Test of the bookkeeping of updating a workspace to the current workspace image, against a
  * knowledge base and a {@link RecordingWorkspaceProvider}: the stored image, the outdated flag, the
- * kept initial password and the rotated token of the LLM proxy.
+ * kept initial password and the URL of the LLM proxy.
  */
 public class TestWorkspaceUpdate extends BasicTestCase {
 
@@ -50,8 +49,7 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 
 	/**
 	 * A created workspace runs the current image; after the image changed, the update creates the
-	 * container anew on the same volumes with the initial password and a new token, which replaces
-	 * the old one.
+	 * container anew on the same volumes with the initial password and the URL of the LLM proxy.
 	 */
 	public void testUpdate() throws Exception {
 		TLObject project = commit(() -> {
@@ -66,8 +64,6 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 			RecordingWorkspaceProvider provider = new RecordingWorkspaceProvider();
 			ApplicationWorkspaces applications = new ApplicationWorkspaces(
 				WorkspaceService.getInstance().getApplications().getConfig(), provider);
-			LLMProxyService proxy = LLMProxyService.getInstance();
-
 			NewWorkspace created = ProjectWorkspaces.commitNewWorkspace(project, WORKSPACE_ID);
 			TLObject workspace = created.workspace();
 			assertTrue("A workspace without image is outdated.", ProjectWorkspaces.isImageOutdated(workspace));
@@ -80,16 +76,9 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 			commit(() -> workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, OLD_IMAGE));
 			assertTrue(ProjectWorkspaces.isImageOutdated(workspace));
 
-			String oldToken = created.spec().getEnv().get(LLMProxyService.ENV_AUTH_TOKEN);
 			WorkspaceUpdate update = ProjectWorkspaces.prepareUpdate(workspace);
-			String newToken = update.spec().getEnv().get(LLMProxyService.ENV_AUTH_TOKEN);
-			assertNotNull("The updated container gets a token.", newToken);
-			assertFalse("The token is rotated.", newToken.equals(oldToken));
-			assertEquals(SecretTokens.hash(newToken), update.llmTokenHash());
-			assertFalse("The plain token is not printed.", update.toString().contains(newToken));
 			assertEquals(created.spec().getInitialPassword(), update.spec().getInitialPassword());
-			assertTrue("The old token is valid until the update is recorded.", proxy.authenticate(oldToken));
-			assertFalse(proxy.authenticate(newToken));
+			assertFalse("The password is not printed.", update.toString().contains(update.spec().getInitialPassword()));
 
 			WorkspaceInfo updated = applications.update(update.spec(), ExecOutput.NONE);
 			assertEquals(WorkspaceState.CREATED, updated.getState());
@@ -103,16 +92,15 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 			assertEquals(mountPaths(first), mountPaths(second));
 			Map<String, String> env = second.getEnv();
 			assertEquals(created.spec().getInitialPassword(), env.get(ApplicationWorkspaces.ENV_INITIAL_PASSWORD));
-			assertEquals(newToken, env.get(LLMProxyService.ENV_AUTH_TOKEN));
+			assertNotNull(env.get(LLMProxyService.ENV_BASE_URL));
 			assertEquals(first.getEnv().get(LLMProxyService.ENV_BASE_URL), env.get(LLMProxyService.ENV_BASE_URL));
+			assertFalse("No container gets a token.", env.containsKey(LLMProxyService.ENV_AUTH_TOKEN)
+				|| first.getEnv().containsKey(LLMProxyService.ENV_AUTH_TOKEN));
 			assertEquals(first.getEnv().get(ApplicationWorkspaces.ENV_APP_DIR), env.get(ApplicationWorkspaces.ENV_APP_DIR));
 
-			commit(() -> ProjectWorkspaces.recordUpdate(workspace, update, updated));
+			commit(() -> ProjectWorkspaces.recordUpdate(workspace, updated));
 			assertEquals(updated.getImage(), FactoryModel.getString(workspace, FactoryModel.WORKSPACE_IMAGE));
-			assertEquals(update.llmTokenHash(), FactoryModel.getString(workspace, FactoryModel.WORKSPACE_LLM_TOKEN_HASH));
 			assertFalse("An updated workspace runs the current image.", ProjectWorkspaces.isImageOutdated(workspace));
-			assertFalse("The old token is no longer valid.", proxy.authenticate(oldToken));
-			assertTrue(proxy.authenticate(newToken));
 		} finally {
 			commit(() -> {
 				TLObject workspace = FactoryModel.getWorkspace(project);

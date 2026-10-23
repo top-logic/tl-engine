@@ -1,5 +1,5 @@
 ---
-description: Read before deploying the control application (tl-factory-app) on a shared Docker server, or when an administrator asks what access it needs - the Docker API calls DockerWorkspaceProvider makes, why the raw system socket is never given to it, what a socket proxy does and does not restrict, the recommended dedicated rootless Docker daemon with its setup, resource cap and checks, a dedicated remote daemon with TLS as alternative, and how control application and workspaces reach each other in each setup.
+description: Read before deploying the control application (tl-factory-app) on a shared Docker server, or when an administrator asks what access it needs - the Docker API calls DockerWorkspaceProvider makes, why the raw system socket is never given to it, what a socket proxy does and does not restrict, the recommended dedicated rootless Docker daemon with its setup, resource cap and checks, a dedicated remote daemon with TLS as alternative, and how control application and workspaces reach each other in each setup, including which accepted sources of the LLM proxy fit.
 order: 10
 ---
 
@@ -141,6 +141,13 @@ They reach each other through ports published on the server:
   from inside the control application's container as well.
 - A workspace reaches the control application under the URL the control application is published
   at, with the server's name, e.g. `http://<name of the server>:<published port>/`.
+
+The LLM proxy of the control application (`/llm-proxy/`) sees a request of a workspace coming from
+the server's gateway or from the userland proxy of the daemon that publishes the port, not from
+the workspace network. Its `allowed-sources` therefore stay empty in this setup
+(`tl_factory_llm_allowed_sources`); block `/llm-proxy/` for clients from outside at the reverse
+proxy in front of the control application instead, see
+[accepted sources](doc:factory#accepted-sources).
 
 ### Checks for the administrator
 

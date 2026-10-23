@@ -34,6 +34,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 
+import com.top_logic.basic.col.filter.CIDRFilter;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -530,6 +531,28 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		_provider.exec(id, ExecCommand.of("ping", "-c", "1", "-W", "1", EXTRA_HOST_NAME), ping);
 		assertTrue(ping.stdout() + ping.stderr(),
 			ping.stdout().contains(EXTRA_HOST_NAME + " (" + EXTRA_HOST_ADDRESS + ")"));
+	}
+
+	/**
+	 * The ranges of the workspace network: none before the network exists, afterwards ranges that
+	 * contain the address of a workspace container.
+	 */
+	public void testNetworkSubnets() throws Exception {
+		assertEquals("No network yet.", Collections.emptyList(), _provider.networkSubnets());
+
+		String id = "subnets";
+		WorkspaceInfo created = _provider.create(httpdSpec(id));
+		_provider.start(id);
+
+		List<String> subnets = _provider.networkSubnets();
+		assertFalse("The network has ranges.", subnets.isEmpty());
+		String address = _docker.inspectContainerCmd(created.getContainerId()).exec()
+			.getNetworkSettings().getNetworks().get(_network).getIpAddress();
+		boolean contained = false;
+		for (String subnet : subnets) {
+			contained |= CIDRFilter.fromString(subnet).accept(address);
+		}
+		assertTrue("Address " + address + " in " + subnets, contained);
 	}
 
 	/**

@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.factory.project;
 
+import java.time.Duration;
 import java.util.function.Supplier;
 
 import junit.framework.Test;
@@ -28,18 +29,25 @@ import com.top_logic.tl.ai.core.access.SecretTokens;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test of the token a new workspace gets for the LLM proxy, against a knowledge base: the stored
- * hash authenticates the token until the workspace is removed.
+ * Test of the tokens of the LLM proxy against a knowledge base: a token issued for a stored
+ * workspace is valid until it is revoked, its lifetime ends or its workspace is removed.
  */
 public class TestWorkspaceLLMToken extends BasicTestCase {
 
 	private static final String PROXY_URL = "http://llm-proxy.test/llm-proxy";
 
-	/**
-	 * A stored workspace authenticates its token, no other one, and nothing once it is removed.
-	 */
-	public void testTokenAuthenticatesUntilWorkspaceRemoved() {
-		TLObject project = commit(() -> {
+	private static final String WORKSPACE_ID = "llm-token-test-1";
+
+	private TLObject _project;
+
+	private TLObject _workspace;
+
+	private LLMProxyService _proxy;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		_project = commit(() -> {
 			TLObject result = ModelService.getInstance().getFactory().createObject(FactoryModel.projectType());
 			result.tUpdateByName(FactoryModel.PROJECT_NAME, "LLM token test");
 			result.tUpdateByName(FactoryModel.PROJECT_GROUP_ID, "com.example");
@@ -47,33 +55,76 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 			result.tUpdateByName(FactoryModel.PROJECT_ENGINE_VERSION, "8.0.0");
 			return result;
 		});
-		try {
-			NewWorkspace created = ProjectWorkspaces.commitNewWorkspace(project, "llm-token-test-1");
-			TLObject workspace = created.workspace();
-			assertSame(workspace, FactoryModel.getWorkspace(project));
+		NewWorkspace created = ProjectWorkspaces.commitNewWorkspace(_project, WORKSPACE_ID);
+		_workspace = created.workspace();
+		assertEquals(PROXY_URL, created.spec().getEnv().get(LLMProxyService.ENV_BASE_URL));
+		assertNull("The container gets no token.", created.spec().getEnv().get(LLMProxyService.ENV_AUTH_TOKEN));
+		_proxy = LLMProxyService.getInstance();
+	}
 
-			String plain = created.spec().getEnv().get(LLMProxyService.ENV_AUTH_TOKEN);
-			assertNotNull("The container gets a token.", plain);
-			assertEquals(PROXY_URL, created.spec().getEnv().get(LLMProxyService.ENV_BASE_URL));
-			assertEquals("Only the hash is stored.", SecretTokens.hash(plain),
-				FactoryModel.getString(workspace, FactoryModel.WORKSPACE_LLM_TOKEN_HASH));
+	@Override
+	protected void tearDown() throws Exception {
+		_proxy.revokeAll(WORKSPACE_ID);
+		commit(() -> {
+			if (_workspace.tValid()) {
+				_workspace.tDelete();
+			}
+			_project.tDelete();
+			return null;
+		});
+		super.tearDown();
+	}
 
-			LLMProxyService proxy = LLMProxyService.getInstance();
-			assertTrue(proxy.authenticate(plain));
-			assertFalse("Another well-formed token.",
-				proxy.authenticate(SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX)));
+	/**
+	 * An issued token is valid, another well-formed one is not, a revoked one no longer.
+	 */
+	public void testIssueAndRevoke() {
+		String token = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
+		assertTrue(_proxy.authenticate(token));
+		assertFalse("Another well-formed token.",
+			_proxy.authenticate(SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX)));
 
-			commit(() -> {
-				workspace.tDelete();
-				return null;
-			});
-			assertFalse("The token of a removed workspace.", proxy.authenticate(plain));
-		} finally {
-			commit(() -> {
-				project.tDelete();
-				return null;
-			});
-		}
+		String other = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
+		_proxy.revoke(token);
+		assertFalse("Revoked.", _proxy.authenticate(token));
+		assertTrue("Other runs keep their tokens.", _proxy.authenticate(other));
+	}
+
+	/**
+	 * A token is not valid after its lifetime.
+	 */
+	public void testExpired() throws InterruptedException {
+		String token = _proxy.issue(WORKSPACE_ID, Duration.ofMillis(100));
+		assertTrue(_proxy.authenticate(token));
+		Thread.sleep(300);
+		assertFalse("Expired.", _proxy.authenticate(token));
+	}
+
+	/**
+	 * A token is not valid once its workspace is removed, and a token for an unknown workspace
+	 * never.
+	 */
+	public void testWorkspaceRemoved() {
+		String token = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
+		String unknown = _proxy.issue("no-such-workspace", Duration.ofMinutes(5));
+		assertFalse("Unknown workspace.", _proxy.authenticate(unknown));
+
+		commit(() -> {
+			_workspace.tDelete();
+			return null;
+		});
+		assertFalse("Workspace removed.", _proxy.authenticate(token));
+	}
+
+	/**
+	 * Revoking the tokens of a workspace, as its removal does.
+	 */
+	public void testRevokeAll() {
+		String first = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
+		String second = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
+		_proxy.revokeAll(WORKSPACE_ID);
+		assertFalse(_proxy.authenticate(first));
+		assertFalse(_proxy.authenticate(second));
 	}
 
 	private static <T> T commit(Supplier<T> change) {

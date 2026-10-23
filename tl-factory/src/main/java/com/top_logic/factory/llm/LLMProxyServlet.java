@@ -33,9 +33,11 @@ import com.top_logic.basic.Logger;
  *
  * <p>
  * Only {@code POST} of {@link #MESSAGES_PATH} and {@link #COUNT_TOKENS_PATH} (below {@link #PATH})
- * is forwarded, with the query string; everything else is answered with 404. A request must carry
- * a workspace token as bearer token in {@link #AUTHORIZATION}, which the {@link LLMProxy} checks,
- * otherwise it is answered with 401.
+ * is forwarded, with the query string; everything else is answered with 404. A request from a
+ * client address the {@link LLMProxy} does not accept is answered with 403 - the address is the one
+ * of the connection ({@link HttpServletRequest#getRemoteAddr()}), never a header such as
+ * {@code X-Forwarded-For}. A request must carry a workspace token as bearer token in
+ * {@link #AUTHORIZATION}, which the {@link LLMProxy} checks, otherwise it is answered with 401.
  * </p>
  *
  * <p>
@@ -99,6 +101,12 @@ public class LLMProxyServlet extends HttpServlet {
 	 * Type of the error answering a request without valid token, as in the Anthropic API.
 	 */
 	public static final String AUTHENTICATION_ERROR = "authentication_error";
+
+	/**
+	 * Type of the error answering a request from an address that is not accepted, as in the
+	 * Anthropic API.
+	 */
+	public static final String PERMISSION_ERROR = "permission_error";
 
 	/**
 	 * Type of the error answering a request the proxy does not forward.
@@ -167,6 +175,12 @@ public class LLMProxyServlet extends HttpServlet {
 		if (proxy == null || !proxy.isEnabled() || !POST.equals(req.getMethod()) || path == null
 			|| !FORWARDED_PATHS.contains(path)) {
 			error(resp, HttpServletResponse.SC_NOT_FOUND, NOT_FOUND_ERROR, "Not found.");
+			return;
+		}
+		String source = req.getRemoteAddr();
+		if (!proxy.isAllowedSource(source)) {
+			Logger.info("LLM proxy: refused a request from " + source + ".", LLMProxyServlet.class);
+			error(resp, HttpServletResponse.SC_FORBIDDEN, PERMISSION_ERROR, "Source not allowed.");
 			return;
 		}
 		if (!proxy.authenticate(bearerToken(req))) {

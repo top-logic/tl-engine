@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, the workspace token in ANTHROPIC_AUTH_TOKEN, ANTHROPIC_BASE_URL, tl_factory_llm_proxy_url), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated).
 ---
 
 # Control application (tl-factory)
@@ -31,8 +31,8 @@ gets access to the container platform itself.
 
 The model module `tl.factory` has the classes `Project` (name, group ID, artifact ID, engine
 version, the workspace as a composition) and `Workspace` (workspace ID, status, host port,
-preview URL, initial root password, the hash of its LLM token, the image its container was created
-from, the output of the last operation as `log`) and the
+preview URL, initial root password, the image its container was created from, the output of the
+last operation as `log`) and the
 enumeration `WorkspaceStatus`: *Created*, *Building*, *Starting*, *Running*, *Stopping*,
 *Stopped*, *Cleaning up*, *Updating*, *Error*, *Unknown*.
 
@@ -137,10 +137,7 @@ The update is an operation like the others, in state *Updating* with its output 
   on the existing named volumes. Sources, Maven repository and database stay, so does the initial
   password of the workspace. A workspace whose container is lost but whose volumes exist gets a
   container again this way.
-- If the proxy is switched on, the new container gets a **new LLM token**: the old token is not
-  stored anywhere and cannot be passed on. The hash of the new token replaces the old one when the
-  container is created, so the old token is no longer accepted. A workspace created before the
-  proxy existed gets its first token this way.
+- If the proxy is switched on, the new container gets its current URL in `ANTHROPIC_BASE_URL`.
 - A workspace that was running is started again and waited for like by *Start*; otherwise it ends
   in *Created*. A failure ends in *Error* with the reason in the log; the update can be repeated.
 
@@ -212,6 +209,7 @@ then.
 | `tl_factory_build_timeout` | `1800` | Seconds a Maven run in a workspace (generate, build, fill a release repository) may take before it is terminated. |
 | `tl_factory_docker_extra_hosts` | *(empty)* | Comma separated `<host>:<address>` entries added to the host names of new workspace containers, e.g. `host.docker.internal:host-gateway`. |
 | `tl_factory_llm_proxy_url` | *(empty)* | URL of the LLM proxy as the workspace containers reach it, e.g. `http://host.docker.internal:8080/tl-factory-app/llm-proxy`; empty switches the proxy off, see [LLM access](#llm-access). |
+| `tl_factory_llm_allowed_sources` | *(empty)* | Comma separated client addresses the LLM proxy accepts: CIDR ranges (IPv4 or IPv6) or `workspace-network`; empty accepts every address, see [LLM access](#llm-access). |
 | `tl_factory_llm_provider` | `anthropic` | Name of the Anthropic provider of `LLMProviderService` whose API key, base URL, version and timeouts the proxy uses. |
 | `tl_factory_log_flush_interval` | `1000` | Milliseconds between two commits of the output of a running operation. |
 | `tl_factory_max_log_size` | `65536` | Characters of the output of an operation that are stored. |
@@ -227,18 +225,26 @@ workspace container: whatever runs in the container - the agent, the generated a
 dependency of it - could read it. The container talks to the API through the control application
 instead.
 
-- **The token.** When a workspace is created and the proxy is switched on, `ProjectWorkspaces`
-  issues a token of its own for it: `tlwst_` followed by a random secret of about 256 bits
-  (`SecretTokens` of `tl-ai-core`). The workspace object stores only its SHA-256
-  (`llmTokenHash`, not shown in the views); the token itself is passed to the container in the
-  environment variable `ANTHROPIC_AUTH_TOKEN`, together with `ANTHROPIC_BASE_URL` set to
-  `tl_factory_llm_proxy_url`. Claude Code sends the token as `Authorization: Bearer <token>` to
-  that URL. Cleaning up the workspace deletes the hash and with it the token; a workspace created
-  while the proxy was off has no token.
+- **The URL.** If the proxy is switched on, every workspace container gets the URL of the proxy,
+  `tl_factory_llm_proxy_url`, in the environment variable `ANTHROPIC_BASE_URL`. It is no secret
+  and the only thing about the proxy the container gets.
+- **The token.** The container gets no token. A token belongs to one agent run: the control
+  application issues it when it starts the run (`LLMProxyService.issue(workspaceId, lifetime)`)
+  and passes it only to the process of the run, in `ANTHROPIC_AUTH_TOKEN` of its command
+  (`ExecCommand`); neither the application of the workspace nor `docker inspect` sees it. Claude
+  Code sends it as `Authorization: Bearer <token>`. A token is `tlwst_` followed by a random
+  secret of about 256 bits (`SecretTokens` of `tl-ai-core`). It is valid until the run ends and
+  the token is revoked (`revoke`), until its lifetime ends - at most `max-token-lifetime` of
+  `LLMProxyService`, four hours by default; a longer lifetime asked for is cut to it -, or until
+  its workspace is removed (*Clean up* revokes all its tokens, `revokeAll`, and a token of a
+  workspace that no longer exists is refused anyway). Tokens are kept in memory only, by their
+  SHA-256: nothing is stored in the database, and a restart of the control application
+  invalidates all tokens - together with the runs it started, which end with it.
 - **The proxy.** `LLMProxyServlet` at `/llm-proxy/*` of the control application forwards `POST`
   of `/v1/messages` and `/v1/messages/count_tokens` (with their query string) to the base URL of
-  the configured provider; every other path and method is answered with 404, a missing or
-  unknown token with 401. It drops the credentials (`Authorization`, `x-api-key`), cookies, `Host`,
+  the configured provider; every other path and method is answered with 404, a request from an
+  address that is not accepted (see below) with 403, a missing, unknown, revoked or expired token
+  with 401. It drops the credentials (`Authorization`, `x-api-key`), cookies, `Host`,
   `Accept-Encoding` and the hop-by-hop headers of the request, sets `x-api-key` to the API key of
   the provider and `anthropic-version` to its version, unless the client sent one; a client's
   `anthropic-beta` is kept. Status, headers and body of the answer are passed back, the body
@@ -254,6 +260,30 @@ with the extra host `host.docker.internal:host-gateway` when the control applica
 host, or `http://tl-factory-app:8080/tl-factory-app/llm-proxy` when its container is connected to
 the workspace network. The proxy answers any valid token, whatever state its workspace is in; it
 neither limits nor counts the requests.
+
+### Accepted sources
+
+`allowed-sources` of `LLMProxyService` (`tl_factory_llm_allowed_sources`) restricts the clients
+of the proxy by their address, in addition to the token. An entry is a range in CIDR notation,
+IPv4 or IPv6, a single address, or `workspace-network`: the ranges of the network the workspace
+containers are attached to, as the container platform reports them
+(`WorkspaceProvider.networkSubnets()`, for Docker the IPAM configuration of
+`tl_factory_docker_network`). They are read on the first request and again when an address
+matches no range, at most every 30 seconds. An empty list accepts every address. A refused request
+is answered with 403 and logged at level INFO with its address. The address checked is the one of
+the connection (`getRemoteAddr()`), never a header such as `X-Forwarded-For`.
+
+Which setting fits depends on how a request of a workspace reaches the control application:
+
+| Operation mode | Source address of a workspace request | Setting |
+|---|---|---|
+| Control application on the host, workspaces reach it through `host-gateway` | the address of the container on the workspace network | `workspace-network` |
+| Control application as container of the same daemon, connected to the workspace network | the address of the container on the workspace network | `workspace-network` |
+| Two daemons ([the rootless setup](doc:factory/docker-server#how-control-application-and-workspaces-reach-each-other)), a reverse proxy in front of the control application, or a port published through the Docker userland proxy | a gateway or the proxy, the same for workspaces and for clients from outside | empty |
+
+In the last case an address list cannot tell workspaces from other clients. Leave it empty and
+block the path `/llm-proxy/` for clients from outside at the reverse proxy in front of the
+control application instead; the token remains the check.
 
 ## Operation modes
 

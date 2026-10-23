@@ -73,12 +73,6 @@ public class FactoryModel {
 	public static final String WORKSPACE_INITIAL_PASSWORD = "initialPassword";
 
 	/**
-	 * Attribute of a {@link #WORKSPACE}: the hash of the token its container authenticates with at
-	 * the LLM proxy, see {@link com.top_logic.factory.llm.LLMProxyService}.
-	 */
-	public static final String WORKSPACE_LLM_TOKEN_HASH = "llmTokenHash";
-
-	/**
 	 * Attribute of a {@link #WORKSPACE}: the image its container was created from, see
 	 * {@link com.top_logic.factory.workspace.WorkspaceInfo#getImage()}.
 	 */
@@ -121,33 +115,28 @@ public class FactoryModel {
 	 *        The identifier of the container of the workspace.
 	 * @param initialPassword
 	 *        The initial password of the account root of the application in the workspace.
-	 * @param llmTokenHash
-	 *        The hash of the token the workspace authenticates with at the LLM proxy,
-	 *        {@code null} if it has no access to it.
 	 * @param status
 	 *        The initial state.
 	 * @return The new workspace.
 	 */
 	public static TLObject createWorkspace(TLObject project, String workspaceId, String initialPassword,
-			String llmTokenHash, WorkspaceStatus status) {
+			WorkspaceStatus status) {
 		TLObject workspace = ModelService.getInstance().getFactory().createObject(workspaceType(), project);
 		workspace.tUpdateByName(WORKSPACE_ID, workspaceId);
 		workspace.tUpdateByName(WORKSPACE_INITIAL_PASSWORD, initialPassword);
-		workspace.tUpdateByName(WORKSPACE_LLM_TOKEN_HASH, llmTokenHash);
 		setStatus(workspace, status);
 		project.tUpdateByName(PROJECT_WORKSPACE, workspace);
 		return workspace;
 	}
 
 	/**
-	 * The workspace whose {@link #WORKSPACE_LLM_TOKEN_HASH token hash} is the given one.
+	 * The stored workspace with the given identifier.
 	 *
-	 * @return The workspace, {@code null} if there is none - the token was never issued or its
-	 *         workspace is removed.
+	 * @return The workspace, {@code null} if there is none.
 	 */
-	public static TLObject findWorkspaceByLLMTokenHash(String llmTokenHash) {
+	public static TLObject findWorkspace(String workspaceId) {
 		for (TLObject workspace : allWorkspaces()) {
-			if (llmTokenHash.equals(getString(workspace, WORKSPACE_LLM_TOKEN_HASH))) {
+			if (workspaceId.equals(getWorkspaceId(workspace))) {
 				return workspace;
 			}
 		}

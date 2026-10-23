@@ -7,7 +7,8 @@ package com.top_logic.factory.llm;
 
 /**
  * What the {@link LLMProxyServlet} asks before it forwards a request: whether the proxy is
- * switched on, whether the token of the caller is valid, and where the request goes.
+ * switched on, whether the request comes from an accepted address, whether the token of the caller
+ * is valid, and where the request goes.
  *
  * @see LLMProxyService
  */
@@ -23,7 +24,17 @@ public interface LLMProxy {
 	boolean isEnabled();
 
 	/**
-	 * Whether the given bearer token was issued to an existing workspace.
+	 * Whether a request from the given client address is accepted.
+	 *
+	 * @param remoteAddress
+	 *        The address of the client the servlet container reports, never a header of the
+	 *        request.
+	 */
+	boolean isAllowedSource(String remoteAddress);
+
+	/**
+	 * Whether the given bearer token is valid: issued for a workspace that still exists, neither
+	 * revoked nor expired.
 	 *
 	 * <p>
 	 * Must not leave a transaction or context open: the request is streamed after it returns.

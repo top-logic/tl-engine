@@ -836,6 +836,29 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	}
 
 	@Override
+	public List<String> networkSubnets() {
+		return request(() -> {
+			Network network;
+			try {
+				network = _client.inspectNetworkCmd().withNetworkId(getConfig().getNetwork()).exec();
+			} catch (NotFoundException ex) {
+				// Created with the first workspace.
+				return Collections.<String> emptyList();
+			}
+			List<String> result = new ArrayList<>();
+			Network.Ipam ipam = network.getIpam();
+			if (ipam != null && ipam.getConfig() != null) {
+				for (Network.Ipam.Config config : ipam.getConfig()) {
+					if (config.getSubnet() != null && !config.getSubnet().isEmpty()) {
+						result.add(config.getSubnet());
+					}
+				}
+			}
+			return result;
+		});
+	}
+
+	@Override
 	public List<WorkspaceInfo> list() {
 		return request(() -> {
 			String workspaceLabel = labelKey(LABEL_WORKSPACE);

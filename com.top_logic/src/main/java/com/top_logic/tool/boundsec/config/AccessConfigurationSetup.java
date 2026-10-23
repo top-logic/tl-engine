@@ -11,24 +11,25 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Base64;
-import java.util.Collections;
+import java.util.Collection;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationReader;
-import com.top_logic.basic.config.SimpleInstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.migration.StartupAction;
+import com.top_logic.mig.html.layout.LayoutConfigTree;
+import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.util.StartupHooks;
 
 /**
@@ -70,16 +71,12 @@ public class AccessConfigurationSetup implements StartupAction {
 
 		AccessConfiguration config;
 		try {
-			config = (AccessConfiguration) ConfigurationReader.readContent(
-				SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
-				Collections.singletonMap("security",
-					TypedConfiguration.getConfigurationDescriptor(AccessConfiguration.class)),
-				accessData);
+			config = AccessImporter.readConfig(accessData);
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError(ex);
 		}
 
-		new AccessImporter().importAccessConfig(config);
+		new AccessImporter().importAccessConfig(config, loadLayoutTrees()).log();
 
 		PooledConnection commitCon = KBUtils.getCurrentContext(kb).getConnection();
 		try {
@@ -87,6 +84,12 @@ public class AccessConfigurationSetup implements StartupAction {
 		} catch (SQLException ex) {
 			Logger.error("Cannot mark configuration as applied.", ex, AccessConfigurationSetup.class);
 		}
+	}
+
+	private static Collection<LayoutConfigTree> loadLayoutTrees() {
+		return ThreadContext.inSystemContext(AccessConfigurationSetup.class,
+			() -> LayoutUtils.getLayoutConfigTreesByName(
+				new DefaultInstantiationContext(AccessConfigurationSetup.class)).values());
 	}
 
 	private static String storedHash(KnowledgeBase kb) {

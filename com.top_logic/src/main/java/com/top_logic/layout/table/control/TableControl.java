@@ -2424,7 +2424,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
 
 			for (TableDropTarget dropTarget : dropTargets) {
-				if (dropTarget.canDrop(event)) {
+				if (dropTarget.getDropType().accepts(event) && dropTarget.canDrop(event)) {
 					displayDropMarker(table, refId, pos);
 
 					return HandlerResult.DEFAULT_RESULT;
@@ -2483,7 +2483,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		protected HandlerResult handleDropEvent(TableDropEvent event, TableControl table, String pos, String refId) {
 			List<TableDropTarget> dropTargets = table.getApplicationModel().getTableConfiguration().getDropTargets();
 			for (TableDropTarget dropTarget : dropTargets) {
-				if (dropTarget.canDrop(event)) {
+				if (dropTarget.getDropType().accepts(event) && dropTarget.canDrop(event)) {
 					dropTarget.handleDrop(event);
 
 					return HandlerResult.DEFAULT_RESULT;

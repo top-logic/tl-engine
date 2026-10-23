@@ -126,24 +126,24 @@ const TLWizard: React.FC<TLCellProps> = ({ controlId }) => {
               </div>
             )}
             {showStepList && (
-              <ol className="tl-wizard__steps" aria-label={i18n['js.wizard.steps']}>
+              <ol className="tl-steps" aria-label={i18n['js.wizard.steps']}>
                 {steps.map((step, position) => {
                   const status = stepState(position, activeIndex);
                   return (
                     <li
                       key={step.key}
-                      className="tl-wizard__step-item"
+                      className="tl-steps__item"
                       data-tl-state={stateAttr(status === 'done' && 'done')}
                       aria-current={status === 'current' ? 'step' : undefined}
                     >
-                      <span className="tl-wizard__disc tl-type-label tl-nums" aria-hidden="true">{position + 1}</span>
+                      <span className="tl-steps__disc tl-type-label tl-nums" aria-hidden="true">{position + 1}</span>
                       {status === 'done' ? (
                         <button type="button" className={buttonClassName({ appearance: 'link' })} onClick={() => goTo(step.key)}>
                           {step.icon && <ThemeIcon encoded={step.icon} className="tl-button__icon tl-icon-sm" />}
                           <span className="tl-button__label">{step.label}</span>
                         </button>
                       ) : (
-                        <span className={'tl-wizard__step-name ' + (status === 'current' ? 'tl-type-body-strong' : 'tl-type-body')}>
+                        <span className={'tl-steps__name ' + (status === 'current' ? 'tl-type-body-strong' : 'tl-type-body')}>
                           {step.icon && <ThemeIcon encoded={step.icon} className="tl-icon-sm" />}
                           {step.label}
                         </span>

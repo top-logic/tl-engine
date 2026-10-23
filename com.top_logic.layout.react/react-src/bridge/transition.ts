@@ -8,6 +8,7 @@
 // decision; the marks are the contract between the two.
 
 import { useLayoutEffect, useRef } from 'react';
+import { STATE_ATTR, addStateWord, removeStateWord } from './css';
 
 /**
  * How long a transition mark stays at most when an animation runs but never reports its end - one
@@ -114,9 +115,6 @@ function whenFinished(element: HTMLElement, done: () => void): (() => void) | nu
   return end;
 }
 
-/** The attribute the package reads states from. */
-const STATE_ATTR = 'data-tl-state';
-
 /** How a change is marked on the DOM. */
 interface Marks {
   enter: string;
@@ -142,21 +140,8 @@ const STATE_MARKS: Marks = {
   exit: 'exiting',
   attribute: STATE_ATTR,
   has: (element, mark) => (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).includes(mark),
-  add: (element, mark) => {
-    const words = (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).filter(Boolean);
-    if (!words.includes(mark)) {
-      words.push(mark);
-    }
-    element.setAttribute(STATE_ATTR, words.join(' '));
-  },
-  remove: (element, mark) => {
-    const words = (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).filter((word) => word && word !== mark);
-    if (words.length > 0) {
-      element.setAttribute(STATE_ATTR, words.join(' '));
-    } else {
-      element.removeAttribute(STATE_ATTR);
-    }
-  },
+  add: addStateWord,
+  remove: removeStateWord,
 };
 
 function marksOf(options: KeyedTransitionOptions): Marks {

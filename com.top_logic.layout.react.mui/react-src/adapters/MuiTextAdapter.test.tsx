@@ -68,7 +68,7 @@ describe('TLText as MUI Typography', () => {
       success: 'var(--mui-palette-success-main)',
       warning: 'var(--mui-palette-warning-main)',
       error: 'var(--mui-palette-error-main)',
-      'on-color': 'var(--text-on-color, var(--mui-palette-common-white))',
+      'on-color': 'var(--tl-text-on-brand)',
     };
     for (const [tone, color] of Object.entries(expected)) {
       mountText({ tone: tone as TextStateJson.Tone });

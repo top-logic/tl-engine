@@ -255,6 +255,25 @@ export function dragKindAccepted(
 }
 
 /**
+ * The decision of {@link dragKindAccepted} for a drag not started yet, from the kind of the dragged
+ * object itself: a keyboard move offers only the drop a pointer drag of that object could make.
+ *
+ * @param kind The drag kind of the dragged object, if any.
+ * @param acceptsAny Whether the target accepts every drag, with any kind or none.
+ * @param acceptedKinds The kinds the target accepts where it does not accept any drag.
+ */
+export function kindAccepted(kind: string | undefined, acceptsAny: boolean, acceptedKinds: readonly string[]): boolean {
+  if (acceptsAny) {
+    return true;
+  }
+  if (!kind) {
+    return false;
+  }
+  const name = kind.toLowerCase();
+  return acceptedKinds.some((accepted) => accepted.toLowerCase() === name);
+}
+
+/**
  * The drop modes that apply to the drag a transfer carries: the modes the target announces for the
  * dragged kind, or all its modes where the kind is not listed - a target accepting any kind lists
  * none. The split of an item follows these modes, so a target inserting one kind among its items and
@@ -344,4 +363,26 @@ export function dropZoneAt(clientY: number, item: HTMLElement, split: TLZoneSpli
     return 'lower';
   }
   return 'middle';
+}
+
+/**
+ * The boundary between two items of a vertical list nearest to a pointer at the given vertical
+ * position, wherever the pointer is - on an item or in the gap between two: before the first item
+ * whose middle is below the pointer, after the last item where the pointer is below the middle of
+ * every item.
+ *
+ * @param items The items of the list, top to bottom.
+ * @returns The item the boundary is at and its side of it, `null` for a list without items.
+ */
+export function boundaryAt(
+  clientY: number,
+  items: readonly Element[],
+): { item: Element; side: 'before' | 'after' } | null {
+  for (const item of items) {
+    const rect = item.getBoundingClientRect();
+    if (clientY < rect.top + rect.height / 2) {
+      return { item, side: 'before' };
+    }
+  }
+  return items.length > 0 ? { item: items[items.length - 1], side: 'after' } : null;
 }

@@ -101,10 +101,11 @@ const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const binding = useMemo(() => bindingFor(language), [language]);
 
-  const cls = [
-    'tlCodeEditor',
-    state.hasError === true ? 'tlCodeEditor--error' : '',
-  ].filter(Boolean).join(' ');
+  // The root is a field of the design system with code text; `tlCodeEditor` scopes the CodeMirror
+  // rules of the stylesheet. The error is `aria-invalid`, not a class.
+  // A read-only editor keeps the field frame too: without it, the line numbers and the empty lines
+  // stand loose in the form. Its own reading form comes with the UI pass (docs/ui-durchgang.md U18).
+  const cls = 'tlCodeEditor tl-field tl-type-code';
 
   return (
     <CodeEditor
@@ -115,6 +116,7 @@ const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       extraExtensions={binding.extras}
       onChange={setValue}
       className={rootClassName(state, cls)}
+      invalid={state.hasError === true}
       contentAttributes={{ id: inputId, ...labelProps }}
     />
   );

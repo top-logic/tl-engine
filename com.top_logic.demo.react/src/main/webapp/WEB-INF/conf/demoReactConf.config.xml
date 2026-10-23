@@ -799,7 +799,7 @@
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
 				<resources>
 					<stylesheet name="tl-demo-react-css"
-						requires="tl-react-controls-css"
+						requires="tl-design-system-components"
 						resource="/style/tl-demo-react.css"
 					/>
 				</resources>

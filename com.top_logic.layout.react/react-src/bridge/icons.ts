@@ -76,3 +76,93 @@ export const ICON_MAXIMIZE = 'css:fa-regular fa-window-maximize';
 
 /** Gives a maximized window its size back. */
 export const ICON_RESTORE = 'css:fa-regular fa-window-restore';
+
+/** Chooses an icon (the icon field while it holds none). */
+export const ICON_CHOOSE_ICON = 'css:fa-solid fa-icons';
+
+/** Uploads a file (the file upload, the binary field). */
+export const ICON_UPLOAD = 'css:fa-solid fa-upload';
+
+/** Downloads a file (the download, the binary field). */
+export const ICON_DOWNLOAD = 'css:fa-solid fa-download';
+
+/** A file (the chip of an attached file). */
+export const ICON_FILE = 'css:fa-regular fa-file';
+
+/** Attaches files (the add button of the file chips). */
+export const ICON_ATTACH = 'css:fa-solid fa-paperclip';
+
+/** Starts a recording (the audio recorder). */
+export const ICON_RECORD = 'css:fa-solid fa-circle';
+
+/** Stops a recording (the audio recorder while it records). */
+export const ICON_STOP = 'css:fa-solid fa-stop';
+
+/** Plays audio (the audio player). */
+export const ICON_PLAY = 'css:fa-solid fa-play';
+
+/** Pauses audio (the audio player while it plays). */
+export const ICON_PAUSE = 'css:fa-solid fa-pause';
+
+/** Takes a photo (the camera button and the capture button of the camera dialog). */
+export const ICON_CAMERA = 'css:fa-solid fa-camera';
+
+/** Mirrors the camera picture (the camera dialog). */
+export const ICON_MIRROR = 'css:fa-solid fa-left-right';
+
+/** Prints the document (the print button over an HTML document). */
+export const ICON_PRINT = 'css:fa-solid fa-print';
+
+/** The button moving to the previous period, e.g. of a calendar. */
+export const ICON_PREVIOUS = 'css:fa-solid fa-chevron-left';
+
+/** The button moving to the next period, e.g. of a calendar. */
+export const ICON_NEXT = 'css:fa-solid fa-chevron-right';
+
+/** Bold text (the toolbar of the rich text editor). */
+export const ICON_BOLD = 'css:fa-solid fa-bold';
+
+/** Italic text (the toolbar of the rich text editor). */
+export const ICON_ITALIC = 'css:fa-solid fa-italic';
+
+/** Underlined text (the toolbar of the rich text editor). */
+export const ICON_UNDERLINE = 'css:fa-solid fa-underline';
+
+/** Struck-through text (the toolbar of the rich text editor). */
+export const ICON_STRIKETHROUGH = 'css:fa-solid fa-strikethrough';
+
+/** A paragraph of text (the paragraph format of the rich text editor). */
+export const ICON_PARAGRAPH = 'css:fa-solid fa-paragraph';
+
+/** A heading (the paragraph format of the rich text editor). */
+export const ICON_HEADING = 'css:fa-solid fa-heading';
+
+/** A bulleted list (the list kind of the rich text editor). */
+export const ICON_BULLET_LIST = 'css:fa-solid fa-list-ul';
+
+/** A numbered list (the list kind of the rich text editor). */
+export const ICON_NUMBERED_LIST = 'css:fa-solid fa-list-ol';
+
+/** A quotation (the toolbar of the rich text editor). */
+export const ICON_QUOTE = 'css:fa-solid fa-quote-left';
+
+/** A block of code (the toolbar of the rich text editor). */
+export const ICON_CODE_BLOCK = 'css:fa-solid fa-code';
+
+/** A link (the toolbar of the rich text editor). */
+export const ICON_LINK = 'css:fa-solid fa-link';
+
+/** Inserts an image (the toolbar of the rich text editor). */
+export const ICON_IMAGE = 'css:fa-regular fa-image';
+
+/** Inserts a table (the toolbar of the rich text editor). */
+export const ICON_TABLE = 'css:fa-solid fa-table';
+
+/** Undoes the last change (the toolbar of the rich text editor). */
+export const ICON_UNDO = 'css:fa-solid fa-arrow-rotate-left';
+
+/** Redoes the last undone change (the toolbar of the rich text editor). */
+export const ICON_REDO = 'css:fa-solid fa-arrow-rotate-right';
+
+/** Shows the HTML source in place of the formatted text (the toolbar of the rich text editor). */
+export const ICON_SOURCE = 'css:fa-solid fa-file-code';

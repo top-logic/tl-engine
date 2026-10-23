@@ -10,14 +10,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,17 +21,11 @@ import javax.swing.tree.TreeModel;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.col.DescendantDFSIterator;
 import com.top_logic.basic.col.TreeView;
-import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationReader;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.SimpleInstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
-import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -52,10 +41,13 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.RoleProfileConfig;
 import com.top_logic.tool.boundsec.compound.gui.admin.rolesProfile.SecurityConfig.ViewConfig;
+import com.top_logic.tool.boundsec.config.AccessConfiguration;
+import com.top_logic.tool.boundsec.config.AccessImporter;
 import com.top_logic.tool.boundsec.gui.profile.CommandGroupCollector;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
+import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
 /**
  * This class collects methods to handle roles profile related functionality.
@@ -345,88 +337,85 @@ public class RolesProfileHandler {
 	/**
 	 * Import a roles profile from a given input stream.
 	 *
+	 * <p>
+	 * All existing rights are replaced by the imported ones. Entries that cannot be imported are
+	 * reported to the user and to the log.
+	 * </p>
+	 *
 	 * @param layoutTrees
 	 *        The {@link LayoutConfigTree}'s that are known in the system.
 	 * @param securityProfiles
 	 *        The input stream to read the profiles from.
+	 *
+	 * @see AccessImporter
 	 */
 	public void importProfiles(Collection<LayoutConfigTree> layoutTrees, BinaryContent securityProfiles)
 			throws ConfigurationException {
-		SecurityConfig securityConfig = readSecurityProfiles(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, securityProfiles);
-		Map<String, RoleProfileConfig> profiles = securityConfig.getProfiles();
-		Set<ComponentName> allViews = addAllViewNames(new HashSet<>(), profiles);
-		Map<String, BoundedRole> roleByName = rolesByName(profiles.keySet());
-		layoutTrees.forEach(tree -> importProfiles(tree, profiles, roleByName, allViews));
-		if (!allViews.isEmpty()) {
-			InfoService.showWarning(
-				I18NConstants.IMPORT_ROLES_PROFILE_MISSING_VIEWS__VIEWS.fill(StringServices.toString(allViews)));
+		AccessConfiguration config = AccessImporter.readConfig(securityProfiles);
+		AccessImporter.Result result = new AccessImporter().importAccessConfig(config, layoutTrees);
+		result.log();
+		showWarning(I18NConstants.IMPORT_ROLES_PROFILE_MISSING_ROLES__ROLES, result.getMissingRoles());
+		showWarning(I18NConstants.IMPORT_ROLES_PROFILE_MISSING_VIEWS__VIEWS, result.getMissingViews());
+		showWarning(I18NConstants.IMPORT_ROLES_PROFILE_UNKNOWN_COMMAND_GROUPS__GROUPS,
+			result.getUnknownCommandGroups());
+		showWarning(I18NConstants.IMPORT_ROLES_PROFILE_UNAVAILABLE_COMMAND_GROUPS__GROUPS,
+			result.getUnavailableCommandGroups());
+		showWarning(I18NConstants.IMPORT_ROLES_PROFILE_IMPLICIT_READ_RIGHTS__RIGHTS, result.getImplicitReadRights());
+	}
+
+	private static void showWarning(ResKey1 message, Set<String> entries) {
+		if (!entries.isEmpty()) {
+			InfoService.showWarning(message.fill(StringServices.toString(entries)));
 		}
 	}
 
-	private <T extends Collection<? super ComponentName>> T addAllViewNames(T out,
-			Map<String, RoleProfileConfig> profiles) {
-		profiles.values().forEach(conf -> out.addAll(conf.getViews().keySet()));
-		return out;
-	}
-
-	private void importProfiles(LayoutConfigTree tree, Map<String, RoleProfileConfig> profiles,
-			Map<String, BoundedRole> roleByName, Set<ComponentName> allConfiguredViews) {
-		DescendantDFSIterator<LayoutConfigTreeNode> allNodes = new DescendantDFSIterator<>(tree, tree.getRoot());
-		while (allNodes.hasNext()) {
-			importProfiles(allNodes.next(), profiles, roleByName, allConfiguredViews);
-		}
-	}
-
-	private Map<String, BoundedRole> rolesByName(Collection<String> roleNames) {
-		Map<String, BoundedRole> roles = BoundedRole.getRolesByName(roleNames);
-		List<String> missingRoles = roleNames
+	/**
+	 * Adds the rights of all {@link PersBoundComp}s that are not defined by a security layout in
+	 * the given trees, e.g. security scopes of the view layer.
+	 *
+	 * @param out
+	 *        The configuration to add the rights to.
+	 * @param roles
+	 *        The roles to export rights for.
+	 * @param layoutTrees
+	 *        The layout trees whose security layouts are already exported.
+	 */
+	public void addNonLayoutProfilesFor(SecurityConfig out, Collection<? extends BoundRole> roles,
+			Collection<LayoutConfigTree> layoutTrees) {
+		Set<ComponentName> layoutSecurity = AccessImporter.securityDefiningNodes(layoutTrees).keySet();
+		List<PersBoundComp> secComps = SecurityComponentCache.getAllSecurityComponents()
 			.stream()
-			.filter(name -> !roles.containsKey(name))
+			.filter(secComp -> !layoutSecurity.contains(secComp.getIdentifier()))
+			.sorted(Comparator.comparing(PersBoundComp::getName))
 			.collect(Collectors.toList());
-		if (!missingRoles.isEmpty()) {
-			InfoService.showWarning(
-				I18NConstants.IMPORT_ROLES_PROFILE_MISSING_ROLES__ROLES.fill(StringServices.toString(missingRoles)));
-		}
-		return roles;
-	}
-
-	private void importProfiles(LayoutConfigTreeNode node, Map<String, RoleProfileConfig> profiles,
-			Map<String, BoundedRole> roleByName, Set<ComponentName> allConfiguredViews) {
-		PersBoundComp secComp = node.getSecurityComponent();
-		if (secComp == null) {
-			return;
-		}
-		ComponentName secCompName = secComp.getIdentifier();
-		allConfiguredViews.remove(secCompName);
-		Map<BoundedRole, Collection<BoundCommandGroup>> neededRights = new HashMap<>();
-		for (Entry<String, RoleProfileConfig> profile: profiles.entrySet()) {
-			BoundedRole role = roleByName.get(profile.getKey());
-			if (role == null) {
-				// non existing role. Already logged.
-				continue;
+		List<BoundCommandGroup> groups = new ArrayList<>(CommandGroupRegistry.getInstance().getAllCommandGroups());
+		groups.remove(SimpleBoundCommandGroup.SYSTEM);
+		groups.sort(SimpleBoundCommandGroup.COMPARE_BY_ID);
+		for (BoundRole role : roles) {
+			RoleProfileConfig profileConfig = out.getProfiles().get(role.getName());
+			if (profileConfig == null) {
+				profileConfig = SecurityConfig.RoleProfileConfig.newInstance(role);
+				out.getProfiles().put(role.getName(), profileConfig);
 			}
-			Map<ComponentName, ViewConfig> views = profile.getValue().getViews();
-			ViewConfig view = views.get(secCompName);
-			if (view == null) {
-				// No rights for view
-				continue;
+			for (PersBoundComp secComp : secComps) {
+				if (profileConfig.getViews().get(secComp.getIdentifier()) != null) {
+					continue;
+				}
+				ViewConfig viewConfig = null;
+				for (BoundCommandGroup group : groups) {
+					if (!secComp.rolesForCommandGroup(group).contains(role)) {
+						continue;
+					}
+					if (viewConfig == null) {
+						viewConfig = SecurityConfig.ViewConfig.newInstance(secComp.getIdentifier());
+					}
+					viewConfig.getCommandGroups().add(SecurityConfig.CommandGroupConfig.newInstance(group));
+				}
+				if (viewConfig != null) {
+					profileConfig.getViews().put(viewConfig.getName(), viewConfig);
+				}
 			}
-			List<BoundCommandGroup> groups = view.getCommandGroups()
-				.stream()
-				.map(config -> config.getCommandGroup()).collect(Collectors.toList());
-			neededRights.put(role, groups);
 		}
-		secComp.setAccess(neededRights);
-	}
-
-	private SecurityConfig readSecurityProfiles(InstantiationContext context, Content profiles)
-			throws ConfigurationException {
-		Map<String, ConfigurationDescriptor> rootDescriptor = Collections.singletonMap(
-			ExportRolesProfileHandler.XML_TAG_SECURITY,
-			TypedConfiguration.getConfigurationDescriptor(SecurityConfig.class));
-		ConfigurationReader reader = new ConfigurationReader(context, rootDescriptor);
-		reader.setSource(profiles);
-		return (SecurityConfig) reader.read();
 	}
 
     /**

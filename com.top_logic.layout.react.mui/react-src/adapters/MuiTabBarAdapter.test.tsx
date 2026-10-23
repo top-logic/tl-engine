@@ -3,7 +3,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { FILL_CLASS } from 'tl-react-bridge';
 import type { TabBarStateJson } from 'tl-react-bridge';
 import MuiTabBarAdapter from './MuiTabBarAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
@@ -58,7 +57,7 @@ describe('TLTabBar as MUI Tabs', () => {
     mountTabBar({ activeTabId: 'a', cssClass: 'my-tabs' });
 
     const root = document.getElementById(CONTROL_ID)!;
-    expect(root.classList).toContain(FILL_CLASS);
+    expect(root.classList).toContain('tl-fill');
     expect(root.classList).toContain('my-tabs');
   });
 

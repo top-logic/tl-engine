@@ -50,6 +50,11 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		/**
 		 * Specifies if the drop occurs ordered, i.e. before or after, or on the referenced row
 		 * itself.
+		 *
+		 * <p>
+		 * A table may have drop operations of both types. Then, the upper and lower third of a row
+		 * select a drop before or after the row, and the middle third selects a drop onto the row.
+		 * </p>
 		 */
 		@Name(DROP_TYPE)
 		DropType getDropType();

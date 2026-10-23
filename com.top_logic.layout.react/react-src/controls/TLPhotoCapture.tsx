@@ -1,4 +1,7 @@
-import { React, useTLState, useTLUpload, useI18N, useStandaloneKeyboardScope, useFocusTrap, rootClassName, tooltipProps } from 'tl-react-bridge';
+import {
+  React, useTLState, useUpload, useI18N, usePart, useStandaloneKeyboardScope, useFocusTrap, createPortal,
+  anchoredOverlayProps, rootClassName, ICON_CAMERA, ICON_MIRROR, ICON_CLOSE,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -6,26 +9,52 @@ const I18N_KEYS = {
   'js.photoCapture.close': 'Close camera',
   'js.photoCapture.capture': 'Capture photo',
   'js.photoCapture.mirror': 'Mirror camera',
-  'js.uploading': 'Uploading\u2026',
   'js.photoCapture.error.denied': 'Camera access denied or unavailable.',
 };
 
-type LocalStatus = 'idle' | 'overlayOpen' | 'uploading';
+/** The name of the multipart part carrying the photo. */
+const PART_PHOTO = 'photo';
 
+/** The file name a captured photo is sent under. */
+const CAPTURE_FILE_NAME = 'capture.jpg';
+
+/** The type and the quality a captured photo is encoded with. */
+const CAPTURE_TYPE = 'image/jpeg';
+const CAPTURE_QUALITY = 0.85;
+
+/** Releases the camera. */
+function stopTracks(stream: MediaStream | null) {
+  stream?.getTracks().forEach(track => track.stop());
+}
+
+/**
+ * Takes a photo with the camera and uploads it (part `photo`).
+ *
+ * <p>The camera button opens a dialog of the design system (`tl-dialog`), portaled to the body: the
+ * camera picture, a mirror toggle and the capture button, which has the focus, so Enter takes the
+ * photo. Escape, a click on the scrim and the close button close the dialog; the focus returns to the
+ * camera button. The dialog is purely a client one: its Escape scope is registered when it opens, so
+ * inside a window it closes first, and the window stays.</p>
+ *
+ * <p>Without camera access in the browser (no secure context), the button opens the file selection of
+ * the device instead. While the photo is uploaded, the camera button is busy and disabled. A device
+ * error and the error of the server are announced in the status line.</p>
+ */
 const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
-  const upload = useTLUpload();
+  const { uploading, error, upload } = useUpload();
+  const Button = usePart('Button');
 
-  const [localStatus, setLocalStatus] = React.useState<LocalStatus>('idle');
+  const [open, setOpen] = React.useState(false);
   const [localError, setLocalError] = React.useState<string | null>(null);
   const [mirrored, setMirrored] = React.useState(false);
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
-  const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const overlayRef = React.useRef<HTMLDivElement | null>(null);
-
-  const serverError = state.error as string | null;
+  const surfaceRef = React.useRef<HTMLDivElement | null>(null);
+  const cameraButtonRef = React.useRef<HTMLElement | null>(null);
+  const captureButtonRef = React.useRef<HTMLElement | null>(null);
+  const mountedRef = React.useRef(true);
 
   const hasGetUserMedia = React.useMemo(
     () => !!(window.isSecureContext && navigator.mediaDevices?.getUserMedia),
@@ -33,29 +62,27 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
   );
 
   const stopCamera = React.useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
+    stopTracks(streamRef.current);
+    streamRef.current = null;
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
   }, []);
 
-  const closeOverlay = React.useCallback(() => {
+  const closeDialog = React.useCallback(() => {
     stopCamera();
-    setLocalStatus('idle');
+    setOpen(false);
   }, [stopCamera]);
 
   const handleCameraClick = React.useCallback(async () => {
-    if (localStatus === 'uploading') {
+    if (uploading || open) {
       return;
     }
 
     setLocalError(null);
 
     if (!hasGetUserMedia) {
-      // Fallback: trigger native file input.
+      // Fallback: the file selection of the device.
       fileInputRef.current?.click();
       return;
     }
@@ -64,26 +91,26 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' }
       });
+      if (!mountedRef.current) {
+        // Unmounted while the browser asked for the camera.
+        stopTracks(stream);
+        return;
+      }
       streamRef.current = stream;
-      setLocalStatus('overlayOpen');
+      setOpen(true);
     } catch (err) {
       console.error('[TLPhotoCapture] Camera access denied or unavailable:', err);
       setLocalError('js.photoCapture.error.denied');
-      setLocalStatus('idle');
     }
-  }, [localStatus, hasGetUserMedia]);
+  }, [uploading, open, hasGetUserMedia]);
 
-  const handleCapture = React.useCallback(async () => {
-    if (localStatus !== 'overlayOpen') {
-      return;
-    }
-
+  const handleCapture = React.useCallback(() => {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) {
+    if (!video) {
       return;
     }
 
+    const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
@@ -92,88 +119,77 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
     }
     ctx.drawImage(video, 0, 0);
 
-    stopCamera();
-    setLocalStatus('uploading');
+    closeDialog();
 
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        setLocalStatus('idle');
-        return;
+    canvas.toBlob((blob) => {
+      if (blob) {
+        upload([{ name: PART_PHOTO, file: blob, fileName: CAPTURE_FILE_NAME }]);
       }
-      const formData = new FormData();
-      formData.append('photo', blob, 'capture.jpg');
-      await upload(formData);
-      setLocalStatus('idle');
-    }, 'image/jpeg', 0.85);
-  }, [localStatus, upload, stopCamera]);
+    }, CAPTURE_TYPE, CAPTURE_QUALITY);
+  }, [upload, closeDialog]);
 
-  const handleFallbackFile = React.useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFallbackFile = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    setLocalStatus('uploading');
-    const formData = new FormData();
-    formData.append('photo', file, file.name);
-    await upload(formData);
-    setLocalStatus('idle');
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    // Reset so picking the same file again still fires a change event.
+    e.target.value = '';
+    if (file) {
+      upload([{ name: PART_PHOTO, file, fileName: file.name }]);
     }
   }, [upload]);
 
-  // Wire stream to video element when overlay opens.
+  // Wire the stream to the video when the dialog opens.
   React.useEffect(() => {
-    if (localStatus === 'overlayOpen' && videoRef.current && streamRef.current) {
+    if (open && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
     }
-  }, [localStatus]);
+  }, [open]);
 
-  // The camera is a modal surface: focus moves in, stays in, and returns to the camera button.
-  useFocusTrap(localStatus === 'overlayOpen', overlayRef, 'first');
+  // The dialog is modal: the focus moves to the capture button, stays in the surface, and returns to the
+  // element that had it. Escape closes the dialog through the shared keyboard dispatcher; its scope is
+  // registered when the dialog opens, so it is the newest one and wins over a window around the control.
+  useFocusTrap(open, surfaceRef, () => captureButtonRef.current);
+  useStandaloneKeyboardScope(open, { ESCAPE: () => { closeDialog(); return true; } });
 
-  // Escape key closes overlay (via the shared keyboard dispatcher).
-  useStandaloneKeyboardScope(localStatus === 'overlayOpen', { ESCAPE: closeOverlay });
-
-  // Cleanup on unmount.
+  // The trap returns the focus to the element that had it; if that is gone, the camera button takes it.
   React.useEffect(() => {
+    if (!open) {
+      return;
+    }
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-        streamRef.current = null;
-      }
+      const anchor = cameraButtonRef.current;
+      queueMicrotask(() => {
+        if (anchor?.isConnected && (document.activeElement === document.body || document.activeElement === null)) {
+          anchor.focus();
+        }
+      });
+    };
+  }, [open]);
+
+  // Unmounted: release the camera.
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      stopTracks(streamRef.current);
+      streamRef.current = null;
     };
   }, []);
 
   const t = useI18N(I18N_KEYS);
-
-  const cameraLabel =
-    localStatus === 'uploading' ? t['js.uploading'] :
-    t['js.photoCapture.open'];
-
-  const cameraBtnClasses = ['tlPhotoCapture__cameraBtn'];
-  if (localStatus === 'uploading') cameraBtnClasses.push('tlPhotoCapture__cameraBtn--uploading');
-
-  const videoClasses = ['tlPhotoCapture__overlayVideo'];
-  if (mirrored) videoClasses.push('tlPhotoCapture__overlayVideo--mirrored');
-
-  const mirrorBtnClasses = ['tlPhotoCapture__mirrorBtn'];
-  if (mirrored) mirrorBtnClasses.push('tlPhotoCapture__mirrorBtn--active');
+  const titleId = controlId + '-camera-title';
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlPhotoCapture')}>
-      <div className="tlPhotoCapture__controls">
-        <button
-          type="button"
-          className={cameraBtnClasses.join(' ')}
-          onClick={handleCameraClick}
-          disabled={localStatus === 'uploading'}
-          aria-label={cameraLabel}
-          {...tooltipProps(cameraLabel)}
-        >
-          <span className="tlPhotoCapture__cameraIcon" />
-        </button>
-      </div>
+    <div id={controlId} className={rootClassName(state, 'tl-upload')}>
+      <Button
+        ref={cameraButtonRef}
+        label={t['js.photoCapture.open']}
+        image={ICON_CAMERA}
+        display="icon-only"
+        appearance="secondary"
+        disabled={uploading}
+        aria-busy={uploading ? true : undefined}
+        onClick={handleCameraClick}
+      />
 
       {!hasGetUserMedia && (
         <input
@@ -186,70 +202,69 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
         />
       )}
 
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-      {localStatus === 'overlayOpen' && (
-        <div className="tl-dialog" onClick={(e) => { if (e.target === e.currentTarget) closeOverlay(); }}>
+      {open && createPortal(
+        <div
+          className="tl-dialog"
+          data-tl-state="entering"
+          onClick={(e) => { if (e.target === e.currentTarget) closeDialog(); }}
+          {...anchoredOverlayProps}
+        >
           <div
-            ref={overlayRef}
-            className="tlPhotoCapture__overlayContent"
+            ref={surfaceRef}
+            className="tl-dialog__surface"
             role="dialog"
             aria-modal="true"
-            aria-label={cameraLabel}
-            tabIndex={-1}
+            aria-labelledby={titleId}
           >
-            <video
-              ref={videoRef}
-              className={videoClasses.join(' ')}
-              autoPlay
-              muted
-              playsInline
-            />
-            <div className="tlPhotoCapture__overlayToolbar">
-              <button
-                type="button"
-                className={mirrorBtnClasses.join(' ')}
+            <div className="tl-titlebar">
+              <h2 className="tl-titlebar__title tl-type-heading-sm" id={titleId}>{t['js.photoCapture.open']}</h2>
+              <Button
+                label={t['js.photoCapture.close']}
+                image={ICON_CLOSE}
+                display="icon-only"
+                appearance="ghost"
+                small
+                onClick={closeDialog}
+              />
+            </div>
+            <div className="tl-dialog__body">
+              <video
+                ref={videoRef}
+                className="tl-media__frame"
+                data-tl-state={mirrored ? 'mirrored' : undefined}
+                autoPlay
+                muted
+                playsInline
+              />
+            </div>
+            <div className="tl-button-bar">
+              <Button
+                label={t['js.photoCapture.mirror']}
+                image={ICON_MIRROR}
+                display="icon-label"
+                appearance="secondary"
+                checked={mirrored}
                 onClick={() => setMirrored(m => !m)}
-                aria-label={t['js.photoCapture.mirror']}
-                {...tooltipProps(t['js.photoCapture.mirror'])}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="7 8 3 12 7 16" />
-                  <polyline points="17 8 21 12 17 16" />
-                  <line x1="12" y1="3" x2="12" y2="21" strokeDasharray="2 2" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className="tlPhotoCapture__overlayCaptureBtn"
+              />
+              <Button
+                ref={captureButtonRef}
+                label={t['js.photoCapture.capture']}
+                image={ICON_CAMERA}
+                display="icon-label"
+                appearance="primary"
                 onClick={handleCapture}
-                aria-label={t['js.photoCapture.capture']}
-                {...tooltipProps(t['js.photoCapture.capture'])}
-              >
-                <span className="tlPhotoCapture__overlayCaptureIcon" />
-              </button>
-              <button
-                type="button"
-                className="tlPhotoCapture__overlayCloseBtn"
-                onClick={closeOverlay}
-                aria-label={t['js.photoCapture.close']}
-                {...tooltipProps(t['js.photoCapture.close'])}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                </svg>
-              </button>
+              />
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {localError && (
-        <span className="tlPhotoCapture__status tlPhotoCapture__status--error">{t[localError]}</span>
+        <span className="tl-file-upload__status tl-type-label" role="alert">{t[localError]}</span>
       )}
-      {serverError && (
-        <span className="tlPhotoCapture__status tlPhotoCapture__status--error">{serverError}</span>
+      {error && (
+        <span className="tl-file-upload__status tl-type-label" role="alert">{error}</span>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon } from 'tl-react-bridge';
+import { React, useTLState, useUpload, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon, ICON_UPLOAD } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { buttonClassName } from './button/buttonClassName';
 
@@ -7,32 +7,22 @@ const I18N_KEYS = {
   'js.uploading': 'Uploading\u2026',
 };
 
-type LocalStatus = 'idle' | 'uploading';
-
-const UPLOAD_ICON = 'css:fa-solid fa-upload';
+/** The name of the multipart part carrying the file. */
+const PART_FILE = 'file';
 
 const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
   const state = useTLState();
-  const upload = useTLUpload();
+  const { uploading, error, upload } = useUpload();
 
-  const [localStatus, setLocalStatus] = React.useState<LocalStatus>('idle');
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  const serverStatus = (state.status as string) ?? 'idle';
-  const serverError = state.error as string | null;
   const accept = (state.accept as string) ?? '';
 
-  const effectiveStatus = serverStatus === 'received' ? 'idle' : (localStatus !== 'idle' ? localStatus : serverStatus);
-
-  const doUpload = React.useCallback(async (file: File) => {
-    setLocalStatus('uploading');
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-    await upload(formData);
-    setLocalStatus('idle');
+  const doUpload = React.useCallback((file: File) => {
+    upload([{ name: PART_FILE, file, fileName: file.name }]);
   }, [upload]);
 
   const handleFileChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,9 +35,9 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
   }, [doUpload]);
 
   const handleButtonClick = React.useCallback(() => {
-    if (localStatus === 'uploading') return;
+    if (uploading) return;
     fileInputRef.current?.click();
-  }, [localStatus]);
+  }, [uploading]);
 
   const handleDragOver = React.useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -65,16 +55,15 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    if (localStatus === 'uploading') return;
+    if (uploading) return;
     const file = e.dataTransfer.files?.[0];
     if (file) {
       doUpload(file);
     }
-  }, [localStatus, doUpload]);
+  }, [uploading, doUpload]);
 
-  const isDisabled = effectiveStatus === 'uploading';
   const t = useI18N(I18N_KEYS);
-  const buttonLabel = effectiveStatus === 'uploading' ? t['js.uploading'] : t['js.fileUpload.choose'];
+  const buttonLabel = uploading ? t['js.uploading'] : t['js.fileUpload.choose'];
 
   return (
     <div
@@ -96,17 +85,17 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
         type="button"
         className={buttonClassName({ appearance: 'secondary' })}
         onClick={handleButtonClick}
-        disabled={isDisabled}
-        aria-busy={isDisabled ? true : undefined}
+        disabled={uploading}
+        aria-busy={uploading ? true : undefined}
         aria-label={buttonLabel}
         {...tooltipProps(buttonLabel)}
         id={inputId}
         {...labelProps}
       >
-        <ThemeIcon encoded={UPLOAD_ICON} className="tl-button__icon tl-icon-md" />
+        <ThemeIcon encoded={ICON_UPLOAD} className="tl-button__icon tl-icon-md" />
       </button>
-      {serverError && (
-        <span className="tl-file-upload__status tl-type-label" role="alert">{serverError}</span>
+      {error && (
+        <span className="tl-file-upload__status tl-type-label" role="alert">{error}</span>
       )}
     </div>
   );

@@ -26,7 +26,7 @@ public interface StyleSheetConfig extends ResourceConfig {
 	String RESOURCE = "resource";
 
 	/**
-	 * The context-relative path of the stylesheet, e.g. {@code "/style/tlReactControls.css"}, or a
+	 * The context-relative path of the stylesheet, e.g. {@code "/style/tlReactBase.css"}, or a
 	 * {@code webjar:} reference.
 	 */
 	@Name(RESOURCE)

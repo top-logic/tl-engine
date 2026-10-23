@@ -1,5 +1,6 @@
-import { React, TLChild, useTLCommand, isInteractiveWithin, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
+import { React, TLChild, useTLCommand } from 'tl-react-bridge';
 import { useRovingFocus } from './useRovingFocus';
+import { useOptionSelection } from './option-selection';
 
 /**
  * Rendering of the children of a container that repeats them, and the selection among them.
@@ -13,8 +14,9 @@ import { useRovingFocus } from './useRovingFocus';
  * A container whose items each display an object is selectable (ReactLayoutControl.setItems): the
  * container is a list box, each item an option the user selects by a click (with Ctrl or Cmd
  * toggling, with Shift extending the selection), by a long press on a touch screen (toggling, where
- * several items may be selected), or by Enter or Space on the focused item. The arrow keys move the
- * focus between the items (see {@link useRovingFocus}).
+ * several items may be selected), or by Enter or Space on the focused item (see
+ * {@link useOptionSelection}). The arrow keys move the focus between the items (see
+ * {@link useRovingFocus}).
  */
 
 /**
@@ -36,9 +38,6 @@ export const ITEM_INDEX_PROPERTY = '--item-index';
  * selectable container it is the option the user presses.
  */
 export const ITEM_CLASS = 'tl-item';
-
-/** Attribute of an item wrapper in a selectable container holding the client key of its object. */
-const ATTR_ITEM_KEY = 'data-tl-item';
 
 /** State key: the CSS class of the wrapper around each child (ReactLayoutControl.ITEM_CLASS). */
 const STATE_ITEM_CLASS = 'itemClass';
@@ -133,23 +132,7 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
     [sendCommand],
   );
 
-  // A long press on an item toggles it. The event comes from the bridge's touch gesture.
-  const longPress = selectable && multiSelect;
-  React.useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !longPress) {
-      return undefined;
-    }
-    const handleLongPress = (event: Event) => {
-      const item = event.target as HTMLElement | null;
-      const key = item?.getAttribute(ATTR_ITEM_KEY);
-      if (key && item!.parentElement === container) {
-        void select(key, true, false);
-      }
-    };
-    container.addEventListener(LONG_PRESS_EVENT, handleLongPress);
-    return () => container.removeEventListener(LONG_PRESS_EVENT, handleLongPress);
-  }, [longPress, select]);
+  const selection = useOptionSelection(containerRef, select, selectable && multiSelect);
 
   if (!selectable) {
     const content = !itemClass && !wrapper
@@ -169,37 +152,13 @@ export function useItems(state: Record<string, unknown>, wrapper?: ItemWrapper):
   const content = children.map((child, i) => {
     const key = itemKeys[i];
     const isSelected = key !== undefined && selected.has(key);
-    // A click on an interactive element inside the item - a button, a link, the option of a nested
-    // list - is that element's. The item is an option itself, so it is not counted.
-    const onInner = (event: React.SyntheticEvent) => isInteractiveWithin(event.target, event.currentTarget);
     return (
       <div
         key={i}
-        role="option"
-        aria-selected={isSelected}
+        {...selection.optionProps(key, isSelected)}
         tabIndex={roving.tabIndexOf(i)}
-        {...{ [ATTR_ITEM_KEY]: key }}
-        {...(multiSelect ? { [ATTR_LONG_PRESS]: '' } : {})}
         className={wrapperClass(wrapper, itemClass)}
         style={wrapperStyle(wrapper, i)}
-        onMouseDown={event => {
-          if (event.shiftKey && !onInner(event)) {
-            // A Shift-click extends the selection, not a text selection.
-            event.preventDefault();
-          }
-        }}
-        onClick={event => {
-          if (key !== undefined && !onInner(event)) {
-            void select(key, event.ctrlKey || event.metaKey, event.shiftKey);
-          }
-        }}
-        onKeyDown={event => {
-          if (key !== undefined && event.target === event.currentTarget
-            && (event.key === 'Enter' || event.key === ' ')) {
-            event.preventDefault();
-            void select(key, event.ctrlKey || event.metaKey, event.shiftKey);
-          }
-        }}
       >
         <TLChild control={child} />
         {isSelected && <span className="tl-item__check" aria-hidden="true" />}

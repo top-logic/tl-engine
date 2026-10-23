@@ -47,6 +47,8 @@ final class ConfigFormCommand implements CommandModel {
 
 	private final BooleanSupplier _available;
 
+	private final BooleanSupplier _executable;
+
 	private final Function<ReactContext, HandlerResult> _action;
 
 	private final List<Runnable> _listeners = new CopyOnWriteArrayList<>();
@@ -68,10 +70,25 @@ final class ConfigFormCommand implements CommandModel {
 	 */
 	ConfigFormCommand(String name, ResKey label, ThemeImage image, BooleanSupplier available,
 			Function<ReactContext, HandlerResult> action) {
+		this(name, label, image, available, available, action);
+	}
+
+	/**
+	 * Creates a {@link ConfigFormCommand} that may be offered but disabled.
+	 *
+	 * @param executable
+	 *        Whether the command can be executed while it is offered, e.g. not while the form shows
+	 *        an error. Read like <code>available</code>.
+	 *
+	 * @see #ConfigFormCommand(String, ResKey, ThemeImage, BooleanSupplier, Function)
+	 */
+	ConfigFormCommand(String name, ResKey label, ThemeImage image, BooleanSupplier available,
+			BooleanSupplier executable, Function<ReactContext, HandlerResult> action) {
 		_name = name;
 		_label = label;
 		_image = image;
 		_available = available;
+		_executable = executable;
 		_action = action;
 	}
 
@@ -92,7 +109,7 @@ final class ConfigFormCommand implements CommandModel {
 
 	@Override
 	public boolean isExecutable() {
-		return _available.getAsBoolean();
+		return _available.getAsBoolean() && _executable.getAsBoolean();
 	}
 
 	@Override
@@ -123,7 +140,7 @@ final class ConfigFormCommand implements CommandModel {
 	}
 
 	/**
-	 * Tells the toolbar to re-read this command's state, after the form's mode changed.
+	 * Tells the toolbar to re-read this command's state, after the form's mode or validity changed.
 	 */
 	void notifyStateChanged() {
 		for (Runnable listener : _listeners) {

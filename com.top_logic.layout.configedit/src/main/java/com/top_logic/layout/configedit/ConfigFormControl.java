@@ -15,6 +15,7 @@ import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -68,8 +69,60 @@ import com.top_logic.util.Resources;
  * now goes through this class. Its fields are still checked as they change, since the caller's save
  * will refuse over the same findings.
  * </p>
+ *
+ * <p>
+ * A caller that persists what is edited hands in an {@link EditAction} to run on save: the command
+ * is then called "Save", and the working copy is carried over only once that action reports success.
+ * A second {@link EditAction} may run on Cancel before the copy is dropped. While the working copy
+ * differs from the original, the form {@link #isDirty() holds unsaved changes} and tells the
+ * observers {@link #observeDirty(Runnable) waiting} for that.
+ * </p>
  */
 public class ConfigFormControl extends ReactFormLayoutControl {
+
+	/** {@link CommandModel#getName() Name} of the command starting edit mode. */
+	public static final String EDIT_COMMAND = "configFormEdit";
+
+	/**
+	 * {@link CommandModel#getName() Name} of the command carrying the working copy over, offered
+	 * without an {@link EditAction} to run on save.
+	 */
+	public static final String APPLY_COMMAND = "configFormApply";
+
+	/**
+	 * {@link CommandModel#getName() Name} of the command saving the working copy, offered with an
+	 * {@link EditAction} to run on save.
+	 */
+	public static final String SAVE_COMMAND = "configFormSave";
+
+	/** {@link CommandModel#getName() Name} of the command dropping the working copy. */
+	public static final String CANCEL_COMMAND = "configFormCancel";
+
+	/**
+	 * What a {@link ConfigFormControl} runs over its working copy before an edit session ends: on
+	 * save, what persists the edited configuration; on cancel, what has to happen before the edits
+	 * are dropped.
+	 */
+	@FunctionalInterface
+	public interface EditAction {
+
+		/**
+		 * Runs the action.
+		 *
+		 * <p>
+		 * Exceptions propagate to the command that started the action, which reports them; the edit
+		 * session then stays open with the edits intact.
+		 * </p>
+		 *
+		 * @param edited
+		 *        The working copy, see {@link ConfigFormModel#edited()}.
+		 * @param done
+		 *        To be run once the action has succeeded, possibly later, e.g. after a dialog. Ends
+		 *        the edit session: on save the working copy is carried over into the original, on
+		 *        cancel it is dropped. An action that fails or is aborted does not run it.
+		 */
+		void run(ConfigurationItem edited, Runnable done);
+	}
 
 	/**
 	 * Where a {@link ConfigFormControl}'s Edit, Apply and Cancel commands are rendered.
@@ -109,6 +162,22 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 
 	private final Commands _commands;
 
+	/** What runs on save before the working copy is carried over, <code>null</code> for nothing. */
+	private final EditAction _onSave;
+
+	/** What runs on cancel before the working copy is dropped, <code>null</code> for nothing. */
+	private final EditAction _onCancel;
+
+	/**
+	 * Whether the form held unsaved changes when this was last computed.
+	 *
+	 * @see #isDirty()
+	 */
+	private boolean _dirty;
+
+	/** The observers {@link #observeDirty(Runnable) waiting} for {@link #isDirty()} to change. */
+	private final List<Runnable> _dirtyObservers = new ArrayList<>();
+
 	/**
 	 * The Edit, Apply and Cancel commands offered to an enclosing toolbar, empty unless
 	 * {@link Commands#TOOLBAR} was asked for.
@@ -139,7 +208,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * that came before.
 	 * </p>
 	 */
-	private final ConfigFieldPush _onFieldChange = new ConfigFieldPush(this::recheck);
+	private final ConfigFieldPush _onFieldChange = new ConfigFieldPush(this::onFieldChange);
 
 	/**
 	 * The {@link ConfigFormModel} listener that rebuilds this control on every mode change,
@@ -241,10 +310,34 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 *        them somewhere - nothing else offers them.
 	 */
 	public ConfigFormControl(ReactContext context, ConfigurationItem config, Commands commands) {
+		this(context, config, commands, null, null);
+	}
+
+	/**
+	 * Creates a {@link ConfigFormControl} running the given actions when an edit session ends.
+	 *
+	 * @param context
+	 *        The React context.
+	 * @param config
+	 *        The configuration item to edit.
+	 * @param commands
+	 *        Where the Edit, Save and Cancel commands are rendered, see
+	 *        {@link #ConfigFormControl(ReactContext, ConfigurationItem, Commands)}.
+	 * @param onSave
+	 *        What runs on save over the checked working copy, before it is carried over;
+	 *        <code>null</code> to carry it over right away, offering "Apply" instead of "Save".
+	 * @param onCancel
+	 *        What runs on cancel over the working copy, before it is dropped; <code>null</code> to
+	 *        drop it right away.
+	 */
+	public ConfigFormControl(ReactContext context, ConfigurationItem config, Commands commands,
+			EditAction onSave, EditAction onCancel) {
 		super(context);
 		_context = context;
 		_model = new ConfigFormModel(config);
 		_commands = commands;
+		_onSave = onSave;
+		_onCancel = onCancel;
 		_toolbarCommands = commands == Commands.TOOLBAR ? createCommands() : Collections.emptyList();
 		_model.addListener(_onModeChange);
 		_index.observeFields(_onFieldChange::watch);
@@ -292,6 +385,10 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		for (Runnable observer : List.copyOf(_validityObservers)) {
 			observer.run();
 		}
+		// Save is disabled while an error is on display.
+		for (ConfigFormCommand command : _toolbarCommands) {
+			command.notifyStateChanged();
+		}
 	}
 
 	/**
@@ -309,21 +406,112 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 
 	private List<ConfigFormCommand> createCommands() {
 		return List.of(
-			new ConfigFormCommand("configFormEdit", I18NConstants.EDIT, Icons.CONFIG_FORM_EDIT,
+			new ConfigFormCommand(EDIT_COMMAND, I18NConstants.EDIT, Icons.CONFIG_FORM_EDIT,
 				() -> !_model.isEditMode(),
 				ctx -> {
 					_model.startEditing();
 					return HandlerResult.DEFAULT_RESULT;
 				}),
-			new ConfigFormCommand("configFormApply", I18NConstants.APPLY, Icons.CONFIG_FORM_APPLY,
+			new ConfigFormCommand(_onSave == null ? APPLY_COMMAND : SAVE_COMMAND, saveLabel(),
+				Icons.CONFIG_FORM_APPLY,
 				_model::isEditMode,
+				// Errors still hidden do not block it: the attempt is what reveals them.
+				() -> !hasVisibleErrors(),
 				ctx -> apply()),
-			new ConfigFormCommand("configFormCancel", I18NConstants.CANCEL, Icons.CONFIG_FORM_CANCEL,
+			new ConfigFormCommand(CANCEL_COMMAND, I18NConstants.CANCEL, Icons.CONFIG_FORM_CANCEL,
 				_model::isEditMode,
-				ctx -> {
-					_model.cancelEditing();
-					return HandlerResult.DEFAULT_RESULT;
-				}));
+				ctx -> cancel()));
+	}
+
+	/**
+	 * The label of the command ending an edit session with the edits: "Save" when an
+	 * {@link EditAction} persists them, "Apply" when they are only carried over.
+	 */
+	private ResKey saveLabel() {
+		return _onSave == null ? I18NConstants.APPLY : I18NConstants.SAVE;
+	}
+
+	/**
+	 * The item this form was created for, see {@link ConfigFormModel#original()}.
+	 */
+	public ConfigurationItem getItem() {
+		return _model.original();
+	}
+
+	/**
+	 * Whether the form is in edit mode, working on a copy of the item it was created for.
+	 */
+	public boolean isEditMode() {
+		return _model.isEditMode();
+	}
+
+	/**
+	 * Whether the form holds unsaved changes: it is in edit mode, and its working copy differs from
+	 * the item it was created for.
+	 *
+	 * <p>
+	 * Compared by value, so an edit that is taken back makes the form clean again. Without an edit
+	 * mode, the form writes straight through and never holds anything unsaved.
+	 * </p>
+	 */
+	public boolean isDirty() {
+		return _model.isEditMode()
+			&& !ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(_model.edited(), _model.original());
+	}
+
+	/**
+	 * Calls the given observer whenever {@link #isDirty()} changes.
+	 *
+	 * @param observer
+	 *        The observer to call.
+	 * @return What ends the observation.
+	 */
+	public Runnable observeDirty(Runnable observer) {
+		_dirtyObservers.add(observer);
+		return () -> _dirtyObservers.remove(observer);
+	}
+
+	/**
+	 * Computes {@link #isDirty()} again and tells the observers if it changed.
+	 */
+	private void updateDirty() {
+		boolean dirty = isDirty();
+		if (dirty == _dirty) {
+			return;
+		}
+		_dirty = dirty;
+		for (Runnable observer : List.copyOf(_dirtyObservers)) {
+			observer.run();
+		}
+	}
+
+	/**
+	 * Saves the working copy as the Save (or Apply) command does: checks it, runs the
+	 * {@link EditAction} given for saving, and carries it over once that succeeded.
+	 *
+	 * @return A failed result naming why the configuration was refused, the default result if it
+	 *         was handed on.
+	 */
+	public HandlerResult save() {
+		return apply();
+	}
+
+	/**
+	 * Drops the working copy and leaves edit mode, without running the {@link EditAction} given for
+	 * cancelling.
+	 */
+	public void discard() {
+		if (_model.isEditMode()) {
+			_model.cancelEditing();
+		}
+	}
+
+	/**
+	 * Runs on every change to a field of the current editor.
+	 */
+	private void onFieldChange() {
+		recheck();
+		updateDirty();
 	}
 
 	/**
@@ -386,6 +574,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		}
 
 		_onFieldChange.armed();
+		updateDirty();
 	}
 
 	/**
@@ -540,13 +729,46 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * </p>
 	 */
 	private HandlerResult apply() {
-		ConfigValidation.Refusal refusal =
-			ConfigValidation.refusalFor(_model.edited(), _index, mandatory(_model.edited()));
+		if (!_model.isEditMode()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		ConfigurationItem edited = _model.edited();
+		ConfigValidation.Refusal refusal = ConfigValidation.refusalFor(edited, _index, mandatory(edited));
 		if (refusal != null) {
 			return refusal(refusal.message(), refusal.details());
 		}
-		_model.apply();
+		if (_onSave == null) {
+			_model.apply();
+		} else {
+			_onSave.run(edited, () -> endSession(edited, _model::apply));
+		}
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Drops the working copy, after the {@link EditAction} given for cancelling succeeded.
+	 */
+	private HandlerResult cancel() {
+		if (!_model.isEditMode()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		if (_onCancel == null) {
+			_model.cancelEditing();
+		} else {
+			ConfigurationItem edited = _model.edited();
+			_onCancel.run(edited, () -> endSession(edited, _model::cancelEditing));
+		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Ends the edit session over the given working copy by the given transition - unless that
+	 * session has ended already, e.g. while an {@link EditAction} waited for a dialog.
+	 */
+	private void endSession(ConfigurationItem edited, Runnable transition) {
+		if (_model.isEditMode() && _model.edited() == edited) {
+			transition.run();
+		}
 	}
 
 	/**
@@ -563,7 +785,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * The button offered in edit mode that {@link #apply()}s the working copy.
 	 */
 	private ReactButtonControl applyButton() {
-		return new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.APPLY), ctx -> apply());
+		return new ReactButtonControl(_context, Resources.getInstance().getString(saveLabel()), ctx -> apply());
 	}
 
 	/**
@@ -571,10 +793,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * working copy.
 	 */
 	private ReactButtonControl cancelButton() {
-		return new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.CANCEL), ctx -> {
-			_model.cancelEditing();
-			return HandlerResult.DEFAULT_RESULT;
-		});
+		return new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.CANCEL),
+			ctx -> cancel());
 	}
 
 	@Override

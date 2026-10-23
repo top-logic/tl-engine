@@ -399,6 +399,11 @@ public class TestConfigFormControl extends TestCase {
 			super(context, config, commands);
 		}
 
+		TestableConfigFormControl(ReactContext context, ConfigurationItem config, Commands commands,
+				EditAction onSave, EditAction onCancel) {
+			super(context, config, commands, onSave, onCancel);
+		}
+
 		/**
 		 * The control's own direct children, so a test can reach the form-level message line
 		 * without having to tell it apart from the group headers nested deeper in the editor -
@@ -1537,6 +1542,170 @@ public class TestConfigFormControl extends TestCase {
 
 		assertTrue("An inline form has nothing to contribute to a toolbar.", form.commands().isEmpty());
 		assertNotNull("...because it draws the button itself.", findButton(form, label(I18NConstants.EDIT)));
+	}
+
+	/**
+	 * An {@link ConfigFormControl.EditAction} that records what it was run over and keeps the
+	 * completion for the test to run.
+	 */
+	private static final class RecordingAction implements ConfigFormControl.EditAction {
+
+		ConfigurationItem _edited;
+
+		Runnable _done;
+
+		@Override
+		public void run(ConfigurationItem edited, Runnable done) {
+			_edited = edited;
+			_done = done;
+		}
+	}
+
+	/** A form in a toolbar whose Save runs the given action. */
+	private TestableConfigFormControl savingForm(ConfigurationItem config, ConfigFormControl.EditAction onSave) {
+		return new TestableConfigFormControl(createTestContext(), config, ConfigFormControl.Commands.TOOLBAR,
+			onSave, null);
+	}
+
+	/** With an action to run on save, the command is Save rather than Apply. */
+	public void testASaveActionMakesApplyASave() {
+		TestableConfigFormControl form =
+			savingForm(TypedConfiguration.newConfigItem(TestConfig.class), new RecordingAction());
+
+		CommandModel save = command(form, ConfigFormControl.SAVE_COMMAND);
+		assertEquals(label(I18NConstants.SAVE), save.getLabel());
+		for (CommandModel command : form.commands()) {
+			assertFalse("No Apply beside Save.", ConfigFormControl.APPLY_COMMAND.equals(command.getName()));
+		}
+	}
+
+	/**
+	 * Save runs the action over the edited working copy, and carries the copy over only once the
+	 * action reports success.
+	 */
+	public void testSaveRunsTheActionOverTheWorkingCopy() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setName("before");
+		RecordingAction onSave = new RecordingAction();
+		TestableConfigFormControl form = savingForm(config, onSave);
+		command(form, ConfigFormControl.EDIT_COMMAND).executeCommand(createTestContext());
+		fieldOf(form, TestConfig.NAME).setValue("after");
+
+		HandlerResult result = command(form, ConfigFormControl.SAVE_COMMAND).executeCommand(createTestContext());
+
+		assertTrue(result.isSuccess());
+		assertNotSame("The action works on the copy, not on the item.", config, onSave._edited);
+		assertEquals("after", ((TestConfig) onSave._edited).getName());
+		assertEquals("Nothing is carried over before the action succeeded.", "before", config.getName());
+		assertTrue("The form stays in edit mode until the action succeeded.", form.isEditMode());
+
+		onSave._done.run();
+
+		assertEquals("after", config.getName());
+		assertFalse("A successful save leaves edit mode.", form.isEditMode());
+		assertFalse(form.isDirty());
+	}
+
+	/** An action that fails leaves the form in edit mode with the edits intact. */
+	public void testAFailingSaveActionKeepsTheEdits() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setName("before");
+		TestableConfigFormControl form = savingForm(config, (edited, done) -> {
+			throw new IllegalStateException("Storage failed.");
+		});
+		command(form, ConfigFormControl.EDIT_COMMAND).executeCommand(createTestContext());
+		fieldOf(form, TestConfig.NAME).setValue("after");
+
+		try {
+			command(form, ConfigFormControl.SAVE_COMMAND).executeCommand(createTestContext());
+			fail("The failure of the action must reach the command.");
+		} catch (IllegalStateException ex) {
+			// Expected.
+		}
+
+		assertTrue(form.isEditMode());
+		assertEquals("after", fieldOf(form, TestConfig.NAME).getValue());
+		assertEquals("before", config.getName());
+		assertTrue(form.isDirty());
+	}
+
+	/** A configuration that does not pass its check is not handed to the action at all. */
+	public void testARefusedSaveDoesNotRunTheAction() {
+		MandatoryConfig config = TypedConfiguration.newConfigItem(MandatoryConfig.class);
+		config.setName("given");
+		RecordingAction onSave = new RecordingAction();
+		TestableConfigFormControl form = savingForm(config, onSave);
+		command(form, ConfigFormControl.EDIT_COMMAND).executeCommand(createTestContext());
+		fieldOf(form, MandatoryConfig.NAME).setValue("");
+
+		assertFalse("Save is disabled while the error is on display.",
+			command(form, ConfigFormControl.SAVE_COMMAND).isExecutable());
+		HandlerResult result = form.save();
+
+		assertFalse(result.isSuccess());
+		assertNull("The action must not see a configuration that failed its check.", onSave._edited);
+		assertTrue(form.isEditMode());
+	}
+
+	/** Cancel runs its action before the copy is dropped. */
+	public void testCancelRunsItsActionFirst() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setName("before");
+		RecordingAction onCancel = new RecordingAction();
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config,
+			ConfigFormControl.Commands.TOOLBAR, null, onCancel);
+		command(form, ConfigFormControl.EDIT_COMMAND).executeCommand(createTestContext());
+		fieldOf(form, TestConfig.NAME).setValue("after");
+
+		command(form, ConfigFormControl.CANCEL_COMMAND).executeCommand(createTestContext());
+		assertTrue("The copy is kept until the action succeeded.", form.isEditMode());
+
+		onCancel._done.run();
+
+		assertFalse(form.isEditMode());
+		assertEquals("before", config.getName());
+	}
+
+	/**
+	 * The form holds unsaved changes exactly while its working copy differs from the item, and
+	 * says so whenever that changes.
+	 */
+	public void testDirtyFollowsTheWorkingCopy() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		config.setName("before");
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		int[] notifications = new int[1];
+		form.observeDirty(() -> notifications[0]++);
+
+		click(findButton(form, label(I18NConstants.EDIT)));
+		assertFalse("A fresh working copy holds nothing unsaved.", form.isDirty());
+		assertEquals(0, notifications[0]);
+
+		fieldOf(form, TestConfig.NAME).setValue("after");
+		assertTrue(form.isDirty());
+		assertEquals(1, notifications[0]);
+
+		fieldOf(form, TestConfig.NAME).setValue("before");
+		assertFalse("An edit taken back leaves nothing unsaved.", form.isDirty());
+		assertEquals(2, notifications[0]);
+
+		fieldOf(form, TestConfig.NAME).setValue("after");
+		form.discard();
+		assertFalse(form.isDirty());
+		assertFalse(form.isEditMode());
+		assertEquals("before", config.getName());
+		assertEquals(4, notifications[0]);
+	}
+
+	/** Without an edit mode, the form writes straight through and never holds anything unsaved. */
+	public void testWriteThroughIsNeverDirty() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, false);
+
+		fieldOf(form, TestConfig.NAME).setValue("after");
+
+		assertEquals("after", config.getName());
+		assertFalse(form.isDirty());
 	}
 
 	/** The form's command with the given technical name. */

@@ -441,3 +441,18 @@ A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, t
 ## Configuration forms
 
 A `<config-form>` edits a `ConfigurationItem` instead of a model object. The control of each property is chosen by the annotations stating what its value means (`@MultiLine`, `@Code`, `@Html`, ...) and by its value type, through maps of the `ConfigControlService` that modules extend; see [controls of configuration forms](doc:config-form-controls).
+
+The item comes from the channel named by `input`, or, with `type` and no value on the channel, is a fresh item of that configuration interface. With `withEditMode="true"` (the default) the form is read-only until Edit starts a working copy of the item; the commands go into the toolbar of the enclosing panel. Without a `<save-action>`, Apply checks the copy and carries it over into the item, Cancel drops it. `withEditMode="false"` writes every change straight into the item, for a caller with a save cycle of its own (e.g. a dialog whose command runs `<check-config-form/>` before saving, guarded by `<config-form-valid/>`).
+
+A `<save-action>` persists what was edited: the command is then called Save, and the chain runs over the working copy. The copy is its argument, named after the `input` channel, or `config` for a form without one, so a Java `ViewAction` receives it as input and a script reads its properties with `$config['name']`. Save first checks the copy as Apply does and is disabled while a field shows an error. Only once the chain ran through is the copy carried over into the item and edit mode left; a chain that fails (an exception, a `TopLogicException`) or is aborted (e.g. by `<notify stop="true"/>`) leaves the form in edit mode with the edits intact, and the error is reported like that of any command. A `<cancel-action>` runs with the same argument before Cancel drops the copy.
+
+```xml
+<config-form input="service">
+	<save-action>
+		<action class="my.app.StoreServiceConfiguration"/>
+		<notify expr="#('Saved.'@en, 'Gespeichert.'@de)"/>
+	</save-action>
+</config-form>
+```
+
+A configuration form takes part in the [unsaved-changes protocol](#unsaved-changes-are-asked-before-a-channel-write-transitively) like a `<form>`: it holds unsaved changes while its working copy differs from the item (compared by value). Then it vetoes the write of its `input` channel and reports itself to the dirty-tracked scope enclosing it, e.g. the frame of a `<tile-stack>`, whose pop it blocks (`ConfigFormStateHandler`). In the question that follows, Save runs the form's save including its `<save-action>`, Discard drops the copy.

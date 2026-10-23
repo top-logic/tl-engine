@@ -345,7 +345,8 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		for (int i = firstFrame; i < _frameDirty.size(); i++) {
 			for (com.top_logic.layout.react.dirty.StateHandler handler : _frameDirty.get(i).getDirtyHandlers()) {
 				if (seen.add(handler)) {
-					// Only forms of the view layer report to the dirty channel of a view.
+					// Only handlers of the view layer (forms, configuration forms) report to the dirty
+					// channel of a view.
 					result.add((StateHandler) handler);
 				}
 			}

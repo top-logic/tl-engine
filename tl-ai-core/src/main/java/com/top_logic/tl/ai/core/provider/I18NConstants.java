@@ -55,17 +55,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey MODEL_DISCOVERY_FAILED;
 
-	/**
-	 * Error reported when an LLM provider is configured with both explicit credentials and an API
-	 * key.
-	 *
-	 * @en The LLM provider "{0}" configures both credentials and an API key. Configure only one of
-	 *     them.
-	 * @de Der LLM-Anbieter "{0}" konfiguriert sowohl Zugangsdaten als auch einen API-Schlüssel.
-	 *     Nur eines von beiden darf angegeben werden.
-	 */
-	public static ResKey1 ERROR_CREDENTIALS_AND_API_KEY__PROVIDER;
-
 	static {
 		initConstants(I18NConstants.class);
 	}

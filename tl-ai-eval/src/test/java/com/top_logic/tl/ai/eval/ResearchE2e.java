@@ -31,7 +31,7 @@ import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
  * <pre>
  * export tl_openai_api_key="..."               # the arm
  * export tl_anthropic_api_key="..."            # the pinned judge
- * export tl_brave_api_key="unencrypted:..."    # the workers' web search (an alias: with prefix)
+ * export tl_brave_api_key="..."                # the workers' web search
  * mvn -pl tl-ai-eval test -DskipTests=false -Dtl.ai.research.e2e=true -Dtest=TestResearchEval
  * </pre>
  *

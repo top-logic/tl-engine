@@ -5,26 +5,44 @@
  */
 package com.top_logic.tl.ai.core.mcp;
 
+import java.net.HttpURLConnection;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.RequestAuthentication;
 
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.client.transport.customizer.McpHttpClientAuthorizationErrorHandler;
 import io.modelcontextprotocol.spec.McpClientTransport;
 
 /**
  * {@link McpTransportConfig} creating an MCP HTTP transport (Streamable HTTP).
  *
  * <p>
- * The MCP server runs as an external HTTP service. Authentication is handled via static headers
- * or a bearer token resolved from an environment variable at connect time.
+ * The MCP server runs as an external HTTP service. Each request is authenticated by the configured
+ * {@link Config#getCredentials() credentials} at the moment it is sent, e.g. with a bearer token
+ * read from an environment variable:
+ * </p>
+ *
+ * <pre>
+ * &lt;transport class="com.top_logic.tl.ai.core.mcp.HttpMcpTransport" url="https://mcp.example.com/mcp"&gt;
+ *   &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer"&gt;
+ *     &lt;secret class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MY_MCP_TOKEN"/&gt;
+ *   &lt;/credentials&gt;
+ * &lt;/transport&gt;
+ * </pre>
+ *
+ * <p>
+ * When the server rejects the credentials (HTTP 401), they are invalidated and the request is sent
+ * once more with fresh ones.
  * </p>
  */
 @InApp
@@ -41,8 +59,8 @@ public class HttpMcpTransport implements McpTransportConfig {
 		/** Configuration property name for {@link #getHeaders()}. */
 		String HEADERS = "headers";
 
-		/** Configuration property name for {@link #getBearerTokenEnvVar()}. */
-		String BEARER_TOKEN_ENV_VAR = "bearer-token-env-var";
+		/** Configuration property name for {@link #getCredentials()}. */
+		String CREDENTIALS = "credentials";
 
 		/**
 		 * The URL of the MCP server endpoint (e.g., {@code "https://mcp.example.com/mcp"}).
@@ -54,8 +72,8 @@ public class HttpMcpTransport implements McpTransportConfig {
 		 * Static HTTP headers sent with every request.
 		 *
 		 * <p>
-		 * Each entry is a header name and the value to send under it, e.g. an API key header
-		 * the server expects in addition to the bearer token.
+		 * Each entry is a header name and the value to send under it, e.g. a routing header the
+		 * server expects in addition to the credentials.
 		 * </p>
 		 */
 		@Name(HEADERS)
@@ -64,16 +82,16 @@ public class HttpMcpTransport implements McpTransportConfig {
 		Map<String, NamedValueConfig> getHeaders();
 
 		/**
-		 * Name of an environment variable holding a bearer token.
+		 * How the requests to the MCP server are authenticated.
 		 *
 		 * <p>
-		 * The variable is read from the server's environment at connect time and its value is
-		 * sent in the {@code Authorization} header using the {@code Bearer} scheme. This keeps
-		 * the secret itself out of the configuration.
+		 * E.g. a bearer token from an environment variable or a file, or an access token from an
+		 * OAuth2 authorization server. If not set, the requests are sent without credentials.
 		 * </p>
 		 */
-		@Name(BEARER_TOKEN_ENV_VAR)
-		String getBearerTokenEnvVar();
+		@Name(CREDENTIALS)
+		@Nullable
+		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
 
 	}
 
@@ -81,50 +99,40 @@ public class HttpMcpTransport implements McpTransportConfig {
 
 	private final Map<String, NamedValueConfig> _headers;
 
-	private final String _bearerTokenEnvVar;
+	private final CredentialProvider _credentials;
 
 	/**
 	 * Creates a new {@link HttpMcpTransport} from configuration.
 	 */
-	@SuppressWarnings("unused")
 	@CalledByReflection
 	public HttpMcpTransport(InstantiationContext context, Config config) {
 		_url = config.getUrl();
 		_headers = config.getHeaders();
-		_bearerTokenEnvVar = config.getBearerTokenEnvVar();
+		_credentials = CredentialProvider.create(context, _url, config.getCredentials(), null, null, null);
 	}
 
 	@Override
 	public McpClientTransport createTransport() {
-		HttpClientStreamableHttpTransport.Builder builder =
-			HttpClientStreamableHttpTransport.builder(_url);
-
-		String bearerToken = null;
-		if (_bearerTokenEnvVar != null && !_bearerTokenEnvVar.isEmpty()) {
-			bearerToken = System.getenv(_bearerTokenEnvVar);
-			if (bearerToken == null || bearerToken.isEmpty()) {
-				Logger.warn("Bearer token env var '" + _bearerTokenEnvVar
-					+ "' is not set for HTTP MCP transport.",
-					HttpMcpTransport.class);
-				bearerToken = null;
-			}
-		}
-
-		if (bearerToken != null || (_headers != null && !_headers.isEmpty())) {
-			String token = bearerToken;
-			builder.httpRequestCustomizer((req, method, uri, body, ctx) -> {
-				if (token != null) {
-					req.header("Authorization", "Bearer " + token);
-				}
+		return HttpClientStreamableHttpTransport.builder(_url)
+			.httpRequestCustomizer((request, method, uri, body, context) -> {
 				if (_headers != null) {
 					for (NamedValueConfig entry : _headers.values()) {
-						req.header(entry.getName(), entry.getValue());
+						request.header(entry.getName(), entry.getValue());
 					}
 				}
-			});
-		}
-
-		return builder.build();
+				_credentials.authenticate(RequestAuthentication.of(request));
+			})
+			.authorizationErrorHandler(McpHttpClientAuthorizationErrorHandler.fromSync(
+				(response, context) -> {
+					if (response.statusCode() != HttpURLConnection.HTTP_UNAUTHORIZED) {
+						return false;
+					}
+					// Cached credentials (an access token) may have expired or been revoked: one
+					// more attempt with fresh ones.
+					_credentials.invalidate();
+					return true;
+				}))
+			.build();
 	}
 
 }

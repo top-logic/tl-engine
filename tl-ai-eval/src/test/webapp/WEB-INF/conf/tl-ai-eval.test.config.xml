@@ -78,9 +78,11 @@
 		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
 			<instance>
 				<search-engine class="com.top_logic.tl.ai.eval.FixtureSearchEngine">
-					<delegate class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine"
-						api-key="%BRAVE_API_KEY%"
-					/>
+					<delegate class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
+						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
+							name="tl_brave_api_key"
+						/>
+					</delegate>
 				</search-engine>
 			</instance>
 		</config>

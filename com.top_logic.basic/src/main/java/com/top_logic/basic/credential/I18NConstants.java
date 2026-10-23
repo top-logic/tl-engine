@@ -36,6 +36,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_SECRET_NOT_CONFIGURED;
 
+	/**
+	 * Error reported when a consumer of an external service is configured with both explicit
+	 * credentials and an API key.
+	 *
+	 * @en "{0}" is configured with both credentials and an API key. Configure only one of them.
+	 * @de "{0}" ist sowohl mit Zugangsdaten als auch mit einem API-Schlüssel konfiguriert. Nur
+	 *     eines von beiden darf angegeben werden.
+	 */
+	public static ResKey1 ERROR_CREDENTIALS_AND_API_KEY__OWNER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -130,7 +130,9 @@ A request rejected with HTTP 401 is repeated once with fresh credentials, so tha
 
 Which model an agent runs on (`default-model`, `<agent-overrides>`), the turn limit and the chat entry point are set on `AgentRuntimeService`; where a run goes when its model cannot answer is the `<failover>` section of `LLMProviderService`. [Providers and failover](doc:ai/providers) describes the four configuration services and the provider system.
 
-The tool `createGiteaIssue` (factory `gitea`, group `egress`) files issues in a Gitea repository named by the environment variables `tl_gitea_url`, `tl_gitea_token`, `tl_gitea_repo_owner` and `tl_gitea_repo_name`; without them the tool answers with an error and creates nothing.
+The other HTTP services of the agents authenticate the same way. The search engines of `webSearch` (`BraveSearchEngine`, `TavilySearchEngine` on `WebToolsService`) take an `api-key` - best `<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_brave_api_key"/>`, the variable holding the plain key - or `<credentials>`. A remote MCP server (`HttpMcpTransport`) takes `<credentials>`, e.g. `HeaderCredentials` with `scheme="Bearer"` and an `EnvironmentSecretSource` as `<secret>`. All of them repeat a request rejected with HTTP 401 once with fresh credentials.
+
+The tool `createGiteaIssue` (factory `gitea`, group `egress`) files issues in a Gitea repository named by the environment variables `tl_gitea_url`, `tl_gitea_repo_owner` and `tl_gitea_repo_name`; without them the tool answers with an error and creates nothing. It authenticates with the access token in `tl_gitea_token`, or with the `<credentials>` of its `<tool class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool">` in the factory.
 
 Before an agent can read any business data, the application needs a `<security-config>` (model access rights) - the engine denies every operation to role-based accounts without one. [The security chapter](doc:ai/security) explains the two grant tables an application writes, and the [worked example](doc:ai/security/role-model-worked-example) builds both from scratch.
 

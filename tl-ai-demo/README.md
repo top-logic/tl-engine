@@ -124,7 +124,7 @@ search and read the web, and answers with one report whose statements link to th
 workers read (`tl-ai-core/doc/deep-research.md`).
 
 `WEB-INF/conf/research.config.xml`, on in `metaConf.txt`, supplies what that needs: Brave as search
-engine, with the key in the environment variable `tl_brave_api_key` (prefix `unencrypted:`), and a
+engine, with the plain key in the environment variable `tl_brave_api_key`, and a
 `<background-allowlist>` with `model.read`, `data.read` and `egress` - without it a spawned subagent
 reaches no tool at all. The allowlist also bounds the scheduled task above. Turn the aspect off when
 you turn on the security test bed, whose allowlist keeps `egress` out on purpose.

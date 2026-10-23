@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.tools.integration;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,7 +16,19 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.concurrent.CancellationException;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.HeaderCredentials;
+import com.top_logic.basic.credential.RequestAuthentication;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.tools.integration.messages.CreateIssueRequest;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
@@ -33,10 +47,23 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * </p>
  *
  * <p>
- * Connection configuration is read from environment variables (with system property fallback):
- * {@code tl_gitea_url}, {@code tl_gitea_token}, {@code tl_gitea_repo_owner},
- * {@code tl_gitea_repo_name}.
+ * The repository is named by environment variables (with system property fallback):
+ * {@code tl_gitea_url}, {@code tl_gitea_repo_owner}, {@code tl_gitea_repo_name}. The requests are
+ * authenticated by the configured {@link Config#getCredentials() credentials}; without them, with
+ * the access token in the variable {@link #TOKEN_VARIABLE}, sent with the scheme
+ * {@link #TOKEN_SCHEME}. Credentials from another source are configured with the
+ * {@link com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory}:
  * </p>
+ *
+ * <pre>
+ * &lt;implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"&gt;
+ *   &lt;tool class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"&gt;
+ *     &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="token"&gt;
+ *       &lt;secret class="com.top_logic.basic.credential.FileSecretSource" path="/run/secrets/gitea-token"/&gt;
+ *     &lt;/credentials&gt;
+ *   &lt;/tool&gt;
+ * &lt;/implementation&gt;
+ * </pre>
  *
  * <p>
  * The tool is {@link ToolMode#EXTERNAL}: it creates a shared, publicly visible issue in another
@@ -48,17 +75,81 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  */
 public class GiteaIssueTool {
 
+	/**
+	 * Configuration options for {@link GiteaIssueTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<GiteaIssueTool> {
+
+		/** Configuration property name for {@link #getCredentials()}. */
+		String CREDENTIALS = "credentials";
+
+		/**
+		 * How the requests to Gitea are authenticated.
+		 *
+		 * <p>
+		 * If not set, with the access token in the variable {@link GiteaIssueTool#TOKEN_VARIABLE},
+		 * sent with the scheme {@link GiteaIssueTool#TOKEN_SCHEME}.
+		 * </p>
+		 */
+		@Name(CREDENTIALS)
+		@Nullable
+		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
+
+	}
+
+	/**
+	 * Name of the system property or environment variable holding the Gitea access token, if no
+	 * {@link Config#getCredentials() credentials} are configured.
+	 */
+	public static final String TOKEN_VARIABLE = "tl_gitea_token";
+
+	/**
+	 * Authentication scheme of a Gitea access token in the {@link CredentialProvider#AUTHORIZATION}
+	 * header.
+	 */
+	public static final String TOKEN_SCHEME = "token";
+
 	private static final Duration HTTP_TIMEOUT = Duration.ofSeconds(30);
 
 	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
 		.connectTimeout(HTTP_TIMEOUT)
 		.build();
 
+	private final CredentialProvider _credentials;
+
 	/**
-	 * Creates a new {@link GiteaIssueTool}.
+	 * Creates a {@link GiteaIssueTool} authenticated with the access token in
+	 * {@link #TOKEN_VARIABLE}.
 	 */
 	public GiteaIssueTool() {
-		// Required public no-arg constructor for ReflectiveToolFactory.
+		this(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			TypedConfiguration.newConfigItem(Config.class));
+	}
+
+	/**
+	 * Creates a {@link GiteaIssueTool} from configuration.
+	 *
+	 * @param context
+	 *        The context for instantiating the credentials.
+	 * @param config
+	 *        The configuration.
+	 */
+	@CalledByReflection
+	public GiteaIssueTool(InstantiationContext context, Config config) {
+		PolymorphicConfiguration<? extends CredentialProvider> credentials = config.getCredentials();
+		if (credentials == null) {
+			credentials = defaultCredentials();
+		}
+		_credentials = context.getInstance(credentials);
+	}
+
+	/**
+	 * The credentials sending the access token in {@link #TOKEN_VARIABLE}.
+	 */
+	private static PolymorphicConfiguration<? extends CredentialProvider> defaultCredentials() {
+		EnvironmentSecretSource.Config token = TypedConfiguration.newConfigItem(EnvironmentSecretSource.Config.class);
+		token.setName(TOKEN_VARIABLE);
+		return HeaderCredentials.config(CredentialProvider.AUTHORIZATION, TOKEN_SCHEME, token);
 	}
 
 	/**
@@ -111,15 +202,11 @@ public class GiteaIssueTool {
 
 		// Read connection configuration.
 		String giteaUrl = getConfig("tl_gitea_url");
-		String giteaToken = getConfig("tl_gitea_token");
 		String repoOwner = getConfig("tl_gitea_repo_owner");
 		String repoName = getConfig("tl_gitea_repo_name");
 
 		if (giteaUrl == null || giteaUrl.isEmpty()) {
 			return "Error: Gitea URL not configured. Set tl_gitea_url environment variable.";
-		}
-		if (giteaToken == null || giteaToken.isEmpty()) {
-			return "Error: Gitea token not configured. Set tl_gitea_token environment variable.";
 		}
 		if (repoOwner == null || repoOwner.isEmpty()) {
 			return "Error: Gitea repo owner not configured. Set tl_gitea_repo_owner environment variable.";
@@ -147,17 +234,22 @@ public class GiteaIssueTool {
 			+ java.net.URLEncoder.encode(repoName, java.nio.charset.StandardCharsets.UTF_8) + "/issues";
 
 		try {
-			HttpRequest request = HttpRequest.newBuilder()
+			HttpRequest.Builder request = HttpRequest.newBuilder()
 				.uri(URI.create(apiUrl))
 				.header("Content-Type", "application/json")
-				.header("Authorization", "token " + giteaToken)
 				.timeout(HTTP_TIMEOUT)
-				.POST(BodyPublishers.ofString(jsonPayload))
-				.build();
+				.POST(BodyPublishers.ofString(jsonPayload));
 
-			// Stopping the run ends the wait for the server.
-			HttpResponse<String> response =
-				RunCancellationBinding.whileBlocked(() -> HTTP_CLIENT.send(request, BodyHandlers.ofString()));
+			HttpResponse<String> response = send(request);
+			if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+				// Cached credentials (an access token) may have expired or been revoked: one more
+				// attempt with fresh ones.
+				_credentials.invalidate();
+				response = send(request);
+				if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+					_credentials.invalidate();
+				}
+			}
 
 			int statusCode = response.statusCode();
 			if (statusCode == 201) {
@@ -168,6 +260,10 @@ public class GiteaIssueTool {
 				Logger.error(errorMsg, GiteaIssueTool.class);
 				return "Error: " + errorMsg;
 			}
+		} catch (I18NRuntimeException ex) {
+			String errorMsg = "No Gitea credentials available: " + ex.getMessage();
+			Logger.error(errorMsg, GiteaIssueTool.class);
+			return "Error: " + errorMsg;
 		} catch (CancellationException ex) {
 			return "Error: creating the Gitea issue was cancelled; it may have been created anyway.";
 		} catch (InterruptedException ex) {
@@ -180,6 +276,17 @@ public class GiteaIssueTool {
 			Logger.error(errorMsg, ex, GiteaIssueTool.class);
 			return "Error: " + errorMsg;
 		}
+	}
+
+	/**
+	 * Sends a copy of the given request with the current credentials.
+	 */
+	private HttpResponse<String> send(HttpRequest.Builder request) throws IOException, InterruptedException {
+		HttpRequest.Builder authenticated = request.copy();
+		_credentials.authenticate(RequestAuthentication.of(authenticated));
+		HttpRequest httpRequest = authenticated.build();
+		// Stopping the run ends the wait for the server.
+		return RunCancellationBinding.whileBlocked(() -> HTTP_CLIENT.send(httpRequest, BodyHandlers.ofString()));
 	}
 
 	/**

@@ -3,13 +3,8 @@
 <!--
 	Main configuration file.
 
-	The alias is the one tl-ai-demo declares for the same purpose: the research questions' web search
-	reads its key out of the environment, so that a key never reaches a configuration file and a build
-	without one simply reports those arms as unable to run. The real-model arms name the variables of
-	their keys in the LLMProviderService configuration itself.
+	The research questions' web search and the real-model arms name the variables of their keys in
+	the configuration itself (WebToolsService, LLMProviderService), so that a key never reaches a
+	configuration file.
 -->
-<root>
-	<alias>
-		<entry name="%BRAVE_API_KEY%" value="${env:tl_brave_api_key:unencrypted:}"/>
-	</alias>
-</root>
+<root/>

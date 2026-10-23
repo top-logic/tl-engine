@@ -5,6 +5,10 @@
  */
 package com.top_logic.basic.credential;
 
+import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.credential.oauth.ClientCredentialsProvider;
 import com.top_logic.basic.exception.I18NRuntimeException;
 
@@ -42,6 +46,12 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  *     // Optionally retry once with fresh credentials.
  * }
  * </pre>
+ *
+ * <p>
+ * A consumer whose service expects a static API key in a known header may accept the key as
+ * shorthand next to its credentials and instantiate both with
+ * {@link #create(InstantiationContext, String, PolymorphicConfiguration, PolymorphicConfiguration, String, String)}.
+ * </p>
  */
 public interface CredentialProvider {
 
@@ -89,6 +99,43 @@ public interface CredentialProvider {
 	 */
 	default void invalidate() {
 		// No cached credentials.
+	}
+
+	/**
+	 * Creates the {@link CredentialProvider} of a consumer that accepts an API key as shorthand
+	 * for its credentials.
+	 *
+	 * @param context
+	 *        The context for instantiating the credentials.
+	 * @param owner
+	 *        Name of the configured consumer, reported in the error message.
+	 * @param credentials
+	 *        The configured credentials, <code>null</code> if none are configured.
+	 * @param apiKey
+	 *        The configured API key, <code>null</code> if none is configured.
+	 * @param header
+	 *        The request header in which the service expects the API key.
+	 * @param scheme
+	 *        The authentication scheme written before the API key, <code>null</code> for sending
+	 *        the bare key.
+	 * @return The configured credentials; if there are none, {@link HeaderCredentials} sending the
+	 *         API key in the given header; without API key, {@link NoCredentials}.
+	 * @throws ConfigurationError
+	 *         If both credentials and an API key are configured.
+	 */
+	static CredentialProvider create(InstantiationContext context, String owner,
+			PolymorphicConfiguration<? extends CredentialProvider> credentials,
+			PolymorphicConfiguration<? extends SecretSource> apiKey, String header, String scheme) {
+		if (credentials != null) {
+			if (apiKey != null) {
+				throw new ConfigurationError(I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__OWNER.fill(owner));
+			}
+			return context.getInstance(credentials);
+		}
+		if (apiKey != null) {
+			return context.getInstance(HeaderCredentials.config(header, scheme, apiKey));
+		}
+		return context.getInstance(TypedConfiguration.newConfigItem(NoCredentials.Config.class));
 	}
 
 }

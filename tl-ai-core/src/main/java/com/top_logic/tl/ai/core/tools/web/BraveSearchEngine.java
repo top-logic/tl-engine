@@ -26,11 +26,14 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.tl.ai.core.tools.web.messages.BraveSearchResponse;
 import com.top_logic.tl.ai.core.tools.web.messages.BraveSearchResult;
 import com.top_logic.tl.ai.core.tools.web.messages.BraveWebResults;
@@ -49,6 +52,11 @@ import com.top_logic.tl.ai.core.tools.web.messages.BraveWebResults;
 public final class BraveSearchEngine implements WebSearchEngine {
 
 	/**
+	 * The request header in which Brave expects the {@link Config#getApiKey() API key}.
+	 */
+	public static final String API_KEY_HEADER = "X-Subscription-Token";
+
+	/**
 	 * Configuration of {@link BraveSearchEngine}.
 	 */
 	public interface Config extends PolymorphicConfiguration<BraveSearchEngine> {
@@ -61,6 +69,13 @@ public final class BraveSearchEngine implements WebSearchEngine {
 		String API_KEY = "api-key";
 
 		/**
+		 * Configuration property name for the credentials.
+		 *
+		 * @see #getCredentials()
+		 */
+		String CREDENTIALS = "credentials";
+
+		/**
 		 * Configuration property name for the API base URL.
 		 *
 		 * @see #getBaseUrl()
@@ -68,14 +83,43 @@ public final class BraveSearchEngine implements WebSearchEngine {
 		String BASE_URL = "base-url";
 
 		/**
-		 * The Brave Search API subscription token (stored encrypted).
+		 * The Brave API key.
+		 *
+		 * <p>
+		 * Sent in the header {@link BraveSearchEngine#API_KEY_HEADER}. Recommended is a reference
+		 * to the variable or file holding the key, so that the key is not part of the
+		 * configuration:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_brave_api_key"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * An attribute value is an encrypted key, or a plain key with the prefix
+		 * <code>unencrypted:</code>. Configuring both an API key and {@link #getCredentials()
+		 * credentials} is an error.
+		 * </p>
 		 *
 		 * @see #API_KEY
 		 */
 		@Name(API_KEY)
-		@Encrypted
-		@Mandatory
-		String getApiKey();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getApiKey();
+
+		/**
+		 * How the requests to Brave are authenticated, if not with an {@link #getApiKey() API key}.
+		 *
+		 * <p>
+		 * E.g. no credentials at all, when a gateway in between adds them. Configuring both
+		 * credentials and an API key is an error.
+		 * </p>
+		 *
+		 * @see #CREDENTIALS
+		 */
+		@Name(CREDENTIALS)
+		@Nullable
+		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
 
 		/**
 		 * The Brave Search API endpoint URL.
@@ -87,13 +131,16 @@ public final class BraveSearchEngine implements WebSearchEngine {
 		String getBaseUrl();
 	}
 
+	/** The name of the search engine, in messages. */
+	private static final String LABEL = "Brave";
+
 	private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
 	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
 		.connectTimeout(TIMEOUT)
 		.build();
 
-	private final String _apiKey;
+	private final CredentialProvider _credentials;
 
 	private final String _baseUrl;
 
@@ -102,20 +149,20 @@ public final class BraveSearchEngine implements WebSearchEngine {
 	/**
 	 * Creates a {@link BraveSearchEngine} from configuration.
 	 */
-	@SuppressWarnings("unused")
 	@CalledByReflection
 	public BraveSearchEngine(InstantiationContext context, Config config) {
-		this(config, SearchHttp.Sleeper.SYSTEM);
+		this(context, config, SearchHttp.Sleeper.SYSTEM);
 	}
 
 	/**
 	 * Creates a {@link BraveSearchEngine} that waits with {@code sleeper}. Package-visible for
 	 * testing.
 	 */
-	BraveSearchEngine(Config config, SearchHttp.Sleeper sleeper) {
-		_apiKey = config.getApiKey();
+	BraveSearchEngine(InstantiationContext context, Config config, SearchHttp.Sleeper sleeper) {
+		_credentials = CredentialProvider.create(context, LABEL, config.getCredentials(), config.getApiKey(),
+			API_KEY_HEADER, null);
 		_baseUrl = config.getBaseUrl();
-		_http = new SearchHttp("Brave", HTTP_CLIENT, sleeper, Clock.systemUTC());
+		_http = new SearchHttp(LABEL, HTTP_CLIENT, _credentials, sleeper, Clock.systemUTC());
 	}
 
 	@Override
@@ -144,12 +191,10 @@ public final class BraveSearchEngine implements WebSearchEngine {
 			url.append("&search_lang=").append(encode(searchLang(query.language())));
 		}
 
-		HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(url.toString()))
+		HttpRequest.Builder httpRequest = HttpRequest.newBuilder(URI.create(url.toString()))
 			.header("Accept", "application/json")
-			.header("X-Subscription-Token", _apiKey)
 			.timeout(TIMEOUT)
-			.GET()
-			.build();
+			.GET();
 
 		HttpResponse<String> response = _http.send(httpRequest);
 		if (response.statusCode() / 100 != 2) {

@@ -18,27 +18,37 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.credential.BasicCredentials;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.HeaderCredentials;
+import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.NoCredentials;
 import com.top_logic.basic.credential.RequestAuthentication;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 
 /**
  * Test case for the static {@link CredentialProvider}s {@link HeaderCredentials},
- * {@link BasicCredentials} and {@link NoCredentials}.
+ * {@link BasicCredentials} and {@link NoCredentials}, and for the choice between credentials and an
+ * API key shorthand in
+ * {@link CredentialProvider#create(com.top_logic.basic.config.InstantiationContext, String, PolymorphicConfiguration, PolymorphicConfiguration, String, String)}.
  */
 @SuppressWarnings("javadoc")
 public class TestCredentialProvider extends AbstractTypedConfigurationTestCase {
 
 	private static final String ROOT_TAG = "config";
+
+	private static final String OWNER = "test-service";
 
 	public interface Config extends ConfigurationItem {
 
@@ -46,8 +56,15 @@ public class TestCredentialProvider extends AbstractTypedConfigurationTestCase {
 
 		String PROVIDERS = "providers";
 
+		String API_KEY = "api-key";
+
 		@Name(CREDENTIALS)
+		@Nullable
 		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
+
+		@Name(API_KEY)
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getApiKey();
 
 		@Name(PROVIDERS)
 		List<PolymorphicConfiguration<? extends CredentialProvider>> getProviders();
@@ -123,6 +140,58 @@ public class TestCredentialProvider extends AbstractTypedConfigurationTestCase {
 		provider.authenticate(RequestAuthentication.of(builder));
 
 		assertEquals("Bearer s3cr3t", builder.build().headers().firstValue("Authorization").orElse(null));
+	}
+
+	public void testCreateFromApiKey() throws ConfigurationException {
+		Map<String, String> headers = authenticate(create("<config api-key='unencrypted:s3cr3t'/>"));
+
+		assertEquals(Collections.singletonMap("x-api-key", "s3cr3t"), headers);
+	}
+
+	public void testCreateFromApiKeyWithScheme() throws ConfigurationException {
+		Config config = read("<config api-key='unencrypted:s3cr3t'/>");
+		CredentialProvider provider = CredentialProvider.create(context, OWNER, config.getCredentials(),
+			config.getApiKey(), CredentialProvider.AUTHORIZATION, CredentialProvider.BEARER);
+
+		assertEquals(Collections.singletonMap("Authorization", "Bearer s3cr3t"), authenticate(provider));
+	}
+
+	public void testCreateFromCredentials() throws ConfigurationException {
+		Map<String, String> headers = authenticate(create("<config>"
+			+ "<credentials class='" + HeaderCredentials.class.getName() + "' header='X-Gateway' secret='unencrypted:gw'/>"
+			+ "</config>"));
+
+		assertEquals(Collections.singletonMap("X-Gateway", "gw"), headers);
+	}
+
+	public void testCreateWithoutCredentials() throws ConfigurationException {
+		CredentialProvider provider = create("<config/>");
+
+		assertTrue(provider instanceof NoCredentials);
+		assertEquals(Collections.emptyMap(), authenticate(provider));
+	}
+
+	public void testCreateWithEmptyApiKey() throws ConfigurationException {
+		CredentialProvider provider = create("<config api-key='unencrypted:'/>");
+
+		assertTrue(provider instanceof NoCredentials);
+	}
+
+	public void testCreateRefusesCredentialsAndApiKey() throws ConfigurationException {
+		try {
+			create("<config api-key='unencrypted:s3cr3t'>"
+				+ "<credentials class='" + NoCredentials.class.getName() + "'/>"
+				+ "</config>");
+			fail("Credentials and an API key must not be accepted together.");
+		} catch (ConfigurationError ex) {
+			assertEquals(I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__OWNER.fill(OWNER), ex.getErrorKey());
+		}
+	}
+
+	private CredentialProvider create(String xml) throws ConfigurationException {
+		Config config = read(xml);
+		return CredentialProvider.create(context, OWNER, config.getCredentials(), config.getApiKey(), "x-api-key",
+			null);
 	}
 
 	private CredentialProvider provider(String xml) throws ConfigurationException {

@@ -190,7 +190,7 @@ public class TestProviderCredentials extends TestCase {
 			fail("Credentials and API key must not be accepted together.");
 		} catch (RuntimeException ex) {
 			assertTrue("Not refused for credentials and API key: " + ex,
-				isRefused(ex, I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__PROVIDER.fill("test")));
+				isRefused(ex, com.top_logic.basic.credential.I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__OWNER.fill("test")));
 		}
 	}
 

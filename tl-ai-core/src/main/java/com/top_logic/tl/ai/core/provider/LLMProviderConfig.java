@@ -13,14 +13,12 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.credential.CredentialProvider;
-import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.NoCredentials;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
@@ -191,21 +189,13 @@ public interface LLMProviderConfig {
 	 *         API key in the given header; without API key, {@link NoCredentials}.
 	 * @throws ConfigurationError
 	 *         If both credentials and an API key are configured.
+	 *
+	 * @see CredentialProvider#create(InstantiationContext, String, PolymorphicConfiguration,
+	 *      PolymorphicConfiguration, String, String)
 	 */
 	static CredentialProvider createCredentials(InstantiationContext context, Config config,
 			PolymorphicConfiguration<? extends SecretSource> apiKey, String header, String scheme) {
-		PolymorphicConfiguration<? extends CredentialProvider> credentials = config.getCredentials();
-		if (credentials != null) {
-			if (apiKey != null) {
-				throw new ConfigurationError(
-					I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__PROVIDER.fill(config.getName()));
-			}
-			return context.getInstance(credentials);
-		}
-		if (apiKey != null) {
-			return context.getInstance(HeaderCredentials.config(header, scheme, apiKey));
-		}
-		return context.getInstance(TypedConfiguration.newConfigItem(NoCredentials.Config.class));
+		return CredentialProvider.create(context, config.getName(), config.getCredentials(), apiKey, header, scheme);
 	}
 
 	/**

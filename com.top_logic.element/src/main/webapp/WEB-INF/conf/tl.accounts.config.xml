@@ -28,6 +28,31 @@
 				</security-config>
 			</instance>
 		</config>
+		<!--
+			Groups and addresses inherit the roles held on the security root, so that the grants on
+			the module tl.accounts take effect for them. An account gets its roles through its contact
+			(see com.top_logic.contact).
+		-->
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<security-parents>
+					<rule
+						id="SecRootForGroup"
+						inherit="true"
+						meta-element="tl.accounts:Group"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+					<rule
+						id="SecRootForAddress"
+						inherit="true"
+						meta-element="tl.accounts:Address"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+				</security-parents>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.tool.execution.service.CommandApprovalService">
 			<instance class="com.top_logic.tool.execution.service.ConfiguredCommandApprovalService">
 				<check type="tl.accounts:Person">

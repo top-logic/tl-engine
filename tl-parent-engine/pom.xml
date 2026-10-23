@@ -63,6 +63,7 @@
 		<module>../com.top_logic.contact</module>
 		<module>../com.top_logic.convert</module>
 		<module>../com.top_logic.credential.azure</module>
+		<module>../com.top_logic.credential.oauth</module>
 		<module>../com.top_logic.dob</module>
 		<module>../com.top_logic.dob.persist</module>
 		<module>../com.top_logic.doc</module>

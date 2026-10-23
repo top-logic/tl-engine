@@ -7,8 +7,8 @@ package com.top_logic.service.openapi.common.authentication.oauth;
 
 import java.net.URI;
 
-import com.top_logic.basic.credential.oauth.OAuthServerConfig;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.credential.oauth.OAuthServerConfig;
 
 /**
  * Provider of {@link URI}s to use for authentication of requests.

@@ -17,7 +17,7 @@ import com.top_logic.basic.config.URLFormat;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.credential.oauth.OAuthServerConfig;
+import com.top_logic.credential.oauth.OAuthServerConfig;
 import com.top_logic.service.openapi.common.authentication.openid.OpenIDUtils;
 
 /**

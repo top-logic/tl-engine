@@ -199,7 +199,7 @@ The gateway speaks plain HTTP; in production it runs behind a TLS-terminating in
 
 The provider of the application gets the gateway route as `base-url` and credentials for the gateway instead of an `api-key`. The provider appends its API path (`/v1/messages`, `/v1/responses`, ...) to the `base-url`, so the route prefix is all the gateway needs.
 
-An application in Kubernetes authenticates with its service account token (no secret in the application at all):
+The OAuth credential providers come from the module `tl-credential-oauth`, which the application adds as dependency. An application in Kubernetes authenticates with its service account token (no secret in the application at all):
 
 ```xml
 <provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
@@ -207,11 +207,11 @@ An application in Kubernetes authenticates with its service account token (no se
 	base-url="https://llm-gateway.example.com/anthropic"
 	models="claude-sonnet-4-6"
 >
-	<credentials class="com.top_logic.basic.credential.oauth.ClientCredentialsProvider"
+	<credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
 		issuer="https://login.example.com/realms/my-realm"
 		client-id="my-app"
 	>
-		<client-authentication class="com.top_logic.basic.credential.oauth.ClientAssertionAuthentication">
+		<client-authentication class="com.top_logic.credential.oauth.ClientAssertionAuthentication">
 			<assertion class="com.top_logic.basic.credential.FileSecretSource" path="/var/run/secrets/tokens/keycloak"/>
 		</client-authentication>
 	</credentials>
@@ -227,12 +227,12 @@ A developer's application uses the device login; the developer confirms one logi
 	name="openai"
 	base-url="https://llm-gateway.example.com/openai"
 >
-	<credentials class="com.top_logic.basic.credential.oauth.DeviceLoginProvider"
+	<credentials class="com.top_logic.credential.oauth.DeviceLoginProvider"
 		issuer="https://login.example.com/realms/my-realm"
 		client-id="dev-gateway"
 		scope="openid offline_access"
 	>
-		<refresh-token-store class="com.top_logic.basic.credential.oauth.FileRefreshTokenStore"/>
+		<refresh-token-store class="com.top_logic.credential.oauth.FileRefreshTokenStore"/>
 	</credentials>
 </provider>
 ```

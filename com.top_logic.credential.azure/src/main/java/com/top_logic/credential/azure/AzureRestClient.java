@@ -17,7 +17,6 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.top_logic.basic.credential.oauth.OAuthConstants;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.json.JSON;
 
@@ -47,6 +46,20 @@ final class AzureRestClient {
 	 * Field of an Azure error object with the error message.
 	 */
 	static final String ERROR_MESSAGE = "message";
+
+	/**
+	 * Field of an OAuth 2.0 error response (RFC 6749 §5.2) with the error code.
+	 */
+	private static final String OAUTH_ERROR = "error";
+
+	/**
+	 * Field of an OAuth 2.0 error response with the error description.
+	 */
+	private static final String OAUTH_ERROR_DESCRIPTION = "error_description";
+
+	private static final String ACCEPT = "Accept";
+
+	private static final String APPLICATION_JSON = "application/json";
 
 	private final HttpClient _client;
 
@@ -87,7 +100,7 @@ final class AzureRestClient {
 		}
 		builder
 			.timeout(_requestTimeout)
-			.header(OAuthConstants.ACCEPT, OAuthConstants.APPLICATION_JSON)
+			.header(ACCEPT, APPLICATION_JSON)
 			.GET();
 		for (Entry<String, String> header : headers.entrySet()) {
 			builder.setHeader(header.getKey(), header.getValue());
@@ -167,9 +180,9 @@ final class AzureRestClient {
 		if (response == null) {
 			return "";
 		}
-		Object error = response.get(OAuthConstants.ERROR);
+		Object error = response.get(OAUTH_ERROR);
 		if (error instanceof String) {
-			return join(error, response.get(OAuthConstants.ERROR_DESCRIPTION));
+			return join(error, response.get(OAUTH_ERROR_DESCRIPTION));
 		}
 		if (error instanceof Map) {
 			Map<?, ?> errorObject = (Map<?, ?>) error;

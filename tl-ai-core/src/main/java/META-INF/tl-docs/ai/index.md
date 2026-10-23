@@ -76,7 +76,7 @@ An `api-key` is a shorthand: the provider sends the key in the header its API ex
 
 Instead of a key, a provider takes `<credentials>` (a `CredentialProvider`, see [credential providers](doc:credentials/credential-providers)), so that the application owns no long-lived secret; a provider that configures both does not start. A provider with neither sends its requests without credentials, e.g. to a gateway that adds them.
 
-In development, the requests go through the central [credential gateway](doc:credentials/gateway), which checks the token of the developer's device login and adds the provider key of the route (here `/anthropic/`):
+In development, the requests go through the central [credential gateway](doc:credentials/gateway), which checks the token of the developer's device login and adds the provider key of the route (here `/anthropic/`). The OAuth credential providers come from the module `tl-credential-oauth`:
 
 ```xml
 <provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
@@ -84,12 +84,12 @@ In development, the requests go through the central [credential gateway](doc:cre
 	base-url="https://llm-gateway.example.com/anthropic"
 	models="claude-sonnet-4-6"
 >
-	<credentials class="com.top_logic.basic.credential.oauth.DeviceLoginProvider"
+	<credentials class="com.top_logic.credential.oauth.DeviceLoginProvider"
 		issuer="https://login.example.com/realms/my-realm"
 		client-id="dev-gateway"
 		scope="openid offline_access"
 	>
-		<refresh-token-store class="com.top_logic.basic.credential.oauth.FileRefreshTokenStore"/>
+		<refresh-token-store class="com.top_logic.credential.oauth.FileRefreshTokenStore"/>
 	</credentials>
 </provider>
 ```
@@ -101,11 +101,11 @@ In production, the application authenticates itself at the same gateway with the
 	name="openai"
 	base-url="https://llm-gateway.example.com/openai"
 >
-	<credentials class="com.top_logic.basic.credential.oauth.ClientCredentialsProvider"
+	<credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
 		issuer="https://login.example.com/realms/my-realm"
 		client-id="my-app"
 	>
-		<client-authentication class="com.top_logic.basic.credential.oauth.ClientAssertionAuthentication">
+		<client-authentication class="com.top_logic.credential.oauth.ClientAssertionAuthentication">
 			<assertion class="com.top_logic.basic.credential.FileSecretSource" path="/var/run/secrets/tokens/keycloak"/>
 		</client-authentication>
 	</credentials>

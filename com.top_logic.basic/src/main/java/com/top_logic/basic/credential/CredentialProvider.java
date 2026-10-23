@@ -9,7 +9,6 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.credential.oauth.ClientCredentialsProvider;
 import com.top_logic.basic.exception.I18NRuntimeException;
 
 /**
@@ -20,8 +19,8 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * not hold a credential itself but asks its configured {@link CredentialProvider} to authenticate
  * each request. The provider decides how: with a static key from a {@link SecretSource}
  * ({@link HeaderCredentials}, {@link BasicCredentials}), with a short-lived access token obtained
- * from an OAuth2 authorization server ({@link ClientCredentialsProvider}), or not at all, when a
- * gateway in between adds the credentials ({@link NoCredentials}).
+ * from an OAuth2 authorization server (the providers of the module <code>tl-credential-oauth</code>),
+ * or not at all, when a gateway in between adds the credentials ({@link NoCredentials}).
  * </p>
  *
  * <p>

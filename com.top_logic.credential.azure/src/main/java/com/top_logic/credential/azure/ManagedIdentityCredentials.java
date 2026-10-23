@@ -10,6 +10,13 @@ import java.net.http.HttpResponse;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import net.minidev.json.JSONObject;
+
+import com.nimbusds.oauth2.sdk.ParseException;
+import com.nimbusds.oauth2.sdk.token.AccessToken;
+import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
+import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
+
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -24,12 +31,11 @@ import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.core.workspace.Environment;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.RequestAuthentication;
-import com.top_logic.basic.credential.oauth.AccessToken;
-import com.top_logic.basic.credential.oauth.ClientCredentialsProvider;
-import com.top_logic.basic.credential.oauth.OAuthConstants;
-import com.top_logic.basic.credential.oauth.OAuthServer;
-import com.top_logic.basic.credential.oauth.TokenCache;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.credential.oauth.ClientCredentialsProvider;
+import com.top_logic.credential.oauth.IssuedToken;
+import com.top_logic.credential.oauth.OAuthServer;
+import com.top_logic.credential.oauth.TokenCache;
 
 /**
  * {@link CredentialProvider} authenticating requests with an access token of the Azure managed
@@ -90,12 +96,12 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * </pre>
  *
  * <pre>
- * &lt;credentials class="com.top_logic.basic.credential.oauth.ClientCredentialsProvider"
+ * &lt;credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
  *   token-url="https://login.microsoftonline.com/%AZURE_TENANT_ID%/oauth2/v2.0/token"
  *   client-id="%AZURE_CLIENT_ID%"
  *   scope="https://cognitiveservices.azure.com/.default"
  * &gt;
- *   &lt;client-authentication class="com.top_logic.basic.credential.oauth.ClientAssertionAuthentication"&gt;
+ *   &lt;client-authentication class="com.top_logic.credential.oauth.ClientAssertionAuthentication"&gt;
  *     &lt;assertion class="com.top_logic.basic.credential.FileSecretSource" path="%AZURE_FEDERATED_TOKEN_FILE%"/&gt;
  *   &lt;/client-authentication&gt;
  * &lt;/credentials&gt;
@@ -161,11 +167,15 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 	public static final String PARAM_RESOURCE = "resource";
 
 	/**
+	 * Query parameter selecting a user-assigned identity by its client ID.
+	 */
+	public static final String PARAM_CLIENT_ID = "client_id";
+
+	/**
 	 * Field of the token response with the end of the token's lifetime in seconds since the epoch.
 	 *
 	 * <p>
-	 * The identity endpoint of an App Service sends no {@link OAuthConstants#EXPIRES_IN}, only this
-	 * field.
+	 * The identity endpoint of an App Service sends no <code>expires_in</code>, only this field.
 	 * </p>
 	 */
 	public static final String FIELD_EXPIRES_ON = "expires_on";
@@ -328,7 +338,7 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 
 	@Override
 	public void authenticate(RequestAuthentication request) {
-		AccessToken token = _tokens.getToken(last -> fetchToken());
+		IssuedToken token = _tokens.getToken(last -> fetchToken());
 		request.setHeader(AUTHORIZATION, token.getAuthorization());
 	}
 
@@ -337,7 +347,7 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 		_tokens.invalidate();
 	}
 
-	private AccessToken fetchToken() {
+	private IssuedToken fetchToken() {
 		Config config = getConfig();
 		Map<String, String> headers = new LinkedHashMap<>();
 		Map<String, String> query = new LinkedHashMap<>();
@@ -361,12 +371,12 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 		query.put(PARAM_RESOURCE, config.getResource());
 		String clientId = StringServices.nonEmpty(config.getClientId());
 		if (clientId != null) {
-			query.put(OAuthConstants.CLIENT_ID, clientId);
+			query.put(PARAM_CLIENT_ID, clientId);
 		}
 		return requestToken(endpoint, AzureRestClient.withQuery(endpoint, query), headers);
 	}
 
-	private AccessToken requestToken(String endpoint, String url, Map<String, String> headers) {
+	private IssuedToken requestToken(String endpoint, String url, Map<String, String> headers) {
 		Config config = getConfig();
 		int maxAttempts = Math.max(1, config.getMaxAttempts());
 		long delay = config.getRetryDelay();
@@ -417,21 +427,32 @@ public class ManagedIdentityCredentials extends AbstractConfiguredInstance<Manag
 		}
 	}
 
-	private static AccessToken parseToken(String endpoint, String body, long issuedAt) {
-		Map<String, Object> response = AzureRestClient.parseObject(body);
-		if (response == null) {
+	private static IssuedToken parseToken(String endpoint, String body, long issuedAt) {
+		JSONObject response;
+		try {
+			response = JSONObjectUtils.parse(body);
+		} catch (ParseException ex) {
+			// The cause is not reported, its message could quote the token.
 			throw new I18NRuntimeException(I18NConstants.ERROR_MALFORMED_RESPONSE__URL.fill(endpoint));
 		}
-		AccessToken token = OAuthServer.parseToken(endpoint, response, issuedAt);
-		if (token.getExpiresIn() != null) {
+		IssuedToken token = OAuthServer.parseToken(endpoint, response, issuedAt);
+		if (token.getLifetime() > 0) {
 			return token;
 		}
-		Long expiresOn = OAuthServer.parseSeconds(endpoint, response.get(FIELD_EXPIRES_ON));
-		if (expiresOn == null) {
+		Object expiresOnValue = response.get(FIELD_EXPIRES_ON);
+		if (expiresOnValue == null) {
 			return token;
 		}
-		long expiresIn = Math.max(0, expiresOn.longValue() - issuedAt / 1000);
-		return new AccessToken(token.getValue(), token.getType(), Long.valueOf(expiresIn), null, issuedAt);
+		long expiresOn;
+		try {
+			expiresOn = Long.parseLong(expiresOnValue.toString());
+		} catch (NumberFormatException ex) {
+			throw new I18NRuntimeException(I18NConstants.ERROR_MALFORMED_RESPONSE__URL.fill(endpoint));
+		}
+		long expiresIn = Math.max(0, expiresOn - issuedAt / 1000);
+		AccessToken accessToken = token.getAccessToken();
+		return new IssuedToken(new BearerAccessToken(accessToken.getValue(), expiresIn, accessToken.getScope()), null,
+			issuedAt);
 	}
 
 }

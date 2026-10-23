@@ -1,5 +1,5 @@
 ---
-description: Read before configuring how an application authenticates its requests to an external HTTP service (the <credentials> of LLM providers, web search, MCP client, A2A remote agents, embedder, DeepL, OpenAPI client, Gitea tool), or before writing an own HTTP consumer - HeaderCredentials, BasicCredentials, NoCredentials, ClientCredentialsProvider (client_secret, private_key_jwt, Kubernetes service account token), ManagedIdentityCredentials of tl-credential-azure, DeviceLoginProvider for developers, CredentialProvider.create, RequestAuthentication, 401 handling.
+description: Read before configuring how an application authenticates its requests to an external HTTP service (the <credentials> of LLM providers, web search, MCP client, A2A remote agents, embedder, DeepL, OpenAPI client, Gitea tool), or before writing an own HTTP consumer - HeaderCredentials, BasicCredentials, NoCredentials, ClientCredentialsProvider of tl-credential-oauth on the Nimbus SDK (client_secret, private_key_jwt, Kubernetes service account token), ManagedIdentityCredentials of tl-credential-azure, DeviceLoginProvider for developers, CredentialProvider.create, RequestAuthentication, 401 handling.
 order: 20
 ---
 
@@ -73,18 +73,20 @@ Configuring both is an error; the consumer does not start.
 
 ## OAuth client credentials
 
-`ClientCredentialsProvider` (in `com.top_logic.basic.credential.oauth`) obtains an access token with the client credentials grant (RFC 6749 §4.4) and sends it as bearer token. The token is cached and renewed `renewal-margin` (default `30s`, at most half the lifetime) before it expires; a token without announced lifetime is assumed to live `default-token-lifetime` (default `5min`).
+The OAuth providers `ClientCredentialsProvider` and `DeviceLoginProvider` live in the module `tl-credential-oauth` (`com.top-logic:tl-credential-oauth`, package `com.top_logic.credential.oauth`), which an application adds as dependency. The protocol is implemented by the [Nimbus OAuth 2.0 SDK](https://connect2id.com/products/nimbus-oauth-openid-connect-sdk): token requests, client authentication, signed assertions and discovery are Nimbus classes; the module adds the configuration, the token cache and the refresh token store.
 
-The authorization server is given by its `issuer` (the token endpoint is read from `<issuer>/.well-known/openid-configuration`) or directly by `token-url`. `scope` and additional `<parameters>` (e.g. `audience`, `resource`) select what the token is for. How the client proves its identity is its `client-authentication`.
+`ClientCredentialsProvider` obtains an access token with the client credentials grant (RFC 6749 §4.4) and sends it as bearer token. The token is cached and renewed `renewal-margin` (default `30s`, at most half the lifetime) before it expires; a token without announced lifetime is assumed to live `default-token-lifetime` (default `5min`).
+
+The authorization server is given by its `issuer` (the token endpoint is read from `<issuer>/.well-known/openid-configuration`) or directly by `token-url`. `scope` and additional `<parameters>` (e.g. `audience`, `resource`) select what the token is for. How the client proves its identity is its `client-authentication`, which the grant requires.
 
 ### With a client secret
 
 ```xml
-<credentials class="com.top_logic.basic.credential.oauth.ClientCredentialsProvider"
+<credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
 	issuer="https://login.example.com/realms/my-realm"
 	client-id="my-app"
 >
-	<client-authentication class="com.top_logic.basic.credential.oauth.ClientSecretAuthentication" method="basic">
+	<client-authentication class="com.top_logic.credential.oauth.ClientSecretAuthentication" method="basic">
 		<secret class="com.top_logic.basic.credential.FileSecretSource" path="/run/secrets/my-app-client-secret"/>
 	</client-authentication>
 </credentials>
@@ -97,11 +99,11 @@ The authorization server is given by its `issuer` (the token endpoint is read fr
 The client signs a short-lived assertion with its private key (RFC 7523); only the public key is registered at the server, the private key never leaves the application:
 
 ```xml
-<credentials class="com.top_logic.basic.credential.oauth.ClientCredentialsProvider"
+<credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
 	issuer="https://login.example.com/realms/my-realm"
 	client-id="my-app"
 >
-	<client-authentication class="com.top_logic.basic.credential.oauth.PrivateKeyJwtAuthentication"
+	<client-authentication class="com.top_logic.credential.oauth.PrivateKeyJwtAuthentication"
 		algorithm="ES256"
 		key-id="my-app-2026"
 	>
@@ -110,7 +112,7 @@ The client signs a short-lived assertion with its private key (RFC 7523); only t
 </credentials>
 ```
 
-The key is PKCS#8 PEM. `algorithm` is `RS256` (default) or another JWS algorithm matching the key type; `key-id` lets the server pick the key during a rotation. A key pair:
+The key is PKCS#8 PEM (`-----BEGIN PRIVATE KEY-----`) or a JSON web key (JWK) with its private part. `algorithm` is `RS256` (default) or another JWS algorithm matching the key type (`RS384`, `RS512`, `PS256`, `PS384`, `PS512`, `ES256`, `ES384`, `ES512`); `key-id` lets the server pick the key during a rotation; without it, the `kid` of a JWK is sent. A key pair:
 
 ```bash
 openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out my-app-key.pem   # ES256
@@ -122,11 +124,11 @@ openssl pkey -in my-app-key.pem -pubout                                         
 The pod authenticates with its projected service account token, which the kubelet renews in a file; the application owns no secret at all. The authorization server trusts the cluster's token issuer for this client (see [Keycloak setup](doc:credentials/keycloak#kubernetes-workload-identity)):
 
 ```xml
-<credentials class="com.top_logic.basic.credential.oauth.ClientCredentialsProvider"
+<credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
 	issuer="https://login.example.com/realms/my-realm"
 	client-id="my-app"
 >
-	<client-authentication class="com.top_logic.basic.credential.oauth.ClientAssertionAuthentication">
+	<client-authentication class="com.top_logic.credential.oauth.ClientAssertionAuthentication">
 		<assertion class="com.top_logic.basic.credential.FileSecretSource" path="/var/run/secrets/tokens/keycloak"/>
 	</client-authentication>
 </credentials>
@@ -178,12 +180,12 @@ In AKS, a pod uses workload identity instead: the `ClientCredentialsProvider` ex
 ```
 
 ```xml
-<credentials class="com.top_logic.basic.credential.oauth.ClientCredentialsProvider"
+<credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
 	token-url="https://login.microsoftonline.com/%AZURE_TENANT_ID%/oauth2/v2.0/token"
 	client-id="%AZURE_CLIENT_ID%"
 	scope="https://cognitiveservices.azure.com/.default"
 >
-	<client-authentication class="com.top_logic.basic.credential.oauth.ClientAssertionAuthentication">
+	<client-authentication class="com.top_logic.credential.oauth.ClientAssertionAuthentication">
 		<assertion class="com.top_logic.basic.credential.FileSecretSource" path="%AZURE_FEDERATED_TOKEN_FILE%"/>
 	</client-authentication>
 </credentials>
@@ -196,12 +198,12 @@ These aliases carry no secret - a tenant id, a client id and a file path - so re
 `DeviceLoginProvider` authenticates with a personal access token of the developer, obtained by the device authorization grant (RFC 8628). It is meant for a developer's application calling the [credential gateway](doc:credentials/gateway) instead of holding a provider key:
 
 ```xml
-<credentials class="com.top_logic.basic.credential.oauth.DeviceLoginProvider"
+<credentials class="com.top_logic.credential.oauth.DeviceLoginProvider"
 	issuer="https://login.example.com/realms/my-realm"
 	client-id="dev-gateway"
 	scope="openid offline_access"
 >
-	<refresh-token-store class="com.top_logic.basic.credential.oauth.FileRefreshTokenStore"/>
+	<refresh-token-store class="com.top_logic.credential.oauth.FileRefreshTokenStore"/>
 </credentials>
 ```
 

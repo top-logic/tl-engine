@@ -16,7 +16,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.credential.oauth.OAuthServerConfig;
+import com.top_logic.credential.oauth.OAuthServerConfig;
 
 /**
  * {@link TokenURIProvider} delivering configured {@link URL}.

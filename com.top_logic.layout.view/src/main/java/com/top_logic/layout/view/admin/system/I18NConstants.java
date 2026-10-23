@@ -80,9 +80,15 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SERVICE_CONFIGURATION_SAVED;
 
 	/**
-	 * @en Configuration reset to the default. Restart the service to apply it.
+	 * @en In-app configuration removed. Restart the service to apply the configuration of the
+	 *     application's configuration files.
 	 */
 	public static ResKey SERVICE_CONFIGURATION_RESET;
+
+	/**
+	 * @en Changes discarded. The configuration the service is running with is in effect again.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_DISCARDED;
 
 	/**
 	 * @en No service is selected.

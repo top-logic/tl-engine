@@ -55,8 +55,7 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The status tells whether the service is running and, for a running service whose stored
- * configuration has changed since it was started (see
- * {@link BasicRuntimeModule#isConfigurationChanged()}), that it must be restarted to apply it.
+ * configuration has changed since it was started, that it must be restarted to apply it.
  * </p>
  *
  * <p>
@@ -73,6 +72,8 @@ import com.top_logic.util.Resources;
  *
  * @implNote The module list comes from {@link ModuleUtil#getAllModules()}; the running status from
  *           {@link BasicRuntimeModule#isActive()}; the labels from {@link ServiceSnapshot#label(BasicRuntimeModule)}.
+ *
+ * @see BasicRuntimeModule#isConfigurationChanged()
  */
 public class ServiceTable implements UIElement {
 

@@ -153,6 +153,12 @@ public class ServiceFunctions extends TLScriptFunctions {
 	 * Whether the configuration of the given service has changed since the service was started, so
 	 * that it must be restarted to apply it.
 	 *
+	 * <p>
+	 * The configuration counts as changed while the configuration stored in the application differs
+	 * from its state when the service was started. Storing that state again, or discarding the
+	 * changes, makes it unchanged.
+	 * </p>
+	 *
 	 * @param module
 	 *        The module of the service.
 	 * @return Whether the configuration has changed, <code>false</code> without a module.

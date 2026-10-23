@@ -21,8 +21,8 @@ import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link ViewAction} storing or resetting the configuration of a service, returning the current
- * application services afterwards.
+ * {@link ViewAction} storing, discarding or removing the configuration of a service stored in the
+ * application, returning the current application services afterwards.
  *
  * <p>
  * The service is the module held by the configured {@link Config#getModule() module channel}. A
@@ -34,6 +34,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @see TLServiceUtils#storeServiceConfiguration(BasicRuntimeModule, ServiceConfiguration)
  * @see TLServiceUtils#resetServiceConfiguration(BasicRuntimeModule)
+ * @see TLServiceUtils#discardConfigurationChanges(BasicRuntimeModule)
  */
 public class ServiceConfigurationAction implements ViewAction {
 
@@ -54,7 +55,15 @@ public class ServiceConfigurationAction implements ViewAction {
 		 *
 		 * @see TLServiceUtils#resetServiceConfiguration(BasicRuntimeModule)
 		 */
-		RESET;
+		RESET,
+
+		/**
+		 * Discard the changes of the configuration stored in the application made since the service
+		 * was started, so that the stored configuration is the one the service is running with.
+		 *
+		 * @see TLServiceUtils#discardConfigurationChanges(BasicRuntimeModule)
+		 */
+		DISCARD;
 	}
 
 	/**
@@ -110,7 +119,7 @@ public class ServiceConfigurationAction implements ViewAction {
 	 *
 	 * @param input
 	 *        For {@link Mode#SAVE}, the {@link ServiceConfiguration} to store, e.g. the working copy
-	 *        a {@code <config-form>} hands to its save actions; ignored for {@link Mode#RESET}.
+	 *        a {@code <config-form>} hands to its save actions; ignored for the other modes.
 	 * @throws TopLogicException
 	 *         When the configuration cannot be stored, e.g. because it violates its constraints.
 	 */
@@ -131,6 +140,11 @@ public class ServiceConfigurationAction implements ViewAction {
 			case RESET:
 				if (TLServiceUtils.resetServiceConfiguration(module)) {
 					ViewMessages.info(context, I18NConstants.SERVICE_CONFIGURATION_RESET);
+				}
+				break;
+			case DISCARD:
+				if (TLServiceUtils.discardConfigurationChanges(module)) {
+					ViewMessages.info(context, I18NConstants.SERVICE_CONFIGURATION_DISCARDED);
 				}
 				break;
 		}

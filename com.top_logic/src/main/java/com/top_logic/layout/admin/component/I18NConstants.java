@@ -82,6 +82,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SERVICE_CONFIG_SAVE_ERROR;
 
 	/**
+	 * @en The service configuration could not be restored to the state the service was started
+	 *     with.
+	 */
+	public static ResKey SERVICE_CONFIG_RESTORE_ERROR;
+
+	/**
 	 * Message introduction if a service with dependents should be stopped.
 	 */
 	public static ResKey1 SERVICE_DEPENDENT_MODULES_MESSAGE__MODULE;

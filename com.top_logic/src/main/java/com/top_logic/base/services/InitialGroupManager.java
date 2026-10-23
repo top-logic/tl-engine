@@ -14,8 +14,10 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -34,6 +36,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 })
 @Label("Initial groups")
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager.Config> {
 
 	/**

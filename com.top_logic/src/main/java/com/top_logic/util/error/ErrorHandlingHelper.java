@@ -20,7 +20,9 @@ import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.InfoService;
@@ -43,6 +45,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * @author <a href="mailto:dkh@top-logic.com">Dirk K&ouml;hlhoff</a>
  */
 @Label("Error handling")
+@ServiceCategory.Of(OperationsCategory.class)
 public class ErrorHandlingHelper extends ManagedClass {
 
 	private static final int DIALOG_HEIGHT = 250;

@@ -30,8 +30,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.OptionProvider;
@@ -115,6 +117,7 @@ import com.top_logic.util.model.ModelService;
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@ServiceCategory.Of(UICategory.class)
 public class FieldControlService extends ConfiguredManagedClass<FieldControlService.Config> {
 
 	/**

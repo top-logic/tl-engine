@@ -19,8 +19,10 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.DataAccessService;
 import com.top_logic.dsa.DatabaseAccessException;
@@ -45,6 +47,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 	DataAccessService.Module.class
 })
 @Label("Web folder factory")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class WebFolderFactory extends ManagedClass {
     
 	/**

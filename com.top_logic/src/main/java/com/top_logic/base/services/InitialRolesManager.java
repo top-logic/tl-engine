@@ -13,8 +13,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.annotate.security.RoleConfig;
@@ -31,6 +33,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 })
 @Label("Initial roles")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class InitialRolesManager extends KBBasedManagedClass<InitialRolesManager.Config> {
 
 	/**

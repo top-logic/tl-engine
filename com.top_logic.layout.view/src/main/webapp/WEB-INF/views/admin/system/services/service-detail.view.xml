@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Detail frame of the services drill-down (see ../services.view.xml): the configuration of one
+	service, read-only until Edit, stored by Save.
+	- The module channel holds the service; it is the parameter the frame was pushed with. The
+	navPath channel is the stack's path, the services channel the snapshot the covered overview
+	table displays, both bound by the enclosing tile-stack. Every command here writes a new
+	snapshot to the services channel: the overview table follows it, and the derived channels
+	reading the state of the service (active, changed, stored) take services as input, so they are
+	computed again as well.
+	- The config channel is filled with an editable copy of the configuration of the service when
+	the frame is built (serviceConfiguration). The config-form edits it; Save runs the
+	ServiceConfigurationAction, which stores the working copy in the application. The form then
+	shows the stored copy.
+	- The service counts as changed (serviceConfigurationChanged) while the configuration stored in
+	the application differs from its state when the service was started; storing the start state
+	again makes it unchanged. While changed, a notice asks to restart the service; Restart
+	(offered while the service runs) applies the stored configuration. "Discard changes" in the
+	notice restores the stored configuration to its start state instead.
+	- "Remove in-app configuration" removes the stored configuration, so that the configuration of
+	the application's configuration files applies after a restart.
+	- Discard and Remove write the configuration that is stored afterwards to the config channel.
+	- A service without settings - no configuration, or none with a property a configuration form
+	displays (serviceHasSettings) - shows a message instead of an empty form. A service whose
+	implementation refuses a configuration changed in the application shows its settings in a form
+	that does not offer Edit.
+-->
+<view>
+	<channels>
+		<channel name="module"/>
+		<channel name="navPath"/>
+		<channel name="services"/>
+		<derived-channel name="depth"
+			expr="$navPath.size()"
+			inputs="navPath"
+		/>
+		<derived-channel name="label"
+			expr="serviceLabel($module)"
+			inputs="module"
+		/>
+		<derived-channel name="settings"
+			expr="serviceHasSettings($module)"
+			inputs="module"
+		/>
+		<derived-channel name="editable"
+			expr="serviceConfigurationEditable($module)"
+			inputs="module"
+		/>
+		<derived-channel name="readOnly"
+			expr="$settings == true &amp;&amp; $editable != true"
+			inputs="settings, editable"
+		/>
+		<derived-channel name="active"
+			expr="serviceActive($module)"
+			inputs="module, services"
+		/>
+		<derived-channel name="changed"
+			expr="serviceConfigurationChanged($module)"
+			inputs="module, services"
+		/>
+		<derived-channel name="stored"
+			expr="serviceConfigurationStored($module)"
+			inputs="module, services"
+		/>
+		<channel name="config"
+			init="serviceConfiguration($module)"
+			inputs="module"
+		/>
+	</channels>
+
+	<panel
+		fill="true"
+		with-inset="true"
+	>
+		<title>
+			<en>Service</en>
+			<de>Dienst</de>
+		</title>
+		<title-content>
+			<text input="label"/>
+		</title-content>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-left"
+				inputs="depth"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Back</en>
+					<de>Zurück</de>
+				</label>
+				<executability>
+					<visible-if expr="$depth > 0"/>
+				</executability>
+				<navigate-pop/>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-repeat"
+				inputs="active, module"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Restart</en>
+					<de>Neustart</de>
+				</label>
+				<tooltip>
+					<en>Restarts the service and the services depending on it, so that they apply the stored configuration.</en>
+					<de>Startet den Dienst und die von ihm abhängigen Dienste neu, sodass sie die gespeicherte Konfiguration übernehmen.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$active == true"/>
+				</executability>
+				<if test="serviceDependents($module) != null">
+					<then>
+						<confirm expr="#('Restarting {0} also restarts the services depending on it:\n{1}\n\nRestart them all?'@en, 'Beim Neustart von {0} werden auch die davon abhängigen Dienste neu gestartet:\n{1}\n\nAlle neu starten?'@de).fill(serviceLabel($module), serviceDependents($module))"/>
+					</then>
+				</if>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="RESTART"
+					selection="module"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-counterclockwise"
+				inputs="stored, module"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Remove in-app configuration</en>
+					<de>In-App-Konfiguration entfernen</de>
+				</label>
+				<tooltip>
+					<en>Removes the configuration stored in the application, so that the configuration of the application's configuration files applies again after a restart of the service.</en>
+					<de>Entfernt die in der Anwendung gespeicherte Konfiguration, sodass nach einem Neustart des Dienstes wieder die Konfiguration aus den Konfigurationsdateien der Anwendung gilt.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$stored == true"/>
+				</executability>
+				<confirm expr="#('Remove the configuration stored in the application? After a restart of the service, the configuration from the configuration files of the application applies.'@en, 'Die in der Anwendung gespeicherte Konfiguration entfernen? Nach einem Neustart des Dienstes gilt die Konfiguration aus den Konfigurationsdateien der Anwendung.'@de)"/>
+				<action class="com.top_logic.layout.view.admin.system.ServiceConfigurationAction"
+					mode="RESET"
+					module="module"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+				<execute-script function="serviceConfiguration($module)">
+					<with-result>
+						<write-channel name="config"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<alert
+			inputs="changed"
+			severity="warning"
+			visible-if="$changed == true"
+		>
+			<message>
+				<en>The stored configuration differs from the running one. Restart the service to apply it.</en>
+				<de>Die gespeicherte Konfiguration weicht von der laufenden ab. Starten Sie den Dienst neu, um sie zu übernehmen.</de>
+			</message>
+			<generic-command
+				image="css:bi bi-x-circle"
+				inputs="changed, module"
+			>
+				<label>
+					<en>Discard changes</en>
+					<de>Änderungen verwerfen</de>
+				</label>
+				<tooltip>
+					<en>Restores the configuration the service is running with, dropping the changes stored since its start. No restart is necessary.</en>
+					<de>Stellt die Konfiguration wieder her, mit der der Dienst läuft, und verwirft die seit seinem Start gespeicherten Änderungen. Ein Neustart ist nicht nötig.</de>
+				</tooltip>
+				<executability>
+					<visible-if expr="$changed == true"/>
+				</executability>
+				<confirm expr="#('Discard the configuration changes stored since the start of the service?'@en, 'Die seit dem Start des Dienstes gespeicherten Konfigurationsänderungen verwerfen?'@de)"/>
+				<action class="com.top_logic.layout.view.admin.system.ServiceConfigurationAction"
+					mode="DISCARD"
+					module="module"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+				<execute-script function="serviceConfiguration($module)">
+					<with-result>
+						<write-channel name="config"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</alert>
+		<visible-if
+			expr="$editable == true"
+			input="editable"
+		>
+			<config-form input="config">
+				<save-action>
+					<action class="com.top_logic.layout.view.admin.system.ServiceConfigurationAction"
+						mode="SAVE"
+						module="module"
+					>
+						<with-result>
+							<write-channel name="services"/>
+						</with-result>
+					</action>
+				</save-action>
+			</config-form>
+		</visible-if>
+		<visible-if
+			expr="$readOnly == true"
+			input="readOnly"
+		>
+			<config-form input="config">
+				<edit-executability>
+					<visible-if expr="false"/>
+				</edit-executability>
+			</config-form>
+		</visible-if>
+		<visible-if
+			expr="$settings != true"
+			input="settings"
+		>
+			<text>
+				<label>
+					<en>This service has no configurable settings.</en>
+					<de>Dieser Dienst hat keine einstellbaren Eigenschaften.</de>
+				</label>
+			</text>
+		</visible-if>
+	</panel>
+</view>

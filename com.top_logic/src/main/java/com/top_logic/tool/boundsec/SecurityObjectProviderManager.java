@@ -22,7 +22,9 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.tool.boundsec.securityObjectProvider.PathSecurityObjectProvider;
 import com.top_logic.tool.boundsec.securityObjectProvider.SecurityObjectProviderFormat;
 
@@ -32,6 +34,7 @@ import com.top_logic.tool.boundsec.securityObjectProvider.SecurityObjectProvider
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 @Label("Security object providers")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class SecurityObjectProviderManager extends ManagedClass {
 
 	/** Prefix to denote path in SecurityObjectProvider configuration. */

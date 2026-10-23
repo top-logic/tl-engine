@@ -6,6 +6,8 @@
 package com.top_logic.layout.configedit;
 
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.layout.form.values.edit.ControlAnnotationFormat;
 import com.top_logic.layout.form.values.edit.ControlAnnotationOptions;
 import java.lang.annotation.Annotation;
@@ -159,6 +161,7 @@ import com.top_logic.mig.html.HTMLFormatter;
  *           because a configured class's own documentation becomes in-app documentation, where a
  *           reference to one of its methods has no meaning.
  */
+@ServiceCategory.Of(UICategory.class)
 public class ConfigControlService extends ConfiguredManagedClass<ConfigControlService.Config> {
 
 	/**

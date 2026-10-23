@@ -29,7 +29,9 @@ import com.top_logic.basic.format.FormatConfig;
 import com.top_logic.basic.format.FormatDefinition;
 import com.top_logic.basic.format.configured.FormatterService.Config.FormatEntry;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 
@@ -43,6 +45,7 @@ import com.top_logic.basic.util.ResKey;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Format configurations")
+@ServiceCategory.Of(I18NCategory.class)
 public final class FormatterService extends ConfiguredManagedClass<FormatterService.Config> {
 
 	/**

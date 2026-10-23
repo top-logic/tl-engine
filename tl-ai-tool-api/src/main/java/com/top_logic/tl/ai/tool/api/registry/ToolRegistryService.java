@@ -18,7 +18,9 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
@@ -30,6 +32,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
  * tools from different factories to have the same simple name without conflicts.
  * </p>
  */
+@ServiceCategory.Of(AICategory.class)
 public class ToolRegistryService extends ConfiguredManagedClass<ToolRegistryService.Config<?>> {
 
 	/**

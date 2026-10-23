@@ -31,8 +31,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ScriptingCategory;
 import com.top_logic.basic.tools.LockWaitMonitor;
 import com.top_logic.basic.util.ExponentialBackoff;
 import com.top_logic.convert.FormatConverterFactory;
@@ -66,6 +68,7 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 	PersonManager.Module.class,
 	PersistencyLayer.Module.class,
 })
+@ServiceCategory.Of(ScriptingCategory.class)
 public final class LuceneIndex extends ConfiguredManagedClass<LuceneIndex.LuceneConfig> {
 	
 	/**

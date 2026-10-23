@@ -33,8 +33,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.basic.module.services.ServletContextService;
 
 /**
@@ -47,6 +49,7 @@ import com.top_logic.basic.module.services.ServletContextService;
 @ServiceDependencies({
 	ServletContextService.Module.class
 })
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends ConfiguredManagedClass<C> {
 
 	/**

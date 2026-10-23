@@ -44,7 +44,9 @@ import com.top_logic.basic.io.binary.ByteArrayStream;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 
 /**
  * Administration service for the application's logging framework configuration.
@@ -54,6 +56,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author  Frank Mausz
  */
 @Label("Logging administration")
+@ServiceCategory.Of(OperationsCategory.class)
 public final class LoggerAdminBean extends ConfiguredManagedClass<LoggerAdminBean.Config> {
 
 	/**

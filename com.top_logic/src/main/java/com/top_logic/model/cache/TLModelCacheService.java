@@ -18,9 +18,11 @@ import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.util.model.CompatibilityService;
@@ -37,6 +39,7 @@ import com.top_logic.util.model.ModelService;
 })
 @ServiceExtensionPoint(ModelService.Module.class)
 @Label("Model cache")
+@ServiceCategory.Of(ModelCategory.class)
 public class TLModelCacheService extends ConfiguredManagedClass<TLModelCacheService.Config> {
 
 	/** {@link ConfigurationItem} for the {@link TLModelCacheService}. */

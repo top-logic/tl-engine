@@ -29,8 +29,10 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewConfig;
 import com.top_logic.layout.view.ViewElement;
@@ -91,6 +93,7 @@ import com.top_logic.util.model.ModelService;
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@ServiceCategory.Of(UICategory.class)
 public class DisplayTargetService extends ConfiguredManagedClass<DisplayTargetService.Config> {
 
 	/**

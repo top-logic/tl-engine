@@ -18,7 +18,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.DevelopmentCategory;
 
 /**
  * Registry of configured {@link ValueNamingScheme}s.
@@ -26,6 +28,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Value naming schemes")
+@ServiceCategory.Of(DevelopmentCategory.class)
 public class ValueNamingSchemeRegistry extends ConfiguredManagedClass<ValueNamingSchemeRegistry.Config> {
 
 	/**

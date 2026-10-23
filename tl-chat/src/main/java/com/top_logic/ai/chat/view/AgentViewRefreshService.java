@@ -25,6 +25,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sched.SchedulerService;
@@ -36,6 +37,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * Makes the model-bound view elements of an open chat window follow what a running agent writes.
@@ -81,6 +83,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 @ServiceDependencies({
 	AgentExecutionStore.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRefreshService.Config<?>>
 		implements AgentExecutionStore.ChangeListener {
 

@@ -28,7 +28,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.Location;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.dob.MetaObject;
@@ -61,6 +63,7 @@ import com.top_logic.util.TLContext;
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
 @Label("Security helper functions")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class BoundHelper extends ManagedClass {
 
     /** When asking for groups this will merge in the groups of the SuperObject */

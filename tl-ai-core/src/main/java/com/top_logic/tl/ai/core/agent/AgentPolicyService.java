@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentSettings;
@@ -22,6 +23,7 @@ import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.limits.BudgetConfig;
 import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
+import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * What an agent run may cost and what an agent may keep about a person: the token and money budget
@@ -39,6 +41,7 @@ import com.top_logic.tl.ai.core.limits.RunLimitSettings;
  */
 @Label("Agent policy")
 @ServiceDependencies({})
+@ServiceCategory.Of(AICategory.class)
 public class AgentPolicyService extends ConfiguredManagedClass<AgentPolicyService.Config<?>> {
 
 	/**

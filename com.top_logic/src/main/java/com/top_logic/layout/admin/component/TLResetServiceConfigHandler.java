@@ -5,10 +5,8 @@
  */
 package com.top_logic.layout.admin.component;
 
-import java.io.File;
 import java.util.Map;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -69,15 +67,7 @@ public class TLResetServiceConfigHandler extends ConfirmCommandHandler {
 	@Override
 	protected HandlerResult internalHandleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> args) {
-		File inappServiceConfig = TLSaveServiceConfigHandler.inAppServiceConfiguration((BasicRuntimeModule<?>) model);
-
-		if (inappServiceConfig.exists()) {
-			if (!inappServiceConfig.delete()) {
-				Logger.error("In-App service configuration file " + inappServiceConfig.getAbsolutePath()
-					+ " could not be deleted.", TLResetServiceConfigHandler.class);
-			}
-
-			TLServiceUtils.reloadConfigurations();
+		if (TLServiceUtils.resetServiceConfiguration((BasicRuntimeModule<?>) model)) {
 			repaintEditor((EditComponent) component);
 
 			InfoService.showInfo(I18NConstants.CONFIGURATION_RESET_INFO_MESSAGE);

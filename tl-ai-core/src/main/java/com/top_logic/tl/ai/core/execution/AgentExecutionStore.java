@@ -34,6 +34,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -63,6 +64,7 @@ import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -102,6 +104,7 @@ import com.top_logic.util.model.ModelService;
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionStore.Config<?>> {
 
 	/**

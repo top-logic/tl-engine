@@ -27,7 +27,9 @@ import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.mig.html.HTMLConstants;
 
@@ -50,6 +52,7 @@ import com.top_logic.mig.html.HTMLConstants;
  * </p>
  */
 @Label("Client resources")
+@ServiceCategory.Of(UICategory.class)
 public class ClientResources extends ConfiguredManagedClass<ClientResources.Config> {
 
 	/**

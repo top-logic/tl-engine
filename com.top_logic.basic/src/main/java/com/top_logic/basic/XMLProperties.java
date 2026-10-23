@@ -43,6 +43,8 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.tooling.Workspace;
@@ -102,6 +104,7 @@ import com.top_logic.basic.xml.XMLStreamUtil;
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
 @Label("XML properties")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class XMLProperties extends ManagedClass {
 
 	/**

@@ -18,8 +18,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.model.TLClass;
@@ -36,6 +38,7 @@ import com.top_logic.util.model.ModelService;
  */
 @ServiceDependencies(ModelService.Module.class)
 @Label("Bookmark handlers")
+@ServiceCategory.Of(UICategory.class)
 public class BookmarkService extends KBBasedManagedClass<BookmarkService.Config> {
 
 	/**

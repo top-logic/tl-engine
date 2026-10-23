@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="shared"/>
+		<channel name="private"/>
+	</channels>
+	<stack>
+		<child class="test.com.top_logic.layout.view.tiles.TestTileStackBindings$ContextProbe"/>
+	</stack>
+</view>

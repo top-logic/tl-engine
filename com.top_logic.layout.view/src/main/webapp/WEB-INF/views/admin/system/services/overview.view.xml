@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Initial frame of the services drill-down (see ../services.view.xml): list the application
+	services (runtime modules) and start / stop / restart the selected one.
+	- The services channel holds the ServiceSnapshot the table displays - bound by the enclosing
+	tile-stack, so a command of the detail frame refreshes it as well. The rows are the modules of the
+	snapshot (serviceList, a live snapshot while the channel is empty), the status column - which
+	declares the services channel as its input, since a column script sees only the row and its own
+	inputs - shows the status the snapshot recorded (serviceStatus), the category column - hidden at
+	the start, since the table is grouped by it - the functional category of the service
+	(serviceCategory, see ServiceCategory), the module column the software module the service is
+	delivered with (serviceModule). The table starts grouped by category, the group headers showing
+	the category in the first column (the service name), the groups in the order the categories
+	declare (serviceCategoryCompare), each cell and group header with the description of the
+	category as tooltip (serviceCategoryTooltip); its filter bar searches the displayed columns.
+	- The table writes the selected module to the selection channel; the derived active channel
+	tells whether it runs, so Start (while stopped) and Stop / Restart (while running) are
+	mutually exclusive. Each command runs the ServiceLifecycleAction (which reads the module from
+	the selection channel) and writes the refreshed snapshot to the services channel, which
+	recomputes the rows, the status and the active channel. Stop and Restart first ask for
+	confirmation when other services depend on the selected one, listing them
+	(serviceDependents), since they are stopped and started with it.
+	- Activating a row - a double-click, Enter, or the row's chevron button - pushes the detail
+	frame of its service, with the module as its "module" channel.
+	- A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar
+	commands.
+-->
+<view>
+	<channels>
+		<channel name="services"/>
+		<channel name="selection"/>
+		<derived-channel name="active"
+			expr="serviceActive($selection)"
+			inputs="selection, services"
+		/>
+	</channels>
+	<panel id="panel"
+		fill="true"
+	>
+		<title>
+			<en>Services</en>
+			<de>Dienste</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-play"
+				inputs="selection, active"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Start</en>
+					<de>Starten</de>
+				</label>
+				<executability>
+					<visible-if expr="$selection != null &amp;&amp; $active == false"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="START"
+					selection="selection"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-stop"
+				inputs="selection, active"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Stop</en>
+					<de>Stoppen</de>
+				</label>
+				<executability>
+					<visible-if expr="$active == true"/>
+				</executability>
+				<if test="serviceDependents($selection) != null">
+					<then>
+						<confirm expr="#('Stopping {0} also stops the services depending on it:\n{1}\n\nStop them all?'@en, 'Beim Stoppen von {0} werden auch die davon abhängigen Dienste gestoppt:\n{1}\n\nAlle stoppen?'@de).fill(serviceLabel($selection), serviceDependents($selection))"/>
+					</then>
+				</if>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="STOP"
+					selection="selection"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-repeat"
+				inputs="selection, active"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Restart</en>
+					<de>Neustart</de>
+				</label>
+				<executability>
+					<visible-if expr="$active == true"/>
+				</executability>
+				<if test="serviceDependents($selection) != null">
+					<then>
+						<confirm expr="#('Restarting {0} also restarts the services depending on it:\n{1}\n\nRestart them all?'@en, 'Beim Neustart von {0} werden auch die davon abhängigen Dienste neu gestartet:\n{1}\n\nAlle neu starten?'@de).fill(serviceLabel($selection), serviceDependents($selection))"/>
+					</then>
+				</if>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="RESTART"
+					selection="selection"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<tooltip>
+					<en>Reads the services and their status again, e.g. after a service was started, stopped or reconfigured in another session.</en>
+					<de>Liest die Dienste und ihren Status neu ein, z. B. nachdem ein Dienst in einer anderen Sitzung gestartet, gestoppt oder umkonfiguriert wurde.</de>
+				</tooltip>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="REFRESH"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+			</generic-command>
+		</commands>
+		<table id="table"
+			filter-bar="true"
+			group-by="category"
+			inputs="services"
+			personalization-key="admin-services"
+			selection="selection"
+		>
+			<columns>
+				<computed-column name="name"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Service</en>
+						<de>Dienst</de>
+					</label>
+					<value>serviceLabel($row)</value>
+				</computed-column>
+				<computed-column name="status"
+					inputs="services"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Status</en>
+						<de>Status</de>
+					</label>
+					<value>serviceStatus($services, $row)</value>
+				</computed-column>
+				<computed-column name="category"
+					type="tl.core:String"
+					visible="false"
+				>
+					<label>
+						<en>Category</en>
+						<de>Kategorie</de>
+					</label>
+					<value>serviceCategory($row)</value>
+					<comparator>serviceCategoryCompare($left, $right)</comparator>
+					<tooltip>serviceCategoryTooltip($value)</tooltip>
+				</computed-column>
+				<computed-column name="module"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Module</en>
+						<de>Modul</de>
+					</label>
+					<value>serviceModule($row)</value>
+				</computed-column>
+				<computed-column name="implementation"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Implementation</en>
+						<de>Implementierung</de>
+					</label>
+					<value>serviceName($row)</value>
+				</computed-column>
+			</columns>
+			<rows>serviceList($services)</rows>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="module"
+				view="admin/system/services/service-detail.view.xml"
+			/>
+		</table>
+	</panel>
+</view>

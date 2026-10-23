@@ -15,7 +15,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
 
@@ -27,6 +29,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Token service")
+@ServiceCategory.Of(PersistenceCategory.class)
 public abstract class TokenService extends ManagedClass {
 
 	/**

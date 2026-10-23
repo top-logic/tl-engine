@@ -26,9 +26,11 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ScriptingCategory;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -56,6 +58,7 @@ import com.top_logic.util.model.ModelService;
 })
 @ServiceExtensionPoint(SearchBuilder.Module.class)
 @Label("Configured TL-Script functions")
+@ServiceCategory.Of(ScriptingCategory.class)
 public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.Config<?>>
 		extends ConfiguredManagedClass<C> implements MethodResolver {
 

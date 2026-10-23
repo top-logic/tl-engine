@@ -25,8 +25,10 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.RegExpValueProvider;
 import com.top_logic.basic.encryption.SecureRandomService;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
@@ -48,6 +50,7 @@ import com.top_logic.util.license.LicenseTool;
 	ResourcesModule.Module.class,
 })
 @Label("Account management")
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 
 	/**

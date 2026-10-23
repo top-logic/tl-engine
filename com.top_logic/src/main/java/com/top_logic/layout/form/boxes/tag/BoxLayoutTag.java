@@ -25,7 +25,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.layout.form.boxes.layout.BoxLayout;
 import com.top_logic.layout.form.boxes.layout.VerticalLayout;
 import com.top_logic.layout.form.boxes.model.DefaultCollectionBox;
@@ -43,6 +45,7 @@ public class BoxLayoutTag extends AbstractBoxStructureTag {
 	 * @see #getLayout(String)
 	 */
 	@Label("Box layout configurations")
+	@ServiceCategory.Of(UICategory.class)
 	public static final class ConfigService extends ManagedClass {
 		
 		private final Map<String, Provider<BoxLayout>> _layoutFactoryByName;

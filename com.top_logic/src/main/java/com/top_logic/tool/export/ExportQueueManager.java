@@ -20,8 +20,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -35,6 +37,7 @@ import com.top_logic.util.TLContextManager;
  */
 @ServiceDependencies({ ExportRegistryFactory.Module.class, PersonManager.Module.class })
 @Label("Export queue manager")
+@ServiceCategory.Of(InterfacesCategory.class)
 public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueueManager.Config> implements Reloadable {
 
 	private static final String TECHNOLOGY = "technology";

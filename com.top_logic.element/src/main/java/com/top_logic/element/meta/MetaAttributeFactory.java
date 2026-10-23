@@ -9,8 +9,10 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory;
 import com.top_logic.element.meta.kbbased.filtergen.FilterFactory;
@@ -36,6 +38,7 @@ import com.top_logic.model.TLStructuredTypePart;
 	GeneratorFactory.Module.class,
 	AttributeValueLocatorFactory.Module.class})
 @Label("Model attribute factory")
+@ServiceCategory.Of(ModelCategory.class)
 public abstract class MetaAttributeFactory extends ManagedClass {
 
 	private final Config _config;

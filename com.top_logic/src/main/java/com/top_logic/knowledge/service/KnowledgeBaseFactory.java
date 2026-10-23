@@ -20,8 +20,10 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.dsa.DataAccessService;
@@ -43,6 +45,7 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 	FlexDataManagerFactory.Module.class,
 	SchedulerService.Module.class })
 @Label("Knowledge base factory")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class KnowledgeBaseFactory extends ManagedClass {
 
 	/** The configurations of all {@link KnowledgeBase}s indexed by name. */

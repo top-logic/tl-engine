@@ -23,6 +23,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.ColumnLockArguments;
 import com.top_logic.layout.react.control.table.ColumnReorderArguments;
 import com.top_logic.layout.react.control.table.ColumnVisibleArguments;
+import com.top_logic.layout.react.control.table.GroupArguments;
 import com.top_logic.layout.react.control.table.ReactColumnSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -30,7 +31,8 @@ import com.top_logic.table.ColumnOption;
 
 /**
  * Test of {@link ReactColumnSelectControl}: locking keeps the locked columns as a block at the start, hiding keeps a
- * column in place, a locked column is always displayed, and the result names the columns the table freezes.
+ * column in place, a locked column is always displayed, the result names the columns the table freezes, and the rows
+ * are grouped by one column, also a hidden one, unless the table is a tree.
  */
 public class TestReactColumnSelect extends TestCase {
 
@@ -154,7 +156,7 @@ public class TestReactColumnSelect extends TestCase {
 
 	public void testTheLastVisibleColumnStays() {
 		ReactColumnSelectControl control = new ReactColumnSelectControl(context(),
-			List.of(option("a", true), option("b", false)), Set.of("a"));
+			List.of(option("a", true), option("b", false)), Set.of("a"), null, true);
 
 		visible(control, "a", false);
 
@@ -169,6 +171,61 @@ public class TestReactColumnSelect extends TestCase {
 
 		assertEquals(List.of("a", "b", "c", "d", "e"), control.order());
 		assertEquals(List.of("a"), control.lockedColumns());
+	}
+
+	public void testOpensWithTheGrouping() {
+		ReactColumnSelectControl control = control(Set.of(), "b", true);
+
+		assertEquals("b", control.groupedColumn());
+		assertEquals(Boolean.TRUE, control.scriptingScalarState().get(ReactColumnSelectControl.GROUPABLE));
+	}
+
+	public void testGroupingMovesToTheChosenColumn() {
+		ReactColumnSelectControl control = control(Set.of(), "b", true);
+
+		assertTrue(group(control, "c"));
+
+		assertEquals("c", control.groupedColumn());
+	}
+
+	public void testChoosingNoColumnRemovesTheGrouping() {
+		ReactColumnSelectControl control = control(Set.of(), "b", true);
+
+		assertTrue(group(control, ""));
+
+		assertNull(control.groupedColumn());
+	}
+
+	public void testAHiddenColumnCanBeGroupedBy() {
+		ReactColumnSelectControl control = control(Set.of(), null, true);
+		assertTrue(visible(control, "d", false));
+
+		assertTrue(group(control, "d"));
+
+		assertEquals("d", control.groupedColumn());
+		assertFalse("Grouping does not display the column.", control.visibleColumns().contains("d"));
+	}
+
+	public void testGroupingByAnUnknownColumnChangesNothing() {
+		ReactColumnSelectControl control = control(Set.of(), "b", true);
+
+		group(control, "x");
+
+		assertEquals("b", control.groupedColumn());
+	}
+
+	public void testATreeOffersNoGrouping() {
+		ReactColumnSelectControl control = control(Set.of(), null, false);
+		assertEquals(Boolean.FALSE, control.scriptingScalarState().get(ReactColumnSelectControl.GROUPABLE));
+
+		group(control, "a");
+
+		assertNull("A tree cannot be grouped.", control.groupedColumn());
+	}
+
+	private static boolean group(ReactColumnSelectControl control, String column) {
+		return control.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column))
+			.isSuccess();
 	}
 
 	private static boolean lock(ReactColumnSelectControl control, String column, boolean locked) {
@@ -188,11 +245,16 @@ public class TestReactColumnSelect extends TestCase {
 			.isSuccess();
 	}
 
-	/** Five visible columns a to e. */
+	/** Five visible columns a to e, the rows not grouped. */
 	private static ReactColumnSelectControl control(Set<String> locked) {
+		return control(locked, null, true);
+	}
+
+	/** Five visible columns a to e, grouped by the given column. */
+	private static ReactColumnSelectControl control(Set<String> locked, String grouped, boolean groupable) {
 		return new ReactColumnSelectControl(context(),
 			List.of(option("a", true), option("b", true), option("c", true), option("d", true), option("e", true)),
-			locked);
+			locked, grouped, groupable);
 	}
 
 	private static ColumnOption option(String name, boolean visible) {

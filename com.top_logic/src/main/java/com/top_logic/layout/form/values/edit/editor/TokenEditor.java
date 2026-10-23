@@ -19,7 +19,6 @@ import com.top_logic.base.security.util.Password;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
@@ -127,7 +126,7 @@ public class TokenEditor extends AbstractEditor {
 	@Override
 	public FormMember createUI(EditorFactory editorFactory, FormContainer container, ValueModel model) {
 		PropertyDescriptor property = model.getProperty();
-		if (isSecretSource(property)) {
+		if (SecretSourceFormat.isSecretSource(property)) {
 			EditorFactory sourceFactory = editorFactory.copy();
 			sourceFactory.setCustomizations(new LiteralTokenCustomizations(editorFactory));
 			return sourceFactory.itemEditor().createUI(sourceFactory, container, model);
@@ -451,15 +450,6 @@ public class TokenEditor extends AbstractEditor {
 			}));
 		}
 
-	}
-
-	/**
-	 * Whether the given property holds the configuration of a {@link SecretSource}.
-	 */
-	private static boolean isSecretSource(PropertyDescriptor property) {
-		Class<?> instanceType = property.getInstanceType();
-		return property.kind() == PropertyKind.ITEM && instanceType != null
-			&& SecretSource.class.isAssignableFrom(instanceType);
 	}
 
 	/**

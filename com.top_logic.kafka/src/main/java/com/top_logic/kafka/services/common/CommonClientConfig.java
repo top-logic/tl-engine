@@ -27,7 +27,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.NamedPolymorphicConfiguration;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
@@ -45,6 +45,8 @@ import com.top_logic.basic.config.annotation.defaults.ShortDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.format.MillisFormatInt;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.kafka.log.KafkaLogWriter;
 import com.top_logic.kafka.log.KafkaNoContentsLogWriter;
 import com.top_logic.kafka.services.consumer.ConsumerDispatcher;
@@ -52,6 +54,15 @@ import com.top_logic.kafka.services.consumer.KafkaClientProperty;
 
 /**
  * Common configurations for Kafka consumer and producer.
+ * 
+ * <p>
+ * The passwords, keys and the JAAS configuration are secrets given by a {@link SecretSource}.
+ * Recommended is a reference to the variable or file holding the secret, so that the secret is not
+ * part of the configuration, e.g. <code>&lt;ssl.truststore.password name="KAFKA_TRUSTSTORE_PASSWORD"/&gt;</code>
+ * for an environment variable holding the plain password. An attribute value is an encrypted
+ * secret, or a plain secret with the prefix <code>unencrypted:</code>. The secrets are read each
+ * time the {@link #getAllProperties() properties} are built, i.e. when a Kafka client is created.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -426,8 +437,8 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 */
 	@Name(SASL_JAAS_CONFIG)
 	@KafkaClientProperty
-	@Encrypted
-	String getSaslJaasConfig();
+	@Format(SecretSourceFormat.class)
+	PolymorphicConfiguration<? extends SecretSource> getSaslJaasConfig();
 
 	/**
 	 * @see SaslConfigs#SASL_KERBEROS_KINIT_CMD_DOC
@@ -716,8 +727,8 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 */
 	@Name(SSL_KEY_PASSWORD_CONFIG)
 	@KafkaClientProperty
-	@Encrypted
-	String getSslKeyPassword();
+	@Format(SecretSourceFormat.class)
+	PolymorphicConfiguration<? extends SecretSource> getSslKeyPassword();
 
 	/**
 	 * @see SslConfigs#SSL_KEYMANAGER_ALGORITHM_DOC
@@ -732,16 +743,16 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 */
 	@Name(SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG)
 	@KafkaClientProperty
-	@Encrypted
-	String getSslKeystoreCertificateChain();
+	@Format(SecretSourceFormat.class)
+	PolymorphicConfiguration<? extends SecretSource> getSslKeystoreCertificateChain();
 
 	/**
 	 * @see SslConfigs#SSL_KEYSTORE_KEY_DOC
 	 */
 	@Name(SSL_KEYSTORE_KEY_CONFIG)
 	@KafkaClientProperty
-	@Encrypted
-	String getSslKeystoreKey();
+	@Format(SecretSourceFormat.class)
+	PolymorphicConfiguration<? extends SecretSource> getSslKeystoreKey();
 
 	/**
 	 * @see SslConfigs#SSL_KEYSTORE_LOCATION_DOC
@@ -755,8 +766,8 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 */
 	@Name(SSL_KEYSTORE_PASSWORD_CONFIG)
 	@KafkaClientProperty
-	@Encrypted
-	String getSslKeystorePassword();
+	@Format(SecretSourceFormat.class)
+	PolymorphicConfiguration<? extends SecretSource> getSslKeystorePassword();
 
 	/**
 	 * @see SslConfigs#SSL_KEYSTORE_TYPE_DOC
@@ -801,8 +812,8 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 */
 	@Name(SSL_TRUSTSTORE_CERTIFICATES_CONFIG)
 	@KafkaClientProperty
-	@Encrypted
-	String getSslTruststoreCertificates();
+	@Format(SecretSourceFormat.class)
+	PolymorphicConfiguration<? extends SecretSource> getSslTruststoreCertificates();
 
 	/**
 	 * @see SslConfigs#SSL_TRUSTSTORE_LOCATION_DOC
@@ -816,8 +827,8 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 */
 	@Name(SSL_TRUSTSTORE_PASSWORD_CONFIG)
 	@KafkaClientProperty
-	@Encrypted
-	String getSslTruststorePassword();
+	@Format(SecretSourceFormat.class)
+	PolymorphicConfiguration<? extends SecretSource> getSslTruststorePassword();
 
 	/**
 	 * @see SslConfigs#SSL_TRUSTSTORE_TYPE_DOC
@@ -869,6 +880,10 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * value is null, the {@link Map} will {@link Map#containsKey(Object) contain} the key and
 	 * value.
 	 * </p>
+	 * <p>
+	 * A property holding a {@link SecretSource} contributes the current value of the secret, which
+	 * is read on each call.
+	 * </p>
 	 * 
 	 * @return The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A
 	 *         new, mutable and resizable {@link Map}.
@@ -886,9 +901,21 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 				continue;
 			}
 			Object value = value(property);
+			if (value != null && SecretSourceFormat.isSecretSource(property)) {
+				value = readSecret((PolymorphicConfiguration<?>) value);
+			}
 			properties.put(property.getPropertyName(), value);
 		}
 		return properties;
+	}
+
+	/**
+	 * The current value of the secret configured by the given {@link SecretSource} configuration.
+	 */
+	private static String readSecret(PolymorphicConfiguration<?> sourceConfig) {
+		SecretSource source = (SecretSource) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+			.getInstance(sourceConfig);
+		return source.getSecret();
 	}
 
 }

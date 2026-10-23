@@ -116,9 +116,9 @@ public interface Config extends JMSClient.Config {
     /**
      * The password to the given user name.
      */
-    @Encrypted
     @Name(PASSWORD)
-    String getPassword();
+    @Format(SecretSourceFormat.class)
+    PolymorphicConfiguration&lt;? extends SecretSource&gt; getPassword();
 }</code></pre>
 
 <p>As can be seen in the example above, the configuration options can be of different types and are given their configuration name as a string by the annotation <code class="hljs inlineCode">@Name()</code>. This is used to give the configuration a translatable name and, if desired, a tooltip. </p>
@@ -136,8 +136,11 @@ public interface Config extends JMSClient.Config {
 <p>After configuration, the class still needs a constructor and must implement the abstract method <code class="hljs inlineCode">setupConnectionFactory</code>.</p>
 
 <pre>
-<code class="language-java">public ActiveMQClient(InstantiationContext context, Config config) {
+<code class="language-java">private final SecretSource _password;
+
+public ActiveMQClient(InstantiationContext context, Config config) {
     super(context, config);
+    _password = context.getInstance(config.getPassword());
 }
 
 @Override
@@ -146,9 +149,11 @@ public ConnectionFactory setupConnectionFactory() {
     String url = config.getURLScheme().toString().toLowerCase() + "://" + config.getHost() + ":" + config.getPort();
     ActiveMQConnectionFactory amqcf = new ActiveMQConnectionFactory(url);
     amqcf.setUser(config.getUser());
-    amqcf.setPassword(config.getPassword());
+    amqcf.setPassword(secret(_password));
     return amqcf;
 }</code></pre>
+
+<p>The password is a <code class="hljs inlineCode">SecretSource</code>: it is configured as reference to an environment variable (<code class="hljs inlineCode">&lt;password name="MQ_PASSWORD"/&gt;</code>), as file, or as encrypted attribute value. The method <code class="hljs inlineCode">setupConnectionFactory</code> is called for each connection, so the password is read at the moment of connecting.</p>
 
 <p>All settings required by the selected MQ system to create a <code class="hljs inlineCode">ConnectionFactory</code> must now be made here. This must be returned so that a connection to the MQ system can be established.</p>
 

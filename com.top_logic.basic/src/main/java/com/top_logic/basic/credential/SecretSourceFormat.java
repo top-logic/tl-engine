@@ -11,6 +11,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.EncodingConfigurationValueProvider;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
@@ -48,6 +49,15 @@ public class SecretSourceFormat extends EncodingConfigurationValueProvider<Polym
 
 	private SecretSourceFormat() {
 		super(LiteralFormat.INSTANCE);
+	}
+
+	/**
+	 * Whether the given property holds the configuration of a {@link SecretSource}.
+	 */
+	public static boolean isSecretSource(PropertyDescriptor property) {
+		Class<?> instanceType = property.getInstanceType();
+		return property.kind() == PropertyKind.ITEM && instanceType != null
+			&& SecretSource.class.isAssignableFrom(instanceType);
 	}
 
 	/**

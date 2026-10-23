@@ -17,8 +17,12 @@ import com.microsoft.azure.storage.blob.CloudBlobDirectory;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.dsa.repos.AbstractRepository;
 import com.top_logic.dsa.repos.BaseEntryInfo;
 import com.top_logic.dsa.repos.RepositoryException;
@@ -55,13 +59,29 @@ public class CloudBasedRepository<C extends CloudContainerObject, L extends Clou
 		/** @see #getContainerName() */
 		void setContainerName(String aName);
 
-		/** String to be used for connecting to the blob storage. */
+		/**
+		 * String to be used for connecting to the blob storage.
+		 * 
+		 * <p>
+		 * The connection string contains the account key and is therefore a secret. Recommended is
+		 * a reference to the variable or file holding the connection string, so that it is not
+		 * part of the configuration, e.g. <code>&lt;connect-string name="blob_connect"/&gt;</code>
+		 * for an environment variable holding the plain connection string. An attribute value is
+		 * an encrypted connection string, or a plain connection string with the prefix
+		 * <code>unencrypted:</code>.
+		 * </p>
+		 * 
+		 * <p>
+		 * The connection string is read when the repository is created at startup.
+		 * </p>
+		 */
 		@Mandatory
 		@Name(CONNECT_STRING)
-		String getConnectString();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getConnectString();
 
 		/** @see #getConnectString() */
-		void setConnectString(String aName);
+		void setConnectString(PolymorphicConfiguration<? extends SecretSource> value);
 
 		/** Name of the base directory this repository is located in. */
 		@Mandatory
@@ -89,7 +109,7 @@ public class CloudBasedRepository<C extends CloudContainerObject, L extends Clou
 	public CloudBasedRepository(InstantiationContext aContext, Config<?> aConfig) throws ConfigurationException {
 		String theName = aConfig.getPath();
 
-		_container = this.connect(aConfig);
+		_container = this.connect(aContext, aConfig);
 
 		try {
 			_baseDir = _container.getDirectoryReference(aConfig.getBaseDirectoryName());
@@ -158,9 +178,9 @@ public class CloudBasedRepository<C extends CloudContainerObject, L extends Clou
 		return ((anObject != null) && (anObject.getParent() != null)) ? super.escapeDirNamesRecursivly(anObject) : anObject;
 	}
 
-	private CloudBlobContainer connect(Config<?> aConfig) throws ConfigurationException {
+	private CloudBlobContainer connect(InstantiationContext aContext, Config<?> aConfig) throws ConfigurationException {
 		String theContainer = aConfig.getContainerName();
-		String theConnect = aConfig.getConnectString();
+		String theConnect = aContext.getInstance(aConfig.getConnectString()).getSecret();
 
 		try {
 			// Retrieve storage account from connection-string.
@@ -183,7 +203,8 @@ public class CloudBasedRepository<C extends CloudContainerObject, L extends Clou
 			return container;
 		} 
 		catch (URISyntaxException | InvalidKeyException ex) {
-			throw new ConfigurationException(I18NConstants.ERROR_CONNECT_STRING, Config.CONNECT_STRING, theConnect, ex);
+			// The connection string is not part of the exception, it contains the account key.
+			throw new ConfigurationException(I18NConstants.ERROR_CONNECT_STRING, Config.CONNECT_STRING, null, ex);
 		} 
 		catch (StorageException ex) {
 			throw new ConfigurationException(I18NConstants.ERROR_CONNECT_CONTAINER, Config.CONTAINER_NAME, theContainer, ex);

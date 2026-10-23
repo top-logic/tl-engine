@@ -10,8 +10,11 @@
 <p>Der Loginname des Masteraccounts , der zum Herstellen einer Verbindung zwischen der Anwendung und dem LDAP Dienst verwendet wird. Der Name hat folgendes Format:</p>
 <pre><code>Benutzername@LDAPDomain</code></pre>
 <h2>master-credential</h2>
-<p><strong>Typ: </strong><code class="hljs inlineCode">String</code></p>
-<p>Das Passwort des Masteraccounts, das zum Herstellen einer Verbindung zwischen der Anwendung und dem LDAP Dienst verwendet wird. <strong>TODO: Verschlüsselung?</strong></p>
+<p><strong>Typ: </strong><code class="hljs inlineCode">SecretSource</code></p>
+<p>Das Passwort des Masteraccounts, das zum Herstellen einer Verbindung zwischen der Anwendung und dem LDAP Dienst verwendet wird. Das Passwort wird bei jedem Öffnen einer Verbindung mit dem Masteraccount gelesen.</p>
+<p>Empfohlen ist ein Verweis auf die Umgebungsvariable (oder Datei), die das Passwort enthält, damit das Passwort nicht Teil der Konfiguration ist:</p>
+<pre><code>&lt;master-credential name="LDAP_CREDENTIAL"/&gt;</code></pre>
+<p>Ein Attributwert ist das mit <code class="hljs inlineCode">CryptSupport</code> verschlüsselte Passwort oder das Passwort im Klartext.</p>
 <h2>base-dn</h2>
 <p><strong>Typ: </strong><code class="hljs inlineCode">String</code></p>
 <p>Der Base DN (Distinguished Name siehe <a class="tlObject" data-custom="false" href="?page=ldapConnection&amp;uuid=59cf989e-fa20-4cc5-a9cb-39b022408cfa">LDAP</a>) ist ein Eintrag im Verzeichnis des LDAPs von dem aus die Suche gestartet werden soll. Alle benötigten Benutzergruppen und Benutzer müssen sich innerhalb dieses Verzeichnisses befinden.</p>

@@ -1,0 +1,49 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+
+/*
+ * The log of the application of a workspace (factory/app-log.view.xml). The log is the scroll
+ * container of its own, filling the panel, and lays its lines out from the bottom: its scroll
+ * position starts at the newest line, stays there while lines arrive, and keeps its place once the
+ * user scrolls up.
+ */
+.tl-panel__body:has(> .tlHtml .tl-factory-log) {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.tl-panel__body:has(> .tlHtml .tl-factory-log) > .tlHtml {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.tl-factory-log {
+	display: flex;
+	flex-direction: column-reverse;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	padding: var(--spacing-03, 0.5rem) var(--spacing-04, 0.75rem);
+}
+
+.tl-factory-log pre {
+	flex: none;
+	overflow: visible;
+	margin: 0;
+	font-family: var(--font-family-mono, monospace);
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	white-space: pre;
+}
+
+.tl-factory-log__empty {
+	margin: 0;
+	padding: var(--spacing-03, 0.5rem) var(--spacing-04, 0.75rem);
+	color: var(--text-secondary);
+}

@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, idle timeout, token per process, interrupt, tl_factory_agent_*).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, idle timeout, token per process, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
 ---
 
 # Control application (tl-factory)
@@ -162,6 +162,23 @@ of `ApplicationWorkspaces` (generating, building, filling a release repository) 
 application - from a number of last lines and/or a point in time on, and then what it writes while
 it runs, until the returned `LogFollower` is closed or the main process ends.
 
+The tab *Application log* of the workspace detail (`factory/app-log.view.xml`) shows that output
+while it is written. Its source channel is fed by `WorkspaceLogSource`, a `ChannelSource` that
+follows the workspace on the channel named by `workspace` and publishes the last `tail-lines` lines
+(default 500) as one text, at most every `update-interval` of the channel:
+
+```xml
+<source-channel name="appLog" update-interval="1000">
+    <source class="com.top_logic.factory.project.WorkspaceLogSource" workspace="workspace" tail-lines="500"/>
+</source-channel>
+```
+
+Each displayed view has a delivery of its own (`WorkspaceLogFollow`), which ends when the view is
+no longer displayed. Another workspace on the channel replaces the delivery. The delivery ends with
+the main process - the workspace stops or is updated -; the next commit changing the workspace, its
+new state, starts it anew with the last lines of the new output. The provider is asked off the
+threads of the windows and commits; a workspace without container shows no output.
+
 In the Docker provider:
 
 - The Docker API has no way to signal an exec instance. A command therefore runs under a short
@@ -302,6 +319,18 @@ The chat offers nothing beyond sending a message (`BackendFeatures.NONE`). Clean
 stops its agents and deletes its conversations with it; the chat sessions about them stay without
 subject.
 
+**In the workspace detail.** *Give a task* (`factory/assign-task.view.xml`) asks for a task and
+gives it to the agent: `factoryCreateConversation(workspace, task)` creates the conversation with
+the task (`task`), and `chatStart('workspace-agent', conversation, task)` of `tl-chat` creates the
+chat session of the current user about it and sends the task as its first message through the chat
+`workspace-agent` of the window, the chat of the tab *Agent*; the session is put on that chat's
+`input` channel, so the tab shows the run while it is written. The command is offered while
+`factoryAgentUnavailable(workspace)` names no reason: the workspace runs on the current image, the
+agent service runs and the LLM proxy is switched on. The tab *Agent* (`factory/workspace-agent.view.xml`)
+lists the conversations of the workspace, newest first, beside the chat of the selected one; its
+subject is the conversation, so a message typed there continues it, also a conversation another
+user started, whose first message then creates that user's chat session about it.
+
 **The process.** The agent is described by an `AgentHarness` - its command line and its
 protocol -, `ClaudeCodeHarness` for Claude Code; the process itself is handled by `WorkspaceAgent`
 the same for every harness. One process serves one conversation:
@@ -345,7 +374,7 @@ version):
 | `user` with `tool_result` | `ToolCallCompleted`, or `ToolCallFailed` for `is_error`. |
 | `system/api_retry` | `RetryScheduled` with the HTTP status as kind (`API_401`), the attempt and the delay. Claude Code repeats a failed request up to ten times with growing delays - for a token the proxy refuses, about three minutes - before the run ends in an error. |
 | `system/compact_boundary` | `CompactionStarted` and `CompactionCompleted`. |
-| `result` | `TurnCompleted` of the last request, `RunCompleted`: `COMPLETE` for `success`, `MAX_TURNS`, `BUDGET_EXHAUSTED`, `ABORTED` after a stop, otherwise `ProviderError` (`API_<status>` or the subtype) and `ERROR`. The usage is the one of the result, the cost the sum of `model_usage_since_last_result` - `total_cost_usd` counts the whole session over all its processes. |
+| `result` | `TurnCompleted` of the last request, `RunCompleted`: `COMPLETE` for `success`, `MAX_TURNS`, `BUDGET_EXHAUSTED`, `ABORTED` after a stop, otherwise `ProviderError` (`API_<status>` or the subtype) and `ERROR`. The usage is the one of the result, the cost the sum of `model_usage_since_last_result` - `total_cost_usd` counts the whole session over all its processes. Its `contextWindow` is what `WorkspaceAgent.contextWindow()` reports to the chat from then on. |
 
 Lines of a subagent (`parent_tool_use_id` set) contribute their tool calls only; its answer reaches
 the main agent as the result of its tool call. Hooks, status lines and control responses are

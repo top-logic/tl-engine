@@ -97,6 +97,9 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 
 	private double _lastTotalCost;
 
+	/** The context window of the model of the last result, zero before one reported it. */
+	private int _contextWindow;
+
 	// ---- State of the current run ----
 
 	private boolean _running;
@@ -192,6 +195,11 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 	@Override
 	public String sessionId() {
 		return _sessionId;
+	}
+
+	@Override
+	public int contextWindow() {
+		return _contextWindow;
 	}
 
 	@Override
@@ -463,10 +471,17 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 		Object perModel = json.get(MODEL_USAGE_SINCE_LAST_RESULT);
 		if (perModel instanceof Map<?, ?> models) {
 			runCost = 0;
+			int window = 0;
 			for (Object entry : models.values()) {
 				if (entry instanceof Map<?, ?> model && model.get(COST_USD) instanceof Number cost) {
 					runCost += cost.doubleValue();
 				}
+				if (entry instanceof Map<?, ?> model && model.get(CONTEXT_WINDOW) instanceof Number size) {
+					window = Math.max(window, size.intValue());
+				}
+			}
+			if (window > 0) {
+				_contextWindow = window;
 			}
 		} else {
 			runCost = Math.max(0, totalCost - _lastTotalCost);

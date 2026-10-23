@@ -65,7 +65,7 @@ public class TestAgentConversationResolver extends BasicTestCase {
 		});
 		NewWorkspace created = ProjectWorkspaces.commitNewWorkspace(_project, WORKSPACE_ID);
 		_workspace = created.workspace();
-		_conversation = commit(() -> FactoryModel.createConversation(_workspace));
+		_conversation = commit(() -> FactoryModel.createConversation(_workspace, "Resolve me."));
 	}
 
 	@Override

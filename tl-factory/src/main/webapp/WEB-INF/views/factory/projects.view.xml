@@ -4,8 +4,11 @@
 	The projects of the control application and their workspaces: a list of the projects with the
 	state of each workspace and the address of its running application, and beside it the selected
 	project with its workspace and the output of the last operation on it (factory/project-detail.view.xml).
-	While the project has a workspace, the project panel shows these in a tab "Details" and beside it a
-	tab "Agent" with a chat about the workspace.
+	While the project has a workspace, the project panel shows these in a tab "Details", beside it a
+	tab "Agent" with the conversations with the coding agent of the workspace
+	(factory/workspace-agent.view.xml) and a tab "Application log" with the log of the application
+	running in the workspace (factory/app-log.view.xml). "Give a task" starts a conversation with the
+	agent (factory/assign-task.view.xml).
 	
 	The operations on a workspace run in the background (ProjectWorkspaces) and commit their output
 	and state while they run. The source channel "commits" brings these commits to the window as
@@ -28,14 +31,36 @@
 			observed-types="tl.factory:Workspace"
 		/>
 		<!--
-			The conversation shown in the Agent tab: the latest conversation of the current user about
-			the selected workspace, and the one the tab creates or the user opens afterwards.
+			Why the coding agent cannot work in the selected workspace now, empty when it can: what
+			"Give a task" says while it is disabled.
 		-->
-		<channel name="agentSession"
+		<derived-channel name="agentUnavailable"
+			expr="factoryAgentUnavailable($workspace)"
+			inputs="workspace"
+			observed-types="tl.factory:Workspace"
+		/>
+		<!--
+			The agent conversation shown in the Agent tab: the newest one of the selected workspace,
+			the one a task just started, or the one the user opens.
+		-->
+		<channel name="conversation"
 			inputs="workspace"
 		>
 			<init><![CDATA[if($workspace == null, null,
-	$workspace.referers(`tl.ai.execution:AgentSession#subject`)
+	$workspace.get(`tl.factory:Workspace#conversations`)
+		.sort((c -> $c.get(`tl.factory:AgentConversation#createdAt`)).comparator().desc())
+		.firstElement())]]></init>
+		</channel>
+		<!--
+			The chat of the current user about that conversation, empty for a conversation the user
+			has not talked in yet: the first message then starts a chat about it, which continues the
+			conversation of the agent.
+		-->
+		<channel name="agentSession"
+			inputs="conversation"
+		>
+			<init><![CDATA[if($conversation == null, null,
+	$conversation.referers(`tl.ai.execution:AgentSession#subject`)
 		.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
 		.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())
 		.firstElement())]]></init>
@@ -246,6 +271,44 @@
 						<en>Project</en>
 						<de>Projekt</de>
 					</title>
+					<!-- Commands about the agent of the selected workspace. -->
+					<commands>
+						<generic-command name="assignTask"
+							image="css:bi bi-robot"
+							inputs="workspace, agentUnavailable"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Give a task</en>
+								<de>Auftrag erteilen</de>
+							</label>
+							<executability>
+								<visible-if expr="$workspace != null"/>
+								<disabled-if expr="$agentUnavailable"/>
+							</executability>
+							<create-transient type="tl.factory:AgentConversation">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="factory/assign-task.view.xml"
+									>
+										<bind
+											channel="workspace"
+											to="workspace"
+										/>
+										<bind
+											channel="conversation"
+											to="conversation"
+										/>
+										<bind
+											channel="agentSession"
+											to="agentSession"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+					</commands>
 					<switch input="workspace">
 						<case test="$workspace != null">
 							<tab-bar active-tab="details">
@@ -277,9 +340,7 @@
 									</view-ref>
 								</tab>
 								<!--
-									The conversation with the agent working in the workspace. A conversation started
-									here is about the workspace (subject), and the tab opens the latest conversation
-									about it.
+									The conversations with the coding agent working in the workspace.
 								-->
 								<tab id="agent"
 									icon="css:bi bi-robot"
@@ -289,20 +350,40 @@
 										<en>Agent</en>
 										<de>Agent</de>
 									</label>
-									<panel fill="true">
-										<chat-conversation
-											chat-id="workspace-agent"
-											input="agentSession"
-											subject="workspace"
-											trace="summary"
-										>
-											<controls
-												auto-approve="true"
-												enter-hint="true"
-												model-picker="true"
-											/>
-										</chat-conversation>
-									</panel>
+									<view-ref view="factory/workspace-agent.view.xml">
+										<bind
+											channel="workspace"
+											to="workspace"
+										/>
+										<bind
+											channel="conversation"
+											to="conversation"
+										/>
+										<bind
+											channel="agentSession"
+											to="agentSession"
+										/>
+										<bind
+											channel="agentUnavailable"
+											to="agentUnavailable"
+										/>
+									</view-ref>
+								</tab>
+								<!-- The log of the application running in the workspace. -->
+								<tab id="app-log"
+									icon="css:bi bi-terminal"
+									route="none"
+								>
+									<label>
+										<en>Application log</en>
+										<de>Anwendungs-Log</de>
+									</label>
+									<view-ref view="factory/app-log.view.xml">
+										<bind
+											channel="workspace"
+											to="workspace"
+										/>
+									</view-ref>
 								</tab>
 							</tab-bar>
 						</case>

@@ -111,12 +111,14 @@ public class TestWorkspaceAgent extends TestCase {
 	 */
 	public void testFirstMessage() throws Exception {
 		WorkspaceAgent agent = agent();
+		assertEquals("No window before the agent reported one.", 0, agent.contextWindow());
 		EventLog events = new EventLog();
 		String answer = agent.send(turn("Antworte nur mit OK."), events, new CancellationToken());
 
 		assertEquals(StopReason.COMPLETE, events.reason());
 		assertEquals("OK", answer);
 		assertEquals("OK", events.text());
+		assertEquals("The window the agent reported.", 1_000_000, agent.contextWindow());
 
 		ScriptedProcess process = _provider.only();
 		ExecCommand command = process.command();

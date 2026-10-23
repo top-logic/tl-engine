@@ -8,6 +8,7 @@ package com.top_logic.factory.project;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.agent.AgentTasks;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
@@ -136,6 +137,38 @@ public class FactoryFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static boolean imageOutdated(@Mandatory TLObject workspace) {
 		return ProjectWorkspaces.isImageOutdated(workspace);
+	}
+
+	/**
+	 * Why the coding agent cannot work in a workspace now: the workspace is not running, runs an
+	 * outdated image without the agent tools, or the control application gives workspaces no access
+	 * to a language model.
+	 *
+	 * @param workspace
+	 *        The workspace of a project, empty for a project without one.
+	 * @return The reason, nothing if the agent can work in the workspace.
+	 */
+	@Label("Agent unavailable")
+	@SideEffectFree
+	public static ResKey agentUnavailable(TLObject workspace) {
+		return AgentTasks.unavailable(workspace);
+	}
+
+	/**
+	 * Creates a conversation with the coding agent of a workspace for a task. The conversation is
+	 * the subject of the chat that sends the task to the agent as its first message, see
+	 * <code>chatStart</code>.
+	 *
+	 * @param workspace
+	 *        The workspace whose agent is to work on the task; it must be running on the current
+	 *        image.
+	 * @param task
+	 *        What the agent is to do.
+	 * @return The new conversation, a <code>tl.factory:AgentConversation</code>.
+	 */
+	@Label("Create an agent conversation")
+	public static TLObject createConversation(@Mandatory TLObject workspace, @Mandatory String task) {
+		return AgentTasks.createConversation(workspace, task);
 	}
 
 	/**

@@ -122,6 +122,12 @@ public final class StreamJson {
 	/** Field of an entry of {@link #MODEL_USAGE_SINCE_LAST_RESULT}: the cost in US dollars. */
 	public static final String COST_USD = "costUSD";
 
+	/**
+	 * Field of an entry of {@link #MODEL_USAGE_SINCE_LAST_RESULT}: the context window of the model,
+	 * in tokens.
+	 */
+	public static final String CONTEXT_WINDOW = "contextWindow";
+
 	// ---- Messages ----
 
 	/** Field of an {@link #TYPE_ASSISTANT} or {@link #TYPE_USER} line: the message. */

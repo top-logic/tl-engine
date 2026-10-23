@@ -58,6 +58,9 @@ public class WorkspaceAgent implements ConversationBackend {
 
 	private final String _workspaceId;
 
+	/** The context window the agent last reported, zero before it reported one. */
+	private volatile int _contextWindow;
+
 	private AgentProcess _process;
 
 	private ScheduledFuture<?> _idleStop;
@@ -102,6 +105,15 @@ public class WorkspaceAgent implements ConversationBackend {
 		return BackendFeatures.NONE;
 	}
 
+	/**
+	 * The context window the agent reported with its last answer in this conversation, zero
+	 * before it answered since the control application started.
+	 */
+	@Override
+	public int contextWindow() {
+		return _contextWindow;
+	}
+
 	@Override
 	public String send(BackendTurn turn, AgentEventListener sink, CancellationToken cancel) throws Exception {
 		AgentProcess process = begin();
@@ -117,6 +129,10 @@ public class WorkspaceAgent implements ConversationBackend {
 					process.terminate();
 				}
 				drain(process, protocol);
+			}
+			int window = protocol.contextWindow();
+			if (window > 0) {
+				_contextWindow = window;
 			}
 			return protocol.answer();
 		} finally {

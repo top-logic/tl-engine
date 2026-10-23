@@ -76,6 +76,19 @@
 			</instance>
 		</config>
 
+		<!-- The stylesheet of the views of the control application, in the engine's layer "tl". -->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<stylesheet name="tl-factory-css"
+						layer="tl"
+						requires="tl-react-controls-css"
+						resource="/style/tl-factory.css"
+					/>
+				</resources>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance class="com.top_logic.element.model.DynamicModelService">
 				<declarations>

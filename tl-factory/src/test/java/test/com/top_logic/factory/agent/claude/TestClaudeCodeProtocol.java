@@ -68,6 +68,7 @@ public class TestClaudeCodeProtocol extends TestCase {
 		assertEquals(((Number) result.get(StreamJson.TOTAL_COST_USD)).doubleValue(),
 			completed.totalCost().amount(), 1e-9);
 		assertTrue(_events.of(AgentEvent.ProviderError.class).isEmpty());
+		assertEquals("The window of the model the result names.", contextWindow(result), _protocol.contextWindow());
 	}
 
 	/**
@@ -106,6 +107,24 @@ public class TestClaudeCodeProtocol extends TestCase {
 		double sessionCost = ((Number) result.get(StreamJson.TOTAL_COST_USD)).doubleValue();
 		double messageCost = _events.completion().totalCost().amount();
 		assertTrue("Cost " + messageCost + " of the session " + sessionCost, messageCost > 0 && messageCost < sessionCost);
+	}
+
+	/**
+	 * Line ends inside and at the start of the streamed pieces of text reach the deltas unchanged.
+	 */
+	public void testLineEndsInDeltas() {
+		_protocol.startRun(RUN_ID, _events);
+		for (String line : Fixtures.lines(Fixtures.OK)) {
+			if (line.contains("\"text_delta\"")) {
+				_protocol.onLine(line.replace("\"text\":\"OK\"", "\"text\":\"1\\n2\""));
+				_protocol.onLine(line.replace("\"text\":\"OK\"", "\"text\":\"\\n3\\n\""));
+			} else {
+				_protocol.onLine(line);
+			}
+		}
+		assertEquals("1\n2\n3\n", _events.text());
+		assertEquals(List.of("1\n2", "\n3\n"),
+			_events.of(AgentEvent.TextDelta.class).stream().map(AgentEvent.TextDelta::text).toList());
 	}
 
 	/**
@@ -301,6 +320,11 @@ public class TestClaudeCodeProtocol extends TestCase {
 		} catch (Exception ex) {
 			throw new AssertionError(ex);
 		}
+	}
+
+	private static int contextWindow(Map<?, ?> result) {
+		Map<?, ?> models = (Map<?, ?>) result.get(StreamJson.MODEL_USAGE_SINCE_LAST_RESULT);
+		return number((Map<?, ?>) models.values().iterator().next(), StreamJson.CONTEXT_WINDOW);
 	}
 
 	private static int number(Map<?, ?> json, String field) {

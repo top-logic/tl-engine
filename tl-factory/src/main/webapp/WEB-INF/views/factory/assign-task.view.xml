@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog giving a task to the coding agent of a workspace: the form edits the task of the draft
+	conversation in "model". Giving the task creates the conversation in the workspace and starts
+	the chat about it with the task as its first message (chatStart), through the chat
+	"workspace-agent" of the window; the conversation is written to "conversation" and the chat
+	session to "agentSession", so that the Agent tab shows the run while it is written.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="workspace"/>
+		<channel name="conversation"/>
+		<channel name="agentSession"/>
+	</channels>
+	<window width="640px">
+		<title>
+			<en>Give a task</en>
+			<de>Auftrag erteilen</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="task"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-send"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Give task</en>
+						<de>Auftrag erteilen</de>
+					</label>
+					<read-form-object>
+						<with-result as="edited">
+							<execute-script>
+								<inputs>
+									<input
+										as="workspace"
+										channel="workspace"
+									/>
+								</inputs>
+								<function><![CDATA[factoryCreateConversation($workspace, $edited.get(`tl.factory:AgentConversation#task`))]]></function>
+								<with-result as="conversation">
+									<write-channel name="conversation"
+										value="conversation"
+									/>
+									<execute-script function="chatStart('workspace-agent', $conversation, $conversation.get(`tl.factory:AgentConversation#task`))">
+										<with-result>
+											<write-channel name="agentSession"/>
+										</with-result>
+									</execute-script>
+									<close-dialog/>
+								</with-result>
+							</execute-script>
+						</with-result>
+					</read-form-object>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+					key="Escape"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

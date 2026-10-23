@@ -88,4 +88,12 @@ public interface AgentProtocol {
 	 */
 	String sessionId();
 
+	/**
+	 * The context window, in tokens, of the model that answered the last run, as the process
+	 * reported it.
+	 *
+	 * @return The window, zero before the process reported one.
+	 */
+	int contextWindow();
+
 }

@@ -99,6 +99,11 @@ public class FactoryModel {
 	public static final String CONVERSATION_CREATED_AT = "createdAt";
 
 	/**
+	 * Name of the property of an {@link #AGENT_CONVERSATION} holding the task it was started with.
+	 */
+	public static final String CONVERSATION_TASK = "task";
+
+	/**
 	 * Attribute of an {@link #AGENT_CONVERSATION}: the ID under which the agent keeps the
 	 * conversation.
 	 */
@@ -138,12 +143,13 @@ public class FactoryModel {
 	}
 
 	/**
-	 * Creates a conversation with the coding agent of the given workspace in the current
-	 * transaction.
+	 * Creates a conversation with the coding agent of the given workspace, started with the given
+	 * task, in the current transaction.
 	 */
-	public static TLObject createConversation(TLObject workspace) {
+	public static TLObject createConversation(TLObject workspace, String task) {
 		TLObject conversation = ModelService.getInstance().getFactory().createObject(conversationType(), workspace);
 		conversation.tUpdateByName(CONVERSATION_CREATED_AT, new Date());
+		conversation.tUpdateByName(CONVERSATION_TASK, task);
 		workspace.tAddByName(WORKSPACE_CONVERSATIONS, conversation);
 		return conversation;
 	}

@@ -31,6 +31,32 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey COMMIT_SESSION_ID;
 
+	/**
+	 * @en The project has no workspace.
+	 */
+	public static ResKey ERROR_NO_WORKSPACE;
+
+	/**
+	 * @en The coding agent of the workspaces is not started in the control application.
+	 */
+	public static ResKey ERROR_NO_AGENT_SERVICE;
+
+	/**
+	 * @en The workspace of "{0}" runs an outdated image without the agent tools. Update the
+	 *     workspace first.
+	 */
+	public static ResKey1 ERROR_AGENT_TOOLS_OUTDATED__WORKSPACE;
+
+	/**
+	 * @en The task is empty. Describe what the agent is to do.
+	 */
+	public static ResKey ERROR_EMPTY_TASK;
+
+	/**
+	 * @en Started an agent conversation.
+	 */
+	public static ResKey COMMIT_CONVERSATION;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

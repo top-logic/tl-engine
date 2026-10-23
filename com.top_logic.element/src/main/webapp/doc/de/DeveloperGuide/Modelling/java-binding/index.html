@@ -41,6 +41,7 @@
    &lt;/plugins&gt;
 &lt;/build&gt;
 </code></pre>
+<p>In einem Projekt mit dem Packaging <code class="hljs inlineCode">tl-app</code> oder <code class="hljs inlineCode">tl-fragment</code> ist das <code class="hljs inlineCode">tl-maven-plugin</code> in der <code class="hljs inlineCode">pom.xml</code> bereits deklariert (mit <code class="hljs inlineCode">&lt;extensions&gt;true&lt;/extensions&gt;</code>). Dort werden die <code class="hljs inlineCode">executions</code> dieser Deklaration hinzugefügt, statt das Plugin ein zweites Mal zu deklarieren.</p>
 <p>Obige Build-Plugin-Definition verwendet das Standard-Maven-Plugin <code class="hljs inlineCode">exec</code>, um den Wrapper-Generator mit den zwei verpflichtenden Argumenten <code class="hljs inlineCode">-out</code> und <code class="hljs inlineCode">-modules</code> aufzurufen. Das Argument <code class="hljs inlineCode">-out</code> legt fest, wohin der generierte Code geschrieben werden soll. Mit <code class="hljs inlineCode">-modules</code> werden die Module aufgezählt, für die Code generiert werden soll. Wenn für mehr als ein Modul Code generiert werden soll, müssen die Modul-Namen kommasepariert in einem Argument übergeben werden.</p>
 <h2>Wrapper-Generierung</h2>
 <p>Ist die Build-Definition wie oben beschrieben angepasst, kann die Generierung über den folgenden Aufruf angestoßen werden:</p>

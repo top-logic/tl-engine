@@ -88,7 +88,7 @@ TopLogic is a layered Maven reactor of 110+ modules. Name prefixes:
 - **`ext.*`** — repackaged external libraries (CKEditor, Font Awesome, BPMN.js, …)
 - **`test.*`** — test-only modules
 
-Most modules are library-JAR *fragments* composed into applications: fragments use parent `tl-parent-core`, runnable apps use `tl-parent-app`.
+Most modules are library-JAR *fragments* composed into applications: fragments use parent `tl-parent-core`, runnable apps use `tl-parent-app`. Projects outside the engine can instead use the packagings `tl-app` / `tl-fragment` of `tl-maven-plugin` with the BOM `tl-bom` and the feature starters `tl-starter-*`, see [application-project.md](com.top_logic/src/main/java/META-INF/tl-docs/application-project.md).
 
 **Dependency direction is strictly bottom-up and must stay acyclic:** `com.top_logic.basic` (utilities, no other TL deps) → `basic.db` → `dob` / `dsa` (data access) → `com.top_logic` (knowledge base, model, layout) → feature modules → application modules. In particular, `basic.*` must never depend on a higher layer.
 

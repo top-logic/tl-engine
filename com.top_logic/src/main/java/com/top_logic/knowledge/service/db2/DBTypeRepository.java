@@ -458,7 +458,7 @@ public class DBTypeRepository extends AbstractTypeSystem implements MORepository
 	public static DBTypeRepository newRepository(InstantiationContext context, DBHelper sqlDialect,
 			SchemaSetup schemaSetup, boolean versioning) throws ConfigurationException {
 		DBTypeRepository result = new DBTypeRepository(sqlDialect, schemaSetup.getConfig().hasMultipleBranches(),
-			SchemaSetup.isBranchLast(schemaSetup.getConfig(), sqlDialect));
+			SchemaSetup.effectiveBranchLast(schemaSetup.getConfig(), sqlDialect));
 		MOFactory typeFactory = new DBKnowledgeTypeFactory(versioning);
 		schemaSetup.createTypes(context, result, typeFactory);
 		context.checkErrors();

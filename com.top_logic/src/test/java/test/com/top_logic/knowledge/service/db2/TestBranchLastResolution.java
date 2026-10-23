@@ -30,7 +30,7 @@ import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 /**
  * Test of the effective value of {@link SchemaConfiguration#getBranchLast()} for a database.
  *
- * @see SchemaSetup#isBranchLast(SchemaConfiguration, DBHelper)
+ * @see SchemaSetup#effectiveBranchLast(SchemaConfiguration, DBHelper)
  * @see SchemaSetup#withExplicitLayout(SchemaConfiguration, DBHelper)
  * @see KBSchemaUtil#parseSchema(String)
  *
@@ -43,9 +43,9 @@ public class TestBranchLastResolution extends TestCase {
 	 */
 	public void testDialectDefault() {
 		SchemaConfiguration schema = schema(null);
-		assertTrue(SchemaSetup.isBranchLast(schema, h2()));
+		assertTrue(SchemaSetup.effectiveBranchLast(schema, h2()));
 		for (DBHelper dialect : otherDialects()) {
-			assertFalse(dialect.getClass().getName(), SchemaSetup.isBranchLast(schema, dialect));
+			assertFalse(dialect.getClass().getName(), SchemaSetup.effectiveBranchLast(schema, dialect));
 		}
 	}
 
@@ -53,9 +53,9 @@ public class TestBranchLastResolution extends TestCase {
 	 * A configured value overrides the default of the dialect.
 	 */
 	public void testExplicitValue() {
-		assertFalse(SchemaSetup.isBranchLast(schema(Boolean.FALSE), h2()));
+		assertFalse(SchemaSetup.effectiveBranchLast(schema(Boolean.FALSE), h2()));
 		for (DBHelper dialect : otherDialects()) {
-			assertTrue(dialect.getClass().getName(), SchemaSetup.isBranchLast(schema(Boolean.TRUE), dialect));
+			assertTrue(dialect.getClass().getName(), SchemaSetup.effectiveBranchLast(schema(Boolean.TRUE), dialect));
 		}
 	}
 
@@ -85,7 +85,7 @@ public class TestBranchLastResolution extends TestCase {
 	public void testStoredWithoutValue() throws ConfigurationException {
 		SchemaConfiguration loaded = storedAndLoaded(schema(null));
 		assertEquals(Boolean.valueOf(SchemaConfiguration.DEFAULT_BRANCH_LAST_ATTRIBUTE), loaded.getBranchLast());
-		assertFalse(SchemaSetup.isBranchLast(loaded, h2()));
+		assertFalse(SchemaSetup.effectiveBranchLast(loaded, h2()));
 	}
 
 	private static SchemaConfiguration storedAndLoaded(SchemaConfiguration schema) throws ConfigurationException {

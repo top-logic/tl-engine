@@ -431,7 +431,7 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 	public MORepository createMORepository(DBHelper sqlDialect, MOFactory typeFactory) {
 		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
 		MORepository repository =
-			new DefaultMORepository(getConfig().hasMultipleBranches(), isBranchLast(getConfig(), sqlDialect));
+			new DefaultMORepository(getConfig().hasMultipleBranches(), effectiveBranchLast(getConfig(), sqlDialect));
 		createTypes(context, repository, typeFactory);
 		repository.resolveReferences();
 		return repository;
@@ -449,7 +449,7 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 	 *         {@link DBHelper#seeksInListOnFirstIndexColumnOnly()} of the given dialect, if the
 	 *         schema has no value.
 	 */
-	public static boolean isBranchLast(SchemaConfiguration schema, DBHelper sqlDialect) {
+	public static boolean effectiveBranchLast(SchemaConfiguration schema, DBHelper sqlDialect) {
 		Boolean branchLast = schema.getBranchLast();
 		if (branchLast != null) {
 			return branchLast.booleanValue();
@@ -472,14 +472,14 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 	 * @return The given schema, if it sets all layout options, or a copy of it with the effective
 	 *         values set.
 	 * 
-	 * @see #isBranchLast(SchemaConfiguration, DBHelper)
+	 * @see #effectiveBranchLast(SchemaConfiguration, DBHelper)
 	 */
 	public static SchemaConfiguration withExplicitLayout(SchemaConfiguration schema, DBHelper sqlDialect) {
 		if (schema.getBranchLast() != null) {
 			return schema;
 		}
 		SchemaConfiguration result = TypedConfiguration.copy(schema);
-		result.setBranchLast(Boolean.valueOf(isBranchLast(schema, sqlDialect)));
+		result.setBranchLast(Boolean.valueOf(effectiveBranchLast(schema, sqlDialect)));
 		return result;
 	}
 

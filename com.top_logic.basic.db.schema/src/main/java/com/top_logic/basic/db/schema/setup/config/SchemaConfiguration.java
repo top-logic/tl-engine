@@ -159,7 +159,7 @@ public interface SchemaConfiguration extends PolymorphicConfiguration<SchemaSetu
 	 * tables to the configured layout when the application starts.
 	 * </p>
 	 * 
-	 * @see SchemaSetup#isBranchLast(SchemaConfiguration, DBHelper)
+	 * @see SchemaSetup#effectiveBranchLast(SchemaConfiguration, DBHelper)
 	 */
 	@Name(BRANCH_LAST_ATTRIBUTE)
 	Boolean getBranchLast();

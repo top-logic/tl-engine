@@ -171,7 +171,7 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 		_kbConfig = migrationKBConfig();
 		_pool = ConnectionPoolRegistry.getConnectionPool(_kbConfig.getConnectionPool());
 		_defaultBranchLast =
-			SchemaSetup.isBranchLast(KBUtils.getSchemaConfig(_kbConfig).getConfig(), _pool.getSQLDialect());
+			SchemaSetup.effectiveBranchLast(KBUtils.getSchemaConfig(_kbConfig).getConfig(), _pool.getSQLDialect());
 		_setup = new SetupKBHelper(_kbConfig);
 		_kb = _setup.setup();
 

@@ -21,7 +21,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * {@link CryptSupport}, or in plain text.
  *
  * <p>
- * The value is decoded with {@link CryptSupport#decodeString(String)} when the secret is used. A
+ * The value is decoded with {@link CryptSupport} when the secret is used. A
  * value that is not in the encoded form (a list of decimal numbers) is the secret in plain text.
  * </p>
  *
@@ -34,6 +34,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * </p>
  *
  * @see CryptSupportSecretSourceFormat
+ * @see CryptSupport#decodeString(String)
  */
 public class CryptSupportSecretSource extends AbstractConfiguredInstance<CryptSupportSecretSource.Config>
 		implements SecretSource {
@@ -55,8 +56,9 @@ public class CryptSupportSecretSource extends AbstractConfiguredInstance<CryptSu
 		String VALUE = "value";
 
 		/**
-		 * The secret encoded by {@link CryptSupport#encodeString(String)}, or the secret in plain
-		 * text.
+		 * The secret encoded by {@link CryptSupport}, or the secret in plain text.
+		 *
+		 * @see CryptSupport#encodeString(String)
 		 */
 		@Name(VALUE)
 		String getValue();

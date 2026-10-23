@@ -193,6 +193,15 @@
 						<property name="name"
 							type="tl.core:String"
 						/>
+						<property name="computedName"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query expr="x -> $x.get(`TestTLScriptSecurity:PathNode#name`)"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 					</attributes>
 				</class>
 
@@ -219,6 +228,17 @@
 							ordered="true"
 							type="PathB"
 						/>
+						<reference name="computedBs"
+							multiple="true"
+							ordered="true"
+							type="PathB"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query expr="a -> $a.get(`TestTLScriptSecurity:PathA#bs`)"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 

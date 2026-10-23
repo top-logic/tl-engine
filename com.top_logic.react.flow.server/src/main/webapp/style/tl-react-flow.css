@@ -25,6 +25,23 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 .tlSelected .tlSelectionMarker { display: initial; }
 
 /*
+ * The fixed parts of a Gantt chart: the row labels at the side, the time axis at the top and the
+ * corner between them. The model paints their backdrop white, which an exported PDF keeps; on the
+ * screen it is the surface of the panel, in either mode. A label the model gives no color of its
+ * own takes the text color: SVG text is black otherwise, unreadable on a dark surface.
+ */
+.tl-gantt-vp-sidebar > rect:first-child,
+.tl-gantt-vp-header > rect:first-child,
+.tl-gantt-vp-corner > rect:first-child {
+	fill: var(--tl-surface-layer);
+}
+.tl-gantt-vp-sidebar text:not([fill]),
+.tl-gantt-vp-header text:not([fill]),
+.tl-gantt-vp-corner text:not([fill]) {
+	fill: var(--tl-text-primary);
+}
+
+/*
  * The zoom indicator the diagram control shows while zooming. An HTML element overlaying the
  * diagram, not part of the SVG.
  */

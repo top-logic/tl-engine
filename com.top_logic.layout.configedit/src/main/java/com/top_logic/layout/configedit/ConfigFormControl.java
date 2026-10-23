@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -26,6 +27,7 @@ import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -190,6 +192,13 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	private final List<ConfigFormCommand> _toolbarCommands;
 
 	private final ConfigFieldIndex _index = new ConfigFieldIndex();
+
+	/**
+	 * Whether editing the item is offered.
+	 *
+	 * @see #setEditPermission(Supplier)
+	 */
+	private Supplier<ExecutableState> _editPermission = () -> ExecutableState.EXECUTABLE;
 
 	/**
 	 * How the properties of the edited item are displayed, by property name.
@@ -407,11 +416,9 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	private List<ConfigFormCommand> createCommands() {
 		return List.of(
 			new ConfigFormCommand(EDIT_COMMAND, I18NConstants.EDIT, Icons.CONFIG_FORM_EDIT,
-				() -> !_model.isEditMode(),
-				ctx -> {
-					_model.startEditing();
-					return HandlerResult.DEFAULT_RESULT;
-				}),
+				() -> !_model.isEditMode() && !_editPermission.get().isHidden(),
+				() -> _editPermission.get().isExecutable(),
+				ctx -> edit()),
 			new ConfigFormCommand(_onSave == null ? APPLY_COMMAND : SAVE_COMMAND, saveLabel(),
 				Icons.CONFIG_FORM_APPLY,
 				_model::isEditMode,
@@ -421,6 +428,41 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 			new ConfigFormCommand(CANCEL_COMMAND, I18NConstants.CANCEL, Icons.CONFIG_FORM_CANCEL,
 				_model::isEditMode,
 				ctx -> cancel()));
+	}
+
+	/**
+	 * Sets what decides whether this form offers editing its item.
+	 *
+	 * <p>
+	 * Guards the transition into edit mode: the Edit command is hidden or disabled as the
+	 * permission says, and starting edit mode is refused while it is not executable. The permission
+	 * is read whenever the command is rendered; a caller whose permission changes calls this method
+	 * again.
+	 * </p>
+	 *
+	 * @param permission
+	 *        The permission, read anew on every use.
+	 */
+	public void setEditPermission(Supplier<ExecutableState> permission) {
+		_editPermission = permission;
+		for (ConfigFormCommand command : _toolbarCommands) {
+			command.notifyStateChanged();
+		}
+		if (_commands == Commands.INLINE) {
+			rebuild();
+		}
+	}
+
+	/**
+	 * Starts edit mode, unless the {@link #setEditPermission(Supplier) permission} refuses it.
+	 */
+	private HandlerResult edit() {
+		ExecutableState permission = _editPermission.get();
+		if (!permission.isExecutable()) {
+			return HandlerResult.notExecutable(permission);
+		}
+		_model.startEditing();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -562,7 +604,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 			if (_model.isEditMode()) {
 				addChild(applyButton());
 				addChild(cancelButton());
-			} else {
+			} else if (!_editPermission.get().isHidden()) {
 				addChild(editButton());
 			}
 		}
@@ -775,10 +817,8 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * The button offered in view mode, starting edit mode.
 	 */
 	private ReactButtonControl editButton() {
-		return new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.EDIT), ctx -> {
-			_model.startEditing();
-			return HandlerResult.DEFAULT_RESULT;
-		});
+		return new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.EDIT),
+			ctx -> edit());
 	}
 
 	/**

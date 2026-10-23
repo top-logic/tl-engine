@@ -70,6 +70,31 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SERVICE_STATE_INACTIVE;
 
 	/**
+	 * @en Running – restart required
+	 */
+	public static ResKey SERVICE_STATE_RESTART_REQUIRED;
+
+	/**
+	 * @en Configuration saved. Restart the service to apply it.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_SAVED;
+
+	/**
+	 * @en Configuration reset to the default. Restart the service to apply it.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_RESET;
+
+	/**
+	 * @en No service is selected.
+	 */
+	public static ResKey ERROR_NO_SERVICE;
+
+	/**
+	 * @en There is no service configuration to store.
+	 */
+	public static ResKey ERROR_NO_SERVICE_CONFIGURATION;
+
+	/**
 	 * @en Lifecycle operation on service ''{0}'' failed.
 	 */
 	public static ResKey1 ERROR_SERVICE_LIFECYCLE__NAME;

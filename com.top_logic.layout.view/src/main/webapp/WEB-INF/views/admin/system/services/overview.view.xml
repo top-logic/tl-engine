@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Initial frame of the services drill-down (see ../services.view.xml): list the application
+	services (runtime modules) and start / stop / restart the selected one. The ServiceTable shows
+	the ServiceSnapshot of the services channel - bound by the enclosing tile-stack, so a command of
+	the detail frame refreshes it as well - or a live snapshot while the channel is empty. It writes
+	the selected module to the selection channel and its running status ('ACTIVE' / 'INACTIVE') to
+	the state channel; the commands gate on that state via the reusable <visible-if> rule so Start
+	(while stopped) and Stop / Restart (while running) are mutually exclusive. Each command runs the
+	ServiceLifecycleAction (which reads the module from the selection channel), writes the refreshed
+	snapshot to the services channel, then writes the new state. Activating a row - a double-click,
+	Enter, or the row's chevron button - pushes the detail frame of its service, with the module as
+	its "module" channel. A titled <panel> is used (not the chrome-less <full-page>) because the view
+	carries toolbar commands.
+-->
+<view>
+	<channels>
+		<channel name="services"/>
+		<channel name="selection"/>
+		<channel name="state"/>
+	</channels>
+	<panel id="panel"
+		fill="true"
+	>
+		<title>
+			<en>Services</en>
+			<de>Dienste</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-play"
+				inputs="state"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Start</en>
+					<de>Starten</de>
+				</label>
+				<executability>
+					<visible-if expr="$state == 'INACTIVE'"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="START"
+					selection="selection"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+				<execute-script function="'ACTIVE'">
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-stop"
+				inputs="state"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Stop</en>
+					<de>Stoppen</de>
+				</label>
+				<executability>
+					<visible-if expr="$state == 'ACTIVE'"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="STOP"
+					selection="selection"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+				<execute-script function="'INACTIVE'">
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-repeat"
+				inputs="state"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Restart</en>
+					<de>Neustart</de>
+				</label>
+				<executability>
+					<visible-if expr="$state == 'ACTIVE'"/>
+				</executability>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="RESTART"
+					selection="selection"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+				<execute-script function="'ACTIVE'">
+					<with-result>
+						<write-channel name="state"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
+					mode="REFRESH"
+				>
+					<with-result>
+						<write-channel name="services"/>
+					</with-result>
+				</action>
+			</generic-command>
+		</commands>
+		<child id="table"
+			class="com.top_logic.layout.view.admin.system.ServiceTable"
+			input="services"
+			selection="selection"
+			state="state"
+		>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="module"
+				view="admin/system/services/service-detail.view.xml"
+			/>
+		</child>
+	</panel>
+</view>

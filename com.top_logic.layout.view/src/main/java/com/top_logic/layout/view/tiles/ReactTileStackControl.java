@@ -105,7 +105,10 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 	private final String _initialViewPath;
 
-	private final String _bindPathTo;
+	/**
+	 * The channels every frame sees, by the name it sees them under.
+	 */
+	private final Map<String, ViewChannel> _sharedChannels;
 
 	private final VetoListener _pathVeto;
 
@@ -141,12 +144,14 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	 * @param initialViewRef
 	 *        View path (relative to {@code /WEB-INF/views/}) of the frame shown when the path is
 	 *        empty.
-	 * @param bindPathTo
-	 *        Channel name under which each frame sees {@code pathChannel}, or {@code null} to keep
-	 *        the path out of the frames' channel namespace.
+	 * @param sharedChannels
+	 *        Channels of the enclosing view that every frame sees, by the name it sees them under -
+	 *        e.g. {@code pathChannel} under the name given by
+	 *        {@link TileStackElement.Config#getBindPathTo()}. Each frame gets the channel itself, not
+	 *        a copy.
 	 */
 	public ReactTileStackControl(ViewContext parent, TileStackElement element, ViewChannel pathChannel,
-			TileStackScope scope, String initialViewRef, String bindPathTo) {
+			TileStackScope scope, String initialViewRef, Map<String, ViewChannel> sharedChannels) {
 		super(parent, null, REACT_MODULE);
 		_parentContext = parent;
 		_element = element;
@@ -154,7 +159,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		_pathChannel = pathChannel;
 		_scope = scope;
 		_initialViewPath = ViewLoader.VIEW_BASE_PATH + initialViewRef;
-		_bindPathTo = bindPathTo;
+		_sharedChannels = sharedChannels;
 
 		Registration pathRegistration = _pathChannel.addListener((sender, oldValue, newValue) -> exchangeFrames());
 		addCleanupAction(pathRegistration::dispose);
@@ -382,9 +387,9 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 		frameContext = frameContext.withScope(TileStackScope.class, _scope)
 			.withScope(RevealPath.class, _here.append(_element, key));
 
-		if (_bindPathTo != null) {
-			// The stack's own channel, so the frame sees the path it sits on change.
-			frameContext.registerChannel(_bindPathTo, _pathChannel);
+		for (Map.Entry<String, ViewChannel> shared : _sharedChannels.entrySet()) {
+			// The enclosing view's own channel, so the frame sees it change - e.g. the path it sits on.
+			frameContext.registerChannel(shared.getKey(), shared.getValue());
 		}
 		List<ViewChannel> paramChannels = new ArrayList<>();
 		for (Map.Entry<String, Object> entry : params.entrySet()) {

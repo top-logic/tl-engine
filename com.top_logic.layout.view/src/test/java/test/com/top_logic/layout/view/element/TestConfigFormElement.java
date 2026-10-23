@@ -46,9 +46,11 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.element.ConfigFormElement;
 import com.top_logic.layout.view.element.ConfigFormStateHandler;
 import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -116,6 +118,37 @@ public class TestConfigFormElement extends TestCase {
 			}
 			INPUTS.add(input);
 			return input;
+		}
+	}
+
+	/**
+	 * {@link ViewExecutabilityRule} hiding a command for an {@link EditedConfig} named
+	 * {@link #LOCKED}.
+	 */
+	public static class LockedHidden implements ViewExecutabilityRule {
+
+		/** The name of an item the rule refuses. */
+		static final String LOCKED = "locked";
+
+		/** Configuration for {@link LockedHidden}. */
+		public interface Config extends PolymorphicConfiguration<LockedHidden> {
+
+			@Override
+			@ClassDefault(LockedHidden.class)
+			Class<? extends LockedHidden> getImplementationClass();
+		}
+
+		/** Creates a {@link LockedHidden} from configuration. */
+		@CalledByReflection
+		public LockedHidden(InstantiationContext context, Config config) {
+			// No configuration.
+		}
+
+		@Override
+		public ExecutableState isExecutable(Object input) {
+			return input instanceof EditedConfig item && LOCKED.equals(item.getName())
+				? ExecutableState.NOT_EXEC_HIDDEN
+				: ExecutableState.EXECUTABLE;
 		}
 	}
 
@@ -395,6 +428,33 @@ public class TestConfigFormElement extends TestCase {
 		((ReactControl) holder).cleanupTree();
 
 		assertEquals(List.of(), scope.getDirtyHandlers());
+	}
+
+	/**
+	 * The edit rules decide over the displayed item whether Edit is offered, and a refused Edit
+	 * does not start editing.
+	 */
+	public void testEditRulesDecideOverTheItem() {
+		ViewChannel channel = channelWith(named(LockedHidden.LOCKED));
+		ConfigFormElement.Config config = TypedConfiguration.newConfigItem(ConfigFormElement.Config.class);
+		config.update(config.descriptor().getProperty(ConfigFormElement.Config.INPUT), new ChannelRef("configuration"));
+		config.getEditExecutability().add(TypedConfiguration.newConfigItem(LockedHidden.Config.class));
+		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestConfigFormElement.class);
+		IReactControl holder = new ConfigFormElement(instantiation, config).createControl(_context);
+		assertFalse(instantiation.hasErrors());
+
+		CommandModel locked = command(holder, ConfigFormControl.EDIT_COMMAND);
+		assertFalse("The rule hides Edit for the locked item.", locked.isVisible());
+		assertFalse(locked.isExecutable());
+		locked.executeCommand(_context);
+		assertFalse("A refused Edit leaves the form read-only.", ((ConfigFormControl) displayed(holder)).isEditMode());
+
+		channel.set(named("open"));
+
+		CommandModel open = command(holder, ConfigFormControl.EDIT_COMMAND);
+		assertTrue("The rule lets another item be edited.", open.isVisible());
+		open.executeCommand(_context);
+		assertTrue(((ConfigFormControl) displayed(holder)).isEditMode());
 	}
 
 	/** Suite requiring the services the configuration editor builds its fields with. */

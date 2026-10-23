@@ -455,4 +455,6 @@ A `<save-action>` persists what was edited: the command is then called Save, and
 </config-form>
 ```
 
+Whether Edit is offered is decided by `<edit-executability>` rules, as for a `<form>`: they decide over the displayed item, which a `<visible-if>` sees under the name of the `input` channel (`config` without one); a hidden or disabled verdict hides or disables Edit, and the form refuses a client's request to start editing nonetheless. A view that shows a configuration only where it may be changed puts the two cases under two `<visible-if>` elements, the read-only form with `<edit-executability><visible-if expr="false"/></edit-executability>` (see `admin/system/services/service-detail.view.xml`).
+
 A configuration form takes part in the [unsaved-changes protocol](#unsaved-changes-are-asked-before-a-channel-write-transitively) like a `<form>`: it holds unsaved changes while its working copy differs from the item (compared by value). Then it vetoes the write of its `input` channel and reports itself to the dirty-tracked scope enclosing it, e.g. the frame of a `<tile-stack>`, whose pop it blocks (`ConfigFormStateHandler`). In the question that follows, Save runs the form's save including its `<save-action>`, Discard drops the copy.

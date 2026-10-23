@@ -51,6 +51,8 @@ import com.top_logic.layout.view.command.ConfigFormScope;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ViewActions;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.util.Resources;
 
 /**
@@ -69,7 +71,8 @@ import com.top_logic.util.Resources;
  * Edit mode works as it does for {@code <form withEditMode="true">}: the item is read-only until
  * Edit starts a working copy, Apply checks it and carries it over, Cancel drops it. Those three
  * commands go to the enclosing panel's toolbar rather than among the fields, which is what makes a
- * configuration form look like the rest of the application.
+ * configuration form look like the rest of the application. Whether Edit is offered at all is
+ * decided by the {@link Config#getEditExecutability() edit rules}.
  * </p>
  *
  * <p>
@@ -123,6 +126,16 @@ public class ConfigFormElement implements UIElement {
 
 		/** Configuration name for {@link #getCancelActions()}. */
 		String CANCEL_ACTIONS = FormElement.Config.CANCEL_ACTIONS;
+
+		/**
+		 * Tag of an entry of the {@link #getSaveActions() save} and {@link #getCancelActions()
+		 * cancel} actions that names its implementation by a <code>class</code> attribute, as in
+		 * a {@code <generic-command>}.
+		 */
+		String ACTION_ENTRY = "action";
+
+		/** Configuration name for {@link #getEditExecutability()}. */
+		String EDIT_EXECUTABILITY = FormElement.Config.EDIT_EXECUTABILITY;
 
 		@Override
 		@ClassDefault(ConfigFormElement.class)
@@ -186,7 +199,8 @@ public class ConfigFormElement implements UIElement {
 		 * Actions saving the edited configuration, run by Save.
 		 *
 		 * <p>
-		 * Written like the actions of a {@code <generic-command>}. The chain runs over the working
+		 * Written like the actions of a {@code <generic-command>}: an action without a tag of its own
+		 * is written as {@code <action class="..."/>}. The chain runs over the working
 		 * copy - the checked, edited configuration - as its argument, named after the
 		 * {@link #getInput() input} channel, or {@value #EDITED_ARGUMENT} for a form without one.
 		 * Once the chain ran through, the copy is carried over into the edited item and the form
@@ -202,6 +216,7 @@ public class ConfigFormElement implements UIElement {
 		 */
 		@Name(SAVE_ACTIONS)
 		@TreeProperty
+		@EntryTag(ACTION_ENTRY)
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewAction>> getSaveActions();
 
@@ -216,16 +231,35 @@ public class ConfigFormElement implements UIElement {
 		 */
 		@Name(CANCEL_ACTIONS)
 		@TreeProperty
+		@EntryTag(ACTION_ENTRY)
 		@Options(fun = AllInAppImplementations.class)
 		List<PolymorphicConfiguration<? extends ViewAction>> getCancelActions();
 
 		/**
+		 * Rules deciding whether this form offers editing its item.
+		 *
+		 * <p>
+		 * Guards the transition into edit mode: the Edit command is disabled or hidden according to
+		 * the rules, and the form refuses the transition when a client requests it nonetheless. The
+		 * rules decide over the displayed item, which a
+		 * {@link com.top_logic.layout.view.command.VisibleIf &lt;visible-if&gt;} sees as a variable
+		 * named like the argument of the {@link #getSaveActions() save actions}. Without a rule,
+		 * every user who sees the form may edit it. Only with {@link #getWithEditMode() edit mode}.
+		 * </p>
+		 */
+		@Name(EDIT_EXECUTABILITY)
+		@EntryTag("rule")
+		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getEditExecutability();
+
+		/**
 		 * The {@link #getSaveActions() save} and {@link #getCancelActions() cancel} actions run over
-		 * the working copy, see {@link ConfigFormElement#editedScope(Config)}.
+		 * the working copy, the {@link #getEditExecutability() edit rules} decide over the displayed
+		 * item, both under the name given by {@link ConfigFormElement#editedScope(Config)}.
 		 */
 		@Override
 		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
-			if (ActionScopes.contains(getSaveActions(), part) || ActionScopes.contains(getCancelActions(), part)) {
+			if (ActionScopes.contains(getSaveActions(), part) || ActionScopes.contains(getCancelActions(), part)
+				|| ActionScopes.contains(getEditExecutability(), part)) {
 				return editedScope(this);
 			}
 			return outer;
@@ -394,6 +428,11 @@ public class ConfigFormElement implements UIElement {
 				chain(_saveActions), chain(_cancelActions));
 			if (!_config.getFields().isEmpty()) {
 				_form.setFieldDisplays(fieldDisplays());
+			}
+			if (!_config.getEditExecutability().isEmpty()) {
+				ViewExecutabilityRule editRule =
+					ViewExecutabilityRules.build(_config.getEditExecutability(), _context, editedScope(_config));
+				_form.setEditPermission(() -> editRule.isExecutable(item));
 			}
 			contribute(_form);
 			register(_form);

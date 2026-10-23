@@ -241,6 +241,66 @@ public class TestTileFrameRouteParticipant extends TestCase {
 	}
 
 	/**
+	 * Tests that the page is named by the innermost frame of the path.
+	 */
+	public void testInnermostFrameNamesPage() {
+		ViewChannel path = path(frame(PERSON_VIEW, "1"), frame(ORDER_VIEW, "7"));
+		TileFrameRouteParticipant participant = participant(scope(path));
+
+		assertEquals(ResKey.text("Order 7"), participant.activeRouteLabel());
+	}
+
+	/**
+	 * Tests that a stack showing its initial view leaves the title to the routes around it.
+	 */
+	public void testEmptyPathNamesNoPage() {
+		assertNull(participant(scope(path())).activeRouteLabel());
+	}
+
+	/**
+	 * Tests that a frame without a label leaves the title to the frame it was drilled into from.
+	 */
+	public void testUnlabeledFrameKeepsOuterLabel() {
+		ViewChannel path = path(frame(PERSON_VIEW, "1"),
+			new TileFrame(ORDER_VIEW, null, Map.of("order", "7")));
+
+		assertEquals(ResKey.text("Person 1"), participant(scope(path)).activeRouteLabel());
+	}
+
+	/**
+	 * Tests that a frame beyond the address names no page: the title names what the URL leads back
+	 * to.
+	 */
+	public void testFrameWithoutAddressNamesNoPage() {
+		ViewChannel path = path(frame(PERSON_VIEW, "1"),
+			new TileFrame(NOTE_VIEW, ResKey.text("Note"), Map.of()));
+		assertEquals(ResKey.text("Person 1"), participant(scope(path)).activeRouteLabel());
+
+		ViewChannel below = path(new TileFrame(NOTE_VIEW, ResKey.text("Note"), Map.of()), frame(PERSON_VIEW, "1"));
+		assertNull("Nothing drilled into from a frame without an address has an address.",
+			participant(scope(below)).activeRouteLabel());
+	}
+
+	/**
+	 * Tests that the label of a frame pushed onto the path is the one reported with the route
+	 * change, so that the title follows a drill-down.
+	 */
+	public void testPushedFrameNamesPage() {
+		ViewChannel path = path();
+		TileStackScope scope = scope(path);
+		TileFrameRouteParticipant participant = participant(scope);
+
+		ResKey[] reported = new ResKey[1];
+		participant.addRouteChangeListener((sender, segment) -> reported[0] = sender.activeRouteLabel());
+
+		scope.push(PERSON_VIEW, null, Map.of("person", "1"));
+		assertEquals(ResKey.text("Person 1"), reported[0]);
+
+		scope.popTo(0);
+		assertNull(reported[0]);
+	}
+
+	/**
 	 * Tests that a frame pushed without a label of its own is named by the label the stack declares
 	 * for its view.
 	 */

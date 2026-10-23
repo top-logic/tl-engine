@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Registration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.routing.RouteChangeListener;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
@@ -36,6 +37,11 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * the URL again for the frame above it. A route naming something the display cannot show - a deleted
  * object, a mistyped identifier - ends the path at the frames the URL established, and the address
  * bar is then corrected to that path.
+ * </p>
+ *
+ * <p>
+ * The page is named by the frame the path leads to: the label of a frame is fixed when the frame is
+ * put on the path, so the title changes with the path and is reported with it.
  * </p>
  */
 public class TileFrameRouteParticipant implements RoutingParticipant {
@@ -148,6 +154,49 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 	@Override
 	public RouteSegment activeRouteSegment() {
 		StringBuilder path = new StringBuilder();
+		for (String segment : addressedSegments()) {
+			if (path.length() > 0) {
+				path.append('/');
+			}
+			path.append(segment);
+		}
+		return path.length() == 0 ? null : new RouteSegment(path.toString());
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The label of the innermost frame the address describes that has one - the label the
+	 * breadcrumb shows for it. A frame drilled into beyond the address names no page the URL leads
+	 * back to, and neither does the initial view of the stack, which leaves the title to the
+	 * participants around the stack.
+	 * </p>
+	 */
+	@Override
+	public ResKey activeRouteLabel() {
+		List<TileFrame> path = _scope.getPath();
+		ResKey result = null;
+		for (int n = 0, cnt = addressedSegments().size(); n < cnt; n++) {
+			ResKey label = path.get(n).getLabel();
+			if (label != null) {
+				result = label;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The URL segments of the frames of the path, from the bottom up, as far as the path has an
+	 * address.
+	 *
+	 * <p>
+	 * The n-th segment belongs to the n-th frame of the path, and the list ends before the first
+	 * frame without an address.
+	 * </p>
+	 */
+	private List<String> addressedSegments() {
+		List<String> result = new ArrayList<>();
 		for (TileFrame frame : _scope.getPath()) {
 			FrameRoute route = _scope.frameRoute(frame.getViewRef());
 			String segment = route == null ? null : route.segment(frame.getParams());
@@ -156,12 +205,9 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 					+ "the URL describes the path up to it.", TileFrameRouteParticipant.class);
 				break;
 			}
-			if (path.length() > 0) {
-				path.append('/');
-			}
-			path.append(segment);
+			result.add(segment);
 		}
-		return path.length() == 0 ? null : new RouteSegment(path.toString());
+		return result;
 	}
 
 	/**

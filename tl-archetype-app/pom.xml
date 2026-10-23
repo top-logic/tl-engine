@@ -91,9 +91,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-archetype-plugin</artifactId>
-				<!-- Note: Old version as workaround for .gitignore files not copied 
-					into the archive. -->
-				<version>2.4</version>
+				<version>3.4.1</version>
+				<configuration>
+					<!-- Packages the .gitignore files of the template into the archetype. -->
+					<useDefaultExcludes>false</useDefaultExcludes>
+				</configuration>
 			</plugin>
 
 			<plugin>

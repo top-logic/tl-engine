@@ -11,11 +11,24 @@
 						heartbeat.
 					-->
 					<module key="com.top_logic.ai.chat.view.AgentViewRefreshService$Module" value="true"/>
+					<!--
+						Decides which conversations an external backend answers instead of the
+						framework's own agent. Without a resolver, none.
+					-->
+					<module key="com.top_logic.ai.chat.backend.ConversationBackendService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.ai.chat.view.AgentViewRefreshService">
 			<instance class="com.top_logic.ai.chat.view.AgentViewRefreshService"/>
+		</config>
+		<!--
+			An application adds its resolver to the list, see ConversationBackendResolver.
+		-->
+		<config service-class="com.top_logic.ai.chat.backend.ConversationBackendService">
+			<instance class="com.top_logic.ai.chat.backend.ConversationBackendService">
+				<resolvers/>
+			</instance>
 		</config>
 		<!--
 			The client bundle of the React chat (built from ui/ into /script/), so that every page

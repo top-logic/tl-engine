@@ -1,5 +1,5 @@
 ---
-description: Read before changing the chat of tl-chat or tl-chat-classic, or a route tl-ai-core serves content on - ChatServlet (/chat/*), ChatProcessor, ChatSSEHandler on the window's React event stream, the React chat (tl-chat/ui, <chat-conversation>, <chat-rail>, <chat-dock>), ReactViewComponent in classic layouts, ChatSessionManager / ChatHistoryService, approval, and the routes /html/{id}, /screenshot/{id} and /archived-page/{handle}.
+description: Read before changing the chat of tl-chat or tl-chat-classic, or a route tl-ai-core serves content on - ChatServlet (/chat/*), ChatProcessor, ChatSSEHandler on the window's React event stream, the React chat (tl-chat/ui, <chat-conversation>, <chat-rail>, <chat-dock>), ReactViewComponent in classic layouts, ChatSessionManager / ChatHistoryService, approval, a ConversationBackend answering a conversation in place of the framework's agent, and the routes /html/{id}, /screenshot/{id} and /archived-page/{handle}.
 order: 67
 ---
 
@@ -12,6 +12,28 @@ order: 67
 `ChatSessionManager` keeps the per-session state (chat, `ConversationMemory`, `ConversationLog`) in an LRU cache, and `ChatHistoryService` persists the chat sessions with their per-user history in the knowledge base. `/chat/capabilities` lists the agents, models and MCP servers the account may use, and `/chat/send` and `/chat/regenerate` refuse with 403 what [run access](doc:ai/security/run-access) refuses.
 
 **Approval.** A tool call that needs approval is decided by `SecurityContext.checkApproval` (`Allowed`, `Denied`, `NeedsApproval`); a `NeedsApproval` goes to the `ApprovalCallback`, which in the chat parks the call and asks the user, with session-level caching of an approval. `/chat/respond` answers a pending approval or `askUser` question. A `STRUCTURAL` tool is refused in production mode (`ExecutionMode`, `ToolPermissionFilter`). An application can decide approval from the call rather than from the tool's mode, see [approval from the call](doc:ai/security/administration#approval-decided-from-the-call).
+
+### A conversation answered from outside
+
+A conversation can be answered by a process outside of the agent loop - a coding agent in a container, a remote agent - while the chat keeps everything around the run: send lock and busy refusal, the user's message persisted first, the delivery to every window showing the conversation, stop, history and cost. Such a process is a `ConversationBackend` (package `com.top_logic.ai.chat.backend` in `tl-chat`); which conversations it answers is decided by the `ConversationBackendResolver`s of the `ConversationBackendService`, asked in their configured order before every run, the first that names a backend winning. `tl-chat` configures none; an application adds its own:
+
+```xml
+<config service-class="com.top_logic.ai.chat.backend.ConversationBackendService">
+    <instance>
+        <resolvers>
+            <resolver class="my.app.WorkspaceBackendResolver"/>
+        </resolvers>
+    </instance>
+</config>
+```
+
+A resolver decides from what the conversation is - typically `AgentSession#subject` - and never from the session's `metadata`, which the chat rewrites from its own state.
+
+- `send(turn, sink, cancel)` runs on the chat's worker thread and blocks until the run has ended. The backend reports its work as `AgentEvent`s into `sink`, from `RunStarted` to `RunCompleted`, and `RunRecording` records them as the conversation's execution with its transcript, tokens and cost, recorded under `agentName()`.
+- **Events only on that thread.** The thread carries the run's frame - the user's sub-session, the bound `ConversationLogListener`, the processing state - and the recording takes its events one at a time in run order. A backend that reads its process on a thread of its own queues what it reads and drains the queue inside `send`; the sink refuses an event from another thread, one after `send` returned and every event after a refused one, and the run then ends in an error.
+- **Stop** cancels `cancel` on the thread of the stop request (`CancellationToken#onCancel`); the backend ends its work, emits `RunCompleted` with `ABORTED` and returns what it has. A backend that throws, or returns without `RunCompleted`, ends the run in an error: recorded as `ERROR`, reported to the windows as `APPLICATION_ERROR`, and the chat is free for the next message.
+- `features()` (`BackendFeatures`) states which functions beyond sending the backend supports - regenerate, editing, the agent / model / effort / MCP pickers, attachments, approvals.
+- A lead turn for subagents' news is never started for such a conversation: only the framework's agent spawns subagents.
 
 ### The front end
 

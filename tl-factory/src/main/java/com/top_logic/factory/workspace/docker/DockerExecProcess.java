@@ -283,11 +283,11 @@ final class DockerExecProcess implements ExecProcess {
 		}
 		int pid = awaitPid();
 		if (pid != NO_PID) {
-			_provider.signal(_containerId, pid, DockerWorkspaceProvider.SIGNAL_TERM);
+			_provider.signal(_containerId, pid, DockerWorkspaceProvider.SIGNAL_TERM, _command.getUser());
 			if (waitFor(_provider.getTerminateTimeout())) {
 				return;
 			}
-			_provider.signal(_containerId, pid, DockerWorkspaceProvider.SIGNAL_KILL);
+			_provider.signal(_containerId, pid, DockerWorkspaceProvider.SIGNAL_KILL, _command.getUser());
 			if (waitFor(KILL_TIMEOUT)) {
 				return;
 			}
@@ -308,7 +308,7 @@ final class DockerExecProcess implements ExecProcess {
 		if (_ended.getCount() > 0 && _pid != NO_PID) {
 			boolean interrupted = Thread.interrupted();
 			try {
-				_provider.signal(_containerId, _pid, DockerWorkspaceProvider.SIGNAL_KILL);
+				_provider.signal(_containerId, _pid, DockerWorkspaceProvider.SIGNAL_KILL, _command.getUser());
 			} finally {
 				if (interrupted) {
 					Thread.currentThread().interrupt();

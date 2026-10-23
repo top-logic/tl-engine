@@ -45,7 +45,9 @@ import com.top_logic.factory.agent.AgentProtocol;
 import com.top_logic.factory.agent.AgentRuntime;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.claude.ClaudeCodeHarness;
+import com.top_logic.factory.llm.LLMAdmission;
 import com.top_logic.factory.llm.LLMProxy;
+import com.top_logic.factory.llm.LLMProxyHandler;
 import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.llm.LLMProxyServlet;
 import com.top_logic.factory.llm.LLMUpstream;
@@ -165,8 +167,8 @@ public class TestClaudeCodeIntegration extends TestCase {
 			}
 
 			@Override
-			public boolean authenticate(String token) {
-				return _tokens.isValid(token);
+			public LLMAdmission admit(String token, String remoteAddress) {
+				return _tokens.isValid(token) ? LLMAdmission.ADMITTED : LLMAdmission.INVALID_TOKEN;
 			}
 
 			@Override
@@ -182,10 +184,10 @@ public class TestClaudeCodeIntegration extends TestCase {
 		_jetty.addConnector(connector);
 		ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath(CONTEXT_PATH);
-		context.addServlet(new ServletHolder(new LLMProxyServlet(() -> proxy)), LLMProxyServlet.PATH + "/*");
+		context.addServlet(new ServletHolder(new LLMProxyServlet(() -> proxy)), LLMProxyHandler.PATH + "/*");
 		_jetty.setHandler(context);
 		_jetty.start();
-		String proxyUrl = "http://" + GATEWAY_HOST + ":" + connector.getLocalPort() + CONTEXT_PATH + LLMProxyServlet.PATH;
+		String proxyUrl = "http://" + GATEWAY_HOST + ":" + connector.getLocalPort() + CONTEXT_PATH + LLMProxyHandler.PATH;
 
 		_provider = createProvider();
 		ApplicationWorkspaces applications =
@@ -195,6 +197,8 @@ public class TestClaudeCodeIntegration extends TestCase {
 		_provider.create(new WorkspaceSpec(_workspaceId, image)
 			// No application: the main process only keeps the container alive.
 			.putEnv(ApplicationWorkspaces.ENV_BUILT_MARKER, "/tmp/never-built")
+			.putEnv(ApplicationWorkspaces.ENV_APP_DIR, APP_DIR)
+			.putEnv(ApplicationWorkspaces.ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT))
 			.putEnv(LLMProxyService.ENV_BASE_URL, proxyUrl));
 		_provider.start(_workspaceId);
 		_provider.exec(_workspaceId, ExecCommand.of("mkdir", "-p", APP_DIR), ExecOutput.NONE);

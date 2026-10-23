@@ -71,8 +71,10 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The entry script and all commands run as the {@link #WORKSPACE_USER}, which is not root. The
  * image creates the mount points of all volumes owned by this user, so that a fresh volume belongs
- * to it as well. Root is used only explicitly: to take over a release repository that was filled
- * by root before it is filled again.
+ * to it as well. No command runs as root: the containers have no capabilities, so root could do
+ * nothing the {@link #WORKSPACE_USER} cannot. A release repository the {@link #WORKSPACE_USER}
+ * cannot write - filled by an image whose commands ran as root - is replaced by an empty one when
+ * it has to be filled.
  * </p>
  */
 public class ApplicationWorkspaces {
@@ -278,11 +280,6 @@ public class ApplicationWorkspaces {
 	 * </p>
 	 */
 	public static final String AGENT_SESSIONS_PATH = "/home/" + WORKSPACE_USER + "/.claude/projects";
-
-	/**
-	 * The root user by its ID, for the commands that need it.
-	 */
-	public static final String ROOT_USER = "0";
 
 	/**
 	 * Placeholder in the {@link ImageContext#DOCKERFILE} of the image replaced by the
@@ -842,6 +839,20 @@ public class ApplicationWorkspaces {
 	}
 
 	/**
+	 * Creates and starts the workspace filling a release repository.
+	 */
+	private void startResolver(String resolverId, String image, String volume) throws InterruptedException {
+		_provider.create(new WorkspaceSpec(resolverId, image)
+			.addVolume(VolumeMount.shared(volume, RELEASE_PATH, false))
+			.putEnv(ENV_MAVEN_ARGS, "-Dmaven.repo.local=" + RELEASE_PATH)
+			// There is no application in the resolver, the entry script only keeps it alive.
+			.putEnv(ENV_BUILT_MARKER, builtMarker())
+			.putEnv(ENV_APP_DIR, SOURCE_PATH)
+			.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT)));
+		_provider.start(resolverId);
+	}
+
+	/**
 	 * Makes sure that the release repository of an engine version is complete, filling it if
 	 * necessary.
 	 *
@@ -864,24 +875,23 @@ public class ApplicationWorkspaces {
 			if (leftOver.getState() != WorkspaceState.MISSING || !leftOver.getVolumes().isEmpty()) {
 				_provider.remove(resolverId);
 			}
-			_provider.create(new WorkspaceSpec(resolverId, image)
-				.addVolume(VolumeMount.shared(volume, RELEASE_PATH, false))
-				.putEnv(ENV_MAVEN_ARGS, "-Dmaven.repo.local=" + RELEASE_PATH)
-				// There is no application in the resolver, the entry script only keeps it alive.
-				.putEnv(ENV_BUILT_MARKER, builtMarker())
-				.putEnv(ENV_APP_DIR, SOURCE_PATH)
-				.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT)));
+			startResolver(resolverId, image, volume);
 			try {
-				_provider.start(resolverId);
 				String marker = RELEASE_PATH + PATH_SEPARATOR + RELEASE_COMPLETE_MARKER;
 				if (_provider.exec(resolverId, ExecCommand.of("test", "-f", marker), ExecOutput.NONE) == 0) {
 					return volume;
 				}
+				if (_provider.exec(resolverId, ExecCommand.of("test", "-w", RELEASE_PATH), ExecOutput.NONE) != 0) {
+					// An incomplete repository filled by an image whose commands ran as root.
+					step(progress, "Replacing the incomplete release repository of TopLogic " + version
+						+ ", which the workspace user cannot write");
+					_provider.remove(resolverId);
+					_provider.removeSharedVolume(volume);
+					_provider.ensureSharedVolume(volume);
+					startResolver(resolverId, image, volume);
+				}
 
 				step(progress, "Filling the release repository of TopLogic " + version);
-				// A repository filled by an image whose commands ran as root.
-				run(resolverId, ExecCommand.of("chown", "-R", WORKSPACE_USER + ":" + WORKSPACE_USER, RELEASE_PATH)
-					.setUser(ROOT_USER), progress);
 				String appDir = RESOLVER_DIR + PATH_SEPARATOR + RESOLVER_ARTIFACT_ID;
 				run(resolverId, ExecCommand.of("rm", "-rf", appDir), progress);
 				run(resolverId,

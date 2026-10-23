@@ -1,5 +1,5 @@
 ---
-description: Read before deploying the control application (tl-factory-app) on a shared Docker server, or when an administrator asks what access it needs - the Docker API calls DockerWorkspaceProvider makes, why the raw system socket is never given to it, what a socket proxy does and does not restrict, the recommended dedicated rootless Docker daemon with its setup, resource cap and checks, a dedicated remote daemon with TLS as alternative, and how control application and workspaces reach each other in each setup, including which accepted sources of the LLM proxy fit.
+description: Read before deploying the control application (tl-factory-app) on a shared Docker server, or when an administrator asks what access it needs - the Docker API calls DockerWorkspaceProvider makes, why the raw system socket is never given to it, what a socket proxy does and does not restrict, the recommended dedicated rootless Docker daemon with its setup, resource cap and checks, the resource limits per workspace with the delegation of the cgroup controllers (Delegate=cpu cpuset io memory pids), the published ports on one host address, recreating the workspace network for its isolation, a dedicated remote daemon with TLS as alternative, and how control application and workspaces reach each other in each setup, including the port of the LLM proxy, TLS and which accepted sources of the LLM proxy fit.
 order: 10
 ---
 
@@ -26,8 +26,13 @@ setups and describes the recommended one step by step. The general configuration
 
 What it never does, as can be checked in `DockerWorkspaceProvider`:
 
-- It creates no privileged container, adds no capabilities and never uses the host PID namespace.
-  Workspaces join only the configured workspace network, which it creates as a bridge network.
+- It creates no privileged container and never uses the host PID namespace. Every workspace
+  container drops all capabilities, runs with `no-new-privileges`, and is limited in memory, CPUs
+  and processes; no command runs as root in it (see
+  [hardening](doc:factory#hardening-of-the-workspace-containers)).
+- Workspaces join only the configured workspace network, which it creates as a bridge network
+  whose containers cannot reach each other (`enable_icc=false`). Their ports are published on one
+  address of the host, `127.0.0.1` unless configured otherwise.
 - It never bind-mounts a host path. All storage is in named volumes.
 - It builds images only from its own build context; no build gets host paths or extra
   entitlements.
@@ -91,7 +96,8 @@ created - is that unprivileged user on the host.
   volumes and networks. The system daemon and its applications are out of reach.
 - **One resource cap for the whole factory.** All workspaces run in the systemd user slice of
   `tl-factory`; one limit on that slice caps memory and CPU of all of them together, whatever the
-  agents build.
+  agents build. The limits of each workspace container come on top, so that one workspace cannot
+  starve the others.
 - **Full API, no proxy.** The control application may use the complete API of its own daemon.
   There is no endpoint list to maintain, and commands with standard input run over the direct
   socket.
@@ -123,6 +129,8 @@ The commands assume Ubuntu with Docker CE from the Docker repository.
    systemctl set-property user-<uid>.slice MemoryMax=32G CPUQuota=800%
    ```
 
+   and delegate the cgroup controllers to the user, see [resource limits](#resource-limits).
+
 3. **The control application.** It runs as a container of the system daemon, as other applications
    do, and gets the rootless socket mounted - that socket, not the system socket:
 
@@ -137,8 +145,17 @@ The commands assume Ubuntu with Docker CE from the Docker repository.
    container must be allowed to use the socket; it belongs to `tl-factory`.
 
 4. **Ports.** The workspaces publish their applications on the server in the range
-   `tl_factory_host_port_min`..`tl_factory_host_port_max` (default 20000-20999). Browsers of the
-   users must reach this range on the server.
+   `tl_factory_host_port_min`..`tl_factory_host_port_max` (default 20000-20999), on the address
+   `tl_factory_host_ip`. Its default `127.0.0.1` keeps them on the server; set it explicitly, to
+   the internal address a reverse proxy forwards to - which puts the previews behind the login it
+   demands -, never to all addresses of a server reachable from the internet. A rootful daemon
+   publishes ports by DNAT rules that come before the firewall of the host - UFW does not block
+   them -, so this address is the restriction that holds.
+
+5. **The workspace network.** The first workspace creates it with the isolation of the workspaces
+   (`enable_icc=false`). A network created before, without that option, is not changed - the
+   control application logs a warning; remove it while no container is attached (`docker network
+   rm tl-factory`) and update the workspaces, which creates it anew.
 
 ### How control application and workspaces reach each other
 
@@ -151,12 +168,19 @@ They reach each other through ports published on the server:
 - A workspace reaches the control application under the URL the control application is published
   at, with the server's name, e.g. `http://<name of the server>:<published port>/`.
 
-The LLM proxy of the control application (`/llm-proxy/`) sees a request of a workspace coming from
-the server's gateway or from the userland proxy of the daemon that publishes the port, not from
-the workspace network. Its `allowed-sources` therefore stay empty in this setup
-(`tl_factory_llm_allowed_sources`); block `/llm-proxy/` for clients from outside at the reverse
-proxy in front of the control application instead, see
-[accepted sources](doc:factory#accepted-sources).
+The LLM proxy of the control application listens on a port of its own
+([the port of the proxy](doc:factory#the-port-of-the-proxy), default `8091`). Publish it from the
+control application's container on an internal address of the server only, e.g.
+`-p 10.0.0.5:8091:8091`, never on all addresses, and give the workspaces
+`tl_factory_llm_proxy_url=http://10.0.0.5:8091/llm-proxy`. The proxy sees a request of a workspace
+coming from the server's gateway or from the userland proxy of the daemon that publishes the port,
+not from the workspace network, and the same for all workspaces. Its `allowed-sources` therefore
+stay empty in this setup (`tl_factory_llm_allowed_sources`, see
+[accepted sources](doc:factory#accepted-sources)), and the binding of a token to its first source
+address only refuses addresses other than that gateway
+([token checks](doc:factory#token-checks)): the address the port is published on, the token and
+its rate limit are the checks. Wherever the proxy is reached over a network between hosts, it is
+reached over TLS.
 
 ### Checks for the administrator
 
@@ -165,6 +189,30 @@ proxy in front of the control application instead, see
 - `ps -eo user,cmd | grep java` on the host shows the processes of the workspaces under
   `tl-factory` or one of its subordinate user IDs, never under root.
 - `systemctl status user-<uid>.slice` shows the memory and CPU used by all workspaces together.
+- `docker -H unix:///run/user/<uid>/docker.sock inspect --format '{{.HostConfig.Memory}}
+  {{.HostConfig.NanoCpus}} {{.HostConfig.PidsLimit}} {{.HostConfig.CapDrop}}
+  {{.HostConfig.SecurityOpt}}' <workspace container>` shows the limits, `[ALL]` and
+  `[no-new-privileges]`.
+
+## Resource limits
+
+Every workspace container is limited in memory (`tl_factory_workspace_memory`, default `8g`), CPUs
+(`tl_factory_workspace_cpus`, default `4`) and processes (`tl_factory_workspace_pids`, default
+`4096`), see [hardening](doc:factory#hardening-of-the-workspace-containers). A rootful daemon
+applies them as they are. A rootless daemon can set only the cgroup controllers systemd delegates
+to its user, by default `memory` and `pids`: without the `cpu` controller it refuses to create a
+container with a CPU limit, and IO limits need `io`. Delegate the controllers once, as root, in
+`/etc/systemd/system/user@.service.d/delegate.conf`:
+
+```ini
+[Service]
+Delegate=cpu cpuset io memory pids
+```
+
+then `systemctl daemon-reload`, and restart the daemon of `tl-factory` (as that user,
+`systemctl --user restart docker`). `cat /sys/fs/cgroup/user.slice/user-<uid>.slice/user@<uid>.service/cgroup.controllers`
+then lists `cpu`. Without the delegation, set `tl_factory_workspace_cpus=0`. The limits need
+cgroup v2 (`docker info` reports `Cgroup Version: 2`).
 
 ## A dedicated daemon on its own VM
 

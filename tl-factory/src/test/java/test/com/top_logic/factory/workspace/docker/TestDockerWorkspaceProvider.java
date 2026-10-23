@@ -6,6 +6,8 @@
 package test.com.top_logic.factory.workspace.docker;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnixDomainSocketAddress;
 import java.net.URI;
@@ -23,6 +25,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -34,11 +38,15 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.AccessMode;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.ContainerNetwork;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Network;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.Volume;
@@ -47,8 +55,13 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 
+import com.sun.net.httpserver.HttpServer;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.col.filter.CIDRFilter;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.listener.Listener;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
@@ -176,6 +189,26 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	 * Process state of a zombie in the output of {@code ps}.
 	 */
 	private static final String ZOMBIE_STATE = "Z";
+
+	/**
+	 * A user ID without entry in the user database of {@link #IMAGE}, not root.
+	 */
+	private static final String OTHER_USER = "1000";
+
+	/**
+	 * Line of {@code /proc/<pid>/status} with the effective capabilities of a process.
+	 */
+	private static final String CAP_EFF = "CapEff:";
+
+	/**
+	 * Line of {@code /proc/<pid>/status} telling whether a process may gain privileges.
+	 */
+	private static final String NO_NEW_PRIVS = "NoNewPrivs:";
+
+	/**
+	 * Answer of the server on the daemon host in {@link #testIsolation()}.
+	 */
+	private static final String HOST_CONTENT = "host-ok";
 
 	private String _suffix;
 
@@ -659,6 +692,207 @@ public class TestDockerWorkspaceProvider extends TestCase {
 			assertEquals(128 + 9, process.exitCode());
 			assertEquals("Processes left after kill.", 0, sleepers(id));
 		}
+
+		// The container has no capability letting root signal the processes of another user.
+		CollectingOutput user = new CollectingOutput();
+		try (ExecProcess process = _provider.startExec(id,
+			ExecCommand.of("sh", "-c", "sleep 604 & echo started; sleep 605").setUser(OTHER_USER), user)) {
+			user.awaitStdout("started\n", WAIT);
+			assertEquals(2, sleepers(id));
+			process.terminate();
+			assertEquals(128 + 15, process.exitCode());
+			assertEquals("Processes of another user left after terminate.", 0, sleepers(id));
+		}
+	}
+
+	/**
+	 * A workspace container is limited in memory, CPUs and processes, has no capabilities, cannot
+	 * gain privileges, and publishes its port on the loopback address only.
+	 */
+	public void testHardening() throws Exception {
+		String id = "hardening";
+		WorkspaceInfo created = _provider.create(httpdSpec(id));
+		WorkspaceInfo started = _provider.start(id);
+
+		InspectContainerResponse container = _docker.inspectContainerCmd(created.getContainerId()).exec();
+		HostConfig host = container.getHostConfig();
+		assertEquals(Long.valueOf(DockerWorkspaceProvider.DEFAULT_MEMORY_LIMIT), host.getMemory());
+		long cpus = Math.min((long) DockerWorkspaceProvider.DEFAULT_CPU_LIMIT, daemonCpus());
+		assertEquals(Long.valueOf(cpus * 1_000_000_000L), host.getNanoCPUs());
+		assertEquals(Long.valueOf(DockerWorkspaceProvider.DEFAULT_PIDS_LIMIT), host.getPidsLimit());
+		assertEquals(Arrays.asList(Capability.ALL), Arrays.asList(host.getCapDrop()));
+		assertEquals(Arrays.asList(DockerWorkspaceProvider.NO_NEW_PRIVILEGES), host.getSecurityOpts());
+
+		Ports.Binding[] bindings =
+			container.getNetworkSettings().getPorts().getBindings().get(ExposedPort.tcp(8080));
+		assertTrue("Bindings: " + Arrays.toString(bindings), bindings.length > 0);
+		for (Ports.Binding binding : bindings) {
+			assertEquals(DockerWorkspaceProvider.LOOPBACK_ADDRESS, binding.getHostIp());
+		}
+		assertTrue(httpGet("http://" + LOOPBACK + ":" + started.getHostPort() + "/").contains(PAGE_CONTENT));
+
+		for (String user : new String[] { null, OTHER_USER }) {
+			String status = output(id, ExecCommand.of("cat", "/proc/self/status").setUser(user));
+			assertTrue(status, status.matches("(?s).*\n" + CAP_EFF + "\\s+0+\n.*"));
+			assertTrue(status, status.matches("(?s).*\n" + NO_NEW_PRIVS + "\\s+1\n.*"));
+		}
+		CollectingOutput chown = new CollectingOutput();
+		assertFalse("Root changed the owner of a file without capabilities.",
+			_provider.exec(id, ExecCommand.of("sh", "-c", "touch /tmp/owned && chown " + OTHER_USER + " /tmp/owned"),
+				chown) == 0);
+	}
+
+	/**
+	 * Configured limits replace the defaults, a CPU limit above the CPUs of the daemon host is cut
+	 * to them, {@code 0} sets no limit, and an empty host IP publishes on all addresses.
+	 */
+	public void testConfiguredLimits() throws Exception {
+		String suffix = _suffix + "-limits";
+		try (DockerWorkspaceProvider provider = createProvider(suffix, dockerHost(), null, config -> {
+			TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.MEMORY_LIMIT, 256L * 1024 * 1024);
+			TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.CPU_LIMIT, 100000.0);
+			TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.PIDS_LIMIT, 0L);
+			TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.HOST_IP, "");
+		})) {
+			try {
+				WorkspaceInfo created = provider.create(httpdSpec("limits"));
+				provider.start("limits");
+				InspectContainerResponse container = _docker.inspectContainerCmd(created.getContainerId()).exec();
+				HostConfig host = container.getHostConfig();
+				assertEquals(Long.valueOf(256L * 1024 * 1024), host.getMemory());
+				assertEquals(Long.valueOf(daemonCpus() * 1_000_000_000L), host.getNanoCPUs());
+				assertTrue("No PIDs limit: " + host.getPidsLimit(),
+					host.getPidsLimit() == null || host.getPidsLimit().longValue() <= 0);
+				for (Ports.Binding binding : container.getNetworkSettings().getPorts().getBindings()
+					.get(ExposedPort.tcp(8080))) {
+					assertFalse(DockerWorkspaceProvider.LOOPBACK_ADDRESS.equals(binding.getHostIp()));
+				}
+			} finally {
+				provider.cleanup(Collections.emptyList());
+			}
+		}
+	}
+
+	/**
+	 * On the isolated workspace network, a workspace reaches neither the port of another workspace
+	 * nor its port published on the loopback address, but it reaches the daemon host through the
+	 * gateway of the network.
+	 */
+	public void testIsolation() throws Exception {
+		_provider.create(httpdSpec("isolated-a"));
+		_provider.start("isolated-a");
+		WorkspaceInfo b = _provider.create(httpdSpec("isolated-b"));
+		WorkspaceInfo bStarted = _provider.start("isolated-b");
+
+		Network network = _docker.inspectNetworkCmd().withNetworkId(_network).exec();
+		assertEquals(Boolean.FALSE.toString(), network.getOptions().get(DockerWorkspaceProvider.OPTION_ENABLE_ICC));
+
+		ContainerNetwork bNetwork = _docker.inspectContainerCmd(b.getContainerId()).exec()
+			.getNetworkSettings().getNetworks().get(_network);
+		String gateway = bNetwork.getGateway();
+		assertFalse("Reached the port of another workspace.",
+			fetch("isolated-a", "http://" + bNetwork.getIpAddress() + ":8080/"));
+		assertFalse("Reached the port another workspace publishes on the loopback address.",
+			fetch("isolated-a", "http://" + gateway + ":" + bStarted.getHostPort() + "/"));
+
+		HttpServer host = HttpServer.create(new InetSocketAddress("0.0.0.0", 0), 0);
+		host.createContext("/", exchange -> {
+			byte[] body = HOST_CONTENT.getBytes(StandardCharsets.UTF_8);
+			exchange.sendResponseHeaders(200, body.length);
+			try (OutputStream out = exchange.getResponseBody()) {
+				out.write(body);
+			}
+		});
+		host.start();
+		try {
+			String hostUrl = "http://" + gateway + ":" + host.getAddress().getPort() + "/";
+			assertEquals(HOST_CONTENT, output("isolated-a", wget(hostUrl)));
+			assertEquals(HOST_CONTENT, output("isolated-a", wget(
+				"http://" + GATEWAY_HOST_NAME + ":" + host.getAddress().getPort() + "/")));
+		} finally {
+			host.stop(0);
+		}
+	}
+
+	/**
+	 * Without isolation, the workspaces on the network reach each other; a provider whose setting
+	 * does not match an existing network warns once and leaves the network as it is.
+	 */
+	public void testOpenNetworkAndMismatch() throws Exception {
+		String suffix = _suffix + "-open";
+		try (DockerWorkspaceProvider open = createProvider(suffix, dockerHost(), null, config -> {
+			TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.ISOLATE_WORKSPACES, false);
+		})) {
+			try {
+				open.create(httpdSpec("open-a"));
+				open.start("open-a");
+				WorkspaceInfo b = open.create(httpdSpec("open-b"));
+				open.start("open-b");
+				String openNetwork = "tl-factory-test-" + suffix;
+				assertEquals(Boolean.TRUE.toString(), _docker.inspectNetworkCmd().withNetworkId(openNetwork).exec()
+					.getOptions().get(DockerWorkspaceProvider.OPTION_ENABLE_ICC));
+				String address = _docker.inspectContainerCmd(b.getContainerId()).exec()
+					.getNetworkSettings().getNetworks().get(openNetwork).getIpAddress();
+				assertEquals(PAGE_CONTENT + "\n", output(open, "open-a", wget("http://" + address + ":8080/")));
+			} finally {
+				open.cleanup(Collections.emptyList());
+			}
+		}
+
+		_provider.create(httpdSpec("isolated"));
+		List<String> warnings = new CopyOnWriteArrayList<>();
+		Listener<LogEntry> listener = entry -> warnings.add(String.valueOf(entry.getMessage()));
+		Logger.getListenerRegistry().register(listener);
+		try (DockerWorkspaceProvider mismatch = createProvider(_suffix, dockerHost(), null, config -> {
+			TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.ISOLATE_WORKSPACES, false);
+		})) {
+			mismatch.create(httpdSpec("mismatch-1"));
+			mismatch.create(httpdSpec("mismatch-2"));
+		} finally {
+			Logger.getListenerRegistry().unregister(listener);
+		}
+		long reported = warnings.stream()
+			.filter(message -> message.contains(_network) && message.contains(DockerWorkspaceProvider.OPTION_ENABLE_ICC))
+			.count();
+		assertEquals("Warnings: " + warnings, 1, reported);
+		assertEquals("The network is not changed.", Boolean.FALSE.toString(),
+			_docker.inspectNetworkCmd().withNetworkId(_network).exec().getOptions()
+				.get(DockerWorkspaceProvider.OPTION_ENABLE_ICC));
+	}
+
+	/**
+	 * Fetches a URL from inside a workspace.
+	 *
+	 * @return Whether it answered.
+	 */
+	private boolean fetch(String id, String url) throws InterruptedException {
+		return _provider.exec(id, wget(url), ExecOutput.NONE) == 0;
+	}
+
+	private static ExecCommand wget(String url) {
+		return ExecCommand.of("wget", "-q", "-T", "3", "-O", "-", url);
+	}
+
+	/**
+	 * The standard output of a command that succeeds.
+	 */
+	private String output(String id, ExecCommand command) throws InterruptedException {
+		return output(_provider, id, command);
+	}
+
+	/**
+	 * The standard output of a command that succeeds in a workspace of the given provider.
+	 */
+	private static String output(WorkspaceProvider provider, String id, ExecCommand command)
+			throws InterruptedException {
+		CollectingOutput output = new CollectingOutput();
+		int exitCode = provider.exec(id, command, output);
+		assertEquals(output.stderr(), 0, exitCode);
+		return output.stdout();
+	}
+
+	private long daemonCpus() {
+		return _docker.infoCmd().exec().getNCPU().longValue();
 	}
 
 	/**
@@ -908,6 +1142,17 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	 *        The directory with the client certificates for TLS, {@code null} without TLS.
 	 */
 	private static DockerWorkspaceProvider createProvider(String suffix, String dockerHost, String certPath) {
+		return createProvider(suffix, dockerHost, certPath, config -> {
+			// The defaults.
+		});
+	}
+
+	/**
+	 * A provider of the workspaces of the test with the given suffix, configured further by the
+	 * given setup.
+	 */
+	private static DockerWorkspaceProvider createProvider(String suffix, String dockerHost, String certPath,
+			Consumer<DockerWorkspaceProvider.Config<?>> setup) {
 		DockerWorkspaceProvider.Config<?> config = TypedConfiguration.newConfigItem(DockerWorkspaceProvider.Config.class);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.DOCKER_HOST, dockerHost);
 		if (certPath != null) {
@@ -922,6 +1167,7 @@ public class TestDockerWorkspaceProvider extends TestCase {
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.TERMINATE_TIMEOUT, 2);
 		TypedConfigUtil.setProperty(config, DockerWorkspaceProvider.Config.EXTRA_HOSTS,
 			Arrays.asList(EXTRA_HOST_NAME + ":" + EXTRA_HOST_ADDRESS, GATEWAY_HOST_NAME + ":" + HOST_GATEWAY));
+		setup.accept(config);
 		return (DockerWorkspaceProvider) TypedConfigUtil.createInstance(config);
 	}
 

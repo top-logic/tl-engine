@@ -12,7 +12,9 @@
 # workspace volumes belong to this user, so that a fresh named volume mounted there belongs to it
 # as well; so does its home directory, which holds the mount point of the agent's conversations. The placeholders @...@ are replaced by ApplicationWorkspaces.imageContext().
 
-FROM eclipse-temurin:21-jdk
+# The base image is pinned by the digest of its tag, so that the same files always build on the same
+# base; Renovate moves the digest (see the customManagers in renovate.json).
+FROM eclipse-temurin:21-jdk@sha256:23cc5734ff46e776f51ce66eb9ee08444fd47caabec0a95b7eb6e94be2d3696d
 
 # The tool versions are pinned and updated by Renovate through the "# renovate:" comments (see the
 # customManagers in renovate.json). The output of Claude Code is parsed, so a new version is
@@ -34,8 +36,14 @@ RUN apt-get update \
 	&& apt-get install -y --no-install-recommends ca-certificates curl git xz-utils \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
-		| tar -xz -C /opt \
+# Maven with the SHA-512 checksum published beside it.
+RUN file="apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
+	&& url="https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/${MAVEN_VERSION}/${file}" \
+	&& cd /tmp \
+	&& curl -fsSLO "${url}" \
+	&& echo "$(curl -fsSL "${url}.sha512" | cut -d ' ' -f 1)  ${file}" | sha512sum -c - \
+	&& tar -xzf "${file}" -C /opt \
+	&& rm "${file}" \
 	&& ln -s "/opt/apache-maven-${MAVEN_VERSION}" /opt/maven
 
 ENV MAVEN_HOME=/opt/maven

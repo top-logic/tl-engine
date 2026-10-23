@@ -25,6 +25,17 @@
         "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+ARG [A-Z0-9_]+=(?<currentValue>\\S+)",
         "# renovate: datasource=(?<datasource>git-refs) depName=(?<depName>\\S+) packageName=(?<packageName>\\S+) currentValue=(?<currentValue>\\S+)\\s+ARG [A-Z0-9_]+=(?<currentDigest>[0-9a-f]{40})"
       ]
+    },
+    {
+      "customType": "regex",
+      "description": "Base image of the workspace image of tl-factory, pinned by the digest of its tag: Renovate moves the digest.",
+      "managerFilePatterns": [
+        "/(^|/)tl-factory/src/main/java/com/top_logic/factory/workspace/app/image/Dockerfile$/"
+      ],
+      "matchStrings": [
+        "FROM (?<depName>[a-z0-9./_-]+):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[0-9a-f]{64})"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
@@ -49,6 +60,21 @@
       ],
       "versioning": "node",
       "allowedVersions": "/^v?(2[2468]|[3-9][02468])\\./"
+    },
+    {
+      "description": "Base image of the workspace image: only new digests of its tag (21-jdk), no move to another JDK version.",
+      "matchFileNames": [
+        "tl-factory/src/main/java/com/top_logic/factory/workspace/app/image/Dockerfile"
+      ],
+      "matchDepNames": [
+        "eclipse-temurin"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "enabled": false
     }
   ]
 }

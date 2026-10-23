@@ -5,6 +5,8 @@
  */
 package com.top_logic.factory.llm;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.text.ParseException;
 import java.time.Clock;
 import java.time.Duration;
@@ -12,7 +14,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
@@ -21,6 +22,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.MillisFormat;
@@ -31,7 +34,6 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.tl.ai.core.access.SecretTokens;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
@@ -42,25 +44,29 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * A workspace container gets no API key and no token in its environment, only the URL of the
- * {@link LLMProxyServlet} of the control application in {@link #ENV_BASE_URL}. A process that may
+ * {@link LLMProxyHandler proxy} of the control application in {@link #ENV_BASE_URL}. A process that may
  * use the API - an agent run - gets a token of its own, {@link #issue(String, Duration) issued} for
  * its workspace and passed only to that process in {@link #ENV_AUTH_TOKEN}; Claude Code sends it
  * as bearer token. The proxy accepts a request from an {@link Config#getAllowedSources() accepted
- * address} whose token is valid, adds the API key of the {@link Config#getProvider() configured
+ * address} whose token admits it, adds the API key of the {@link Config#getProvider() configured
  * provider} of the {@link LLMProviderService} and forwards the request.
  * </p>
  *
  * <p>
- * A token is {@value #TOKEN_PREFIX} followed by a random secret of about 256 bits (see
- * {@link SecretTokens}). It is valid until it is {@link #revoke(String) revoked} - when its run
- * ends -, until its lifetime ends (at most {@link Config#getMaxTokenLifetime()}), or until its
- * workspace is removed. Tokens are kept in memory only, as their hashes; a restart of the control
- * application invalidates all of them, together with the runs it started.
+ * A token is {@value #TOKEN_PREFIX} followed by a random secret of about 256 bits. It is valid until
+ * it is {@link #revoke(String) revoked} - when its run ends -, until its lifetime ends (at most
+ * {@link Config#getMaxTokenLifetime()}), or until its workspace is removed. It is bound to the
+ * address of its first request and limited to {@link Config#getRateLimit()} requests per minute,
+ * see {@link TokenGrants}. Tokens are kept in memory only, as their hashes; a restart of the
+ * control application invalidates all of them, together with the runs it started.
  * </p>
  *
  * <p>
  * The proxy is switched on by its {@link Config#getProxyUrl() URL}: without one, workspaces get no
- * URL, no token is issued, and the servlet answers every request with 404.
+ * URL, no token is issued, and the proxy answers every request with 404. It listens on a port of
+ * its own ({@link LLMProxyListener}, {@link Config#getListenAddress()},
+ * {@link Config#getListenPort()}); the {@link LLMProxyServlet} in the web application answers only
+ * if {@link Config#isServletEnabled()} is set.
  * </p>
  */
 @ServiceDependencies({
@@ -97,7 +103,29 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		String ALLOWED_SOURCES = "allowed-sources";
 
 		/**
-		 * The URL of the {@link LLMProxyServlet} as the workspace containers reach it, e.g.
+		 * Configuration property name of {@link #getRateLimit()}.
+		 */
+		String RATE_LIMIT = "rate-limit";
+
+		/**
+		 * Configuration property name of {@link #getListenAddress()}.
+		 */
+		String LISTEN_ADDRESS = "listen-address";
+
+		/**
+		 * Configuration property name of {@link #getListenPort()}.
+		 */
+		String LISTEN_PORT = "listen-port";
+
+		/**
+		 * Configuration property name of {@link #isServletEnabled()}.
+		 */
+		String SERVLET_ENABLED = "servlet-enabled";
+
+		/**
+		 * The URL of the proxy as the workspace containers reach it: the
+		 * {@link #getListenPort() port of its own}, e.g.
+		 * {@code http://host.docker.internal:8091/llm-proxy}, or the {@link LLMProxyServlet}, e.g.
 		 * {@code http://host.docker.internal:8080/tl-factory-app/llm-proxy}.
 		 *
 		 * <p>
@@ -149,6 +177,72 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		@Format(CommaSeparatedStrings.class)
 		List<String> getAllowedSources();
 
+		/**
+		 * The requests per minute a token may make, with bursts up to this number; {@code 0} for
+		 * no limit.
+		 *
+		 * <p>
+		 * A request beyond is answered with 429 and the seconds to wait in {@code Retry-After},
+		 * which Claude Code waits for before it repeats the request. The default leaves an agent
+		 * working at full speed - a request per step and a few side requests - room, and limits a
+		 * token that got out of the workspace.
+		 * </p>
+		 *
+		 * @see #RATE_LIMIT
+		 */
+		@Name(RATE_LIMIT)
+		@IntDefault(DEFAULT_RATE_LIMIT)
+		int getRateLimit();
+
+		/**
+		 * The address the proxy listens on with a port of its own, see {@link #getListenPort()}.
+		 *
+		 * <p>
+		 * The default, the loopback address, serves a reverse proxy or a tunnel on the same host
+		 * only. With the control application on the host of the Docker daemon, it is the address
+		 * {@code host-gateway} stands for in the workspaces - the gateway of Docker's default
+		 * bridge, e.g. {@code 172.17.0.1} -, so that workspaces reach it but no other host does.
+		 * In a container of its own, the control application listens on {@code 0.0.0.0} and the
+		 * port is not published, or published on an internal address only.
+		 * </p>
+		 *
+		 * @see #LISTEN_ADDRESS
+		 */
+		@Name(LISTEN_ADDRESS)
+		@StringDefault(DEFAULT_LISTEN_ADDRESS)
+		String getListenAddress();
+
+		/**
+		 * The port the proxy listens on, apart from the port of the control application; {@code 0}
+		 * for no port of its own.
+		 *
+		 * <p>
+		 * The proxy is reached there at {@link LLMProxyHandler#PATH}. The port is opened only if
+		 * the proxy is switched on by its {@link #getProxyUrl() URL}.
+		 * </p>
+		 *
+		 * @see #LISTEN_PORT
+		 */
+		@Name(LISTEN_PORT)
+		@IntDefault(DEFAULT_LISTEN_PORT)
+		int getListenPort();
+
+		/**
+		 * Whether the proxy also answers at {@link LLMProxyHandler#PATH} of the web application,
+		 * through the port of the control application.
+		 *
+		 * <p>
+		 * Off by default: the port of the control application is the one its users reach, and the
+		 * proxy needs not be reachable there. Switched on, a reverse proxy in front of the control
+		 * application must keep clients from outside from reaching that path.
+		 * </p>
+		 *
+		 * @see #SERVLET_ENABLED
+		 */
+		@Name(SERVLET_ENABLED)
+		@BooleanDefault(false)
+		boolean isServletEnabled();
+
 	}
 
 	/**
@@ -169,22 +263,25 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	public static final String TOKEN_PREFIX = "tlwst_";
 
 	/**
-	 * A valid token, by its hash.
-	 *
-	 * @param workspaceId
-	 *        The workspace the token is issued for.
-	 * @param expires
-	 *        When the token stops being valid.
+	 * Default of {@link Config#getRateLimit()}.
 	 */
-	private record Grant(String workspaceId, Instant expires) {
-		// Plain data.
-	}
+	public static final int DEFAULT_RATE_LIMIT = 120;
 
-	private final Map<String, Grant> _grants = new ConcurrentHashMap<>();
+	/**
+	 * Default of {@link Config#getListenAddress()}, the loopback address.
+	 */
+	public static final String DEFAULT_LISTEN_ADDRESS = "127.0.0.1";
+
+	/**
+	 * Default of {@link Config#getListenPort()}.
+	 */
+	public static final int DEFAULT_LISTEN_PORT = 8091;
+
+	private final TokenGrants _grants;
 
 	private final SourceFilter _sources;
 
-	private final Clock _clock = Clock.systemUTC();
+	private LLMProxyListener _listener;
 
 	/**
 	 * Creates a {@link LLMProxyService} from configuration.
@@ -203,6 +300,54 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 			throw new ConfigurationError(
 				"Invalid entry in '" + Config.ALLOWED_SOURCES + "' of the LLM proxy: " + ex.getMessage(), ex);
 		}
+		if (config.getRateLimit() < 0 || config.getListenPort() < 0) {
+			throw new ConfigurationError("Negative '" + Config.RATE_LIMIT + "' or '" + Config.LISTEN_PORT
+				+ "' of the LLM proxy.");
+		}
+		_grants = new TokenGrants(Clock.systemUTC(), LLMProxyService::workspaceExists, config.getRateLimit());
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+		if (isEnabled() && getConfig().getListenPort() > 0) {
+			InetSocketAddress address =
+				new InetSocketAddress(getConfig().getListenAddress().strip(), getConfig().getListenPort());
+			try {
+				_listener = new LLMProxyListener(address, () -> this);
+				Logger.info("LLM proxy listening on " + _listener.getAddress() + ".", LLMProxyService.class);
+			} catch (IOException ex) {
+				Logger.error("LLM proxy: cannot listen on " + address + ", the workspaces have no LLM access: "
+					+ ex.getMessage(), ex, LLMProxyService.class);
+			}
+		}
+	}
+
+	@Override
+	protected void shutDown() {
+		if (_listener != null) {
+			_listener.close();
+			_listener = null;
+		}
+		super.shutDown();
+	}
+
+	/**
+	 * The address the proxy listens on with a port of its own, {@code null} if it does not.
+	 */
+	public InetSocketAddress getListenerAddress() {
+		LLMProxyListener listener = _listener;
+		return listener == null ? null : listener.getAddress();
+	}
+
+	/**
+	 * The {@link LLMProxy} the {@link LLMProxyServlet} of the web application serves: the
+	 * {@link LLMProxyService} if it is running and {@link Config#isServletEnabled() serves the
+	 * servlet}, {@code null} otherwise.
+	 */
+	public static LLMProxy servletProxy() {
+		LLMProxyService service = getInstance();
+		return service != null && service.getConfig().isServletEnabled() ? service : null;
 	}
 
 	@Override
@@ -253,13 +398,8 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		if (!isEnabled()) {
 			return null;
 		}
-		Instant now = _clock.instant();
-		dropExpired(now);
 		Duration max = getMaxTokenLifetime();
-		Duration effective = lifetime.compareTo(max) > 0 ? max : lifetime;
-		String plain = SecretTokens.newToken(TOKEN_PREFIX);
-		_grants.put(SecretTokens.hash(plain), new Grant(workspaceId, now.plus(effective)));
-		return plain;
+		return _grants.issue(workspaceId, lifetime.compareTo(max) > 0 ? max : lifetime);
 	}
 
 	/**
@@ -269,11 +409,7 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	 */
 	@Override
 	public Instant expiresAt(String token) {
-		if (!SecretTokens.hasFormat(TOKEN_PREFIX, token)) {
-			return null;
-		}
-		Grant grant = _grants.get(SecretTokens.hash(token));
-		return grant == null ? null : grant.expires();
+		return _grants.expiresAt(token);
 	}
 
 	/**
@@ -281,20 +417,14 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	 */
 	@Override
 	public void revoke(String token) {
-		if (SecretTokens.hasFormat(TOKEN_PREFIX, token)) {
-			_grants.remove(SecretTokens.hash(token));
-		}
+		_grants.revoke(token);
 	}
 
 	/**
 	 * Revokes all tokens issued for the given workspace, e.g. when it is removed.
 	 */
 	public void revokeAll(String workspaceId) {
-		_grants.values().removeIf(grant -> grant.workspaceId().equals(workspaceId));
-	}
-
-	private void dropExpired(Instant now) {
-		_grants.values().removeIf(grant -> !now.isBefore(grant.expires()));
+		_grants.revokeAll(workspaceId);
 	}
 
 	@Override
@@ -303,26 +433,14 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	}
 
 	@Override
-	public boolean authenticate(String token) {
-		if (!SecretTokens.hasFormat(TOKEN_PREFIX, token)) {
-			return false;
-		}
-		String hash = SecretTokens.hash(token);
-		Grant grant = _grants.get(hash);
-		if (grant == null) {
-			return false;
-		}
-		if (!_clock.instant().isBefore(grant.expires())) {
-			_grants.remove(hash, grant);
-			return false;
-		}
-		boolean exists = ThreadContext.<Boolean, RuntimeException, RuntimeException> inSystemContext(
+	public LLMAdmission admit(String token, String remoteAddress) {
+		return _grants.admit(token, remoteAddress);
+	}
+
+	private static boolean workspaceExists(String workspaceId) {
+		return ThreadContext.<Boolean, RuntimeException, RuntimeException> inSystemContext(
 			LLMProxyService.class,
-			() -> Boolean.valueOf(FactoryModel.findWorkspace(grant.workspaceId()) != null)).booleanValue();
-		if (!exists) {
-			_grants.remove(hash, grant);
-		}
-		return exists;
+			() -> Boolean.valueOf(FactoryModel.findWorkspace(workspaceId) != null)).booleanValue();
 	}
 
 	@Override

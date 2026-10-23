@@ -6,8 +6,11 @@
 package test.com.top_logic.factory.llm;
 
 import java.text.ParseException;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +25,10 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.factory.llm.LLMAdmission;
 import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.llm.SourceFilter;
+import com.top_logic.factory.llm.TokenGrants;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.app.ApplicationSpec;
@@ -37,7 +42,13 @@ import com.top_logic.tl.ai.core.access.SecretTokens;
  */
 public class TestLLMProxyService extends TestCase {
 
-	private static final String PROXY_URL = "http://host.docker.internal:8080/tl-factory-app/llm-proxy";
+	private static final String PROXY_URL = "http://host.docker.internal:8091/llm-proxy";
+
+	private static final String SOURCE = "172.30.0.5";
+
+	private static final String OTHER_SOURCE = "172.30.0.6";
+
+	private final MutableClock _clock = new MutableClock();
 
 	/**
 	 * A workspace container gets the URL of the proxy, but no token.
@@ -106,10 +117,101 @@ public class TestLLMProxyService extends TestCase {
 	 */
 	public void testForeignTokenRefused() {
 		LLMProxyService service = service(PROXY_URL);
-		assertFalse(service.authenticate(null));
-		assertFalse(service.authenticate(""));
-		assertFalse(service.authenticate(SecretTokens.newToken("tlpat_")));
-		assertFalse("Never issued.", service.authenticate(SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX)));
+		assertEquals(LLMAdmission.INVALID_TOKEN, service.admit(null, SOURCE));
+		assertEquals(LLMAdmission.INVALID_TOKEN, service.admit("", SOURCE));
+		assertEquals(LLMAdmission.INVALID_TOKEN, service.admit(SecretTokens.newToken("tlpat_"), SOURCE));
+		assertEquals("Never issued.", LLMAdmission.INVALID_TOKEN,
+			service.admit(SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX), SOURCE));
+	}
+
+	/**
+	 * The proxy listens on a port of its own on the loopback address and does not answer in the
+	 * web application, unless configured otherwise.
+	 */
+	public void testListenerAndServletDefaults() {
+		LLMProxyService.Config<?> config = service(PROXY_URL).getConfig();
+		assertEquals(LLMProxyService.DEFAULT_LISTEN_PORT, config.getListenPort());
+		assertEquals(LLMProxyService.DEFAULT_LISTEN_ADDRESS, config.getListenAddress());
+		assertFalse(config.isServletEnabled());
+		assertEquals(LLMProxyService.DEFAULT_RATE_LIMIT, config.getRateLimit());
+		assertNull("No servlet proxy without a running service.", LLMProxyService.servletProxy());
+	}
+
+	/**
+	 * A token is bound to the address of its first request; other addresses are refused, its own
+	 * keeps working; another token binds to its own first address.
+	 */
+	public void testTokenBoundToFirstSource() {
+		TokenGrants grants = new TokenGrants(_clock, workspace -> true, 0);
+		String token = grants.issue("ws-1", Duration.ofHours(1));
+		assertEquals(LLMAdmission.ADMITTED, grants.admit(token, SOURCE));
+		assertEquals(LLMAdmission.FOREIGN_SOURCE, grants.admit(token, OTHER_SOURCE));
+		assertEquals(LLMAdmission.ADMITTED, grants.admit(token, SOURCE));
+		assertNotNull("Not revoked.", grants.expiresAt(token));
+
+		String other = grants.issue("ws-1", Duration.ofHours(1));
+		assertEquals(LLMAdmission.ADMITTED, grants.admit(other, OTHER_SOURCE));
+		assertEquals(LLMAdmission.FOREIGN_SOURCE, grants.admit(other, SOURCE));
+	}
+
+	/**
+	 * A refused token does not bind: the first admitted request decides.
+	 */
+	public void testInvalidRequestDoesNotBind() {
+		boolean[] exists = { false };
+		TokenGrants grants = new TokenGrants(_clock, workspace -> exists[0], 0);
+		String token = grants.issue("ws-1", Duration.ofHours(1));
+		assertEquals(LLMAdmission.INVALID_TOKEN, grants.admit(token, OTHER_SOURCE));
+		assertNull("Dropped with its workspace.", grants.expiresAt(token));
+
+		exists[0] = true;
+		String next = grants.issue("ws-1", Duration.ofHours(1));
+		assertEquals(LLMAdmission.ADMITTED, grants.admit(next, SOURCE));
+	}
+
+	/**
+	 * A token makes at most the rate limit of requests in a burst; the allowance refills with the
+	 * time, and the wait reported is the time until the next request is admitted.
+	 */
+	public void testRateLimit() {
+		TokenGrants grants = new TokenGrants(_clock, workspace -> true, 6);
+		String token = grants.issue("ws-1", Duration.ofHours(1));
+		for (int n = 0; n < 6; n++) {
+			assertEquals("Request " + n, LLMAdmission.ADMITTED, grants.admit(token, SOURCE));
+		}
+		LLMAdmission limited = grants.admit(token, SOURCE);
+		assertEquals(LLMAdmission.Status.RATE_LIMITED, limited.status());
+		assertEquals("One request every ten seconds.", Duration.ofSeconds(10), limited.retryAfter());
+
+		_clock.advance(Duration.ofSeconds(4));
+		assertEquals(Duration.ofSeconds(6), grants.admit(token, SOURCE).retryAfter());
+		_clock.advance(Duration.ofSeconds(6));
+		assertEquals(LLMAdmission.ADMITTED, grants.admit(token, SOURCE));
+		assertEquals(LLMAdmission.Status.RATE_LIMITED, grants.admit(token, SOURCE).status());
+
+		_clock.advance(Duration.ofMinutes(5));
+		for (int n = 0; n < 6; n++) {
+			assertEquals("At most a burst of the limit: " + n, LLMAdmission.ADMITTED, grants.admit(token, SOURCE));
+		}
+		assertEquals(LLMAdmission.Status.RATE_LIMITED, grants.admit(token, SOURCE).status());
+
+		TokenGrants unlimited = new TokenGrants(_clock, workspace -> true, 0);
+		String free = unlimited.issue("ws-1", Duration.ofHours(1));
+		for (int n = 0; n < 1000; n++) {
+			assertEquals(LLMAdmission.ADMITTED, unlimited.admit(free, SOURCE));
+		}
+	}
+
+	/**
+	 * A token is refused after its lifetime.
+	 */
+	public void testExpiry() {
+		TokenGrants grants = new TokenGrants(_clock, workspace -> true, 0);
+		String token = grants.issue("ws-1", Duration.ofMinutes(10));
+		assertEquals(LLMAdmission.ADMITTED, grants.admit(token, SOURCE));
+		_clock.advance(Duration.ofMinutes(10));
+		assertEquals(LLMAdmission.INVALID_TOKEN, grants.admit(token, SOURCE));
+		assertNull(grants.expiresAt(token));
 	}
 
 	/**
@@ -179,6 +281,33 @@ public class TestLLMProxyService extends TestCase {
 	 */
 	public static Test suite() {
 		return ServiceTestSetup.createSetup(TestLLMProxyService.class, TypeIndex.Module.INSTANCE);
+	}
+
+	/**
+	 * {@link Clock} the test advances.
+	 */
+	private static final class MutableClock extends Clock {
+
+		private Instant _now = Instant.parse("2026-01-01T00:00:00Z");
+
+		void advance(Duration duration) {
+			_now = _now.plus(duration);
+		}
+
+		@Override
+		public ZoneId getZone() {
+			return ZoneOffset.UTC;
+		}
+
+		@Override
+		public Clock withZone(ZoneId zone) {
+			return this;
+		}
+
+		@Override
+		public Instant instant() {
+			return _now;
+		}
 	}
 
 }

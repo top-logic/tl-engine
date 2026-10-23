@@ -21,7 +21,12 @@
 					public-host="%FACTORY_PUBLIC_HOST%"
 					host-port-min="%FACTORY_HOST_PORT_MIN%"
 					host-port-max="%FACTORY_HOST_PORT_MAX%"
+					cpu-limit="%FACTORY_WORKSPACE_CPUS%"
 					extra-hosts="%FACTORY_DOCKER_EXTRA_HOSTS%"
+					host-ip="%FACTORY_HOST_IP%"
+					isolate-workspaces="%FACTORY_DOCKER_ISOLATE%"
+					memory-limit="%FACTORY_WORKSPACE_MEMORY%"
+					pids-limit="%FACTORY_WORKSPACE_PIDS%"
 				/>
 				<applications
 					engine-version="%FACTORY_ENGINE_VERSION%"
@@ -47,8 +52,12 @@
 		<config service-class="com.top_logic.factory.llm.LLMProxyService">
 			<instance class="com.top_logic.factory.llm.LLMProxyService"
 				allowed-sources="%FACTORY_LLM_ALLOWED_SOURCES%"
+				listen-address="%FACTORY_LLM_PROXY_ADDRESS%"
+				listen-port="%FACTORY_LLM_PROXY_PORT%"
 				provider="%FACTORY_LLM_PROVIDER%"
 				proxy-url="%FACTORY_LLM_PROXY_URL%"
+				rate-limit="%FACTORY_LLM_RATE_LIMIT%"
+				servlet-enabled="%FACTORY_LLM_PROXY_SERVLET%"
 			/>
 		</config>
 

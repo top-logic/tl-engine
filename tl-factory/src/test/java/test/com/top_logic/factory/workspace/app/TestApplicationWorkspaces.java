@@ -401,15 +401,18 @@ public class TestApplicationWorkspaces extends TestCase {
 	}
 
 	/**
-	 * The workspace runs its commands as the non-root {@link ApplicationWorkspaces#WORKSPACE_USER},
-	 * has Claude Code in the version of the image with the TopLogic plugin and the Playwright MCP
+	 * The workspace runs its commands as the non-root {@link ApplicationWorkspaces#WORKSPACE_USER}
+	 * without capabilities, has Claude Code in the version of the image with the TopLogic plugin and the Playwright MCP
 	 * server, whose headless Chromium opens a page, and has no API key in its environment; a command of the
 	 * workspace user reads its input and is terminated.
 	 */
 	private void assertAgentTools() throws Exception {
 		assertEquals(ApplicationWorkspaces.WORKSPACE_USER + "\n", output(ExecCommand.of("id", "-un")));
 		assertFalse("Commands run as root.", "0\n".equals(output(ExecCommand.of("id", "-u"))));
-		assertEquals("0\n", output(ExecCommand.of("id", "-u").setUser(ApplicationWorkspaces.ROOT_USER)));
+		// No capabilities, no gain of privileges (setuid programs): nothing in the container acts as root.
+		String status = output(ExecCommand.of("cat", "/proc/self/status"));
+		assertTrue(status, status.matches("(?s).*\\nCapEff:\\s+0+\\n.*"));
+		assertTrue(status, status.matches("(?s).*\\nNoNewPrivs:\\s+1\\n.*"));
 
 		assertTrue("Unexpected Claude Code version.",
 			output(ExecCommand.of("claude", "--version")).startsWith(claudeCodeVersion() + " "));

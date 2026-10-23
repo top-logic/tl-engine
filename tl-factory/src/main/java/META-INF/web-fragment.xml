@@ -6,8 +6,9 @@
   <name>tl-factory</name>
 
   <!--
-    The LLM proxy of the workspace containers (LLMProxyServlet.PATH). The servlet authenticates the
-    requests itself by the token of a workspace.
+    The LLM proxy of the workspace containers (LLMProxyHandler.PATH) in the web application. It answers
+    only if servlet-enabled of the LLMProxyService is set; by default the proxy listens on a port of its
+    own instead. The servlet authenticates the requests itself by the token of a workspace.
   -->
   <servlet>
     <servlet-name>LLMProxyServlet</servlet-name>

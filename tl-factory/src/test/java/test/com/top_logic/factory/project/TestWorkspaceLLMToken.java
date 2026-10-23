@@ -17,6 +17,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.llm.LLMAdmission;
 import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
@@ -33,6 +34,11 @@ import com.top_logic.util.model.ModelService;
  * workspace is valid until it is revoked, its lifetime ends or its workspace is removed.
  */
 public class TestWorkspaceLLMToken extends BasicTestCase {
+
+	/**
+	 * The address the requests of the test come from.
+	 */
+	private static final String SOURCE = "172.30.0.5";
 
 	private static final String PROXY_URL = "http://llm-proxy.test/llm-proxy";
 
@@ -80,14 +86,14 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	 */
 	public void testIssueAndRevoke() {
 		String token = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
-		assertTrue(_proxy.authenticate(token));
+		assertTrue(admitted(token));
 		assertFalse("Another well-formed token.",
-			_proxy.authenticate(SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX)));
+			admitted(SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX)));
 
 		String other = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
 		_proxy.revoke(token);
-		assertFalse("Revoked.", _proxy.authenticate(token));
-		assertTrue("Other runs keep their tokens.", _proxy.authenticate(other));
+		assertFalse("Revoked.", admitted(token));
+		assertTrue("Other runs keep their tokens.", admitted(other));
 	}
 
 	/**
@@ -95,9 +101,9 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	 */
 	public void testExpired() throws InterruptedException {
 		String token = _proxy.issue(WORKSPACE_ID, Duration.ofMillis(100));
-		assertTrue(_proxy.authenticate(token));
+		assertTrue(admitted(token));
 		Thread.sleep(300);
-		assertFalse("Expired.", _proxy.authenticate(token));
+		assertFalse("Expired.", admitted(token));
 	}
 
 	/**
@@ -107,13 +113,13 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	public void testWorkspaceRemoved() {
 		String token = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
 		String unknown = _proxy.issue("no-such-workspace", Duration.ofMinutes(5));
-		assertFalse("Unknown workspace.", _proxy.authenticate(unknown));
+		assertFalse("Unknown workspace.", admitted(unknown));
 
 		commit(() -> {
 			_workspace.tDelete();
 			return null;
 		});
-		assertFalse("Workspace removed.", _proxy.authenticate(token));
+		assertFalse("Workspace removed.", admitted(token));
 	}
 
 	/**
@@ -123,8 +129,8 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 		String first = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
 		String second = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
 		_proxy.revokeAll(WORKSPACE_ID);
-		assertFalse(_proxy.authenticate(first));
-		assertFalse(_proxy.authenticate(second));
+		assertFalse(admitted(first));
+		assertFalse(admitted(second));
 	}
 
 	private static <T> T commit(Supplier<T> change) {
@@ -148,6 +154,13 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 				// The default engine version of a new project; starting it contacts no container platform.
 				WorkspaceService.Module.INSTANCE,
 				LLMProxyService.Module.INSTANCE));
+	}
+
+	/**
+	 * Whether the proxy admits a request with the given token.
+	 */
+	private boolean admitted(String token) {
+		return _proxy.admit(token, SOURCE).status() == LLMAdmission.Status.ADMITTED;
 	}
 
 }

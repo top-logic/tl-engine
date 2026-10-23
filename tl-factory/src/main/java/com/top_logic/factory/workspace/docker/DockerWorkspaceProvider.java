@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -35,6 +36,7 @@ import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.BuildResponseItem;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
@@ -59,8 +61,12 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.format.MemorySizeFormat;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.factory.workspace.ExecCommand;
@@ -101,6 +107,21 @@ import com.top_logic.util.error.TopLogicException;
  * published on a port of the range from {@link Config#getHostPortMin()} to
  * {@link Config#getHostPortMax()}, which the daemon chooses anew on every start among the ports of
  * the range that are free at that time.
+ * </p>
+ *
+ * <p>
+ * The network is created with {@link #OPTION_ENABLE_ICC} switched off if
+ * {@link Config#isIsolateWorkspaces()} is set, so that a workspace container cannot reach another
+ * one on it. The host port is bound to {@link Config#getHostIp()} only, by default the loopback
+ * address of the daemon host.
+ * </p>
+ *
+ * <p>
+ * Every workspace container is limited in {@link Config#getMemoryLimit() memory},
+ * {@link Config#getCpuLimit() CPUs} and {@link Config#getPidsLimit() processes}, runs without any
+ * capability ({@link Capability#ALL} dropped) and with {@link #NO_NEW_PRIVILEGES}: no process in it
+ * gains rights, not even one of the root user or a setuid program. The provider runs no command as
+ * root itself; a command is terminated by its own user.
  * </p>
  *
  * <p>
@@ -206,6 +227,41 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		 * @see #getExtraHosts()
 		 */
 		String EXTRA_HOSTS = "extra-hosts";
+
+		/**
+		 * Configuration property name of {@link #getHostIp()}.
+		 *
+		 * @see #getHostIp()
+		 */
+		String HOST_IP = "host-ip";
+
+		/**
+		 * Configuration property name of {@link #isIsolateWorkspaces()}.
+		 *
+		 * @see #isIsolateWorkspaces()
+		 */
+		String ISOLATE_WORKSPACES = "isolate-workspaces";
+
+		/**
+		 * Configuration property name of {@link #getMemoryLimit()}.
+		 *
+		 * @see #getMemoryLimit()
+		 */
+		String MEMORY_LIMIT = "memory-limit";
+
+		/**
+		 * Configuration property name of {@link #getCpuLimit()}.
+		 *
+		 * @see #getCpuLimit()
+		 */
+		String CPU_LIMIT = "cpu-limit";
+
+		/**
+		 * Configuration property name of {@link #getPidsLimit()}.
+		 *
+		 * @see #getPidsLimit()
+		 */
+		String PIDS_LIMIT = "pids-limit";
 
 		@Override
 		@ClassDefault(DockerWorkspaceProvider.class)
@@ -362,7 +418,126 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		@Format(CommaSeparatedStrings.class)
 		List<String> getExtraHosts();
 
+		/**
+		 * The address of the daemon host the port of a workspace is published on.
+		 *
+		 * <p>
+		 * The default, the loopback address, makes the applications of the workspaces reachable
+		 * from the daemon host only. A server publishing them to the browsers of its users names
+		 * the address of the interface they are to be reached on, e.g. the one a reverse proxy
+		 * forwards to; empty publishes them on all addresses of the host. A rootful Docker daemon
+		 * publishes ports past the firewall rules of the host (UFW), so the address is the
+		 * restriction that holds.
+		 * </p>
+		 *
+		 * @see #HOST_IP
+		 */
+		@Name(HOST_IP)
+		@Label("Host IP")
+		@StringDefault(LOOPBACK_ADDRESS)
+		String getHostIp();
+
+		/**
+		 * Whether the workspace containers are kept from reaching each other on the
+		 * {@link #getNetwork() network}.
+		 *
+		 * <p>
+		 * The network is created with {@link DockerWorkspaceProvider#OPTION_ENABLE_ICC} switched
+		 * off: a container reaches the daemon host - its gateway - and, through it, the outside, but
+		 * not the ports of another container on the network. The option is set when the network
+		 * is created; an existing network with another setting is not changed, the provider logs a
+		 * warning, and the network has to be removed to be created anew.
+		 * </p>
+		 *
+		 * @see #ISOLATE_WORKSPACES
+		 */
+		@Name(ISOLATE_WORKSPACES)
+		@BooleanDefault(true)
+		boolean isIsolateWorkspaces();
+
+		/**
+		 * The memory a workspace container may use, e.g. {@code 8g}; {@code 0} for no limit.
+		 *
+		 * <p>
+		 * The default of {@code 8g} holds the Java processes of a workspace - the application, a Maven
+		 * build and the {@code tl-mcp} server of the agent, each taking a quarter of the limit as
+		 * its default heap - beside Claude Code and the headless Chromium of the browser checks.
+		 * </p>
+		 *
+		 * @see #MEMORY_LIMIT
+		 */
+		@Name(MEMORY_LIMIT)
+		@Format(MemorySizeFormat.class)
+		@LongDefault(DEFAULT_MEMORY_LIMIT)
+		long getMemoryLimit();
+
+		/**
+		 * The number of CPUs a workspace container may use, e.g. {@code 4} or {@code 1.5};
+		 * {@code 0} for no limit.
+		 *
+		 * <p>
+		 * A limit above the CPUs of the daemon host is cut to them. Under a rootless daemon, the
+		 * limit needs the CPU controller delegated to the user of the daemon, see the article
+		 * {@code factory/docker-server}.
+		 * </p>
+		 *
+		 * @see #CPU_LIMIT
+		 */
+		@Name(CPU_LIMIT)
+		@Label("CPU limit")
+		@DoubleDefault(DEFAULT_CPU_LIMIT)
+		double getCpuLimit();
+
+		/**
+		 * The number of processes and threads a workspace container may run at once; {@code 0} for
+		 * no limit.
+		 *
+		 * <p>
+		 * The limit stops a fork bomb; the default leaves room for the threads of several Java
+		 * processes and the browser.
+		 * </p>
+		 *
+		 * @see #PIDS_LIMIT
+		 */
+		@Name(PIDS_LIMIT)
+		@Label("PIDs limit")
+		@LongDefault(DEFAULT_PIDS_LIMIT)
+		long getPidsLimit();
+
 	}
+
+	/**
+	 * The loopback address of the daemon host, the default {@link Config#getHostIp()}.
+	 */
+	public static final String LOOPBACK_ADDRESS = "127.0.0.1";
+
+	/**
+	 * Default of {@link Config#getMemoryLimit()}: {@code 8g}.
+	 */
+	public static final long DEFAULT_MEMORY_LIMIT = 8L * 1024 * 1024 * 1024;
+
+	/**
+	 * Default of {@link Config#getCpuLimit()}.
+	 */
+	public static final double DEFAULT_CPU_LIMIT = 4;
+
+	/**
+	 * Default of {@link Config#getPidsLimit()}.
+	 */
+	public static final long DEFAULT_PIDS_LIMIT = 4096;
+
+	/**
+	 * Driver option of a bridge network deciding whether the containers on it reach each other.
+	 *
+	 * @see Config#isIsolateWorkspaces()
+	 */
+	public static final String OPTION_ENABLE_ICC = "com.docker.network.bridge.enable_icc";
+
+	/**
+	 * Security option keeping every process of a container from gaining privileges, e.g. through a
+	 * setuid program.
+	 */
+	public static final String NO_NEW_PRIVILEGES = "no-new-privileges";
 
 	/**
 	 * Key suffix of the label carrying the workspace identifier, set on containers and volumes.
@@ -462,11 +637,7 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 
 	private static final String SHELL_COMMAND_OPTION = "-c";
 
-	/**
-	 * The user sending signals to commands, the root user by its ID, so that it needs no entry in
-	 * the user database of the image.
-	 */
-	private static final String SIGNAL_USER = "0";
+	private static final long NANO_CPUS_PER_CPU = 1_000_000_000L;
 
 	/**
 	 * Seconds to wait for a {@code kill} run in a container.
@@ -480,6 +651,11 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	private final DockerClientConfig _clientConfig;
 
 	private final DockerClient _client;
+
+	/**
+	 * Whether the mismatch of the isolation of an existing network has been reported.
+	 */
+	private final AtomicBoolean _networkMismatchReported = new AtomicBoolean();
 
 	/**
 	 * Creates a {@link DockerWorkspaceProvider} from configuration.
@@ -498,6 +674,9 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 		if (config.getHostPortMin() <= 0 || config.getHostPortMin() > config.getHostPortMax()) {
 			throw new IllegalArgumentException("Invalid host port range " + config.getHostPortMin() + "-"
 				+ config.getHostPortMax() + " of the Docker workspace provider.");
+		}
+		if (config.getMemoryLimit() < 0 || config.getCpuLimit() < 0 || config.getPidsLimit() < 0) {
+			throw new IllegalArgumentException("Negative resource limit of the Docker workspace provider.");
 		}
 		_clientConfig = createClientConfig(config);
 		_client = createClient(config, _clientConfig);
@@ -722,16 +901,7 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 				.withLabels(labels)
 				.withEnv(env)
 				.withExposedPorts(port)
-				.withHostConfig(HostConfig.newHostConfig()
-					// An init process as PID 1 reaps orphaned processes and forwards signals to the
-					// main process.
-					.withInit(true)
-					.withNetworkMode(getConfig().getNetwork())
-					.withMounts(mounts)
-					.withExtraHosts(getConfig().getExtraHosts().toArray(new String[0]))
-					.withPortBindings(new PortBinding(
-						Ports.Binding.bindPortRange(getConfig().getHostPortMin(), getConfig().getHostPortMax()),
-						port)));
+				.withHostConfig(hostConfig(mounts, port));
 			if (!spec.getCommand().isEmpty()) {
 				cmd.withCmd(spec.getCommand());
 			}
@@ -746,6 +916,47 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 				DockerWorkspaceProvider.class);
 			return info(workspaceId, containerId);
 		});
+	}
+
+	private HostConfig hostConfig(List<Mount> mounts, ExposedPort port) {
+		Config<?> config = getConfig();
+		String hostIp = config.getHostIp() == null ? "" : config.getHostIp().strip();
+		int min = config.getHostPortMin();
+		int max = config.getHostPortMax();
+		HostConfig result = HostConfig.newHostConfig()
+			// An init process as PID 1 reaps orphaned processes and forwards signals to the
+			// main process.
+			.withInit(true)
+			.withNetworkMode(config.getNetwork())
+			.withMounts(mounts)
+			.withExtraHosts(config.getExtraHosts().toArray(new String[0]))
+			.withPortBindings(new PortBinding(hostIp.isEmpty() ? Ports.Binding.bindPortRange(min, max)
+				: Ports.Binding.bindIpAndPortRange(hostIp, min, max), port))
+			.withCapDrop(Capability.ALL)
+			.withSecurityOpts(Collections.singletonList(NO_NEW_PRIVILEGES));
+		if (config.getMemoryLimit() > 0) {
+			result.withMemory(Long.valueOf(config.getMemoryLimit()));
+		}
+		if (config.getCpuLimit() > 0) {
+			result.withNanoCPUs(Long.valueOf(nanoCpus(config.getCpuLimit())));
+		}
+		if (config.getPidsLimit() > 0) {
+			result.withPidsLimit(Long.valueOf(config.getPidsLimit()));
+		}
+		return result;
+	}
+
+	/**
+	 * The CPU limit in billionths of a CPU, cut to the CPUs of the daemon host: the daemon refuses
+	 * a limit above them.
+	 */
+	private long nanoCpus(double cpus) {
+		double effective = cpus;
+		Integer available = _client.infoCmd().exec().getNCPU();
+		if (available != null && available.intValue() > 0 && effective > available.intValue()) {
+			effective = available.intValue();
+		}
+		return Math.round(effective * NANO_CPUS_PER_CPU);
 	}
 
 	@Override
@@ -978,12 +1189,16 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 	 *        The ID of the process group, the process ID of its leader.
 	 * @param signal
 	 *        The name of the signal, {@link #SIGNAL_TERM} or {@link #SIGNAL_KILL}.
+	 * @param user
+	 *        The user sending the signal: the user the processes run as
+	 *        ({@link ExecCommand#getUser()} of the command), {@code null} for the user of the image.
+	 *        No other user may signal them, the containers have no capability allowing it.
 	 */
-	void signal(String containerId, int processGroup, String signal) {
+	void signal(String containerId, int processGroup, String signal, String user) {
 		try {
 			String execId = _client.execCreateCmd(containerId)
 				.withCmd(SHELL, SHELL_COMMAND_OPTION, "kill -" + signal + " -" + processGroup)
-				.withUser(SIGNAL_USER)
+				.withUser(user)
 				.withAttachStdout(true)
 				.withAttachStderr(true)
 				.exec()
@@ -1200,17 +1415,42 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 
 	private void ensureNetwork() {
 		String network = getConfig().getNetwork();
+		boolean isolate = getConfig().isIsolateWorkspaces();
 		for (Network existing : _client.listNetworksCmd().withNameFilter(network).exec()) {
 			// The name filter matches substrings.
 			if (network.equals(existing.getName())) {
+				checkIsolation(existing, isolate);
 				return;
 			}
 		}
 		_client.createNetworkCmd()
 			.withName(network)
 			.withDriver(BRIDGE_DRIVER)
+			.withOptions(Collections.singletonMap(OPTION_ENABLE_ICC, Boolean.toString(!isolate)))
 			.withLabels(Collections.singletonMap(labelKey(LABEL_NETWORK), network))
 			.exec();
+	}
+
+	/**
+	 * Warns once if an existing network does not isolate the workspaces as configured.
+	 *
+	 * <p>
+	 * The network is not changed: the option of a bridge network is fixed when it is created, and
+	 * containers the provider does not manage may be attached to it.
+	 * </p>
+	 */
+	private void checkIsolation(Network existing, boolean isolate) {
+		Map<String, String> options = existing.getOptions();
+		String icc = options == null ? null : options.get(OPTION_ENABLE_ICC);
+		// The containers of a bridge network reach each other unless the option says otherwise.
+		boolean isolated = Boolean.FALSE.toString().equals(icc);
+		if (isolated != isolate && _networkMismatchReported.compareAndSet(false, true)) {
+			Logger.warn("The workspace network " + existing.getName() + " has " + OPTION_ENABLE_ICC + "="
+				+ (icc == null ? "<unset>" : icc) + ", but the provider is configured with "
+				+ Config.ISOLATE_WORKSPACES + "=" + isolate + ". The network is not changed: remove it while no "
+				+ "container is attached (docker network rm " + existing.getName()
+				+ "), the next workspace created creates it anew.", DockerWorkspaceProvider.class);
+		}
 	}
 
 	private void removeNetworks() {

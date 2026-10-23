@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, the agent-sessions volume, a lost conversation (isSessionLost), idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, the port of its own (LLMProxyListener, LLMProxyHandler, listen-address, listen-port, servlet-enabled), TLS for the proxy, the token checks (TokenGrants, rate-limit with 429 and Retry-After, binding to the first source address), tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before hardening or changing the limits of the workspace containers (memory-limit, cpu-limit, pids-limit, CapDrop ALL, no-new-privileges, host-ip, isolate-workspaces with enable_icc, recreating the workspace network, tl_factory_host_ip, tl_factory_workspace_*), before running the control application on Windows (WSL2), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root, no command as root), and before updating its tool versions or the base image digest or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, the agent-sessions volume, a lost conversation (isSessionLost), idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
 ---
 
 # Control application (tl-factory)
@@ -27,7 +27,7 @@ gets access to the container platform itself.
 | `WorkspaceService` | Service holding the configured provider and the `ApplicationWorkspaces`. |
 | `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace, builds it and runs it under the supervision of the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
 | `ProjectWorkspaces` | Service running the operations on the workspaces of the stored projects in the background and storing their state and output; reconciles the stored states with the existing containers after a restart. |
-| `LLMProxyService` / `LLMProxyServlet` | Access of the workspaces to the Anthropic Messages API through the control application, see [LLM access](#llm-access). |
+| `LLMProxyService` / `LLMProxyHandler` | Access of the workspaces to the Anthropic Messages API through the control application, on a port of its own (`LLMProxyListener`) or in the web application (`LLMProxyServlet`), see [LLM access](#llm-access). |
 | `WorkspaceAgentService` / `WorkspaceAgent` | The coding agent of a workspace answering a chat, see [the agent in the workspace](#the-agent-in-the-workspace). |
 | `FactoryFunctions` | The TL-Script functions the views call: `factoryCreateWorkspace`, `factoryStart`, `factoryStop`, `factoryCleanup`, `factoryUpdate`, `factoryImageOutdated`, `factoryEngineVersion`, `factoryCheckGroupId`, `factoryCheckArtifactId`. |
 
@@ -58,9 +58,11 @@ shows the output of its own operations.
 the entry script, the control command `tl-workspace-app`, the user instructions `CLAUDE.md` of Claude
 Code and the Maven settings in the package `com.top_logic.factory.workspace.app.image`);
 the tag of the image is the hash of these files, so a change of a pinned version in the
-`Dockerfile` leads to a new image. On top of `eclipse-temurin:21-jdk` it contains:
+`Dockerfile` leads to a new image. On top of `eclipse-temurin:21-jdk`, pinned by digest, it
+contains:
 
-- Maven, git, and Node with npm from the Node.js distribution.
+- Maven, checked against its published SHA-512 checksum, git, and Node with npm from the Node.js
+  distribution, checked against its `SHASUMS256.txt`.
 - **Claude Code** (`ARG CLAUDE_CODE_VERSION`), installed with npm. The image sets
   `DISABLE_AUTOUPDATER`, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, `DISABLE_TELEMETRY`,
   `DISABLE_ERROR_REPORTING`, `CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY` and
@@ -79,11 +81,12 @@ the tag of the image is the hash of these files, so a change of a pinned version
   login; no API keys are needed; browser checks with the Playwright MCP server.
 
 The entry script and every command run as the user `tl` (`ApplicationWorkspaces.WORKSPACE_USER`,
-uid 1000), not as root - Claude Code refuses to bypass its permission prompts as root. A command
-runs as root only if its `ExecCommand` says so (`setUser(ApplicationWorkspaces.ROOT_USER)`); the
-Docker provider signals commands as root. The image creates the mount points of all volumes
-(`ApplicationWorkspaces.VOLUME_PATHS`) owned by `tl`, so that a fresh named volume mounted there
-belongs to `tl` as well.
+uid 1000), not as root - Claude Code refuses to bypass its permission prompts as root. No command
+runs as root, not even one of the control application: the containers have no capabilities (see
+[hardening](#hardening-of-the-workspace-containers)), so root could do nothing in them `tl` cannot,
+and the Docker provider terminates a command as the user it runs as. The image creates the mount
+points of all volumes (`ApplicationWorkspaces.VOLUME_PATHS`) owned by `tl`, so that a fresh named
+volume mounted there belongs to `tl` as well.
 
 Workspaces and release repositories of images that ran as root:
 
@@ -91,8 +94,9 @@ Workspaces and release repositories of images that ran as root:
   never deletes an image. Its volumes belong to root, so [updating it](#updating-a-workspace) does
   not help - the user `tl` cannot write its sources; clean it up and create the workspace anew to
   get the agent tools.
-- A **release repository** filled by root stays usable: the workspaces mount it read-only. Before
-  a release repository is filled, the resolver takes it over for `tl` (`chown -R` as root).
+- A **release repository** filled by root stays usable once it is complete: the workspaces mount
+  it read-only. An incomplete one that `tl` cannot write is removed and created anew, empty, before
+  it is filled.
 
 ### The application under supervision
 
@@ -162,9 +166,9 @@ before (running container = running application).
 ### Pinned versions
 
 Every tool version of the image is pinned in the `Dockerfile` - `MAVEN_VERSION`, `NODE_VERSION`,
-`CLAUDE_CODE_VERSION`, `PLAYWRIGHT_MCP_VERSION` and the commit `TL_CLAUDE_TOOLS_COMMIT` of the
-plugin; the base image `eclipse-temurin:21-jdk` is the one exception and follows its tag. Nothing is
-installed as "latest":
+`CLAUDE_CODE_VERSION`, `PLAYWRIGHT_MCP_VERSION`, the commit `TL_CLAUDE_TOOLS_COMMIT` of the
+plugin, and the base image `eclipse-temurin:21-jdk` by the digest of its tag (`FROM
+eclipse-temurin:21-jdk@sha256:...`). Nothing is installed as "latest":
 
 - **The tag is the content hash.** An image is built again only when a file of its context changes.
   With an unpinned version, a release of a tool would never reach an existing image, and two
@@ -180,7 +184,8 @@ Renovate proposes the updates. Each pinned `ARG` has a comment above it naming i
 (`org.apache.maven:apache-maven`), `node-version` for Node, `npm` for Claude Code and
 `@playwright/mcp`, and `git-refs` with `packageName=<repository URL> currentValue=main` for the
 plugin, whose commit Renovate moves to the head of `main`. The `customManagers` of `renovate.json`
-read these comments; its `packageRules` group the updates into one pull request *workspace image
+read these comments and the `FROM` line, whose digest Renovate moves with the `docker` datasource
+(a rule keeps the tag `21-jdk`, so only new digests of it are proposed); its `packageRules` group the updates into one pull request *workspace image
 tools* per week (a major update in a pull request of its own) - each update needs the integration
 test below, so a batch is tested once - and restrict Node to LTS lines from 22 on, the version
 Claude Code needs.
@@ -267,8 +272,9 @@ In the Docker provider:
 - The Docker API has no way to signal an exec instance. A command therefore runs under a short
   `sh` script that writes the process ID of the command as first line of its output (the provider
   removes the line) and replaces itself by the command. A process started by `docker exec` leads its
-  own process group, so `terminate` runs `kill -TERM -<pid>` in the container (as root) for the
-  whole group, and `kill -KILL -<pid>` if the group has not ended after `terminate-timeout`
+  own process group, so `terminate` runs `kill -TERM -<pid>` in the container for the whole
+  group, as the user of the command - no other user may signal it in a container without
+  capabilities -, and `kill -KILL -<pid>` if the group has not ended after `terminate-timeout`
   seconds. The workspace image needs `sh` and `kill`.
 - The input of a command is written over a connection to the daemon that the provider opens itself
   (Unix socket or TCP, with TLS if `tls-cert-path` is set): the daemon closes the input of the
@@ -305,13 +311,22 @@ then.
 | `tl_factory_docker_network` | `tl-factory` | Network all workspace containers join; created if missing. |
 | `tl_factory_public_host` | `localhost` | Host name under which a browser reaches the published ports; the preview URL is built from it. |
 | `tl_factory_host_port_min` / `tl_factory_host_port_max` | `20000` / `20999` | Range of host ports the container port 8080 is published on. |
+| `tl_factory_host_ip` | `127.0.0.1` | Address of the daemon host the ports are published on; empty for all addresses, see [hardening](#hardening-of-the-workspace-containers). |
+| `tl_factory_docker_isolate` | `true` | Whether the workspace containers are kept from reaching each other on the workspace network; applies when the network is created. |
+| `tl_factory_workspace_memory` | `8g` | Memory a workspace container may use; `0` for no limit. |
+| `tl_factory_workspace_cpus` | `4` | CPUs a workspace container may use, e.g. `1.5`; cut to the CPUs of the daemon host; `0` for no limit. |
+| `tl_factory_workspace_pids` | `4096` | Processes and threads a workspace container may run at once; `0` for no limit. |
 | `tl_factory_engine_version` | `8.0.0-alpha11` | Engine version a new project proposes. |
 | `tl_factory_image_repository` | `tl-factory-workspace` | Name of the workspace image; the tag is the content hash of its files. |
 | `tl_factory_repository_url` | TopLogic Nexus | Maven repository the TopLogic releases are taken from. |
 | `tl_factory_start_timeout` | `600` | Seconds a started application has to answer. |
 | `tl_factory_build_timeout` | `1800` | Seconds a Maven run in a workspace (generate, build, fill a release repository) may take before it is terminated. |
 | `tl_factory_docker_extra_hosts` | *(empty)* | Comma separated `<host>:<address>` entries added to the host names of new workspace containers, e.g. `host.docker.internal:host-gateway`. |
-| `tl_factory_llm_proxy_url` | *(empty)* | URL of the LLM proxy as the workspace containers reach it, e.g. `http://host.docker.internal:8080/tl-factory-app/llm-proxy`; empty switches the proxy off, see [LLM access](#llm-access). |
+| `tl_factory_llm_proxy_url` | *(empty)* | URL of the LLM proxy as the workspace containers reach it, e.g. `http://host.docker.internal:8091/llm-proxy`; empty switches the proxy off, see [LLM access](#llm-access). |
+| `tl_factory_llm_proxy_address` | `127.0.0.1` | Address the proxy listens on with its own port, see [the port of the proxy](#the-port-of-the-proxy). |
+| `tl_factory_llm_proxy_port` | `8091` | Port of the proxy, apart from the port of the control application; `0` for none. |
+| `tl_factory_llm_proxy_servlet` | `false` | Whether the proxy also answers at `/llm-proxy/` of the web application. |
+| `tl_factory_llm_rate_limit` | `120` | Requests per minute a token may make; `0` for no limit. |
 | `tl_factory_llm_allowed_sources` | *(empty)* | Comma separated client addresses the LLM proxy accepts: CIDR ranges (IPv4 or IPv6) or `workspace-network`; empty accepts every address, see [LLM access](#llm-access). |
 | `tl_factory_llm_provider` | `anthropic` | Name of the Anthropic provider of `LLMProviderService` whose API key, base URL, version and timeouts the proxy uses. |
 | `tl_factory_agent_model` | *(empty)* | Model the coding agent works with, e.g. `claude-sonnet-4-6` or `sonnet`; empty for the default of Claude Code. |
@@ -325,6 +340,47 @@ then.
 Further properties of the Docker provider (`tls-cert-path`, `connect-timeout`, `label-namespace`,
 `name-prefix`, `stop-timeout`, `terminate-timeout`) are set in the configuration of `WorkspaceService` of the
 application.
+
+### Hardening of the workspace containers
+
+An agent works in its workspace with all permissions of Claude Code skipped. What it - or a
+dependency, a web page, a prompt injection - does there must stay in that workspace. The Docker
+provider creates every workspace container like this:
+
+- **Resource limits** (`memory-limit`, `cpu-limit`, `pids-limit`): one workspace - a Maven build,
+  Chromium, a fork bomb of the agent - cannot starve the others. The default of 8 GiB holds the
+  Java processes of a workspace (the application, a Maven build and the `tl-mcp` server of the
+  agent, each taking a quarter of the limit as default heap) beside Claude Code and the headless
+  Chromium; 4 CPUs keep a build fast without taking a server; 4096 processes and threads leave
+  room for several JVMs and the browser and stop a fork bomb. A CPU limit above the CPUs of the
+  daemon host is cut to them, which the daemon would refuse otherwise. Under a rootless daemon
+  the limits need the cgroup controllers delegated to its user, see
+  [the Docker server article](doc:factory/docker-server#resource-limits).
+- **No capabilities, no new privileges**: all capabilities are dropped (`CapDrop=ALL`) and
+  `no-new-privileges` is set, so root in the container can do nothing `tl` cannot, and no setuid
+  program gains rights. Nothing the image or the application needs at runtime requires a
+  capability: Docker's init process, the entry script, Java, Maven, Node, Claude Code and the
+  headless Chromium of the Playwright MCP server, which Playwright starts without the Chromium
+  sandbox (`--no-sandbox`, its default in a container). `TestApplicationWorkspaces` checks the
+  browser through the MCP server in such a container.
+- **The published port on one address** (`host-ip`, `tl_factory_host_ip`, default `127.0.0.1`): an
+  unfinished application with its initial password is not reachable from the whole network. A
+  rootful Docker daemon publishes ports by DNAT rules that come before the firewall rules of the
+  host - UFW does not block them -, so the address is the restriction that holds. A server sets
+  the address explicitly, e.g. the internal address a reverse proxy forwards to; making the
+  previews reachable only through the login of the control application is a task of that reverse
+  proxy.
+- **No traffic between workspaces** (`isolate-workspaces`, `tl_factory_docker_isolate`): the
+  workspace network is created with `com.docker.network.bridge.enable_icc=false`
+  (`DockerWorkspaceProvider.OPTION_ENABLE_ICC`). A workspace reaches the daemon host through the
+  gateway of its network - the control application and its LLM proxy in host mode, the outside -,
+  but not the application or database of another workspace. Together with the published port on
+  the loopback address, it does not reach that application through the host either. The option
+  is fixed when a network is created: the provider does not change an existing network with
+  another setting, which other containers may use, but logs a warning once. Such a network -
+  e.g. `tl-factory` of a control application from before this setting - is removed while no
+  container is attached (`docker network rm tl-factory`, after stopping the workspaces or
+  disconnecting them); the next workspace that is created or updated creates it anew.
 
 ## LLM access
 
@@ -348,11 +404,12 @@ instead.
   workspace that no longer exists is refused anyway). Tokens are kept in memory only, by their
   SHA-256: nothing is stored in the database, and a restart of the control application
   invalidates all tokens - together with the runs it started, which end with it.
-- **The proxy.** `LLMProxyServlet` at `/llm-proxy/*` of the control application forwards `POST`
-  of `/v1/messages` and `/v1/messages/count_tokens` (with their query string) to the base URL of
-  the configured provider; every other path and method is answered with 404, a request from an
-  address that is not accepted (see below) with 403, a missing, unknown, revoked or expired token
-  with 401. It drops the credentials (`Authorization`, `x-api-key`), cookies, `Host`,
+- **The proxy.** `LLMProxyHandler` at `/llm-proxy/` forwards `POST` of `/v1/messages` and
+  `/v1/messages/count_tokens` (with their query string) to the base URL of the configured
+  provider; every other path and method is answered with 404, a request from an address that is
+  not accepted (see below) with 403, a missing, unknown, revoked or expired token with 401, a token
+  used from another address than its first request with 403, and a token over its rate limit with
+  429 (see [token checks](#token-checks)). It drops the credentials (`Authorization`, `x-api-key`), cookies, `Host`,
   `Accept-Encoding` and the hop-by-hop headers of the request, sets `x-api-key` to the API key of
   the provider and `anthropic-version` to its version, unless the client sent one; a client's
   `anthropic-beta` is kept. Status, headers and body of the answer are passed back, the body
@@ -362,12 +419,62 @@ instead.
   the `LLMProviderService` of `tl-ai-core`. `tl-factory-app` configures a provider `anthropic`
   without models whose key is read from the environment variable `tl_anthropic_api_key`.
 
-The workspace containers must reach the URL of the proxy, see *Reaching the control application*
-in the operation modes below: e.g. `http://host.docker.internal:8080/tl-factory-app/llm-proxy`
-with the extra host `host.docker.internal:host-gateway` when the control application runs on the
-host, or `http://tl-factory-app:8080/tl-factory-app/llm-proxy` when its container is connected to
-the workspace network. The proxy answers any valid token, whatever state its workspace is in; it
-neither limits nor counts the requests.
+The workspace containers must reach the URL of the proxy, see [the port of the
+proxy](#the-port-of-the-proxy) and *Reaching the control application* in the operation modes
+below. The proxy answers any valid token, whatever state its workspace is in.
+
+### The port of the proxy
+
+The port of the control application is the one its users reach, from wherever they are; the
+proxy needs not be reachable there. `LLMProxyService` therefore serves the proxy on a port of its
+own: `LLMProxyListener`, an HTTP server of the JDK independent of the server the control
+application runs in, listens on `listen-address`:`listen-port` (`tl_factory_llm_proxy_address`,
+default `127.0.0.1`, and `tl_factory_llm_proxy_port`, default `8091`) and answers at `/llm-proxy/`
+only. It is opened only while the proxy is switched on by its URL; port `0` opens none. A port that
+cannot be bound is logged as error, and the workspaces have no LLM access then.
+
+The address depends on how the workspaces reach the control application:
+
+| Operation mode | `listen-address` | `tl_factory_llm_proxy_url` |
+|---|---|---|
+| Control application on the host of the daemon | the address `host-gateway` stands for, the gateway of Docker's default bridge (`docker network inspect bridge`, e.g. `172.17.0.1`): the workspaces reach it, other hosts do not | `http://host.docker.internal:8091/llm-proxy` with the extra host `host.docker.internal:host-gateway` |
+| Control application in a container of the daemon | `0.0.0.0` in its container, the port not published; see [isolation](#hardening-of-the-workspace-containers) for how the workspaces reach the container | `http://<address of the container>:8091/llm-proxy` |
+| [Two daemons](doc:factory/docker-server#how-control-application-and-workspaces-reach-each-other) | `0.0.0.0` in its container, the port published on an internal address of the server only, never on all addresses | `http://<internal address of the server>:8091/llm-proxy` |
+| Behind a reverse proxy or tunnel on the same host | `127.0.0.1`, the default | the URL of the reverse proxy |
+
+The servlet `LLMProxyServlet` at `/llm-proxy/*` of the web application answers only if
+`servlet-enabled` (`tl_factory_llm_proxy_servlet`) is set; otherwise it answers with 404. It is the
+alternative where no second port can be opened: then a reverse proxy in front of the control
+application must refuse the path `/llm-proxy/` to clients from outside (e.g. `location
+/tl-factory-app/llm-proxy/ { deny all; }` in nginx) and pass it only on the address the workspaces
+use.
+
+**TLS.** The token travels in the `Authorization` header. Whenever the proxy is not reached on the
+host itself or over a network of the daemon - a VM, a remote daemon, another host, the cloud -, it
+must be reached over TLS: a reverse proxy terminating TLS in front of the port of the proxy, and
+`tl_factory_llm_proxy_url` with `https://`. The workspace must trust its certificate: a
+certificate of a public CA needs nothing, one of an own CA is added to the image or given to Claude
+Code in `NODE_EXTRA_CA_CERTS`.
+
+### Token checks
+
+Beside its validity, every request is checked against its token (`TokenGrants`):
+
+- **Rate limit.** A token may make `rate-limit` requests per minute (`tl_factory_llm_rate_limit`,
+  default 120, `0` for none), in bursts up to that number; its allowance refills continuously. A
+  request beyond is answered with 429, `rate_limit_error` and the seconds to wait in `Retry-After`,
+  which Claude Code waits for before it repeats the request. 120 leave an agent working at full
+  speed - a request per step plus token counting and side requests of a small model - room, and
+  limit what a token that got out of the workspace can cost. A budget per token or workspace is not
+  enforced.
+- **Source binding.** A token is bound to the address its first admitted request comes from
+  (trust on first use, `getRemoteAddr()` of the connection, never a header). A request from another
+  address is answered with 403 and logged as warning with the address and the workspace; the token
+  is not revoked and keeps working from its own address. The binding is always on. It means most
+  where the proxy sees the address of the workspace container - the control application on the
+  host or on the workspace network: a token that leaks out of the workspace is useless elsewhere.
+  Behind NAT, a userland proxy, a rootless daemon or a reverse proxy, all workspaces share one
+  source address; the binding then only refuses a token used from another address than that one.
 
 ### Accepted sources
 
@@ -389,9 +496,9 @@ Which setting fits depends on how a request of a workspace reaches the control a
 | Control application as container of the same daemon, connected to the workspace network | the address of the container on the workspace network | `workspace-network` |
 | Two daemons ([the rootless setup](doc:factory/docker-server#how-control-application-and-workspaces-reach-each-other)), a reverse proxy in front of the control application, or a port published through the Docker userland proxy | a gateway or the proxy, the same for workspaces and for clients from outside | empty |
 
-In the last case an address list cannot tell workspaces from other clients. Leave it empty and
-block the path `/llm-proxy/` for clients from outside at the reverse proxy in front of the
-control application instead; the token remains the check.
+In the last case an address list cannot tell workspaces from other clients. Leave it empty; the
+port of the proxy, bound to an address only the workspaces reach, its token and its rate limit
+remain the checks.
 
 ## The agent in the workspace
 
@@ -509,11 +616,13 @@ user running it must be allowed to use the socket. Preview links point to
 
 A workspace container reaches the control application through the gateway of the daemon: with
 `tl_factory_docker_extra_hosts=host.docker.internal:host-gateway`, new containers resolve
-`host.docker.internal` to the address of the host on their network, and reach the control
-application under `http://host.docker.internal:<port of the control application>/`. The control
-application must listen on that address, not only on `127.0.0.1`, and a firewall of the host must
-let the workspace network through. Containers created before the setting keep their host names
-until they are created anew.
+`host.docker.internal` to the address of the host on Docker's default bridge (`docker0`, e.g.
+`172.17.0.1`), and reach the LLM proxy under `http://host.docker.internal:8091/llm-proxy` when it
+listens on that address (`tl_factory_llm_proxy_address=172.17.0.1`, see [the port of the
+proxy](#the-port-of-the-proxy)). A firewall of the host must let the workspace network through to
+that port. Containers created before the setting keep their host names until they are created
+anew. The published ports of the workspaces are bound to `127.0.0.1`, where the control
+application and a browser on the host reach them.
 
 ### Control application in a container
 
@@ -542,11 +651,31 @@ In both cases:
 - **Public host.** `tl_factory_public_host` is the name browsers use to reach the published ports
   of the daemon host.
 - **Reaching the control application.** A workspace container reaches the control application by
-  the name of its container on the workspace network, e.g. `http://tl-factory-app:8080/`, once the
-  control application's container is connected to that network (see above). No extra host is
-  needed then; `host-gateway` names the daemon host, which reaches the control application only
-  through a port it publishes there.
+  the name of its container on the workspace network, e.g. `http://tl-factory-app:8091/llm-proxy`,
+  once the control application's container is connected to that network (see above). No extra
+  host is needed then; `host-gateway` names the daemon host, which reaches the control application
+  only through a port it publishes there. On the [isolated](#hardening-of-the-workspace-containers)
+  workspace network, however, no container reaches another - the control application's container
+  neither reaches the workspaces nor is reached by them. Either switch the isolation off
+  (`tl_factory_docker_isolate=false`) and accept that workspaces reach each other, or keep the
+  control application off the workspace network: it reaches the previews through
+  `tl_factory_public_host` and the published ports (`tl_factory_host_ip` an address its container
+  reaches), and the workspaces reach its proxy through a port it publishes on the gateway address
+  of the default bridge, as `host.docker.internal:host-gateway`.
 - **Ownership by labels.** The provider marks everything it creates with labels in its
   `label-namespace` and lists, cleans up and removes only objects carrying them - never by name. The
   control application's own container carries no such label and is never touched; two control
   applications on one daemon need different label namespaces.
+
+### Windows (WSL2)
+
+Run the control application **inside WSL2**, with a Docker daemon in the same WSL2 distribution
+(Docker Engine installed there, or Docker Desktop with its WSL2 integration), and talk to it
+through the Unix socket `unix:///var/run/docker.sock`. A control application running on Windows
+itself would reach Docker Desktop only through the named pipe `npipe://`: the commands of a
+workspace that read their standard input - the agent among them - need a connection the provider
+opens itself (`HijackedConnection`), which knows Unix sockets and TCP, not named pipes. The
+browsers on Windows reach the control application and the previews through `localhost`, which WSL2
+forwards; keep the sources of the control application and its database inside the WSL2 file system
+for speed. The resource limits of the workspaces apply inside the WSL2 VM, whose own size is set in
+`.wslconfig`.

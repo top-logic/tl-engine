@@ -11,8 +11,8 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.react.control.ReactCommand;
 
 /**
- * Typed arguments of the {@link TableViewControl} group command: which column the table groups its
- * rows by.
+ * Typed arguments of the group command of the {@link TableViewControl} and of its
+ * {@link ReactColumnSelectControl column selection}: which column the table groups its rows by.
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}

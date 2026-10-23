@@ -26,9 +26,11 @@ between the sheet and the browser, so what is written there is what the browser 
 
 **Write `var(--name)` without a fallback.** A `var(--name, 0.5rem)` hides the fact that the theme is
 missing the token: the page renders, silently ignoring the theme. A token the theme does not declare
-is a defect to fix in the theme. The only custom properties that carry a fallback are the ones a
-stylesheet declares itself (`--cal-ev-bg`, …), where the fallback is the value of the
-default case rather than a stand-in for a missing token.
+is a defect to fix in the theme. No stylesheet declares a custom property of its own to vary a value
+per element: such a value is either a role the element selects (a calendar event without a color of
+its own takes the surface of its category, `data-tl-role="category-N"` reading
+`--tl-category-N-surface`) or data set inline (a color the server sends for an event, with its text
+color chosen by `textOn`).
 
 ## Cascade layers
 
@@ -36,7 +38,7 @@ The styles of the React page are ordered by CSS cascade layers, not by their pos
 
 | Order | Layer | Rules |
 |---|---|---|
-| 1 | `tl` | the theme token blocks of the `UIThemeService`, the design system, `tlReactControls.css`, the stylesheets of the engine modules and of the libraries they bundle (fonts, icon fonts) |
+| 1 | `tl` | the theme token blocks of the `UIThemeService`, the design system, the stylesheets of the engine modules and of the libraries they bundle (fonts, icon fonts) |
 | 2 | `mui` | the rules of a component library rendering the UI: Material UI's emotion styles, its CSS variables, the styling properties derived from the MUI theme (`tl-mui-theme-properties`), the rules of a customer's `styled` components and `styleOverrides` |
 | — | unlayered | the stylesheets of the application, e.g. the rules of its `css-class` names |
 

@@ -89,11 +89,6 @@
 						resource="/style/tlReactBase.css"
 						requires="tl-react-fonts-inter,tl-design-system-components"
 					/>
-					<stylesheet name="tl-react-controls-css"
-						layer="tl"
-						resource="/style/tlReactControls.css"
-						requires="tl-react-base,tl-react-icons-fontawesome,tl-react-icons-bootstrap,tl-react-icons-tl"
-					/>
 				</resources>
 			</instance>
 		</config>

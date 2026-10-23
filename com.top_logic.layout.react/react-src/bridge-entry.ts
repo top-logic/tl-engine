@@ -28,11 +28,16 @@ export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-brid
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
 export { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export type { CommandOptions } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
 export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
+export { useTabList } from './bridge/tab-list';
+export type { TabProps, PanelProps, TabListOptions } from './bridge/tab-list';
+export { Menu, MenuItem, MenuHeader, MenuSeparator, useRovingMenu, menuItemClassName } from './bridge/menu';
+export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
@@ -63,13 +68,19 @@ export type {
   ProgressBarPartProps,
   SpinnerPartProps,
   SpinnerSize,
+  ListboxPartProps,
+  ListboxEntry,
 } from './bridge/parts';
+export {
+  useSuggestions, applySuggestion, CMD_SUGGEST, ARG_SUGGEST_TEXT, ARG_SUGGEST_CARET, SUGGEST_DEBOUNCE_MS,
+} from './bridge/suggestions';
+export type { Suggestions, SuggestionsOptions, SuggestionsAnswer, ComboboxAttributes } from './bridge/suggestions';
 export { OptionValues } from './bridge/option-values';
 export type { OptionDescriptor } from './bridge/option-values';
-export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
+export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
-export { INTERACTIVE_SELECTOR, isInteractiveWithin } from './bridge/interactive';
+export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget } from './bridge/interactive';
 export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
@@ -99,7 +110,12 @@ export type {
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
 export { useImageSrc } from './bridge/image-source';
-export { avatarInitials, avatarCategory } from './bridge/avatar';
+export { useUpload } from './bridge/upload';
+export type { UploadState, UploadPart } from './bridge/upload';
+export { downloadBlob } from './bridge/download-blob';
+export { avatarInitials } from './bridge/avatar';
+export { categoryOf } from './bridge/category';
+export { textOn } from './bridge/text-on';
 // The state contract of the replaceable components, generated from state.proto: one message per
 // component (e.g. ButtonStateJson for TLButton), read with useTLState<Partial<ButtonStateJson>>().
 export type {
@@ -111,6 +127,7 @@ export type {
   ToggleButtonStateJson,
   CheckboxStateJson,
   TextInputStateJson,
+  SuggestionEntryJson,
   PasswordInputStateJson,
   NumberInputStateJson,
   DatePickerStateJson,
@@ -139,7 +156,7 @@ export { scrollToAnchor } from './bridge/scroll';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
-export { tokenPx, tokenMs, useTokenPx } from './bridge/token-px';
+export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
 export { isEditorTarget } from './bridge/editor-target';
 export { filterOptions } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';

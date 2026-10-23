@@ -9,8 +9,8 @@
 	registration, one is planned and one is a draft - and so that one incoming invoice is overdue,
 	which is the question the overdue column and the chat are there to answer.
 
-	Load-once: InitialDataSetupService records the file name, so editing this file changes nothing
-	in a database that already read it (rename it to re-import).
+	Load-once: the initial data import (InitialDataSetup) records the file name, so editing this file
+	changes nothing in a database that already read it (rename it to re-import).
 -->
 <objects>
 	<resolvers>

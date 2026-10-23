@@ -474,6 +474,66 @@ message TextInputState extends TypingFieldState {
 	 * The number of visible rows of a {@link #multiline} field.
 	 */
 	int32 rows;
+
+	/**
+	 * Whether the field offers suggestions while the user types. Absent: the field offers none.
+	 *
+	 * The field asks for them with the command {@code suggest}, giving the text typed as argument
+	 * {@code text} and the caret position in it as argument {@code caret}; the answer arrives in
+	 * {@link #suggestions}. Asking never changes the value of the field; a suggestion the user
+	 * picks is entered like any other text.
+	 */
+	bool offersSuggestions;
+
+	/**
+	 * The suggestions computed for the text {@link #suggestionsText} with the caret at
+	 * {@link #suggestionsCaret}, in the order they are offered. The list is shown as it is, without
+	 * filtering it further.
+	 */
+	repeated SuggestionEntry suggestions;
+
+	/**
+	 * The text the {@link #suggestions} were computed for. A client that has been typed into since
+	 * it asked ignores suggestions computed for another text or caret position.
+	 */
+	string suggestionsText;
+
+	/**
+	 * The caret position in {@link #suggestionsText} the {@link #suggestions} were computed for.
+	 */
+	int32 suggestionsCaret;
+}
+
+/**
+ * A suggestion offered for a text being typed: a replacement for a range of that text.
+ *
+ * Picking the suggestion replaces the characters {@link #from} (inclusive) to {@link #to}
+ * (exclusive) of the text it was computed for by {@link #text}, and puts the caret behind the
+ * inserted text. With {@link #from} equal to {@link #to}, the suggestion inserts its text at that
+ * position.
+ */
+message SuggestionEntry {
+	/**
+	 * What the list of suggestions shows for this suggestion.
+	 */
+	string label;
+
+	/**
+	 * The text replacing the range {@link #from} to {@link #to}.
+	 */
+	string text;
+
+	/**
+	 * The position of the first character replaced, a character offset in the text the suggestion
+	 * was computed for.
+	 */
+	int32 from;
+
+	/**
+	 * The position behind the last character replaced, a character offset in the text the
+	 * suggestion was computed for.
+	 */
+	int32 to;
 }
 
 /**

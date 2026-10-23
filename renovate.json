@@ -40,6 +40,12 @@
   ],
   "packageRules": [
     {
+      "matchPackageNames": [
+        "@tiptap/**"
+      ],
+      "groupName": "tiptap"
+    },
+    {
       "description": "The tools of the workspace image are updated together: every update needs the integration test of tl-factory (with -Dtl.factory.integration=true) before it is merged, which CI does not run.",
       "matchFileNames": [
         "tl-factory/src/main/java/com/top_logic/factory/workspace/app/image/Dockerfile"

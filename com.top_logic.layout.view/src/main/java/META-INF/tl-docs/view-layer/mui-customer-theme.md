@@ -424,6 +424,7 @@ anything.
 | `Divider` | the part: the lines of toolbars, toolbar menus and the sidebar | `Divider` |
 | `ProgressBar` | the part: progress controls, job status, loading options | `LinearProgress` |
 | `Spinner` | the part: busy indicators | `CircularProgress` |
+| `Listbox` | the part: the suggestions under a text field | `Paper`, `List`, `ListItemButton` |
 | `TLDatePicker`, `TLSelect`, `TLDropdownSelect`, `TLSegmentedChoice`, `TLChoiceGroup`, `TLTabBar`, `TLWindow`, `TLDialog`, `TLMenu`, `TLSnackbar`, `TLAlert`, `TLFormField`, `TLText`, `TLCard`, `TLAppBar`, `TLBreadcrumb`, `TLAvatar`, `TLSlider` | the control as a whole | the MUI counterpart, documented on each `Mui*Adapter.tsx` |
 
 The parts are described in [Parts: the atoms of the React UI](doc:view-layer/parts), the controls

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLUpload, useTLDataUrl, useI18N, rootClassName, useFieldLabelProps, fieldInputId, usePart } from 'tl-react-bridge';
+import { React, useTLState, useUpload, useTLDataUrl, useI18N, rootClassName, stateAttr, useFieldLabelProps, fieldInputId, usePart, downloadBlob, ICON_UPLOAD, ICON_DOWNLOAD } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
@@ -10,12 +10,8 @@ const I18N_KEYS = {
   'js.downloading': 'Downloading…',
 };
 
-type LocalStatus = 'idle' | 'uploading';
-
-const UPLOAD_ICON = 'css:fa-solid fa-upload';
-
-/** Icon of the button downloading the file. */
-const DOWNLOAD_ICON = 'css:fa-solid fa-download';
+/** The name of the multipart part carrying the file. */
+const PART_FILE = 'file';
 
 /**
  * Form-field control for a binary ({@code tl.core:Binary}) attribute. Renders a file upload
@@ -31,7 +27,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   const labelProps = useFieldLabelProps(controlId, inputId);
   const liveState = useTLState();
   const state = liveState ?? propState ?? {};
-  const upload = useTLUpload();
+  const { uploading: isUploading, error, upload } = useUpload();
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
   const Button = usePart('Button');
@@ -41,10 +37,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   const fileName = (state.fileName as string) ?? 'download';
   const dataRevision = (state.dataRevision as number) ?? 0;
   const accept = (state.accept as string) ?? '';
-  const serverStatus = (state.status as string) ?? 'idle';
-  const serverError = (state.error as string) ?? null;
 
-  const [localStatus, setLocalStatus] = React.useState<LocalStatus>('idle');
   const [isDragOver, setIsDragOver] = React.useState(false);
   const [downloading, setDownloading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -55,38 +48,15 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
     }
     setDownloading(true);
     try {
-      const url = dataUrl + (dataUrl.includes('?') ? '&' : '?') + 'rev=' + dataRevision;
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        console.error('[TLBinaryField] Failed to fetch data:', resp.status);
-        return;
-      }
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileName;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-      console.error('[TLBinaryField] Fetch error:', e);
+      await downloadBlob(dataUrl + (dataUrl.includes('?') ? '&' : '?') + 'rev=' + dataRevision, fileName);
     } finally {
       setDownloading(false);
     }
   }, [hasData, downloading, dataUrl, dataRevision, fileName]);
 
-  const doUpload = React.useCallback(async (file: File) => {
-    setLocalStatus('uploading');
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-    await upload(formData);
-    setLocalStatus('idle');
+  const doUpload = React.useCallback((file: File) => {
+    upload([{ name: PART_FILE, file, fileName: file.name }]);
   }, [upload]);
-
-  const isUploading = (serverStatus === 'received' ? 'idle' : (localStatus !== 'idle' ? localStatus : serverStatus)) === 'uploading';
 
   // All hooks must run unconditionally (Rules of Hooks), so the edit-mode handlers are declared
   // before the view-mode early return below.
@@ -131,35 +101,32 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
     ? t['js.downloading']
     : t['js.download.file'].replace('{0}', fileName);
 
-  const downloadLink = (
-    <span className="tlDownload">
+  // The file row: the download button and the name of the file.
+  const fileRow = (
+    <>
       <Button
         label={downloadLabel}
-        image={DOWNLOAD_ICON}
+        image={ICON_DOWNLOAD}
         display="icon-only"
         appearance="ghost"
         disabled={downloading || disabled}
         aria-busy={downloading ? true : undefined}
         onClick={doDownload}
       />
-      <span className="tlDownload__fileName">{fileName}</span>
-    </span>
+      <span className="tl-file__name">{fileName}</span>
+    </>
   );
 
   // View (read-only) mode: just the download link, or a "no file" hint.
   if (showsValueOnly(state)) {
     if (!hasData) {
       return (
-        <div id={controlId} className={rootClassName(state, 'tlBinaryField tlDownload tlDownload--empty')}>
-          <span className="tlDownload__fileName tlDownload__fileName--empty">{t['js.download.noFile']}</span>
+        <div id={controlId} className={rootClassName(state, 'tl-file')} data-tl-state={stateAttr('empty')}>
+          <span className="tl-file__name">{t['js.download.noFile']}</span>
         </div>
       );
     }
-    return (
-      <div id={controlId} className={rootClassName(state, 'tlBinaryField tlBinaryField--view')}>
-        {downloadLink}
-      </div>
-    );
+    return <div id={controlId} className={rootClassName(state, 'tl-file')}>{fileRow}</div>;
   }
 
   // Edit mode: drag-and-drop upload + button, plus a download link for the current file.
@@ -169,7 +136,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   return (
     <div
       id={controlId}
-      className={rootClassName(state, 'tlBinaryField tl-file-upload')}
+      className={rootClassName(state, 'tl-file-upload')}
       data-tl-state={isDragOver ? 'dragover' : undefined}
       onDragOver={disabled ? undefined : handleDragOver}
       onDragLeave={disabled ? undefined : handleDragLeave}
@@ -187,7 +154,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
       <Button
         id={inputId}
         label={buttonLabel}
-        image={UPLOAD_ICON}
+        image={ICON_UPLOAD}
         display="icon-only"
         appearance="secondary"
         disabled={isDisabled}
@@ -195,9 +162,9 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
         onClick={handleButtonClick}
         {...labelProps}
       />
-      {hasData && downloadLink}
-      {serverError && (
-        <span className="tl-file-upload__status tl-type-label" role="alert">{serverError}</span>
+      {hasData && <span className="tl-file">{fileRow}</span>}
+      {error && (
+        <span className="tl-file-upload__status tl-type-label" role="alert">{error}</span>
       )}
     </div>
   );

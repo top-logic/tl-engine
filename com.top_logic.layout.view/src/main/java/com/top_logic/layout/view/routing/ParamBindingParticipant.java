@@ -9,12 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.listener.Registration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.routing.RouteChangeListener;
 import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.routing.RoutingParticipant;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.tiles.TileLabelProvider;
 
 /**
  * Lightweight {@link RoutingParticipant} that connects a view channel to a URL path segment via
@@ -32,6 +36,13 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * the value is percent-encoded on its way into the URL and decoded on its way back, and the prefix
  * appears exactly when there is a value to introduce.
  * </p>
+ *
+ * <p>
+ * A binding with a {@link ParamBindingConfig#getLabel() label} names the page by it while it
+ * contributes its segment. The label follows the channels it is computed from for as long as the
+ * participant has route change listeners - while it is registered with the route manager of a
+ * display, that is - so that the page title changes with them.
+ * </p>
  */
 public class ParamBindingParticipant implements RoutingParticipant {
 
@@ -41,7 +52,19 @@ public class ParamBindingParticipant implements RoutingParticipant {
 
 	private final RoutePattern _pattern;
 
+	private final TileLabelProvider _label;
+
+	private final ViewContext _labelContext;
+
+	private final boolean _finalTitle;
+
 	private final List<RouteChangeListener> _listeners = new ArrayList<>();
+
+	/**
+	 * The subscriptions to the channels the label is computed from, held while the participant has
+	 * listeners.
+	 */
+	private final List<Registration> _labelRegistrations = new ArrayList<>();
 
 	/**
 	 * Creates a new {@link ParamBindingParticipant} whose route is the value segment alone.
@@ -67,18 +90,66 @@ public class ParamBindingParticipant implements RoutingParticipant {
 	 *        The view channel bound to this parameter.
 	 */
 	public ParamBindingParticipant(String prefix, String routeParamName, ViewChannel channel) {
+		this(prefix, routeParamName, channel, null, null);
+	}
+
+	/**
+	 * Creates a new {@link ParamBindingParticipant} naming the page by a label.
+	 *
+	 * @param prefix
+	 *        Static path segments placed in front of the value, or {@code null} for a route that is
+	 *        the value segment alone.
+	 * @param routeParamName
+	 *        The route parameter name (e.g., "companyId").
+	 * @param channel
+	 *        The view channel bound to this parameter.
+	 * @param label
+	 *        The provider of the label naming the page while the binding contributes a segment, or
+	 *        {@code null} for a binding that names no page.
+	 * @param labelContext
+	 *        The context the label is computed in, the context of the view declaring the binding.
+	 *        May be {@code null} where no label is given.
+	 */
+	public ParamBindingParticipant(String prefix, String routeParamName, ViewChannel channel,
+			TileLabelProvider label, ViewContext labelContext) {
+		this(prefix, routeParamName, channel, label, labelContext, false);
+	}
+
+	/**
+	 * Creates a new {@link ParamBindingParticipant} naming the page by a label that may be the final
+	 * title of the page.
+	 *
+	 * @param prefix
+	 *        Static path segments placed in front of the value, or {@code null} for a route that is
+	 *        the value segment alone.
+	 * @param routeParamName
+	 *        The route parameter name (e.g., "companyId").
+	 * @param channel
+	 *        The view channel bound to this parameter.
+	 * @param label
+	 *        The provider of the label naming the page while the binding contributes a segment, or
+	 *        {@code null} for a binding that names no page.
+	 * @param labelContext
+	 *        The context the label is computed in, the context of the view declaring the binding.
+	 *        May be {@code null} where no label is given.
+	 * @param finalTitle
+	 *        Whether the routes inside the view declaring the binding keep their labels out of the
+	 *        title while the binding contributes a segment, see {@link #titlesContent()}.
+	 */
+	public ParamBindingParticipant(String prefix, String routeParamName, ViewChannel channel,
+			TileLabelProvider label, ViewContext labelContext, boolean finalTitle) {
 		_routeParamName = routeParamName;
 		_channel = channel;
+		_label = label;
+		_labelContext = labelContext;
+		_finalTitle = finalTitle;
 		_pattern = RoutePattern.compile(pattern(prefix, routeParamName), routeParamName);
 
 		// Listen to channel changes (forward: selection -> URL). A cleared channel is reported as
 		// well, so that the segment leaves the address bar with the value it described.
 		_channel.addListener((sender, oldValue, newValue) -> {
 			RouteSegment segment = segment(newValue);
-			RouteSegment reported = segment != null ? segment : new RouteSegment("");
-			for (RouteChangeListener l : new ArrayList<>(_listeners)) {
-				l.onRouteChange(this, reported);
-			}
+			notifyRouteChange(segment != null ? segment : new RouteSegment(""));
 		});
 	}
 
@@ -119,6 +190,37 @@ public class ParamBindingParticipant implements RoutingParticipant {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The {@link ParamBindingConfig#getLabel() label} of the binding while it contributes a segment.
+	 * Without a value there is nothing the label could name, and a binding without a label names
+	 * nothing either: an identifier in the URL is no title.
+	 * </p>
+	 */
+	@Override
+	public ResKey activeRouteLabel() {
+		if (_label == null || activeRouteSegment() == null) {
+			return null;
+		}
+		return _label.compute(_labelContext);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A binding declared the {@link ParamBindingConfig#getFinalTitle() final title} keeps the routes
+	 * inside its view out of the title while it contributes a segment: without a value, the binding
+	 * names no page, and the routes inside name it instead.
+	 * </p>
+	 */
+	@Override
+	public boolean titlesContent() {
+		return !_finalTitle || activeRouteSegment() == null;
+	}
+
+	/**
 	 * The segment describing the given channel value, or {@code null} if the value contributes none.
 	 */
 	private RouteSegment segment(Object value) {
@@ -140,13 +242,66 @@ public class ParamBindingParticipant implements RoutingParticipant {
 		return prefix == null || prefix.isEmpty() ? param : prefix + '/' + param;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The first listener starts following the channels the label is computed from.
+	 * </p>
+	 */
 	@Override
 	public void addRouteChangeListener(RouteChangeListener listener) {
+		if (_listeners.isEmpty()) {
+			observeLabel();
+		}
 		_listeners.add(listener);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The last listener ends following the channels the label is computed from: nobody is left to
+	 * tell about a new label.
+	 * </p>
+	 */
 	@Override
 	public void removeRouteChangeListener(RouteChangeListener listener) {
 		_listeners.remove(listener);
+		if (_listeners.isEmpty()) {
+			unobserveLabel();
+		}
+	}
+
+	private void observeLabel() {
+		if (_label == null) {
+			return;
+		}
+		for (ViewChannel input : _label.observedChannels(_labelContext)) {
+			_labelRegistrations.add(input.addListener((sender, oldValue, newValue) -> onLabelInputChange()));
+		}
+	}
+
+	private void unobserveLabel() {
+		for (Registration registration : _labelRegistrations) {
+			registration.dispose();
+		}
+		_labelRegistrations.clear();
+	}
+
+	/**
+	 * Reports a possible change of the label, which matters only while the binding names the page.
+	 */
+	private void onLabelInputChange() {
+		RouteSegment segment = activeRouteSegment();
+		if (segment != null) {
+			notifyRouteChange(segment);
+		}
+	}
+
+	private void notifyRouteChange(RouteSegment reported) {
+		for (RouteChangeListener l : new ArrayList<>(_listeners)) {
+			l.onRouteChange(this, reported);
+		}
 	}
 }

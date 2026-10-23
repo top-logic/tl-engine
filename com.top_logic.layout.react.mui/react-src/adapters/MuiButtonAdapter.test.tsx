@@ -5,7 +5,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import React from 'react';
 import { screen, cleanup, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, replacePart } from 'tl-react-bridge';
+import { ButtonDefaults, useButtonDefaults, TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, replacePart } from 'tl-react-bridge';
 import type { ButtonStateJson, ButtonDefaultsValue, ToggleButtonStateJson } from 'tl-react-bridge';
 import TLButton from '../../../com.top_logic.layout.react/react-src/controls/TLButton';
 import TLToggleButton from '../../../com.top_logic.layout.react/react-src/controls/TLToggleButton';
@@ -363,5 +363,32 @@ describe('the MUI button part', () => {
     const button = screen.getByRole('button', { name: 'Speichern' });
     expect(button.classList).toContain('MuiButton-contained');
     expect(button.classList).not.toContain('tl-button');
+  });
+});
+
+describe('radio group in a menu', () => {
+  const Entry: React.FC<{ label: string; checked: boolean }> = ({ label, checked }) => {
+    const defaults = useButtonDefaults();
+    return (
+      <MuiButtonAdapter label={label} display="label-only" appearance="menu-item" checked={checked}
+        radio={defaults.radio} onClick={() => {}} />
+    );
+  };
+
+  it('draws menuitemradio entries, one checked, selected look, no radio attribute, no warning', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <ButtonDefaults appearance="menu-item" radio>
+        <Entry label="Paragraph" checked={false} />
+        <Entry label="Heading 1" checked />
+        <Entry label="Heading 2" checked={false} />
+      </ButtonDefaults>,
+    );
+    const radios = screen.getAllByRole('menuitemradio');
+    expect(radios).toHaveLength(3);
+    expect(radios.filter(r => r.getAttribute('aria-checked') === 'true').map(r => r.textContent)).toEqual(['Heading 1']);
+    expect(radios.map(r => r.classList.contains('Mui-selected'))).toEqual([false, true, false]);
+    radios.forEach(r => expect(r.hasAttribute('radio')).toBe(false));
+    expect(errors).not.toHaveBeenCalled();
   });
 });

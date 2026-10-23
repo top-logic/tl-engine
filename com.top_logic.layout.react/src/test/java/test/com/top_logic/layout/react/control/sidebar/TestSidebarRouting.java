@@ -10,14 +10,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
+import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
+import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.react.routing.RouteChangeListener;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
@@ -173,8 +182,13 @@ public class TestSidebarRouting extends TestCase {
 		ReactContext context = new DefaultReactContext("", "test", queue, new ReactWindowRegistry("test"));
 		RouteManager routeManager = context.getRouteManager();
 		queue.setRouteManager(routeManager);
+		routeManager.setApplicationTitle(ResKey.text("Demo"));
 		List<String> reported = new ArrayList<>();
-		routeManager.setUrlChangeHandler((url, replace) -> reported.add(url));
+		List<String> titles = new ArrayList<>();
+		routeManager.setUrlChangeHandler((url, title, replace) -> {
+			reported.add(url);
+			titles.add(title);
+		});
 
 		Supplier<String> noSegment = () -> null;
 		List<SidebarItem> items = List.of(
@@ -190,6 +204,8 @@ public class TestSidebarRouting extends TestCase {
 		render(sidebar);
 		assertEquals("The content of a routed item is part of the URL.", "first/one",
 			routeManager.currentUrl());
+		assertEquals("The page is not titled after the selected item.", "First – Demo",
+			titles.get(titles.size() - 1));
 
 		sidebar.selectItem("admin");
 		render(sidebar);
@@ -198,6 +214,8 @@ public class TestSidebarRouting extends TestCase {
 			routeManager.currentUrl());
 		assertEquals("Selecting the item without a route left the URL of the item before in the "
 			+ "address bar.", "", reported.get(reported.size() - 1));
+		assertEquals("An item without a route names no page, so the title is the application's.",
+			"Demo", titles.get(titles.size() - 1));
 
 		// A reload of the window adopts the URL the client shows.
 		routeManager.adoptUrl("");
@@ -209,6 +227,64 @@ public class TestSidebarRouting extends TestCase {
 		sidebar.selectItem("first");
 		render(sidebar);
 		assertEquals("first/one", routeManager.currentUrl());
+		assertEquals("First – Demo", routeManager.currentTitle());
+	}
+
+	/**
+	 * The labels of the routes inside an item declared the final title do not rename the page,
+	 * while their segments stay in the URL; the content of another item refines the title.
+	 *
+	 * <p>
+	 * The tab bar is the content of the sidebar - a visible child of its control - and so lies
+	 * inside the participant the sidebar is.
+	 * </p>
+	 */
+	public void testFinalTitleItemKeepsContentLabelsOutOfTitle() {
+		SSEUpdateQueue queue = new SSEUpdateQueue();
+		ReactContext context = new DefaultReactContext("", "test", queue, new ReactWindowRegistry("test"));
+		RouteManager routeManager = context.getRouteManager();
+		queue.setRouteManager(routeManager);
+		routeManager.setApplicationTitle(ResKey.text("Demo"));
+		List<String> titles = new ArrayList<>();
+		routeManager.setUrlChangeHandler((url, title, replace) -> titles.add(title));
+
+		Supplier<ReactControl> tabs = () -> new ReactTabBarControl(context, null,
+			List.of(new TabDefinition("details", "Details",
+				() -> new ReactControl(context, null, "TestContent"), null).withRoute("details")),
+			"details");
+		List<SidebarItem> items = List.of(
+			new NavigationItem("person", "Anna Meier", null, tabs).withRoute("person").withFinalTitle(true),
+			new NavigationItem("plain", "Plain", null, tabs).withRoute("plain"));
+
+		ReactSidebarControl sidebar =
+			new ReactSidebarControl(context, items, "person", false, null, null);
+		queue.setRootControl(sidebar);
+		sidebar.attach();
+		render(sidebar);
+		assertEquals("The tab inside the item left the URL.", "person/details", routeManager.currentUrl());
+		assertEquals("The tab inside an item declared the final title renamed the page.",
+			"Anna Meier – Demo", routeManager.currentTitle());
+		assertEquals("Anna Meier – Demo", titles.get(titles.size() - 1));
+
+		sidebar.selectItem("plain");
+		render(sidebar);
+		assertEquals("plain/details", routeManager.currentUrl());
+		assertEquals("The tab inside an item refines the title by default.", "Details – Demo",
+			routeManager.currentTitle());
+	}
+
+	/**
+	 * The suite of tests.
+	 *
+	 * <p>
+	 * The page title is resolved by {@link com.top_logic.util.Resources}, which the services of the
+	 * test setup provide.
+	 * </p>
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(new TestSuite(TestSidebarRouting.class),
+				ResourcesModule.Module.INSTANCE));
 	}
 
 }

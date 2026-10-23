@@ -44,16 +44,16 @@ const TLPdfViewer: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!hasPdf) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tlPdfViewer ' + fillClass)}>
-        <div className="tlPdfViewer__placeholder">{t['js.pdfViewer.noDocument']}</div>
+      <div id={controlId} className={rootClassName(state, 'tl-media', fillClass)}>
+        <div className="tl-status">{t['js.pdfViewer.noDocument']}</div>
       </div>
     );
   }
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlPdfViewer ' + fillClass)}>
+    <div id={controlId} className={rootClassName(state, 'tl-media', fillClass)}>
       <iframe
-        className="tlPdfViewer__frame"
+        className="tl-media__frame"
         src={viewerUrl}
         title={t['js.pdfViewer.title']}
       />

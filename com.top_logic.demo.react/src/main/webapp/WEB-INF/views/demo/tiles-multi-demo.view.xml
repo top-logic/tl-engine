@@ -48,6 +48,7 @@
 							path="navPathA"
 						>
 							<frame
+								final-title="true"
 								route="person/:person"
 								view="demo/tiles-demo/person-detail.view.xml"
 							>
@@ -90,6 +91,7 @@
 							path="navPathB"
 						>
 							<frame
+								final-title="true"
 								route="person/:person"
 								view="demo/tiles-demo/person-detail.view.xml"
 							>

@@ -153,19 +153,36 @@ function reloadOnStaleUi(): void {
 }
 
 /**
+ * Options of a command sent through {@link enqueueCommand}.
+ */
+export interface CommandOptions {
+  /**
+   * Whether the pending debounced field values are sent before the command; absent: `true`. A
+   * command that reads nothing of the form but its own arguments - a query for the suggestions to
+   * the text typed, which carries that text - passes `false`, so that it does not send a value a
+   * field holds back until it is left.
+   */
+  flushFields?: boolean;
+}
+
+/**
  * Enqueues a command into the strict FIFO chain.
  *
  * <p>For an action command (anything but {@link CMD_VALUE_CHANGED}), all pending debounced field
- * values are flushed first. The flushes enqueue their {@link CMD_VALUE_CHANGED} sends
- * synchronously, so they precede the action in the chain and are processed by the server before
- * the action runs.</p>
+ * values are flushed first, unless {@link CommandOptions.flushFields} says otherwise. The flushes
+ * enqueue their {@link CMD_VALUE_CHANGED} sends synchronously, so they precede the action in the
+ * chain and are processed by the server before the action runs.</p>
  *
  * @returns a promise resolving with this command's answer once it has arrived, or with
  *          {@code undefined} when the command failed; it never rejects (transport failures are
  *          logged).
  */
-export function enqueueCommand(url: string, payload: CommandPayload): Promise<CommandResponse | undefined> {
-  if (payload.command !== CMD_VALUE_CHANGED) {
+export function enqueueCommand(
+  url: string,
+  payload: CommandPayload,
+  options?: CommandOptions,
+): Promise<CommandResponse | undefined> {
+  if (payload.command !== CMD_VALUE_CHANGED && options?.flushFields !== false) {
     void flushPendingFieldValues();
   }
   const result = _chain.then(() => post(url, payload));

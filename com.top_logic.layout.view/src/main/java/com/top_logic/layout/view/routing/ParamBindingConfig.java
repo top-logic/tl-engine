@@ -5,11 +5,14 @@
  */
 package com.top_logic.layout.view.routing;
 
-import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.layout.view.tiles.ScriptedTileLabel;
+import com.top_logic.layout.view.tiles.StaticTileLabel;
+import com.top_logic.layout.view.tiles.TileLabelProvider;
 
 /**
  * Binds a view channel to a URL route parameter.
@@ -33,7 +36,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * </p>
  */
 @TagName("bind")
-public interface ParamBindingConfig extends ConfigurationItem {
+public interface ParamBindingConfig extends WithFinalTitle {
 
 	/** Configuration name for {@link #getChannel()}. */
 	String CHANNEL = "channel";
@@ -43,6 +46,9 @@ public interface ParamBindingConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getPrefix()}. */
 	String PREFIX = "prefix";
+
+	/** Configuration name for {@link #getLabel()}. */
+	String LABEL = "label";
 
 	/**
 	 * The name of the channel to bind to.
@@ -76,4 +82,26 @@ public interface ParamBindingConfig extends ConfigurationItem {
 	@Name(PREFIX)
 	@Nullable
 	String getPrefix();
+
+	/**
+	 * Provider for the label naming the page while the binding contributes its segment.
+	 *
+	 * <p>
+	 * The label titles the browser tab when no route displayed inside this view names the page more
+	 * precisely: {@link ScriptedTileLabel &lt;label class="...ScriptedTileLabel"&gt;} with
+	 * {@code inputs="ticket" expr="$ticket.get(`mod:Ticket#name`)"} names the page by the object
+	 * the value identifies, {@link StaticTileLabel} by fixed text. It is computed in the context of
+	 * the view declaring the binding and computed again whenever one of the channels the provider
+	 * {@link TileLabelProvider#observedChannels(com.top_logic.layout.view.ViewContext) reads}
+	 * takes a new value.
+	 * </p>
+	 *
+	 * <p>
+	 * A binding without a label leaves the title to the routes around it: the value alone, an
+	 * identifier, names nothing a user would recognize the page by.
+	 * </p>
+	 */
+	@Name(LABEL)
+	@Nullable
+	PolymorphicConfiguration<? extends TileLabelProvider> getLabel();
 }

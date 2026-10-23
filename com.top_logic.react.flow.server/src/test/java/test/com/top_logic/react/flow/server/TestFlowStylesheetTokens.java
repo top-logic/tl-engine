@@ -21,9 +21,17 @@ public class TestFlowStylesheetTokens extends AbstractStylesheetTokenTest {
 	/** The stylesheets audited, under the resource paths they are served from. */
 	private static final List<String> STYLESHEETS = List.of("/style/tl-react-flow.css");
 
+	/** The token sheet of the design system package: the rules of the sheet read its roles. */
+	private static final List<String> DESIGN_SYSTEM_TOKENS = List.of("/style/tl-design-system/tokens.css");
+
 	@Override
 	protected List<String> stylesheets() {
 		return STYLESHEETS;
+	}
+
+	@Override
+	protected List<String> tokenStylesheets() {
+		return DESIGN_SYSTEM_TOKENS;
 	}
 
 	/**

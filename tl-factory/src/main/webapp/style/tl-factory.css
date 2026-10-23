@@ -10,13 +10,13 @@
  * position starts at the newest line, stays there while lines arrive, and keeps its place once the
  * user scrolls up.
  */
-.tl-panel__body:has(> .tlHtml .tl-factory-log) {
+.tl-panel__body:has(> .tl-prose .tl-factory-log) {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 }
 
-.tl-panel__body:has(> .tlHtml .tl-factory-log) > .tlHtml {
+.tl-panel__body:has(> .tl-prose .tl-factory-log) > .tl-prose {
 	display: flex;
 	flex-direction: column;
 	flex: 1 1 auto;

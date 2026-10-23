@@ -398,7 +398,6 @@ describe('the files of a file chip field (TLFileChips) as MUI chips', () => {
     expect(sent.mock.calls).toEqual([[CMD_REMOVE_FILE, { [ARG_KEY]: 'k2' }]]);
     const add = screen.getByRole('button', { name: LABEL_ADD_FILE });
     expect(add.classList).toContain('MuiButton-root');
-    expect(add.classList).toContain('tlFileChips__add');
   });
 
   it('offers neither removing nor adding files while not editable', async () => {

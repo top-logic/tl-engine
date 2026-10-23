@@ -180,3 +180,46 @@ Adopting a URL — a deep link, a reload, a back navigation — works in two ste
 - **Query parameters**: `<query-bindings><bind channel="filter" query-param="q"/></query-bindings>` on `<view>` binds a channel to one query parameter (`QueryBindingParticipant`). It works like a route parameter, with two differences that follow from the query naming its parameters instead of placing them: the binding occupies no path segment, so it neither depends on nor disturbs the position of anything else in the URL and simply disappears when the channel holds nothing; and the query of an adopted URL is offered to *every* participant (`RoutingParticipant.activateQuery`), each taking the parameters it declares. A change that leaves the path as it is and alters only the query is always reported with `replaceState`, whatever the participant asked for: refining what a page shows - narrowing a filter, picking a sorting - stays on that page, so the back button leaves it rather than walking the terms typed on it. A URL without the parameter says nothing about the value, exactly as for a route parameter: the view keeps what it establishes and the address bar is completed with it. A displayed element list bound to such a channel (a `<table>`'s `<rows>` over its `<inputs>`, an `<object-list>`, a `<calendar>`) is re-read when it starts observing (`RowSourceObserver.attach`), because the URL writes the channel while the display is still being attached - and equally when a display comes back after being detached, which ignored every change meanwhile. Keys and values are `application/x-www-form-urlencoded` (UTF-8), and the parameters follow the display order of the participants contributing them. The value is text, so a `<value-input value="searchTerm" type="tl.core:String"/>` writes it, a `<table>` reads it through an `<inputs><input channel="status"/></inputs>` of its `<rows>` expression, and a `<table>` bound with `active-preset` / `search-term` publishes its own filtering on such a channel (see [Filtering](doc:view-layer/tables#filtering-the-filter-bar-and-its-presets)) - `views/tickets.view.xml` in `com.top_logic.demo.react` binds both as `/view/tickets/ticket/<id>?filter=<preset>&q=<term>`.
 
 An encoded slash (`%2F`) in a route value needs a servlet container that accepts such a path — containers reject it by default, as "ambiguous". The embedded Jetty of `tl-ide-jetty` does accept it: `Bootstrap` allows `UriCompliance.Violation.AMBIGUOUS_PATH_SEPARATOR` on the connector's `HttpConfiguration` and sets `ServletHandler.setDecodeAmbiguousURIs(true)`. A standalone Jetty needs the same two settings (`jetty.httpConfig.uriCompliance`, `jetty.servlet.decodeAmbiguousURIs`), a Tomcat 10.1 `encodedSolidusHandling="decode"` on its `<Connector>` (the default `reject` answers 400). Object identifiers never contain a slash, so this concerns bindings on a business key only.
+
+## Browser tab title
+
+The title of the browser tab follows what the display shows: it is the label of the innermost route the display contains that has a label, followed by the application title — `Ticket 4711 – TopLogic React Demo`. `RouteManager.currentTitle()` composes it from `RoutingParticipant.activeRouteLabel()` of the same participants the URL is composed from, in display order, and sends it with every URL change (`RouteChangeEvent.title`); a change of the label alone is sent as a replacement of the URL the browser shows already, so a renamed page keeps its history entry. Labels belong to the route declarations — there is no element that sets a title on its own:
+
+- **Application title**: `title` of `ViewConfig`, internationalized, e.g. `<config config:interface="com.top_logic.layout.view.ViewConfig"><title><en>TopLogic React Demo</en><de>TopLogic React Demo</de></title></config>`. It is the title the page is loaded with and the whole title while no route has a label (and while a login view holds the requested URL). Without it, the page is loaded as `TopLogic` and the title is the label alone.
+- **Sidebar and tabs**: the label of the selected `<nav-item>` and of the active tab, where it has a route — an item or tab with `route="none"` names no page.
+- **Tile stack**: the label of the innermost frame on the path that the URL describes — the label the breadcrumb shows, from `<frame><label>` or the `frame-label` of the `<navigate-push>`. It is fixed when the frame is pushed and changes with the path.
+- **Route parameters**: a `<bind>` names the page only where it declares a `<label>`, the same providers as a frame label (`TileLabelProvider`), computed in the context of the view declaring the binding while the binding contributes its segment. A bare identifier is no title, so a binding without a label leaves the title to the routes around it. A scripted label follows its `inputs`: whenever one of them takes a new value, the title is composed again. A label that has to follow edits of the displayed object - a ticket renamed while it is shown - reads a [`<derived-channel>`](doc:view-layer/channels#following-edits-of-the-input-objects-observed-types) holding the name, which observes the object and takes the new name as a new value. Query bindings name no page.
+
+```xml
+<param-bindings>
+	<bind channel="ticketId" prefix="ticket" route-param="ticket">
+		<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+			expr="$ticket.get(`demo.tickets:Ticket#name`)"
+			inputs="ticket"
+		/>
+	</bind>
+</param-bindings>
+```
+
+### Final title
+
+A route inside the content of a labelled route renames the page, because the innermost label wins. In a tile stack whose person frame contains tabs, the title would read `Details – …` instead of the person's name. Setting `final-title="true"` on the outer declaration makes its label the final title: the routes inside its content keep their URL segments, but their labels no longer reach the title.
+
+```xml
+<tile-stack initial="accounts/overview.view.xml" path="navPath">
+	<frame route="person/:person" view="accounts/person-detail.view.xml" final-title="true">
+		<param name="person"
+			expr="objectId($person)"
+			reverse="$value.objectResolve(`tl.accounts:Person`)"
+		/>
+		<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+			expr="$person.get(`tl.accounts:Person#name`)"
+			inputs="person"
+		/>
+	</frame>
+</tile-stack>
+```
+
+With tabs inside `person-detail.view.xml`, the URL is `…/person/4711/details` and the title stays `Anna Meier – …`.
+
+`final-title` (`WithFinalTitle`, default `false`) is available on every declaration that gives a route a label: `<nav-item>`, `<tab>`, `<frame>` and `<bind>`. It takes effect only while the declaration is part of the URL — not for `route="none"`, not for a `<bind>` whose channel holds no value — and for a tile stack it is the `<frame>` the title is taken from that decides. A declaration with `final-title` but without a label of its own leaves the title to the routes around it. Technically, the participant answers `RoutingParticipant.titlesContent()` with `false`, and `SSEUpdateQueue` leaves everything below it out of the participants `RouteManager.setTitlingParticipants()` supplies; "below" means inside the visible children of the control the participant belongs to or is anchored at (a tile stack anchors the participant of its path, a view the participants of its bindings).

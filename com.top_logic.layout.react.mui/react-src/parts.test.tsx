@@ -110,6 +110,7 @@ describe('the TopLogic drawing of the parts', () => {
     const { default: DividerPart } = await import('../../com.top_logic.layout.react/react-src/controls/divider/DividerPart');
     const { default: ProgressBarPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/ProgressBarPart');
     const { default: SpinnerPart } = await import('../../com.top_logic.layout.react/react-src/controls/progress/SpinnerPart');
+    const { default: ListboxPart } = await import('../../com.top_logic.layout.react/react-src/controls/listbox/ListboxPart');
     // A chip draws its remove button with the part Button, a disclosure toggle its busy indicator
     // with the part Spinner, a field value of a color role its pill with the part Chip.
     const { registerPart } = await import('tl-react-bridge');
@@ -119,7 +120,7 @@ describe('the TopLogic drawing of the parts', () => {
     registerPart('Chip', ChipPart);
     return {
       ButtonPart, MenuTriggerPart, DisclosureTogglePart, CheckboxPart, TextInputPart, FieldValuePart, ChipPart, BadgePart,
-      DividerPart, ProgressBarPart, SpinnerPart,
+      DividerPart, ProgressBarPart, SpinnerPart, ListboxPart,
     };
   }
 
@@ -213,6 +214,8 @@ describe('the TopLogic drawing of the parts', () => {
     render(<>
       <MenuTriggerPart {...props} />
       <MenuTriggerPart {...props} label="Aktionen" icon="css:bi bi-three-dots" expanded />
+      <MenuTriggerPart {...props} label="Format" icon="css:bi bi-type" small />
+      <MenuTriggerPart {...props} label="Ansicht" small />
     </>);
 
     const labeled = screen.getByRole('button', { name: 'Mehr' });
@@ -224,6 +227,13 @@ describe('the TopLogic drawing of the parts', () => {
     expect(iconOnly.className).toBe('tl-button tl-button--ghost tl-type-body tl-button--icon');
     expect(iconOnly.getAttribute('aria-expanded')).toBe('true');
     expect(iconOnly.textContent).toBe('');
+    expect(iconOnly.querySelector('i')!.classList.contains('tl-icon-md')).toBe(true);
+
+    // Small applies to the icon alone, like the part Button.
+    const small = screen.getByRole('button', { name: 'Format' });
+    expect(small.className).toBe('tl-button tl-button--ghost tl-type-body tl-button--sm tl-button--icon');
+    expect(small.querySelector('i')!.classList.contains('tl-icon-sm')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Ansicht' }).className).toBe('tl-button tl-button--ghost tl-type-body');
   });
 
   it('draws a disclosure toggle as the toggle of the design system, named by its label', async () => {
@@ -464,7 +474,7 @@ describe('the TopLogic drawing of the parts', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('draws a multi-line box as the text area of the design system, without icon, action and key handler', async () => {
+  it('draws a multi-line box as the text area of the design system, without icon and action, passing its keys', async () => {
     const { TextInputPart } = await defaults();
     const onKeyDown = vi.fn();
 
@@ -478,7 +488,18 @@ describe('the TopLogic drawing of the parts', () => {
     expect(document.querySelector('.my-icon')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();
     await userEvent.type(area, '{Enter}');
-    expect(onKeyDown).not.toHaveBeenCalled();
+    expect(onKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['Enter']);
+  });
+
+  it('puts the combobox role of a box offering suggestions on the input', async () => {
+    const { TextInputPart } = await defaults();
+
+    render(<TextInputPart value="" role="combobox" aria-expanded={false} aria-autocomplete="list" aria-label="Regel" />);
+
+    const box = screen.getByRole('combobox', { name: 'Regel' });
+    expect(box.tagName).toBe('INPUT');
+    expect(box.getAttribute('aria-expanded')).toBe('false');
+    expect(box.getAttribute('aria-autocomplete')).toBe('list');
   });
 
   it('draws a number box with its bounds, the keyboard asked for and a password box masked', async () => {
@@ -816,5 +837,35 @@ describe('the TopLogic drawing of the parts', () => {
     expect(decoration.getAttribute('aria-hidden')).toBe('true');
     expect(decoration.hasAttribute('role')).toBe(false);
     expect(screen.getAllByRole('progressbar')).toEqual([named]);
+  });
+
+  it('draws a list as the options of a select on a popover, the active entry highlighted', async () => {
+    const { ListboxPart } = await defaults();
+    const anchor = document.createElement('input');
+    document.body.appendChild(anchor);
+    const onPick = vi.fn();
+    const onActivate = vi.fn();
+
+    render(<ListboxPart id="l1" anchor={anchor} aria-label="Vorschläge" activeIndex={1}
+      entries={[{ id: 'l1-0', label: 'Küche' }, { id: 'l1-1', label: 'Serverraum' }]}
+      onPick={onPick} onActivate={onActivate} />);
+
+    const list = screen.getByRole('listbox', { name: 'Vorschläge' });
+    expect(list.id).toBe('l1');
+    expect(list.className).toBe('tl-select__list tl-type-body');
+    expect(list.closest('.tl-popover')).not.toBeNull();
+    const options = screen.getAllByRole('option');
+    expect(options.map(option => option.id)).toEqual(['l1-0', 'l1-1']);
+    expect(options.map(option => option.textContent)).toEqual(['Küche', 'Serverraum']);
+    expect(options.map(option => option.getAttribute('aria-selected'))).toEqual(['false', 'true']);
+    expect(options[1].getAttribute('data-tl-state')).toBe('highlighted');
+
+    anchor.focus();
+    await userEvent.click(options[0]);
+    expect(onPick.mock.calls).toEqual([[0]]);
+    expect(onActivate).toHaveBeenCalledWith(0);
+    // A press into the list leaves the focus in the element controlling it.
+    expect(document.activeElement).toBe(anchor);
+    anchor.remove();
   });
 });

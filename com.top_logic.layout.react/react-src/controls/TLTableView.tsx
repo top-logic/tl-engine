@@ -1,11 +1,8 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
-import { isInteractiveTarget, isOperableTarget } from './interactive';
-import { NO_DRAG_IMAGE } from './drop-hint';
-import { DropHint } from './DropHint';
-import type { HintAnchor } from './DropHint';
-import type { DropVerdict } from './drop-hint';
-import { Menu, MenuItem } from './menu/Menu';
+import { DropHint, NO_DRAG_IMAGE } from './DropHint';
+import type { HintAnchor, DropVerdict } from './DropHint';
+import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
 
@@ -854,7 +851,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
    * the server then drags the whole selection, which may reach beyond the rendered row window.
    */
   const handleRowDragStart = React.useCallback((row: RowState, selected: boolean, event: React.DragEvent) => {
-    if (isInteractiveTarget(event)) {
+    if (isInteractiveTarget(event.target)) {
       // A drag begun on a cell's input belongs to that input (selecting its text), not to the row.
       event.preventDefault();
       return;
@@ -1007,7 +1004,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     // Give the grid keyboard focus so the table's keyboard scope becomes active - except when
     // the click landed in an interactive cell element (e.g. a text input of an editable cell),
     // which must keep the focus to stay editable.
-    if (!isInteractiveTarget(event)) {
+    if (!isInteractiveTarget(event.target)) {
       gridRef.current?.focus({ preventScroll: true });
       // A plain selecting click enters the clicked cell for editing: once the row re-renders
       // editable, the focus effect moves the caret into that column's input.
@@ -1022,7 +1019,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     // overwrite the value the control is sending at the same moment, and the edit would be lost.
     // A control that cannot be operated - the read-only checkbox of a row not yet editable - does
     // nothing with the click, which then selects the row as a click on its text would.
-    if (isOperableTarget(event) && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+    if (isOperableTarget(event.target) && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
       return;
     }
     sendCommand('select', {
@@ -1036,7 +1033,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // activation. A double-click inside an interactive cell element belongs to that element
   // (selecting a word in a text input), so it opens nothing.
   const handleRowActivate = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
-    if (isInteractiveTarget(event)) {
+    if (isInteractiveTarget(event.target)) {
       return;
     }
     // The click that preceded this double-click already toggled the group, and a group row has
@@ -1350,7 +1347,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     searchTimeoutRef.current = window.setTimeout(() => sendSearch(term), SEARCH_DEBOUNCE_MS);
   }, [sendSearch]);
 
-  const handleSearchKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
       // Sends the term without waiting out the pause; the scope default must not also fire.
       event.preventDefault();
@@ -1417,7 +1414,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     closeSaveForm();
   }, [saveName, sendCommand, closeSaveForm]);
 
-  const handleSaveKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSaveKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       handleSaveSubmit();
@@ -1911,7 +1908,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 // double-click); plain click-and-drag still selects cell text, and
                 // interactive cell elements keep their own mouse handling (e.g.
                 // double-click word selection in a text input).
-                if ((e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) && !isInteractiveTarget(e)) {
+                if ((e.shiftKey || e.ctrlKey || e.metaKey || e.detail > 1) && !isInteractiveTarget(e.target)) {
                   e.preventDefault();
                 }
               }}

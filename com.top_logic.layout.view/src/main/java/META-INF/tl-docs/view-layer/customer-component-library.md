@@ -91,7 +91,7 @@ There are two levels of replacement:
   draws them; it holds no server state and sends no command. The part appears as a control of its
   own and inline in toolbars, menus, tables, trees, form groups and the sidebar, so one replacement
   reaches all of them. The parts are `Button`, `MenuTrigger`, `DisclosureToggle`, `Checkbox`,
-  `TextInput`, `FieldValue`, `Chip`, `Badge`, `Divider`, `ProgressBar` and `Spinner`; the list
+  `TextInput`, `FieldValue`, `Chip`, `Badge`, `Divider`, `ProgressBar`, `Spinner` and `Listbox`; the list
   with the places each is drawn, the registry and a part adapter are in
   [Parts: the atoms of the React UI](doc:view-layer/parts).
 - **A control, with `replace`.** The adapter renders the complete state of a control under its

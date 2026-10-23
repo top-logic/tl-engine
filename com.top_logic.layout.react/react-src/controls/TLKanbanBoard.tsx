@@ -1,8 +1,16 @@
-import { React, useTLState, useTLCommand, TLChild, FillBarrier, useFill, rootClassName, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, createPortal, ATTR_LONG_PRESS, LONG_PRESS_EVENT } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, usePart, TLChild, FillBarrier, useFill, rootClassName, stateAttr, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, boundaryAt, isInteractiveWithin, kindAccepted } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone } from 'tl-react-bridge';
-import { isInteractiveTarget } from './interactive';
-import { placeDropHint, NO_DRAG_IMAGE } from './drop-hint';
-import type { DropVerdict } from './drop-hint';
+import { DropHint, NO_DRAG_IMAGE } from './DropHint';
+import type { DropVerdict, HintAnchor } from './DropHint';
+import { useOptionSelection, ATTR_OPTION_KEY } from './option-selection';
+import { useRovingFocus } from './useRovingFocus';
+
+const { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } = React;
+
+/** Texts of the board; the server translates them (I18NConstants, js.kanbanBoard.*). */
+const I18N_KEYS = {
+  'js.kanbanBoard.moved': 'Moved to {0}, position {1} of {2}.',
+};
 
 /** The command selecting a card (ReactKanbanBoardControl.CMD_SELECT_CARD). */
 const CMD_SELECT_CARD = 'selectCard';
@@ -21,6 +29,15 @@ const CMD_DROP = 'drop';
 
 /** The command asking whether a drop at the hovered target would be accepted (DropSupport.CMD_DROP_PROBE). */
 const CMD_DROP_PROBE = 'dropProbe';
+
+/** Selects the cards of a column, evaluated on its card list. */
+const CARD_SELECTOR = ':scope > [role="option"]';
+
+/** Selects the cards of a column, evaluated on the column. */
+const COLUMN_CARD_SELECTOR = ':scope > .tl-board__cards > [role="option"]';
+
+/** Selects the cards of the board, evaluated on the board - not those of a board inside a card. */
+const BOARD_CARD_SELECTOR = ':scope > .tl-board__column > .tl-board__cards > [role="option"]';
 
 /** A card as the server describes it. */
 interface CardDescriptor {
@@ -65,20 +82,194 @@ const ZONE_OF_POSITION: Record<CardPosition, TLDropZone> = {
   none: 'none',
 };
 
-/** Where a running drag hovers the board. */
-interface DropState {
-  /** Key of the hovered column. */
-  column: string;
-
+/** Where a drop is made: beside a card, or on a column. */
+interface DropTarget {
   /** Key of the card the drop is made beside, or of the column for a drop appending to it. */
   target: string;
 
   /** Where the drop is made relative to the card, `none` for a drop on the column. */
   position: CardPosition;
+}
+
+/** Where a running drag hovers the board. */
+interface DropState extends DropTarget {
+  /** Key of the hovered column. */
+  column: string;
 
   /** Identifier of the probe asking about this target, `null` for a drag not started here. */
   probe: string | null;
 }
+
+/** The direction Alt + arrow moves a card in. */
+type MoveDirection = 'up' | 'down' | 'left' | 'right';
+
+/** The direction the given key moves a card in together with Alt, `null` for a key moving none. */
+function moveOf(key: string): MoveDirection | null {
+  switch (key) {
+    case 'ArrowUp':
+      return 'up';
+    case 'ArrowDown':
+      return 'down';
+    case 'ArrowLeft':
+      return 'left';
+    case 'ArrowRight':
+      return 'right';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Where Alt + arrow moves the given cards of a column, named as a drag dropping them there names it
+ * - the server resolves it like any drop (ReactKanbanBoardControl.placeOf): down after the card
+ * following the last of them, up before the card preceding the first of them, left and right into
+ * the neighbouring column, before the card standing there at the position of the moved card, or at
+ * the column's end where there is none. A board that does not reorder its columns takes a drop on a
+ * column as a whole only, as the pointer makes it: left and right then name the column.
+ *
+ * @param columns The columns of the board.
+ * @param columnIndex The position of the column the cards are in.
+ * @param cardIndex The position of the card the key was pressed on, within its column.
+ * @param moved The keys of the moved cards, in display order.
+ * @param direction The direction of the move.
+ * @param reorder Whether the board reorders its columns.
+ * @returns The drop target, `null` where the cards cannot move in that direction.
+ */
+function keyboardDrop(
+  columns: readonly ColumnDescriptor[],
+  columnIndex: number,
+  cardIndex: number,
+  moved: readonly string[],
+  direction: MoveDirection,
+  reorder: boolean,
+): DropTarget | null {
+  const cards = columns[columnIndex].cards;
+  switch (direction) {
+    case 'down': {
+      const next = cards[cards.findIndex((card) => card.key === moved[moved.length - 1]) + 1];
+      return next ? { target: next.key, position: 'after' } : null;
+    }
+    case 'up': {
+      const first = cards.findIndex((card) => card.key === moved[0]);
+      return first > 0 ? { target: cards[first - 1].key, position: 'before' } : null;
+    }
+    default: {
+      const neighbour = columns[columnIndex + (direction === 'left' ? -1 : 1)];
+      if (!neighbour) {
+        return null;
+      }
+      const card = reorder ? neighbour.cards[cardIndex] : undefined;
+      return card ? { target: card.key, position: 'before' } : { target: neighbour.key, position: 'none' };
+    }
+  }
+}
+
+/** Fills the placeholders {0}, {1}, ... of a translated text. */
+function format(template: string, ...args: string[]): string {
+  return template.replace(/\{(\d+)\}/g, (placeholder, index: string) => args[Number(index)] ?? placeholder);
+}
+
+/** A column of the board, see {@link BoardColumn}. */
+interface BoardColumnProps {
+  column: ColumnDescriptor;
+
+  /** The ID of the column's label, which names the column and its card list. */
+  labelId: string;
+
+  /** The keys of the selected cards. */
+  selected: ReadonlySet<string>;
+
+  /** Whether several cards may be selected. */
+  multiSelect: boolean;
+
+  /** Whether cards are dragged. */
+  dragEnabled: boolean;
+
+  /** Selects the card with the given key. */
+  select: (key: string, toggle: boolean, range: boolean) => void;
+
+  /** The `data-tl-state` of the column in the running drag. */
+  columnState: string | undefined;
+
+  /** The `data-tl-state` of the given card in the running drag. */
+  cardState: (card: CardDescriptor) => string | undefined;
+
+  onCardDragStart: (card: CardDescriptor, event: React.DragEvent) => void;
+
+  onCardDragEnd: () => void;
+
+  onColumnDragOver: (column: ColumnDescriptor, event: React.DragEvent) => void;
+
+  onColumnDrop: (column: ColumnDescriptor, event: React.DragEvent) => void;
+
+  /**
+   * Handles a key pressed in the card list of the column that moves a card (Alt + arrow); whether
+   * it was such a key, which then does not move the focus.
+   */
+  onMoveKey: (column: ColumnDescriptor, event: React.KeyboardEvent) => boolean;
+}
+
+/**
+ * A column of the board: a section named by its header, with its cards as the options of a list
+ * box - one tab stop, the arrow keys moving the focus among the cards (useRovingFocus), the
+ * selection as among any options (useOptionSelection).
+ */
+const BoardColumn: React.FC<BoardColumnProps> = ({
+  column, labelId, selected, multiSelect, dragEnabled, select, columnState, cardState,
+  onCardDragStart, onCardDragEnd, onColumnDragOver, onColumnDrop, onMoveKey,
+}) => {
+  const Badge = usePart('Badge');
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const cards = column.cards;
+
+  const firstSelected = cards.findIndex((card) => selected.has(card.key));
+  const roving = useRovingFocus(listRef, CARD_SELECTOR, cards.length, firstSelected, { linear: true });
+  const selection = useOptionSelection(listRef, select, multiSelect);
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    // Alt + arrow moves the card instead of the focus.
+    if (!onMoveKey(column, event)) {
+      roving.onKeyDown(event);
+    }
+  };
+
+  return (
+    <section className="tl-board__column" aria-labelledby={labelId} data-tl-state={columnState}
+      onDragOver={(event) => onColumnDragOver(column, event)}
+      onDrop={(event) => onColumnDrop(column, event)}
+    >
+      <header className="tl-board__header tl-type-body-strong">
+        <span id={labelId} className="tl-board__label">{column.label}</span>
+        <Badge content={String(column.count)} />
+      </header>
+      <FillBarrier>
+        <div ref={listRef} className="tl-board__cards" role="listbox" aria-labelledby={labelId}
+          aria-multiselectable={multiSelect || undefined}
+          onKeyDown={handleKeyDown} onFocus={roving.onFocus}>
+          {cards.map((card, index) => {
+            const isSelected = selected.has(card.key);
+            const draggable = dragEnabled && card.draggable !== false;
+            return (
+              <div
+                key={card.key}
+                {...selection.optionProps(card.key, isSelected)}
+                tabIndex={roving.tabIndexOf(index)}
+                className="tl-item tl-board__card"
+                draggable={draggable}
+                data-tl-state={cardState(card)}
+                onDragStart={draggable ? (event) => onCardDragStart(card, event) : undefined}
+                onDragEnd={draggable ? onCardDragEnd : undefined}
+              >
+                <TLChild control={card.content} />
+                {isSelected && <span className="tl-item__check" aria-hidden="true" />}
+              </div>
+            );
+          })}
+        </div>
+      </FillBarrier>
+    </section>
+  );
+};
 
 /**
  * A board of columns, each holding a vertical list of cards.
@@ -95,18 +286,28 @@ interface DropState {
  * - dropVerdicts: Record<string, DropVerdict> - the answers to the probes of the running drag
  *
  * The columns are placed side by side and scroll horizontally where they do not fit; each column
- * scrolls its cards vertically. A card is selected by a click or by Enter / Space while it has the
- * focus; a click on an interactive element inside the card is left to that element. With `Ctrl`
- * (or `Cmd`) the card is toggled instead, with `Shift` the selection is extended up to it; a long
- * press on a touch screen toggles as well, where several cards may be selected.
+ * scrolls its cards vertically. The cards of a column are the options of a list box with one tab
+ * stop; the arrow keys move the focus among them. A card is selected by a click or by Enter / Space
+ * while it has the focus; a click on an interactive element inside the card is left to that
+ * element. With `Ctrl` (or `Cmd`) the card is toggled instead, with `Shift` the selection is
+ * extended up to it; a long press on a touch screen toggles as well, where several cards may be
+ * selected.
  *
  * Cards are dragged with the drag payload every drag source of the bridge writes, so they can be
  * dropped on any control accepting their type, and a column accepts what such a control drags.
  * Dragging a selected card drags all selected cards, in display order.
  * While the board reorders its columns, a drop is made at the card boundary nearest to the pointer
- * - on a card or in the gap between two - and an insertion line shows where; otherwise a drop is made on the column as a whole, and the
- * column a dragged card already is in accepts no drop. A column the server refuses a drop on shows
- * the reason next to the pointer.
+ * - on a card or in the gap between two - and an insertion line shows where; otherwise a drop is
+ * made on the column as a whole, and the column a dragged card already is in accepts no drop. A
+ * column the server refuses a drop on shows the reason next to the pointer.
+ *
+ * Alt + arrow moves the focused card - with the other selected cards of its column, where it is
+ * selected - by the drop a drag would make, and only where the pointer could drag the card and drop
+ * it on the board: up and down by one place within its column, while the board reorders its
+ * columns; left and right into the neighbouring column, at the same position or at its end - on a
+ * board not reordering its columns onto the column as a whole, as a drop there is made. Once the new
+ * state shows the card at its new place, it has the focus, and its place is announced; a move the
+ * server refuses leaves the focus where it is.
  *
  * The board always fills the height its container offers, and each card list is a fill barrier.
  */
@@ -114,9 +315,10 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const fillClass = useFill(true);
+  const i18n = useI18N(I18N_KEYS);
 
   const columns = (state.columns as ColumnDescriptor[]) ?? [];
-  const selected = React.useMemo(() => new Set((state.selected as string[] | null) ?? []), [state.selected]);
+  const selected = useMemo(() => new Set((state.selected as string[] | null) ?? []), [state.selected]);
   const multiSelect = state.multiSelect === true;
   const dragEnabled = state.dragEnabled === true;
   const dragKind = (state.dragKind as string | null) ?? undefined;
@@ -125,35 +327,18 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
   const reorder = state.reorder === true;
   const dropVerdicts = (state.dropVerdicts as Record<string, DropVerdict>) ?? {};
 
-  const select = React.useCallback(
-    (card: string, toggle: boolean, range: boolean) =>
-      sendCommand(CMD_SELECT_CARD, { [ARG_CARD]: card, [ARG_TOGGLE]: toggle, [ARG_RANGE]: range }),
+  const select = useCallback(
+    (card: string, toggle: boolean, range: boolean) => {
+      void sendCommand(CMD_SELECT_CARD, { [ARG_CARD]: card, [ARG_TOGGLE]: toggle, [ARG_RANGE]: range });
+    },
     [sendCommand],
   );
 
-  // -- A long press on a card toggles it. The event comes from the bridge's touch gesture. --
-  const rootRef = React.useRef<HTMLDivElement | null>(null);
-  React.useEffect(() => {
-    const root = rootRef.current;
-    if (!root || !multiSelect) {
-      return undefined;
-    }
-    const handleLongPress = (event: Event) => {
-      const card = (event.target as Element | null)?.closest<HTMLElement>('[data-card]');
-      const key = card?.dataset.card;
-      if (key && root.contains(card)) {
-        void select(key, true, false);
-      }
-    };
-    root.addEventListener(LONG_PRESS_EVENT, handleLongPress);
-    return () => root.removeEventListener(LONG_PRESS_EVENT, handleLongPress);
-  }, [multiSelect, select]);
-
   // -- Where an accepted drag currently hovers, or null while none does. --
-  const [dropState, setDropState] = React.useState<DropState | null>(null);
+  const [dropState, setDropState] = useState<DropState | null>(null);
 
   // -- Drop probes sent for the running drag: each target is asked once per drag. --
-  const probesRef = React.useRef<{ drag: string; sent: Set<string> } | null>(null);
+  const probesRef = useRef<{ drag: string; sent: Set<string> } | null>(null);
 
   const dropVerdict: DropVerdict | undefined = dropState?.probe ? dropVerdicts[dropState.probe] : undefined;
   const dropRefused = dropVerdict !== undefined && !dropVerdict.accepted;
@@ -161,27 +346,27 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
   // A drag hovering the board may end without any event reaching it: a refused drop is not
   // dispatched here, and the source's dragend reaches the source's control only.
   const dragHovers = dropState !== null;
-  React.useEffect(() => {
+  useEffect(() => {
     if (!dragHovers) {
       return undefined;
     }
     return onDragEnd(() => setDropState(null));
   }, [dragHovers]);
 
-  // -- The hint carrying the reason of a refusal, following the pointer. --
-  const dragPointerRef = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const dropHintRef = React.useRef<HTMLDivElement | null>(null);
-  const attachDropHint = React.useCallback((hint: HTMLDivElement | null) => {
-    dropHintRef.current = hint;
-    if (hint) {
-      placeDropHint(hint, dragPointerRef.current.x, dragPointerRef.current.y,
-        runningDrag()?.image ?? NO_DRAG_IMAGE);
-    }
-  }, []);
+  // -- The cards dragged from this board, marked once the browser has taken the drag image. --
+  const [dragged, setDragged] = useState<ReadonlySet<string> | null>(null);
+  useEffect(() => (dragged ? onDragEnd(() => setDragged(null)) : undefined), [dragged]);
 
-  const handleCardDragStart = React.useCallback((card: CardDescriptor, event: React.DragEvent) => {
-    if (isInteractiveTarget(event)) {
-      // A drag begun on an input inside the card belongs to that input.
+  // -- Where the hint on a refused column stands - at the pointer, beside the drag image - and the
+  //    hint's way to follow it: dragover fires continuously, and only the hint re-renders for each
+  //    move, not the board. --
+  const hintAnchorRef = useRef<HintAnchor>({ x: 0, y: 0, height: 0 });
+  const hintMoveRef = useRef<((at: HintAnchor) => void) | null>(null);
+
+  const handleCardDragStart = useCallback((card: CardDescriptor, event: React.DragEvent) => {
+    if (isInteractiveWithin(event.target, event.currentTarget)) {
+      // A drag begun on an input or a link inside the card belongs to that element. The card itself,
+      // an option, counts as interactive by its role, but it is what is dragged.
       event.preventDefault();
       return;
     }
@@ -190,14 +375,26 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
       ? columns.flatMap((column) => column.cards.map((c) => c.key).filter((key) => selected.has(key)))
       : [card.key];
     writeDragPayload(event, { source: controlId, keys, selection: false, kind: dragKind });
+    const marked = new Set(keys);
+    // A drag cancelled before the image was taken has already ended: no card stays marked dragging.
+    afterDragImage(() => {
+      if (runningDrag()) {
+        setDragged(marked);
+      }
+    });
   }, [controlId, dragKind, columns, selected]);
+
+  const handleCardDragEnd = useCallback(() => {
+    setDropState(null);
+    setDragged(null);
+  }, []);
 
   /**
    * The target a drag event over the given column points at, or `null` where the column accepts
    * no drop of the running drag.
    */
-  const dropTargetAt = React.useCallback(
-    (column: ColumnDescriptor, event: React.DragEvent): { target: string; position: CardPosition } | null => {
+  const dropTargetAt = useCallback(
+    (column: ColumnDescriptor, event: React.DragEvent): DropTarget | null => {
       const drag = runningDrag();
       const withinColumn = drag !== null && drag.payload.source === controlId
         && drag.payload.keys.every((key) => column.cards.some((card) => card.key === key));
@@ -206,30 +403,18 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
       }
       if (reorder) {
         // The nearest boundary between two cards, wherever the pointer is in the column - on a card
-        // or in the gap between two: before the first card whose middle is below the pointer, after
-        // the last card when the pointer is below the middle of every card.
-        const cardElements = Array.from(
-          event.currentTarget.querySelectorAll<HTMLElement>('.tlKanbanBoard__card[data-card]'));
-        let last: string | null = null;
-        for (const cardElement of cardElements) {
-          const key = cardElement.dataset.card;
-          if (!key) {
-            continue;
-          }
-          const rect = cardElement.getBoundingClientRect();
-          if (event.clientY < rect.top + rect.height / 2) {
-            return { target: key, position: 'before' };
-          }
-          last = key;
-        }
-        if (last !== null) {
-          return { target: last, position: 'after' };
+        // or in the gap between two, or below the last one.
+        const boundary = boundaryAt(event.clientY,
+          Array.from(event.currentTarget.querySelectorAll(COLUMN_CARD_SELECTOR)));
+        const key = boundary?.item.getAttribute(ATTR_OPTION_KEY);
+        if (boundary && key) {
+          return { target: key, position: boundary.side };
         }
       }
       return { target: column.key, position: 'none' };
     }, [controlId, reorder]);
 
-  const handleColumnDragOver = React.useCallback((column: ColumnDescriptor, event: React.DragEvent) => {
+  const handleColumnDragOver = useCallback((column: ColumnDescriptor, event: React.DragEvent) => {
     // Coarse acceptance from the payload's kind alone; whether this particular drop is possible
     // is the server's answer, given once it arrives.
     if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
@@ -240,12 +425,11 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
       setDropState(null);
       return;
     }
-    dragPointerRef.current = { x: event.clientX, y: event.clientY };
     const drag = runningDrag();
-    const hint = dropHintRef.current;
-    if (hint) {
-      placeDropHint(hint, event.clientX, event.clientY, drag?.image ?? NO_DRAG_IMAGE);
-    }
+    // The browser draws the drag image around the pointer; the hint stands beside it.
+    const image = drag?.image ?? NO_DRAG_IMAGE;
+    hintAnchorRef.current = { x: event.clientX, y: event.clientY + image.top, height: image.bottom - image.top };
+    hintMoveRef.current?.(hintAnchorRef.current);
     let probe: string | null = null;
     if (drag) {
       probe = drag.id + '|' + target.target + '|' + target.position;
@@ -282,7 +466,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     event.dataTransfer.dropEffect = 'move';
   }, [dropAcceptsAny, dropAccepts, dropTargetAt, dropVerdicts, sendCommand]);
 
-  const handleColumnDrop = React.useCallback((column: ColumnDescriptor, event: React.DragEvent) => {
+  const handleColumnDrop = useCallback((column: ColumnDescriptor, event: React.DragEvent) => {
     if (!dragKindAccepted(event.dataTransfer, dropAcceptsAny, dropAccepts)) {
       return;
     }
@@ -295,7 +479,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     event.stopPropagation();
     const payload = readDragPayload(event.dataTransfer);
     if (payload) {
-      sendCommand(CMD_DROP, {
+      void sendCommand(CMD_DROP, {
         source: payload.source,
         // Comma-separated: the command argument is a formatted string list, and a key holds no comma.
         keys: payload.keys.join(','),
@@ -306,7 +490,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [dropAcceptsAny, dropAccepts, dropTargetAt, sendCommand]);
 
-  const handleRootDragLeave = React.useCallback((event: React.DragEvent) => {
+  const handleRootDragLeave = useCallback((event: React.DragEvent) => {
     // Moving among the board's own descendants fires a leave on each one left behind; only leaving
     // the board itself ends the highlight.
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -314,78 +498,121 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, []);
 
+  // -- After a keyboard move the focus follows the moved card. Its element is keyed by the card, so
+  //    React moves it - within the column - or creates it anew - in another column - once the new
+  //    state arrives, and the browser drops the focus of a node it moves. The card it was pressed
+  //    on, and where it stood then; null while no move is pending. --
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const pendingMoveRef = useRef<{ key: string; column: string; index: number } | null>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const movedText = i18n['js.kanbanBoard.moved'];
+
+  useLayoutEffect(() => {
+    const pending = pendingMoveRef.current;
+    if (pending === null) {
+      return;
+    }
+    const column = columns.find((c) => c.cards.some((card) => card.key === pending.key));
+    const index = column ? column.cards.findIndex((card) => card.key === pending.key) : -1;
+    const element = Array.from(rootRef.current?.querySelectorAll<HTMLElement>(BOARD_CARD_SELECTOR) ?? [])
+      .find((card) => card.getAttribute(ATTR_OPTION_KEY) === pending.key);
+    if (column && element && (column.key !== pending.column || index !== pending.index)) {
+      pendingMoveRef.current = null;
+      element.focus();
+      setAnnouncement(format(movedText, column.label, String(index + 1), String(column.cards.length)));
+      return;
+    }
+    // The card is gone, or the user went on before the new state arrived: the focus is not the
+    // board's to take back.
+    const active = document.activeElement;
+    if (!column || (active !== null && active !== document.body && active !== element)) {
+      pendingMoveRef.current = null;
+    }
+  }, [columns, movedText]);
+
+  const handleMoveKey = useCallback((column: ColumnDescriptor, event: React.KeyboardEvent): boolean => {
+    const direction = moveOf(event.key);
+    if (!event.altKey || direction === null) {
+      return false;
+    }
+    // Only a key pressed on a card itself moves it; one pressed in an element inside a card is that
+    // element's.
+    const target = event.target as Element;
+    const index = target.parentElement === event.currentTarget
+      ? column.cards.findIndex((card) => card.key === target.getAttribute(ATTR_OPTION_KEY))
+      : -1;
+    const vertical = direction === 'up' || direction === 'down';
+    if (index < 0 || !dragEnabled || (vertical && !reorder) || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return true;
+    }
+    const card = column.cards[index];
+    // The keyboard moves a card only where the pointer could: drag the card, and drop it on this board.
+    if (card.draggable === false || !kindAccepted(dragKind, dropAcceptsAny, dropAccepts)) {
+      return true;
+    }
+    // The board takes Alt + arrow over from the page: no scrolling, no step in the browser history.
+    event.preventDefault();
+    event.stopPropagation();
+    // A selected card takes the other selected cards of its column along, in display order.
+    const moved = selected.has(card.key)
+      ? column.cards.map((c) => c.key).filter((key) => selected.has(key))
+      : [card.key];
+    const drop = keyboardDrop(columns, columns.indexOf(column), index, moved, direction, reorder);
+    if (drop === null) {
+      return true;
+    }
+    pendingMoveRef.current = { key: card.key, column: column.key, index };
+    // The drop a drag of these cards would make there: the keys, not the selection, as in a drag.
+    void sendCommand(CMD_DROP, {
+      source: controlId,
+      keys: moved.join(','),
+      selection: false,
+      targetKey: drop.target,
+      zone: ZONE_OF_POSITION[drop.position],
+    });
+    return true;
+  }, [columns, controlId, dragEnabled, dragKind, dropAcceptsAny, dropAccepts, reorder, selected, sendCommand]);
+
   return (
-    <div id={controlId} ref={rootRef} className={rootClassName(state, 'tlKanbanBoard', fillClass)}
+    <div id={controlId} ref={rootRef} className={rootClassName(state, 'tl-board', fillClass)}
       onDragLeave={handleRootDragLeave}>
-      {dropRefused && dropVerdict?.reason && createPortal(
-        <div ref={attachDropHint} className="tlKanbanBoard__dropHint" role="status">
-          {dropVerdict.reason}
-        </div>,
-        document.body)}
-      {columns.map(column => {
-        const headerId = `${controlId}-${column.key}`;
+      {/* Why the column under the running drag refuses it: a tl-popover in the document body, so
+          that neither the board's scrolling nor its clipping can hide it. */}
+      {dropRefused && dropVerdict?.reason && (
+        <DropHint reason={dropVerdict.reason} start={hintAnchorRef.current} moveRef={hintMoveRef} />
+      )}
+      {columns.map((column) => {
         const hovered = dropState !== null && dropState.column === column.key ? dropState : null;
-        const appendLine = hovered !== null && !dropRefused && reorder && hovered.position === 'none';
+        // The column under the drag is marked as the target whenever it takes the drop (as the old
+        // board did), or as refusing it; where the card lands beside another one, the insertion line
+        // at that card shows it in addition.
+        const columnState = hovered === null
+          ? undefined
+          : (dropRefused ? 'drop-refused' : 'drop-onto');
+        const line = hovered !== null && !dropRefused && hovered.position !== 'none' ? hovered : null;
         return (
-          <section key={column.key}
-            className={'tlKanbanBoard__column'
-              + (hovered ? (dropRefused ? ' tlKanbanBoard__column--dropRefused' : ' tlKanbanBoard__column--dragover') : '')}
-            aria-labelledby={headerId}
-            onDragOver={(event) => handleColumnDragOver(column, event)}
-            onDrop={(event) => handleColumnDrop(column, event)}
-          >
-            <header className="tlKanbanBoard__header">
-              <span id={headerId} className="tlKanbanBoard__label">{column.label}</span>
-              <span className="tlKanbanBoard__count">{column.count}</span>
-            </header>
-            <FillBarrier>
-              <ul className={'tlKanbanBoard__cards' + (appendLine ? ' tlKanbanBoard__cards--dropEnd' : '')}
-                role="list" aria-labelledby={headerId}>
-                {column.cards.map(card => {
-                  const isSelected = selected.has(card.key);
-                  const draggable = dragEnabled && card.draggable !== false;
-                  const line = hovered !== null && !dropRefused && hovered.target === card.key
-                    ? (hovered.position === 'before' ? ' tlKanbanBoard__card--dropBefore' : ' tlKanbanBoard__card--dropAfter')
-                    : '';
-                  return (
-                    <li
-                      key={card.key}
-                      role="listitem"
-                      tabIndex={0}
-                      data-card={card.key}
-                      draggable={draggable}
-                      aria-current={isSelected ? 'true' : undefined}
-                      {...(multiSelect ? { [ATTR_LONG_PRESS]: '' } : {})}
-                      className={'tlKanbanBoard__card' + (isSelected ? ' tlKanbanBoard__card--selected' : '') + line}
-                      onDragStart={draggable ? (event) => handleCardDragStart(card, event) : undefined}
-                      onDragEnd={draggable ? () => setDropState(null) : undefined}
-                      onMouseDown={event => {
-                        if (event.shiftKey && !isInteractiveTarget(event)) {
-                          // A Shift-click extends the selection, not a text selection.
-                          event.preventDefault();
-                        }
-                      }}
-                      onClick={event => {
-                        if (!isInteractiveTarget(event)) {
-                          select(card.key, event.ctrlKey || event.metaKey, event.shiftKey);
-                        }
-                      }}
-                      onKeyDown={event => {
-                        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
-                          event.preventDefault();
-                          select(card.key, event.ctrlKey || event.metaKey, event.shiftKey);
-                        }
-                      }}
-                    >
-                      <TLChild control={card.content} />
-                    </li>
-                  );
-                })}
-              </ul>
-            </FillBarrier>
-          </section>
+          <BoardColumn
+            key={column.key}
+            column={column}
+            labelId={`${controlId}-${column.key}`}
+            selected={selected}
+            multiSelect={multiSelect}
+            dragEnabled={dragEnabled}
+            select={select}
+            columnState={columnState}
+            cardState={(card) => stateAttr(
+              dragged !== null && dragged.has(card.key) && 'dragging',
+              line !== null && line.target === card.key && (line.position === 'before' ? 'drop-before' : 'drop-after'),
+            )}
+            onCardDragStart={handleCardDragStart}
+            onCardDragEnd={handleCardDragEnd}
+            onColumnDragOver={handleColumnDragOver}
+            onColumnDrop={handleColumnDrop}
+            onMoveKey={handleMoveKey}
+          />
         );
       })}
+      <div className="tl-board__live tl-visually-hidden" role="status">{announcement}</div>
     </div>
   );
 };

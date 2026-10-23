@@ -1,14 +1,8 @@
 import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId, usePart } from 'tl-react-bridge';
 import type { TLCellProps, SliderStateJson } from 'tl-react-bridge';
-import { showsValueOnly } from './form/fieldState';
+import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
 const { useCallback } = React;
-
-/**
- * The custom property on the input holding the share of the range the value covers, a number from 0
- * to 1; the track draws the value part up to it.
- */
-const FILL_PROPERTY = '--tlSlider-fill';
 
 /**
  * The share of the range from min to max that the value covers, kept within 0 and 1. An empty
@@ -42,8 +36,11 @@ function fillFraction(value: number, min: number, max: number): number {
  * across the track is one round-trip rather than one per pixel. The text follows a moment behind,
  * being the server's answer to the value it was given.
  *
- * The track is filled from the lower bound up to the handle; the control writes the share of the
- * range the value covers on the input (FILL_PROPERTY), from which the stylesheet sizes that part.
+ * The track is filled from the lower bound up to the handle: the fill is an element of its own
+ * whose inline size is the share of the range the value covers, as in the progress bar.
+ *
+ * The state of the field is carried as attributes (see fieldStateAttrs): `aria-invalid` and
+ * `aria-required` on the input, `data-tl-state` on the root.
  *
  * A field holding no value puts the handle at the lower bound and shows no text, so an empty value
  * is not read as the smallest one.
@@ -76,7 +73,7 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
   const minLabel = state.minLabel ?? '';
   const maxLabel = state.maxLabel ?? '';
   const number = typeof value === 'number' ? value : null;
-  const fillStyle = { [FILL_PROPERTY]: String(fillFraction(number ?? min, min, max)) } as React.CSSProperties;
+  const fillPercent = fillFraction(number ?? min, min, max) * 100;
 
   if (showsValueOnly(state)) {
     return (
@@ -84,43 +81,43 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
     );
   }
 
+  const { 'aria-invalid': ariaInvalid, 'aria-required': ariaRequired, ...rootAttrs } = fieldStateAttrs(state) as
+    { 'aria-invalid'?: 'true'; 'aria-required'?: 'true'; 'data-tl-state'?: string };
   const hasError = state.hasError === true;
-  const hasWarnings = state.hasWarnings === true;
   const errorMessage = state.errorMessage;
 
   return (
     <span
       id={controlId}
-      className={rootClassName(
-        state,
-        'tlSlider',
-        hasError && 'tlSlider--error',
-        !hasError && hasWarnings && 'tlSlider--warning'
-      )}
+      className={rootClassName(state, 'tl-slider')}
+      {...rootAttrs}
     >
+      <span className="tl-slider__track">
+        <span className="tl-slider__fill" style={{ inlineSize: `${fillPercent}%` }} />
+      </span>
       <input
-        className="tlSlider__input"
+        className="tl-slider__input"
         type="range"
         min={min}
         max={max}
         step={step}
         value={number ?? min}
-        style={fillStyle}
         onChange={handleChange}
         onPointerUp={handleCommit}
         onKeyUp={handleCommit}
         onBlur={handleCommit}
         disabled={state.disabled === true}
         aria-valuetext={label || undefined}
-        aria-invalid={hasError || undefined}
+        aria-invalid={ariaInvalid}
+        aria-required={ariaRequired}
         title={hasError && errorMessage ? errorMessage : undefined}
         id={inputId}
         {...labelProps}
       />
-      <output className="tlSlider__value">
-        <span className="tlSlider__valueText">{label}</span>
-        <span className="tlSlider__valueSizer" aria-hidden="true">{minLabel}</span>
-        <span className="tlSlider__valueSizer" aria-hidden="true">{maxLabel}</span>
+      <output className="tl-slider__value">
+        <span className="tl-slider__text">{label}</span>
+        <span className="tl-slider__sizer" aria-hidden="true">{minLabel}</span>
+        <span className="tl-slider__sizer" aria-hidden="true">{maxLabel}</span>
       </output>
     </span>
   );

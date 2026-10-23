@@ -12,7 +12,6 @@ import junit.framework.Test;
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.operation.OperationModeService;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
@@ -145,7 +144,7 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testUngrantedCapabilitiesReachNoRequest() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			List<String> offered = schemaNamesFor(login);
 
 			assertFalse(login + " must not be offered a workspace tool: " + offered,
@@ -174,7 +173,7 @@ public class SecDemoSchemaFilterTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testTheImplicitBaselineReachesEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			assertTrue("askUser must survive the filter for " + login + ": " + schemaNamesFor(login),
 				schemaNamesFor(login).contains("askUser"));
 		}

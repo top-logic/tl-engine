@@ -18,7 +18,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.Collaboration;
-import com.top_logic.bpe.execution.engine.InitialProcessSetupService;
+import com.top_logic.bpe.execution.engine.InitialProcessSetup;
 import com.top_logic.bpe.util.Updater;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
@@ -138,7 +138,7 @@ public class BPMLUpdateCommand extends PreconditionCommandHandler {
 		// AbstractModelBinding#usesSecurity().
 		ModelBinding binding =
 			new ApplicationModelBinding(collaboration.tKnowledgeBase(), ModelService.getApplicationModel(), false);
-		Collaboration newCollaboration = InitialProcessSetupService.importBPML(source, binding);
+		Collaboration newCollaboration = InitialProcessSetup.importBPML(source, binding);
 		new Updater(collaboration, newCollaboration, updateExtensions).update();
 	}
 

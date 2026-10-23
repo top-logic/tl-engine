@@ -4,8 +4,9 @@
 #
 # Image of an application workspace: a JDK, Maven, Node and git, Maven settings making the
 # TopLogic release repository available, Claude Code with the TopLogic plugin and a headless
-# Chromium for the Playwright MCP server, and the entry script that runs the application of the
-# workspace as the main process of the container.
+# Chromium for the Playwright MCP server, the entry script that supervises the application of the
+# workspace as the main process of the container, the command tl-workspace-app controlling it, and
+# the user instructions of Claude Code describing the workspace.
 #
 # The entry script and all commands run as the user @WORKSPACE_USER@. The mount points of the
 # workspace volumes belong to this user, so that a fresh named volume mounted there belongs to it
@@ -26,7 +27,7 @@ ARG CLAUDE_CODE_VERSION=2.1.309
 ARG PLAYWRIGHT_MCP_VERSION=0.0.83
 ARG TL_CLAUDE_TOOLS_REPOSITORY=https://github.com/top-logic/tl-claude-tools.git
 # renovate: datasource=git-refs depName=tl-claude-tools packageName=https://github.com/top-logic/tl-claude-tools.git currentValue=main
-ARG TL_CLAUDE_TOOLS_COMMIT=aecc9e529a70e0b7b2664575af544964d1b5cbe0
+ARG TL_CLAUDE_TOOLS_COMMIT=87e56d479951252a40251e0927273927faf723f5
 ARG WORKSPACE_UID=1000
 
 RUN apt-get update \
@@ -92,7 +93,14 @@ RUN if existing="$(getent passwd "${WORKSPACE_UID}" | cut -d: -f1)" && [ -n "${e
 
 COPY settings.xml /opt/maven/conf/settings.xml
 COPY entrypoint.sh /usr/local/bin/tl-factory-entrypoint
-RUN chmod 755 /usr/local/bin/tl-factory-entrypoint
+COPY tl-workspace-app.sh /usr/local/bin/tl-workspace-app
+RUN chmod 755 /usr/local/bin/tl-factory-entrypoint /usr/local/bin/tl-workspace-app
+
+# The state directory shared by the supervisor and tl-workspace-app. The tl-app skill of
+# tl-claude-tools hands start, stop and restart to the command named in TL_APP_CONTROL instead of
+# starting a second instance of the application.
+ENV TL_WORKSPACE_APP_STATE=/tmp/tl-workspace-app
+ENV TL_APP_CONTROL=tl-workspace-app
 
 USER @WORKSPACE_USER@
 
@@ -100,5 +108,7 @@ RUN claude plugin marketplace add /opt/tl-claude-tools \
 	&& claude plugin install tl-claude-tools@toplogic \
 	&& claude mcp add --scope user playwright -- playwright-mcp --browser chromium --headless \
 		--executable-path /usr/local/bin/chrome-headless-shell --output-dir /tmp/playwright-mcp
+
+COPY --chown=@WORKSPACE_USER@:@WORKSPACE_USER@ CLAUDE.md /home/@WORKSPACE_USER@/.claude/CLAUDE.md
 
 CMD ["/usr/local/bin/tl-factory-entrypoint"]

@@ -32,6 +32,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_WORKSPACE_STOPPED__WORKSPACE;
 
 	/**
+	 * @en The application in the workspace "{0}" did not start, see the end of its log.
+	 */
+	public static ResKey1 ERROR_APPLICATION_FAILED__WORKSPACE;
+
+	/**
 	 * @en The resource "{0}" of the workspace image is missing.
 	 */
 	public static ResKey1 ERROR_MISSING_IMAGE_RESOURCE__NAME;

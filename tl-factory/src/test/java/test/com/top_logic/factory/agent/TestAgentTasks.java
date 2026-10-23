@@ -106,8 +106,8 @@ public class TestAgentTasks extends BasicTestCase {
 	}
 
 	/**
-	 * The agent works only in a running workspace on the current image; the reasons name the
-	 * project.
+	 * The agent works only in a workspace whose container runs on the current image, also when its
+	 * application does not run; the reasons name the project.
 	 */
 	public void testUnavailable() {
 		assertEquals(I18NConstants.ERROR_NO_WORKSPACE, AgentTasks.unavailable(null));
@@ -121,6 +121,13 @@ public class TestAgentTasks extends BasicTestCase {
 
 		setCurrentImage();
 		assertNull(AgentTasks.unavailable(_workspace));
+
+		setStatus(WorkspaceStatus.APP_STOPPED);
+		assertNull("The agent works while the application does not run.", AgentTasks.unavailable(_workspace));
+
+		setStatus(WorkspaceStatus.STOPPED);
+		assertEquals(I18NConstants.ERROR_WORKSPACE_NOT_RUNNING__WORKSPACE.fill("Agent tasks test"),
+			AgentTasks.unavailable(_workspace));
 	}
 
 	/** A task creates a conversation of the workspace, but only where the agent can work. */

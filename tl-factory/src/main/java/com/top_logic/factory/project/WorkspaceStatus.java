@@ -40,6 +40,15 @@ public enum WorkspaceStatus {
 	RUNNING(false),
 
 	/**
+	 * The container runs, its application does not: it was stopped, or it failed to start.
+	 *
+	 * <p>
+	 * The agent of the workspace can work in this state, e.g. to repair the application.
+	 * </p>
+	 */
+	APP_STOPPED(false),
+
+	/**
 	 * The container is being stopped.
 	 */
 	STOPPING(true),
@@ -73,6 +82,14 @@ public enum WorkspaceStatus {
 
 	private WorkspaceStatus(boolean busy) {
 		_busy = busy;
+	}
+
+	/**
+	 * Whether the container of a workspace in this state runs, so that commands and the agent can
+	 * run in it.
+	 */
+	public boolean isContainerRunning() {
+		return this == RUNNING || this == APP_STOPPED;
 	}
 
 	/**

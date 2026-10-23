@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.Logger;
@@ -42,9 +43,10 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * All workspaces run the image built from the {@link #imageContext(String) workspace image
  * context}. The entry script of the image keeps the container alive until the application is built
- * (the file {@link #BUILT_MARKER} exists in the source volume), and from then on runs the
- * application in the foreground on the {@link WorkspaceSpec#getContainerPort() container port}.
- * Starting and stopping the workspace therefore starts and stops the application, and its source,
+ * (the file {@link #BUILT_MARKER} exists in the source volume), and from then on supervises the
+ * application on the {@link WorkspaceSpec#getContainerPort() container port}. Starting and stopping
+ * the workspace therefore starts and stops the application; in between, the
+ * {@link #APP_CONTROL_COMMAND} stops and restarts it without ending the container. Its source,
  * database and Maven repository survive in the volumes of the workspace:
  * </p>
  *
@@ -301,6 +303,93 @@ public class ApplicationWorkspaces {
 	public static final String ENTRY_SCRIPT = "entrypoint.sh";
 
 	/**
+	 * Path of the script of the {@link #APP_CONTROL_COMMAND} in the {@link #imageContext(String)
+	 * image context}.
+	 */
+	public static final String APP_CONTROL_SCRIPT = "tl-workspace-app.sh";
+
+	/**
+	 * Path of the user instructions of Claude Code in the {@link #imageContext(String) image
+	 * context}, installed for the {@link #WORKSPACE_USER}.
+	 */
+	public static final String USER_INSTRUCTIONS = "CLAUDE.md";
+
+	/**
+	 * Command in the workspace image controlling the application the entry script supervises:
+	 * {@code status}, {@code start}, {@code stop}, {@code restart}, {@code log}.
+	 *
+	 * @see #ENV_APP_CONTROL
+	 */
+	public static final String APP_CONTROL_COMMAND = "tl-workspace-app";
+
+	/**
+	 * Environment variable of the workspace image naming the {@link #APP_CONTROL_COMMAND}, to which
+	 * the {@code tl-app} skill of the TopLogic plugin hands starting and stopping the application.
+	 */
+	public static final String ENV_APP_CONTROL = "TL_APP_CONTROL";
+
+	/**
+	 * Argument of the {@link #APP_CONTROL_COMMAND} printing the state of the application.
+	 */
+	public static final String APP_CONTROL_STATUS = "status";
+
+	/**
+	 * Argument of the {@link #APP_CONTROL_COMMAND} starting the application and waiting until it
+	 * answers.
+	 */
+	public static final String APP_CONTROL_START = "start";
+
+	/**
+	 * Argument of the {@link #APP_CONTROL_COMMAND} printing the end of the log of the application.
+	 */
+	public static final String APP_CONTROL_LOG = "log";
+
+	/**
+	 * Environment variable of the {@link #APP_CONTROL_COMMAND} giving the seconds {@code start}
+	 * waits for the application.
+	 */
+	public static final String ENV_APP_TIMEOUT = "TL_WORKSPACE_APP_TIMEOUT";
+
+	/**
+	 * Environment variable of the {@link #APP_CONTROL_COMMAND} giving the number of lines
+	 * {@code log} prints.
+	 */
+	public static final String ENV_APP_LOG_LINES = "TL_WORKSPACE_APP_LOG_LINES";
+
+	/**
+	 * Exit code of {@code status} of the {@link #APP_CONTROL_COMMAND}: the application answers.
+	 */
+	public static final int APP_STATUS_RUNNING = 0;
+
+	/**
+	 * Exit code of {@code status} of the {@link #APP_CONTROL_COMMAND}: the application does not
+	 * answer (yet).
+	 */
+	public static final int APP_STATUS_NOT_RUNNING = 3;
+
+	/**
+	 * Exit code of {@code status} of the {@link #APP_CONTROL_COMMAND}: the application failed.
+	 */
+	public static final int APP_STATUS_FAILED = 4;
+
+	/**
+	 * Start of the line of {@code status} of the {@link #APP_CONTROL_COMMAND} naming the state of
+	 * the supervisor.
+	 */
+	public static final String APP_STATUS_PREFIX = "status: ";
+
+	/**
+	 * States of the supervisor in which the application does not run and is not about to.
+	 */
+	private static final Set<String> SUPERVISOR_STOPPED = Set.of("stopped", "unbuilt");
+
+	private static final Duration APP_STATUS_TIMEOUT = Duration.ofSeconds(30);
+
+	private static final Duration APP_CONTROL_GRACE = Duration.ofSeconds(60);
+
+	private static final int FAILURE_LOG_LINES = 60;
+
+	/**
 	 * Prefix of the identifier of the workspace filling a release repository, followed by the
 	 * logical name of the release volume.
 	 */
@@ -483,6 +572,134 @@ public class ApplicationWorkspaces {
 	}
 
 	/**
+	 * Starts the stopped or failed application of a running workspace through the
+	 * {@link #APP_CONTROL_COMMAND} and waits until it answers, at most
+	 * {@link Config#getStartTimeout()}.
+	 *
+	 * @param workspaceId
+	 *        The running workspace.
+	 * @param progress
+	 *        Receiver of the output of the command, the end of the log of the application if it
+	 *        fails.
+	 * @throws ApplicationFailedException
+	 *         If the application failed to start.
+	 */
+	public void startApplication(String workspaceId, ExecOutput progress) throws InterruptedException {
+		int timeout = _config.getStartTimeout();
+		ExecCommand command = ExecCommand.of(APP_CONTROL_COMMAND, APP_CONTROL_START)
+			.putEnv(ENV_APP_TIMEOUT, Integer.toString(timeout))
+			// The command ends by itself after the start timeout.
+			.setTimeout(Duration.ofSeconds(timeout).plus(APP_CONTROL_GRACE));
+		OutputTail tail = new OutputTail(progress);
+		int exitCode = _provider.exec(workspaceId, command, tail);
+		if (exitCode != 0) {
+			if (applicationState(workspaceId) == ApplicationState.FAILED) {
+				throw new ApplicationFailedException(workspaceId);
+			}
+			throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__WORKSPACE_COMMAND_CODE_OUTPUT
+				.fill(workspaceId, command.toString(), exitCode, tail.toString()));
+		}
+	}
+
+	/**
+	 * The state of the application in a running workspace, as its supervisor reports it.
+	 *
+	 * @param workspaceId
+	 *        The running workspace.
+	 * @return The state, {@link ApplicationState#UNKNOWN} if the workspace does not tell, e.g.
+	 *         because its image has no {@link #APP_CONTROL_COMMAND}.
+	 */
+	public ApplicationState applicationState(String workspaceId) throws InterruptedException {
+		StringBuilder output = new StringBuilder();
+		int exitCode;
+		try {
+			exitCode = _provider.exec(workspaceId,
+				ExecCommand.of(APP_CONTROL_COMMAND, APP_CONTROL_STATUS).setTimeout(APP_STATUS_TIMEOUT),
+				new ExecOutput() {
+					@Override
+					public void stdout(String text) {
+						output.append(text);
+					}
+				});
+		} catch (TopLogicException ex) {
+			Logger.info("No application state of workspace " + workspaceId + ": " + ex.getMessage(),
+				ApplicationWorkspaces.class);
+			return ApplicationState.UNKNOWN;
+		}
+		return ApplicationState.of(exitCode, output.toString());
+	}
+
+	/**
+	 * Writes the end of the log of a failed application to the given output and fails.
+	 */
+	private void failure(String workspaceId, ExecOutput progress) throws InterruptedException {
+		_provider.exec(workspaceId, ExecCommand.of(APP_CONTROL_COMMAND, APP_CONTROL_LOG)
+			.putEnv(ENV_APP_LOG_LINES, Integer.toString(FAILURE_LOG_LINES))
+			.setTimeout(APP_STATUS_TIMEOUT), progress);
+		throw new ApplicationFailedException(workspaceId);
+	}
+
+	/**
+	 * The state of the application in a running workspace, as the {@link #APP_CONTROL_COMMAND}
+	 * reports it.
+	 */
+	public enum ApplicationState {
+
+		/**
+		 * The application answers.
+		 */
+		RUNNING,
+
+		/**
+		 * The application is starting or stopping.
+		 */
+		CHANGING,
+
+		/**
+		 * The application is stopped on request, or not built yet.
+		 */
+		STOPPED,
+
+		/**
+		 * The application ended by itself or its initialization failed.
+		 */
+		FAILED,
+
+		/**
+		 * The workspace does not tell.
+		 */
+		UNKNOWN;
+
+		/**
+		 * The state reported by {@code status} of the {@link #APP_CONTROL_COMMAND}.
+		 *
+		 * @param exitCode
+		 *        The exit code of the command.
+		 * @param output
+		 *        Its output, with a line {@value ApplicationWorkspaces#APP_STATUS_PREFIX} followed by
+		 *        the state of the supervisor.
+		 */
+		public static ApplicationState of(int exitCode, String output) {
+			switch (exitCode) {
+				case APP_STATUS_RUNNING:
+					return RUNNING;
+				case APP_STATUS_FAILED:
+					return FAILED;
+				case APP_STATUS_NOT_RUNNING:
+					for (String line : output.split(LINE_END)) {
+						if (line.startsWith(APP_STATUS_PREFIX)) {
+							String state = line.substring(APP_STATUS_PREFIX.length()).trim();
+							return SUPERVISOR_STOPPED.contains(state) ? STOPPED : CHANGING;
+						}
+					}
+					return UNKNOWN;
+				default:
+					return UNKNOWN;
+			}
+		}
+	}
+
+	/**
 	 * Stops a workspace and with it its application.
 	 *
 	 * @see WorkspaceProvider#stop(String)
@@ -507,10 +724,21 @@ public class ApplicationWorkspaces {
 	/**
 	 * Waits until the application of a running workspace answers HTTP requests.
 	 *
+	 * @see #awaitApplication(String, String, ExecOutput)
+	 */
+	public String awaitApplication(String workspaceId, String contextPath) throws InterruptedException {
+		return awaitApplication(workspaceId, contextPath, ExecOutput.NONE);
+	}
+
+	/**
+	 * Waits until the application of a running workspace answers HTTP requests.
+	 *
 	 * <p>
 	 * The application answers when a request of its context path is answered with status 200 or a
 	 * redirect, e.g. to the login page. The wait fails if the workspace stops or the application
-	 * does not answer within {@link Config#getStartTimeout()}.
+	 * does not answer within {@link Config#getStartTimeout()}. It fails at once if the supervisor in
+	 * the container reports the application as {@link ApplicationState#FAILED failed}; the end of
+	 * the log of the application is written to the given output then.
 	 * </p>
 	 *
 	 * @param workspaceId
@@ -518,9 +746,14 @@ public class ApplicationWorkspaces {
 	 * @param contextPath
 	 *        The context path of the application, its {@link ApplicationSpec#getArtifactId()
 	 *        artifact}.
+	 * @param progress
+	 *        Receiver of the end of the log of an application that failed.
 	 * @return The URL of the application.
+	 * @throws ApplicationFailedException
+	 *         If the application failed to start.
 	 */
-	public String awaitApplication(String workspaceId, String contextPath) throws InterruptedException {
+	public String awaitApplication(String workspaceId, String contextPath, ExecOutput progress)
+			throws InterruptedException {
 		long timeoutMillis = _config.getStartTimeout() * 1000L;
 		long deadline = System.currentTimeMillis() + timeoutMillis;
 		HttpClient client = HttpClient.newBuilder()
@@ -542,6 +775,9 @@ public class ApplicationWorkspaces {
 				}
 			} catch (IOException ex) {
 				// Not yet listening.
+			}
+			if (applicationState(workspaceId) == ApplicationState.FAILED) {
+				failure(workspaceId, progress);
 			}
 			if (System.currentTimeMillis() >= deadline) {
 				throw new TopLogicException(I18NConstants.ERROR_APPLICATION_NOT_REACHABLE__WORKSPACE_URL_SECONDS
@@ -666,6 +902,8 @@ public class ApplicationWorkspaces {
 		return new ImageContext()
 			.add(ImageContext.DOCKERFILE, dockerfile)
 			.add(ENTRY_SCRIPT, resource(ENTRY_SCRIPT))
+			.add(APP_CONTROL_SCRIPT, resource(APP_CONTROL_SCRIPT))
+			.add(USER_INSTRUCTIONS, resource(USER_INSTRUCTIONS))
 			.add(SETTINGS_FILE, settings);
 	}
 

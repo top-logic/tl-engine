@@ -12,6 +12,7 @@
 				<classifier name="BUILDING"/>
 				<classifier name="STARTING"/>
 				<classifier name="RUNNING"/>
+				<classifier name="APP_STOPPED"/>
 				<classifier name="STOPPING"/>
 				<classifier name="STOPPED"/>
 				<classifier name="REMOVING"/>

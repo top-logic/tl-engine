@@ -44,10 +44,14 @@ import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.ImageContext;
+import com.top_logic.factory.workspace.LogFollower;
 import com.top_logic.factory.workspace.WorkspaceInfo;
+import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.WorkspaceState;
+import com.top_logic.factory.workspace.app.ApplicationFailedException;
 import com.top_logic.factory.workspace.app.ApplicationSpec;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces.ApplicationState;
 import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
 
 /**
@@ -118,6 +122,68 @@ public class TestApplicationWorkspaces extends TestCase {
 	private static final String RANDOM_PASSWORD = "Initial password for 'root': ";
 
 	private static final Duration WAIT = Duration.ofSeconds(30);
+
+	/**
+	 * Log message of the generated application once it has started.
+	 */
+	private static final String UP_AND_RUNNING = "up and running";
+
+	/**
+	 * Start of the line of the supervisor in the container log when the application is up.
+	 */
+	private static final String SUPERVISOR_UP = "[tl-workspace-app] The application is up at ";
+
+	/**
+	 * Name of the init process Docker runs as PID 1 of a container created with init.
+	 */
+	private static final String INIT_PROCESS = "docker-init";
+
+	/**
+	 * Process state of a zombie in the output of {@code ps}.
+	 */
+	private static final String ZOMBIE_STATE = "Z";
+
+	/**
+	 * Part of the command line of the application process, the Maven JVM launching it.
+	 */
+	private static final String APPLICATION_PROCESS = "-Dtl.port=";
+
+	/**
+	 * Exit code of {@link ApplicationWorkspaces#APP_CONTROL_COMMAND} {@code status} for an
+	 * application that does not answer.
+	 */
+	private static final int STATUS_NOT_RUNNING = 3;
+
+	/**
+	 * Finds the script of the {@code tl-app} skill of the TopLogic plugin in the workspace image.
+	 */
+	/**
+	 * Lists the application configuration of the generated application, which
+	 * {@link #BREAK_COMMAND} makes malformed. Its name is the project name the archetype derives
+	 * from the artifact.
+	 */
+	private static final String FIND_BROKEN_FILE = "ls " + ApplicationWorkspaces.appDir(ARTIFACT_ID)
+		+ "/src/main/webapp/WEB-INF/conf/*.conf.config.xml";
+
+	/**
+	 * Command making the file given as its argument malformed XML.
+	 */
+	private static final String BREAK_COMMAND = "sed -i 's/<application /<application broken= /' ";
+
+	/**
+	 * Text in the log of an application whose start failed.
+	 */
+	private static final Pattern ERROR_IN_LOG = Pattern.compile("ERROR|Exception");
+
+	private static final String BACKUP_SUFFIX = ".it-backup";
+
+	/**
+	 * Time within which a failed start of the application is recognized: its start up to the failure
+	 * and the grace period of the supervisor.
+	 */
+	private static final Duration FAILURE_LIMIT = Duration.ofSeconds(120);
+
+	private static final String FIND_TL_APP_SCRIPT = "find / -path '*tl-app/tl-app.sh' 2>/dev/null | head -1";
 
 	/**
 	 * File added to the image context to get another workspace image for the update. The
@@ -228,6 +294,7 @@ public class TestApplicationWorkspaces extends TestCase {
 		assertLoginPage(url);
 		assertInitialPassword(created.getContainerId());
 		assertAgentTools();
+		assertApplicationControl(url);
 		assertEquals(0, _provider.exec(_workspaceId,
 			ExecCommand.of("sh", "-c", "echo " + DATA_CONTENT + " > " + DATA_FILE), ExecOutput.NONE));
 
@@ -366,6 +433,141 @@ public class TestApplicationWorkspaces extends TestCase {
 			assertFalse(process.isAlive());
 			assertEquals(128 + 15, process.exitCode());
 		}
+	}
+
+	/**
+	 * The init process of the container reaps orphans; the application runs under the supervisor of
+	 * the entry script, the {@link ApplicationWorkspaces#APP_CONTROL_COMMAND} stops, starts and
+	 * restarts it on the same database without ending the container, its output still reaches the
+	 * container log, and the {@code tl-app} skill hands its commands to it.
+	 */
+	private void assertApplicationControl(String url) throws Exception {
+		assertEquals(INIT_PROCESS + "\n", output(ExecCommand.of("cat", "/proc/1/comm")));
+		for (int n = 0; n < 3; n++) {
+			output(ExecCommand.of("sh", "-c", "sleep 1 & sleep 1 & exit 0"));
+		}
+		// The orphans end after a second and are reparented to PID 1.
+		Thread.sleep(3000);
+		String ps = output(ExecCommand.of("ps", "-eo", "stat,args"));
+		for (String line : ps.split("\n")) {
+			assertFalse("Zombie left: " + ps, line.trim().startsWith(ZOMBIE_STATE));
+		}
+
+		assertEquals(ApplicationWorkspaces.APP_CONTROL_COMMAND + "\n",
+			output(ExecCommand.of("printenv", ApplicationWorkspaces.ENV_APP_CONTROL)));
+		String control = ApplicationWorkspaces.APP_CONTROL_COMMAND;
+		String localUrl = "http://localhost:" + WorkspaceSpec.DEFAULT_CONTAINER_PORT + "/" + ARTIFACT_ID + "/";
+		String status = output(ExecCommand.of(control, "status"));
+		assertTrue(status, status.contains("status: running\n"));
+		assertTrue(status, status.contains("url: " + localUrl + "\n"));
+		assertTrue(status, status.contains("login: root / " + INITIAL_PASSWORD + "\n"));
+		assertEquals(1, applicationProcesses());
+
+		CollectingOutput containerLog = new CollectingOutput();
+		try (LogFollower follower = _provider.followLog(_workspaceId, 0, null, containerLog)) {
+			String restarted = output(ExecCommand.of(control, "restart", ApplicationWorkspaces.appDir(ARTIFACT_ID)));
+			assertStarted(restarted, localUrl);
+			containerLog.awaitStdoutContaining(UP_AND_RUNNING);
+			containerLog.awaitStdoutContaining(SUPERVISOR_UP + localUrl + ".");
+		}
+		assertLoginPage(url);
+		assertEquals(1, applicationProcesses());
+		String runLog = output(ExecCommand.of("sh", "-c",
+			"TL_WORKSPACE_APP_LOG_LINES=100000 " + control + " log"));
+		assertTrue("Log of the restarted run incomplete.", runLog.contains(UP_AND_RUNNING));
+		assertFalse("Database set up anew on restart.", runLog.contains(PASSWORD_FROM_ENV));
+		assertFalse("Database set up anew on restart.", runLog.contains(RANDOM_PASSWORD));
+
+		CollectingOutput wrongModule = new CollectingOutput();
+		assertEquals(1, _provider.exec(_workspaceId, ExecCommand.of(control, "restart", "/tmp"), wrongModule));
+		assertEquals(1, applicationProcesses());
+
+		assertTrue(output(ExecCommand.of(control, "stop")).contains("Stopped."));
+		assertEquals(WorkspaceState.RUNNING, _provider.status(_workspaceId).getState());
+		assertEquals(0, applicationProcesses());
+		CollectingOutput stopped = new CollectingOutput();
+		assertEquals(STATUS_NOT_RUNNING, _provider.exec(_workspaceId, ExecCommand.of(control, "status"), stopped));
+		assertTrue(stopped.stdout(), stopped.stdout().contains("status: stopped\n"));
+		assertStarted(output(ExecCommand.of(control, "start")), localUrl);
+		assertEquals(1, applicationProcesses());
+		assertLoginPage(url);
+
+		String tlApp = output(ExecCommand.of("sh", "-c", FIND_TL_APP_SCRIPT)).trim();
+		assertFalse("No tl-app skill in the image.", tlApp.isEmpty());
+		assertStarted(output(ExecCommand.of(tlApp, "restart", ApplicationWorkspaces.appDir(ARTIFACT_ID))), localUrl);
+		assertEquals(1, applicationProcesses());
+		assertLoginPage(url);
+
+		assertFailedStart(url);
+	}
+
+	/**
+	 * An application whose initialization fails - its server runs, but it does not answer - is
+	 * reported as failed and stopped soon, the waits for it fail at once with the end of its log,
+	 * and after the repair it starts again.
+	 */
+	private void assertFailedStart(String url) throws Exception {
+		String layout = output(ExecCommand.of("sh", "-c", FIND_BROKEN_FILE)).trim();
+		output(ExecCommand.of("sh", "-c", "cp " + layout + " " + layout + BACKUP_SUFFIX
+			+ " && " + BREAK_COMMAND + layout + " && grep -q 'broken=' " + layout));
+
+		long start = System.currentTimeMillis();
+		CollectingOutput restart = new CollectingOutput();
+		assertEquals(1, _provider.exec(_workspaceId,
+			ExecCommand.of(ApplicationWorkspaces.APP_CONTROL_COMMAND, "restart"), restart));
+		assertTrue(restart.stderr(), restart.stderr().contains("Error: "));
+		assertTrue("Failure not recognized at once.", System.currentTimeMillis() - start < FAILURE_LIMIT.toMillis());
+		assertEquals(ApplicationState.FAILED, _applications.applicationState(_workspaceId));
+		assertEquals(0, applicationProcesses());
+
+		CollectingOutput waitLog = new CollectingOutput();
+		start = System.currentTimeMillis();
+		try {
+			_applications.awaitApplication(_workspaceId, ARTIFACT_ID, waitLog);
+			fail("A failed application is waited for.");
+		} catch (ApplicationFailedException ex) {
+			// Expected.
+		}
+		assertTrue("Wait did not fail at once.", System.currentTimeMillis() - start < WAIT.toMillis());
+		assertTrue("No log of the failure: " + waitLog.stdout(), ERROR_IN_LOG.matcher(waitLog.stdout()).find());
+
+		CollectingOutput startLog = new CollectingOutput();
+		try {
+			_applications.startApplication(_workspaceId, startLog);
+			fail("A broken application started.");
+		} catch (ApplicationFailedException ex) {
+			// Expected.
+		}
+
+		output(ExecCommand.of("mv", layout + BACKUP_SUFFIX, layout));
+		CollectingOutput repaired = new CollectingOutput();
+		_applications.startApplication(_workspaceId, repaired);
+		assertTrue(repaired.stdout(), repaired.stdout().contains("url: "));
+		assertEquals(ApplicationState.RUNNING, _applications.applicationState(_workspaceId));
+		assertLoginPage(_applications.awaitApplication(_workspaceId, ARTIFACT_ID));
+		assertLoginPage(url);
+	}
+
+	/**
+	 * The output of a successful start: the URL, the log and the login of the application.
+	 */
+	private static void assertStarted(String output, String localUrl) {
+		assertTrue(output, output.contains("url: " + localUrl + "\n"));
+		assertTrue(output, output.contains("\nlog: ") || output.startsWith("log: "));
+		assertTrue(output, output.contains("login: root / " + INITIAL_PASSWORD + "\n"));
+	}
+
+	/**
+	 * The number of processes of the application in the workspace.
+	 */
+	private int applicationProcesses() throws InterruptedException {
+		int result = 0;
+		for (String line : output(ExecCommand.of("ps", "-eo", "args")).split("\n")) {
+			if (line.contains(APPLICATION_PROCESS)) {
+				result++;
+			}
+		}
+		return result;
 	}
 
 	/**

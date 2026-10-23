@@ -167,6 +167,16 @@ public class TestDockerWorkspaceProvider extends TestCase {
 	 */
 	private static final String SLEEPER_PATTERN = "sleep 60[0-9]";
 
+	/**
+	 * Name of the init process Docker runs as PID 1 of a container created with init.
+	 */
+	private static final String INIT_PROCESS = "docker-init";
+
+	/**
+	 * Process state of a zombie in the output of {@code ps}.
+	 */
+	private static final String ZOMBIE_STATE = "Z";
+
 	private String _suffix;
 
 	private String _namePrefix;
@@ -754,6 +764,32 @@ public class TestDockerWorkspaceProvider extends TestCase {
 			contained |= CIDRFilter.fromString(subnet).accept(address);
 		}
 		assertTrue("Address " + address + " in " + subnets, contained);
+	}
+
+	/**
+	 * A workspace container runs an init process as PID 1, which reaps the orphaned processes of
+	 * the commands even if the main process never waits for children.
+	 */
+	public void testInit() throws Exception {
+		String id = "init";
+		_provider.create(new WorkspaceSpec(id, IMAGE).setCommand(Arrays.asList("sleep", "3600")));
+		_provider.start(id);
+
+		CollectingOutput init = new CollectingOutput();
+		assertEquals(0, _provider.exec(id, ExecCommand.of("cat", "/proc/1/comm"), init));
+		assertEquals(INIT_PROCESS + "\n", init.stdout());
+
+		for (int n = 0; n < 3; n++) {
+			assertEquals(0, _provider.exec(id, ExecCommand.of("sh", "-c", "sleep 1 & sleep 1 & exit 0"),
+				ExecOutput.NONE));
+		}
+		// The orphans end after a second and are reparented to PID 1.
+		Thread.sleep(3000);
+		CollectingOutput ps = new CollectingOutput();
+		assertEquals(0, _provider.exec(id, ExecCommand.of("ps", "-o", "stat,args"), ps));
+		for (String line : ps.stdout().split("\n")) {
+			assertFalse("Zombie left: " + ps.stdout(), line.trim().startsWith(ZOMBIE_STATE));
+		}
 	}
 
 	/**

@@ -9,7 +9,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
-import com.top_logic.factory.project.WorkspaceStatus;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLObject;
@@ -34,8 +33,9 @@ public final class AgentTasks {
 	 * Why the coding agent cannot work in the given workspace now, or {@code null} if it can.
 	 *
 	 * <p>
-	 * The agent works in a running workspace whose container has the agent tools, i.e. runs the
-	 * current workspace image, and needs the LLM proxy of the control application.
+	 * The agent works in a workspace whose container runs and has the agent tools, i.e. runs the
+	 * current workspace image, and needs the LLM proxy of the control application. The application
+	 * of the workspace need not run: the agent is needed most when it does not start.
 	 * </p>
 	 *
 	 * @param workspace
@@ -55,7 +55,7 @@ public final class AgentTasks {
 		TLObject project = FactoryModel.getProject(workspace);
 		Object name = project == null ? FactoryModel.getWorkspaceId(workspace)
 			: project.tValueByName(FactoryModel.PROJECT_NAME);
-		if (FactoryModel.getStatus(workspace) != WorkspaceStatus.RUNNING) {
+		if (!FactoryModel.getStatus(workspace).isContainerRunning()) {
 			return I18NConstants.ERROR_WORKSPACE_NOT_RUNNING__WORKSPACE.fill(name);
 		}
 		if (ProjectWorkspaces.isImageOutdated(workspace)) {

@@ -16,7 +16,8 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en The workspace of "{0}" is not running. Start it to talk to its agent.
+	 * @en The container of the workspace of "{0}" is not running. Start the workspace to talk to its
+	 *     agent.
 	 */
 	public static ResKey1 ERROR_WORKSPACE_NOT_RUNNING__WORKSPACE;
 

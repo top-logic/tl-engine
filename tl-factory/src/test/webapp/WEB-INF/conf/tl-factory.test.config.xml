@@ -11,5 +11,12 @@
 				proxy-url="http://llm-proxy.test/llm-proxy"
 			/>
 		</config>
+
+		<!-- Operations on the workspaces a test chooses; the applications are checked only by the tests. -->
+		<config service-class="com.top_logic.factory.project.ProjectWorkspaces">
+			<instance class="test.com.top_logic.factory.project.TestingProjectWorkspaces"
+				application-check-interval="0"
+			/>
+		</config>
 	</services>
 </application>

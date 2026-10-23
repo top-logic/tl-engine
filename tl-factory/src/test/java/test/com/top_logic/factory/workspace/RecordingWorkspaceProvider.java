@@ -35,11 +35,72 @@ import com.top_logic.factory.workspace.WorkspaceState;
  */
 public class RecordingWorkspaceProvider implements WorkspaceProvider {
 
+	/**
+	 * Entry of {@link #calls()} for {@link #start(String)}.
+	 */
+	public static final String START = "start";
+
+	/**
+	 * Entry of {@link #calls()} for {@link #stop(String)}.
+	 */
+	public static final String STOP = "stop";
+
+	/**
+	 * Entry of {@link #calls()} for {@link #exec(String, ExecCommand, ExecOutput)}.
+	 */
+	public static final String EXEC = "exec";
+
 	private final List<WorkspaceSpec> _created = new ArrayList<>();
 
 	private final Map<String, WorkspaceInfo> _workspaces = new LinkedHashMap<>();
 
 	private List<String> _networkSubnets = Collections.emptyList();
+
+	private final List<String> _calls = new ArrayList<>();
+
+	private int _hostPort = WorkspaceInfo.NO_PORT;
+
+	private ExecHandler _execHandler = (workspaceId, command, output) -> 0;
+
+	/**
+	 * Answers the commands run in a workspace of a {@link RecordingWorkspaceProvider}.
+	 */
+	public interface ExecHandler {
+
+		/**
+		 * Runs the given command, writing its output to the given output.
+		 *
+		 * @return The exit code.
+		 */
+		int exec(String workspaceId, ExecCommand command, ExecOutput output);
+
+	}
+
+	/**
+	 * Sets the handler answering the commands, which succeed without output by default.
+	 */
+	public synchronized RecordingWorkspaceProvider setExecHandler(ExecHandler handler) {
+		_execHandler = handler;
+		return this;
+	}
+
+	/**
+	 * Sets the host port the running workspaces are published on, with the preview URL
+	 * {@code http://localhost:<port>/}.
+	 */
+	public synchronized RecordingWorkspaceProvider setHostPort(int hostPort) {
+		_hostPort = hostPort;
+		return this;
+	}
+
+	/**
+	 * The calls of the lifecycle operations ({@code start}, {@code stop}) and the commands run,
+	 * each as {@code <operation> <workspace>} or {@code exec <workspace> <command line>}, in the
+	 * order of the calls.
+	 */
+	public synchronized List<String> calls() {
+		return new ArrayList<>(_calls);
+	}
 
 	/**
 	 * Sets the address ranges reported by {@link #networkSubnets()}.
@@ -118,11 +179,13 @@ public class RecordingWorkspaceProvider implements WorkspaceProvider {
 
 	@Override
 	public synchronized WorkspaceInfo start(String workspaceId) {
+		_calls.add(START + " " + workspaceId);
 		return put(created(workspaceId), WorkspaceState.RUNNING);
 	}
 
 	@Override
 	public synchronized WorkspaceInfo stop(String workspaceId) {
+		_calls.add(STOP + " " + workspaceId);
 		return put(created(workspaceId), WorkspaceState.STOPPED);
 	}
 
@@ -161,7 +224,12 @@ public class RecordingWorkspaceProvider implements WorkspaceProvider {
 
 	@Override
 	public int exec(String workspaceId, ExecCommand command, ExecOutput output) {
-		return 0;
+		ExecHandler handler;
+		synchronized (this) {
+			_calls.add(EXEC + " " + workspaceId + " " + String.join(" ", command.getCommand()));
+			handler = _execHandler;
+		}
+		return handler.exec(workspaceId, command, output);
 	}
 
 	@Override
@@ -181,8 +249,10 @@ public class RecordingWorkspaceProvider implements WorkspaceProvider {
 
 	private WorkspaceInfo put(WorkspaceSpec spec, WorkspaceState state) {
 		String id = spec.getWorkspaceId();
+		boolean published = state == WorkspaceState.RUNNING && _hostPort != WorkspaceInfo.NO_PORT;
 		WorkspaceInfo info = new WorkspaceInfo(id, state, "container-" + id + "-" + _created.size(), spec.getImage(),
-			WorkspaceInfo.NO_PORT, null, volumes(id));
+			published ? _hostPort : WorkspaceInfo.NO_PORT, published ? "http://localhost:" + _hostPort + "/" : null,
+			volumes(id));
 		_workspaces.put(id, info);
 		return info;
 	}

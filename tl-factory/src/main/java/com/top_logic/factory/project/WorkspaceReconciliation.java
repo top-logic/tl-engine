@@ -16,6 +16,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceState;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces.ApplicationState;
 
 /**
  * Comparison of the stored states of workspaces with the containers that actually exist, as done
@@ -31,6 +32,11 @@ import com.top_logic.factory.workspace.WorkspaceState;
  * only cleared by an operation on the workspace. Every other workspace takes the state of its container;
  * a workspace whose container is gone becomes {@link WorkspaceStatus#ERROR}. When the container
  * platform cannot be asked, every workspace becomes {@link WorkspaceStatus#UNKNOWN}.
+ * </p>
+ *
+ * <p>
+ * A running container is asked for the state of its application: a container whose application
+ * is stopped or failed makes the workspace {@link WorkspaceStatus#APP_STOPPED}.
  * </p>
  *
  * <p>
@@ -79,9 +85,23 @@ public class WorkspaceReconciliation {
 
 	}
 
+	/**
+	 * Function telling the state of the application in a running workspace.
+	 */
+	public interface ApplicationStateCheck {
+
+		/**
+		 * The state of the application in the given running workspace.
+		 */
+		ApplicationState of(String workspaceId);
+
+	}
+
 	private final WorkspaceProvider _provider;
 
 	private final ApplicationUrl _applicationUrl;
+
+	private final ApplicationStateCheck _applicationState;
 
 	/**
 	 * Creates a {@link WorkspaceReconciliation}.
@@ -90,10 +110,14 @@ public class WorkspaceReconciliation {
 	 *        The provider reporting the containers.
 	 * @param applicationUrl
 	 *        Computes the URL of the application of a running workspace.
+	 * @param applicationState
+	 *        Tells the state of the application of a running workspace.
 	 */
-	public WorkspaceReconciliation(WorkspaceProvider provider, ApplicationUrl applicationUrl) {
+	public WorkspaceReconciliation(WorkspaceProvider provider, ApplicationUrl applicationUrl,
+			ApplicationStateCheck applicationState) {
 		_provider = provider;
 		_applicationUrl = applicationUrl;
+		_applicationState = applicationState;
 	}
 
 	/**
@@ -162,10 +186,23 @@ public class WorkspaceReconciliation {
 				"The container of the workspace does not exist any more.", null);
 		}
 		WorkspaceStatus status = WorkspaceStatus.of(actual.getState());
+		if (status == WorkspaceStatus.RUNNING && applicationDown(_applicationState.of(actual.getWorkspaceId()))) {
+			status = WorkspaceStatus.APP_STOPPED;
+		}
 		return endpoint(status, actual, status == stored ? null : "The workspace is " + label(status) + ".");
 	}
 
+	/**
+	 * Whether an application in the given state does not run and is not about to.
+	 */
+	public static boolean applicationDown(ApplicationState state) {
+		return state == ApplicationState.STOPPED || state == ApplicationState.FAILED;
+	}
+
 	private Outcome endpoint(WorkspaceStatus status, WorkspaceInfo actual, String message) {
+		if (status == WorkspaceStatus.APP_STOPPED && actual.hasHostPort()) {
+			return new Outcome(status, Integer.valueOf(actual.getHostPort()), null, message, image(actual));
+		}
 		if (actual.getState() == WorkspaceState.RUNNING && actual.hasHostPort()) {
 			return new Outcome(status, Integer.valueOf(actual.getHostPort()), _applicationUrl.of(actual), message,
 				image(actual));
@@ -178,7 +215,7 @@ public class WorkspaceReconciliation {
 	}
 
 	private static String label(WorkspaceStatus status) {
-		return status.name().toLowerCase(Locale.ROOT);
+		return status.name().toLowerCase(Locale.ROOT).replace('_', ' ');
 	}
 
 }

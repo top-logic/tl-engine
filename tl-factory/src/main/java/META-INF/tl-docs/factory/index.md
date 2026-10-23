@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image (the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
 ---
 
 # Control application (tl-factory)
@@ -24,7 +24,7 @@ gets access to the container platform itself.
 | `WorkspaceProvider` | Platform-neutral lifecycle of a workspace container: create, start, stop, remove, create anew on another image (`recreate`), status, list, cleanup, commands in the container, the log of its main process, image build, shared volumes. |
 | `DockerWorkspaceProvider` | The implementation on the Docker Engine API. |
 | `WorkspaceService` | Service holding the configured provider and the `ApplicationWorkspaces`. |
-| `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace, builds it and runs it as the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
+| `ApplicationWorkspaces` | Generates an empty application from `tl-archetype-app` in a workspace, builds it and runs it under the supervision of the main process of the container on port 8080. The engine artifacts of a version are resolved once into a shared, read-only release repository. |
 | `ProjectWorkspaces` | Service running the operations on the workspaces of the stored projects in the background and storing their state and output; reconciles the stored states with the existing containers after a restart. |
 | `LLMProxyService` / `LLMProxyServlet` | Access of the workspaces to the Anthropic Messages API through the control application, see [LLM access](#llm-access). |
 | `WorkspaceAgentService` / `WorkspaceAgent` | The coding agent of a workspace answering a chat, see [the agent in the workspace](#the-agent-in-the-workspace). |
@@ -34,8 +34,12 @@ The model module `tl.factory` has the classes `Project` (name, group ID, artifac
 version, the workspace as a composition) and `Workspace` (workspace ID, status, host port,
 preview URL, initial root password, the image its container was created from, the output of the
 last operation as `log`) and the
-enumeration `WorkspaceStatus`: *Created*, *Building*, *Starting*, *Running*, *Stopping*,
-*Stopped*, *Cleaning up*, *Updating*, *Error*, *Unknown*.
+enumeration `WorkspaceStatus`: *Created*, *Building*, *Starting*, *Running*, *Application stopped*,
+*Stopping*, *Stopped*, *Cleaning up*, *Updating*, *Error*, *Unknown*. *Application stopped*
+(`APP_STOPPED`) means: the container runs, its application does not - it was stopped or failed to
+start. The agent works in such a workspace (see [the agent in the
+workspace](#the-agent-in-the-workspace)), *Start* starts only the application, *Stop* stops the
+container.
 
 A new workspace gets a random initial password, which the container passes to the application in
 the environment variable `tl_initial_password` (`ApplicationWorkspaces.ENV_INITIAL_PASSWORD`); the
@@ -43,14 +47,15 @@ application sets it for its account `root` when it creates its database. The det
 under the preview link. It is the password of a development workspace and is no longer valid once
 it is changed in the application.
 
-The output of the application itself - the main process of the container - goes to the log of the
-container in the container platform (`docker logs <container>`); the control application only
+The output of the application itself - copied to the output of the main process of the container,
+its supervisor - goes to the log of the container in the container platform (`docker logs <container>`); the control application only
 shows the output of its own operations.
 
 ## The workspace image
 
 `ApplicationWorkspaces.imageContext()` holds the files the image is built from (the `Dockerfile`,
-the entry script and the Maven settings in the package `com.top_logic.factory.workspace.app.image`);
+the entry script, the control command `tl-workspace-app`, the user instructions `CLAUDE.md` of Claude
+Code and the Maven settings in the package `com.top_logic.factory.workspace.app.image`);
 the tag of the image is the hash of these files, so a change of a pinned version in the
 `Dockerfile` leads to a new image. On top of `eclipse-temurin:21-jdk` it contains:
 
@@ -66,6 +71,11 @@ the tag of the image is the hash of these files, so a change of a pinned version
 - The **Playwright MCP server** (`ARG PLAYWRIGHT_MCP_VERSION`), registered for the workspace user as
   MCP server `playwright`, with the headless shell of Chromium and its system libraries. Snapshots
   and screenshots of the server go to `/tmp/playwright-mcp`, not into the sources.
+- The **entry script** supervising the application and the command **`tl-workspace-app`**
+  controlling it, see [the application under supervision](#the-application-under-supervision).
+- **User instructions** of Claude Code (`~/.claude/CLAUDE.md` of `tl`): the application already runs
+  on port 8080 and is restarted with `tl-workspace-app restart`, never started a second time; the
+  login; no API keys are needed; browser checks with the Playwright MCP server.
 
 The entry script and every command run as the user `tl` (`ApplicationWorkspaces.WORKSPACE_USER`,
 uid 1000), not as root - Claude Code refuses to bypass its permission prompts as root. A command
@@ -82,6 +92,71 @@ Workspaces and release repositories of images that ran as root:
   get the agent tools.
 - A **release repository** filled by root stays usable: the workspaces mount it read-only. Before
   a release repository is filled, the resolver takes it over for `tl` (`chown -R` as root).
+
+### The application under supervision
+
+The application is not the main process of the container but runs under its supervisor, the entry
+script, so that it can be stopped and restarted without ending the container - Claude Code and
+every other command in the container would end with it.
+
+- **Init.** The Docker provider creates every container with Docker's init process
+  (`HostConfig.withInit`) as PID 1: it reaps orphaned processes - the JVMs and tools of commands
+  that ended before their children - and forwards the stop signal to the entry script.
+- **Supervisor.** Until the file `.tl-factory-built` exists in the source volume, the entry script
+  only waits. Then it runs `mvn -B -Dtl.port=8080` in the directory of the application, with the
+  environment of the container (`tl_initial_password` among it). The output goes both to the
+  output of the entry script - the container log, so `followLog` and the tab *Application log* show
+  every run - and to the log of the current run, `$TL_WORKSPACE_APP_STATE/app.log`. Stopping the
+  container (`SIGTERM`) stops the application gracefully and ends the script. The supervisor
+  reports in the container log, in lines starting with `[tl-workspace-app]`, when it starts the
+  application, when the application is up (`The application is up at <url>.`), when and why it
+  stops it (on request, because the container stops, or after a failed start) and with which exit
+  code it ended.
+- **Failure.** An application that ends by itself has *failed* and is not started again; the
+  container keeps running, so that it can be repaired and started. A TopLogic application whose
+  initialization fails does not end - its server runs and answers with errors -, so the supervisor
+  also reads the log of the run: the server reports `Server started:` after the application
+  reported `up and running`. A run whose log shows the first but not the second for
+  `TL_WORKSPACE_APP_START_GRACE` seconds (default 5) is stopped and failed as well.
+- **Control.** `tl-workspace-app <status|start|stop|restart|log> [<app-module-path>]`
+  (`ApplicationWorkspaces.APP_CONTROL_COMMAND`) talks to the supervisor through files in its state
+  directory `TL_WORKSPACE_APP_STATE` (`/tmp/tl-workspace-app`): it writes the desired state (`run` or
+  `stop`), the supervisor starts or stops the application within a second and publishes its
+  state (`unbuilt`, `starting`, `running`, `stopping`, `stopped`, `failed`), the number of runs,
+  the process ID and the exit code of the last run. `start` and `restart` wait until the
+  application answers at `http://localhost:8080/<artifactId>/` (`TL_WORKSPACE_APP_TIMEOUT`,
+  default 300 seconds) and print `url:`, `log:` and `login: root / <initial password>`; a run that
+  fails meanwhile fails the command with the end of its log. `stop` leaves the container running.
+  `status` prints the state and exits 0 if the application answers, 4 if it failed, 3 otherwise
+  (`ApplicationWorkspaces.APP_STATUS_*`); `log` prints the end of the log of the current run
+  (`TL_WORKSPACE_APP_LOG_LINES` lines). A module path, if given, must be the directory of the
+  application.
+- **The `tl-app` skill.** The image sets `TL_APP_CONTROL=tl-workspace-app`
+  (`ApplicationWorkspaces.ENV_APP_CONTROL`); the skill of the TopLogic plugin then hands `start`,
+  `stop` and `restart` to that command instead of starting a second instance, which would fail on
+  the locked H2 database of the running one.
+
+In the control application:
+
+- **Waiting for the application** (`ApplicationWorkspaces.awaitApplication`, after creating,
+  starting or updating a workspace) asks `tl-workspace-app status` whenever the preview URL does
+  not answer yet. If the application failed, the wait ends at once with an
+  `ApplicationFailedException`, after writing the end of the application log to the output of the
+  operation; the workspace becomes *Application stopped*.
+- **Start** of a workspace whose container runs (*Application stopped*) runs
+  `tl-workspace-app start` (`ApplicationWorkspaces.startApplication`) instead of starting the
+  container, with the start timeout of the control application.
+- **Application check.** Every `application-check-interval` milliseconds (default 10000, `0`
+  switches it off) `ProjectWorkspaces` asks the workspaces in state *Running* or *Application
+  stopped* on which no operation runs for the state of their application
+  (`ApplicationWorkspaces.applicationState`): a stopped or failed application makes a running
+  workspace *Application stopped*, one that answers again makes it *Running* - e.g. after the agent
+  repaired and restarted it. An application starting or stopping changes nothing.
+- **After a restart** of the control application, the reconciliation asks every running container
+  the same way.
+
+A container on an image without `tl-workspace-app` tells no application state; it is treated as
+before (running container = running application).
 
 ### Pinned versions
 
@@ -116,7 +191,9 @@ An update is taken over like this:
    and takes minutes:
    `mvn test -DskipTests=false -pl tl-factory -Dtest=test.com.top_logic.factory.workspace.app.TestApplicationWorkspaces -Dtl.factory.integration=true`.
    It builds the new image, creates an application, checks Claude Code in the pinned version, the
-   plugin, the Playwright MCP server with its browser, and updates the workspace to another image.
+   plugin, the Playwright MCP server with its browser, the init process, the supervisor with
+   `tl-workspace-app` and the `tl-app` skill handing its commands to it, and updates the workspace
+   to another image.
    A new Claude Code version additionally needs a check of the stream-json parsing, see [the agent in
    the workspace](#the-agent-in-the-workspace).
 3. Merge. The control application builds the new image on the next creation or update of a
@@ -164,7 +241,7 @@ of `ApplicationWorkspaces` (generating, building, filling a release repository) 
 `build-timeout` instead.
 
 `WorkspaceProvider.followLog` delivers the output of the main process of a workspace - the
-application - from a number of last lines and/or a point in time on, and then what it writes while
+supervisor and the application it runs, across restarts of the application - from a number of last lines and/or a point in time on, and then what it writes while
 it runs, until the returned `LogFollower` is closed or the main process ends.
 
 The tab *Application log* of the workspace detail (`factory/app-log.view.xml`) shows that output
@@ -212,7 +289,8 @@ cleaned up.
 After a restart, the stored states are compared with the containers that exist
 (`WorkspaceReconciliation`): an operation interrupted by the restart while building or cleaning up
 leaves the workspace in *Error*, a workspace whose container is gone is in *Error*, and every other
-workspace takes the state of its container. The comparison runs in the background, so the
+workspace takes the state of its container - a running container whose application is stopped or
+failed makes it *Application stopped*. The comparison runs in the background, so the
 application starts also when the container platform is not reachable; the workspaces are *Unknown*
 then.
 
@@ -332,8 +410,9 @@ chat session of the current user about it and sends the task as its first messag
 `workspace-agent` of the window, the chat of the tab *Agent*; the session is put on that chat's
 `input` channel, and `<show-view view="factory/workspace-agent.view.xml"/>` brings the tab *Agent*
 into view, so it shows the run while it is written. The command is offered while
-`factoryAgentUnavailable(workspace)` names no reason: the workspace runs on the current image, the
-agent service runs and the LLM proxy is switched on. The tab *Agent* (`factory/workspace-agent.view.xml`)
+`factoryAgentUnavailable(workspace)` names no reason: the container of the workspace runs
+(*Running* or *Application stopped* - the agent is needed most when the application does not
+start) on the current image, the agent service runs and the LLM proxy is switched on. The tab *Agent* (`factory/workspace-agent.view.xml`)
 lists the conversations of the workspace, newest first, beside the chat of the selected one; its
 subject is the conversation, so a message typed there continues it, also a conversation another
 user started, whose first message then creates that user's chat session about it.

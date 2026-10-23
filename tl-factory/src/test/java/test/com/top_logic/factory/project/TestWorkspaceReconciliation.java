@@ -16,6 +16,7 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.factory.project.WorkspaceReconciliation;
+import com.top_logic.factory.project.WorkspaceReconciliation.ApplicationStateCheck;
 import com.top_logic.factory.project.WorkspaceReconciliation.Outcome;
 import com.top_logic.factory.project.WorkspaceStatus;
 import com.top_logic.factory.workspace.ExecCommand;
@@ -27,6 +28,8 @@ import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.WorkspaceState;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces.ApplicationState;
 
 /**
  * Test of {@link WorkspaceReconciliation} against a {@link WorkspaceProvider} reporting a fixed set
@@ -192,12 +195,76 @@ public class TestWorkspaceReconciliation extends TestCase {
 		assertEquals(List.of("a"), new ArrayList<>(result.keySet()));
 	}
 
+	/**
+	 * A running container whose application is stopped or failed makes the workspace
+	 * {@link WorkspaceStatus#APP_STOPPED} with its port but without the URL of the application; an
+	 * application starting, running or not telling its state leaves it running, and an
+	 * {@link WorkspaceStatus#APP_STOPPED} workspace whose application answers again runs.
+	 */
+	public void testApplicationState() {
+		FakeProvider provider = new FakeProvider()
+			.add(running("stopped", 20007))
+			.add(running("failed", 20008))
+			.add(running("changing", 20009))
+			.add(running("unknown", 20010))
+			.add(running("again", 20011));
+		Map<String, ApplicationState> states = Map.of(
+			"stopped", ApplicationState.STOPPED,
+			"failed", ApplicationState.FAILED,
+			"changing", ApplicationState.CHANGING,
+			"unknown", ApplicationState.UNKNOWN,
+			"again", ApplicationState.RUNNING);
+
+		Map<String, Outcome> result = reconcile(provider, states::get,
+			"stopped", WorkspaceStatus.RUNNING,
+			"failed", WorkspaceStatus.STARTING,
+			"changing", WorkspaceStatus.RUNNING,
+			"unknown", WorkspaceStatus.RUNNING,
+			"again", WorkspaceStatus.APP_STOPPED);
+
+		Outcome stopped = result.get("stopped");
+		assertEquals(WorkspaceStatus.APP_STOPPED, stopped.status());
+		assertEquals(Integer.valueOf(20007), stopped.hostPort());
+		assertNull(stopped.previewUrl());
+		assertNotNull(stopped.message());
+		assertEquals(WorkspaceStatus.APP_STOPPED, result.get("failed").status());
+		assertEquals(WorkspaceStatus.RUNNING, result.get("changing").status());
+		assertEquals(WorkspaceStatus.RUNNING, result.get("unknown").status());
+		Outcome again = result.get("again");
+		assertEquals(WorkspaceStatus.RUNNING, again.status());
+		assertEquals("http://localhost:20011/" + URL_SUFFIX, again.previewUrl());
+	}
+
+	/**
+	 * The state of an application is read from the exit code and the status line of the control
+	 * command; an image without the command tells nothing.
+	 */
+	public void testApplicationStateOfStatus() {
+		assertEquals(ApplicationState.RUNNING,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_RUNNING, "status: running\nurl: x\n"));
+		assertEquals(ApplicationState.FAILED,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_FAILED, "status: failed\nexit: 143\n"));
+		assertEquals(ApplicationState.STOPPED,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_NOT_RUNNING, "status: stopped\nexit: 143\n"));
+		assertEquals(ApplicationState.STOPPED,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_NOT_RUNNING, "status: unbuilt\n"));
+		assertEquals(ApplicationState.CHANGING,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_NOT_RUNNING, "status: starting\n"));
+		assertEquals(ApplicationState.UNKNOWN, ApplicationState.of(127, ""));
+	}
+
 	private static Map<String, Outcome> reconcile(WorkspaceProvider provider, Object... idsAndStates) {
+		return reconcile(provider, id -> ApplicationState.RUNNING, idsAndStates);
+	}
+
+	private static Map<String, Outcome> reconcile(WorkspaceProvider provider, ApplicationStateCheck applications,
+			Object... idsAndStates) {
 		Map<String, WorkspaceStatus> stored = new LinkedHashMap<>();
 		for (int n = 0; n < idsAndStates.length; n += 2) {
 			stored.put((String) idsAndStates[n], (WorkspaceStatus) idsAndStates[n + 1]);
 		}
-		return new WorkspaceReconciliation(provider, info -> info.getPreviewUrl() + URL_SUFFIX).reconcile(stored);
+		return new WorkspaceReconciliation(provider, info -> info.getPreviewUrl() + URL_SUFFIX, applications)
+			.reconcile(stored);
 	}
 
 	private static WorkspaceInfo running(String id, int port) {

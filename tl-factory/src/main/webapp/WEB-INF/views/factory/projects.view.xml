@@ -153,7 +153,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="if([`tl.factory:WorkspaceStatus#STOPPED`, `tl.factory:WorkspaceStatus#CREATED`, `tl.factory:WorkspaceStatus#UNKNOWN`].containsElement($status), null, #('The workspace is not stopped.'@en, 'Der Workspace ist nicht gestoppt.'@de))"/>
+								<disabled-if expr="if([`tl.factory:WorkspaceStatus#STOPPED`, `tl.factory:WorkspaceStatus#CREATED`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`].containsElement($status), null, #('Neither the workspace nor its application is stopped.'@en, 'Weder der Workspace noch seine Anwendung ist gestoppt.'@de))"/>
 							</executability>
 							<execute-script function="factoryStart($project)"/>
 						</generic-command>
@@ -169,7 +169,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="if([`tl.factory:WorkspaceStatus#RUNNING`, `tl.factory:WorkspaceStatus#UNKNOWN`, `tl.factory:WorkspaceStatus#ERROR`].containsElement($status), null, #('The workspace is not running.'@en, 'Der Workspace läuft nicht.'@de))"/>
+								<disabled-if expr="if([`tl.factory:WorkspaceStatus#RUNNING`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`, `tl.factory:WorkspaceStatus#ERROR`].containsElement($status), null, #('The workspace is not running.'@en, 'Der Workspace läuft nicht.'@de))"/>
 							</executability>
 							<execute-script function="factoryStop($project)"/>
 						</generic-command>
@@ -262,7 +262,8 @@
 	status = $row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#status`);
 	if($status == `tl.factory:WorkspaceStatus#ERROR`, 'tl-status-error',
 		if($status == `tl.factory:WorkspaceStatus#RUNNING`, 'tl-status-success',
-			if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), 'tl-status-info', null)));
+			if($status == `tl.factory:WorkspaceStatus#APP_STOPPED`, 'tl-status-warning',
+				if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), 'tl-status-info', null))));
 }]]></row-class>
 					</table>
 				</panel>

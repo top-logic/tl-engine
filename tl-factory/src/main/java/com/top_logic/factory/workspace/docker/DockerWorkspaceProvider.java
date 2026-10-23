@@ -723,6 +723,9 @@ public class DockerWorkspaceProvider extends AbstractConfiguredInstance<DockerWo
 				.withEnv(env)
 				.withExposedPorts(port)
 				.withHostConfig(HostConfig.newHostConfig()
+					// An init process as PID 1 reaps orphaned processes and forwards signals to the
+					// main process.
+					.withInit(true)
 					.withNetworkMode(getConfig().getNetwork())
 					.withMounts(mounts)
 					.withExtraHosts(getConfig().getExtraHosts().toArray(new String[0]))

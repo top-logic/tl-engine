@@ -35,7 +35,7 @@ Both are closed until an application configures them. `tl-ai-demo` carries a rea
 		<remote-agents>
 			<remote-agent name="other" card-url="https://example.com/other/a2a/agent/agent-card.json">
 				<credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer">
-					<secret class="com.top_logic.basic.credential.EnvironmentSecretSource" name="OTHER_A2A_TOKEN"/>
+					<secret name="OTHER_A2A_TOKEN"/>
 				</credentials>
 			</remote-agent>
 		</remote-agents>

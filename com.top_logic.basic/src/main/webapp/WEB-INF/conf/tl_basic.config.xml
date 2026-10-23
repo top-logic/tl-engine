@@ -37,9 +37,7 @@
 				splitting-tags="div,p,td,li"
 				tag-handling="true"
 			>
-				<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-					name="translation_api_key"
-				/>
+				<api-key name="translation_api_key"/>
 			</instance>
 		</config>
 		

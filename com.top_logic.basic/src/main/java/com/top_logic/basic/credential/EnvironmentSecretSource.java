@@ -24,8 +24,13 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * then a system property, then an environment variable.
  * </p>
  *
+ * <p>
+ * It is the default {@link SecretSource}: an element without <code>class</code> attribute names
+ * the variable:
+ * </p>
+ *
  * <pre>
- * &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MY_API_KEY"/&gt;
+ * &lt;api-key name="MY_API_KEY"/&gt;
  * </pre>
  *
  * @see Environment#getSystemPropertyOrEnvironmentVariable(String, String)

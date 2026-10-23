@@ -98,7 +98,7 @@ public class TestSearchEngineCredentials extends TestCase {
 		System.setProperty(VARIABLE, API_KEY);
 		try (RecordingServer api = RecordingServer.start(target -> json(BRAVE_OK))) {
 			engine(BraveSearchEngine.class, api, "",
-				"<api-key class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>")
+				"<api-key name='" + VARIABLE + "'/>")
 				.search(query());
 
 			assertEquals(API_KEY, header(api, 0, BraveSearchEngine.API_KEY_HEADER));
@@ -216,13 +216,18 @@ public class TestSearchEngineCredentials extends TestCase {
 				InAppServiceConfigStore.OVERRIDE_SERVICE);
 
 			assertTrue(written, written.contains("name=\"" + VARIABLE + "\""));
-			assertTrue(written, written.contains(EnvironmentSecretSource.class.getName()));
 			assertFalse(written, written.contains(API_KEY));
 
 			FileUtilities.writeStringToFile(written, file, StringServices.UTF8);
 			String rewritten = InAppServiceConfigStore.toXml(InAppServiceConfigStore.APPLICATION_TAG,
 				InAppServiceConfigStore.read(file), InAppServiceConfigStore.OVERRIDE_SERVICE);
 			assertEquals(written, rewritten);
+
+			WebToolsService.Config<?> service = (WebToolsService.Config<?>) InAppServiceConfigStore.read(file)
+				.getServices().get(WebToolsService.class).getInstance();
+			EnvironmentSecretSource.Config apiKey = (EnvironmentSecretSource.Config)
+				((BraveSearchEngine.Config) service.getSearchEngine()).getApiKey();
+			assertEquals(VARIABLE, apiKey.getName());
 		} finally {
 			file.delete();
 		}

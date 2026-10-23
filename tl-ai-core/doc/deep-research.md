@@ -117,9 +117,7 @@ in the model catalog, because no public catalog knows a local model:
 				models="qwen3.8-27b"
 				name="qwen"
 			>
-				<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-					name="tl_qwen_api_key"
-				/>
+				<api-key name="tl_qwen_api_key"/>
 			</provider>
 		</providers>
 		<model-catalog>

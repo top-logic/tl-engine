@@ -10,8 +10,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
-import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 
@@ -52,14 +50,13 @@ public interface ClientSecret extends ConfigurationItem {
 	 *
 	 * <pre>
 	 * &lt;client-secret client-id="my-app"&gt;
-	 *   &lt;password class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MY_APP_CLIENT_SECRET"/&gt;
+	 *   &lt;password name="MY_APP_CLIENT_SECRET"/&gt;
 	 * &lt;/client-secret&gt;
 	 * </pre>
 	 */
 	@Name(PASSWORD)
 	@Mandatory
 	@Format(SecretSourceFormat.class)
-	@ImplementationClassDefault(LiteralSecretSource.class)
 	PolymorphicConfiguration<? extends SecretSource> getPassword();
 
 	/**

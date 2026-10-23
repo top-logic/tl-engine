@@ -64,7 +64,7 @@ Enabling the module is not enough, deliberately.
 </config>
 ```
 
-The key is read from its secret source at each check, here the environment variable `MCP_API_KEY`, so it can be rotated without a restart and the configuration never holds it. A key kept in the configuration itself is the attribute `api-key="..."` with an encrypted value (or `unencrypted:` followed by the key); the service editor generates such a key with *Update token*.
+The key is read from its secret source at each check, here the environment variable `MCP_API_KEY`, so it can be rotated without a restart and the configuration never holds it. Unlike other secrets, the `<api-key>` of an API-key secret names the class of its source, because a key without `class` is a key kept in the configuration (the form the service editor generates tokens for). A key kept in the configuration itself is the attribute `api-key="..."` with an encrypted value (or `unencrypted:` followed by the key); the service editor generates such a key with *Update token*.
 
 Four schemes are available, and a caller may present any one of the configured ones:
 

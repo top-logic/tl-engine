@@ -13,30 +13,22 @@
 						models="claude-haiku-4-5-20251001,claude-opus-4-7,claude-sonnet-4-6"
 						name="anthropic"
 					>
-						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-							name="tl_anthropic_api_key"
-						/>
+						<api-key name="tl_anthropic_api_key"/>
 					</provider>
 					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
 						name="mistral"
 					>
-						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-							name="tl_mistral_api_key"
-						/>
+						<api-key name="tl_mistral_api_key"/>
 					</provider>
 					<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
 						name="openai"
 					>
-						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-							name="tl_openai_api_key"
-						/>
+						<api-key name="tl_openai_api_key"/>
 					</provider>
 					<provider class="com.top_logic.tl.ai.core.provider.xai.XAIProviderConfig"
 						name="xai"
 					>
-						<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-							name="tl_xai_api_key"
-						/>
+						<api-key name="tl_xai_api_key"/>
 					</provider>
 				</providers>
 				<model-catalog/>

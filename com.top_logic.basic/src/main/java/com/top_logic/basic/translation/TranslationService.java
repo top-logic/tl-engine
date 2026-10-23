@@ -109,7 +109,7 @@ public abstract class TranslationService<C extends TranslationService.Config> ex
 		 * </p>
 		 *
 		 * <pre>
-		 * &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="translation_api_key"/&gt;
+		 * &lt;api-key name="translation_api_key"/&gt;
 		 * </pre>
 		 *
 		 * <p>

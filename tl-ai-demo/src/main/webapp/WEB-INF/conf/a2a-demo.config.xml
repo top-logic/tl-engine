@@ -42,7 +42,7 @@
 				<remote-agents>
 					<remote-agent name="other" card-url="http://localhost:8081/other/a2a/agent/agent-card.json">
 						<credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer">
-							<secret class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_a2a_other_token"/>
+							<secret name="tl_a2a_other_token"/>
 						</credentials>
 					</remote-agent>
 				</remote-agents>

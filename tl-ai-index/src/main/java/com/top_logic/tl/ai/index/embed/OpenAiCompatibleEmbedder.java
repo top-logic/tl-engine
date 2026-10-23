@@ -118,7 +118,7 @@ public class OpenAiCompatibleEmbedder extends AbstractEmbedder<OpenAiCompatibleE
 		 * </p>
 		 *
 		 * <pre>
-		 * &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_embed_api_key"/&gt;
+		 * &lt;api-key name="tl_embed_api_key"/&gt;
 		 * </pre>
 		 *
 		 * <p>

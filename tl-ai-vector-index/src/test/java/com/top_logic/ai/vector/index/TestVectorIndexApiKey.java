@@ -131,7 +131,8 @@ public class TestVectorIndexApiKey extends TestCase {
 				InAppServiceConfigStore.OVERRIDE_SERVICE);
 
 			assertTrue(written, written.contains("name=\"" + VARIABLE + "\""));
-			assertTrue(written, written.contains(EnvironmentSecretSource.class.getName()));
+			// An element without class is an EnvironmentSecretSource, the default secret source.
+			assertTrue(written, written.contains("<mistral-api-key name=\"" + VARIABLE + "\"/>"));
 			assertFalse(written, written.contains(API_KEY));
 
 			FileUtilities.writeStringToFile(written, file, StringServices.UTF8);

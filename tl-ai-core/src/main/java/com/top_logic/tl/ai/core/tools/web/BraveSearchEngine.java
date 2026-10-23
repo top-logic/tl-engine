@@ -92,7 +92,7 @@ public final class BraveSearchEngine implements WebSearchEngine {
 		 * </p>
 		 *
 		 * <pre>
-		 * &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_brave_api_key"/&gt;
+		 * &lt;api-key name="tl_brave_api_key"/&gt;
 		 * </pre>
 		 *
 		 * <p>

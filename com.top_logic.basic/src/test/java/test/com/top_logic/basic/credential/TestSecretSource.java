@@ -150,6 +150,18 @@ public class TestSecretSource extends AbstractTypedConfigurationTestCase {
 		assertEquals("Variable must be read on each use.", "second", source.getSecret());
 	}
 
+	public void testElementWithoutClassIsEnvironment() throws Exception {
+		System.setProperty(TEST_VARIABLE, "from-env");
+		Config config = read("<config><api-key name='" + TEST_VARIABLE + "'/></config>");
+
+		assertTrue(config.getApiKey() instanceof EnvironmentSecretSource.Config);
+		assertEquals("from-env", secret(config));
+
+		Config copy = (Config) fromXML(toXML(config));
+		assertTrue(copy.getApiKey() instanceof EnvironmentSecretSource.Config);
+		assertEquals("from-env", secret(copy));
+	}
+
 	public void testEnvironmentUndefined() throws ConfigurationException {
 		Config config = read("<config><api-key class='" + EnvironmentSecretSource.class.getName()
 			+ "' name='" + UNDEFINED_VARIABLE + "'/></config>");

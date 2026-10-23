@@ -32,7 +32,7 @@ Depend on `tl-ai-index`, switch the module on and configure the types:
 			dimensions="768"
 			query-prefix="query: "
 		>
-			<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_embed_api_key"/>
+			<api-key name="tl_embed_api_key"/>
 		</embedder>
 		<chunking max-chars="1200" overlap-sentences="1" page-marker="^\[p\.(\d+)\]$"/>
 		<types>
@@ -75,8 +75,7 @@ Then give an agent the tools `index.search` and `index.similar`.
 - `OpenAiCompatibleEmbedder` - `POST <base-url>/v1/embeddings`, one batch per request, retries on
   network errors, 429 and 5xx. vLLM, text-embeddings-inference, llama.cpp's server and Ollama serve this
   route. `send-dimensions="true"` asks the server to cut the vector (OpenAI API). `api-key` is sent as
-  `Authorization: Bearer`; best as `<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-  name="tl_embed_api_key"/>`, the variable holding the plain key (the attribute form `api-key="…"` is an
+  `Authorization: Bearer`; best as `<api-key name="tl_embed_api_key"/>`, the variable holding the plain key (the attribute form `api-key="…"` is an
   encrypted key or one with the prefix `unencrypted:`). Instead of a key, `<credentials>` take any
   `CredentialProvider`, e.g. an OAuth2 access token; configuring both is an error. A request rejected with
   401 is repeated once with fresh credentials.

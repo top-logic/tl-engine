@@ -9,10 +9,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.equal.EqualityByValue;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 
@@ -56,14 +54,13 @@ public interface LoginCredentials extends EqualityByValue {
 	 *
 	 * <pre>
 	 * &lt;login user="my-user"&gt;
-	 *   &lt;password class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MY_USER_PASSWORD"/&gt;
+	 *   &lt;password name="MY_USER_PASSWORD"/&gt;
 	 * &lt;/login&gt;
 	 * </pre>
 	 */
 	@Mandatory
 	@Name(PASSWORD)
 	@Format(SecretSourceFormat.class)
-	@ImplementationClassDefault(LiteralSecretSource.class)
 	PolymorphicConfiguration<? extends SecretSource> getPassword();
 
 	/**

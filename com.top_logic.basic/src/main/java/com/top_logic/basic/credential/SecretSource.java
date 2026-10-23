@@ -10,6 +10,7 @@ import java.security.MessageDigest;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.exception.I18NRuntimeException;
 
 /**
@@ -38,13 +39,14 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * </p>
  *
  * <ul>
- * <li>An element selects any {@link SecretSource} implementation by its class, e.g. an
- * {@link EnvironmentSecretSource} naming the variable that holds the secret, or a
- * {@link FileSecretSource}:
+ * <li>An element selects a {@link SecretSource} implementation by its class, e.g. a
+ * {@link FileSecretSource}. An element without <code>class</code> attribute is an
+ * {@link EnvironmentSecretSource} naming the variable that holds the secret (the explicit form
+ * <code>class="com.top_logic.basic.credential.EnvironmentSecretSource"</code> is valid as well):
  *
  * <pre>
  * &lt;my-service&gt;
- *   &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="my_api_key"/&gt;
+ *   &lt;api-key name="my_api_key"/&gt;
  * &lt;/my-service&gt;
  *
  * &lt;my-service&gt;
@@ -68,11 +70,16 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  *
  * <p>
  * Writing such a configuration back produces the attribute form (with the secret encrypted) for a
- * {@link LiteralSecretSource} and the element form for all other sources.
+ * {@link LiteralSecretSource}, the element without <code>class</code> for an
+ * {@link EnvironmentSecretSource} and the element with <code>class</code> for all other sources.
+ * The service editor preselects the {@link EnvironmentSecretSource} for a new mandatory secret,
+ * since it keeps the secret out of the configuration files. A property may choose another default
+ * with an {@link ImplementationClassDefault} annotation of its own.
  * </p>
  *
  * @see Format
  */
+@ImplementationClassDefault(EnvironmentSecretSource.class)
 public interface SecretSource {
 
 	/**

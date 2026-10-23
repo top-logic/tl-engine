@@ -35,7 +35,7 @@ import io.modelcontextprotocol.spec.McpClientTransport;
  * <pre>
  * &lt;transport class="com.top_logic.tl.ai.core.mcp.HttpMcpTransport" url="https://mcp.example.com/mcp"&gt;
  *   &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer"&gt;
- *     &lt;secret class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MY_MCP_TOKEN"/&gt;
+ *     &lt;secret name="MY_MCP_TOKEN"/&gt;
  *   &lt;/credentials&gt;
  * &lt;/transport&gt;
  * </pre>

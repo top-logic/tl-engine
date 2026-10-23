@@ -109,7 +109,7 @@ public final class TavilySearchEngine implements WebSearchEngine {
 		 * </p>
 		 *
 		 * <pre>
-		 * &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_tavily_api_key"/&gt;
+		 * &lt;api-key name="tl_tavily_api_key"/&gt;
 		 * </pre>
 		 *
 		 * <p>

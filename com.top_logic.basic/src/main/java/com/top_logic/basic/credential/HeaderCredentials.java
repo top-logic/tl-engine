@@ -35,13 +35,24 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
  * </pre>
  *
  * <p>
+ * The same with the token from an environment variable, named by a secret element without
+ * <code>class</code> attribute:
+ * </p>
+ *
+ * <pre>
+ * &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer"&gt;
+ *   &lt;secret name="OPENAI_API_KEY"/&gt;
+ * &lt;/credentials&gt;
+ * </pre>
+ *
+ * <p>
  * An API key in a service-specific header (<code>x-api-key: &lt;secret&gt;</code>) from an
  * environment variable:
  * </p>
  *
  * <pre>
  * &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" header="x-api-key"&gt;
- *   &lt;secret class="com.top_logic.basic.credential.EnvironmentSecretSource" name="ANTHROPIC_API_KEY"/&gt;
+ *   &lt;secret name="ANTHROPIC_API_KEY"/&gt;
  * &lt;/credentials&gt;
  * </pre>
  *

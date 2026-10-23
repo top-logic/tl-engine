@@ -235,10 +235,12 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 
 			String written = toXML(config);
 			assertTrue(written, written.contains("name=\"" + VARIABLE + "\""));
-			assertTrue(written, written.contains(EnvironmentSecretSource.class.getName()));
 			assertFalse(written, written.contains(API_KEY));
 
 			Config reread = read(written);
+			EnvironmentSecretSource.Config apiKey = (EnvironmentSecretSource.Config)
+				((TranslationService.Config) reread.getService()).getApiKey();
+			assertEquals(VARIABLE, apiKey.getName());
 			assertEquals(written, toXML(reread));
 			assertEquals(TRANSLATION, ((ExposedService) getInstance(reread.getService())).translator()
 				.translate("Hello", "en", "de"));
@@ -246,7 +248,7 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 	}
 
 	private static String environmentApiKey() {
-		return "<api-key class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>";
+		return "<api-key name='" + VARIABLE + "'/>";
 	}
 
 	private String translate(MockApi api, String attributes, String content) throws ConfigurationException {

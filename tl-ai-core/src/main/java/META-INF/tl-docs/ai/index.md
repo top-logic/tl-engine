@@ -42,10 +42,10 @@ The providers are configured on `LLMProviderService` (service editor: *LLM provi
 				name="anthropic"
 				models="claude-haiku-4-5-20251001,claude-sonnet-4-6"
 			>
-				<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_anthropic_api_key"/>
+				<api-key name="tl_anthropic_api_key"/>
 			</provider>
 			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig" name="openai">
-				<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_openai_api_key"/>
+				<api-key name="tl_openai_api_key"/>
 			</provider>
 		</providers>
 		<model-catalog/>
@@ -53,7 +53,7 @@ The providers are configured on `LLMProviderService` (service editor: *LLM provi
 </config>
 ```
 
-The API keys come from environment variables: an `EnvironmentSecretSource` reads the variable it names (a system property or an environment variable) at each request, and the variable holds the plain key:
+The API keys come from environment variables: an `<api-key>` element without `class` attribute is an `EnvironmentSecretSource`, which reads the variable it names (a system property or an environment variable) at each request, and the variable holds the plain key:
 
 ```bash
 export tl_openai_api_key="sk-..."
@@ -130,7 +130,7 @@ A request rejected with HTTP 401 is repeated once with fresh credentials, so tha
 
 Which model an agent runs on (`default-model`, `<agent-overrides>`), the turn limit and the chat entry point are set on `AgentRuntimeService`; where a run goes when its model cannot answer is the `<failover>` section of `LLMProviderService`. [Providers and failover](doc:ai/providers) describes the four configuration services and the provider system.
 
-The other HTTP services of the agents authenticate the same way. The search engines of `webSearch` (`BraveSearchEngine`, `TavilySearchEngine` on `WebToolsService`) take an `api-key` - best `<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_brave_api_key"/>`, the variable holding the plain key - or `<credentials>`. A remote MCP server (`HttpMcpTransport`) and a remote A2A agent (`<remote-agent>` of `A2AService`, module `tl-ai-a2a`) take `<credentials>`, e.g. `HeaderCredentials` with `scheme="Bearer"` and an `EnvironmentSecretSource` as `<secret>`. The HTTP embedder of `tl-ai-index` (`OpenAiCompatibleEmbedder`) takes an `api-key`, sent as bearer token, or `<credentials>`. All of them repeat a request rejected with HTTP 401 once with fresh credentials. The vector index of `tl-ai-vector-index` takes its key as `<mistral-api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_mistral_api_key"/>` and reads it when it starts; without a key it is disabled - the application starts, a warning is logged, nothing is indexed and a search reports that the index is not available.
+The other HTTP services of the agents authenticate the same way. The search engines of `webSearch` (`BraveSearchEngine`, `TavilySearchEngine` on `WebToolsService`) take an `api-key` - best `<api-key name="tl_brave_api_key"/>`, the variable holding the plain key - or `<credentials>`. A remote MCP server (`HttpMcpTransport`) and a remote A2A agent (`<remote-agent>` of `A2AService`, module `tl-ai-a2a`) take `<credentials>`, e.g. `HeaderCredentials` with `scheme="Bearer"` and an `EnvironmentSecretSource` as `<secret>`. The HTTP embedder of `tl-ai-index` (`OpenAiCompatibleEmbedder`) takes an `api-key`, sent as bearer token, or `<credentials>`. All of them repeat a request rejected with HTTP 401 once with fresh credentials. The vector index of `tl-ai-vector-index` takes its key as `<mistral-api-key name="tl_mistral_api_key"/>` and reads it when it starts; without a key it is disabled - the application starts, a warning is logged, nothing is indexed and a search reports that the index is not available.
 
 The tool `createGiteaIssue` (factory `gitea`, group `egress`) files issues in a Gitea repository named by the environment variables `tl_gitea_url`, `tl_gitea_repo_owner` and `tl_gitea_repo_name`; without them the tool answers with an error and creates nothing. It authenticates with the access token in `tl_gitea_token`, or with the `<credentials>` of its `<tool class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool">` in the factory.
 

@@ -75,16 +75,12 @@ public class TestProviderApiKeyStorage extends TestCase {
 								models="claude-sonnet-4-6"
 								name="anthropic"
 							>
-								<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-									name="test_provider_api_key_storage"
-								/>
+								<api-key name="test_provider_api_key_storage"/>
 							</provider>
 							<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
 								name="mistral"
 							>
-								<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-									name="test_provider_api_key_storage_unset"
-								/>
+								<api-key name="test_provider_api_key_storage_unset"/>
 							</provider>
 						</providers>
 						<model-catalog/>
@@ -135,6 +131,7 @@ public class TestProviderApiKeyStorage extends TestCase {
 		AnthropicProviderConfig.Config provider =
 			(AnthropicProviderConfig.Config) service(config).getProviders().get(ANTHROPIC);
 		assertEquals(API_KEY, secretSource(provider.getApiKey()).getSecret());
+		assertEquals(VARIABLE, ((EnvironmentSecretSource.Config) provider.getApiKey()).getName());
 	}
 
 	/**

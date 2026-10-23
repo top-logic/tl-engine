@@ -34,7 +34,8 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerUtil;
 
 /**
- * Test case for a {@link TokenEditor} on a property holding a {@link SecretSource}.
+ * Test case for a {@link TokenEditor} on a property holding a {@link SecretSource} and for the
+ * preselected source of a plain {@link SecretSource} property.
  */
 @SuppressWarnings("javadoc")
 public class TestTokenEditorSecretSource extends TestCase {
@@ -58,6 +59,27 @@ public class TestTokenEditorSecretSource extends TestCase {
 
 		void setToken(PolymorphicConfiguration<? extends SecretSource> value);
 
+	}
+
+	public interface PlainSecretProperties extends ConfigurationItem {
+
+		String SECRET = "secret";
+
+		@Name(SECRET)
+		@Mandatory
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getSecret();
+
+	}
+
+	public void testPlainSecretPreselectsEnvironment() {
+		PlainSecretProperties model = TypedConfiguration.newConfigItem(PlainSecretProperties.class);
+		FormGroup group = build(model);
+
+		assertTrue("The environment source is preselected: " + model.getSecret(),
+			model.getSecret() instanceof EnvironmentSecretSource.Config);
+		assertNotNull("The name of the variable is edited.", findMember(group, EnvironmentSecretSource.Config.NAME));
+		assertNull("No token generation without token editor.", findMember(group, OPENER));
 	}
 
 	public void testLiteralPreselectedWithTokenCommands() {

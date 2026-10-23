@@ -62,6 +62,7 @@ import com.top_logic.basic.config.annotation.defaults.ShortDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.format.BuiltInFormats;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.func.Identity;
 import com.top_logic.basic.generate.CodeUtil;
@@ -1019,7 +1020,10 @@ public abstract class PropertyDescriptorImpl
 	private Class<?> annotatedImplementationClassDefault() {
 		ImplementationClassDefault annotation = getAnnotation(ImplementationClassDefault.class);
 		if (annotation == null) {
-			return null;
+			annotation = TypedConfigUtil.instanceTypeImplementationClassDefault(this);
+			if (annotation == null) {
+				return null;
+			}
 		}
 		return annotation.value();
 	}

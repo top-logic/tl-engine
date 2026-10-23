@@ -79,7 +79,7 @@ import com.top_logic.basic.credential.RequestAuthentication;
  *   scope="llm"
  * &gt;
  *   &lt;client-authentication class="com.top_logic.basic.credential.oauth.ClientSecretAuthentication" method="basic"&gt;
- *     &lt;secret class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MY_APP_CLIENT_SECRET"/&gt;
+ *     &lt;secret name="MY_APP_CLIENT_SECRET"/&gt;
  *   &lt;/client-authentication&gt;
  *   &lt;parameters&gt;
  *     &lt;parameter name="audience" value="llm-gateway"/&gt;

@@ -43,6 +43,7 @@ import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
+import com.top_logic.service.openapi.client.authentication.apikey.ClientAPIKeySecret;
 import com.top_logic.service.openapi.client.authentication.config.ClientAuthentication;
 import com.top_logic.service.openapi.client.authentication.http.basic.ClientBasicAuthSecret;
 import com.top_logic.service.openapi.client.authentication.oauth.ClientCredentialSecret;
@@ -193,6 +194,9 @@ public class TestClientAuthentication extends TestCase {
 		String xml = toXML(config);
 		assertFalse("Secret written: " + xml, xml.contains(API_KEY));
 		assertTrue("Reference not written: " + xml, xml.contains(VARIABLE));
+
+		ClientAPIKeySecret copy = (ClientAPIKeySecret) parse(xml).getSecrets().get(DOMAIN);
+		assertEquals(VARIABLE, ((EnvironmentSecretSource.Config) copy.getAPIKey()).getName());
 	}
 
 	public void testWriteAPIKeyLiteralEncrypted() throws Exception {
@@ -302,11 +306,10 @@ public class TestClientAuthentication extends TestCase {
 
 		String xml = toXML(config);
 		assertFalse("Secret written: " + xml, xml.contains(PASSWORD));
-		assertTrue("Reference not written: " + xml, xml.contains(EnvironmentSecretSource.class.getName()));
 		assertTrue("Variable not written: " + xml, xml.contains(VARIABLE));
 
 		ClientBasicAuthSecret copy = (ClientBasicAuthSecret) parse(xml).getSecrets().get(DOMAIN);
-		assertTrue(copy.getLogin().getPassword() instanceof EnvironmentSecretSource.Config);
+		assertEquals(VARIABLE, ((EnvironmentSecretSource.Config) copy.getLogin().getPassword()).getName());
 	}
 
 	public void testWriteLiteralEncrypted() throws Exception {
@@ -332,6 +335,7 @@ public class TestClientAuthentication extends TestCase {
 	}
 
 	private static String environmentKey() {
+		// The OpenAPI key preselects a literal, so a key from the environment names its class.
 		return "<api-key class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>";
 	}
 
@@ -361,7 +365,7 @@ public class TestClientAuthentication extends TestCase {
 	}
 
 	private static String environmentPassword() {
-		return "<password class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>";
+		return "<password name='" + VARIABLE + "'/>";
 	}
 
 	private static String registry(String authentication, String secret) {

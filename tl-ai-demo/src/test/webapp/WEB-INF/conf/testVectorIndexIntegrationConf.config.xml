@@ -9,7 +9,7 @@
 				mistral-embed-model="mistral-embed"
 				embedding-model-type="mistral"
 			>
-				<mistral-api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_mistral_api_key"/>
+				<mistral-api-key name="tl_mistral_api_key"/>
 			</instance>
 		</config>
 	</services>
@@ -22,7 +22,7 @@
 			mistral-embed-model="mistral-embed"
 			embedding-model-type="mistral"
 		>
-			<mistral-api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_mistral_api_key"/>
+			<mistral-api-key name="tl_mistral_api_key"/>
 		</config>
 	</configs>
 </application>

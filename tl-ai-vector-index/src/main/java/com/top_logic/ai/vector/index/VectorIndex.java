@@ -134,7 +134,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 * </p>
 		 *
 		 * <pre>
-		 * &lt;mistral-api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_mistral_api_key"/&gt;
+		 * &lt;mistral-api-key name="tl_mistral_api_key"/&gt;
 		 * </pre>
 		 *
 		 * <p>

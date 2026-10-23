@@ -274,7 +274,7 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		 * <pre>
 		 * &lt;remote-agent name="other" card-url="https://example.com/other/a2a/agent/agent-card.json"&gt;
 		 *   &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer"&gt;
-		 *     &lt;secret class="com.top_logic.basic.credential.EnvironmentSecretSource" name="OTHER_A2A_TOKEN"/&gt;
+		 *     &lt;secret name="OTHER_A2A_TOKEN"/&gt;
 		 *   &lt;/credentials&gt;
 		 * &lt;/remote-agent&gt;
 		 * </pre>

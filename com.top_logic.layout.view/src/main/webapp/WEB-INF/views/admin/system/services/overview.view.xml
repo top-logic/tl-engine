@@ -4,15 +4,16 @@
 	Initial frame of the services drill-down (see ../services.view.xml): list the application
 	services (runtime modules) and start / stop / restart the selected one.
 	- The services channel holds the ServiceSnapshot the table displays - bound by the enclosing
-	tile-stack, so a command of the detail frame refreshes it as well. The rows are the modules of
-	the snapshot (serviceList, a live snapshot while the channel is empty), the status column - which
+	tile-stack, so a command of the detail frame refreshes it as well. The rows are the modules of the
+	snapshot (serviceList, a live snapshot while the channel is empty), the status column - which
 	declares the services channel as its input, since a column script sees only the row and its own
-	inputs - shows the status the snapshot recorded (serviceStatus), the category column the functional category
-	of the service (serviceCategory, see ServiceCategory), the module column the software module the
-	service is delivered with (serviceModule). The table starts grouped by category, the groups in
-	the order the categories declare (serviceCategoryCompare), each cell and group header with the
-	description of the category as tooltip (serviceCategoryTooltip); its filter bar searches the
-	displayed columns.
+	inputs - shows the status the snapshot recorded (serviceStatus), the category column - hidden at
+	the start, since the table is grouped by it - the functional category of the service
+	(serviceCategory, see ServiceCategory), the module column the software module the service is
+	delivered with (serviceModule). The table starts grouped by category, the group headers showing
+	the category in the first column (the service name), the groups in the order the categories
+	declare (serviceCategoryCompare), each cell and group header with the description of the
+	category as tooltip (serviceCategoryTooltip); its filter bar searches the displayed columns.
 	- The table writes the selected module to the selection channel; the derived active channel
 	tells whether it runs, so Start (while stopped) and Stop / Restart (while running) are
 	mutually exclusive. Each command runs the ServiceLifecycleAction (which reads the module from
@@ -132,6 +133,15 @@
 			selection="selection"
 		>
 			<columns>
+				<computed-column name="name"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Service</en>
+						<de>Dienst</de>
+					</label>
+					<value>serviceLabel($row)</value>
+				</computed-column>
 				<computed-column name="status"
 					inputs="services"
 					type="tl.core:String"
@@ -142,17 +152,9 @@
 					</label>
 					<value>serviceStatus($services, $row)</value>
 				</computed-column>
-				<computed-column name="name"
-					type="tl.core:String"
-				>
-					<label>
-						<en>Service</en>
-						<de>Dienst</de>
-					</label>
-					<value>serviceLabel($row)</value>
-				</computed-column>
 				<computed-column name="category"
 					type="tl.core:String"
+					visible="false"
 				>
 					<label>
 						<en>Category</en>

@@ -479,8 +479,11 @@
 
 /* Die Fläche der Karte; Ecke, Zeiger und Lage (position) gibt tl-item[role="option"]. */
 /* Rechts hält die Karte die Ecke des Auswahlhakens frei (tl-item__check: Abstand xs, Breite icon-md, dazu xs Luft) —
-   immer, nicht erst gewählt: sonst deckt der Haken einen Knopf der Kartenansicht, oder der Inhalt springt beim Wählen. */
+   immer, nicht erst gewählt: sonst deckt der Haken einen Knopf der Kartenansicht, oder der Inhalt springt beim Wählen.
+   Die Karte schrumpft nicht: tl-item setzt min-height: 0, und in der rollenden Liste stauchte das die Karten unter
+   ihren Text, statt die Liste rollen zu lassen (wie .tl-panel__body > *). */
 .tl-board__card {
+  flex-shrink: 0;
   padding: var(--tl-space-sm) calc(var(--tl-space-xs) + var(--tl-size-icon-md) + var(--tl-space-xs)) var(--tl-space-sm) var(--tl-space-md);
   background: var(--tl-surface-layer);
   border: var(--tl-border-width-sm) solid var(--tl-border-separator);
@@ -6355,4 +6358,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:235cdebd34cbdf99af1b9c8ea51ccb4b3ef066cca085ef39f63328c181890cf5 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:1c81f4e0c82bcd5f814ae1601eb6d5b00d0a592b531985b41b3e12a9206d70d9 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

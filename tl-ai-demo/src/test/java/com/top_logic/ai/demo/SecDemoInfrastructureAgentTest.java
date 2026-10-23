@@ -7,7 +7,6 @@ package com.top_logic.ai.demo;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -77,7 +76,7 @@ public class SecDemoInfrastructureAgentTest extends SecDemoPersonaTest {
 
 	/** Every persona of the fixture, so the rule is about the agent and not about one account. */
 	public void testNoPersonaMayTalkToTheImprover() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			assertNotNull(login + " must not be able to talk to " + IMPROVER + ".",
 				refusalFor(login, IMPROVER));
 		}

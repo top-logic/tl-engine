@@ -37,7 +37,7 @@ import com.top_logic.basic.io.binary.BinaryDataURI;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.knowledge.service.db2.InitialDataSetupService;
+import com.top_logic.knowledge.service.db2.InitialDataSetup;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
@@ -413,7 +413,7 @@ public class XMLInstanceExporter {
 		if (downloadName == null) {
 			downloadName =
 				new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss").format(new Date()) + "_" + typeName
-					+ InitialDataSetupService.FILE_SUFFIX;
+					+ InitialDataSetup.FILE_SUFFIX;
 		}
 		InstanceXmlData instanceData = new InstanceXmlData(downloadName, export);
 		return instanceData;

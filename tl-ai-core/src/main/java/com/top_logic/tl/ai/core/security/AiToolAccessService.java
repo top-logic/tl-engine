@@ -30,7 +30,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.db2.InitialDataSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.security.AccessRevoke;
@@ -104,8 +103,8 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 	// that "is this agent name known" has the same answer on every start; without the ordering the
 	// check would silently be skipped on some of them. None of the three is switched on by this -
 	// all three are active by default and none depends on this service, so there is no cycle.
-	// The agent records of the initial data import are the exception: AgentNameCheck judges those
-	// names after the import (#663).
+	// The agent records of the initial data import are the exception: the import runs after all
+	// services, so AgentNameCheck judges those names after it (#663).
 	TopLogicAgentDefinitions.Module.class,
 	LLMProviderService.Module.class,
 	McpServerRegistry.Module.class,
@@ -327,14 +326,13 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * <p>
 	 * The agents of an application are its configured ones and its {@code tl.ai.core:Agent}
 	 * records, and the initial data import creates records ({@code WEB-INF/data/agents.objects.xml},
-	 * which the agent editor's "Apply to development environment" writes). Nothing orders this
-	 * service after that import, and it must not depend on it: every test that starts this service
-	 * would then import every seed file of the application. So until the import has run, the agent
-	 * names are not judged here - {@link AgentNameCheck} judges them once it has (#663).
+	 * which the agent editor's "Apply to development environment" writes). The import is a startup
+	 * hook that runs after all services are started, so the agent names are never judged here -
+	 * {@link AgentNameCheck} judges them after the import (#663).
 	 * </p>
 	 */
 	private static Set<String> namesKnownAtStart(Dimension dimension) {
-		if (dimension == Dimension.AGENT && !InitialDataSetupService.Module.INSTANCE.isActive()) {
+		if (dimension == Dimension.AGENT) {
 			return null;
 		}
 		return knownNames(dimension);
@@ -344,8 +342,8 @@ public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessServ
 	 * Refuses the agent names of this policy that the application does not have.
 	 *
 	 * <p>
-	 * The check {@link #startUp()} leaves out while the initial data import has not run yet. Called
-	 * by {@link AgentNameCheck}, which starts after the import.
+	 * The check {@link #startUp()} leaves out, since the initial data import has not run yet. Called
+	 * by {@link AgentNameCheck}, which runs after the import.
 	 * </p>
 	 *
 	 * @throws ConfigurationError

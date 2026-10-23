@@ -23,14 +23,11 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
-import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.map.MultiMaps;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.i18n.log.BufferingI18NLog;
@@ -38,9 +35,6 @@ import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.logging.Level;
-import com.top_logic.basic.module.ManagedClass;
-import com.top_logic.basic.module.ServiceDependencies;
-import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
@@ -52,10 +46,12 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.migration.StartupAction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.tool.boundsec.config.AccessConfigurationSetupService;
+import com.top_logic.tool.boundsec.config.AccessConfigurationSetup;
 import com.top_logic.util.Resources;
+import com.top_logic.util.StartupHooks;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 import com.top_logic.xio.importer.binding.ApplicationModelBinding;
@@ -69,15 +65,13 @@ import com.top_logic.xio.importer.binding.ModelBinding;
  * since the last import. The content hash of each file is persisted so that unchanged files are
  * skipped on subsequent startups.
  * </p>
+ * 
+ * <p>
+ * The import must run as {@link StartupHooks startup hook}, because the workflows may require any
+ * service of the application, e.g. the groups they refer to.
+ * </p>
  */
-@ServiceDependencies({
-	ModelService.Module.class,
-
-	// Workflows may refer to groups, therefore, those must be created first.
-	InitialGroupManager.Module.class,
-})
-@Label("Initial workflow import")
-public class InitialProcessSetupService extends ManagedClass {
+public class InitialProcessSetup implements StartupAction {
 
 	/**
 	 * Marker value stored in {@link DBProperties} in legacy installations to indicate that a
@@ -103,40 +97,21 @@ public class InitialProcessSetupService extends ManagedClass {
 
 	private static final Pattern NAME_HASH_PATTERN = Pattern.compile("^(?<name>.+):(?<hash>[A-Za-z0-9/+=]+)$");
 
-	/**
-	 * Typed configuration interface definition for {@link InitialProcessSetupService}.
-	 */
-	public interface Config extends ServiceConfiguration<InitialProcessSetupService> {
-		// configuration interface definition
-	}
-
-	/**
-	 * Create a {@link InitialProcessSetupService}.
-	 * 
-	 * @param context
-	 *        the {@link InstantiationContext} to create the new object in
-	 * @param config
-	 *        the configuration object to be used for instantiation
-	 */
-	public InitialProcessSetupService(InstantiationContext context, Config config) {
-		super(context, config);
-	}
-
 	@Override
-	protected void startUp() {
+	public void perform() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
 		Resource[] resources = FileManager.getInstance()
 			.getResourcePaths(DATA_PATH)
 			.stream()
 			.map(s -> s.substring(DATA_PATH.length()))
-			.filter(InitialProcessSetupService::isWorkflowFile)
+			.filter(InitialProcessSetup::isWorkflowFile)
 			.sorted()
 			.map(Resource::loadResource)
 			.filter(Objects::nonNull)
 			.toArray(Resource[]::new);
 		if (resources.length == 0) {
-			Logger.info("No workflows found in " + DATA_PATH + ".", InitialProcessSetupService.class);
+			Logger.info("No workflows found in " + DATA_PATH + ".", InitialProcessSetup.class);
 			return;
 		}
 
@@ -152,7 +127,7 @@ public class InitialProcessSetupService extends ManagedClass {
 				try {
 					storedHash = loadHash(readCon, resource);
 				} catch (SQLException ex) {
-					Logger.error("Cannot test whether data is already loaded.", ex, InitialProcessSetupService.class);
+					Logger.error("Cannot test whether data is already loaded.", ex, InitialProcessSetup.class);
 					continue;
 				}
 				if (LOADED.equals(storedHash)) {
@@ -170,7 +145,7 @@ public class InitialProcessSetupService extends ManagedClass {
 					Logger.error(
 						"Unexpected stored hash format. Expected is the format <name>:<hash>, where <name> is the name of the workflow, and <hash> is the Base64 encoded hash of the data: "
 							+ storedHash,
-						InitialProcessSetupService.class);
+						InitialProcessSetup.class);
 					continue;
 				}
 				if (!matcher.group("hash").equals(resource.hash())) {
@@ -185,7 +160,7 @@ public class InitialProcessSetupService extends ManagedClass {
 		}
 
 		if (newProcesses.isEmpty() && updatedProcesses.isEmpty() && initHashesProcesses.isEmpty()) {
-			Logger.info("All workflows in " + DATA_PATH + " are up to date.", InitialProcessSetupService.class);
+			Logger.info("All workflows in " + DATA_PATH + " are up to date.", InitialProcessSetup.class);
 			return;
 		}
 
@@ -196,7 +171,7 @@ public class InitialProcessSetupService extends ManagedClass {
 			if (!newProcesses.isEmpty()) {
 				for (Resource resource : newProcesses) {
 					String resourcePath = resourcePath(resource);
-					Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetupService.class);
+					Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetup.class);
 
 					String wfName;
 					try {
@@ -204,14 +179,14 @@ public class InitialProcessSetupService extends ManagedClass {
 						wfName = newWorkflow.getName();
 					} catch (Exception ex) {
 						Logger.error("Cannot load initial workflow: " + resourcePath, ex,
-							InitialProcessSetupService.class);
+							InitialProcessSetup.class);
 						continue;
 					}
 
 					try {
 						storeHash(commitCon, resource, wfName);
 					} catch (SQLException ex) {
-						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetupService.class);
+						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetup.class);
 					}
 				}
 			}
@@ -219,7 +194,7 @@ public class InitialProcessSetupService extends ManagedClass {
 			if (!initHashesProcesses.isEmpty()) {
 				for (Resource resource : initHashesProcesses) {
 					String resourcePath = resourcePath(resource);
-					Logger.info("Setting initial hash for workflow: " + resourcePath, InitialProcessSetupService.class);
+					Logger.info("Setting initial hash for workflow: " + resourcePath, InitialProcessSetup.class);
 
 					String wfName;
 					try {
@@ -230,13 +205,13 @@ public class InitialProcessSetupService extends ManagedClass {
 						newWorkflow.tDelete();
 					} catch (Exception ex) {
 						Logger.error("Cannot load workflow to get name: " + resourcePath, ex,
-							InitialProcessSetupService.class);
+							InitialProcessSetup.class);
 						continue;
 					}
 					try {
 						storeHash(commitCon, resource, wfName);
 					} catch (SQLException ex) {
-						Logger.error("Cannot initialize hash: " + resourcePath, ex, InitialProcessSetupService.class);
+						Logger.error("Cannot initialize hash: " + resourcePath, ex, InitialProcessSetup.class);
 					}
 				}
 			}
@@ -252,7 +227,7 @@ public class InitialProcessSetupService extends ManagedClass {
 							+ nameAndResource.getValue().stream().map(this::resourcePath)
 								.collect(Collectors.joining(", "))
 							+ ") created a workflow with name '" + nameAndResource.getKey()
-							+ "'. No updated is executed.", InitialProcessSetupService.class);
+							+ "'. No updated is executed.", InitialProcessSetup.class);
 						continue;
 					}
 
@@ -267,15 +242,15 @@ public class InitialProcessSetupService extends ManagedClass {
 						case 0:
 							Logger.warn(
 								"No workflow with name '" + collaborationName + "' found for resource: " + resourcePath,
-								InitialProcessSetupService.class);
+								InitialProcessSetup.class);
 							continue;
 						case 1:
 							processToUpdate = collaborations.get(0);
-							Logger.info("Update initial workflow: " + resourcePath, InitialProcessSetupService.class);
+							Logger.info("Update initial workflow: " + resourcePath, InitialProcessSetup.class);
 							break;
 						default:
 							Logger.warn("Multiple workflows with name '" + collaborationName
-								+ "' found: " + resourcePath, InitialProcessSetupService.class);
+								+ "' found: " + resourcePath, InitialProcessSetup.class);
 							continue;
 					}
 
@@ -286,14 +261,14 @@ public class InitialProcessSetupService extends ManagedClass {
 						wfName = processToUpdate.getName();
 					} catch (Exception ex) {
 						Logger.error("Cannot load workflow to update: " + resourcePath, ex,
-							InitialProcessSetupService.class);
+							InitialProcessSetup.class);
 						continue;
 					}
 
 					try {
 						storeHash(commitCon, resource, wfName);
 					} catch (SQLException ex) {
-						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetupService.class);
+						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetup.class);
 					}
 				}
 			}
@@ -412,7 +387,7 @@ public class InitialProcessSetupService extends ManagedClass {
 	public static Collaboration importBPML(Source source, ModelBinding binding) throws XMLStreamException {
 		BufferingI18NLog errors = new BufferingI18NLog();
 		I18NLog log = errors.filter(Level.ERROR).tee(
-			new LogProtocol(InitialProcessSetupService.class)
+			new LogProtocol(InitialProcessSetup.class)
 				.asI18NLog(Resources.getSystemInstance())
 				.filter(Level.FATAL));
 		BPMLImporter importer = new BPMLImporter(log);
@@ -446,17 +421,17 @@ public class InitialProcessSetupService extends ManagedClass {
 	record Resource(String name, BinaryData data, String hash) {
 
 		/**
-		 * Loads the workflow file with the given name from {@value InitialProcessSetupService#DATA_PATH}
+		 * Loads the workflow file with the given name from {@value InitialProcessSetup#DATA_PATH}
 		 * and computes its content hash.
 		 *
 		 * @param name
-		 *        File name relative to {@value InitialProcessSetupService#DATA_PATH}.
+		 *        File name relative to {@value InitialProcessSetup#DATA_PATH}.
 		 * @return The loaded {@link Resource}, or <code>null</code> if the content hash could not be
 		 *         computed due to an I/O error.
 		 */
 		static Resource loadResource(String name) {
 			BinaryData data = FileManager.getInstance().getData(DATA_PATH + name);
-			String hash = AccessConfigurationSetupService.hash(data);
+			String hash = AccessConfigurationSetup.hash(data);
 			if (hash == null) {
 				// Error occurred. Was already logged.
 				return null;
@@ -466,25 +441,4 @@ public class InitialProcessSetupService extends ManagedClass {
 
 	}
 
-	/**
-	 * Singleton holder for the {@link InitialProcessSetupService}.
-	 */
-	public static final class Module extends TypedRuntimeModule<InitialProcessSetupService> {
-
-		/**
-		 * Singleton {@link InitialProcessSetupService.Module} instance.
-		 */
-		public static final Module INSTANCE = new Module();
-
-		private Module() {
-			// Singleton constructor.
-		}
-
-		@Override
-		public Class<InitialProcessSetupService> getImplementation() {
-			return InitialProcessSetupService.class;
-		}
-	}
-
 }
-

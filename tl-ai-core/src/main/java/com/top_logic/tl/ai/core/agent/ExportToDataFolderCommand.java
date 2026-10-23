@@ -71,7 +71,8 @@ public class ExportToDataFolderCommand extends AbstractCommandHandler {
 
 	/**
 	 * Clears the {@code initial-data.<fileName>} flag in {@link DBProperties} so that
-	 * {@code InitialDataSetupService} re-imports the file on the next startup.
+	 * {@link com.top_logic.knowledge.service.db2.InitialDataSetup} re-imports the file on the next
+	 * startup.
 	 */
 	private void resetInitialDataFlag(String fileName) {
 		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();

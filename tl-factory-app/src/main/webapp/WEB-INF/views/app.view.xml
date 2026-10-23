@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The control application in the application shell of tl-layout-view: a same-path overlay naming
+	the application and placing the project management of tl-factory before the system section of
+	the sidebar.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<sidebar
+		config:ref="sidebar"
+		active-item="projects"
+	>
+		<header config:override="true">
+			<text>
+				<label>
+					<en>TL Factory</en>
+					<de>TL Factory</de>
+				</label>
+			</text>
+		</header>
+		<footer config:override="true">
+			<text>
+				<label>
+					<en>TopLogic · Factory</en>
+					<de>TopLogic · Factory</de>
+				</label>
+			</text>
+		</footer>
+		<items>
+			<nav-item id="projects"
+				config:position="before"
+				config:reference="system-separator"
+				icon="css:bi bi-boxes"
+			>
+				<view-ref view="factory/projects.view.xml"/>
+				<label>
+					<en>Projects</en>
+					<de>Projekte</de>
+				</label>
+			</nav-item>
+		</items>
+	</sidebar>
+	<app-bar config:ref="app-bar">
+		<title>
+			<en>TopLogic Factory</en>
+			<de>TopLogic Factory</de>
+		</title>
+	</app-bar>
+</view>

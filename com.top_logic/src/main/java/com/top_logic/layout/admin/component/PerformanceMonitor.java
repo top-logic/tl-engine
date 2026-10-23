@@ -26,7 +26,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.ProcessingKind;
@@ -40,6 +42,7 @@ import com.top_logic.layout.ProcessingKind;
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
 @Label("Performance monitor")
+@ServiceCategory.Of(OperationsCategory.class)
 public class PerformanceMonitor extends ManagedClass implements Reloadable {
 
 	private Map<Long, Set<PerformanceDataEntryAggregated>> perfData;

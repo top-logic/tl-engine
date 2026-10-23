@@ -13,5 +13,13 @@
   },
   "postUpdateOptions": [
     "npmDedupe"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "@tiptap/**"
+      ],
+      "groupName": "tiptap"
+    }
   ]
 }

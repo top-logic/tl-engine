@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, stateAttr, usePart, ICON_HANDLE, ICON_VISIBLE, ICON_HIDDEN, ICON_LOCK, ICON_UNLOCK } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, stateAttr, usePart, ICON_HANDLE, ICON_VISIBLE, ICON_HIDDEN, ICON_LOCK, ICON_UNLOCK, ICON_GROUP } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 
@@ -16,6 +16,8 @@ const I18N_KEYS = {
   'js.table.columnUnlockShort': 'Unfreeze',
   'js.table.columnsLocked': 'Frozen',
   'js.table.columnLastVisible': 'At least one column stays visible',
+  'js.table.groupBy': 'Group by this column',
+  'js.table.ungroup': 'Remove grouping',
 };
 
 /** Shows or hides one of the columns. */
@@ -26,6 +28,9 @@ const CMD_COLUMN_REORDER = 'columnReorder';
 
 /** Freezes or releases one of the columns. */
 const CMD_COLUMN_LOCK = 'columnLock';
+
+/** Groups the rows by the column the `column` argument names, or by none when it is empty. */
+const CMD_GROUP = 'group';
 
 /** Argument of every command: which column it applies to. */
 const ARG_COLUMN = 'column';
@@ -45,6 +50,8 @@ interface ColumnEntry {
   visible: boolean;
   /** Whether the table freezes this column; the locked entries stand as a block at the start. */
   locked: boolean;
+  /** Whether the rows are grouped by this column; at most one entry is. */
+  grouped: boolean;
 }
 
 /** Fills the placeholder {0} of a translated text. */
@@ -59,6 +66,10 @@ function format(template: string, arg: string): string {
  * The frozen columns stand as a block under the heading "Frozen". A frozen column is always shown: the eye of a frozen
  * column also releases it, the lock of a hidden one also shows it, and both say so in their names.
  *
+ * Unless the table is a tree (state `groupable` false), each row also offers a toggle grouping the rows by its column,
+ * hidden or shown; choosing another column moves the grouping there, choosing the grouped one removes it. Like lock and
+ * eye it appears on hover or focus, but on the grouped row it always stands, so the current grouping is in sight.
+ *
  * Order, visibility and lock live on the server (see ReactColumnSelectControl), so a gesture sends a command and the
  * re-pushed list is what renders.
  */
@@ -70,6 +81,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
   const visibleCount = entries.filter((entry) => entry.visible).length;
+  const groupable = state.groupable !== false;
 
   // A table over a large type offers a column per attribute, which is a long list to scroll. The search narrows what
   // is rendered; the full list stays the reference for the drop position, so a row can be dropped next to a row the
@@ -123,6 +135,10 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_COLUMN_LOCK, { [ARG_COLUMN]: name, [ARG_LOCKED]: locked });
   }, [sendCommand]);
 
+  const handleGroup = React.useCallback((name: string, grouped: boolean) => {
+    sendCommand(CMD_GROUP, { [ARG_COLUMN]: grouped ? '' : name });
+  }, [sendCommand]);
+
   // The moved column is named rather than counted: the server resolves it against its own working copy, which the
   // client's list is only a picture of. The server also decides the lock from where the column lands.
   const handleMove = React.useCallback((from: number, targetIndex: number) => {
@@ -172,6 +188,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
           const lockLabel = format(i18n[entry.locked ? 'js.table.columnUnlock'
             : entry.visible ? 'js.table.columnLock' : 'js.table.columnShowLock'], entry.label);
           const lockTip = i18n[entry.locked ? 'js.table.columnUnlockShort' : 'js.table.columnLockShort'];
+          const grouped = groupable && entry.grouped === true;
           const handle = reorder.handleProps(index);
           return (
             <li
@@ -181,6 +198,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                 reorderState(reorder.itemState(index)),
                 !entry.visible && 'off',
                 entry.locked && 'locked',
+                grouped && 'grouped',
                 index === lastLockedShown && hasUnlockedShown && 'section-end',
               )}
               {...reorder.itemProps(index)}
@@ -191,11 +209,24 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                 display="icon-only"
                 appearance="ghost"
                 small
-                className="tl-reorder-list__handle"
+                className="tl-reorder-list__handle tl-reveal-on-hover"
                 {...handle}
               />
               <span className="tl-reorder-list__label">{entry.label}</span>
               <span className="tl-reorder-list__actions">
+                {groupable && (
+                  <Button
+                    label={i18n[grouped ? 'js.table.ungroup' : 'js.table.groupBy']}
+                    image={ICON_GROUP}
+                    display="icon-only"
+                    appearance="ghost"
+                    small
+                    checked={grouped}
+                    // The grouped row keeps its toggle in sight; the others show it on hover or focus.
+                    className={grouped ? undefined : 'tl-reveal-on-hover'}
+                    onClick={() => handleGroup(entry.name, grouped)}
+                  />
+                )}
                 <Button
                   ref={buttonRef(`${entry.name}:lock`)}
                   label={lockLabel}
@@ -204,7 +235,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   display="icon-only"
                   appearance="ghost"
                   small
-                  className="tl-reorder-list__lock"
+                  className="tl-reorder-list__lock tl-reveal-on-hover"
                   onClick={(event) => handleLock(entry.name, !entry.locked, event)}
                 />
                 <Button
@@ -216,7 +247,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                   appearance="ghost"
                   small
                   disabled={lastVisible}
-                  className="tl-reorder-list__eye"
+                  className="tl-reorder-list__eye tl-reveal-on-hover"
                   onClick={(event) => handleToggle(entry.name, !entry.visible, event)}
                 />
               </span>

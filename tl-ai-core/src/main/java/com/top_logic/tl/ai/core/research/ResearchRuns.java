@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContext;
@@ -44,6 +45,7 @@ import com.top_logic.tl.ai.core.execution.model.ResearchRun;
 import com.top_logic.tl.ai.core.execution.model.ResearchSource;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -73,6 +75,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	PersistencyLayer.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class ResearchRuns extends ConfiguredManagedClass<ResearchRuns.Config<?>> {
 
 	/** How long a run waits for its report to be written. */

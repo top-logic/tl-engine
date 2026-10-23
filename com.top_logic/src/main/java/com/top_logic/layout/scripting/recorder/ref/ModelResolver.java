@@ -32,8 +32,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.DevelopmentCategory;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
@@ -47,6 +49,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 	TypeIndex.Module.class,
 })
 @Label("Model name resolver")
+@ServiceCategory.Of(DevelopmentCategory.class)
 public class ModelResolver extends ManagedClass {
 
 	/**

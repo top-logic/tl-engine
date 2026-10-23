@@ -20,6 +20,8 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.version.Version;
 
@@ -29,6 +31,7 @@ import com.top_logic.basic.version.Version;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Servlet context")
+@ServiceCategory.Of(RuntimeCategory.class)
 public final class ServletContextService extends ManagedClass {
 
 	private final ServletContext context;

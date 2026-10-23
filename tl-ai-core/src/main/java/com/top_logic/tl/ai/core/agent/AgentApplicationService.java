@@ -16,11 +16,13 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
 import com.top_logic.tl.ai.core.tools.model.ObjectIdConfig;
+import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * What an agent knows about this application: what it is called, how the environment block is
@@ -39,6 +41,7 @@ import com.top_logic.tl.ai.core.tools.model.ObjectIdConfig;
  */
 @Label("Agent application knowledge")
 @ServiceDependencies({})
+@ServiceCategory.Of(AICategory.class)
 public class AgentApplicationService extends ConfiguredManagedClass<AgentApplicationService.Config<?>> {
 
 	/**

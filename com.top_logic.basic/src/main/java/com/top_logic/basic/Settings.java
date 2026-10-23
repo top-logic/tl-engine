@@ -15,7 +15,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 
 /**
  * Global application configuration.
@@ -23,6 +25,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 @Label("Global settings")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class Settings extends ManagedClass {
 
 	/**

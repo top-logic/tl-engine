@@ -14,8 +14,10 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -45,6 +47,7 @@ import com.top_logic.tool.execution.ExecutableState;
 	CommandGroupRegistry.Module.class
 })
 @Label("Command approval")
+@ServiceCategory.Of(AccessControlCategory.class)
 public abstract class CommandApprovalService extends ManagedClass {
 
 	private static final CommandApprovalService INACTIVE =

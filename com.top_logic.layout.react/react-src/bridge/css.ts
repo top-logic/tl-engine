@@ -40,3 +40,34 @@ export function stateAttr(...words: (string | false | null | undefined)[]): stri
   const all = words.filter(Boolean).join(' ');
   return all === '' ? undefined : all;
 }
+
+/** The attribute the design system package reads state words from. */
+export const STATE_ATTR = 'data-tl-state';
+
+/**
+ * Adds a word to the `data-tl-state` of an element the bridge marks outside of React (a jump target,
+ * the document body), keeping the words already there.
+ *
+ * Not for an element a component renders: React writes its `data-tl-state` (see {@link stateAttr})
+ * and drops a word set by hand on the next render.
+ */
+export function addStateWord(element: Element, word: string): void {
+  const words = (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).filter(Boolean);
+  if (!words.includes(word)) {
+    words.push(word);
+  }
+  element.setAttribute(STATE_ATTR, words.join(' '));
+}
+
+/**
+ * Removes a word from the `data-tl-state` of an element, keeping the other words; the attribute goes
+ * with the last word. The counterpart of {@link addStateWord}.
+ */
+export function removeStateWord(element: Element, word: string): void {
+  const words = (element.getAttribute(STATE_ATTR) ?? '').split(/\s+/).filter((w) => w && w !== word);
+  if (words.length > 0) {
+    element.setAttribute(STATE_ATTR, words.join(' '));
+  } else {
+    element.removeAttribute(STATE_ATTR);
+  }
+}

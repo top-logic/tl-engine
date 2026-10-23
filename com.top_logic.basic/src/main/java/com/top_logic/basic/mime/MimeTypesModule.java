@@ -18,12 +18,15 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
 
 /**
  * Service resolving file extensions to content types.
  */
 @Label("MIME type resolution")
+@ServiceCategory.Of(I18NCategory.class)
 public class MimeTypesModule extends ManagedClass implements Reloadable {
 	/** The standard type for HTML. */
 	public static final String HTML_TYPE = "text/html";

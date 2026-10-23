@@ -16,8 +16,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ScriptingCategory;
 import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.tl.ai.index.embed.Embedder;
@@ -39,6 +41,7 @@ import com.top_logic.util.model.ModelService;
 	FormatConverterFactory.Module.class,
 })
 @Label("AI index")
+@ServiceCategory.Of(ScriptingCategory.class)
 public class AiIndexService extends ConfiguredManagedClass<AiIndexService.Config<?>> {
 
 	/**

@@ -403,16 +403,23 @@ public class TestCompactField extends TestCase {
 		ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
 		ReactButtonControl opener = descendants(compact, ReactButtonControl.class).get(0);
 
-		assertTrue(compact.getCssClass().contains("tlCompactField--edit"));
+		assertTrue(compact.getCssClass().contains("tl-compact-field"));
+		assertTrue(compact.getCssClass().contains("tl-field"));
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit\""));
+		assertFalse(opener.getCssClass().contains("tl-reveal-on-hover"));
 		assertTrue(opener.stateAsJSON().contains("fa-pen-to-square"));
 
 		model.setEditable(false);
-		assertTrue(compact.getCssClass().contains("tlCompactField--view"));
-		assertFalse(compact.getCssClass().contains("tlCompactField--edit"));
+		assertTrue(compact.getCssClass().contains("tl-compact-field"));
+		assertFalse(compact.getCssClass().contains("tl-field"));
+		assertFalse(compact.stateAsJSON().contains("\"stateWords\":\"edit\""));
+		assertTrue(opener.getCssClass().contains("tl-reveal-on-hover"));
 		assertTrue(opener.stateAsJSON().contains("fa-eye"));
 
 		model.setEditable(true);
-		assertTrue(compact.getCssClass().contains("tlCompactField--edit"));
+		assertTrue(compact.getCssClass().contains("tl-field"));
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit\""));
+		assertFalse(opener.getCssClass().contains("tl-reveal-on-hover"));
 		assertTrue(opener.stateAsJSON().contains("fa-pen-to-square"));
 	}
 
@@ -429,8 +436,8 @@ public class TestCompactField extends TestCase {
 		assertEquals("", compact.getPreviewText());
 		List<ReactControl> children = compact.displayedChildren();
 		assertEquals(2, children.size());
-		assertEquals("tlCompactField__preview", children.get(0).getCssClass());
-		assertEquals("tlCompactField__opener", children.get(1).getCssClass());
+		assertEquals("tl-compact-field__preview", children.get(0).getCssClass());
+		assertEquals("tl-compact-field__opener", children.get(1).getCssClass());
 	}
 
 	/**

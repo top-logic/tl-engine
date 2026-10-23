@@ -29,7 +29,9 @@ import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
 import com.top_logic.tools.resources.translate.Translator;
 
 /**
@@ -67,6 +69,7 @@ import com.top_logic.tools.resources.translate.Translator;
  * @author <a href="mailto:Dmitry.Ivanizki@top-logic.com">Dmitry Ivanizki</a>
  */
 @Label("Translation service")
+@ServiceCategory.Of(I18NCategory.class)
 public abstract class TranslationService<C extends TranslationService.Config> extends ConfiguredManagedClass<C>
 		implements Translator {
 

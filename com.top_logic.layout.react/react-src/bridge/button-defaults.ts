@@ -14,12 +14,15 @@ export type ButtonAppearance = 'primary' | 'secondary' | 'ghost' | 'link' | 'men
  *   `secondary`. A menu says `menu-item`, and that one wins over the server: inside a menu every
  *   button is an entry, carrying the {@link menuItemProps} the menu's keyboard navigation finds its
  *   entries by.
+ * - `radio`: the toggle buttons inside are the alternatives of one choice, of which exactly one is checked
+ *   (paragraph format): in a menu each is a `menuitemradio` instead of a `menuitemcheckbox`.
  * - `iconOnly`: a compact toolbar says `true`; every button that shows its icon drops its label
  *   then and becomes a square icon button, its label moving to the tooltip.
  */
 export interface ButtonDefaultsValue {
   appearance?: ButtonAppearance;
   iconOnly?: boolean;
+  radio?: boolean;
 }
 
 /** Outside every container: no defaults. */
@@ -32,7 +35,7 @@ const ButtonDefaultsContext = createContext<ButtonDefaultsValue>(NO_DEFAULTS);
  */
 export function ButtonDefaults({ children, ...value }: React.PropsWithChildren<ButtonDefaultsValue>) {
   const parent = useContext(ButtonDefaultsContext);
-  const merged = useMemo(() => ({ ...parent, ...value }), [parent, value.appearance, value.iconOnly]);
+  const merged = useMemo(() => ({ ...parent, ...value }), [parent, value.appearance, value.iconOnly, value.radio]);
   return React.createElement(ButtonDefaultsContext.Provider, { value: merged }, children);
 }
 
@@ -45,9 +48,11 @@ export function useButtonDefaults(): ButtonDefaultsValue {
  * What an entry of a menu carries besides its look: the role and the roving tabindex, by which the
  * menu finds its entries for its keyboard navigation (arrows, Home, End, Escape). An entry is a
  * `menuitem`; a toggle, which always has a pressed state (`checked` true or false), is a
- * `menuitemcheckbox`. Outside a menu, nothing.
+ * `menuitemcheckbox`, or a `menuitemradio` when the defaults say {@link ButtonDefaultsValue.radio}. Outside a menu,
+ * nothing.
  */
 export function menuItemProps(defaults: ButtonDefaultsValue, checked?: boolean): { role?: string; tabIndex?: number } {
   if (defaults.appearance !== 'menu-item') return {};
-  return { role: checked === undefined ? 'menuitem' : 'menuitemcheckbox', tabIndex: -1 };
+  const toggle = defaults.radio ? 'menuitemradio' : 'menuitemcheckbox';
+  return { role: checked === undefined ? 'menuitem' : toggle, tabIndex: -1 };
 }

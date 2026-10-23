@@ -52,6 +52,7 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
+import com.top_logic.layout.view.routing.WithFinalTitle;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.AccessControl;
 import com.top_logic.layout.view.security.SecurityScope;
@@ -322,7 +323,7 @@ public class SidebarElement implements UIElement {
 	 * A navigation item with content.
 	 */
 	@TagName("nav-item")
-	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl {
+	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl, WithFinalTitle {
 
 		@Override
 		@ClassDefault(NavItemElement.class)
@@ -441,6 +442,8 @@ public class SidebarElement implements UIElement {
 
 		private final boolean _hidden;
 
+		private final boolean _finalTitle;
+
 		private final AccessControl _accessControl;
 
 		private final List<UIElement> _children;
@@ -456,6 +459,7 @@ public class SidebarElement implements UIElement {
 			_route = config.getRoute();
 			_badgeRef = config.getBadge();
 			_hidden = config.getHidden();
+			_finalTitle = config.getFinalTitle();
 			_accessControl = config.getAccessControl();
 			_children = config.getChildren().stream()
 				.map(context::getInstance)
@@ -484,6 +488,7 @@ public class SidebarElement implements UIElement {
 			String effectiveRoute = resolveRoute(_route, _id);
 			if (effectiveRoute != null) {
 				item.withRoute(effectiveRoute);
+				item.withFinalTitle(_finalTitle);
 			}
 			item.withHidden(_hidden);
 			if (_badgeRef != null) {

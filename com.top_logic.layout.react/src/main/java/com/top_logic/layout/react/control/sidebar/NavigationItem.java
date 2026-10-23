@@ -36,6 +36,8 @@ public class NavigationItem extends SidebarItem {
 
 	private boolean _hidden;
 
+	private boolean _finalTitle;
+
 	/**
 	 * Creates a new {@link NavigationItem} without a badge.
 	 *
@@ -172,6 +174,35 @@ public class NavigationItem extends SidebarItem {
 	 */
 	public NavigationItem withHidden(boolean hidden) {
 		_hidden = hidden;
+		return this;
+	}
+
+	/**
+	 * Whether the label of this item is the final title of the page while the item is selected.
+	 *
+	 * <p>
+	 * Only meaningful for an item with a {@link #getRoute() route}: an item without one names no
+	 * page.
+	 * </p>
+	 *
+	 * @see com.top_logic.layout.react.routing.RoutingParticipant#titlesContent()
+	 */
+	public boolean isFinalTitle() {
+		return _finalTitle;
+	}
+
+	/**
+	 * Sets whether the label of this item is the final title of the page.
+	 *
+	 * @param finalTitle
+	 *        {@code true} to keep the labels of the routes inside the content of this item out of
+	 *        the title of the page.
+	 * @return This instance for fluent chaining.
+	 *
+	 * @see #isFinalTitle()
+	 */
+	public NavigationItem withFinalTitle(boolean finalTitle) {
+		_finalTitle = finalTitle;
 		return this;
 	}
 

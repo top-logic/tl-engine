@@ -22,7 +22,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.reporting.queue.QueueReporter;
 import com.top_logic.reporting.queue.ReportQueueConstants;
 import com.top_logic.reporting.remote.ReportDescriptor;
@@ -35,6 +37,7 @@ import com.top_logic.reporting.remote.Reporter;
  */
 @Deprecated
 @Label("Report factory")
+@ServiceCategory.Of(InterfacesCategory.class)
 public final class ReportFactory extends ManagedClass {
 	
 	public static final String FILE_TYPE = "FileType";

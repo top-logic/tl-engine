@@ -44,8 +44,10 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.sched.SchedulerServiceHandle;
 import com.top_logic.basic.sql.ConnectionPool;
@@ -70,6 +72,7 @@ import com.top_logic.util.db.DBUtil.ResultAsLongList;
  */
 @ServiceDependencies({ ConnectionPoolRegistry.Module.class, SchedulerService.Module.class })
 @Label("Cluster management")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class ClusterManager extends ManagedClass {
 
     /** Mapping that maps everything to <code>null</code>. */

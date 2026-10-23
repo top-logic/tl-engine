@@ -19,8 +19,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
@@ -32,6 +34,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 	ThreadContextManager.Module.class
 })
 @Label("Encryption service")
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class EncryptionService extends ManagedClass {
 
 	/**

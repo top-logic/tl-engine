@@ -19,6 +19,7 @@ import com.top_logic.basic.encryption.SymmetricEncryption;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.element.meta.MetaElementUtil;
@@ -27,6 +28,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.cookiepool.model.CookiePool;
 import com.top_logic.tl.ai.core.cookiepool.model.TlAiCookiepoolFactory;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -102,6 +104,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	EncryptionService.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class CookiePoolService extends ConfiguredManagedClass<CookiePoolService.Config<?>> {
 
 	/**

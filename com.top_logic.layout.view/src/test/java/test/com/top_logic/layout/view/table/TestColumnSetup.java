@@ -34,6 +34,7 @@ import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
+import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 
 /**
@@ -289,6 +290,37 @@ public class TestColumnSetup extends TestCase {
 	private static ColumnSetup setup(int width) {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
 			row -> ColumnProviderService.attributeValue(row, ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, width);
+	}
+
+	/**
+	 * A column with a tooltip puts it on its cells, computed from the row and the value, and on the
+	 * header row of a group it forms, computed from the value of the group without a row.
+	 */
+	public void testTooltip() {
+		Column<Object, ?> column = withTooltip().buildColumn();
+		Map<String, Object> row = Map.of(ATTRIBUTE, "x");
+
+		assertEquals("cell x", column.renderCell(row).tooltip());
+
+		ListRowSource<Object> source = new ListRowSource<>(List.of(row), List.of(column));
+		DefaultTableView<Object> view = DefaultTableView.create(List.of(column), source);
+		view.group(new GroupSpec(List.of(ATTRIBUTE)));
+		Row<Object> header = view.rows(0, 1).get(0);
+		assertEquals(RowKind.GROUP_HEADER, header.kind());
+		assertEquals("group x", view.cell(header, ATTRIBUTE).tooltip());
+	}
+
+	/** A column without a tooltip leaves its cells as they are. */
+	public void testNoTooltip() {
+		Column<Object, ?> column = computed(null).buildColumn();
+
+		assertNull(column.renderCell(Map.of(ATTRIBUTE, "x")).tooltip());
+	}
+
+	private static ColumnSetup withTooltip() {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, null, false,
+			ColumnExport.DEFAULT, (row, value) -> (row == null ? "group " : "cell ") + value);
 	}
 
 	/**

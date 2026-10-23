@@ -124,7 +124,7 @@
 					-->
 					<stylesheet name="tl-ai-demo-shell-css"
 						resource="/style/tl-ai-demo-shell.css"
-						requires="tl-react-controls-css"
+						requires="tl-design-system-components"
 					/>
 				</resources>
 			</instance>

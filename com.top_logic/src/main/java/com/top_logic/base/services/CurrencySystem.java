@@ -20,8 +20,10 @@ import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -38,6 +40,7 @@ import com.top_logic.knowledge.wrap.unit.UnitWrapper;
  */
 @ServiceDependencies(PersistencyLayer.Module.class)
 @Label("Currency system")
+@ServiceCategory.Of(I18NCategory.class)
 public class CurrencySystem extends ManagedClass {
 
 	/** Name of Configuration property defining the main (System) Currency */

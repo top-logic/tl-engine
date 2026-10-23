@@ -39,7 +39,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ScriptingCategory;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.basic.treexf.FactoryResolver;
 import com.top_logic.basic.treexf.TreeMaterializer;
@@ -122,6 +124,7 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@ServiceCategory.Of(ScriptingCategory.class)
 public class SearchBuilder<C extends SearchBuilder.Config<?>> extends ConfiguredManagedClass<C>
 		implements ExprVisitor<SearchExpression, TLModel, ConfigurationException>
 {

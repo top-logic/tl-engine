@@ -10,8 +10,10 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.kafka.sync.knowledge.service.exporter.KafkaExportConfiguration;
 import com.top_logic.kafka.sync.knowledge.service.exporter.ModelBasedExportConfiguration;
 import com.top_logic.kafka.sync.knowledge.service.importer.KafkaImportConfiguration;
@@ -25,6 +27,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
  */
 @Label("Kafka data synchronization")
 @ServiceDependencies(PersistencyLayer.Module.class)
+@ServiceCategory.Of(InterfacesCategory.class)
 public class KafkaExportImportConfiguration extends ManagedClass {
 
 	/**

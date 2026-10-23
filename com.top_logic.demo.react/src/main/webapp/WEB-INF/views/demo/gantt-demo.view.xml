@@ -30,9 +30,9 @@ rangeMax  = $dayNum($endCal);
 
 lodBreakpoint = 4.0;
 
-r_axis1   = reactFlowGanttRow(model: "axis:1",       label: reactFlowEmpty(), acceptsDrop: false, backgroundColor: "#f0f0f0", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 20);
-r_axis2   = reactFlowGanttRow(model: "axis:2",       label: reactFlowEmpty(), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 18);
-r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowAlign(reactFlowPadding(reactFlowText("Markers"), all: 4), vAlign: "middle"), acceptsDrop: false, backgroundColor: "#f8f8f8", borderColor: "#d0d0d0", rowPadding: 0, minContentHeight: 32);
+r_axis1   = reactFlowGanttRow(model: "axis:1",       label: reactFlowEmpty(), acceptsDrop: false, backgroundColor: "rgba(128,128,128,0.16)", borderColor: "rgba(128,128,128,0.3)", rowPadding: 0, minContentHeight: 20);
+r_axis2   = reactFlowGanttRow(model: "axis:2",       label: reactFlowEmpty(), acceptsDrop: false, backgroundColor: "rgba(128,128,128,0.08)", borderColor: "rgba(128,128,128,0.3)", rowPadding: 0, minContentHeight: 18);
+r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowAlign(reactFlowPadding(reactFlowText("Markers"), all: 4), vAlign: "middle"), acceptsDrop: false, backgroundColor: "rgba(128,128,128,0.08)", borderColor: "rgba(128,128,128,0.3)", rowPadding: 0, minContentHeight: 32);
 
 /* === Axis cell builder ===
    Each cell is a non-interactive GanttSpan whose box is an outer LOD that
@@ -45,7 +45,7 @@ r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowAlign(react
    the text (e.g. early day cells just after the breakpoint), keeping the
    stripes visible without overflowing text. */
 
-axisFills = list("rgba(0,0,0,0.03)", "rgba(0,0,0,0.08)");
+axisFills = list("rgba(128,128,128,0.06)", "rgba(128,128,128,0.14)");
 
 axisCell = modelId -> rowModel -> start -> end -> label -> index -> showWhenZoomedIn -> {
 	cellBox = reactFlowFill(
@@ -137,14 +137,14 @@ freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers
 
 /* === Data rows (default rowPadding: 4) === */
 
-r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), borderColor: "#e0e0e0");
-r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
-r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), borderColor: "#e0e0e0");
-r_deploy = reactFlowGanttRow(model: "phase:deploy", label: reactFlowPadding(reactFlowText("Deployment"),   all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
-r_docs   = reactFlowGanttRow(model: "phase:docs",   label: reactFlowPadding(reactFlowText("Documentation"), all: 4), borderColor: "#e0e0e0");
-r_review = reactFlowGanttRow(model: "phase:review", label: reactFlowPadding(reactFlowText("Review"),        all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
-r_launch = reactFlowGanttRow(model: "phase:launch", label: reactFlowPadding(reactFlowText("Launch"),        all: 4), borderColor: "#e0e0e0");
-r_maint  = reactFlowGanttRow(model: "phase:maint",  label: reactFlowPadding(reactFlowText("Maintenance"),   all: 4), backgroundColor: "rgba(0,0,0,0.03)", borderColor: "#e0e0e0");
+r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), borderColor: "rgba(128,128,128,0.25)");
+r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), borderColor: "rgba(128,128,128,0.25)");
+r_deploy = reactFlowGanttRow(model: "phase:deploy", label: reactFlowPadding(reactFlowText("Deployment"),   all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+r_docs   = reactFlowGanttRow(model: "phase:docs",   label: reactFlowPadding(reactFlowText("Documentation"), all: 4), borderColor: "rgba(128,128,128,0.25)");
+r_review = reactFlowGanttRow(model: "phase:review", label: reactFlowPadding(reactFlowText("Review"),        all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+r_launch = reactFlowGanttRow(model: "phase:launch", label: reactFlowPadding(reactFlowText("Launch"),        all: 4), borderColor: "rgba(128,128,128,0.25)");
+r_maint  = reactFlowGanttRow(model: "phase:maint",  label: reactFlowPadding(reactFlowText("Maintenance"),   all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
 
 /* === Items === */
 
@@ -190,10 +190,10 @@ e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sou
 /* === Decorations === */
 
 /* Grid lines at month boundaries */
-gl_feb = reactFlowGanttLineDeco(model: "grid:feb", at: 20485, color: "#888888", strokeWidth: 0.5);
-gl_mar = reactFlowGanttLineDeco(model: "grid:mar", at: 20513, color: "#888888", strokeWidth: 0.5);
-gl_apr = reactFlowGanttLineDeco(model: "grid:apr", at: 20544, color: "#888888", strokeWidth: 0.5);
-gl_may = reactFlowGanttLineDeco(model: "grid:may", at: 20574, color: "#888888", strokeWidth: 0.5);
+gl_feb = reactFlowGanttLineDeco(model: "grid:feb", at: 20485, color: "rgba(128,128,128,0.6)", strokeWidth: 0.5);
+gl_mar = reactFlowGanttLineDeco(model: "grid:mar", at: 20513, color: "rgba(128,128,128,0.6)", strokeWidth: 0.5);
+gl_apr = reactFlowGanttLineDeco(model: "grid:apr", at: 20544, color: "rgba(128,128,128,0.6)", strokeWidth: 0.5);
+gl_may = reactFlowGanttLineDeco(model: "grid:may", at: 20574, color: "rgba(128,128,128,0.6)", strokeWidth: 0.5);
 
 /* Freeze range (colored strip - no label here, label is in Markers row) */
 freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color: "rgba(255,100,100,0.3)");

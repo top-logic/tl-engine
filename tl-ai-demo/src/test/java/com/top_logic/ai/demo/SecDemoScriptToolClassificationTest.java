@@ -9,7 +9,6 @@ import java.util.List;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -78,7 +77,7 @@ public class SecDemoScriptToolClassificationTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testUnclassifiedScriptToolDeniedToEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			Tool tool = tool(UNCLASSIFIED_SCRIPT_TOOL);
 			TopLogicSecurityContext security = securityFor(login);
 

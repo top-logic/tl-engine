@@ -44,7 +44,7 @@
 			       <module key="com.top_logic.tool.export.ExportRegistryFactory$Module" value="true"/>
 			       <module key="com.top_logic.base.services.InitialGroupManager$Module" value="true" />
 			       <module key="com.top_logic.base.services.InitialRolesManager$Module" value="true" />
-			       <module key="com.top_logic.tool.boundsec.config.AccessConfigurationSetupService$Module" value="true" />
+			       <module key="com.top_logic.util.StartupHooks$Module" value="true" />
 			       <module key="com.top_logic.base.administration.MaintenanceWindowManager$Module" value="true"/>
 			       <module key="com.top_logic.base.accesscontrol.SessionService$Module" value="true"/>
 			       <module key="com.top_logic.layout.admin.component.PerformanceMonitor$Module" value="true" />
@@ -65,11 +65,27 @@
 			       <module key="com.top_logic.layout.editor.DynamicComponentService$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.commandhandlers.BookmarkService$Module" value="true"/>
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
-			       <module key="com.top_logic.knowledge.service.db2.InitialDataSetupService$Module" value="true"/>
 			       <module key="com.top_logic.base.office.excel.handler.POITypeProvider$Module" value="true"/>
 			       <module key="com.top_logic.base.accesscontrol.LoginFailuresModule$Module" value="true"/>
 			       <module key="com.top_logic.model.security.SecurityConfigurationService$Module" value="true"/>
 				</modules>
+			</instance>
+		</config>
+		
+		<config service-class="com.top_logic.util.StartupHooks">
+			<instance class="com.top_logic.util.StartupHooks">
+				<hooks>
+					<hook id="initial-data"
+						on-error="log-error"
+					>
+						<action class="com.top_logic.knowledge.service.db2.InitialDataSetup"/>
+					</hook>
+					<hook id="access-configuration"
+						on-error="log-error"
+					>
+						<action class="com.top_logic.tool.boundsec.config.AccessConfigurationSetup"/>
+					</hook>
+				</hooks>
 			</instance>
 		</config>
 		

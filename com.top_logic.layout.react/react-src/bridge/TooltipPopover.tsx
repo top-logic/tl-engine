@@ -14,6 +14,7 @@ import {
   FloatingPortal,
   FloatingArrow,
 } from '@floating-ui/react';
+import { stateAttr } from './css';
 
 export interface TooltipData {
   /** When set, rendered as HTML. Must be sanitized by the emitter. */
@@ -25,7 +26,7 @@ export interface TooltipData {
   /**
    * When true, the popover stays open while the pointer hovers over it — enabling
    * text selection, copy, and link navigation. Use for help pages with code snippets.
-   * Default: passive (pointer-events disabled on the popover).
+   * Default: passive, the pointer goes through the popover (tl-tooltip in the design system package).
    */
   interactive?: boolean;
 }
@@ -117,29 +118,32 @@ export function TooltipPopover(props: TooltipPopoverProps) {
   const role = useRole(context, { role: 'tooltip' });
   const { getFloatingProps } = useInteractions([dismiss, role]);
 
+  // The block tl-tooltip of the design system package draws it: surface, layer, the type of caption and
+  // body, and whether the pointer goes through it - an interactive tooltip is a state, not a class.
   return (
     <FloatingPortal root={portalRoot}>
       <div
         ref={refs.setFloating}
-        style={data.interactive ? floatingStyles : { ...floatingStyles, pointerEvents: 'none' }}
-        className={'tl-tooltip-popover' + (data.interactive ? ' tl-tooltip-popover--interactive' : '')}
+        style={floatingStyles}
+        className="tl-tooltip"
+        data-tl-state={stateAttr(data.interactive && 'interactive')}
         {...getFloatingProps()}
         onPointerEnter={onEnter}
         onPointerLeave={onLeave}
       >
-        {data.caption ? <div className="tl-tooltip-caption">{data.caption}</div> : null}
+        {data.caption ? <div className="tl-tooltip__caption tl-type-label-strong">{data.caption}</div> : null}
         {data.html != null ? (
           <div
-            className="tl-tooltip-body"
+            className="tl-tooltip__body tl-type-label"
             dangerouslySetInnerHTML={{ __html: data.html }}
           />
         ) : (
-          <div className="tl-tooltip-body">{data.text ?? ''}</div>
+          <div className="tl-tooltip__body tl-type-label">{data.text ?? ''}</div>
         )}
         <FloatingArrow
           ref={arrowRef}
           context={context}
-          className="tl-tooltip-arrow"
+          className="tl-tooltip__arrow"
           width={12}
           height={6}
         />

@@ -412,6 +412,89 @@
   display: flex;
 }
 
+/* --- board/board.css --- */
+/* Board — Spec 5c §5 (V23, V5, V6, V29), Vertrag board.contract.md. Leser ist TLKanbanBoard.
+   Spalten nebeneinander, in jeder eine Auswahlliste von Karten. Eine Karte ist ein tl-item mit role="option": Zeigen
+   (Hof), Ring und Haken der Auswahl zeichnet layout.css, den Fokusring base.css. Einfügelinie, Ablegen in die
+   Spalte, Ablehnung und die gezogene Karte zeichnet allein drag.css über data-tl-state; der Grund einer Ablehnung
+   ist tl-drop-hint (drag.css). Der Zähler ist tl-badge. Die Schrift setzen die Typo-Klassen am Element. */
+
+.tl-board {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--tl-space-md);
+  padding: var(--tl-space-sm);
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 0;
+}
+.tl-board[hidden] { display: none; }
+
+/* Eine Spalte wächst von size-12 bis size-13; mehr Spalten, als passen, rollen waagerecht. Die Spalte ist eine Mulde
+   auf surface-base, die Karte liegt darauf in surface-layer — in beiden Modi heller als die Spalte (layer-nested wäre
+   hell gleich der Karte und dunkel heller als sie: die Karte läge versenkt). */
+.tl-board__column {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 var(--tl-size-12);
+  min-width: var(--tl-size-12);
+  max-width: var(--tl-size-13);
+  min-height: 0;
+  background: var(--tl-surface-base);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+}
+.tl-board__column[hidden] { display: none; }
+
+.tl-board__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tl-space-xs);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  color: var(--tl-text-primary);
+}
+.tl-board__header[hidden] { display: none; }
+
+.tl-board__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Karten-Liste rollt senkrecht; ihr Innenabstand hält den Fokusring der Karten in der Liste. */
+.tl-board__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-sm);
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: var(--tl-space-sm);
+  overflow-y: auto;
+}
+.tl-board__cards[hidden] { display: none; }
+
+/* Die Fläche der Karte; Ecke, Zeiger und Lage (position) gibt tl-item[role="option"]. */
+/* Rechts hält die Karte die Ecke des Auswahlhakens frei (tl-item__check: Abstand xs, Breite icon-md, dazu xs Luft) —
+   immer, nicht erst gewählt: sonst deckt der Haken einen Knopf der Kartenansicht, oder der Inhalt springt beim Wählen.
+   Die Karte schrumpft nicht: tl-item setzt min-height: 0, und in der rollenden Liste stauchte das die Karten unter
+   ihren Text, statt die Liste rollen zu lassen (wie .tl-panel__body > *). */
+.tl-board__card {
+  flex-shrink: 0;
+  padding: var(--tl-space-sm) calc(var(--tl-space-xs) + var(--tl-size-icon-md) + var(--tl-space-xs)) var(--tl-space-sm) var(--tl-space-md);
+  background: var(--tl-surface-layer);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Eine Karte, die sich ziehen lässt, zeigt das Greifen; das Attribut role hebt die Regel über den Zeiger von
+   tl-item (layout.css steht im Bundle danach). */
+.tl-board__card[role="option"][draggable="true"] {
+  cursor: grab;
+}
+
 /* --- bottom-bar/bottom-bar.css --- */
 /* BottomBar — Spec 2026-10-16 Welle 4b §5. Die Navigation am unteren Rand kleiner Bildschirme: Einträge mit Icon über
    Label. Die aktuelle Seite (aria-current="page") trägt die Fläche der Auswahl hinter dem Icon; das Label wird
@@ -687,6 +770,25 @@
   background: var(--tl-surface-brand-subtle-hover);
 }
 
+/* Gedrückt in Tönung danger ist gefüllt rot (Welle 5b §3): der aufnehmende Recorder. Dieselben Rollen wie
+   danger + primary; der Rand folgt der Fläche, sonst bliebe die Markenlinie des gedrückten Zustands auf Rot.
+   Steht vor :disabled — dahinter schlüge Rot den deaktivierten Zustand. */
+.tl-button--danger[aria-pressed="true"] {
+  background: var(--tl-status-error-surface);
+  border-color: var(--tl-status-error-surface);
+  color: var(--tl-text-on-status-error);
+}
+.tl-button--danger[aria-pressed="true"]:hover {
+  background: var(--tl-status-error-surface-hover);
+  border-color: var(--tl-status-error-surface-hover);
+  color: var(--tl-text-on-status-error-hover);
+}
+.tl-button--danger[aria-pressed="true"]:active {
+  background: var(--tl-status-error-surface-active);
+  border-color: var(--tl-status-error-surface-active);
+  color: var(--tl-text-on-status-error-active);
+}
+
 /* Deaktiviert bleibt die Schaltfläche für den Zeiger erreichbar: ihr Tooltip nennt den Grund, warum
    sie nicht ausführbar ist (#29675). Den Klick verschluckt der native disabled-Zustand; Zeigen und
    Drücken ändern ihr Aussehen nicht, auch nicht bei Tönung oder Link. Der Zeiger steht mit :hover in
@@ -728,6 +830,616 @@
   to { opacity: 0.4; }
 }
 
+/* --- calendar/calendar.css --- */
+/* Kalender — Spec 5c §3 (V8, V24–V27), Vertrag calendar.contract.md. Leser ist TLCalendar.
+   Leiste (tl-toolbar mit tl-segmented), Zeitraster (Tag, Arbeitswoche, Woche), Monat, Jahr. Die Schrift setzen
+   die Typo-Klassen am Element (tl-type-*), dieser Block setzt keine. Zustände sind Attribute: aria-current="date"
+   (heute), aria-selected (gewählter Termin), data-tl-state~="nonworking" / "other" / "event" / "preview";
+   die Kategorie ist data-tl-role="category-N". Ziehen (dragging, drop-onto) zeichnet allein drag.css.
+   Inline stehen nur Daten: Stundenhöhe, Lage und Größe der Termine, Spaltenzahl des Zeitrasters, Serverfarbe. */
+
+.tl-calendar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--tl-text-primary);
+  background: var(--tl-surface-layer);
+}
+.tl-calendar[hidden] { display: none; }
+
+/* --- Leiste ------------------------------------------------------------------------------------------ */
+
+/* Am tl-toolbar: die Leiste gibt Anordnung und Abstand oben und unten (toolbar.css), hier nur Rand und Seiten. */
+.tl-calendar__toolbar {
+  flex: none;
+  padding-inline: var(--tl-space-sm);
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-calendar__title {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-calendar__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+.tl-calendar__body[hidden] { display: none; }
+
+/* Die Termine eines Rasters sind eine Auswahlliste (role="listbox"). Die Liste ist nur Semantik: sie umschließt
+   die Spalten, Zellen oder Wochen, ohne selbst eine Box zu sein — die Lage der Termine bleibt die ihres Rasters. */
+.tl-calendar__events {
+  display: contents;
+}
+.tl-calendar__events[hidden] { display: none; }
+
+/* --- Zeitraster -------------------------------------------------------------------------------------- */
+
+.tl-calendar__time-grid {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  user-select: none;
+}
+.tl-calendar__time-grid[hidden] { display: none; }
+
+/* Die Stundenspalte in size-9: „ganztägig“ in tl-type-label passt hinein (size-8 schnitte es ab), „23:00“ ohnehin. */
+.tl-calendar__gutter {
+  box-sizing: border-box;
+  flex: none;
+  inline-size: var(--tl-size-9);
+}
+
+.tl-calendar__head {
+  display: flex;
+  flex: none;
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-calendar__head[hidden] { display: none; }
+
+/* Der Tageskopf ist ein Knopf (Name: das volle Datum); Wochentag und Tageszahl tragen ihre Typo-Klasse. */
+.tl-calendar__day-head {
+  appearance: none;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  margin: 0;
+  padding: var(--tl-space-2xs);
+  border: 0;
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.tl-calendar__day-head[hidden] { display: none; }
+
+.tl-calendar__weekday,
+.tl-calendar__month-weekday {
+  color: var(--tl-text-secondary);
+  text-transform: uppercase;
+}
+
+/* Die Tageszahl: im Tageskopf ein span, im Monat ein Knopf. Ein Kreis in size-icon-lg, den „heute“ füllt. */
+.tl-calendar__day-number {
+  appearance: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--tl-size-icon-lg);
+  block-size: var(--tl-size-icon-lg);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--tl-radius-full);
+  background: transparent;
+  color: inherit;
+}
+.tl-calendar__day-number[hidden] { display: none; }
+
+.tl-calendar__all-day {
+  display: flex;
+  flex: none;
+  min-height: var(--tl-size-6);
+  max-height: var(--tl-size-10);
+  overflow-y: auto;
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-calendar__all-day[hidden] { display: none; }
+
+.tl-calendar__all-day-label {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  padding-inline-end: var(--tl-space-2xs);
+  color: var(--tl-text-secondary);
+}
+.tl-calendar__all-day-label[hidden] { display: none; }
+
+.tl-calendar__all-day-cell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-2xs);
+  padding: var(--tl-space-2xs);
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-calendar__all-day-cell[hidden] { display: none; }
+
+.tl-calendar__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Die Höhe (24 Stunden zu je einer Stundenhöhe) steht inline: Daten. */
+.tl-calendar__time-body {
+  position: relative;
+  display: flex;
+}
+.tl-calendar__time-body[hidden] { display: none; }
+
+.tl-calendar__hours {
+  position: relative;
+  flex: none;
+  inline-size: var(--tl-size-9);
+}
+
+.tl-calendar__hour {
+  position: absolute;
+  inset-inline-end: var(--tl-space-xs);
+  transform: translateY(-50%);
+  color: var(--tl-text-secondary);
+}
+
+/* Die Spaltenzahl (grid-template-columns) steht inline: Daten. */
+.tl-calendar__columns {
+  position: relative;
+  flex: 1;
+  display: grid;
+}
+.tl-calendar__columns[hidden] { display: none; }
+
+/* Eine Tagesspalte auf surface-base, die Arbeitszeit darin auf surface-layer. Im Stapel der Spalte liegen in
+   Quellreihenfolge: Arbeitszeit, Stundenlinien, Termine; die Jetzt-Linie, der gewählte und der fokussierte
+   Termin und die Vorschau liegen darüber (layer-raised). */
+.tl-calendar__column {
+  position: relative;
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-base);
+}
+
+.tl-calendar__work {
+  position: absolute;
+  inset-inline: 0;
+  background: var(--tl-surface-layer);
+  pointer-events: none;
+}
+
+.tl-calendar__hour-line {
+  position: absolute;
+  inset-inline: 0;
+  border-block-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  pointer-events: none;
+}
+
+/* Die Jetzt-Linie in der Linie der Fehler-Bedeutung, mit einem Punkt an ihrem Anfang. */
+.tl-calendar__now {
+  position: absolute;
+  inset-inline: 0;
+  z-index: var(--tl-layer-raised);
+  block-size: var(--tl-border-width-md);
+  background: var(--tl-status-error-border);
+  pointer-events: none;
+}
+
+.tl-calendar__now::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--tl-space-2xs));
+  top: calc(-1 * (var(--tl-space-2xs) - var(--tl-border-width-sm)));
+  inline-size: var(--tl-size-2);
+  block-size: var(--tl-size-2);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-status-error-border);
+}
+
+/* --- Termine ----------------------------------------------------------------------------------------- */
+
+/* Gefüllt: ohne Kategorie und ohne Serverfarbe die Marke; mit Kategorie deren gefüllte Fläche und die gerechnete
+   Schrift (Regeln unten aus dem Generator); eine Serverfarbe steht inline als Fläche mit der Schrift aus textOn.
+   Derselbe Termin im Zeitraster (absolut, Lage inline), in der Ganztagszeile und als Balken im Monat. */
+.tl-calendar__event {
+  box-sizing: border-box;
+  position: relative;
+  min-width: 0;
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tl-calendar__event[data-tl-role="category-1"] { background: var(--tl-category-1-surface); color: var(--tl-text-on-category-1); }
+.tl-calendar__event[data-tl-role="category-2"] { background: var(--tl-category-2-surface); color: var(--tl-text-on-category-2); }
+.tl-calendar__event[data-tl-role="category-3"] { background: var(--tl-category-3-surface); color: var(--tl-text-on-category-3); }
+.tl-calendar__event[data-tl-role="category-4"] { background: var(--tl-category-4-surface); color: var(--tl-text-on-category-4); }
+.tl-calendar__event[data-tl-role="category-5"] { background: var(--tl-category-5-surface); color: var(--tl-text-on-category-5); }
+.tl-calendar__event[data-tl-role="category-6"] { background: var(--tl-category-6-surface); color: var(--tl-text-on-category-6); }
+.tl-calendar__event[data-tl-role="category-7"] { background: var(--tl-category-7-surface); color: var(--tl-text-on-category-7); }
+.tl-calendar__event[data-tl-role="category-8"] { background: var(--tl-category-8-surface); color: var(--tl-text-on-category-8); }
+
+.tl-calendar__column .tl-calendar__event {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  white-space: normal;
+}
+
+.tl-calendar__column .tl-calendar__event[hidden] { display: none; }
+
+.tl-calendar__overlay .tl-calendar__event {
+  align-self: center;
+  pointer-events: auto;
+}
+
+/* Ausgewählt ist ein Ring wie tl-item[aria-selected] (layout.css); die Fläche bleibt die Kategorie. Auf dem
+   gefüllten Termin zieht der Ring die Schriftfarbe (currentColor = text-on der Fläche): sie hält 4,5:1 gegen jede
+   Fläche, border-interactive verschwände auf der Marke und den blauen Kategorien. Um die Linienbreite eingerückt,
+   damit außen die Füllung stehen bleibt und der Ring als Linie liest, nicht als hellerer Rand. Der Chip liegt auf der Tageszelle
+   und trägt den Ring von tl-item. */
+.tl-calendar__event[aria-selected="true"]::after,
+.tl-calendar__chip[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.tl-calendar__event[aria-selected="true"]::after {
+  inset: var(--tl-border-width-md);
+  border-color: currentColor;
+}
+
+/* Die Vorschau am Zielort (Ziehen, Länge ändern, Anlegen) und der Platzhalter beim Anlegen: die Marke, blass. */
+.tl-calendar__event[data-tl-state~="preview"] {
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+  opacity: 0.4;
+}
+/* Trägt der Platzhalter das Anlegen-Feld, ist er keine Vorschau mehr, sondern die Eingabe: voll deckend, damit der
+   getippte Titel das Paar text-on-brand auf surface-brand hält (blass fiel er unter 4,5:1, Sichtprüfung 5c). */
+.tl-calendar__event[data-tl-state~="preview"]:has(.tl-calendar__create) {
+  opacity: 1;
+}
+
+.tl-calendar__event[aria-selected="true"],
+.tl-calendar__event:focus-visible,
+.tl-calendar__event[data-tl-state~="preview"] {
+  z-index: var(--tl-layer-raised);
+}
+
+.tl-calendar__event-time,
+.tl-calendar__event-title {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tl-calendar__resize {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  block-size: var(--tl-space-xs);
+  cursor: ns-resize;
+}
+
+/* Das Feld beim Anlegen (input.tl-field): randlos auf der Fläche des Platzhalters wie der Zelleditor der Tabelle. */
+.tl-calendar__event .tl-calendar__create {
+  inline-size: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  user-select: text;
+}
+
+.tl-calendar__event .tl-calendar__create::placeholder {
+  color: inherit;
+  opacity: 0.7;
+}
+
+/* Was in einem schneidenden Behälter bündig liegt (Rollbereich, Woche, Ganztagszeile, Körper), trägt den Ring
+   aus base.css innen — außen wäre er halb weg (focus-clip.test.mjs). */
+.tl-calendar__day-head:focus-visible,
+.tl-calendar__day-number:focus-visible,
+.tl-calendar__event:focus-visible,
+.tl-calendar__chip:focus-visible,
+.tl-calendar__more:focus-visible,
+.tl-calendar__event .tl-calendar__create:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* --- Monat ------------------------------------------------------------------------------------------- */
+
+.tl-calendar__month {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  user-select: none;
+}
+.tl-calendar__month[hidden] { display: none; }
+
+.tl-calendar__month-head {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex: none;
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-calendar__month-head[hidden] { display: none; }
+
+.tl-calendar__month-weekday {
+  padding: var(--tl-space-2xs);
+  text-align: center;
+}
+
+.tl-calendar__month-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tl-calendar__month-body[hidden] { display: none; }
+
+.tl-calendar__week {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Die untere Schicht einer Woche: sieben Tageszellen mit Rand, Fläche und Tageszahl. */
+.tl-calendar__days {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.tl-calendar__days[hidden] { display: none; }
+
+.tl-calendar__day {
+  min-width: 0;
+  border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-block-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  cursor: pointer;
+}
+
+.tl-calendar__day > .tl-calendar__day-number {
+  margin-inline-start: var(--tl-space-2xs);
+  cursor: pointer;
+}
+
+/* Die obere Schicht: mehrtägige Balken, dann Termine mit Uhrzeit je Tag, ausdrücklich platziert (Zeile und Spalte
+   inline). Sie beginnt unter der Tageszahl; nur ihre Termine nehmen Zeiger an. */
+.tl-calendar__overlay {
+  position: absolute;
+  inset-inline: 0;
+  top: var(--tl-size-6);
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--tl-size-5);
+  gap: var(--tl-space-2xs);
+  padding-inline: var(--tl-space-2xs);
+  pointer-events: none;
+}
+.tl-calendar__overlay[hidden] { display: none; }
+
+/* Ein Termin mit Uhrzeit im Monat ist nicht gefüllt: Punkt in der Farbe des Termins, Text auf der Tageszelle. */
+.tl-calendar__chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  padding-inline: var(--tl-space-2xs);
+  border-radius: var(--tl-radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.tl-calendar__chip[hidden] { display: none; }
+
+.tl-calendar__chip:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-calendar__chip .tl-calendar__event-time {
+  flex: none;
+  color: var(--tl-text-secondary);
+}
+
+.tl-calendar__chip-dot {
+  flex: none;
+  inline-size: var(--tl-size-2);
+  block-size: var(--tl-size-2);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+}
+
+.tl-calendar__chip-dot[data-tl-role="category-1"] { background: var(--tl-category-1-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-2"] { background: var(--tl-category-2-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-3"] { background: var(--tl-category-3-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-4"] { background: var(--tl-category-4-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-5"] { background: var(--tl-category-5-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-6"] { background: var(--tl-category-6-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-7"] { background: var(--tl-category-7-surface); }
+.tl-calendar__chip-dot[data-tl-role="category-8"] { background: var(--tl-category-8-surface); }
+
+/* „+n weitere“: ein Knopf in der Farbe eines Links. */
+.tl-calendar__more {
+  appearance: none;
+  margin: 0;
+  padding: 0 var(--tl-space-2xs);
+  border: 0;
+  background: transparent;
+  color: var(--tl-text-link);
+  text-align: start;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tl-calendar__more:hover {
+  color: var(--tl-text-link-hover);
+}
+
+/* --- Jahr -------------------------------------------------------------------------------------------- */
+
+.tl-calendar__year {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tl-size-12), 1fr));
+  gap: var(--tl-space-md);
+  padding: var(--tl-space-md);
+  align-content: start;
+}
+.tl-calendar__year[hidden] { display: none; }
+
+.tl-calendar__mini {
+  padding: var(--tl-space-xs);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+}
+
+/* Der Monatsname ist ein Knopf zur Monatsansicht. */
+.tl-calendar__mini-title {
+  appearance: none;
+  display: block;
+  inline-size: 100%;
+  margin: 0 0 var(--tl-space-xs);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.tl-calendar__mini-title[hidden] { display: none; }
+
+.tl-calendar__mini-title:hover {
+  color: var(--tl-text-link);
+}
+
+.tl-calendar__mini-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--tl-space-2xs);
+  justify-items: center;
+}
+.tl-calendar__mini-grid[hidden] { display: none; }
+
+.tl-calendar__mini-weekday {
+  color: var(--tl-text-secondary);
+  text-align: center;
+}
+
+/* Ein Tag des Mini-Monats ist ein Knopf und ein Kreis wie die Tageszahl. */
+.tl-calendar__mini-day {
+  appearance: none;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--tl-size-icon-lg);
+  block-size: var(--tl-size-icon-lg);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--tl-radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.tl-calendar__mini-day[hidden] { display: none; }
+
+/* Termintage: eine Markierung unter der Zahl. */
+.tl-calendar__mini-day[data-tl-state~="event"]::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 50%;
+  bottom: var(--tl-border-width-sm);
+  transform: translateX(-50%);
+  inline-size: var(--tl-size-1);
+  block-size: var(--tl-size-1);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+}
+
+/* --- Eine Tageszelle (V26): Zeitraster-Kopf, Monat und Mini-Monat zeichnen gleich -------------------- */
+
+.tl-calendar__day-head[data-tl-state~="nonworking"],
+.tl-calendar__column[data-tl-state~="nonworking"],
+.tl-calendar__mini-day[data-tl-state~="nonworking"] {
+  background: var(--tl-surface-base);
+}
+
+/* Die Tageszelle des Monats ist ein Ablageziel: ihre Fläche steht ohne Spezifität, damit drop-onto (drag.css)
+   sie übermalt (drag.contract.md „Bild“). */
+:where(.tl-calendar__day[data-tl-state~="nonworking"]) {
+  background: var(--tl-surface-base);
+}
+
+.tl-calendar__day[data-tl-state~="other"],
+.tl-calendar__mini-day[data-tl-state~="other"] {
+  color: var(--tl-text-secondary);
+}
+
+/* Zeigen nach arbeitsfrei, damit es dort sichtbar bleibt; heute steht danach und bleibt die Marke. */
+.tl-calendar__day-head:hover,
+.tl-calendar__mini-day:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+/* Heute: ein Kreis auf der Marke um die Tageszahl, in jeder Ansicht derselbe. */
+.tl-calendar__day-head[aria-current="date"] .tl-calendar__day-number,
+.tl-calendar__day[aria-current="date"] .tl-calendar__day-number,
+.tl-calendar__mini-day[aria-current="date"] {
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-calendar__mini-day[aria-current="date"][data-tl-state~="event"]::after {
+  background: var(--tl-text-on-brand);
+}
+
 /* --- card/card.css --- */
 /* Karte — Spec 2026-10-16 Welle 4c §4 (Q15), Weg B. Die eine Kartenfläche: Karte, Panel als Karte, Accordion. Die
    Fläche folgt der Verschachtelung — auf der Seite surface-layer, in einer Fläche (Karte, Accordion, Panel als Karte;
@@ -759,6 +1471,50 @@
 
 .tl-card__body--pad-compact {
   padding: var(--tl-space-xs);
+}
+
+/* --- chart/chart.css --- */
+/* Chart — Spec 2026-10-20 Welle 5d §8 (Plan-Review K12, Ruling R3). Das Diagramm (Chart.js, TLChart) zeichnet seine
+   Reihen, Gitter und Beschriftung auf ein Canvas; die Farben liest das Control im Browser aus den Kategorien
+   (--tl-category-N-mark), --tl-border-separator und --tl-text-secondary. Hier steht, was im DOM um das Canvas
+   liegt: die Wurzel, der Tooltip am Datenpunkt, der Knopf zum Zurücksetzen des Zooms, und leer oder Fehler als
+   tl-status. Die Schrift tragen die Typo-Klassen am Element. */
+
+.tl-chart {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: var(--tl-size-12);
+}
+.tl-chart[hidden] { display: none; }
+
+/* Leer und Fehler sind eine tl-status-Zeile (role="status" bzw. role="alert") in der Mitte der Fläche. */
+.tl-chart:has(> .tl-status) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Der Tooltip hat die Fläche von tl-popover (Klasse am Element: Fläche, Rand, Schatten, Innenabstand). Hier nur Lage und
+   Ebene: absolut am Datenpunkt statt fest am Viewport, ohne Mindestbreite, und der Zeiger geht hindurch. Beide Klassen
+   im Selektor, weil components.css chart vor popover ordnet und ein einzelner Klassenselektor gegen
+   `.tl-popover { position: fixed }` verlöre. Die Ebene sticky: über dem Canvas und dem Knopf, unter allem, was sich
+   über die Seite legt. */
+.tl-chart__tooltip.tl-popover {
+  position: absolute;
+  z-index: var(--tl-layer-sticky);
+  min-width: 0;
+  pointer-events: none;
+}
+
+/* Der Knopf schwebt über der Zeichnung; eine Fläche für sich hält ihn dort lesbar. */
+.tl-chart__zoom-reset {
+  position: absolute;
+  top: var(--tl-space-xs);
+  inset-inline-end: var(--tl-space-xs);
+  z-index: var(--tl-layer-raised);
+  background: var(--tl-surface-layer);
+  border-radius: var(--tl-radius-md);
 }
 
 /* --- choice/choice.css --- */
@@ -1202,6 +1958,96 @@
   color: var(--tl-text-on-brand-active);
 }
 
+/* --- color-picker/color-picker.css --- */
+/* Farb-Picker — Spec 2026-10-17 Welle 5a §4. Der Inhalt des Farb-Popups (Hülle: tl-picker, Feldknopf und Zelle:
+   tl-swatch). Das CSS zeichnet nur Geometrie, Rahmen und Griffe aus Tokens; Datenfarben (Wert, reiner Farbton,
+   Verläufe, Farbtonspektrum) setzt das TSX inline. Palette und Mischer tragen einen Rand von space-2xs, sonst
+   schneidet ihr overflow den Fokusring der Randzellen. */
+
+.tl-color-picker__palette {
+  display: grid;
+  gap: var(--tl-space-2xs);
+  padding: var(--tl-space-2xs);
+}
+.tl-color-picker__palette[hidden] { display: none; }
+
+/* Die gewählte Option trägt einen Ring in der Auswahlfarbe, ein Rand statt outline: der Fokusring aus base.css
+   bleibt davon unterscheidbar. */
+.tl-color-picker__palette [aria-selected="true"] {
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+}
+
+.tl-color-picker__mixer {
+  display: flex;
+  gap: var(--tl-space-sm);
+  padding: var(--tl-space-2xs);
+}
+.tl-color-picker__mixer[hidden] { display: none; }
+
+/* Maß des Mischers: ein festes Quadrat. Das Feld ist size-12 breit und hoch, der Farbtonstreifen size-control-sm breit
+   und size-12 hoch; der Mischer schrumpft nicht (flex: none), damit die Stapelzeile seine Breite einrechnet und er die
+   Spalte daneben (Vorschau, Eingaben) nicht überlagert. Ist das Popup niedriger, scrollt das Reiterfeld. */
+.tl-color-picker__mixer {
+  flex: none;
+  box-sizing: content-box;
+  block-size: var(--tl-size-12);
+}
+
+.tl-color-picker__field {
+  inline-size: var(--tl-size-12);
+  block-size: var(--tl-size-12);
+}
+
+.tl-color-picker__hue {
+  inline-size: var(--tl-size-control-sm);
+  block-size: var(--tl-size-12);
+}
+
+/* Gemeinsam: der Rahmen der beiden Flächen. */
+.tl-color-picker__field,
+.tl-color-picker__hue {
+  position: relative;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-sm);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Der Griff liegt auf einer Datenfarbe: ein Doppelring aus den beiden Griff-Rollen, innen hell (inset-Linie), außen dunkel (Rand), von
+   denen auf jeder Farbe einer 3:1 erreicht. Kein outline: den verbietet das Gate den Komponenten. */
+.tl-color-picker__handle {
+  position: absolute;
+  box-sizing: border-box;
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: var(--tl-border-width-md) solid var(--tl-border-handle-dark);
+  border-radius: var(--tl-radius-full);
+  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-handle-light);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Der Griff des Farbtonreglers steht mittig im Streifen; nur seine Höhe (top) ist Datum und kommt inline. */
+.tl-color-picker__hue > .tl-color-picker__handle {
+  left: 50%;
+}
+
+.tl-color-picker__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+}
+.tl-color-picker__preview[hidden] { display: none; }
+
+.tl-color-picker__inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+}
+.tl-color-picker__inputs[hidden] { display: none; }
+
 /* --- columns/columns.css --- */
 /* Spalten — 3b §12.
    Eine umbrechende Reihe von Spalten, jede wächst nach ihrem Gewicht. Die Flex-Basis einer Spalte setzt
@@ -1226,6 +2072,96 @@
 .tl-columns__column {
   min-width: 0;
   max-width: 100%;
+}
+
+/* --- compact-field/compact-field.css --- */
+/* Compact field — Spec 2026-10-20 Welle 5d §6. Die Vorschau eines Werts und der Knopf, der seinen Editor im Dialog
+   öffnet (ReactCompactFieldControl). Die Wurzel ist eine Reihe (tl-stack); die Vorschau nimmt die Breite, die der
+   Knopf lässt, und endet mit Ellipse, der Knopf behält seine Größe. Bearbeitbar ist die Wurzel ein Feld (tl-field,
+   data-tl-state~="edit") und sieht aus wie ein Select: der Knopf sitzt im Rahmen am Ende und zeigt Zeigen und
+   Drücken eine Stufe kräftiger — mit derselben Regel wie die Knöpfe im Select (select.css). Lesend erscheint der
+   Knopf erst beim Zeigen: er trägt tl-reveal-on-hover (layout.css), dieser Block blendet nichts selbst ein. */
+
+.tl-compact-field {
+  min-width: 0;
+}
+
+.tl-compact-field > .tl-compact-field__preview {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Der Knopf (tl-button--icon --sm --ghost, Icon tl-icon-sm) liest sich wie der Chevron eines Select: klein, gedämpft. */
+.tl-compact-field > .tl-compact-field__opener {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  color: var(--tl-icon-secondary);
+}
+
+/* Der Ring des Öffners liegt innen: in der Tabellenzelle schneidet die Zelle, was über sie hinausragt (kompakte
+   Dichte), im Feld läge er außen auf dem Rahmen. Wie die Knöpfe der Liste (reorder-list.css). */
+.tl-compact-field > .tl-compact-field__opener:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Bearbeitbar: ein Feld, in der Tabellenzelle das zellfüllende randlose Feld der anderen Zelleditoren; der Knopf
+   steht space-2xs vom Rand wie die Knöpfe im Select. */
+.tl-compact-field[data-tl-state~="edit"] {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  padding-inline-end: var(--tl-space-2xs);
+}
+.tl-compact-field[hidden] { display: none; }
+
+/* --- dashboard/dashboard.css --- */
+/* Dashboard — Spec 5c §6 (V5, V6, V12, V20), Vertrag dashboard.contract.md. Leser ist TLDashboard.
+   Kacheln in einem Raster, das die Engine packt (Spalten, Zeilen und Lage der Kacheln inline). Eine Kachel ist eine
+   Karte (tl-card: Fläche, Rand, Ecke, kein Schatten) und ein Overlay (tl-overlay tl-overlay--fill): der Inhalt ist
+   die Basis, im Bearbeiten liegen darüber die Abdeckung und der Ausblenden-Knopf (tl-overlay__action). Die Aktion
+   einer Kachel ist ein verborgener Knopf (tl-visually-hidden); hat er den Tastaturfokus, trägt die Kachel den Ring
+   (base.css). Bearbeiten ist data-tl-state~="edit" an der Wurzel; Einfügemarke und gezogene Kachel zeichnet drag.css
+   (das Raster trägt data-tl-axis="horizontal"). Den Innenabstand der Wurzel gibt tl-inset, den Abstand der Kacheln
+   liest das TSX aus --tl-space-md (useTokenPx) für Packung und Raster zugleich. */
+
+.tl-dashboard {
+  min-width: 0;
+}
+
+.tl-dashboard__grid {
+  inline-size: 100%;
+}
+
+/* Die Kachel hat eine feste Höhe (Zeilen des Rasters); was nicht passt, rollt. */
+.tl-dashboard__tile {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Die ganze Kachel nimmt den Klick der Aktion; eine deaktivierte Aktion lässt die Kachel, wie sie ist. */
+.tl-dashboard__tile:has(> .tl-dashboard__action:not(:disabled, [aria-disabled="true"])) {
+  cursor: pointer;
+}
+
+.tl-dashboard:not([data-tl-state~="edit"]) .tl-dashboard__tile:has(> .tl-dashboard__action:not(:disabled, [aria-disabled="true"])):hover {
+  border-color: var(--tl-border-interactive);
+}
+
+/* Der Name und die Tastatur-Bedienung der Kachel: außer Sicht (tl-visually-hidden), mit Abstand space-sm zur
+   Kachelkante, damit sein Ring nicht an der rollenden Kachel endet. Sichtbar ist der Ring der Kachel. */
+.tl-dashboard__action {
+  position: absolute;
+  inset-block-start: var(--tl-space-sm);
+  inset-inline-start: var(--tl-space-sm);
+}
+
+/* Im Bearbeiten deckt sie die Kachel (in tl-overlay__layer--fill) und nimmt den Zeiger: ein Klick erreicht den
+   Inhalt nicht, die Kachel lässt sich ziehen. Sie steht im DOM vor der Ebene mit dem Ausblenden-Knopf, der so
+   oben liegt — ohne z-index. */
+.tl-dashboard__cover {
+  flex: 1 1 auto;
+  cursor: move;
 }
 
 /* --- dialog/dialog.css --- */
@@ -1384,7 +2320,9 @@
    Zeilen, an einer Zeile unter ihren haftenden Zellen (layer-raised). ::after ist der Cursor-Ring
    (base.css). Die Fläche erbt die Ecke des Ziels: die Marke folgt der runden Pille, eckige Ziele bleiben
    eckig. Die Fläche von drop-onto steht am Ziel; eine Fläche, die sie übermalen soll, steht beim
-   Block in :where (Tabellenzeile, Baumknoten, Listeneintrag der Spaltenwahl). */
+   Block in :where (Tabellenzeile, Baumknoten, Listeneintrag der Spaltenwahl).
+   Dazu, was beim Ziehen über allem liegt (Spec 5d §4): der Schild, das Zieh-Bild des Fingers, der Ablehnungshinweis
+   und die Markierung des Element-Pickers, alle auf layer-drag. */
 
 /* Die Fläche braucht ein positioniertes Ziel. :where hat keine Spezifität: eine Lage, die der Block
    setzt (absolute Zeile, haftende Kopfzelle), bleibt. */
@@ -1439,6 +2377,78 @@
    hier einmal statt in jedem Block. */
 [data-tl-state~="dragging"] {
   opacity: 0.4;
+}
+
+/* Warum das Ziel unter dem Zeiger ablehnt (Spec 5c §8): ein tl-popover (Lage aus bridge/popover.ts) an Tabelle, Baum
+   und Board, Text und Rand in Fehlerfarbe; der Zeiger geht hindurch. Vorher tl-table__hint. Am tl-popover, weil
+   popover.css im Bundle nach drag.css steht und seinen Rand sonst über diesen legte. Er liegt auf layer-drag und steht
+   im DOM nach dem Zieh-Bild: beim Ziehen mit dem Finger verdeckt das Bild den Grund nicht (Spec 5d §4). */
+.tl-popover.tl-drop-hint {
+  z-index: var(--tl-layer-drag);
+  border-color: var(--tl-status-error-border);
+  color: var(--tl-status-error-text);
+  pointer-events: none;
+}
+
+/* Der Schild beim Ziehen mit der Maus (pointer-drag.ts): deckt das Fenster, damit kein Element unter dem Zeiger
+   Zeigen-Zustände oder eine Textauswahl bekommt; die Geste selbst geht über Pointer-Capture an den Griff. */
+.tl-drag-shield {
+  position: fixed;
+  inset: 0;
+  z-index: var(--tl-layer-drag);
+  user-select: none;
+}
+
+/* Die Kopie des gezogenen Elements, die dem Finger folgt (touch-drag.ts). 0.9 ist ein Anteil, kein Maß. */
+.tl-drag-image {
+  z-index: var(--tl-layer-drag);
+  opacity: 0.9;
+  box-shadow: var(--tl-shadow-drag);
+}
+
+/* Bereit: der Finger hat das Element nach langem Drücken aufgenommen und sich noch nicht bewegt. Ein eigenes Attribut,
+   nicht data-tl-state: das Wort dort setzt das Control, ein Re-Render verwürfe ein fremdes (Plan-Review K15). Die
+   Quelle beim Ziehen mit dem Finger trägt danach dragging wie beim Ziehen mit der Maus (oben). */
+[data-tl-armed] {
+  box-shadow: var(--tl-shadow-drag);
+  transform: scale(1.02);
+  transition:
+    transform var(--tl-duration-fast) var(--tl-easing-standard),
+    box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Ein ziehbares Element nimmt der Finger mit langem Drücken auf (touch-drag.ts); auf Geräten ohne Maus öffnet das
+   Drücken darum weder das Kontextmenü noch eine Textauswahl. */
+@media (pointer: coarse) {
+  [draggable="true"] {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Element-Picker (element-picker.ts, ein Entwicklerwerkzeug): die Markierung über dem Element unter dem Zeiger, in
+   beiden Modi aus dem Theme. Der Rand ist deckend; nur die Fläche auf ::before ist durchscheinend und lässt das Element
+   durchscheinen — die Deckkraft ist ein Anteil, kein Maß. Der Zeiger „Fadenkreuz“ ist ein Zustand am body. */
+.tl-pick-highlight {
+  position: fixed;
+  pointer-events: none;
+  z-index: var(--tl-layer-drag);
+  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+}
+
+.tl-pick-highlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tl-surface-brand-subtle);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+body[data-tl-state~="picking"],
+body[data-tl-state~="picking"] * {
+  cursor: crosshair;
 }
 
 /* --- drawer/drawer.css --- */
@@ -1725,6 +2735,30 @@ a.tl-field-value:hover {
   color: var(--tl-text-link-hover);
 }
 
+/* --- file/file.css --- */
+/* File — Spec 2026-10-19 Welle 5b §6. Die Dateizeile von TLDownload und TLBinaryField: der Name mit Ellipse und
+   Höchstbreite, die Knöpfe daneben (Part Button). Leer ist ein Zustand: der Hinweis steht in text-secondary, nicht
+   kursiv und nicht in der Deaktiviert-Farbe — er ist lesbarer Text. */
+
+.tl-file {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-control-gap);
+  min-block-size: var(--tl-size-control);
+}
+.tl-file[hidden] { display: none; }
+
+.tl-file__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: var(--tl-size-13);
+}
+
+.tl-file[data-tl-state~="empty"] {
+  color: var(--tl-text-secondary);
+}
+
 /* --- form/form.css --- */
 /* Formular — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“, Spec Welle 2 §6.
    Der Feldrahmen (tl-form-field) legt Label, Eingabe und Meldungen in ein Raster; die Label-Lage ist
@@ -1931,9 +2965,8 @@ a.tl-field-value:hover {
 
 /* Ein Formular, das eine füllende Region trägt, ist eine Spalte: das füllende Kind nimmt die Höhe, die
    das Formular bekommt, jedes andere Kind behält die Höhe seines Inhalts. Das füllende Kind trägt die
-   Füllklasse der Engine (tlFill, Welle 3/4); das Klassen-Gate lässt sie nicht in einem Selektor zu, darum
-   gilt die Regel für alle Kinder — und :where gibt ihr die Spezifität null, sodass die Füllregel der
-   Engine das Schrumpfverbot für das füllende Kind aufhebt. */
+   Füllklasse tl-fill (layout.css); die Regel gilt für alle Kinder — und :where gibt ihr die Spezifität
+   null, sodass die Füllregel das Schrumpfverbot für das füllende Kind aufhebt. */
 .tl-form-layout--fill {
   display: flex;
   flex-direction: column;
@@ -1985,7 +3018,11 @@ a.tl-field-value:hover {
 }
 .tl-file-upload[hidden] { display: none; }
 
-.tl-file-upload[data-tl-state~="dragover"] {
+/* Eine Regel für alle Drop-Zonen (Welle 5b §6): das Datei-Feld, die Chip-Gruppe von TLFileChips und die
+   Werteliste, die ihre Werte durch Hochladen anfügt (#29852). */
+.tl-file-upload[data-tl-state~="dragover"],
+.tl-chip-group[data-tl-state~="dragover"],
+.tl-value-list[data-tl-state~="dragover"] {
   outline: var(--tl-border-width-md) dashed var(--tl-border-interactive);
   outline-offset: var(--tl-focus-offset);
 }
@@ -1998,12 +3035,165 @@ a.tl-field-value:hover {
   color: var(--tl-status-error-text);
 }
 
+/* In der umbrechenden Chip-Gruppe von TLFileChips bricht die Fehlerzeile unter die Chips (Spec 5b §6.5). */
+.tl-chip-group > .tl-file-upload__status {
+  flex-basis: 100%;
+}
+
+/* Die Chips stehen in der Zeile der Gruppe; die Hülle gibt es nur, damit sie im kompakten Feld rollen. */
+.tl-chip-group__chips {
+  display: contents;
+}
+
+/* Kompakt, etwa in der Tabellenzelle (#29852): eine Zeile, nicht höher als ein Chip. Die Chips rollen seitwärts —
+   mit Rad und Trackpad, ohne eigenen Balken wie der Kopf der Tabelle —, der Knopf bleibt am Ende der Zeile außerhalb
+   der rollenden Reihe. */
+.tl-chip-group[data-tl-state~="compact"] {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tl-chip-group[data-tl-state~="compact"] > .tl-chip-group__chips {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+/* Ein Chip (tl-chip, ohne Daten tl-pill) behält seine Breite, während die Reihe rollt; ein langer Name endet mit
+   Ellipse in der sichtbaren Breite (max-width beider: 100 %). */
+.tl-chip-group[data-tl-state~="compact"] > .tl-chip-group__chips > *,
+.tl-chip-group[data-tl-state~="compact"] > .tl-button {
+  flex-shrink: 0;
+}
+
+/* Die Reihe schneidet, was über sie hinausragt, die Tabellenzelle ebenso: die Ringe liegen innen, wie beim
+   Compact field (compact-field.css). */
+.tl-chip-group[data-tl-state~="compact"] :focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Der Fehler bleibt in der Zeile, gekürzt; sein ganzer Text ist sein Tooltip. */
+.tl-chip-group[data-tl-state~="compact"] > .tl-file-upload__status {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- icon-picker/icon-picker.css --- */
+/* Icon-Picker — Spec 2026-10-17 Welle 5a §5. Der Inhalt des Icon-Popups (Hülle: tl-picker, Feldknopf: tl-swatch,
+   Laden, leer, Fehler: tl-status). Das Popup ist size-13 im Quadrat und lässt sich von Hand größer ziehen. */
+
+.tl-picker.tl-icon-picker {
+  inline-size: var(--tl-size-13);
+  block-size: var(--tl-size-13);
+  overflow: hidden;
+  resize: both;
+}
+
+.tl-icon-picker__filter {
+  flex-shrink: 0;
+}
+
+/* Das Raster nimmt den Rest des Popups; der Rand von space-2xs hält den Fokusring der Randzellen im overflow. */
+.tl-icon-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--tl-size-control));
+  align-content: start;
+  flex: 1 1 auto;
+  gap: var(--tl-space-2xs);
+  min-block-size: 0;
+  padding: var(--tl-space-2xs);
+  scroll-padding: var(--tl-space-xs); /* Fokus hält die Zelle samt Ring im Sichtfeld. */
+  overflow: auto;
+}
+.tl-icon-picker__grid[hidden] { display: none; }
+
+.tl-icon-picker__cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  inline-size: var(--tl-size-control);
+  block-size: var(--tl-size-control);
+  border-radius: var(--tl-radius-sm);
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+.tl-icon-picker__cell[hidden] { display: none; }
+
+.tl-icon-picker__cell:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-icon-picker__cell[aria-selected="true"] {
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-icon-picker__advanced {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-sm);
+}
+.tl-icon-picker__advanced[hidden] { display: none; }
+
+.tl-icon-picker__preview {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-sm);
+}
+.tl-icon-picker__preview[hidden] { display: none; }
+
+/* --- job-status/job-status.css --- */
+/* JobStatus — Spec 2026-10-19 Welle 5b §7: was ein langer Auftrag meldet. Kopf mit Zustand, Laufzeit und Abbrechen;
+   darunter die Live-Zeile (nur sie trägt role="status"), die Schritte als tl-steps--vertical, der Balken (Part
+   ProgressBar), die Meldung und der Fehler als eigene Zeile mit role="alert". */
+
+.tl-job-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-xs);
+}
+.tl-job-status[hidden] { display: none; }
+
+.tl-job-status__header {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-sm);
+}
+
+.tl-job-status__elapsed {
+  color: var(--tl-text-secondary);
+}
+
+.tl-job-status__cancel {
+  margin-inline-start: auto;
+}
+
+.tl-job-status__message {
+  color: var(--tl-text-secondary);
+}
+
+.tl-job-status__error {
+  color: var(--tl-status-error-text);
+}
+
 /* --- layout/layout.css --- */
 /* Reihen und Abstände — Spec 2026-10-16 Welle 4c §5 (Q16, Q22). Stack und Grid ordnen Kinder mit der einen
    Gap-Skala, die tl-columns seit 3b liest: compact space-sm, default space-md, loose space-lg. Inset ist der Abstand
    eines Inhalts zum Rand; wie weit, sagt die nächste Fläche über React-Kontext (useSurface) als Modifier — ohne
    Modifier die Seite. Bounded begrenzt die Breite und mittelt, Item umhüllt wiederholte Kinder, Deck zeigt eines zur
-   Zeit und nimmt seine Größe. Wer füllt, entscheidet der Fill-Vertrag (tlFill, bis Welle 5 im alten Stylesheet). */
+   Zeit und nimmt seine Größe. Wer füllt, trägt tl-fill (unten). Ein Element, das erst beim Zeigen erscheint, trägt
+   tl-reveal-on-hover (unten). */
 
 .tl-stack {
   display: flex;
@@ -2143,6 +3333,114 @@ a.tl-field-value:hover {
 }
 .tl-deck[hidden] { display: none; }
 
+/* Füllen (Spec 5d §3): ein Kind mit tl-fill nimmt die Höhe, die sein Behälter in der Hauptachse übrig lässt, und darf
+   unter seinen Inhalt schrumpfen, damit es selbst scrollt. Ob ein Kind füllt, entscheidet der Control-Baum (useFill /
+   useFillHost der Bridge): ein Behälter mit füllendem Kind füllt seinerseits, bis zur ersten Box, die ohnehin begrenzt
+   ist. Die Hülle eines wiederholten Kindes (tl-item) füllt mit, solange ihr Kind füllt. */
+.tl-fill {
+  flex: 1;
+  min-height: 0;
+}
+
+.tl-item:has(> .tl-fill) {
+  flex: 1;
+}
+
+/* Aktion beim Zeigen (Spec 5d §6, Plan-Review K6): eine Regel für jedes Element, das erst beim Zeigen erscheint — der
+   Griff und die Knöpfe der umsortierbaren Liste, der Öffner des Compact field. opacity, nicht visibility: ein
+   unsichtbarer Knopf bleibt mit Tab erreichbar und erscheint, sobald er den Fokus hat. Die Übergangsliste ersetzt die
+   von .tl-button (button.css steht im Bundle davor): opacity kommt dazu, die weichen Hover-Übergänge bleiben. */
+.tl-reveal-on-hover {
+  opacity: 0;
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Sichtbar beim Zeigen auf das eigene Feld (den direkten Elternteil) oder die Zeile, und bei Tastaturfokus. Fokus heißt
+   hier :focus-visible, nicht :focus-within: nach einem Mausklick bleibt der Fokus im Knopf, und die Zeile hielte ihre
+   Knöpfe sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). Die Zeile der umsortierbaren Liste zeigt
+   Griff und Knöpfe wie bisher als Ganzes: die Knöpfe stehen in tl-reorder-list__actions, und der Zeiger auf der
+   Beschriftung soll sie zeigen. */
+:hover > .tl-reveal-on-hover,
+:has(:focus-visible) > .tl-reveal-on-hover,
+.tl-reveal-on-hover:focus-visible,
+.tl-table__row:hover .tl-reveal-on-hover,
+.tl-reorder-list__item:hover .tl-reveal-on-hover,
+.tl-reorder-list__item:has(:focus-visible) .tl-reveal-on-hover {
+  opacity: 1;
+}
+
+/* Ohne Zeigen (Touch) gäbe es nie :hover — dort steht die Aktion immer. */
+@media (hover: none) {
+  .tl-reveal-on-hover {
+    opacity: 1;
+  }
+}
+
+/* --- media/media.css --- */
+/* Media — Spec 2026-10-19 Welle 5b §5. Ein Block für eingebettete Inhalte: Bild, PDF, HTML-Dokument und -Vorschau,
+   Kamera-Video. Der Rahmen (img, iframe, video) füllt die Wurzel; die Größe gibt der Server inline. Die Einpassung
+   ist eine Variante, Spiegeln ein Zustand. */
+
+.tl-media {
+  display: block;
+  max-inline-size: 100%;
+  position: relative;
+}
+.tl-media[hidden] { display: none; }
+
+.tl-media__frame {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+  border-radius: var(--tl-radius-sm);
+}
+
+/* Ein Bild ist so breit wie das Bild, solange keine Größe es anders sagt (die gibt der Server inline); nur Bilder
+   tragen eine Einpassung, das Dokument füllt weiter. */
+.tl-media--cover,
+.tl-media--contain {
+  inline-size: fit-content;
+}
+
+.tl-media--cover .tl-media__frame { object-fit: cover; }
+.tl-media--contain .tl-media__frame { object-fit: contain; }
+
+/* Fremdes HTML (Dokument und Vorschau) setzt Weiß voraus: das Papier ist in beiden Modi weiß. */
+.tl-media--document .tl-media__frame {
+  background: var(--tl-surface-document);
+}
+
+/* Vorschau eines Dokuments: ein Bild einer Seite. Die Seite behält die Größe, für die sie geschrieben ist (inline),
+   liegt außerhalb des Flusses und wird von links oben verkleinert (transform inline); was übersteht, ist abgeschnitten
+   wie Papier. Sie wird angesehen, nicht benutzt: der Zeiger geht an das, was die Vorschau trägt. */
+.tl-media--preview {
+  overflow: hidden;
+}
+
+.tl-media--preview > .tl-media__frame {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+/* Kamera-Video (Spec 5b §4): gespiegelt ist ein Zustand am Video. */
+.tl-media__frame[data-tl-state~="mirrored"] {
+  transform: scaleX(-1);
+}
+
+/* Reservierter Platz ohne Bild. */
+.tl-media__placeholder {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
 /* --- menu/menu.css --- */
 /* Menu — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W3).
    Ein Menü ist ein tl-popover mit Einträgen. Der Fokus ist echt (Roving-Tabindex): der Ring aus
@@ -2267,7 +3565,8 @@ a.tl-field-value:hover {
 /* Overlay — Spec 2026-10-13 Welle 4a §8. Ein Stapel aus Basis und Ebenen, kein Overlay im Sinn eines Dialogs:
    die Basis gibt die Höhe, das umgebende Layout die Breite; jede Ebene deckt genau diese Fläche und legt ihren
    Inhalt an einen Rand, eine Ecke oder die Mitte. Wo eine Ebene nichts zeigt, geht der Zeiger zur Basis durch.
-   Keine Fläche, keine Ebene (z-index): das Aussehen gibt die Anwendung über die Klasse der Ebene. */
+   Keine Fläche, keine Ebene (z-index): das Aussehen gibt die Anwendung über die Klasse der Ebene. Einzige Fläche
+   ist tl-overlay__action (Welle 5b §4): der Knopf über einer Fläche, die in beiden Modi weiß sein kann. */
 
 .tl-overlay {
   position: relative;
@@ -2275,6 +3574,32 @@ a.tl-field-value:hover {
   max-width: 100%;
 }
 .tl-overlay[hidden] { display: none; }
+
+/* Füllt den Behälter (Welle 5b §4): das HTML-Dokument nimmt seinen Platz, nicht die Höhe der Basis. Die Basis
+   füllt das Overlay. */
+.tl-overlay--fill {
+  display: flex;
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.tl-overlay__base {
+  display: block;
+}
+
+.tl-overlay--fill > .tl-overlay__base {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* Die Basis gibt ihrem Kind die volle Höhe: ein tl-media mit iframe bliebe sonst 150 px hoch. */
+.tl-overlay--fill > .tl-overlay__base > * {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
 
 .tl-overlay__layer {
   position: absolute;
@@ -2298,6 +3623,19 @@ a.tl-field-value:hover {
 .tl-overlay__layer--bottom-left { align-items: end; justify-content: start; }
 .tl-overlay__layer--bottom { align-items: end; justify-content: center; }
 .tl-overlay__layer--bottom-right { align-items: end; justify-content: end; }
+
+/* Der Knopf über einer Fläche (Welle 5b §4): eine kleine schwebende Fläche wie ein Popover, ohne Portal. Darin ein
+   Part Button ghost, icon-only. Ohne sie stünde im Dunkelmodus helle Schrift auf dem weißen Dokument. */
+.tl-overlay__action {
+  display: flex;
+  margin: var(--tl-space-xs); /* schwebt mit Abstand zur Ecke, der Schatten bleibt sichtbar (Sichtprüfung 19.10.) */
+  padding: var(--tl-space-2xs);
+  background: var(--tl-surface-overlay);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  box-shadow: var(--tl-shadow-popover);
+}
+.tl-overlay__action[hidden] { display: none; }
 
 /* --- panel/panel.css --- */
 /* Panel — Spec 2026-10-16 Welle 4c §3 (Q3, Q8, Q13, Q14). Eine Fläche mit Kopf (tl-titlebar), Körper und
@@ -2367,6 +3705,42 @@ a.tl-field-value:hover {
   .tl-panel--hover-actions > .tl-titlebar > :is(.tl-titlebar__actions, .tl-titlebar__buttons) {
     opacity: 1;
   }
+}
+
+/* --- picker/picker.css --- */
+/* Picker — Spec 2026-10-17 Welle 5a §3. Die Hülle der Popups von Farb- und Icon-Picker: eine Spalte aus Reitern
+   (tl-tabs), Inhalt und Knopfleiste (tl-button-bar) auf einem tl-popover. Keine Breite — das Popup richtet sich nach
+   seinem Inhalt. Den Rand der Reiter liefert tl-tabs. */
+
+.tl-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tl-space-sm);
+}
+.tl-picker[hidden] { display: none; }
+
+/* Die Reiter nehmen den Rest der Hülle und schrumpfen mit ihr: der Inhalt im Reiterfeld (Raster) scrollt selbst,
+   statt dass das Popup als Ganzes scrollt. */
+.tl-picker__tabs {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* Der Rand von space-2xs im Reiterfeld hält den Fokusring der Randelemente (Filter, Eingaben, Zellen) im
+   overflow des Feldes. */
+.tl-picker__tabs > .tl-tabs__panel {
+  padding: var(--tl-space-2xs);
+  scroll-padding: var(--tl-space-xs);
+}
+
+/* Ein Reiterfeld mit Mischer reserviert die Bahn des Scrollbalkens: erscheint er erst beim Schrumpfen, verengt er das
+   Feld, und das Popup scrollt auch seitlich. Das Raster des Icon-Pickers scrollt selbst und braucht das nicht. */
+.tl-picker__tabs > .tl-tabs__panel:has(.tl-color-picker__mixer) {
+  scrollbar-gutter: stable;
+}
+
+.tl-picker__actions {
+  flex-shrink: 0;
 }
 
 /* --- pill/pill.css --- */
@@ -2534,12 +3908,98 @@ a.tl-field-value:hover {
   to { rotate: 360deg; }
 }
 
+/* --- prose/prose.css --- */
+/* Prose — Spec 2026-10-19 Welle 5b §5. Fließtext vom Server (TLHtml eingebettet): Überschriften, Absätze, Listen,
+   Links, Code, Tabellen, Zitate in fremdem HTML. Keine eigenen Größen: die Schrift kommt aus den Typo-Klassen, an
+   die der Generator die Selektoren `.tl-prose <element>` hängt (tokens.json „prose“, base.css). Hier stehen nur
+   Abstände und Farben. */
+
+.tl-prose h1,
+.tl-prose h2,
+.tl-prose h3,
+.tl-prose h4,
+.tl-prose h5,
+.tl-prose h6 {
+  margin-block: var(--tl-space-md) 0;
+}
+
+.tl-prose p,
+.tl-prose ul,
+.tl-prose ol,
+.tl-prose pre,
+.tl-prose table,
+.tl-prose blockquote {
+  margin-block: var(--tl-space-sm) 0;
+}
+
+/* Lange Wörter und Adressen brechen um, statt die Seite seitwärts zu schieben. Ein Abschnitt, zu dem gesprungen wird,
+   hält Abstand zur Oberkante (#29765) — ebenso der Inhalt selbst, wenn er an seinen Anfang gescrollt wird. */
+.tl-prose {
+  overflow-wrap: break-word;
+  scroll-margin-block-start: var(--tl-space-lg);
+}
+
+.tl-prose [id] {
+  scroll-margin-block-start: var(--tl-space-lg);
+}
+
+/* Das erste Kind schließt bündig an den Behälter an. */
+.tl-prose > :first-child {
+  margin-block-start: 0;
+}
+
+.tl-prose a {
+  color: var(--tl-text-link);
+}
+
+.tl-prose a:hover {
+  color: var(--tl-text-link-hover);
+}
+
+/* Code ist leicht abgesetzt: die verschachtelte Fläche, die kleine Ecke. */
+.tl-prose code,
+.tl-prose pre {
+  background: var(--tl-surface-layer-nested);
+  border-radius: var(--tl-radius-sm);
+}
+
+.tl-prose code {
+  padding-inline: var(--tl-space-2xs);
+}
+
+.tl-prose pre {
+  padding: var(--tl-space-xs) var(--tl-space-sm);
+  overflow: auto;
+}
+
+/* Code im Block trägt die Fläche des Blocks, keine zweite. */
+.tl-prose pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.tl-prose table {
+  border-collapse: collapse;
+}
+
+.tl-prose th,
+.tl-prose td {
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+}
+
+.tl-prose blockquote {
+  margin-inline: 0;
+  border-inline-start: var(--tl-border-width-md) solid var(--tl-border-separator);
+  padding-inline-start: var(--tl-space-sm);
+}
+
 /* --- reorder-list/reorder-list.css --- */
 /* Umsortierbare Liste — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W11), 3b §8.
    ul.tl-reorder-list > li.tl-reorder-list__item: vorn der Griff (tl-reorder-list__handle, ein
    tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter die
    Beschriftung und rechts Schloss und Auge (tl-reorder-list__actions); Griff und Knöpfe erscheinen beim Zeigen
-   oder Fokus (Spec 2026-10-12, #29825). Die Ziehen-Optik zeichnet
+   oder Fokus (Spec 2026-10-12, #29825) über tl-reveal-on-hover (layout.css, Spec 5d §6). Die Ziehen-Optik zeichnet
    drag.css, den Ring base.css — am Griff innen, weil die Liste scrollt. Höchstens size-popover-max
    hoch; dann scrollt die Liste in sich. Steht die Suche davor, füllen beide ihren Behälter: die
    Suche bleibt stehen, nur die Liste scrollt, und die Höhe gibt der Behälter (Sichtprüfung 12.10.). */
@@ -2591,12 +4051,6 @@ a.tl-field-value:hover {
 .tl-reorder-list__handle {
   color: var(--tl-icon-secondary);
   cursor: grab;
-  opacity: 0;
-  transition:
-    opacity var(--tl-duration-fast) var(--tl-easing-standard),
-    background-color var(--tl-duration-fast) var(--tl-easing-standard),
-    border-color var(--tl-duration-fast) var(--tl-easing-standard),
-    color var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
 .tl-reorder-list__handle:active {
@@ -2627,39 +4081,11 @@ a.tl-field-value:hover {
   margin-inline-start: auto;
 }
 
-/* Die Knöpfe erscheinen beim Zeigen oder wenn ein Element der Zeile den Tastaturfokus hat (der Griff ebenso, seine opacity
-   steht in seiner Grundregel oben). opacity, nicht visibility: ein unsichtbarer Knopf bleibt mit Tab erreichbar und
-   erscheint, sobald er den Fokus hat. */
-.tl-reorder-list__actions > .tl-button {
-  opacity: 0;
-  transition:
-    opacity var(--tl-duration-fast) var(--tl-easing-standard),
-    background-color var(--tl-duration-fast) var(--tl-easing-standard),
-    border-color var(--tl-duration-fast) var(--tl-easing-standard),
-    color var(--tl-duration-fast) var(--tl-easing-standard);
-}
-
-/* Fokus heißt hier Tastaturfokus (:focus-visible), nicht :focus-within: nach einem Mausklick bleibt der Fokus im Knopf,
-   und die Zeile hielte Auge und Schloss sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). */
-.tl-reorder-list__item:hover > .tl-reorder-list__handle,
-.tl-reorder-list__item:has(:focus-visible) > .tl-reorder-list__handle,
-.tl-reorder-list__item:hover > .tl-reorder-list__actions > .tl-button,
-.tl-reorder-list__item:has(:focus-visible) > .tl-reorder-list__actions > .tl-button {
-  opacity: 1;
-}
-
-/* Gesetzte Zustände bleiben zu sehen: das Auge einer ausgeblendeten, das Schloss einer fixierten Spalte. */
+/* Gesetzte Zustände bleiben zu sehen, auch ohne Zeigen (tl-reveal-on-hover verbirgt sie sonst): das Auge einer
+   ausgeblendeten, das Schloss einer fixierten Spalte. */
 .tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
 .tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock {
   opacity: 1;
-}
-
-/* Ohne Zeigen (Touch) gäbe es nie :hover — dort stehen Griff und Knöpfe immer. */
-@media (hover: none) {
-  .tl-reorder-list__handle,
-  .tl-reorder-list__actions > .tl-button {
-    opacity: 1;
-  }
 }
 
 /* Ausgeblendet: die Spalte behält ihren Platz, ihr Name tritt zurück. Der Eintrag bleibt bedienbar — die
@@ -2683,6 +4109,90 @@ a.tl-field-value:hover {
    der Gruppe, nicht am Feld (wie im Select-Popup). */
 .tl-reorder-list__search {
   margin-bottom: var(--tl-space-xs);
+}
+
+/* --- rich-text/rich-text.css --- */
+/* Rich Text — Spec 2026-10-20 Welle 5d §7. Der Wysiwyg-Editor (TLWysiwygEditor, Tiptap): der Rahmen ist ein Feld
+   (tl-field: Rand, Zeigen, Fehler über aria-invalid), darin die Leiste (tl-toolbar tl-toolbar--wrap) und die
+   Schreibfläche mit tl-prose (Überschriften, Listen, Code, Zitat, Link, Tabelle aus prose.css). Hier steht nur, was
+   allein der Editor braucht: Innenabstand und Mindesthöhe der Schreibfläche, die Kopfzelle, die Trennung von Leiste
+   und Text. Klassen der Bibliothek (.ProseMirror, Bildauswahl, Spaltengriff) stehen nicht im Paket, sondern im
+   Engine-Sheet des Editors (Plan-Review K3). Die Ansicht (nicht bearbeitbar) trägt tl-prose ohne diesen Block. */
+
+/* Leiste und Schreibfläche untereinander; den Innenabstand tragen sie selbst, nicht der Rahmen. Kein overflow am
+   Rahmen: er schnitte den Fokusring der Knöpfe am Rand ab. */
+.tl-rich-text {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.tl-rich-text[hidden] { display: none; }
+
+/* Die Leiste rückt um space-xs vom Rand ein und trennt sich mit der Linie des Rahmens vom Text. */
+.tl-rich-text > .tl-toolbar {
+  padding-inline: var(--tl-space-xs);
+  border-block-end: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+/* Der Innenabstand gehört der Schreibfläche selbst: ein Klick bis an den Rand setzt die Schreibmarke in den Text. */
+.tl-rich-text .tl-prose {
+  min-height: var(--tl-size-10);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+}
+
+/* Die Schreibfläche reicht bis an den Rand des Rahmens und an die Linie der Leiste: der Ring aus base.css liegt
+   darum innen, außen läge er auf dem Rand. */
+.tl-rich-text .tl-prose:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Die Kopfzelle einer Tabelle hebt sich im Editor ab; Schrift und Linie kommen aus prose.css. */
+.tl-rich-text .tl-prose th {
+  background: var(--tl-surface-layer-nested);
+}
+
+/* Bilder passen in die Breite der Schreibfläche. */
+.tl-rich-text .tl-prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Die Quelle (Umschalter der Leiste, master #29860): eine Textarea an Stelle der Schreibfläche, mit deren
+   Innenabstand und Mindesthöhe; Rand und Fehler zeichnet der Rahmen, die Typo-Klasse tl-type-code trägt das TSX. */
+.tl-rich-text__source {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--tl-size-10);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  resize: vertical;
+}
+.tl-rich-text__source:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Markup, das der Editor behält, ohne es bearbeiten zu können (master #29860), steht als sein Quelltext im Text:
+   leise und gestrichelt umrandet — ein Stück, das man auswählen und löschen, aber nicht formatieren kann. Die
+   Typo-Klasse tl-type-code trägt das TSX; den Ring der Auswahl zeichnet das Engine-Sheet (Klasse der Bibliothek). */
+.tl-rich-text__markup {
+  display: block;
+  margin-block: var(--tl-space-xs);
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+  border: var(--tl-border-width-sm) dashed var(--tl-border-separator);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-layer-nested);
+  color: var(--tl-text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: default;
+}
+.tl-rich-text__markup--inline {
+  display: inline;
+  margin-block: 0;
+  padding-block: 0;
 }
 
 /* --- select/select.css --- */
@@ -2807,11 +4317,14 @@ a.tl-field-value:hover {
 
 /* Löschen und Chevron sind Knöpfe im Feld wie die Aktion der tl-field-group (field.css): quadratisch
    size-control-sm, am Ende space-2xs vom Rand (padding-inline-end von .tl-select), Zeigen surface-interactive-selected, Drücken
-   surface-interactive-active — auf surface-field ist die Zeigen-Stufe des Ghost-Knopfs hell nicht zu sehen. */
-.tl-select__controls > .tl-button--ghost:not(:disabled):hover {
+   surface-interactive-active — auf surface-field ist die Zeigen-Stufe des Ghost-Knopfs hell nicht zu sehen.
+   Der Öffner des bearbeitbaren Compact field (compact-field.css) ist derselbe Knopf im Feld: eine Regel, zwei Leser. */
+.tl-select__controls > .tl-button--ghost:not(:disabled):hover,
+.tl-compact-field[data-tl-state~="edit"] > .tl-compact-field__opener.tl-button--ghost:not(:disabled):hover {
   background: var(--tl-surface-interactive-selected);
 }
-.tl-select__controls > .tl-button--ghost:not(:disabled):active {
+.tl-select__controls > .tl-button--ghost:not(:disabled):active,
+.tl-compact-field[data-tl-state~="edit"] > .tl-compact-field__opener.tl-button--ghost:not(:disabled):active {
   background: var(--tl-surface-interactive-active);
 }
 
@@ -3097,6 +4610,180 @@ a.tl-field-value:hover {
   to { opacity: 0; transform: translateX(var(--tl-space-md)); }
 }
 
+/* --- slider/slider.css --- */
+/* Slider — Spec 2026-10-17 Welle 5a §6. Ein natives range, mit dem Wert als Text daneben. Die Spur des range ist
+   durchsichtig; darunter liegen die Ruhespur und die Füllung (ein Element wie bei tl-progress, ihre Breite setzt
+   das Control als Anteil inline). Die Pseudo-Regeln zeichnen nur den Daumen. Den Fokusring um das ganze range
+   liefert base.css. Zustände sind Attribute (aria-invalid, data-tl-state), keine Klassen. */
+
+.tl-slider {
+  display: inline-grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--tl-space-sm);
+  inline-size: 100%;
+}
+.tl-slider[hidden] { display: none; }
+
+/* Spur und range teilen sich die erste Zelle; die Spur ist um den halben Daumen eingerückt, denn die Mitte des
+   Daumens wandert von einem halben Daumen nach dem Anfang bis einen halben Daumen vor das Ende. */
+.tl-slider__track {
+  grid-area: 1 / 1;
+  display: block;
+  margin-inline: calc(var(--tl-size-choice) / 2);
+  block-size: var(--tl-size-progress);
+  overflow: hidden;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-border-control);
+}
+.tl-slider__track[hidden] { display: none; }
+
+.tl-slider__fill {
+  display: block;
+  block-size: 100%;
+  background: var(--tl-surface-brand);
+}
+
+.tl-slider__input {
+  grid-area: 1 / 1;
+  appearance: none;
+  -webkit-appearance: none;
+  min-inline-size: 0;
+  block-size: var(--tl-size-choice);
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.tl-slider__input:disabled {
+  cursor: default;
+}
+
+.tl-slider__input::-webkit-slider-runnable-track {
+  block-size: var(--tl-size-choice);
+  border: none;
+  background: transparent;
+}
+
+.tl-slider__input::-moz-range-track {
+  block-size: var(--tl-size-choice);
+  border: none;
+  background: transparent;
+}
+
+.tl-slider__input::-moz-range-progress {
+  background: transparent;
+}
+
+/* Der Daumen ist eine Marke: ein Kreis in der Markenfarbe. */
+.tl-slider__input::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: none;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-slider__input::-moz-range-thumb {
+  inline-size: var(--tl-size-choice);
+  block-size: var(--tl-size-choice);
+  border: none;
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-brand);
+  transition: box-shadow var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+/* Der Hof: beim Zeigen ein Ring um den Daumen, beim Drücken ein stärkerer, wie bei den Auswahlmarken. Ein Schatten
+   ohne Versatz und Unschärfe zeichnet nur außerhalb des Daumens; seine Ausbreitung füllt ihn bis zur Trefferfläche
+   eines Controls. Deaktiviert zeigt keinen. */
+.tl-slider__input:not(:disabled):hover::-webkit-slider-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-hover);
+}
+
+.tl-slider__input:not(:disabled):hover::-moz-range-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-hover);
+}
+
+.tl-slider__input:not(:disabled):active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-active);
+}
+
+.tl-slider__input:not(:disabled):active::-moz-range-thumb {
+  box-shadow: 0 0 0 calc((var(--tl-size-control) - var(--tl-size-choice)) / 2) var(--tl-surface-state-active);
+}
+
+.tl-slider__input:disabled::-webkit-slider-thumb {
+  background: var(--tl-border-disabled);
+}
+
+.tl-slider__input:disabled::-moz-range-thumb {
+  background: var(--tl-border-disabled);
+}
+
+.tl-slider:has(.tl-slider__input:disabled) .tl-slider__track {
+  background: var(--tl-surface-disabled);
+}
+
+.tl-slider:has(.tl-slider__input:disabled) .tl-slider__fill {
+  background: var(--tl-border-disabled);
+}
+
+/* Der Wert als Text. Wert und beide Grenzen stehen in einer Gitterzelle, so ist der Kasten so breit wie die
+   breiteste und die Spur behält ihre Länge, während der Wert wechselt. */
+.tl-slider__value {
+  grid-area: 1 / 2;
+  display: inline-grid;
+  color: var(--tl-text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tl-slider__value[hidden] { display: none; }
+
+.tl-slider__text,
+.tl-slider__sizer {
+  grid-area: 1 / 1;
+  justify-self: end;
+}
+
+.tl-slider__sizer {
+  visibility: hidden;
+}
+
+/* Vorrang über die Spezifität, nicht über die Reihenfolge: deaktiviert verdrängt jeden Zustand (:not(:disabled)),
+   und der Fehler verdrängt die Warnung (:not([aria-invalid="true"]) an den Warnregeln). Daumen und Text tragen
+   den Zustand. */
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"])::-webkit-slider-thumb {
+  background: var(--tl-status-warning-border);
+}
+
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"])::-moz-range-thumb {
+  background: var(--tl-status-warning-border);
+}
+
+.tl-slider[data-tl-state~="warning"] .tl-slider__input:not(:disabled):not([aria-invalid="true"]) ~ .tl-slider__value .tl-slider__text {
+  color: var(--tl-status-warning-text);
+}
+
+.tl-slider__input[aria-invalid="true"]:not(:disabled)::-webkit-slider-thumb {
+  background: var(--tl-status-error-border);
+}
+
+.tl-slider__input[aria-invalid="true"]:not(:disabled)::-moz-range-thumb {
+  background: var(--tl-status-error-border);
+}
+
+.tl-slider__input[aria-invalid="true"]:not(:disabled) ~ .tl-slider__value .tl-slider__text {
+  color: var(--tl-status-error-text);
+}
+
+.tl-slider__input:disabled ~ .tl-slider__value {
+  color: var(--tl-text-disabled);
+}
+
 /* --- snackbar/snackbar.css --- */
 /* Snackbar — Spec 2026-10-13 Welle 4a §5, Konsolidierung Q7. Ein Alert mit eigener Hülle: Farbe, Linie, Titel, Text,
    Schließen-Knopf und Ansage kommen aus tl-alert (data-tl-role, role="alert" nur bei error); hier stehen Lage,
@@ -3241,9 +4928,9 @@ a.tl-field-value:hover {
 
 /* --- status/status.css --- */
 /* Status — docs/skalen.md „Gleiches wird zusammengelegt“ (W10), 3b §10.
-   Eine Zeile, die sagt, was statt Inhalt da ist: lädt (immer ein unbestimmter tl-progress darin), leer
+   Eine Zeile, die sagt, was statt Inhalt da ist: lädt (ein unbestimmter tl-progress oder der Spinner darin), leer
    („Keine Einträge“, „Nichts gefunden“), Fehler (role=alert). Herausgelöst aus tl-select__status; Leser:
-   Select-Popup, Baum, Tabelle. Die Schrift setzt der Ort (tl-type-body). */
+   Select-Popup, Baum, Tabelle, Icon-Picker. Die Schrift setzt der Ort (tl-type-body). */
 
 .tl-status {
   display: flex;
@@ -3259,9 +4946,148 @@ a.tl-field-value:hover {
   color: var(--tl-status-error-text);
 }
 
-/* Der Fortschritt füllt die Zeile; seine Beschriftung sagt, was lädt. */
+/* Der Fortschritt füllt die Zeile; seine Beschriftung sagt, was lädt. Der Spinner behält seine Größe und steht als
+   Flex-Kind am Zeilenanfang, daneben der Text; er braucht keine eigene Regel. */
 .tl-status > .tl-progress {
   flex: 1 1 auto;
+}
+
+/* --- steps/steps.css --- */
+/* Steps — Spec 2026-10-19 Welle 5b §7 (V22): eine Schrittliste für Wizard und JobStatus. Die Scheibe nennt die
+   Position in drei Stufen: aktuell die Marke, erledigt die schwächere Markenfläche, kommend eine Linie. Die Ausrichtung
+   ändert nur die Anordnung, nicht die Farben — sonst wären es wieder zwei Formen. Waagrecht (Wizard) ruht die Scheibe;
+   senkrecht (JobStatus) pulsiert die des aktuellen Schritts, solange er läuft. Der globale Reduced-Motion-Schalter aus
+   base.css beendet den Puls; `alternate` endet bei Deckkraft 0,4, darum setzt nichts einen Fill-Mode. */
+
+.tl-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tl-space-xs) var(--tl-space-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tl-steps[hidden] { display: none; }
+
+.tl-steps--vertical {
+  flex-direction: column;
+  gap: var(--tl-space-2xs);
+}
+
+.tl-steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+
+.tl-steps__disc {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--tl-size-icon-lg);
+  height: var(--tl-size-icon-lg);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-full);
+  background: var(--tl-surface-layer-nested);
+  color: var(--tl-text-secondary);
+}
+
+.tl-steps--vertical .tl-steps__disc {
+  width: var(--tl-size-icon-md);
+  height: var(--tl-size-icon-md);
+}
+
+.tl-steps__item[data-tl-state~="done"] > .tl-steps__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand-subtle);
+  color: var(--tl-text-primary);
+}
+
+.tl-steps__item[aria-current="step"] > .tl-steps__disc {
+  border-color: transparent;
+  background: var(--tl-surface-brand);
+  color: var(--tl-text-on-brand);
+}
+
+.tl-steps--vertical .tl-steps__item[aria-current="step"] > .tl-steps__disc {
+  animation: tl-steps-pulse var(--tl-duration-loop) var(--tl-easing-standard) infinite alternate;
+}
+
+.tl-steps__name {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+.tl-steps__item[aria-current="step"] > .tl-steps__name {
+  color: var(--tl-text-primary);
+}
+
+@keyframes tl-steps-pulse {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+
+/* --- swatch/swatch.css --- */
+/* Swatch — Spec 2026-10-17 Welle 5a §3. Ein Quadrat, das eine Auswahl zeigt: Feldknopf des Farb- und Icon-Pickers
+   und Zelle der Palette (die Zelle des Icon-Rasters ist tl-icon-picker__cell). Das CSS zeichnet nur Geometrie und Rahmen; die Datenfarbe setzt das TSX
+   inline. Leer, Fehler und Warnung sind Attribute (aria-invalid, data-tl-state), keine Klassen. Den Fokusring liefert
+   base.css. */
+
+.tl-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  inline-size: var(--tl-size-control);
+  block-size: var(--tl-size-control);
+  padding: 0;
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-field);
+  color: var(--tl-text-primary);
+}
+.tl-swatch[hidden] { display: none; }
+
+.tl-swatch--wide {
+  inline-size: 100%;
+}
+
+/* Keine Farbe: ein Schachbrett aus Tokens (Grad statt Prozent), nur am Farb-Swatch. */
+.tl-swatch--color[data-tl-state~="empty"] {
+  background:
+    repeating-conic-gradient(var(--tl-surface-field) 0deg 90deg, var(--tl-border-separator) 90deg 180deg);
+  background-size: calc(2 * var(--tl-space-xs)) calc(2 * var(--tl-space-xs));
+}
+
+/* Die Warnung steht vor dem Fehler: bei gleicher Spezifität gewinnt die spätere Regel, und der Fehler
+   muss die Warnung verdrängen (wie in field.css). */
+.tl-swatch[data-tl-state~="warning"] {
+  border-color: var(--tl-status-warning-border);
+}
+
+.tl-swatch[aria-invalid="true"] {
+  border-color: var(--tl-status-error-border);
+}
+
+button.tl-swatch:disabled {
+  border-color: var(--tl-border-disabled);
+  background-color: var(--tl-surface-disabled);
+  color: var(--tl-text-disabled);
+  cursor: default;
+}
+
+/* Der Feldknopf zeigt beim Zeigen den Hof der Auswahlmarken, die Option (Palettenzelle) den starken Hof der Fläche
+   einer Option (skalen 4c S3: der schwache ging als Saum verloren). */
+button.tl-swatch:not(:disabled):hover {
+  box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover);
+}
+
+.tl-swatch[role="option"]:hover {
+  box-shadow: 0 0 0 var(--tl-space-2xs) var(--tl-surface-state-hover-strong);
 }
 
 /* --- table/table.css --- */
@@ -3288,6 +5114,13 @@ a.tl-field-value:hover {
   color: var(--tl-text-primary);
 }
 .tl-table[hidden] { display: none; }
+
+/* Eine füllende Tabelle behält Kopf, drei Zeilen und Fuß (#29922): kürzer zeigt sie nichts Brauchbares. Ist die
+   begrenzte Region, in der sie steht (Dialogkörper, scrollender Panelkörper), dafür zu klein, scrollt die Region,
+   statt dass die Tabelle auf 0 px zusammenfällt. */
+.tl-table.tl-fill {
+  min-height: calc(var(--tl-size-bar) + 3 * var(--tl-size-row) + var(--tl-size-control));
+}
 
 /* --- Filterleiste ---------------------------------------------------------------- */
 
@@ -3627,6 +5460,14 @@ a.tl-field-value:hover {
   padding: 0;
 }
 
+/* Eine Spalte mit einem Befehl je Zeile (RowCommandColumn): der Knopf ist ghost und klein und trägt seinen Rahmen
+   selbst, die Zelle keinen Innenabstand, mittig. Die Java-Klasse landet an Kopf- und Datenzelle. */
+.tl-table__cell--command,
+.tl-table__header-cell.tl-table__cell--command {
+  padding: 0;
+  justify-content: center;
+}
+
 /* Lage, kein Zustand der Bedienung: fixierte und angeheftete Zellen haften (Versatz inline), liegen mit
    layer-raised über den scrollenden und erben die Fläche ihrer Zeile. Die Kante zur scrollenden Fläche
    ist eine Linie border-emphasis, kein Schatten. */
@@ -3727,6 +5568,38 @@ a.tl-field-value:hover {
   white-space: nowrap;
 }
 
+/* Eine Liste von Werten (tl-value-list, lesend ein span) ist ein Lesewert wie ein Text: sie füllt die Zelle und endet
+   mit Ellipse, wo die Spalte endet. :where hält die Spezifität bei (0,2,0), [hidden] unten gewinnt. Die bearbeitende
+   Liste (div, role="group") bleibt eine Spalte von Zeilen. */
+.tl-table__cell > .tl-value-list:where(span) {
+  display: block;
+  inline-size: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* In der Zelle liest sich die Variante untereinander als die eine Zeile, die die Zeile hoch ist: Einträge und Trenner
+   stehen im Fluss. */
+.tl-table__cell .tl-value-list--block > .tl-value-list__item,
+.tl-table__cell .tl-value-list--block > .tl-select__separator {
+  display: inline;
+}
+
+/* Ein Wert mit Zusatzknopf daneben (der Sprachknopf eines mehrsprachigen Texts): eine Reihe in Spaltenbreite, der Wert
+   nimmt den Platz (tl-stack--grow-first) und endet mit Ellipse. */
+.tl-table__cell > .tl-stack--row {
+  inline-size: 100%;
+  min-width: 0;
+}
+
+.tl-table__cell > .tl-stack--grow-first.tl-stack--row > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tl-table__cell > [hidden] {
   display: none;
 }
@@ -3736,6 +5609,9 @@ a.tl-field-value:hover {
    Statusfarbe (3a-Gate). Warnung vor Fehler: der Fehler steht später und gewinnt. */
 .tl-table__cell:has(.tl-field) {
   padding: 0;
+  /* Gestreckt, nicht mittig: das Feld steckt in Hüllen (TLChild, tl-field-group), deren height: 100% nur
+     gegen eine gestreckte Höhe greift — mittig blieb das Feld so hoch wie sein Text (Sichtprüfung 23.10.). */
+  align-items: stretch;
 }
 
 .tl-table__cell .tl-field {
@@ -3748,6 +5624,18 @@ a.tl-field-value:hover {
 
 .tl-table__cell .tl-field:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Ein Feld, in das man schreiben kann, zeigt sich durch eine Linie unten in der Rahmenfarbe der Felder —
+   randlos und durchsichtig sah die Zelle im Bearbeiten-Modus aus wie im Lesen. Auf gezeigter und
+   ausgewählter Zeile hielte border-control 3:1 nicht (bis 2,44), dort trägt border-interactive die Linie.
+   Gleich spezifisch wie Warnung und Fehler, die danach stehen und mit ihrem Rahmen gewinnen. */
+.tl-table__cell .tl-field:not(:disabled, [readonly]) {
+  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-control);
+}
+
+:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly]) {
+  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-interactive);
 }
 
 .tl-table__cell .tl-field[data-tl-state~="warning"] {
@@ -3849,16 +5737,6 @@ a.tl-field-value:hover {
 .tl-table__body > [role="row"]:has(> .tl-status) {
   position: sticky;
   inset-inline-start: 0;
-}
-
-/* --- Ablehnung beim Ziehen ------------------------------------------------------- */
-
-/* Warum das Ziel unter dem Zeiger ablehnt: ein tl-popover (Lage aus bridge/popover.ts), Text und Rand
-   in Fehlerfarbe; der Zeiger geht hindurch. */
-.tl-table__hint {
-  border-color: var(--tl-status-error-border);
-  color: var(--tl-status-error-text);
-  pointer-events: none;
 }
 
 /* --- tabs/tabs.css --- */
@@ -4163,7 +6041,7 @@ a.tl-field-value:hover {
    ihnen, wann sie kompakt sind (iconOnly) — keine Regel hier liest tl-button__label. Trenner sind
    tl-divider--vertical (Part Divider, #29787) und tragen die Marke tl-toolbar__separator, an der das Control
    ihre Breite misst — ohne eigene Regel. Zustände sind Attribute: data-tl-overflow (kollabiert an diesem Ende),
-   data-tl-compact (Icons statt Label). */
+   data-tl-compact (Icons statt Label), data-tl-break (Trenner am Umbruch einer umbrechenden Leiste). */
 
 .tl-toolbar {
   display: flex;
@@ -4187,6 +6065,18 @@ a.tl-field-value:hover {
   justify-content: flex-start;
 }
 
+/* Eine Leiste, die nicht kollabiert, sondern umbricht (Wysiwyg-Editor, tl-rich-text): die Gruppen gehen ganz in die
+   nächste Zeile; der Abstand zwischen den Zeilen ist der zwischen den Einträgen. */
+.tl-toolbar--wrap {
+  flex-wrap: wrap;
+}
+
+/* Ein Trenner, an dem die Leiste umbricht, trennt nichts: er steht am Zeilenende. Das Control misst die Zeilen und
+   setzt data-tl-break; der Trenner behält seinen Platz, damit das Verbergen keinen neuen Umbruch auslöst. */
+.tl-toolbar--wrap > .tl-divider[data-tl-break] {
+  visibility: hidden;
+}
+
 .tl-toolbar__group {
   display: flex;
   align-items: center;
@@ -4196,6 +6086,85 @@ a.tl-field-value:hover {
 
 .tl-toolbar__group > :empty {
   display: none;
+}
+
+/* Eine Gruppe, die eine eingebettete Toolbar hält (die Befehle des Servers in der Leiste des Wysiwyg-Editors),
+   schrumpft unter ihren Inhalt: erst dann bekommt die eingebettete Toolbar weniger als ihre natürliche Breite und
+   kollabiert in ihren Überlauf, statt die Leiste über den Rand zu schieben. */
+.tl-toolbar__group:has(> .tl-toolbar) {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* --- tooltip/tooltip.css --- */
+/* Tooltip — Spec 2026-10-20 Welle 5d §5. Der Hinweis an einem Element (bridge/tooltip-host.ts, TooltipPopover.tsx):
+   die einzige invertierte Fläche des Pakets — ein Hinweis, kein Menü. Die Lage setzt floating-ui inline; hier
+   stehen Fläche, Ebene, Grenzen und Abstände. Die Schrift tragen die Typo-Klassen an Überschrift und Text.
+   Der Schatten steht am Tooltip (box-shadow aus shadow-popover, Plan-Review K4), der Pfeil hat keinen:
+   drop-shadow() nimmt die zweischichtige Schattenliste nicht. Ebene layer-tooltip: über dem Popover, in dem das
+   erklärte Element liegen kann (Menüeintrag, Option), und über dem Toast. */
+
+@keyframes tl-tooltip-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tl-tooltip {
+  z-index: var(--tl-layer-tooltip);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-width: var(--tl-size-13);
+  margin: 0;
+  padding: 0;
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-inverse);
+  box-shadow: var(--tl-shadow-popover);
+  color: var(--tl-text-inverse);
+  pointer-events: none;
+  animation: tl-tooltip-in var(--tl-duration-fast) var(--tl-easing-entrance);
+}
+.tl-tooltip[hidden] { display: none; }
+
+/* Interaktiv (Text mit Link, Text zum Kopieren): der Zeiger darf hinein, der Text ist auswählbar. */
+.tl-tooltip[data-tl-state~="interactive"] {
+  pointer-events: auto;
+  cursor: text;
+  user-select: text;
+}
+
+/* Die Überschrift schließt oben an, der Text darunter trägt den Abstand zu ihr. */
+.tl-tooltip__caption {
+  padding: var(--tl-space-2xs) var(--tl-space-sm) 0;
+}
+
+/* Lange Wörter und Adressen brechen um, statt die Breite zu sprengen. */
+.tl-tooltip__body {
+  padding: var(--tl-space-2xs) var(--tl-space-sm);
+  overflow-wrap: break-word;
+  white-space: normal;
+  text-align: start;
+}
+
+/* Erlaubtes HTML vom Server erbt Farbe und Schrift des Tooltips; der erste und letzte Block schließen bündig an. */
+.tl-tooltip__body * {
+  color: inherit;
+}
+
+.tl-tooltip__body > :first-child {
+  margin-block-start: 0;
+}
+
+.tl-tooltip__body > :last-child {
+  margin-block-end: 0;
+}
+
+.tl-tooltip__body :is(ol, ul) {
+  padding-inline-start: var(--tl-space-sm);
+}
+
+.tl-tooltip__arrow {
+  fill: var(--tl-surface-inverse);
 }
 
 /* --- tree/tree.css --- */
@@ -4269,10 +6238,63 @@ a.tl-field-value:hover {
   white-space: nowrap;
 }
 
+/* --- value-list/value-list.css --- */
+/* Werteliste — Spec 5c §7 (V28), Vertrag value-list.contract.md. Leser ist TLValueList.
+   Die Werte eines mehrwertigen Felds. Lesend (span) sind sie ein Text in einer Zeile, getrennt durch „, “
+   (tl-select__separator, ausgeschrieben, damit kopiert wird, was zu sehen ist); die Variante --block stellt sie
+   untereinander, dann trennt der Zeilenumbruch und der Trenner fällt aus dem Bild. Bearbeitend (div, role="group")
+   steht jeder Wert in einer Zeile mit Griff und Entfernen-Knopf (Part Button), darunter der Hinzufügen-Knopf.
+   Gezogen, Einfügemarke: drag.css über data-tl-state an der Zeile. In der Tabellenzelle füllt table.css. */
+
+.tl-value-list {
+  min-width: 0;
+  color: var(--tl-text-primary);
+}
+
+/* Der Trenner in der Schriftfarbe wie im Select (select.css): derselbe Trenner, dasselbe Bild. */
+.tl-value-list > .tl-select__separator {
+  white-space: pre;
+}
+
+.tl-value-list--block {
+  display: flex;
+  flex-direction: column;
+}
+
+.tl-value-list--block > .tl-select__separator {
+  display: none;
+}
+
+/* Bearbeitend: die Zeilen und der Hinzufügen-Knopf folgen untereinander. */
+.tl-value-list[role="group"] {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: var(--tl-space-2xs);
+  inline-size: 100%;
+}
+
+.tl-value-list[hidden] { display: none; }
+
+.tl-value-list__row {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  inline-size: 100%;
+  min-width: 0;
+}
+.tl-value-list__row[hidden] { display: none; }
+
+.tl-value-list__row > .tl-value-list__item {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* --- wizard/wizard.css --- */
 /* Wizard — Spec 2026-10-16 Welle 4c §8 (Q19: eigenes Muster, auf Tokens). Oben, was zeigt, wo man ist — Zähler,
-   Fortschritt, Schrittliste —, darunter der Schritt. Die Scheibe nennt die Position in drei Stufen: aktuell die
-   Marke, erledigt die schwächere Markenfläche, kommend eine Linie. Der Schritt gleitet beim Wechsel (slide.css). */
+   Fortschritt, Schrittliste —, darunter der Schritt. Die Schrittliste ist der Block tl-steps (steps.css, Spec 5b §7);
+   der Wizard zeigt ihn waagrecht. Der Schritt gleitet beim Wechsel (slide.css). */
 
 .tl-wizard {
   display: flex;
@@ -4304,58 +6326,6 @@ a.tl-field-value:hover {
 .tl-wizard__progress > * {
   flex: 1 1 auto;
   min-width: 0;
-}
-
-.tl-wizard__steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--tl-space-xs) var(--tl-space-xl);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tl-wizard__step-item {
-  display: flex;
-  align-items: center;
-  gap: var(--tl-space-xs);
-}
-
-.tl-wizard__disc {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: var(--tl-size-icon-lg);
-  height: var(--tl-size-icon-lg);
-  border: var(--tl-border-width-sm) solid var(--tl-border-control);
-  border-radius: var(--tl-radius-full);
-  background: var(--tl-surface-layer-nested);
-  color: var(--tl-text-secondary);
-}
-
-.tl-wizard__step-item[data-tl-state~="done"] > .tl-wizard__disc {
-  border-color: transparent;
-  background: var(--tl-surface-brand-subtle);
-  color: var(--tl-text-primary);
-}
-
-.tl-wizard__step-item[aria-current="step"] > .tl-wizard__disc {
-  border-color: transparent;
-  background: var(--tl-surface-brand);
-  color: var(--tl-text-on-brand);
-}
-
-.tl-wizard__step-name {
-  display: flex;
-  align-items: center;
-  gap: var(--tl-space-xs);
-  color: var(--tl-text-secondary);
-  white-space: nowrap;
-}
-
-.tl-wizard__step-item[aria-current="step"] > .tl-wizard__step-name {
-  color: var(--tl-text-primary);
 }
 
 /* Der Bereich des Schritts: begrenzt, damit ein füllender Schritt hier seine Höhe auflöst; er positioniert die Kopie
@@ -4403,4 +6373,4 @@ a.tl-field-value:hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:198ad497809d494ee74e07f936f69397f2ce07ddf171bfd74c3f077d46340334 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:5eee426e61fb6a821f76758694a780695f8f380a9f5fecf1ac3e1bce9c3b9ef7 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

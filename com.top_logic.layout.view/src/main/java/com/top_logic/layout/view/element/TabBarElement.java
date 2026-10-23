@@ -28,6 +28,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
+import com.top_logic.layout.view.routing.WithFinalTitle;
 
 /**
  * UIElement that wraps {@link ReactTabBarControl}.
@@ -82,7 +83,7 @@ public class TabBarElement implements UIElement {
 	 * Configuration for a single tab.
 	 */
 	@TagName("tab")
-	public interface TabConfig extends ContentSectionConfig {
+	public interface TabConfig extends ContentSectionConfig, WithFinalTitle {
 
 		/** Configuration name for {@link #getRoute()}. */
 		String ROUTE = "route";
@@ -117,7 +118,8 @@ public class TabBarElement implements UIElement {
 	public TabBarElement(InstantiationContext context, Config config) {
 		_tabs = new ArrayList<>();
 		for (TabConfig tabConfig : config.getTabs()) {
-			_tabs.add(new TabEntry(ContentSection.of(context, tabConfig), tabConfig.getRoute()));
+			_tabs.add(new TabEntry(ContentSection.of(context, tabConfig), tabConfig.getRoute(),
+				tabConfig.getFinalTitle()));
 		}
 		_activeTab = config.getActiveTab();
 		_cssClass = config.getCssClass();
@@ -154,6 +156,7 @@ public class TabBarElement implements UIElement {
 			String effectiveRoute = SidebarElement.resolveRoute(entry._route(), section.getId());
 			if (effectiveRoute != null) {
 				tabDef.withRoute(effectiveRoute);
+				tabDef.withFinalTitle(entry._finalTitle());
 			}
 			tabDefs.add(tabDef);
 		}
@@ -179,6 +182,6 @@ public class TabBarElement implements UIElement {
 	/**
 	 * A configured tab, as far as it is the same for every session.
 	 */
-	private record TabEntry(ContentSection _section, String _route) {
+	private record TabEntry(ContentSection _section, String _route, boolean _finalTitle) {
 	}
 }

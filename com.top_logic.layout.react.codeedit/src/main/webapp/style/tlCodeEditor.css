@@ -1,37 +1,67 @@
+/*
+ * Code editor on the design system: the root is a field (tl-field: border, hover, error through
+ * aria-invalid) with code text (tl-type-code); this sheet only holds what the field cannot know,
+ * the layout of the editor inside it and the classes of CodeMirror, a library whose classes cannot
+ * be replaced. The sheet stays unlayered: it must beat the base theme CodeMirror writes into the
+ * page at runtime, which is unlayered too and would win against every rule of a layer.
+ */
 .tlCodeEditor {
 	min-height: 160px;
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--border-subtle);
-	border-radius: var(--corner-radius);
-	background: var(--field);
+	/* The gutter and the scroller reach the border of the frame: no padding at the sides. */
+	padding: 0;
+}
+
+.tlCodeEditor[hidden] {
+	display: none;
 }
 
 .tlCodeEditor .cm-editor {
 	flex: 1;
-	font-size: var(--body-02-font-size);
-	line-height: var(--body-02-line-height);
 }
 
-.tlCodeEditor:focus-within {
-	border-color: var(--focus);
-	box-shadow: 0 0 0 1px var(--focus);
-}
-
-.tlCodeEditor--error {
-	border-color: var(--support-error);
-}
-
-.tlCodeEditor .cm-editor.cm-focused {
-	outline: none;
-}
-
+/*
+ * The text of the editor is the code text of the root: CodeMirror sets a font of its own on the
+ * scroller, which hands the root's font down instead.
+ */
 .tlCodeEditor .cm-scroller {
 	overflow: auto;
+	font-family: inherit;
+	line-height: inherit;
 }
 
-.tlCodeEditor .cm-content {
-	font-family: var(--font-family-mono);
+/*
+ * The focus ring of the keyboard focus of the design system, drawn inside the frame on the editor,
+ * which does not scroll: the content scrolls inside the scroller, so a ring on it would be mostly
+ * out of view in a long or wide document. The content gives up the ring of the base sheet and
+ * CodeMirror's own mark of the focus is transparent.
+ */
+.tlCodeEditor .cm-editor.cm-focused {
+	outline-color: transparent;
+}
+
+.tlCodeEditor .cm-content:focus-visible {
+	outline-color: transparent;
+}
+
+/*
+ * The ring is drawn by a layer over the editor: CodeMirror's line numbers are sticky and opaque and
+ * would cover the left edge of a ring on the editor itself. The line numbers stay above the
+ * scrolling content (raised), the ring above them (sticky).
+ */
+.tlCodeEditor .cm-gutters {
+	z-index: var(--tl-layer-raised);
+}
+
+.tlCodeEditor .cm-editor:has(.cm-content:focus-visible)::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: var(--tl-layer-sticky);
+	pointer-events: none;
+	outline: var(--tl-focus-width) solid var(--tl-focus-ring);
+	outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 /*
@@ -53,24 +83,24 @@
 }
 
 .tlCodeEditor .cm-gutters {
-	background: var(--layer);
-	border-right: 1px solid var(--border-subtle);
-	color: var(--text-secondary);
+	background: var(--tl-surface-layer);
+	border-right: var(--tl-border-width-sm) solid var(--tl-border-separator);
+	color: var(--tl-text-secondary);
 }
 
 .tlCodeEditor .cm-activeLineGutter {
-	background: var(--layer-accent);
-	color: var(--layer-accent-text);
+	background: var(--tl-surface-interactive-selected);
+	color: var(--tl-text-primary);
 }
 
 .tlCodeEditor .cm-activeLine {
-	background: var(--background-selected);
+	background: var(--tl-surface-interactive-selected);
 }
 
 .tlCodeEditor .cm-diagnostic-error {
-	border-left-color: var(--support-error);
+	border-left-color: var(--tl-status-error-border);
 }
 
 .tlCodeEditor .cm-diagnostic-warning {
-	border-left-color: var(--support-warning);
+	border-left-color: var(--tl-status-warning-border);
 }

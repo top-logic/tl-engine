@@ -1491,8 +1491,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	// -- Column selection dialog --
 
 	/**
-	 * Opens the column selection: which columns the table displays, in which order, and which of
-	 * them it freezes.
+	 * Opens the column selection: which columns the table displays, in which order, which of them
+	 * it freezes, and which column the rows are grouped by.
 	 *
 	 * <p>
 	 * The dialog edits a working copy in a {@link ReactColumnSelectControl} and applies it in one
@@ -1513,7 +1513,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Resources resources = Resources.getInstance();
 
 		ReactColumnSelectControl selection =
-			new ReactColumnSelectControl(context, _view.columnOptions(), lockedColumnNames());
+			new ReactColumnSelectControl(context, _view.columnOptions(), lockedColumnNames(), getGroupedColumn(),
+				!_treeMode);
 		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
 		ReactWindowControl window = new ReactWindowControl(context,
 			resources.getString(I18NConstants.JS_TABLE_COLUMNS), DisplayDimension.px(460),
@@ -1523,7 +1524,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		window.setHeight(DisplayDimension.percent(70));
 		window.setChild(selection);
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
-			applyColumns(selection.visibleColumns(), selection.lockedColumns());
+			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumn());
 			dialogs.closeTopDialog(DialogResult.ok(null));
 			return HandlerResult.DEFAULT_RESULT;
 		});
@@ -1547,17 +1548,23 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Applies a new set of displayed columns and the columns to freeze, and re-renders.
+	 * Applies a new set of displayed columns, the columns to freeze and the grouping, and re-renders.
 	 *
 	 * @param columns
 	 *        The columns to display, in display order.
 	 * @param lockedColumns
 	 *        The displayed columns to freeze; the table freezes up to the last of them in the new order.
+	 * @param groupedColumn
+	 *        The column to group the rows by, displayed or not; {@code null} or empty for none.
 	 */
-	protected void applyColumns(List<String> columns, List<String> lockedColumns) {
+	protected void applyColumns(List<String> columns, List<String> lockedColumns, String groupedColumn) {
+		GroupSpec grouping = groupSpec(groupedColumn);
 		rearrange(() -> {
 			_view.setColumnOrder(columns);
 			_view.setFrozenColumnCount(frozenPrefixOf(lockedColumns));
+			if (!grouping.columns().equals(_view.state().getGrouping().columns())) {
+				_view.group(grouping);
+			}
 		});
 	}
 
@@ -1726,11 +1733,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        The name of the column to group by.
 	 */
 	public void setGroupedColumn(String column) {
-		GroupSpec grouping = StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
+		GroupSpec grouping = groupSpec(column);
 		if (grouping.columns().equals(_view.state().getGrouping().columns())) {
 			return;
 		}
 		rearrange(() -> _view.group(grouping));
+	}
+
+	/**
+	 * The grouping by the given column, {@link GroupSpec#NONE} for a {@code null} or empty one.
+	 */
+	private static GroupSpec groupSpec(String column) {
+		return StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
 	}
 
 	/**

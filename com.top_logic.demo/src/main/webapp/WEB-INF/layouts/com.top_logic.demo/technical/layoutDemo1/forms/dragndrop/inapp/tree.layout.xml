@@ -42,6 +42,11 @@
 	};$draggedObjects.foreach(draggedObject -> $handleDrop($draggedObject,$referenceRow));}
 	]]></handleDrop>
 			</dropTarget>
+			<dropTarget class="com.top_logic.model.search.providers.OrderedTreeDropByExpression"
+				canDrop="true"
+				handleDrop="draggedObjects -> parent -> reference -> info(&quot;Dropped &quot; + $draggedObjects + &quot; into &quot; + $parent + &quot; before &quot; + $reference)"
+				in-transaction="false"
+			/>
 		</dropTargets>
 	</arguments>
 </config:template-call>

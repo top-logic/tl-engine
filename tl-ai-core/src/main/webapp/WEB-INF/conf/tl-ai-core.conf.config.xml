@@ -66,11 +66,6 @@
 						See the developer article ai/security/tool-access-configuration.
 					-->
 					<module key="com.top_logic.tl.ai.core.security.AiToolAccessService$Module" value="true"/>
-					<!--
-						Checks the agent names of the tool access policy after the initial data import,
-						which creates the agent records a policy may name (#663).
-					-->
-					<module key="com.top_logic.tl.ai.core.security.AgentNameCheck$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -95,8 +90,23 @@
 		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
 			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService"/>
 		</config>
-		<config service-class="com.top_logic.tl.ai.core.security.AgentNameCheck">
-			<instance class="com.top_logic.tl.ai.core.security.AgentNameCheck"/>
+
+		<!--
+			Checks the agent names of the tool access policy after the initial data import, which
+			creates the agent records a policy may name (#663). An unknown agent stops the start.
+		-->
+		<config service-class="com.top_logic.util.StartupHooks">
+			<instance class="com.top_logic.util.StartupHooks">
+				<hooks>
+					<hook id="agent-name-check"
+						config:position="after"
+						config:reference="initial-data"
+						on-error="fail"
+					>
+						<action class="com.top_logic.tl.ai.core.security.AgentNameCheck"/>
+					</hook>
+				</hooks>
+			</instance>
 		</config>
 
 		<!--

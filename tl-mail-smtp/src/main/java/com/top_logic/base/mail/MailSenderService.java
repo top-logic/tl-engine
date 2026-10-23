@@ -64,7 +64,9 @@ import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.func.IfTrue;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.version.Version;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
@@ -80,6 +82,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Label("Mail sender (SMTP)")
+@ServiceCategory.Of(InterfacesCategory.class)
 public final class MailSenderService extends ConfiguredManagedClass<MailSenderService.Config> implements Reloadable {
 
 	private Config _config;

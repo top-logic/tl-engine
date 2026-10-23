@@ -40,7 +40,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
 import com.top_logic.model.search.expr.parser.ParseException;
-import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
@@ -275,25 +274,6 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	private TLObject newObject(String className) {
 		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:" + className);
 		return DynamicModelService.getFactoryFor("TestTLScriptSecurity").createObject(type);
-	}
-
-	/**
-	 * Executes the given script with its inputs passed on <em>unfiltered</em>, while the result is
-	 * still filtered like in {@link QueryExecutor#executeWith(Args)}.
-	 *
-	 * <p>
-	 * The tests of this class pass objects as inputs that the acting user must not discover, to test
-	 * the checks of the script itself (permissions of write operations, referers of an unreadable
-	 * object, ...). Since the inputs of a secured script are restricted to discoverable objects (R4
-	 * of the Discover specification), such an object would arrive as {@code null} and the tests would
-	 * no longer test what they are meant to. The input filter itself is tested in
-	 * {@link TestDiscoverRight}.
-	 * </p>
-	 */
-	protected static Object execute(SearchExpression search, Object... args) {
-		QueryExecutor executor = QueryExecutor.compile(kb(), model(), search);
-		Object result = executor.executeIntermediate(executor.context(), Args.some(args));
-		return SearchExpression.filterSecurity(result);
 	}
 
 	private Transaction beginTx() {

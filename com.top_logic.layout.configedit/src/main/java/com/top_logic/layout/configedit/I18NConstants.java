@@ -26,6 +26,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey APPLY;
 
 	/**
+	 * @en Save
+	 */
+	public static ResKey SAVE;
+
+	/**
 	 * @en Cancel
 	 */
 	public static ResKey CANCEL;

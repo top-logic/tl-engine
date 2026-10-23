@@ -32,6 +32,7 @@ import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
@@ -49,6 +50,7 @@ import com.top_logic.tl.ai.core.provider.ProviderExposesModelConstraint;
 import com.top_logic.tl.ai.core.provider.ProviderFieldMode;
 import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
 import com.top_logic.tl.ai.core.security.SecurityContextFactory;
+import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * Which agent runs how: the model each agent runs on, its execution parameters, how many runs the
@@ -74,6 +76,7 @@ import com.top_logic.tl.ai.core.security.SecurityContextFactory;
 	// Every model reference is checked against its providers at start.
 	LLMProviderService.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeService.Config<?>> {
 
 	/**

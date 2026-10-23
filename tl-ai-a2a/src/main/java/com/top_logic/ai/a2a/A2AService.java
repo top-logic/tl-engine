@@ -33,6 +33,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
@@ -44,6 +45,7 @@ import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointSecret;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.observe.ObserverQueue;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
@@ -62,6 +64,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 	ToolRegistryService.Module.class,
 	ServletContextService.Module.class
 })
+@ServiceCategory.Of(AICategory.class)
 public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 
 	/**

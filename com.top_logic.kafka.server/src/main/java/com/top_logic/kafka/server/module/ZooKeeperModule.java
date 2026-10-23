@@ -11,7 +11,9 @@ import org.apache.zookeeper.server.ServerConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.kafka.server.starter.ZooKeeperStarter;
 
 /**
@@ -26,6 +28,7 @@ import com.top_logic.kafka.server.starter.ZooKeeperStarter;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("ZooKeeper server")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class ZooKeeperModule extends ManagedClass {
 
 	/**

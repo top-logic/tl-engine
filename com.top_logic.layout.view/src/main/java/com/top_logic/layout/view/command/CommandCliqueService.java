@@ -19,7 +19,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
@@ -43,6 +45,7 @@ import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
  *           position of its group.
  */
 @Label("Toolbar cliques")
+@ServiceCategory.Of(UICategory.class)
 public class CommandCliqueService extends ConfiguredManagedClass<CommandCliqueService.Config> {
 
 	/**

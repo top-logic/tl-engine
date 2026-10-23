@@ -23,7 +23,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
@@ -60,6 +62,7 @@ import com.top_logic.basic.time.CalendarUtil;
  * @author    <a href="mailto:fma@top-logic.com">Frank Mausz</a>
  */
 @Label("File logging")
+@ServiceCategory.Of(OperationsCategory.class)
 public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 
 	/**

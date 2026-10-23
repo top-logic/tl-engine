@@ -1,0 +1,371 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.layout.view.admin.system;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
+import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.version.SoftwareModule;
+import com.top_logic.layout.admin.component.TLServiceUtils;
+import com.top_logic.layout.configedit.ConfigEditorControl;
+import com.top_logic.model.search.expr.config.operations.AdminOnly;
+import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
+import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.util.Resources;
+import com.top_logic.util.TLCollator;
+
+/**
+ * TL-Script functions about the application services (runtime modules): what a view administering
+ * a service displays of it.
+ *
+ * <p>
+ * A service is given by its module, e.g. the row of a table of the services a command was
+ * activated for. Every function accepts no module at all and answers with nothing, so that a channel computed
+ * from a module that is not yet known stays empty.
+ * </p>
+ *
+ * <pre>
+ * &lt;derived-channel name="changed"
+ *   expr="serviceConfigurationChanged($module)"
+ *   inputs="module, services"/&gt;
+ * </pre>
+ *
+ * @implNote Every public static method here is a TL-Script function named by the
+ *           {@link ScriptPrefix} of this class followed by the capitalized method name, so
+ *           {@link #configuration(BasicRuntimeModule)} is called <code>serviceConfiguration</code>.
+ *           The functions read the state of the services, which only an administrator may inspect
+ *           from a script entered interactively.
+ */
+@ScriptPrefix(ServiceFunctions.PREFIX)
+@AdminOnly
+public class ServiceFunctions extends TLScriptFunctions {
+
+	/** Prefix all function names of this class start with. */
+	public static final String PREFIX = "service";
+
+	/** Marker of an entry in a list of services in a message. */
+	private static final String LIST_ITEM = "\u2022 ";
+
+	/**
+	 * The services of the given snapshot, sorted by their label.
+	 *
+	 * @param snapshot
+	 *        The services as read at one point in time, e.g. the value a service command wrote to a
+	 *        channel.
+	 * @return The modules of the services; the ones of a snapshot taken now without a snapshot.
+	 */
+	@Label("Services of a snapshot")
+	public static List<BasicRuntimeModule<?>> list(ServiceSnapshot snapshot) {
+		return (snapshot == null ? ServiceSnapshot.current() : snapshot).getModules();
+	}
+
+	/**
+	 * The status of the given service as the given snapshot recorded it: running, running but
+	 * requiring a restart to apply a changed configuration, or stopped.
+	 *
+	 * @param snapshot
+	 *        The services as read at one point in time; without a snapshot, the current status is
+	 *        given.
+	 * @param module
+	 *        The module of the service.
+	 * @return What the user reads for the status, <code>null</code> without a module.
+	 */
+	@Label("Status of a service")
+	public static String status(ServiceSnapshot snapshot, BasicRuntimeModule<?> module) {
+		if (module == null) {
+			return null;
+		}
+		ServiceSnapshot.Status status =
+			snapshot == null ? ServiceSnapshot.Status.of(module) : snapshot.status(module);
+		return Resources.getInstance().getString(status.getLabel());
+	}
+
+	/**
+	 * The functional category of the given service.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return The label of the category the implementation of the service is assigned to,
+	 *         <code>null</code> without a module.
+	 *
+	 * @see ServiceCategory
+	 * @see #categoryCompare(String, String)
+	 */
+	@Label("Category of a service")
+	public static String category(BasicRuntimeModule<?> module) {
+		if (module == null) {
+			return null;
+		}
+		return categoryLabel(ServiceCategory.of(module.getImplementation()));
+	}
+
+	/**
+	 * Compares two service categories given by their labels, in the order the categories declare.
+	 *
+	 * <p>
+	 * Categories of the same position are ordered by their labels. A label that names no category is
+	 * ordered like a category without a declared position.
+	 * </p>
+	 *
+	 * @param left
+	 *        The label of the first category, see {@link #category(BasicRuntimeModule)}.
+	 * @param right
+	 *        The label of the second category.
+	 * @return A negative number, zero, or a positive number, if the first category comes before, at
+	 *         the same position, or after the second.
+	 */
+	@Label("Compare service categories")
+	public static double categoryCompare(String left, String right) {
+		int byOrder = Integer.compare(categoryOrder(left), categoryOrder(right));
+		if (byOrder != 0) {
+			return byOrder;
+		}
+		return Integer.signum(String.valueOf(left).compareTo(String.valueOf(right)));
+	}
+
+	/**
+	 * The tooltip of a service category given by its label.
+	 *
+	 * @param label
+	 *        The label of the category, see {@link #category(BasicRuntimeModule)}.
+	 * @return The description of the category, <code>null</code> if the label names no category or
+	 *         the category has no description.
+	 */
+	@Label("Tooltip of a service category")
+	public static String categoryTooltip(String label) {
+		Class<? extends ServiceCategory> category = categoryOf(label);
+		if (category == null) {
+			return null;
+		}
+		return Resources.getInstance().getString(ServiceCategory.label(category).tooltipOptional());
+	}
+
+	/**
+	 * The position of the category with the given label in the current language.
+	 */
+	private static int categoryOrder(String label) {
+		Class<? extends ServiceCategory> category = categoryOf(label);
+		return category == null ? ServiceCategory.DEFAULT_ORDER : ServiceCategory.order(category);
+	}
+
+	/**
+	 * The category with the given label in the current language, <code>null</code> if there is
+	 * none.
+	 */
+	private static Class<? extends ServiceCategory> categoryOf(String label) {
+		if (label == null) {
+			return null;
+		}
+		for (Class<?> type : TypeIndex.getInstance().getSpecializations(ServiceCategory.class, true, true, true)) {
+			@SuppressWarnings("unchecked")
+			Class<? extends ServiceCategory> category = (Class<? extends ServiceCategory>) type;
+			if (label.equals(categoryLabel(category))) {
+				return category;
+			}
+		}
+		return null;
+	}
+
+	private static String categoryLabel(Class<? extends ServiceCategory> category) {
+		return Resources.getInstance().getString(ServiceCategory.label(category));
+	}
+
+	/**
+	 * The software module the given service is delivered with.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return The name of the software module providing the implementation of the service - its
+	 *         human-readable name, if the application knows one, otherwise its artifact name;
+	 *         <code>null</code> without a module.
+	 *
+	 * @see SoftwareModule
+	 */
+	@Label("Software module of a service")
+	public static String module(BasicRuntimeModule<?> module) {
+		return module == null ? null : SoftwareModule.of(module.getImplementation()).label();
+	}
+
+	/**
+	 * The label of the given service, the configured label of its implementation class.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return The label, <code>null</code> without a module.
+	 */
+	@Label("Label of a service")
+	public static String label(BasicRuntimeModule<?> module) {
+		return module == null ? null : ServiceSnapshot.label(module);
+	}
+
+	/**
+	 * The technical name of the given service, which identifies it, e.g. in the address of a page
+	 * displaying it.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return The qualified name of the implementation class of the service, <code>null</code>
+	 *         without a module.
+	 *
+	 * @see #byName(String)
+	 */
+	@Label("Name of a service")
+	public static String name(BasicRuntimeModule<?> module) {
+		return module == null ? null : module.getImplementation().getName();
+	}
+
+	/**
+	 * The service of the given technical name.
+	 *
+	 * @param name
+	 *        The name of the service, see {@link #name(BasicRuntimeModule)}.
+	 * @return The module of the service, <code>null</code> if there is no service of that name.
+	 */
+	@Label("Service by its name")
+	public static BasicRuntimeModule<?> byName(String name) {
+		if (name == null) {
+			return null;
+		}
+		return ModuleUtil.getAllModules().stream()
+			.filter(module -> module.getImplementation().getName().equals(name))
+			.findFirst()
+			.orElse(null);
+	}
+
+	/**
+	 * Whether the given service is running.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return Whether the service is started, <code>false</code> without a module.
+	 */
+	@Label("Whether a service is running")
+	public static boolean active(BasicRuntimeModule<?> module) {
+		return module != null && module.isActive();
+	}
+
+	/**
+	 * The services stopped and started together with the given service, because they depend on it
+	 * directly or indirectly.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return The labels of the dependent services in alphabetical order, one per line and each
+	 *         marked as a list item, for a confirmation message; <code>null</code> if no service
+	 *         depends on the given one, or without a module.
+	 */
+	@Label("Services depending on a service")
+	public static String dependents(BasicRuntimeModule<?> module) {
+		if (module == null) {
+			return null;
+		}
+		List<String> labels = ModuleUtil.INSTANCE.getAllDependents(module, false).stream()
+			.map(ServiceSnapshot::label)
+			.sorted(new TLCollator())
+			.toList();
+		if (labels.isEmpty()) {
+			return null;
+		}
+		return labels.stream()
+			.map(label -> LIST_ITEM + label)
+			.collect(Collectors.joining("\n"));
+	}
+
+	/**
+	 * An editable copy of the configuration of the given service.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return A copy of the configuration that becomes effective with the next start of the
+	 *         service, <code>null</code> if the service has no configuration, and without a module.
+	 *
+	 * @see TLServiceUtils#getServiceConfiguration(BasicRuntimeModule)
+	 */
+	@Label("Configuration of a service")
+	public static ServiceConfiguration<? extends ManagedClass> configuration(BasicRuntimeModule<?> module) {
+		return module == null ? null : TLServiceUtils.getServiceConfiguration(module);
+	}
+
+	/**
+	 * Whether the configuration of the given service may be changed in the application.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return Whether the service {@link #hasSettings(BasicRuntimeModule) has settings} and its
+	 *         implementation does not refuse a configuration changed in the application,
+	 *         <code>false</code> without a module.
+	 *
+	 * @see TLServiceUtils#isInAppEditable(BasicRuntimeModule)
+	 */
+	@Label("Whether the configuration of a service can be edited")
+	public static boolean configurationEditable(BasicRuntimeModule<?> module) {
+		return module != null && TLServiceUtils.isInAppEditable(module) && hasSettings(module);
+	}
+
+	/**
+	 * Whether the given service has settings a configuration form displays.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return Whether the service has a configuration with a property a configuration form
+	 *         displays, <code>false</code> without a module.
+	 *
+	 * @see ConfigEditorControl#hasDisplayedProperty(com.top_logic.basic.config.ConfigurationItem)
+	 */
+	@Label("Whether a service has settings")
+	public static boolean hasSettings(BasicRuntimeModule<?> module) {
+		if (module == null) {
+			return false;
+		}
+		ServiceConfiguration<?> config = TLServiceUtils.getServiceConfiguration(module);
+		return config != null && ConfigEditorControl.hasDisplayedProperty(config);
+	}
+
+	/**
+	 * Whether a configuration of the given service is stored in the application, replacing the
+	 * configuration of the application's configuration files.
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return Whether a stored configuration exists that a reset would remove, <code>false</code>
+	 *         without a module.
+	 *
+	 * @see TLServiceUtils#hasInAppConfiguration(BasicRuntimeModule)
+	 */
+	@Label("Whether a configuration of a service is stored in the application")
+	public static boolean configurationStored(BasicRuntimeModule<?> module) {
+		return module != null && TLServiceUtils.hasInAppConfiguration(module);
+	}
+
+	/**
+	 * Whether the configuration of the given service has changed since the service was started, so
+	 * that it must be restarted to apply it.
+	 *
+	 * <p>
+	 * The configuration counts as changed while the configuration stored in the application differs
+	 * from its state when the service was started. Storing that state again, or discarding the
+	 * changes, makes it unchanged.
+	 * </p>
+	 *
+	 * @param module
+	 *        The module of the service.
+	 * @return Whether the configuration has changed, <code>false</code> without a module.
+	 *
+	 * @see BasicRuntimeModule#isConfigurationChanged()
+	 */
+	@Label("Whether the configuration of a service has changed since its start")
+	public static boolean configurationChanged(BasicRuntimeModule<?> module) {
+		return module != null && module.isConfigurationChanged();
+	}
+
+}

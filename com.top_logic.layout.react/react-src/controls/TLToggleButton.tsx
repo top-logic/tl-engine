@@ -30,7 +30,7 @@ export interface TLToggleButtonProps {
  * {@code label}, {@code active}, and {@code disabled} as props to customise behaviour.</p>
  *
  * <p>Inside a menu ({@code ButtonDefaults.appearance} {@code menu-item}) it is a checkbox entry of
- * that menu ({@code menuitemcheckbox} with {@code aria-checked}). It shows no icon, so a compact
+ * that menu ({@code menuitemcheckbox} with {@code aria-checked}; under {@code ButtonDefaults.radio} a {@code menuitemradio}). It shows no icon, so a compact
  * toolbar leaves it as it is.</p>
  *
  * <p>A hidden toggle button renders nothing.</p>
@@ -65,6 +65,7 @@ const TLToggleButton: React.FC<TLCellProps & TLToggleButtonProps> = ({ controlId
       display="label-only"
       appearance={defaults.appearance ?? 'secondary'}
       checked={resolvedActive}
+      radio={defaults.radio}
       disabled={resolvedDisabled}
       className={rootClassName(state)}
       onClick={handleClick}

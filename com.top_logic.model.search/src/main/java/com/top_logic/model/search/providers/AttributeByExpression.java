@@ -35,7 +35,7 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
-import com.top_logic.model.search.expr.interpreter.UpdateSecurityVisitor;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.search.persistency.attribute.AbstractExpressionAttribute;
 import com.top_logic.model.util.Pointer;
@@ -61,6 +61,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 		// Pure marker interface.
 	}
 
+	private QueryExecutor _executor;
+
 	private ScriptTracer _analyzer;
 
 	/**
@@ -82,10 +84,13 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 
 		// Definer's-rights: a computed value must not apply the invoking user's model security (its
 		// result would otherwise be user-dependent, breaking caching/indexing/determinism); access to
-		// the value is controlled by the read grant on the computed attribute itself. Applied both to
-		// the value expression and to the tracing analyzer that evaluates the same computation. (The
-		// locator variant does the same in AttributeValueLocatorByExpression; a macro keeps security.)
-		UpdateSecurityVisitor.disableSecurity(getExpr());
+		// the value is controlled by the read grant on the computed attribute itself. Applied to the
+		// executor of the value expression, which would otherwise withhold the inputs and the result
+		// the reader must not discover, and to the tracing analyzer that evaluates the same
+		// computation. (The locator variant does the same in AttributeValueLocatorByExpression; a
+		// macro keeps security.)
+		_executor = executor(attribute.tKnowledgeBase(), attribute.getModel(), getExpr());
+		_executor.disableSecurity();
 
 		_analyzer = ScriptTracer.compile(attribute.getModel(), getConfig().getExpr());
 		_analyzer.disableSecurity();
@@ -129,7 +134,7 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 
 	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute) throws AttributeException {
-		Object result = executor(attribute.tKnowledgeBase(), attribute.getModel(), getExpr()).execute(object);
+		Object result = _executor.execute(object);
 		return convertAndCheck(object, attribute, result);
 	}
 

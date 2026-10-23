@@ -27,8 +27,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ScriptingCategory;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.filter.ModelFilter;
@@ -55,6 +57,7 @@ import com.top_logic.util.model.ModelService;
 @ServiceDependencies({
 	SearchBuilder.Module.class
 })
+@ServiceCategory.Of(ScriptingCategory.class)
 public class ModelBasedSearch extends ConfiguredManagedClass<ModelBasedSearch.Config> {
 
 	/**

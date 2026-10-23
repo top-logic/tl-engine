@@ -25,6 +25,11 @@
  * well, written by {@link pushLocalStep} with the address of the page. A move between such entries
  * of the displayed page is not reported to the server, which has nothing to show differently: the
  * entry the browser arrives at shows itself again, e.g. by scrolling to where the reader was.</p>
+ *
+ * <p>A RouteChangeEvent also carries the title of the page its URL names, which becomes the title
+ * of the document once the history is written, so that the entry is recorded under the title of
+ * its page. A change of the title alone arrives with the URL the browser shows already, as a
+ * replacement.</p>
  */
 
 import { enqueueCommand, type CommandResponse } from './command-channel';
@@ -32,6 +37,8 @@ import { enqueueCommand, type CommandResponse } from './command-channel';
 export interface RouteChangeEventData {
   url: string;
   replace: boolean;
+  /** The title of the page the URL names, empty where the display names none. */
+  title?: string;
 }
 
 export interface RouteResumeEventData {
@@ -119,6 +126,12 @@ const _localSteps = new Map<number, LocalStep>();
 let _displayUrl = '';
 
 /**
+ * The title the document was loaded with, shown while the display names no title of its own.
+ * {@code null} until route synchronization is initialized.
+ */
+let _loadedTitle: string | null = null;
+
+/**
  * Write a step within the displayed page to the history, e.g. a jump to a section of a long text.
  *
  * <p>The new entry has the address of the page. Going back to the entry the step was taken from
@@ -173,6 +186,7 @@ function getContextPath(): string {
 export function initRouteSync(): void {
   if (_initialized) return;
   _initialized = true;
+  _loadedTitle = document.title;
 
   window.addEventListener('popstate', (event: PopStateEvent) => {
     if (_restoredUrl !== null) {
@@ -215,6 +229,21 @@ export function handleRouteChangeEvent(event: RouteChangeEventData): void {
     _displayPos = pos;
   }
   _displayUrl = fullUrl;
+  // After the history is written: the browser records the title with the entry that is current.
+  applyTitle(event.title);
+}
+
+/**
+ * Show the given page title as the title of the document; an empty one restores the title the
+ * document was loaded with.
+ */
+function applyTitle(title: string | undefined): void {
+  if (title === undefined) return;
+  if (title !== '') {
+    document.title = title;
+  } else if (_loadedTitle !== null) {
+    document.title = _loadedTitle;
+  }
 }
 
 /**

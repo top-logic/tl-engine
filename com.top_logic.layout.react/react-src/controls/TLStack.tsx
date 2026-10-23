@@ -39,6 +39,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const wrap = state.wrap === true;
   const maxWidth = (state.maxWidth as string) ?? null;
   const growFirst = state.growFirst === true;
+  const stateWords = (state.stateWords as string | undefined) || undefined;
   const items = useItems(state);
 
   const [fillClass, fillHost] = useFillHost();
@@ -61,7 +62,7 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <FillProvider host={fillHost}>
-      <div id={controlId} role={role} {...labelProps} {...items.containerProps} className={className} style={style}>
+      <div id={controlId} role={role} data-tl-state={stateWords} {...labelProps} {...items.containerProps} className={className} style={style}>
         {items.content}
       </div>
     </FillProvider>

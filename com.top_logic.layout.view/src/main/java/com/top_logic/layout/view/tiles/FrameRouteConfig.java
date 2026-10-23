@@ -7,7 +7,6 @@ package com.top_logic.layout.view.tiles;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -15,6 +14,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
+import com.top_logic.layout.view.routing.WithFinalTitle;
 
 /**
  * The route in the URL that one frame of a {@link TileStackElement &lt;tile-stack&gt;} occupies.
@@ -32,6 +32,8 @@ import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
  * {@link #getParams() parameters}. The declaration also carries the {@link #getLabel() label} of the
  * frame, which every frame of that view is named by - the one restored from a URL as well as the one
  * a {@link NavigatePushCommand &lt;navigate-push&gt;} pushes without a label of its own.
+ * With {@link #FINAL_TITLE} set, that label stays the title of the page while the frame is displayed,
+ * whatever the frame view displays inside - tabs dividing what is shown of the person, for instance.
  * </p>
  *
  * <p>
@@ -40,7 +42,7 @@ import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
  *
  * <pre>
  * &lt;tile-stack initial="accounts/overview.view.xml" path="navPath"&gt;
- *   &lt;frame route="person/:person" view="accounts/person-detail.view.xml"&gt;
+ *   &lt;frame route="person/:person" view="accounts/person-detail.view.xml" final-title="true"&gt;
  *     &lt;param name="person"
  *       expr="objectId($person)"
  *       reverse="$value.objectResolve(`tl.accounts:Person`)"/&gt;
@@ -52,7 +54,7 @@ import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
  */
 @TagName(FrameRouteConfig.TAG_NAME)
 @TitleProperty(name = FrameRouteConfig.VIEW)
-public interface FrameRouteConfig extends ConfigurationItem {
+public interface FrameRouteConfig extends WithFinalTitle {
 
 	/** Configuration tag of a {@link FrameRouteConfig}. */
 	String TAG_NAME = "frame";

@@ -1,7 +1,7 @@
 // ===========================================================================
 // Agent security test bed - RESET
 //
-// Puts the seeded data back the way SecDemoSetupService created it, so a
+// Puts the seeded data back the way SecDemoSetup created it, so a
 // scenario can be replayed without rebuilding the database:
 //
 //   * deletes every pm:Ticket a scenario created, whatever it is called,
@@ -27,7 +27,7 @@
 // See tl-ai-demo/doc/secdemo/testbed.md, "Enabling and resetting the fixture".
 // ===========================================================================
 {
-	// The tickets SecDemoSetupService seeds, as [project, title, body] - kept in
+	// The tickets SecDemoSetup seeds, as [project, title, body] - kept in
 	// step with the <projects> list of secdemo.config.xml. Anything of this type
 	// that is not listed here was created by a scenario and goes away.
 	seededTickets = [

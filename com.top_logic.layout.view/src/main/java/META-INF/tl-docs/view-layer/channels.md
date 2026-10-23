@@ -54,6 +54,7 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 | `<derived-channel>` `reverse` | `value` (the written value) | — |
 | `<table>` / `<tree-table>` / `<composition-table>`: `row-class`, column `<value>`, `<can-update>`, `<object>` | `row` | `row-as` on the table |
 | column `<update>` | `row`, `value` (the entered value) | `row-as`, `value-as` on the column |
+| column `<tooltip>` | `row`, `value` (the cell value; in a group header row only the group's `value`) | `row-as`, `value-as` on the column |
 | `<dynamic-columns>` `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`; `<value>`, `<update>`, `<can-update>`, `<aggregate>` | `column`; with `row` / `value` / `members` as for the other columns | `column-as` on the dynamic columns |
 | column `<aggregate>` / `<comparator>` | `members` / `left`, `right` | — |
 | `<match>` of a scripted filter | `params`, `value`, `row` | `value-as`, `row-as` |
@@ -158,6 +159,14 @@ The source is a Java class implementing `ChannelSource`, configured in the `<sou
 - **The channel holds state, not events.** `update-interval` is the shortest time in milliseconds between two deliveries (default 250, zero delivers every value): a value published while an earlier one is still held back replaces it, and the last value of a burst is always delivered. A source whose consumers must see every message accumulates them into the value itself.
 - **The subscription follows the display.** The channel subscribes when the view declaring it is displayed and disposes the registration when the view is hidden - a tab nobody looks at, a closed dialog - or destroyed, exactly like the observation of a derived channel. The source therefore sees one subscription per displayed view instance per window, and one again each time a view is displayed anew. After the registration is disposed, publishing into its sink is harmless and ignored. A source that shares one external connection among its subscribers manages that sharing itself.
 - A source whose `subscribe` fails is logged, and the channel stays an ordinary writable value.
+
+**Following commits of other threads: `CommitSource`.** A window learns of a commit it did not make itself - a background job, a scheduled task, another session - only when its model events are synthesized: on its next request, or on the heartbeat of its event stream every 15 seconds. Every delivery of a source channel synthesizes them as well, so a view that displays objects changed in the background declares a channel fed by `com.top_logic.layout.view.channel.CommitSource`, which publishes the number of every commit touching an object of its `types` (all commits without `types`). Its tables, forms and derived channels observing those objects or types then follow the commits within the channel's `update-interval`; the channel value itself is rarely read:
+
+```xml
+<source-channel name="commits" update-interval="1000">
+	<source class="com.top_logic.layout.view.channel.CommitSource" types="my.module:Job"/>
+</source-channel>
+```
 
 Java code that has a `ViewContext` and a channel at hand - an action starting background work, an element of its own - does not need a declared source: a `ChannelPublisher` created on a request thread delivers values into the channel from any thread with the same threading, throttling and conflation; `close()` ends it.
 

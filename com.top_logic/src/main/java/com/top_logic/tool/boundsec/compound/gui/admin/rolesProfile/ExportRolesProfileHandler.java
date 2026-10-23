@@ -90,6 +90,8 @@ public class ExportRolesProfileHandler extends AbstractDownloadHandler {
 		for (LayoutConfigTree layout : layoutTrees) {
 			addProfiles(securityConfig, layout);
 		}
+		new RolesProfileHandler().addNonLayoutProfilesFor(securityConfig, sortedRolesCopy(BoundedRole.getAll()),
+			layoutTrees);
 		return securityConfig;
 	}
 

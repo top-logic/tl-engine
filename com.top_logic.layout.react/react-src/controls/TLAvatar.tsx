@@ -3,7 +3,7 @@ import {
   useTLState,
   useImageSrc,
   avatarInitials,
-  avatarCategory,
+  categoryOf,
   rootClassName,
   tooltipProps,
 } from 'tl-react-bridge';
@@ -74,7 +74,7 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
           .filter(Boolean)
           .join(' ')
       )}
-      data-tl-role={`category-${avatarCategory(name)}`}
+      data-tl-role={`category-${categoryOf(name)}`}
       role="img"
       aria-label={name}
       {...tooltipProps(name)}

@@ -23,7 +23,9 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * Service owning the pool of isolated, per-session headless Chromium browsers used by
@@ -91,6 +93,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * a refusal into the tool's clean policy message.
  * </p>
  */
+@ServiceCategory.Of(AICategory.class)
 public class BrowserToolsService extends ConfiguredManagedClass<BrowserToolsService.Config<?>>
 		implements BrowserSession.DomainPolicy, FilteringProxy.RequestPolicy {
 

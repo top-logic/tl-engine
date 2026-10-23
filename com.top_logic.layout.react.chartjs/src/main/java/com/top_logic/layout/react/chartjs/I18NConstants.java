@@ -43,6 +43,12 @@ public class I18NConstants extends I18NConstantsBase {
 	// -- Client-side i18n keys --
 
 	/**
+	 * @en Chart
+	 */
+	@CustomKey("js.chart.label")
+	public static ResKey JS_CHART_LABEL;
+
+	/**
 	 * @en Reset zoom
 	 */
 	@CustomKey("js.chart.resetZoom")

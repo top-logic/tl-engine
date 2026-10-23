@@ -11,7 +11,6 @@ import java.util.Set;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
@@ -98,7 +97,7 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testEveryPersonaHoldsTheRolesTheMatrixClaims() {
-		Map<String, List<String>> expected = SecDemoSetupService.personaRoles();
+		Map<String, List<String>> expected = personaRoles();
 		assertEquals("The aspect must configure four personas; adjust this test bed if it changed.",
 			4, expected.size());
 
@@ -149,7 +148,7 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testUngrantedCapabilitiesAreDeniedToEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			assertDenied(login, AGENT_META_TOOL, ToolGroups.AGENT_META);
 			assertDenied(login, AGENT_AUTHORING_TOOL, ToolGroups.AGENT_AUTHORING);
 			assertDenied(login, WORKSPACE_TOOL, ToolGroups.WORKSPACE);
@@ -181,14 +180,14 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 		assertEquals("The precondition of this test: the policy grants interaction nowhere.",
 			List.of(), AiToolAccessService.policy().getBaseline().getGrants());
 
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			assertAllowed(login, "user-interaction.askUser");
 		}
 	}
 
 	/** Both roles reach both read groups: the read half of the matrix is deliberately identical. */
 	public void testBothRolesRead() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			assertAllowed(login, MODEL_READ_TOOL);
 			assertAllowed(login, LIST_TOOL);
 			assertAllowed(login, GET_TOOL);
@@ -270,7 +269,7 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 */
 	public void testADryRunNeedsOnlyScript() {
 		List<TLObject> seeded = tickets();
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			String result = changeDataAs(login, CREATE_TICKET, true);
 
 			assertFalse(login + " must reach a dry run with 'script' alone: " + result,
@@ -285,7 +284,7 @@ public class SecDemoToolAccessTest extends SecDemoPersonaTest {
 	 * deny-by-default answer to "what happens when a tool arrives that nobody classified".
 	 */
 	public void testUnclassifiedToolDeniedToEveryPersona() {
-		for (String login : SecDemoSetupService.personaLogins()) {
+		for (String login : personaLogins()) {
 			String reason = securityFor(login).toolDenialReason("mcp__unknown__doThing");
 
 			assertNotNull("An unclassified tool must be denied to " + login + ".", reason);

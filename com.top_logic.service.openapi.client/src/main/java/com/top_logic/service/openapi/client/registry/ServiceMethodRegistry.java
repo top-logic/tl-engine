@@ -46,8 +46,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.TypeSpec;
@@ -84,6 +86,7 @@ import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandl
  */
 @ServiceExtensionPoint(SearchBuilder.Module.class)
 @Label("TL-Script functions for external APIs")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodRegistry.Config<?>>
 		implements MethodResolver {
 

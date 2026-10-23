@@ -17,7 +17,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 
 /**
  * Resolves template sources from configured storage protocols.
@@ -29,6 +31,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
 @Label("Template source factory")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class TemplateSourceFactory extends ConfiguredManagedClass<TemplateSourceFactory.Config> {
 
 	/**

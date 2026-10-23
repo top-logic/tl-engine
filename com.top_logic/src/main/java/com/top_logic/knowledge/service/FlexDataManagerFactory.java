@@ -9,7 +9,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.FlexVersionedDataManager;
@@ -21,6 +23,7 @@ import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Flexible data manager")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class FlexDataManagerFactory extends ManagedClass {
 
 	/**

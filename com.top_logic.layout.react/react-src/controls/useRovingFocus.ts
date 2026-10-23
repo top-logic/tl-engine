@@ -5,13 +5,15 @@ import { React } from 'tl-react-bridge';
  *
  * Exactly one item is in the tab order ({@link RovingFocus.tabIndexOf} gives it `0`, every other
  * item `-1`): the item focused last while it is displayed, otherwise the preferred one (e.g. the
- * selected item), otherwise the first. Within the container the arrow keys move the focus:
+ * selected item), otherwise the first. The item holding the focus stays the tab stop when it moves to
+ * another position. Within the container the arrow keys move the focus:
  *
  * - ArrowLeft / ArrowRight: the previous / next item in document order.
  * - ArrowUp / ArrowDown: the item in the row above / below, nearest by its horizontal center,
  *   determined from the rendered positions of the items - so the keys follow a wrapping row or a
  *   grid as it is laid out at the moment. In a container whose items all stand in one row, they
- *   move to the previous / next item like ArrowLeft / ArrowRight.
+ *   move to the previous / next item like ArrowLeft / ArrowRight. In a {@link RovingFocusOptions.linear
+ *   linear} container they always do, whatever the layout.
  * - Home / End: the first / last item.
  *
  * Only a key pressed on an item itself moves the focus; a key pressed in an element inside an item
@@ -26,6 +28,15 @@ export interface RovingFocus {
 
   /** Focus handler of the container, tracking the item that has the focus. */
   onFocus(event: React.FocusEvent): void;
+}
+
+/** Options of {@link useRovingFocus}. */
+export interface RovingFocusOptions {
+  /**
+   * Whether the items form one sequence, whatever their layout - e.g. the events of a day, placed by
+   * their time: ArrowUp / ArrowDown move to the previous / next item like ArrowLeft / ArrowRight.
+   */
+  linear?: boolean;
 }
 
 /** Distance in pixels below which two item edges count as one row. */
@@ -44,13 +55,17 @@ const ROW_TOLERANCE_PX = 1;
  * @param preferred
  *        The position of the item in the tab order while none was focused, e.g. the selected one;
  *        `-1` for the first. A change of it moves the tab stop to it.
+ * @param options
+ *        See {@link RovingFocusOptions}.
  */
 export function useRovingFocus(
   containerRef: React.RefObject<HTMLElement | null>,
   itemSelector: string,
   count: number,
   preferred: number,
+  options: RovingFocusOptions = {},
 ): RovingFocus {
+  const linear = options.linear === true;
   const [focused, setFocused] = React.useState<number>(-1);
 
   React.useEffect(() => {
@@ -75,6 +90,21 @@ export function useRovingFocus(
     }
   }, [items]);
 
+  // A keyed item that React moves to another position keeps the focus without a focus event: React
+  // gives the focus back to a node it moves while committing, with its own events switched off. After
+  // every commit the tab stop therefore follows the item holding the focus to its position (an
+  // unchanged position updates nothing).
+  React.useLayoutEffect(() => {
+    const active = document.activeElement;
+    if (active === null) {
+      return;
+    }
+    const index = items().findIndex(item => item.contains(active));
+    if (index >= 0) {
+      setFocused(index);
+    }
+  });
+
   const onKeyDown = React.useCallback((event: React.KeyboardEvent) => {
     const all = items();
     const current = all.indexOf(event.target as HTMLElement);
@@ -90,10 +120,10 @@ export function useRovingFocus(
         next = current + 1;
         break;
       case 'ArrowUp':
-        next = verticalNeighbor(all, current, -1);
+        next = linear ? current - 1 : verticalNeighbor(all, current, -1);
         break;
       case 'ArrowDown':
-        next = verticalNeighbor(all, current, 1);
+        next = linear ? current + 1 : verticalNeighbor(all, current, 1);
         break;
       case 'Home':
         next = 0;
@@ -109,7 +139,7 @@ export function useRovingFocus(
       all[next].focus();
       setFocused(next);
     }
-  }, [items]);
+  }, [items, linear]);
 
   const tabIndexOf = React.useCallback((index: number) => (index === tabStop ? 0 : -1), [tabStop]);
 

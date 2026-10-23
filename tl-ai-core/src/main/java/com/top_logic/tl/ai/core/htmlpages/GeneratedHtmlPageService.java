@@ -13,6 +13,7 @@ import java.util.Optional;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
@@ -24,6 +25,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
 import com.top_logic.tl.ai.core.htmlpages.model.TlAiHtmlpagesFactory;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -32,6 +34,7 @@ import com.top_logic.util.model.ModelService;
 @ServiceDependencies({
 	ModelService.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class GeneratedHtmlPageService extends ConfiguredManagedClass<GeneratedHtmlPageService.Config<?>> {
 
 	/** Bytes of randomness for ids; 16 bytes encodes to 22 base64url characters without padding. */

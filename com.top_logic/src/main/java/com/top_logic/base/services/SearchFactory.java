@@ -16,7 +16,9 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ScriptingCategory;
 import com.top_logic.knowledge.searching.Filter;
 import com.top_logic.knowledge.searching.Precondition;
 import com.top_logic.knowledge.searching.QueryConfig;
@@ -34,6 +36,7 @@ import com.top_logic.knowledge.searching.SearchService;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Search service")
+@ServiceCategory.Of(ScriptingCategory.class)
 public class SearchFactory extends ManagedClass implements SearchService {
 
 	/**

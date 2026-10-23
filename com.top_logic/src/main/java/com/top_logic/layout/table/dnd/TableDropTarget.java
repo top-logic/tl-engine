@@ -6,6 +6,7 @@
 package com.top_logic.layout.table.dnd;
 
 import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.dnd.TableDropEvent.Position;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
@@ -29,18 +30,44 @@ public interface TableDropTarget {
 		 * 
 		 * @see TableDropEvent#getPos()
 		 */
-		ORDERED,
+		ORDERED {
+			@Override
+			public boolean accepts(TableDropEvent event) {
+				// A drop onto the table itself (no reference row) appends to the end.
+				return event.getPos() != Position.ONTO || event.getRefRow() < 0;
+			}
+		},
 
 		/**
 		 * A drop occurs to a row itself, without positioning relative to the target row.
 		 */
-		ROW,
+		ROW {
+			@Override
+			public boolean accepts(TableDropEvent event) {
+				return event.getPos() == Position.ONTO;
+			}
+		},
 
 		;
+
+		/**
+		 * Whether the position of the given event describes a drop of this type.
+		 * 
+		 * <p>
+		 * A table may have {@link TableDropTarget}s of different types. A drop event is only passed
+		 * to those targets, whose type accepts the event's position.
+		 * </p>
+		 */
+		public abstract boolean accepts(TableDropEvent event);
 	}
 
 	/**
-	 * HTML data attribute that transports the {@link #getDropType()} to the client.
+	 * HTML data attribute that transports the {@link #getDropType()}s of all drop targets of a
+	 * table to the client.
+	 * 
+	 * <p>
+	 * The value is a space separated list of {@link DropType} names.
+	 * </p>
 	 */
 	String TL_DROPTYPE_ATTR = HTMLConstants.DATA_ATTRIBUTE_PREFIX + "droptype";
 

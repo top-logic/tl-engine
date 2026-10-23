@@ -151,16 +151,17 @@
 
 				<!--
 					The one-decision preferences, an entry each rather than a form field: one entry
-					per language the application supports, and one per theme configured in
-					UIThemeService, labelled and iconed by the theme itself. Both mark the choice in
-					force as active, which the menu shows in bold, both head their group with a
-					label naming the choice, and both contribute nothing when there is only one of
-					them - so an application with a single theme and a single language sees none of
-					this.
+					per language the application supports, one per theme configured in
+					UIThemeService, labelled and iconed by the theme itself, and the two densities,
+					normal and compact. All mark the choice in force as active, which the menu shows
+					in bold, all head their group with a label naming the choice, and languages and
+					themes contribute nothing when there is only one of them - so an application
+					with a single theme and a single language sees only the densities.
 				-->
 				<command-sources>
 					<language-commands/>
 					<theme-commands/>
+					<density-commands/>
 				</command-sources>
 			</menu>
 		</default>

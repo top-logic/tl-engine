@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.element;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +16,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
@@ -20,12 +24,15 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.configedit.FieldDisplay;
 import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -36,8 +43,16 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ConfigFormScope;
+import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewActionChain;
+import com.top_logic.layout.view.command.ViewActions;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.util.Resources;
 
 /**
@@ -56,7 +71,16 @@ import com.top_logic.util.Resources;
  * Edit mode works as it does for {@code <form withEditMode="true">}: the item is read-only until
  * Edit starts a working copy, Apply checks it and carries it over, Cancel drops it. Those three
  * commands go to the enclosing panel's toolbar rather than among the fields, which is what makes a
- * configuration form look like the rest of the application.
+ * configuration form look like the rest of the application. Whether Edit is offered at all is
+ * decided by the {@link Config#getEditExecutability() edit rules}.
+ * </p>
+ *
+ * <p>
+ * A {@link Config#getSaveActions() save action} makes Apply a Save: the action chain runs over the
+ * checked working copy, and only once it ran through is the copy carried over and edit mode left.
+ * While the form holds unsaved changes, it blocks the write of another item to its input channel
+ * and reports the changes to the enclosing dirty-tracked scope, as a {@code <form>} does, see
+ * {@link ConfigFormStateHandler}.
  * </p>
  *
  * <p>
@@ -71,7 +95,16 @@ public class ConfigFormElement implements UIElement {
 	 * Configuration for {@link ConfigFormElement}.
 	 */
 	@TagName("config-form")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
+
+		/**
+		 * Name of the argument holding the working copy in the {@link #getSaveActions() save} and
+		 * {@link #getCancelActions() cancel} actions of a form without {@link #getInput() input}.
+		 */
+		String EDITED_ARGUMENT = "config";
 
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
@@ -87,6 +120,22 @@ public class ConfigFormElement implements UIElement {
 
 		/** Configuration name for {@link #getFields()}. */
 		String FIELDS = "fields";
+
+		/** Configuration name for {@link #getSaveActions()}. */
+		String SAVE_ACTIONS = FormElement.Config.SAVE_ACTIONS;
+
+		/** Configuration name for {@link #getCancelActions()}. */
+		String CANCEL_ACTIONS = FormElement.Config.CANCEL_ACTIONS;
+
+		/**
+		 * Tag of an entry of the {@link #getSaveActions() save} and {@link #getCancelActions()
+		 * cancel} actions that names its implementation by a <code>class</code> attribute, as in
+		 * a {@code <generic-command>}.
+		 */
+		String ACTION_ENTRY = "action";
+
+		/** Configuration name for {@link #getEditExecutability()}. */
+		String EDIT_EXECUTABILITY = FormElement.Config.EDIT_EXECUTABILITY;
 
 		@Override
 		@ClassDefault(ConfigFormElement.class)
@@ -145,6 +194,86 @@ public class ConfigFormElement implements UIElement {
 		@Name(FIELDS)
 		@EntryTag(FieldConfig.TAG)
 		List<FieldConfig> getFields();
+
+		/**
+		 * Actions saving the edited configuration, run by Save.
+		 *
+		 * <p>
+		 * Written like the actions of a {@code <generic-command>}: an action without a tag of its own
+		 * is written as {@code <action class="..."/>}. The chain runs over the working
+		 * copy - the checked, edited configuration - as its argument, named after the
+		 * {@link #getInput() input} channel, or {@value #EDITED_ARGUMENT} for a form without one.
+		 * Once the chain ran through, the copy is carried over into the edited item and the form
+		 * leaves edit mode. A chain that fails or is aborted leaves the form in edit mode with the
+		 * edits intact; its error is reported like that of any command. Save is not offered while
+		 * a field of the form shows an error.
+		 * </p>
+		 *
+		 * <p>
+		 * Without save actions, the command is called Apply and carries the copy over right away.
+		 * Only with {@link #getWithEditMode() edit mode}.
+		 * </p>
+		 */
+		@Name(SAVE_ACTIONS)
+		@TreeProperty
+		@EntryTag(ACTION_ENTRY)
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getSaveActions();
+
+		/**
+		 * Actions run by Cancel before the working copy is dropped.
+		 *
+		 * <p>
+		 * The chain runs with the same argument as the {@link #getSaveActions() save actions}. Once
+		 * it ran through, the copy is dropped and the form leaves edit mode; a chain that fails or
+		 * is aborted leaves the form in edit mode.
+		 * </p>
+		 */
+		@Name(CANCEL_ACTIONS)
+		@TreeProperty
+		@EntryTag(ACTION_ENTRY)
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends ViewAction>> getCancelActions();
+
+		/**
+		 * Rules deciding whether this form offers editing its item.
+		 *
+		 * <p>
+		 * Guards the transition into edit mode: the Edit command is disabled or hidden according to
+		 * the rules, and the form refuses the transition when a client requests it nonetheless. The
+		 * rules decide over the displayed item, which a
+		 * {@link com.top_logic.layout.view.command.VisibleIf &lt;visible-if&gt;} sees as a variable
+		 * named like the argument of the {@link #getSaveActions() save actions}. Without a rule,
+		 * every user who sees the form may edit it. Only with {@link #getWithEditMode() edit mode}.
+		 * </p>
+		 */
+		@Name(EDIT_EXECUTABILITY)
+		@EntryTag("rule")
+		List<PolymorphicConfiguration<? extends ViewExecutabilityRule>> getEditExecutability();
+
+		/**
+		 * The {@link #getSaveActions() save} and {@link #getCancelActions() cancel} actions run over
+		 * the working copy, the {@link #getEditExecutability() edit rules} decide over the displayed
+		 * item, both under the name given by {@link ConfigFormElement#editedScope(Config)}.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getSaveActions(), part) || ActionScopes.contains(getCancelActions(), part)
+				|| ActionScopes.contains(getEditExecutability(), part)) {
+				return editedScope(this);
+			}
+			return outer;
+		}
+	}
+
+	/**
+	 * The scope the {@link Config#getSaveActions() save} and {@link Config#getCancelActions() cancel}
+	 * actions of the given form run in: the working copy, named after the {@link Config#getInput()
+	 * input} channel, or {@link Config#EDITED_ARGUMENT} without one.
+	 */
+	public static ActionScope editedScope(Config config) {
+		ChannelRef input = config.getInput();
+		return ActionScope.single(input == null ? Config.EDITED_ARGUMENT : input.getChannelName());
 	}
 
 	/**
@@ -195,6 +324,10 @@ public class ConfigFormElement implements UIElement {
 
 	private final Config _config;
 
+	private final List<ViewAction> _saveActions;
+
+	private final List<ViewAction> _cancelActions;
+
 	/**
 	 * The {@link Config#getFields() configured} displays, by property name.
 	 */
@@ -212,6 +345,9 @@ public class ConfigFormElement implements UIElement {
 	@CalledByReflection
 	public ConfigFormElement(InstantiationContext context, Config config) {
 		_config = config;
+		ActionScope scope = editedScope(config);
+		_saveActions = ViewActions.instantiate(context, config.getSaveActions(), scope);
+		_cancelActions = ViewActions.instantiate(context, config.getCancelActions(), scope);
 	}
 
 	@Override
@@ -221,7 +357,7 @@ public class ConfigFormElement implements UIElement {
 
 		ReactStackControl holder = new ReactStackControl(context, Collections.emptyList());
 		holder.setCssClass(_config.getCssClass());
-		Display display = new Display(context, holder, scope);
+		Display display = new Display(context, input, holder, scope);
 		display.show(itemOf(input));
 
 		if (input != null) {
@@ -259,14 +395,17 @@ public class ConfigFormElement implements UIElement {
 
 		private final ViewContext _context;
 
+		private final ViewChannel _input;
+
 		private final ReactStackControl _holder;
 
 		private final CommandScope _scope;
 
 		private ConfigFormControl _form;
 
-		Display(ViewContext context, ReactStackControl holder, CommandScope scope) {
+		Display(ViewContext context, ViewChannel input, ReactStackControl holder, CommandScope scope) {
 			_context = context;
+			_input = input;
 			_holder = holder;
 			_scope = scope;
 		}
@@ -285,12 +424,19 @@ public class ConfigFormElement implements UIElement {
 			ConfigFormControl.Commands commands = _config.getWithEditMode()
 				? ConfigFormControl.Commands.TOOLBAR
 				: ConfigFormControl.Commands.NONE;
-			_form = new ConfigFormControl(_context, item, commands);
+			_form = new ConfigFormControl(_context, item, commands,
+				chain(_saveActions), chain(_cancelActions));
 			if (!_config.getFields().isEmpty()) {
 				_form.setFieldDisplays(fieldDisplays());
 			}
+			if (!_config.getEditExecutability().isEmpty()) {
+				ViewExecutabilityRule editRule =
+					ViewExecutabilityRules.build(_config.getEditExecutability(), _context, editedScope(_config));
+				_form.setEditPermission(() -> editRule.isExecutable(item));
+			}
 			contribute(_form);
 			register(_form);
+			new ConfigFormStateHandler(_form, _input, _context.getDirtyChannel());
 			_holder.setChildren(List.of(_form));
 		}
 
@@ -337,6 +483,31 @@ public class ConfigFormElement implements UIElement {
 			for (CommandModel command : commands) {
 				_scope.removeCommand(command);
 			}
+		}
+
+		/**
+		 * The given actions as what the form runs at the end of an edit session, <code>null</code>
+		 * for none.
+		 *
+		 * <p>
+		 * The chain runs in the context of this element over the working copy; the session ends by
+		 * an action appended to the chain, so it ends exactly when the chain ran through - also
+		 * when it resumes after a dialog, and not when it was aborted or failed.
+		 * </p>
+		 */
+		private ConfigFormControl.EditAction chain(List<ViewAction> actions) {
+			if (actions.isEmpty()) {
+				return null;
+			}
+			ActionScope scope = editedScope(_config);
+			return (edited, done) -> {
+				List<ViewAction> chain = new ArrayList<>(actions);
+				chain.add((context, input) -> {
+					done.run();
+					return input;
+				});
+				ViewActionChain.run(_context, chain, scope.arguments(edited), null);
+			};
 		}
 
 		private void disposeForm() {

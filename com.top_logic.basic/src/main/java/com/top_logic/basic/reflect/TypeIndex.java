@@ -32,6 +32,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.common.json.adapt.ReaderR;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.xref.model.AnnotationInfo;
@@ -52,6 +54,7 @@ import com.top_logic.xref.model.StringValue;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Type index")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class TypeIndex extends ManagedClass {
 
 	private final Map<String, ClassInfo> _types = new HashMap<>();

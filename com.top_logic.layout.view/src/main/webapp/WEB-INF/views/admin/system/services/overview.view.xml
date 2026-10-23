@@ -114,6 +114,10 @@
 					<en>Refresh</en>
 					<de>Aktualisieren</de>
 				</label>
+				<tooltip>
+					<en>Reads the services and their status again, e.g. after a service was started, stopped or reconfigured in another session.</en>
+					<de>Liest die Dienste und ihren Status neu ein, z. B. nachdem ein Dienst in einer anderen Sitzung gestartet, gestoppt oder umkonfiguriert wurde.</de>
+				</tooltip>
 				<action class="com.top_logic.layout.view.admin.system.ServiceLifecycleAction"
 					mode="REFRESH"
 				>

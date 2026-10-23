@@ -12,13 +12,8 @@ import java.util.function.Predicate;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.module.ManagedClass;
-import com.top_logic.basic.module.ServiceDependencies;
-import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
@@ -26,11 +21,13 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.migration.StartupAction;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.schema.ObjectsConf;
+import com.top_logic.util.StartupHooks;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -40,12 +37,13 @@ import com.top_logic.util.model.ModelService;
  * Initial data files can be produced by {@link XMLInstanceExporter} or in the UI from the export
  * command in the instance editor.
  * </p>
+ * 
+ * <p>
+ * The import must run as {@link StartupHooks startup hook}, because the imported data may require
+ * any service of the application.
+ * </p>
  */
-@ServiceDependencies({
-	ModelService.Module.class,
-})
-@Label("Initial data setup")
-public class InitialDataSetupService extends ManagedClass {
+public class InitialDataSetup implements StartupAction {
 
 	private static final String DATA_PATH = "/WEB-INF/data/";
 	/**
@@ -53,27 +51,8 @@ public class InitialDataSetupService extends ManagedClass {
 	 */
 	public static final String FILE_SUFFIX = ".objects.xml";
 
-	/**
-	 * Typed configuration interface definition for {@link InitialDataSetupService}.
-	 */
-	public interface Config extends ServiceConfiguration<InitialDataSetupService> {
-		// configuration interface definition
-	}
-
-	/**
-	 * Create a {@link InitialDataSetupService}.
-	 * 
-	 * @param context
-	 *        the {@link InstantiationContext} to create the new object in
-	 * @param config
-	 *        the configuration object to be used for instantiation
-	 */
-	public InitialDataSetupService(InstantiationContext context, Config config) {
-		super(context, config);
-	}
-
 	@Override
-	protected void startUp() {
+	public void perform() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		ConnectionPool pool = KBUtils.getConnectionPool(kb);
 		PooledConnection readCon = pool.borrowReadConnection();
@@ -83,7 +62,7 @@ public class InitialDataSetupService extends ManagedClass {
 				return DBProperties.getProperty(readCon, DBProperties.GLOBAL_PROPERTY,
 					"initial-data." + name) == null;
 			} catch (SQLException ex) {
-				Logger.error("Cannot test whether data is already loaded.", ex, InitialDataSetupService.class);
+				Logger.error("Cannot test whether data is already loaded.", ex, InitialDataSetup.class);
 				return false;
 			}
 		};
@@ -109,7 +88,7 @@ public class InitialDataSetupService extends ManagedClass {
 
 				for (String name : resourceNames) {
 					String resource = DATA_PATH + name;
-					Logger.info("Loading initial data: " + resource, InitialDataSetupService.class);
+					Logger.info("Loading initial data: " + resource, InitialDataSetup.class);
 
 					try {
 						BinaryData data = FileManager.getInstance().getData(resource);
@@ -120,14 +99,14 @@ public class InitialDataSetupService extends ManagedClass {
 						XMLInstanceImporter importer = new XMLInstanceImporter(model, factory);
 						importer.importInstances(config);
 					} catch (ConfigurationException ex) {
-						Logger.error("Cannot load initial data: " + resource, ex, InitialDataSetupService.class);
+						Logger.error("Cannot load initial data: " + resource, ex, InitialDataSetup.class);
 					}
 
 					try {
 						DBProperties.setProperty(commitCon, DBProperties.GLOBAL_PROPERTY, "initial-data." + name,
 							"loaded");
 					} catch (SQLException ex) {
-						Logger.error("Cannot mark as loaded: " + resource, ex, InitialDataSetupService.class);
+						Logger.error("Cannot mark as loaded: " + resource, ex, InitialDataSetup.class);
 					}
 				}
 
@@ -137,25 +116,4 @@ public class InitialDataSetupService extends ManagedClass {
 
 	}
 
-	/**
-	 * Singleton holder for the {@link InitialDataSetupService}.
-	 */
-	public static final class Module extends TypedRuntimeModule<InitialDataSetupService> {
-
-		/**
-		 * Singleton {@link InitialDataSetupService.Module} instance.
-		 */
-		public static final Module INSTANCE = new Module();
-
-		private Module() {
-			// Singleton constructor.
-		}
-
-		@Override
-		public Class<InitialDataSetupService> getImplementation() {
-			return InitialDataSetupService.class;
-		}
-	}
-
 }
-

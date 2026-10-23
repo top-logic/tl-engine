@@ -21,73 +21,50 @@ import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.ObjectFlag;
-import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.XmlDateTimeFormat;
-import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.db.schema.properties.DBPropertiesSchema;
 import com.top_logic.basic.io.FileUtilities;
-import com.top_logic.basic.module.ServiceDependencies;
-import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.doc.export.DocumentationImporter;
 import com.top_logic.doc.export.TLDocExportImportConstants;
-import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.tool.boundsec.CommandHandlerFactory;
-import com.top_logic.tool.boundsec.commandhandlers.BookmarkService;
-import com.top_logic.util.model.ModelService;
+import com.top_logic.knowledge.service.migration.StartupAction;
+import com.top_logic.util.StartupHooks;
 
 /**
  * Imports the application's documentation during startup.
  *
+ * <p>
+ * The import must run as {@link StartupHooks startup hook}, because it may require any service of
+ * the application.
+ * </p>
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@ServiceDependencies({
-	ModelService.Module.class,
-	BookmarkService.Module.class,
-	CommandHandlerFactory.Module.class,
-})
-@Label("Documentation import")
-public class ImportDocumentationModule extends KBBasedManagedClass<ImportDocumentationModule.Config> {
+public class ImportDocumentation implements StartupAction {
 
 	/**
 	 * Property name in {@link DBPropertiesSchema#TABLE_NAME} that holds the timestamp of the most
 	 * recent documentation file that was imported.
+	 *
+	 * <p>
+	 * The name refers to the former service class, so that existing installations do not import the
+	 * documentation again.
+	 * </p>
 	 */
-	public static final String LAST_IMPORT_TIME_PROPERTY = ImportDocumentationModule.class.getName() + ".lastImport";
-
-	/**
-	 * Typed configuration interface definition for {@link ImportDocumentationModule}.
-	 * 
-	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
-	 */
-	public interface Config extends KBBasedManagedClass.Config<ImportDocumentationModule> {
-		// configuration interface definition
-	}
-
-	/**
-	 * Create a {@link ImportDocumentationModule}.
-	 * 
-	 * @param context
-	 *        the {@link InstantiationContext} to create the new object in
-	 * @param config
-	 *        the configuration object to be used for instantiation
-	 */
-	public ImportDocumentationModule(InstantiationContext context, Config config) {
-		super(context, config);
-	}
+	public static final String LAST_IMPORT_TIME_PROPERTY = "com.top_logic.doc.ImportDocumentationModule.lastImport";
 
 	@Override
-	protected void startUp() {
-		super.startUp();
+	public void perform() {
 		try {
-			updateDocumentationFromFS(new LogProtocol(ImportDocumentationModule.class));
+			updateDocumentationFromFS(new LogProtocol(ImportDocumentation.class));
 		} catch (RuntimeException ex) {
-			Logger.error("Cannot import documentation: " + ex.getMessage(), ex, ImportDocumentationModule.class);
+			Logger.error("Cannot import documentation: " + ex.getMessage(), ex, ImportDocumentation.class);
 		}
 	}
 
@@ -103,7 +80,7 @@ public class ImportDocumentationModule extends KBBasedManagedClass<ImportDocumen
 		if (lastImport == null || lastImport.before(lastDocModification)) {
 			ResKey commitMessage = I18NConstants.UPDATE_DOCUMENTATION_FROM_FS__DATE
 				.fill(XmlDateTimeFormat.formatTimeStamp(lastDocModification.getTime()));
-			try (Transaction tx = kb().beginTransaction(commitMessage)) {
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(commitMessage)) {
 				importDocumentation(log, rootPath);
 				tx.commit();
 			}
@@ -202,27 +179,7 @@ public class ImportDocumentationModule extends KBBasedManagedClass<ImportDocumen
 	}
 
 	private ConnectionPool connectionPool() {
-		return KBUtils.getConnectionPool(kb());
-	}
-
-	/**
-	 * Module for instantiation of the {@link ImportDocumentationModule}.
-	 */
-	public static class Module extends TypedRuntimeModule<ImportDocumentationModule> {
-
-		/** Singleton for this module. */
-		public static final Module INSTANCE = new Module();
-
-		private Module() {
-			// Singleton constructor.
-		}
-
-		@Override
-		public Class<ImportDocumentationModule> getImplementation() {
-			return ImportDocumentationModule.class;
-		}
-
+		return KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
 	}
 
 }
-

@@ -11,7 +11,6 @@ import java.util.TreeSet;
 
 import junit.framework.Test;
 
-import com.top_logic.ai.demo.secdemo.SecDemoSetupService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -140,7 +139,7 @@ public class SecDemoRoleRuleTest extends SecDemoPersonaTest {
 
 	/** The check of the persona matrix finds nothing for the fixture as the aspect declares it. */
 	public void testTheMatrixCheckFindsNothing() {
-		assertEquals(List.of(), SecDemoSetupService.getInstance().matrixProblems());
+		assertEquals(List.of(), secDemoSetup().matrixProblems());
 	}
 
 	/** A rule that really produces nothing is still reported. */
@@ -153,7 +152,7 @@ public class SecDemoRoleRuleTest extends SecDemoPersonaTest {
 			tx.commit();
 		}
 		try {
-			List<String> problems = SecDemoSetupService.getInstance().matrixProblems();
+			List<String> problems = secDemoSetup().matrixProblems();
 			assertEquals("Only Dora lost her role: " + problems, 1, problems.size());
 			assertTrue(problems.get(0), problems.get(0).contains("'dora' the role 'projectPartner'"));
 		} finally {
@@ -162,7 +161,7 @@ public class SecDemoRoleRuleTest extends SecDemoPersonaTest {
 				tx.commit();
 			}
 		}
-		assertEquals(List.of(), SecDemoSetupService.getInstance().matrixProblems());
+		assertEquals(List.of(), secDemoSetup().matrixProblems());
 	}
 
 	private void assertRolesOnRoot(String login, String... expected) {

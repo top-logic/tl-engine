@@ -182,13 +182,16 @@ export function useThemeDefaults(config: any): any {
     // its series or point the neutral separator colour, so it stays visibly uncategorised and the others keep their
     // index; with no readable category at all (no design system) nothing is made up.
     if (data.datasets && palette.some(color => color !== undefined)) {
-      const isPieType = merged.type === 'pie' || merged.type === 'doughnut' || merged.type === 'polarArea';
+      // Each dataset is painted by its own type; the type of the chart is the default of a dataset without one.
+      const PIE_TYPES = ['pie', 'doughnut', 'polarArea'];
+      const LINE_TYPES = ['line', 'radar'];
       const categoryColor = (i: number) => palette[i % palette.length] ?? gridColor;
 
       data.datasets = data.datasets.map((ds: any, i: number) => {
         const result = { ...ds };
         if (!result.backgroundColor) {
-          if (isPieType || ds.type === 'pie' || ds.type === 'doughnut' || ds.type === 'polarArea') {
+          const type = ds.type ?? merged.type;
+          if (PIE_TYPES.includes(type)) {
             // Pie/doughnut/polarArea: one color per data point.
             const dataLen = Array.isArray(result.data) ? result.data.length : 0;
             const points = Array.from({ length: dataLen }, (_, j) => categoryColor(j));
@@ -203,9 +206,7 @@ export function useThemeDefaults(config: any): any {
             // Bar/line/etc.: one color per dataset.
             const color = categoryColor(i);
             if (color === undefined) return result;
-            const isLineType = merged.type === 'line' || merged.type === 'radar'
-              || ds.type === 'line' || ds.type === 'radar';
-            if (isLineType) {
+            if (LINE_TYPES.includes(type)) {
               // Line/radar: no fill by default; the area (where the server turns it on) is the colour at 20 %, the
               // points are filled in the colour itself.
               result.backgroundColor = color + AREA_ALPHA;

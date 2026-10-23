@@ -244,6 +244,43 @@ describe('chart colours', () => {
     expect(radarResult.current.data.datasets[0].pointBackgroundColor).toBe(LIGHT[0]);
   });
 
+  it('each dataset is painted by its own type: a line dataset in a bar chart, a bar dataset in a line chart', () => {
+    const mixedBar = {
+      type: 'bar',
+      data: { labels: ['a', 'b'], datasets: [{ data: [1, 2] }, { type: 'line', data: [2, 1] }] },
+    };
+    const { result: barResult } = renderHook(() => useThemeDefaults(mixedBar));
+    const [bars, lineOfBar] = barResult.current.data.datasets;
+    expect(bars.backgroundColor).toBe(LIGHT[0]);
+    expect(bars.pointBackgroundColor).toBeUndefined();
+    expect(lineOfBar.backgroundColor).toBe(LIGHT[1] + '33');
+    expect(lineOfBar.pointBackgroundColor).toBe(LIGHT[1]);
+    expect(lineOfBar.fill).toBe(false);
+
+    const mixedLine = {
+      type: 'line',
+      data: { labels: ['a', 'b'], datasets: [{ data: [1, 2] }, { type: 'bar', data: [2, 1] }] },
+    };
+    const { result: lineResult } = renderHook(() => useThemeDefaults(mixedLine));
+    const [line, barOfLine] = lineResult.current.data.datasets;
+    expect(line.backgroundColor).toBe(LIGHT[0] + '33');
+    expect(line.pointBackgroundColor).toBe(LIGHT[0]);
+    expect(barOfLine.backgroundColor).toBe(LIGHT[1]);
+    expect(barOfLine.pointBackgroundColor).toBeUndefined();
+    expect(barOfLine.fill).toBeUndefined();
+  });
+
+  it('a pie dataset inside a bar chart takes one opaque colour per point and the seam', () => {
+    const config = {
+      type: 'bar',
+      data: { labels: ['a', 'b', 'c'], datasets: [{ type: 'pie', data: [1, 2, 3] }] },
+    };
+    const { result } = renderHook(() => useThemeDefaults(config));
+    const dataset = result.current.data.datasets[0];
+    expect(dataset.backgroundColor).toEqual([LIGHT[0], LIGHT[1], LIGHT[2]]);
+    expect(dataset.borderColor).toBe(COLORS.light.layer);
+  });
+
   it('a line whose server set the colour of the points keeps it', () => {
     const line = { type: 'line', data: { datasets: [{ data: [1, 2], pointBackgroundColor: '#112233' }] } };
     const { result } = renderHook(() => useThemeDefaults(line));

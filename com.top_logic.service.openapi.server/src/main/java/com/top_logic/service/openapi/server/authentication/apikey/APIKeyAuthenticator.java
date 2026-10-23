@@ -5,7 +5,10 @@
  */
 package com.top_logic.service.openapi.server.authentication.apikey;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 
 import jakarta.servlet.http.Cookie;
@@ -89,8 +92,28 @@ public class APIKeyAuthenticator implements Authenticator {
 		return checkKey(apikey);
 	}
 
+	/**
+	 * The account name assigned to the given API key, <code>null</code> if the key is not
+	 * configured.
+	 *
+	 * <p>
+	 * The key is compared with all configured keys in constant time, so that a configured key
+	 * cannot be guessed from response times.
+	 * </p>
+	 */
+	private String accountFor(String apikey) {
+		byte[] sent = apikey.getBytes(StandardCharsets.UTF_8);
+		String result = null;
+		for (Entry<String, String> entry : _accountByApiKey.entrySet()) {
+			if (MessageDigest.isEqual(entry.getKey().getBytes(StandardCharsets.UTF_8), sent)) {
+				result = entry.getValue();
+			}
+		}
+		return result;
+	}
+
 	private Person checkKey(String apikey) throws AuthenticationFailure {
-		String userName = StringServices.isEmpty(apikey) ? null : _accountByApiKey.get(apikey);
+		String userName = StringServices.isEmpty(apikey) ? null : accountFor(apikey);
 		if (userName == null) {
 			throw new AuthenticationFailure(
 				I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));

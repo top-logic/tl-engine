@@ -21,6 +21,7 @@ import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
@@ -167,8 +168,14 @@ public class TestEmptySecrets extends TestCase {
 	private static LoginCredentials credentials(String user, String password) {
 		LoginCredentials login = TypedConfiguration.newConfigItem(LoginCredentials.class);
 		login.setUser(user);
-		login.setPassword(password);
+		login.setPassword(password.isEmpty() ? null : literal(password));
 		return login;
+	}
+
+	private static LiteralSecretSource.Config literal(String secret) {
+		LiteralSecretSource.Config result = TypedConfiguration.newConfigItem(LiteralSecretSource.Config.class);
+		result.setValue(secret);
+		return result;
 	}
 
 	private static ServerSecret apiKeySecret(String apiKey) {

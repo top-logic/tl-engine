@@ -121,7 +121,9 @@ public class TestMcpSecrets extends TestCase {
 		EndpointSecret.ClientCredentials secret = (EndpointSecret.ClientCredentials) config.getSecrets().get(0);
 		assertEquals("oidc", secret.getDomain());
 		assertEquals("mcp", secret.getClientSecret().getClientId());
-		assertEquals("pw", secret.getClientSecret().getPassword());
+		assertEquals("pw",
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(secret.getClientSecret().getPassword())
+				.getSecret());
 
 		Authenticator authenticator =
 			EndpointAuthentication.build("/mcp/*", config.getAuthentications(), config.getSecrets());

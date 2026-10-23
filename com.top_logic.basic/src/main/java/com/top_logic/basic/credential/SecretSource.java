@@ -5,6 +5,9 @@
  */
 package com.top_logic.basic.credential;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -86,5 +89,30 @@ public interface SecretSource {
 	 *         secret.
 	 */
 	String getSecret();
+
+	/**
+	 * Whether the given value is the current secret, e.g. a key sent by a client that is checked
+	 * against the configured key.
+	 *
+	 * <p>
+	 * The comparison takes a time independent of the position of the first differing character,
+	 * so that the secret cannot be guessed from response times.
+	 * </p>
+	 *
+	 * @param candidate
+	 *        The value to check, <code>null</code> never matches.
+	 * @return Whether the candidate equals {@link #getSecret()}.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the secret is not available.
+	 */
+	default boolean matches(String candidate) {
+		String secret = getSecret();
+		if (candidate == null) {
+			return false;
+		}
+		return MessageDigest.isEqual(secret.getBytes(StandardCharsets.UTF_8),
+			candidate.getBytes(StandardCharsets.UTF_8));
+	}
 
 }

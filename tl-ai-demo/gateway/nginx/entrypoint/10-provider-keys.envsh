@@ -1,0 +1,12 @@
+#!/bin/sh
+# Sourced by the entrypoint of the nginx image before it renders /etc/nginx/templates: exports the
+# provider keys from the mounted secret files, so that they appear neither in the compose file
+# nor in the container's environment as seen by "docker inspect".
+
+for name in anthropic openai mistral; do
+	file="/run/secrets/${name}_api_key"
+	if [ -r "$file" ]; then
+		var="$(echo "$name" | tr '[:lower:]' '[:upper:]')_API_KEY"
+		export "$var=$(tr -d '\r\n' < "$file")"
+	fi
+done

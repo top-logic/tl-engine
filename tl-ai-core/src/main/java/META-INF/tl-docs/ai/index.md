@@ -60,9 +60,9 @@ export tl_openai_api_key="sk-..."
 export tl_anthropic_api_key="sk-ant-..."
 ```
 
-This is the recommended form, because the configuration then holds the variable name, not the key: a key resolved from an alias such as `api-key="%ANTHROPIC_API_KEY%"` is part of the effective configuration, and the Service Editor writes it into the file it stores. A variable that is not set does not stop the application; only a request of that provider fails.
+This is the recommended form, because the configuration then holds the variable name, not the key: a key resolved from an alias such as `api-key="%ANTHROPIC_API_KEY%"` is part of the effective configuration, and the Service Editor writes it into the file it stores. A variable that is not set does not stop the application; only a request of that provider fails. The chapter [secrets and credentials](doc:credentials) describes all forms a key can take and where it can come from.
 
-The variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key` therefore hold the plain key. `tl-ai-core.conf.xml` still defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` for them, for applications whose configuration references the aliases: an alias is read as an encrypted value, so such an application either writes `api-key="unencrypted:%ANTHROPIC_API_KEY%"` (the variable holding the plain key) or, better, replaces the alias by the `<api-key>` element above.
+The variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key` therefore hold the plain key. `tl-ai-core.conf.xml` still defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` for them, for applications whose configuration references the aliases: an alias is read as an encrypted value, so such an application either writes `api-key="unencrypted:%ANTHROPIC_API_KEY%"` (the variable holding the plain key) or, better, replaces the alias by the `<api-key>` element above ([migration](doc:credentials/migration)).
 
 A key given directly in the configuration is an `api-key` attribute. It is an encrypted configuration value, so a key in plain text carries the prefix `unencrypted:` - with no space after the colon, which would become part of the key: `api-key="unencrypted:sk-..."`.
 
@@ -74,9 +74,9 @@ An `api-key` is a shorthand: the provider sends the key in the header its API ex
 </provider>
 ```
 
-Instead of a key, a provider takes `<credentials>` (a `CredentialProvider`), so that the application owns no long-lived secret; a provider that configures both does not start. A provider with neither sends its requests without credentials, e.g. to a gateway that adds them.
+Instead of a key, a provider takes `<credentials>` (a `CredentialProvider`, see [credential providers](doc:credentials/credential-providers)), so that the application owns no long-lived secret; a provider that configures both does not start. A provider with neither sends its requests without credentials, e.g. to a gateway that adds them.
 
-In development, the requests go through the central API gateway, which checks the token of the developer's device login and adds the provider key of the route (here `/anthropic/`):
+In development, the requests go through the central [credential gateway](doc:credentials/gateway), which checks the token of the developer's device login and adds the provider key of the route (here `/anthropic/`):
 
 ```xml
 <provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"

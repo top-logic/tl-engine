@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.admin.component;
 
-import java.io.File;
 import java.util.Map;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -24,13 +23,8 @@ public class HasInAppServiceConfigExecutabilityRule implements ExecutabilityRule
 
 	@Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-		if (model instanceof BasicRuntimeModule) {
-			File inappServiceConfig =
-				TLSaveServiceConfigHandler.inAppServiceConfiguration((BasicRuntimeModule<?>) model);
-
-			if (inappServiceConfig.exists()) {
-				return ExecutableState.EXECUTABLE;
-			}
+		if (model instanceof BasicRuntimeModule<?> module && TLServiceUtils.hasInAppConfiguration(module)) {
+			return ExecutableState.EXECUTABLE;
 		}
 
 		return ExecutableState.NOT_EXEC_HIDDEN;

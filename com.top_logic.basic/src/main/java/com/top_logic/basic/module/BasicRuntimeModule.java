@@ -28,6 +28,8 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 
 	private List<ServiceDependency<M>> _dynamicDependencies = new CopyOnWriteArrayList<>();
 
+	private volatile boolean _configurationChanged;
+
 	/**
 	 * Convenience constant for the implementation of {@link #getDependencies()} in
 	 * {@link BasicRuntimeModule}s without dependencies.
@@ -91,6 +93,31 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 		}
 
 		return (impl);
+	}
+
+	/**
+	 * Whether the stored configuration of this service differs from the configuration the running
+	 * instance was started with.
+	 * 
+	 * <p>
+	 * A changed configuration becomes effective with the next {@link #startUp() start} of this
+	 * module, which resets this flag.
+	 * </p>
+	 * 
+	 * @see #markConfigurationChanged()
+	 */
+	public boolean isConfigurationChanged() {
+		return _configurationChanged;
+	}
+
+	/**
+	 * Records that the stored configuration of this service has been changed and differs from the
+	 * configuration the running instance was started with.
+	 * 
+	 * @see #isConfigurationChanged()
+	 */
+	public void markConfigurationChanged() {
+		_configurationChanged = true;
 	}
 
 	/**
@@ -180,6 +207,8 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 			impl = null;
 			throw ex;
 		}
+		// The started instance uses the current configuration.
+		_configurationChanged = false;
 	}
 
 	/**

@@ -17,8 +17,10 @@ import com.top_logic.ai.chat.backend.BackendFeatures;
 import com.top_logic.ai.chat.backend.BackendTurn;
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.factory.workspace.WorkspaceState;
 import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.error.TopLogicException;
@@ -45,6 +47,11 @@ import com.top_logic.util.error.TopLogicException;
  * terminated. A process that ends during a run ends the run in an error.</li>
  * <li>A process whose protocol reports it {@link AgentProtocol#isSpent() spent} after a run - its
  * token is refused - is terminated; the next message starts a new process.</li>
+ * <li>A process that does not find the conversation it is to continue
+ * ({@link AgentProtocol#isSessionLost()}) - its store was lost with the container - is replaced at
+ * once by a process starting a new conversation, whose session ID replaces the stored one. That
+ * process answers the message, and the run tells the user first that the agent lost what the
+ * conversation said so far.</li>
  * </ul>
  */
 public class WorkspaceAgent implements ConversationBackend {
@@ -53,6 +60,12 @@ public class WorkspaceAgent implements ConversationBackend {
 	 * Kind of the error that ends a run whose process ended.
 	 */
 	public static final String ERROR_PROCESS_EXIT = "PROCESS_EXIT";
+
+	/** Number of the turn the notice of a lost conversation belongs to. */
+	private static final int FIRST_TURN = 1;
+
+	/** Separates the notice of a lost conversation from the answer. */
+	private static final String PARAGRAPH_END = "\n\n";
 
 	private final AgentRuntime _runtime;
 
@@ -121,17 +134,17 @@ public class WorkspaceAgent implements ConversationBackend {
 		AgentProcess process = begin();
 		boolean spent = false;
 		try {
-			AgentProtocol protocol = process.protocol();
-			protocol.startRun(UUID.randomUUID().toString(), _runtime.messages().apply(turn.owner()), sink);
-			try (CancellationToken.Registration registration = cancel.onCancel(process::cancel)) {
-				try {
-					process.write(protocol.userMessage(turn.text()));
-				} catch (IOException ex) {
-					Logger.info("Agent in workspace '" + _workspaceId + "' takes no input: "
-						+ ex.getMessage(), WorkspaceAgent.class);
-					process.terminate();
-				}
-				drain(process, protocol);
+			String runId = UUID.randomUUID().toString();
+			I18NBundle messages = _runtime.messages().apply(turn.owner());
+			AgentProtocol protocol = run(process, runId, messages, turn, sink, cancel);
+			String notice = null;
+			if (protocol.isSessionLost()) {
+				Logger.info("Agent in workspace '" + _workspaceId + "' does not have the conversation '"
+					+ _conversation.sessionId() + "' any more, starting a new one.", WorkspaceAgent.class);
+				_conversation.storeSessionId(null);
+				process = restart();
+				notice = messages.getString(I18NConstants.NOTICE_CONVERSATION_LOST) + PARAGRAPH_END;
+				protocol = run(process, runId, messages, turn, withNotice(sink, notice), cancel);
 			}
 			spent = protocol.isSpent();
 			if (spent) {
@@ -143,10 +156,57 @@ public class WorkspaceAgent implements ConversationBackend {
 			if (window > 0) {
 				_contextWindow = window;
 			}
-			return protocol.answer();
+			String answer = protocol.answer();
+			return notice == null ? answer : notice + (answer == null ? "" : answer);
 		} finally {
 			end(spent);
 		}
+	}
+
+	/**
+	 * Hands the message of the user to the process and delivers the run on this thread.
+	 *
+	 * @return The protocol of the process, holding the outcome of the run.
+	 */
+	private AgentProtocol run(AgentProcess process, String runId, I18NBundle messages, BackendTurn turn,
+			AgentEventListener sink, CancellationToken cancel) {
+		AgentProtocol protocol = process.protocol();
+		protocol.startRun(runId, messages, sink);
+		try (CancellationToken.Registration registration = cancel.onCancel(process::cancel)) {
+			try {
+				process.write(protocol.userMessage(turn.text()));
+			} catch (IOException ex) {
+				Logger.info("Agent in workspace '" + _workspaceId + "' takes no input: "
+					+ ex.getMessage(), WorkspaceAgent.class);
+				process.terminate();
+			}
+			drain(process, protocol);
+		}
+		return protocol;
+	}
+
+	/**
+	 * The given sink, followed by the given notice to the user as the first text of the run; the
+	 * answer of the run starts with it as well.
+	 */
+	private static AgentEventListener withNotice(AgentEventListener sink, String notice) {
+		return new AgentEventListener() {
+			private boolean _noticed;
+
+			@Override
+			public void onEvent(AgentEvent event) {
+				sink.onEvent(event);
+				if (!_noticed && event instanceof AgentEvent.RunStarted started) {
+					_noticed = true;
+					sink.onEvent(new AgentEvent.TextDelta(started.runId(), FIRST_TURN, started.timestamp(), notice));
+				}
+			}
+
+			@Override
+			public boolean dispatchesTo(AgentEventListener target) {
+				return this == target || sink.dispatchesTo(target);
+			}
+		};
 	}
 
 	/**
@@ -269,6 +329,17 @@ public class WorkspaceAgent implements ConversationBackend {
 			WorkspaceAgent.class);
 		return AgentProcess.start(_runtime.provider(), workspaceId, harness.command(launch), token,
 			_runtime.tokens(), harness.newProtocol(), _runtime.watchers());
+	}
+
+	/**
+	 * Replaces the process of the run in progress by a new one, which starts with the conversation
+	 * stored now.
+	 */
+	private synchronized AgentProcess restart() {
+		stopProcess();
+		AgentProcess process = startProcess();
+		_process = process;
+		return process;
 	}
 
 	/**

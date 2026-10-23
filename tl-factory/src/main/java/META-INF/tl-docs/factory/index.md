@@ -1,12 +1,13 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to the Anthropic API (LLMProxyService, LLMProxyServlet at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN with issue/revoke and max-token-lifetime, allowed-sources with workspace-network, tl_factory_llm_proxy_url, tl_factory_llm_allowed_sources), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root), and before updating its tool versions or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, the agent-sessions volume, a lost conversation (isSessionLost), idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
 ---
 
 # Control application (tl-factory)
 
 The control application manages TopLogic applications that are built by agents. Every managed
 application is a **project**; its application is generated, built and run in a **workspace**: a
-container of its own with named volumes for the sources, the Maven repository and the database.
+container of its own with named volumes for the sources, the Maven repository and the database,
+and for the conversations of its coding agent.
 The control application creates, starts, stops and removes these containers; no workspace container
 gets access to the container platform itself.
 
@@ -218,8 +219,8 @@ The update is an operation like the others, in state *Updating* with its output 
 - It builds the current image if needed, makes sure the release repository is complete and creates
   the container anew (`WorkspaceProvider.recreate`): the provider makes the image available,
   removes the old container - stopping it if it runs - and creates the new one from the same spec
-  on the existing named volumes. Sources, Maven repository and database stay, so does the initial
-  password of the workspace. A workspace whose container is lost but whose volumes exist gets a
+  on the existing named volumes. Sources, Maven repository and database stay, so do the
+  conversations of the agent and the initial password of the workspace. A workspace whose container is lost but whose volumes exist gets a
   container again this way.
 - If the proxy is switched on, the new container gets its current URL in `ANTHROPIC_BASE_URL`.
 - A workspace that was running is started again and waited for like by *Start*; otherwise it ends
@@ -437,7 +438,17 @@ the same for every harness. One process serves one conversation:
   it is stored in `sessionId` of the conversation in a transaction of its own as soon as it is
   known. A new process - after the idle timeout, a token renewal, a crash or a restart of the
   control application - continues the conversation with `--resume <session ID>`; the session ID
-  stays the same.
+  stays the same. Claude Code keeps its conversations in `~/.claude/projects`
+  (`ApplicationWorkspaces.AGENT_SESSIONS_PATH`), which is the named volume `agent-sessions` of the
+  workspace, so a conversation also continues after *Update workspace* created the container anew.
+  Only that directory is a volume: the plugin, the MCP servers and `CLAUDE.md` in `~/.claude` come
+  from the current image.
+- **Lost conversation.** A process that does not find the conversation it is to resume - a
+  workspace created before the volume existed, a removed volume - answers with an error `result`
+  "No conversation found with session ID ..." and ends. `ClaudeCodeProtocol` lets nothing of that
+  reach the chat (`AgentProtocol.isSessionLost()`); `WorkspaceAgent` clears the stored session ID,
+  starts a process with a new conversation for the same run and message, and the run begins with
+  the text `NOTICE_CONVERSATION_LOST`: the agent answers without the earlier course.
 - A message is one line `{"type":"user","message":{"role":"user","content":[{"type":"text","text":...}]}}`
   on the input of the process. The output is split into lines by a thread of the provider and
   queued; the run drains the queue on the chat's thread until the `result` line, so that every

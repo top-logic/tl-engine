@@ -90,6 +90,8 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 			WorkspaceSpec first = containers.get(0);
 			WorkspaceSpec second = containers.get(1);
 			assertEquals(mountPaths(first), mountPaths(second));
+			assertTrue("The agent's conversations survive the update.",
+				mountPaths(second).contains(ApplicationWorkspaces.AGENT_SESSIONS_PATH));
 			Map<String, String> env = second.getEnv();
 			assertEquals(created.spec().getInitialPassword(), env.get(ApplicationWorkspaces.ENV_INITIAL_PASSWORD));
 			assertNotNull(env.get(LLMProxyService.ENV_BASE_URL));

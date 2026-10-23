@@ -187,7 +187,7 @@
 								<null-input-disabled/>
 								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated, null, #('The workspace runs on the current image.'@en, 'Der Workspace läuft auf dem aktuellen Image.'@de))))"/>
 							</executability>
-							<confirm expr="#('Create the container of {0} anew on the current image? Sources, Maven repository and database are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image neu anlegen? Quellen, Maven-Repository und Datenbank bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
+							<confirm expr="#('Create the container of {0} anew on the current image? Sources, Maven repository, database and the conversations of the agent are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image neu anlegen? Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
 							<execute-script function="factoryUpdate($project)"/>
 						</generic-command>
 						<generic-command name="cleanupWorkspace"

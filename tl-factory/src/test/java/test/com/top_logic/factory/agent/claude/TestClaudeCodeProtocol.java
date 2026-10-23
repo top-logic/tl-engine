@@ -17,6 +17,7 @@ import test.com.top_logic.factory.agent.EventLog;
 import test.com.top_logic.factory.agent.KeyBundle;
 
 import com.top_logic.basic.json.JSON;
+import com.top_logic.factory.agent.AgentProtocol;
 import com.top_logic.factory.agent.I18NConstants;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.claude.ClaudeCodeProtocol;
@@ -208,6 +209,31 @@ public class TestClaudeCodeProtocol extends TestCase {
 		assertEquals(0, _events.completion().totalCost().amount(), 0);
 		assertEquals("The run ends with its first refused request.", AgentEvent.RunCompleted.class,
 			_events.events().get(_events.events().size() - 1).getClass());
+	}
+
+	/**
+	 * A process that does not have the conversation it is to resume ends the run without a trace in
+	 * the sink: the run is answered by another process, see {@link AgentProtocol#isSessionLost()}.
+	 */
+	public void testSessionNotFound() throws Exception {
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
+		List<String> lines = Fixtures.lines(Fixtures.SESSION_NOT_FOUND);
+		for (int n = 0; n < lines.size(); n++) {
+			assertEquals("Line " + n, n == lines.size() - 1, _protocol.onLine(lines.get(n)));
+		}
+		assertTrue(_protocol.isSessionLost());
+		assertTrue("Nothing of the run reached the sink.", _events.events().isEmpty());
+	}
+
+	/**
+	 * A run that fails otherwise has the conversation; it ends in an error as before.
+	 */
+	public void testOtherErrorIsNoLostSession() throws Exception {
+		_protocol.startRun(RUN_ID, KeyBundle.INSTANCE, _events);
+		_protocol.onLine(Fixtures.lines(Fixtures.SESSION_NOT_FOUND).get(0).replace(
+			ClaudeCodeProtocol.ERROR_SESSION_NOT_FOUND, "Something else went wrong"));
+		assertFalse(_protocol.isSessionLost());
+		assertEquals(StopReason.ERROR, _events.reason());
 	}
 
 	/**

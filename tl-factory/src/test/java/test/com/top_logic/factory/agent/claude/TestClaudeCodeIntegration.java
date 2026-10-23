@@ -272,6 +272,18 @@ public class TestClaudeCodeIntegration extends TestCase {
 				process.close();
 			}
 		}
+		try (Recorder recorder = new Recorder()) {
+			// A conversation Claude Code never had, as one whose store was lost with its container.
+			String token = _tokens.issue(_workspaceId, Duration.ofHours(1));
+			ExecProcess process = _provider.startExec(_workspaceId,
+				harness.command(new AgentLaunch(APP_DIR, UUID.randomUUID().toString(), token)), recorder);
+			try {
+				recorder.turn(process, Fixtures.SESSION_NOT_FOUND, protocol.userMessage(PROMPT_OK));
+				assertTrue("The process ends after refusing the conversation.", process.waitFor(WAIT));
+			} finally {
+				process.close();
+			}
+		}
 	}
 
 	/**

@@ -90,6 +90,17 @@ public interface AgentProtocol {
 	boolean isSpent();
 
 	/**
+	 * Whether the agent does not have the conversation the process was started to continue - e.g.
+	 * because its store was lost with the container of the workspace.
+	 *
+	 * <p>
+	 * The run ended without anything reaching its sink, not even its start, and the process is of
+	 * no further use: the run is to be answered by a process starting a new conversation.
+	 * </p>
+	 */
+	boolean isSessionLost();
+
+	/**
 	 * The answer of the last run: its final text, what it answered so far for a run that did not
 	 * complete.
 	 */

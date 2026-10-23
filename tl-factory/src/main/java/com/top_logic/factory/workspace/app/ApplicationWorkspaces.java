@@ -57,6 +57,8 @@ import com.top_logic.util.error.TopLogicException;
  * workspace.</li>
  * <li>The release repository of the engine version, a {@link VolumeMount#isShared() shared} volume
  * mounted read-only at {@link #RELEASE_PATH} and used as tail of the local Maven repository.</li>
+ * <li>{@link #AGENT_SESSIONS_VOLUME} at {@link #AGENT_SESSIONS_PATH}: the conversations of the
+ * coding agent, so that a conversation continues after the container was created anew.</li>
  * </ul>
  *
  * <p>
@@ -200,6 +202,11 @@ public class ApplicationWorkspaces {
 	public static final String RELEASE_PATH = "/release";
 
 	/**
+	 * Logical name of the volume holding the conversations of the coding agent of a workspace.
+	 */
+	public static final String AGENT_SESSIONS_VOLUME = "agent-sessions";
+
+	/**
 	 * Prefix of the logical name of the shared volume holding the release repository of an engine
 	 * version, followed by the version.
 	 */
@@ -261,6 +268,18 @@ public class ApplicationWorkspaces {
 	public static final String WORKSPACE_USER = "tl";
 
 	/**
+	 * Mount path of the {@link #AGENT_SESSIONS_VOLUME}: the directory in which Claude Code keeps the
+	 * conversations it resumes, one directory per working directory.
+	 *
+	 * <p>
+	 * Only this directory is a volume, not the configuration directory of Claude Code around it:
+	 * the plugin, the MCP servers and the user instructions installed there come from the image, so
+	 * that a workspace created anew on a current image has the current ones.
+	 * </p>
+	 */
+	public static final String AGENT_SESSIONS_PATH = "/home/" + WORKSPACE_USER + "/.claude/projects";
+
+	/**
 	 * The root user by its ID, for the commands that need it.
 	 */
 	public static final String ROOT_USER = "0";
@@ -284,7 +303,7 @@ public class ApplicationWorkspaces {
 	 * owned by the {@link #WORKSPACE_USER}.
 	 */
 	public static final List<String> VOLUME_PATHS =
-		Collections.unmodifiableList(Arrays.asList(SOURCE_PATH, REPOSITORY_PATH, RELEASE_PATH));
+		Collections.unmodifiableList(Arrays.asList(SOURCE_PATH, REPOSITORY_PATH, RELEASE_PATH, AGENT_SESSIONS_PATH));
 
 	/**
 	 * Placeholder in the Maven settings of the image replaced by the
@@ -957,6 +976,7 @@ public class ApplicationWorkspaces {
 			.addVolume(new VolumeMount(SOURCE_VOLUME, SOURCE_PATH))
 			.addVolume(new VolumeMount(REPOSITORY_VOLUME, REPOSITORY_PATH))
 			.addVolume(VolumeMount.shared(releaseVolume, RELEASE_PATH, true))
+			.addVolume(new VolumeMount(AGENT_SESSIONS_VOLUME, AGENT_SESSIONS_PATH))
 			.putEnv(ENV_MAVEN_ARGS, String.join(" ", workspaceMavenArgs()))
 			.putEnv(ENV_APP_DIR, appDir(spec))
 			.putEnv(ENV_BUILT_MARKER, builtMarker())

@@ -178,6 +178,10 @@ public class ScriptedProcess implements ExecProcess {
 	@Override
 	public void closeStdin() {
 		_stdinClosed = true;
+		if (_ended.getCount() == 0) {
+			// Ended already, its writer may be gone.
+			return;
+		}
 		// Claude Code ends at the end of its input.
 		_writer.execute(() -> end(0));
 	}

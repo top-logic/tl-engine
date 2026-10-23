@@ -104,6 +104,9 @@ public class TestApplicationWorkspaces extends TestCase {
 
 	private static final String DATA_CONTENT = "persisted";
 
+	/** A file in the store of the agent's conversations, which survives an update. */
+	private static final String SESSION_FILE = ApplicationWorkspaces.AGENT_SESSIONS_PATH + "/it-session";
+
 	private static final String DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
 
 	private static final String INITIAL_PASSWORD = "it-" + UUID.randomUUID();
@@ -287,7 +290,7 @@ public class TestApplicationWorkspaces extends TestCase {
 				progress);
 		long built = System.currentTimeMillis();
 		assertEquals(WorkspaceState.RUNNING, created.getState());
-		assertEquals(2, created.getVolumes().size());
+		assertEquals(3, created.getVolumes().size());
 
 		String url = _applications.awaitApplication(_workspaceId, ARTIFACT_ID);
 		long reachable = System.currentTimeMillis();
@@ -297,6 +300,8 @@ public class TestApplicationWorkspaces extends TestCase {
 		assertApplicationControl(url);
 		assertEquals(0, _provider.exec(_workspaceId,
 			ExecCommand.of("sh", "-c", "echo " + DATA_CONTENT + " > " + DATA_FILE), ExecOutput.NONE));
+		assertEquals("The workspace user cannot write the agent's conversations.", 0, _provider.exec(_workspaceId,
+			ExecCommand.of("sh", "-c", "echo " + DATA_CONTENT + " > " + SESSION_FILE), ExecOutput.NONE));
 
 		WorkspaceInfo stopped = _applications.stop(_workspaceId);
 		assertEquals(WorkspaceState.STOPPED, stopped.getState());
@@ -336,6 +341,9 @@ public class TestApplicationWorkspaces extends TestCase {
 			output(ExecCommand.of("printenv", ApplicationWorkspaces.ENV_INITIAL_PASSWORD)));
 		assertEquals("The source volume did not survive the update.", DATA_CONTENT + "\n",
 			output(ExecCommand.of("cat", DATA_FILE)));
+		assertEquals("The agent's conversations did not survive the update.", DATA_CONTENT + "\n",
+			output(ExecCommand.of("cat", SESSION_FILE)));
+		assertAgentTools();
 
 		_applications.remove(_workspaceId);
 		WorkspaceInfo removed = _provider.status(_workspaceId);

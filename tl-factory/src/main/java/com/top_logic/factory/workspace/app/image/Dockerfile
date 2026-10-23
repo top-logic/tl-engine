@@ -10,7 +10,7 @@
 #
 # The entry script and all commands run as the user @WORKSPACE_USER@. The mount points of the
 # workspace volumes belong to this user, so that a fresh named volume mounted there belongs to it
-# as well. The placeholders @...@ are replaced by ApplicationWorkspaces.imageContext().
+# as well; so does its home directory, which holds the mount point of the agent's conversations. The placeholders @...@ are replaced by ApplicationWorkspaces.imageContext().
 
 FROM eclipse-temurin:21-jdk
 
@@ -89,7 +89,8 @@ RUN if existing="$(getent passwd "${WORKSPACE_UID}" | cut -d: -f1)" && [ -n "${e
 	fi \
 	&& useradd --create-home --uid "${WORKSPACE_UID}" --user-group --shell /bin/bash @WORKSPACE_USER@ \
 	&& mkdir -p @VOLUME_PATHS@ \
-	&& chown @WORKSPACE_USER@:@WORKSPACE_USER@ @VOLUME_PATHS@
+	&& chown @WORKSPACE_USER@:@WORKSPACE_USER@ @VOLUME_PATHS@ \
+	&& chown -R @WORKSPACE_USER@:@WORKSPACE_USER@ /home/@WORKSPACE_USER@
 
 COPY settings.xml /opt/maven/conf/settings.xml
 COPY entrypoint.sh /usr/local/bin/tl-factory-entrypoint

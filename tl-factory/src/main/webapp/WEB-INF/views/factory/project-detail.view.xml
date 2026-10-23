@@ -37,8 +37,8 @@
 				<de>Image veraltet</de>
 			</title>
 			<message>
-				<en>The container of the workspace runs another image than the current workspace image and misses its tools. "Update workspace" creates the container anew on the current image and keeps sources, Maven repository and database.</en>
-				<de>Der Container des Workspaces läuft auf einem anderen als dem aktuellen Workspace-Image und hat dessen Werkzeuge nicht. "Workspace aktualisieren" legt den Container auf dem aktuellen Image neu an und behält Quellen, Maven-Repository und Datenbank.</de>
+				<en>The container of the workspace runs another image than the current workspace image and misses its tools. "Update workspace" creates the container anew on the current image and keeps sources, Maven repository, database and the conversations of the agent.</en>
+				<de>Der Container des Workspaces läuft auf einem anderen als dem aktuellen Workspace-Image und hat dessen Werkzeuge nicht. "Workspace aktualisieren" legt den Container auf dem aktuellen Image neu an und behält Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten.</de>
 			</message>
 		</alert>
 		<form

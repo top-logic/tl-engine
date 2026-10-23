@@ -34,6 +34,10 @@ public interface ConversationTarget {
 
 	/**
 	 * Stores the session ID the agent reported.
+	 *
+	 * @param sessionId
+	 *        The session ID, {@code null} for a conversation the agent no longer has: the next
+	 *        process starts a new one.
 	 */
 	void storeSessionId(String sessionId);
 

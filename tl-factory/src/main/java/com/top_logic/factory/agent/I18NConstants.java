@@ -64,6 +64,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_LLM_ACCESS_REFUSED__STATUS;
 
+	/**
+	 * @en The agent no longer has the earlier course of this conversation, e.g. because the workspace
+	 *     was created anew. It answers without it.
+	 */
+	public static ResKey NOTICE_CONVERSATION_LOST;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

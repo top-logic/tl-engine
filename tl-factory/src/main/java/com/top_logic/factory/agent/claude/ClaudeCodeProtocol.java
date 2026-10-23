@@ -86,6 +86,11 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 	/** Prefix of the kind of the {@link AgentEvent.ProviderError} of a failed API request. */
 	public static final String ERROR_KIND_API_PREFIX = "API_";
 
+	/**
+	 * Start of the error with which Claude Code refuses to resume a conversation it does not have.
+	 */
+	public static final String ERROR_SESSION_NOT_FOUND = "No conversation found with session ID";
+
 	private static final String INTERRUPT_ID_PREFIX = "tl-interrupt-";
 
 	private static final String NO_MODEL = "";
@@ -110,6 +115,9 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 
 	/** Whether the process cannot serve another run, see {@link #isSpent()}. */
 	private boolean _spent;
+
+	/** Whether the conversation to continue was missing, see {@link #isSessionLost()}. */
+	private boolean _sessionLost;
 
 	/** The context window of the model of the last result, zero before one reported it. */
 	private int _contextWindow;
@@ -222,6 +230,11 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 	@Override
 	public boolean isSpent() {
 		return _spent;
+	}
+
+	@Override
+	public boolean isSessionLost() {
+		return _sessionLost;
 	}
 
 	@Override
@@ -408,6 +421,15 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 	}
 
 	private void onResult(Map<?, ?> json) {
+		if (!_started && sessionNotFound(json)) {
+			// Nothing of the run reached the sink: it is answered by a process starting a new
+			// conversation, see AgentProtocol#isSessionLost().
+			_sessionLost = true;
+			_running = false;
+			_sink = null;
+			_messages = null;
+			return;
+		}
 		ensureStarted(null);
 		abandonTools();
 		closeTurn();
@@ -539,6 +561,16 @@ public class ClaudeCodeProtocol implements AgentProtocol {
 		}
 		String subtype = string(json, SUBTYPE);
 		return subtype == null ? ERROR_KIND_RUN_FAILED : subtype.toUpperCase(Locale.ROOT);
+	}
+
+	/**
+	 * Whether the result refuses to resume the conversation, because Claude Code does not have it.
+	 */
+	private static boolean sessionNotFound(Map<?, ?> json) {
+		if (!Boolean.TRUE.equals(json.get(IS_ERROR)) || !(json.get(ERRORS) instanceof List<?> errors)) {
+			return false;
+		}
+		return errors.stream().anyMatch(error -> error instanceof String text && text.startsWith(ERROR_SESSION_NOT_FOUND));
 	}
 
 	private static String errorMessage(Map<?, ?> json, String subtype) {

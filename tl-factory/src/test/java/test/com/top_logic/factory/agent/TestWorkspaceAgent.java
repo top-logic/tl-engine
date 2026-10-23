@@ -195,6 +195,53 @@ public class TestWorkspaceAgent extends TestCase {
 	}
 
 	/**
+	 * A stored conversation Claude Code no longer has - its store was lost with the container - is
+	 * replaced by a new one: the message is answered by a process starting a new conversation, the
+	 * run says first that the earlier course is lost, and the new session ID is stored.
+	 */
+	public void testLostSessionStartsNewConversation() throws Exception {
+		_conversation.storeSessionId("lost-session");
+		_answers = lostThenFixture();
+		WorkspaceAgent agent = agent();
+		EventLog events = new EventLog();
+		String answer = agent.send(turn("Weiter."), events, new CancellationToken());
+
+		assertEquals(StopReason.COMPLETE, events.reason());
+		assertTrue("No error reached the chat.", events.of(AgentEvent.ProviderError.class).isEmpty());
+		assertEquals("One run.", 1, events.of(AgentEvent.RunStarted.class).size());
+		String notice = KeyBundle.INSTANCE.getString(com.top_logic.factory.agent.I18NConstants.NOTICE_CONVERSATION_LOST);
+		assertTrue("The run starts with the notice: " + events.text(), events.text().startsWith(notice));
+		assertTrue("The answer follows the notice.", events.text().endsWith("OK"));
+		assertEquals("The answer starts with the notice too.", events.text(), answer);
+
+		assertEquals(2, _provider.processes().size());
+		assertEquals(List.of(ClaudeCodeHarness.OPTION_RESUME, "lost-session"),
+			resumeArgs(_provider.processes().get(0).command()));
+		assertEquals("A new conversation.", Collections.emptyList(),
+			resumeArgs(_provider.processes().get(1).command()));
+		awaitRevoked(_tokens.issued().get(0));
+		assertEquals(sessionId(Fixtures.OK), _conversation.sessionId());
+		assertTrue("The lost session was forgotten first.", _conversation.stored().contains(null));
+	}
+
+	/**
+	 * Answers the first message with the refusal of the lost conversation and the end of the
+	 * process, every later one with the fixtures.
+	 */
+	private Function<String, List<String>> lostThenFixture() {
+		boolean[] refused = { false };
+		return line -> {
+			if (!refused[0]) {
+				refused[0] = true;
+				List<String> lines = new ArrayList<>(Fixtures.lines(Fixtures.SESSION_NOT_FOUND));
+				lines.add(ScriptedProcess.CRASH);
+				return lines;
+			}
+			return answerByFixture(line);
+		};
+	}
+
+	/**
 	 * A process whose token has less than half of its lifetime left is replaced before the run.
 	 */
 	public void testTokenRenewal() throws Exception {

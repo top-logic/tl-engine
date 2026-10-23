@@ -10,7 +10,9 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.DevelopmentCategory;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
 
@@ -22,6 +24,7 @@ import com.top_logic.factory.workspace.docker.DockerWorkspaceProvider;
  * when the platform is not reachable; the first workspace operation reports that.
  * </p>
  */
+@ServiceCategory.Of(DevelopmentCategory.class)
 public class WorkspaceService extends ConfiguredManagedClass<WorkspaceService.Config<?>> {
 
 	/**

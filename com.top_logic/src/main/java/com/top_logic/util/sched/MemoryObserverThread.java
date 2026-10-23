@@ -34,8 +34,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 import com.top_logic.basic.time.TimeZones;
 import com.top_logic.layout.Accessor;
 import com.top_logic.util.Resources;
@@ -72,6 +74,7 @@ import com.top_logic.util.monitor.MonitorResult;
  */
 @ServiceDependencies({ AliasManager.Module.class, ApplicationMonitor.Module.class })
 @Label("Memory logging")
+@ServiceCategory.Of(OperationsCategory.class)
 public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverThread.Config>
 		implements MonitorComponent, Reloadable {
 	

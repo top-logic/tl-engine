@@ -12,7 +12,9 @@ import java.util.List;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 
 /**
  * A watch service that watches registered file system paths for changes and events.
@@ -20,6 +22,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @Label("File system cache")
+@ServiceCategory.Of(RuntimeCategory.class)
 public abstract class FileSystemCache extends ManagedClass {
 
 	/**

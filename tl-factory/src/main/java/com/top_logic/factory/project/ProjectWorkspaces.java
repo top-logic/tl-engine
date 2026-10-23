@@ -23,8 +23,10 @@ import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.DevelopmentCategory;
 import com.top_logic.basic.sched.DaemonThreadFactory;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
@@ -69,6 +71,7 @@ import com.top_logic.util.model.ModelService;
 	SchedulerService.Module.class,
 	SecureRandomService.Module.class,
 })
+@ServiceCategory.Of(DevelopmentCategory.class)
 public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.Config<?>> {
 
 	/**

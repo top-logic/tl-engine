@@ -11,7 +11,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.core.workspace.Environment;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.mig.html.ContainerDetector;
 
 /**
@@ -37,6 +39,7 @@ import com.top_logic.mig.html.ContainerDetector;
  *
  * @author <a href="mailto:jonathan.huesing@top-logic.com">Jonathan Hüsing</a>
  */
+@ServiceCategory.Of(RuntimeCategory.class)
 public class OperationModeService extends ConfiguredManagedClass<OperationModeService.Config> {
 
 	/**

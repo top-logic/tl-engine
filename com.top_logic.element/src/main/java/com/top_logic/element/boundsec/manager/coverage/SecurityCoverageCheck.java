@@ -17,9 +17,11 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -66,6 +68,7 @@ import com.top_logic.util.model.ModelService;
 })
 @ServiceExtensionPoint(AccessManager.Module.class)
 @Label("Security coverage check")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCoverageCheck.Config> {
 
 	/** Separator between the type of a finding and its message. */

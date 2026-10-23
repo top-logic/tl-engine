@@ -26,8 +26,10 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.util.ComputationEx2;
 
 /**
@@ -37,6 +39,7 @@ import com.top_logic.basic.util.ComputationEx2;
  */
 @ServiceDependencies(SecureRandomService.Module.class)
 @Label("Thread context management")
+@ServiceCategory.Of(RuntimeCategory.class)
 public abstract class ThreadContextManager extends ManagedClass {
 
 	/**

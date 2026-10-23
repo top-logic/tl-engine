@@ -25,7 +25,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.DesignTokenKind;
@@ -56,6 +58,7 @@ import com.top_logic.mig.html.HTMLConstants;
  *           {@link #writeThemeScript(TagWriter)}.
  */
 @Label("UI themes")
+@ServiceCategory.Of(UICategory.class)
 public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config> {
 
 	/** {@link PersonalConfiguration} key storing the user's selected theme id. */

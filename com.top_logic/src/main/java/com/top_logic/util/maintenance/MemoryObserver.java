@@ -36,8 +36,10 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.monitor.ApplicationMonitor;
 import com.top_logic.util.monitor.MonitorComponent;
@@ -60,6 +62,7 @@ import com.top_logic.util.sched.MemoryObserverThread;
  */
 @ServiceDependencies({ AliasManager.Module.class, ApplicationMonitor.Module.class, FormatterService.Module.class })
 @Label("Memory observer")
+@ServiceCategory.Of(OperationsCategory.class)
 public class MemoryObserver extends ConfiguredManagedClass<MemoryObserver.Config>
 		implements MonitorComponent, Reloadable {
 

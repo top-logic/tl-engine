@@ -16,7 +16,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.convert.converters.FormatConverter;
 
 /**
@@ -27,6 +29,7 @@ import com.top_logic.convert.converters.FormatConverter;
  * @author <a href="mailto:tma@top-logic.com>tma</a>
  */
 @Label("Document format converters")
+@ServiceCategory.Of(InterfacesCategory.class)
 public final class FormatConverterFactory extends ManagedClass {
 
 	/**

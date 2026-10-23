@@ -42,7 +42,9 @@ import com.top_logic.basic.json.config.JSONConfigValueAnalyzer;
 import com.top_logic.basic.json.config.JSONObject;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.tool.boundsec.securityObjectProvider.path.Component;
 import com.top_logic.util.Resources;
@@ -56,6 +58,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 @Label("Structured text editor configuration")
+@ServiceCategory.Of(UICategory.class)
 public class StructuredTextConfigService extends ManagedClass {
 	
 	/** Path of the ckeditor in webapp */

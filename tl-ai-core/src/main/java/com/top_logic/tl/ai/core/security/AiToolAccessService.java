@@ -24,6 +24,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
@@ -37,6 +38,7 @@ import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -109,6 +111,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 	LLMProviderService.Module.class,
 	McpServerRegistry.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class AiToolAccessService extends ConfiguredManagedClass<AiToolAccessService.Config<?>> {
 
 	/**

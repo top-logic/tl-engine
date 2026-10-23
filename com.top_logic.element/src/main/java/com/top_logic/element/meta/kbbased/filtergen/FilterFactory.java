@@ -26,8 +26,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.element.meta.form.EditContext;
 
 /**
@@ -38,6 +40,7 @@ import com.top_logic.element.meta.form.EditContext;
 @Deprecated
 @ServiceDependencies({ ApplicationConfig.Module.class })
 @Label("Attribute filters")
+@ServiceCategory.Of(ModelCategory.class)
 public class FilterFactory extends ManagedClass implements Reloadable {
     
 	private ConcurrentMap<String, AttributedValueFilter> _filterByName = new ConcurrentHashMap<>();

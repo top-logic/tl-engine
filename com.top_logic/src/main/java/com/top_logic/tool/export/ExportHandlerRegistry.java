@@ -15,7 +15,9 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 
 /**
  * Registry of the {@link ExportHandler}s available for exporting data, keyed by name.
@@ -23,6 +25,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href=mailto:fsc@top-logic.com>FSC</a>
  */
 @Label("Export handlers")
+@ServiceCategory.Of(InterfacesCategory.class)
 public final class ExportHandlerRegistry extends ManagedClass {
 
 	/** The map of known handlers. */

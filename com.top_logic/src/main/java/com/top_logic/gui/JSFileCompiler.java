@@ -24,7 +24,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.FileCompiler;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.mig.html.HTMLUtil;
@@ -35,6 +37,7 @@ import com.top_logic.mig.html.HTMLUtil;
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
 @Label("JavaScript file compiler")
+@ServiceCategory.Of(UICategory.class)
 public final class JSFileCompiler extends FileCompiler {
 
 	/**

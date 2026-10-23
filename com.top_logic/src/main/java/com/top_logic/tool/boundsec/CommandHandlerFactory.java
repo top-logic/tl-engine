@@ -37,8 +37,10 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.misc.AbstractIndexer;
 import com.top_logic.basic.func.misc.AbstractListIndexer;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.tool.boundsec.CommandHandler.CommandDefaults;
 import com.top_logic.tool.boundsec.CommandHandler.Display;
@@ -56,6 +58,7 @@ import com.top_logic.tool.execution.ExecutabilityRuleManager;
 	ExecutabilityRuleManager.Module.class,
 	CommandGroupRegistry.Module.class })
 @Label("Command handlers")
+@ServiceCategory.Of(UICategory.class)
 public final class CommandHandlerFactory extends ManagedClass {
 
 	/**

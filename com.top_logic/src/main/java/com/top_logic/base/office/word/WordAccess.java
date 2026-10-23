@@ -16,7 +16,9 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 
 
 /**
@@ -38,6 +40,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 @Label("MS-Word access")
+@ServiceCategory.Of(InterfacesCategory.class)
 public abstract class WordAccess extends AbstractOffice {
 
     /** File extension for MS-Word documents. */

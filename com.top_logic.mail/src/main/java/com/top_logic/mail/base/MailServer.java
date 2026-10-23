@@ -29,8 +29,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -56,6 +58,7 @@ import com.top_logic.mail.proxy.exchange.ExchangeMail;
 @ServiceDependencies({
 	MailReceiverService.Module.class
 })
+@ServiceCategory.Of(InterfacesCategory.class)
 public class MailServer extends KBBasedManagedClass<MailServer.Config> implements MessageCountListener {
 
 	/**

@@ -8,8 +8,10 @@ package com.top_logic.kafka.server.module;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.kafka.server.starter.KafkaStarter;
 
 import kafka.Kafka;
@@ -28,6 +30,7 @@ import kafka.server.KafkaConfig;
  */
 @Label("Kafka server")
 @ServiceDependencies(ZooKeeperModule.Module.class)
+@ServiceCategory.Of(InterfacesCategory.class)
 public class KafkaModule extends ManagedClass {
 
 	/**

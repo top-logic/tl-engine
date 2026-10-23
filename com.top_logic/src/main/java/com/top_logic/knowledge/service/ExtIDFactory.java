@@ -15,8 +15,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -38,6 +40,7 @@ import com.top_logic.model.util.TLModelUtil;
 	SecureRandomService.Module.class
 })
 @Label("External ID factory")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class ExtIDFactory extends ManagedClass {
 
 	/** Default external id attribute when nothing is configured for the concrete type */

@@ -23,7 +23,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.DevelopmentCategory;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -59,6 +61,7 @@ import com.top_logic.util.TLContextManager;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Scripting recorder")
+@ServiceCategory.Of(DevelopmentCategory.class)
 public abstract class ScriptingRecorder extends ConfiguredManagedClass<ScriptingRecorder.Config> {
 
 	/**

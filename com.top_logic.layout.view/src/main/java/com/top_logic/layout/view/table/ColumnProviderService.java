@@ -30,7 +30,9 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.list.FastListElementComparator;
@@ -116,6 +118,7 @@ import com.top_logic.util.TLCollator;
  * </p>
  */
 @Label("Table columns")
+@ServiceCategory.Of(UICategory.class)
 public class ColumnProviderService extends ConfiguredManagedClass<ColumnProviderService.Config> {
 
 	/** What separates the values a cell holding several of them shows. */

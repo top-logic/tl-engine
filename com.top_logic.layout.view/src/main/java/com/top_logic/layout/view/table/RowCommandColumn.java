@@ -69,10 +69,12 @@ public class RowCommandColumn {
 	 *
 	 * <p>
 	 * A cell of such a column holds a button rather than text: it drops the padding a text cell
-	 * needs and centers the button in the width the column has.
+	 * needs and centers the button in the width the column has. The class is the shape the design
+	 * system gives such a cell ({@code tl-table__cell--command}); it lands on the header cell of the
+	 * column as well as on its data cells.
 	 * </p>
 	 */
-	public static final String CSS_CLASS = "tlRowCommandCell";
+	public static final String CSS_CLASS = "tl-table__cell--command";
 
 	/**
 	 * A command offered on every row of a table.

@@ -208,7 +208,12 @@ describe('the lock and the eye of the column selection as MUI icon buttons', () 
       expectMuiIconButton(button);
       expect(button.closest('.tl-reorder-list__item')).not.toBeNull();
       expect(button.textContent).toBe('');
+      // The row shows them on pointing or keyboard focus (layout contract: tl-reveal-on-hover).
+      expect(button.classList.contains('tl-reveal-on-hover')).toBe(true);
     }
+    const grip = document.querySelector('.tl-reorder-list__handle');
+    expect(grip).not.toBeNull();
+    expect(grip!.classList.contains('tl-reveal-on-hover')).toBe(true);
 
     await userEvent.click(hide);
     await settle();

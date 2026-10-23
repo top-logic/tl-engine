@@ -440,6 +440,20 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_DASHBOARD_HIDE_TILE;
 
 	/**
+	 * @en Tile {0}
+	 */
+	@CustomKey("js.dashboard.tile")
+	public static ResKey JS_DASHBOARD_TILE;
+
+	// -- Kanban board client-side i18n keys --
+
+	/**
+	 * @en Moved to {0}, position {1} of {2}.
+	 */
+	@CustomKey("js.kanbanBoard.moved")
+	public static ResKey JS_KANBAN_BOARD_MOVED;
+
+	/**
 	 * @en Microphone requires a secure connection (HTTPS).
 	 */
 	@CustomKey("js.audioRecorder.error.insecure")
@@ -1023,6 +1037,30 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_COLOR_INPUT_CLEAR;
 
 	/**
+	 * @en Colors
+	 */
+	@CustomKey("js.colorInput.colors")
+	public static ResKey JS_COLOR_INPUT_COLORS;
+
+	/**
+	 * @en Saturation and brightness
+	 */
+	@CustomKey("js.colorInput.saturationBrightness")
+	public static ResKey JS_COLOR_INPUT_SATURATION_BRIGHTNESS;
+
+	/**
+	 * @en Saturation {0} %, brightness {1} %
+	 */
+	@CustomKey("js.colorInput.saturationBrightnessValue")
+	public static ResKey JS_COLOR_INPUT_SATURATION_BRIGHTNESS_VALUE;
+
+	/**
+	 * @en Hue
+	 */
+	@CustomKey("js.colorInput.hue")
+	public static ResKey JS_COLOR_INPUT_HUE;
+
+	/**
 	 * @en Simple
 	 */
 	@CustomKey("js.iconSelect.simpleTab")
@@ -1053,7 +1091,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_ICON_SELECT_LOADING;
 
 	/**
-	 * @en Failed to load. Click to retry.
+	 * @en The icons could not be loaded.
 	 */
 	@CustomKey("js.iconSelect.loadError")
 	public static ResKey JS_ICON_SELECT_LOAD_ERROR;
@@ -1099,6 +1137,24 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.iconSelect.chooseIcon")
 	public static ResKey JS_ICON_SELECT_CHOOSE_ICON;
+
+	/**
+	 * @en Icons
+	 */
+	@CustomKey("js.iconSelect.icons")
+	public static ResKey JS_ICON_SELECT_ICONS;
+
+	/**
+	 * @en Load again
+	 */
+	@CustomKey("js.iconSelect.retry")
+	public static ResKey JS_ICON_SELECT_RETRY;
+
+	/**
+	 * @en No icon
+	 */
+	@CustomKey("js.iconSelect.noIcon")
+	public static ResKey JS_ICON_SELECT_NO_ICON;
 
 	// -- Alert client-side i18n keys --
 
@@ -1253,6 +1309,24 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.calendar.more")
 	public static ResKey JS_CALENDAR_MORE;
 
+	/**
+	 * @en Calendar
+	 */
+	@CustomKey("js.calendar.toolbar")
+	public static ResKey JS_CALENDAR_TOOLBAR;
+
+	/**
+	 * @en View
+	 */
+	@CustomKey("js.calendar.view")
+	public static ResKey JS_CALENDAR_VIEW;
+
+	/**
+	 * @en Events
+	 */
+	@CustomKey("js.calendar.events")
+	public static ResKey JS_CALENDAR_EVENTS;
+
 	// -- Job status client-side i18n keys --
 
 	/**
@@ -1290,6 +1364,18 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.jobStatus.cancel")
 	public static ResKey JS_JOB_STATUS_CANCEL;
+
+	/**
+	 * @en Step: {0}
+	 */
+	@CustomKey("js.jobStatus.currentStep")
+	public static ResKey JS_JOB_STATUS_CURRENT_STEP;
+
+	/**
+	 * @en Steps
+	 */
+	@CustomKey("js.jobStatus.steps")
+	public static ResKey JS_JOB_STATUS_STEPS;
 
 	static {
 		initConstants(I18NConstants.class);

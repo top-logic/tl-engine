@@ -1,4 +1,4 @@
-import { React, useTLState, useImageSrc, avatarInitials, avatarCategory, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useImageSrc, avatarInitials, categoryOf, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps, AvatarStateJson } from 'tl-react-bridge';
 import Avatar from '@mui/material/Avatar';
 import type { CSSObject, Theme } from '@mui/material/styles';
@@ -6,7 +6,7 @@ import type { TypographyVariant } from '@mui/material/styles';
 
 /**
  * The attribute of the avatar root naming the category of the design system the display name
- * maps to, `1` to `8` (see `avatarCategory` of 'tl-react-bridge'). Present whenever the avatar has
+ * maps to, `1` to `8` (see `categoryOf` of 'tl-react-bridge'). Present whenever the avatar has
  * a name. A theme restyles a category through `components.MuiAvatar.styleOverrides.root`, e.g.
  * `{ '&[data-category="3"]': { backgroundColor: … } }`.
  */
@@ -89,7 +89,7 @@ const NO_CONTENT = <></>;
  * <li>no picture, a name → the initials of the name (`avatarInitials`) as children,
  *     `role="img"` and `aria-label` = name;</li>
  * <li>no picture, no name → the empty neutral circle, `aria-hidden`;</li>
- * <li>name → the category (`avatarCategory`) in {@link CATEGORY_ATTRIBUTE}, and the tooltip
+ * <li>name → the category (`categoryOf`) in {@link CATEGORY_ATTRIBUTE}, and the tooltip
  *     of the name (`tooltipProps`), as TLAvatar shows it;</li>
  * <li>size (absent: `medium`) → {@link SIZE_ATTRIBUTE};</li>
  * <li>hidden → nothing is rendered; the configured CSS class → className of the `Avatar`, which
@@ -121,7 +121,7 @@ const MuiAvatarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
       : <Avatar {...rootProps} aria-hidden="true">{NO_CONTENT}</Avatar>;
   }
 
-  const named = { ...rootProps, [CATEGORY_ATTRIBUTE]: avatarCategory(name), ...tooltipProps(name) };
+  const named = { ...rootProps, [CATEGORY_ATTRIBUTE]: categoryOf(name), ...tooltipProps(name) };
   return src
     ? <Avatar {...named} src={src} alt={name}>{avatarInitials(name)}</Avatar>
     : <Avatar {...named} role="img" aria-label={name}>{avatarInitials(name)}</Avatar>;

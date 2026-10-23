@@ -1,8 +1,14 @@
-import { React, useI18N, TLChild, tooltipProps, anchoredOverlayProps } from 'tl-react-bridge';
+import {
+  React, useI18N, TLChild, usePart, ButtonDefaults, useButtonDefaults, Menu, usePopover,
+  useCloseOnOutsidePress, useFocusTrap, useStandaloneKeyboardScope, pressClosedSurface, createPortal,
+  anchoredOverlayProps,
+  ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE, ICON_STRIKETHROUGH, ICON_PARAGRAPH, ICON_HEADING, ICON_BULLET_LIST,
+  ICON_NUMBERED_LIST, ICON_QUOTE, ICON_CODE_BLOCK, ICON_LINK, ICON_IMAGE, ICON_TABLE, ICON_UNDO, ICON_REDO, ICON_SOURCE,
+} from 'tl-react-bridge';
 import { useEditorState } from '@tiptap/react';
 import type { Editor, EditorStateSnapshot } from '@tiptap/react';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import * as Popover from '@radix-ui/react-popover';
+
+const { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } = React;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -40,7 +46,7 @@ interface ToolbarState {
   codeBlock: boolean;
 
   /** The level of the heading at the cursor, or null in a paragraph. */
-  headingLevel: number | null;
+  headingLevel: HeadingLevel | null;
 
   bulletList: boolean;
   orderedList: boolean;
@@ -51,6 +57,9 @@ interface ToolbarState {
 
 /** The levels a heading can have. */
 const HEADING_LEVELS = [1, 2, 3, 4, 5, 6] as const;
+
+/** The level of a heading. */
+type HeadingLevel = typeof HEADING_LEVELS[number];
 
 /**
  * Reads the toolbar state from the editor. The toolbar renders from this selection only, so it
@@ -77,10 +86,12 @@ function selectToolbarState({ editor }: EditorStateSnapshot<Editor | null>): Too
 }
 
 // ---------------------------------------------------------------------------
-// I18N key prefix
+// I18N
 // ---------------------------------------------------------------------------
 
-const ALL_I18N_KEYS: Record<string, string> = {
+/** The texts of the toolbar, with their English fallbacks; the server translates them. */
+const I18N_KEYS: Record<string, string> = {
+  'js.wysiwyg.toolbar': 'Editor toolbar',
   'js.wysiwyg.bold': 'Bold',
   'js.wysiwyg.italic': 'Italic',
   'js.wysiwyg.underline': 'Underline',
@@ -93,8 +104,8 @@ const ALL_I18N_KEYS: Record<string, string> = {
   'js.wysiwyg.heading4': 'Heading 4',
   'js.wysiwyg.heading5': 'Heading 5',
   'js.wysiwyg.heading6': 'Heading 6',
-  'js.wysiwyg.bulletList': 'Bullet List',
-  'js.wysiwyg.orderedList': 'Numbered List',
+  'js.wysiwyg.bulletList': 'Bullet list',
+  'js.wysiwyg.orderedList': 'Numbered list',
   'js.wysiwyg.lists': 'Lists',
   'js.wysiwyg.blockquote': 'Blockquote',
   'js.wysiwyg.link': 'Link',
@@ -103,287 +114,361 @@ const ALL_I18N_KEYS: Record<string, string> = {
   'js.wysiwyg.linkRemove': 'Remove link',
   'js.wysiwyg.image': 'Image',
   'js.wysiwyg.table': 'Table',
-  'js.wysiwyg.codeBlock': 'Code Block',
+  'js.wysiwyg.codeBlock': 'Code block',
   'js.wysiwyg.undo': 'Undo',
   'js.wysiwyg.redo': 'Redo',
   'js.wysiwyg.source': 'Source code',
 };
 
+/** The translated texts of the toolbar. */
+type Labels = Record<string, string>;
+
+/** The translated text of the toolbar under the given name (the key without its prefix). */
+function t(labels: Labels, key: string): string {
+  return labels['js.wysiwyg.' + key];
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function t(labels: Record<string, string>, key: string): string {
-  return labels['js.wysiwyg.' + key] || ALL_I18N_KEYS['js.wysiwyg.' + key] || key;
+/**
+ * Keeps the focus - and with it the selection - in the text when a button of the toolbar is
+ * pressed with the mouse. The keyboard reaches the buttons anyway: Enter and Space click the
+ * focused button.
+ */
+function keepFocus(event: React.MouseEvent) {
+  event.preventDefault();
 }
 
 /**
- * Handler for the closing of a toolbar popup that puts the caret back into the text at its
- * previous selection, instead of onto the button that opened the popup.
+ * The return target of the surfaces of the toolbar (popover.contract.md, rich-text.contract.md):
+ * when a menu or the link popup closes, the focus goes back into the text at its selection, not
+ * to the button that opened the surface, so that writing goes on where it stopped.
+ *
+ * <p>The focus trap of the surface gives the focus back to where it was when the surface opened;
+ * this hook then moves it on into the text - only from there, not from a field the user has
+ * pressed in meanwhile. Its cleanup runs after the one of the trap: the trap belongs to a child
+ * (the menu), whose cleanup runs first, or it is a hook called before this one.</p>
+ *
+ * @returns The function to call right before the surface opens, noting where the focus is.
  */
-function useFocusEditorOnClose(editor: Editor): (e: Event) => void {
-  return React.useCallback((e: Event) => {
-    e.preventDefault();
-    editor.commands.focus();
-  }, [editor]);
+function useReturnToText(open: boolean, editor: Editor): () => void {
+  const originRef = useRef<Element | null>(null);
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    return () => {
+      const current = document.activeElement;
+      const given = current === originRef.current || current === null || current === document.body;
+      originRef.current = null;
+      if (given && !editor.isDestroyed) {
+        editor.view.focus();
+      }
+    };
+  }, [open, editor]);
+  return useCallback(() => {
+    originRef.current = document.activeElement;
+  }, []);
 }
 
 // ---------------------------------------------------------------------------
-// ToolbarButton -- simple icon button with tooltip
+// Buttons
 // ---------------------------------------------------------------------------
 
-interface BtnProps {
+interface ToolButtonProps {
   icon: string;
-  tooltip: string;
-  active?: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-}
-
-const ToolbarButton: React.FC<BtnProps> = ({ icon, tooltip, active, disabled, onClick }) => {
-  return (
-    <button
-      type="button"
-      className={'tlWysiwygToolbar__btn' + (active ? ' tlWysiwygToolbar__btn--active' : '')}
-      disabled={disabled}
-      onMouseDown={(e: React.MouseEvent) => {
-        e.preventDefault();
-        onClick();
-      }}
-      aria-label={tooltip}
-      {...tooltipProps(tooltip)}
-    >
-      <i className={icon} />
-    </button>
-  );
-};
-
-// ---------------------------------------------------------------------------
-// HeadingDropdown
-// ---------------------------------------------------------------------------
-
-interface HeadingLevel {
   label: string;
-  level: number | null; // null = paragraph
-  icon: string;
+
+  /** The pressed state of a toggle; absent for a button that is no toggle. */
+  checked?: boolean;
+
+  disabled?: boolean;
+  onPress: () => void;
 }
 
-const HeadingDropdown: React.FC<{
-  editor: Editor;
-  labels: Record<string, string>;
-  activeLevel: number | null;
-}> = ({ editor, labels, activeLevel }) => {
-  const levels: HeadingLevel[] = [
-    { label: t(labels, 'paragraph'), level: null, icon: 'ri-paragraph' },
-    { label: t(labels, 'heading1'), level: 1, icon: 'ri-h-1' },
-    { label: t(labels, 'heading2'), level: 2, icon: 'ri-h-2' },
-    { label: t(labels, 'heading3'), level: 3, icon: 'ri-h-3' },
-    { label: t(labels, 'heading4'), level: 4, icon: 'ri-h-4' },
-    { label: t(labels, 'heading5'), level: 5, icon: 'ri-h-5' },
-    { label: t(labels, 'heading6'), level: 6, icon: 'ri-h-6' },
-  ];
-
-  const focusEditor = useFocusEditorOnClose(editor);
-  const currentIcon = activeLevel === null ? 'ri-paragraph' : 'ri-h-' + activeLevel;
-  const currentLabel = activeLevel === null ? t(labels, 'paragraph') : t(labels, 'heading' + activeLevel);
-
+/**
+ * A button of the toolbar: the part `Button` in the appearance the toolbar gives its buttons
+ * (ghost, icon alone), drawn small like every button of the toolbar. A deliberate exception to the
+ * standard icon button, which a button showing its icon alone otherwise is: this toolbar is part of
+ * a field, not a bar over a region (rich-text.contract.md). A toggle reports whether it is pressed
+ * (`aria-pressed`).
+ */
+const ToolButton: React.FC<ToolButtonProps> = ({ icon, label, checked, disabled, onPress }) => {
+  const Button = usePart('Button');
+  const defaults = useButtonDefaults();
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button type="button" className="tlWysiwygToolbar__btn tlWysiwygToolbar__btn--dropdown"
-          aria-label={t(labels, 'heading')} {...tooltipProps(currentLabel)}>
-          <i className={currentIcon} />
-          <i className="ri-arrow-down-s-line tlWysiwygToolbar__chevron" />
-        </button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="tlWysiwygToolbar__dropdown"
-          sideOffset={4}
-          align="start"
-          onCloseAutoFocus={focusEditor}
-          {...anchoredOverlayProps}
-        >
-          {levels.map((h) => {
-            const isActive = h.level === activeLevel;
-            return (
-              <DropdownMenu.Item
-                key={h.level ?? 'p'}
-                className={'tlWysiwygToolbar__dropdownItem' + (isActive ? ' tlWysiwygToolbar__dropdownItem--active' : '')}
-                onSelect={() => {
-                  if (h.level === null) {
-                    editor.chain().focus().setParagraph().run();
-                  } else {
-                    editor.chain().focus().toggleHeading({ level: h.level as 1|2|3|4|5|6 }).run();
-                  }
-                }}
-              >
-                <i className={h.icon + ' tlWysiwygToolbar__dropdownIcon'} />
-                <span>{h.label}</span>
-              </DropdownMenu.Item>
-            );
-          })}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    <Button
+      image={icon}
+      label={label}
+      display={defaults.iconOnly === false ? 'icon-label' : 'icon-only'}
+      appearance={defaults.appearance ?? 'ghost'}
+      small
+      checked={checked}
+      disabled={disabled}
+      onMouseDown={keepFocus}
+      onClick={onPress}
+    />
+  );
+};
+
+/**
+ * An alternative of a choice the toolbar offers in a menu. Applying it leaves the focus alone: the
+ * menu gives it back to the text when it closes (useReturnToText), at once - a second, deferred
+ * focus of the editor would pull it back from where the user has gone meanwhile.
+ */
+interface Choice {
+  label: string;
+
+  /** The icon of the entry; absent: the entry shows its label alone. */
+  icon?: string;
+
+  /** Whether the alternative is the one at the cursor. */
+  checked: boolean;
+
+  /** Applies the alternative to the text. */
+  apply: () => void;
+}
+
+interface ChoiceEntryProps extends Omit<Choice, 'apply'> {
+  onSelect: () => void;
+}
+
+/**
+ * An entry of a menu of the toolbar: the part `Button` as entry of the menu. Under the defaults of
+ * a choice (`ButtonDefaults` `radio`) it is a `menuitemradio`, otherwise a `menuitemcheckbox`;
+ * `aria-checked` is the given state either way.
+ */
+const ChoiceEntry: React.FC<ChoiceEntryProps> = ({ label, icon, checked, onSelect }) => {
+  const Button = usePart('Button');
+  const defaults = useButtonDefaults();
+  return (
+    <Button
+      image={icon}
+      label={label}
+      display={icon ? 'icon-label' : 'label-only'}
+      appearance={defaults.appearance ?? 'menu-item'}
+      radio={defaults.radio}
+      checked={checked}
+      onClick={onSelect}
+    />
   );
 };
 
 // ---------------------------------------------------------------------------
-// ListDropdown
+// Menus
 // ---------------------------------------------------------------------------
 
-const ListDropdown: React.FC<{
+interface ChoiceMenuProps {
   editor: Editor;
-  labels: Record<string, string>;
-  isBullet: boolean;
-  isOrdered: boolean;
-}> = ({ editor, labels, isBullet, isOrdered }) => {
-  const focusEditor = useFocusEditorOnClose(editor);
-  const currentIcon = isOrdered ? 'ri-list-ordered' : 'ri-list-unordered';
-  const listsLabel = t(labels, 'lists');
+
+  /** The name of the trigger. */
+  label: string;
+
+  /** The icon of the trigger: the one of the alternative at the cursor. */
+  icon: string;
+
+  /** The alternatives, one entry each; at most one is checked. */
+  choices: Choice[];
+
+  /**
+   * Whether the entries are the alternatives of a choice that always holds one of them (radio
+   * entries), or toggles that may all be off, choosing the checked one switching it off (checkbox
+   * entries).
+   */
+  radio: boolean;
+}
+
+/**
+ * A menu of the toolbar offering the alternatives of one choice (paragraph format, list kind): the
+ * part `MenuTrigger` opening the menu of the bridge, whose entries are radio entries or checkbox
+ * entries ({@link ChoiceMenuProps.radio}). The menu closes after an entry is chosen; the focus goes
+ * back into the text.
+ */
+const ChoiceMenu: React.FC<ChoiceMenuProps> = ({ editor, label, icon, choices, radio }) => {
+  const MenuTrigger = usePart('MenuTrigger');
+  const defaults = useButtonDefaults();
+  const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
+  const close = useCallback(() => setOpen(false), []);
+  const noteOrigin = useReturnToText(open, editor);
+
+  const toggle = useCallback(() => {
+    // The press of this click has closed the menu: leave it closed.
+    if (pressClosedSurface()) {
+      return;
+    }
+    if (!open) {
+      noteOrigin();
+    }
+    setOpen(!open);
+  }, [open, noteOrigin]);
 
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
-          className={'tlWysiwygToolbar__btn tlWysiwygToolbar__btn--dropdown' + ((isBullet || isOrdered) ? ' tlWysiwygToolbar__btn--active' : '')}
-          aria-label={listsLabel}
-          {...tooltipProps(listsLabel)}
-        >
-          <i className={currentIcon} />
-          <i className="ri-arrow-down-s-line tlWysiwygToolbar__chevron" />
-        </button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className="tlWysiwygToolbar__dropdown"
-          sideOffset={4}
-          align="start"
-          onCloseAutoFocus={focusEditor}
-          {...anchoredOverlayProps}
-        >
-          <DropdownMenu.Item
-            className={'tlWysiwygToolbar__dropdownItem' + (isBullet ? ' tlWysiwygToolbar__dropdownItem--active' : '')}
-            onSelect={() => editor.chain().focus().toggleBulletList().run()}
-          >
-            <i className="ri-list-unordered tlWysiwygToolbar__dropdownIcon" />
-            <span>{t(labels, 'bulletList')}</span>
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className={'tlWysiwygToolbar__dropdownItem' + (isOrdered ? ' tlWysiwygToolbar__dropdownItem--active' : '')}
-            onSelect={() => editor.chain().focus().toggleOrderedList().run()}
-          >
-            <i className="ri-list-ordered tlWysiwygToolbar__dropdownIcon" />
-            <span>{t(labels, 'orderedList')}</span>
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    <>
+      <MenuTrigger
+        ref={setAnchor}
+        appearance={defaults.appearance ?? 'ghost'}
+        expanded={open}
+        label={label}
+        icon={icon}
+        small
+        onMouseDown={keepFocus}
+        onClick={toggle}
+      />
+      <Menu open={open} anchor={anchor} onClose={close}>
+        <ButtonDefaults appearance="menu-item" radio={radio} iconOnly={false}>
+          {choices.map(choice => (
+            <ChoiceEntry
+              key={choice.label}
+              label={choice.label}
+              icon={choice.icon}
+              checked={choice.checked}
+              onSelect={() => {
+                choice.apply();
+                close();
+              }}
+            />
+          ))}
+        </ButtonDefaults>
+      </Menu>
+    </>
   );
 };
 
 // ---------------------------------------------------------------------------
-// LinkPopover
+// Link popup
 // ---------------------------------------------------------------------------
 
-const LinkPopover: React.FC<{
-  editor: Editor;
-  labels: Record<string, string>;
-  isActive: boolean;
-}> = ({ editor, labels, isActive }) => {
-  const [open, setOpen] = React.useState(false);
-  const [url, setUrl] = React.useState('');
-  const inputRef = React.useRef<HTMLInputElement>(null);
+/**
+ * The button of the toolbar opening the link popup, and the popup: a content popover with the
+ * address of the link in a field and the buttons applying and - on a link - removing it. Enter in
+ * the field applies, Escape and a press outside close. The focus goes back into the text.
+ */
+const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> = ({ editor, labels, isLink }) => {
+  const MenuTrigger = usePart('MenuTrigger');
+  const Button = usePart('Button');
+  const TextInput = usePart('TextInput');
+  const defaults = useButtonDefaults();
+  const fieldId = useId();
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState('');
+
+  // Trigger and surface each carry an own ref and the one of the popover: plain callbacks, as in the
+  // menu of the bridge, so that the refs type-check under the React types of this module.
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [anchor, setAnchor] = useState<HTMLButtonElement | null>(null);
+  const setTriggerRefs = useCallback((element: HTMLButtonElement | null) => {
+    triggerRef.current = element;
+    setAnchor(element);
+  }, []);
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const { setFloating, style } = usePopover({ open, anchor });
+  const setSurfaceRefs = useCallback((element: HTMLDivElement | null) => {
+    surfaceRef.current = element;
+    setFloating(element);
+  }, [setFloating]);
+
+  const close = useCallback(() => setOpen(false), []);
+  useStandaloneKeyboardScope(open, { ESCAPE: close });
+  useCloseOnOutsidePress(open, [triggerRef, surfaceRef], close);
+  useFocusTrap(open, surfaceRef, 'field');
+  // After the trap: its cleanup runs first.
+  const noteOrigin = useReturnToText(open, editor);
+
+  const toggle = useCallback(() => {
+    if (open) {
+      close();
+      return;
+    }
+    // Editing a link starts from its address.
+    setUrl(editor.getAttributes('link').href || '');
+    noteOrigin();
+    setOpen(true);
+  }, [open, close, editor, noteOrigin]);
+
+  const href = url.trim();
+
+  // The focus goes back to the text when the popup closes (useReturnToText).
+  const apply = useCallback(() => {
+    if (href) {
+      editor.chain().setLink({ href }).run();
+    }
+    close();
+  }, [editor, href, close]);
+
+  const remove = useCallback(() => {
+    editor.chain().unsetLink().run();
+    close();
+  }, [editor, close]);
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      apply();
+    }
+  }, [apply]);
 
   const linkLabel = t(labels, 'link');
-  const focusEditor = useFocusEditorOnClose(editor);
-
-  const handleOpen = React.useCallback((nextOpen: boolean) => {
-    if (nextOpen) {
-      // Pre-fill with current link if editing
-      const attrs = editor.getAttributes('link');
-      setUrl(attrs.href || '');
-    }
-    setOpen(nextOpen);
-  }, [editor]);
-
-  const applyLink = React.useCallback(() => {
-    if (url.trim()) {
-      editor.chain().focus().setLink({ href: url.trim() }).run();
-    }
-    setOpen(false);
-  }, [editor, url]);
-
-  const removeLink = React.useCallback(() => {
-    editor.chain().focus().unsetLink().run();
-    setOpen(false);
-  }, [editor]);
-
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      applyLink();
-    }
-  }, [applyLink]);
 
   return (
-    <Popover.Root open={open} onOpenChange={handleOpen}>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          className={'tlWysiwygToolbar__btn' + (isActive ? ' tlWysiwygToolbar__btn--active' : '')}
+    <>
+      <MenuTrigger
+        ref={setTriggerRefs}
+        appearance={defaults.appearance ?? 'ghost'}
+        expanded={open}
+        haspopup="dialog"
+        label={linkLabel}
+        icon={ICON_LINK}
+        small
+        onMouseDown={keepFocus}
+        onClick={toggle}
+      />
+      {open && createPortal(
+        <div
+          ref={setSurfaceRefs}
+          className="tl-popover tl-popover--content"
+          role="dialog"
           aria-label={linkLabel}
-          {...tooltipProps(linkLabel)}
-        >
-          <i className="ri-link" />
-        </button>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          className="tlWysiwygToolbar__linkPopover"
-          sideOffset={6}
-          align="start"
-          onCloseAutoFocus={focusEditor}
+          style={style}
           {...anchoredOverlayProps}
         >
-          <div className="tlWysiwygToolbar__linkForm">
-            <label className="tlWysiwygToolbar__linkLabel">{t(labels, 'linkUrl')}</label>
-            <input
-              ref={inputRef}
-              type="url"
-              className="tlWysiwygToolbar__linkInput"
-              placeholder="https://..."
-              value={url}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
-              onKeyDown={handleKeyDown}
-              autoFocus
-            />
-            <div className="tlWysiwygToolbar__linkActions">
-              <button
-                type="button"
-                className="tlWysiwygToolbar__linkApply"
-                onClick={applyLink}
-                disabled={!url.trim()}
-              >
-                {t(labels, 'linkApply')}
-              </button>
-              {isActive && (
-                <button
-                  type="button"
-                  className="tlWysiwygToolbar__linkRemove"
-                  onClick={removeLink}
-                >
-                  {t(labels, 'linkRemove')}
-                </button>
-              )}
+          <div className="tl-inset tl-inset--panel">
+            <div className="tl-stack tl-stack--column tl-stack--gap-compact">
+              <label htmlFor={fieldId} className="tl-type-label">{t(labels, 'linkUrl')}</label>
+              <TextInput
+                id={fieldId}
+                type="url"
+                value={url}
+                placeholder="https://..."
+                onChange={setUrl}
+                onKeyDown={handleKeyDown}
+              />
+              <div className="tl-stack tl-stack--row tl-stack--gap-compact tl-stack--justify-end">
+                <Button
+                  label={t(labels, 'linkApply')}
+                  display="label-only"
+                  appearance="primary"
+                  disabled={!href}
+                  onClick={apply}
+                />
+                {isLink && (
+                  <Button
+                    label={t(labels, 'linkRemove')}
+                    display="label-only"
+                    appearance="secondary"
+                    danger
+                    onClick={remove}
+                  />
+                )}
+              </div>
             </div>
           </div>
-          <Popover.Arrow className="tlWysiwygToolbar__popoverArrow" />
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+        </div>,
+        document.body,
+      )}
+    </>
   );
 };
 
@@ -391,135 +476,175 @@ const LinkPopover: React.FC<{
 // Main Toolbar
 // ---------------------------------------------------------------------------
 
+/**
+ * Marks the dividers of the wrapping toolbar at which it breaks into the next row (`data-tl-break`,
+ * toolbar.contract.md): the group after such a divider starts the next row, the divider would stand
+ * alone at the end of its row. Measured after every render and whenever the toolbar or one of its
+ * entries changes its size; the package hides a marked divider but keeps its place, so marking it
+ * causes no new break.
+ */
+function useBreakDividers(): React.RefObject<HTMLDivElement | null> {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const mark = () => {
+      root.querySelectorAll(':scope > .tl-divider').forEach(divider => {
+        const before = divider.previousElementSibling;
+        const after = divider.nextElementSibling;
+        const breaks = before !== null && after !== null
+          && after.getBoundingClientRect().top >= before.getBoundingClientRect().bottom;
+        divider.toggleAttribute('data-tl-break', breaks);
+      });
+    };
+    mark();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(mark);
+    observer.observe(root);
+    Array.from(root.children).forEach(child => observer.observe(child));
+    return () => observer.disconnect();
+  });
+
+  return ref;
+}
+
+/**
+ * The toolbar of the rich text editor (rich-text.contract.md): a wrapping `tl-toolbar` whose
+ * groups are divided by vertical dividers. Its buttons are the part `Button`, ghost, icon alone and
+ * small, as are its menu triggers; the paragraph format is a menu of radio entries, the list kind a menu of checkbox entries
+ * (the checked one switches the list off), the link a popup. The commands the editor is configured
+ * with form a toolbar of their own inside. Where the editor offers source editing, a toggle shows the
+ * HTML source in place of the formatted text; while it is shown, the toggle is the only button. A
+ * divider at which the toolbar breaks into the next row is hidden ({@link useBreakDividers}).
+ */
 const WysiwygToolbar: React.FC<ToolbarProps> = ({ editor, onImageUpload, sourceMode, onToggleSource, toolbar }) => {
-  const labels = useI18N(ALL_I18N_KEYS);
+  const labels = useI18N(I18N_KEYS);
   const state = useEditorState({ editor, selector: selectToolbarState });
+  const Divider = usePart('Divider');
+  const toolbarRef = useBreakDividers();
 
   if (!editor || !state) return null;
 
   const sourceToggle = onToggleSource && (
-    <div className="tlWysiwygToolbar__group">
-      <ToolbarButton
-        icon="ri-code-box-line"
-        tooltip={t(labels, 'source')}
-        active={sourceMode}
-        onClick={onToggleSource}
-      />
-    </div>
+    <ToolButton icon={ICON_SOURCE} label={t(labels, 'source')} checked={sourceMode} onPress={onToggleSource} />
   );
 
   if (sourceMode) {
     // The formatting buttons act on the formatted text, which is not shown.
     return (
-      <div className="tlWysiwygToolbar" role="toolbar" aria-label="Editor toolbar">
-        <div className="tlWysiwygToolbar__groups">
-          {sourceToggle}
+      <ButtonDefaults appearance="ghost" iconOnly>
+        <div className="tl-toolbar tl-toolbar--wrap" role="toolbar" aria-label={t(labels, 'toolbar')}>
+          <div className="tl-toolbar__group">{sourceToggle}</div>
         </div>
-      </div>
+      </ButtonDefaults>
     );
   }
 
+  const headingLevel = state.headingLevel;
+  const groups: React.ReactNode[] = [
+    // Text formatting
+    <>
+      <ToolButton icon={ICON_BOLD} label={t(labels, 'bold')} checked={state.bold}
+        onPress={() => editor.chain().focus().toggleBold().run()} />
+      <ToolButton icon={ICON_ITALIC} label={t(labels, 'italic')} checked={state.italic}
+        onPress={() => editor.chain().focus().toggleItalic().run()} />
+      <ToolButton icon={ICON_UNDERLINE} label={t(labels, 'underline')} checked={state.underline}
+        onPress={() => editor.chain().focus().toggleUnderline().run()} />
+      <ToolButton icon={ICON_STRIKETHROUGH} label={t(labels, 'strikethrough')} checked={state.strike}
+        onPress={() => editor.chain().focus().toggleStrike().run()} />
+    </>,
+
+    // Paragraph format and list kind
+    <>
+      <ChoiceMenu
+        editor={editor}
+        label={t(labels, 'heading')}
+        icon={headingLevel === null ? ICON_PARAGRAPH : ICON_HEADING}
+        radio
+        choices={[
+          {
+            label: t(labels, 'paragraph'),
+            checked: headingLevel === null,
+            apply: () => editor.chain().setParagraph().run(),
+          },
+          ...HEADING_LEVELS.map(level => ({
+            label: t(labels, 'heading' + level),
+            checked: headingLevel === level,
+            // Choosing the level in force keeps it: a radio entry is no toggle.
+            apply: () => editor.chain().setHeading({ level }).run(),
+          })),
+        ]}
+      />
+      <ChoiceMenu
+        editor={editor}
+        label={t(labels, 'lists')}
+        icon={state.orderedList ? ICON_NUMBERED_LIST : ICON_BULLET_LIST}
+        radio={false}
+        choices={[
+          {
+            label: t(labels, 'bulletList'),
+            icon: ICON_BULLET_LIST,
+            checked: state.bulletList,
+            apply: () => editor.chain().toggleBulletList().run(),
+          },
+          {
+            label: t(labels, 'orderedList'),
+            icon: ICON_NUMBERED_LIST,
+            checked: state.orderedList,
+            apply: () => editor.chain().toggleOrderedList().run(),
+          },
+        ]}
+      />
+    </>,
+
+    // Block elements
+    <>
+      <ToolButton icon={ICON_QUOTE} label={t(labels, 'blockquote')} checked={state.blockquote}
+        onPress={() => editor.chain().focus().toggleBlockquote().run()} />
+      <ToolButton icon={ICON_CODE_BLOCK} label={t(labels, 'codeBlock')} checked={state.codeBlock}
+        onPress={() => editor.chain().focus().toggleCodeBlock().run()} />
+    </>,
+
+    // Link, image, table
+    <>
+      <LinkPopup editor={editor} labels={labels} isLink={state.link} />
+      {onImageUpload && <ToolButton icon={ICON_IMAGE} label={t(labels, 'image')} onPress={onImageUpload} />}
+      <ToolButton icon={ICON_TABLE} label={t(labels, 'table')}
+        onPress={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} />
+    </>,
+  ];
+
+  // The commands the editor is configured with, in a toolbar of their own.
+  if (toolbar != null) {
+    groups.push(<TLChild control={toolbar} />);
+  }
+
+  if (sourceToggle) {
+    groups.push(sourceToggle);
+  }
+
+  // History
+  groups.push(
+    <>
+      <ToolButton icon={ICON_UNDO} label={t(labels, 'undo')} disabled={!state.canUndo}
+        onPress={() => editor.chain().focus().undo().run()} />
+      <ToolButton icon={ICON_REDO} label={t(labels, 'redo')} disabled={!state.canRedo}
+        onPress={() => editor.chain().focus().redo().run()} />
+    </>,
+  );
+
   return (
-    <div className="tlWysiwygToolbar" role="toolbar" aria-label="Editor toolbar">
-      <div className="tlWysiwygToolbar__groups">
-        {/* Text formatting */}
-        <div className="tlWysiwygToolbar__group">
-          <ToolbarButton
-            icon="ri-bold"
-            tooltip={t(labels, 'bold')}
-            active={state.bold}
-            onClick={() => editor.chain().focus().toggleBold().run()}
-          />
-          <ToolbarButton
-            icon="ri-italic"
-            tooltip={t(labels, 'italic')}
-            active={state.italic}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-          />
-          <ToolbarButton
-            icon="ri-underline"
-            tooltip={t(labels, 'underline')}
-            active={state.underline}
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-          />
-          <ToolbarButton
-            icon="ri-strikethrough"
-            tooltip={t(labels, 'strikethrough')}
-            active={state.strike}
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-          />
-        </div>
-
-        {/* Heading and list dropdowns */}
-        <div className="tlWysiwygToolbar__group">
-          <HeadingDropdown editor={editor} labels={labels} activeLevel={state.headingLevel} />
-          <ListDropdown
-            editor={editor}
-            labels={labels}
-            isBullet={state.bulletList}
-            isOrdered={state.orderedList}
-          />
-        </div>
-
-        {/* Block elements */}
-        <div className="tlWysiwygToolbar__group">
-          <ToolbarButton
-            icon="ri-double-quotes-l"
-            tooltip={t(labels, 'blockquote')}
-            active={state.blockquote}
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          />
-          <ToolbarButton
-            icon="ri-code-s-slash-line"
-            tooltip={t(labels, 'codeBlock')}
-            active={state.codeBlock}
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          />
-        </div>
-
-        {/* Link, Image, Table */}
-        <div className="tlWysiwygToolbar__group">
-          <LinkPopover editor={editor} labels={labels} isActive={state.link} />
-          {onImageUpload && (
-            <ToolbarButton
-              icon="ri-image-line"
-              tooltip={t(labels, 'image')}
-              onClick={onImageUpload}
-            />
-          )}
-          <ToolbarButton
-            icon="ri-table-line"
-            tooltip={t(labels, 'table')}
-            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
-          />
-        </div>
-
-        {/* The commands the editor is configured with, in a toolbar of their own. */}
-        {toolbar != null && (
-          <div className="tlWysiwygToolbar__group tlWysiwygToolbar__group--commands">
-            <TLChild control={toolbar} />
-          </div>
-        )}
-
-        {sourceToggle}
-
-        {/* History */}
-        <div className="tlWysiwygToolbar__group">
-          <ToolbarButton
-            icon="ri-arrow-go-back-line"
-            tooltip={t(labels, 'undo')}
-            disabled={!state.canUndo}
-            onClick={() => editor.chain().focus().undo().run()}
-          />
-          <ToolbarButton
-            icon="ri-arrow-go-forward-line"
-            tooltip={t(labels, 'redo')}
-            disabled={!state.canRedo}
-            onClick={() => editor.chain().focus().redo().run()}
-          />
-        </div>
+    <ButtonDefaults appearance="ghost" iconOnly>
+      <div ref={toolbarRef} className="tl-toolbar tl-toolbar--wrap" role="toolbar" aria-label={t(labels, 'toolbar')}>
+        {groups.map((group, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <Divider orientation="vertical" />}
+            <div className="tl-toolbar__group">{group}</div>
+          </React.Fragment>
+        ))}
       </div>
-    </div>
+    </ButtonDefaults>
   );
 };
 

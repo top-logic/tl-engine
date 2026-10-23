@@ -917,6 +917,9 @@ public class ViewServlet extends TopLogicServlet {
 				themes.writeModeAttribute(out, theme);
 			}
 		}
+		// The density the user has selected, whatever the theme: the first paint is dense already, so
+		// that nothing jumps once the theme script has run.
+		themes.writeDensityAttribute(out);
 		out.endBeginTag();
 
 		out.beginBeginTag(HTMLConstants.HEAD);

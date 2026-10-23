@@ -1,8 +1,8 @@
 // The fill contract: which controls take the height their container offers, and how that request
 // propagates up through nested containers.
 //
-// A control that fills carries FILL_CLASS on its root element, which the layout CSS turns into
-// `flex: 1; min-height: 0`. That alone bounds a control only as long as its container has a
+// A control that fills carries FILL_CLASS on its root element, which the design system package
+// (layout.css) turns into `flex: 1; min-height: 0`. That alone bounds a control only as long as its container has a
 // definite height itself, so a container hosting a filling child has to fill in turn - up to the
 // first box that is bounded anyway (the viewport-high mount point, a tab-content region, a split
 // pane). The chain is therefore not a property of a single control but of the path
@@ -13,9 +13,9 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 
 /**
  * CSS class of a control that fills the space its flex container offers, instead of growing with
- * its content.
+ * its content: `tl-fill` of the design system package (layout.css).
  */
-export const FILL_CLASS = 'tlFill';
+export const FILL_CLASS = 'tl-fill';
 
 /**
  * The container a control reports its fill request to.

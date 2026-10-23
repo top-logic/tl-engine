@@ -32,7 +32,7 @@ const TOGGLE_VALUE = 'on';
  * <ul>
  * <li>an entry of a menu (appearance `menu-item`) → a `ListItemButton` showing icon and label (the
  *     MUI `MenuItem` works only inside an MUI menu, and the menu around the entry is TopLogic's);
- *     active → `selected`; danger → the error color;</li>
+ *     active, or checked in a radio group ({@link ButtonPartProps.radio}) → `selected`; danger → the error color;</li>
  * <li>a toggle ({@link ButtonPartProps.checked}) outside a menu → a `ToggleButton`, `selected` while
  *     checked, showing its icon and its label as the display mode says;</li>
  * <li>a button showing its icon alone → an `IconButton`, color `error` for danger, `primary` for
@@ -51,7 +51,7 @@ const TOGGLE_VALUE = 'on';
  */
 const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
   const {
-    id, ref, href, target: _target, label, image, display, appearance, danger: dangerTone, small, active, checked,
+    id, ref, href, target: _target, label, image, display, appearance, danger: dangerTone, small, active, checked, radio,
     disabled, tabIndex, tooltip: _tooltip, className, onClick, onMouseDown, onPointerDown, onKeyDown, ...attributes
   } = props;
   const isLink = appearance === 'link';
@@ -68,7 +68,7 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
         {...common}
         component="button"
         type="button"
-        selected={active === true}
+        selected={active === true || (radio === true && checked === true)}
         sx={danger ? DANGER_MENU_ITEM_SX : MENU_ITEM_SX}
         {...accessibility}
       >

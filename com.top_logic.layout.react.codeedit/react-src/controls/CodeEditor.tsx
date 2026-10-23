@@ -131,6 +131,12 @@ export interface CodeEditorProps {
    * with the label of the form field around the editor (see `useFieldLabelProps`).
    */
   contentAttributes?: Record<string, string>;
+  /**
+   * Whether the text is in error. The error is announced at the editable content element, the
+   * textbox assistive technology reads, and shown by the frame through the same attribute
+   * (`aria-invalid` on the root, which the field of the design system draws as its error border).
+   */
+  invalid?: boolean;
 }
 
 /** Maps a 1-based line/column diagnostic onto an absolute CodeMirror document range. */
@@ -152,8 +158,11 @@ function toEditorDiagnostic(view: EditorView, d: CodeEditorDiagnostic): Diagnost
 const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const {
     controlId, value, readOnly, languageSupport, extraExtensions, completionSource, hoverSource,
-    diagnostics, debounceMs = 300, className, contentAttributes,
+    diagnostics, debounceMs = 300, className, invalid = false,
   } = props;
+
+  // The attributes of the content element: those of the host, and the error as the host reports it.
+  const contentAttributes = invalid ? { ...props.contentAttributes, 'aria-invalid': 'true' } : props.contentAttributes;
 
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -301,6 +310,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
       ref={editorRef}
       id={controlId}
       className={['tlCodeEditorSurface', className ?? 'tlCodeEditor'].join(' ')}
+      aria-invalid={invalid ? true : undefined}
     />
   );
 };

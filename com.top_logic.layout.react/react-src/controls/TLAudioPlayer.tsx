@@ -1,18 +1,24 @@
-import { React, useTLState, useTLDataUrl, useI18N, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useI18N, usePart, rootClassName, ICON_PLAY, ICON_PAUSE } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
   'js.audioPlayer.play': 'Play audio',
   'js.audioPlayer.pause': 'Pause audio',
   'js.audioPlayer.noAudio': 'No audio',
-  'js.loading': 'Loading\u2026',
 };
 
 type PlayerStatus = 'disabled' | 'idle' | 'loading' | 'playing' | 'paused';
 
+/**
+ * Plays the audio of the server control.
+ *
+ * <p>The button shows play or, while playing, pause, and is named as it shows; it is no toggle. While
+ * the audio is loaded, it is busy. Without audio it is disabled and says so in its tooltip.</p>
+ */
 const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const dataUrl = useTLDataUrl();
+  const Button = usePart('Button');
 
   const hasAudio = !!state.hasAudio;
   const dataRevision: number = (state.dataRevision as number | undefined) ?? 0;
@@ -77,6 +83,18 @@ const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
     };
   }, []);
 
+  // The browser may refuse to play (no permission to autoplay, a format it cannot decode): the player stands ready.
+  const play = React.useCallback((audio: HTMLAudioElement) => {
+    setStatus('playing');
+    audio.play().catch((e: unknown) => {
+      console.error('[TLAudioPlayer] Playback failed:', e);
+      if (audioRef.current === audio) {
+        audioRef.current = null;
+        setStatus('idle');
+      }
+    });
+  }, []);
+
   const handleClick = React.useCallback(async () => {
     if (status === 'disabled' || status === 'loading') {
       return;
@@ -93,8 +111,7 @@ const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
 
     // Resume if paused and we still have an Audio object.
     if (status === 'paused' && audioRef.current) {
-      audioRef.current.play();
-      setStatus('playing');
+      play(audioRef.current);
       return;
     }
 
@@ -123,36 +140,25 @@ const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
     audio.onended = () => {
       setStatus('idle');
     };
-    audio.play();
-    setStatus('playing');
-  }, [status, dataUrl]);
+    play(audio);
+  }, [status, dataUrl, play]);
 
   const t = useI18N(I18N_KEYS);
-  const ariaLabel =
-    status === 'loading' ? t['js.loading'] :
-    status === 'playing' ? t['js.audioPlayer.pause'] :
-    status === 'disabled' ? t['js.audioPlayer.noAudio'] :
-    t['js.audioPlayer.play'];
-
-  const isDisabled = status === 'disabled' || status === 'loading';
-
-  const buttonClasses = ['tlAudioPlayer__button'];
-  if (status === 'playing') buttonClasses.push('tlAudioPlayer__button--playing');
-  if (status === 'loading') buttonClasses.push('tlAudioPlayer__button--loading');
+  const playing = status === 'playing';
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlAudioPlayer')}>
-      <button
-        type="button"
-        className={buttonClasses.join(' ')}
+    <span id={controlId} className={rootClassName(state) || undefined}>
+      <Button
+        label={playing ? t['js.audioPlayer.pause'] : t['js.audioPlayer.play']}
+        tooltip={status === 'disabled' ? t['js.audioPlayer.noAudio'] : undefined}
+        image={playing ? ICON_PAUSE : ICON_PLAY}
+        display="icon-only"
+        appearance="secondary"
+        disabled={status === 'disabled' || status === 'loading'}
+        aria-busy={status === 'loading' ? true : undefined}
         onClick={handleClick}
-        disabled={isDisabled}
-        aria-label={ariaLabel}
-        {...tooltipProps(ariaLabel)}
-      >
-        <span className={`tlAudioPlayer__icon${status === 'playing' ? ' tlAudioPlayer__icon--pause' : ''}`} />
-      </button>
-    </div>
+      />
+    </span>
   );
 };
 

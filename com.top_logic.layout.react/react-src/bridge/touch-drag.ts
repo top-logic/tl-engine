@@ -10,8 +10,10 @@
  * drag source and drop target of the document works by touch without knowing of it.</p>
  *
  * <p>The gesture: a finger resting {@link LONG_PRESS_MS} on a draggable element picks it up - the
- * element shows as {@link ATTR_TOUCH_DRAG armed}. Moving the finger then starts the drag: an image
- * of the element follows the finger, and the drop is made where the finger is lifted. A finger
+ * element shows as {@link ATTR_ARMED armed}. Moving the finger then starts the drag: an image
+ * of the element follows the finger, and the drop is made where the finger is lifted. The source
+ * shows as dragged the way it does under the mouse: its control marks it in its {@code dragstart}
+ * handler, which this module dispatches. A finger
  * moving before the element is picked up scrolls the page as usual, and a short tap stays a click.
  * Near the edge of a scrolled container the drag scrolls it, so a drop target outside the visible
  * area is reached. A press on an interactive element within a draggable one (a button on a card)
@@ -48,10 +50,13 @@ const AUTO_SCROLL_MAX_STEP_PX = 18;
 const TICK_MS = 50;
 
 /**
- * Attribute marking the element taking part in a touch drag: {@code armed} while it is picked up
- * and the finger has not moved yet, {@code source} while it is dragged.
+ * Attribute marking an element picked up by a finger that has not moved yet (drawn by the design
+ * system package, drag.css).
+ *
+ * <p>An attribute of its own rather than a word in {@code data-tl-state}: the control rendering the
+ * element writes that attribute, and its next render would drop a word set here.</p>
  */
-export const ATTR_TOUCH_DRAG = 'data-touch-drag';
+export const ATTR_ARMED = 'data-tl-armed';
 
 /**
  * Attribute marking an element that is told of a long press on it by a {@link LONG_PRESS_EVENT},
@@ -65,8 +70,12 @@ export const ATTR_LONG_PRESS = 'data-long-press';
  */
 export const LONG_PRESS_EVENT = 'tl-longpress';
 
-/** Class of the image of the dragged element following the finger. */
-export const TOUCH_DRAG_IMAGE_CLASS = 'tlTouchDragImage';
+/**
+ * Class of the image of the dragged element following the finger: `tl-drag-image` of the design
+ * system package (drag.css), on the layer of the drag. The hint why a drop is refused shares that
+ * layer and is rendered after the image is appended, so it lies above it.
+ */
+export const TOUCH_DRAG_IMAGE_CLASS = 'tl-drag-image';
 
 /** A finger resting on a draggable element, not picked up yet. */
 interface Pressing {
@@ -167,7 +176,7 @@ function pickUp(): void {
     startX: gesture.startX,
     startY: gesture.startY,
   };
-  gesture.source.setAttribute(ATTR_TOUCH_DRAG, 'armed');
+  gesture.source.setAttribute(ATTR_ARMED, '');
   navigator.vibrate?.(15);
 }
 
@@ -252,14 +261,13 @@ function suppressWhilePickedUp(event: Event): void {
 
 function startDrag(gesture: Armed, x: number, y: number): void {
   const source = gesture.source;
-  source.removeAttribute(ATTR_TOUCH_DRAG);
+  source.removeAttribute(ATTR_ARMED);
   const dataTransfer = new DataTransfer();
   const start = dispatchDrag('dragstart', source, dataTransfer, gesture.startX, gesture.startY, null);
   if (start.defaultPrevented || !source.isConnected) {
     _gesture = null;
     return;
   }
-  source.setAttribute(ATTR_TOUCH_DRAG, 'source');
   const dragging: Dragging = {
     kind: 'dragging',
     touch: gesture.touch,
@@ -282,7 +290,7 @@ function startDrag(gesture: Armed, x: number, y: number): void {
 function createDragImage(source: HTMLElement): HTMLElement {
   const rect = source.getBoundingClientRect();
   const image = source.cloneNode(true) as HTMLElement;
-  image.removeAttribute(ATTR_TOUCH_DRAG);
+  image.removeAttribute(ATTR_ARMED);
   image.removeAttribute('id');
   for (const withId of Array.from(image.querySelectorAll('[id]'))) {
     withId.removeAttribute('id');
@@ -427,7 +435,7 @@ function cancelGesture(): void {
       _gesture = null;
       return;
     case 'armed':
-      gesture.source.removeAttribute(ATTR_TOUCH_DRAG);
+      gesture.source.removeAttribute(ATTR_ARMED);
       _gesture = null;
       return;
     case 'dragging':
@@ -444,7 +452,6 @@ function endDrag(gesture: Dragging): void {
   _gesture = null;
   window.clearInterval(gesture.ticker);
   gesture.image.remove();
-  gesture.source.removeAttribute(ATTR_TOUCH_DRAG);
   dispatchDrag('dragend', gesture.source, gesture.dataTransfer, gesture.x, gesture.y, null);
 }
 

@@ -61,6 +61,15 @@ function gapPx(): number {
   return tokenPx(document.documentElement, '--tl-space-xs', 8);
 }
 
+/**
+ * The placement rules: offset by the gap, flipped to the other side where it does not fit, and shifted
+ * along both axes so that, where neither side has room, the surface overlaps its anchor instead of
+ * leaving the viewport.
+ */
+export function popoverMiddleware(gap: number) {
+  return [offset(gap), flip(), shift({ padding: gap, crossAxis: true })];
+}
+
 export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElement | null) => void; style: React.CSSProperties } {
   const { open, anchor, placement = 'bottom-start', hover } = opts;
   // Two getComputedStyle calls per render would run per keystroke in a select: read on opening only.
@@ -72,7 +81,7 @@ export function usePopover(opts: PopoverOptions): { setFloating: (el: HTMLElemen
     onOpenChange: next => hoverRef.current?.onOpenChange(next),
     placement,
     strategy: 'fixed',
-    middleware: [offset(gap), flip(), shift({ padding: gap })],
+    middleware: popoverMiddleware(gap),
     whileElementsMounted: open ? autoUpdate : undefined,
   });
   useHover(context, {

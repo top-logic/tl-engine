@@ -289,7 +289,7 @@ function renderSource(source: string, inline: boolean) {
 function sourceView(inline: boolean) {
   return ({ node }: { node: { attrs: Record<string, unknown> } }) => {
     const dom = document.createElement(inline ? 'span' : 'div');
-    dom.className = 'tlWysiwygEditor__htmlSource' + (inline ? ' tlWysiwygEditor__htmlSource--inline' : '');
+    dom.className = 'tl-rich-text__markup tl-type-code' + (inline ? ' tl-rich-text__markup--inline' : '');
     dom.contentEditable = 'false';
     dom.textContent = String(node.attrs[SOURCE] || '');
     return { dom };

@@ -21,9 +21,20 @@ public class TestWysiwygStylesheetTokens extends AbstractStylesheetTokenTest {
 	/** The stylesheets audited, under the resource paths they are served from. */
 	private static final List<String> STYLESHEETS = List.of("/script/tl-react-wysiwyg.css");
 
+	/**
+	 * The token sheet of the design system package: the rules of the editor's sheet read its tokens
+	 * (the focus ring of a selected image, the resize handle of a table column).
+	 */
+	private static final List<String> DESIGN_SYSTEM_TOKENS = List.of("/style/tl-design-system/tokens.css");
+
 	@Override
 	protected List<String> stylesheets() {
 		return STYLESHEETS;
+	}
+
+	@Override
+	protected List<String> tokenStylesheets() {
+		return DESIGN_SYSTEM_TOKENS;
 	}
 
 	/**

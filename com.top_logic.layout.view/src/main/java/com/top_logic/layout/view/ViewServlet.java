@@ -664,9 +664,10 @@ public class ViewServlet extends TopLogicServlet {
 			routeManager.adoptUrl(requestedRoute);
 		}
 
-		routeManager.setUrlChangeHandler((url, replace) -> {
+		routeManager.setUrlChangeHandler((url, title, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
 				.setUrl(url)
+				.setTitle(title)
 				.setReplace(replace);
 			sseQueue.enqueue(event);
 		});

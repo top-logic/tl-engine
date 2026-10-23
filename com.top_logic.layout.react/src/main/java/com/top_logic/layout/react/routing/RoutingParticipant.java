@@ -8,6 +8,8 @@ package com.top_logic.layout.react.routing;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.util.ResKey;
+
 /**
  * Controls that contribute URL segments implement this interface.
  *
@@ -51,6 +53,34 @@ public interface RoutingParticipant {
      * item is active.
      */
     RouteSegment activeRouteSegment();
+
+	/**
+	 * The label of what the {@link #activeRouteSegment() active route segment} names, or
+	 * {@code null} if this participant names nothing a user would recognize the page by.
+	 *
+	 * <p>
+	 * The label names the page in the browser tab and in the history: the {@link RouteManager}
+	 * titles the page after the label of the innermost participant of the display that reports one
+	 * - the item a sidebar selects, the tab a tab bar shows, refined by whatever the display names
+	 * below them. A participant without a label leaves the title to the participants around it.
+	 * </p>
+	 *
+	 * <p>
+	 * A change of the label is reported like a change of the route, to the
+	 * {@link #addRouteChangeListener(RouteChangeListener) route change listeners}, even where the
+	 * segment stays the same: the page keeps its address, but not its title.
+	 * </p>
+	 *
+	 * <p>
+	 * The default reports no label, which is what a participant does whose route refines the page
+	 * rather than naming one - a query parameter holding a filter, for instance.
+	 * </p>
+	 *
+	 * @see RouteManager#currentTitle()
+	 */
+	default ResKey activeRouteLabel() {
+		return null;
+	}
 
 	/**
 	 * Takes up the query parameters of the URL being adopted.

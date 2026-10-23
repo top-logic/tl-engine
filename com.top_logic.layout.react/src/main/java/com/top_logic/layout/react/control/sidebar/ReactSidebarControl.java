@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ScriptingControl;
@@ -547,6 +548,24 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 			return new RouteSegment(pattern.produce(Map.of()));
 		}
 		return null;
+	}
+
+	/**
+	 * The label of the selected item, where the item has a route.
+	 *
+	 * <p>
+	 * An item without a route names no page: the URL ends above it, and so does the title, which is
+	 * left to the participants around this sidebar.
+	 * </p>
+	 */
+	@Override
+	public ResKey activeRouteLabel() {
+		NavigationItem activeItem = findNavItem(_activeItemId, _items);
+		if (activeItem == null || activeItem.getRoute() == null) {
+			return null;
+		}
+		String label = activeItem.getLabel();
+		return label == null || label.isEmpty() ? null : ResKey.text(label);
 	}
 
 	/**

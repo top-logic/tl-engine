@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -298,6 +299,24 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			return new RouteSegment(pattern.produce(Map.of()));
 		}
 		return null;
+	}
+
+	/**
+	 * The label of the active tab, where the tab has a route.
+	 *
+	 * <p>
+	 * A tab without a route names no page: the URL ends above it, and so does the title, which is
+	 * left to the participants around this tab bar.
+	 * </p>
+	 */
+	@Override
+	public ResKey activeRouteLabel() {
+		TabDefinition activeTab = findTab(_activeTabId);
+		if (activeTab.getRoute() == null) {
+			return null;
+		}
+		String label = activeTab.getLabel();
+		return label == null || label.isEmpty() ? null : ResKey.text(label);
 	}
 
 	/**

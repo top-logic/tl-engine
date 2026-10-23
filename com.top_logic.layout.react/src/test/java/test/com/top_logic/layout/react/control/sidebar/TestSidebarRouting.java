@@ -10,8 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -173,8 +180,13 @@ public class TestSidebarRouting extends TestCase {
 		ReactContext context = new DefaultReactContext("", "test", queue, new ReactWindowRegistry("test"));
 		RouteManager routeManager = context.getRouteManager();
 		queue.setRouteManager(routeManager);
+		routeManager.setApplicationTitle(ResKey.text("Demo"));
 		List<String> reported = new ArrayList<>();
-		routeManager.setUrlChangeHandler((url, replace) -> reported.add(url));
+		List<String> titles = new ArrayList<>();
+		routeManager.setUrlChangeHandler((url, title, replace) -> {
+			reported.add(url);
+			titles.add(title);
+		});
 
 		Supplier<String> noSegment = () -> null;
 		List<SidebarItem> items = List.of(
@@ -190,6 +202,8 @@ public class TestSidebarRouting extends TestCase {
 		render(sidebar);
 		assertEquals("The content of a routed item is part of the URL.", "first/one",
 			routeManager.currentUrl());
+		assertEquals("The page is not titled after the selected item.", "First – Demo",
+			titles.get(titles.size() - 1));
 
 		sidebar.selectItem("admin");
 		render(sidebar);
@@ -198,6 +212,8 @@ public class TestSidebarRouting extends TestCase {
 			routeManager.currentUrl());
 		assertEquals("Selecting the item without a route left the URL of the item before in the "
 			+ "address bar.", "", reported.get(reported.size() - 1));
+		assertEquals("An item without a route names no page, so the title is the application's.",
+			"Demo", titles.get(titles.size() - 1));
 
 		// A reload of the window adopts the URL the client shows.
 		routeManager.adoptUrl("");
@@ -209,6 +225,21 @@ public class TestSidebarRouting extends TestCase {
 		sidebar.selectItem("first");
 		render(sidebar);
 		assertEquals("first/one", routeManager.currentUrl());
+		assertEquals("First – Demo", routeManager.currentTitle());
+	}
+
+	/**
+	 * The suite of tests.
+	 *
+	 * <p>
+	 * The page title is resolved by {@link com.top_logic.util.Resources}, which the services of the
+	 * test setup provide.
+	 * </p>
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(new TestSuite(TestSidebarRouting.class),
+				ResourcesModule.Module.INSTANCE));
 	}
 
 }

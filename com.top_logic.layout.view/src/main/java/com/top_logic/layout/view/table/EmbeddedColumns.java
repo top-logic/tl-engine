@@ -375,7 +375,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			setup.hiddenByDefault(),
 			setup.export(),
 			embeddedCellFunction(setup.tooltip(), navigation),
-			embeddedCellFunction(setup.cellClass(), navigation));
+			embeddedCellFunction(setup.cellClass(), navigation),
+			setup.display());
 	}
 
 	/**

@@ -39,6 +39,7 @@ import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
+import com.top_logic.layout.view.element.ResourceDisplayByExpression;
 import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.element.TreeTableElement;
 import com.top_logic.layout.view.table.AbstractColumnDeclaration;
@@ -274,6 +275,54 @@ public class TestTableScripts extends BasicTestCase {
 		assertTrue(first.comparator().compare("a", "b") > 0);
 		assertEquals("row fax", first.cellClass().apply("row", "x"));
 		assertNull(first.cellClass().apply("row", "none"));
+	}
+
+	/**
+	 * Tests that a column and a set of dynamic columns take a display of their values, whose scripts
+	 * see the value by the name the column gives it and none of the inputs of the table, so that a
+	 * display adds no input to the column.
+	 */
+	public void testDisplay() throws Exception {
+		String display = "<display class='" + ResourceDisplayByExpression.class.getName() + "'"
+			+ " label=\"'L:' + $v\" css-class=\"['c', $v]\"/>";
+		TableElement.Config table = (TableElement.Config) parse(TABLE,
+			"<table inputs='factor' rows='[]'><columns>"
+				+ "<computed-column name='c' type='tl.core:String' value-as='v' value='$row'>" + display
+				+ "</computed-column>"
+				+ "<dynamic-columns name='d' value-as='v' type='tl.core:String' columns=\"['m']\" value='$row'>"
+				+ display + "</dynamic-columns>"
+				+ "<column attribute='x'><display class='" + ResourceDisplayByExpression.class.getName()
+				+ "' label='$value'/></column>"
+				+ "</columns></table>");
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> declarations = table.getColumns().getColumns();
+
+		ComputedColumn.Config computed = (ComputedColumn.Config) declarations.get(0);
+		ConfigurationItem computedDisplay = computed.getDisplay();
+		assertTrue(computedDisplay instanceof ResourceDisplayByExpression.Config);
+		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.LABEL);
+		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.CSS_CLASS);
+		ColumnSetup setup = single(instantiate(computed).resolve(new ColumnResolution(null, _context)));
+		ResourceDisplayByExpression provider = (ResourceDisplayByExpression) setup.display();
+		assertEquals("L:a", provider.getLabel("a"));
+		assertEquals("c a", provider.getCssClass("a"));
+
+		DynamicColumns.Config dynamic = (DynamicColumns.Config) declarations.get(1);
+		assertScope(List.of("v"), dynamic.getDisplay(), ResourceDisplayByExpression.Config.LABEL);
+		ColumnSetup dynamicSetup = single(instantiate(dynamic).resolve(new ColumnResolution(null, _context)));
+		assertEquals("L:b", ((ResourceDisplayByExpression) dynamicSetup.display()).getLabel("b"));
+
+		AttributeColumn.Config attribute = (AttributeColumn.Config) declarations.get(2);
+		assertScope(List.of("value"), attribute.getDisplay(), ResourceDisplayByExpression.Config.LABEL);
+		assertEquals("A display reads no input of the table.", List.of(), instantiate(attribute).inputs());
+
+		ColumnSetup plain = single(instantiate(table.getColumns().getColumns().get(0))
+			.resolve(new ColumnResolution(null, _context)));
+		assertNotNull(plain.display());
+		TableElement.Config withoutDisplay = (TableElement.Config) parse(TABLE,
+			"<table rows='[]'><columns><computed-column name='c' value='$row'/></columns></table>");
+		assertNull("A column without a display shows its values as their type derives.",
+			single(instantiate(withoutDisplay.getColumns().getColumns().get(0))
+				.resolve(new ColumnResolution(null, _context))).display());
 	}
 
 	/**

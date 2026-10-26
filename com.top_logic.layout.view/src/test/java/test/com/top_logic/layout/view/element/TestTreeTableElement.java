@@ -31,6 +31,8 @@ import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.table.ExpandArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ChildControl;
+import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
@@ -62,6 +64,19 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	/** Name of the input channel the cell class of {@link #CLASSES_VIEW} reads. */
 	private static final String MARK = "mark";
+
+	/** A view showing the objects of its rows through a display computing their parts. */
+	private static final String DISPLAY_VIEW = "test-tree-table-display.view.xml";
+
+	/** Name of the column of {@link #DISPLAY_VIEW}. */
+	private static final String MODULE_COLUMN = "module";
+
+	/**
+	 * Row state key of the cell controls of a row, by column name.
+	 *
+	 * @implNote Restated here because {@link TableViewControl} keeps it private.
+	 */
+	private static final String ROW_CELLS = "cells";
 
 	/** Name of the column of {@link #CLASSES_VIEW}. */
 	private static final String NAME_COLUMN = "name";
@@ -234,6 +249,25 @@ public class TestTreeTableElement extends BasicTestCase {
 			_selected.set(rows(control).get(0));
 			assertEquals("chosen", rowState(control, 0).get(ROW_CSS_CLASS));
 			assertEquals("m2-tl.core sel", cellClass(control, 0));
+		} finally {
+			control.detach();
+		}
+	}
+
+	/**
+	 * The cell of a column with a display is the control of that display, showing the label and the
+	 * CSS class it computes for the object of the row.
+	 */
+	public void testCellShowsTheDisplayOfItsColumn() throws Exception {
+		TableViewControl<?> control = createControl(DISPLAY_VIEW);
+		control.attach();
+		try {
+			Map<?, ?> cell = (Map<?, ?>) ((Map<?, ?>) rowState(control, 0).get(ROW_CELLS)).get(MODULE_COLUMN);
+			assertNotNull("The row has no cell of the column.", cell);
+			Map<?, ?> cellState = (Map<?, ?>) cell.get(ChildControl.STATE__PROP);
+			assertEquals("TLResourceCell", cell.get(ChildControl.MODULE__PROP));
+			assertEquals("Module tl.core", cellState.get("label"));
+			assertEquals("module", cellState.get(ControlState.CSS_CLASS__PROP));
 		} finally {
 			control.detach();
 		}

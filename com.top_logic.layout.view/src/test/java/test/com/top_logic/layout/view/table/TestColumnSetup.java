@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import junit.framework.Test;
@@ -20,6 +21,15 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -397,6 +407,155 @@ public class TestColumnSetup extends TestCase {
 				}
 				return "cell-" + value;
 			});
+	}
+
+	/**
+	 * A column with a display shows the value of a data cell through it, and keeps the display of
+	 * its type for an empty cell and a cell the user may not read.
+	 */
+	public void testDisplay() {
+		RecordingDisplay display = new RecordingDisplay();
+		Column<Object, ?> column = withDisplay(display, null, null).buildColumn();
+		Column<Object, ?> plain = withDisplay(null, null, null).buildColumn();
+
+		assertEquals("x", shown(display, column.renderCell(Map.of(ATTRIBUTE, "x"))));
+
+		Map<String, Object> empty = Map.of();
+		assertEquals("An empty cell keeps the display of its type.", plain.renderCell(empty),
+			column.renderCell(empty));
+		Map<String, Object> unreadable = Map.of(ATTRIBUTE, ColumnProviderService.UNREADABLE);
+		assertEquals("A cell the user may not read keeps the display of its type.",
+			plain.renderCell(unreadable), column.renderCell(unreadable));
+		Map<String, Object> noValues = Map.of(ATTRIBUTE, List.of());
+		assertEquals("A cell without values keeps the display of its type.", plain.renderCell(noValues),
+			column.renderCell(noValues));
+		assertEquals("Only the displayed value reached the display.", List.of("x"), display._shown);
+	}
+
+	/**
+	 * The header row of a group and the aggregate of a group show their value through the display
+	 * of the column.
+	 */
+	public void testDisplayOfGroupValues() {
+		RecordingDisplay display = new RecordingDisplay();
+		Column<Object, ?> column = withDisplay(display, rows -> "sum " + rows.size(), null).buildColumn();
+		Column<Object, ?> plain = withDisplay(null, null, null).buildColumn();
+
+		assertEquals("g", shown(display, render(column, "g")));
+		assertEquals("A group without a value keeps the display of its type.", render(plain, null),
+			render(column, null));
+		assertEquals("sum 2", shown(display, column.aggregate().get().over(group("a", "b"))));
+	}
+
+	/** Renders the given group value through the renderer of the given column. */
+	@SuppressWarnings("unchecked")
+	private static CellContent render(Column<Object, ?> column, Object groupValue) {
+		return ((Column<Object, Object>) column).renderer().render(groupValue);
+	}
+
+	/** The tooltip of a column wraps what its display shows. */
+	public void testDisplayKeepsTheTooltip() {
+		RecordingDisplay display = new RecordingDisplay();
+		Column<Object, ?> column =
+			withDisplay(display, null, (row, value) -> (row == null ? "group " : "cell ") + value).buildColumn();
+
+		CellContent cell = column.renderCell(Map.of(ATTRIBUTE, "x"));
+		assertEquals("cell x", cell.tooltip());
+		assertEquals("x", shown(display, cell));
+
+		CellContent groupCell = render(column, "g");
+		assertEquals("group g", groupCell.tooltip());
+		assertEquals("g", shown(display, groupCell));
+	}
+
+	/**
+	 * The search finds a cell by the label a display computes, and by the text of the type of the
+	 * values where the display computes none.
+	 */
+	public void testSearchTextFollowsALabelingDisplay() {
+		Column<Object, ?> labeled = withDisplay(new LabelingDisplay(), null, null).buildColumn();
+		Column<Object, ?> unlabeled = withDisplay(new RecordingDisplay(), null, null).buildColumn();
+
+		assertEquals("label x", labeled.searchText(Map.of(ATTRIBUTE, "x")));
+		assertEquals("x", unlabeled.searchText(Map.of(ATTRIBUTE, "x")));
+		Map<String, Object> empty = Map.of();
+		assertEquals("An empty cell is searched by the text of its type.",
+			withDisplay(null, null, null).buildColumn().searchText(empty), labeled.searchText(empty));
+	}
+
+	/**
+	 * A cell holding several values shows each of them through the display, in a read-only list of
+	 * values, and is searched by their labels joined as the values of any multi-valued cell are.
+	 */
+	public void testDisplayOfSeveralValues() {
+		LabelingDisplay display = new LabelingDisplay();
+		Column<Object, ?> column = withDisplay(display, null, null).buildColumn();
+		Map<String, Object> row = Map.of(ATTRIBUTE, List.of("a", "b"));
+
+		CellContent cell = column.renderCell(row);
+		assertTrue("Not shown through a control: " + cell, cell instanceof CellContent.Raw);
+		ReactContext context =
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		ReactControl control = ((CellControlFactory) ((CellContent.Raw) cell).payload()).create(context);
+		assertTrue("Not a list of values: " + control, control instanceof ReactValueListControl);
+		assertEquals("Each value is shown through the display.", List.of("a", "b"), display._shown);
+
+		assertEquals("label a, label b", column.searchText(row));
+	}
+
+	/**
+	 * The value the given display was given by the control factory of the given cell content.
+	 */
+	private static Object shown(RecordingDisplay display, CellContent content) {
+		assertTrue("Not shown through the display: " + content, content instanceof CellContent.Raw);
+		Object payload = ((CellContent.Raw) content).payload();
+		assertTrue("Not a control factory: " + payload, payload instanceof CellControlFactory);
+		int before = display._shown.size();
+		((CellControlFactory) payload).create(null);
+		assertEquals("The display created one control.", before + 1, display._shown.size());
+		return display._shown.get(before);
+	}
+
+	/**
+	 * A column reading the value under {@link #ATTRIBUTE}, shown through the given display.
+	 *
+	 * @param display
+	 *        The display, {@code null} for the type-derived one.
+	 * @param aggregate
+	 *        The aggregate of a group, {@code null} for none.
+	 * @param tooltip
+	 *        The tooltip of a cell, {@code null} for none.
+	 */
+	private static ColumnSetup withDisplay(ReactControlProvider display, Function<List<Object>, Object> aggregate,
+			BiFunction<Object, Object, String> tooltip) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, aggregate, null,
+			false, ColumnExport.DEFAULT, tooltip, null, display);
+	}
+
+	/**
+	 * {@link ReactControlProvider} recording the values it is given, creating no control.
+	 */
+	private static class RecordingDisplay implements ReactControlProvider {
+
+		final List<Object> _shown = new ArrayList<>();
+
+		@Override
+		public ReactControl createControl(ReactContext context, Object model) {
+			_shown.add(model);
+			return null;
+		}
+	}
+
+	/**
+	 * {@link RecordingDisplay} computing a label of its own for a value.
+	 */
+	private static class LabelingDisplay extends RecordingDisplay implements LabelProvider {
+
+		@Override
+		public String getLabel(Object object) {
+			return "label " + object;
+		}
 	}
 
 	/**

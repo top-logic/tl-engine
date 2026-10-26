@@ -24,6 +24,7 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
@@ -44,8 +45,9 @@ import com.top_logic.util.Resources;
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
  * such column has: its label, its filter, its width, whether it can be edited, the order it sorts
- * the table in, the order of its values, what it aggregates over a group of rows, and the display
- * annotations it states over the ones of its values' attribute or type.
+ * the table in, the order of its values, what it aggregates over a group of rows, how its cells
+ * display their values, and the display annotations it states over the ones of its values'
+ * attribute or type.
  *
  * <p>
  * A subclass says what the column is named and what its cells hold; everything the table does with
@@ -111,6 +113,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getCellClass()}. */
 		String CELL_CLASS = "cell-class";
+
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
 
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
@@ -276,6 +281,36 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCellClass();
 
+		/**
+		 * How a cell of the column displays its value, in place of the display the type of the
+		 * values derives.
+		 *
+		 * <p>
+		 * The display is given the value of the cell and creates the control showing it - the same
+		 * displays a <code>&lt;tree&gt;</code> shows its nodes with. It shows a value only: an empty
+		 * cell, a cell the user may not read and a cell being edited keep the display of the type.
+		 * The header row of a group formed by the column and the result of its
+		 * {@link #getAggregate() aggregate} show their value through it as well. A display that
+		 * computes a label for the value is also what the search of the table finds the cell by.
+		 * Unset (the default), the cells show their values as the type of the values derives.
+		 * </p>
+		 *
+		 * <p>
+		 * Example showing a device by its icon and a label of its own, computed with
+		 * {@link com.top_logic.layout.view.element.ResourceDisplayByExpression}:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;computed-column name="device" value="$row"&gt;
+		 *     &lt;display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
+		 *         label="$value.get(`my:Device#name`) + ' (' + $value.get(`my:Device#address`) + ')'"
+		 *     /&gt;
+		 * &lt;/computed-column&gt;
+		 * </pre>
+		 */
+		@Name(DISPLAY)
+		PolymorphicConfiguration<ReactControlProvider> getDisplay();
+
 	}
 
 	private final ResKey _label;
@@ -295,6 +330,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final QueryExecutor _tooltip;
 
 	private final QueryExecutor _cellClass;
+
+	/** The configured {@link Config#getDisplay() display}, {@code null} for the type-derived one. */
+	private final ReactControlProvider _display;
 
 	/**
 	 * The inputs whose values the {@link #_aggregate}, the {@link #_comparator}, the
@@ -328,6 +366,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_comparator = InputScript.compile(config, Config.COMPARATOR);
 		_tooltip = InputScript.compile(config, Config.TOOLTIP);
 		_cellClass = InputScript.compile(config, Config.CELL_CLASS);
+		_display = context.getInstance(config.getDisplay());
 		boolean scripted = _aggregate != null || _comparator != null || _tooltip != null || _cellClass != null;
 		_scriptInputs =
 			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
@@ -384,6 +423,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_comparator = null;
 		_tooltip = null;
 		_cellClass = null;
+		_display = null;
 		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
 		_export = ColumnExport.DEFAULT;
@@ -436,7 +476,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			_scriptInputs.isEmpty() ? List.of() : ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs));
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs), _display);
 	}
 
 	/**
@@ -529,7 +569,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 *
 	 * @see CellClassProviderByExpression#toCssClass(Object)
 	 */
-	static String cssClass(Object result) {
+	public static String cssClass(Object result) {
 		return StringServices.nonEmpty(CellClassProviderByExpression.toCssClass(result));
 	}
 
@@ -537,7 +577,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * The text of a tooltip a script computed: the text itself, an internationalized text in the
 	 * language of the user, the label of any other value, {@code null} for nothing at all.
 	 */
-	static String tooltipText(Object result) {
+	public static String tooltipText(Object result) {
 		if (result == null) {
 			return null;
 		}

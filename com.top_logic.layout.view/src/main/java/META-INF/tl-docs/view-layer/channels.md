@@ -56,6 +56,7 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 | column `<update>` | `row`, `value` (the entered value) | `row-as`, `value-as` on the column |
 | column `<tooltip>` | `row`, `value` (the cell value; in a group header row only the group's `value`) | `row-as`, `value-as` on the column |
 | column `cell-class` | `row`, `value` (the cell value) | `row-as`, `value-as` on the column |
+| `label`, `icon`, `css-class`, `tooltip` of a `ResourceDisplayByExpression` (a column `<display>`, a `<tree>` `<nodeContent>`) | `value` (the displayed object) - and no inputs: a display gets no channels | `value-as` on the column |
 | `<dynamic-columns>` `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`; `<value>`, `<update>`, `<can-update>`, `<aggregate>`, `<tooltip>`, `cell-class` | `column`; with `row` / `value` / `members` as for the other columns | `column-as` on the dynamic columns |
 | column `<aggregate>` / `<comparator>` | `members` / `left`, `right` | — |
 | `<match>` of a scripted filter | `params`, `value`, `row` | `value-as`, `row-as` |

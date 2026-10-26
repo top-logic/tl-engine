@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -26,6 +27,7 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
@@ -139,6 +141,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getCellClass()}. */
 		String CELL_CLASS = AbstractColumnDeclaration.Config.CELL_CLASS;
+
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = AbstractColumnDeclaration.Config.DISPLAY;
 
 		@Override
 		@ClassDefault(DynamicColumns.class)
@@ -426,6 +431,20 @@ public class DynamicColumns implements ColumnDeclaration {
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCellClass();
 
+		/**
+		 * How a cell of every column displays its value, in place of the display the type of the
+		 * values derives.
+		 *
+		 * <p>
+		 * The display is given the value of the cell, as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getDisplay() display}: an empty cell, a cell the
+		 * user may not read and a cell being edited keep the display of the type. Unset, the cells
+		 * show their values as the type of the values derives.
+		 * </p>
+		 */
+		@Name(DISPLAY)
+		PolymorphicConfiguration<ReactControlProvider> getDisplay();
+
 	}
 
 	private final String _name;
@@ -440,6 +459,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 	/** @see #inputs() */
 	private final List<InputRef> _inputs;
+
+	/** How the cells display their values, {@code null} for the display their type derives. */
+	private final ReactControlProvider _display;
 
 	/**
 	 * Creates a {@link DynamicColumns} showing one column per object of the given set.
@@ -481,12 +503,41 @@ public class DynamicColumns implements ColumnDeclaration {
 	 */
 	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export,
 			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs) {
+		this(name, width, readonly, export, columns, inputs, null);
+	}
+
+	/**
+	 * Creates a {@link DynamicColumns} showing one column per object of the given set, computed
+	 * with the values of the given channels, whose cells display their values through the given
+	 * display.
+	 *
+	 * @param name
+	 *        The name every column is named after, ahead of the name of the object it stands for.
+	 * @param width
+	 *        The default display width of every column in pixels, {@code 0} to keep the width the
+	 *        type of its values derives.
+	 * @param readonly
+	 *        Whether the columns stay read-only while the rows of the table are edited.
+	 * @param export
+	 *        How every column takes part in an export of the table.
+	 * @param columns
+	 *        The columns to show, computed for what the table resolves its columns against.
+	 * @param inputs
+	 *        The channels the given columns are computed with, see {@link #inputs()}.
+	 * @param display
+	 *        How the cells display their values, {@code null} for the display their type derives,
+	 *        see {@link ColumnSetup#display()}.
+	 */
+	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export,
+			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs,
+			ReactControlProvider display) {
 		_name = name;
 		_width = width;
 		_readonly = readonly;
 		_export = export;
 		_columns = columns;
 		_inputs = inputs;
+		_display = display;
 	}
 
 	/**
@@ -495,7 +546,7 @@ public class DynamicColumns implements ColumnDeclaration {
 	@CalledByReflection
 	public DynamicColumns(InstantiationContext context, Config config) {
 		this(config.getName(), config.getWidth(), config.getReadonly(), ColumnExport.of(context, config),
-			scripted(context, config), config.getInputs());
+			scripted(context, config), config.getInputs(), context.getInstance(config.getDisplay()));
 	}
 
 	/**
@@ -561,7 +612,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
-				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column)));
+				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
+				_display));
 		}
 		return result;
 	}

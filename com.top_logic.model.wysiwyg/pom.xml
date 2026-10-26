@@ -10,7 +10,7 @@
 
   <artifactId>tl-model-wysiwyg</artifactId>
 	<name>${project.artifactId}</name>
-	<description>HTML typed model attributes.</description>
+	<description>Classic UI for HTML typed model attributes: form fields, report editing and the editor feature options.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -28,15 +28,11 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-wysiwyg-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-wysiwyg</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-model-search</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-contact</artifactId>
     </dependency>
   </dependencies>
 </project>

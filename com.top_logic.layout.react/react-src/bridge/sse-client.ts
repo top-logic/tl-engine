@@ -166,10 +166,12 @@ function createEventSource(url: string): void {
       // The connection closing is expected; reloading here would abort the navigation.
       return;
     }
-    if (source.readyState === EventSource.CLOSED && mayBeNavigating()) {
+    if (mayBeNavigating()) {
       // The browser aborts the stream when a navigation it starts by itself begins (the reload
-      // button), long before the page is left: no reason to poll. A page that is still there
-      // afterwards - the user stayed on it - opens its stream again.
+      // button), long before the page is left, and the server ends it when it renders the next
+      // page: no reason to poll, and no reconnect that would take the stream from the next page. A
+      // page that is still there afterwards - the user stayed on it - opens its stream again.
+      source.close();
       afterNavigationGrace(() => {
         if (_eventSource === source && !_polling) createEventSource(_url!);
       });
@@ -233,6 +235,12 @@ async function pollLoop(): Promise<void> {
   let full = true;
   let backoff = 0;
   while (!isPageLeaving()) {
+    if (mayBeNavigating()) {
+      // The events from now on may be the next page's: the server keeps them until a poll reads
+      // them, so a page that is still there after the navigation it announced reads them then.
+      await new Promise<void>((resolve) => afterNavigationGrace(resolve));
+      continue;
+    }
     try {
       const withToken = !full && _pollToken !== '';
       const url = withToken

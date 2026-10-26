@@ -121,6 +121,58 @@ describe('an event stream the browser aborts for a navigation', () => {
   });
 });
 
+describe('an event stream that fails while a navigation may be starting', () => {
+  it('is closed rather than left to reconnect, and opened again afterwards', async () => {
+    const { connect, NAVIGATION_START_GRACE_MS } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    heartbeat(sources[0]);
+
+    window.dispatchEvent(new Event('beforeunload'));
+    // The server ended the stream: the browser would reconnect it by itself.
+    sources[0].readyState = FakeEventSource.CONNECTING;
+    sources[0].onerror?.();
+
+    expect(sources[0].readyState).toBe(FakeEventSource.CLOSED);
+    expect(sources).toHaveLength(1);
+
+    vi.advanceTimersByTime(NAVIGATION_START_GRACE_MS);
+
+    expect(sources).toHaveLength(2);
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+  });
+});
+
+describe('a tab that polls', () => {
+  /** A poll answer with no events. */
+  function emptyAnswer(): Response {
+    return new Response(JSON.stringify({ last: 0, token: 't', events: [] }), { status: 200 });
+  }
+
+  it('reads no events while a navigation may be starting', async () => {
+    window.sessionStorage.setItem(POLLING_KEY, '1');
+    let release: () => void = () => {};
+    const fetchMock = vi.fn(() => new Promise<Response>((resolve) => {
+      release = () => resolve(emptyAnswer());
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { connect, NAVIGATION_START_GRACE_MS } = await load();
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    window.dispatchEvent(new Event('beforeunload'));
+    // The server ends the waiting poll when it renders the next page.
+    release();
+    await vi.advanceTimersByTimeAsync(NAVIGATION_START_GRACE_MS - 1);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('an event stream refused without a navigation', () => {
   it('makes the tab poll', async () => {
     const { connect } = await load();

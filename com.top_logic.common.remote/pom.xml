@@ -18,6 +18,10 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<!-- It will be used in a Java 17 JVM. -->
 		<maven.compiler.target>17</maven.compiler.target>
+    <!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+    <tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+    <!-- Fail on imports that are not used. -->
+    <tl.unused-imports.skip>false</tl.unused-imports.skip>
   </properties>
 
   <dependencies>

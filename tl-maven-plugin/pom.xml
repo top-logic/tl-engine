@@ -37,6 +37,10 @@
 		<!-- Maven has internal duplications in its utilities. -->		
 		<skipDependencyCheck>true</skipDependencyCheck>
 		<dependency-check.skip>true</dependency-check.skip>
+		<!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+		<tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+		<!-- Fail on imports that are not used. -->
+		<tl.unused-imports.skip>false</tl.unused-imports.skip>
 	</properties>
 
 	<dependencies>

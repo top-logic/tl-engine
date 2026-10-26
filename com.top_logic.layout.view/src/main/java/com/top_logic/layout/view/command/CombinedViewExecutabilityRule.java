@@ -61,7 +61,7 @@ public class CombinedViewExecutabilityRule implements ViewExecutabilityRule, Con
 	 *
 	 * <p>
 	 * A combination built from rules that are bound already, as
-	 * {@link ViewExecutabilityRules#build(List, ViewContext)} does, is not bound again.
+	 * {@link ViewExecutabilityRules#build(List, ViewContext, ActionScope)} does, is not bound again.
 	 * </p>
 	 */
 	@Override

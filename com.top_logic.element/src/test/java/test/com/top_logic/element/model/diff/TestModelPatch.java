@@ -6,6 +6,7 @@
 package test.com.top_logic.element.model.diff;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
@@ -19,6 +20,8 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.ErrorIgnoringProtocol;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.sql.ConnectionPool;
@@ -35,22 +38,27 @@ import com.top_logic.element.model.diff.compare.CreateModelPatch;
 import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.export.ModelConfigExtractor;
+import com.top_logic.element.model.migration.model.DeleteTLModuleProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLClassProcessor;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.IdentityMapping;
 import com.top_logic.model.config.ModelPartConfig;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -102,6 +110,18 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		assertEqualsConfig(right, base);
 
 		// Perform migration at database level.
+		left = migrate(left, processors);
+
+		// Check that migration removes all differences between persistent and target model.
+		assertEmpty(createPatch(left, right));
+		assertEqualsConfig(right, left);
+		check.accept(left);
+	}
+
+	/**
+	 * Runs the given processors on the database and reloads the given model afterwards.
+	 */
+	private TLModel migrate(TLModel model, List<MigrationProcessor> processors) throws SQLException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		ConnectionPool connectionPool = KBUtils.getConnectionPool(kb);
 		PooledConnection connection = connectionPool.borrowWriteConnection();
@@ -119,12 +139,7 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		}
 
 		KBTestUtils.clearCache(kb);
-		left = reload(kb, left);
-
-		// Check that migration removes all differences between persistent and target model.
-		assertEmpty(createPatch(left, right));
-		assertEqualsConfig(right, left);
-		check.accept(left);
+		return reload(kb, model);
 	}
 
 	/**
@@ -259,6 +274,70 @@ public class TestModelPatch extends AbstractModelPatchTest {
 		return type.getLocalParts().stream()
 			.filter(p -> p.getName().equals(partName))
 			.findFirst().orElseThrow();
+	}
+
+	public void testUpdateClassMovesAssociations() throws SQLException {
+		String sourceModule = "updateClassMoveSource";
+		String targetModule = "updateClassMoveTarget";
+		ModelConfig config = fixture("test-update-class.model.xml", sourceModule);
+		ModuleConfig target = TypedConfiguration.newConfigItem(ModuleConfig.class);
+		target.setName(targetModule);
+		config.getModules().add(target);
+		TLModel model = setupModel(config);
+
+		UpdateTLClassProcessor.Config update = updateClass(sourceModule, "A", targetModule, "A");
+		DeleteTLModuleProcessor.Config delete = TypedConfiguration.newConfigItem(DeleteTLModuleProcessor.Config.class);
+		delete.setName(sourceModule);
+		delete.setFailOnExistingTypes(true);
+		delete.setSkipModelBaselineChange(true);
+
+		TLModel migrated = migrate(model, processors(update, delete));
+
+		assertFalse(migrated.getModules().stream().anyMatch(m -> m.getName().equals(sourceModule)));
+		assertAssociation(localPart(migrated, targetModule, "A", "ref"), targetModule, "A$ref");
+	}
+
+	public void testUpdateClassRenamesAssociations() throws SQLException {
+		String module = "updateClassRename";
+		TLModel model = setupModel(fixture("test-update-class.model.xml", module));
+
+		TLModel migrated = migrate(model, processors(updateClass(module, "A", module, "B")));
+
+		assertAssociation(localPart(migrated, module, "B", "ref"), module, "B$ref");
+		assertFalse(migrated.getModules().stream()
+			.filter(m -> m.getName().equals(module))
+			.flatMap(m -> m.getTypes().stream())
+			.anyMatch(t -> t.getName().equals("A$ref")));
+	}
+
+	private static UpdateTLClassProcessor.Config updateClass(String module, String type, String newModule,
+			String newType) {
+		UpdateTLClassProcessor.Config config = TypedConfiguration.newConfigItem(UpdateTLClassProcessor.Config.class);
+		config.setName(qTypeName(module, type));
+		config.setNewName(qTypeName(newModule, newType));
+		config.setSkipModelBaselineChange(true);
+		return config;
+	}
+
+	private static QualifiedTypeName qTypeName(String module, String type) {
+		QualifiedTypeName result = TypedConfiguration.newConfigItem(QualifiedTypeName.class);
+		result.setName(TLModelUtil.qualifiedName(module, type));
+		return result;
+	}
+
+	@SafeVarargs
+	private static List<MigrationProcessor> processors(
+			PolymorphicConfiguration<? extends MigrationProcessor>... configs) {
+		return TypedConfiguration.getInstanceList(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			Arrays.asList(configs));
+	}
+
+	private static void assertAssociation(TLStructuredTypePart reference, String expectedModule,
+			String expectedName) {
+		TLAssociation association = ((TLReference) reference).getEnd().getOwner();
+		assertEquals(expectedName, association.getName());
+		assertEquals(expectedModule, association.getModule().getName());
+		assertTrue(association.getModule().getTypes().contains(association));
 	}
 
 	public void testPatchBecomesOverrideTransient() {

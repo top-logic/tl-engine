@@ -1874,6 +1874,12 @@
   color: var(--tl-text-on-brand-hover);
 }
 
+/* Auf der Marke trägt der leisere Text die Farbe der Beschriftung: das Grau von text-secondary
+   verschwände auf der Markenfläche, etwa die Zeilenzahl eines gewählten Presets (#29968). */
+.tl-chip[aria-pressed="true"] .tl-chip__detail {
+  color: inherit;
+}
+
 /* Warnung vor Fehler: der Fehler steht später und gewinnt. Den Prüfzustand zeigen nur ungewählte,
    nicht deaktivierte Chips — ein gewählter trägt die Marke, ein deaktivierter keinen Prüfzustand.
    role="group" erlaubt kein aria-invalid; der Fehler steht in data-tl-state. */

@@ -38,7 +38,7 @@ Also rename the module key if the application lists it in `ModuleSystem`:
 |---|---|
 | `<providers>` | `LLMProviderService` `<providers>` |
 | `<model-catalog>` (`catalog-url`, `<model-overrides>`) | `LLMProviderService` `<model-catalog>` |
-| `<model-catalog><llm-configuration>` | nowhere - it is filled from the bundled catalog at every start and from models.dev after it; delete it |
+| `<model-catalog><llm-configuration>` | nowhere - the model metadata resolved from the bundled catalog, models.dev and `<model-overrides>` is state of the running service (`LLMProviderService#catalog()`), not configuration; a file that still contains the element fails at startup, delete it |
 | `<failover>` (`quota-ttl-seconds`, `capacity-ttl-seconds`, `transient-ttl-seconds`, `rate-limit-wait-seconds`, `<chains>`) | `LLMProviderService` `<failover>` |
 | `<agent-execution default-model>` | `AgentRuntimeService` `default-model` |
 | `<agent-execution default-provider>` | `AgentRuntimeService` `default-provider` |

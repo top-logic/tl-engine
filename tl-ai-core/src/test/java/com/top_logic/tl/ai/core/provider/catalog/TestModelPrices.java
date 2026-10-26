@@ -92,18 +92,31 @@ public class TestModelPrices extends TestCase {
 		assertNull("Nothing of the catalog's price list is mixed in.", info.cost().cacheRead());
 	}
 
-	/** The read-only catalog entry an administrator sees shows the prices that are charged. */
-	public void testTheCatalogEntryShowsThePrices() {
-		ModelInfo catalog = new ModelInfo("claude-test", null, new ModelInfo.ModelLimits(200_000, 64_000, 0),
-			new ModelInfo.ModelCapabilities(true, true, true, false, false, null, null),
-			new ModelCost(3, 15, 0.3, null, null, null, null, null), null, false, null);
+	/** A price the catalog does not state stays empty, so that it falls back when charged. */
+	public void testAMissingCatalogPriceStaysEmpty() {
+		String json = """
+			{
+			  "anthropic": {
+			    "models": {
+			      "claude-test": {
+			        "id": "claude-test",
+			        "cost": { "input": 3, "output": 15, "cache_read": 0.3 },
+			        "limit": { "context": 200000, "output": 64000 }
+			      }
+			    }
+			  }
+			}
+			""";
+		ModelInfo info =
+			ModelsDevFetcher.parseJson(json, Map.of("anthropic", Set.of("claude-test"))).get("claude-test");
 
-		ModelCatalogEntry.Config entry = ModelCatalogEntry.toConfig("claude-test", catalog);
-
-		assertEquals(Double.valueOf(3), entry.getInputPrice());
-		assertEquals(Double.valueOf(15), entry.getOutputPrice());
-		assertEquals(Double.valueOf(0.3), entry.getCacheReadPrice());
-		assertNull(entry.getCacheWritePrice());
+		ModelCost price = info.cost();
+		assertEquals(3.0, price.input(), DELTA);
+		assertEquals(15.0, price.output(), DELTA);
+		assertEquals(Double.valueOf(0.3), price.cacheRead());
+		assertNull(price.cacheWrite());
+		assertEquals("1 M written to the cache at the input price.", 3.0,
+			CostCalculator.costOf(price, new TokenUsage(0, 0, 0, 0, 1_000_000)).total(), DELTA);
 	}
 
 	private static OverrideConfig override(String name, Double input, Double output) {

@@ -25,7 +25,7 @@ import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
  *        {@link LLMProxyHandler#X_API_KEY}. They are read for each request, so that a rotated key
  *        is used without restart.
  * @param version
- *        The {@link LLMProxyServlet#ANTHROPIC_VERSION} sent when the client sends none.
+ *        The {@link LLMProxyHandler#ANTHROPIC_VERSION} sent when the client sends none.
  * @param connectTimeout
  *        How long to wait for a connection to the API.
  * @param requestTimeout

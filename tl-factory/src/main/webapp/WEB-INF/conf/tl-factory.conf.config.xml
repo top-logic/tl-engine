@@ -92,7 +92,7 @@
 				<resources>
 					<stylesheet name="tl-factory-css"
 						layer="tl"
-						requires="tl-react-controls-css"
+						requires="tl-design-system-components"
 						resource="/style/tl-factory.css"
 					/>
 				</resources>

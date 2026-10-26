@@ -178,4 +178,26 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 		};
 	}
 
+	/**
+	 * The given column, offering no sorting.
+	 *
+	 * <p>
+	 * The table cannot be sorted by the column, and a table grouped by it keeps its groups in the
+	 * order their first rows appear in.
+	 * </p>
+	 *
+	 * @param column
+	 *        The column to keep from sorting.
+	 * @return A column identical to the given one, except that it has no {@link Column#sort()
+	 *         sort capability}.
+	 */
+	public static <R, V> Column<R, V> notSortable(Column<R, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public Optional<Sort<V>> sort() {
+				return Optional.empty();
+			}
+		};
+	}
+
 }

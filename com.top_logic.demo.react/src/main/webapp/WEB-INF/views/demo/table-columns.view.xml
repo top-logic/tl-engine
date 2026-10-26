@@ -8,7 +8,8 @@
 	computed, and the table needs no row type at all. "Transient rows" shows a table over objects
 	that were never persisted. "Embedded columns" shows the columns of the object a row points to
 	as columns of the row. "Dynamic columns" shows one column per milestone, decided by the data.
-	"Group order" shows groups ordered by a comparator the grouping column declares.
+	"Group order" shows groups ordered by a comparator the grouping column declares, "Row order"
+	groups by a column declared with sortable="false", whose groups follow the order of the rows.
 	"Editable column" edits a computed column through its update function. "Default columns" shows
 	what a table displays when it declares no columns: the main properties of its row type.
 	
@@ -331,6 +332,43 @@
 							</computed-column>
 						</columns>
 						<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="row-order"
+				icon="css:bi bi-list-ol"
+			>
+				<label>
+					<en>Row order</en>
+					<de>Zeilenreihenfolge</de>
+				</label>
+				<panel>
+					<title>
+						<en>Groups in the order of their rows</en>
+						<de>Gruppen in der Reihenfolge ihrer Zeilen</de>
+					</title>
+					<!--
+						The table starts grouped by the milestone column, which is declared with
+						sortable="false": it offers no sorting, and its groups come in the order their first
+						rows appear in. The rows are the tickets ordered by their title, so the milestone of
+						the alphabetically first ticket comes first (M2, M1, M3) - not the milestones in
+						alphabetical order. Sorting the table by the title in descending order reverses the
+						order of the groups as well.
+					-->
+					<table
+						group-by="milestone"
+						personalization-key="table-columns-row-order"
+						types="tl.demo.projectManagement:Ticket"
+					>
+						<columns>
+							<column attribute="title"/>
+							<column
+								attribute="milestone"
+								sortable="false"
+							/>
+						</columns>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)
+	.sort(comparator(t -> $t.get(`tl.demo.projectManagement:Ticket#title`)))]]></rows>
 					</table>
 				</panel>
 			</tab>

@@ -183,7 +183,8 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	 *
 	 * <p>
 	 * The table cannot be sorted by the column, and a table grouped by it keeps its groups in the
-	 * order their first rows appear in.
+	 * order of the rows it is given, whatever it is sorted by; a sort orders the rows within each
+	 * group.
 	 * </p>
 	 *
 	 * @param column

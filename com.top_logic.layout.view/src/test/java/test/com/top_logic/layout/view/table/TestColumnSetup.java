@@ -168,8 +168,8 @@ public class TestColumnSetup extends TestCase {
 
 	/**
 	 * A column that is not sortable offers no sorting, even when it declares a comparator, and a
-	 * table grouped by it keeps its groups in the order their first rows appear in - although the
-	 * values would sort differently.
+	 * table grouped by it keeps its groups in the order of the given rows - although the values
+	 * would sort differently.
 	 */
 	public void testUnsortableColumnKeepsTheGroupsInRowOrder() {
 		assertTrue("A column sorts by default.", ordered(null).buildColumn().sort().isPresent());

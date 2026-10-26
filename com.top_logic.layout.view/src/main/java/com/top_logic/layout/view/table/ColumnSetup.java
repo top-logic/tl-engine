@@ -72,9 +72,10 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        whose cells have none. In the header row of a group, the row is {@code null} and the value
  *        is the value the group is formed by.
  * @param sortable
- *        Whether the column sorts at all. A column that does not sort offers no sorting, ignores
- *        its {@link #comparator()}, and a table grouped by it keeps its groups in the order their
- *        first rows appear in.
+ *        Whether the column sorts at all. A column that does not sort offers no sorting and
+ *        ignores its {@link #comparator()}; a table grouped by it keeps its groups in the order of
+ *        the rows it is given, whatever it is sorted by, and a sort orders the rows within each
+ *        group.
  */
 public record ColumnSetup(
 		String name,

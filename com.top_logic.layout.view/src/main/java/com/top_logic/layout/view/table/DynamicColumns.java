@@ -411,8 +411,8 @@ public class DynamicColumns implements ColumnDeclaration {
 		 *
 		 * <p>
 		 * {@code false} offers no sorting by any of the columns, and a table grouped by one of them
-		 * keeps its groups in the order their first rows appear in - the order of the rows the
-		 * table is given decides. Such columns have no {@link #getComparator() comparator}.
+		 * keeps its groups in the order of the rows the table is given, whatever the table is sorted
+		 * by; a sort orders the rows within each group. Such columns have no {@link #getComparator() comparator}.
 		 * </p>
 		 */
 		@Name(SORTABLE)

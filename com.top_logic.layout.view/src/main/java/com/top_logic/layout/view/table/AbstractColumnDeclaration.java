@@ -247,8 +247,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 *
 		 * <p>
 		 * {@code false} offers no sorting by the column, and a table grouped by it keeps its groups
-		 * in the order their first rows appear in - the order of the rows the table is given
-		 * decides. Such a column has neither a {@link #getSort() sort direction} nor a
+		 * in the order of the rows the table is given, whatever the table is sorted by; a sort
+		 * orders the rows within each group. Such a column has neither a {@link #getSort() sort direction} nor a
 		 * {@link #getComparator() comparator}.
 		 * </p>
 		 */

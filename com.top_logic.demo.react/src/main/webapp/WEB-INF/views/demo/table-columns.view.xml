@@ -350,10 +350,10 @@
 					<!--
 						The table starts grouped by the milestone column, which is declared with
 						sortable="false": it offers no sorting, and its groups come in the order of the rows
-						the table is given. The rows are the tickets ordered by their title, so the milestone
-						of the alphabetically first ticket comes first (M2, M1, M3) - not the milestones in
-						alphabetical order. Sorting the table by the title in descending order keeps the
-						groups in that order and only reverses the tickets within each group.
+						the table is given. The rows are the tickets in descending order of their title, so the
+						milestone of the last ticket in alphabetical order comes first, not the milestones in
+						alphabetical order. Sorting the table by the title keeps the groups in that order and
+						only orders the tickets within each group.
 					-->
 					<table
 						group-by="milestone"
@@ -368,7 +368,7 @@
 							/>
 						</columns>
 						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)
-	.sort(comparator(t -> $t.get(`tl.demo.projectManagement:Ticket#title`)))]]></rows>
+	.sort(x -> y -> compare($y.get(`tl.demo.projectManagement:Ticket#title`), $x.get(`tl.demo.projectManagement:Ticket#title`)))]]></rows>
 					</table>
 				</panel>
 			</tab>

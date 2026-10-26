@@ -7,10 +7,13 @@ package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -31,6 +34,7 @@ import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.providers.CellClassProviderByExpression;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
@@ -104,6 +108,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getTooltip()}. */
 		String TOOLTIP = "tooltip";
+
+		/** Configuration name for {@link #getCellClass()}. */
+		String CELL_CLASS = "cell-class";
 
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
@@ -229,6 +236,46 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTooltip();
 
+		/**
+		 * The CSS class of a cell of the column: an expression computing the class from the row and
+		 * the value of the cell.
+		 *
+		 * <p>
+		 * The expression sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the
+		 * name the table gives it with {@value RowAsConfig#ROW_AS}, and the value of the cell as the
+		 * variable {@value ValueAsConfig#DEFAULT_VALUE_AS}, or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}. It sees the values of the inputs of the column as well,
+		 * of the table for a column without inputs of its own.
+		 * </p>
+		 *
+		 * <p>
+		 * The result is put on the cell: nothing or an empty string gives the cell no class, a list
+		 * gives it all of its members as classes, any other value its text. The standard classes
+		 * tl-status-error, tl-status-warning, tl-status-success and tl-status-info tint the cell in
+		 * the color of the corresponding status. Any other class is styled by the application's own
+		 * stylesheet.
+		 * </p>
+		 *
+		 * <p>
+		 * The class follows the cell: it is computed whenever the cell is built. A cell the user may
+		 * not read and the header row of a group get no class. Unset (the default) leaves the cells
+		 * without a class of their own.
+		 * </p>
+		 *
+		 * <p>
+		 * Example marking the overdue dates of a column:
+		 * </p>
+		 *
+		 * <pre>
+		 * $value != null &amp;&amp; $value &lt; today() ? "tl-status-error" : null
+		 * </pre>
+		 */
+		@Name(CELL_CLASS)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCellClass();
+
 	}
 
 	private final ResKey _label;
@@ -247,9 +294,12 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final QueryExecutor _tooltip;
 
+	private final QueryExecutor _cellClass;
+
 	/**
-	 * The inputs whose values the {@link #_aggregate} and the {@link #_comparator} see, empty for
-	 * a declaration without them.
+	 * The inputs whose values the {@link #_aggregate}, the {@link #_comparator}, the
+	 * {@link #_tooltip} and the {@link #_cellClass} see, empty for a declaration setting none of
+	 * them.
 	 */
 	private final List<InputRef> _scriptInputs;
 
@@ -277,7 +327,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_aggregate = InputScript.compile(config, Config.AGGREGATE);
 		_comparator = InputScript.compile(config, Config.COMPARATOR);
 		_tooltip = InputScript.compile(config, Config.TOOLTIP);
-		_scriptInputs = InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE));
+		_cellClass = InputScript.compile(config, Config.CELL_CLASS);
+		boolean scripted = _aggregate != null || _comparator != null || _tooltip != null || _cellClass != null;
+		_scriptInputs =
+			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
 		_hiddenByDefault = !config.getVisible();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
@@ -287,12 +340,28 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * The channels the declared filter reads.
+	 * The channels the declared filter reads, and the inputs of the column - of the table, for a
+	 * column without inputs of its own - where the column computes its
+	 * {@link Config#getAggregate() aggregate}, its {@link Config#getComparator() order}, its
+	 * {@link Config#getTooltip() tooltips} or its {@link Config#getCellClass() cell classes} with
+	 * a script: the script sees their values, so the cells follow them.
 	 * </p>
 	 */
 	@Override
 	public List<InputRef> inputs() {
-		return _binding.inputs();
+		return union(_scriptInputs, _binding.inputs());
+	}
+
+	/**
+	 * The given lists of inputs joined, each input once, in the order of their first occurrence.
+	 */
+	@SafeVarargs
+	protected static List<InputRef> union(List<InputRef>... inputs) {
+		Set<InputRef> result = new LinkedHashSet<>();
+		for (List<InputRef> list : inputs) {
+			result.addAll(list);
+		}
+		return new ArrayList<>(result);
 	}
 
 	/**
@@ -314,6 +383,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_aggregate = null;
 		_comparator = null;
 		_tooltip = null;
+		_cellClass = null;
 		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
 		_export = ColumnExport.DEFAULT;
@@ -362,12 +432,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
-		List<ViewChannel> inputs = _aggregate == null && _comparator == null && _tooltip == null
-			? List.of()
-			: ChannelInputs.resolve(scope.context(), _scriptInputs);
+		List<ViewChannel> inputs =
+			_scriptInputs.isEmpty() ? List.of() : ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export, tooltip(_tooltip, inputs));
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs));
 	}
 
 	/**
@@ -437,6 +506,31 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			return null;
 		}
 		return (row, value) -> tooltipText(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The function computing the CSS class of a cell from its row and its value, {@code null} for a
+	 * column whose cells have none. The function answers {@code null} for a cell without a class.
+	 *
+	 * @param executor
+	 *        The compiled {@link Config#getCellClass()}.
+	 * @param inputs
+	 *        The channels of its inputs.
+	 */
+	private static BiFunction<Object, Object, String> cellClass(QueryExecutor executor, List<ViewChannel> inputs) {
+		if (executor == null) {
+			return null;
+		}
+		return (row, value) -> cssClass(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The CSS class of a cell a script computed, {@code null} for none.
+	 *
+	 * @see CellClassProviderByExpression#toCssClass(Object)
+	 */
+	static String cssClass(Object result) {
+		return StringServices.nonEmpty(CellClassProviderByExpression.toCssClass(result));
 	}
 
 	/**

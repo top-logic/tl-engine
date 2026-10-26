@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.table.Aggregator;
@@ -71,6 +72,11 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        The tooltip of a cell, computed from its row and its value, or {@code null} for a column
  *        whose cells have none. In the header row of a group, the row is {@code null} and the value
  *        is the value the group is formed by.
+ * @param cellClass
+ *        The CSS class of a data cell, computed from its row and its value, or {@code null} for a
+ *        column whose cells have none. It is never passed the
+ *        {@link ColumnProviderService#UNREADABLE} marker: a cell the user may not read has no class.
+ *        An empty class counts as none.
  */
 public record ColumnSetup(
 		String name,
@@ -85,10 +91,25 @@ public record ColumnSetup(
 		Comparator<Object> comparator,
 		boolean hiddenByDefault,
 		ColumnExport export,
-		BiFunction<Object, Object, String> tooltip) {
+		BiFunction<Object, Object, String> tooltip,
+		BiFunction<Object, Object, String> cellClass) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column whose cells have no tooltip.
+	 * Creates a {@link ColumnSetup} of a column whose cells have no CSS class of their own.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, null);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column whose cells have neither a tooltip nor a CSS class
+	 * of their own.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -97,7 +118,7 @@ public record ColumnSetup(
 			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
 			ColumnExport export) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, null);
+			export, null, null);
 	}
 
 	/**
@@ -128,7 +149,8 @@ public record ColumnSetup(
 	 * in the {@link #width() configured width} when there is one, showing the
 	 * {@link #aggregate()} in the header row of a group when it computes one, sorting by the
 	 * {@link #comparator()} when it declares one, with the {@link #tooltip()} on its cells and on
-	 * the header rows of the groups it forms when it computes one, and left out of exports when its
+	 * the header rows of the groups it forms when it computes one, with the {@link #cellClass()} on
+	 * its cells when it computes one, and left out of exports when its
 	 * {@link #export()} says so.
 	 */
 	public Column<Object, ?> buildColumn() {
@@ -167,6 +189,9 @@ public record ColumnSetup(
 		if (tooltip != null) {
 			result = withTooltip(result, tooltip);
 		}
+		if (cellClass != null) {
+			result = withCellClass(result, cellClass);
+		}
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
 		}
@@ -199,6 +224,33 @@ public record ColumnSetup(
 			public CellRenderer<V> renderer() {
 				CellRenderer<V> inner = super.renderer();
 				return groupValue -> CellContent.withTooltip(inner.render(groupValue), tooltip.apply(null, groupValue));
+			}
+		};
+	}
+
+	/**
+	 * The given column with the given CSS class on its data cells.
+	 *
+	 * <p>
+	 * A data cell gets the class computed from its row and its value, in addition to the class the
+	 * given column puts on it. A cell the user may not read gets no class of its own.
+	 * </p>
+	 */
+	private static <V> Column<Object, V> withCellClass(Column<Object, V> column,
+			BiFunction<Object, Object, String> cellClass) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public String cssClass(Object row) {
+				String inner = super.cssClass(row);
+				V cellValue = super.value(row);
+				if (cellValue == ColumnProviderService.UNREADABLE) {
+					return inner;
+				}
+				String own = cellClass.apply(row, cellValue);
+				if (StringServices.isEmpty(own)) {
+					return inner;
+				}
+				return StringServices.isEmpty(inner) ? own : inner + " " + own;
 			}
 		};
 	}

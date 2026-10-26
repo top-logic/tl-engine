@@ -137,6 +137,9 @@ public class DynamicColumns implements ColumnDeclaration {
 		/** Configuration name for {@link #getTooltip()}. */
 		String TOOLTIP = AbstractColumnDeclaration.Config.TOOLTIP;
 
+		/** Configuration name for {@link #getCellClass()}. */
+		String CELL_CLASS = AbstractColumnDeclaration.Config.CELL_CLASS;
+
 		@Override
 		@ClassDefault(DynamicColumns.class)
 		Class<? extends DynamicColumns> getImplementationClass();
@@ -402,6 +405,27 @@ public class DynamicColumns implements ColumnDeclaration {
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTooltip();
 
+		/**
+		 * The CSS class of a cell of every column: an expression computing the class from the row,
+		 * the object the column stands for and the value of the cell.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getValue() value} - the row and the
+		 * object the column stands for - and the value of the cell as the variable
+		 * {@value ValueAsConfig#DEFAULT_VALUE_AS}, or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}. Its result is put on the cell as the one of a single
+		 * column's {@link AbstractColumnDeclaration.Config#getCellClass() cell class}: nothing or an
+		 * empty string gives the cell no class, a list all of its members, any other value its
+		 * text. A cell the user may not read and the header row of a group get no class.
+		 * </p>
+		 */
+		@Name(CELL_CLASS)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCellClass();
+
 	}
 
 	private final String _name;
@@ -537,7 +561,7 @@ public class DynamicColumns implements ColumnDeclaration {
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
-				set.comparator(column), !set.visible(column), _export, set.tooltip(column)));
+				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column)));
 		}
 		return result;
 	}
@@ -563,6 +587,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		private final QueryExecutor _tooltip;
 
+		private final QueryExecutor _cellClass;
+
 		private final ColumnFunctions _functions;
 
 		private final TLModelPartRef _typeRef;
@@ -583,6 +609,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			_aggregate = InputScript.compile(config, Config.AGGREGATE);
 			_comparator = InputScript.compile(config, Config.COMPARATOR);
 			_tooltip = InputScript.compile(config, Config.TOOLTIP);
+			_cellClass = InputScript.compile(config, Config.CELL_CLASS);
 			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
 			_typeRef = config.getType();
 			_multiple = config.getMultiple();
@@ -705,6 +732,16 @@ public class DynamicColumns implements ColumnDeclaration {
 				QueryExecutor tooltip = _tooltip;
 				return (row, value) -> AbstractColumnDeclaration
 					.tooltipText(tooltip.execute(_cells.inputs(row, column, value)));
+			}
+
+			@Override
+			public BiFunction<Object, Object, String> cellClass(Object column) {
+				if (_cellClass == null) {
+					return null;
+				}
+				QueryExecutor cellClass = _cellClass;
+				return (row, value) -> AbstractColumnDeclaration
+					.cssClass(cellClass.execute(_cells.inputs(row, column, value)));
 			}
 
 		}

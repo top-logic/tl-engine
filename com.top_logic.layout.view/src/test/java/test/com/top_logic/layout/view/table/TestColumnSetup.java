@@ -35,6 +35,7 @@ import com.top_logic.table.RowKind;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.ListRowSource;
 
 /**
@@ -321,6 +322,81 @@ public class TestColumnSetup extends TestCase {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
 			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, null, false,
 			ColumnExport.DEFAULT, (row, value) -> (row == null ? "group " : "cell ") + value);
+	}
+
+	/**
+	 * A column with a CSS class puts the class computed from the row and the value on its data
+	 * cells, and none where the computation yields nothing or an empty text.
+	 */
+	public void testCellClass() {
+		Column<Object, ?> column = withCellClass(ColumnBinding.TYPE_DERIVED).buildColumn();
+
+		assertEquals("cell-x", column.cssClass(Map.of(ATTRIBUTE, "x")));
+		assertNull(column.cssClass(Map.of(ATTRIBUTE, NO_CLASS)));
+		assertNull(column.cssClass(Map.of(ATTRIBUTE, EMPTY_CLASS)));
+	}
+
+	/**
+	 * The CSS class a column computes is put on its cells in addition to the class the column its
+	 * binding built puts there.
+	 */
+	public void testCellClassJoinsTheInnerClass() {
+		ColumnBinding marking = setup -> markedInner(ColumnBinding.TYPE_DERIVED.createColumn(setup));
+		Column<Object, ?> column = withCellClass(marking).buildColumn();
+
+		assertEquals("inner cell-x", column.cssClass(Map.of(ATTRIBUTE, "x")));
+		assertEquals("inner", column.cssClass(Map.of(ATTRIBUTE, NO_CLASS)));
+	}
+
+	/** The given column putting the class <code>inner</code> on every cell. */
+	private static <V> Column<Object, V> markedInner(Column<Object, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public String cssClass(Object row) {
+				return "inner";
+			}
+		};
+	}
+
+	/** A cell the user may not read gets no CSS class computed from its value. */
+	public void testNoCellClassForAnUnreadableCell() {
+		Column<Object, ?> column = withCellClass(ColumnBinding.TYPE_DERIVED).buildColumn();
+
+		assertNull(column.cssClass(Map.of(ATTRIBUTE, ColumnProviderService.UNREADABLE)));
+	}
+
+	/** A column without a CSS class leaves its cells without one. */
+	public void testNoCellClass() {
+		Column<Object, ?> column = withTooltip().buildColumn();
+
+		assertNull(column.cssClass(Map.of(ATTRIBUTE, "x")));
+	}
+
+	/** The value for which {@link #withCellClass(ColumnBinding)} computes no class. */
+	private static final String NO_CLASS = "none";
+
+	/** The value for which {@link #withCellClass(ColumnBinding)} computes an empty class. */
+	private static final String EMPTY_CLASS = "empty";
+
+	/**
+	 * A column of the given binding marking a cell with the class <code>cell-</code> and its value,
+	 * except for the values {@link #NO_CLASS} and {@link #EMPTY_CLASS}. The computation rejects
+	 * the {@link ColumnProviderService#UNREADABLE} marker, which it must never be passed.
+	 */
+	private static ColumnSetup withCellClass(ColumnBinding binding) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, binding, 0, null, null, null, false,
+			ColumnExport.DEFAULT, null, (row, value) -> {
+				assertNotSame(ColumnProviderService.UNREADABLE, value);
+				assertNotNull(row);
+				if (NO_CLASS.equals(value)) {
+					return null;
+				}
+				if (EMPTY_CLASS.equals(value)) {
+					return "";
+				}
+				return "cell-" + value;
+			});
 	}
 
 	/**

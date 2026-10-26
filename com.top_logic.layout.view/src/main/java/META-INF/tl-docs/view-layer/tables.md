@@ -49,6 +49,31 @@ Further rules that hold across the kinds:
 - **A row need not be a model object.** A table whose rows are dictionaries declares no `types` at all and computes every column (`$row["name"]`); transient objects are displayed by the same attribute columns persistent ones are, and are skipped when the table observes its row types for changes.
 - `com.top_logic.demo.react` shows all of this under the *Table columns* nav item (`WEB-INF/views/demo/table-columns.view.xml`), one tab per kind.
 
+## Column alignment
+
+Numeric model attributes align to the end of the cell automatically, so digits line up. Dates stay at the start, and so do attributes with multiple values. A column declaration overrides this with `align="start"` or `align="end"` (`align` of the column configuration):
+
+```xml
+<table>
+  <columns>
+    <column attribute="name"/>
+    <column attribute="amount" align="end"/>
+    <column attribute="zipCode" align="start"/>
+  </columns>
+</table>
+```
+
+## View options
+
+Every React table shows a gear that opens the *View* menu:
+
+- **Density**: *As everywhere*, *Normal* or *Compact*. A choice other than *As everywhere* overrides the global density for this table.
+- **Stripes** and **Column lines**: both off by default.
+- **Choose and order columns …**: only where the table offers a column selection.
+- **Reset**: restores the declared columns, widths, frozen columns, sorting, grouping and the view options. Filters stay.
+
+A setting applies immediately. It is stored per person and table with the rest of the table state.
+
 ## Selecting rows and nodes
 
 A `<table>` and a `<tree>` write what the user selects to the channel named by `selection`, and `selection-mode` says how much may be selected at a time — `single` (the default) or `multi`:
@@ -101,6 +126,7 @@ A `<table>` buckets its rows by the value of one column: one collapsible header 
 - **A group header stands for no object**: the gesture that would select it (a click, or `Enter`) collapses or expands it instead, the selection channel never receives a group, and range selection, select-all and keyboard navigation only ever collect `RowKind.DATA` rows. Changing the grouping clears the selection, since the rows it named are gone.
 - **One column at a time** — `ListRowSource` rejects a multi-column `GroupSpec`, and the UI offers a single column accordingly.
 - Grouping is offered for the columns the user may choose at all (the `columnOptions()`, i.e. the selectable ones): an action column carries the row itself and would yield one group per row. A tree table (`TableViewControl` built in `treeMode` over a `TreeRowSource`) offers no grouping at all: its rows are structured by their nodes already.
+- **Many presets.** Presets that do not fit in one line move behind a "+ n more" chip. The active preset always stays visible. A user's own presets can be removed from that menu (Delete or Backspace on the entry). The footer names the active preset, or the number of active filters when none matches.
 - Demo: *Object list* (`tickets.view.xml`) groups its first ticket list by status and leaves the second flat; *Attributes → Table* starts ungrouped and is grouped from the header menu.
 
 ## Row classes: marking rows by their data

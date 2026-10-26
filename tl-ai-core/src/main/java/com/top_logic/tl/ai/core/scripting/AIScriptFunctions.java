@@ -66,6 +66,7 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -294,8 +295,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        <li>Binary data: Treated as user image/document message</li>
 	 *        </ul>
 	 * @param model
-	 *        The model name to use, or {@code null} to use the default model configured in
-	 *        {@link AgentRuntimeService}.
+	 *        The model name to use, or {@code null} to use the
+	 *        {@link AgentRuntimeService#defaultTarget() default model}.
 	 * @param responseFormat
 	 *        The response format specification, which reaches the provider's request. Can be:
 	 *        <ul>
@@ -325,7 +326,13 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			Collection<String> tools) {
 		LLMProviderService registry = LLMProviderService.getInstance();
 		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
-		String modelName = model != null ? model : runtime == null ? null : runtime.getDefaultModel();
+		String modelName = model;
+		String providerName = null;
+		if (modelName == null && runtime != null) {
+			ModelTarget target = runtime.defaultTarget();
+			modelName = target.model();
+			providerName = target.provider();
+		}
 
 		// Build system prompt and user messages from the input
 		String systemPrompt = null;
@@ -369,7 +376,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		toolRegistry.freeze();
 
-		LLMProvider provider = registry.buildProvider(modelName);
+		LLMProvider provider = registry.buildProvider(modelName, providerName);
 
 		AgentParams config = new AgentParams(
 			modelName, systemPrompt != null ? systemPrompt : "",

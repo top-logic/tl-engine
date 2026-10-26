@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.NoCredentials;
 import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 
 /**
@@ -202,6 +203,46 @@ public interface LLMProviderConfig {
 	 * Creates a ready-to-use {@link LLMProvider} from this configuration.
 	 */
 	LLMProvider createProvider();
+
+	/**
+	 * The credentials authenticating the requests to the API of this provider.
+	 *
+	 * @return The credentials, <code>null</code> for a provider that sends no requests that need
+	 *         them.
+	 */
+	default CredentialProvider getCredentials() {
+		return null;
+	}
+
+	/**
+	 * Whether this provider can serve requests now.
+	 *
+	 * <p>
+	 * A provider whose {@link #getCredentials() credentials} are not available is inactive: it is
+	 * never called, and a run on one of its models uses another one or fails with a message naming
+	 * the {@link #credentialsReference() missing secret}. Asked each time a run chooses a provider,
+	 * so that a secret provided later activates the provider without a restart.
+	 * </p>
+	 *
+	 * @see CredentialProvider#isAvailable()
+	 */
+	default boolean isAvailable() {
+		CredentialProvider credentials = getCredentials();
+		return credentials == null || credentials.isAvailable();
+	}
+
+	/**
+	 * Where the {@link #getCredentials() credentials} of this provider are taken from, e.g. the
+	 * name of the secret holding its API key, without revealing them.
+	 *
+	 * @return The description, <code>null</code> if the credentials cannot tell.
+	 *
+	 * @see CredentialProvider#reference()
+	 */
+	default ResKey credentialsReference() {
+		CredentialProvider credentials = getCredentials();
+		return credentials == null ? null : credentials.reference();
+	}
 
 	/**
 	 * Discovers available models from the provider's API.

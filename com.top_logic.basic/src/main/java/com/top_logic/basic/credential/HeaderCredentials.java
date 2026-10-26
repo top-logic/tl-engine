@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link CredentialProvider} sending a static secret (API key, token) in a request header.
@@ -189,6 +190,16 @@ public class HeaderCredentials extends AbstractConfiguredInstance<HeaderCredenti
 	@Override
 	public boolean isAvailable() {
 		return _secret.isAvailable();
+	}
+
+	/**
+	 * Where the secret is taken from.
+	 *
+	 * @see SecretSource#reference()
+	 */
+	@Override
+	public ResKey reference() {
+		return _secret.reference();
 	}
 
 }

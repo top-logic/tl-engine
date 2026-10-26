@@ -10,6 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Authentication of outgoing HTTP requests to an external service.
@@ -116,6 +117,22 @@ public interface CredentialProvider {
 	 */
 	default boolean isAvailable() {
 		return true;
+	}
+
+	/**
+	 * Where this provider takes its credentials from, e.g. to tell a user which secret must be
+	 * provided to make a service {@link #isAvailable() available}.
+	 *
+	 * <p>
+	 * The description identifies the secret without revealing it.
+	 * </p>
+	 *
+	 * @return The description, <code>null</code> if this provider cannot tell.
+	 *
+	 * @see SecretSource#reference()
+	 */
+	default ResKey reference() {
+		return null;
 	}
 
 	/**

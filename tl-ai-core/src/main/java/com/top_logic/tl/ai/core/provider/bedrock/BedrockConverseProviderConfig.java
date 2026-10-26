@@ -100,6 +100,11 @@ public class BedrockConverseProviderConfig implements LLMProviderConfig {
 	}
 
 	@Override
+	public CredentialProvider getCredentials() {
+		return _credentials;
+	}
+
+	@Override
 	public LLMProvider createProvider() {
 		// Do NOT run through normalizeBaseUrl — that strips /v1 which may be valid for some
 		// Bedrock gateway paths. AbstractStreamingProvider trims trailing slashes internally.

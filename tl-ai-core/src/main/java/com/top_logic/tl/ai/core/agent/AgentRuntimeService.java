@@ -48,9 +48,11 @@ import com.top_logic.tl.ai.core.provider.LLMProviderService.ServiceProviderOptio
 import com.top_logic.tl.ai.core.provider.ModelToolCallConstraint;
 import com.top_logic.tl.ai.core.provider.ProviderExposesModelConstraint;
 import com.top_logic.tl.ai.core.provider.ProviderFieldMode;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
 import com.top_logic.tl.ai.core.security.SecurityContextFactory;
 import com.top_logic.tl.ai.tool.api.AICategory;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Which agent runs how: the model each agent runs on, its execution parameters, how many runs the
@@ -675,10 +677,39 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 	}
 
 	/**
+	 * The model of a run that is assigned none.
+	 *
+	 * <p>
+	 * The configured {@link #getDefaultModel() default model}; when none is configured, the
+	 * {@link LLMProviderService#defaultTarget() first model of the first available provider},
+	 * resolved anew for each run.
+	 * </p>
+	 *
+	 * @return The model and the provider named for it; never <code>null</code>.
+	 * @throws TopLogicException
+	 *         if no default model is configured and no provider is available.
+	 */
+	public ModelTarget defaultTarget() {
+		String model = getDefaultModel();
+		if (model != null) {
+			return new ModelTarget(model, getDefaultProvider());
+		}
+		LLMProviderService providers = LLMProviderService.getInstance();
+		if (providers == null) {
+			throw new TopLogicException(com.top_logic.tl.ai.core.provider.I18NConstants.ERROR_NO_PROVIDER_CONFIGURED);
+		}
+		ModelTarget target = providers.defaultTarget();
+		if (target == null) {
+			throw new TopLogicException(providers.noProviderAvailable());
+		}
+		return target;
+	}
+
+	/**
 	 * Resolves the model for the given agent.
 	 *
-	 * @throws IllegalStateException
-	 *         if no model can be resolved
+	 * @throws TopLogicException
+	 *         if no model is configured and no provider is available
 	 * @see #resolveModelAssignment(String)
 	 */
 	public String resolveModel(String agentName) {
@@ -690,15 +721,17 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 	 *
 	 * <p>
 	 * Resolution order for the model name: the agent's {@link Config#getAgentOverrides() override},
-	 * then the {@link #getDefaultModel() default model}. Tuning parameters are taken from the
-	 * override if present; otherwise all are {@code null} (meaning "use defaults").
+	 * then the {@link #getDefaultModel() default model}, then the
+	 * {@link LLMProviderService#defaultTarget() first model of the first available provider}.
+	 * Tuning parameters are taken from the override if present; otherwise all are {@code null}
+	 * (meaning "use defaults").
 	 * </p>
 	 *
 	 * @param agentName
 	 *        the agent name
 	 * @return the full assignment including model name and all optional tuning parameters
-	 * @throws IllegalStateException
-	 *         if no model can be resolved
+	 * @throws TopLogicException
+	 *         if no model is configured and no provider is available
 	 *
 	 * @see AgentModelAssignment
 	 */
@@ -706,8 +739,8 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		AgentOverride perAgent = getAgentOverride(agentName);
 		ModelRef ref = modelRefOf(perAgent, getDefaultModel(), getDefaultProvider());
 		if (ref.model() == null) {
-			throw new IllegalStateException(
-				"No model assigned to agent '" + agentName + "' and no default model configured.");
+			ModelTarget target = defaultTarget();
+			ref = new ModelRef(target.model(), target.provider());
 		}
 		if (perAgent != null) {
 			return new AgentModelAssignment(ref.model(), ref.provider(),

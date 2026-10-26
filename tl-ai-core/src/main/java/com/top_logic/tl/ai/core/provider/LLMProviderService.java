@@ -824,6 +824,17 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	}
 
 	/**
+	 * The started provider with the given name.
+	 *
+	 * @param providerName
+	 *        The name of the provider in {@link Config#getProviders()}.
+	 * @return The provider, {@code null} if none of that name is configured.
+	 */
+	public LLMProviderConfig getProvider(String providerName) {
+		return _providerConfigs == null ? null : _providerConfigs.get(providerName);
+	}
+
+	/**
 	 * Why the given model reference does not resolve to exactly one provider.
 	 */
 	private String unroutable(String modelName, String providerName) {

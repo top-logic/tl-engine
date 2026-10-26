@@ -93,6 +93,20 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		_credentials = LLMProviderConfig.createCredentials(context, config, config.getApiKey(), AnthropicMessagesProvider.API_KEY_HEADER, null);
 	}
 
+	/**
+	 * The configuration of this provider.
+	 */
+	public Config getConfig() {
+		return _config;
+	}
+
+	/**
+	 * The credentials authenticating the requests to the API of this provider.
+	 */
+	public CredentialProvider getCredentials() {
+		return _credentials;
+	}
+
 	@Override
 	public LLMProvider createProvider() {
 		String baseUrl = ModelDiscoveryHelper.normalizeBaseUrl(_config.getBaseUrl());

@@ -698,6 +698,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-layout-wysiwyg-core</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-wysiwyg</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

@@ -18,6 +18,7 @@ import junit.framework.Test;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -382,8 +383,8 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	/**
 	 * The {@code <export>} of a tree table is offered in the toolbar of the enclosing element while
-	 * the tree table is displayed, and writes the whole tree as an outline of the sheet: the rows
-	 * below a closed row at their depth, hidden.
+	 * the tree table is displayed, and writes the whole tree as an outline of the sheet: also the
+	 * rows below a closed row, visible at their depth, with no row marked as collapsed.
 	 */
 	public void testExport() throws Exception {
 		CommandScope scope = new CommandScope(List.of());
@@ -402,12 +403,13 @@ public class TestTreeTableElement extends BasicTestCase {
 			Sheet sheet = workbook.getSheetAt(0);
 			String[] values = { A, A1, A2, B };
 			int[] levels = { 0, 1, 1, 0 };
-			boolean[] hidden = { false, true, true, false };
 			for (int n = 0; n < values.length; n++) {
 				org.apache.poi.ss.usermodel.Row row = sheet.getRow(n + 1);
 				assertEquals("Value of row " + (n + 1), values[n], row.getCell(0).getStringCellValue());
 				assertEquals("Level of row " + (n + 1), levels[n], row.getOutlineLevel());
-				assertEquals("Hidden row " + (n + 1), hidden[n], row.getZeroHeight());
+				assertFalse("Row " + (n + 1) + " must be visible.", row.getZeroHeight());
+				assertFalse("Row " + (n + 1) + " must not be marked collapsed.",
+					((XSSFRow) row).getCTRow().isSetCollapsed() && ((XSSFRow) row).getCTRow().getCollapsed());
 			}
 			assertEquals("No row beyond the tree.", values.length, sheet.getLastRowNum());
 		}

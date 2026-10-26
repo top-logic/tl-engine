@@ -23,6 +23,10 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.CitationDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.ai.chat.backend.BackendRun;
+import com.top_logic.ai.chat.backend.BackendTurn;
+import com.top_logic.ai.chat.backend.ConversationBackend;
+import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
@@ -35,7 +39,6 @@ import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
@@ -201,8 +204,15 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Executes user message through the AgentFactory entry point agent.
+	 * Runs one turn of the chat the state was sent in: the frame every run gets, and in it the
+	 * answer of the conversation's {@link ConversationBackend} or of the framework's own agent.
+	 *
+	 * <p>
+	 * The frame is the same for both: the run's log listener, its registration with the account
+	 * ({@link PendingInteractionRegistry}), the delivery of its events to every window showing the
+	 * conversation, and the wrap-up that hands the answer to the windows and persists the chat.
 	 * Uses state from tracker; {@code taskId} must already be set on state.
+	 * </p>
 	 */
 	static void executeOrchestrator(TaskProgressTracker taskTracker, AIProcessingState state,
 			String userMessage, List<AttachmentDto> attachments) throws Exception {
@@ -216,7 +226,6 @@ public class ChatProcessor {
 		// The chat the run was sent in, captured with the send: everything the run reads and writes
 		// of its chat is this, whatever chat the window shows by now (#844).
 		ChatState chatState = state.getChatState();
-		ConversationMemory conversationMemory = chatState.memory();
 
 		ConversationLog convLog = state.getConversationLog();
 		if (convLog == null) {
@@ -226,10 +235,125 @@ public class ChatProcessor {
 		ConversationLogListener logListener = new ConversationLogListener(convLog);
 		state.setLogListener(logListener);
 
-		TaskStore taskStore = chatState.taskStore();
-
 		UserInteractionStore interactionStore = new UserInteractionStore();
 		state.setUserInteractionStore(interactionStore);
+
+		try {
+			// This run belongs to the account, not to the window it was started in: any window of
+			// theirs - a second tab, a reloaded page, a new login - may answer what it asks and may
+			// stop it, and both have to reach this state wherever the run is parked. Registered
+			// inside the scope whose finally drops it again, so a run that dies leaves nothing
+			// behind. See PendingInteractionRegistry.
+			PendingInteractionRegistry.register(taskId, TLContext.currentUser(), taskTracker, state);
+
+			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
+				ChatProcessor.class);
+
+			if (!state.isWake()) {
+				boolean hasAttachments = attachments != null && !attachments.isEmpty();
+				boolean hasText = userMessage != null && !userMessage.trim().isEmpty();
+				if (!hasText && !hasAttachments) {
+					state.addPendingMessage(new ChatMessage("Agent", "Please provide a message."));
+					return;
+				}
+			}
+
+			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
+			// the JS client reconnects SSE during session creation, and the new connection
+			// may not be ready when /chat/send arrives. Retry briefly to allow it to connect.
+			ChatEventHandler sseHandler = ChatEventHandlerRegistry.find(taskTracker);
+			if (sseHandler == null) {
+				for (int i = 0; i < 10 && sseHandler == null; i++) {
+					Thread.sleep(100);
+					sseHandler = ChatEventHandlerRegistry.find(taskTracker);
+				}
+			}
+			state.setSseHandler(sseHandler);
+
+			// SSE handlers still receive raw AgentEvents for text_delta streaming.
+			// ConversationLogListener handles structured recording via ConversationLog, and comes
+			// first: the forwarder reads from it where each delta ends.
+			if (sseHandler == null) {
+				Logger.warn("No SSE handler found for tracker — streaming may not reach the browser.",
+					ChatProcessor.class);
+			}
+			AgentEventListener sseForwarder =
+				streamForwarder(taskTracker, chatState, taskTracker.getSessionOwner(), logListener);
+			AgentEventListener listener =
+				new CompositeAgentEventListener(List.of(logListener, sseForwarder));
+			// Allow sub-agent approval events to bubble up to the SSE handler
+			logListener.setParentListener(listener);
+
+			// Record the run against the session captured at send time (not the currently
+			// active one), so a completed run is never written under the wrong session.
+			AgentSession agentSession = resolveAgentSession(state.getSessionId(), taskTracker.getSessionOwner());
+
+			ConversationBackend backend = ConversationBackendService.backendFor(agentSession);
+			String result;
+			if (backend != null && state.isWake()) {
+				// A lead turn for subagents' news is a turn of the framework's own agent, which does
+				// not answer a conversation of a backend - not even when subagents it started before
+				// the conversation went to the backend report back.
+				Logger.info("No lead turn for subagent news in chat " + state.getSessionId()
+					+ ": it is answered by the backend '" + backend.agentName() + "'.", ChatProcessor.class);
+				discardCurrentTurn(convLog);
+				return;
+			} else if (backend != null) {
+				BackendTurn turn = new BackendTurn(state.getSessionId(), agentSession,
+					taskTracker.getSessionOwner(), userMessage != null ? userMessage.trim() : "", attachments);
+				result = BackendRun.run(backend, turn, convLog, logListener, listener,
+					state.getCancellationToken());
+			} else {
+				Answer answer = runInternal(taskTracker, state, chatState, convLog, logListener, interactionStore,
+					listener, agentSession, userMessage, attachments);
+				if (answer == null) {
+					// A lead turn that found no news: nothing ran.
+					return;
+				}
+				result = answer.text();
+			}
+			state.setLastAgentResponse(result);
+			state.setLastCitations(lastCitations(convLog));
+
+			state.addPendingMessage(new ChatMessage("Agent", result));
+
+			// Flush pending messages (including agent response) into Chat before persisting,
+			// so the persisted data includes the agent's response.
+			applyPollUpdates(state, chatState.chat(), taskTracker);
+
+			// The run's chat, not the one the window shows by now.
+			taskTracker.getSessionManager().persist(chatState);
+		} finally {
+			PendingInteractionRegistry.unregister(taskId);
+			state.setLogListener(null);
+			chatState.taskStore().setListener(null);
+			state.setUserInteractionStore(null);
+		}
+	}
+
+	/**
+	 * What a run of the framework's own agent answered.
+	 *
+	 * @param text
+	 *        The answer text; may be <code>null</code>, e.g. for a stopped run.
+	 */
+	private record Answer(String text) {
+		// Plain data.
+	}
+
+	/**
+	 * Answers the run's message with the framework's own agent - the agent, model and MCP servers
+	 * chosen in the chat, with the chat's plan, skills, tool catalog and subagents.
+	 *
+	 * @return The answer, or <code>null</code> when the run is a lead turn that found no news and
+	 *         nothing ran.
+	 */
+	private static Answer runInternal(TaskProgressTracker taskTracker, AIProcessingState state,
+			ChatState chatState, ConversationLog convLog, ConversationLogListener logListener,
+			UserInteractionStore interactionStore, AgentEventListener listener, AgentSession agentSession,
+			String userMessage, List<AttachmentDto> attachments) throws Exception {
+		ConversationMemory conversationMemory = chatState.memory();
+		TaskStore taskStore = chatState.taskStore();
 
 		// Ordered, because the order is what the next run restores the tool catalog in: a catalog
 		// restored in another order sends the same tools as different bytes (Gitea #346).
@@ -255,26 +379,12 @@ public class ChatProcessor {
 					UserMemoryBinding.bind(state.getMemories());
 				RunLimits.Reuse spendReading = RunLimits.reuse(state.getSpendReading())) {
 
-			// This run belongs to the account, not to the window it was started in: any window of
-			// theirs - a second tab, a reloaded page, a new login - may answer what it asks and may
-			// stop it, and both have to reach this state wherever the run is parked. Registered
-			// inside the scope whose finally drops it again, so a run that dies leaves nothing
-			// behind. See PendingInteractionRegistry.
-			PendingInteractionRegistry.register(taskId, TLContext.currentUser(), taskTracker, state);
-
-			Logger.info("ChatProcessor: Starting agent in thread: " + Thread.currentThread().getName(),
-				ChatProcessor.class);
-
 			AgentFactory agentFactory = AgentFactory.getInstance();
 			Conversation conversation = conversationMemory.conversation();
 
 			if (!state.isWake()) {
 				boolean hasAttachments = attachments != null && !attachments.isEmpty();
 				boolean hasText = userMessage != null && !userMessage.trim().isEmpty();
-				if (!hasText && !hasAttachments) {
-					state.addPendingMessage(new ChatMessage("Agent", "Please provide a message."));
-					return;
-				}
 				String trimmed = hasText ? userMessage.trim() : "[See attached files]";
 
 				// Build user message with content parts (text + attachments)
@@ -309,31 +419,6 @@ public class ChatProcessor {
 			AgentFactory.RunOverrides runOverrides =
 				new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());
 
-			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
-			// the JS client reconnects SSE during session creation, and the new connection
-			// may not be ready when /chat/send arrives. Retry briefly to allow it to connect.
-			ChatEventHandler sseHandler = ChatEventHandlerRegistry.find(taskTracker);
-			if (sseHandler == null) {
-				for (int i = 0; i < 10 && sseHandler == null; i++) {
-					Thread.sleep(100);
-					sseHandler = ChatEventHandlerRegistry.find(taskTracker);
-				}
-			}
-			state.setSseHandler(sseHandler);
-
-			// SSE handlers still receive raw AgentEvents for text_delta streaming.
-			// ConversationLogListener handles structured recording via ConversationLog, and comes
-			// first: the forwarder reads from it where each delta ends.
-			if (sseHandler == null) {
-				Logger.warn("No SSE handler found for tracker — streaming may not reach the browser.",
-					ChatProcessor.class);
-			}
-			AgentEventListener sseForwarder =
-				streamForwarder(taskTracker, chatState, taskTracker.getSessionOwner(), logListener);
-			AgentEventListener listener =
-				new CompositeAgentEventListener(List.of(logListener, sseForwarder));
-			// Allow sub-agent approval events to bubble up to the SSE handler
-			logListener.setParentListener(listener);
 			taskStore.setListener(listener);
 			// The run's own chat, not whatever the window shows by now: a lead turn reads its news
 			// from here, and must not be handed another chat's.
@@ -341,9 +426,6 @@ public class ChatProcessor {
 				taskTracker.getSessionManager().getSubagentRegistry(state.getSessionId());
 			ToolRegistry sessionRegistry = chatState.toolRegistry();
 
-			// Record the run against the session captured at send time (not the currently
-			// active one), so a completed run is never written under the wrong session.
-			AgentSession agentSession = resolveAgentSession(state.getSessionId(), taskTracker.getSessionOwner());
 			// The agent's plan is in-memory state of the run; mirroring it onto AgentTask rows is
 			// what makes it survive a reload and lets a model-bound view show it while the run is
 			// still going.
@@ -351,9 +433,8 @@ public class ChatProcessor {
 					AgentTaskMirror taskMirror =
 						AgentTaskMirror.attach(taskStore, agentSession, toolContext.executionHandle())) {
 				if (state.isWake() && !openWithNews(convLog, conversation, toolContext, listener)) {
-					return;
+					return null;
 				}
-				String result;
 				try {
 					AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
 						conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
@@ -370,33 +451,16 @@ public class ChatProcessor {
 					// catalog evicted has to disappear from the session too, or the next run restores
 					// tools that are no longer loaded.
 					chatState.loadLoadedSkills(loadedSkills);
-					result = withStopNotice(runResult.response(), runResult.result(), toolContext);
+					return new Answer(withStopNotice(runResult.response(), runResult.result(), toolContext));
 				} catch (RunLimitExceededException ex) {
 					// A ceiling of this installation, not a failure: the account's budget was already
 					// spent when the run wanted to start, or the last free slot went to another request
 					// between the pre-check and here. Said as the agent's own answer, because that is
 					// where the user is looking - notifyError would report it as a broken application.
 					Logger.info("Chat run not started: " + ex.getMessage(), ChatProcessor.class);
-					result = Resources.getInstance().getString(ex.reason());
+					return new Answer(Resources.getInstance().getString(ex.reason()));
 				}
-				state.setLastAgentResponse(result);
-				state.setLastCitations(lastCitations(convLog));
-
-				state.addPendingMessage(new ChatMessage("Agent", result));
-
-				// Flush pending messages (including agent response) into Chat before persisting,
-				// so the persisted data includes the agent's response.
-				applyPollUpdates(state, chatState.chat(), taskTracker);
-
-				// The run's chat, not the one the window shows by now.
-				taskTracker.getSessionManager().persist(chatState);
 			}
-
-		} finally {
-			PendingInteractionRegistry.unregister(taskId);
-			state.setLogListener(null);
-			taskStore.setListener(null);
-			state.setUserInteractionStore(null);
 		}
 	}
 
@@ -922,7 +986,7 @@ public class ChatProcessor {
 	 *
 	 * <p>
 	 * Package-visible rather than private so a test can ask what a tracker's runs are given; it has
-	 * one production caller, {@link #executeOrchestrator}.
+	 * one production caller, {@link #runInternal}.
 	 * </p>
 	 */
 	static ToolContext buildToolContext(UserInteractionStore interactionStore,

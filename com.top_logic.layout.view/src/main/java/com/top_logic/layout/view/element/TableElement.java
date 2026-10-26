@@ -55,6 +55,7 @@ import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.TableDropConfig;
@@ -322,9 +323,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		}
 
 		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
-		ReadOnlyTable<ListRowSource<Object>> table = createTable(context, resolveRowType(rows), inputValues,
-			columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false, initialGrouping(), _drops,
-			rowCssClass);
+		ReadOnlyTable<ListRowSource<Object>, TableSelectionBinding> table = createTable(context,
+			resolveRowType(rows), inputValues, columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false,
+			initialGrouping(), _drops, rowCssClass, ROW_SELECTION);
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setRowCount(_config.getRowCount());
@@ -346,8 +347,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		// computed from the inputs apart from the rows.
 		InputRoles roles = inputRoles(context, inputChannels);
 		Runnable inputsChanged = () -> {
-			refreshPresets(table, ChannelInputs.arguments(inputChannels));
-			if (rowCssClass != null) {
+			if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+				// Pushes the rows again as well, for their row class.
+				control.refreshFilters();
+			} else if (rowCssClass != null) {
 				control.repaintRows();
 			}
 		};

@@ -394,6 +394,71 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * A deleted object is not delivered as result, also to a user who could discover it before,
+	 * while a live object with the same rights still is.
+	 */
+	public void testDeletedObjectNotDiscoverable() throws Exception {
+		TLObject alive = createReadableC("alive");
+		TLObject deleted = createDeletedC("deleted");
+		becomeUser(_pathUser);
+		assertSame(alive, eval("x -> $x", alive));
+		assertNull(eval("x -> $x", deleted));
+	}
+
+	/**
+	 * An attribute of a deleted object is not readable, also for a user who could read it before.
+	 */
+	public void testAttributeOfDeletedObjectNotReadable() throws Exception {
+		TLObject alive = createReadableC("alive");
+		TLObject deleted = createDeletedC("deleted");
+		becomeUser(_pathUser);
+		assertEquals("alive", eval(NAME_SCRIPT, alive));
+		assertNull(eval(NAME_SCRIPT, deleted));
+	}
+
+	/**
+	 * A deleted object is not accessible for an administrator either.
+	 */
+	public void testAdminDoesNotDiscoverDeletedObject() throws Exception {
+		TLObject alive = createReadableC("alive");
+		TLObject deleted = createDeletedC("deleted");
+		becomeUser(PersonManager.getManager().getRoot());
+		assertSame(alive, eval("x -> $x", alive));
+		assertNull(eval("x -> $x", deleted));
+	}
+
+	/**
+	 * The access checks of the service deny any operation on a deleted object, for every user.
+	 */
+	public void testServiceDeniesDeletedObject() throws Exception {
+		TLObject alive = createReadableC("alive");
+		TLObject deleted = createDeletedC("deleted");
+		TLStructuredTypePart name = part("PathNode", "name");
+		TLClass type = (TLClass) TLModelUtil.findType("TestTLScriptSecurity:PathC");
+		assertTrue(rights().isReadAllowed(_pathUser, alive));
+		assertTrue(rights().isReadAllowed(_pathUser, alive, name));
+		for (Person person : Arrays.asList(_pathUser, PersonManager.getManager().getRoot())) {
+			assertFalse(rights().isAllowed(person, deleted, SimpleBoundCommandGroup.READ));
+			assertFalse(rights().isAllowed(person, deleted, name, SimpleBoundCommandGroup.READ));
+			assertFalse(rights().isAllowedCreate(person, type, deleted));
+		}
+	}
+
+	/**
+	 * Creates a {@link #createReadableC(String) readable} object and deletes it in a committed
+	 * transaction.
+	 */
+	TLObject createDeletedC(String name) throws Exception {
+		TLObject c = createReadableC(name);
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			c.tDelete();
+			tx.commit();
+		}
+		assertFalse(c.tValid());
+		return c;
+	}
+
+	/**
 	 * R5: A new reference target must be discoverable.
 	 */
 	public void testSetToUndiscoverableTargetDenied() throws Exception {

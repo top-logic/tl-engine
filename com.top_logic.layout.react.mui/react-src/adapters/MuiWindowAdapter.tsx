@@ -71,7 +71,8 @@ const TOOLBAR_STYLE: React.CSSProperties = { display: 'flex', alignItems: 'cente
 
 /**
  * The body: flush (the content owns its inset), scrolling what does not fit, separated from title
- * bar and footer by lines.
+ * bar and footer by lines. Its layout is the bounded region of the design system (tl-region), which
+ * stretches the content to the body's height.
  */
 const BODY_SX: SxProps<Theme> = { padding: 0, flex: 1, overflow: 'auto' };
 
@@ -193,7 +194,7 @@ const MuiWindowAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={BODY_SX}>
+        <DialogContent dividers className="tl-region" sx={BODY_SX}>
           <FillBarrier>
             <TLChild control={state.child} />
           </FillBarrier>

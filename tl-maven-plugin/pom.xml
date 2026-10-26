@@ -37,6 +37,10 @@
 		<!-- Maven has internal duplications in its utilities. -->		
 		<skipDependencyCheck>true</skipDependencyCheck>
 		<dependency-check.skip>true</dependency-check.skip>
+		<!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+		<tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+		<!-- Fail on imports that are not used. -->
+		<tl.unused-imports.skip>false</tl.unused-imports.skip>
 	</properties>
 
 	<dependencies>
@@ -211,6 +215,22 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<!-- Generates the Sisu index META-INF/sisu/javax.inject.Named of the components (packaging, parent injection). -->
+					<annotationProcessors>
+						<annotationProcessor>org.eclipse.sisu.space.SisuIndexAPT6</annotationProcessor>
+					</annotationProcessors>
+					<annotationProcessorPaths>
+						<annotationProcessorPath>
+							<groupId>org.eclipse.sisu</groupId>
+							<artifactId>org.eclipse.sisu.inject</artifactId>
+							<version>0.9.0.M3</version>
+						</annotationProcessorPath>
+					</annotationProcessorPaths>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

@@ -757,15 +757,32 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * Pushes the complete filter - the column filters and the search - into the row source.
 	 *
 	 * <p>
-	 * The single place the {@link FilterSpec} is built, so that changing one of its parts cannot
-	 * drop the other. The searched columns are derived here from
-	 * {@link TableViewState#getColumnOrder()}, the columns currently displayed, so the search
-	 * always examines what the user sees.
+	 * The {@link FilterSpec} is built by {@link #filterSpec(Map, TextFilterState)}, the single
+	 * place it is built, so that changing one of its parts cannot drop the other, and a filter
+	 * {@link #matchCount(NamedFilter) counted} without being applied is counted as applying it
+	 * filters.
 	 * </p>
 	 */
 	private void applyFilter() {
-		_source.withFilter(new FilterSpec(_state.getFilters(),
-			new SearchSpec(_state.getSearch(), _state.getColumnOrder())));
+		_source.withFilter(filterSpec(_state.getFilters(), _state.getSearch()));
+	}
+
+	/**
+	 * The complete filter - the given column filters and the given search - as the row source
+	 * receives it.
+	 *
+	 * <p>
+	 * The searched columns are derived from {@link TableViewState#getColumnOrder()}, the columns
+	 * currently displayed, so the search always examines what the user sees.
+	 * </p>
+	 *
+	 * @param filters
+	 *        The criterion per column.
+	 * @param search
+	 *        The search term, {@code null} for none.
+	 */
+	private FilterSpec filterSpec(Map<String, FilterState> filters, TextFilterState search) {
+		return new FilterSpec(filters, new SearchSpec(search, _state.getColumnOrder()));
 	}
 
 	/**
@@ -870,16 +887,42 @@ public class DefaultTableView<R> implements TableView<R> {
 	private void applyCriteria(NamedFilter filter) {
 		Map<String, FilterState> filters = _state.getFilters();
 		filters.clear();
-		for (Map.Entry<String, FilterState> entry : filter.filters().entrySet()) {
-			// The same guard the restore of a persisted filter applies: a criterion is only kept for
-			// a column that exists and can be filtered by.
-			Column<R, ?> column = _columns.get(entry.getKey());
-			if (column != null && column.filter().isPresent()) {
-				filters.put(entry.getKey(), entry.getValue());
-			}
-		}
+		filters.putAll(applicableCriteria(filter));
 		_state.setSearch(filter.search());
 		applyFilter();
+	}
+
+	/**
+	 * The column criteria of the given {@link NamedFilter} this table can filter by.
+	 *
+	 * <p>
+	 * The same guard the restore of a persisted filter applies: a criterion is only kept for a
+	 * column that exists and can be filtered by.
+	 * </p>
+	 */
+	private Map<String, FilterState> applicableCriteria(NamedFilter filter) {
+		Map<String, FilterState> result = new LinkedHashMap<>();
+		for (Map.Entry<String, FilterState> entry : filter.filters().entrySet()) {
+			Column<R, ?> column = _columns.get(entry.getKey());
+			if (column != null && column.filter().isPresent()) {
+				result.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The filter is built from the {@link NamedFilter}'s criteria exactly as
+	 * {@link #applyNamedFilter(String)} builds it, and the row source is asked to
+	 * {@link RowSource#matchCount(FilterSpec) count} it without applying it.
+	 * </p>
+	 */
+	@Override
+	public int matchCount(NamedFilter filter) {
+		return _source.matchCount(filterSpec(applicableCriteria(filter), filter.search()));
 	}
 
 	@Override

@@ -830,6 +830,91 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(List.of("Charlie", "alice"), names(view));
 	}
 
+	/**
+	 * Tests that {@link TableView#matchCount(NamedFilter)} counts the rows the named filter selects
+	 * on its own: the column filters and the search the table is filtered by do not change the
+	 * count, and counting changes neither the displayed rows nor the active named filter.
+	 */
+	public void testMatchCountOfANamedFilterIgnoresTheLiveCriteria() {
+		TableView<Person> view = newFilterBarView(null, null);
+		NamedFilter older = view.namedFilters().get(0);
+		assertEquals("Charlie (30) and Bob (40) are older than 26.", 2, view.matchCount(older));
+
+		view.filter("name", TextFilterState.contains("li"));
+		view.search(TextFilterState.contains("3"));
+		assertEquals(List.of("Charlie"), names(view));
+		assertEquals("The live column filter and search are replaced, not narrowed.", 2, view.matchCount(older));
+
+		view.applyNamedFilter(HOLDS_LI);
+		assertEquals(List.of("Charlie", "alice"), names(view));
+		assertEquals("The active named filter does not narrow the count of another one.", 2,
+			view.matchCount(older));
+
+		assertEquals("Counting does not apply the filter.", List.of("Charlie", "alice"), names(view));
+		assertEquals(HOLDS_LI, view.activeNamedFilter().id());
+		assertTrue(view.state().getFilters().isEmpty());
+		assertEquals(TextFilterState.contains("li"), view.state().getSearch());
+	}
+
+	/**
+	 * Tests that a named filter with a search term of its own is counted with that term, in place of
+	 * the term the table is searched for.
+	 */
+	public void testMatchCountOfANamedFilterCountsItsOwnSearch() {
+		TableView<Person> view = newFilterBarView(null, null);
+		NamedFilter holdsLi = view.namedFilters().get(1);
+		view.applyNamedFilter(OLDER);
+		view.search(TextFilterState.contains("Bob"));
+		assertEquals(List.of("Bob"), names(view));
+
+		assertEquals("Charlie and alice hold 'li', although neither is displayed.", 2, view.matchCount(holdsLi));
+		assertEquals(List.of("Bob"), names(view));
+
+		view.applyNamedFilter(HOLDS_LI);
+		assertEquals("The count is what applying the filter shows.", view.rowCount(), view.matchCount(holdsLi));
+	}
+
+	/**
+	 * Tests that a criterion for a column the table does not have, or does not filter by, is left
+	 * out of the count as {@link TableView#applyNamedFilter(String)} drops it.
+	 */
+	public void testMatchCountOfANamedFilterIgnoresCriteriaOfMissingColumns() {
+		List<Column<Person, ?>> columns = personColumns();
+		NamedFilter ghost = NamedFilter.declared("ghost", ResKey.text("Ghost"),
+			Map.of("ghost", new Contains("x"),
+				"age", RangeFilterState.between(Integer.valueOf(39), Integer.valueOf(50)),
+				"name", new Contains("li")),
+			null);
+		TableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns), null, null,
+			SortSpec.NONE, List.of(), List.of(ghost), null);
+
+		assertEquals("Only the criterion on the filterable name counts: Charlie and alice.", 2,
+			view.matchCount(ghost));
+		assertEquals(3, view.rowCount());
+
+		view.applyNamedFilter("ghost");
+		assertEquals("The count is what applying the filter shows.", 2, view.rowCount());
+	}
+
+	/**
+	 * Tests that the presentation of a {@link NamedFilter} - its {@link NamedFilter#cssClass() CSS
+	 * class} and whether it is {@link NamedFilter#counted() counted} - takes no part in telling
+	 * whether it is the active one.
+	 */
+	public void testPresentationTakesNoPartInMatching() {
+		Map<String, FilterState> criteria =
+			Map.of("age", RangeFilterState.between(Integer.valueOf(26), Integer.valueOf(50)));
+		NamedFilter plain = NamedFilter.declared(OLDER, ResKey.text("Older"), criteria, null);
+		assertNull(plain.cssClass());
+		assertFalse(plain.counted());
+
+		NamedFilter styled = NamedFilter.declared(OLDER, ResKey.text("Older"), criteria, null, "tl-warn", true);
+		assertEquals("tl-warn", styled.cssClass());
+		assertTrue(styled.counted());
+		assertTrue(styled.matches(criteria, null));
+		assertTrue(styled.matches(criteria, TextFilterState.contains("li")));
+	}
+
 	public void testActiveNamedFilterEndsWithAnEdit() {
 		TableView<Person> view = newFilterBarView(null, null);
 		view.applyNamedFilter(OLDER);

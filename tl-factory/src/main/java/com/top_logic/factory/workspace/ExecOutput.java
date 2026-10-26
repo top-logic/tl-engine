@@ -6,8 +6,11 @@
 package com.top_logic.factory.workspace;
 
 /**
- * Receiver of the output of a command run by
- * {@link WorkspaceProvider#exec(String, ExecCommand, ExecOutput)}.
+ * Receiver of the output of a command run in a workspace
+ * ({@link WorkspaceProvider#exec(String, ExecCommand, ExecOutput)},
+ * {@link WorkspaceProvider#startExec(String, ExecCommand, ExecOutput)}), of an image build
+ * ({@link WorkspaceProvider#buildImage(String, ImageContext, ExecOutput)}) or of the main process
+ * of a workspace ({@link WorkspaceProvider#followLog(String, int, java.time.Instant, ExecOutput)}).
  *
  * <p>
  * The output arrives in chunks as the command produces it, not split at line ends. A chunk never
@@ -25,14 +28,14 @@ public interface ExecOutput {
 	};
 
 	/**
-	 * Called with a chunk of the standard output of the command.
+	 * Called with a chunk of the standard output.
 	 */
 	default void stdout(String text) {
 		// Ignored by default.
 	}
 
 	/**
-	 * Called with a chunk of the error output of the command.
+	 * Called with a chunk of the error output.
 	 */
 	default void stderr(String text) {
 		// Ignored by default.

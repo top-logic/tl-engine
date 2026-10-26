@@ -43,8 +43,8 @@ public interface RowSource<R> {
 	int size();
 
 	/**
-	 * Value of {@link #matchCount()} and {@link #dataCount()} for a source that cannot tell its
-	 * count.
+	 * Value of {@link #matchCount()}, {@link #matchCount(FilterSpec)} and {@link #dataCount()} for
+	 * a source that cannot tell its count.
 	 */
 	int UNKNOWN_COUNT = -1;
 
@@ -60,6 +60,29 @@ public interface RowSource<R> {
 	 *         displays lazily to tell it.
 	 */
 	default int matchCount() {
+		return UNKNOWN_COUNT;
+	}
+
+	/**
+	 * The number of data rows the given filter would let pass.
+	 *
+	 * <p>
+	 * The count is that of {@link #matchCount()} for a source the given filter were
+	 * {@link #withFilter(FilterSpec) applied} to, but the filter is not applied: the result is
+	 * independent of the current filter, sort, grouping and expansion of this source, and asking for
+	 * it leaves all of them - the {@link #size() displayed rows} and their {@link #window(int, int)
+	 * windows} included - as they are. This tells how many rows a filter would select before the
+	 * user switches to it, e.g. for a filter offered under a name.
+	 * </p>
+	 *
+	 * @param filter
+	 *        The filter to count the rows of, in place of the current one.
+	 * @return The count, or {@link #UNKNOWN_COUNT} for a source that would have to load what it
+	 *         displays lazily to tell it.
+	 *
+	 * @see #matchCount()
+	 */
+	default int matchCount(FilterSpec filter) {
 		return UNKNOWN_COUNT;
 	}
 

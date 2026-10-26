@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selected"/>
+		<channel name="mark"/>
+	</channels>
+
+	<tree-table
+		children="if($node == 'root', [`tl.core`], [])"
+		inputs="selected, mark"
+		root="'root'"
+		row-class="$row == $selected ? 'chosen' : null"
+		selection="selected"
+	>
+		<columns>
+			<column attribute="name"
+				cell-class="[$mark + '-' + $value, $row == $selected ? 'sel' : null]"
+			/>
+		</columns>
+	</tree-table>
+</view>

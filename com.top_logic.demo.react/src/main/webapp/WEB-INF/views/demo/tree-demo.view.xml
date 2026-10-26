@@ -55,6 +55,18 @@
 	On top of that, the model access rights of the user decide: <create-transient> and
 	<delete-object> bring the rule for the creation and the deletion they perform, and the script
 	creating a ticket declares its creation with a <model-access> rule.
+
+	The same objects are displayed twice, in the tabs "Tree" and "Tree table": a <tree-table> with
+	the root, children and parents of the tree and with the name, due date and approval as columns.
+	Both bind the "selected" channel, so the commands work on the selection of either, and an object
+	written to it is revealed in both - the rows above it are opened, it is selected and scrolled
+	into view, as the new ticket under a closed milestone of the tree table is. The display in the
+	tab not shown follows the model as well: a name or due date changed in the details form beside
+	the tabs, while the tree table is in the hidden tab, shows in its columns as soon as the tab is
+	opened again, and when its selected object is deleted meanwhile, the row it hung in is selected.
+
+	The details form edits the single selected object: the name, due date and approval of a
+	milestone, the title of a ticket, the name of a scope.
 -->
 <view>
 	<channels>
@@ -83,171 +95,297 @@
 			inputs="selectedSingle"
 		/>
 	</channels>
-	<panel>
-		<title>
-			<en>Tree Demo</en>
-			<de>Baum-Demo</de>
-		</title>
-		<commands>
-			<generic-command
-				image="css:bi bi-plus-lg"
-				inputs="selectedScope"
-				placement="TOOLBAR"
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				size="60"
+				unit="%"
 			>
-				<label>
-					<en>New milestone</en>
-					<de>Neuer Meilenstein</de>
-				</label>
-				<executability>
-					<null-input-disabled/>
-				</executability>
-				<create-transient
-					container="selectedScope"
-					reference="milestones"
-					type="tl.demo.projectManagement:Milestone"
-				>
-					<with-result>
-						<open-dialog
-							bind-input-to="model"
-							dialog-view="demo/create-milestone.view.xml"
+				<panel>
+					<title>
+						<en>Tree Demo</en>
+						<de>Baum-Demo</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							inputs="selectedScope"
+							placement="TOOLBAR"
 						>
-							<bind
-								channel="container"
-								to="selectedScope"
-							/>
-							<bind
-								channel="selection"
-								to="selected"
-							/>
-						</open-dialog>
-					</with-result>
-				</create-transient>
-			</generic-command>
-			<!--
-				The ticket is created without a dialog, so the script gets the milestone as the
-				command's input. The ticket is created in the context of its scope, which numbers the
-				tickets of a project continuously. A ticket hangs in the scope's composition and names
-				its milestone; the milestone's ticket list is the backwards side of that reference and
-				is not written to.
-			-->
-			<generic-command
-				image="css:bi bi-ticket-perforated"
-				inputs="selectedMilestone as milestone"
-				placement="TOOLBAR"
+							<label>
+								<en>New milestone</en>
+								<de>Neuer Meilenstein</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<create-transient
+								container="selectedScope"
+								reference="milestones"
+								type="tl.demo.projectManagement:Milestone"
+							>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-milestone.view.xml"
+									>
+										<bind
+											channel="container"
+											to="selectedScope"
+										/>
+										<bind
+											channel="selection"
+											to="selected"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+						<!--
+							The ticket is created without a dialog, so the script gets the milestone as the
+							command's input. The ticket is created in the context of its scope, which numbers the
+							tickets of a project continuously. A ticket hangs in the scope's composition and names
+							its milestone; the milestone's ticket list is the backwards side of that reference and
+							is not written to.
+						-->
+						<generic-command
+							image="css:bi bi-ticket-perforated"
+							inputs="selectedMilestone as milestone"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New ticket</en>
+								<de>Neues Ticket</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<model-access
+									operation="Create"
+									type="tl.demo.projectManagement:Ticket"
+								/>
+							</executability>
+							<with-transaction>
+								<commitMessage>
+									<en>Created a ticket in milestone {0}.</en>
+									<de>Ticket in Meilenstein {0} angelegt.</de>
+								</commitMessage>
+								<execute-script function="{ scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, context: $scope, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
+								<with-result>
+									<write-channel name="selected"/>
+								</with-result>
+							</with-transaction>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-box-arrow-up"
+							inputs="selectedTicket as ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Detach from milestone</en>
+								<de>Von Meilenstein lösen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<with-transaction>
+								<execute-script function="{ $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, null); null; }"/>
+							</with-transaction>
+						</generic-command>
+						<!--
+							A ticket without a milestone hangs in no child list of the tree. The command attaches
+							the first such ticket of the selected milestone's scope to the milestone and writes it
+							to "selected". The tickets are observed, because whether there is a free ticket depends
+							on objects beyond the selected milestone. Should the free ticket be gone by the time the
+							command runs, the script answers the milestone, which leaves the selection where it is.
+						-->
+						<generic-command
+							image="css:bi bi-box-arrow-in-down"
+							inputs="selectedMilestone as milestone"
+							observed-types="tl.demo.projectManagement:Ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Attach a free ticket</en>
+								<de>Freies Ticket anhängen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).isEmpty(), #('The project has no ticket without a milestone.'@en, 'Das Projekt hat kein Ticket ohne Meilenstein.'@de), null)"/>
+							</executability>
+							<with-transaction>
+								<commitMessage>
+									<en>Attached a ticket to milestone {0}.</en>
+									<de>Ticket an Meilenstein {0} angehängt.</de>
+								</commitMessage>
+								<execute-script function="{ ticket = $milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).firstElement(); if($ticket == null, $milestone, { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }); }"/>
+								<with-result>
+									<write-channel name="selected"/>
+								</with-result>
+							</with-transaction>
+						</generic-command>
+						<!-- <delete-object/> deletes a single object as well as a set of them. -->
+						<generic-command
+							image="css:bi bi-trash"
+							inputs="selected"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<delete-object/>
+						</generic-command>
+					</commands>
+					<tab-bar active-tab="tree">
+						<tabs>
+							<tab id="tree"
+								icon="css:bi bi-diagram-2"
+							>
+								<label>
+									<en>Tree</en>
+									<de>Baum</de>
+								</label>
+								<tree
+									observed-types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
+									selection="selected"
+									selection-mode="multi"
+								>
+									<root>`tl.demo.projectManagement:ProjectScope`</root>
+									<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+									<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
+									<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
+										<write-channel name="activated"/>
+									</on-activate>
+								</tree>
+							</tab>
+							<tab id="tree-table"
+								icon="css:bi bi-list-nested"
+							>
+								<label>
+									<en>Tree table</en>
+									<de>Baumtabelle</de>
+								</label>
+								<tree-table
+									observed-types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
+									personalization-key="tree-demo-tree-table"
+									selection="selected"
+									selection-mode="multi"
+								>
+									<root>`tl.demo.projectManagement:ProjectScope`</root>
+									<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+									<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
+									<columns>
+										<computed-column name="name"
+											type="tl.core:String"
+										>
+											<label>
+												<en>Name</en>
+												<de>Name</de>
+											</label>
+											<value><![CDATA[if($row.instanceOf(`tl.demo.projectManagement:Ticket`), $row.get(`tl.demo.projectManagement:Ticket#title`), if($row.instanceOf(`tl.demo.projectManagement:Milestone`), $row.get(`tl.demo.projectManagement:Milestone#name`), $row.get(`tl.demo.projectManagement:ProjectScope#name`)))]]></value>
+										</computed-column>
+										<computed-column name="dueDate"
+											type="tl.core:Date"
+										>
+											<label>
+												<en>Due date</en>
+												<de>Fälligkeitsdatum</de>
+											</label>
+											<value><![CDATA[if($row.instanceOf(`tl.demo.projectManagement:Milestone`), $row.get(`tl.demo.projectManagement:Milestone#dueDate`), null)]]></value>
+										</computed-column>
+										<computed-column name="approved"
+											type="tl.core:Boolean"
+										>
+											<label>
+												<en>Approved</en>
+												<de>Genehmigt</de>
+											</label>
+											<value><![CDATA[if($row.instanceOf(`tl.demo.projectManagement:Milestone`), $row.get(`tl.demo.projectManagement:Milestone#approved`), null)]]></value>
+										</computed-column>
+									</columns>
+									<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
+										<write-channel name="activated"/>
+									</on-activate>
+								</tree-table>
+							</tab>
+						</tabs>
+					</tab-bar>
+					<inset>
+						<text>
+							<label>
+								<en>Selected node</en>
+								<de>Ausgewählter Knoten</de>
+							</label>
+						</text>
+						<text input="selected"/>
+						<text>
+							<label>
+								<en>Activated node</en>
+								<de>Aktivierter Knoten</de>
+							</label>
+						</text>
+						<text input="activated"/>
+					</inset>
+				</panel>
+			</pane>
+			<pane
+				size="40"
+				unit="%"
 			>
-				<label>
-					<en>New ticket</en>
-					<de>Neues Ticket</de>
-				</label>
-				<executability>
-					<null-input-disabled/>
-					<model-access
-						operation="Create"
-						type="tl.demo.projectManagement:Ticket"
-					/>
-				</executability>
-				<with-transaction>
-					<commitMessage>
-						<en>Created a ticket in milestone {0}.</en>
-						<de>Ticket in Meilenstein {0} angelegt.</de>
-					</commitMessage>
-					<execute-script function="{ scope = $milestone.container(); ticket = new(`tl.demo.projectManagement:Ticket`, context: $scope, transient: false); $ticket.set(`tl.demo.projectManagement:Ticket#title`, 'Ticket ' + ($scope.get(`tl.demo.projectManagement:ProjectScope#tickets`).size() + 1)); $scope.add(`tl.demo.projectManagement:ProjectScope#tickets`, $ticket); $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }"/>
-					<with-result>
-						<write-channel name="selected"/>
-					</with-result>
-				</with-transaction>
-			</generic-command>
-			<generic-command
-				image="css:bi bi-box-arrow-up"
-				inputs="selectedTicket as ticket"
-				placement="TOOLBAR"
-			>
-				<label>
-					<en>Detach from milestone</en>
-					<de>Von Meilenstein lösen</de>
-				</label>
-				<executability>
-					<null-input-disabled/>
-				</executability>
-				<with-transaction>
-					<execute-script function="{ $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, null); null; }"/>
-				</with-transaction>
-			</generic-command>
-			<!--
-				A ticket without a milestone hangs in no child list of the tree. The command attaches
-				the first such ticket of the selected milestone's scope to the milestone and writes it
-				to "selected". The tickets are observed, because whether there is a free ticket depends
-				on objects beyond the selected milestone. Should the free ticket be gone by the time the
-				command runs, the script answers the milestone, which leaves the selection where it is.
-			-->
-			<generic-command
-				image="css:bi bi-box-arrow-in-down"
-				inputs="selectedMilestone as milestone"
-				observed-types="tl.demo.projectManagement:Ticket"
-				placement="TOOLBAR"
-			>
-				<label>
-					<en>Attach a free ticket</en>
-					<de>Freies Ticket anhängen</de>
-				</label>
-				<executability>
-					<null-input-disabled/>
-					<disabled-if expr="if($milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).isEmpty(), #('The project has no ticket without a milestone.'@en, 'Das Projekt hat kein Ticket ohne Meilenstein.'@de), null)"/>
-				</executability>
-				<with-transaction>
-					<commitMessage>
-						<en>Attached a ticket to milestone {0}.</en>
-						<de>Ticket an Meilenstein {0} angehängt.</de>
-					</commitMessage>
-					<execute-script function="{ ticket = $milestone.container().get(`tl.demo.projectManagement:ProjectScope#tickets`).filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == null).firstElement(); if($ticket == null, $milestone, { $ticket.set(`tl.demo.projectManagement:Ticket#milestone`, $milestone); $ticket; }); }"/>
-					<with-result>
-						<write-channel name="selected"/>
-					</with-result>
-				</with-transaction>
-			</generic-command>
-			<!-- <delete-object/> deletes a single object as well as a set of them. -->
-			<generic-command
-				image="css:bi bi-trash"
-				inputs="selected"
-				placement="TOOLBAR"
-			>
-				<label>
-					<en>Delete</en>
-					<de>Löschen</de>
-				</label>
-				<executability>
-					<null-input-disabled/>
-				</executability>
-				<delete-object/>
-			</generic-command>
-		</commands>
-		<tree
-			observed-types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
-			selection="selected"
-			selection-mode="multi"
-		>
-			<root>`tl.demo.projectManagement:ProjectScope`</root>
-			<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
-			<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
-			<on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
-				<write-channel name="activated"/>
-			</on-activate>
-		</tree>
-		<inset>
-			<text>
-				<label>
-					<en>Selected node</en>
-					<de>Ausgewählter Knoten</de>
-				</label>
-			</text>
-			<text input="selected"/>
-			<text>
-				<label>
-					<en>Activated node</en>
-					<de>Aktivierter Knoten</de>
-				</label>
-			</text>
-			<text input="activated"/>
-		</inset>
-	</panel>
+				<panel>
+					<title>
+						<en>Details</en>
+						<de>Details</de>
+					</title>
+					<switch input="selectedSingle as object">
+						<case test="$object.instanceOf(`tl.demo.projectManagement:Milestone`)">
+							<form
+								input="selectedMilestone"
+								with-inset="true"
+								withEditMode="true"
+							>
+								<field attribute="name"/>
+								<field attribute="dueDate"/>
+								<field attribute="approved"/>
+							</form>
+						</case>
+						<case test="$object.instanceOf(`tl.demo.projectManagement:Ticket`)">
+							<form
+								input="selectedTicket"
+								with-inset="true"
+								withEditMode="true"
+							>
+								<field attribute="title"/>
+							</form>
+						</case>
+						<case test="$object.instanceOf(`tl.demo.projectManagement:ProjectScope`)">
+							<form
+								input="selectedScope"
+								with-inset="true"
+								withEditMode="true"
+							>
+								<field attribute="name"/>
+							</form>
+						</case>
+						<default>
+							<inset>
+								<text>
+									<label>
+										<en>Select a single node to edit it.</en>
+										<de>Einen einzelnen Knoten auswählen, um ihn zu bearbeiten.</de>
+									</label>
+								</text>
+							</inset>
+						</default>
+					</switch>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
 </view>

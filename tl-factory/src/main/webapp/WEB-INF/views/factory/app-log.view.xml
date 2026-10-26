@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The log of the application of a workspace (tab "Application log" of factory/projects.view.xml):
+	the last lines of the output of the main process of the workspace container, following the
+	output while it is written. The source follows the log only while this view is displayed.
+
+	The embedding view binds the workspace channel.
+-->
+<view>
+	<channels>
+		<channel name="workspace"/>
+		<source-channel name="appLog"
+			update-interval="1000"
+		>
+			<source class="com.top_logic.factory.project.WorkspaceLogSource"
+				tail-lines="500"
+				workspace="workspace"
+			/>
+		</source-channel>
+		<derived-channel name="appLogHtml"
+			inputs="appLog"
+		>
+			<expr><![CDATA[if(isEmpty($appLog),
+	{{{<p class="tl-factory-log__empty">{#('No output of the application yet.'@en, 'Noch keine Ausgabe der Anwendung.'@de)}</p>}}},
+	{{{<div class="tl-factory-log"><pre>{$appLog}</pre></div>}}})]]></expr>
+		</derived-channel>
+	</channels>
+	<panel fill="true">
+		<html input="appLogHtml"/>
+	</panel>
+</view>

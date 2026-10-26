@@ -52,8 +52,9 @@ import com.top_logic.table.SortSpec;
  * the group's data rows. The groups are ordered by the grouping column's own
  * {@link Column#sort() comparator}, a {@code null} group value last; the direction is taken
  * from the {@link SortSpec} if it sorts the grouping column, ascending otherwise. A grouping
- * column without sort capability keeps the groups in the order their first rows appear in.
- * Within a group, the rows keep the order of the {@link SortSpec}. A {@link GroupSpec} with
+ * column without sort capability keeps the groups in the order of the given rows - the order in
+ * which the first rows of the groups appear in the backing list, whatever the {@link SortSpec}
+ * sorts by. Within a group, the rows keep the order of the {@link SortSpec}. A {@link GroupSpec} with
  * more than one column is rejected.
  * </p>
  *
@@ -86,6 +87,13 @@ public class ListRowSource<R> implements RowSource<R> {
 	 * {@link #matchingKeys()} and {@link #allRows()}.
 	 */
 	private List<R> _matching = List.of();
+
+	/**
+	 * For a grouping column without sort capability, the position of each group value among the
+	 * {@link #_matching} rows in the order of the backing list, by which the groups are ordered;
+	 * {@code null} otherwise.
+	 */
+	private Map<Object, Integer> _givenGroupOrder;
 
 	/**
 	 * The keys of {@link #_matching}, for {@link #matchingKeys(Collection)}, or {@code null} until
@@ -162,6 +170,30 @@ public class ListRowSource<R> implements RowSource<R> {
 	@Override
 	public int matchCount() {
 		return _matching.size();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Tests every backing element against the given filter, as {@link #withFilter(FilterSpec)}
+	 * would; the grouping does not matter, since the count is of the data rows, not of the group
+	 * rows displayed around them.
+	 * </p>
+	 */
+	@Override
+	public int matchCount(FilterSpec filter) {
+		Predicate<R> predicate = ColumnLogic.predicate(filter, _byName);
+		if (predicate == null) {
+			return _elements.size();
+		}
+		int result = 0;
+		for (R element : _elements) {
+			if (predicate.test(element)) {
+				result++;
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -350,6 +382,7 @@ public class ListRowSource<R> implements RowSource<R> {
 				rows.add(element);
 			}
 		}
+		_givenGroupOrder = givenGroupOrder(rows);
 		Comparator<R> order = ColumnLogic.comparator(_sort, _byName);
 		if (order != null) {
 			rows.sort(order);
@@ -358,6 +391,29 @@ public class ListRowSource<R> implements RowSource<R> {
 		_matchingKeys = null;
 		_dataCount = _elements.size();
 		_displayed = _grouping.columns().isEmpty() ? flatRows(rows) : groupedRows(rows, false);
+	}
+
+	/**
+	 * The position of each value of the grouping column among the given rows, in the order its
+	 * first row has there, or {@code null} if the rows are not grouped or the grouping column has
+	 * its own order.
+	 *
+	 * @param rows
+	 *        The filtered rows in the order of the backing list, before they are sorted.
+	 */
+	private Map<Object, Integer> givenGroupOrder(List<R> rows) {
+		if (_grouping.columns().isEmpty()) {
+			return null;
+		}
+		Column<R, ?> groupColumn = _byName.get(_grouping.columns().get(0));
+		if (groupColumn.sort().isPresent()) {
+			return null;
+		}
+		Map<Object, Integer> result = new HashMap<>();
+		for (R row : rows) {
+			result.putIfAbsent(groupColumn.value(row), result.size());
+		}
+		return result;
 	}
 
 	private List<Row<R>> flatRows(List<R> rows) {
@@ -375,8 +431,9 @@ public class ListRowSource<R> implements RowSource<R> {
 	 *
 	 * <p>
 	 * The buckets are ordered by {@link ColumnLogic#groupComparator(Column, SortSpec)}; for a
-	 * grouping column without sort capability they stay in the order their first rows appear
-	 * in. The rows within a bucket keep the order of the sorted input.
+	 * grouping column without sort capability they keep the order of the given rows, see
+	 * {@link #_givenGroupOrder}, whatever the rows are sorted by. The rows within a bucket keep the
+	 * order of the sorted input.
 	 * </p>
 	 */
 	private List<Row<R>> groupedRows(List<R> rows, boolean all) {
@@ -389,6 +446,9 @@ public class ListRowSource<R> implements RowSource<R> {
 		Comparator<Object> groupOrder = ColumnLogic.groupComparator(groupColumn, _sort);
 		if (groupOrder != null) {
 			ordered.sort(Map.Entry.comparingByKey(groupOrder));
+		} else if (_givenGroupOrder != null) {
+			Map<Object, Integer> rank = _givenGroupOrder;
+			ordered.sort(Comparator.comparingInt(bucket -> rank.get(bucket.getKey())));
 		}
 		List<Row<R>> displayed = new ArrayList<>();
 		for (Map.Entry<Object, List<R>> bucket : ordered) {

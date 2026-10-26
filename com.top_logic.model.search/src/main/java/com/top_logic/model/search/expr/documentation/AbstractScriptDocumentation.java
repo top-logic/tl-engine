@@ -128,7 +128,7 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 	/**
 	 * Write the label of the script.
 	 * 
-	 * @implNote The label is part of an {@value #H2} section.
+	 * @implNote The label is part of an {@value HTMLConstants#H2} section.
 	 *
 	 * @param context
 	 *        The context in which rendering occurs.
@@ -353,7 +353,7 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 	/**
 	 * Writes a potential default for the parameter if there is one.
 	 * 
-	 * @implNote The parameter default is part of a {@link #TD}.
+	 * @implNote The parameter default is part of a {@link HTMLConstants#TD}.
 	 *
 	 * @param context
 	 *        The context in which rendering occurs.
@@ -387,7 +387,7 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 	/**
 	 * Writes a potential description for the parameter if there is one.
 	 * 
-	 * @implNote The parameter default is part of a {@link #TD}.
+	 * @implNote The parameter default is part of a {@link HTMLConstants#TD}.
 	 *
 	 * @param context
 	 *        The context in which rendering occurs.

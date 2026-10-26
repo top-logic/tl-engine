@@ -67,11 +67,6 @@ public class SSEServlet extends HttpServlet {
 		}
 
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
-		// Establishing the connection restarts the session's inactivity timeout just as any other
-		// request does, so a control counting down to the end of the session has to hear about it.
-		// Nothing further arrives through this connection: the heartbeats travel down the one
-		// request opened here and never touch the session again.
-		registry.noteActivity(session);
 		if (registry.getQueue(windowName) == null) {
 			Logger.info("SSEServlet: window '" + windowName + "' is unknown, answered as gone.", SSEServlet.class);
 			response.sendError(HttpServletResponse.SC_GONE, "Unknown window.");

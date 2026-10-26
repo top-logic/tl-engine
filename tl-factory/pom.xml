@@ -26,6 +26,18 @@
       <artifactId>tl-layout-view</artifactId>
     </dependency>
 
+    <!-- The LLM provider whose API key the LLM proxy of the workspaces adds to their requests. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-core</artifactId>
+    </dependency>
+
+    <!-- The chat of tl-chat, showing the conversation of an agent working in a workspace. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-chat</artifactId>
+    </dependency>
+
     <!-- Docker Engine API client of the Docker workspace provider (Apache-2.0). -->
     <dependency>
       <groupId>com.github.docker-java</groupId>

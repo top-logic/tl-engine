@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import junit.framework.Test;
@@ -20,6 +21,15 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -35,12 +45,14 @@ import com.top_logic.table.RowKind;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.ListRowSource;
 
 /**
  * Test for {@link ColumnSetup}: the column it builds is displayed in the width it configures, and
  * keeps the width of the column its {@link ColumnBinding} built when it configures none; it sorts
- * by the comparator it declares, and in the order its binding derives when it declares none.
+ * by the comparator it declares, in the order its binding derives when it declares none, and not
+ * at all when it is not sortable.
  */
 public class TestColumnSetup extends TestCase {
 
@@ -166,6 +178,25 @@ public class TestColumnSetup extends TestCase {
 	}
 
 	/**
+	 * A column that is not sortable offers no sorting, even when it declares a comparator, and a
+	 * table grouped by it keeps its groups in the order of the given rows - although the values
+	 * would sort differently.
+	 */
+	public void testUnsortableColumnKeepsTheGroupsInRowOrder() {
+		assertTrue("A column sorts by default.", ordered(null).buildColumn().sort().isPresent());
+
+		Column<Object, ?> column = unsortable(null).buildColumn();
+		assertTrue("The column offers no sorting.", column.sort().isEmpty());
+		assertTrue("A comparator does not make the column sort.",
+			unsortable(BY_LENGTH).buildColumn().sort().isEmpty());
+
+		ListRowSource<Object> source = new ListRowSource<>(rows("b", "a", "b", "c"), List.of(column));
+		source.withGrouping(new GroupSpec(List.of(ATTRIBUTE)));
+		assertEquals(List.of("b", "a", "c"), groupValues(source));
+		assertEquals("The rows of a group keep their order.", List.of("b", "b", "a", "c"), values(source));
+	}
+
+	/**
 	 * Collections of values are ordered element by element by the order of their elements: the
 	 * first differing element decides, a collection that is the start of a longer one comes first,
 	 * an empty collection before every other one, and an empty element after every other one.
@@ -199,13 +230,18 @@ public class TestColumnSetup extends TestCase {
 
 	/** A row source over rows holding the given values, in a column ordered {@link #BY_LENGTH}. */
 	private static ListRowSource<Object> source(String... values) {
+		return new ListRowSource<>(rows(values), List.of(ordered(BY_LENGTH).buildColumn()));
+	}
+
+	/** Rows holding the given values, in that order. */
+	private static List<Object> rows(String... values) {
 		List<Object> rows = new ArrayList<>();
 		for (String value : values) {
 			Map<String, Object> row = new HashMap<>();
 			row.put(ATTRIBUTE, value);
 			rows.add(row);
 		}
-		return new ListRowSource<>(rows, List.of(ordered(BY_LENGTH).buildColumn()));
+		return rows;
 	}
 
 	/** The values of the data rows the given source shows, in display order. */
@@ -247,6 +283,18 @@ public class TestColumnSetup extends TestCase {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
 			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, comparator,
 			false);
+	}
+
+	/**
+	 * A descriptor over a value read from the row map, that is not sortable.
+	 *
+	 * @param comparator
+	 *        The order of the column's values the descriptor states nevertheless, or {@code null}.
+	 */
+	private static ColumnSetup unsortable(Comparator<Object> comparator) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, comparator,
+			false, ColumnExport.DEFAULT, null, false);
 	}
 
 	/**
@@ -321,6 +369,230 @@ public class TestColumnSetup extends TestCase {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
 			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, null, false,
 			ColumnExport.DEFAULT, (row, value) -> (row == null ? "group " : "cell ") + value);
+	}
+
+	/**
+	 * A column with a CSS class puts the class computed from the row and the value on its data
+	 * cells, and none where the computation yields nothing or an empty text.
+	 */
+	public void testCellClass() {
+		Column<Object, ?> column = withCellClass(ColumnBinding.TYPE_DERIVED).buildColumn();
+
+		assertEquals("cell-x", column.cssClass(Map.of(ATTRIBUTE, "x")));
+		assertNull(column.cssClass(Map.of(ATTRIBUTE, NO_CLASS)));
+		assertNull(column.cssClass(Map.of(ATTRIBUTE, EMPTY_CLASS)));
+	}
+
+	/**
+	 * The CSS class a column computes is put on its cells in addition to the class the column its
+	 * binding built puts there.
+	 */
+	public void testCellClassJoinsTheInnerClass() {
+		ColumnBinding marking = setup -> markedInner(ColumnBinding.TYPE_DERIVED.createColumn(setup));
+		Column<Object, ?> column = withCellClass(marking).buildColumn();
+
+		assertEquals("inner cell-x", column.cssClass(Map.of(ATTRIBUTE, "x")));
+		assertEquals("inner", column.cssClass(Map.of(ATTRIBUTE, NO_CLASS)));
+	}
+
+	/** The given column putting the class <code>inner</code> on every cell. */
+	private static <V> Column<Object, V> markedInner(Column<Object, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public String cssClass(Object row) {
+				return "inner";
+			}
+		};
+	}
+
+	/** A cell the user may not read gets no CSS class computed from its value. */
+	public void testNoCellClassForAnUnreadableCell() {
+		Column<Object, ?> column = withCellClass(ColumnBinding.TYPE_DERIVED).buildColumn();
+
+		assertNull(column.cssClass(Map.of(ATTRIBUTE, ColumnProviderService.UNREADABLE)));
+	}
+
+	/** A column without a CSS class leaves its cells without one. */
+	public void testNoCellClass() {
+		Column<Object, ?> column = withTooltip().buildColumn();
+
+		assertNull(column.cssClass(Map.of(ATTRIBUTE, "x")));
+	}
+
+	/** The value for which {@link #withCellClass(ColumnBinding)} computes no class. */
+	private static final String NO_CLASS = "none";
+
+	/** The value for which {@link #withCellClass(ColumnBinding)} computes an empty class. */
+	private static final String EMPTY_CLASS = "empty";
+
+	/**
+	 * A column of the given binding marking a cell with the class <code>cell-</code> and its value,
+	 * except for the values {@link #NO_CLASS} and {@link #EMPTY_CLASS}. The computation rejects
+	 * the {@link ColumnProviderService#UNREADABLE} marker, which it must never be passed.
+	 */
+	private static ColumnSetup withCellClass(ColumnBinding binding) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, binding, 0, null, null, null, false,
+			ColumnExport.DEFAULT, null, (row, value) -> {
+				assertNotSame(ColumnProviderService.UNREADABLE, value);
+				assertNotNull(row);
+				if (NO_CLASS.equals(value)) {
+					return null;
+				}
+				if (EMPTY_CLASS.equals(value)) {
+					return "";
+				}
+				return "cell-" + value;
+			});
+	}
+
+	/**
+	 * A column with a display shows the value of a data cell through it, and keeps the display of
+	 * its type for an empty cell and a cell the user may not read.
+	 */
+	public void testDisplay() {
+		RecordingDisplay display = new RecordingDisplay();
+		Column<Object, ?> column = withDisplay(display, null, null).buildColumn();
+		Column<Object, ?> plain = withDisplay(null, null, null).buildColumn();
+
+		assertEquals("x", shown(display, column.renderCell(Map.of(ATTRIBUTE, "x"))));
+
+		Map<String, Object> empty = Map.of();
+		assertEquals("An empty cell keeps the display of its type.", plain.renderCell(empty),
+			column.renderCell(empty));
+		Map<String, Object> unreadable = Map.of(ATTRIBUTE, ColumnProviderService.UNREADABLE);
+		assertEquals("A cell the user may not read keeps the display of its type.",
+			plain.renderCell(unreadable), column.renderCell(unreadable));
+		Map<String, Object> noValues = Map.of(ATTRIBUTE, List.of());
+		assertEquals("A cell without values keeps the display of its type.", plain.renderCell(noValues),
+			column.renderCell(noValues));
+		assertEquals("Only the displayed value reached the display.", List.of("x"), display._shown);
+	}
+
+	/**
+	 * The header row of a group and the aggregate of a group show their value through the display
+	 * of the column.
+	 */
+	public void testDisplayOfGroupValues() {
+		RecordingDisplay display = new RecordingDisplay();
+		Column<Object, ?> column = withDisplay(display, rows -> "sum " + rows.size(), null).buildColumn();
+		Column<Object, ?> plain = withDisplay(null, null, null).buildColumn();
+
+		assertEquals("g", shown(display, render(column, "g")));
+		assertEquals("A group without a value keeps the display of its type.", render(plain, null),
+			render(column, null));
+		assertEquals("sum 2", shown(display, column.aggregate().get().over(group("a", "b"))));
+	}
+
+	/** Renders the given group value through the renderer of the given column. */
+	@SuppressWarnings("unchecked")
+	private static CellContent render(Column<Object, ?> column, Object groupValue) {
+		return ((Column<Object, Object>) column).renderer().render(groupValue);
+	}
+
+	/** The tooltip of a column wraps what its display shows. */
+	public void testDisplayKeepsTheTooltip() {
+		RecordingDisplay display = new RecordingDisplay();
+		Column<Object, ?> column =
+			withDisplay(display, null, (row, value) -> (row == null ? "group " : "cell ") + value).buildColumn();
+
+		CellContent cell = column.renderCell(Map.of(ATTRIBUTE, "x"));
+		assertEquals("cell x", cell.tooltip());
+		assertEquals("x", shown(display, cell));
+
+		CellContent groupCell = render(column, "g");
+		assertEquals("group g", groupCell.tooltip());
+		assertEquals("g", shown(display, groupCell));
+	}
+
+	/**
+	 * The search finds a cell by the label a display computes, and by the text of the type of the
+	 * values where the display computes none.
+	 */
+	public void testSearchTextFollowsALabelingDisplay() {
+		Column<Object, ?> labeled = withDisplay(new LabelingDisplay(), null, null).buildColumn();
+		Column<Object, ?> unlabeled = withDisplay(new RecordingDisplay(), null, null).buildColumn();
+
+		assertEquals("label x", labeled.searchText(Map.of(ATTRIBUTE, "x")));
+		assertEquals("x", unlabeled.searchText(Map.of(ATTRIBUTE, "x")));
+		Map<String, Object> empty = Map.of();
+		assertEquals("An empty cell is searched by the text of its type.",
+			withDisplay(null, null, null).buildColumn().searchText(empty), labeled.searchText(empty));
+	}
+
+	/**
+	 * A cell holding several values shows each of them through the display, in a read-only list of
+	 * values, and is searched by their labels joined as the values of any multi-valued cell are.
+	 */
+	public void testDisplayOfSeveralValues() {
+		LabelingDisplay display = new LabelingDisplay();
+		Column<Object, ?> column = withDisplay(display, null, null).buildColumn();
+		Map<String, Object> row = Map.of(ATTRIBUTE, List.of("a", "b"));
+
+		CellContent cell = column.renderCell(row);
+		assertTrue("Not shown through a control: " + cell, cell instanceof CellContent.Raw);
+		ReactContext context =
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		ReactControl control = ((CellControlFactory) ((CellContent.Raw) cell).payload()).create(context);
+		assertTrue("Not a list of values: " + control, control instanceof ReactValueListControl);
+		assertEquals("Each value is shown through the display.", List.of("a", "b"), display._shown);
+
+		assertEquals("label a, label b", column.searchText(row));
+	}
+
+	/**
+	 * The value the given display was given by the control factory of the given cell content.
+	 */
+	private static Object shown(RecordingDisplay display, CellContent content) {
+		assertTrue("Not shown through the display: " + content, content instanceof CellContent.Raw);
+		Object payload = ((CellContent.Raw) content).payload();
+		assertTrue("Not a control factory: " + payload, payload instanceof CellControlFactory);
+		int before = display._shown.size();
+		((CellControlFactory) payload).create(null);
+		assertEquals("The display created one control.", before + 1, display._shown.size());
+		return display._shown.get(before);
+	}
+
+	/**
+	 * A column reading the value under {@link #ATTRIBUTE}, shown through the given display.
+	 *
+	 * @param display
+	 *        The display, {@code null} for the type-derived one.
+	 * @param aggregate
+	 *        The aggregate of a group, {@code null} for none.
+	 * @param tooltip
+	 *        The tooltip of a cell, {@code null} for none.
+	 */
+	private static ColumnSetup withDisplay(ReactControlProvider display, Function<List<Object>, Object> aggregate,
+			BiFunction<Object, Object, String> tooltip) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, aggregate, null,
+			false, ColumnExport.DEFAULT, tooltip, null, display);
+	}
+
+	/**
+	 * {@link ReactControlProvider} recording the values it is given, creating no control.
+	 */
+	private static class RecordingDisplay implements ReactControlProvider {
+
+		final List<Object> _shown = new ArrayList<>();
+
+		@Override
+		public ReactControl createControl(ReactContext context, Object model) {
+			_shown.add(model);
+			return null;
+		}
+	}
+
+	/**
+	 * {@link RecordingDisplay} computing a label of its own for a value.
+	 */
+	private static class LabelingDisplay extends RecordingDisplay implements LabelProvider {
+
+		@Override
+		public String getLabel(Object object) {
+			return "label " + object;
+		}
 	}
 
 	/**

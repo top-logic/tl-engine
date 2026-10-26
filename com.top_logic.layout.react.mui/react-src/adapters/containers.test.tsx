@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { React, createPortal, useStandaloneKeyboardScope, SurfaceProvider, panelSurface, replacePart, register } from 'tl-react-bridge';
+import { React, createPortal, useStandaloneKeyboardScope, SurfaceProvider, panelSurface, replacePart, register, useFill, FILL_CLASS } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLColumns from '../../../com.top_logic.layout.react/react-src/controls/TLColumns';
 import TLStack from '../../../com.top_logic.layout.react/react-src/controls/TLStack';
@@ -38,6 +38,8 @@ afterEach(() => {
 // A control that draws into the page, not into its place: the overflow menu of a toolbar does so.
 register('ContainersPortaledChild', () => createPortal(<button type="button">Menueeintrag</button>, document.body));
 register('ContainersItemButton', () => <button type="button">Oeffnen</button>);
+// A control that fills the height its container offers, as a table does.
+register('ContainersFillingChild', ({ controlId }: TLCellProps) => <div id={controlId} className={useFill(true)} />);
 const withButton = { controlId: 'bt', module: 'ContainersItemButton', state: {} } as ReturnType<typeof childControl>;
 const portaled = { controlId: 'p', module: 'ContainersPortaledChild', state: {} } as ReturnType<typeof childControl>;
 
@@ -268,6 +270,24 @@ describe('a split handle is a separator', () => {
     fireEvent.doubleClick(handle);
     await settle();
     expect(sent).toHaveBeenCalledWith('resetSizes', expect.anything());
+  });
+
+  it('makes each pane a bounded region, so that a filling child takes the height of the pane', async () => {
+    mountAdapter(TLSplitPanel, {
+      ...SPLIT,
+      children: [
+        { ...SPLIT.children[0], control: { controlId: 'filling', module: 'ContainersFillingChild', state: {} } },
+        SPLIT.children[1],
+      ],
+    });
+    await settle();
+    const filling = document.getElementById('filling')!;
+    expect(filling.classList).toContain(FILL_CLASS);
+    const pane = filling.parentElement!;
+    expect(pane.classList).toContain('tl-split__pane');
+    expect(pane.classList).toContain('tl-region');
+    expect(pane.style.display).toBe('');
+    expect(pane.style.overflow).toBe('auto');
   });
 
   it('keeps the percent scale on the handle after a key', async () => {

@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -36,7 +37,11 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.layout.view.model.TreeSelectionBinding;
+import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.layout.view.table.DropTargetMode;
+import com.top_logic.layout.view.table.RowClassConfig;
+import com.top_logic.layout.view.table.RowClassFunction;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
@@ -60,10 +65,17 @@ import com.top_logic.table.impl.TreeRowSource;
  * </p>
  *
  * <p>
- * Everything else - the columns, the selection, the filter bar, the activation and the dragging of
- * rows - is that of every {@link AbstractTableElement}. The {@link Config#getDrops() drops} take a
+ * The selection is that of a tree, see {@link TreeSelectionBinding}: an object written to the
+ * selection channel is revealed - the rows above it are opened and its row is scrolled into view -,
+ * and when the selected object loses its row, the row it hung in becomes the selection.
+ * </p>
+ *
+ * <p>
+ * Everything else - the columns, the filter bar, the activation and the dragging of rows - is that
+ * of every {@link AbstractTableElement}. The {@link Config#getDrops() drops} take a
  * table's targets, and an insertion among the rows refers to the row it is made under as well as to
- * the row it is made before, as in a tree.
+ * the row it is made before, as in a tree. As a table, it marks its rows with the
+ * {@link Config#getRowClass() row class}.
  * </p>
  *
  * @implNote A drop is compiled with the {@link DropTargetMode#treeSignature()} of its target.
@@ -75,7 +87,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	 * Configuration for {@link TreeTableElement}.
 	 */
 	@TagName("tree-table")
-	public interface Config extends AbstractTableElement.Config, TreeStructureConfig {
+	public interface Config extends AbstractTableElement.Config, TreeStructureConfig, RowClassConfig {
 
 		/** Access to the default methods of this interface for the configuration proxy. */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -173,6 +185,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
 	private final List<DeclaredDrop> _drops;
 
+	/** The compiled {@link Config#getRowClass() row class function}. */
+	private final RowClassFunction _rowClass;
+
 	/**
 	 * Creates a {@link TreeTableElement} from configuration.
 	 */
@@ -181,6 +196,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		super(context, config);
 		_functions = new TreeFunctions(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().treeSignature());
+		_rowClass = RowClassFunction.compile(config);
 	}
 
 	@Override
@@ -190,9 +206,27 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		DefaultTreeUINodeModel treeModel = _functions.treeModel(builder, inputChannels);
 		NodeStructure structure = new NodeStructure(treeModel, _config.getCanExpandAll());
 
-		ReadOnlyTable<TreeRowSource<DefaultTreeUINode, Object>> table = createTable(context,
+		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
+		// The function saying what holds an object serves the observation (where an object that
+		// moved went, where an object of an observed type belongs) and the selection (which row an
+		// object of the channel has). The node of an object read from the channel is looked for in
+		// the tree displayed now, which is another one after a rebuild.
+		Function<Object, Object> parentFunction = _functions.parentFunction(inputChannels);
+		SelectionBinder<TreeSelectionBinding> selectionBinder = (tableControl, channel) -> {
+			TreeSelectionBinding binding = new TreeSelectionBinding(
+				TreeSelectionDisplay.of(tableControl, structure::model), structure::model,
+				TreeFunctions.nodeLocator(parentFunction), channel);
+			// The channel and the selection outlive the control, so the binding is dropped with it.
+			// It survives an attach/detach cycle, which only suspends the observation of the model:
+			// a selection written while the table is off screen is displayed when it returns.
+			tableControl.addCleanupAction(binding::dispose);
+			return binding;
+		};
+
+		ReadOnlyTable<TreeRowSource<DefaultTreeUINode, Object>, TreeSelectionBinding> table = createTable(context,
 			resolveRowType(structure.topLevelObjects()), ChannelInputs.arguments(inputChannels),
-			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, null);
+			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, rowCssClass,
+			selectionBinder);
 		TableViewControl<Object> control = table.control();
 		TreeRowSource<DefaultTreeUINode, Object> source = table.source();
 
@@ -200,9 +234,6 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		Runnable refresh = () -> {
 			source.refresh();
 			control.refreshData();
-			if (table.selectionBinding() != null) {
-				table.selectionBinding().rowsRefreshed();
-			}
 		};
 		ObservableTreeModel observableModel = new ObservableTreeModel(new ObservableTreeModel.Display() {
 			@Override
@@ -224,12 +255,25 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 			@Override
 			public void inputsChanged() {
-				// The rows and their cells stay; the criteria of the presets may read the inputs.
-				refreshPresets(table, ChannelInputs.arguments(inputChannels));
+				// The rows and their cells stay; the criteria of the presets and the row class may read
+				// the inputs.
+				if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+					control.refreshFilters();
+				}
+				if (rowCssClass != null) {
+					control.repaintRows();
+				}
 			}
-		}, treeModel, _functions::root, builder, _functions.parentFunction(inputChannels),
+		}, treeModel, _functions::root, builder, parentFunction,
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels)
 				.withRowIndependentInputs(inputRoles(context, inputChannels).rowIndependent());
+
+		// Every change of the tree makes the selection express itself on the rows displayed now:
+		// the rows are refreshed before, so a selected object that lost its row is gone from them.
+		TreeSelectionBinding selectionBinding = table.selectionBinding();
+		if (selectionBinding != null) {
+			observableModel.addStructureListener(selectionBinding::structureChanged);
+		}
 
 		// Opening a row computes the children of its node, whose objects are followed from then on.
 		source.addListener((from, to) -> observableModel.nodesComputed());
@@ -255,6 +299,13 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		NodeStructure(DefaultTreeUINodeModel model, boolean finite) {
 			_model = model;
 			_finite = finite;
+		}
+
+		/**
+		 * The model whose tree this structure is.
+		 */
+		DefaultTreeUINodeModel model() {
+			return _model;
 		}
 
 		/**

@@ -421,6 +421,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String NAMED_FILTER_DELETABLE = "deletable";
 
 	/**
+	 * Entry key of a {@link #NAMED_FILTERS} filter's {@link NamedFilter#cssClass() CSS class}, put
+	 * on its chip in either state. Present only for a filter that has one.
+	 */
+	private static final String NAMED_FILTER_CSS_CLASS = "cssClass";
+
+	/**
+	 * Entry key of the number of data rows a {@link NamedFilter#counted() counted}
+	 * {@link #NAMED_FILTERS} filter selects on its own, see {@link TableView#matchCount(NamedFilter)}.
+	 * Present only for a counted filter of a table whose rows can be counted.
+	 */
+	private static final String NAMED_FILTER_COUNT = "count";
+
+	/**
 	 * State key holding the {@link NamedFilter#id() identifier} of the filter the table currently
 	 * matches, empty when it matches none of them.
 	 */
@@ -865,6 +878,21 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Pushes the table again after the {@link TableView#namedFilters() named filters} were replaced
+	 * on the {@link #getView() view} directly, the rows and their content staying as they are.
+	 *
+	 * <p>
+	 * The filter bar displays the replaced filters - with the numbers of rows they select -, and
+	 * an active declared filter is applied again with its replaced criteria, so the displayed rows
+	 * are pushed again as well. No cell control is built again, in contrast to
+	 * {@link #refreshData()}.
+	 * </p>
+	 */
+	public void refreshFilters() {
+		buildFullState();
+	}
+
+	/**
 	 * Pushes the rows of the current window again, with the cell controls built for them.
 	 *
 	 * <p>
@@ -928,6 +956,29 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (_cursorIndex >= 0 && (_cursorIndex < _viewportStart || _cursorIndex >= _viewportStart + _viewportCount)) {
 			updateViewport(Math.max(0, _cursorIndex - _viewportCount / 2), _viewportCount);
 		}
+	}
+
+	/**
+	 * Expands the rows with the given {@link Row#key() row keys}, as the user does with their
+	 * toggles, and re-renders the rows.
+	 *
+	 * <p>
+	 * A row is expanded in the order the keys are given, so a row below another one becomes
+	 * displayed when the keys name the row above it first. A key of a row that is expanded already
+	 * changes nothing.
+	 * </p>
+	 *
+	 * @param keys
+	 *        The keys of the rows to expand.
+	 */
+	public void expandRows(Collection<?> keys) {
+		if (keys.isEmpty()) {
+			return;
+		}
+		for (Object key : keys) {
+			_view.setExpanded(key, true);
+		}
+		rebuildAfterRowChange();
 	}
 
 	/**
@@ -1033,6 +1084,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * filter set in the per-column dialog ends the match just like applying another named filter
 	 * does.
 	 * </p>
+	 *
+	 * <p>
+	 * The number of rows a {@link NamedFilter#counted() counted} filter selects is computed here
+	 * as well, so it follows every change of the rows - a {@link #refreshData()} after the
+	 * displayed objects changed, a {@link #refreshFilters()} after the declared filters were
+	 * resolved anew.
+	 * </p>
 	 */
 	private void refreshFilterBar() {
 		if (!_filterBar) {
@@ -1048,6 +1106,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				filterState.put(NAMED_FILTER_LABEL, label(resources, filter.label()));
 				filterState.put(NAMED_FILTER_DELETABLE,
 					Boolean.valueOf(filter.origin() == NamedFilter.Origin.SAVED));
+				if (filter.cssClass() != null) {
+					filterState.put(NAMED_FILTER_CSS_CLASS, filter.cssClass());
+				}
+				if (filter.counted()) {
+					int count = _view.matchCount(filter);
+					if (count != RowSource.UNKNOWN_COUNT) {
+						filterState.put(NAMED_FILTER_COUNT, Integer.valueOf(count));
+					}
+				}
 				filters.add(filterState);
 			}
 			putState(NAMED_FILTERS, filters);

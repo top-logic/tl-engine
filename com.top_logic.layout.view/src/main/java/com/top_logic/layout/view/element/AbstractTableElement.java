@@ -447,6 +447,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		/** Configuration name for {@link #getCriteria()}. */
 		String CRITERIA = "criteria";
 
+		/** Configuration name for {@link #getCount()}. */
+		String COUNT = "count";
+
+		/** Configuration name for {@link #getCssClass()}. */
+		String CSS_CLASS = "css-class";
+
 		/**
 		 * Technical name identifying this preset among the table's named filters.
 		 *
@@ -476,6 +482,40 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Name(CRITERIA)
 		@DefaultContainer
 		List<CriterionConfig> getCriteria();
+
+		/**
+		 * Whether this preset's chip shows the number of rows the preset selects after its label.
+		 *
+		 * <p>
+		 * The number counts the rows matching this preset's criteria alone - exactly the rows a
+		 * click on the chip shows. The column filters and the search the user currently applies to
+		 * the table do not change it, so every chip tells what it would show, whichever is active.
+		 * The number follows the rows of the table: it is computed again whenever they change, e.g.
+		 * after a commit touching objects of the table's observed types, without the page being
+		 * reloaded.
+		 * </p>
+		 *
+		 * <p>
+		 * A table whose rows cannot be counted without loading them all shows no number, even
+		 * if this is set.
+		 * </p>
+		 */
+		@Name(COUNT)
+		@Label("Show row count")
+		boolean getCount();
+
+		/**
+		 * A CSS class put on this preset's chip, whether the preset is active or not.
+		 *
+		 * <p>
+		 * It lets an application mark a preset of particular meaning - one selecting the items
+		 * waiting for someone, the overdue ones - with a style of its own. Without it, the chip looks
+		 * like every other preset's.
+		 * </p>
+		 */
+		@Name(CSS_CLASS)
+		@Nullable
+		String getCssClass();
 	}
 
 	/**
@@ -643,8 +683,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The name to display.
 	 * @param criteria
 	 *        The compiled criteria, in declaration order.
+	 * @param cssClass
+	 *        The {@link PresetConfig#getCssClass() CSS class} of the preset's chip, or {@code null}.
+	 * @param counted
+	 *        Whether the preset's chip shows the {@link PresetConfig#getCount() number of rows} it
+	 *        selects.
 	 */
-	private record CompiledPreset(String id, ResKey label, List<CompiledCriterion> criteria) {
+	private record CompiledPreset(String id, ResKey label, List<CompiledCriterion> criteria, String cssClass,
+			boolean counted) {
 		// Pure data carrier.
 	}
 
@@ -713,10 +759,46 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
-	 * A read-only table built by {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function)}.
+	 * Binds the selection of a table built by
+	 * {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
+	 * to its {@link Config#getSelection() selection channel}.
+	 *
+	 * @param <B>
+	 *        The type of the binding.
+	 */
+	@FunctionalInterface
+	protected interface SelectionBinder<B> {
+
+		/**
+		 * Binds the selection of the given control to the given channel, for as long as the control
+		 * lives.
+		 *
+		 * @param control
+		 *        The control displaying the table.
+		 * @param channel
+		 *        The selection channel.
+		 * @return The binding.
+		 */
+		B bind(TableViewControl<Object> control, ViewChannel channel);
+	}
+
+	/**
+	 * {@link SelectionBinder} of a table selecting its rows by a {@link TableSelectionBinding}.
+	 */
+	protected static final SelectionBinder<TableSelectionBinding> ROW_SELECTION = (control, channel) -> {
+		TableSelectionBinding binding = new TableSelectionBinding(control, channel);
+		control.addCleanupAction(binding::dispose);
+		return binding;
+	};
+
+	/**
+	 * A read-only table built by
+	 * {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
 	 *
 	 * @param <S>
 	 *        The type of the row source.
+	 * @param <B>
+	 *        The type of the binding of the selection channel.
 	 * @param control
 	 *        The control displaying the table.
 	 * @param view
@@ -732,9 +814,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * @param setups
 	 *        The descriptors of the declared columns.
 	 */
-	protected record ReadOnlyTable<S extends RowSource<Object>>(TableViewControl<Object> control,
+	protected record ReadOnlyTable<S extends RowSource<Object>, B>(TableViewControl<Object> control,
 			DefaultTableView<Object> view, S source, List<Column<Object, ?>> columns, List<String> declaredNames,
-			TableSelectionBinding selectionBinding, List<ColumnSetup> setups) {
+			B selectionBinding, List<ColumnSetup> setups) {
 		// Pure data.
 	}
 
@@ -759,10 +841,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * @param rowCssClass
 	 *        The CSS class of a row computed from its object, {@code null} for a table whose rows
 	 *        carry none.
+	 * @param selectionBinder
+	 *        Binds the selection of the table to the {@link Config#getSelection() selection
+	 *        channel}, if one is configured.
 	 */
-	protected final <S extends RowSource<Object>> ReadOnlyTable<S> createTable(ViewContext context,
+	protected final <S extends RowSource<Object>, B> ReadOnlyTable<S, B> createTable(ViewContext context,
 			TLStructuredType rowType, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
-			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass) {
+			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass,
+			SelectionBinder<B> selectionBinder) {
 		ViewCommandModel activation = activationModel(context);
 
 		List<ColumnDeclaration> declarations = columns(rowType);
@@ -807,11 +893,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		}
 
 		ChannelRef selectionRef = _config.getSelection();
-		TableSelectionBinding selectionBinding =
-			selectionRef != null ? new TableSelectionBinding(control, context.resolveChannel(selectionRef)) : null;
-		if (selectionBinding != null) {
-			control.addCleanupAction(selectionBinding::dispose);
-		}
+		B selectionBinding =
+			selectionRef != null ? selectionBinder.bind(control, context.resolveChannel(selectionRef)) : null;
 
 		TableFilterBinding filterBinding = filterBinding(context, control);
 		if (filterBinding != null) {
@@ -828,14 +911,23 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * from the inputs, so a changed input means other criteria - they are resolved again, and a chip
 	 * the user has applied goes on filtering by what it now means.
 	 *
+	 * <p>
+	 * Only the {@link ReadOnlyTable#view() view} takes up the resolved presets. A caller that does
+	 * not push the table again anyway - by {@link TableViewControl#refreshData()} after the rows
+	 * changed - pushes it by {@link TableViewControl#refreshFilters()} when this returns
+	 * {@code true}.
+	 * </p>
+	 *
 	 * @param inputValues
 	 *        The values of the input channels now.
+	 * @return Whether the table declares presets, so that its named filters were replaced.
 	 */
-	protected final void refreshPresets(ReadOnlyTable<?> table, Object[] inputValues) {
+	protected final boolean refreshPresets(ReadOnlyTable<?, ?> table, Object[] inputValues) {
 		if (_presets.isEmpty()) {
-			return;
+			return false;
 		}
 		table.view().setDeclaredFilters(declaredFilters(table.columns(), table.declaredNames(), inputValues));
+		return true;
 	}
 
 	/**
@@ -860,7 +952,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *
 	 * <p>
 	 * What a column shows or filters follows the channels its declaration reads - the
-	 * {@code inputs} of its functions and of its filter - only by the table being refreshed, which
+	 * {@link ColumnDeclaration#inputs() inputs} of its functions, of its filter, and of the scripts
+	 * computing its aggregate, its order, its tooltips and its cell classes, which for a column
+	 * without inputs of its own are the inputs of the table - only by the table being refreshed, which
 	 * builds the cells again and filters the rows anew. A change of such a "cell input" therefore
 	 * refreshes the table in any case. Every other input is cell-independent: where its change
 	 * leaves the rows equal, the cells stay, and only what is computed from the inputs apart from
@@ -963,7 +1057,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			for (CompiledCriterion criterion : preset.criteria()) {
 				criteria.add(criterion.evaluate(arguments));
 			}
-			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria));
+			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria,
+				preset.cssClass(), preset.counted()));
 		}
 		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns,
 			ColumnDeclarations.withheld(declaredNames, columns));
@@ -1026,7 +1121,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			}
 			ResKey label = presetConfig.getLabel();
 			result.add(new CompiledPreset(presetConfig.getName(),
-				label != null ? label : ResKey.text(presetConfig.getName()), criteria));
+				label != null ? label : ResKey.text(presetConfig.getName()), criteria,
+				presetConfig.getCssClass(), presetConfig.getCount()));
 		}
 		return result;
 	}

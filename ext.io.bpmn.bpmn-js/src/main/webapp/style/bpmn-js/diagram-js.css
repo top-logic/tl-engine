@@ -1,0 +1,691 @@
+/*
+ * diagram-js stylesheet as bundled with bpmn-js 3.0.4.
+ *
+ * All rules are scoped to the bpmn-js root element (.bjs-container), so that they do not affect
+ * other diagram-js based diagrams of the application. The .djs-cursor-* rules stay global, because
+ * diagram-js sets these classes on the document body.
+ */
+
+/**
+ * outline styles
+ */
+
+.bjs-container .djs-outline {
+  fill: none;
+  visibility: hidden;
+}
+
+.bjs-container .djs-element.hover .djs-outline,
+.bjs-container .djs-element.selected .djs-outline {
+  visibility: visible;
+  shape-rendering: crispEdges;
+  stroke-dasharray: 3,3;
+}
+
+.bjs-container .djs-element.selected .djs-outline {
+  stroke: #8888FF;
+  stroke-width: 1px;
+}
+
+.bjs-container .djs-element.hover .djs-outline {
+  stroke: #FF8888;
+  stroke-width: 1px;
+}
+
+.bjs-container .djs-shape.connect-ok .djs-visual > :nth-child(1) {
+  fill: #DCFECC /* light-green */ !important;
+}
+
+.bjs-container .djs-shape.connect-not-ok .djs-visual > :nth-child(1),
+.bjs-container .djs-shape.drop-not-ok .djs-visual > :nth-child(1) {
+  fill: #f9dee5 /* light-red */ !important;
+}
+
+.bjs-container .djs-shape.new-parent .djs-visual > :nth-child(1) {
+  fill: #F7F9FF !important;
+}
+
+.bjs-container svg.drop-not-ok {
+  background: #f9dee5 /* light-red */ !important;
+}
+
+.bjs-container svg.new-parent {
+  background: #F7F9FF /* light-blue */ !important;
+}
+
+.bjs-container .djs-connection.connect-ok .djs-visual > :nth-child(1),
+.bjs-container .djs-connection.drop-ok .djs-visual > :nth-child(1) {
+  stroke: #90DD5F /* light-green */ !important;
+}
+
+.bjs-container .djs-connection.connect-not-ok .djs-visual > :nth-child(1),
+.bjs-container .djs-connection.drop-not-ok .djs-visual > :nth-child(1) {
+  stroke: #E56283 /* light-red */ !important;
+}
+
+.bjs-container .drop-not-ok,
+.bjs-container .connect-not-ok {
+  cursor: not-allowed;
+}
+
+.bjs-container .djs-element.attach-ok .djs-visual > :nth-child(1) {
+  stroke-width: 5px !important;
+  stroke: rgba(255, 116, 0, 0.7) !important;
+}
+
+
+/**
+* Selection box style
+*
+*/
+.bjs-container .djs-lasso-overlay {
+  fill: rgb(255, 116, 0);
+  fill-opacity: 0.1;
+
+  stroke-dasharray: 5 1 3 1;
+  stroke: rgb(255, 116, 0);
+
+  shape-rendering: crispEdges;
+  pointer-events: none;
+}
+
+/**
+ * Resize styles
+ */
+.bjs-container .djs-resize-overlay {
+  fill: none;
+
+  stroke-dasharray: 5 1 3 1;
+  stroke: rgb(255, 116, 0);
+
+  pointer-events: none;
+}
+
+.bjs-container .djs-resizer-hit {
+  fill: none;
+  pointer-events: all;
+}
+
+.bjs-container .djs-resizer-visual {
+  fill: white;
+  stroke-width: 1px;
+  stroke: black;
+  shape-rendering: crispEdges;
+  stroke-opacity: 0.2;
+}
+
+.djs-cursor-resize-nwse,
+.bjs-container .djs-resizer-nw,
+.bjs-container .djs-resizer-se {
+  cursor: nwse-resize;
+}
+
+.djs-cursor-resize-nesw,
+.bjs-container .djs-resizer-ne,
+.bjs-container .djs-resizer-sw {
+  cursor: nesw-resize;
+}
+
+.bjs-container .djs-shape.djs-resizing > .djs-outline {
+  visibility: hidden !important;
+}
+
+.bjs-container .djs-shape.djs-resizing > .djs-resizer {
+  visibility: hidden;
+}
+
+.bjs-container .djs-dragger > .djs-resizer {
+  visibility: hidden;
+}
+
+/**
+ * drag styles
+ */
+.bjs-container .djs-dragger .djs-visual circle,
+.bjs-container .djs-dragger .djs-visual path,
+.bjs-container .djs-dragger .djs-visual polygon,
+.bjs-container .djs-dragger .djs-visual polyline,
+.bjs-container .djs-dragger .djs-visual rect,
+.bjs-container .djs-dragger .djs-visual text {
+  fill: none !important;
+  stroke: rgb(255, 116, 0) !important;
+}
+
+.bjs-container .djs-dragging {
+  opacity: 0.3;
+}
+
+.bjs-container .djs-dragging,
+.bjs-container .djs-dragging > * {
+  pointer-events: none !important;
+}
+
+.bjs-container .djs-dragging .djs-context-pad,
+.bjs-container .djs-dragging .djs-outline {
+  display: none !important;
+}
+
+/**
+ * no pointer events for visual
+ */
+.bjs-container .djs-visual,
+.bjs-container .djs-outline {
+  pointer-events: none;
+}
+
+/**
+ * all pointer events for hit shape
+ */
+.bjs-container .djs-shape .djs-hit {
+  pointer-events: all;
+}
+
+.bjs-container .djs-connection .djs-hit {
+  pointer-events: stroke;
+}
+
+/**
+ * shape / connection basic styles
+ */
+.bjs-container .djs-connection .djs-visual {
+  stroke-width: 2px;
+  fill: none;
+}
+
+.djs-cursor-grab {
+  cursor: -webkit-grab;
+  cursor: -moz-grab;
+  cursor: grab;
+}
+
+.djs-cursor-grabbing {
+  cursor: -webkit-grabbing;
+  cursor: -moz-grabbing;
+  cursor: grabbing;
+}
+
+.djs-cursor-crosshair {
+  cursor: crosshair;
+}
+
+.djs-cursor-move {
+  cursor: move;
+}
+
+.djs-cursor-resize-ns {
+  cursor: ns-resize;
+}
+
+.djs-cursor-resize-ew {
+  cursor: ew-resize;
+}
+
+
+/**
+ * snapping
+ */
+.bjs-container .djs-snap-line {
+  stroke: rgb(255, 195, 66);
+  stroke: rgba(255, 195, 66, 0.50);
+  stroke-linecap: round;
+  stroke-width: 2px;
+  pointer-events: none;
+}
+
+/**
+ * snapping
+ */
+.bjs-container .djs-crosshair {
+  stroke: #555;
+  stroke-linecap: round;
+  stroke-width: 1px;
+  pointer-events: none;
+  shape-rendering: crispEdges;
+  stroke-dasharray: 5, 5;
+}
+
+/**
+ * palette
+ */
+
+.bjs-container .djs-palette {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+
+  box-sizing: border-box;
+  width: 48px;
+}
+
+.bjs-container .djs-palette .separator {
+  margin: 0 5px;
+  padding-top: 5px;
+
+  border: none;
+  border-bottom: solid 1px #DDD;
+
+  clear: both;
+}
+
+.bjs-container .djs-palette .entry:before {
+  vertical-align: middle;
+}
+
+.bjs-container .djs-palette .djs-palette-toggle {
+  cursor: pointer;
+}
+
+.bjs-container .djs-palette .entry,
+.bjs-container .djs-palette .djs-palette-toggle {
+  color: #333;
+  font-size: 30px;
+
+  text-align: center;
+}
+
+.bjs-container .djs-palette .entry {
+  float: left;
+}
+
+.bjs-container .djs-palette .entry img {
+  max-width: 100%;
+}
+
+.bjs-container .djs-palette .djs-palette-entries:after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+.bjs-container .djs-palette .djs-palette-toggle:hover {
+  background: #666;
+}
+
+.bjs-container .djs-palette .entry:hover {
+  color: rgb(255, 116, 0);
+}
+
+.bjs-container .djs-palette .highlighted-entry {
+  color: rgb(255, 116, 0) !important;
+}
+
+.bjs-container .djs-palette .entry,
+.bjs-container .djs-palette .djs-palette-toggle {
+  width: 46px;
+  height: 46px;
+  line-height: 46px;
+  cursor: default;
+}
+
+/**
+ * Palette open / two-column layout is controlled via
+ * classes on the palette. Events to hook into palette
+ * changed life-cycle are available in addition.
+ */
+.bjs-container .djs-palette.two-column.open {
+  width: 94px;
+}
+
+.bjs-container .djs-palette:not(.open) .djs-palette-entries {
+  display: none;
+}
+
+.bjs-container .djs-palette:not(.open) {
+  overflow: hidden;
+}
+
+.bjs-container .djs-palette.open .djs-palette-toggle {
+  display: none;
+}
+
+/**
+ * context-pad
+ */
+.bjs-container .djs-overlay-context-pad {
+  width: 72px;
+}
+
+.bjs-container .djs-context-pad {
+  position: absolute;
+  display: none;
+  pointer-events: none;
+}
+
+.bjs-container .djs-context-pad .entry {
+  width: 22px;
+  height: 22px;
+  text-align: center;
+  display: inline-block;
+  font-size: 22px;
+  margin: 0 2px 2px 0;
+
+  border-radius: 3px;
+
+  cursor: default;
+
+  background-color: #FEFEFE;
+  box-shadow: 0 0 2px 1px #FEFEFE;
+  pointer-events: all;
+}
+
+.bjs-container .djs-context-pad .entry:before {
+  vertical-align: top;
+}
+
+.bjs-container .djs-context-pad .entry:hover {
+  background: rgb(255, 252, 176);
+}
+
+.bjs-container .djs-context-pad.open {
+  display: block;
+}
+
+/**
+ * popup styles
+ */
+.bjs-container .djs-popup .entry {
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* larger font for prefixed icons */
+.bjs-container .djs-popup .entry:before {
+  vertical-align: middle;
+  font-size: 20px;
+}
+
+.bjs-container .djs-popup .entry > span {
+  vertical-align: middle;
+  font-size: 14px;
+}
+
+.bjs-container .djs-popup .entry:hover,
+.bjs-container .djs-popup .entry.active:hover {
+  background: rgb(255, 252, 176);
+}
+
+.bjs-container .djs-popup .entry.disabled {
+  background: inherit;
+}
+
+.bjs-container .djs-popup .djs-popup-header .entry {
+  display: inline-block;
+  padding: 2px 3px 2px 3px;
+
+  border: solid 1px transparent;
+  border-radius: 3px;
+}
+
+.bjs-container .djs-popup .djs-popup-header .entry.active {
+  color: rgb(255, 116, 0);
+  border: solid 1px rgb(255, 116, 0);
+  background-color: #F6F6F6;
+}
+
+.bjs-container .djs-popup-body .entry {
+  padding: 4px 10px 4px 5px;
+}
+
+.bjs-container .djs-popup-body .entry > span {
+  margin-left: 5px;
+}
+
+.bjs-container .djs-popup-body {
+  background-color: #FEFEFE;
+}
+
+.bjs-container .djs-popup-header {
+  border-bottom: 1px solid #DDD;
+}
+
+.bjs-container .djs-popup-header .entry {
+  margin: 1px;
+  margin-left: 3px;
+}
+
+.bjs-container .djs-popup-header .entry:last-child {
+  margin-right: 3px;
+}
+
+/**
+ * popup / palette styles
+ */
+.bjs-container .djs-popup, .bjs-container .djs-palette {
+  background: #FAFAFA;
+  border: solid 1px #CCC;
+  border-radius: 2px;
+}
+
+/**
+ * touch
+ */
+
+.bjs-container .djs-shape,
+.bjs-container .djs-connection {
+  touch-action: none;
+}
+
+.bjs-container .djs-segment-dragger,
+.bjs-container .djs-bendpoint {
+  display: none;
+}
+
+/**
+ * bendpoints
+ */
+.bjs-container .djs-segment-dragger .djs-visual {
+  fill: rgba(255, 255, 121, 0.2);
+  stroke-width: 1px;
+  stroke-opacity: 1;
+  stroke: rgba(255, 255, 121, 0.3);
+}
+
+.bjs-container .djs-bendpoint .djs-visual {
+  fill: rgba(255, 255, 121, 0.8);
+  stroke-width: 1px;
+  stroke-opacity: 0.5;
+  stroke: black;
+}
+
+.bjs-container .djs-segment-dragger:hover,
+.bjs-container .djs-bendpoints.hover .djs-segment-dragger,
+.bjs-container .djs-bendpoints.selected .djs-segment-dragger,
+.bjs-container .djs-bendpoint:hover,
+.bjs-container .djs-bendpoints.hover .djs-bendpoint,
+.bjs-container .djs-bendpoints.selected .djs-bendpoint {
+  display: block;
+}
+
+.bjs-container .djs-drag-active .djs-bendpoints * {
+  display: none;
+}
+
+.bjs-container .djs-bendpoints:not(.hover) .floating {
+  display: none;
+}
+
+.bjs-container .djs-segment-dragger:hover .djs-visual,
+.bjs-container .djs-segment-dragger.djs-dragging .djs-visual,
+.bjs-container .djs-bendpoint:hover .djs-visual,
+.bjs-container .djs-bendpoint.floating .djs-visual {
+  fill: yellow;
+  stroke-opacity: 0.5;
+  stroke: black;
+}
+
+.bjs-container .djs-bendpoint.floating .djs-hit {
+  pointer-events: none;
+}
+
+.bjs-container .djs-segment-dragger .djs-hit,
+.bjs-container .djs-bendpoint .djs-hit {
+  pointer-events: all;
+  fill: none;
+}
+
+.bjs-container .djs-segment-dragger.horizontal .djs-hit {
+  cursor: ns-resize;
+}
+
+.bjs-container .djs-segment-dragger.vertical .djs-hit {
+  cursor: ew-resize;
+}
+
+.bjs-container .djs-segment-dragger.djs-dragging .djs-hit {
+  pointer-events: none;
+}
+
+.bjs-container .djs-updating,
+.bjs-container .djs-updating > * {
+  pointer-events: none !important;
+}
+
+.bjs-container .djs-updating .djs-context-pad,
+.bjs-container .djs-updating .djs-outline,
+.bjs-container .djs-updating .djs-bendpoint,
+.bjs-container .connect-ok .djs-bendpoint,
+.bjs-container .connect-not-ok .djs-bendpoint,
+.bjs-container .drop-ok .djs-bendpoint,
+.bjs-container .drop-not-ok .djs-bendpoint {
+  display: none !important;
+}
+
+.bjs-container .djs-segment-dragger.djs-dragging,
+.bjs-container .djs-bendpoint.djs-dragging {
+  display: block;
+  opacity: 1.0;
+}
+
+.bjs-container .djs-segment-dragger.djs-dragging .djs-visual,
+.bjs-container .djs-bendpoint.djs-dragging .djs-visual {
+  fill: yellow;
+  stroke-opacity: 0.5;
+}
+
+
+/**
+ * tooltips
+ */
+.bjs-container .djs-tooltip-error {
+  font-size: 11px;
+  line-height: 18px;
+  text-align: left;
+
+  padding: 5px;
+
+  opacity: 0.7;
+}
+
+.bjs-container .djs-tooltip-error > * {
+  width: 160px;
+
+  background: rgb(252, 236, 240);
+  color: rgb(158, 76, 76);
+  padding: 3px 7px;
+  border-radius: 5px;
+  border-left: solid 5px rgb(174, 73, 73);
+}
+
+.bjs-container .djs-tooltip-error:hover {
+  opacity: 1;
+}
+
+
+/**
+ * search pad
+ */
+.bjs-container .djs-search-container {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+
+  width: 25%;
+  min-width: 300px;
+  max-width: 400px;
+  z-index: 10;
+
+  font-size: 1.05em;
+  opacity: 0.9;
+  background: #FAFAFA;
+  border: solid 1px #CCC;
+  border-radius: 2px;
+}
+
+.bjs-container .djs-search-container:not(.open) {
+  display: none;
+}
+
+.bjs-container .djs-search-input input {
+  font-size: 1.05em;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+}
+
+.bjs-container .djs-search-input input:focus {
+  outline: none;
+  border-color: #52B415;
+}
+
+.bjs-container .djs-search-results {
+  position: relative;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.bjs-container .djs-search-results:hover {
+  /*background: #fffdd7;*/
+  cursor: pointer;
+}
+
+.bjs-container .djs-search-result {
+  width: 100%;
+  padding: 6px 10px;
+  background: white;
+  border-bottom: solid 1px #AAA;
+  border-radius: 1px;
+}
+
+.bjs-container .djs-search-highlight {
+  color: black;
+}
+
+.bjs-container .djs-search-result-primary {
+  margin: 0 0 10px;
+}
+
+.bjs-container .djs-search-result-secondary {
+  font-family: monospace;
+  margin: 0;
+}
+
+.bjs-container .djs-search-result:hover {
+  background: #fdffd6;
+}
+
+.bjs-container .djs-search-result-selected {
+  background: #fffcb0;
+}
+
+.bjs-container .djs-search-result-selected:hover {
+  background: #f7f388;
+}
+
+.bjs-container .djs-search-overlay {
+  background: yellow;
+  opacity: 0.3;
+}
+
+/**
+ * hidden styles
+ */
+.bjs-container .djs-element-hidden,
+.bjs-container .djs-element-hidden .djs-hit,
+.bjs-container .djs-element-hidden .djs-outline,
+.bjs-container .djs-label-hidden .djs-label {
+  display: none !important;
+}

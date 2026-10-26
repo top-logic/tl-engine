@@ -346,6 +346,29 @@ describe('a streaming answer', () => {
    * deltas is a quarter of the time, and the shape still shows - the old rebuild churns thousands
    * of nodes over the last 25 deltas, against the few dozen allowed here.
    */
+  /**
+   * Line ends inside and at the start of the deltas are line breaks while the answer streams, as
+   * they are once it is complete - an answer of one number per line, as a coding agent streams it.
+   */
+  it('keeps the line ends of the deltas', async () => {
+    const container = document.createElement('div')
+    document.body.append(container)
+    const root = createRoot(container)
+    mounted = root
+
+    let text = ''
+    for (const delta of ['1', '\n2\n3', '\n4\n']) {
+      text += delta
+      root.render(React.createElement(Markdown, { text, streaming: true, labels }))
+      await settle()
+    }
+    expect(container.querySelector('p')?.innerHTML).toBe('1<br>2<br>3<br>4')
+
+    root.render(React.createElement(Markdown, { text, streaming: false, labels }))
+    await settle()
+    expect(container.querySelector('p')?.innerHTML).toBe('1<br>2<br>3<br>4')
+  })
+
   it('extends the answer instead of rebuilding it', async () => {
     const container = document.createElement('div')
     document.body.append(container)

@@ -6,15 +6,12 @@
 package com.top_logic.tl.ai.core.execution;
 
 import java.util.List;
-import java.util.function.Supplier;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -25,18 +22,16 @@ import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 
 /**
  * Runs an agent through {@link AgentFactory} with persistent execution recording.
  *
  * <p>
- * This is the preferred entry point for running agents: it wraps the caller's event listener in
- * an {@link ExecutionRecorder}, so every run leaves an {@link AgentExecution} row — created with
+ * This is the preferred entry point for running agents: it records the run through a
+ * {@link RunRecording} over the caller's event listener, so every run leaves an {@link AgentExecution} row — created with
  * status RUNNING before the first model call and finalized with stop reason, token usage, error
  * message and the serialized per-run transcript on any exit, including exceptional ones. The
  * execution is recorded against the {@link AgentSession} captured at call time, so a completed
@@ -109,38 +104,16 @@ public final class AgentRunner {
 			ConversationMemory memory, ToolContext context, AgentEventListener listener,
 			ToolRegistry sessionRegistry, ConversationLog log, AgentSession session,
 			AgentExecution parentExecution, AgentFactory.RunOverrides overrides) {
-		// Ensure the run's turns land in the log that becomes the transcript. Callers that wire a
-		// ConversationLogListener over this log themselves (e.g. the chat UI) already record into
-		// it; entry points that don't (e.g. the TL-Script functions, which pass a no-op listener)
-		// would otherwise serialize an empty log. This closes that gap for every caller.
-		AgentEventListener downstream = withTranscriptRecording(listener, log);
-
-		// Entry points may start the run's turn before invoking the loop (chat records the
-		// user message first); an open current turn belongs to this run, not to history.
-		int turnsBefore = log != null
-			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
-			: 0;
-
-		AgentEventListener effectiveListener = downstream;
-		ExecutionRecorder recorder = null;
-		if (session != null) {
-			recorder = new ExecutionRecorder(session, agentName, parentExecution,
-				context.executionHandle(), downstream, checkpointOf(log, turnsBefore));
-			effectiveListener = recorder;
-		} else {
-			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
-				AgentRunner.class);
-		}
+		RunRecording recording = RunRecording.open(agentName, session, parentExecution,
+			context.executionHandle(), log, listener);
 
 		AgentFactory.RunResult runResult;
 		try (ConversationRegistry registry = bindConversationRegistry(session, parentExecution)) {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
-				context, effectiveListener, sessionRegistry,
+				context, recording, sessionRegistry,
 				overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
 		} catch (RuntimeException ex) {
-			if (recorder != null) {
-				recorder.complete(transcriptOf(log, turnsBefore), ex);
-			}
+			recording.fail(ex);
 			throw ex;
 		}
 
@@ -148,14 +121,12 @@ public final class AgentRunner {
 		if (log != null) {
 			response = CitationValidator.apply(log, response, context.readingList()).text();
 		}
-		if (recorder != null) {
-			recorder.completeWithLatestTranscript(finalTranscriptOf(log, turnsBefore), response, null);
-		}
-		// The recorder's result carries the provider's own error message (it saw the ProviderError
+		recording.finish(response);
+		// The recording's result carries the provider's own error message (it saw the ProviderError
 		// event); the loop's own result is the fallback for an unrecorded run.
 		return new RecordedRun(response, runResult.registry(),
-			recorder != null && recorder.result() != null ? recorder.result() : runResult.result(),
-			recorder != null ? recorder.execution() : null);
+			recording.result() != null ? recording.result() : runResult.result(),
+			recording.execution());
 	}
 
 	/**
@@ -167,15 +138,15 @@ public final class AgentRunner {
 	 * <p>
 	 * This entry point exists for callers that cannot build their loop from an agent name via
 	 * {@link AgentFactory} - notably asynchronous subagents, which run a specially built,
-	 * depth-limited loop. They get identical transcript recording ({@link #withTranscriptRecording}
-	 * over {@code log} plus an {@link ExecutionRecorder}) without duplicating that wiring.
+	 * depth-limited loop. They get identical recording through {@link RunRecording} without
+	 * duplicating that wiring.
 	 * </p>
 	 *
 	 * <p>
 	 * The caller owns the {@code conversation} and {@code log} (including any user turn seeded
 	 * before the run); the returned {@link RecordedRun} carries no response text or tool registry
 	 * (both {@code null}) - the caller extracts what it needs from the conversation it passed in.
-	 * On an exception the recorder is finalized with the failure and the exception is rethrown.
+	 * On an exception the recording is finalized with the failure and the exception is rethrown.
 	 * </p>
 	 *
 	 * @param loop
@@ -205,45 +176,24 @@ public final class AgentRunner {
 		// which agent the run serves. Published as plain data for the run's tools to read.
 		context.executionHandle().setAgentName(agentName);
 
-		AgentEventListener downstream = withTranscriptRecording(listener, log);
-
-		// Callers may seed the run's first turn (e.g. the subagent's user message) before the loop;
-		// an open current turn belongs to this run, not to history.
-		int turnsBefore = log != null
-			? log.turns().size() - (log.currentTurn() != null ? 1 : 0)
-			: 0;
-
-		AgentEventListener effectiveListener = downstream;
-		ExecutionRecorder recorder = null;
-		if (session != null) {
-			recorder = new ExecutionRecorder(session, agentName, parentExecution,
-				context.executionHandle(), downstream, checkpointOf(log, turnsBefore));
-			effectiveListener = recorder;
-		} else {
-			Logger.info("Agent run of '" + agentName + "' not recorded: no session given.",
-				AgentRunner.class);
-		}
+		RunRecording recording = RunRecording.open(agentName, session, parentExecution,
+			context.executionHandle(), log, listener);
 
 		AgentResult result;
 		try {
 			// A pre-built loop serves a subagent, which brings no session memory: it gets one over its
 			// own conversation, so that it compacts like a chat run instead of overflowing.
-			result = loop.run(conversation, CompactionStrategies.forDefaultModel(), context, effectiveListener);
+			result = loop.run(conversation, CompactionStrategies.forDefaultModel(), context, recording);
 		} catch (RuntimeException ex) {
-			if (recorder != null) {
-				recorder.complete(transcriptOf(log, turnsBefore), ex);
-			}
+			recording.fail(ex);
 			throw ex;
 		}
 
 		if (log != null) {
 			CitationValidator.apply(log, lastAssistantText(log), context.readingList());
 		}
-		if (recorder != null) {
-			recorder.completeWithLatestTranscript(finalTranscriptOf(log, turnsBefore), null, null);
-		}
-		return new RecordedRun(null, null, result,
-			recorder != null ? recorder.execution() : null);
+		recording.finish(null);
+		return new RecordedRun(null, null, result, recording.execution());
 	}
 
 	/**
@@ -287,93 +237,6 @@ public final class AgentRunner {
 			if (lease != null) {
 				lease.close();
 			}
-		}
-	}
-
-	/**
-	 * Returns a listener that additionally records the run's events into {@code log} (the transcript
-	 * source), unless {@code listener} already dispatches to a recorder for that log.
-	 *
-	 * <p>
-	 * The recorder used is the {@link ConversationLogListener} bound to the current thread when it
-	 * targets {@code log} (so tool-driven parts and loop events share one listener); otherwise a
-	 * fresh {@link ConversationLogListener} over {@code log} is created. When {@code log} is
-	 * <code>null</code> no transcript is kept and {@code listener} is returned unchanged.
-	 * </p>
-	 */
-	private static AgentEventListener withTranscriptRecording(AgentEventListener listener,
-			ConversationLog log) {
-		if (log == null) {
-			return listener;
-		}
-		ConversationLogListener bound = ConversationLogListener.current();
-		ConversationLogListener transcriptRecorder =
-			(bound != null && bound.log() == log) ? bound : new ConversationLogListener(log);
-		if (listener != null && listener.dispatchesTo(transcriptRecorder)) {
-			return listener;
-		}
-		return listener == null
-			? transcriptRecorder
-			: new CompositeAgentEventListener(transcriptRecorder, listener);
-	}
-
-	/**
-	 * The run's transcript while it is still going, for the recorder to checkpoint (#598), or
-	 * <code>null</code> when the run keeps no log.
-	 *
-	 * <p>
-	 * The same slice of the log that {@link #transcriptOf(ConversationLog, int)} writes at the end,
-	 * open turn included - which is the point: the open turn is the one a restart would otherwise
-	 * lose.
-	 * </p>
-	 */
-	private static Supplier<String> checkpointOf(ConversationLog log, int turnsBefore) {
-		return log == null ? null : () -> transcriptOf(log, turnsBefore);
-	}
-
-	/**
-	 * The run's final transcript, serialized when the store writes it rather than now.
-	 *
-	 * <p>
-	 * A background subagent the run started may end in between, and its part has to be written in
-	 * its ended form - see {@link ExecutionRecorder#completeWithLatestTranscript(Supplier, String, Throwable)}.
-	 * The run's turns are fixed now, though: a run the same log starts next must not end up in this
-	 * one's transcript.
-	 * </p>
-	 */
-	private static Supplier<String> finalTranscriptOf(ConversationLog log, int turnsBefore) {
-		if (log == null) {
-			return () -> null;
-		}
-		List<Turn> runTurns = List.copyOf(runTurns(log, turnsBefore));
-		return () -> {
-			try {
-				return ConversationLogSerializer.toJson(runTurns);
-			} catch (RuntimeException ex) {
-				Logger.warn("Failed to serialize run transcript: " + ex.getMessage(), ex, AgentRunner.class);
-				return null;
-			}
-		};
-	}
-
-	private static List<Turn> runTurns(ConversationLog log, int turnsBefore) {
-		List<Turn> turns = log.turns();
-		return turns.subList(Math.min(turnsBefore, turns.size()), turns.size());
-	}
-
-	/**
-	 * Serializes the turns the current run appended to the log, or <code>null</code> if the log
-	 * is unavailable or serialization fails.
-	 */
-	private static String transcriptOf(ConversationLog log, int turnsBefore) {
-		if (log == null) {
-			return null;
-		}
-		try {
-			return ConversationLogSerializer.toJson(runTurns(log, turnsBefore));
-		} catch (RuntimeException ex) {
-			Logger.warn("Failed to serialize run transcript: " + ex.getMessage(), ex, AgentRunner.class);
-			return null;
 		}
 	}
 

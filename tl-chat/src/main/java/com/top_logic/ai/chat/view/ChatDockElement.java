@@ -27,6 +27,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.element.ContentControls;
 
 /**
  * Declarative {@code <chat-dock/>} element: a floating launcher that opens the chat over the page.
@@ -169,10 +170,18 @@ public class ChatDockElement implements UIElement {
 		 *
 		 * <p>
 		 * Any view element; normally one {@code <chat>} holding the conversation and whatever else
-		 * the application wants beside it. Write <b>one</b> element: the engine's fill rule
-		 * ({@code .tlStack:has(> .tlPanel--fill)}) looks one level deep, so a second child adds a
-		 * wrapping stack and the conversation loses the bounded height it scrolls inside.
+		 * the application wants beside it. The content takes the height of the open panel, and a
+		 * conversation inside scrolls there instead of growing with its transcript. Several children
+		 * stand one below the other, and the ones that fill share the height the others leave.
 		 * </p>
+		 *
+		 * @implNote The dock's stylesheet stretches a {@code <chat>}, a {@code <stack>} or a
+		 *           {@code <panel>} placed here over the panel's body, and the body ends the view
+		 *           layer's fill chain (the fill contract of the article {@code view-layer/basics}),
+		 *           so the conversation's {@code <panel fill="true">} resolves its height against the
+		 *           body and nothing outside the dock reacts to it. Several children are combined
+		 *           into one stack ({@link ContentControls#toControl(List, ViewContext)}), which the
+		 *           body stretches alike.
 		 */
 		@Name(CONTENT)
 		@Label("Content")

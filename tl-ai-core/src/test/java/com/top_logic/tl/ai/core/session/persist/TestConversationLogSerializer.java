@@ -86,6 +86,22 @@ public class TestConversationLogSerializer extends TestCase {
 		assertEquals(started.plusSeconds(19), restored.assistantParts().get(0).timestamp());
 	}
 
+	/**
+	 * A turn read back keeps the ID it was recorded with: the run that ended with it - its cost,
+	 * its start and its end - is found by that ID when the chat is opened again.
+	 */
+	public void testTheTurnKeepsItsId() {
+		ConversationLog log = new ConversationLog();
+		Turn turn = log.startTurn();
+		turn.setUserParts(List.of(new Part.TextPart("u1", turn.timestamp(), "Hello")));
+		log.completeTurn();
+
+		Turn restored =
+			ConversationLogSerializer.fromJson(ConversationLogSerializer.toJson(log)).turns().get(0);
+
+		assertEquals(turn.id(), restored.id());
+	}
+
 	/** A transcript written before the field existed has no context, not an empty one. */
 	public void testATurnWithoutContextRestoresNone() {
 		ConversationLog log = new ConversationLog();

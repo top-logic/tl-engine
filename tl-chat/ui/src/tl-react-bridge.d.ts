@@ -24,6 +24,12 @@ declare module 'tl-react-bridge' {
    */
   export const TLChild: ReactTypes.FC<{ control: unknown }>
 
+  /**
+   * Ends the view layer's fill chain for the children rendered inside: a child that fills resolves
+   * its height against the element around them, and nothing further out reacts to it.
+   */
+  export const FillBarrier: ReactTypes.FC<{ children?: ReactTypes.ReactNode }>
+
   export function useTLState(): Record<string, unknown>
 
   /**

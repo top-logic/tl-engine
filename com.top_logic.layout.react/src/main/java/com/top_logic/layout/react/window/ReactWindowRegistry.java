@@ -158,6 +158,15 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * The registry of the given session, or {@code null} if the session has none yet.
+	 *
+	 * @see #forSession(HttpSession)
+	 */
+	public static ReactWindowRegistry lookup(HttpSession session) {
+		return (ReactWindowRegistry) session.getAttribute(SESSION_ATTRIBUTE_KEY);
+	}
+
+	/**
 	 * Gets the registry for the given session, creating it if necessary.
 	 */
 	public static ReactWindowRegistry forSession(HttpSession session) {
@@ -208,6 +217,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 *
 	 * @param session
 	 *        The session the request belongs to, read for its inactivity interval.
+	 *
+	 * @see com.top_logic.layout.react.servlet.SessionActivityFilter
 	 *
 	 * @implNote The reference point passed on is the current time rather than
 	 *           {@link HttpSession#getLastAccessedTime()}: the latter reports the request before

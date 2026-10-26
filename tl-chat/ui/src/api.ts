@@ -1,3 +1,4 @@
+import type { ConversationFeatures } from './features'
 import { argsSummary } from './plain-text'
 import { draftToText, parseDraft, referenceSummary } from './reference'
 import { chatFetch } from './stale-window'
@@ -171,6 +172,8 @@ export interface SessionDetail {
   /** Context window of the model that ran the last turn; zero when that model is unknown here. */
   contextWindow?: number
   lastModel?: string
+  /** The recorded runs, by the last turn each of them wrote. */
+  runs?: RecordedRun[]
   /** Answer ratings recorded in this session, so a reopened chat shows them again. */
   feedback?: MessageFeedback[]
   lastEffort?: string
@@ -183,6 +186,8 @@ export interface SessionDetail {
    * had got, in the count every `text_delta` carries as `end`. Absent when no run was in flight.
    */
   inFlight?: { streamedChars?: number }
+  /** Which functions beyond sending this conversation supports; read with `readFeatures`. */
+  features?: Partial<ConversationFeatures>
 }
 
 export async function loadSession(at: ChatAddress, id: string): Promise<SessionDetail> {
@@ -201,7 +206,10 @@ export async function deleteSession(at: ChatAddress, id: string): Promise<void> 
   if (!res.ok) throw new Error(`delete failed (${res.status})`)
 }
 
-export async function sendMessage(at: ChatAddress, payload: SendPayload): Promise<{ taskId?: string; status: string }> {
+export async function sendMessage(
+  at: ChatAddress,
+  payload: SendPayload,
+): Promise<{ taskId?: string; status: string; features?: Partial<ConversationFeatures> }> {
   const res = await chatFetch(withWindow('/chat/send', at), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -214,14 +222,18 @@ export async function sendMessage(at: ChatAddress, payload: SendPayload): Promis
   if (res.status === 429) {
     throw await refused(res)
   }
-  const data = (await res.json()) as { taskId?: string; status?: string }
+  const data = (await res.json()) as {
+    taskId?: string
+    status?: string
+    features?: Partial<ConversationFeatures>
+  }
   if (res.status === 409 || data.status === 'busy') {
     throw new Error('busy')
   }
   if (!res.ok || data.status === 'error') {
     throw new Error(data.status ?? `send failed (${res.status})`)
   }
-  return { taskId: data.taskId, status: data.status ?? 'processing' }
+  return { taskId: data.taskId, status: data.status ?? 'processing', features: data.features }
 }
 
 /**
@@ -549,7 +561,7 @@ export async function loadSubagentTranscript(at: ChatAddress, id: string, runId?
       credentials: 'include',
     }),
   )
-  return turnsJsonToMessages(detail.turnsJson)
+  return turnsJsonToMessages(detail.turnsJson, detail.runs)
 }
 
 export function fileToAttachment(file: File): Promise<Attachment> {
@@ -750,7 +762,49 @@ function opensWithSubagentNews(turn: PersistedTurn): boolean {
   return first?.type === 'system' && first.systemData?.eventType === 'SUBAGENT_RESULT'
 }
 
-export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[] {
+/** The cost fields of a recorded run, none when it reported no cost. */
+function costOf(run: RecordedRun | undefined): { cost?: number; currency?: string } {
+  return run && run.currency ? { cost: run.cost, currency: run.currency } : {}
+}
+
+/** What the history knows about one recorded run, by the last turn it wrote. */
+export interface RecordedRun {
+  turnId: string
+  /** When the run reported its start, in milliseconds since the epoch; zero if not recorded. */
+  startedAt?: number
+  /** When the run ended, in milliseconds since the epoch; zero while it has not ended. */
+  endedAt?: number
+  /** The cost in `currency`; absent or zero without a currency. */
+  cost?: number
+  /** Empty or absent when the run reported no cost. */
+  currency?: string
+}
+
+/**
+ * Start and duration of the run meta line of a restored turn, `null` for none.
+ *
+ * Measured the way a live run is: from when the run reported its start to its end, both as
+ * recorded with the run that ended with this turn - a turn starts with the user's message, which may
+ * be well before the process answering it is running. A turn without such a run (one the run did
+ * not end with, a transcript older than the recorded times) is measured from its own start to its
+ * last recorded part; one whose parts carry no later stamp shows no duration rather than a
+ * fabricated one.
+ */
+function restoredRunSpan(
+  turn: PersistedTurn,
+  run: RecordedRun | undefined,
+): { startedAt: number; durationMs: number } | null {
+  if (run && run.startedAt && run.endedAt && run.startedAt >= turn.timestamp && run.endedAt >= run.startedAt) {
+    return { startedAt: run.startedAt, durationMs: run.endedAt - run.startedAt }
+  }
+  const lastPartAt = (turn.assistantParts ?? []).reduce(
+    (latest, part) => Math.max(latest, part.timestamp ?? 0),
+    0,
+  )
+  return lastPartAt > turn.timestamp ? { startedAt: turn.timestamp, durationMs: lastPartAt - turn.timestamp } : null
+}
+
+export function turnsJsonToMessages(turnsJson: string | undefined, runs?: RecordedRun[]): ChatMessage[] {
   if (!turnsJson) return []
   let turns: PersistedTurn[]
   try {
@@ -781,20 +835,16 @@ export function turnsJsonToMessages(turnsJson: string | undefined): ChatMessage[
         ...(woken.length ? { woken } : {}),
       })
     }
-    // "Worked for" on a restored turn is measured the same way as on a live one: from when the turn
-    // started to its last recorded part. Turns whose parts carry no later stamp show no duration
-    // rather than a fabricated one.
-    const lastPartAt = (turn.assistantParts ?? []).reduce(
-      (latest, part) => Math.max(latest, part.timestamp ?? 0),
-      0,
-    )
-    if (lastPartAt > turn.timestamp) {
+    const run = runs?.find((item) => item.turnId === turn.id)
+    const span = restoredRunSpan(turn, run)
+    if (span) {
       msgs.push({
         type: 'run_meta',
         id: `${turn.id}-run`,
         runId: turn.id,
-        startedAt: turn.timestamp,
-        durationMs: lastPartAt - turn.timestamp,
+        startedAt: span.startedAt,
+        durationMs: span.durationMs,
+        ...costOf(run),
         timestamp: turn.timestamp,
       })
     }

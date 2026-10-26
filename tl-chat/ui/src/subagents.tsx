@@ -1,5 +1,6 @@
 import { React } from 'tl-react-bridge'
 import { formatTokens } from './context-usage'
+import { formatMoney } from './money'
 import { plainText } from './plain-text'
 import type { bundle } from './i18n'
 import { isEnded, type ChatMessage, type SubagentActivity, type SubagentBudget, type SubagentLive } from './types'
@@ -67,19 +68,6 @@ export function subagentCosts(
         : undefined
   if (share !== undefined && (tokens > 0 || money > 0)) parts.push(labels.subagentsBudgetShare(percent(share)))
   return parts.join(' · ')
-}
-
-function formatMoney(amount: number, currency: string, language: string): string {
-  try {
-    // A short run costs less than a cent: then four places, otherwise the currency's own.
-    return new Intl.NumberFormat(language, {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: amount < 0.1 ? 4 : 2,
-    }).format(amount)
-  } catch {
-    return `${amount.toFixed(4)} ${currency}`
-  }
 }
 
 function percent(share: number): string {

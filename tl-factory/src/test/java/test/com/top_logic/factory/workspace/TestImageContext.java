@@ -65,6 +65,8 @@ public class TestImageContext extends TestCase {
 		ImageContext context = ApplicationWorkspaces.imageContext(url);
 		assertTrue(context.getFiles().containsKey(ImageContext.DOCKERFILE));
 		assertTrue(context.getFiles().containsKey(ApplicationWorkspaces.ENTRY_SCRIPT));
+		assertTrue(context.getFiles().containsKey(ApplicationWorkspaces.APP_CONTROL_SCRIPT));
+		assertTrue(context.getFiles().containsKey(ApplicationWorkspaces.USER_INSTRUCTIONS));
 		String settings =
 			new String(context.getFiles().get(ApplicationWorkspaces.SETTINGS_FILE), StandardCharsets.UTF_8);
 		assertTrue(settings, settings.contains("https://repo.example.com/maven/?a=1&amp;b=2"));

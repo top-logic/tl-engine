@@ -107,6 +107,11 @@ export function useTLCommand(): (
   return dispatch
 }
 
+/** Ends the fill chain, which a test has no layout for: renders the children as they are. */
+export function FillBarrier({ children }: { children?: RealReact.ReactNode }) {
+  return RealReact.createElement(RealReact.Fragment, null, children)
+}
+
 /** A child control as a marker element: what it is, not what it would render. */
 export function TLChild({ control }: { control: unknown }) {
   const descriptor = (control ?? {}) as { controlId?: string; module?: string }

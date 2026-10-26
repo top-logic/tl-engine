@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLCommand, useI18N, TLChild, useFill, startPointerDrag, rootClassName, stateAttr,
+  React, useTLState, useTLCommand, useI18N, TLChild, useFill, FillBarrier, startPointerDrag, rootClassName, stateAttr,
   separatorMove, separatorStep, movedSize,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -102,8 +102,10 @@ function resized(children: ChildDescriptor[], pixels: number[]): ChildDescriptor
  * is released.
  *
  * Always fills its container: a pane sized in pixels keeps its size while there is room for it, the panes sized in
- * percent share the rest, and the handle between them has to span the available extent. Each pane scrolls what does
- * not fit into it, which ends the fill chain there.
+ * percent share the rest, and the handle between them has to span the available extent. Each pane is a bounded region
+ * of the fill contract: a column flex box that scrolls what does not fit into it and ends the fill chain (a
+ * FillBarrier), so that whatever fills - a table, a switch showing a tab bar, a stack around a table - takes the height
+ * of the pane, while content of its own size keeps its size.
  */
 const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -156,6 +158,8 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
 
   const computeChildStyle = (child: ChildDescriptor): React.CSSProperties => {
     const style: React.CSSProperties = {
+      display: 'flex',
+      flexDirection: 'column',
       overflow: child.scrolling || 'auto',
       flex: paneFlex(child, allCollapsed, effectiveHorizontal),
     };
@@ -254,7 +258,9 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
         data-tl-state={stateAttr(child.collapsed && effectiveHorizontal && 'collapsed')}
         style={computeChildStyle(child)}
       >
-        <TLChild control={child.control} />
+        <FillBarrier>
+          <TLChild control={child.control} />
+        </FillBarrier>
       </div>
     );
 

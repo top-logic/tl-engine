@@ -391,7 +391,9 @@ public class ChatConversationElement implements UIElement {
 		 * </pre>
 		 *
 		 * <p>
-		 * A conversation is stamped once, when it comes into being: opening an older one while
+		 * A conversation is stamped once, by the request that brings it into being - before its first
+		 * message is sent, so that a {@link com.top_logic.ai.chat.backend.ConversationBackendResolver}
+		 * deciding from the subject already answers that message. Opening an older one while
 		 * another object stands here does not move it, and a conversation started while the channel
 		 * was empty keeps no subject rather than being given one later.
 		 * </p>

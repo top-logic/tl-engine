@@ -96,9 +96,9 @@ Two rules that make this worth the class:
 - **Declare the scope where the layout already is.** `ChatScopeElement` adds a `chat-id` to
   `<stack>`'s config and overrides `createControl` to derive the context - about fifteen lines, no
   control, no React element, and the app writes `<chat>` in place of the `<stack>` it already had.
-  Wrapping *extra* nesting around existing elements is the version to avoid: the engine's
-  `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so an added stack silently costs a
-  `<panel fill="true">` its height.
+  Wrapping *extra* nesting around existing elements is the version to avoid: it adds a level to
+  every layout that adopts the scope, and a container that does not take part in the fill contract
+  (`useFillHost`) would cost a `<panel fill="true">` inside it its height.
 - **Make the join say something when it is wrong.** An ambient default means an element that
   disagrees still renders - empty, forever, with no symptom. Tally the joins where they are all
   visible (for the chat, `ChatViewBinding` plus `ChatJoinLog`, keyed on the `InteractionContext`,

@@ -925,6 +925,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_DELETE_FILTER;
 
 	/**
+	 * @en + {0} more
+	 */
+	@CustomKey("js.table.morePresets")
+	public static ResKey JS_TABLE_MORE_PRESETS;
+
+	/**
 	 * @en Do not save
 	 */
 	@CustomKey("js.table.cancelSave")

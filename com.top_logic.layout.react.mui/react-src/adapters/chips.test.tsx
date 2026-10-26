@@ -4,7 +4,7 @@
 // drawn by the MUI adapters of the parts Chip and Badge: one replacement of a part reaches all of them.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup, within } from '@testing-library/react';
+import { screen, cleanup, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CMD_VALUE_CHANGED, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
 import TLOptionChips from '../../../com.top_logic.layout.react/react-src/controls/TLOptionChips';
@@ -346,6 +346,255 @@ describe('the named filters of a table (TLTableView) as MUI chips', () => {
     await settle();
 
     expect(chip('Offen').querySelector('.MuiChip-deleteIcon')).toBeNull();
+  });
+});
+
+describe('the presets of a table (TLTableView) that do not fit in the row of the filter bar', () => {
+  /** Eight presets, the sixth of the user's own. */
+  const PRESETS = Array.from({ length: 8 }, (_, i) => ({ id: `p${i + 1}`, label: `Preset ${i + 1}`, deletable: i === 5 }));
+  const CHIP_WIDTH = 100;
+  const MORE_WIDTH = 80;
+  const MORE_TEXT = 'js.table.morePresets';
+
+  /** The width the filter bar has: what the test lays out, as jsdom lays out nothing. */
+  let barWidth = 0;
+  /** The callbacks of the resize observers the table has created. */
+  let observers: Array<() => void> = [];
+
+  class RecordingResizeObserver {
+    constructor(callback: () => void) {
+      observers.push(callback);
+    }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  /** A bar with room for the given number of chips and the chip of the menu (and the pixel of rounding). */
+  function roomFor(chips: number) {
+    return chips * CHIP_WIDTH + MORE_WIDTH + 1;
+  }
+
+  function mountPresets(width: number, state: Record<string, unknown> = {}) {
+    barWidth = width;
+    observers = [];
+    vi.stubGlobal('ResizeObserver', RecordingResizeObserver);
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      let measured = 0;
+      if (this.matches('.tl-table__filter-bar')) {
+        measured = barWidth;
+      } else if (this.matches('.tl-table__more')) {
+        measured = MORE_WIDTH;
+      } else if (this.hasAttribute('data-tl-preset')) {
+        measured = CHIP_WIDTH;
+      }
+      return { x: 0, y: 0, top: 0, left: 0, right: measured, bottom: 0, width: measured, height: 0, toJSON() {} };
+    });
+    return mountAdapter(TLTableView, {
+      columns: [{ name: 'name', label: 'Name', width: 120, sortable: false }],
+      rows: [{ id: 'r0', index: 0, cells: { name: childControl('c0', 'Zeile') } }],
+      totalRowCount: 1,
+      filterBar: true,
+      namedFilters: PRESETS,
+      ...state,
+    });
+  }
+
+  /** The labels of the chips that stand in the row. */
+  function rowLabels() {
+    return Array.from(document.querySelectorAll('[data-tl-preset]')).map(element => element.textContent);
+  }
+
+  /** The chip of the menu. */
+  function moreChip() {
+    return document.querySelector<HTMLElement>('.tl-table__more');
+  }
+
+  /** The width of the bar changes: the resize observers report it. */
+  function resizeTo(width: number) {
+    barWidth = width;
+    act(() => observers.forEach(callback => callback()));
+  }
+
+  /** Opens the menu of the presets and returns it. */
+  async function openMenu() {
+    await userEvent.click(moreChip()!);
+    return screen.getByRole('menu');
+  }
+
+  /** The labels of the entries of the menu. */
+  function entryLabels(menu: HTMLElement) {
+    return within(menu).getAllByRole('menuitemradio').map(element => element.textContent);
+  }
+
+  it('shows the presets that fit and a chip "+ n more" for the rest, in declared order', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    expect(rowLabels()).toEqual(['Preset 1', 'Preset 2', 'Preset 3']);
+    expect(moreChip()!.textContent).toContain(MORE_TEXT);
+    expect(moreChip()!.getAttribute('aria-haspopup')).toBe('menu');
+    expect(moreChip()!.getAttribute('aria-expanded')).toBe('false');
+    const menu = await openMenu();
+    expect(moreChip()!.getAttribute('aria-expanded')).toBe('true');
+    expect(entryLabels(menu)).toEqual(['Preset 4', 'Preset 5', 'Preset 6', 'Preset 7', 'Preset 8']);
+  });
+
+  it('shows no chip "+ n more" when all presets fit', async () => {
+    mountPresets(8 * CHIP_WIDTH + 1);
+    await settle();
+
+    expect(rowLabels()).toHaveLength(8);
+    expect(moreChip()).toBeNull();
+  });
+
+  it('keeps the active preset in the row: it takes the last place, the preset it displaces goes to the menu', async () => {
+    mountPresets(roomFor(3), { activeNamedFilter: 'p7' });
+    await settle();
+
+    expect(rowLabels()).toEqual(['Preset 1', 'Preset 2', 'Preset 7']);
+    expect(chip('Preset 7').getAttribute('aria-pressed')).toBe('true');
+    const menu = await openMenu();
+    expect(entryLabels(menu)).toEqual(['Preset 3', 'Preset 4', 'Preset 5', 'Preset 6', 'Preset 8']);
+  });
+
+  it('draws the entries of the menu as radio entries, none of them checked while the active preset stands in the row', async () => {
+    mountPresets(roomFor(3), { activeNamedFilter: 'p7' });
+    await settle();
+
+    const entries = within(await openMenu()).getAllByRole('menuitemradio');
+    expect(entries).toHaveLength(5);
+    entries.forEach(entry => expect(entry.getAttribute('aria-checked')).toBe('false'));
+  });
+
+  it('applies a preset chosen in the menu, and closes the menu', async () => {
+    const sent = mountPresets(roomFor(3));
+    await settle();
+
+    await userEvent.click(within(await openMenu()).getByRole('menuitemradio', { name: 'Preset 5' }));
+    await settle();
+
+    expect(sent.mock.calls).toEqual([[CMD_APPLY_FILTER, { id: 'p5' }]]);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('hands the focus to the preset chosen in the menu once it stands in the row', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    await userEvent.click(within(await openMenu()).getByRole('menuitemradio', { name: 'Preset 5' }));
+    patchState({ activeNamedFilter: 'p5' });
+    await settle();
+
+    expect(rowLabels()).toEqual(['Preset 1', 'Preset 2', 'Preset 5']);
+    expect(document.activeElement).toBe(chip('Preset 5'));
+  });
+
+  it('deletes a preset of the user from the menu by its remove action', async () => {
+    const sent = mountPresets(roomFor(3));
+    await settle();
+
+    const entry = within(await openMenu()).getByRole('group', { name: 'Preset 6' });
+    await userEvent.click(within(entry).getByRole('button', { name: LABEL_DELETE_FILTER }));
+    await settle();
+
+    expect(sent.mock.calls).toEqual([[CMD_DELETE_FILTER, { id: 'p6' }]]);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('offers a remove action only for the presets of the user in the menu', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    const menu = await openMenu();
+    expect(within(menu).getAllByRole('button', { name: LABEL_DELETE_FILTER })).toHaveLength(1);
+    expect(within(menu).getAllByRole('group')).toHaveLength(1);
+  });
+
+  it('deletes the focused preset of the user in the menu by the key Delete', async () => {
+    const sent = mountPresets(roomFor(3));
+    await settle();
+
+    const entry = within(await openMenu()).getByRole('menuitemradio', { name: 'Preset 6' });
+    expect(entry.getAttribute('aria-keyshortcuts')).toBe('Delete Backspace');
+    entry.focus();
+    await userEvent.keyboard('{Delete}');
+    await settle();
+
+    expect(sent.mock.calls).toEqual([[CMD_DELETE_FILTER, { id: 'p6' }]]);
+  });
+
+  it('leaves the focus on the chip of the menu after a deletion from the menu, while presets are left in it', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    const entry = within(await openMenu()).getByRole('group', { name: 'Preset 6' });
+    await userEvent.click(within(entry).getByRole('button', { name: LABEL_DELETE_FILTER }));
+    patchState({ namedFilters: PRESETS.filter(preset => preset.id !== 'p6') });
+    await settle();
+
+    expect(document.activeElement).toBe(moreChip());
+  });
+
+  it('hands the focus on after a deletion from the menu took the last preset out of it', async () => {
+    const OWN_LAST = [...PRESETS.slice(0, 3), { id: 'p4', label: 'Preset 4', deletable: true }];
+    mountPresets(roomFor(3), { namedFilters: OWN_LAST });
+    await settle();
+
+    const entry = within(await openMenu()).getByRole('group', { name: 'Preset 4' });
+    await userEvent.click(within(entry).getByRole('button', { name: LABEL_DELETE_FILTER }));
+    patchState({ namedFilters: PRESETS.slice(0, 3) });
+    await settle();
+
+    expect(moreChip()).toBeNull();
+    expect(document.activeElement).not.toBe(document.body);
+    expect(document.activeElement!.closest('.tl-table__filter-bar')).not.toBeNull();
+  });
+
+  it('cuts the row again when the width of the bar changes', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+    expect(rowLabels()).toHaveLength(3);
+
+    resizeTo(roomFor(5));
+    expect(rowLabels()).toEqual(['Preset 1', 'Preset 2', 'Preset 3', 'Preset 4', 'Preset 5']);
+    expect(moreChip()).not.toBeNull();
+
+    resizeTo(roomFor(1));
+    expect(rowLabels()).toEqual(['Preset 1']);
+
+    resizeTo(8 * CHIP_WIDTH + 1);
+    expect(rowLabels()).toHaveLength(8);
+    expect(moreChip()).toBeNull();
+  });
+
+  it('keeps the row it has when the bar is measured again without a change of width', async () => {
+    mountPresets(roomFor(3), { activeNamedFilter: 'p8' });
+    await settle();
+
+    resizeTo(roomFor(3));
+    resizeTo(roomFor(3));
+
+    expect(rowLabels()).toEqual(['Preset 1', 'Preset 2', 'Preset 8']);
+  });
+
+  it('keeps the active preset in the row even with no room for a chip', async () => {
+    mountPresets(10, { activeNamedFilter: 'p4' });
+    await settle();
+
+    expect(rowLabels()).toEqual(['Preset 4']);
+    expect(await within(await openMenu()).findAllByRole('menuitemradio')).toHaveLength(7);
+  });
+
+  it('shows a preset added to the cut row, and cuts the row again', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    patchState({ namedFilters: [...PRESETS, { id: 'p9', label: 'Preset 9', deletable: false }] });
+    await settle();
+
+    expect(rowLabels()).toEqual(['Preset 1', 'Preset 2', 'Preset 3']);
+    expect(entryLabels(await openMenu())).toHaveLength(6);
   });
 });
 

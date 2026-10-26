@@ -6,6 +6,7 @@ import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
 import { TableViewButton } from './table/TableViewOptions';
+import { FilterPresets } from './table/FilterPresets';
 import type { TableDensity, TableViewValues } from './table/TableViewOptions';
 
 /**
@@ -89,6 +90,7 @@ const I18N_KEYS = {
   'js.table.saveFilter': 'Save this filter',
   'js.table.filterName': 'Filter name',
   'js.table.deleteFilter': 'Delete this filter',
+  'js.table.morePresets': '+ {0} more',
   'js.table.cancelSave': 'Do not save',
 };
 
@@ -329,7 +331,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const DisclosureToggle = usePart('DisclosureToggle');
   const Checkbox = usePart('Checkbox');
   const TextInput = usePart('TextInput');
-  const Chip = usePart('Chip');
   const rootRef = React.useRef<HTMLDivElement>(null);
   // The grid (role=grid) holds the keyboard focus and points at the cursor row with
   // aria-activedescendant; the body inside it only scrolls.
@@ -1640,25 +1641,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       {filterBar && (
         <div ref={filterBarRef} className="tl-table__filter-bar">
           {namedFilters.length > 0 && (
-            <span className="tl-chip-group">
-              {namedFilters.map((named) => {
-                const isActive = named.id === activeNamedFilter;
-                // Only a filter of the user's own can be deleted; a declared one is part of the
-                // table and offers no remove affordance.
-                return (
-                  <Chip
-                    key={named.id}
-                    label={named.label}
-                    pressed={isActive}
-                    tooltip={isActive ? i18n['js.table.clearFilter'] : named.label}
-                    onClick={() => handleNamedFilter(named.id)}
-                    onRemove={named.deletable ? (e) => handleDeleteNamedFilter(named.id, e) : undefined}
-                    removeLabel={i18n['js.table.deleteFilter']}
-                    {...(named.deletable ? { [FILTER_CHIP_ATTR]: true } : {})}
-                  />
-                );
-              })}
-            </span>
+            <FilterPresets
+              presets={namedFilters}
+              activeId={activeNamedFilter}
+              densityKey={viewDensity}
+              chipAttr={FILTER_CHIP_ATTR}
+              moreText={i18n['js.table.morePresets']}
+              clearLabel={i18n['js.table.clearFilter']}
+              deleteLabel={i18n['js.table.deleteFilter']}
+              onToggle={handleNamedFilter}
+              onDelete={handleDeleteNamedFilter}
+            />
           )}
           <SearchField
             className="tl-table__search"

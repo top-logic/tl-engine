@@ -174,8 +174,8 @@ Establishes the "System" admin section (added with the locks view as a sibling t
       modified) and writes the selected file to a `selectedFile` channel; the `LogLineTable` reads that
       channel and shows the file's **parsed** entries — one row per entry — in a sortable, per-column
       filterable/searchable table (time, severity, category, thread, message, details), newest first.
-      Parsing **reuses the legacy `com.top_logic.monitoring` `LogParser`/`LogLine`/`LogFile`** (added a
-      `tl-monitoring` dependency); only the last 4 MB are parsed. The time column filters by **date-time
+      Parsing **uses the `com.top_logic.monitoring.log` `LogParser`/`LogLine`/`LogFile`** of the
+      UI-independent `tl-monitoring-core` module; only the last 4 MB are parsed. The time column filters by **date-time
       range** (`ComparableColumnFilter`), severity by **value checkboxes** (`OptionsColumnFilter` over the
       standard severities), the rest by text. Each file row carries a **download button** (a read-only
       `ReactBinaryFieldControl` serving the file). Refresh ticks a `reload` channel so the current file is

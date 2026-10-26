@@ -108,6 +108,7 @@
 		<module>../com.top_logic.model.search.react</module>
 		<module>../tl-model-wysiwyg-core</module>
 		<module>../com.top_logic.model.wysiwyg</module>
+		<module>../tl-monitoring-core</module>
 		<module>../com.top_logic.monitoring</module>
 		<module>../com.top_logic.office</module>
 		<module>../com.top_logic.presentation</module>

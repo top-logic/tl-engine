@@ -196,10 +196,17 @@ A feature starter is a POM bundling the TopLogic modules of a feature. It is dec
 
 | Starter | Modules |
 |---|---|
-| `tl-starter-react` | `tl-layout-view`, `tl-layout-view-contact`, `tl-layout-react-codeedit`, `tl-layout-react-wysiwyg`, `tl-model-wysiwyg`, `tl-model-search-react`, `tl-react-flow-server`, `tl-dev-tools` |
-| `tl-starter-classic` | `tl-themes-core`, `tl-layout-scripting-template`, `tl-layout-formeditor`, `tl-layout-themeedit`, `tl-graph-diagramjs-server`, `tl-graphic-blocks-server`, `tl-monitoring`, `tl-doc`, `tl-model-search`, `tl-contact` |
+| `tl-starter-react` | `tl-layout-view`, `tl-layout-view-contact`, `tl-layout-react-codeedit`, `tl-layout-react-wysiwyg`, `tl-model-wysiwyg-core`, `tl-model-search-react`, `tl-react-flow-server`, `tl-dev-tools` |
+| `tl-starter-classic` | `tl-themes-core`, `tl-layout-scripting-template`, `tl-layout-formeditor`, `tl-layout-themeedit`, `tl-graph-diagramjs-server`, `tl-graphic-blocks-server`, `tl-monitoring`, `tl-doc`, `tl-model-search`, `tl-contact`, `tl-model-wysiwyg` |
 | `tl-starter-ai` | `tl-ai-core`, `tl-chat`, `tl-ai-views`, `tl-ai-mcp-server`, `tl-ai-a2a`, `tl-layout-view-agent` |
 | `tl-starter-ai-search` | `tl-ai-index`, `tl-ai-index-onnx` |
+
+The HTML attribute types `tl.model.wysiwyg:Html` and `tl.model.i18n:I18NHtml` are defined in
+`tl-model-wysiwyg-core`, which contains no user interface and is shared by both starters. The
+classic UI edits them with the CKEditor of `tl-model-wysiwyg` (in `tl-starter-classic`), the React
+UI with the editor of `tl-layout-react-wysiwyg` (in `tl-starter-react`). A React-only application
+therefore contains none of the classic modules `tl-layout-wysiwyg`, `tl-model-wysiwyg` and
+`ext-com-ckeditor`.
 
 The remaining features are single modules, declared like any other dependency (without version):
 

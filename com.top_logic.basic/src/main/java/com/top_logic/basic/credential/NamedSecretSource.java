@@ -26,12 +26,18 @@ import com.top_logic.basic.config.annotation.TagName;
  * </pre>
  *
  * <p>
- * Where the named secrets live is configured once per installation in {@link SecretStores}: by
+ * Where the named secrets live is configured once per installation in the
+ * {@link SecretStoreService}: by
  * default, the secret is read from the system property or environment variable with its name
  * (see {@link EnvironmentSecretStore}).
  * </p>
  *
- * @see SecretStores#getSecret(String)
+ * <p>
+ * A service reading a named secret declares a dependency on the {@link SecretStoreService}; the
+ * secret cannot be read while that service is not started.
+ * </p>
+ *
+ * @see SecretStoreService#getSecret(String)
  */
 @Label("Secret by name")
 public class NamedSecretSource extends AbstractConfiguredInstance<NamedSecretSource.Config>
@@ -81,7 +87,7 @@ public class NamedSecretSource extends AbstractConfiguredInstance<NamedSecretSou
 
 	@Override
 	public String getSecret() {
-		return SecretStores.getSecret(getConfig().getName());
+		return SecretStoreService.secret(getConfig().getName());
 	}
 
 }

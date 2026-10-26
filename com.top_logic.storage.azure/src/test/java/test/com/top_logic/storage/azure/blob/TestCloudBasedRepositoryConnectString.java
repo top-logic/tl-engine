@@ -17,6 +17,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.storage.azure.blob.CloudBasedRepository;
 
 /**
@@ -120,7 +121,7 @@ public class TestCloudBasedRepositoryConnectString extends AbstractTypedConfigur
 	}
 
 	public static Test suite() {
-		return suite(TestCloudBasedRepositoryConnectString.class);
+		return suite(TestCloudBasedRepositoryConnectString.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

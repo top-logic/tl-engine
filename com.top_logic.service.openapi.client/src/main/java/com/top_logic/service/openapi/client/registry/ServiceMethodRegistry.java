@@ -45,8 +45,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.InterfacesCategory;
@@ -84,6 +86,7 @@ import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandl
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @ServiceExtensionPoint(SearchBuilder.Module.class)
 @Label("TL-Script functions for external APIs")
 @ServiceCategory.Of(InterfacesCategory.class)

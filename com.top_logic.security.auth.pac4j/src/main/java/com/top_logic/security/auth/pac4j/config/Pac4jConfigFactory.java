@@ -32,6 +32,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -47,7 +48,8 @@ import com.top_logic.basic.module.services.ServletContextService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ServiceDependencies({
-	ServletContextService.Module.class
+	ServletContextService.Module.class,
+	SecretStoreService.Module.class
 })
 @ServiceCategory.Of(AuthenticationCategory.class)
 public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends ConfiguredManagedClass<C> {

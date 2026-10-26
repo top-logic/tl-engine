@@ -33,6 +33,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.NamedSecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.mail.proxy.MailReceiverService;
 
@@ -329,7 +330,7 @@ public class TestMailPasswordSources extends AbstractTypedConfigurationTestCase 
 	}
 
 	public static Test suite() {
-		return suite(TestMailPasswordSources.class);
+		return suite(TestMailPasswordSources.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

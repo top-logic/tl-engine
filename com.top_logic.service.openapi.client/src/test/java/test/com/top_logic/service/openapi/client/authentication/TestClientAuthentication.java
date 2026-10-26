@@ -25,6 +25,7 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -41,6 +42,7 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.NamedSecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
@@ -483,7 +485,8 @@ public class TestClientAuthentication extends TestCase {
 	 * Reading a configuration resolves its types through the <code>TypeIndex</code>.
 	 */
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(new TestSuite(TestClientAuthentication.class));
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(new TestSuite(TestClientAuthentication.class), SecretStoreService.Module.INSTANCE));
 	}
 
 }

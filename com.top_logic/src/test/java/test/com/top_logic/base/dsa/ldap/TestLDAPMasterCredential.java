@@ -30,6 +30,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.NamedSecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 
 /**
  * Tests the master credential of a {@link LDAPAccessService} given by a secret source: the
@@ -193,7 +194,8 @@ public class TestLDAPMasterCredential extends AbstractTypedConfigurationTestCase
 
 	public static Test suite() {
 		return TLTestSetup.createTLTestSetup(
-			ServiceTestSetup.createSetup(TestLDAPMasterCredential.class, CryptSupport.Module.INSTANCE));
+			ServiceTestSetup.createSetup(TestLDAPMasterCredential.class, CryptSupport.Module.INSTANCE,
+				SecretStoreService.Module.INSTANCE));
 	}
 
 }

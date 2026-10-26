@@ -39,6 +39,8 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -49,6 +51,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * @author <a href=mailto:kbu@top-logic.com>Karsten Buch</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 public class LDAPAccessService {
 
 	/**

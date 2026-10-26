@@ -25,6 +25,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.tl.ai.core.provider.LLMProviderService.ModelCatalogConfig;
@@ -99,7 +100,8 @@ public class TestProviderApiKeyStorage extends TestCase {
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.withThreadContext(new TestSuite(TestProviderApiKeyStorage.class)));
+			ServiceTestSetup.createSetup(
+			ServiceTestSetup.withThreadContext(new TestSuite(TestProviderApiKeyStorage.class)), SecretStoreService.Module.INSTANCE));
 	}
 
 	@Override

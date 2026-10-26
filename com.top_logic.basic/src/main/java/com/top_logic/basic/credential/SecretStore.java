@@ -13,7 +13,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * moment of use.
  *
  * <p>
- * A {@link NamedSecretSource} names a secret, the store configured in {@link SecretStores}
+ * A {@link NamedSecretSource} names a secret, the store configured in the {@link SecretStoreService}
  * decides where the secrets live: in environment variables ({@link EnvironmentSecretStore}), in
  * the files of a directory ({@link DirectorySecretStore}), in the configuration itself
  * ({@link LiteralSecretStore}) or in several of them ({@link ChainSecretStore}).
@@ -25,7 +25,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * e.g. a remote vault, keeps a cache of its own.
  * </p>
  *
- * @see SecretStores
+ * @see SecretStoreService
  */
 @ImplementationClassDefault(EnvironmentSecretStore.class)
 public interface SecretStore {

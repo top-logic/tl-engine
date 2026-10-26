@@ -33,6 +33,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig;
 import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig.EncryptedDriverOption;
@@ -281,7 +282,7 @@ public class TestSecretDriverOptions extends AbstractTypedConfigurationTestCase 
 	}
 
 	public static Test suite() {
-		return suite(TestSecretDriverOptions.class);
+		return suite(TestSecretDriverOptions.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

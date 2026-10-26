@@ -18,6 +18,7 @@ import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.credential.NamedSecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.services.jms.activemq.ActiveMQClient;
 
 /**
@@ -136,7 +137,7 @@ public class TestActiveMQPassword extends AbstractTypedConfigurationTestCase {
 	}
 
 	public static Test suite() {
-		return suite(TestActiveMQPassword.class);
+		return suite(TestActiveMQPassword.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

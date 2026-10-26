@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
@@ -82,6 +83,7 @@ import io.qdrant.client.QdrantGrpcClient;
 	MimeTypes.Module.class,
 	PersonManager.Module.class,
 	PersistencyLayer.Module.class,
+	SecretStoreService.Module.class,
 })
 @ServiceCategory.Of(ScriptingCategory.class)
 public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.VectorIndexingConfig> {

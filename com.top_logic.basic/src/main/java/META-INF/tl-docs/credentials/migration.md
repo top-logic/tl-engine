@@ -1,5 +1,5 @@
 ---
-description: Read when upgrading an application to the engine version with secret sources, secret stores and credential providers - the short form <api-key name="..."/> as NamedSecretSource resolved through SecretStores$Config (environment by default, explicit EnvironmentSecretSource where a variable is meant regardless of the store), the key variables tl_*_api_key and translation_api_key holding the plain key, the %..._API_KEY% / %TRANSLATION_API_KEY% / %BLOB_CONNECT% aliases, removed bearer-token-env-var (HttpMcpTransport) and token-env (A2A remote agent), vector index and search engine keys, and the Java API changes (getters returning PolymorphicConfiguration<? extends SecretSource>, DataSourceConfig#getDriverOptions, ServiceProviderInfo#createFromConfig, mcp-json-jackson3).
+description: Read when upgrading an application to the engine version with secret sources, secret stores and credential providers - the short form <api-key name="..."/> as NamedSecretSource resolved through the SecretStoreService (environment by default, @ServiceDependencies of an own service reading a named secret, explicit EnvironmentSecretSource where a variable is meant regardless of the store), the key variables tl_*_api_key and translation_api_key holding the plain key, the %..._API_KEY% / %TRANSLATION_API_KEY% / %BLOB_CONNECT% aliases, removed bearer-token-env-var (HttpMcpTransport) and token-env (A2A remote agent), vector index and search engine keys, and the Java API changes (getters returning PolymorphicConfiguration<? extends SecretSource>, DataSourceConfig#getDriverOptions, ServiceProviderInfo#createFromConfig, mcp-json-jackson3).
 order: 50
 ---
 
@@ -9,12 +9,13 @@ Every password, key and client secret of the engine is a [secret source](doc:cre
 
 ## Named secrets and the secret store
 
-An element without `class` attribute (`<api-key name="tl_openai_api_key"/>`) is a `NamedSecretSource`: it names the secret, and the secret store of the installation (`SecretStores$Config`) delivers it. The engine configures the environment store, which reads the system property or environment variable of that name - the same variable an element without `class` read before. A configuration using the short form therefore keeps working unchanged.
+An element without `class` attribute (`<api-key name="tl_openai_api_key"/>`) is a `NamedSecretSource`: it names the secret, and the secret store service of the installation (`SecretStoreService`) delivers it. The engine configures the environment store, which reads the system property or environment variable of that name - the same variable an element without `class` read before. A configuration using the short form therefore keeps working unchanged.
 
 What changes:
 
 - An installation that configures another store (a secret directory, Azure Key Vault) gets **all** named secrets from that store. A property that must keep reading a variable regardless of the store names its class: `<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="..."/>`, or the installation adds an override for that name.
 - A configuration written by the Service Editor keeps the short form for a named secret; an `EnvironmentSecretSource` is written with its `class` attribute.
+- A named secret is read through the started `SecretStoreService`. The services of the engine declare the dependency; an own service reading a secret adds `SecretStoreService.Module.class` to its `@ServiceDependencies`, and a test reading a named secret starts the service. Without it, reading the secret fails with "the secret store service is not started".
 - Java code creating the configuration of an environment reference in code (`EnvironmentSecretSource.Config`) keeps reading that variable; code meaning a logical secret creates a `NamedSecretSource.Config` instead.
 
 ## Key variables hold the plain key

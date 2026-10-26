@@ -15,6 +15,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -39,6 +40,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	// The text of uploaded files.
 	FormatConverterFactory.Module.class,
+	SecretStoreService.Module.class,
 })
 @Label("AI index")
 @ServiceCategory.Of(ScriptingCategory.class)

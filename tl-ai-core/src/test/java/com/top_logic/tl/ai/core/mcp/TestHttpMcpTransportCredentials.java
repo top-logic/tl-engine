@@ -38,6 +38,7 @@ import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.RequestAuthentication;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
 
 import io.modelcontextprotocol.client.McpClient;
@@ -76,7 +77,8 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.withThreadContext(new TestSuite(TestHttpMcpTransportCredentials.class)));
+			ServiceTestSetup.createSetup(
+			ServiceTestSetup.withThreadContext(new TestSuite(TestHttpMcpTransportCredentials.class)), SecretStoreService.Module.INSTANCE));
 	}
 
 	@Override

@@ -45,14 +45,16 @@ import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.credential.SecretStore;
-import com.top_logic.basic.credential.SecretStores;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.RestartException;
 
 /**
  * Test case for {@link NamedSecretSource}, the {@link SecretStore}s and their configuration in
- * {@link SecretStores}.
+ * the {@link SecretStoreService}.
  */
 @SuppressWarnings("javadoc")
 public class TestSecretStores extends AbstractTypedConfigurationTestCase {
@@ -60,6 +62,9 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 	private static final String ROOT_TAG = "config";
 
 	private static final String STORES_TAG = "secret-stores";
+
+	/** The implementation class of a {@link #STORES_TAG} configuration. */
+	private static final String SERVICE_CLASS = " class='" + SecretStoreService.class.getName() + "'";
 
 	private static final String SECRET = "test_secret_stores_secret";
 
@@ -83,24 +88,25 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 
 	private PolymorphicConfiguration<? extends SecretStore> _savedStore;
 
-	private Map<String, SecretStores.SecretOverride> _savedOverrides;
+	private Map<String, SecretStoreService.SecretOverride> _savedOverrides;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		assertTrue("Application configuration not available.", ApplicationConfig.Module.INSTANCE.isActive());
 		_dir = Files.createTempDirectory("TestSecretStores");
-		SecretStores.Config global = global();
+		SecretStoreService.Config global = global();
 		_savedStore = global.getStore();
 		_savedOverrides = new LinkedHashMap<>(global.getOverrides());
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		SecretStores.Config global = global();
+		SecretStoreService.Config global = global();
 		global.setStore(_savedStore);
 		global.getOverrides().clear();
 		global.getOverrides().putAll(_savedOverrides);
+		restartService();
 		for (String name : new String[] { SECRET, OTHER, PREFIX + SECRET }) {
 			System.clearProperty(name);
 		}
@@ -209,16 +215,17 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 	}
 
 	public void testLiteralStoreWrittenEncrypted() throws Exception {
-		SecretStores.Config config = read("<secret-stores><store class='" + LiteralSecretStore.class.getName()
+		SecretStoreService.Config config = read("<" + STORES_TAG + SERVICE_CLASS + "><store class='"
+			+ LiteralSecretStore.class.getName()
 			+ "'><secrets><secret name='" + SECRET + "' value='unencrypted:plain-secret'/></secrets></store>"
-			+ "</secret-stores>");
+			+ "</" + STORES_TAG + ">");
 
 		String xml = toXML(config);
 		assertFalse("Secret written in plain text: " + xml, xml.contains("plain-secret"));
 		assertTrue("Secret not written encrypted: " + xml,
 			xml.contains("value=\"" + ConfigurationEncryption.AUTHENTICATED_PREFIX));
 
-		SecretStores.Config copy = (SecretStores.Config) fromXML(xml);
+		SecretStoreService.Config copy = (SecretStoreService.Config) fromXML(xml);
 		assertEquals(config, copy);
 		installStore(copy);
 		assertEquals("plain-secret", named(SECRET).getSecret());
@@ -335,9 +342,10 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 
 		Throwable parseFailure = null;
 		try {
-			read("<secret-stores><store class='" + LiteralSecretStore.class.getName() + "'><secrets>"
+			read("<" + STORES_TAG + SERVICE_CLASS + "><store class='" + LiteralSecretStore.class.getName()
+				+ "'><secrets>"
 				+ "<secret name='" + SECRET + "' value='PlainTextPassword12345'/>"
-				+ "</secrets></store></secret-stores>");
+				+ "</secrets></store></" + STORES_TAG + ">");
 		} catch (Throwable ex) {
 			parseFailure = ex;
 		}
@@ -346,16 +354,17 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 	}
 
 	/**
-	 * The secret storage of an installation-specific fragment (loaded last, like a
-	 * <code>tl_config</code> or <code>autoconf</code> fragment) is merged with the engine
-	 * configuration by the reader of the application configuration: its store replaces the store
-	 * of the engine, its overrides are added to the overrides of the configuration before it.
+	 * The configuration of the {@link SecretStoreService} in an installation-specific fragment
+	 * (loaded last, like a <code>tl_config</code> or <code>autoconf</code> fragment) is merged with
+	 * the engine configuration by the reader of the application configuration: its store replaces
+	 * the store of the engine, its overrides are added to the overrides of the configuration before
+	 * it.
 	 */
 	public void testOverlayFragment() throws ConfigurationException, IOException {
 		List<BinaryContent> engine = XMLProperties.Module.INSTANCE.config().getTypedConfigs();
 		assertTrue("No engine configuration loaded.", !engine.isEmpty());
 
-		SecretStores.Config engineOnly = secretStoresSection(engine);
+		SecretStoreService.Config engineOnly = serviceConfig(engine);
 		assertTrue("Engine store: " + engineOnly.getStore(), engineOnly.getStore() instanceof EnvironmentSecretStore.Config);
 
 		BinaryContent base = fragment("base.config.xml",
@@ -368,7 +377,7 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 		sources.add(base);
 		sources.add(overlay);
 
-		SecretStores.Config merged = secretStoresSection(sources);
+		SecretStoreService.Config merged = serviceConfig(sources);
 
 		assertTrue("Store of the overlay replaces the store before it: " + merged.getStore(),
 			merged.getStore() instanceof DirectorySecretStore.Config);
@@ -383,10 +392,27 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 	}
 
 	/**
-	 * Reads the given typed configuration files the way the application configuration is loaded
-	 * and returns their {@link SecretStores} section.
+	 * A named secret cannot be read while the {@link SecretStoreService} is not started.
 	 */
-	private SecretStores.Config secretStoresSection(List<BinaryContent> sources) throws ConfigurationException {
+	public void testServiceNotStarted() throws Exception {
+		System.setProperty(SECRET, "from-env");
+		SecretSource source = named(SECRET);
+		assertEquals("from-env", source.getSecret());
+
+		ModuleUtil.INSTANCE.shutDown(SecretStoreService.Module.INSTANCE);
+		try {
+			assertFailure(I18NConstants.ERROR_SECRET_STORE_NOT_STARTED__NAME.fill(SECRET), source);
+		} finally {
+			ModuleUtil.INSTANCE.startUp(SecretStoreService.Module.INSTANCE);
+		}
+		assertEquals("from-env", source.getSecret());
+	}
+
+	/**
+	 * Reads the given typed configuration files the way the application configuration is loaded
+	 * and returns the configuration of the {@link SecretStoreService}.
+	 */
+	private SecretStoreService.Config serviceConfig(List<BinaryContent> sources) throws ConfigurationException {
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(ApplicationConfig.ROOT_TAG,
 			TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class));
 		ApplicationConfig.Config config = (ApplicationConfig.Config) new ConfigurationReader(context, descriptors)
@@ -394,15 +420,16 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 			.setVariableExpander(AliasManager.getInstance().getExpander())
 			.read();
 		context.checkErrors();
-		return (SecretStores.Config) config.getConfigs().get(SecretStores.Config.class);
+		return (SecretStoreService.Config) config.getServices().get(SecretStoreService.class).getInstance();
 	}
 
-	private static BinaryContent fragment(String name, String section) {
+	private static BinaryContent fragment(String name, String content) {
 		String xml = "<?xml version='1.0' encoding='utf-8' ?>"
 			+ "<application config:interface='com.top_logic.basic.config.ApplicationConfig$Config'"
-			+ " xmlns:config='http://www.top-logic.com/ns/config/6.0'><configs>"
-			+ "<config config:interface='" + SecretStores.Config.class.getName() + "'>" + section + "</config>"
-			+ "</configs></application>";
+			+ " xmlns:config='http://www.top-logic.com/ns/config/6.0'><services>"
+			+ "<config service-class='" + SecretStoreService.class.getName() + "'>"
+			+ "<instance class='" + SecretStoreService.class.getName() + "'>" + content + "</instance>"
+			+ "</config></services></application>";
 		return BinaryDataFactory.createBinaryData(xml.getBytes(StandardCharsets.UTF_8), "text/xml", name);
 	}
 
@@ -412,24 +439,42 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 	}
 
 	/**
-	 * Installs the given content of a {@link SecretStores.Config} as global configuration.
+	 * Installs the given content of a {@link SecretStoreService.Config} as configuration of the
+	 * running service.
 	 */
 	private void install(String content) throws ConfigurationException {
-		installStore(read("<" + STORES_TAG + ">" + content + "</" + STORES_TAG + ">"));
+		installStore(read("<" + STORES_TAG + SERVICE_CLASS + ">" + content + "</" + STORES_TAG + ">"));
 	}
 
-	private void installStore(SecretStores.Config config) {
-		SecretStores.Config global = global();
+	private void installStore(SecretStoreService.Config config) {
+		SecretStoreService.Config global = global();
 		global.setStore(TypedConfiguration.copy(config.getStore()));
 		global.getOverrides().clear();
-		for (SecretStores.SecretOverride override : config.getOverrides().values()) {
-			SecretStores.SecretOverride copy = TypedConfiguration.copy(override);
+		for (SecretStoreService.SecretOverride override : config.getOverrides().values()) {
+			SecretStoreService.SecretOverride copy = TypedConfiguration.copy(override);
 			global.getOverrides().put(copy.getName(), copy);
+		}
+		restartService();
+	}
+
+	/**
+	 * Starts the {@link SecretStoreService} again with its current configuration.
+	 */
+	private static void restartService() {
+		try {
+			ModuleUtil.INSTANCE.restart(SecretStoreService.Module.INSTANCE);
+		} catch (RestartException ex) {
+			throw new AssertionError("Restart of the secret store service failed.", ex);
 		}
 	}
 
-	private static SecretStores.Config global() {
-		return ApplicationConfig.getInstance().getConfig(SecretStores.Config.class);
+	private static SecretStoreService.Config global() {
+		try {
+			return (SecretStoreService.Config) ApplicationConfig.getInstance()
+				.getServiceConfiguration(SecretStoreService.class);
+		} catch (ConfigurationException ex) {
+			throw new AssertionError(ex);
+		}
 	}
 
 	private static void write(Path file, String content) throws IOException {
@@ -461,12 +506,12 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 	protected Map<String, ConfigurationDescriptor> getDescriptors() {
 		Map<String, ConfigurationDescriptor> result = new HashMap<>();
 		result.put(ROOT_TAG, TypedConfiguration.getConfigurationDescriptor(Config.class));
-		result.put(STORES_TAG, TypedConfiguration.getConfigurationDescriptor(SecretStores.Config.class));
+		result.put(STORES_TAG, TypedConfiguration.getConfigurationDescriptor(SecretStoreService.Config.class));
 		return result;
 	}
 
 	public static Test suite() {
-		return suite(TestSecretStores.class);
+		return suite(TestSecretStores.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

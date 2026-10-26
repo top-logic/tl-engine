@@ -25,7 +25,7 @@ import com.top_logic.basic.util.ResKey;
  * <p>
  * It is the default store of the installation, so that the secret
  * <code>&lt;api-key name="tl_openai_api_key"/&gt;</code> is read from the variable
- * <code>tl_openai_api_key</code> unless {@link SecretStores} configures another store.
+ * <code>tl_openai_api_key</code> unless the {@link SecretStoreService} configures another store.
  * </p>
  *
  * @see Environment#getSystemPropertyOrEnvironmentVariable(String, String)

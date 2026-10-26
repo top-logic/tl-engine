@@ -32,6 +32,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -62,7 +63,8 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 @ServiceDependencies({
 	AgentExecutionStore.Module.class,
 	ToolRegistryService.Module.class,
-	ServletContextService.Module.class
+	ServletContextService.Module.class,
+	SecretStoreService.Module.class
 })
 @ServiceCategory.Of(AICategory.class)
 public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {

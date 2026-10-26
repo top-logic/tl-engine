@@ -13,7 +13,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.credential.AbstractSecretStore;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretStore;
-import com.top_logic.basic.credential.SecretStores;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 
@@ -38,15 +38,17 @@ import com.top_logic.basic.util.ResKey;
  * </p>
  *
  * <p>
- * The store of the installation is configured in the global configuration section
- * <code>SecretStores$Config</code>:
+ * The store of the installation is configured in the secret store service (also in the service
+ * editor):
  * </p>
  *
  * <pre>
- * &lt;config config:interface="com.top_logic.basic.credential.SecretStores$Config"&gt;
- *   &lt;store class="com.top_logic.credential.azure.KeyVaultSecretStore"
- *     vault-url="https://my-vault.vault.azure.net"
- *   /&gt;
+ * &lt;config service-class="com.top_logic.basic.credential.SecretStoreService"&gt;
+ *   &lt;instance class="com.top_logic.basic.credential.SecretStoreService"&gt;
+ *     &lt;store class="com.top_logic.credential.azure.KeyVaultSecretStore"
+ *       vault-url="https://my-vault.vault.azure.net"
+ *     /&gt;
+ *   &lt;/instance&gt;
  * &lt;/config&gt;
  * </pre>
  *
@@ -57,21 +59,23 @@ import com.top_logic.basic.util.ResKey;
  * </p>
  *
  * <pre>
- * &lt;config config:interface="com.top_logic.basic.credential.SecretStores$Config"&gt;
- *   &lt;store class="com.top_logic.credential.azure.KeyVaultSecretStore"
- *     vault-url="https://my-vault.vault.azure.net"
- *     prefix="prod_"
- *   &gt;
- *     &lt;credentials class="com.top_logic.credential.azure.ManagedIdentityCredentials"
- *       resource="https://vault.azure.net"
- *       client-id="00000000-0000-0000-0000-000000000000"
- *     /&gt;
- *   &lt;/store&gt;
+ * &lt;config service-class="com.top_logic.basic.credential.SecretStoreService"&gt;
+ *   &lt;instance class="com.top_logic.basic.credential.SecretStoreService"&gt;
+ *     &lt;store class="com.top_logic.credential.azure.KeyVaultSecretStore"
+ *       vault-url="https://my-vault.vault.azure.net"
+ *       prefix="prod_"
+ *     &gt;
+ *       &lt;credentials class="com.top_logic.credential.azure.ManagedIdentityCredentials"
+ *         resource="https://vault.azure.net"
+ *         client-id="00000000-0000-0000-0000-000000000000"
+ *       /&gt;
+ *     &lt;/store&gt;
+ *   &lt;/instance&gt;
  * &lt;/config&gt;
  * </pre>
  *
  * @see NamedSecretSource
- * @see SecretStores
+ * @see SecretStoreService
  * @see com.top_logic.basic.credential.ChainSecretStore
  * @see KeyVaultSecretSource
  */

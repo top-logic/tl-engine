@@ -19,6 +19,7 @@ import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.credential.NamedSecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.services.jms.ibmmq.IBMMQClient;
 
 /**
@@ -137,7 +138,7 @@ public class TestIBMMQPassword extends AbstractTypedConfigurationTestCase {
 	}
 
 	public static Test suite() {
-		return suite(TestIBMMQPassword.class);
+		return suite(TestIBMMQPassword.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

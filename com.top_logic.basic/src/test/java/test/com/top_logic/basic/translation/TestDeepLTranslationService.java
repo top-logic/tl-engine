@@ -33,6 +33,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.I18NConstants;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.translation.DeepLTranslationService;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
@@ -285,7 +286,7 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 	}
 
 	public static Test suite() {
-		return suite(TestDeepLTranslationService.class);
+		return suite(TestDeepLTranslationService.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

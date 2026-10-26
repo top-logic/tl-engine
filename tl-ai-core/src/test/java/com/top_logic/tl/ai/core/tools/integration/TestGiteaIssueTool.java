@@ -30,6 +30,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.HeaderCredentials;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolResult;
@@ -64,7 +65,8 @@ public class TestGiteaIssueTool extends TestCase {
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.withThreadContext(new TestSuite(TestGiteaIssueTool.class)));
+			ServiceTestSetup.createSetup(
+			ServiceTestSetup.withThreadContext(new TestSuite(TestGiteaIssueTool.class)), SecretStoreService.Module.INSTANCE));
 	}
 
 	@Override

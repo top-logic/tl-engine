@@ -52,6 +52,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SECRET_NAME_INVALID__NAME;
 
 	/**
+	 * @en The secret "{0}" cannot be read: the secret store service is not started. A service
+	 *     reading a named secret must declare a dependency on the secret store service.
+	 */
+	public static ResKey1 ERROR_SECRET_STORE_NOT_STARTED__NAME;
+
+	/**
 	 * @en The override of the secret "{0}" refers to itself.
 	 */
 	public static ResKey1 ERROR_SECRET_OVERRIDE_CYCLE__NAME;

@@ -36,6 +36,7 @@ import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.exception.I18NRuntimeException;
 
 /**
@@ -313,7 +314,7 @@ public class TestSecretSource extends AbstractTypedConfigurationTestCase {
 	}
 
 	public static Test suite() {
-		return suite(TestSecretSource.class);
+		return suite(TestSecretSource.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

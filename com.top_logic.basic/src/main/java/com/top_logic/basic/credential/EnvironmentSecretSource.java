@@ -34,7 +34,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  *
  * <p>
  * An element without <code>class</code> attribute is a {@link NamedSecretSource} instead, whose
- * secret is fetched from the {@link SecretStores secret storage} of the installation, by default
+ * secret is fetched from the {@link SecretStoreService secret storage} of the installation, by default
  * from the variable with the same name.
  * </p>
  *

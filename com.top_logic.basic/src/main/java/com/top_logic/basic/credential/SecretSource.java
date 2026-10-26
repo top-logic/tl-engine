@@ -41,7 +41,8 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  *
  * <ul>
  * <li>An element without <code>class</code> attribute is a {@link NamedSecretSource} naming the
- * secret. Where the named secrets live is decided once per installation in {@link SecretStores}:
+ * secret. Where the named secrets live is decided once per installation in the
+ * {@link SecretStoreService}:
  * by default in system properties or environment variables of the same name, in production e.g. in
  * the files of a mounted secret directory or in a vault:
  *

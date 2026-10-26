@@ -36,6 +36,7 @@ import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.RequestAuthentication;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
@@ -65,7 +66,8 @@ public class TestSearchEngineCredentials extends TestCase {
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.withThreadContext(new TestSuite(TestSearchEngineCredentials.class)));
+			ServiceTestSetup.createSetup(
+			ServiceTestSetup.withThreadContext(new TestSuite(TestSearchEngineCredentials.class)), SecretStoreService.Module.INSTANCE));
 	}
 
 	@Override

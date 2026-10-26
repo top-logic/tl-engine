@@ -8,6 +8,7 @@
 			<instance class="com.top_logic.basic.module.ModuleSystem">
 				<modules>
 					<module key="com.top_logic.basic.util.AllocationService$Module" value="true"/>
+					<module key="com.top_logic.basic.credential.SecretStoreService$Module" value="true"/>
 					<module key="com.top_logic.basic.sql.ConnectionPoolRegistry$Module" value="true"/>
 					<module key="com.top_logic.basic.sched.SchedulerService$Module" value="true"/>
 					<module key="com.top_logic.basic.Settings$Module" value="true" />
@@ -24,6 +25,12 @@
 			</instance>
 		</config>
 		
+		<config service-class="com.top_logic.basic.credential.SecretStoreService">
+			<instance class="com.top_logic.basic.credential.SecretStoreService">
+				<store class="com.top_logic.basic.credential.EnvironmentSecretStore"/>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.basic.io.FileSystemCache">
 			<instance class="com.top_logic.basic.io.NoFileSystemCache"/>
 		</config>
@@ -521,10 +528,6 @@
 			</filters>
 		</config>
 			
-		<config config:interface="com.top_logic.basic.credential.SecretStores$Config">
-			<store class="com.top_logic.basic.credential.EnvironmentSecretStore"/>
-		</config>
-
 		<config config:interface="com.top_logic.basic.config.template.TemplateExpression$GlobalConfig">
 			<functions>
 				<function name="size" impl="com.top_logic.basic.func.Size" />

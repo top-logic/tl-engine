@@ -21,6 +21,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.NamedSecretSource;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.security.auth.pac4j.config.DefaultOidcClientConfigurator;
 
 /**
@@ -151,7 +152,7 @@ public class TestOidcClientSecret extends AbstractTypedConfigurationTestCase {
 	}
 
 	public static Test suite() {
-		return suite(TestOidcClientSecret.class);
+		return suite(TestOidcClientSecret.class, SecretStoreService.Module.INSTANCE);
 	}
 
 }

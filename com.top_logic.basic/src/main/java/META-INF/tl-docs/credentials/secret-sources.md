@@ -17,7 +17,7 @@ The short form, an element without `class` attribute, names the secret:
 <api-key name="tl_openai_api_key"/>
 ```
 
-The secret is fetched by its name from the secret storage of the installation, configured once in `SecretStores$Config` (see [secret stores](doc:credentials/secret-stores)). With the default store, the system property or environment variable of that name holds the plain secret:
+The secret is fetched by its name from the secret storage of the installation, configured once in the `SecretStoreService` (see [secret stores](doc:credentials/secret-stores)). With the default store, the system property or environment variable of that name holds the plain secret:
 
 ```bash
 export tl_openai_api_key="sk-..."
@@ -151,6 +151,13 @@ public interface Config<I extends MyService> extends ServiceConfiguration<I> {
 - The `SecretSourceFormat` makes the attribute form (`api-key="unencrypted:..."` or encrypted) possible and marks the property as encrypted, so its value is never reported in an error message.
 - Without `@Mandatory`, an unconfigured property is `null`; `context.getInstance(null)` returns `null`, so the service checks for it.
 - The Service Editor preselects the `NamedSecretSource` for a new mandatory secret. `@ImplementationClassDefault(LiteralSecretSource.class)` on the property preselects the literal source instead, e.g. for a generated token.
+
+The service declares a dependency on the `SecretStoreService`, because a named secret is read through it (see [secret stores](doc:credentials/secret-stores#a-service-reading-a-named-secret)):
+
+```java
+@ServiceDependencies(SecretStoreService.Module.class)
+public class MyService extends ConfiguredManagedClass<MyService.Config<?>> {
+```
 
 The service instantiates the source in its constructor and asks it for the secret at each use - never keep the result of `getSecret()` in a field:
 

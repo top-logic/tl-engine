@@ -22,8 +22,8 @@ const QUERY = `(max-width: ${COMPACT_MAX_WIDTH}px)`;
  * - snackbar: ChildDescriptor         (built-in notification service)
  *
  * Always fills its container - the shell spans the viewport, so the app bar stays put and overflowing content
- * scrolls inside the content region rather than moving the page. That region is bounded by it and ends the fill
- * chain.
+ * scrolls inside the content region rather than moving the page. That region is bounded by it (tl-region) and ends
+ * the fill chain: it stretches the content to its height.
  */
 const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -65,7 +65,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
             <TLChild control={notices} />
           </div>
         )}
-        <main className="tl-app-shell__content">
+        <main className="tl-app-shell__content tl-region">
           <FillBarrier>
             <TLChild control={content} />
           </FillBarrier>

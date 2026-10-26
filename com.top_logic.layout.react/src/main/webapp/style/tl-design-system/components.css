@@ -314,12 +314,10 @@
   gap: 0;
 }
 
-/* Begrenzte Spalte: die aktive Ansicht löst ihre Höhe gegen diesen Bereich auf, füllt ihn und rollt in sich, die
-   AppBar bleibt stehen. Bündig: die Ansicht trägt ihren Abstand selbst (Abstandsmodell). */
+/* Begrenzte Region (tl-region): die aktive Ansicht löst ihre Höhe gegen diesen Bereich auf, füllt ihn und rollt in
+   sich, die AppBar bleibt stehen. Bündig: die Ansicht trägt ihren Abstand selbst (Abstandsmodell). */
 .tl-app-shell__content {
-  display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
   min-height: 0;
   overflow: hidden;
 }
@@ -2243,11 +2241,15 @@
 }
 
 .tl-dialog__body {
-  display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
   min-height: 0;
   overflow: auto;
+}
+
+/* Ein Körper ohne Region (Fotoaufnahme) ordnet seinen Inhalt als Spalte; der Körper eines Fensters ist eine Region. */
+.tl-dialog__body:not(.tl-region) {
+  display: flex;
+  flex-direction: column;
 }
 
 /* Acht Griffe zum Ändern der Größe, halb über dem Rand. Kanten xs breit, Ecken sm groß. */
@@ -2531,9 +2533,7 @@ body[data-tl-state~="picking"] * {
 }
 
 .tl-drawer__body {
-  display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
   min-height: 0;
   overflow: auto;
   /* Wischen im Drawer läuft nicht in die Seite weiter. Der Innenabstand bleibt wie bisher; ob der Drawer bündig wird
@@ -3324,14 +3324,25 @@ a.tl-field-value:hover {
   transform: translateY(calc(var(--tl-size-icon-md) * -0.06)) rotate(45deg);
 }
 
-/* Zeigt ein Kind zur Zeit und nimmt dessen Größe: neben einer Breadcrumb, in der AppBar so groß wie sein Inhalt. */
+/* Zeigt ein Kind zur Zeit und erzeugt keine eigene Box: das Kind steht, als stünde es im Behälter des Decks selbst —
+   neben einer Breadcrumb, in der AppBar so groß wie sein Inhalt, in einer begrenzten Region (tl-region) auf deren Höhe
+   gestreckt. Eine Klasse am Deck gestaltet darum keine Box. */
 .tl-deck {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
+  display: contents;
 }
 .tl-deck[hidden] { display: none; }
+
+/* Begrenzte Region: eine Fläche, die ohnehin begrenzt ist und die Füllkette beendet (Split-Fläche, Reiterinhalt,
+   Inhalt von AppShell und Sidebar, Körper von Fenster und Drawer), gibt ihrem einen Inhalt ihre Höhe. Eine Zelle
+   aus minmax(0, 1fr): ein füllender Inhalt (tl-fill) ist genau so hoch wie die Region und scrollt in sich, ein Inhalt
+   eigener Größe wird auf ihre Höhe gestreckt. Ist er höher, scrollt ein Panel seinen Körper und behält Kopf und
+   Knopfleiste im Blick; anderer Inhalt läuft über seine Box hinaus, und die Region scrollt (overflow der Region). */
+.tl-region {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.tl-region[hidden] { display: none; }
 
 /* Füllen (Spec 5d §3): ein Kind mit tl-fill nimmt die Höhe, die sein Behälter in der Hauptachse übrig lässt, und darf
    unter seinen Inhalt schrumpfen, damit es selbst scrollt. Ob ein Kind füllt, entscheidet der Control-Baum (useFill /
@@ -4546,19 +4557,13 @@ a.tl-field-value:hover {
   border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 
-/* Der Inhalt: die aktive Ansicht füllt ihn und trägt ihren Abstand selbst (Abstandsmodell). */
+/* Der Inhalt: eine begrenzte Region (tl-region), die aktive Ansicht füllt ihn und trägt ihren Abstand selbst
+   (Abstandsmodell). */
 .tl-sidebar__content {
   position: relative;
-  display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
   min-width: 0;
   overflow: auto;
-}
-
-.tl-sidebar__content > * {
-  flex: 1 1 0;
-  min-height: 0;
 }
 
 /* --- skeleton/skeleton.css --- */
@@ -5791,11 +5796,16 @@ button.tl-swatch:not(:disabled):hover {
 }
 
 .tl-tabs__panel {
-  display: flex;
-  flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+}
+
+/* Ein Reiterfeld ohne Region (Farb- und Icon-Picker) ordnet seinen Inhalt als Spalte; der Inhalt der TabBar ist eine
+   Region. */
+.tl-tabs__panel:not(.tl-region) {
+  display: flex;
+  flex-direction: column;
 }
 .tl-tabs__panel[hidden] { display: none; }
 
@@ -6373,4 +6383,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:5eee426e61fb6a821f76758694a780695f8f380a9f5fecf1ac3e1bce9c3b9ef7 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:c79d19ba467b1740bd4354bcab7394e65bb07d752e5c8ddbc6ccf02803e56a2f — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

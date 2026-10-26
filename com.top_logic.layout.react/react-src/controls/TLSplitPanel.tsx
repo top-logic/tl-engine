@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLCommand, useI18N, TLChild, useFill, startPointerDrag, rootClassName, stateAttr,
+  React, useTLState, useTLCommand, useI18N, TLChild, useFill, FillBarrier, startPointerDrag, rootClassName, stateAttr,
   separatorMove, separatorStep, movedSize,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -43,7 +43,8 @@ function share(before: ChildDescriptor, after: ChildDescriptor): number | null {
  * click. The sizes reach the server when a drag ends and when a key is released.
  *
  * Always fills its container: the panes are sized proportionally and the handle between them has to span the
- * available extent. Each pane scrolls what does not fit into it, which ends the fill chain there.
+ * available extent. Each pane is a bounded region (tl-region) that ends the fill chain: it stretches a child of its own
+ * size to its height, holds a filling child to exactly that height, and scrolls what does not fit into it.
  */
 const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -184,11 +185,13 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         key={`child-${i}`}
         id={paneId(i)}
-        className="tl-split__pane"
+        className="tl-split__pane tl-region"
         data-tl-state={stateAttr(child.collapsed && effectiveHorizontal && 'collapsed')}
         style={computeChildStyle(child)}
       >
-        <TLChild control={child.control} />
+        <FillBarrier>
+          <TLChild control={child.control} />
+        </FillBarrier>
       </div>
     );
 

@@ -12,7 +12,6 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.element.meta.TypeSpec;
-import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
@@ -35,12 +34,29 @@ public interface CodeEditorLanguage extends TLAttributeAnnotation {
 	String getValue();
 
 	/**
+	 * The values that can be chosen for {@link #getValue()}.
+	 * 
+	 * <p>
+	 * Each value is the identifier of an Ace editor language mode. The code editor of the classic
+	 * UI uses it as its language mode.
+	 * </p>
+	 */
+	List<String> LANGUAGE_MODES = List.of(
+		"ace/mode/text",
+		"ace/mode/css",
+		"ace/mode/html",
+		"ace/mode/xml",
+		"ace/mode/javascript",
+		"ace/mode/json",
+		"ace/mode/markdown");
+
+	/**
 	 * Option provider function for {@link CodeEditorLanguage#getValue()}.
 	 */
 	class LanguageOptions extends Function0<List<String>> {
 		@Override
 		public List<String> apply() {
-			return CodeEditorControl.LANGUAGE_MODES;
+			return LANGUAGE_MODES;
 		}
 	}
 

@@ -9,6 +9,9 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.reporting.flex.search.model.FlexReport;
 
 /**
+ * {@link Filter} accepting the {@link FlexReport}s of a given {@link FlexReport#getFormatVersion()
+ * format version}.
+ * 
  * @author     <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class StoredReportVersionFilter implements Filter<FlexReport> {

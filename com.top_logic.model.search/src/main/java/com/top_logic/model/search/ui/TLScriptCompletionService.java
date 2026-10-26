@@ -36,8 +36,8 @@ import com.top_logic.util.regex.TLRegexBuilder;
  * Reusable service for computing TL-Script code completions.
  *
  * <p>
- * Shared by {@link TLScriptAutoCompletionCommand} (the Ace editor) and the <code>CodeMirror</code> 6
- * editor. Completions carry their documentation, see {@link TLScriptDocumentation}.
+ * Shared by the Ace editor of the classic UI and the <code>CodeMirror</code> 6 editor. Completions
+ * carry their documentation, see {@link TLScriptDocumentation}.
  * </p>
  */
 public class TLScriptCompletionService implements TLScriptConstants {

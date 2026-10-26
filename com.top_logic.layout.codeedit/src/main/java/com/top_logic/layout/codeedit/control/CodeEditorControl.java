@@ -7,7 +7,6 @@ package com.top_logic.layout.codeedit.control;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -88,19 +87,6 @@ public class CodeEditorControl extends AbstractFormFieldControl {
 	 * CSS class name to display the code editor in full size.
 	 */
 	public static final String FULL_SIZE_CSS_CLASS = "fullSize";
-
-	/**
-	 * Allo supported language modes for the code editor control.
-	 */
-	public static final List<String> LANGUAGE_MODES = Collections.unmodifiableList(Arrays.asList(
-		MODE_TEXT,
-		MODE_CSS,
-		MODE_HTML,
-		MODE_XML,
-		MODE_JS,
-		MODE_JSON,
-		MODE_MARKDOWN
-	));
 
 	/**
 	 * {@link ControlProvider} creating {@link CodeEditorControl}s.

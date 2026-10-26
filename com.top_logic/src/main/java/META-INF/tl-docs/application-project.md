@@ -142,8 +142,9 @@ The POM of a generated application, reduced to the TopLogic parts:
 
 - **`tl.version`** is the single place naming the TopLogic version. Use it for both the BOM import
   and the plugin version: the packaging builds the project with the parent configuration of the
-  plugin's own version, so BOM and plugin must not differ. Upgrading the engine means changing this
-  property.
+  plugin's own version, so BOM and plugin must not differ: the build stops with an error if the
+  version of `tl-maven-plugin` managed by the imported BOM differs from the version of the plugin.
+  Upgrading the engine means changing this property.
 - **`tl-bom`** manages the versions of all TopLogic modules and of the libraries they are built and
   tested with, so dependencies are declared without `<version>`. The project must import it
   itself; the packaging contributes no `dependencyManagement`. An imported BOM is interpolated in

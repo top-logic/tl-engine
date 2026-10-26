@@ -23,6 +23,8 @@ import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Extension;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
@@ -74,6 +76,11 @@ import org.slf4j.LoggerFactory;
  *
  * <p>
  * A project whose parent chain already contains a TopLogic parent POM is left unchanged.
+ * </p>
+ *
+ * <p>
+ * Before injecting, the version of this plugin managed by the imported BOM <code>tl-bom</code> is
+ * compared with the version of this plugin, see {@link #checkBomVersion(MavenProject, String)}.
  * </p>
  */
 @Named(TLParentInjector.NAME)
@@ -194,6 +201,7 @@ public class TLParentInjector extends AbstractMavenLifecycleParticipant {
 			if (version == null) {
 				version = ownVersion();
 			}
+			checkBomVersion(project, version);
 			inject(session, project, packaging, version);
 		}
 	}
@@ -235,6 +243,47 @@ public class TLParentInjector extends AbstractMavenLifecycleParticipant {
 			return properties.getProperty(VERSION_PROPERTY);
 		} catch (IOException ex) {
 			throw new MavenExecutionException("Cannot read '" + PLUGIN_POM_PROPERTIES + "'.", ex);
+		}
+	}
+
+	/**
+	 * Checks that the BOM <code>tl-bom</code> imported by the given project has the version of the
+	 * plugin that injects the TopLogic parent POM.
+	 *
+	 * <p>
+	 * The BOM <code>tl-bom</code> manages this plugin ({@link TLPackaging#TL_GROUP_ID}:{@link #PLUGIN_ARTIFACT_ID})
+	 * in its own version. The injected TopLogic parent POM has the version of this plugin. A
+	 * difference between both versions would mix TopLogic versions in one build. A project that
+	 * does not manage this plugin (e.g. because it does not import <code>tl-bom</code>) is not
+	 * checked.
+	 * </p>
+	 *
+	 * @param project
+	 *        The project after reading, whose dependency management contains the dependencies
+	 *        managed by its imported BOMs.
+	 * @param pluginVersion
+	 *        The version of this plugin.
+	 * @throws MavenExecutionException
+	 *         If the managed version of this plugin differs from the given plugin version.
+	 */
+	public static void checkBomVersion(MavenProject project, String pluginVersion) throws MavenExecutionException {
+		DependencyManagement management = project.getDependencyManagement();
+		if (management == null) {
+			return;
+		}
+		for (Dependency dependency : management.getDependencies()) {
+			if (!TLPackaging.TL_GROUP_ID.equals(dependency.getGroupId())
+				|| !PLUGIN_ARTIFACT_ID.equals(dependency.getArtifactId())) {
+				continue;
+			}
+			String bomVersion = dependency.getVersion();
+			if (pluginVersion.equals(bomVersion)) {
+				continue;
+			}
+			throw new MavenExecutionException("The project " + project.getId() + " imports the BOM of TopLogic "
+				+ "version '" + bomVersion + "' but builds with " + TLPackaging.TL_GROUP_ID + ":" + PLUGIN_ARTIFACT_ID
+				+ " version '" + pluginVersion + "'. Use the same version for the import of tl-bom and for "
+				+ PLUGIN_ARTIFACT_ID + ", e.g. through a property 'tl.version'.", project.getFile());
 		}
 	}
 

@@ -1,5 +1,5 @@
 ---
-description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the tl.deb.* properties of the Debian package, and inheriting tl-parent-app instead.
+description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
 order: 10
 ---
 
@@ -269,6 +269,42 @@ application POM:
 The package depends on `mariadb-server`, `tomcat10`, `libmariadb-java`, `apache2` and `apg`. An
 application that configures the `jdeb` plugin with an execution without ID changes this execution
 instead of adding a second one.
+
+## Switching a project from tl-parent-app to the packaging
+
+A project inheriting `tl-parent-app` (or, as a fragment, `tl-parent-core`) keeps building
+unchanged; switching to the packaging is optional and is worthwhile when the project should get a
+company parent or join an existing multi-module build. The steps, in the project POM:
+
+1. **Parent**: remove the `<parent>` naming `tl-parent-app` / `tl-parent-core`. Declare
+   `<groupId>` and `<version>` explicitly if they were inherited from the TopLogic parent so far.
+2. **Packaging**: set `<packaging>tl-app</packaging>` (fragment: `tl-fragment`) and declare the
+   `tl-maven-plugin` with `<version>${tl.version}</version>` and
+   `<extensions>true</extensions>` in `<build><plugins>`, see [The project POM](#the-project-pom).
+3. **Versions**: add the property `tl.version` with the former parent version and the import of
+   `tl-bom` with `<version>${tl.version}</version>` in `dependencyManagement`. Dependencies on
+   TopLogic modules and managed libraries stay without `<version>`.
+4. **Version-property overrides**: a property such as `jetty.version` set in the project no longer
+   changes the version of the library, because the imported BOM is interpolated in its own
+   context. Declare each such library with its version in the project's own
+   `dependencyManagement` instead; that entry wins over the import.
+5. **Repositories**: the TopLogic parent POM was resolved through the Maven settings or the
+   project's `repositories`. The BOM, the plugin and the modules need the same repositories:
+   declare `tl-releases` and `tl-snapshots` both as `repository` and as `pluginRepository`
+   (`https://dev.top-logic.com/nexus/repository/toplogic/` and
+   `https://dev.top-logic.com/nexus/repository/toplogic-snapshots/`) unless the settings provide
+   them.
+6. **Debian package**: a project generated with an older archetype configures the plugins `jdeb`
+   and `upload-maven-plugin` itself. Their executions merge with those of `tl-parent-app`, so the
+   project keeps building one package, but the blocks are now redundant: delete them, and delete
+   the `tl.deb.*` properties that equal the defaults in [Debian package](#debian-package).
+7. **Starters** (optional): replace the single modules of a feature by its starter, see
+   [Features: starters and single modules](#features-starters-and-single-modules). The module
+   order and thus the configuration of the application stays the same.
+
+To check the switch, compare the output of `mvn help:effective-pom` before and after: plugins,
+properties and dependencies must be the same, apart from the removed parent. For an application,
+compare the content of `target/<finalName>-app.war` as well.
 
 ## Inheriting tl-parent-app
 

@@ -101,6 +101,24 @@ public interface CredentialProvider {
 	}
 
 	/**
+	 * Whether this provider can add credentials to a request now.
+	 *
+	 * <p>
+	 * Asked each time a consumer chooses whether to offer the external service, so that the
+	 * service is offered as soon as its credentials, e.g. a secret, are provided. The check is
+	 * local and cheap: it never contacts a server, never reveals a secret and does not fail for an
+	 * absent secret. A provider that cannot tell without contacting a server, e.g. because it
+	 * obtains a token from it, answers <code>true</code>; a failure is then reported by
+	 * {@link #authenticate(RequestAuthentication)}.
+	 * </p>
+	 *
+	 * @see SecretSource#isAvailable()
+	 */
+	default boolean isAvailable() {
+		return true;
+	}
+
+	/**
 	 * Creates the {@link CredentialProvider} of a consumer that accepts an API key as shorthand
 	 * for its credentials.
 	 *

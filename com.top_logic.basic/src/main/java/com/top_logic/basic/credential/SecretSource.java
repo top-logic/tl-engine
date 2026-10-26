@@ -129,6 +129,33 @@ public interface SecretSource {
 	}
 
 	/**
+	 * Whether this source holds its secret now.
+	 *
+	 * <p>
+	 * Asked each time a consumer decides whether it can offer a function that needs the secret, so
+	 * that the function becomes available as soon as the secret is provided, without restarting
+	 * the application. The secret is {@link #lookup() looked up} but not returned.
+	 * </p>
+	 *
+	 * <p>
+	 * A secret that is present but cannot be read, e.g. an empty or unreadable file, counts as
+	 * available: the consumer then uses it and reports the actual problem with
+	 * {@link #getSecret()}, instead of silently hiding a function whose secret was provided.
+	 * </p>
+	 *
+	 * @return Whether {@link #lookup()} finds the secret or fails because the secret cannot be
+	 *         read; <code>false</code> if the source does not hold it.
+	 */
+	default boolean isAvailable() {
+		try {
+			return lookup() != null;
+		} catch (I18NRuntimeException ex) {
+			// Present but not readable, reported when the secret is used.
+			return true;
+		}
+	}
+
+	/**
 	 * Where this source takes its secret from, for an administrator checking the secrets of an
 	 * installation.
 	 *

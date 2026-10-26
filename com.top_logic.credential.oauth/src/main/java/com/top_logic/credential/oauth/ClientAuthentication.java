@@ -9,6 +9,8 @@ import java.net.URI;
 
 import com.nimbusds.oauth2.sdk.id.ClientID;
 
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.exception.I18NRuntimeException;
 
 /**
@@ -42,5 +44,20 @@ public interface ClientAuthentication {
 	 *         If the credentials are not available. The message never contains a secret.
 	 */
 	com.nimbusds.oauth2.sdk.auth.ClientAuthentication createAuthentication(ClientID clientId, URI tokenEndpoint);
+
+	/**
+	 * Whether the client credentials are available now, so that
+	 * {@link #createAuthentication(ClientID, URI)} can succeed.
+	 *
+	 * <p>
+	 * The check is local and cheap and never reveals a secret.
+	 * </p>
+	 *
+	 * @see CredentialProvider#isAvailable()
+	 * @see SecretSource#isAvailable()
+	 */
+	default boolean isAvailable() {
+		return true;
+	}
 
 }

@@ -181,4 +181,14 @@ public class HeaderCredentials extends AbstractConfiguredInstance<HeaderCredenti
 		request.setHeader(config.getHeader(), value);
 	}
 
+	/**
+	 * Whether the secret is available now.
+	 *
+	 * @see SecretSource#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _secret.isAvailable();
+	}
+
 }

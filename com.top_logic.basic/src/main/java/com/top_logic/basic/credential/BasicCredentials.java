@@ -103,6 +103,16 @@ public class BasicCredentials extends AbstractConfiguredInstance<BasicCredential
 	}
 
 	/**
+	 * Whether the password is available now.
+	 *
+	 * @see SecretSource#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _password.isAvailable();
+	}
+
+	/**
 	 * The value of an {@link #AUTHORIZATION} header for HTTP basic authentication.
 	 *
 	 * @param user

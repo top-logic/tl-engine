@@ -167,6 +167,62 @@ public class TestTreeRowSource extends TestCase {
 	}
 
 	/**
+	 * Tests that {@link TreeRowSource#matchCount(FilterSpec)} counts the nodes matching the given
+	 * filter themselves - not the ancestors displayed to lead to them -, whatever the source is
+	 * currently filtered by and whichever nodes are expanded, and that counting leaves the displayed
+	 * rows as they are.
+	 */
+	public void testMatchCountOfAFilterCountsOwnMatches() {
+		TreeRowSource<Node, Node> source = new TreeRowSource<>(_structure, columns());
+		source.withFilter(new FilterSpec(Map.of("name", new Contains("b"))));
+		assertEquals(List.of("b"), names(source));
+
+		assertEquals("a1 and a1x match below the collapsed a; a is displayed to lead to them, but is "
+			+ "no match of its own.", 2, source.matchCount(new FilterSpec(Map.of("name", new Contains("a1")))));
+		assertEquals("The empty filter counts every node of the tree.", 5, source.matchCount(FilterSpec.NONE));
+		assertEquals("A filter matching nothing counts nothing.", 0,
+			source.matchCount(new FilterSpec(Map.of("name", new Contains("z")))));
+
+		assertEquals("Counting does not apply the filter.", List.of("b"), names(source));
+	}
+
+	/**
+	 * Tests that a tree that is not {@link TreeStructure#isFinite() finite} cannot be counted under
+	 * a given filter.
+	 */
+	public void testMatchCountOfAnInfiniteTreeIsUnknown() {
+		TreeStructure<Node, Node> infinite = new TreeStructure<>() {
+			@Override
+			public List<Node> roots() {
+				return _structure.roots();
+			}
+
+			@Override
+			public List<Node> children(Node node) {
+				return _structure.children(node);
+			}
+
+			@Override
+			public boolean isLeaf(Node node) {
+				return _structure.isLeaf(node);
+			}
+
+			@Override
+			public Node businessObject(Node node) {
+				return node;
+			}
+
+			@Override
+			public boolean isFinite() {
+				return false;
+			}
+		};
+		TreeRowSource<Node, Node> source = new TreeRowSource<>(infinite, columns());
+		assertEquals(com.top_logic.table.RowSource.UNKNOWN_COUNT,
+			source.matchCount(new FilterSpec(Map.of("name", new Contains("a1")))));
+	}
+
+	/**
 	 * A changed tree is displayed after a refresh, with the nodes that were expanded still
 	 * expanded.
 	 */

@@ -83,6 +83,30 @@ public class TestDeclaredFilters extends TestCase {
 		assertEquals(new BooleanFilterState(true, false, false), filter.filters().get(ACTIVE));
 	}
 
+	/**
+	 * The presentation a declaration gives its chip - a CSS class, a row count - reaches the
+	 * resolved filter, and a declaration giving none yields a filter without either.
+	 */
+	public void testResolvePresentation() {
+		BufferingProtocol log = new BufferingProtocol();
+		List<NamedFilter> filters = DeclaredFilters.resolve(log, "test", List.of(
+			new Declaration("waiting", ResKey.text("Waiting"), List.of(Criterion.value(ACTIVE, Boolean.TRUE)),
+				"tl-preset--waiting", true),
+			new Declaration("plain", ResKey.text("Plain"), List.of(Criterion.value(ACTIVE, Boolean.FALSE)))),
+			columns());
+
+		assertFalse(log.getErrors().toString(), log.hasErrors());
+		assertEquals(2, filters.size());
+
+		NamedFilter waiting = filters.get(0);
+		assertEquals("tl-preset--waiting", waiting.cssClass());
+		assertTrue("The declaration asks for its rows to be counted.", waiting.counted());
+
+		NamedFilter plain = filters.get(1);
+		assertNull("A declaration without a CSS class gives its filter none.", plain.cssClass());
+		assertFalse("A declaration is not counted unless it says so.", plain.counted());
+	}
+
 	public void testUnknownColumnReported() {
 		BufferingProtocol log = new BufferingProtocol();
 		List<NamedFilter> filters = DeclaredFilters.resolve(log, "test", List.of(

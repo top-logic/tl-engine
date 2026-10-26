@@ -1872,6 +1872,12 @@
   color: var(--tl-text-on-brand-hover);
 }
 
+/* Auf der Marke trägt der leisere Text die Farbe der Beschriftung: das Grau von text-secondary
+   verschwände auf der Markenfläche, etwa die Zeilenzahl eines gewählten Presets (#29968). */
+.tl-chip[aria-pressed="true"] .tl-chip__detail {
+  color: inherit;
+}
+
 /* Warnung vor Fehler: der Fehler steht später und gewinnt. Den Prüfzustand zeigen nur ungewählte,
    nicht deaktivierte Chips — ein gewählter trägt die Marke, ein deaktivierter keinen Prüfzustand.
    role="group" erlaubt kein aria-invalid; der Fehler steht in data-tl-state. */
@@ -6383,4 +6389,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:c79d19ba467b1740bd4354bcab7394e65bb07d752e5c8ddbc6ccf02803e56a2f — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:9d2f871b6acef5cde6acfe9c920378ca97a0752fe091bd7d9d9347eb84f0f1dd — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

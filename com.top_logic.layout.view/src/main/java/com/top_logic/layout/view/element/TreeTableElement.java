@@ -257,7 +257,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			public void inputsChanged() {
 				// The rows and their cells stay; the criteria of the presets and the row class may read
 				// the inputs.
-				refreshPresets(table, ChannelInputs.arguments(inputChannels));
+				if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+					control.refreshFilters();
+				}
 				if (rowCssClass != null) {
 					control.repaintRows();
 				}

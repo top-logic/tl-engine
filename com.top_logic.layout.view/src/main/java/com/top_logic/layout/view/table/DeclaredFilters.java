@@ -144,9 +144,21 @@ public class DeclaredFilters {
 	 *        The name to display.
 	 * @param criteria
 	 *        What is selected per column.
+	 * @param cssClass
+	 *        The {@link NamedFilter#cssClass() CSS class} of the resulting filter, or {@code null}.
+	 * @param counted
+	 *        Whether the resulting filter is {@link NamedFilter#counted() counted}.
 	 */
-	public record Declaration(String id, ResKey label, List<Criterion> criteria) {
-		// Pure data carrier.
+	public record Declaration(String id, ResKey label, List<Criterion> criteria, String cssClass,
+			boolean counted) {
+
+		/**
+		 * Creates a {@link Declaration} without presentation of its own: no CSS class, and not
+		 * counted.
+		 */
+		public Declaration(String id, ResKey label, List<Criterion> criteria) {
+			this(id, label, criteria, null, false);
+		}
 	}
 
 	/**
@@ -216,7 +228,8 @@ public class DeclaredFilters {
 				// offered as such.
 				continue;
 			}
-			result.add(NamedFilter.declared(id, declaration.label(), filters, null));
+			result.add(NamedFilter.declared(id, declaration.label(), filters, null,
+				declaration.cssClass(), declaration.counted()));
 		}
 		return result;
 	}

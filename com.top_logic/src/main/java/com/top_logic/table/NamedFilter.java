@@ -43,9 +43,18 @@ import com.top_logic.table.filter.TextFilterState;
  * @param search
  *        The cross-column search term this filter is made of, or {@code null} for a filter that
  *        says nothing about the search - the usual case, see {@link #matches(Map, TextFilterState)}.
+ * @param cssClass
+ *        A CSS class the UI offering this filter puts on its control, so that an application can
+ *        style a particular filter of its own - a warning color for the filter selecting overdue
+ *        items -, or {@code null} for none. It is presentation only: it takes no part in
+ *        {@link #matches(Map, TextFilterState)}.
+ * @param counted
+ *        Whether the UI offering this filter shows the number of rows it selects next to its
+ *        {@link #label()}, see {@link TableView#matchCount(NamedFilter)}. It is presentation only:
+ *        it takes no part in {@link #matches(Map, TextFilterState)}.
  */
 public record NamedFilter(String id, ResKey label, Origin origin, Map<String, FilterState> filters,
-		TextFilterState search) {
+		TextFilterState search, String cssClass, boolean counted) {
 
 	/**
 	 * Where a {@link NamedFilter} comes from, which decides whether the user may delete it.
@@ -70,6 +79,17 @@ public record NamedFilter(String id, ResKey label, Origin origin, Map<String, Fi
 	}
 
 	/**
+	 * Creates a {@link NamedFilter} without presentation of its own: no {@link #cssClass() CSS
+	 * class}, and not {@link #counted() counted}.
+	 *
+	 * @see #NamedFilter(String, ResKey, Origin, Map, TextFilterState, String, boolean)
+	 */
+	public NamedFilter(String id, ResKey label, Origin origin, Map<String, FilterState> filters,
+			TextFilterState search) {
+		this(id, label, origin, filters, search, null, false);
+	}
+
+	/**
 	 * A {@link Origin#DECLARED} {@link NamedFilter}.
 	 *
 	 * @see #NamedFilter(String, ResKey, Origin, Map, TextFilterState)
@@ -77,6 +97,21 @@ public record NamedFilter(String id, ResKey label, Origin origin, Map<String, Fi
 	public static NamedFilter declared(String id, ResKey label, Map<String, FilterState> filters,
 			TextFilterState search) {
 		return new NamedFilter(id, label, Origin.DECLARED, filters, search);
+	}
+
+	/**
+	 * A {@link Origin#DECLARED} {@link NamedFilter} with presentation of its own, as a table
+	 * definition can declare it.
+	 *
+	 * @param cssClass
+	 *        See {@link #cssClass()}.
+	 * @param counted
+	 *        See {@link #counted()}.
+	 * @see #NamedFilter(String, ResKey, Origin, Map, TextFilterState, String, boolean)
+	 */
+	public static NamedFilter declared(String id, ResKey label, Map<String, FilterState> filters,
+			TextFilterState search, String cssClass, boolean counted) {
+		return new NamedFilter(id, label, Origin.DECLARED, filters, search, cssClass, counted);
 	}
 
 	/**

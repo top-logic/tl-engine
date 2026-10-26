@@ -782,8 +782,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					.onInputsChanged(_cellIndependentInputs, () -> {
 						// The rows and their cells stay; what is computed from the inputs apart
 						// from the rows is computed again.
-						refreshDeclaredFilters(view, columns);
-						if (_rowCssClass != null) {
+						if (refreshDeclaredFilters(view, columns)) {
+							// Pushes the rows again as well, for their row class.
+							table.refreshFilters();
+						} else if (_rowCssClass != null) {
 							table.repaintRows();
 						}
 					});
@@ -799,11 +801,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/**
 	 * Resolves the criteria of the declared filters again for the current input values.
+	 *
+	 * @return Whether the table declares filters, so that they were replaced on the given view.
 	 */
-	private void refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
-		if (_declaredFilters != null) {
-			view.setDeclaredFilters(_declaredFilters.apply(columns));
+	private boolean refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
+		if (_declaredFilters == null) {
+			return false;
 		}
+		view.setDeclaredFilters(_declaredFilters.apply(columns));
+		return true;
 	}
 
 	/**

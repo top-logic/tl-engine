@@ -49,6 +49,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_SECRET_EMPTY__NAME_VAULT;
 
 	/**
+	 * @en The secret "{0}" does not exist in the key vault "{1}".
+	 */
+	public static ResKey2 ERROR_SECRET_NOT_FOUND__NAME_VAULT;
+
+	/**
+	 * @en "{0}" is not a valid name of a secret in Azure Key Vault. A name consists of 1 to 127
+	 *     letters, digits and dashes; an underscore in the name of the secret stands for a dash.
+	 */
+	public static ResKey1 ERROR_INVALID_SECRET_NAME__NAME;
+
+	/**
 	 * @en The response of "{0}" is malformed.
 	 */
 	public static ResKey1 ERROR_MALFORMED_RESPONSE__URL;

@@ -32,6 +32,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretStore;
 import com.top_logic.basic.exception.I18NRuntimeException;
 
 /**
@@ -59,11 +60,16 @@ public abstract class AbstractAzureMockTest extends AbstractTypedConfigurationTe
 
 		String SECRET = "secret";
 
+		String STORE = "store";
+
 		@Name(CREDENTIALS)
 		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
 
 		@Name(SECRET)
 		PolymorphicConfiguration<? extends SecretSource> getSecret();
+
+		@Name(STORE)
+		PolymorphicConfiguration<? extends SecretStore> getStore();
 
 	}
 
@@ -228,6 +234,14 @@ public abstract class AbstractAzureMockTest extends AbstractTypedConfigurationTe
 	protected SecretSource secret(String xml) throws Exception {
 		Config config = read("<config>" + xml + "</config>");
 		return getInstance(config.getSecret());
+	}
+
+	/**
+	 * Reads a secret store configuration.
+	 */
+	protected SecretStore store(String xml) throws Exception {
+		Config config = read("<config>" + xml + "</config>");
+		return getInstance(config.getStore());
 	}
 
 	/**

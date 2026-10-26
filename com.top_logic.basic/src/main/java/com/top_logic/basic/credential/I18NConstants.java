@@ -8,6 +8,7 @@ package com.top_logic.basic.credential;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 
 /**
  * Internationalization constants for this package.
@@ -71,6 +72,43 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     eines von beiden darf angegeben werden.
 	 */
 	public static ResKey1 ERROR_CREDENTIALS_AND_API_KEY__OWNER;
+
+	/**
+	 * Description of a secret that is kept in the configuration itself.
+	 *
+	 * @en In the configuration
+	 * @de In der Konfiguration
+	 */
+	public static ResKey SECRET_IN_CONFIGURATION;
+
+	/**
+	 * Description of a secret source or store by its kind and the non-secret details identifying
+	 * it.
+	 *
+	 * @en {0} ({1})
+	 * @de {0} ({1})
+	 */
+	public static ResKey2 SECRET_DESCRIPTION__KIND_DETAIL;
+
+	/**
+	 * Description of the override in the secret store service delivering a named secret.
+	 *
+	 * @en Override: {0}
+	 * @de Übersteuerung: {0}
+	 */
+	public static ResKey1 SECRET_RESOLVED_BY_OVERRIDE__SOURCE;
+
+	/**
+	 * @en The secret source cannot be created from its configuration.
+	 * @de Die Quelle des Geheimnisses kann nicht aus ihrer Konfiguration erzeugt werden.
+	 */
+	public static ResKey ERROR_SECRET_SOURCE_INVALID;
+
+	/**
+	 * @en Checking the secret failed: {0}.
+	 * @de Die Prüfung des Geheimnisses ist fehlgeschlagen: {0}.
+	 */
+	public static ResKey1 ERROR_SECRET_CHECK_FAILED__PROBLEM;
 
 	static {
 		initConstants(I18NConstants.class);

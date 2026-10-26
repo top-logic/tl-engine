@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link SecretSource} delivering a secret stored in the configuration itself.
@@ -91,6 +92,11 @@ public class LiteralSecretSource extends AbstractConfiguredInstance<LiteralSecre
 			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_NOT_CONFIGURED);
 		}
 		return value;
+	}
+
+	@Override
+	public ResKey reference() {
+		return I18NConstants.SECRET_IN_CONFIGURATION;
 	}
 
 }

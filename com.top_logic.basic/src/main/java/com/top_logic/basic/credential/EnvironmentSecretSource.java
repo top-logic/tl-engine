@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.core.workspace.Environment;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link SecretSource} reading the secret from a system property or an environment variable.
@@ -93,6 +94,16 @@ public class EnvironmentSecretSource extends AbstractConfiguredInstance<Environm
 			throw new I18NRuntimeException(EnvironmentSecretStore.undefined(name));
 		}
 		return value;
+	}
+
+	@Override
+	public String lookup() {
+		return EnvironmentSecretStore.variable(getConfig().getName());
+	}
+
+	@Override
+	public ResKey reference() {
+		return ResKey.text(getConfig().getName());
 	}
 
 }

@@ -152,6 +152,69 @@ public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 		assertEquals("Only a rejected token is retried.", 1, requests(SECRET_PATH).size());
 	}
 
+	private static final String NOT_FOUND_BODY =
+		"{\"error\":{\"code\":\"SecretNotFound\",\"message\":\"A secret with (name/id) db-password was not found.\"}}";
+
+	private static final String NOT_FOUND_DETAIL = "SecretNotFound: A secret with (name/id) db-password was not found.";
+
+	private static final String FORBIDDEN_BODY =
+		"{\"error\":{\"code\":\"Forbidden\",\"message\":\"Access denied.\"}}";
+
+	private static final String FORBIDDEN_DETAIL = "Forbidden: Access denied.";
+
+	public void testLookupExisting() throws Exception {
+		SecretSource source = vault("", credentials());
+
+		assertEquals("value-1", source.lookup());
+		assertEquals("Secret read by lookup must be cached.", "value-1", source.getSecret());
+		assertEquals(1, requests(SECRET_PATH).size());
+	}
+
+	public void testLookupNotFoundThenGetSecret() throws Exception {
+		respond(SECRET_PATH, (count, request) -> new Object[] { 404, NOT_FOUND_BODY });
+		SecretSource source = vault("", credentials());
+
+		assertNull("Missing secret must be absent.", source.lookup());
+		assertFailure(404, NOT_FOUND_DETAIL, source);
+		assertNull("Cached absence must stay absent.", source.lookup());
+		assertEquals("Absence must be cached.", 1, requests(SECRET_PATH).size());
+	}
+
+	public void testGetSecretNotFoundThenLookup() throws Exception {
+		respond(SECRET_PATH, (count, request) -> new Object[] { 404, NOT_FOUND_BODY });
+		SecretSource source = vault("", credentials());
+
+		assertFailure(404, NOT_FOUND_DETAIL, source);
+		assertNull("Cached absence must be absent for lookup.", source.lookup());
+		assertFailure(404, NOT_FOUND_DETAIL, source);
+		assertEquals("Absence must be cached.", 1, requests(SECRET_PATH).size());
+	}
+
+	public void testForbiddenIsError() throws Exception {
+		respond(SECRET_PATH, (count, request) -> new Object[] { 403, FORBIDDEN_BODY });
+		SecretSource source = vault("", credentials());
+
+		try {
+			source.lookup();
+			fail("Denied access not reported by lookup.");
+		} catch (I18NRuntimeException ex) {
+			assertEquals(I18NConstants.ERROR_SECRET_REQUEST_FAILED__NAME_VAULT_STATUS_DETAIL.fill(SECRET_NAME,
+				url(""), 403, FORBIDDEN_DETAIL), ex.getErrorKey());
+		}
+		assertFailure(403, FORBIDDEN_DETAIL, source);
+		assertEquals("Failure must not be cached.", 2, requests(SECRET_PATH).size());
+	}
+
+	private void assertFailure(int status, String detail, SecretSource source) {
+		try {
+			source.getSecret();
+			fail("Failure not reported.");
+		} catch (I18NRuntimeException ex) {
+			assertEquals(I18NConstants.ERROR_SECRET_REQUEST_FAILED__NAME_VAULT_STATUS_DETAIL.fill(SECRET_NAME,
+				url(""), status, detail), ex.getErrorKey());
+		}
+	}
+
 	public void testEmptySecret() throws Exception {
 		respond(SECRET_PATH, (count, request) -> new Object[] { 200, "{\"value\":\"\"}" });
 		SecretSource source = vault("", credentials());

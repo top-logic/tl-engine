@@ -1,5 +1,5 @@
 ---
-description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure), prefix and per-secret overrides, putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
+description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure), prefix and per-secret overrides, putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
 order: 15
 ---
 
@@ -181,6 +181,12 @@ The fragment is an ordinary typed configuration:
 ```
 
 The `store` of the fragment replaces the environment store of the engine; its overrides are added to those of the engine configuration.
+
+## Checking the secrets of an installation
+
+The administration of the React UI lists all secrets the configurations of the running services refer to under *System > Secrets*: per service the property holding the secret (`providers[anthropic] / credentials / secret`), the kind of source, how it identifies the secret (the name, the variable, the file, the vault secret; a secret kept in the configuration only as such), for a named secret the override or the store delivering it, and whether it is available. A secret is *missing* when its source does not hold it - an undefined variable, a file that does not exist, a name neither an override nor the store knows - and an *error* when it is present but cannot be read, e.g. an empty file. The secret itself is never shown.
+
+`SecretReferences.ofServices()` collects these `SecretReference`s, walking the configuration each service was started with through all nested items, lists and maps; `SecretReferences.of(service, config)` does the same for one configuration. It tells a missing secret from an unreadable one by `SecretSource#lookup()`, which answers `null` for an absent secret (for a named secret through `SecretStoreService#lookup(String)`), and describes the source by `SecretSource#reference()`. An own source overrides both, so that its secrets are reported precisely; without them, any failure counts as error and the reference stays empty.
 
 ## Explicit sources as the exception
 

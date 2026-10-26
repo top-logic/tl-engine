@@ -12,6 +12,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Source of a single secret (API key, password, token) that is fetched at the moment of use.
@@ -106,6 +107,42 @@ public interface SecretSource {
 	 *         secret.
 	 */
 	String getSecret();
+
+	/**
+	 * The current value of the secret, if its source holds it.
+	 *
+	 * <p>
+	 * In contrast to {@link #getSecret()}, a secret that is absent from its source - an undefined
+	 * variable, a file that does not exist, a name the secret store does not hold - is answered with
+	 * <code>null</code> instead of an error. This tells a missing secret from one that is present
+	 * but cannot be read, e.g. when checking whether all secrets of an installation are provided.
+	 * </p>
+	 *
+	 * @return The secret, never empty, or <code>null</code> if the source does not hold it.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the secret is present but cannot be delivered, e.g. an empty or unreadable file.
+	 *         The message of the exception never contains the secret.
+	 */
+	default String lookup() {
+		return getSecret();
+	}
+
+	/**
+	 * Where this source takes its secret from, for an administrator checking the secrets of an
+	 * installation.
+	 *
+	 * <p>
+	 * The description identifies the secret without revealing it: the name of a secret or of a
+	 * variable, the path of a file, the vault and the name of a secret in it. A secret kept in the
+	 * configuration itself is described as such.
+	 * </p>
+	 *
+	 * @return The description, <code>null</code> if this source cannot tell.
+	 */
+	default ResKey reference() {
+		return null;
+	}
 
 	/**
 	 * Whether the given value is the current secret, e.g. a key sent by a client that is checked

@@ -12,6 +12,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link SecretSource} fetching a secret by its name from the secret storage of the installation.
@@ -88,6 +89,16 @@ public class NamedSecretSource extends AbstractConfiguredInstance<NamedSecretSou
 	@Override
 	public String getSecret() {
 		return SecretStoreService.secret(getConfig().getName());
+	}
+
+	@Override
+	public String lookup() {
+		return SecretStoreService.lookupSecret(getConfig().getName());
+	}
+
+	@Override
+	public ResKey reference() {
+		return ResKey.text(getConfig().getName());
 	}
 
 }

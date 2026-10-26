@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
@@ -174,6 +175,35 @@ public class SecretStoreService extends ConfiguredManagedClass<SecretStoreServic
 	 *         secret.
 	 */
 	public String getSecret(String name) {
+		return resolve(name, SecretSource::getSecret, store -> store.getSecret(name));
+	}
+
+	/**
+	 * The current value of the secret with the given name, if it is held where it is looked for.
+	 *
+	 * <p>
+	 * The secret is looked up like in {@link #getSecret(String)}, but a secret that is absent - its
+	 * {@link Config#getOverrides() override} does not hold it, or the {@link Config#getStore()
+	 * store} does not - is answered with <code>null</code> instead of an error.
+	 * </p>
+	 *
+	 * @param name
+	 *        The name of the secret.
+	 * @return The secret, never empty, or <code>null</code> if it is absent.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the secret is present but cannot be delivered. The message of the exception
+	 *         never contains the secret.
+	 *
+	 * @see SecretSource#lookup()
+	 * @see SecretStore#lookup(String)
+	 */
+	public String lookup(String name) {
+		return resolve(name, SecretSource::lookup, store -> store.lookup(name));
+	}
+
+	private String resolve(String name, Function<SecretSource, String> fromOverride,
+			Function<SecretStore, String> fromStore) {
 		Set<String> resolving = RESOLVING.get();
 		if (!resolving.add(name)) {
 			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_OVERRIDE_CYCLE__NAME.fill(name));
@@ -181,12 +211,33 @@ public class SecretStoreService extends ConfiguredManagedClass<SecretStoreServic
 		try {
 			SecretSource override = _overrides.get(name);
 			if (override != null) {
-				return override.getSecret();
+				return fromOverride.apply(override);
 			}
-			return _store.getSecret(name);
+			return fromStore.apply(_store);
 		} finally {
 			resolving.remove(name);
 		}
+	}
+
+	/**
+	 * The source of the secret with the given name, if it does not live in the store.
+	 *
+	 * @param name
+	 *        The name of the secret.
+	 * @return The source of the {@link Config#getOverrides() override} for the name,
+	 *         <code>null</code> if the secret is taken from the {@link #getStore() store}.
+	 */
+	public SecretSource getOverride(String name) {
+		return _overrides.get(name);
+	}
+
+	/**
+	 * The store delivering every secret without {@link #getOverride(String) override}.
+	 *
+	 * @see Config#getStore()
+	 */
+	public SecretStore getStore() {
+		return _store;
 	}
 
 	/**
@@ -204,6 +255,23 @@ public class SecretStoreService extends ConfiguredManagedClass<SecretStoreServic
 			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_STORE_NOT_STARTED__NAME.fill(name));
 		}
 		return Module.INSTANCE.getImplementationInstance().getSecret(name);
+	}
+
+	/**
+	 * The current value of the secret with the given name from the started
+	 * {@link SecretStoreService}, if it is held where it is looked for.
+	 *
+	 * @see #lookup(String)
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the secret is present but cannot be delivered, or if the
+	 *         {@link SecretStoreService} has not been started.
+	 */
+	public static String lookupSecret(String name) {
+		if (!Module.INSTANCE.isActive()) {
+			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_STORE_NOT_STARTED__NAME.fill(name));
+		}
+		return Module.INSTANCE.getImplementationInstance().lookup(name);
 	}
 
 	/**

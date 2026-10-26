@@ -24,6 +24,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Reads secrets from one Azure Key Vault and keeps them for the configured cache time.
@@ -34,7 +35,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * {@link CredentialProviderPolicy}), by default the managed identity of the machine or app for the
  * resource {@link #KEY_VAULT_RESOURCE}. A secret is kept for the cache time and read again
  * afterwards, so that a secret rotated in the key vault takes effect without restarting the
- * application. A failed read is not kept.
+ * application. The absence of a secret is kept like a secret, a failed read is not kept.
  * </p>
  *
  * @see KeyVaultSecretSource
@@ -114,7 +115,8 @@ public final class KeyVaultClient {
 	 *        Version of the secret, empty for the current version.
 	 * @param optional
 	 *        Whether a missing secret is reported as <code>null</code> instead of as error. The
-	 *        absence is kept for the cache time like a secret.
+	 *        absence is kept for the cache time like a secret, for optional and non-optional
+	 *        requests alike: a non-optional request reports a cached absence as error.
 	 * @return The secret, never empty; <code>null</code> only if the secret does not exist and
 	 *         the request is optional.
 	 *
@@ -125,17 +127,30 @@ public final class KeyVaultClient {
 	public String getSecret(String name, String version, boolean optional) {
 		String key = version.isEmpty() ? name : name + '/' + version;
 		CacheEntry entry = _cache.computeIfAbsent(key, x -> new CacheEntry());
-		return entry.get(() -> fetch(name, version, optional));
+		Snapshot snapshot = entry.get(() -> fetch(name, version));
+		if (snapshot.isAbsent()) {
+			if (optional) {
+				return null;
+			}
+			throw new I18NRuntimeException(snapshot._notFound);
+		}
+		return snapshot._value;
 	}
 
-	private String fetch(String name, String version, boolean optional) {
+	/**
+	 * Reads the secret from the key vault.
+	 *
+	 * @return The secret, or the absence of the secret with the error reporting it.
+	 */
+	private Snapshot fetch(String name, String version) {
 		KeyVaultSecret secret;
 		try {
 			secret = _client.getSecret(name, version);
 		} catch (HttpResponseException ex) {
 			int status = ex.getResponse().getStatusCode();
-			if (optional && status == STATUS_NOT_FOUND) {
-				return null;
+			if (status == STATUS_NOT_FOUND) {
+				return Snapshot.absent(I18NConstants.ERROR_SECRET_REQUEST_FAILED__NAME_VAULT_STATUS_DETAIL
+					.fill(name, _vaultUrl, status, errorText(ex)));
 			}
 			// The cause is not reported, its message quotes the response.
 			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_REQUEST_FAILED__NAME_VAULT_STATUS_DETAIL
@@ -155,7 +170,7 @@ public final class KeyVaultClient {
 		if (StringServices.isEmpty(value)) {
 			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_EMPTY__NAME_VAULT.fill(name, _vaultUrl));
 		}
-		return value;
+		return Snapshot.secret(value);
 	}
 
 	private static String errorText(HttpResponseException ex) {
@@ -183,20 +198,20 @@ public final class KeyVaultClient {
 		 */
 		private volatile Snapshot _snapshot;
 
-		String get(Supplier<String> fetch) {
+		Snapshot get(Supplier<Snapshot> fetch) {
 			Snapshot snapshot = _snapshot;
 			if (snapshot != null && !snapshot.isExpired()) {
-				return snapshot._value;
+				return snapshot;
 			}
 			synchronized (this) {
 				snapshot = _snapshot;
 				if (snapshot != null && !snapshot.isExpired()) {
 					// Read by another thread in the meantime.
-					return snapshot._value;
+					return snapshot;
 				}
-				String value = fetch.get();
-				_snapshot = new Snapshot(value, System.currentTimeMillis() + _cacheTime);
-				return value;
+				snapshot = fetch.get().expiringAt(System.currentTimeMillis() + _cacheTime);
+				_snapshot = snapshot;
+				return snapshot;
 			}
 		}
 
@@ -207,13 +222,48 @@ public final class KeyVaultClient {
 	 */
 	private static final class Snapshot {
 
+		/**
+		 * The secret, <code>null</code> if it does not exist.
+		 */
 		final String _value;
+
+		/**
+		 * The error reporting the absence of the secret, <code>null</code> if it exists.
+		 */
+		final ResKey _notFound;
 
 		private final long _expires;
 
-		Snapshot(String value, long expires) {
+		private Snapshot(String value, ResKey notFound, long expires) {
 			_value = value;
+			_notFound = notFound;
 			_expires = expires;
+		}
+
+		/**
+		 * A snapshot of an existing secret.
+		 */
+		static Snapshot secret(String value) {
+			return new Snapshot(value, null, 0);
+		}
+
+		/**
+		 * A snapshot of a secret that does not exist, reported by the given error when it is
+		 * required.
+		 */
+		static Snapshot absent(ResKey notFound) {
+			return new Snapshot(null, notFound, 0);
+		}
+
+		/**
+		 * This snapshot, valid until the given time.
+		 */
+		Snapshot expiringAt(long expires) {
+			return new Snapshot(_value, _notFound, expires);
+		}
+
+		boolean isAbsent() {
+			return _value == null;
 		}
 
 		boolean isExpired() {

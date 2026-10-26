@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link SecretSource} reading a secret from Azure Key Vault.
@@ -132,6 +133,11 @@ public class KeyVaultSecretSource extends AbstractConfiguredInstance<KeyVaultSec
 
 	}
 
+	/**
+	 * Path segment between the vault URL and the name of a secret in the identifier of a secret.
+	 */
+	private static final String SECRETS_PATH = "/secrets/";
+
 	private final KeyVaultClient _client;
 
 	/**
@@ -151,6 +157,23 @@ public class KeyVaultSecretSource extends AbstractConfiguredInstance<KeyVaultSec
 	public String getSecret() {
 		Config config = getConfig();
 		return _client.getSecret(config.getSecretName(), StringServices.nonNull(config.getSecretVersion()), false);
+	}
+
+	@Override
+	public String lookup() {
+		Config config = getConfig();
+		return _client.getSecret(config.getSecretName(), StringServices.nonNull(config.getSecretVersion()), true);
+	}
+
+	/**
+	 * The identifier of the secret in the key vault, its URL without the secret.
+	 */
+	@Override
+	public ResKey reference() {
+		Config config = getConfig();
+		String version = StringServices.nonNull(config.getSecretVersion());
+		return ResKey.text(_client.getVaultUrl() + SECRETS_PATH + config.getSecretName()
+			+ (version.isEmpty() ? "" : "/" + version));
 	}
 
 }

@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link SecretSource} reading the secret from a file, e.g. a Kubernetes or Docker secret mounted
@@ -107,6 +108,16 @@ public class FileSecretSource extends AbstractConfiguredInstance<FileSecretSourc
 				I18NConstants.ERROR_SECRET_FILE_UNREADABLE__PATH.fill(_file.getPath().toString()));
 		}
 		return secret;
+	}
+
+	@Override
+	public String lookup() {
+		return _file.lookup();
+	}
+
+	@Override
+	public ResKey reference() {
+		return ResKey.text(_file.getPath().toString());
 	}
 
 }

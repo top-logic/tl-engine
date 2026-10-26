@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link SecretSource} delivering a secret stored in the configuration in the form encoded by
@@ -99,6 +100,11 @@ public class CryptSupportSecretSource extends AbstractConfiguredInstance<CryptSu
 				CryptSupportSecretSource.class);
 			return value;
 		}
+	}
+
+	@Override
+	public ResKey reference() {
+		return com.top_logic.basic.credential.I18NConstants.SECRET_IN_CONFIGURATION;
 	}
 
 }

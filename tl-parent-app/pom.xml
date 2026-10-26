@@ -75,12 +75,6 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-scripting-template</artifactId>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
 
 		<dependency>
 		    <groupId>com.h2database</groupId>

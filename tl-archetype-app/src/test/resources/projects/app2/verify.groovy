@@ -51,7 +51,8 @@ def expectedDependencies = [
 	"tl-chat-classic": true,
 	"tl-starter-ai-search": true,
 	"tl-security-auth-pac4j": true,
-	"tl-license-professional": false
+	"tl-license-professional": false,
+	"tl-layout-scripting-template": true
 ];
 expectedDependencies.each { artifactId, present ->
 	if (dependencies.contains(artifactId) != present) {

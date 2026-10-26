@@ -48,7 +48,8 @@ def dependencies = children(child(pom, "dependencies"), "dependency").collect { 
 def expectedDependencies = [
 	"tl-starter-react": true,
 	"tl-license-professional": false,
-	"tl-starter-ai": false
+	"tl-starter-ai": false,
+	"tl-layout-scripting-template": false
 ];
 expectedDependencies.each { artifactId, present ->
 	if (dependencies.contains(artifactId) != present) {

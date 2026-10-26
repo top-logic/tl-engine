@@ -53,7 +53,8 @@ def expectedDependencies = [
 	"tl-starter-ai-search": true,
 	"tl-security-auth-pac4j": true,
 	"tl-service-openapi-client": true,
-	"tl-service-openapi-server": true
+	"tl-service-openapi-server": true,
+	"tl-layout-scripting-template": false
 ];
 expectedDependencies.each { artifactId, present ->
 	if (dependencies.contains(artifactId) != present) {

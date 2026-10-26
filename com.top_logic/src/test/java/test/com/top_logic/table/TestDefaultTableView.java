@@ -547,6 +547,52 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals("restored sort re-applied to rows", List.of("Bob", "Charlie", "alice"), names(view2));
 	}
 
+	public void testPersistsAndRestoresViewOptions() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-view-options");
+
+		TableView<Person> view1 = newView(store, id);
+		view1.setViewOptions("compact", true, true);
+
+		TableView<Person> view2 = newView(store, id);
+		assertEquals("compact", view2.state().getDensity());
+		assertTrue(view2.state().isStriped());
+		assertTrue(view2.state().isColumnLines());
+	}
+
+	public void testUnknownDensityIsDefault() {
+		TableView<Person> view = newView();
+		view.setViewOptions("roomy", false, false);
+		assertEquals("", view.state().getDensity());
+	}
+
+	public void testResetRestoresViewOptionsButKeepsFilters() {
+		TableView<Person> view = newView();
+		view.filter("name", new Contains("a"));
+		view.setViewOptions("normal", true, true);
+
+		view.resetToDefaults();
+
+		assertEquals("", view.state().getDensity());
+		assertFalse(view.state().isStriped());
+		assertFalse(view.state().isColumnLines());
+		assertEquals("The reset keeps the column filters.", Set.of("name"), view.state().getFilters().keySet());
+	}
+
+	public void testResetPersistsDefaultViewOptions() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-view-options-reset");
+
+		TableView<Person> view1 = newView(store, id);
+		view1.setViewOptions("compact", true, true);
+		view1.resetToDefaults();
+
+		TableView<Person> view2 = newView(store, id);
+		assertEquals("", view2.state().getDensity());
+		assertFalse(view2.state().isStriped());
+		assertFalse(view2.state().isColumnLines());
+	}
+
 	public void testRestoreDropsStaleAndAppendsNewColumns() {
 		ViewStateStore store = new MapViewStateStore();
 		TableId id = new TableId("t2");

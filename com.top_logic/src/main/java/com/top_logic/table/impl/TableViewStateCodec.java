@@ -64,6 +64,12 @@ public final class TableViewStateCodec {
 	 */
 	private static final String SEARCH = "search";
 
+	private static final String DENSITY = "density";
+
+	private static final String STRIPED = "striped";
+
+	private static final String COLUMN_LINES = "columnLines";
+
 	private TableViewStateCodec() {
 		// Utility class.
 	}
@@ -119,6 +125,16 @@ public final class TableViewStateCodec {
 		TextFilterState search = state.getSearch();
 		if (search != null && !search.isEmpty()) {
 			json.put(SEARCH, TextColumnFilter.textToJson(search));
+		}
+
+		if (!TableViewState.DENSITY_DEFAULT.equals(state.getDensity())) {
+			json.put(DENSITY, state.getDensity());
+		}
+		if (state.isStriped()) {
+			json.put(STRIPED, Boolean.TRUE);
+		}
+		if (state.isColumnLines()) {
+			json.put(COLUMN_LINES, Boolean.TRUE);
 		}
 		return json;
 	}
@@ -198,6 +214,27 @@ public final class TableViewStateCodec {
 		if (search != null && !search.isEmpty()) {
 			target.setSearch(search);
 		}
+
+		if (json.containsKey(DENSITY)) {
+			target.setDensity(density(json.get(DENSITY)));
+		}
+		if (json.containsKey(STRIPED)) {
+			target.setStriped(asBool(json.get(STRIPED)));
+		}
+		if (json.containsKey(COLUMN_LINES)) {
+			target.setColumnLines(asBool(json.get(COLUMN_LINES)));
+		}
+	}
+
+	/** The known density the given value names, the default for anything else. */
+	private static String density(Object value) {
+		if (TableViewState.DENSITY_NORMAL.equals(value)) {
+			return TableViewState.DENSITY_NORMAL;
+		}
+		if (TableViewState.DENSITY_COMPACT.equals(value)) {
+			return TableViewState.DENSITY_COMPACT;
+		}
+		return TableViewState.DENSITY_DEFAULT;
 	}
 
 	private static List<String> strings(List<?> list) {

@@ -28,6 +28,10 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-reporting-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-reporting-flex</artifactId>
     </dependency>
     <dependency>

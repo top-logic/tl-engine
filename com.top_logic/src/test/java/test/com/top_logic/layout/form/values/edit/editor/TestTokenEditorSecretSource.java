@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.LiteralSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.layout.form.FormContainer;
@@ -72,13 +73,13 @@ public class TestTokenEditorSecretSource extends TestCase {
 
 	}
 
-	public void testPlainSecretPreselectsEnvironment() {
+	public void testPlainSecretPreselectsNamed() {
 		PlainSecretProperties model = TypedConfiguration.newConfigItem(PlainSecretProperties.class);
 		FormGroup group = build(model);
 
-		assertTrue("The environment source is preselected: " + model.getSecret(),
-			model.getSecret() instanceof EnvironmentSecretSource.Config);
-		assertNotNull("The name of the variable is edited.", findMember(group, EnvironmentSecretSource.Config.NAME));
+		assertTrue("The named source is preselected: " + model.getSecret(),
+			model.getSecret() instanceof NamedSecretSource.Config);
+		assertNotNull("The name of the secret is edited.", findMember(group, NamedSecretSource.Config.NAME));
 		assertNull("No token generation without token editor.", findMember(group, OPENER));
 	}
 
@@ -92,14 +93,14 @@ public class TestTokenEditorSecretSource extends TestCase {
 		assertNotNull("The literal value can be cleared.", findMember(group, CLEAR));
 	}
 
-	public void testEnvironmentSourceShowsReference() {
+	public void testNamedSourceShowsReference() {
 		SecretProperties model = TypedConfiguration.newConfigItem(SecretProperties.class);
 		FormGroup group = build(model);
 
-		model.setToken(TypedConfiguration.newConfigItem(EnvironmentSecretSource.Config.class));
+		model.setToken(TypedConfiguration.newConfigItem(NamedSecretSource.Config.class));
 
 		assertNull("No token generation for a reference.", findMember(group, OPENER));
-		assertNotNull("The name of the variable is edited.", findMember(group, EnvironmentSecretSource.Config.NAME));
+		assertNotNull("The name of the secret is edited.", findMember(group, NamedSecretSource.Config.NAME));
 	}
 
 	public void testConfiguredSourceKept() {

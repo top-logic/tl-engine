@@ -48,9 +48,10 @@ public class ServiceProviderInfo extends Hashtable {
 		 * The password of the master account used to access the directory.
 		 * 
 		 * <p>
-		 * Recommended is a reference to the variable or file holding the password, so that the
-		 * password is not part of the configuration, e.g. <code>&lt;master-credential name="LDAP_CREDENTIAL"/&gt;</code>
-		 * for an environment variable holding the plain password. An attribute value is the
+		 * Recommended is a reference to the password by its secret name, so that the password is
+		 * not part of the configuration, e.g. <code>&lt;master-credential
+		 * name="LDAP_CREDENTIAL"/&gt;</code>, which the default secret store reads from the
+		 * environment variable of that name holding the plain password. An attribute value is the
 		 * password encoded by {@link CryptSupport}, or the password in plain text.
 		 * </p>
 		 * 

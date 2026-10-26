@@ -20,7 +20,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.security.auth.pac4j.config.DefaultOidcClientConfigurator;
 
 /**
@@ -100,7 +100,7 @@ public class TestOidcClientSecret extends AbstractTypedConfigurationTestCase {
 		assertEquals(SECRET, clientSecret(config));
 	}
 
-	/** A reference to a variable is written as element without class holding only the name. */
+	/** A reference to a named secret is written as element without class holding only the name. */
 	public void testWriteEnvironmentSecret() throws Exception {
 		System.setProperty(VARIABLE, SECRET);
 		Config config = read(xml("", environmentSecret()));
@@ -111,7 +111,7 @@ public class TestOidcClientSecret extends AbstractTypedConfigurationTestCase {
 			written.contains("<" + DefaultOidcClientConfigurator.Config.SECRET + " name=\"" + VARIABLE + "\""));
 
 		Config copy = (Config) fromXML(written);
-		assertTrue(copy.getClient().getSecret() instanceof EnvironmentSecretSource.Config);
+		assertTrue(copy.getClient().getSecret() instanceof NamedSecretSource.Config);
 		assertEquals(written, toXML(copy));
 		assertEquals(SECRET, clientSecret(copy));
 	}

@@ -36,8 +36,8 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory;
 
 /**
- * Tests how {@link GiteaIssueTool} authenticates its requests: with the access token in
- * {@link GiteaIssueTool#TOKEN_VARIABLE} by default, with the credentials configured on its
+ * Tests how {@link GiteaIssueTool} authenticates its requests: with the access token in the secret
+ * {@link GiteaIssueTool#TOKEN_SECRET} by default (read from the variable of that name), with the credentials configured on its
  * {@link ReflectiveToolFactory}, and once more with a fresh token after a rejection.
  */
 public class TestGiteaIssueTool extends TestCase {
@@ -84,13 +84,13 @@ public class TestGiteaIssueTool extends TestCase {
 		System.clearProperty(URL_VARIABLE);
 		System.clearProperty(OWNER_VARIABLE);
 		System.clearProperty(REPO_VARIABLE);
-		System.clearProperty(GiteaIssueTool.TOKEN_VARIABLE);
+		System.clearProperty(GiteaIssueTool.TOKEN_SECRET);
 		super.tearDown();
 	}
 
 	/** Without configured credentials, the token of the variable is sent with the scheme of Gitea. */
 	public void testDefaultToken() {
-		System.setProperty(GiteaIssueTool.TOKEN_VARIABLE, "gitea-token");
+		System.setProperty(GiteaIssueTool.TOKEN_SECRET, "gitea-token");
 
 		String result = createIssue(new GiteaIssueTool());
 
@@ -100,14 +100,14 @@ public class TestGiteaIssueTool extends TestCase {
 
 	/** Without configured credentials and token, no issue is created and the variable is named. */
 	public void testMissingToken() {
-		if (System.getenv(GiteaIssueTool.TOKEN_VARIABLE) != null) {
+		if (System.getenv(GiteaIssueTool.TOKEN_SECRET) != null) {
 			// The token of the environment cannot be removed for the test.
 			return;
 		}
 		String result = createIssue(new GiteaIssueTool());
 
 		assertTrue(result, result.startsWith("Error:"));
-		assertTrue(result, result.contains(GiteaIssueTool.TOKEN_VARIABLE));
+		assertTrue(result, result.contains(GiteaIssueTool.TOKEN_SECRET));
 		assertTrue(_authorizations.isEmpty());
 	}
 
@@ -127,7 +127,7 @@ public class TestGiteaIssueTool extends TestCase {
 
 	/** The factory still instantiates a tool class by its no-argument constructor. */
 	public void testToolClass() throws ConfigurationException {
-		System.setProperty(GiteaIssueTool.TOKEN_VARIABLE, "gitea-token");
+		System.setProperty(GiteaIssueTool.TOKEN_SECRET, "gitea-token");
 
 		Tool tool = tool("", "tool-class='" + GiteaIssueTool.class.getName() + "'");
 		tool.execute(Map.of("title", "T", "category", "tool-misuse", "severity", "low", "description", "D"), null);
@@ -137,11 +137,11 @@ public class TestGiteaIssueTool extends TestCase {
 
 	/** A rejected request is repeated once with a fresh token. */
 	public void testRetryWithFreshToken() {
-		System.setProperty(GiteaIssueTool.TOKEN_VARIABLE, "old-token");
+		System.setProperty(GiteaIssueTool.TOKEN_SECRET, "old-token");
 		_accepted = authorization -> {
 			if ("token old-token".equals(authorization)) {
 				// The token is rotated while the request is rejected.
-				System.setProperty(GiteaIssueTool.TOKEN_VARIABLE, "new-token");
+				System.setProperty(GiteaIssueTool.TOKEN_SECRET, "new-token");
 				return false;
 			}
 			return true;
@@ -155,7 +155,7 @@ public class TestGiteaIssueTool extends TestCase {
 
 	/** A token rejected again is not tried a third time. */
 	public void testRetryOnlyOnce() {
-		System.setProperty(GiteaIssueTool.TOKEN_VARIABLE, "wrong-token");
+		System.setProperty(GiteaIssueTool.TOKEN_SECRET, "wrong-token");
 		_accepted = authorization -> false;
 
 		String result = createIssue(new GiteaIssueTool());

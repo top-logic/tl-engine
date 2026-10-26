@@ -179,10 +179,11 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * The client secret to authenticate this application at the identity provider.
 		 * 
 		 * <p>
-		 * Recommended is a reference to the variable or file holding the secret, so that the
-		 * secret is not part of the configuration, e.g. <code>&lt;secret name="OIDC_CLIENT_SECRET"/&gt;</code>
-		 * for an environment variable holding the plain secret. An attribute value is an
-		 * encrypted secret, or a plain secret with the prefix <code>unencrypted:</code>.
+		 * Recommended is a reference to the secret by its name, so that the secret is not part of
+		 * the configuration, e.g. <code>&lt;secret name="OIDC_CLIENT_SECRET"/&gt;</code>, which
+		 * the default secret store reads from the environment variable of that name holding the
+		 * plain secret. An attribute value is an encrypted secret, or a plain secret with the
+		 * prefix <code>unencrypted:</code>.
 		 * </p>
 		 * 
 		 * <p>

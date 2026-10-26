@@ -1,37 +1,39 @@
 ---
-description: Read before configuring where a password, API key or token comes from (EnvironmentSecretSource, FileSecretSource, LiteralSecretSource, KeyVaultSecretSource of tl-credential-azure on the Azure SDK, CryptSupportSecretSource), or before adding a secret property to an own service - SecretSourceFormat, PolymorphicConfiguration<? extends SecretSource>, reading the secret at use, SecretSource#matches for constant-time comparison, TokenEditor for generated tokens.
+description: Read before configuring a single password, API key or token (NamedSecretSource - the short form <api-key name="..."/> resolved through the secret store of the installation -, EnvironmentSecretSource, FileSecretSource, LiteralSecretSource, KeyVaultSecretSource of tl-credential-azure on the Azure SDK, CryptSupportSecretSource), or before adding a secret property to an own service - SecretSourceFormat, PolymorphicConfiguration<? extends SecretSource>, reading the secret at use, SecretSource#matches for constant-time comparison, TokenEditor for generated tokens.
 order: 10
 ---
 
 # Secret sources
 
-A `SecretSource` delivers one secret at the moment it is used (`getSecret()`). The consumer does not keep the value, so a secret rotated in its source takes effect without a restart. The sources of `com.top_logic.basic.credential` cover the environment, files and the configuration itself; `tl-credential-azure` adds Azure Key Vault.
+A `SecretSource` delivers one secret at the moment it is used (`getSecret()`). The consumer does not keep the value, so a secret rotated in its source takes effect without a restart. The usual source is a `NamedSecretSource`, which names the secret and leaves its storage to the [secret store](doc:credentials/secret-stores) of the installation. The other sources of `com.top_logic.basic.credential` read one particular variable, file or configuration value; `tl-credential-azure` adds one particular secret of an Azure Key Vault. They are the exception for a secret that lives apart from the others.
 
-A missing secret (an unset variable, an unreadable or empty file) fails the use of the secret with a message naming the variable or file, never the secret. A consumer reading its secret at use therefore does not stop the start of the application; only its requests fail while the secret is missing.
+A missing secret (an unset variable, an unreadable or empty file) fails the use of the secret with a message naming the secret, variable or file, never the secret. A consumer reading its secret at use therefore does not stop the start of the application; only its requests fail while the secret is missing.
 
-## EnvironmentSecretSource
+## NamedSecretSource
 
-Reads a variable on each use: a JNDI value of the application context first, then a system property, then an environment variable - the same order as the `${env:...}` aliases.
-
-The short form is an element without `class` attribute, naming the variable:
+The short form, an element without `class` attribute, names the secret:
 
 ```xml
 <api-key name="tl_openai_api_key"/>
 ```
 
-The explicit form is equivalent:
-
-```xml
-<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="tl_openai_api_key"/>
-```
-
-The variable holds the plain secret:
+The secret is fetched by its name from the secret storage of the installation, configured once in `SecretStores$Config` (see [secret stores](doc:credentials/secret-stores)). With the default store, the system property or environment variable of that name holds the plain secret:
 
 ```bash
 export tl_openai_api_key="sk-..."
 ```
 
-Inside a list of secret sources (rare), the tag name is `env-secret`.
+Inside a list of secret sources (rare), the tag name is `named-secret`.
+
+## EnvironmentSecretSource
+
+Reads one variable on each use, regardless of the secret store of the installation: a JNDI value of the application context first, then a system property, then an environment variable - the same order as the `${env:...}` aliases. It names its class:
+
+```xml
+<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="TL_SPECIAL_KEY"/>
+```
+
+With the default environment store, `<api-key name="TL_SPECIAL_KEY"/>` reads the same variable; the explicit form keeps reading it when the installation configures another store. Inside a list of secret sources (rare), the tag name is `env-secret`.
 
 ## FileSecretSource
 
@@ -85,7 +87,7 @@ This is the form every encrypted `String` property had, so existing configuratio
 
 ## KeyVaultSecretSource (Azure)
 
-Module `tl-credential-azure` (`com.top-logic:tl-credential-azure`), based on the Azure SDK for Java (`SecretClient` of `azure-security-keyvault-secrets`, sending with the JDK HTTP client). Reads a secret from Azure Key Vault, authenticated by default with the managed identity of the machine, container app or pod the application runs on; that identity needs the role *Key Vault Secrets User* on the vault or the secret:
+Module `tl-credential-azure` (`com.top-logic:tl-credential-azure`), based on the Azure SDK for Java (`SecretClient` of `azure-security-keyvault-secrets`, sending with the JDK HTTP client). Reads one secret from Azure Key Vault - an installation keeping all its secrets in one vault uses the `KeyVaultSecretStore` instead (see [secret stores](doc:credentials/secret-stores#keyvaultsecretstore-azure)) - authenticated by default with the managed identity of the machine, container app or pod the application runs on; that identity needs the role *Key Vault Secrets User* on the vault or the secret:
 
 ```xml
 <api-key class="com.top_logic.credential.azure.KeyVaultSecretSource"
@@ -131,7 +133,7 @@ public interface Config<I extends MyService> extends ServiceConfiguration<I> {
 	 * The key for the requests to the external service.
 	 *
 	 * <p>
-	 * Recommended is a reference to the variable or file holding the key, e.g.
+	 * Recommended is a reference to the key by its secret name, e.g.
 	 * <code>&lt;api-key name="my_service_api_key"/&gt;</code>. An attribute value is an
 	 * encrypted key, or a plain key with the prefix <code>unencrypted:</code>.
 	 * </p>
@@ -148,7 +150,7 @@ public interface Config<I extends MyService> extends ServiceConfiguration<I> {
 
 - The `SecretSourceFormat` makes the attribute form (`api-key="unencrypted:..."` or encrypted) possible and marks the property as encrypted, so its value is never reported in an error message.
 - Without `@Mandatory`, an unconfigured property is `null`; `context.getInstance(null)` returns `null`, so the service checks for it.
-- The Service Editor preselects the `EnvironmentSecretSource` for a new mandatory secret. `@ImplementationClassDefault(LiteralSecretSource.class)` on the property preselects the literal source instead, e.g. for a generated token.
+- The Service Editor preselects the `NamedSecretSource` for a new mandatory secret. `@ImplementationClassDefault(LiteralSecretSource.class)` on the property preselects the literal source instead, e.g. for a generated token.
 
 The service instantiates the source in its constructor and asks it for the secret at each use - never keep the result of `getSecret()` in a field:
 

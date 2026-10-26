@@ -35,24 +35,25 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
  * </pre>
  *
  * <p>
- * The same with the token from an environment variable, named by a secret element without
- * <code>class</code> attribute:
+ * The same with the token from the secret store of the installation, named by a secret element
+ * without <code>class</code> attribute (by default read from the environment variable of that
+ * name):
  * </p>
  *
  * <pre>
  * &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer"&gt;
- *   &lt;secret name="OPENAI_API_KEY"/&gt;
+ *   &lt;secret name="openai_api_key"/&gt;
  * &lt;/credentials&gt;
  * </pre>
  *
  * <p>
- * An API key in a service-specific header (<code>x-api-key: &lt;secret&gt;</code>) from an
- * environment variable:
+ * An API key in a service-specific header (<code>x-api-key: &lt;secret&gt;</code>) from the
+ * secret store:
  * </p>
  *
  * <pre>
  * &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" header="x-api-key"&gt;
- *   &lt;secret name="ANTHROPIC_API_KEY"/&gt;
+ *   &lt;secret name="anthropic_api_key"/&gt;
  * &lt;/credentials&gt;
  * </pre>
  *

@@ -37,13 +37,14 @@ public interface APIKeySecret extends SecretConfiguration {
 	 *
 	 * <p>
 	 * The key is read each time it is used. An attribute value is an encrypted key (or a value
-	 * with the prefix <code>unencrypted:</code>). A key from the environment is referenced by the
-	 * name of its variable:
+	 * with the prefix <code>unencrypted:</code>). A key in the secret storage of the installation is
+	 * referenced by its name; since the property defaults to a key given in the configuration, the
+	 * reference names its class:
 	 * </p>
 	 *
 	 * <pre>
 	 * &lt;api-key-server-secret domain="my-api"&gt;
-	 *   &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MY_API_KEY"/&gt;
+	 *   &lt;api-key class="com.top_logic.basic.credential.NamedSecretSource" name="my_api_key"/&gt;
 	 * &lt;/api-key-server-secret&gt;
 	 * </pre>
 	 */

@@ -100,8 +100,8 @@ public class TestVectorIndexApiKey extends TestCase {
 	}
 
 	/**
-	 * The service editor stores a key referenced by its variable in the form it was read, holding
-	 * only the name of the variable.
+	 * The service editor stores a key referenced by its secret name in the form it was read,
+	 * holding only the name of the secret.
 	 */
 	public void testEnvironmentApiKeyStorage() throws IOException, ConfigurationException {
 		System.setProperty(VARIABLE, API_KEY);
@@ -116,9 +116,7 @@ public class TestVectorIndexApiKey extends TestCase {
 						config:override="true"
 					>
 						<instance class="com.top_logic.ai.vector.index.VectorIndex">
-							<mistral-api-key class="com.top_logic.basic.credential.EnvironmentSecretSource"
-								name="%s"
-							/>
+							<mistral-api-key name="%s"/>
 						</instance>
 					</config>
 				</services>
@@ -131,7 +129,7 @@ public class TestVectorIndexApiKey extends TestCase {
 				InAppServiceConfigStore.OVERRIDE_SERVICE);
 
 			assertTrue(written, written.contains("name=\"" + VARIABLE + "\""));
-			// An element without class is an EnvironmentSecretSource, the default secret source.
+			// An element without class is a NamedSecretSource, the default secret source.
 			assertTrue(written, written.contains("<mistral-api-key name=\"" + VARIABLE + "\"/>"));
 			assertFalse(written, written.contains(API_KEY));
 

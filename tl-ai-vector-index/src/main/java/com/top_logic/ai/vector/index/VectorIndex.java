@@ -29,7 +29,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -132,8 +131,8 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 * The Mistral API key for the embedding service.
 		 *
 		 * <p>
-		 * Recommended is a reference to the variable or file holding the key, so that the key is not
-		 * part of the configuration:
+		 * Recommended is a reference to the key by its secret name, so that the key is not part of
+		 * the configuration:
 		 * </p>
 		 *
 		 * <pre>
@@ -143,10 +142,10 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		 * <p>
 		 * An attribute value is an encrypted key, or a plain key with the prefix
 		 * <code>unencrypted:</code>. The key is read when the service starts. Without a key - none
-		 * configured, or the referenced variable or file not available - the vector index is
-		 * disabled: the application starts, a warning is logged, nothing is indexed and a search
-		 * reports that the vector index is not available. Not needed for the
-		 * {@link #getEmbeddingModelType() embedding model type} <code>local</code>.
+		 * configured, or the referenced secret not available - the vector index is disabled: the
+		 * application starts, a warning is logged, nothing is indexed and a search reports that
+		 * the vector index is not available. Not needed for the {@link #getEmbeddingModelType()
+		 * embedding model type} <code>local</code>.
 		 * </p>
 		 *
 		 * @see #MISTRAL_API_KEY
@@ -320,7 +319,7 @@ public final class VectorIndex extends ConfiguredManagedClass<VectorIndex.Vector
 		if (keyConfig == null) {
 			Logger.warn("The vector index is disabled: no Mistral API key is configured. Configure '"
 				+ VectorIndexingConfig.MISTRAL_API_KEY + "', e.g. as <" + VectorIndexingConfig.MISTRAL_API_KEY
-				+ " class=\"" + EnvironmentSecretSource.class.getName() + "\" name=\"tl_mistral_api_key\"/>.",
+				+ " name=\"tl_mistral_api_key\"/>.",
 				VectorIndex.class);
 			return null;
 		}

@@ -57,9 +57,10 @@ import com.top_logic.kafka.services.consumer.KafkaClientProperty;
  * 
  * <p>
  * The passwords, keys and the JAAS configuration are secrets given by a {@link SecretSource}.
- * Recommended is a reference to the variable or file holding the secret, so that the secret is not
- * part of the configuration, e.g. <code>&lt;ssl.truststore.password name="KAFKA_TRUSTSTORE_PASSWORD"/&gt;</code>
- * for an environment variable holding the plain password. An attribute value is an encrypted
+ * Recommended is a reference to the secret by its name, so that the secret is not part of the
+ * configuration, e.g. <code>&lt;ssl.truststore.password
+ * name="KAFKA_TRUSTSTORE_PASSWORD"/&gt;</code>, which the default secret store reads from the
+ * environment variable of that name holding the plain password. An attribute value is an encrypted
  * secret, or a plain secret with the prefix <code>unencrypted:</code>. The secrets are read each
  * time the {@link #getAllProperties() properties} are built, i.e. when a Kafka client is created.
  * </p>

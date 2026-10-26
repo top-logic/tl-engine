@@ -87,8 +87,7 @@ public final class BraveSearchEngine implements WebSearchEngine {
 		 *
 		 * <p>
 		 * Sent in the header {@link BraveSearchEngine#API_KEY_HEADER}. Recommended is a reference
-		 * to the variable or file holding the key, so that the key is not part of the
-		 * configuration:
+		 * to the key by its secret name, so that the key is not part of the configuration:
 		 * </p>
 		 *
 		 * <pre>

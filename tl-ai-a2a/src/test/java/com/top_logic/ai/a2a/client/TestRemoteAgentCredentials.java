@@ -140,8 +140,8 @@ public class TestRemoteAgentCredentials extends TestCase {
 	}
 
 	/**
-	 * The service editor stores a token referenced by its variable in the form it was read, holding
-	 * only the name of the variable.
+	 * The service editor stores a token referenced by its secret name in the form it was read,
+	 * holding only the name of the secret.
 	 */
 	public void testCredentialsStorage() throws IOException, ConfigurationException {
 		System.setProperty(VARIABLE, TOKEN);
@@ -161,9 +161,7 @@ public class TestRemoteAgentCredentials extends TestCase {
 									<credentials class="com.top_logic.basic.credential.HeaderCredentials"
 										scheme="Bearer"
 									>
-										<secret class="com.top_logic.basic.credential.EnvironmentSecretSource"
-											name="%s"
-										/>
+										<secret name="%s"/>
 									</credentials>
 								</remote-agent>
 							</remote-agents>
@@ -179,7 +177,7 @@ public class TestRemoteAgentCredentials extends TestCase {
 				InAppServiceConfigStore.OVERRIDE_SERVICE);
 
 			assertTrue(written, written.contains("name=\"" + VARIABLE + "\""));
-			// An element without class is an EnvironmentSecretSource, the default secret source.
+			// An element without class is a NamedSecretSource, the default secret source.
 			assertTrue(written, written.contains("<secret name=\"" + VARIABLE + "\"/>"));
 			assertFalse(written, written.contains(TOKEN));
 

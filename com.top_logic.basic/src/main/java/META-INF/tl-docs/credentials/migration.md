@@ -1,15 +1,25 @@
 ---
-description: Read when upgrading an application to the engine version with secret sources and credential providers - the key variables tl_*_api_key and translation_api_key holding the plain key, the %..._API_KEY% / %TRANSLATION_API_KEY% / %BLOB_CONNECT% aliases, removed bearer-token-env-var (HttpMcpTransport) and token-env (A2A remote agent), vector index and search engine keys, and the Java API changes (getters returning PolymorphicConfiguration<? extends SecretSource>, DataSourceConfig#getDriverOptions, ServiceProviderInfo#createFromConfig, mcp-json-jackson3).
+description: Read when upgrading an application to the engine version with secret sources, secret stores and credential providers - the short form <api-key name="..."/> as NamedSecretSource resolved through SecretStores$Config (environment by default, explicit EnvironmentSecretSource where a variable is meant regardless of the store), the key variables tl_*_api_key and translation_api_key holding the plain key, the %..._API_KEY% / %TRANSLATION_API_KEY% / %BLOB_CONNECT% aliases, removed bearer-token-env-var (HttpMcpTransport) and token-env (A2A remote agent), vector index and search engine keys, and the Java API changes (getters returning PolymorphicConfiguration<? extends SecretSource>, DataSourceConfig#getDriverOptions, ServiceProviderInfo#createFromConfig, mcp-json-jackson3).
 order: 50
 ---
 
 # Migration
 
-Every password, key and client secret of the engine is a [secret source](doc:credentials/secret-sources), and every HTTP consumer takes [credentials](doc:credentials/credential-providers). An attribute value keeps working - it is read as encrypted value or with the prefix `unencrypted:`, as before. What an application changes is collected here.
+Every password, key and client secret of the engine is a [secret source](doc:credentials/secret-sources), named secrets live in the [secret store](doc:credentials/secret-stores) of the installation, and every HTTP consumer takes [credentials](doc:credentials/credential-providers). An attribute value keeps working - it is read as encrypted value or with the prefix `unencrypted:`, as before. What an application changes is collected here.
+
+## Named secrets and the secret store
+
+An element without `class` attribute (`<api-key name="tl_openai_api_key"/>`) is a `NamedSecretSource`: it names the secret, and the secret store of the installation (`SecretStores$Config`) delivers it. The engine configures the environment store, which reads the system property or environment variable of that name - the same variable an element without `class` read before. A configuration using the short form therefore keeps working unchanged.
+
+What changes:
+
+- An installation that configures another store (a secret directory, Azure Key Vault) gets **all** named secrets from that store. A property that must keep reading a variable regardless of the store names its class: `<api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="..."/>`, or the installation adds an override for that name.
+- A configuration written by the Service Editor keeps the short form for a named secret; an `EnvironmentSecretSource` is written with its `class` attribute.
+- Java code creating the configuration of an environment reference in code (`EnvironmentSecretSource.Config`) keeps reading that variable; code meaning a logical secret creates a `NamedSecretSource.Config` instead.
 
 ## Key variables hold the plain key
 
-The engine configuration references the keys by variable name (`<api-key name="..."/>`), and such a variable holds the **plain key**, without the prefix `unencrypted:`:
+The engine configuration references the keys by secret name (`<api-key name="..."/>`); with the default store, the variable of that name holds the **plain key**, without the prefix `unencrypted:`:
 
 | Variable | Read by |
 |---|---|
@@ -33,7 +43,7 @@ The Eclipse launch `Start TL AI Demo.launch` passes the Eclipse variables `tl_*_
 
 ## Aliases referencing a key
 
-The aliases `%ANTHROPIC_API_KEY%`, `%OPENAI_API_KEY%`, `%MISTRAL_API_KEY%`, `%XAI_API_KEY%` (in `tl-ai-core.conf.xml`) and `%TRANSLATION_API_KEY%` (in `tl_basic.xml`) still stand for the variables above - which now hold the plain key, while an attribute is read as encrypted value. A configuration using such an alias in an attribute either adds the prefix or, better, references the variable:
+The aliases `%ANTHROPIC_API_KEY%`, `%OPENAI_API_KEY%`, `%MISTRAL_API_KEY%`, `%XAI_API_KEY%` (in `tl-ai-core.conf.xml`) and `%TRANSLATION_API_KEY%` (in `tl_basic.xml`) still stand for the variables above - which now hold the plain key, while an attribute is read as encrypted value. A configuration using such an alias in an attribute either adds the prefix or, better, references the secret by name:
 
 Before:
 
@@ -73,7 +83,7 @@ The same holds for DeepL:
 
 `tl-ai-demo` no longer defines `%BRAVE_API_KEY%`; a configuration copied from its `research.config.xml` uses `<api-key name="tl_brave_api_key"/>`.
 
-An `autoconf` file the Service Editor wrote from such a configuration holds the resolved key, encrypted. Saving the service again after the change writes the variable reference instead; check that the file no longer contains an encrypted key.
+An `autoconf` file the Service Editor wrote from such a configuration holds the resolved key, encrypted. Saving the service again after the change writes the reference by name instead; check that the file no longer contains an encrypted key.
 
 ## A key given as element content
 
@@ -83,7 +93,7 @@ A value given as element content is read like an attribute value, aliases includ
 <secret>%PAC_SECRET%</secret>
 ```
 
-As with an attribute, the alias must resolve to an encrypted value or to a value with the prefix `unencrypted:`. Referencing the variable avoids both:
+As with an attribute, the alias must resolve to an encrypted value or to a value with the prefix `unencrypted:`. Referencing the secret by name avoids both:
 
 ```xml
 <secret name="tl_pac_secret"/>
@@ -125,7 +135,7 @@ The MCP client of `tl-ai-core` needs the JSON mapper `io.modelcontextprotocol.sd
 
 ## Vector index
 
-The vector index reads its key from the variable `tl_mistral_api_key`; `aiVectorIndexingConf.xml` no longer defines `%MISTRAL_API_KEY%`:
+The vector index reads its key from the secret `tl_mistral_api_key`; `aiVectorIndexingConf.xml` no longer defines `%MISTRAL_API_KEY%`:
 
 ```xml
 <!-- Before -->
@@ -141,7 +151,7 @@ Without a key, the vector index is disabled with a warning instead of aborting t
 
 ## Azure blob storage
 
-The `connect-string` of `CloudBasedRepository` is a secret property. The alias `%BLOB_CONNECT%` of `azureStorageConf.xml` now carries the prefix `unencrypted:`. An application that overrides `%BLOB_CONNECT%` with a plain connection string, or sets `connect-string` to one, adds the prefix (or encrypts the value), or references a variable holding the plain connection string:
+The `connect-string` of `CloudBasedRepository` is a secret property. The alias `%BLOB_CONNECT%` of `azureStorageConf.xml` now carries the prefix `unencrypted:`. An application that overrides `%BLOB_CONNECT%` with a plain connection string, or sets `connect-string` to one, adds the prefix (or encrypts the value), or references a named secret holding the plain connection string:
 
 ```xml
 <!-- Before -->

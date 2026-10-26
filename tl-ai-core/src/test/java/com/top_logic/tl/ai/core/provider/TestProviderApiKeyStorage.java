@@ -23,7 +23,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.io.FileUtilities;
@@ -33,8 +33,10 @@ import com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
 
 /**
- * Tests that an LLM provider whose API key is referenced through an {@link EnvironmentSecretSource}
- * is stored by the service editor in the form it was read, holding only the name of the variable.
+ * Tests that an LLM provider whose API key is referenced by name through a
+ * {@link NamedSecretSource} is stored by the service editor in the form it was read, holding only
+ * the name of the secret. The default secret store reads the secret from the variable of that
+ * name.
  */
 public class TestProviderApiKeyStorage extends TestCase {
 
@@ -131,7 +133,7 @@ public class TestProviderApiKeyStorage extends TestCase {
 		AnthropicProviderConfig.Config provider =
 			(AnthropicProviderConfig.Config) service(config).getProviders().get(ANTHROPIC);
 		assertEquals(API_KEY, secretSource(provider.getApiKey()).getSecret());
-		assertEquals(VARIABLE, ((EnvironmentSecretSource.Config) provider.getApiKey()).getName());
+		assertEquals(VARIABLE, ((NamedSecretSource.Config) provider.getApiKey()).getName());
 	}
 
 	/**

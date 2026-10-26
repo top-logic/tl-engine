@@ -17,7 +17,7 @@ import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.services.jms.activemq.ActiveMQClient;
 
 /**
@@ -79,7 +79,7 @@ public class TestActiveMQPassword extends AbstractTypedConfigurationTestCase {
 		assertEquals(ROTATED_PASSWORD, ((ActiveMQConnectionFactory) client.setupConnectionFactory()).getPassword());
 	}
 
-	/** A reference to a variable is written as element without class holding only the name. */
+	/** A reference to a named secret is written as element without class holding only the name. */
 	public void testWriteEnvironmentPassword() throws Exception {
 		System.setProperty(VARIABLE, PASSWORD);
 		ActiveMQClient.Config<?> config = read(client("", environmentPassword()));
@@ -90,7 +90,7 @@ public class TestActiveMQPassword extends AbstractTypedConfigurationTestCase {
 			written.contains("<" + ActiveMQClient.Config.PASSWORD + " name=\"" + VARIABLE + "\""));
 
 		ActiveMQClient.Config<?> copy = (ActiveMQClient.Config<?>) fromXML(written);
-		assertTrue(copy.getPassword() instanceof EnvironmentSecretSource.Config);
+		assertTrue(copy.getPassword() instanceof NamedSecretSource.Config);
 		assertEquals(written, toXML(copy));
 	}
 

@@ -9,21 +9,28 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import junit.framework.Test;
 
 import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
+import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.ConfigurationEncryption;
+import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -40,6 +47,8 @@ import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.credential.SecretStore;
 import com.top_logic.basic.credential.SecretStores;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 
 /**
  * Test case for {@link NamedSecretSource}, the {@link SecretStore}s and their configuration in
@@ -334,6 +343,67 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 		}
 		assertNotNull("Plain text value accepted.", parseFailure);
 		assertNoSecret(parseFailure, "PlainTextPassword12345");
+	}
+
+	/**
+	 * The secret storage of an installation-specific fragment (loaded last, like a
+	 * <code>tl_config</code> or <code>autoconf</code> fragment) is merged with the engine
+	 * configuration by the reader of the application configuration: its store replaces the store
+	 * of the engine, its overrides are added to the overrides of the configuration before it.
+	 */
+	public void testOverlayFragment() throws ConfigurationException, IOException {
+		List<BinaryContent> engine = XMLProperties.Module.INSTANCE.config().getTypedConfigs();
+		assertTrue("No engine configuration loaded.", !engine.isEmpty());
+
+		SecretStores.Config engineOnly = secretStoresSection(engine);
+		assertTrue("Engine store: " + engineOnly.getStore(), engineOnly.getStore() instanceof EnvironmentSecretStore.Config);
+
+		BinaryContent base = fragment("base.config.xml",
+			"<store class='" + EnvironmentSecretStore.class.getName() + "'/>"
+				+ "<overrides><override name='base_secret' source='unencrypted:from-base'/></overrides>");
+		BinaryContent overlay = fragment("overlay.config.xml",
+			"<store class='" + DirectorySecretStore.class.getName() + "' directory='" + _dir + "'/>"
+				+ "<overrides><override name='overlay_secret' source='unencrypted:from-overlay'/></overrides>");
+		List<BinaryContent> sources = new ArrayList<>(engine);
+		sources.add(base);
+		sources.add(overlay);
+
+		SecretStores.Config merged = secretStoresSection(sources);
+
+		assertTrue("Store of the overlay replaces the store before it: " + merged.getStore(),
+			merged.getStore() instanceof DirectorySecretStore.Config);
+		assertEquals(_dir.toString(), ((DirectorySecretStore.Config) merged.getStore()).getDirectory());
+		assertEquals("Overrides are added.", Set.of("base_secret", "overlay_secret"), merged.getOverrides().keySet());
+
+		installStore(merged);
+		write(_dir.resolve(SECRET), "from-directory");
+		assertEquals("from-directory", named(SECRET).getSecret());
+		assertEquals("from-base", named("base_secret").getSecret());
+		assertEquals("from-overlay", named("overlay_secret").getSecret());
+	}
+
+	/**
+	 * Reads the given typed configuration files the way the application configuration is loaded
+	 * and returns their {@link SecretStores} section.
+	 */
+	private SecretStores.Config secretStoresSection(List<BinaryContent> sources) throws ConfigurationException {
+		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(ApplicationConfig.ROOT_TAG,
+			TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class));
+		ApplicationConfig.Config config = (ApplicationConfig.Config) new ConfigurationReader(context, descriptors)
+			.setSources(sources)
+			.setVariableExpander(AliasManager.getInstance().getExpander())
+			.read();
+		context.checkErrors();
+		return (SecretStores.Config) config.getConfigs().get(SecretStores.Config.class);
+	}
+
+	private static BinaryContent fragment(String name, String section) {
+		String xml = "<?xml version='1.0' encoding='utf-8' ?>"
+			+ "<application config:interface='com.top_logic.basic.config.ApplicationConfig$Config'"
+			+ " xmlns:config='http://www.top-logic.com/ns/config/6.0'><configs>"
+			+ "<config config:interface='" + SecretStores.Config.class.getName() + "'>" + section + "</config>"
+			+ "</configs></application>";
+		return BinaryDataFactory.createBinaryData(xml.getBytes(StandardCharsets.UTF_8), "text/xml", name);
 	}
 
 	private SecretSource named(String name) throws ConfigurationException {

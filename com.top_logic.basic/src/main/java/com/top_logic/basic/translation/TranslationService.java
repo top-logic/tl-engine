@@ -107,8 +107,8 @@ public abstract class TranslationService<C extends TranslationService.Config> ex
 		 * The API key to authenticate the requests.
 		 *
 		 * <p>
-		 * Recommended is a reference to the variable or file holding the key, so that the key is
-		 * not part of the configuration:
+		 * Recommended is a reference to the key by its secret name, so that the key is not part of
+		 * the configuration:
 		 * </p>
 		 *
 		 * <pre>

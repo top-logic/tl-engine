@@ -15,7 +15,7 @@ import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.storage.azure.blob.CloudBasedRepository;
 
@@ -63,7 +63,7 @@ public class TestCloudBasedRepositoryConnectString extends AbstractTypedConfigur
 		assertEquals(CONNECT_STRING, connectString(read(xml("", environmentConnectString()))));
 	}
 
-	/** A reference to a variable is written as element without class holding only the name. */
+	/** A reference to a named secret is written as element without class holding only the name. */
 	public void testWriteEnvironmentConnectString() throws Exception {
 		System.setProperty(VARIABLE, CONNECT_STRING);
 		CloudBasedRepository.Config<?> config = read(xml("", environmentConnectString()));
@@ -74,7 +74,7 @@ public class TestCloudBasedRepositoryConnectString extends AbstractTypedConfigur
 			written.contains("<" + CloudBasedRepository.Config.CONNECT_STRING + " name=\"" + VARIABLE + "\""));
 
 		CloudBasedRepository.Config<?> copy = (CloudBasedRepository.Config<?>) fromXML(written);
-		assertTrue(copy.getConnectString() instanceof EnvironmentSecretSource.Config);
+		assertTrue(copy.getConnectString() instanceof NamedSecretSource.Config);
 		assertEquals(written, toXML(copy));
 	}
 

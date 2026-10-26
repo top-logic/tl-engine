@@ -138,9 +138,9 @@ and merges by key, so a file of the application adds to what tl-ai ships instead
 
 Each block sits in the usual `<application><services>...</services></application>` frame.
 
-The provider names the environment variable of its key (an `<api-key>` element without `class` is an `EnvironmentSecretSource`, the variable
-holding the plain key without `unencrypted:` prefix) instead of the alias `%ANTHROPIC_API_KEY%`: the
-configuration then holds the variable name, not the key, while a key resolved from an alias ends up in
+The provider names its key as secret (an `<api-key>` element without `class` is a `NamedSecretSource`; the default secret
+store reads the variable of that name, holding the plain key without `unencrypted:` prefix) instead of the alias
+`%ANTHROPIC_API_KEY%`: the configuration then holds the secret name, not the key, while a key resolved from an alias ends up in
 the file the Service Editor stores.
 
 ## Java API

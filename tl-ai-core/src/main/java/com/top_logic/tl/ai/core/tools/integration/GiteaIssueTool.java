@@ -25,8 +25,8 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.credential.CredentialProvider;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
@@ -50,7 +50,7 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * The repository is named by environment variables (with system property fallback):
  * {@code tl_gitea_url}, {@code tl_gitea_repo_owner}, {@code tl_gitea_repo_name}. The requests are
  * authenticated by the configured {@link Config#getCredentials() credentials}; without them, with
- * the access token in the variable {@link #TOKEN_VARIABLE}, sent with the scheme
+ * the access token in the secret {@link #TOKEN_SECRET}, sent with the scheme
  * {@link #TOKEN_SCHEME}. Credentials from another source are configured with the
  * {@link com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory}:
  * </p>
@@ -87,8 +87,8 @@ public class GiteaIssueTool {
 		 * How the requests to Gitea are authenticated.
 		 *
 		 * <p>
-		 * If not set, with the access token in the variable {@link GiteaIssueTool#TOKEN_VARIABLE},
-		 * sent with the scheme {@link GiteaIssueTool#TOKEN_SCHEME}.
+		 * If not set, with the access token in the secret {@link GiteaIssueTool#TOKEN_SECRET}, sent
+		 * with the scheme {@link GiteaIssueTool#TOKEN_SCHEME}.
 		 * </p>
 		 */
 		@Name(CREDENTIALS)
@@ -98,10 +98,16 @@ public class GiteaIssueTool {
 	}
 
 	/**
-	 * Name of the system property or environment variable holding the Gitea access token, if no
-	 * {@link Config#getCredentials() credentials} are configured.
+	 * Name of the secret holding the Gitea access token, if no {@link Config#getCredentials()
+	 * credentials} are configured.
+	 *
+	 * <p>
+	 * The secret is fetched from the secret storage of the installation (see
+	 * {@link NamedSecretSource}), by default from the system property or environment variable of
+	 * this name.
+	 * </p>
 	 */
-	public static final String TOKEN_VARIABLE = "tl_gitea_token";
+	public static final String TOKEN_SECRET = "tl_gitea_token";
 
 	/**
 	 * Authentication scheme of a Gitea access token in the {@link CredentialProvider#AUTHORIZATION}
@@ -118,8 +124,8 @@ public class GiteaIssueTool {
 	private final CredentialProvider _credentials;
 
 	/**
-	 * Creates a {@link GiteaIssueTool} authenticated with the access token in
-	 * {@link #TOKEN_VARIABLE}.
+	 * Creates a {@link GiteaIssueTool} authenticated with the access token in the secret
+	 * {@link #TOKEN_SECRET}.
 	 */
 	public GiteaIssueTool() {
 		this(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
@@ -144,11 +150,11 @@ public class GiteaIssueTool {
 	}
 
 	/**
-	 * The credentials sending the access token in {@link #TOKEN_VARIABLE}.
+	 * The credentials sending the access token in the secret {@link #TOKEN_SECRET}.
 	 */
 	private static PolymorphicConfiguration<? extends CredentialProvider> defaultCredentials() {
-		EnvironmentSecretSource.Config token = TypedConfiguration.newConfigItem(EnvironmentSecretSource.Config.class);
-		token.setName(TOKEN_VARIABLE);
+		NamedSecretSource.Config token = TypedConfiguration.newConfigItem(NamedSecretSource.Config.class);
+		token.setName(TOKEN_SECRET);
 		return HeaderCredentials.config(CredentialProvider.AUTHORIZATION, TOKEN_SCHEME, token);
 	}
 

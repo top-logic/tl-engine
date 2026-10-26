@@ -16,7 +16,7 @@ import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.kafka.services.common.CommonClientConfig;
 
 /**
@@ -99,7 +99,7 @@ public class TestKafkaClientSecrets extends AbstractTypedConfigurationTestCase {
 		assertEquals(ROTATED_SECRET, config.getAllProperties().get(CommonClientConfig.SASL_JAAS_CONFIG));
 	}
 
-	/** References to variables are written as elements without class holding only the name. */
+	/** References to named secrets are written as elements without class holding only the name. */
 	public void testWriteEnvironmentSecret() throws Exception {
 		System.setProperty(VARIABLE, SECRET);
 		String property = CommonClientConfig.SSL_KEYSTORE_PASSWORD_CONFIG;
@@ -111,7 +111,7 @@ public class TestKafkaClientSecrets extends AbstractTypedConfigurationTestCase {
 			written.contains("<" + property + " name=\"" + VARIABLE + "\""));
 
 		ClientConfig copy = (ClientConfig) fromXML(written);
-		assertTrue(copy.getSslKeystorePassword() instanceof EnvironmentSecretSource.Config);
+		assertTrue(copy.getSslKeystorePassword() instanceof NamedSecretSource.Config);
 		assertEquals(written, toXML(copy));
 	}
 

@@ -32,7 +32,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.mail.proxy.MailReceiverService;
 
@@ -227,7 +227,7 @@ public class TestMailPasswordSources extends AbstractTypedConfigurationTestCase 
 		assertEquals(List.of(PASSWORD, ROTATED_PASSWORD), PASSWORDS);
 	}
 
-	/** References to variables are written as elements without class holding only the name. */
+	/** References to named secrets are written as elements without class holding only the name. */
 	public void testWriteEnvironmentPasswords() throws Exception {
 		System.setProperty(VARIABLE, PASSWORD);
 		Config config = read(xml(sender("", environmentPassword()), receiver("", environmentPassword())));
@@ -238,8 +238,8 @@ public class TestMailPasswordSources extends AbstractTypedConfigurationTestCase 
 			written.contains("<" + MailSenderService.Config.PASSWORD + " name=\"" + VARIABLE + "\""));
 
 		Config copy = (Config) fromXML(written);
-		assertTrue(copy.getSender().getPassword() instanceof EnvironmentSecretSource.Config);
-		assertTrue(copy.getReceiver().getPassword() instanceof EnvironmentSecretSource.Config);
+		assertTrue(copy.getSender().getPassword() instanceof NamedSecretSource.Config);
+		assertTrue(copy.getReceiver().getPassword() instanceof NamedSecretSource.Config);
 		assertEquals(written, toXML(copy));
 	}
 

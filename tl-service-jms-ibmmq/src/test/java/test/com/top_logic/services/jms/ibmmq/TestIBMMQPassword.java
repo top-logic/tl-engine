@@ -18,7 +18,7 @@ import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.services.jms.ibmmq.IBMMQClient;
 
 /**
@@ -80,7 +80,7 @@ public class TestIBMMQPassword extends AbstractTypedConfigurationTestCase {
 		assertEquals(ROTATED_PASSWORD, ((MQConnectionFactory) client.setupConnectionFactory()).getStringProperty(WMQConstants.PASSWORD));
 	}
 
-	/** A reference to a variable is written as element without class holding only the name. */
+	/** A reference to a named secret is written as element without class holding only the name. */
 	public void testWriteEnvironmentPassword() throws Exception {
 		System.setProperty(VARIABLE, PASSWORD);
 		IBMMQClient.Config<?> config = read(client("", environmentPassword()));
@@ -91,7 +91,7 @@ public class TestIBMMQPassword extends AbstractTypedConfigurationTestCase {
 			written.contains("<" + IBMMQClient.Config.PASSWORD + " name=\"" + VARIABLE + "\""));
 
 		IBMMQClient.Config<?> copy = (IBMMQClient.Config<?>) fromXML(written);
-		assertTrue(copy.getPassword() instanceof EnvironmentSecretSource.Config);
+		assertTrue(copy.getPassword() instanceof NamedSecretSource.Config);
 		assertEquals(written, toXML(copy));
 	}
 

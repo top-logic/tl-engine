@@ -206,11 +206,11 @@ public class Argon2Hashing extends AbstractConfiguredInstance<Argon2Hashing.Conf
 		 * </p>
 		 * 
 		 * <p>
-		 * Recommended is a reference to the variable or file holding the pepper, so that the pepper
-		 * is not part of the configuration, e.g. <code>&lt;pepper name="PASSWORD_PEPPER"/&gt;</code>
-		 * for an environment variable holding the plain pepper. An attribute value is an encrypted
-		 * pepper, or a plain pepper with the prefix <code>unencrypted:</code>. Without a pepper, the
-		 * hash is computed without secret.
+		 * Recommended is a reference to the pepper by its secret name, so that the pepper is not
+		 * part of the configuration, e.g. <code>&lt;pepper name="PASSWORD_PEPPER"/&gt;</code>,
+		 * which the default secret store reads from the environment variable of that name holding
+		 * the plain pepper. An attribute value is an encrypted pepper, or a plain pepper with the
+		 * prefix <code>unencrypted:</code>. Without a pepper, the hash is computed without secret.
 		 * </p>
 		 * 
 		 * <p>

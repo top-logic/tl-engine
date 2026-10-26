@@ -171,10 +171,11 @@ public abstract class AbstractConfiguredConnectionPoolBase extends AbstractConne
 			 * The source of the secret value of the driver option.
 			 * 
 			 * <p>
-			 * Recommended is a reference to the variable or file holding the secret, so that the
-			 * secret is not part of the configuration, e.g. <code>&lt;value name="DB_PASSWORD"/&gt;</code>
-			 * for an environment variable holding the plain password. An attribute value is an
-			 * encrypted secret, or a plain secret with the prefix <code>unencrypted:</code>.
+			 * Recommended is a reference to the secret by its name, so that the secret is not part
+			 * of the configuration, e.g. <code>&lt;value name="DB_PASSWORD"/&gt;</code>, which the
+			 * default secret store reads from the environment variable of that name holding the
+			 * plain password. An attribute value is an encrypted secret, or a plain secret with
+			 * the prefix <code>unencrypted:</code>.
 			 * </p>
 			 * 
 			 * <p>

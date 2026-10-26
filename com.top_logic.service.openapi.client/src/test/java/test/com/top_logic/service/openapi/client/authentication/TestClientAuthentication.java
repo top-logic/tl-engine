@@ -40,6 +40,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.LiteralSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
@@ -300,16 +301,16 @@ public class TestClientAuthentication extends TestCase {
 		assertEquals("Bearer token-1", lastApiRequest().header(AUTHORIZATION));
 	}
 
-	public void testWriteEnvironmentReference() throws Exception {
+	public void testWriteNamedReference() throws Exception {
 		System.setProperty(VARIABLE, PASSWORD);
 		ServiceMethodRegistry.Config<?> config = parse(basicConfig("", environmentPassword()));
 
 		String xml = toXML(config);
 		assertFalse("Secret written: " + xml, xml.contains(PASSWORD));
-		assertTrue("Variable not written: " + xml, xml.contains(VARIABLE));
+		assertTrue("Secret name not written: " + xml, xml.contains(VARIABLE));
 
 		ClientBasicAuthSecret copy = (ClientBasicAuthSecret) parse(xml).getSecrets().get(DOMAIN);
-		assertEquals(VARIABLE, ((EnvironmentSecretSource.Config) copy.getLogin().getPassword()).getName());
+		assertEquals(VARIABLE, ((NamedSecretSource.Config) copy.getLogin().getPassword()).getName());
 	}
 
 	public void testWriteLiteralEncrypted() throws Exception {

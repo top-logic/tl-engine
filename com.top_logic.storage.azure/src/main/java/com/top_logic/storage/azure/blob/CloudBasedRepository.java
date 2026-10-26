@@ -64,11 +64,11 @@ public class CloudBasedRepository<C extends CloudContainerObject, L extends Clou
 		 * 
 		 * <p>
 		 * The connection string contains the account key and is therefore a secret. Recommended is
-		 * a reference to the variable or file holding the connection string, so that it is not
-		 * part of the configuration, e.g. <code>&lt;connect-string name="blob_connect"/&gt;</code>
-		 * for an environment variable holding the plain connection string. An attribute value is
-		 * an encrypted connection string, or a plain connection string with the prefix
-		 * <code>unencrypted:</code>.
+		 * a reference to the connection string by its secret name, so that it is not part of the
+		 * configuration, e.g. <code>&lt;connect-string name="blob_connect"/&gt;</code>, which the
+		 * default secret store reads from the environment variable of that name holding the plain
+		 * connection string. An attribute value is an encrypted connection string, or a plain
+		 * connection string with the prefix <code>unencrypted:</code>.
 		 * </p>
 		 * 
 		 * <p>

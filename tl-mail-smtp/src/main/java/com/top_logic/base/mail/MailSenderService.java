@@ -216,10 +216,11 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 		 * The password to authenticate this system to the SMTP server.
 		 * 
 		 * <p>
-		 * Recommended is a reference to the variable or file holding the password, so that the
-		 * password is not part of the configuration, e.g. <code>&lt;password name="SMTP_PASSWORD"/&gt;</code>
-		 * for an environment variable holding the plain password. An attribute value is an
-		 * encrypted password, or a plain password with the prefix <code>unencrypted:</code>.
+		 * Recommended is a reference to the password by its secret name, so that the password is
+		 * not part of the configuration, e.g. <code>&lt;password name="SMTP_PASSWORD"/&gt;</code>,
+		 * which the default secret store reads from the environment variable of that name holding
+		 * the plain password. An attribute value is an encrypted password, or a plain password
+		 * with the prefix <code>unencrypted:</code>.
 		 * </p>
 		 * 
 		 * <p>

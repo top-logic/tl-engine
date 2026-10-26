@@ -28,8 +28,8 @@ import com.top_logic.base.security.util.CryptSupport;
 import com.top_logic.base.security.util.CryptSupportSecretSource;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.LiteralSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 
 /**
  * Tests the master credential of a {@link LDAPAccessService} given by a secret source: the
@@ -124,7 +124,7 @@ public class TestLDAPMasterCredential extends AbstractTypedConfigurationTestCase
 		assertFalse(service.getCopyOfSPI().containsKey(ServiceProviderInfo.KEY_CREDENTIALS));
 	}
 
-	/** A reference to a variable is written as element without class holding only the name. */
+	/** A reference to a named secret is written as element without class holding only the name. */
 	public void testWriteEnvironmentCredential() throws Exception {
 		System.setProperty(VARIABLE, PASSWORD);
 		LDAPAccessService.Config config = read(xml("", environmentCredential()));
@@ -135,7 +135,7 @@ public class TestLDAPMasterCredential extends AbstractTypedConfigurationTestCase
 			written.contains("<" + ServiceProviderInfo.Config.MASTER_CREDENTIAL + " name=\"" + VARIABLE + "\""));
 
 		LDAPAccessService.Config copy = (LDAPAccessService.Config) fromXML(written);
-		assertTrue(copy.getMasterCredential() instanceof EnvironmentSecretSource.Config);
+		assertTrue(copy.getMasterCredential() instanceof NamedSecretSource.Config);
 		assertEquals(written, toXML(copy));
 	}
 

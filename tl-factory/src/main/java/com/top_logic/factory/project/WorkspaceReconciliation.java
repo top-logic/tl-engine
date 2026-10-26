@@ -16,6 +16,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceState;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces.ApplicationState;
 
 /**
  * Comparison of the stored states of workspaces with the containers that actually exist, as done
@@ -23,13 +24,24 @@ import com.top_logic.factory.workspace.WorkspaceState;
  *
  * <p>
  * An operation that was running when the control application stopped did not finish: a workspace
- * stored as {@link WorkspaceStatus#BUILDING} or {@link WorkspaceStatus#REMOVING} is in an
- * undefined state and becomes {@link WorkspaceStatus#ERROR}; one stored as
+ * stored as {@link WorkspaceStatus#BUILDING}, {@link WorkspaceStatus#REMOVING} or
+ * {@link WorkspaceStatus#UPDATING} is in an undefined state and becomes
+ * {@link WorkspaceStatus#ERROR}; one stored as
  * {@link WorkspaceStatus#STARTING} or {@link WorkspaceStatus#STOPPING} takes the state of its
  * container. A workspace in state {@link WorkspaceStatus#ERROR} stays there, since the error is
- * only cleared by removing the workspace. Every other workspace takes the state of its container;
+ * only cleared by an operation on the workspace. Every other workspace takes the state of its container;
  * a workspace whose container is gone becomes {@link WorkspaceStatus#ERROR}. When the container
  * platform cannot be asked, every workspace becomes {@link WorkspaceStatus#UNKNOWN}.
+ * </p>
+ *
+ * <p>
+ * A running container is asked for the state of its application: a container whose application
+ * is stopped or failed makes the workspace {@link WorkspaceStatus#APP_STOPPED}.
+ * </p>
+ *
+ * <p>
+ * The image of an existing container is reported as well, so that a workspace knows the image it
+ * runs on also when it was not recorded when the container was created.
  * </p>
  */
 public class WorkspaceReconciliation {
@@ -45,8 +57,12 @@ public class WorkspaceReconciliation {
 	 *        The URL of the application, {@code null} if it is not published.
 	 * @param message
 	 *        A line explaining a change to the user, {@code null} if there is nothing to explain.
+	 * @param image
+	 *        The image the container of the workspace was created from, {@code null} if there is no
+	 *        container or the container platform could not be asked.
 	 */
-	public record Outcome(WorkspaceStatus status, Integer hostPort, String previewUrl, String message) {
+	public record Outcome(WorkspaceStatus status, Integer hostPort, String previewUrl, String message,
+			String image) {
 
 		/**
 		 * Creates an {@link Outcome}.
@@ -69,9 +85,23 @@ public class WorkspaceReconciliation {
 
 	}
 
+	/**
+	 * Function telling the state of the application in a running workspace.
+	 */
+	public interface ApplicationStateCheck {
+
+		/**
+		 * The state of the application in the given running workspace.
+		 */
+		ApplicationState of(String workspaceId);
+
+	}
+
 	private final WorkspaceProvider _provider;
 
 	private final ApplicationUrl _applicationUrl;
+
+	private final ApplicationStateCheck _applicationState;
 
 	/**
 	 * Creates a {@link WorkspaceReconciliation}.
@@ -80,10 +110,14 @@ public class WorkspaceReconciliation {
 	 *        The provider reporting the containers.
 	 * @param applicationUrl
 	 *        Computes the URL of the application of a running workspace.
+	 * @param applicationState
+	 *        Tells the state of the application of a running workspace.
 	 */
-	public WorkspaceReconciliation(WorkspaceProvider provider, ApplicationUrl applicationUrl) {
+	public WorkspaceReconciliation(WorkspaceProvider provider, ApplicationUrl applicationUrl,
+			ApplicationStateCheck applicationState) {
 		_provider = provider;
 		_applicationUrl = applicationUrl;
+		_applicationState = applicationState;
 	}
 
 	/**
@@ -134,13 +168,14 @@ public class WorkspaceReconciliation {
 	public Outcome reconcile(WorkspaceStatus stored, WorkspaceInfo actual) {
 		if (actual == null) {
 			return new Outcome(WorkspaceStatus.UNKNOWN, null, null,
-				"The container platform was not reachable when the control application started.");
+				"The container platform was not reachable when the control application started.", null);
 		}
 		switch (stored) {
 			case BUILDING:
 			case REMOVING:
+			case UPDATING:
 				return new Outcome(WorkspaceStatus.ERROR, null, null,
-					"The operation was interrupted by a restart of the control application.");
+					"The operation was interrupted by a restart of the control application.", image(actual));
 			case ERROR:
 				return endpoint(WorkspaceStatus.ERROR, actual, null);
 			default:
@@ -148,21 +183,39 @@ public class WorkspaceReconciliation {
 		}
 		if (actual.getState() == WorkspaceState.MISSING) {
 			return new Outcome(WorkspaceStatus.ERROR, null, null,
-				"The container of the workspace does not exist any more.");
+				"The container of the workspace does not exist any more.", null);
 		}
 		WorkspaceStatus status = WorkspaceStatus.of(actual.getState());
+		if (status == WorkspaceStatus.RUNNING && applicationDown(_applicationState.of(actual.getWorkspaceId()))) {
+			status = WorkspaceStatus.APP_STOPPED;
+		}
 		return endpoint(status, actual, status == stored ? null : "The workspace is " + label(status) + ".");
 	}
 
+	/**
+	 * Whether an application in the given state does not run and is not about to.
+	 */
+	public static boolean applicationDown(ApplicationState state) {
+		return state == ApplicationState.STOPPED || state == ApplicationState.FAILED;
+	}
+
 	private Outcome endpoint(WorkspaceStatus status, WorkspaceInfo actual, String message) {
-		if (actual.getState() == WorkspaceState.RUNNING && actual.hasHostPort()) {
-			return new Outcome(status, Integer.valueOf(actual.getHostPort()), _applicationUrl.of(actual), message);
+		if (status == WorkspaceStatus.APP_STOPPED && actual.hasHostPort()) {
+			return new Outcome(status, Integer.valueOf(actual.getHostPort()), null, message, image(actual));
 		}
-		return new Outcome(status, null, null, message);
+		if (actual.getState() == WorkspaceState.RUNNING && actual.hasHostPort()) {
+			return new Outcome(status, Integer.valueOf(actual.getHostPort()), _applicationUrl.of(actual), message,
+				image(actual));
+		}
+		return new Outcome(status, null, null, message, image(actual));
+	}
+
+	private static String image(WorkspaceInfo actual) {
+		return actual.getState() == WorkspaceState.MISSING ? null : actual.getImage();
 	}
 
 	private static String label(WorkspaceStatus status) {
-		return status.name().toLowerCase(Locale.ROOT);
+		return status.name().toLowerCase(Locale.ROOT).replace('_', ' ');
 	}
 
 }

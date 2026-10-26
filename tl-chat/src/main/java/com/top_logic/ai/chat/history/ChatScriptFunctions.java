@@ -7,6 +7,9 @@ package com.top_logic.ai.chat.history;
 
 import java.util.Date;
 
+import com.top_logic.ai.chat.layout.ChatStart;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
@@ -17,6 +20,7 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.TLContextManager;
 
 /**
  * TL-Script functions about chats.
@@ -88,6 +92,32 @@ public class ChatScriptFunctions extends TLScriptFunctions {
 			}
 		}
 		return news ? NEWS : working ? RUNNING : null;
+	}
+
+	/**
+	 * Starts a chat in the current window: a new conversation about the given object, whose first
+	 * message is sent at once, as if the user had typed it into the chat.
+	 *
+	 * <p>
+	 * For a command giving an order - "work on this" - rather than waiting for the user to type.
+	 * The conversation is about the given object from its start, so that what answers conversations
+	 * about such objects answers the first message too. The message is sent through the chat of the
+	 * window named by {@code chatId}: write the result to the {@code input} channel of a
+	 * {@code <chat-conversation>} of that chat, and it shows the answer as it is written.
+	 * </p>
+	 *
+	 * @param chatId
+	 *        The chat of the window that sends the message, the {@code chat-id} of the chat elements
+	 *        that show it.
+	 * @param subject
+	 *        What the conversation is about, empty for nothing.
+	 * @param text
+	 *        The first message.
+	 * @return The new conversation, a {@code tl.ai.execution:AgentSession}.
+	 */
+	@Label("Start a chat with a message")
+	public static AgentSession start(@Mandatory String chatId, TLObject subject, @Mandatory String text) {
+		return ChatStart.start(TLContextManager.getSubSession(), chatId, TLContext.currentUser(), subject, text);
 	}
 
 	/** Whether a question or an approval of the given run waits for the given account. */

@@ -40,7 +40,8 @@ import com.top_logic.table.impl.ListRowSource;
 /**
  * Test for {@link ColumnSetup}: the column it builds is displayed in the width it configures, and
  * keeps the width of the column its {@link ColumnBinding} built when it configures none; it sorts
- * by the comparator it declares, and in the order its binding derives when it declares none.
+ * by the comparator it declares, in the order its binding derives when it declares none, and not
+ * at all when it is not sortable.
  */
 public class TestColumnSetup extends TestCase {
 
@@ -166,6 +167,25 @@ public class TestColumnSetup extends TestCase {
 	}
 
 	/**
+	 * A column that is not sortable offers no sorting, even when it declares a comparator, and a
+	 * table grouped by it keeps its groups in the order of the given rows - although the values
+	 * would sort differently.
+	 */
+	public void testUnsortableColumnKeepsTheGroupsInRowOrder() {
+		assertTrue("A column sorts by default.", ordered(null).buildColumn().sort().isPresent());
+
+		Column<Object, ?> column = unsortable(null).buildColumn();
+		assertTrue("The column offers no sorting.", column.sort().isEmpty());
+		assertTrue("A comparator does not make the column sort.",
+			unsortable(BY_LENGTH).buildColumn().sort().isEmpty());
+
+		ListRowSource<Object> source = new ListRowSource<>(rows("b", "a", "b", "c"), List.of(column));
+		source.withGrouping(new GroupSpec(List.of(ATTRIBUTE)));
+		assertEquals(List.of("b", "a", "c"), groupValues(source));
+		assertEquals("The rows of a group keep their order.", List.of("b", "b", "a", "c"), values(source));
+	}
+
+	/**
 	 * Collections of values are ordered element by element by the order of their elements: the
 	 * first differing element decides, a collection that is the start of a longer one comes first,
 	 * an empty collection before every other one, and an empty element after every other one.
@@ -199,13 +219,18 @@ public class TestColumnSetup extends TestCase {
 
 	/** A row source over rows holding the given values, in a column ordered {@link #BY_LENGTH}. */
 	private static ListRowSource<Object> source(String... values) {
+		return new ListRowSource<>(rows(values), List.of(ordered(BY_LENGTH).buildColumn()));
+	}
+
+	/** Rows holding the given values, in that order. */
+	private static List<Object> rows(String... values) {
 		List<Object> rows = new ArrayList<>();
 		for (String value : values) {
 			Map<String, Object> row = new HashMap<>();
 			row.put(ATTRIBUTE, value);
 			rows.add(row);
 		}
-		return new ListRowSource<>(rows, List.of(ordered(BY_LENGTH).buildColumn()));
+		return rows;
 	}
 
 	/** The values of the data rows the given source shows, in display order. */
@@ -247,6 +272,18 @@ public class TestColumnSetup extends TestCase {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
 			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, comparator,
 			false);
+	}
+
+	/**
+	 * A descriptor over a value read from the row map, that is not sortable.
+	 *
+	 * @param comparator
+	 *        The order of the column's values the descriptor states nevertheless, or {@code null}.
+	 */
+	private static ColumnSetup unsortable(Comparator<Object> comparator) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, comparator,
+			false, ColumnExport.DEFAULT, null, false);
 	}
 
 	/**

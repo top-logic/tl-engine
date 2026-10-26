@@ -227,6 +227,9 @@ export interface RunMeta {
   runId: string
   startedAt: number
   durationMs?: number
+  /** What the run cost, in `currency`, once it has reported it; absent while unknown. */
+  cost?: number
+  currency?: string
   timestamp: number
 }
 

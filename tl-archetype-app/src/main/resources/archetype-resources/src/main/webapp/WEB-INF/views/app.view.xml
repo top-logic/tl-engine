@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	The application shell of tl-layout-view, extended by a same-path overlay naming the application.
+	The application shell of tl-layout-view, extended by a same-path overlay naming the application in
+	the app bar and the header of the sidebar; the footer of the sidebar keeps the TopLogic credit.
 	The sidebar items leading to the pages of the application go before the system section:
 	<nav-item id="..." config:position="before" config:reference="system-separator">.
 -->
@@ -25,22 +26,6 @@
 				</label>
 			</text>
 		</header-collapsed>
-		<footer config:override="true">
-			<text>
-				<label>
-					<en>${DisplayName}</en>
-					<de>${DisplayName}</de>
-				</label>
-			</text>
-		</footer>
-		<footer-collapsed config:override="true">
-			<text>
-				<label>
-					<en>${initials}</en>
-					<de>${initials}</de>
-				</label>
-			</text>
-		</footer-collapsed>
 	</sidebar>
 	<app-bar config:ref="app-bar">
 		<title>

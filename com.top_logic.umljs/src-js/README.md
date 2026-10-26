@@ -25,4 +25,4 @@ Thus, to build and show a minimal example it is sufficient to enter the followin
 
 `npm run all`
 
-After you created a _new version_ of umljs you should copy the resulting compact javascript files to _webapp/script/umljs_ to update the corresponding top-logic umljs module.
+After you created a _new version_ of umljs you should copy the resulting compact javascript files to _webapp/script/umljs_ and _dist/assets/diagram-js.css_ to _webapp/style/umljs_ to update the corresponding top-logic umljs module. When copying _diagram-js.css_, keep the header of the existing copy (including the global _.djs-cursor-*_ rules) and wrap the new content in `@scope (:has(> .djs-parent)) to (:scope > :not(.djs-parent)) { ... }` as before, so that the stylesheet only applies inside diagram-js 15 diagrams. The scope root is the parent of the diagram root (.djs-parent), because selectors inside `@scope` match only descendants of the scope root, and the stylesheet styles the diagram root itself.

@@ -155,6 +155,12 @@
 		<module>../com.top_logic.migrate.tl</module>
 		<module>../com.top_logic.migrate.tl_580</module>
 
+		<!-- Feature starters -->
+		<module>../tl-starter-react</module>
+		<module>../tl-starter-classic</module>
+		<module>../tl-starter-ai</module>
+		<module>../tl-starter-ai-search</module>
+
 		<!-- Supported DB drivers -->
 		<module>../ext.com.ibm.db2</module>
 

@@ -184,10 +184,6 @@ public class ViewServlet extends TopLogicServlet {
 		}
 
 		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
-		// Rendering the page restarts the session's inactivity timeout. A reload renders the tree the
-		// window already holds, so the controls counting down to the end of the session are the ones
-		// created before this request and have to be told.
-		windowRegistry.noteActivity(session);
 
 		// Rendering the page attaches the window's tree, and that changes the display like any
 		// command does - on a reload, while the report of the page just unloaded detaches the same

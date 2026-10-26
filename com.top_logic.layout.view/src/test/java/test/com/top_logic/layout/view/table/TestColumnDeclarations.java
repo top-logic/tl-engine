@@ -258,6 +258,51 @@ public class TestColumnDeclarations extends TestCase {
 	}
 
 	/**
+	 * A column declared not to be sortable offers no sorting, while a declaration saying nothing
+	 * about it sorts.
+	 */
+	public void testUnsortableColumnDoesNotSort() {
+		ComputedColumn.Config unsortable = computedColumn("total", MODULE + ":Integer");
+		set(unsortable, ComputedColumn.Config.SORTABLE, false);
+
+		ColumnSetup setup = single(unsortable);
+		assertFalse(setup.sortable());
+		assertTrue("The column offers no sorting.", setup.buildColumn().sort().isEmpty());
+
+		ColumnSetup sortable = single(attributeColumn("count", null));
+		assertTrue("A column sorts by default.", sortable.sortable());
+		assertTrue(sortable.buildColumn().sort().isPresent());
+	}
+
+	/**
+	 * A column declared not to be sortable can neither sort the table in a direction nor order its
+	 * values by a comparator.
+	 */
+	public void testUnsortableColumnWithASortIsReported() {
+		AttributeColumn.Config sorted = attributeColumn("count", "ASC");
+		set(sorted, AttributeColumn.Config.SORTABLE, false);
+		assertReported(sorted);
+
+		ComputedColumn.Config compared = computedColumn("total", null);
+		set(compared, ComputedColumn.Config.SORTABLE, false);
+		set(compared, ComputedColumn.Config.COMPARATOR, TypedConfiguration.newConfigItem(Expr.Null.class));
+		assertReported(compared);
+	}
+
+	/** Checks that the given declaration is reported when it is instantiated. */
+	private static void assertReported(PolymorphicConfiguration<? extends ColumnDeclaration> config) {
+		ColumnsConfig columns = TypedConfiguration.newConfigItem(ColumnsConfig.class);
+		columns.getColumns().add(config);
+
+		BufferingProtocol log = new BufferingProtocol();
+		ColumnDeclarations.instantiate(new DefaultInstantiationContext(log), columns);
+
+		assertFalse("The column is reported.", log.getErrors().isEmpty());
+		assertTrue("The report names the option: " + log.getErrors(),
+			log.getErrors().get(0).contains(AttributeColumn.Config.SORTABLE));
+	}
+
+	/**
 	 * The channels the declared columns read are collected once each, in declaration order; a
 	 * {@code <column>} over an attribute reads none.
 	 */

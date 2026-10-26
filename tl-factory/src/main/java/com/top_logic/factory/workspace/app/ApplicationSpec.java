@@ -5,6 +5,9 @@
  */
 package com.top_logic.factory.workspace.app;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -22,6 +25,8 @@ public final class ApplicationSpec {
 	private String _engineVersion;
 
 	private String _initialPassword;
+
+	private final Map<String, String> _env = new LinkedHashMap<>();
 
 	/**
 	 * Creates an {@link ApplicationSpec}.
@@ -102,6 +107,34 @@ public final class ApplicationSpec {
 	 */
 	public ApplicationSpec setInitialPassword(String initialPassword) {
 		_initialPassword = initialPassword;
+		return this;
+	}
+
+	/**
+	 * Environment variables the workspace container gets in addition to those
+	 * {@link ApplicationWorkspaces} sets itself.
+	 */
+	public Map<String, String> getEnv() {
+		return Collections.unmodifiableMap(_env);
+	}
+
+	/**
+	 * Adds an environment variable of the workspace container.
+	 *
+	 * @see #getEnv()
+	 */
+	public ApplicationSpec putEnv(String name, String value) {
+		_env.put(Objects.requireNonNull(name, "name"), Objects.requireNonNull(value, "value"));
+		return this;
+	}
+
+	/**
+	 * Adds environment variables of the workspace container.
+	 *
+	 * @see #getEnv()
+	 */
+	public ApplicationSpec putEnv(Map<String, String> env) {
+		env.forEach(this::putEnv);
 		return this;
 	}
 

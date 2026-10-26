@@ -113,11 +113,15 @@ export interface FilterPresetsProps {
  * of the width of the bar needs no new layout of the presets. The chip of the menu only ever counts as wide as
  * the widest it has been, so that the digits of its count cannot make the row switch between two numbers.</p>
  *
- * <p>The menu is a radio group of the presets in it: at most one is checked, the preset in force if it is
- * in the menu, which it is not, as the row keeps it. A preset of the user's own carries its remove action
- * at the end of its entry, and the key Delete on the entry deletes it as well.</p>
+ * <p>The menu holds plain entries, one per preset that is not in the row; the preset in force is never among
+ * them, as the row keeps it, so no entry is "in force". A preset of the user's own carries its remove action
+ * at the end of its entry (for the pointer: it is no stop of the keyboard); the key Delete or Backspace on the
+ * focused entry deletes it.</p>
+ *
+ * <p>The component renders again only with a change of its props, so a table that changes for another reason
+ * (scrolling, selection) neither measures nor touches the observer.</p>
  */
-export const FilterPresets: React.FC<FilterPresetsProps> = ({
+const FilterPresetsRow: React.FC<FilterPresetsProps> = ({
   presets, activeId, densityKey, chipAttr, moreText, clearLabel, deleteLabel, onToggle, onDelete,
 }) => {
   const Chip = usePart('Chip');
@@ -132,6 +136,13 @@ export const FilterPresets: React.FC<FilterPresetsProps> = ({
   const measuredFor = useRef(densityKey);
   /** The preset chosen in the menu, which takes the focus once it stands in the row. */
   const pendingFocus = useRef<string | null>(null);
+  /** The ID of the preset in force at the last render, to see a change of it. */
+  const lastActive = useRef(activeId);
+  /** The one observer of this mount, and what it observes. */
+  const observer = useRef<ResizeObserver | null>(null);
+  const observed = useRef(new Set<Element>());
+  /** Withdraws the wish for the focus once the focus goes elsewhere. */
+  const dropFocusWish = useRef<(() => void) | null>(null);
 
   const row = rowOf(presets, activeId, count ?? presets.length);
   const rowIds = new Set(row.map((preset) => preset.id));
@@ -202,14 +213,32 @@ export const FilterPresets: React.FC<FilterPresetsProps> = ({
     if (typeof ResizeObserver === 'undefined') {
       return;
     }
-    const observer = new ResizeObserver(() => measureRef.current());
+    // One observer for the mount; what it watches follows the elements that are there now.
+    observer.current ??= new ResizeObserver(() => measureRef.current());
     const group = groupRef.current;
+    const now = new Set<Element>(group?.querySelectorAll(`[${PRESET_ATTR}], .${MORE_CLASS}`) ?? []);
     if (group?.parentElement) {
-      observer.observe(group.parentElement);
+      now.add(group.parentElement);
     }
-    group?.querySelectorAll(`[${PRESET_ATTR}], .${MORE_CLASS}`).forEach((chip) => observer.observe(chip));
-    return () => observer.disconnect();
+    for (const element of observed.current) {
+      if (!now.has(element)) {
+        observer.current.unobserve(element);
+        observed.current.delete(element);
+      }
+    }
+    for (const element of now) {
+      if (!observed.current.has(element)) {
+        observer.current.observe(element);
+        observed.current.add(element);
+      }
+    }
   });
+  useLayoutEffect(() => () => {
+    observer.current?.disconnect();
+    observer.current = null;
+    observed.current.clear();
+    dropFocusWish.current?.();
+  }, []);
 
   // The menu is for the presets that are not in the row: with none left, it closes.
   const menuEmpty = menu.length === 0;
@@ -222,11 +251,20 @@ export const FilterPresets: React.FC<FilterPresetsProps> = ({
   // The preset chosen in the menu stands in the row once the server has applied it: the focus goes there, as
   // the chip of the menu may be gone with the last preset in it.
   useLayoutEffect(() => {
+    const changed = lastActive.current !== activeId;
+    lastActive.current = activeId;
     const chosen = pendingFocus.current;
-    if (chosen === null || chosen !== activeId) {
+    if (chosen === null) {
       return;
     }
-    pendingFocus.current = null;
+    if (chosen !== activeId) {
+      // Another preset has come into force than the one chosen: the wish is out of date.
+      if (changed) {
+        dropFocusWish.current?.();
+      }
+      return;
+    }
+    dropFocusWish.current?.();
     const active = document.activeElement;
     if (active && active !== document.body && active !== moreRef.current) {
       return;
@@ -239,7 +277,21 @@ export const FilterPresets: React.FC<FilterPresetsProps> = ({
   const close = useCallback(() => setOpen(false), []);
 
   const choose = (id: string) => {
-    pendingFocus.current = id === activeId ? null : id;
+    dropFocusWish.current?.();
+    pendingFocus.current = id;
+    // The wish ends as soon as the focus goes to somewhere outside of the filter bar.
+    const leaves = (event: FocusEvent) => {
+      const bar = groupRef.current?.parentElement;
+      if (!(event.target instanceof Node) || !bar?.contains(event.target)) {
+        dropFocusWish.current?.();
+      }
+    };
+    document.addEventListener('focusin', leaves);
+    dropFocusWish.current = () => {
+      document.removeEventListener('focusin', leaves);
+      pendingFocus.current = null;
+      dropFocusWish.current = null;
+    };
     setOpen(false);
     onToggle(id);
   };
@@ -293,8 +345,6 @@ export const FilterPresets: React.FC<FilterPresetsProps> = ({
               label={preset.label}
               display="label-only"
               appearance="menu-item"
-              radio
-              checked={preset.id === activeId}
               aria-keyshortcuts={preset.deletable ? DELETE_KEYS.join(' ') : undefined}
               onClick={() => choose(preset.id)}
             />
@@ -318,6 +368,8 @@ export const FilterPresets: React.FC<FilterPresetsProps> = ({
                 display="icon-only"
                 appearance="ghost"
                 small
+                // For the pointer: the keyboard deletes by the key on the entry.
+                tabIndex={-1}
                 onClick={(event) => remove(preset.id, event)}
               />
             </div>
@@ -327,3 +379,5 @@ export const FilterPresets: React.FC<FilterPresetsProps> = ({
     </>
   );
 };
+
+export const FilterPresets = React.memo(FilterPresetsRow);

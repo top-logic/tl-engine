@@ -424,7 +424,7 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
 
   /** The labels of the entries of the menu. */
   function entryLabels(menu: HTMLElement) {
-    return within(menu).getAllByRole('menuitemradio').map(element => element.textContent);
+    return within(menu).getAllByRole('menuitem').map(element => element.textContent);
   }
 
   it('shows the presets that fit and a chip "+ n more" for the rest, in declared order', async () => {
@@ -458,20 +458,21 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
     expect(entryLabels(menu)).toEqual(['Preset 3', 'Preset 4', 'Preset 5', 'Preset 6', 'Preset 8']);
   });
 
-  it('draws the entries of the menu as radio entries, none of them checked while the active preset stands in the row', async () => {
+  it('draws the entries of the menu as plain entries: no radio, nothing checked', async () => {
     mountPresets(roomFor(3), { activeNamedFilter: 'p7' });
     await settle();
 
-    const entries = within(await openMenu()).getAllByRole('menuitemradio');
-    expect(entries).toHaveLength(5);
-    entries.forEach(entry => expect(entry.getAttribute('aria-checked')).toBe('false'));
+    const menu = await openMenu();
+    expect(within(menu).getAllByRole('menuitem')).toHaveLength(5);
+    expect(within(menu).queryAllByRole('menuitemradio')).toHaveLength(0);
+    expect(menu.querySelector('[aria-checked]')).toBeNull();
   });
 
   it('applies a preset chosen in the menu, and closes the menu', async () => {
     const sent = mountPresets(roomFor(3));
     await settle();
 
-    await userEvent.click(within(await openMenu()).getByRole('menuitemradio', { name: 'Preset 5' }));
+    await userEvent.click(within(await openMenu()).getByRole('menuitem', { name: 'Preset 5' }));
     await settle();
 
     expect(sent.mock.calls).toEqual([[CMD_APPLY_FILTER, { id: 'p5' }]]);
@@ -482,7 +483,7 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
     mountPresets(roomFor(3));
     await settle();
 
-    await userEvent.click(within(await openMenu()).getByRole('menuitemradio', { name: 'Preset 5' }));
+    await userEvent.click(within(await openMenu()).getByRole('menuitem', { name: 'Preset 5' }));
     patchState({ activeNamedFilter: 'p5' });
     await settle();
 
@@ -515,7 +516,7 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
     const sent = mountPresets(roomFor(3));
     await settle();
 
-    const entry = within(await openMenu()).getByRole('menuitemradio', { name: 'Preset 6' });
+    const entry = within(await openMenu()).getByRole('menuitem', { name: 'Preset 6' });
     expect(entry.getAttribute('aria-keyshortcuts')).toBe('Delete Backspace');
     entry.focus();
     await userEvent.keyboard('{Delete}');
@@ -551,6 +552,74 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
     expect(document.activeElement!.closest('.tl-table__filter-bar')).not.toBeNull();
   });
 
+  it('keeps the remove action of an entry out of the tab order: Tab from the entry does not land on it', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    const menu = await openMenu();
+    const entry = within(menu).getByRole('menuitem', { name: 'Preset 6' });
+    const remove = within(menu).getByRole('button', { name: LABEL_DELETE_FILTER });
+    expect(remove.getAttribute('tabindex')).toBe('-1');
+    entry.focus();
+    await userEvent.tab();
+    expect(document.activeElement).not.toBe(remove);
+  });
+
+  it('does not measure again for a change of the table that leaves the presets as they are', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+    const measured = () => (Element.prototype.getBoundingClientRect as unknown as { mock: { contexts: Element[] } })
+      .mock.contexts.filter(element => element.matches('.tl-table__filter-bar, [data-tl-preset], .tl-table__more')).length;
+    const before = measured();
+    const created = observers.length;
+
+    patchState({ totalRowCount: 2 });
+    await settle();
+
+    expect(measured()).toBe(before);
+    expect(observers.length).toBe(created);
+    expect(rowLabels()).toHaveLength(3);
+  });
+
+  it('creates one resize observer for the presets, however often the row is cut again', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+    const created = observers.length;
+
+    resizeTo(roomFor(5));
+    resizeTo(roomFor(2));
+    resizeTo(roomFor(3));
+
+    expect(observers.length).toBe(created);
+  });
+
+  it('does not hand the focus to a preset chosen in the menu once another one has come into force', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    await userEvent.click(within(await openMenu()).getByRole('menuitem', { name: 'Preset 5' }));
+    patchState({ activeNamedFilter: 'p2' });
+    await settle();
+    patchState({ activeNamedFilter: 'p5' });
+    await settle();
+
+    expect(document.activeElement).not.toBe(chip('Preset 5'));
+  });
+
+  it('does not hand the focus to a preset chosen in the menu once the focus has gone elsewhere', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    await userEvent.click(within(await openMenu()).getByRole('menuitem', { name: 'Preset 5' }));
+    const outside = document.body.appendChild(document.createElement('button'));
+    outside.focus();
+    patchState({ activeNamedFilter: 'p5' });
+    await settle();
+
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+  });
+
   it('cuts the row again when the width of the bar changes', async () => {
     mountPresets(roomFor(3));
     await settle();
@@ -583,7 +652,7 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
     await settle();
 
     expect(rowLabels()).toEqual(['Preset 4']);
-    expect(await within(await openMenu()).findAllByRole('menuitemradio')).toHaveLength(7);
+    expect(await within(await openMenu()).findAllByRole('menuitem')).toHaveLength(7);
   });
 
   it('shows a preset added to the cut row, and cuts the row again', async () => {

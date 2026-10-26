@@ -162,18 +162,46 @@ public class TestGrouping extends TestCase {
 	}
 
 	/**
-	 * A grouping column without sort capability keeps the groups in the order their first rows
-	 * appear in the sorted rows.
+	 * A grouping column without sort capability keeps the groups in the order of the given rows,
+	 * not in the order their first rows have once the rows are sorted.
 	 */
 	public void testUnsortableGroupingColumnKeepsFirstAppearanceOrder() {
 		ListRowSource<Sale> source = new ListRowSource<>(unorderedSales(), sortableColumns(false));
 		source.withGrouping(new GroupSpec(List.of("region")));
 		source.withOrder(SortSpec.ascending("amount"));
 
-		// Sorted by amount, South's rows come first, and so does its group.
-		assertEquals(List.of("South", "North"), groupValues(source));
-		assertEquals(List.of(1, 2), memberAmounts(source, "South"));
+		// Sorted by amount, South's rows would come first, but North's row is the first one given.
+		assertEquals(List.of("North", "South"), groupValues(source));
 		assertEquals(List.of(5, 8, 9), memberAmounts(source, "North"));
+		assertEquals(List.of(1, 2), memberAmounts(source, "South"));
+	}
+
+	/**
+	 * Whatever the table is sorted by, the groups of a grouping column without sort capability
+	 * come in the order of the given rows, and the sort only orders the rows within each group -
+	 * in the displayed rows and in all rows alike.
+	 */
+	public void testUnsortableGroupingColumnIgnoresTheSortForTheGroupOrder() {
+		List<Sale> given = List.of(new Sale("b", 1), new Sale("a", 2), new Sale("b", 3), new Sale("c", 4));
+		ListRowSource<Sale> source = new ListRowSource<>(given, sortableColumns(false));
+		source.withGrouping(new GroupSpec(List.of("region")));
+		source.withOrder(new SortSpec(List.of(new SortColumn("amount", false))));
+
+		// Sorted descending by amount, the first rows would be c, b, a.
+		assertEquals(List.of("b", "a", "c"), groupValues(source));
+		assertEquals("The sort orders the rows within the group.", List.of(3, 1), memberAmounts(source, "b"));
+
+		List<String> allGroups = new ArrayList<>();
+		for (Row<Sale> row : source.allRows()) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				allGroups.add((String) row.group().key().values().get(0));
+			}
+		}
+		assertEquals("All rows have the groups in the same order.", List.of("b", "a", "c"), allGroups);
+
+		source.withOrder(SortSpec.ascending("amount"));
+		assertEquals(List.of("b", "a", "c"), groupValues(source));
+		assertEquals(List.of(1, 3), memberAmounts(source, "b"));
 	}
 
 	/**

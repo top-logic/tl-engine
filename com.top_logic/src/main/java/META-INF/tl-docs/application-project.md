@@ -300,8 +300,10 @@ company parent or join an existing multi-module build. The steps, in the project
    project keeps building one package, but the blocks are now redundant: delete them, and delete
    the `tl.deb.*` properties that equal the defaults in [Debian package](#debian-package).
 7. **Starters** (optional): replace the single modules of a feature by its starter, see
-   [Features: starters and single modules](#features-starters-and-single-modules). The module
-   order and thus the configuration of the application stays the same.
+   [Features: starters and single modules](#features-starters-and-single-modules). Fragments that
+   do not depend on each other may change places in the module order if the project listed them
+   in another order than the starter. This changes the order within merged files only
+   (`metaConf.txt`, `theme.xml`, theme settings, the tabs of merged views).
 
 To check the switch, compare the output of `mvn help:effective-pom` before and after: plugins,
 properties and dependencies must be the same, apart from the removed parent. For an application,

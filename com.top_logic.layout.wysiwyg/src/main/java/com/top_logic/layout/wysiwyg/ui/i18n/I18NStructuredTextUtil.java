@@ -35,6 +35,9 @@ public class I18NStructuredTextUtil {
 	/** Prefix identifying image references. */
 	public static final String REF_ID_PREFIX = "ref:";
 
+	/** Selector for images referencing an image of a {@link StructuredText}. */
+	public static final String IMAGE_CSS_SELECTOR = getImageCSSSelector(REF_ID_PREFIX);
+
 	/**
 	 * Creates an {@link I18NStructuredText} from a plain text or <i>CommonMark</i> source.
 	 *
@@ -251,6 +254,17 @@ public class I18NStructuredTextUtil {
 		}
 
 		return null;
+	}
+
+	/**
+	 * CSS selector for images outside of code blocks whose source starts with the given prefix.
+	 * 
+	 * @param srcPrefix
+	 *        Prefix of the src attribute of the selected images.
+	 * @return Selector to apply to a {@link Document}.
+	 */
+	public static String getImageCSSSelector(String srcPrefix) {
+		return "*:not(code) img[src^=\"" + srcPrefix + "\"]";
 	}
 
 	/**

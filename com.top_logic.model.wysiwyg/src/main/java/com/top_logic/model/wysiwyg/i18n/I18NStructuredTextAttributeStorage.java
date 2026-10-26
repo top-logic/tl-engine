@@ -18,7 +18,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
@@ -35,7 +34,6 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.knowledge.service.db2.StaticItem;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
-import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
 import com.top_logic.model.TLObject;
@@ -44,7 +42,6 @@ import com.top_logic.model.export.PreloadBuilder;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.v5.AssociationCachePreload;
 import com.top_logic.model.wysiwyg.storage.CommonStructuredTextAttributeStorage;
-import com.top_logic.util.TLContextManager;
 
 /**
  * The {@link AbstractStorage} for {@link I18NStructuredText}.
@@ -118,18 +115,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 
 	private void addSourceCodes(TLObject tlObject, Map<Locale, StructuredText> structuredTexts) {
 		for (KnowledgeItem sourceCode : fetchSourceCodes(tlObject)) {
-			TLSubSessionContext subSession = TLContextManager.getSubSession();
-			Locale currentLocale = subSession.set(StructuredTextConfigService.LOCALE, getLanguage(sourceCode));
-			try {
-				StructuredText structuredText = getOrCreateByLanguage(structuredTexts, sourceCode);
-				structuredText.setSourceCode(getSourceCode(sourceCode));
-			} finally {
-				if (currentLocale == null) {
-					subSession.reset(StructuredTextConfigService.LOCALE);
-				} else {
-					subSession.set(StructuredTextConfigService.LOCALE, currentLocale);
-				}
-			}
+			StructuredText structuredText = getOrCreateByLanguage(structuredTexts, sourceCode);
+			structuredText.setSourceCode(getSourceCode(sourceCode));
 		}
 	}
 

@@ -61,7 +61,7 @@ public class StructuredTextUtil {
 			.syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
 			.escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml);
 
-		Elements localImaged = document.select(StructuredTextControl.IMAGE_CSS_SELECTOR);
+		Elements localImaged = document.select(I18NStructuredTextUtil.IMAGE_CSS_SELECTOR);
 		for (Element localImg : localImaged) {
 			String image = I18NStructuredTextUtil.getImageID(I18NStructuredTextUtil.getSrcValue(localImg));
 			BinaryData binaryData = images.get(image);

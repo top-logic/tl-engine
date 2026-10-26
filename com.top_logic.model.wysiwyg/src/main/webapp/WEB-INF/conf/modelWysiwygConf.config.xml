@@ -123,6 +123,16 @@
 				</type-system>
 			</type-systems>
 		</config>
+
+		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
+			<customizations>
+				<property name="com.top_logic.model.wysiwyg.annotation.StructuredTextEditorConfig#features">
+					<annotations>
+						<options fun="com.top_logic.model.wysiwyg.annotation.StructuredEditorConfigOptions"/>
+					</annotations>
+				</property>
+			</customizations>
+		</config>
 	</configs>
 	
 	<defaults>

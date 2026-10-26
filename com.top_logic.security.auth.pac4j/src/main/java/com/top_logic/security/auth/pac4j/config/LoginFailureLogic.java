@@ -13,8 +13,10 @@ import org.pac4j.core.engine.DefaultCallbackLogic;
 import org.pac4j.core.engine.DefaultSecurityLogic;
 import org.pac4j.core.exception.http.HttpAction;
 import org.pac4j.core.http.adapter.HttpActionAdapter;
+import org.pac4j.jee.context.JEEContext;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
+import com.top_logic.base.accesscontrol.ExternalLoginFailure;
 import com.top_logic.basic.Logger;
 
 /**
@@ -26,7 +28,8 @@ import com.top_logic.basic.Logger;
  * credentials of the application (<code>unauthorized_client</code>), is not reachable, or answers
  * the authentication with an error. pac4j reports such failures as exceptions; the logics log them
  * as warning and send the browser to the {@link ApplicationPages.Config#getLoginRetrySSOPage()
- * login retry page}, using the error URL of {@link AbstractExceptionAwareLogic}.
+ * login retry page}, using the error URL of {@link AbstractExceptionAwareLogic}. The page tells the
+ * visitor about the failure through the {@link ExternalLoginFailure} reported.
  * </p>
  */
 public class LoginFailureLogic {
@@ -50,7 +53,7 @@ public class LoginFailureLogic {
 
 		@Override
 		protected Object handleException(Exception ex, HttpActionAdapter adapter, WebContext context) {
-			if (logFailure(ex)) {
+			if (handleFailure(ex, context)) {
 				setErrorUrl(_errorUrl.get());
 			}
 			return super.handleException(ex, adapter, context);
@@ -77,7 +80,7 @@ public class LoginFailureLogic {
 
 		@Override
 		protected Object handleException(Exception ex, HttpActionAdapter adapter, WebContext context) {
-			if (logFailure(ex)) {
+			if (handleFailure(ex, context)) {
 				setErrorUrl(_errorUrl.get());
 			}
 			return super.handleException(ex, adapter, context);
@@ -93,16 +96,20 @@ public class LoginFailureLogic {
 	}
 
 	/**
-	 * Logs the given exception of a login, if it is a failure.
+	 * Logs the given exception of a login and reports it as {@link ExternalLoginFailure}, if it is a
+	 * failure.
 	 *
 	 * @return Whether the exception is a failure, not an answer pac4j sends deliberately (e.g. the
 	 *         redirect to the identity provider).
 	 */
-	static boolean logFailure(Exception ex) {
+	static boolean handleFailure(Exception ex, WebContext context) {
 		if (ex instanceof HttpAction) {
 			return false;
 		}
 		Logger.warn("Single sign-on failed: " + ex.getMessage(), ex, LoginFailureLogic.class);
+		if (context instanceof JEEContext jeeContext) {
+			ExternalLoginFailure.report(jeeContext.getNativeRequest());
+		}
 		return true;
 	}
 

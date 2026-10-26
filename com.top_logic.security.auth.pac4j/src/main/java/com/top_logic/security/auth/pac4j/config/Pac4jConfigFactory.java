@@ -16,6 +16,7 @@ import org.pac4j.core.adapter.FrameworkAdapter;
 import org.pac4j.core.authorization.authorizer.RequireAnyRoleAuthorizer;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
+import org.pac4j.core.client.IndirectClient;
 import org.pac4j.core.config.ConfigFactory;
 import org.pac4j.core.http.url.DefaultUrlResolver;
 import org.pac4j.core.http.url.UrlResolver;
@@ -199,6 +200,14 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 			Client client = configurator.createReauthenticationClient(context);
 			if (client != null) {
 				clientList.add(client);
+			}
+		}
+
+		for (Client client : clientList) {
+			if (client instanceof IndirectClient indirect) {
+				// A failed login leads to the login page, from which the visitor retries on purpose.
+				// pac4j's guard against redirect loops would refuse that retry with 401.
+				indirect.setCheckAuthenticationAttempt(false);
 			}
 		}
 

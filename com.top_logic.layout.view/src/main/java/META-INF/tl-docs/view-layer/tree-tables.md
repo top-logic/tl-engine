@@ -41,7 +41,7 @@ A `<tree-table>` is a table whose rows form a tree: each object is a row with th
   ```
 
   The display leaves the click to the row (`link` is off by default), and the search of the tree table finds the row by the computed label.
-- **Selection** works as in a table (`TableSelectionBinding`): the channel holds the selected object, a set of them, or nothing, and an object written to it is selected - also one inside a row that is not open, which shows as selected once it is opened.
+- **Selection** works as in a `<tree>` (`TreeSelectionBinding`, shown on the rows through `TreeSelectionDisplay.of(TableViewControl, …)`): the channel holds the selected object, a set of them, or nothing, and an object written to it is revealed - the rows above it are opened (`TableViewControl#expandRows`), it is selected and its row scrolled into view; its row is found through `parents` where the tree table declares it, and by searching otherwise. When the selected object loses its row - deleted, or taken out of the child list it hung in, also while the tree table was off screen - the nearest remaining row above it becomes the selection and is written to the channel; where no row above it is left, the channel is cleared (see [selecting rows and nodes](doc:view-layer/tables#selecting-rows-and-nodes)).
 - The control is the `TableViewControl` in tree mode, fed by a `TreeRowSource`; the source is the table's `RowHierarchy` (`TableView.hierarchy()`): which row holds a row, and the children of a row in display order, whether it is open or not.
 
 ## Drag and drop

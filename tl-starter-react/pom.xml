@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<!--
+		Feature starter: the TopLogic modules of the React UI as a single dependency. An application enables
+		the React UI by depending on this POM:
+
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-starter-react</artifactId>
+				<type>pom</type>
+			</dependency>
+
+		The parent is tl-parent-all, not tl-parent-core: a starter contributes no code and no resources, so it
+		needs only the version management and publishing settings, but none of the module build of a
+		TopLogic fragment.
+	-->
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-all</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<artifactId>tl-starter-react</artifactId>
+
+	<name>${project.artifactId}</name>
+	<description>Feature starter bundling the TopLogic modules of the React UI (views of tl-layout-view, entry point /view/).</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>pom</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view-contact</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-react-codeedit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-react-wysiwyg</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-wysiwyg</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-search-react</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-react-flow-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-dev-tools</artifactId>
+		</dependency>
+	</dependencies>
+</project>

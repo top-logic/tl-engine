@@ -37,6 +37,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.NodeLocator;
 import com.top_logic.layout.view.model.TreeNodes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
+import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
@@ -667,7 +668,8 @@ public class TestTreeSelectionBinding extends TestCase {
 			_treeControl.setSelectionMode(SelectionMode.MULTI);
 		}
 
-		_binding = new TreeSelectionBinding(_treeControl, _selectionModel, () -> _tree, locator, _channel);
+		_binding = new TreeSelectionBinding(TreeSelectionDisplay.of(_treeControl, _selectionModel), () -> _tree, locator,
+			_channel);
 	}
 
 	/**

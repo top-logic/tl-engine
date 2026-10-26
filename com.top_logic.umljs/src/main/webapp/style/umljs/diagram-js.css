@@ -1,3 +1,54 @@
+/*
+ * assets/diagram-js.css of diagram-js 15.9.1, wrapped in
+ * "@scope (:has(> .djs-parent)) to (:scope > :not(.djs-parent)) { ... }".
+ *
+ * diagram-js marks the root element of each diagram (canvas container) with .djs-parent, so the
+ * rules do not affect other diagram libraries of the application (e.g. bpmn-js 3, which has no
+ * .djs-parent). The scope root is the parent of the diagram root, because selectors without
+ * :scope match only descendants of the scope root, and the stylesheet has rules for the diagram
+ * root itself (.djs-parent, .djs-container). The scope ends at all other children of that parent.
+ * The .djs-cursor-* rules are repeated outside the scope, because diagram-js sets these classes
+ * on the document body.
+ */
+
+.djs-cursor-grab {
+  cursor: -webkit-grab;
+  cursor: -moz-grab;
+  cursor: grab;
+}
+
+.djs-cursor-grabbing {
+  cursor: -webkit-grabbing;
+  cursor: -moz-grabbing;
+  cursor: grabbing;
+}
+
+.djs-cursor-crosshair {
+  cursor: crosshair;
+}
+
+.djs-cursor-move {
+  cursor: move;
+}
+
+.djs-cursor-resize-ns {
+  cursor: ns-resize;
+}
+
+.djs-cursor-resize-ew {
+  cursor: ew-resize;
+}
+
+.djs-cursor-resize-nwse {
+  cursor: nwse-resize;
+}
+
+.djs-cursor-resize-nesw {
+  cursor: nesw-resize;
+}
+
+@scope (:has(> .djs-parent)) to (:scope > :not(.djs-parent)) {
+
 /**
  * color definitions
  */
@@ -1012,4 +1063,6 @@
 .djs-element .djs-hit-click-stroke,
 .djs-element .djs-hit-all {
   cursor: move;
+}
+
 }

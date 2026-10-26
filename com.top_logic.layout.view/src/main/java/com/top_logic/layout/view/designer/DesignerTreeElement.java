@@ -43,6 +43,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.NodeLocator;
 import com.top_logic.layout.view.model.TreeNodes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
+import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -142,7 +143,7 @@ public class DesignerTreeElement implements UIElement {
 		TreeSelectionBinding selectionBinding;
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionBinding = new TreeSelectionBinding(treeControl, selectionModel,
+			selectionBinding = new TreeSelectionBinding(TreeSelectionDisplay.of(treeControl, selectionModel),
 				() -> currentModel[0], NodeLocator.SEARCHING, selectionChannel);
 			treeControl.addCleanupAction(selectionBinding::dispose);
 		} else {

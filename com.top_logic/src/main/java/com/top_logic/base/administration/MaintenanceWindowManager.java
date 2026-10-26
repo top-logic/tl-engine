@@ -31,8 +31,10 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -57,6 +59,7 @@ import com.top_logic.util.db.DBUtil;
 	Login.Module.class,
 })
 @Label("Maintenance window")
+@ServiceCategory.Of(OperationsCategory.class)
 public final class MaintenanceWindowManager extends ManagedClass implements ClusterManagerListener {
 
     /**

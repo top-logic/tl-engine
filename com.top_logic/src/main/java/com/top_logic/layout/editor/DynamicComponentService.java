@@ -29,8 +29,10 @@ import com.top_logic.basic.io.PathUpdate;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
@@ -48,6 +50,7 @@ import com.top_logic.mig.html.layout.LayoutUtils;
 	SafeHTML.Module.class,
 })
 @Label("Dynamic components")
+@ServiceCategory.Of(UICategory.class)
 public class DynamicComponentService extends ConfiguredManagedClass<DynamicComponentService.Config> {
 
 	/**

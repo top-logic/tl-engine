@@ -1,4 +1,4 @@
-import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, usePart, ICON_CLEAR } from 'tl-react-bridge';
+import { React, useTLState, useTLDataUrl, useTLCommand, useI18N, rootClassName, stateAttr, usePart, downloadBlob, ICON_CLEAR, ICON_DOWNLOAD } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -8,9 +8,6 @@ const I18N_KEYS = {
   'js.download.clear': 'Clear',
   'js.download.clearFile': 'Clear file',
 };
-
-/** Icon of the button downloading the file. */
-const DOWNLOAD_ICON = 'css:fa-solid fa-download';
 
 const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -31,25 +28,7 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
 
     setDownloading(true);
     try {
-      const url = dataUrl + (dataUrl.includes('?') ? '&' : '?') + 'rev=' + dataRevision;
-      const resp = await fetch(url);
-      if (!resp.ok) {
-        console.error('[TLDownload] Failed to fetch data:', resp.status);
-        return;
-      }
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = fileName;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-      console.error('[TLDownload] Fetch error:', e);
+      await downloadBlob(dataUrl + (dataUrl.includes('?') ? '&' : '?') + 'rev=' + dataRevision, fileName);
     } finally {
       setDownloading(false);
     }
@@ -67,8 +46,8 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (!hasData) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tlDownload tlDownload--empty')}>
-        <span className="tlDownload__fileName tlDownload__fileName--empty">{t['js.download.noFile']}</span>
+      <div id={controlId} className={rootClassName(state, 'tl-file')} data-tl-state={stateAttr('empty')}>
+        <span className="tl-file__name">{t['js.download.noFile']}</span>
       </div>
     );
   }
@@ -78,17 +57,17 @@ const TLDownload: React.FC<TLCellProps> = ({ controlId }) => {
     : t['js.download.file'].replace('{0}', fileName);
 
   return (
-    <div id={controlId} className={rootClassName(state, 'tlDownload')}>
+    <div id={controlId} className={rootClassName(state, 'tl-file')}>
       <Button
         label={downloadLabel}
-        image={DOWNLOAD_ICON}
+        image={ICON_DOWNLOAD}
         display="icon-only"
         appearance="ghost"
         disabled={downloading}
         aria-busy={downloading ? true : undefined}
         onClick={handleDownload}
       />
-      <span className="tlDownload__fileName">{fileName}</span>
+      <span className="tl-file__name">{fileName}</span>
       {clearable && (
         <Button
           label={t['js.download.clearFile']}

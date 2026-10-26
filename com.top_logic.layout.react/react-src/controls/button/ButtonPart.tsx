@@ -11,12 +11,13 @@ import { buttonClassName } from './buttonClassName';
  * ({@link buttonLinkAttributes}).</p>
  *
  * <p>A button showing its icon alone is a square icon button; drawn small, it carries a small
- * icon. Beside a label the icon is small. The label is drawn in the label element of the button or
+ * icon. Beside a label the icon is small. A checked radio entry reads strong, like the entry in force: a
+ * menu entry has no check mark of its own. The label is drawn in the label element of the button or
  * of the menu entry.</p>
  */
 const ButtonPart: React.FC<ButtonPartProps> = (props) => {
   const {
-    id, ref, href, target: _target, label, image, display, appearance, danger, small, active, checked: _checked,
+    id, ref, href, target: _target, label, image, display, appearance, danger, small, active, checked, radio,
     disabled, tabIndex, tooltip: _tooltip, className, onClick, onMouseDown, onPointerDown, onKeyDown, ...attributes
   } = props;
   const iconOnly = display === 'icon-only';
@@ -27,7 +28,7 @@ const ButtonPart: React.FC<ButtonPartProps> = (props) => {
   const block = appearance === 'menu-item' ? 'tl-menu' : 'tl-button';
 
   const classes = buttonClassName({
-    appearance, danger, small: smallIcon, icon: iconOnly && !!image, current: active, extra: className,
+    appearance, danger, small: smallIcon, icon: iconOnly && !!image, current: active || (radio === true && checked === true), extra: className,
   });
   const content = (
     <>

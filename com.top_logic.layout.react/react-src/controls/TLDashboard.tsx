@@ -1,12 +1,15 @@
-import { React, useTLState, useTLCommand, useI18N, TLChild, FillBarrier, rootClassName, usePart, ICON_CLOSE } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild, FillBarrier, rootClassName, stateAttr, usePart, ICON_CLOSE, isInteractiveTarget, useListReorder, reorderState, useTokenPx, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { isInteractiveTarget } from './interactive';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
 
 const I18N_KEYS = {
   'js.dashboard.hideTile': 'Hide tile',
+  'js.dashboard.tile': 'Tile {0}',
 };
+
+/** The space between the tiles, for the grid and its packing alike, while the design system is not loaded. */
+const GAP_FALLBACK_PX = 16;
 
 /** The command sending the new order of the shown tiles after the user moved one. */
 const REORDER_COMMAND = 'reorder';
@@ -60,6 +63,7 @@ const WIDTH_FRACTION: Record<TileDescriptor['width'], number> = {
 
 const COL_BREAKPOINTS = [1, 2, 3, 4];
 
+/** The pixel value of a length the server states, such as the minimum column width `16rem`. */
 function parseLengthPx(value: string, fontPx: number): number {
   const match = /^([\d.]+)(rem|em|px)?$/.exec(value.trim());
   if (!match) return 16 * fontPx;
@@ -184,6 +188,9 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
   const [cols, setCols] = useState<number>(1);
   const editMode = state.editMode === true;
 
+  // The space between the tiles is the design system's, read where the grid is drawn.
+  const gap = useTokenPx(containerRef, '--tl-space-md', GAP_FALLBACK_PX);
+
   // Recompute column count on resize.
   useEffect(() => {
     const el = containerRef.current;
@@ -204,56 +211,29 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
     return m;
   }, [placements]);
 
-  // --- Drag and drop (edit mode only) ---
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<{ id: string; before: boolean } | null>(null);
+  const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
-  const onDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, id: string) => {
-    if (!editMode) { e.preventDefault(); return; }
-    setDraggedId(id);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', id);
-  }, [editMode]);
+  // --- Moving tiles (edit mode only): the common gesture, along the row of tiles ---
 
-  const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>, id: string) => {
-    if (!editMode || !draggedId || draggedId === id) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const before = e.clientX < rect.left + rect.width / 2;
-    setDropTarget(prev => (prev && prev.id === id && prev.before === before) ? prev : { id, before });
-  }, [editMode, draggedId]);
-
-  const onDragLeave = useCallback(() => {
-    // Cleared on drop/dragend; leaving a single tile shouldn't clear.
-  }, []);
-
-  const commitReorder = useCallback((draggedTileId: string, targetId: string, before: boolean) => {
+  /** Sends the order of the tiles after the tile at {@code from} moved to {@code to}. */
+  const moveTile = useCallback((from: number, to: number) => {
     const ids = tiles.map(t => t.id);
-    const from = ids.indexOf(draggedTileId);
-    if (from < 0) return;
-    ids.splice(from, 1);
-    const toBase = ids.indexOf(targetId);
-    if (toBase < 0) { ids.splice(from, 0, draggedTileId); return; }
-    const insertAt = before ? toBase : toBase + 1;
-    ids.splice(insertAt, 0, draggedTileId);
+    const [moved] = ids.splice(from, 1);
+    ids.splice(to, 0, moved);
     sendCommand(REORDER_COMMAND, { [ORDER_ARG]: ids });
   }, [tiles, sendCommand]);
 
-  const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>, id: string) => {
-    if (!editMode || !draggedId || draggedId === id) return;
-    e.preventDefault();
-    const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const before = e.clientX < rect.left + rect.width / 2;
-    commitReorder(draggedId, id, before);
-    setDraggedId(null);
-    setDropTarget(null);
-  }, [editMode, draggedId, commitReorder]);
-
-  const onDragEnd = useCallback(() => {
-    setDraggedId(null);
-    setDropTarget(null);
-  }, []);
+  const reorder = useListReorder({
+    axis: 'horizontal',
+    onMove: moveTile,
+    enabled: editMode,
+    handle: false,
+    count: tiles.length,
+    // A tile is announced under the name of its action, a tile without one by its position.
+    labelOf: index => tiles[index]?.action?.label || i18n['js.dashboard.tile'].replace('{0}', String(index + 1)),
+    keyOf: index => tiles[index]?.id ?? String(index),
+  });
 
   // --- Activation ---
 
@@ -263,9 +243,6 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
 
   // --- Hiding ---
 
-  const i18n = useI18N(I18N_KEYS);
-  const Button = usePart('Button');
-
   const hideTile = useCallback((tileId: string) => {
     sendCommand(HIDE_COMMAND, { [TILE_ID_ARG]: tileId });
   }, [sendCommand]);
@@ -274,7 +251,7 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
    * A press on the hide button must not begin moving the tile it sits in: the tile is draggable in
    * edit mode, and a drag would start from the button as from any other point of the tile.
    */
-  const preventDrag = useCallback((e: React.DragEvent<HTMLSpanElement>) => {
+  const preventDrag = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
   }, []);
@@ -287,25 +264,27 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
    */
   const onTileClick = useCallback((e: React.MouseEvent<HTMLDivElement>, tile: TileDescriptor) => {
     const action = tile.action;
-    if (!action || editMode || action.disabled || isInteractiveTarget(e)) return;
+    if (!action || editMode || action.disabled || isInteractiveTarget(e.target)) return;
     activateTile(tile.id);
   }, [editMode, activateTile]);
 
+  // Columns, row height and gap are data of the packing; the design system has no form for them.
   const gridStyle: React.CSSProperties = {
     display: 'grid',
     gridTemplateColumns: `repeat(${cols}, 1fr)`,
     gridAutoRows: rowHeight,
-    gap: '1rem',
+    gap: `${gap}px`,
   };
 
   return (
     <div
       id={controlId}
       ref={containerRef}
-      className={rootClassName(state, 'tlDashboard' + (editMode ? ' tlDashboard--edit' : ''))}
+      className={rootClassName(state, 'tl-dashboard', 'tl-inset')}
+      data-tl-state={stateAttr(editMode && 'edit')}
     >
-      <div className="tlDashboard__grid" style={gridStyle}>
-        {tiles.map(tile => {
+      <div className="tl-dashboard__grid" data-tl-axis="horizontal" style={gridStyle} {...reorder.containerProps}>
+        {tiles.map((tile, index) => {
           const p = placementById[tile.id];
           if (!p) return null;
           const style: React.CSSProperties = {
@@ -313,35 +292,31 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
             gridRow: `${p.rowStart + 1} / ${p.rowEnd + 1}`,
           };
           const action = tile.action;
-          const classes = ['tlDashboard__tile'];
-          if (action) classes.push('tlDashboard__tile--action');
-          if (action && action.disabled) classes.push('tlDashboard__tile--disabled');
-          if (draggedId === tile.id) classes.push('tlDashboard__tile--dragging');
-          if (dropTarget && dropTarget.id === tile.id) {
-            classes.push(dropTarget.before ? 'tlDashboard__tile--dropBefore' : 'tlDashboard__tile--dropAfter');
-          }
           return (
+            // While the dashboard is rearranged, the tile is what the keyboard moves: focusable, named and
+            // described by the reorder gesture, Alt + arrow left and right move it one place.
             <div
               key={tile.id}
-              className={classes.join(' ')}
+              className="tl-card tl-dashboard__tile tl-overlay tl-overlay--fill"
               style={style}
-              draggable={editMode}
+              data-tl-state={reorderState(reorder.itemState(index))}
+              tabIndex={editMode ? 0 : undefined}
+              // A group, so that the name the reorder gesture gives it is allowed (a generic div takes none).
+              role={editMode ? 'group' : undefined}
               onClick={action ? e => onTileClick(e, tile) : undefined}
-              data-tooltip={action && action.tooltip ? `text:${action.tooltip}` : undefined}
-              onDragStart={e => onDragStart(e, tile.id)}
-              onDragOver={e => onDragOver(e, tile.id)}
-              onDragLeave={onDragLeave}
-              onDrop={e => onDrop(e, tile.id)}
-              onDragEnd={onDragEnd}
+              {...tooltipProps(action?.tooltip)}
+              {...reorder.itemProps(index)}
+              {...reorder.handleProps(index)}
             >
               {action && (
                 // The tile's accessible name and its keyboard operation: a button of its own, out
                 // of sight but in the tab order, activated by Enter and Space as any button is.
                 // While the tiles are rearranged it steps aside, so tabbing does not reach an
-                // action the dashboard currently does not offer.
+                // action the dashboard currently does not offer. It is a direct child of the tile,
+                // which shows the focus ring for it.
                 <button
                   type="button"
-                  className="tlDashboard__tileAction"
+                  className="tl-dashboard__action tl-visually-hidden"
                   disabled={action.disabled}
                   tabIndex={editMode ? -1 : 0}
                   onClick={() => activateTile(tile.id)}
@@ -349,32 +324,38 @@ const TLDashboard: React.FC<TLCellProps> = ({ controlId }) => {
                   {action.label}
                 </button>
               )}
-              <FillBarrier>
-                <TLChild control={tile.control} />
-              </FillBarrier>
-              {editMode && <div className="tlDashboard__overlay" />}
+              <div className="tl-overlay__base">
+                <FillBarrier>
+                  <TLChild control={tile.control} />
+                </FillBarrier>
+              </div>
               {editMode && (
-                // Above the overlay, so that it is the one thing in a tile being rearranged that
-                // answers the pointer instead of starting a move.
-                <span
-                  className="tlDashboard__hide"
-                  draggable
-                  onDragStart={preventDrag}
-                >
-                  <Button
-                    label={i18n['js.dashboard.hideTile']}
-                    image={ICON_CLOSE}
-                    display="icon-only"
-                    appearance="ghost"
-                    small
-                    onClick={() => hideTile(tile.id)}
-                  />
-                </span>
+                // Takes the pointer from the content, so that a press moves the tile.
+                <div className="tl-overlay__layer tl-overlay__layer--fill">
+                  <div className="tl-dashboard__cover" />
+                </div>
+              )}
+              {editMode && (
+                // After the cover, so that it lies above it and is the one thing in a tile being
+                // rearranged that answers the pointer instead of starting a move.
+                <div className="tl-overlay__layer tl-overlay__layer--top-right">
+                  <div className="tl-overlay__action" draggable onDragStart={preventDrag}>
+                    <Button
+                      label={i18n['js.dashboard.hideTile']}
+                      image={ICON_CLOSE}
+                      display="icon-only"
+                      appearance="ghost"
+                      small
+                      onClick={() => hideTile(tile.id)}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           );
         })}
       </div>
+      {reorder.announcer}
     </div>
   );
 };

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Media in a view: recording audio, playing it back, taking a photo and downloading what was
+	recorded or taken.
+	
+	The upper panel records audio from the microphone with <audio-recorder>. The recording is
+	uploaded and written to the "recording" channel; the <audio-player> beside it plays what that
+	channel holds, and the <download> offers it as a file.
+	
+	The lower panel takes a photo with the camera through <photo-capture>. The photo is uploaded and
+	written to the "photo" channel; the <image> shows it, and the <download> offers it as a file.
+	
+	All elements of a panel read and write the same channel, so a new recording or photo reaches
+	every one of them at once.
+-->
+<view>
+	<channels>
+		<channel name="recording"/>
+		<channel name="photo"/>
+	</channels>
+	<stack
+		direction="column"
+		gap="default"
+	>
+		<panel with-inset="true">
+			<title>
+				<en>Recording</en>
+				<de>Aufnahme</de>
+			</title>
+			<audio-recorder input="recording"/>
+			<audio-player input="recording"/>
+			<download input="recording"/>
+		</panel>
+		<panel with-inset="true">
+			<title>
+				<en>Photo</en>
+				<de>Foto</de>
+			</title>
+			<photo-capture input="photo"/>
+			<image input="photo"/>
+			<download input="photo"/>
+		</panel>
+	</stack>
+</view>

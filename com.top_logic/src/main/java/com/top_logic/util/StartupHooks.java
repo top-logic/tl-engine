@@ -19,8 +19,10 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -47,6 +49,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 })
 @Label("Startup hooks")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class StartupHooks extends ManagedClass {
 
 	/**

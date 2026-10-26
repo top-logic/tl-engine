@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.module.category.RuntimeCategory;
 
 /**
  * Manages all configured services in the system.
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.annotation.Name;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Module system")
+@ServiceCategory.Of(RuntimeCategory.class)
 public final class ModuleSystem extends ManagedClass {
 
 	/**

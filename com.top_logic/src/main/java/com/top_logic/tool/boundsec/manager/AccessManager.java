@@ -22,9 +22,11 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.CommitHandler;
@@ -49,6 +51,7 @@ import com.top_logic.util.TLContext;
 })
 @ServiceExtensionPoint(PersistencyLayer.Module.class)
 @Label("Access control")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class AccessManager extends ConfiguredManagedClass<AccessManager.Config> implements Reloadable {
 
 	/**

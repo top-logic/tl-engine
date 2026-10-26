@@ -27,8 +27,10 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
@@ -45,6 +47,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 	Login.Module.class,
 })
 @Label("Security devices")
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class TLSecurityDeviceManager extends ManagedClass {
 	
 	/**

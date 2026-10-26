@@ -9,8 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.routing.RouteChangeListener;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteMatch;
@@ -28,6 +35,10 @@ public class TestRouteManager extends TestCase {
 		private final List<RoutePattern> _routes;
 
 		RouteSegment _activeSegment;
+
+		ResKey _label;
+
+		boolean _titlesContent = true;
 
 		private RouteMatch _lastActivation;
 
@@ -52,6 +63,24 @@ public class TestRouteManager extends TestCase {
 		@Override
 		public RouteSegment activeRouteSegment() {
 			return _activeSegment;
+		}
+
+		@Override
+		public ResKey activeRouteLabel() {
+			return _label;
+		}
+
+		@Override
+		public boolean titlesContent() {
+			return _titlesContent;
+		}
+
+		/**
+		 * Renames what the active segment names and reports the change.
+		 */
+		void rename(String label) {
+			_label = label == null ? null : ResKey.text(label);
+			notifyRouteChange(_activeSegment != null ? _activeSegment : new RouteSegment(""));
 		}
 
 		@Override
@@ -167,7 +196,7 @@ public class TestRouteManager extends TestCase {
 	public void testUrlChangeNotification() {
 		RouteManager rm = new RouteManager();
 		List<String> urlChanges = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> urlChanges.add(url));
+		rm.setUrlChangeHandler((url, title, replace) -> urlChanges.add(url));
 
 		MockParticipant sidebar = new MockParticipant(List.of(
 			RoutePattern.compile("/explore", "explore")));
@@ -301,7 +330,7 @@ public class TestRouteManager extends TestCase {
 		rm.register(sidebar);
 		sidebar.simulateNavigation("explore", Map.of());
 
-		rm.setUrlChangeHandler((url, replace) -> replaceFlags.add(replace));
+		rm.setUrlChangeHandler((url, title, replace) -> replaceFlags.add(replace));
 		rm.navigateToRoute("listings");
 		assertEquals("listings", rm.currentUrl());
 
@@ -348,7 +377,7 @@ public class TestRouteManager extends TestCase {
 		rm.register(sidebar);
 		sidebar.simulateNavigation("explore", Map.of());
 
-		rm.setUrlChangeHandler((url, replace) -> {
+		rm.setUrlChangeHandler((url, title, replace) -> {
 			urls.add(url);
 			replaceFlags.add(replace);
 		});
@@ -380,7 +409,7 @@ public class TestRouteManager extends TestCase {
 		leavingTab.simulateNavigation("featured", Map.of());
 		rm.register(leavingTab);
 
-		rm.setUrlChangeHandler((url, replace) -> {
+		rm.setUrlChangeHandler((url, title, replace) -> {
 			urls.add(url);
 			replaceFlags.add(replace);
 		});
@@ -412,7 +441,7 @@ public class TestRouteManager extends TestCase {
 		rm.register(sidebar);
 		sidebar.simulateNavigation("explore", Map.of());
 
-		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
 
 		// The page displays no route at all, whatever the page before it displayed.
 		rm.adoptUrl("");
@@ -436,7 +465,7 @@ public class TestRouteManager extends TestCase {
 			RoutePattern.compile("/:id", "id")));
 		rm.register(sidebar);
 
-		rm.setUrlChangeHandler((url, replace) -> {
+		rm.setUrlChangeHandler((url, title, replace) -> {
 			urls.add(url);
 			replaceFlags.add(replace);
 		});
@@ -469,7 +498,7 @@ public class TestRouteManager extends TestCase {
 		rm.register(sidebar);
 		sidebar.simulateNavigation("explore", Map.of());
 
-		rm.setUrlChangeHandler((url, replace) -> replaceFlags.add(replace));
+		rm.setUrlChangeHandler((url, title, replace) -> replaceFlags.add(replace));
 		sidebar.simulateNavigation("listings", Map.of());
 
 		assertEquals(List.of(Boolean.FALSE), replaceFlags);
@@ -489,7 +518,7 @@ public class TestRouteManager extends TestCase {
 		rm.register(sidebar);
 		sidebar.simulateNavigation("explore", Map.of());
 
-		rm.setUrlChangeHandler((url, replace) -> replaceFlags.add(replace));
+		rm.setUrlChangeHandler((url, title, replace) -> replaceFlags.add(replace));
 		rm.adoptUrl("listings");
 		rm.navigate(() -> sidebar.simulateNavigation("listings", Map.of()));
 		rm.finishAdoption();
@@ -562,7 +591,7 @@ public class TestRouteManager extends TestCase {
 		detail.simulateNavigation("id", Map.of("id", "x"));
 
 		List<String> urls = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
 
 		// The way back out of the detail, which the display reaches by resetting what the URL leaves
 		// out - a state the address bar describes before the display arrives at it.
@@ -591,7 +620,7 @@ public class TestRouteManager extends TestCase {
 		detail.simulateNavigation("id", Map.of("id", "x"));
 
 		List<String> urls = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
 
 		// A form with unsaved input vetoes leaving it.
 		rm.adoptUrl("b");
@@ -619,7 +648,7 @@ public class TestRouteManager extends TestCase {
 		rm.adoptUrl("b");
 		rm.cancelAdoption();
 
-		rm.setUrlChangeHandler((url, replace) -> replaceFlags.add(replace));
+		rm.setUrlChangeHandler((url, title, replace) -> replaceFlags.add(replace));
 		sidebar.simulateNavigation("b", Map.of());
 
 		assertEquals("b", rm.currentUrl());
@@ -818,7 +847,7 @@ public class TestRouteManager extends TestCase {
 		filter.setValue("established");
 
 		List<Boolean> replaceFlags = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> replaceFlags.add(replace));
+		rm.setUrlChangeHandler((url, title, replace) -> replaceFlags.add(replace));
 
 		rm.adoptUrl("a");
 		rm.resolvePending();
@@ -845,7 +874,7 @@ public class TestRouteManager extends TestCase {
 
 		List<String> urls = new ArrayList<>();
 		List<Boolean> replaceFlags = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> {
+		rm.setUrlChangeHandler((url, title, replace) -> {
 			urls.add(url);
 			replaceFlags.add(replace);
 		});
@@ -877,7 +906,7 @@ public class TestRouteManager extends TestCase {
 
 		List<String> urls = new ArrayList<>();
 		List<Boolean> replaceFlags = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> {
+		rm.setUrlChangeHandler((url, title, replace) -> {
 			urls.add(url);
 			replaceFlags.add(replace);
 		});
@@ -913,7 +942,7 @@ public class TestRouteManager extends TestCase {
 
 		List<String> urls = new ArrayList<>();
 		List<Boolean> replaceFlags = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> {
+		rm.setUrlChangeHandler((url, title, replace) -> {
 			urls.add(url);
 			replaceFlags.add(replace);
 		});
@@ -957,7 +986,7 @@ public class TestRouteManager extends TestCase {
 		sidebar.simulateNavigation("explore", Map.of());
 
 		List<String> urls = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
 
 		rm.holdUrl("my-refunds");
 		rm.resolvePending();
@@ -977,7 +1006,7 @@ public class TestRouteManager extends TestCase {
 		rm.holdUrl("explore");
 
 		List<String> urls = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
 
 		ResettableParticipant sidebar = new ResettableParticipant(List.of(
 			RoutePattern.compile("/explore", "explore")));
@@ -1003,7 +1032,7 @@ public class TestRouteManager extends TestCase {
 		rm.holdUrl("my-refunds");
 
 		List<String> urls = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
 
 		rm.navigateToRoute("explore");
 
@@ -1021,7 +1050,7 @@ public class TestRouteManager extends TestCase {
 		rm.holdUrl("explore");
 
 		List<String> urls = new ArrayList<>();
-		rm.setUrlChangeHandler((url, replace) -> urls.add(url));
+		rm.setUrlChangeHandler((url, title, replace) -> urls.add(url));
 
 		rm.adoptUrl("explore");
 		MockParticipant sidebar = new MockParticipant(List.of(
@@ -1036,6 +1065,193 @@ public class TestRouteManager extends TestCase {
 
 		sidebar.simulateNavigation("listings", Map.of());
 		assertEquals(List.of("listings"), urls);
+	}
+
+	/** A URL delivered to the client, with the title and the history mode it was delivered with. */
+	private record Delivery(String url, String title, boolean replace) {
+		// Pure data.
+	}
+
+	private static MockParticipant labelled(String label, RoutePattern... routes) {
+		MockParticipant result = new MockParticipant(List.of(routes));
+		result._label = label == null ? null : ResKey.text(label);
+		return result;
+	}
+
+	/**
+	 * Tests that the page is titled after the innermost labelled participant, followed by the
+	 * application title.
+	 */
+	public void testTitleNamesInnermostLabel() {
+		RouteManager rm = new RouteManager();
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		List<Delivery> deliveries = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> deliveries.add(new Delivery(url, title, replace)));
+
+		MockParticipant sidebar = labelled("Explore", RoutePattern.compile("/explore", "explore"));
+		MockParticipant tabs = labelled("Featured", RoutePattern.compile("/featured", "featured"));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		assertEquals("Explore – Demo", deliveries.get(deliveries.size() - 1).title());
+
+		rm.register(tabs);
+		tabs.simulateNavigation("featured", Map.of());
+		assertEquals("Featured – Demo", rm.currentTitle());
+		Delivery last = deliveries.get(deliveries.size() - 1);
+		assertEquals("explore/featured", last.url());
+		assertEquals("The title does not travel with the URL it belongs to.", "Featured – Demo",
+			last.title());
+	}
+
+	/**
+	 * Tests that a participant without a label leaves the title to the labelled participant around
+	 * it.
+	 */
+	public void testUnlabelledParticipantKeepsOuterLabel() {
+		RouteManager rm = new RouteManager();
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		MockParticipant sidebar = labelled("Explore", RoutePattern.compile("/explore", "explore"));
+		MockParticipant filter = labelled(null, RoutePattern.compile("/featured", "featured"));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		rm.register(filter);
+		filter.simulateNavigation("featured", Map.of());
+		assertEquals("Explore – Demo", rm.currentTitle());
+	}
+
+	/**
+	 * Tests that a display naming no label is titled with the application title alone, and one
+	 * without an application title with the label alone.
+	 */
+	public void testTitleWithoutLabelOrApplicationTitle() {
+		RouteManager rm = new RouteManager();
+		MockParticipant sidebar = labelled(null, RoutePattern.compile("/explore", "explore"));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+		assertEquals("Neither a label nor an application title gives no title.", "", rm.currentTitle());
+
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		assertEquals("Demo", rm.currentTitle());
+
+		rm.setApplicationTitle(null);
+		sidebar._label = ResKey.text("Explore");
+		assertEquals("Explore", rm.currentTitle());
+	}
+
+	/**
+	 * Tests that renaming what the display shows delivers the title with the unchanged URL as a
+	 * replacement, and that a report changing neither delivers nothing.
+	 */
+	public void testTitleOnlyChange() {
+		RouteManager rm = new RouteManager();
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		List<Delivery> deliveries = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> deliveries.add(new Delivery(url, title, replace)));
+		MockParticipant sidebar = labelled("Ticket 4711", RoutePattern.compile("/ticket", "ticket"));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("ticket", Map.of());
+		int before = deliveries.size();
+
+		sidebar.rename("Ticket 4712");
+		assertEquals("A change of the title alone was not delivered.", before + 1, deliveries.size());
+		Delivery renamed = deliveries.get(deliveries.size() - 1);
+		assertEquals("ticket", renamed.url());
+		assertEquals("Ticket 4712 – Demo", renamed.title());
+		assertTrue("A change of the title alone must not push a history entry.", renamed.replace());
+
+		sidebar.rename("Ticket 4712");
+		assertEquals("A report changing neither URL nor title was delivered.", before + 1,
+			deliveries.size());
+	}
+
+	/**
+	 * Tests that a page loaded for a URL is told the title of its display, even where the display
+	 * leaves the URL as the client shows it.
+	 */
+	public void testAdoptedUrlDeliversTitle() {
+		RouteManager rm = new RouteManager();
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		List<Delivery> deliveries = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> deliveries.add(new Delivery(url, title, replace)));
+		MockParticipant sidebar = labelled("Explore",
+			RoutePattern.compile("/explore", "explore"),
+			RoutePattern.compile("/listings", "listings"));
+		rm.register(sidebar);
+		sidebar.simulateNavigation("explore", Map.of());
+
+		// A reload of the window: the client shows the title the page was loaded with.
+		rm.adoptUrl("explore");
+		rm.resolvePending();
+		deliveries.clear();
+		rm.finishAdoption();
+		assertEquals(List.of(new Delivery("explore", "Explore – Demo", true)), deliveries);
+
+		// A move within the history: the client shows the title of the display it left, which is
+		// the one the display still names.
+		deliveries.clear();
+		rm.navigateToRoute("explore");
+		rm.finishAdoption();
+		assertEquals("An unchanged title was delivered again.", List.of(), deliveries);
+	}
+
+	/**
+	 * Tests that the participants inside one that keeps its content out of the title contribute
+	 * their segments to the URL but not their labels to the title, and that the title is composed
+	 * from the displayed participants while no titling source is installed.
+	 */
+	public void testFinalTitleHidesInnerLabels() {
+		RouteManager rm = new RouteManager();
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		List<Delivery> deliveries = new ArrayList<>();
+		rm.setUrlChangeHandler((url, title, replace) -> deliveries.add(new Delivery(url, title, replace)));
+
+		MockParticipant frame = labelled("Anna Meier", RoutePattern.compile("/person", "person"));
+		MockParticipant tabs = labelled("Details", RoutePattern.compile("/details", "details"));
+		rm.setDisplayedParticipants(() -> List.of(frame, tabs));
+		rm.register(frame);
+		rm.register(tabs);
+		frame.simulateNavigation("person", Map.of());
+		tabs.simulateNavigation("details", Map.of());
+		assertEquals("Without a titling source, the displayed participants title the page.",
+			"Details – Demo", rm.currentTitle());
+
+		// The source a display installs: the tabs lie inside the frame.
+		rm.setTitlingParticipants(() -> frame.titlesContent() ? List.of(frame, tabs) : List.of(frame));
+		assertEquals("By default, the content refines the title.", "Details – Demo", rm.currentTitle());
+
+		frame._titlesContent = false;
+		frame.rename("Anna Meier");
+		assertEquals("Anna Meier – Demo", rm.currentTitle());
+		Delivery last = deliveries.get(deliveries.size() - 1);
+		assertEquals("The URL lost the segment of the participant inside.", "person/details", last.url());
+		assertEquals("Anna Meier – Demo", last.title());
+	}
+
+	/**
+	 * Tests that a display holding a URL is titled with the application title alone.
+	 */
+	public void testHeldUrlHasApplicationTitle() {
+		RouteManager rm = new RouteManager();
+		rm.setApplicationTitle(ResKey.text("Demo"));
+		MockParticipant login = labelled("Login", RoutePattern.compile("/login", "login"));
+		rm.holdUrl("explore");
+		rm.register(login);
+		login.simulateNavigation("login", Map.of());
+		assertEquals("Demo", rm.currentTitle());
+	}
+
+	/**
+	 * The suite of tests.
+	 *
+	 * <p>
+	 * The page title is resolved by {@link com.top_logic.util.Resources}, which the services of the
+	 * test setup provide.
+	 * </p>
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(new TestSuite(TestRouteManager.class),
+				ResourcesModule.Module.INSTANCE));
 	}
 
 	/**

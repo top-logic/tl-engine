@@ -9,6 +9,8 @@ public class RouteChangeEvent_Impl extends com.top_logic.layout.react.protocol.i
 
 	private boolean _replace = false;
 
+	private String _title = "";
+
 	/**
 	 * Creates a {@link RouteChangeEvent_Impl} instance.
 	 *
@@ -56,6 +58,22 @@ public class RouteChangeEvent_Impl extends com.top_logic.layout.react.protocol.i
 	}
 
 	@Override
+	public final String getTitle() {
+		return _title;
+	}
+
+	@Override
+	public com.top_logic.layout.react.protocol.RouteChangeEvent setTitle(String value) {
+		internalSetTitle(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTitle()} without chain call utility. */
+	protected final void internalSetTitle(String value) {
+		_title = value;
+	}
+
+	@Override
 	public String jsonType() {
 		return ROUTE_CHANGE_EVENT__TYPE;
 	}
@@ -67,6 +85,8 @@ public class RouteChangeEvent_Impl extends com.top_logic.layout.react.protocol.i
 		out.value(getUrl());
 		out.name(REPLACE__PROP);
 		out.value(isReplace());
+		out.name(TITLE__PROP);
+		out.value(getTitle());
 	}
 
 	@Override
@@ -74,6 +94,7 @@ public class RouteChangeEvent_Impl extends com.top_logic.layout.react.protocol.i
 		switch (field) {
 			case URL__PROP: setUrl(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case REPLACE__PROP: setReplace(in.nextBoolean()); break;
+			case TITLE__PROP: setTitle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

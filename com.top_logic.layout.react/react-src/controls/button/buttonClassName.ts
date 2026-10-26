@@ -1,5 +1,5 @@
 import type { ButtonAppearance } from 'tl-react-bridge';
-import { menuItemClassName } from '../menu/Menu';
+import { menuItemClassName } from 'tl-react-bridge';
 
 /**
  * The class list of a button: block, appearance, tone, size, shape, typography, passed-through

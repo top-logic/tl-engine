@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, pushLocalStep, usePart,
+  React, useTLState, useTLDataUrl, useTLCommand, useI18N, useFill, rootClassName, pushLocalStep, usePart, ICON_PRINT,
   useFieldLabelProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -12,9 +12,6 @@ const ARG_LINK = 'link';
 
 /** Attribute of a link naming its target for the server (ReactHtmlControl.LINK_ATTRIBUTE). */
 const LINK_ATTRIBUTE = 'data-tl-link';
-
-/** Icon of the button printing the document. */
-const PRINT_ICON = 'css:bi bi-printer';
 
 /**
  * Scrolls the element of the given id inside the container into view.
@@ -218,30 +215,36 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
     );
   }
 
-  const className = rootClassName(state, 'tlHtml', `tlHtml--${display}`, fillClass);
-
   if (display === 'document') {
+    // The document is the base of an overlay filling its place; the print button lies in a layer over it, on a
+    // surface of its own, since the paper of the document is white in either mode.
     return (
-      <div id={controlId} {...labelled} className={rootClassName(state, className)}>
-        <iframe
-          ref={frameRef}
-          className="tlHtml__frame"
-          // No "allow-scripts": a document brought along from elsewhere is displayed, not run.
-          // "allow-same-origin" keeps it reachable for the print button, "allow-modals" lets the
-          // print dialog open on it.
-          sandbox="allow-same-origin allow-modals"
-          src={dataUrl + '&rev=' + dataRevision}
-          title={t['js.html.document']}
-        />
-        {print && (
-          <div className="tlHtml__print">
-            <Button
-              label={t['js.html.print']}
-              image={PRINT_ICON}
-              display="icon-only"
-              appearance="ghost"
-              onClick={handlePrint}
+      <div id={controlId} {...labelled} className={rootClassName(state, 'tl-overlay', 'tl-overlay--fill', fillClass)}>
+        <div className="tl-overlay__base">
+          <div className="tl-media tl-media--document">
+            <iframe
+              ref={frameRef}
+              className="tl-media__frame"
+              // No "allow-scripts": a document brought along from elsewhere is displayed, not run.
+              // "allow-same-origin" keeps it reachable for the print button, "allow-modals" lets the
+              // print dialog open on it.
+              sandbox="allow-same-origin allow-modals"
+              src={dataUrl + '&rev=' + dataRevision}
+              title={t['js.html.document']}
             />
+          </div>
+        </div>
+        {print && (
+          <div className="tl-overlay__layer tl-overlay__layer--top-right">
+            <div className="tl-overlay__action">
+              <Button
+                label={t['js.html.print']}
+                image={ICON_PRINT}
+                display="icon-only"
+                appearance="ghost"
+                onClick={handlePrint}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -253,11 +256,11 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         id={controlId}
         ref={boxRef}
-        className={rootClassName(state, className)}
+        className={rootClassName(state, 'tl-media', 'tl-media--document', 'tl-media--preview')}
         style={{ aspectRatio: `${thumbnailWidth} / ${thumbnailHeight}` }}
       >
         <iframe
-          className="tlHtml__page"
+          className="tl-media__frame"
           // As for a document: no script runs in the frame, and same-origin keeps it readable.
           sandbox="allow-same-origin"
           // A preview is fetched once it comes near the viewport, not with the page holding it.
@@ -266,11 +269,12 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
           title={t['js.html.document']}
           tabIndex={-1}
           aria-hidden="true"
+          // The page keeps the size it is written for and is scaled to the width the box measures; the design system
+          // (tl-media--preview) takes it out of the flow, scales it from its top left corner and lets clicks pass.
           style={{
             width: thumbnailWidth + 'px',
             height: thumbnailHeight + 'px',
             transform: `scale(${boxWidth > 0 ? boxWidth / thumbnailWidth : 0})`,
-            transformOrigin: 'top left',
           }}
         />
       </div>
@@ -278,7 +282,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   if (display !== 'inline') {
-    return <div id={controlId} {...labelled} className={rootClassName(state, className)}/>;
+    return <div id={controlId} {...labelled} className={rootClassName(state)}/>;
   }
 
   return (
@@ -286,7 +290,7 @@ const TLHtml: React.FC<TLCellProps> = ({ controlId }) => {
       id={controlId}
       {...labelled}
       ref={contentRef}
-      className={rootClassName(state, className)}
+      className={rootClassName(state, 'tl-prose')}
       onClick={handleContentClick}
       dangerouslySetInnerHTML={{ __html: html }}
     />

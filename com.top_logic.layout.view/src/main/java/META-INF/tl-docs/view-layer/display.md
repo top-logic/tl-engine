@@ -91,7 +91,33 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 </overlay>
 ```
 
-The client classes an application styles against are `.tlImage` / `.tlImage__image`, `.tl-overlay` / `.tl-overlay__layer` / `.tl-overlay__layer--<anchor>` (design system, `overlay.css`) and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar[data-tl-role="category-<n>"]` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+The client classes an application styles against are `.tl-media` / `.tl-media--cover` / `.tl-media--contain` / `.tl-media__frame` (design system, `media.css`), `.tl-overlay` / `.tl-overlay__layer` / `.tl-overlay__layer--<anchor>` (design system, `overlay.css`) and `.tl-avatar` / `.tl-avatar--<size>` / `.tl-avatar[data-tl-role="category-<n>"]` / `.tl-avatar__image` (design system, `avatar.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/image-demo.view.xml` with `style/tl-demo-react.css`.
+
+## Recording, playback and download
+
+Four elements work on `BinaryData` held by a [channel](doc:view-layer/channels), each through its `input` attribute:
+
+- **`<audio-recorder input="ch">`** (`AudioRecorderElement`) records from the user's microphone; the recording is uploaded and written to the channel.
+- **`<audio-player input="ch">`** (`AudioPlayerElement`) plays back the audio the channel holds.
+- **`<photo-capture input="ch">`** (`PhotoCaptureElement`) takes a photo with the user's camera; the photo is uploaded and written to the channel.
+- **`<download input="ch">`** (`DownloadElement`) shows the file name of the data the channel holds and downloads it on request.
+
+All four are bound to their channel in both directions (`BinaryChannelBinding`): a new value of the channel reaches the element, and what the element produces is written to the channel. Elements that share a channel therefore share the data — a recorder, a player and a download on one channel play and offer the latest recording, and an `<image>` on the channel of a `<photo-capture>` shows the latest photo. A value that is no `BinaryData` counts as no data.
+
+```xml
+<view>
+	<channels>
+		<channel name="recording"/>
+	</channels>
+	<stack>
+		<audio-recorder input="recording"/>
+		<audio-player input="recording"/>
+		<download input="recording"/>
+	</stack>
+</view>
+```
+
+The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/media-demo.view.xml`.
 
 ## Ready-made HTML: `<html>`
 
@@ -105,7 +131,7 @@ A value of any other type has no HTML representation; the element reports that i
 
 `display` decides how the content is shown, and with it what stands between it and the reader.
 
-**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the stylesheet gives `.tlHtml--inline` the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
+**`inline`** (the default) inserts the fragment into the page where the element stands, after `SafeHTML` has checked it against the application's whitelist — a script, an attribute carrying one, anything else the check refuses is not inserted, and the message of the check takes its place. The fragment brings its structure and the page gives it typography: the design system's `.tl-prose` (`prose.css`) gives it the theme's text color and font and spaces the elements a fragment is made of, so an answer reads as a section of the page it lands in. `css-class` adds a class of the application's own beside it.
 
 ```xml
 <html input="answer"/>

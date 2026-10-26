@@ -8,7 +8,9 @@ package com.top_logic.util.model;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -29,6 +31,7 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Model compatibility")
+@ServiceCategory.Of(ModelCategory.class)
 public class CompatibilityService extends ManagedClass {
 	
 	/**

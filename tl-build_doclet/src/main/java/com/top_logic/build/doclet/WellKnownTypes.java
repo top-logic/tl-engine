@@ -57,6 +57,8 @@ public class WellKnownTypes {
 
 	TypeMirror _withPropertiesType;
 
+	TypeMirror _serviceCategoryType;
+
 	List<TypeMirror> _reskeyTypes;
 
 	TypeElement _objectType;
@@ -111,6 +113,7 @@ public class WellKnownTypes {
 		_i18nConstantsType = typeMirror("com.top_logic.basic.i18n.I18NConstantsBase");
 		_themeConstantsType = typeMirror("com.top_logic.layout.basic.IconsBase");
 		_withPropertiesType = typeMirror("com.top_logic.layout.template.WithProperties");
+		_serviceCategoryType = typeMirror("com.top_logic.basic.module.ServiceCategory");
 		_tlScriptFunctionsType = typeMirror("com.top_logic.model.search.expr.config.operations.TLScriptFunctions");
 		_reskeyTypes = Arrays.asList(
 			typeMirror("com.top_logic.basic.util.ResKey"),

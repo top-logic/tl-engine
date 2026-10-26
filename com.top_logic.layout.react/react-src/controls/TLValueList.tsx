@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useTLUpload, useI18N, useListReorder, reorderState, TLChild, rootClassName, tooltipProps, useFieldLabelProps, ThemeIcon, ICON_ADD, ICON_REMOVE, ICON_HANDLE, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useUpload, useI18N, useListReorder, reorderState, TLChild, rootClassName, stateAttr, useFieldLabelProps, ICON_ADD, ICON_REMOVE, ICON_HANDLE, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
@@ -72,7 +72,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, controlId);
   const state = useTLState();
   const sendCommand = useTLCommand();
-  const upload = useTLUpload();
+  const { uploading, upload } = useUpload();
   const t = useI18N(I18N_KEYS);
   const Button = usePart('Button');
 
@@ -85,25 +85,11 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   const uploads = state.upload === true;
   const accept = (state.accept as string | null) ?? '';
 
-  const [uploading, setUploading] = React.useState(false);
   const [fileDragOver, setFileDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  const doUpload = React.useCallback(async (files: FileList | File[]) => {
-    const list = Array.from(files);
-    if (list.length === 0) {
-      return;
-    }
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      for (const file of list) {
-        formData.append(FILE_PART, file, file.name);
-      }
-      await upload(formData);
-    } finally {
-      setUploading(false);
-    }
+  const doUpload = React.useCallback((files: FileList | File[]) => {
+    upload(Array.from(files, file => ({ name: FILE_PART, file, fileName: file.name })));
   }, [upload]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,8 +105,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   const takesFileDrop = uploads && editable && !disabled && !uploading;
   const isFileDrag = (event: React.DragEvent) => event.dataTransfer.types.includes(FILES_TRANSFER_TYPE);
 
-  const cls = 'tlValueList ' + (block ? 'tlValueList--block' : 'tlValueList--inline')
-    + (fileDragOver ? ' tlValueList--dragover' : '');
+  const cls = block ? 'tl-value-list tl-value-list--block' : 'tl-value-list';
 
   const move = React.useCallback((index: number, targetIndex: number) => {
     sendCommand(CMD_MOVE_ELEMENT, { [ARG_INDEX]: index, [ARG_TARGET_INDEX]: targetIndex });
@@ -137,8 +122,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
       <span id={controlId} className={rootClassName(state, cls)}>
         {elements.map((element, index) => (
           <React.Fragment key={index}>
-            {index > 0 && <span className="tlValueList__separator">{SEPARATOR}</span>}
-            <span className="tlValueList__item">
+            {index > 0 && <span className="tl-select__separator">{SEPARATOR}</span>}
+            <span className="tl-value-list__item">
               <TLChild control={element} />
             </span>
           </React.Fragment>
@@ -181,22 +166,22 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div id={controlId} {...labelProps} role="group" className={rootClassName(state, cls)}
+      data-tl-state={stateAttr(fileDragOver && 'dragover')}
       onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
       {elements.map((element, index) => {
         return (
-          <div key={index} className="tlValueList__row" data-tl-state={reorderState(reorder.itemState(index))} {...reorder.itemProps(index)}>
+          <div key={index} className="tl-value-list__row" data-tl-state={reorderState(reorder.itemState(index))} {...reorder.itemProps(index)}>
             {arrangeable && (
-              <button
-                type="button"
-                className="tlValueList__handle"
-                aria-label={t['js.valueList.move']}
-                {...tooltipProps(t['js.valueList.move'])}
+              <Button
+                label={t['js.valueList.move']}
+                image={ICON_HANDLE}
+                display="icon-only"
+                appearance="ghost"
+                small
                 {...reorder.handleProps(index)}
-              >
-                <ThemeIcon encoded={ICON_HANDLE} />
-              </button>
+              />
             )}
-            <span className="tlValueList__item">
+            <span className="tl-value-list__item">
               <TLChild control={element} />
             </span>
             <Button
@@ -205,7 +190,6 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
               display="icon-only"
               appearance="ghost"
               small
-              className="tlValueList__remove"
               disabled={disabled}
               onClick={() => sendCommand(CMD_REMOVE_ELEMENT, { [ARG_INDEX]: index })}
             />
@@ -228,8 +212,8 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
         display="icon-only"
         appearance="ghost"
         small
-        className="tlValueList__add"
         disabled={disabled || uploading}
+        aria-busy={uploading ? true : undefined}
         onClick={() => {
           if (uploads) {
             fileInputRef.current?.click();

@@ -7,6 +7,7 @@ package test.com.top_logic.layout.react.control.table;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -18,6 +19,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.table.GroupArguments;
 import com.top_logic.layout.react.control.table.ReactColumnSelectControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -33,7 +35,7 @@ import com.top_logic.table.impl.ListRowSource;
 
 /**
  * Tests how the {@link TableViewControl} applies the result of the column selection: the displayed columns in their
- * order, and the locked ones as the frozen prefix.
+ * order, the locked ones as the frozen prefix, and the grouping.
  */
 public class TestColumnSelectionApply extends TestCase {
 
@@ -71,14 +73,20 @@ public class TestColumnSelectionApply extends TestCase {
 			super(context, view, false);
 		}
 
-		/** Opens the protected {@link #applyColumns(List, List)} to the test. */
+		/** Opens the protected {@link #applyColumns(List, List, String)} to the test, keeping the grouping. */
 		void apply(List<String> columns, List<String> lockedColumns) {
-			applyColumns(columns, lockedColumns);
+			applyColumns(columns, lockedColumns, getGroupedColumn());
+		}
+
+		/** Applies the result of the given column selection, as its OK button does. */
+		void apply(ReactColumnSelectControl selection) {
+			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumn());
 		}
 
 		/** The column selection as the {@link TableViewControl} creates it when it opens the dialog. */
 		ReactColumnSelectControl openSelection() {
-			return new ReactColumnSelectControl(getReactContext(), getView().columnOptions(), lockedColumnNames());
+			return new ReactColumnSelectControl(getReactContext(), getView().columnOptions(), lockedColumnNames(),
+				getGroupedColumn(), true);
 		}
 
 	}
@@ -141,6 +149,58 @@ public class TestColumnSelectionApply extends TestCase {
 
 		assertEquals(List.of(COLUMN_ACTIONS, COLUMN_NAME, COLUMN_AMOUNT, COLUMN_STATE), displayedColumns(table));
 		assertEquals(2, table.getView().frozenColumnCount());
+	}
+
+	/**
+	 * Tests that the grouping chosen in the selection is applied together with the columns, and that the table opens
+	 * the selection with its grouping.
+	 */
+	public void testGroupingIsAppliedWithTheColumns() {
+		TestTable table = control();
+		table.setGroupedColumn(COLUMN_NAME);
+
+		ReactColumnSelectControl selection = table.openSelection();
+		assertEquals(COLUMN_NAME, selection.groupedColumn());
+
+		group(selection, COLUMN_AMOUNT);
+		assertEquals("The grouping waits for the dialog to be applied.", COLUMN_NAME, table.getGroupedColumn());
+
+		table.apply(selection);
+		assertEquals(COLUMN_AMOUNT, table.getGroupedColumn());
+	}
+
+	/**
+	 * Tests that removing the grouping in the selection shows the rows ungrouped once applied.
+	 */
+	public void testRemovingTheGroupingIsApplied() {
+		TestTable table = control();
+		table.setGroupedColumn(COLUMN_NAME);
+
+		ReactColumnSelectControl selection = table.openSelection();
+		group(selection, "");
+		table.apply(selection);
+
+		assertNull(table.getGroupedColumn());
+	}
+
+	/**
+	 * Tests that the rows can be grouped by a column the table does not display, which its header menu does not offer.
+	 */
+	public void testGroupingByAHiddenColumn() {
+		TestTable table = control();
+		table.apply(List.of(COLUMN_NAME, COLUMN_AMOUNT), List.of());
+
+		ReactColumnSelectControl selection = table.openSelection();
+		group(selection, COLUMN_STATE);
+		table.apply(selection);
+
+		assertEquals(COLUMN_STATE, table.getGroupedColumn());
+		assertEquals(List.of(COLUMN_NAME, COLUMN_AMOUNT), displayedColumns(table));
+	}
+
+	private static void group(ReactColumnSelectControl selection, String column) {
+		assertTrue(selection.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column))
+			.isSuccess());
 	}
 
 	/** The names of the displayed columns of the given table, in display order. */

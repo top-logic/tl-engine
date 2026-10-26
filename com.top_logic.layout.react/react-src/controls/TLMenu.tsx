@@ -1,6 +1,6 @@
 import { React, useTLState, useTLCommand, rootClassName } from 'tl-react-bridge';
 import type { TLCellProps, MenuStateJson } from 'tl-react-bridge';
-import { Menu, MenuItem, MenuHeader, MenuSeparator } from './menu/Menu';
+import { Menu, MenuItem, MenuHeader, MenuSeparator } from 'tl-react-bridge';
 
 type MenuItemState = Partial<MenuStateJson.Entry> & Required<Pick<MenuStateJson.Entry, 'type' | 'id' | 'label'>>;
 

@@ -30,9 +30,11 @@ import com.top_logic.basic.config.constraint.impl.NotBothTrue;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -84,6 +86,7 @@ import com.top_logic.util.model.ModelService;
 })
 @ServiceExtensionPoint(ModelService.Module.class)
 @Label("Model access rights")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class SecurityConfigurationService extends ConfiguredManagedClass<SecurityConfigurationService.Config>
 		implements ModelAccessRights {
 

@@ -23,7 +23,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.element.meta.expr.internal.OperationFactory;
 import com.top_logic.element.meta.expr.parser.ExpressionParser;
 import com.top_logic.element.meta.expr.parser.ParseException;
@@ -35,6 +37,7 @@ import com.top_logic.element.meta.expr.parser.TokenMgrError;
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 @Label("Attribute value locators")
+@ServiceCategory.Of(ModelCategory.class)
 public class AttributeValueLocatorFactory extends ManagedClass {
 
 	private final Map<String, Class<? extends AttributeValueLocator>> _classByName;

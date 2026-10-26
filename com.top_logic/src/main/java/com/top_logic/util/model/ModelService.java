@@ -41,8 +41,10 @@ import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
@@ -114,6 +116,7 @@ import com.top_logic.util.model.check.StringSizeCheck;
 	FormatterService.Module.class,
 })
 @Label("Application model")
+@ServiceCategory.Of(ModelCategory.class)
 public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		implements CommitChecker, ModificationListener {
 

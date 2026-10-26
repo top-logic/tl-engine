@@ -11,6 +11,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.layout.react.dirty.UnsavedChanges;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -159,6 +160,18 @@ public class TestTabBarRouteVeto extends TestCase {
 		routeManager.finishAdoption();
 		assertEquals("A tab without a dirty channel is left without a refusal.",
 			OVERVIEW, _tabBar.getActiveTabId());
+	}
+
+	/**
+	 * The page is named by the label of the tab the URL names.
+	 */
+	public void testLabelOfTheTabTheUrlNames() {
+		assertEquals(ResKey.text("Overview"), _tabBar.activeRouteLabel());
+
+		RouteManager routeManager = _context.getRouteManager();
+		routeManager.navigateToRoute(DETAILS);
+		routeManager.finishAdoption();
+		assertEquals(ResKey.text("Details"), _tabBar.activeRouteLabel());
 	}
 
 }

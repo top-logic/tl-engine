@@ -5,24 +5,15 @@
  */
 package com.top_logic.layout.admin.component;
 
-import java.io.File;
-
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.constraint.check.ConstraintChecker;
-import com.top_logic.basic.i18n.log.BufferingI18NLog;
-import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.autoconf.InAppServiceConfigStore;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Stores custom service configurations in a separate configuration file in the autoconf folder of
@@ -31,12 +22,6 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class TLSaveServiceConfigHandler extends AbstractApplyCommandHandler {
-
-	/**
-	 * The stored configuration replaces the service configuration of the underlying configuration
-	 * layers, so that a value removed in the editor does not reappear from the base configuration.
-	 */
-	private static final boolean OVERRIDE_BASE_CONFIG = true;
 
 	/**
 	 * Creates a {@link TLSaveServiceConfigHandler} from configuration.
@@ -52,36 +37,17 @@ public class TLSaveServiceConfigHandler extends AbstractApplyCommandHandler {
 
 	@Override
 	protected boolean storeChanges(LayoutComponent component, FormContext context, Object model) {
-		BasicRuntimeModule<?> module = (BasicRuntimeModule<?>) model;
-
-		if (model instanceof BasicRuntimeModule) {
+		if (model instanceof BasicRuntimeModule<?> module) {
 			ServiceConfiguration<?> serviceConfiguration = getServiceConfiguration(component);
-			checkConstraints(serviceConfiguration);
-			boolean serviceConfig = storeNewServiceConfiguration(serviceConfiguration, module);
-
-			TLServiceUtils.reloadConfigurations();
+			TLServiceUtils.storeServiceConfiguration(module, serviceConfiguration);
 			repaintEditor((EditComponent) component);
 
 			InfoService.showInfo(I18NConstants.CONFIGURATION_SAVED_INFO_MESSAGE);
 
-			return serviceConfig;
+			return true;
 		}
 
 		return false;
-	}
-
-	private void checkConstraints(ServiceConfiguration<?> serviceConfiguration) {
-		BufferingI18NLog checkingProtocol = new BufferingI18NLog();
-		new ConstraintChecker().check(checkingProtocol, serviceConfiguration);
-		ResKey[] errorKeys =
-			checkingProtocol.getEntries()
-				.stream()
-				.filter(event -> event.getLevel() == Level.ERROR)
-				.map(BufferingI18NLog.Entry::getMessage)
-				.toArray(ResKey[]::new);
-		if (errorKeys.length > 0) {
-			throw new TopLogicException(I18NConstants.SERVICE_CONFIGURATION_INVALID__ERRORS.fill(errorKeys));
-		}
 	}
 
 	private void repaintEditor(EditComponent editor) {
@@ -105,24 +71,6 @@ public class TLSaveServiceConfigHandler extends AbstractApplyCommandHandler {
 		EditComponent editor = (EditComponent) component;
 
 		return editor.getFormContext();
-	}
-
-	private boolean storeNewServiceConfiguration(ServiceConfiguration<?> instance,
-			BasicRuntimeModule<?> module) {
-
-		try {
-			File inAppServiceConfigFile = InAppServiceConfigStore.store(module, instance, OVERRIDE_BASE_CONFIG);
-			Logger.info(inAppServiceConfigFile.getAbsolutePath() + " successfully written.",
-				TLSaveServiceConfigHandler.class);
-		} catch (Exception exception) {
-			throw new TopLogicException(I18NConstants.SERVICE_CONFIG_SAVE_ERROR, exception);
-		}
-
-		return true;
-	}
-
-	static File inAppServiceConfiguration(BasicRuntimeModule<?> model) {
-		return InAppServiceConfigStore.fileFor(model);
 	}
 
 }

@@ -12,7 +12,9 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.NamedValues;
@@ -23,6 +25,7 @@ import com.top_logic.dob.NamedValues;
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
 @Label("Data object storage")
+@ServiceCategory.Of(PersistenceCategory.class)
 public abstract class DataManager extends ManagedClass {
 
     /** The default number of Attributes assumed */

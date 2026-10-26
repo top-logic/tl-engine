@@ -8,6 +8,8 @@ package com.top_logic.layout.react.routing;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.util.ResKey;
+
 /**
  * Controls that contribute URL segments implement this interface.
  *
@@ -51,6 +53,34 @@ public interface RoutingParticipant {
      * item is active.
      */
     RouteSegment activeRouteSegment();
+
+	/**
+	 * The label of what the {@link #activeRouteSegment() active route segment} names, or
+	 * {@code null} if this participant names nothing a user would recognize the page by.
+	 *
+	 * <p>
+	 * The label names the page in the browser tab and in the history: the {@link RouteManager}
+	 * titles the page after the label of the innermost participant of the display that reports one
+	 * - the item a sidebar selects, the tab a tab bar shows, refined by whatever the display names
+	 * below them. A participant without a label leaves the title to the participants around it.
+	 * </p>
+	 *
+	 * <p>
+	 * A change of the label is reported like a change of the route, to the
+	 * {@link #addRouteChangeListener(RouteChangeListener) route change listeners}, even where the
+	 * segment stays the same: the page keeps its address, but not its title.
+	 * </p>
+	 *
+	 * <p>
+	 * The default reports no label, which is what a participant does whose route refines the page
+	 * rather than naming one - a query parameter holding a filter, for instance.
+	 * </p>
+	 *
+	 * @see RouteManager#currentTitle()
+	 */
+	default ResKey activeRouteLabel() {
+		return null;
+	}
 
 	/**
 	 * Takes up the query parameters of the URL being adopted.
@@ -133,6 +163,35 @@ public interface RoutingParticipant {
 	 * </p>
 	 */
 	default boolean routesContent() {
+		return true;
+	}
+
+	/**
+	 * Whether the participants inside what this participant displays refine the title of the page.
+	 *
+	 * <p>
+	 * The page is titled after the innermost participant of the display that reports a
+	 * {@link #activeRouteLabel() label}. Where this participant names the page completely - a frame
+	 * showing an object, whose tabs only divide what is shown of it - the label of a tab inside it
+	 * would rename the page after a part of it: the browser tab would read "Details" instead of the
+	 * name of the object. A participant answering {@code false} keeps the labels of the participants
+	 * inside its content out of the title, which then is its own label or, where it reports none,
+	 * whatever the participants around it name.
+	 * </p>
+	 *
+	 * <p>
+	 * The URL is not affected: the participants inside still contribute their segments and are
+	 * offered the segments of a URL that is opened.
+	 * </p>
+	 *
+	 * <p>
+	 * The default is {@code true}: what is displayed inside a participant names the page more
+	 * precisely than the participant itself.
+	 * </p>
+	 *
+	 * @see RouteManager#setTitlingParticipants(java.util.function.Supplier)
+	 */
+	default boolean titlesContent() {
 		return true;
 	}
 

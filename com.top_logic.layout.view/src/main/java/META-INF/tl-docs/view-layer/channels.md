@@ -54,6 +54,7 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 | `<derived-channel>` `reverse` | `value` (the written value) | — |
 | `<table>` / `<tree-table>` / `<composition-table>`: `row-class`, column `<value>`, `<can-update>`, `<object>` | `row` | `row-as` on the table |
 | column `<update>` | `row`, `value` (the entered value) | `row-as`, `value-as` on the column |
+| column `<tooltip>` | `row`, `value` (the cell value; in a group header row only the group's `value`) | `row-as`, `value-as` on the column |
 | `<dynamic-columns>` `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`; `<value>`, `<update>`, `<can-update>`, `<aggregate>` | `column`; with `row` / `value` / `members` as for the other columns | `column-as` on the dynamic columns |
 | column `<aggregate>` / `<comparator>` | `members` / `left`, `right` | — |
 | `<match>` of a scripted filter | `params`, `value`, `row` | `value-as`, `row-as` |

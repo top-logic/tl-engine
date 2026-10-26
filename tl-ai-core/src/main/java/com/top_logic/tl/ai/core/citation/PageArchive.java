@@ -37,6 +37,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContext;
@@ -54,6 +55,7 @@ import com.top_logic.tl.ai.core.ApplicationUrl;
 import com.top_logic.tl.ai.core.execution.WriterShutdown;
 import com.top_logic.tl.ai.core.execution.model.ArchivedPage;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.util.model.ModelService;
 
@@ -104,6 +106,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	PersistencyLayer.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class PageArchive extends ConfiguredManagedClass<PageArchive.Config<?>> {
 
 	/** Path prefix of the route an archived copy is opened at. */

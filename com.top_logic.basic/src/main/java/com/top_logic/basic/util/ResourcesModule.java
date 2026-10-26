@@ -47,7 +47,9 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
 import com.top_logic.tools.resources.ResourceFile;
 
 /**
@@ -58,6 +60,7 @@ import com.top_logic.tools.resources.ResourceFile;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Internationalization resources")
+@ServiceCategory.Of(I18NCategory.class)
 public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Config> {
 
 	/** Flag indicating that the key was found and no default was given. */

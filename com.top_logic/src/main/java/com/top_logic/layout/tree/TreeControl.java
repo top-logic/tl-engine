@@ -1137,7 +1137,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		protected HandlerResult handleDnDEvent(TreeDropEvent dropEvent, TreeControl treeControl, String targetID,
 				String position) {
 			for (TreeDropTarget dropTarget : treeControl.getData().getDropTargets()) {
-				if (dropTarget.canDrop(dropEvent)) {
+				if (dropTarget.getDropType().accepts(dropEvent) && dropTarget.canDrop(dropEvent)) {
 					displayDropMarker(treeControl, targetID, position);
 
 					return HandlerResult.DEFAULT_RESULT;
@@ -1201,7 +1201,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		protected HandlerResult handleDnDEvent(TreeDropEvent dropEvent, TreeControl treeControl, String targetID,
 				String position) {
 			for (TreeDropTarget dropTarget : treeControl.getData().getDropTargets()) {
-				if (dropTarget.canDrop(dropEvent)) {
+				if (dropTarget.getDropType().accepts(dropEvent) && dropTarget.canDrop(dropEvent)) {
 					dropTarget.handleDrop(dropEvent);
 
 					return HandlerResult.DEFAULT_RESULT;

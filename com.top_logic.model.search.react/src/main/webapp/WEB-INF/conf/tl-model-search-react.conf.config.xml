@@ -35,10 +35,12 @@
 					/>
 					<!--
 						Unlayered: the stylesheet overrides the base theme CodeMirror writes into the page
-						at runtime, which is unlayered and would win against every rule of a layer.
+						at runtime, which is unlayered and would win against every rule of a layer. It
+						follows the stylesheet of the code editor, whose structural rules it builds on.
 					-->
 					<stylesheet name="tl-script-editor-css"
 						resource="/style/tlScriptEditor.css"
+						requires="tl-code-editor-css"
 					/>
 				</resources>
 			</instance>

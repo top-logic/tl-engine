@@ -25,7 +25,9 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory.Config.GeneratorConfig;
 import com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory.Config.GeneratorSpiConfig;
 
@@ -35,6 +37,7 @@ import com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory.Config.Gene
  * @author <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 @Label("Option generators")
+@ServiceCategory.Of(ModelCategory.class)
 public class GeneratorFactory extends ConfiguredManagedClass<GeneratorFactory.Config> {
 
 	/**

@@ -47,6 +47,8 @@ public final class FrameRoute {
 
 	private final TileLabelProvider _label;
 
+	private final boolean _finalTitle;
+
 	/**
 	 * Creates a {@link FrameRoute}.
 	 *
@@ -67,11 +69,38 @@ public final class FrameRoute {
 	 */
 	public FrameRoute(String viewRef, String route, Map<String, Function<Object, String>> toUrl,
 			Map<String, Function<String, Object>> fromUrl, TileLabelProvider label) {
+		this(viewRef, route, toUrl, fromUrl, label, false);
+	}
+
+	/**
+	 * Creates a {@link FrameRoute}.
+	 *
+	 * @param viewRef
+	 *        Path of the frame view this route describes, relative to {@code /WEB-INF/views/}.
+	 * @param route
+	 *        Pattern of the URL segments a frame of that view occupies, e.g.
+	 *        {@code "person/:person"}.
+	 * @param toUrl
+	 *        Conversions of parameter values to URL texts, by parameter name. A parameter without an
+	 *        entry is converted by its own text representation.
+	 * @param fromUrl
+	 *        Conversions of URL texts to parameter values, by parameter name. A parameter without an
+	 *        entry is taken as the text it is.
+	 * @param label
+	 *        Provider naming a frame of this view, or {@code null} for frames named by whoever
+	 *        pushes them.
+	 * @param finalTitle
+	 *        Whether the label of a frame of this view is the final title of the page, see
+	 *        {@link #isFinalTitle()}.
+	 */
+	public FrameRoute(String viewRef, String route, Map<String, Function<Object, String>> toUrl,
+			Map<String, Function<String, Object>> fromUrl, TileLabelProvider label, boolean finalTitle) {
 		_viewRef = viewRef;
 		_pattern = RoutePattern.compile(route, viewRef);
 		_toUrl = Map.copyOf(toUrl);
 		_fromUrl = Map.copyOf(fromUrl);
 		_label = label;
+		_finalTitle = finalTitle;
 	}
 
 	/**
@@ -97,7 +126,8 @@ public final class FrameRoute {
 		}
 		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = config.getLabel();
 		TileLabelProvider label = labelConfig != null ? context.getInstance(labelConfig) : null;
-		return new FrameRoute(config.getView(), config.getRoute(), toUrl, fromUrl, label);
+		return new FrameRoute(config.getView(), config.getRoute(), toUrl, fromUrl, label,
+			config.getFinalTitle());
 	}
 
 	/**
@@ -105,6 +135,16 @@ public final class FrameRoute {
 	 */
 	public String viewRef() {
 		return _viewRef;
+	}
+
+	/**
+	 * Whether the label of a frame of this view is the final title of the page: what the frame view
+	 * displays inside does not rename it.
+	 *
+	 * @see FrameRouteConfig#getFinalTitle()
+	 */
+	public boolean isFinalTitle() {
+		return _finalTitle;
 	}
 
 	/**

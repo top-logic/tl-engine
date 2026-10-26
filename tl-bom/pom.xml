@@ -1357,7 +1357,7 @@
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>grpc-protobuf</artifactId>
-				<version>1.85.0</version>
+				<version>1.85.1</version>
 			</dependency>
 			<dependency>
 				<!-- LangChain4j: embedding models and vector stores of tl-ai-vector-index. -->
@@ -1476,7 +1476,7 @@
 			<dependency>
 			    <groupId>org.xhtmlrenderer</groupId>
 			    <artifactId>flying-saucer-pdf</artifactId>
-			    <version>9.13.3</version>
+			    <version>9.13.4</version>
 			    
 		        <exclusions>
 		            <exclusion>

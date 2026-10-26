@@ -25,7 +25,9 @@ import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.dob.IdentifierTypes;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -73,6 +75,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * @author <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
 @Label("Reference attribute storage")
+@ServiceCategory.Of(ModelCategory.class)
 public class WrapperMetaAttributeUtil extends KBBasedManagedClass<WrapperMetaAttributeUtil.Config> {
 
 	/**

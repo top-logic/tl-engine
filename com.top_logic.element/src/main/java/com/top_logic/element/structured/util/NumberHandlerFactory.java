@@ -17,8 +17,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ModelCategory;
 import com.top_logic.element.structured.util.NumberHandler.NumberHandlerConfig;
 import com.top_logic.layout.provider.LabelProviderService;
 
@@ -30,6 +32,7 @@ import com.top_logic.layout.provider.LabelProviderService;
 // Note: A configured number handler uses the meta label provider to add a dynamic context to the generated ID.
 @ServiceDependencies(LabelProviderService.Module.class)
 @Label("Number generators")
+@ServiceCategory.Of(ModelCategory.class)
 public class NumberHandlerFactory extends ManagedClass {
     
 	/**

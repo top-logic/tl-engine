@@ -40,6 +40,7 @@ const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
 const LABEL_REMOVE = 'js.valueList.remove';
 const LABEL_GROUP_BY = 'js.table.groupBy';
+const LABEL_UNGROUP = 'js.table.ungroup';
 const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
 const LABEL_COLUMN_HIDE = 'js.table.columnHide';
 const LABEL_COLUMN_SHOW_LOCK = 'js.table.columnShowLock';
@@ -208,7 +209,12 @@ describe('the lock and the eye of the column selection as MUI icon buttons', () 
       expectMuiIconButton(button);
       expect(button.closest('.tl-reorder-list__item')).not.toBeNull();
       expect(button.textContent).toBe('');
+      // The row shows them on pointing or keyboard focus (layout contract: tl-reveal-on-hover).
+      expect(button.classList.contains('tl-reveal-on-hover')).toBe(true);
     }
+    const grip = document.querySelector('.tl-reorder-list__handle');
+    expect(grip).not.toBeNull();
+    expect(grip!.classList.contains('tl-reveal-on-hover')).toBe(true);
 
     await userEvent.click(hide);
     await settle();
@@ -219,11 +225,55 @@ describe('the lock and the eye of the column selection as MUI icon buttons', () 
     expect(sent).toHaveBeenCalledWith(CMD_COLUMN_LOCK, { column: 'b', locked: true });
   });
 
-  it('offers no grouping in the dialog: grouping rows stays in the header menu (#29825)', async () => {
-    mountAdapter(TLColumnSelect, { entries: [entry('a', true, false)] });
+});
+
+describe('the group toggle of the column selection', () => {
+  /** The command the column selection sends for the group toggle. */
+  const CMD_GROUP = 'group';
+
+  function entry(name: string, visible: boolean, grouped: boolean) {
+    return { name, label: 'Spalte ' + name, visible, locked: false, grouped };
+  }
+
+  it('offers grouping on every row, also a hidden one, and moves the grouping to the chosen column', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { groupable: true, entries: [entry('a', true, false), entry('b', false, false), entry('c', true, true)] });
+    await settle();
+
+    const groupBy = screen.getAllByRole('button', { name: LABEL_GROUP_BY });
+    expect(groupBy).toHaveLength(2);
+    for (const button of groupBy) {
+      expect(button.getAttribute('aria-pressed')).toBe('false');
+      expect(button.classList.contains('tl-reveal-on-hover')).toBe(true);
+    }
+
+    // The toggle of the hidden column b.
+    await userEvent.click(groupBy[1]);
+    await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { column: 'b' });
+  });
+
+  it('keeps the toggle of the grouped row in sight, pressed, and removes the grouping', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { groupable: true, entries: [entry('a', true, false), entry('c', true, true)] });
+    await settle();
+
+    const ungroup = screen.getByRole('button', { name: LABEL_UNGROUP });
+    expect(ungroup.getAttribute('aria-pressed')).toBe('true');
+    expect(ungroup.classList.contains('tl-reveal-on-hover')).toBe(false);
+    expect(ungroup.closest('.tl-reorder-list__item')!.getAttribute('data-tl-state')).toContain('grouped');
+
+    await userEvent.click(ungroup);
+    await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { column: '' });
+  });
+
+  it('offers no grouping for a tree', async () => {
+    mountAdapter(TLColumnSelect, { groupable: false, entries: [entry('a', true, false)] });
     await settle();
 
     expect(screen.queryByRole('button', { name: LABEL_GROUP_BY })).toBeNull();
+    expect(screen.queryByRole('button', { name: LABEL_UNGROUP })).toBeNull();
   });
 });
 

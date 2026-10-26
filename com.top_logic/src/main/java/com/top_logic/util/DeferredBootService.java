@@ -16,7 +16,9 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.util.ComputationEx2;
 
 /**
@@ -26,6 +28,7 @@ import com.top_logic.basic.util.ComputationEx2;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Deferred boot")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class DeferredBootService extends ManagedClass {
 
 	/**

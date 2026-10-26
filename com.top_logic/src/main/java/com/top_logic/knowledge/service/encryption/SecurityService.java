@@ -18,7 +18,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 
 /**
  * Registers the cryptographic security providers used by the application.
@@ -27,6 +29,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  */
 @InApp(value = false)
 @Label("Security providers")
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class SecurityService extends ConfiguredManagedClass<SecurityService.Config> {
 
 	/**

@@ -45,21 +45,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LOCK_COLUMN_NODE;
 
 	/**
-	 * @en Status
-	 */
-	public static ResKey SERVICE_COLUMN_STATUS;
-
-	/**
-	 * @en Service
-	 */
-	public static ResKey SERVICE_COLUMN_NAME;
-
-	/**
-	 * @en Implementation
-	 */
-	public static ResKey SERVICE_COLUMN_TECHNICAL_NAME;
-
-	/**
 	 * @en Running
 	 */
 	public static ResKey SERVICE_STATE_ACTIVE;
@@ -68,6 +53,49 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Stopped
 	 */
 	public static ResKey SERVICE_STATE_INACTIVE;
+
+	/**
+	 * @en Running – restart required
+	 */
+	public static ResKey SERVICE_STATE_RESTART_REQUIRED;
+
+	/**
+	 * @en Configuration saved. Restart the service to apply it.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_SAVED;
+
+	/**
+	 * @en Configuration saved. It matches the configuration the service is running with, no
+	 *     restart is necessary.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_SAVED_UNCHANGED;
+
+	/**
+	 * @en In-app configuration removed. Restart the service to apply the configuration of the
+	 *     application's configuration files.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_RESET;
+
+	/**
+	 * @en In-app configuration removed. The configuration of the application's configuration
+	 *     files matches the one the service is running with, no restart is necessary.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_RESET_UNCHANGED;
+
+	/**
+	 * @en Changes discarded. The configuration the service is running with is in effect again.
+	 */
+	public static ResKey SERVICE_CONFIGURATION_DISCARDED;
+
+	/**
+	 * @en No service is selected.
+	 */
+	public static ResKey ERROR_NO_SERVICE;
+
+	/**
+	 * @en There is no service configuration to store.
+	 */
+	public static ResKey ERROR_NO_SERVICE_CONFIGURATION;
 
 	/**
 	 * @en Lifecycle operation on service ''{0}'' failed.

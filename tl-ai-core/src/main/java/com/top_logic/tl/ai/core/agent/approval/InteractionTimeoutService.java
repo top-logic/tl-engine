@@ -11,7 +11,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * The deadlines a human gets to answer an agent: how long a tool approval and how long a question
@@ -32,6 +34,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * decide when that happens.
  * </p>
  */
+@ServiceCategory.Of(AICategory.class)
 public class InteractionTimeoutService extends ConfiguredManagedClass<InteractionTimeoutService.Config<?>> {
 
 	/**

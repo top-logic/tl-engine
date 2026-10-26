@@ -33,6 +33,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
@@ -44,6 +45,7 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
 import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
+import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * The LLM providers of this installation: which models exist and how to reach them, what is known
@@ -75,6 +77,7 @@ import com.top_logic.tl.ai.core.provider.health.ModelTarget;
  * @see AgentFactory
  */
 @Label("LLM providers")
+@ServiceCategory.Of(AICategory.class)
 public class LLMProviderService extends ConfiguredManagedClass<LLMProviderService.Config<?>> {
 
 	/**

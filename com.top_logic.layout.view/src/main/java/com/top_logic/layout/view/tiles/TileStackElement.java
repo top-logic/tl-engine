@@ -5,7 +5,9 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.annotation.InApp;
@@ -22,6 +24,7 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -44,7 +47,9 @@ import com.top_logic.layout.view.navigation.RevealPath;
  * navigating back to one displays it again instead of building it anew. Each frame gets its own
  * isolated channel namespace and a {@link TileStackScope} reachable for descendants so that nested
  * commands can push further frames without explicit configuration. Under the name
- * {@link Config#getBindPathTo() bind-path-to}, a frame additionally sees the path it sits on.
+ * {@link Config#getBindPathTo() bind-path-to}, a frame additionally sees the path it sits on, and
+ * each of the {@link Config#getBindings() bindings} makes a channel of the enclosing view visible in
+ * every frame.
  * </p>
  *
  * <p>
@@ -95,6 +100,9 @@ public class TileStackElement implements UIElement {
 		/** Configuration name for {@link #getFrames()}. */
 		String FRAMES = "frames";
 
+		/** Configuration name for {@link #getBindings()}. */
+		String BINDINGS = "bindings";
+
 		/**
 		 * Reference to the channel holding the {@code List<TileFrame>} path.
 		 *
@@ -137,6 +145,21 @@ public class TileStackElement implements UIElement {
 		String getBindPathTo();
 
 		/**
+		 * Channels of the enclosing view that every mounted frame sees.
+		 *
+		 * <p>
+		 * Each binding works as in a {@code <view-ref>}: the channel of the enclosing view named by
+		 * {@code to} is registered in every frame under the name {@code channel}, and a frame view
+		 * declaring a channel of that name reads and writes the enclosing view's channel. Unlike a
+		 * frame parameter, which is a snapshot taken at push time, a bound channel is live: a value a
+		 * frame writes is seen by the frames it covers, which stay alive meanwhile - e.g. a list the
+		 * initial frame displays and a pushed detail frame changes.
+		 * </p>
+		 */
+		@Name(BINDINGS)
+		List<ChannelBindingConfig> getBindings();
+
+		/**
 		 * The routes in the URL that the frames of this stack occupy.
 		 *
 		 * <p>
@@ -156,6 +179,8 @@ public class TileStackElement implements UIElement {
 
 	private final String _bindPathTo;
 
+	private final List<ChannelBindingConfig> _bindings;
+
 	private final List<FrameRoute> _frameRoutes;
 
 	private final String _cssClass;
@@ -168,6 +193,7 @@ public class TileStackElement implements UIElement {
 		_pathRef = config.getPath();
 		_initialViewRef = config.getInitial();
 		_bindPathTo = config.getBindPathTo();
+		_bindings = config.getBindings();
 		_frameRoutes = config.getFrames().stream()
 			.map(frame -> FrameRoute.create(context, frame))
 			.collect(Collectors.toList());
@@ -183,8 +209,15 @@ public class TileStackElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
 		TileStackScope scope = new TileStackScope(pathChannel, _frameRoutes, RevealPath.of(context), this);
+		Map<String, ViewChannel> sharedChannels = new LinkedHashMap<>();
+		if (_bindPathTo != null) {
+			sharedChannels.put(_bindPathTo, pathChannel);
+		}
+		for (ChannelBindingConfig binding : _bindings) {
+			sharedChannels.put(binding.getChannel(), context.resolveChannel(binding.getTo()));
+		}
 		ReactTileStackControl result =
-			new ReactTileStackControl(context, this, pathChannel, scope, _initialViewRef, _bindPathTo);
+			new ReactTileStackControl(context, this, pathChannel, scope, _initialViewRef, sharedChannels);
 		result.setCssClass(_cssClass);
 		return result;
 	}

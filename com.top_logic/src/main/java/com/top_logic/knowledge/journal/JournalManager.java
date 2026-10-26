@@ -44,8 +44,10 @@ import com.top_logic.basic.db.sql.SQLQuery;
 import com.top_logic.basic.db.sql.SQLQuery.Parameter;
 import com.top_logic.basic.db.sql.SQLSelect;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.DBHelper;
@@ -91,6 +93,7 @@ import com.top_logic.util.TLContext;
 	ConnectionPoolRegistry.Module.class
 })
 @Label("Change journal")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class JournalManager extends ManagedClass {
 
 	private static final String MESSAGE_COLUMN = "MESSAGE";

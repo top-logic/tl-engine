@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
@@ -34,6 +35,7 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
+import com.top_logic.util.Resources;
 
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
@@ -99,6 +101,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getComparator()}. */
 		String COMPARATOR = "comparator";
+
+		/** Configuration name for {@link #getTooltip()}. */
+		String TOOLTIP = "tooltip";
 
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
@@ -202,6 +207,28 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getComparator();
 
+		/**
+		 * The tooltip of a cell of the column: an expression computing what the user reads when
+		 * pointing at the cell.
+		 *
+		 * <p>
+		 * The expression sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the
+		 * name the table gives it with {@value RowAsConfig#ROW_AS}, and the value of the cell as the
+		 * variable {@value ValueAsConfig#DEFAULT_VALUE_AS}, or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}. In the header row of a group formed by the column, it is
+		 * evaluated for the value of the group, without a row. It sees the values of the inputs of
+		 * the column as well, of the table for a column without inputs of its own. It yields a text
+		 * or an internationalized text, written as <code>#('Text'@en, 'Text'@de)</code>; nothing at
+		 * all leaves the cell without a tooltip. Unset (the default), a cell offers its own text
+		 * where it does not fit.
+		 * </p>
+		 */
+		@Name(TOOLTIP)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getTooltip();
+
 	}
 
 	private final ResKey _label;
@@ -217,6 +244,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final QueryExecutor _aggregate;
 
 	private final QueryExecutor _comparator;
+
+	private final QueryExecutor _tooltip;
 
 	/**
 	 * The inputs whose values the {@link #_aggregate} and the {@link #_comparator} see, empty for
@@ -247,6 +276,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_width = config.getWidth();
 		_aggregate = InputScript.compile(config, Config.AGGREGATE);
 		_comparator = InputScript.compile(config, Config.COMPARATOR);
+		_tooltip = InputScript.compile(config, Config.TOOLTIP);
 		_scriptInputs = InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE));
 		_hiddenByDefault = !config.getVisible();
 		_export = ColumnExport.of(context, config);
@@ -283,6 +313,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_width = 0;
 		_aggregate = null;
 		_comparator = null;
+		_tooltip = null;
 		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
 		_export = ColumnExport.DEFAULT;
@@ -331,12 +362,12 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
-		List<ViewChannel> inputs = _aggregate == null && _comparator == null
+		List<ViewChannel> inputs = _aggregate == null && _comparator == null && _tooltip == null
 			? List.of()
 			: ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export);
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs));
 	}
 
 	/**
@@ -390,6 +421,39 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			return null;
 		}
 		return order((value1, value2) -> executor.execute(ChannelInputs.arguments(inputs, value1, value2)));
+	}
+
+	/**
+	 * The function computing the tooltip of a cell from its row and its value, {@code null} for a
+	 * column whose cells have none.
+	 *
+	 * @param executor
+	 *        The compiled {@link Config#getTooltip()}.
+	 * @param inputs
+	 *        The channels of its inputs.
+	 */
+	private static BiFunction<Object, Object, String> tooltip(QueryExecutor executor, List<ViewChannel> inputs) {
+		if (executor == null) {
+			return null;
+		}
+		return (row, value) -> tooltipText(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The text of a tooltip a script computed: the text itself, an internationalized text in the
+	 * language of the user, the label of any other value, {@code null} for nothing at all.
+	 */
+	static String tooltipText(Object result) {
+		if (result == null) {
+			return null;
+		}
+		if (result instanceof ResKey key) {
+			return Resources.getInstance().getString(key);
+		}
+		if (result instanceof CharSequence text) {
+			return text.toString();
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(result);
 	}
 
 	/**

@@ -22,9 +22,8 @@ import com.top_logic.layout.react.theme.UIThemeService;
  */
 public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 
-	/** The stylesheets audited. */
-	private static final List<String> STYLESHEETS =
-		List.of("/style/tlReactBase.css", "/style/tlReactControls.css");
+	/** The stylesheets audited: the page frame of the engine; the controls live in the design system package. */
+	private static final List<String> STYLESHEETS = List.of("/style/tlReactBase.css");
 
 	/**
 	 * The token sheet of the design system package: the only place the {@code --tl} namespace is
@@ -33,21 +32,9 @@ public class TestReactStylesheetTokens extends AbstractStylesheetTokenTest {
 	 */
 	private static final List<String> DESIGN_SYSTEM_TOKENS = List.of("/style/tl-design-system/tokens.css");
 
-	/**
-	 * Selectors rounding for a reason of their own: an icon is drawn out of a box whose corners
-	 * belong to the glyph, not to a control.
-	 */
-	private static final Set<String> ICON_GLYPHS =
-		Set.of(".tlAudioRecorder__icon--stop", ".tlPhotoCapture__cameraIcon");
-
 	@Override
 	protected List<String> stylesheets() {
 		return STYLESHEETS;
-	}
-
-	@Override
-	protected Set<String> allowedLiteralSelectors() {
-		return ICON_GLYPHS;
 	}
 
 	@Override

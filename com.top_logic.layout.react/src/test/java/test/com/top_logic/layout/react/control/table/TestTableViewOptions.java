@@ -184,6 +184,28 @@ public class TestTableViewOptions extends TestCase {
 	}
 
 	/**
+	 * Tests that the empty density the client sends for "like everywhere" is accepted, and that a
+	 * command without a density means the same.
+	 */
+	public void testEmptyAndMissingDensityIsDefault() {
+		setViewOptions("compact", true, false);
+
+		setViewOptions("", true, false);
+		assertEquals("", _table.clientState(STATE_VIEW_DENSITY));
+		assertEquals("", _view.state().getDensity());
+		assertEquals("", _store._saved.getDensity());
+		assertEquals(Boolean.TRUE, _table.clientState(STATE_STRIPED));
+
+		setViewOptions("compact", false, false);
+		_table.executeClientCommand(CMD_SET_VIEW_OPTIONS, Map.of(
+			SetViewOptionsArguments.STRIPED, Boolean.TRUE,
+			SetViewOptionsArguments.COLUMN_LINES, Boolean.FALSE));
+		assertEquals("", _table.clientState(STATE_VIEW_DENSITY));
+		assertEquals("", _view.state().getDensity());
+		assertEquals(Boolean.TRUE, _table.clientState(STATE_STRIPED));
+	}
+
+	/**
 	 * Tests that the view reset restores the view options, and tells the client so.
 	 */
 	public void testResetViewRestoresOptions() {
@@ -202,13 +224,16 @@ public class TestTableViewOptions extends TestCase {
 	 * Tests that the view reset keeps the filters, as the column dialog's reset does.
 	 */
 	public void testResetViewKeepsFilters() {
-		search("a");
+		search("zzz");
 		setViewOptions("compact", true, true);
 
 		_table.executeClientCommand(CMD_RESET_VIEW, Map.of());
 
 		assertNotNull(_view.state().getSearch());
-		assertEquals(Integer.valueOf(3), _table.clientState("totalRowCount"));
+		assertEquals("The search still narrows the rows.",
+			text(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(0, 3)) + " \u00b7 "
+				+ text(I18NConstants.TABLE_FILTERS_ACTIVE__COUNT.fill(1)),
+			_table.clientState(STATE_ROW_COUNT));
 	}
 
 	/**

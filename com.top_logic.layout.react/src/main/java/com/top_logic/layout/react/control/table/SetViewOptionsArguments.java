@@ -6,8 +6,8 @@
 package com.top_logic.layout.react.control.table;
 
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.layout.react.control.ReactCommand;
 
 /**
@@ -35,10 +35,10 @@ public interface SetViewOptionsArguments extends ReactCommand {
 
 	/**
 	 * The row density: empty to follow the surrounding application, {@code normal} or
-	 * {@code compact}. Any other value is taken as empty.
+	 * {@code compact}. Any other value, and none, is taken as empty.
 	 */
 	@Name(DENSITY)
-	@Mandatory
+	@StringDefault("")
 	String getDensity();
 
 	/**

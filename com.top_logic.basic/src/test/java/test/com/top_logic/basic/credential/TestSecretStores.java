@@ -188,6 +188,20 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 		assertEquals("Changed file must be read again.", "rotated-secret", source.getSecret());
 	}
 
+	public void testDirectoryStoreInHome() throws Exception {
+		String home = System.getProperty("user.home");
+		System.setProperty("user.home", _dir.toString());
+		try {
+			Path secrets = Files.createDirectories(_dir.resolve(".app/secrets"));
+			write(secrets.resolve(SECRET), "s3cr3t");
+			install("<store class='" + DirectorySecretStore.class.getName() + "' directory='~/.app/secrets'/>");
+
+			assertEquals("s3cr3t", named(SECRET).getSecret());
+		} finally {
+			System.setProperty("user.home", home);
+		}
+	}
+
 	public void testDirectoryStoreMissing() throws Exception {
 		install("<store class='" + DirectorySecretStore.class.getName() + "' directory='" + _dir + "'/>");
 

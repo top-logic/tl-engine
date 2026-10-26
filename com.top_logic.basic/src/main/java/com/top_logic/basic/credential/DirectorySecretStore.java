@@ -56,8 +56,9 @@ public class DirectorySecretStore extends AbstractSecretStore<DirectorySecretSto
 		 * Absolute path of the directory holding one file per secret.
 		 *
 		 * <p>
-		 * Like any configuration value, the path may contain aliases, e.g.
-		 * <code>%SECRETS_DIR%</code>.
+		 * A path starting with <code>~/</code> lies in the home directory of the user running the
+		 * application, e.g. <code>~/.top-logic/secrets</code>. Like any configuration value, the
+		 * path may contain aliases, e.g. <code>%SECRETS_DIR%</code>.
 		 * </p>
 		 */
 		@Name(DIRECTORY)
@@ -70,6 +71,11 @@ public class DirectorySecretStore extends AbstractSecretStore<DirectorySecretSto
 		void setDirectory(String value);
 
 	}
+
+	/**
+	 * Prefix of a {@link Config#getDirectory() directory} in the home directory of the user.
+	 */
+	private static final String HOME = "~";
 
 	private final Path _directory;
 
@@ -85,7 +91,15 @@ public class DirectorySecretStore extends AbstractSecretStore<DirectorySecretSto
 	 */
 	public DirectorySecretStore(InstantiationContext context, Config config) {
 		super(context, config);
-		_directory = Paths.get(config.getDirectory()).toAbsolutePath().normalize();
+		_directory = resolve(config.getDirectory());
+	}
+
+	private static Path resolve(String directory) {
+		if (directory.equals(HOME) || directory.startsWith(HOME + "/")) {
+			return Paths.get(System.getProperty("user.home"), directory.substring(HOME.length()))
+				.toAbsolutePath().normalize();
+		}
+		return Paths.get(directory).toAbsolutePath().normalize();
 	}
 
 	@Override

@@ -68,7 +68,7 @@ Reads each secret from the file named like the secret in one directory, e.g. a K
 <store class="com.top_logic.basic.credential.DirectorySecretStore" directory="/run/secrets"/>
 ```
 
-The secret `db_password` is the content of `/run/secrets/db_password`. The file is read like the file of a `FileSecretSource` (see [secret sources](doc:credentials/secret-sources#filesecretsource)): UTF-8, without surrounding white space, cached and read again when the file has been replaced. A missing file means that the store does not hold the secret; an empty or unreadable file is an error. A name that would leave the directory (`../x`) is rejected.
+The secret `db_password` is the content of `/run/secrets/db_password`. The file is read like the file of a `FileSecretSource` (see [secret sources](doc:credentials/secret-sources#filesecretsource)): UTF-8, without surrounding white space, cached and read again when the file has been replaced. A missing file means that the store does not hold the secret; an empty or unreadable file is an error. A name that would leave the directory (`../x`) is rejected. A directory starting with `~/` lies in the home directory of the user running the application.
 
 With Kubernetes, the keys of the secret object are the secret names:
 
@@ -175,7 +175,7 @@ The configurations shipped with an application contain no secrets, not even defa
 ```
 
 - A system property or environment variable named like the secret takes precedence.
-- Otherwise the file named like the secret in the folder `~/.top-logic/secrets` of the developer delivers it (alias `%DEVEL_SECRETS_DIR%` in `devel-secrets.xml`). The folder is shared by all workspaces and applications of the developer and lies outside every project, so a real key never ends up in a repository:
+- Otherwise the file named like the secret in the folder `~/.top-logic/secrets` of the developer delivers it (alias `%DEVEL_SECRETS_DIR%` in `devel-secrets.xml`; the variable `tl_devel_secrets_dir` moves it). The folder is shared by all workspaces and applications of the developer and lies outside every project, so a real key never ends up in a repository:
 
   ```
   ~/.top-logic/secrets/translation_api_key    <DeepL API key>

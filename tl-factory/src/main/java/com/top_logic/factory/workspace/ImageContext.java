@@ -36,6 +36,13 @@ public final class ImageContext {
 	 */
 	public static final int HASH_LENGTH = 16;
 
+	/**
+	 * Separator between the repository and the tag of an image reference.
+	 *
+	 * @see #imageReference(String)
+	 */
+	public static final String TAG_SEPARATOR = ":";
+
 	private static final String HASH_ALGORITHM = "SHA-256";
 
 	private static final char[] HEX_DIGITS = "0123456789abcdef".toCharArray();
@@ -112,6 +119,18 @@ public final class ImageContext {
 			result.append(HEX_DIGITS[hash[n] & 0xF]);
 		}
 		return result.toString();
+	}
+
+	/**
+	 * The reference of the image built from this context in the given repository: the repository
+	 * tagged with the {@link #contentHash() content hash}.
+	 *
+	 * @param repository
+	 *        The name of the image without tag, e.g. {@code tl-factory-workspace}.
+	 * @see WorkspaceProvider#buildImage(String, ImageContext, ExecOutput)
+	 */
+	public String imageReference(String repository) {
+		return repository + TAG_SEPARATOR + contentHash();
 	}
 
 	private static void updateLength(MessageDigest digest, int length) {

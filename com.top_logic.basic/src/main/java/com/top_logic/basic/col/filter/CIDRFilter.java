@@ -5,17 +5,22 @@
  */
 package com.top_logic.basic.col.filter;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.util.StringTokenizer;
 
 import com.top_logic.basic.col.Filter;
 
 /**
- * IP filter that can be specified by a CIDR string.
+ * IP filter that can be specified by a CIDR string, an IPv4 range such as {@code 10.0.0.0/8} or an
+ * IPv6 range such as {@code fd00::/8}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class CIDRFilter implements Filter<String> {
+
+	private static final char IPV6_SEPARATOR = ':';
 
     /** The pattern to be used, never <code>null</code>. */
     private byte[] pattern;
@@ -57,14 +62,23 @@ public class CIDRFilter implements Filter<String> {
 	public String toString() {
         StringBuffer theResult = new StringBuffer(this.getClass().getName()).append(" [");
 
-        for (int theCnt = this.pattern.length, thePos = 0; thePos < theCnt; thePos++) {
-            if (thePos > 0) {
-                theResult.append('.');
-            }
-            theResult.append(pattern[thePos] & 0xFF);
-        }
+		if (this.pattern.length == 4) {
+			for (int theCnt = this.pattern.length, thePos = 0; thePos < theCnt; thePos++) {
+				if (thePos > 0) {
+					theResult.append('.');
+				}
+				theResult.append(pattern[thePos] & 0xFF);
+			}
+		} else {
+			try {
+				theResult.append(InetAddress.getByAddress(pattern).getHostAddress());
+			} catch (UnknownHostException ex) {
+				// Not reached, the pattern has the length of an address.
+				theResult.append(ex.getMessage());
+			}
+		}
 
-        if (this.maskBitCount < 32) {
+        if (this.maskBitCount < 8 * this.pattern.length) {
             theResult.append('/');
             theResult.append(this.maskBitCount);
         }
@@ -83,8 +97,19 @@ public class CIDRFilter implements Filter<String> {
     	return (this.matches(CIDRFilter.getByteArray(anObject)));
     }
 
+	/**
+	 * Whether the given address is in the range of this filter.
+	 *
+	 * <p>
+	 * An IPv4 address never matches an IPv6 range and vice versa.
+	 * </p>
+	 */
+	public boolean matches(InetAddress address) {
+		return address != null && matches(address.getAddress());
+	}
+
     public boolean matches(byte[] address) {
-		if (address.length != pattern.length) return false;
+		if (address == null || address.length != pattern.length) return false;
 		for (int cnt = pattern.length, n = 0; n < cnt; n++) {
 			if ((address[n] & mask[n]) != pattern[n]) {
 				return false;
@@ -94,13 +119,20 @@ public class CIDRFilter implements Filter<String> {
 	}
 
     /** 
-     * Convert the given IP address (V4) into a byte array.
+     * Convert the given IP address (V4 or V6) into a byte array.
      * 
-     * @param    anAddress    The IP address (V4) to be converted.
-     * @return   The byte representation of the given IP address (V4) or 
+     * @param    anAddress    The IP address (V4 or V6) to be converted.
+     * @return   The byte representation of the given IP address or 
      *           <code>null</code>, if not a valid address.
      */
     public static byte[] getByteArray(String anAddress) {
+		if (anAddress.indexOf(IPV6_SEPARATOR) >= 0) {
+			try {
+				return ipv6Bytes(anAddress);
+			} catch (ParseException ex) {
+				return null;
+			}
+		}
         StringTokenizer theToken = new StringTokenizer(anAddress, ".");
 
         if (theToken.countTokens() == 4) {
@@ -142,6 +174,10 @@ public class CIDRFilter implements Filter<String> {
 			theMaskSource    = null;
 		}
 
+		if (thePatternSource.indexOf(IPV6_SEPARATOR) >= 0) {
+			return withMask(ipv6Bytes(thePatternSource), theMaskSource, theSeparator);
+		}
+
 		String[] theByteSource = thePatternSource.split("\\.");
 
         if (theByteSource.length != 4) 
@@ -165,10 +201,16 @@ public class CIDRFilter implements Filter<String> {
             thePattern[thePos] = (byte) thePatternByte;
 		}
 
+		return withMask(thePattern, theMaskSource, theSeparator);
+	}
+
+	private static CIDRFilter withMask(byte[] thePattern, String theMaskSource, int theSeparator)
+			throws ParseException {
+		int maxBits = 8 * thePattern.length;
 		int theMaskBits;
 
         if (theMaskSource == null) {
-			theMaskBits = 8 * thePattern.length;
+			theMaskBits = maxBits;
 		}
         else {
 			try {
@@ -178,11 +220,32 @@ public class CIDRFilter implements Filter<String> {
 				throw new ParseException("Illegal mask: " + ex, theSeparator + 1);
 			}
 
-            if (theMaskBits < 0 || theMaskBits > 32) {
+            if (theMaskBits < 0 || theMaskBits > maxBits) {
                 throw new ParseException("Mask bits out of range: " + theMaskBits, theSeparator + 1);
             }
 		}
 
 		return new CIDRFilter(thePattern, theMaskBits);
+	}
+
+	/**
+	 * The bytes of an IPv6 address literal, without name resolution.
+	 */
+	private static byte[] ipv6Bytes(String literal) throws ParseException {
+		String address = literal.startsWith("[") && literal.endsWith("]")
+			? literal.substring(1, literal.length() - 1)
+			: literal;
+		for (int n = 0, cnt = address.length(); n < cnt; n++) {
+			char ch = address.charAt(n);
+			// Restricts the input to an address literal, so that no host name is looked up.
+			if (!(Character.digit(ch, 16) >= 0 || ch == IPV6_SEPARATOR || ch == '.')) {
+				throw new ParseException("Not an IPv6 address: " + literal, n);
+			}
+		}
+		try {
+			return InetAddress.getByName(address).getAddress();
+		} catch (UnknownHostException ex) {
+			throw new ParseException("Not an IPv6 address: " + literal, 0);
+		}
 	}
 }

@@ -3,7 +3,12 @@
 <!--
 	The projects of the control application and their workspaces: a list of the projects with the
 	state of each workspace and the address of its running application, and beside it the selected
-	project with its workspace and the output of the last operation on it.
+	project with its workspace and the output of the last operation on it (factory/project-detail.view.xml).
+	While the project has a workspace, the project panel shows these in a tab "Details", beside it a
+	tab "Agent" with the conversations with the coding agent of the workspace
+	(factory/workspace-agent.view.xml) and a tab "Application log" with the log of the application
+	running in the workspace (factory/app-log.view.xml). "Give a task" starts a conversation with the
+	agent (factory/assign-task.view.xml).
 	
 	The operations on a workspace run in the background (ProjectWorkspaces) and commit their output
 	and state while they run. The source channel "commits" brings these commits to the window as
@@ -25,9 +30,53 @@
 			inputs="project"
 			observed-types="tl.factory:Workspace"
 		/>
+		<!--
+			Why the coding agent cannot work in the selected workspace now, empty when it can: what
+			"Give a task" says while it is disabled.
+		-->
+		<derived-channel name="agentUnavailable"
+			expr="factoryAgentUnavailable($workspace)"
+			inputs="workspace"
+			observed-types="tl.factory:Workspace"
+		/>
+		<!--
+			The agent conversation shown in the Agent tab: the newest one of the selected workspace,
+			the one a task just started, or the one the user opens.
+		-->
+		<channel name="conversation"
+			inputs="workspace"
+		>
+			<init><![CDATA[if($workspace == null, null,
+	$workspace.get(`tl.factory:Workspace#conversations`)
+		.sort((c -> $c.get(`tl.factory:AgentConversation#createdAt`)).comparator().desc())
+		.firstElement())]]></init>
+		</channel>
+		<!--
+			The chat of the current user about that conversation, empty for a conversation the user
+			has not talked in yet: the first message then starts a chat about it, which continues the
+			conversation of the agent.
+		-->
+		<channel name="agentSession"
+			inputs="conversation"
+		>
+			<init><![CDATA[if($conversation == null, null,
+	$conversation.referers(`tl.ai.execution:AgentSession#subject`)
+		.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+		.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())
+		.firstElement())]]></init>
+		</channel>
 		<derived-channel name="status"
 			expr="$workspace.get(`tl.factory:Workspace#status`)"
 			inputs="workspace"
+		/>
+		<!--
+			Whether the container of the workspace was created from an older image than the current
+			one; false while it has no container.
+		-->
+		<derived-channel name="outdated"
+			expr="if($workspace == null, false, factoryImageOutdated($workspace))"
+			inputs="workspace"
+			observed-types="tl.factory:Workspace"
 		/>
 		<derived-channel name="previewLink"
 			inputs="workspace"
@@ -104,7 +153,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="if([`tl.factory:WorkspaceStatus#STOPPED`, `tl.factory:WorkspaceStatus#CREATED`, `tl.factory:WorkspaceStatus#UNKNOWN`].containsElement($status), null, #('The workspace is not stopped.'@en, 'Der Workspace ist nicht gestoppt.'@de))"/>
+								<disabled-if expr="if([`tl.factory:WorkspaceStatus#STOPPED`, `tl.factory:WorkspaceStatus#CREATED`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`].containsElement($status), null, #('Neither the workspace nor its application is stopped.'@en, 'Weder der Workspace noch seine Anwendung ist gestoppt.'@de))"/>
 							</executability>
 							<execute-script function="factoryStart($project)"/>
 						</generic-command>
@@ -120,9 +169,26 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="if([`tl.factory:WorkspaceStatus#RUNNING`, `tl.factory:WorkspaceStatus#UNKNOWN`, `tl.factory:WorkspaceStatus#ERROR`].containsElement($status), null, #('The workspace is not running.'@en, 'Der Workspace läuft nicht.'@de))"/>
+								<disabled-if expr="if([`tl.factory:WorkspaceStatus#RUNNING`, `tl.factory:WorkspaceStatus#APP_STOPPED`, `tl.factory:WorkspaceStatus#UNKNOWN`, `tl.factory:WorkspaceStatus#ERROR`].containsElement($status), null, #('The workspace is not running.'@en, 'Der Workspace läuft nicht.'@de))"/>
 							</executability>
 							<execute-script function="factoryStop($project)"/>
+						</generic-command>
+						<generic-command name="updateWorkspace"
+							clique="edit"
+							image="css:bi bi-arrow-repeat"
+							inputs="project, status, outdated"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Update workspace</en>
+								<de>Workspace aktualisieren</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), if($outdated, null, #('The workspace runs on the current image.'@en, 'Der Workspace läuft auf dem aktuellen Image.'@de))))"/>
+							</executability>
+							<confirm expr="#('Create the container of {0} anew on the current image? Sources, Maven repository, database and the conversations of the agent are kept, a running application is restarted.'@en, 'Den Container von {0} auf dem aktuellen Image neu anlegen? Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten bleiben erhalten, eine laufende Anwendung wird neu gestartet.'@de).fill($project)"/>
+							<execute-script function="factoryUpdate($project)"/>
 						</generic-command>
 						<generic-command name="cleanupWorkspace"
 							clique="delete"
@@ -136,7 +202,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
-								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), null))"/>
+								<disabled-if expr="if($status == null, #('The project has no workspace.'@en, 'Das Projekt hat keinen Workspace.'@de), if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), #('An operation is running on the workspace.'@en, 'Auf dem Workspace läuft eine Operation.'@de), null))"/>
 							</executability>
 							<confirm expr="#('Remove the workspace of {0} with its container, sources and database? The project is kept.'@en, 'Den Workspace von {0} mit Container, Quellen und Datenbank entfernen? Das Projekt bleibt erhalten.'@de).fill($project)"/>
 							<execute-script function="factoryCleanup($project)"/>
@@ -196,7 +262,8 @@
 	status = $row.get(`tl.factory:Project#workspace`).get(`tl.factory:Workspace#status`);
 	if($status == `tl.factory:WorkspaceStatus#ERROR`, 'tl-status-error',
 		if($status == `tl.factory:WorkspaceStatus#RUNNING`, 'tl-status-success',
-			if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`].containsElement($status), 'tl-status-info', null)));
+			if($status == `tl.factory:WorkspaceStatus#APP_STOPPED`, 'tl-status-warning',
+				if([`tl.factory:WorkspaceStatus#BUILDING`, `tl.factory:WorkspaceStatus#STARTING`, `tl.factory:WorkspaceStatus#STOPPING`, `tl.factory:WorkspaceStatus#REMOVING`, `tl.factory:WorkspaceStatus#UPDATING`].containsElement($status), 'tl-status-info', null))));
 }]]></row-class>
 					</table>
 				</panel>
@@ -205,31 +272,148 @@
 				size="55"
 				unit="%"
 			>
-				<panel with-inset="true">
+				<panel>
 					<title>
 						<en>Project</en>
 						<de>Projekt</de>
 					</title>
-					<form
-						input="project"
-						mode-switch="false"
-					>
-						<field attribute="name"/>
-						<field attribute="groupId"/>
-						<field attribute="artifactId"/>
-						<field attribute="engineVersion"/>
-					</form>
-					<html input="previewLink"/>
-					<form
-						input="workspace"
-						mode-switch="false"
-					>
-						<field attribute="initialPassword"/>
-						<field attribute="status"/>
-						<field attribute="workspaceId"/>
-						<field attribute="hostPort"/>
-						<field attribute="log"/>
-					</form>
+					<!-- Commands about the agent of the selected workspace. -->
+					<commands>
+						<generic-command name="assignTask"
+							image="css:bi bi-robot"
+							inputs="workspace, agentUnavailable"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Give a task</en>
+								<de>Auftrag erteilen</de>
+							</label>
+							<executability>
+								<visible-if expr="$workspace != null"/>
+								<disabled-if expr="$agentUnavailable"/>
+							</executability>
+							<create-transient type="tl.factory:AgentConversation">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="factory/assign-task.view.xml"
+									>
+										<bind
+											channel="workspace"
+											to="workspace"
+										/>
+										<bind
+											channel="conversation"
+											to="conversation"
+										/>
+										<bind
+											channel="agentSession"
+											to="agentSession"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+					</commands>
+					<switch input="workspace">
+						<case test="$workspace != null">
+							<tab-bar active-tab="details">
+								<tab id="details"
+									icon="css:bi bi-card-list"
+									route="none"
+								>
+									<label>
+										<en>Details</en>
+										<de>Details</de>
+									</label>
+									<view-ref view="factory/project-detail.view.xml">
+										<bind
+											channel="project"
+											to="project"
+										/>
+										<bind
+											channel="workspace"
+											to="workspace"
+										/>
+										<bind
+											channel="outdated"
+											to="outdated"
+										/>
+										<bind
+											channel="previewLink"
+											to="previewLink"
+										/>
+									</view-ref>
+								</tab>
+								<!--
+									The conversations with the coding agent working in the workspace.
+								-->
+								<tab id="agent"
+									icon="css:bi bi-robot"
+									route="none"
+								>
+									<label>
+										<en>Agent</en>
+										<de>Agent</de>
+									</label>
+									<view-ref view="factory/workspace-agent.view.xml">
+										<bind
+											channel="workspace"
+											to="workspace"
+										/>
+										<bind
+											channel="conversation"
+											to="conversation"
+										/>
+										<bind
+											channel="agentSession"
+											to="agentSession"
+										/>
+										<bind
+											channel="agentUnavailable"
+											to="agentUnavailable"
+										/>
+									</view-ref>
+								</tab>
+								<!-- The log of the application running in the workspace. -->
+								<tab id="app-log"
+									icon="css:bi bi-terminal"
+									route="none"
+								>
+									<label>
+										<en>Application log</en>
+										<de>Anwendungs-Log</de>
+									</label>
+									<view-ref view="factory/app-log.view.xml">
+										<bind
+											channel="workspace"
+											to="workspace"
+										/>
+									</view-ref>
+								</tab>
+							</tab-bar>
+						</case>
+						<default>
+							<view-ref view="factory/project-detail.view.xml">
+								<bind
+									channel="project"
+									to="project"
+								/>
+								<bind
+									channel="workspace"
+									to="workspace"
+								/>
+								<bind
+									channel="outdated"
+									to="outdated"
+								/>
+								<bind
+									channel="previewLink"
+									to="previewLink"
+								/>
+							</view-ref>
+						</default>
+					</switch>
 				</panel>
 			</pane>
 		</panes>

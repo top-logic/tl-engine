@@ -6,6 +6,7 @@
 package com.top_logic.ai.chat.view;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,6 +31,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.TLObject;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -102,6 +104,14 @@ public final class ChatViewBinding {
 	 * </p>
 	 */
 	private final Map<String, ViewChannel> _presentable = new ConcurrentHashMap<>();
+
+	/**
+	 * The channel holding what a conversation created in this chat is about, {@code null} while
+	 * no displayed element of the chat names one.
+	 *
+	 * @see #offerSubject(ViewChannel)
+	 */
+	private volatile ViewChannel _subject;
 
 	private ChatViewBinding(TLSubSessionContext subSession, String windowName, String contextPath, String chatId,
 			String conversation) {
@@ -297,6 +307,88 @@ public final class ChatViewBinding {
 			return;
 		}
 		_presentable.remove(name.trim(), channel);
+	}
+
+	/**
+	 * Lets a conversation created in this chat be about the object on the given channel - the
+	 * {@code subject} of a {@code <chat-conversation>} - for as long as its element is displayed.
+	 *
+	 * <p>
+	 * Read when the conversation comes into being, by {@link #subjectOf(TypedAnnotatable, String)},
+	 * on the request that creates it: a conversation is about what the page shows when it is
+	 * created, and is stamped before its first message is sent.
+	 * </p>
+	 */
+	public void offerSubject(ViewChannel channel) {
+		_subject = channel;
+	}
+
+	/**
+	 * Undoes one {@link #offerSubject(ViewChannel)}, for an element that is no longer displayed; a
+	 * later offer of another channel is left alone.
+	 */
+	public void withdrawSubject(ViewChannel channel) {
+		if (_subject == channel) {
+			_subject = null;
+		}
+	}
+
+	/**
+	 * What a conversation created now in this chat is about, or <code>null</code> for nothing.
+	 *
+	 * @see #singleObject(Object)
+	 */
+	public TLObject subject() {
+		ViewChannel channel = _subject;
+		return channel == null ? null : singleObject(channel.get());
+	}
+
+	/**
+	 * What a conversation created now in the chat {@code conversation} of {@code scope}'s window is
+	 * about, or <code>null</code> when the window shows no such chat or the chat names no subject.
+	 *
+	 * @param scope
+	 *        The window's sub-session. May be <code>null</code>, which names nothing.
+	 * @param conversation
+	 *        The conversation of the window, as the client names it.
+	 */
+	public static TLObject subjectOf(TypedAnnotatable scope, String conversation) {
+		if (scope == null) {
+			return null;
+		}
+		Map<String, ChatViewBinding> map = scope.get(BINDINGS);
+		if (map == null) {
+			return null;
+		}
+		ChatViewBinding binding;
+		synchronized (map) {
+			binding = map.get(ChatSessionRegistry.key(conversation));
+		}
+		return binding == null ? null : binding.subject();
+	}
+
+	/**
+	 * The one model object a channel value names: the object itself, or the single row of a
+	 * selection; <code>null</code> for nothing, several objects or anything that is no object.
+	 *
+	 * <p>
+	 * As a subject: an empty channel means the page was showing nothing, and several objects on it
+	 * name no single thing the conversation could be about; neither stamps a subject. A conversation
+	 * with no subject is simply in no scoped list.
+	 * </p>
+	 *
+	 * @param channelValue
+	 *        What stands on a channel: one object, a one-row selection, several, or nothing.
+	 */
+	public static TLObject singleObject(Object channelValue) {
+		if (channelValue instanceof TLObject object) {
+			return object;
+		}
+		if (channelValue instanceof Collection<?> many && many.size() == 1) {
+			Object single = many.iterator().next();
+			return single instanceof TLObject object ? object : null;
+		}
+		return null;
 	}
 
 	/** The channel {@code name}, or <code>null</code> when this chat does not offer it. */

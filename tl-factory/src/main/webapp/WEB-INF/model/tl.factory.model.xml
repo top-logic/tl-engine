@@ -12,9 +12,11 @@
 				<classifier name="BUILDING"/>
 				<classifier name="STARTING"/>
 				<classifier name="RUNNING"/>
+				<classifier name="APP_STOPPED"/>
 				<classifier name="STOPPING"/>
 				<classifier name="STOPPED"/>
 				<classifier name="REMOVING"/>
+				<classifier name="UPDATING"/>
 				<classifier name="ERROR"/>
 				<classifier name="UNKNOWN"/>
 			</enum>
@@ -106,6 +108,10 @@
 						type="tl.core:Integer"
 					>
 						<annotations>
+							<!-- A port, displayed without grouping separator. -->
+							<format>
+								<decimal pattern="0"/>
+							</format>
 							<visibility value="read-only"/>
 						</annotations>
 					</property>
@@ -127,8 +133,81 @@
 							<visibility value="read-only"/>
 						</annotations>
 					</property>
+					<!--
+						The image the container of the workspace was created from. A workspace without
+						image or with another one than the current workspace image is outdated.
+					-->
+					<property name="image"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
 					<property name="log"
 						type="tl.core:Text"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The conversations with the coding agent working in the workspace. -->
+					<reference name="conversations"
+						composite="true"
+						inverse-reference="workspace"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						ordered="true"
+						type="AgentConversation"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
+			<!--
+				A conversation with the coding agent of a workspace: the subject of the chat that talks
+				to the agent, started with a task given to the agent. The agent keeps the conversation
+				itself; a new process of it continues the conversation stored under the session ID.
+			-->
+			<class name="AgentConversation">
+				<annotations>
+					<main-properties properties="createdAt,task,sessionId"/>
+				</annotations>
+				<attributes>
+					<reference name="workspace"
+						aggregate="true"
+						inverse-reference="conversations"
+						kind="backwards"
+						navigate="true"
+						type="Workspace"
+					/>
+					<property name="createdAt"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The task the conversation was started with, its first message to the agent. -->
+					<property name="task"
+						mandatory="true"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<multi-line/>
+						</annotations>
+					</property>
+					<!--
+						The ID under which the agent keeps the conversation, empty before its first
+						answer.
+					-->
+					<property name="sessionId"
+						type="tl.core:String"
 					>
 						<annotations>
 							<visibility value="read-only"/>

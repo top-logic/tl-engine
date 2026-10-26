@@ -1033,6 +1033,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (!(instance instanceof BoundObject)) {
 			return true;
 		}
+		if (isDeleted(instance)) {
+			// A deleted object is accessible for nobody, and its type must not be read.
+			return false;
+		}
 		if (!isCommitted(instance)) {
 			// Roles are computed at commit time; an object created in the current transaction has no
 			// computed roles yet, so an instance-level check against it is not meaningful.
@@ -1167,6 +1171,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (!(instance instanceof BoundObject)) {
 			return true;
 		}
+		if (isDeleted(instance)) {
+			// A deleted object is accessible for nobody, and its type must not be read.
+			return false;
+		}
 		if (!isCommitted(instance)) {
 			// See isAllowed(Person, TLObject, BoundCommandGroup): no check on not-yet-committed objects.
 			return true;
@@ -1227,6 +1235,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public boolean isAllowedCreate(Person person, TLClass type, TLObject context) {
+		if (context != null && isDeleted(context)) {
+			// Nobody may create an object in a deleted context.
+			return false;
+		}
 		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, SimpleBoundCommandGroup.CREATE);
 		if (allowedBypass != null) {
 			return allowedBypass.booleanValue();
@@ -1266,12 +1278,29 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * transient objects) are exempt from instance-level checks -- their creation was already gated
 	 * by the CREATE check against a committed context.
 	 * </p>
+	 *
+	 * <p>
+	 * An object deleted in a committed transaction still counts as committed here; the access
+	 * checks deny it before, see {@link #isDeleted(TLObject)}.
+	 * </p>
 	 */
 	private static boolean isCommitted(TLObject object) {
 		if (object == null || object.tTransient()) {
 			return false;
 		}
 		return object.tHandle().getState() == KnowledgeItem.State.PERSISTENT;
+	}
+
+	/**
+	 * Whether the given object has been deleted.
+	 *
+	 * <p>
+	 * A deleted object is accessible for nobody, not even for a person bypassing the model
+	 * security, and its type must not be read.
+	 * </p>
+	 */
+	private static boolean isDeleted(TLObject object) {
+		return !object.tValid();
 	}
 
 	/**

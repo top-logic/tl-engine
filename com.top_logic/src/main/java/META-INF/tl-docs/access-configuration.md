@@ -138,7 +138,12 @@ instead of replacing them.
   rules.
 
 A custom operation can also authorize a configured TL-Script function as a whole, see
-[privileged TL-Script functions](doc:access-privileged-scripts).
+[privileged TL-Script functions](doc:access-privileged-scripts). The UI units of the React view
+layer (navigation items, tabs, sections, tiles) name the operation they check and the object they
+check it on with `<access-control>` and are decided by these grants as well (article
+`view-layer/access-control` of the module `com.top_logic.layout.view`). The operation `Administration` of the
+engine's administration views is declared on the security root (`<singleton
+name="SecurityStructure#ROOT">`) and granted there.
 
 ### Operations: which operations apply to a type
 

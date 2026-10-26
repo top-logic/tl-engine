@@ -18,7 +18,27 @@
 					<module name="tl.admin"
 						internal="true"
 					/>
+					<!--
+						The administration of the application (WEB-INF/views/admin/admin.view.xml) is
+						shown to the users holding the operation "Administration" on the security root:
+						<access-control operation="Administration"/>. Without a grant, only the
+						technical super user (root) holds it; an application grants it to its
+						administrator roles with a <grant operation="Administration" roles="..."/> in
+						this entry.
+					-->
+					<singleton name="SecurityStructure#ROOT">
+						<operations>
+							<operation name="Administration"/>
+						</operations>
+					</singleton>
 				</security-config>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+				<group name="Administration"
+					type="write"
+				/>
 			</instance>
 		</config>
 		<!-- The entries of the developer documentation, shown in its documentation window. -->
@@ -40,9 +60,6 @@
 						value="true"
 					/>
 					<module key="com.top_logic.layout.view.table.ColumnProviderService$Module"
-						value="true"
-					/>
-					<module key="com.top_logic.layout.view.security.SecurityScopeService$Module"
 						value="true"
 					/>
 					<module key="com.top_logic.layout.view.navigation.DisplayTargetService$Module"
@@ -162,28 +179,6 @@
 						/>
 					</provider>
 				</providers>
-			</instance>
-		</config>
-
-		<!--
-			Security scope for the reusable account / group / role administration views
-			(WEB-INF/views/admin/admin.view.xml). Defined here in the framework so any app
-			that includes this module inherits it and can gate an Administration entry with
-			<access-control scope="administration"/> out of the box. With no roles assigned,
-			the scope is visible only to the technical super user (root); other users are
-			granted via the security administration UI. Apps may add further scopes by
-			extending this service's <scopes> list.
-		-->
-		<config service-class="com.top_logic.layout.view.security.SecurityScopeService">
-			<instance class="com.top_logic.layout.view.security.SecurityScopeService">
-				<scopes>
-					<scope id="administration">
-						<label>
-							<en>Administration</en>
-							<de>Administration</de>
-						</label>
-					</scope>
-				</scopes>
 			</instance>
 		</config>
 

@@ -41,16 +41,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_PASSWORD_CHANGE_UNSUPPORTED;
 
 	/**
-	 * @en Scope
-	 */
-	public static ResKey MATRIX_SCOPE_COLUMN;
-
-	/**
-	 * @en Command group
-	 */
-	public static ResKey MATRIX_GROUP_COLUMN;
-
-	/**
 	 * @en Type
 	 */
 	public static ResKey COVERAGE_COLUMN_TYPE;

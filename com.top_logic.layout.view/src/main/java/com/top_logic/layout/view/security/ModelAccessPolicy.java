@@ -6,6 +6,8 @@
 package com.top_logic.layout.view.security;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.util.ResKey;
@@ -16,9 +18,11 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -327,6 +331,74 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
+	 * Whether the current user may hold the given operation on objects of the given type at all.
+	 *
+	 * <p>
+	 * The operation is out of reach, independent of any concrete object, when the user is
+	 * restricted (see {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), or when no
+	 * role is granted the operation (or an operation implying it) on the type or on one of its
+	 * specializations. A type with an access parent is decided by the types its access parent may
+	 * lead to, with {@link SimpleBoundCommandGroup#WRITE} in place of
+	 * {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE}. A type
+	 * without security, or one whose singletons have rights of their own, is always in reach.
+	 * </p>
+	 *
+	 * <p>
+	 * A UI unit or command offering the operation is hidden when it is out of reach: no object
+	 * changes that.
+	 * </p>
+	 *
+	 * @param operation
+	 *        The operation.
+	 * @param type
+	 *        The (static) type of the objects the operation is performed on.
+	 */
+	public static boolean isOffered(BoundCommandGroup operation, TLClass type) {
+		if (restricted(TLContext.currentUser(), operation)) {
+			return false;
+		}
+		return isGrantable(ModelAccessRights.getInstance(), operation, type, new HashSet<>());
+	}
+
+	private static boolean isGrantable(ModelAccessRights rights, BoundCommandGroup operation, TLClass type,
+			Set<TLClass> seen) {
+		for (TLClass candidate : TLModelUtil.getReflexiveTransitiveSpecializations(type)) {
+			if (!seen.add(candidate)) {
+				continue;
+			}
+			if (rights.isWithoutSecurity(candidate) || rights.hasSingletonRights(candidate)) {
+				return true;
+			}
+			AccessParentFunction accessParent = rights.getAccessParent(candidate);
+			if (accessParent != null) {
+				BoundCommandGroup parentOperation = isCreate(operation) || isDelete(operation)
+					? SimpleBoundCommandGroup.WRITE
+					: operation;
+				for (TLClass parentType : accessParent.getParentTypes(candidate)) {
+					if (isGrantable(rights, parentOperation, parentType, seen)) {
+						return true;
+					}
+				}
+				continue;
+			}
+			if (!rights.getAllowedRoles(candidate, operation).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The reason given for refusing the given operation on a concrete object.
+	 *
+	 * @param operation
+	 *        The refused operation.
+	 */
+	public static ResKey deniedReason(BoundCommandGroup operation) {
+		return objectReason(operation, null);
+	}
+
+	/**
 	 * The state of a command creating an object in the given container.
 	 *
 	 * <p>
@@ -374,6 +446,10 @@ public final class ModelAccessPolicy {
 	 */
 	public static boolean isCreate(BoundCommandGroup operation) {
 		return SimpleBoundCommandGroup.CREATE.getID().equals(operation.getID());
+	}
+
+	private static boolean isDelete(BoundCommandGroup operation) {
+		return SimpleBoundCommandGroup.DELETE.getID().equals(operation.getID());
 	}
 
 	private static ExecutableState refused(DeniedDisplay denied, boolean hideByDefault,

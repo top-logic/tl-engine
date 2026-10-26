@@ -5,77 +5,85 @@
  */
 package com.top_logic.layout.view.security;
 
-import com.top_logic.basic.Logger;
+import java.util.function.Function;
+
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.ViewContext;
 
 /**
- * Shared access-control enforcement for removable UI units.
+ * Shared access-control enforcement for UI units (navigation items, sidebar groups, tabs, accordion
+ * sections, tiles).
  *
  * <p>
- * All securable elements (nav-items, tabs, tiles) run the same check: resolve the referenced
- * {@link SecurityScope} and ask whether the current user may see the unit. A unit without an
- * {@link AccessControl} is always accessible; a reference to an undefined scope fails closed.
+ * Every securable unit runs the same three steps, each accepting {@code null} for a unit without
+ * {@link AccessControl}:
  * </p>
+ * <ol>
+ * <li>{@link #isOffered(UnitAccess)} when the unit is built: a unit the user can never see is
+ * omitted.</li>
+ * <li>{@link #contentContext(UnitAccess, ViewContext)} when its content context is created: the
+ * {@link SecuredObject} of the unit is published to the content.</li>
+ * <li>{@link #guard(UnitAccess, ViewContext, Function)} when the content is created: the content is
+ * displayed as the access check decides for the current object of the unit.</li>
+ * </ol>
  */
 public class AccessChecks {
 
 	/**
-	 * Whether the UI unit carrying the given {@link AccessControl} is accessible to the current
-	 * user.
+	 * Whether the UI unit with the given access check is displayed to the current user at all.
 	 *
-	 * @param accessControl
-	 *        The access control of the unit, or {@code null} when the unit is not guarded.
-	 * @return {@code true} when the unit may be shown.
+	 * @param access
+	 *        The access check of the unit, {@code null} when the unit is not guarded.
+	 * @return {@code true} when the unit is built.
+	 *
+	 * @see UnitAccess#isOffered()
 	 */
-	public static boolean isAccessible(AccessControl accessControl) {
-		if (accessControl == null) {
-			// No access control: access is granted.
-			return true;
-		}
-		SecurityScope scope = resolveScope(accessControl);
-		if (scope == null) {
-			// Fail closed: a misconfigured reference must not expose a guarded unit.
-			return false;
-		}
-		return scope.isVisible();
+	public static boolean isOffered(UnitAccess access) {
+		return access == null || access.isOffered();
 	}
 
 	/**
-	 * Resolves the {@link SecurityScope} referenced by the given {@link AccessControl}.
+	 * The context the content of a UI unit with the given access check is built in.
 	 *
 	 * <p>
-	 * Used both for the visibility check ({@link #isAccessible(AccessControl)}) and to establish the
-	 * scope on the {@link com.top_logic.layout.view.ViewContext} for the guarded unit's content, so
-	 * that command-level rules built underneath can default to it.
+	 * Publishes the {@link SecuredObject} of the unit in the given context, so that commands in the
+	 * content can check their operation on it (see {@link SecuredObject#of(ViewContext)}).
 	 * </p>
 	 *
-	 * @param accessControl
-	 *        The access control of a unit, or {@code null} when the unit is not guarded.
-	 * @return The referenced scope, or {@code null} when {@code accessControl} is {@code null} or its
-	 *         scope id is undefined (the undefined case is logged).
+	 * @param access
+	 *        The access check of the unit, {@code null} when the unit is not guarded.
+	 * @param context
+	 *        The context of the content without the unit's object.
 	 */
-	public static SecurityScope resolveScope(AccessControl accessControl) {
-		if (accessControl == null) {
-			return null;
+	public static ViewContext contentContext(UnitAccess access, ViewContext context) {
+		if (access == null) {
+			return context;
 		}
-		String scopeId = accessControl.getScope();
-		SecurityScope scope = SecurityScopeService.getInstance().getScope(scopeId);
-		if (scope == null) {
-			Logger.error("Reference to undefined security scope '" + scopeId + "'.", AccessChecks.class);
-		}
-		return scope;
+		return context.withScope(SecuredObject.class, access.bind(context));
 	}
 
 	/**
-	 * Whether the UI unit described by the given configuration is accessible to the current user.
+	 * Creates the content of a UI unit with the given access check.
 	 *
-	 * @param config
-	 *        The configuration of the unit.
-	 * @return {@code true} when the unit may be shown.
+	 * <p>
+	 * For a check over an object, the content is wrapped in an {@link AccessGuardControl} that
+	 * displays it while the operation is allowed on the current object.
+	 * </p>
 	 *
-	 * @see #isAccessible(AccessControl)
+	 * @param access
+	 *        The access check of the unit, {@code null} when the unit is not guarded.
+	 * @param contentContext
+	 *        The context created by {@link #contentContext(UnitAccess, ViewContext)}.
+	 * @param content
+	 *        Creates the content in the given context.
 	 */
-	public static boolean isAccessible(WithAccessControl config) {
-		return isAccessible(config.getAccessControl());
+	public static ReactControl guard(UnitAccess access, ViewContext contentContext,
+			Function<ViewContext, ReactControl> content) {
+		if (access == null || !access.isReactive()) {
+			return content.apply(contentContext);
+		}
+		return new AccessGuardControl(contentContext, access, access.bind(contentContext),
+			() -> content.apply(contentContext));
 	}
 
 }

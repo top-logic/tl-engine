@@ -248,8 +248,8 @@ public class FormElement extends ContainerElement {
 		 * </p>
 		 *
 		 * <p>
-		 * A {@link com.top_logic.layout.view.security.SecurityRule} checks the user's roles for a
-		 * command group on the enclosing security scope; a
+		 * A {@link com.top_logic.layout.view.security.ModelAccessRule} checks an operation on the
+		 * displayed object in the model access rights; a
 		 * {@link com.top_logic.layout.view.command.VisibleIf} evaluates a script predicate over the
 		 * displayed object, which it sees as a variable named after the {@link #getInput() input}
 		 * channel of the form. Without a rule, every user who sees the form may edit it.

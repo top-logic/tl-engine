@@ -5,7 +5,7 @@
 		<group id="guarded"
 			label="Guarded"
 		>
-			<access-control scope="administration"/>
+			<access-control operation="Administration"/>
 			<nav-item id="withheld"
 				label="Withheld"
 			>

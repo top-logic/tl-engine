@@ -17,10 +17,7 @@ import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryManager;
-import com.top_logic.knowledge.service.I18NConstants;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.calendar.CalendarEvent;
 import com.top_logic.layout.react.control.calendar.DefaultCalendarEvent;
@@ -34,19 +31,13 @@ import com.top_logic.layout.view.job.JobMonitor;
 import com.top_logic.layout.view.job.JobPhase;
 import com.top_logic.layout.view.list.ElementAsConfig;
 import com.top_logic.layout.view.list.ObjectListScope;
-import com.top_logic.layout.view.security.SecurityScope;
-import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.util.Resources;
 
 /**
- * Tests the commit messages of the changes the calendar, the object list, the security scope, the
- * form and the background job of the view layer perform.
+ * Tests the commit messages of the changes the calendar, the object list, the form and the
+ * background job of the view layer perform.
  *
  * <p>
  * Each test asserts the message stored with the revision the change is committed in.
@@ -54,7 +45,6 @@ import com.top_logic.util.Resources;
  *
  * @see ExpressionCalendarModel
  * @see ObjectListScope
- * @see SecurityScope
  * @see FormControl
  * @see ChunkedJobBody
  */
@@ -83,12 +73,6 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 
 	/** The label of the project before a change, which the commit message names. */
 	private static final String ORIGINAL = "project";
-
-	/** Security ID of the scope the tests grant and revoke on. */
-	private static final ComponentName SCOPE_ID = ComponentName.newName("test.TestElementCommitMessages");
-
-	/** Label of the scope the tests grant and revoke on. */
-	private static final String SCOPE_LABEL = "Test scope";
 
 	@Override
 	protected void setUp() throws Exception {
@@ -163,37 +147,6 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 		list.removeElement(_project);
 
 		assertLastMessage("Removed list element: " + ORIGINAL);
-	}
-
-	/**
-	 * Granting and revoking a command group names the group, the role and the scope.
-	 */
-	public void testSecurityGrant() throws Exception {
-		PersBoundComp persBoundComp;
-		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
-			persBoundComp = PersBoundComp.createInstance(kb(), SCOPE_ID);
-			tx.commit();
-		}
-		try {
-			SecurityScope scope = new SecurityScope(SCOPE_ID, ResKey.text(SCOPE_LABEL), List.of());
-			BoundCommandGroup group = SimpleBoundCommandGroup.READ;
-			BoundedRole role = BoundedRole.getRoleByName(ROLE_RESPONSIBLE);
-			String groupLabel = MetaLabelProvider.INSTANCE.getLabel(group);
-			String roleLabel = MetaLabelProvider.INSTANCE.getLabel(role);
-
-			scope.setGranted(group, role, true);
-			assertTrue(scope.isGranted(group, role));
-			assertLastMessage(
-				"Granted command group \"" + groupLabel + "\" to role \"" + roleLabel + "\" on \"" + SCOPE_LABEL + "\".");
-
-			scope.setGranted(group, role, false);
-			assertFalse(scope.isGranted(group, role));
-			assertLastMessage(
-				"Revoked command group \"" + groupLabel + "\" from role \"" + roleLabel + "\" on \"" + SCOPE_LABEL
-					+ "\".");
-		} finally {
-			delete(persBoundComp);
-		}
 	}
 
 	/**

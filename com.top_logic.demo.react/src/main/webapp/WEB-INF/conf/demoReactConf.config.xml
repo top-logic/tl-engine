@@ -30,7 +30,7 @@
 		</config>
 		<!--
 			The roles of this application: the administrator role that may open the administration
-			area, granted in security.xml; the account reader and user roles that the role rules below
+			area, granted the operation "Administration" on the security root below; the account reader and user roles that the role rules below
 			give to the members of the "users" group; the project member and project administrator
 			roles that the role rules below give to the members and the administrators of a project,
 			on that project only; the project manager role that a role rule below gives to the members
@@ -446,6 +446,13 @@
 							roles="demo.react.ChartReader"
 						/>
 					</class>
+					<!-- The administrator role opens the administration area. -->
+					<singleton name="SecurityStructure#ROOT">
+						<grant
+							operation="Administration"
+							roles="demo.react.Administrator"
+						/>
+					</singleton>
 				</security-config>
 			</instance>
 		</config>

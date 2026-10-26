@@ -83,7 +83,9 @@ def classicModules = [
 	"tl-layout-wysiwyg",
 	"tl-model-wysiwyg",
 	"ext-com-ckeditor",
-	"tl-ai-classic"
+	"tl-ai-classic",
+	"tl-model-search-classic",
+	"tl-layout-codeedit"
 ];
 def missing = classicModules.findAll { !resolved.contains(it) };
 if (!missing.isEmpty()) {

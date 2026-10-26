@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="modelSearchClassicMessages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<!-- The editors of the attribute types of tl-model-search in the classic UI. -->
+		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+			<instance>
+				<attribute-settings>
+					<attribute-setting config-name="CODE">
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
+								controlProvider="com.top_logic.model.search.code.CodeEditorControlProvider"
+							/>
+						</tag-provider>
+
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<tooltipRenderer class="com.top_logic.model.search.code.CodeEditorTooltipRenderer"/>
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+						</column-info>
+					</attribute-setting>
+
+					<attribute-setting config-name="JSON">
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
+								controlProvider="com.top_logic.model.search.code.CodeEditorControlProvider"
+							/>
+						</tag-provider>
+
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider"
+									maxChars="50"
+								>
+									<fullTextProvider class="com.top_logic.layout.provider.label.JSONLabelProvider"
+										pretty="false"
+									/>
+								</labelProvider>
+								<tooltipRenderer class="com.top_logic.layout.renderers.PreformattedContentRenderer">
+									<content-renderer class="com.top_logic.layout.renderers.ConfiguredLabelRenderer">
+										<labels class="com.top_logic.layout.provider.label.JSONLabelProvider"
+											pretty="true"
+										/>
+									</content-renderer>
+								</tooltipRenderer>
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+						</column-info>
+					</attribute-setting>
+
+					<attribute-setting config-name="EXPR">
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
+								controlProvider="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"
+							/>
+						</tag-provider>
+
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<tooltipRenderer class="com.top_logic.model.search.ui.TLScriptRenderer"/>
+								<editControlProvider class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+							</editControlProvider>
+						</column-info>
+					</attribute-setting>
+
+					<attribute-setting config-name="TEMPLATE">
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+						</column-info>
+					</attribute-setting>
+
+					<attribute-setting config-name="REPORT">
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+						</column-info>
+					</attribute-setting>
+
+					<attribute-setting config-name="MACRO">
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
+								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
+							</editControlProvider>
+						</column-info>
+					</attribute-setting>
+				</attribute-settings>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+					<handler id="deleteModelSearch" class="com.top_logic.model.search.ui.selector.DeleteSearchCommand"
+						clique="delete">
+						<executability>
+							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
+						</executability>
+					</handler>
+					<handler id="resetModelSearch" class="com.top_logic.model.search.ui.selector.ResetSearchCommand"
+						clique="reset"/>
+					<handler id="saveModelSearch" class="com.top_logic.model.search.ui.selector.SaveSearchCommand"
+						clique="save">
+						<executability>
+							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
+						</executability>
+					</handler>
+					<handler id="saveModelSearchAs" class="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsCommand"
+						clique="save" group="System"/>
+				</handlers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance>
+				<files>
+					<file resource="tlscripteditor.js" />
+				</files>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
+			<type-controls>
+				<!-- TL-Script, also the script of a script function, is edited in the TL-Script code editor. -->
+				<type-control type="com.top_logic.model.search.expr.config.dom.Expr">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction0">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction1">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction2">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction3">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+				<type-control type="com.top_logic.layout.ScriptFunction4">
+					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
+				</type-control>
+			</type-controls>
+		</config>
+	</configs>
+</application>

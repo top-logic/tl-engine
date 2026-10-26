@@ -197,7 +197,7 @@ A feature starter is a POM bundling the TopLogic modules of a feature. It is dec
 | Starter | Modules |
 |---|---|
 | `tl-starter-react` | `tl-layout-view`, `tl-layout-view-contact`, `tl-layout-react-codeedit`, `tl-layout-react-wysiwyg`, `tl-model-wysiwyg-core`, `tl-model-search-react`, `tl-react-flow-server`, `tl-dev-tools` |
-| `tl-starter-classic` | `tl-themes-core`, `tl-layout-scripting-template`, `tl-layout-formeditor`, `tl-layout-themeedit`, `tl-graph-diagramjs-server`, `tl-graphic-blocks-server`, `tl-monitoring`, `tl-doc`, `tl-model-search`, `tl-contact`, `tl-model-wysiwyg` |
+| `tl-starter-classic` | `tl-themes-core`, `tl-layout-scripting-template`, `tl-layout-formeditor`, `tl-layout-themeedit`, `tl-graph-diagramjs-server`, `tl-graphic-blocks-server`, `tl-monitoring`, `tl-doc`, `tl-model-search`, `tl-model-search-classic`, `tl-contact`, `tl-model-wysiwyg` |
 | `tl-starter-ai` | `tl-ai-core`, `tl-chat`, `tl-ai-views`, `tl-ai-mcp-server`, `tl-ai-a2a`, `tl-layout-view-agent` |
 | `tl-starter-ai-search` | `tl-ai-index`, `tl-ai-index-onnx` |
 

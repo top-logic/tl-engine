@@ -30,6 +30,11 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-model-search</artifactId>
     </dependency>
+    <!-- The classic TL-Script UI (model search, script console, TL-Script code editor) of the classic applications built with the form editor. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search-classic</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-contact</artifactId>

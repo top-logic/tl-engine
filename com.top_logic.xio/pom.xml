@@ -30,6 +30,11 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-model-search</artifactId>
     </dependency>
+    <!-- The XML editor of the import dialog (XMLImportCommand). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-codeedit</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-contact</artifactId>

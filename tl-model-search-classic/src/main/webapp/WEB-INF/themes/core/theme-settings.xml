@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="tl-model-search.command.updateSearchConsole"
+		value="css:fa-solid fa-database"
+	/>
+	<icon name="tl-model-search.command.executeSearchConsole"
+		value="css:fa-solid fa-play"
+	/>
+</settings>

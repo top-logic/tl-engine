@@ -65,6 +65,6 @@ if (buildPlugins != ["tl-maven-plugin"]) {
 	throw new AssertionError("Expected only the build plugin tl-maven-plugin, found " + buildPlugins + ".");
 }
 def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").readLines()*.trim();
-if (metaConf != ["db-default.xml", "myapp.conf.xml"]) {
+if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "myapp.conf.xml"]) {
 	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
 }

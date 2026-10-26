@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.element.meta.TestCheckValueOwners">
+			<types>
+				<class name="Holder">
+					<annotations>
+						<table name="PreloadTest"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="others"
+							multiple="true"
+							type="Item"
+						/>
+						<reference name="items"
+							composite="true"
+							multiple="true"
+							type="Item"
+						>
+							<annotations>
+								<storage-algorithm>
+									<inline-set-storage container-column="containerSet"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+				<class name="Item">
+					<annotations>
+						<table name="PreloadTest"/>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

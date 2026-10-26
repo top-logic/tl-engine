@@ -68,3 +68,12 @@ def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").re
 if (metaConf != ["db-default.xml", "myapp.conf.xml"]) {
 	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
 }
+// The browser tab is titled by the application title tl.title.
+def viewConfigs = { conf ->
+	def configs = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(conf).documentElement;
+	children(child(configs, "configs"), "config").findAll { it.getAttribute("config:interface") == "com.top_logic.layout.view.ViewConfig" }
+};
+def appViewConfigs = viewConfigs(new File(project, "src/main/webapp/WEB-INF/conf/myapp.conf.config.xml"));
+if (appViewConfigs*.getAttribute("title") != ["tl.title"]) {
+	throw new AssertionError("Expected the view title tl.title in myapp.conf.config.xml.");
+}

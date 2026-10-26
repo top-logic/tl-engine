@@ -62,3 +62,8 @@ def buildPlugins = children(child(child(pom, "build"), "plugins"), "plugin").col
 if (buildPlugins != ["tl-maven-plugin"]) {
 	throw new AssertionError("Expected only the build plugin tl-maven-plugin, found " + buildPlugins + ".");
 }
+// Without the React UI, there is no view configuration titling the browser tab.
+def conf = new File(project, "src/main/webapp/WEB-INF/conf/classicapp.conf.config.xml");
+if (conf.text.contains("com.top_logic.layout.view.ViewConfig")) {
+	throw new AssertionError("Unexpected view configuration in " + conf + ".");
+}

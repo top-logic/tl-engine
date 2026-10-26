@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.controlprovider;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -32,6 +33,7 @@ import com.top_logic.layout.react.control.table.ReactResourceCellControl;
  * @implNote The display is a {@link ReactResourceCellControl} created with the three flags
  *           {@link Config#getImage()}, {@link Config#getLabel()} and {@link Config#getLink()}.
  */
+@InApp
 public class MetaResourceControlProvider implements ReactControlProvider {
 
 	/**

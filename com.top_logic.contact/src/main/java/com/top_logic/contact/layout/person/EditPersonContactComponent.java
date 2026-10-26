@@ -120,7 +120,11 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
     		    theContext.addMember(ConstantFieldProvider.INSTANCE.createField(FIELD_PERSON, thePerson));
                 // Disable only when Person wasAlive when when last checked
 				if (thePerson != null && thePerson.tValid()) {
-					TLClass theMetaElement = theContact.tType();
+					// The cast is redundant for javac, which takes the TLClass result of
+					// AttributedObject.tType(). Eclipse resolves tType() to TLObject.tType() returning
+					// TLStructuredType, inherited through the superclass AbstractTLObject, and reports a
+					// type mismatch without it.
+					TLClass theMetaElement = (TLClass) theContact.tType();
     
                     disableAttribute(theContext, PersonContact.FIRST_NAME    , theContact, theMetaElement);
                     disableAttribute(theContext, PersonContact.NAME_ATTRIBUTE   , theContact, theMetaElement);

@@ -602,8 +602,9 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * Recorded on the current turn of the bound {@code ConversationLog} like a subagent delivery, as
-	 * a {@link Part.SystemEventType#CONTINUATION_REQUESTED} part, so that a reloaded session puts the
-	 * same message back between the two replies instead of merging them into one.
+	 * a {@link com.top_logic.tl.ai.core.session.Part.SystemEventType#CONTINUATION_REQUESTED} part, so
+	 * that a reloaded session puts the same message back between the two replies instead of merging
+	 * them into one.
 	 * </p>
 	 */
 	private static void askToContinue(Conversation conversation, AssistantMessage reply, String runId,

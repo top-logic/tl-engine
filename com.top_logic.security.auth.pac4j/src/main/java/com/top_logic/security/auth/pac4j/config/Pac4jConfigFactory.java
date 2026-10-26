@@ -8,6 +8,7 @@ package com.top_logic.security.auth.pac4j.config;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import jakarta.servlet.ServletContext;
 
@@ -15,6 +16,7 @@ import org.pac4j.core.adapter.FrameworkAdapter;
 import org.pac4j.core.authorization.authorizer.RequireAnyRoleAuthorizer;
 import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
+import org.pac4j.core.client.IndirectClient;
 import org.pac4j.core.config.ConfigFactory;
 import org.pac4j.core.http.url.DefaultUrlResolver;
 import org.pac4j.core.http.url.UrlResolver;
@@ -201,6 +203,14 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 			}
 		}
 
+		for (Client client : clientList) {
+			if (client instanceof IndirectClient indirect) {
+				// A failed login leads to the login page, from which the visitor retries on purpose.
+				// pac4j's guard against redirect loops would refuse that retry with 401.
+				indirect.setCheckAuthenticationAttempt(false);
+			}
+		}
+
 		final Clients clients = new Clients(resolveCallbackUrl(context, getConfig()), clientList);
 		clients.setUrlResolver(createUrlResolver(getConfig()));
 
@@ -213,6 +223,10 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 		final org.pac4j.core.config.Config config = new org.pac4j.core.config.Config(clients);
 
 		config.addAuthorizer("admin", new RequireAnyRoleAuthorizer("ROLE_ADMIN"));
+		String contextPath = context.getContextPath();
+		Supplier<String> errorUrl = () -> LoginFailureLogic.loginRetryUrl(contextPath);
+		config.setSecurityLogic(new LoginFailureLogic.Security(errorUrl));
+		config.setCallbackLogic(new LoginFailureLogic.Callback(errorUrl));
 		FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config);
 		return config;
 	}

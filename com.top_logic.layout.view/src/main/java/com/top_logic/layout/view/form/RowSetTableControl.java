@@ -28,6 +28,7 @@ import com.top_logic.layout.react.control.layout.ReactPanelControl;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarGroupDisplay;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.table.CellContentReactAdapter;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -781,8 +782,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					.onInputsChanged(_cellIndependentInputs, () -> {
 						// The rows and their cells stay; what is computed from the inputs apart
 						// from the rows is computed again.
-						refreshDeclaredFilters(view, columns);
-						if (_rowCssClass != null) {
+						if (refreshDeclaredFilters(view, columns)) {
+							// Pushes the rows again as well, for their row class.
+							table.refreshFilters();
+						} else if (_rowCssClass != null) {
 							table.repaintRows();
 						}
 					});
@@ -798,11 +801,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/**
 	 * Resolves the criteria of the declared filters again for the current input values.
+	 *
+	 * @return Whether the table declares filters, so that they were replaced on the given view.
 	 */
-	private void refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
-		if (_declaredFilters != null) {
-			view.setDeclaredFilters(_declaredFilters.apply(columns));
+	private boolean refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
+		if (_declaredFilters == null) {
+			return false;
 		}
+		view.setDeclaredFilters(_declaredFilters.apply(columns));
+		return true;
 	}
 
 	/**
@@ -1042,8 +1049,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/**
 	 * Adapts a type-derived {@link Column} (rows typed {@code Object}) to the {@link TLObject} row
 	 * type of this table, rendering cells editable when the enclosing form edits and the
-	 * {@link RowEditPolicy} covers the row, and read-only cells through the view-mode field display
-	 * of the column's values (so value types keep their interactive display, e.g. a download link).
+	 * {@link RowEditPolicy} covers the row, and read-only cells exactly as the column built from its
+	 * {@link ColumnSetup} renders them - with the display, the tooltip and the CSS class it declares,
+	 * and the view-mode field display of the values' type otherwise (so value types keep their
+	 * interactive display, e.g. a download link).
 	 */
 	private final class EditAwareColumn<V> implements Column<TLObject, V> {
 
@@ -1087,13 +1096,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					ReactControl editControl = buildEditCellControl(context, row, _setup);
 					return editControl != null
 						? editControl
-						: readOnlyControl(context, row);
+						: CellContentReactAdapter.toControl(context, _inner.renderCell(row));
 				});
 			}
-			if (_setup.type().resolved() && row != null) {
-				return new CellContent.Raw((CellControlFactory) context -> readOnlyControl(context, row));
-			}
 			return _inner.renderCell(row);
+		}
+
+		@Override
+		public String searchText(TLObject row) {
+			return _inner.searchText(row);
 		}
 
 		/**
@@ -1102,19 +1113,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		private boolean offersEdit(TLObject row) {
 			CellEditing editing = _setup.editing();
 			return editing != null && editing.canEdit(row);
-		}
-
-		/**
-		 * The read-only cell control: the view-mode field display of the column's values.
-		 *
-		 * <p>
-		 * The value is read through the column's own value function, so a column showing something
-		 * else than an attribute of the row displays that.
-		 * </p>
-		 */
-		private ReactControl readOnlyControl(ReactContext context, TLObject row) {
-			return FieldControlService.getInstance()
-				.createDisplayControl(context, _setup.type(), _setup.value().apply(row));
 		}
 
 		@Override

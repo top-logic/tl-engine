@@ -50,7 +50,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DropSignature;
 import com.top_logic.layout.view.dnd.DragSourceBinding;
-import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.knowledge.service.PersistencyLayer;

@@ -52,7 +52,7 @@ public abstract class AbstractListRenderer extends DefaultControlRenderer<ListCo
 	 *        the {@link DisplayContext} to get information about the context this rendering occurs.
 	 * @param listControl
 	 *        the list control which is currently written by this renderer.
-	 * @see #writeControlTagAttributes(DisplayContext, TagWriter, ListControl)
+	 * @see #writeControlTagAttributes(DisplayContext, TagWriter, com.top_logic.layout.Control)
 	 */
 	protected void writeContentTagAttributes(DisplayContext context, TagWriter out, ListControl listControl) {
 		// no content tag attributes here

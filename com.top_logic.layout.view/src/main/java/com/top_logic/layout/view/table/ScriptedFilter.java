@@ -30,7 +30,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
@@ -159,11 +158,15 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	@Override
 	public Column<Object, ?> createColumn(ColumnSetup setup) {
 		Function<Object, Object> value = setup.value();
+		ColumnType type = setup.type();
+		Function<Object, String> displayText = ColumnProviderService.displayText(type);
 		return DefaultColumn.<Object, ScriptedCell> builder(setup.name(),
 			row -> new ScriptedCell(value.apply(row), row))
 			.label(setup.label())
-			.width(ColumnProviderService.getInstance().defaultWidth(setup.type()))
-			.renderer(cell -> CellContent.text(ColumnProviderService.label(cell.value())))
+			.width(ColumnProviderService.getInstance().defaultWidth(type))
+			// The value is displayed and searched as in a column without a scripted filter.
+			.renderer(cell -> ColumnProviderService.displayContent(type, cell.value()))
+			.searchText(cell -> displayText.apply(cell.value()))
 			// The cell pairs the value with its row for the filter; an export writes the value.
 			.exportValue(ScriptedCell::value)
 			.sort(() -> Comparator.comparing(ScriptedCell::value, ColumnProviderService.labelOrder()))

@@ -24,7 +24,6 @@ import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.view.ContainerElement;
-import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 
 /**

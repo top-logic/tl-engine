@@ -78,11 +78,12 @@
   --tl-surface-base: var(--tl-gray-1);
   --tl-surface-layer: var(--tl-gray-0);
   --tl-surface-layer-nested: var(--tl-gray-0);
+  --tl-surface-layer-muted: var(--tl-gray-3);
   --tl-surface-overlay: var(--tl-gray-0);
   --tl-surface-field: var(--tl-gray-3);
   --tl-surface-document: var(--tl-gray-0);
   --tl-surface-interactive-hover: var(--tl-gray-4);
-  --tl-surface-interactive-selected: var(--tl-gray-7);
+  --tl-surface-interactive-strong: var(--tl-gray-7);
   --tl-surface-interactive-active: var(--tl-gray-10);
   --tl-surface-disabled: var(--tl-gray-7);
   --tl-surface-brand: var(--tl-blue-49);
@@ -90,6 +91,8 @@
   --tl-surface-brand-active: var(--tl-blue-62);
   --tl-surface-brand-subtle: var(--tl-blue-6);
   --tl-surface-brand-subtle-hover: var(--tl-blue-9);
+  --tl-surface-selected: var(--tl-blue-6);
+  --tl-surface-selected-hover: var(--tl-blue-8);
   --tl-text-primary: var(--tl-gray-77);
   --tl-text-secondary: var(--tl-gray-55);
   --tl-text-helper: var(--tl-gray-49);
@@ -104,6 +107,7 @@
   --tl-border-control: var(--tl-gray-36);
   --tl-border-emphasis: var(--tl-gray-45);
   --tl-border-interactive: var(--tl-blue-49);
+  --tl-border-selected: var(--tl-blue-49);
   --tl-border-disabled: var(--tl-gray-18);
   --tl-border-handle-light: var(--tl-gray-0);
   --tl-border-handle-dark: var(--tl-gray-77);
@@ -199,16 +203,28 @@
   --tl-space-control-gap: var(--tl-size-4);
 }
 
+[data-tl-density="normal"] {
+  --tl-size-control: var(--tl-height-3);
+  --tl-size-control-sm: var(--tl-height-1);
+  --tl-size-row: var(--tl-height-4);
+  --tl-size-bar: var(--tl-height-5);
+  --tl-size-shell-bar: var(--tl-size-8);
+  --tl-space-control-x: var(--tl-size-3);
+  --tl-space-control-y: var(--tl-size-2);
+  --tl-space-control-gap: var(--tl-size-4);
+}
+
 [data-tl-mode="dark"] {
   color-scheme: dark;
   --tl-surface-base: var(--tl-gray-79);
   --tl-surface-layer: var(--tl-gray-76);
   --tl-surface-layer-nested: var(--tl-gray-74);
+  --tl-surface-layer-muted: var(--tl-gray-72);
   --tl-surface-overlay: var(--tl-gray-70);
   --tl-surface-field: var(--tl-gray-72);
   --tl-surface-document: var(--tl-gray-0);
   --tl-surface-interactive-hover: var(--tl-gray-67);
-  --tl-surface-interactive-selected: var(--tl-gray-64);
+  --tl-surface-interactive-strong: var(--tl-gray-64);
   --tl-surface-interactive-active: var(--tl-gray-60);
   --tl-surface-disabled: var(--tl-gray-69);
   --tl-surface-brand: var(--tl-blue-32);
@@ -216,6 +232,8 @@
   --tl-surface-brand-active: var(--tl-blue-43);
   --tl-surface-brand-subtle: var(--tl-blue-74);
   --tl-surface-brand-subtle-hover: var(--tl-blue-69);
+  --tl-surface-selected: var(--tl-blue-72);
+  --tl-surface-selected-hover: var(--tl-blue-69);
   --tl-text-primary: var(--tl-gray-5);
   --tl-text-secondary: var(--tl-gray-29);
   --tl-text-helper: var(--tl-gray-33);
@@ -230,6 +248,7 @@
   --tl-border-control: var(--tl-gray-43);
   --tl-border-emphasis: var(--tl-gray-39);
   --tl-border-interactive: var(--tl-blue-32);
+  --tl-border-selected: var(--tl-blue-32);
   --tl-border-disabled: var(--tl-gray-66);
   --tl-border-handle-light: var(--tl-gray-0);
   --tl-border-handle-dark: var(--tl-gray-77);
@@ -326,4 +345,4 @@
   --tl-space-control-y: var(--tl-size-1);
   --tl-space-control-gap: var(--tl-size-3);
 }
-/* tl-design-system sha256:0ee47682bf99a9b0fe0ed1c6f6c5b76f75e9cd574f88b26e56fbfffd1182ab73 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:0542b8cab31de5af9ff0767bddb85343844f6ed62b743540793abf3ee7410a9a — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

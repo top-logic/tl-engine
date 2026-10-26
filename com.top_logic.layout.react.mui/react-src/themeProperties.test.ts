@@ -59,6 +59,13 @@ describe('themeProperties', () => {
     expect(light[THEME.layer01]).toBe('#fff');
     // The hover of MUI (4 % black) on white paper, opaque.
     expect(light[THEME.layerHover]).toBe('rgb(245, 245, 245)');
+    // The MUI "selected" action state is a selection: it feeds the design system's selection role (and the neutral
+    // strong surface, which it fed before the selection got its own role), opaque on the paper.
+    expect(light[DS.surfaceSelected]).toBe('rgb(235, 235, 235)');
+    expect(light[DS.surfaceSelected]).toBe(light[THEME.backgroundSelected]);
+    expect(light[DS.surfaceInteractiveStrong]).toBe(light[DS.surfaceSelected]);
+    // Hovering a selected row: MUI's hover (4 % black) over the selected color, opaque.
+    expect(light[DS.surfaceSelectedHover]).toBe('rgb(226, 226, 226)');
     // A selected MUI table row: the primary color at the selected opacity, on the paper.
     expect(light[THEME.layerSelected]).toBe('rgb(237, 244, 251)');
     expect(light[DS.textPlaceholder]).toBe('rgba(0, 0, 0, 0.3654)');

@@ -20,6 +20,7 @@
   --tl-blue-4: #E2F3FF;
   --tl-blue-6: #DFEBFF;
   --tl-blue-7: #EEEEFF;
+  --tl-blue-8: #D7E6FD;
   --tl-blue-9: #CEE1FF;
   --tl-blue-21: #95BDFF;
   --tl-blue-27: #75A9FF;
@@ -32,6 +33,7 @@
   --tl-blue-55: #004DBA;
   --tl-blue-62: #003A8F;
   --tl-blue-69: #1E2F4B;
+  --tl-blue-72: #1A2941;
   --tl-blue-73: #24233E;
   --tl-blue-74: #162338;
   --tl-gray-0: #FFFFFF;
@@ -190,4 +192,4 @@
   --tl-veil-5: rgba(27, 29, 33, 0.16);
   --tl-veil-6: rgba(240, 243, 249, 0.13);
 }
-/* tl-design-system sha256:38d176b0891f71518d91bed5933818ffcb46d3c90dfccf500be8d59d32a9a680 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:a11306c9ea60bc5194958e230577f95926405273cb29c1884763160a41789885 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

@@ -70,12 +70,12 @@
 }
 
 .tlScriptEditor .cm-activeLineGutter {
-	background: var(--tl-surface-interactive-selected);
+	background: var(--tl-surface-interactive-strong);
 	color: var(--tl-text-primary);
 }
 
 .tlScriptEditor .cm-activeLine {
-	background: var(--tl-surface-interactive-selected);
+	background: var(--tl-surface-interactive-strong);
 }
 
 .tlScriptEditor .cm-tooltip-autocomplete {

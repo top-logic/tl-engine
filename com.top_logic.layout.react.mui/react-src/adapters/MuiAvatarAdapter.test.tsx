@@ -76,7 +76,7 @@ describe('TLAvatar as MUI Avatar', () => {
     expect(avatar.hasAttribute(TOOLTIP_ATTR)).toBe(false);
     expect(avatar.textContent).toBe('');
     expect(avatar.querySelector('svg')).toBeNull();
-    expect(declaredValues(avatar, 'background-color')).toContain('var(--tl-surface-interactive-selected)');
+    expect(declaredValues(avatar, 'background-color')).toContain('var(--tl-surface-interactive-strong)');
   });
 
   it('takes the diameter of its size, medium without one', () => {

@@ -14,6 +14,12 @@ import com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService;
 
 /**
  * All available {@link StructuredText} editor features.
+ * 
+ * <p>
+ * Option function for {@link StructuredTextEditorConfig#getFeatures()}, attached to that property
+ * by the form customizations in <code>modelWysiwygConf.config.xml</code>. The options are the
+ * {@link StructuredTextConfigService#getFeatures() features} of the HTML editor.
+ * </p>
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

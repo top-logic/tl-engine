@@ -107,11 +107,6 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 
 	private static final String ID_SEPARATOR = "_";
 
-	private static final String REF_ID_PREFIX = I18NStructuredTextUtil.REF_ID_PREFIX;
-
-	/** Selector for images. */
-	public static final String IMAGE_CSS_SELECTOR = getImageCSSSelector(REF_ID_PREFIX);
-
 	private static final String TL_OBJECT_LINK_CSS_SELECTOR = "a.tlObject";
 
 	private static final String TL_OBJECT_WRAPPER_CSS_CLASS = "tlObjectWrapper";
@@ -466,7 +461,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 	 *        URL prefix for local images.
 	 */
 	public static void linkImageSources(Document newValue, Map<String, BinaryData> images, String urlPrefix) {
-		Elements localImages = newValue.select(getImageCSSSelector(urlPrefix));
+		Elements localImages = newValue.select(I18NStructuredTextUtil.getImageCSSSelector(urlPrefix));
 		
 		Set<String> linkImageIDs = linkImageSources(urlPrefix, localImages);
 		I18NStructuredTextUtil.removeUnusedImages(images, linkImageIDs);
@@ -504,7 +499,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 	 * @return {@link String} containing the new HTML code with resolved image sources.
 	 */
 	private Document resolveImageSources(DisplayContext context, Document document) {
-		Elements localImages = document.select(IMAGE_CSS_SELECTOR);
+		Elements localImages = document.select(I18NStructuredTextUtil.IMAGE_CSS_SELECTOR);
 
 		resolveImageSources(context, localImages);
 
@@ -613,10 +608,6 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		int index = attr.indexOf(urlPrefix);
 
 		return urlDecode(attr.substring(index + urlPrefix.length() + RESOURCE_SEPARATOR.length()));
-	}
-
-	private static String getImageCSSSelector(String srcPrefix) {
-		return "*:not(code) img[src^=\"" + srcPrefix + "\"]";
 	}
 
 	private String getSourceCode() {

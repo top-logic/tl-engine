@@ -11,8 +11,8 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.ListBinding;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
@@ -22,7 +22,6 @@ import com.top_logic.model.annotate.TargetType;
  * feature set and a template set for a HTML attribute.
  * 
  * @see #getFeatures()
- * @see com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService.Config
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
@@ -36,13 +35,14 @@ public interface StructuredTextEditorConfig extends TLAttributeAnnotation {
 	 */
 	public static final String EDITOR_CONFIGURATION = "wysiwyg";
 
+	/** Property name of {@link #getFeatures()}. */
+	String FEATURES = "features";
+
 	/**
-	 * List of
-	 * {@link com.top_logic.layout.wysiwyg.ui.StructuredTextConfigService.Config#getFeatures()
-	 * features} to select.
+	 * Names of the features of the HTML editor to select.
 	 */
+	@Name(FEATURES)
 	@Format(CommaSeparatedStrings.class)
-	@Options(fun = StructuredEditorConfigOptions.class)
 	List<String> getFeatures();
 
 	/**

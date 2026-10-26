@@ -28,6 +28,12 @@ export interface StripGeometry {
 
   /** The width of the whole content of the strip. */
   scrollWidth: number;
+
+  /**
+   * The width the strip gets back when its content fits: the space the elements beside it (its
+   * scroll buttons) take while they are shown, 0 while they are not.
+   */
+  spare?: number;
 }
 
 /** The horizontal extent of an element inside the scrolled content of a strip. */
@@ -39,8 +45,15 @@ export interface StripExtent {
   end: number;
 }
 
-/** In which directions content of a strip is hidden. */
+/** Whether and in which directions content of a strip is hidden. */
 export interface StripOverflow {
+  /**
+   * The content does not fit the strip, even with the space of the scroll buttons: the buttons are
+   * shown. Showing them narrows the strip, which keeps it overflowing; hiding them widens it, which
+   * keeps the content fitting - the state does not oscillate, and scrolling never changes it.
+   */
+  overflows: boolean;
+
   /** Content is hidden before the visible part. */
   canScrollStart: boolean;
 
@@ -58,9 +71,10 @@ function clamp(g: StripGeometry, scrollLeft: number): number {
   return Math.min(maxScroll(g), Math.max(0, scrollLeft));
 }
 
-/** In which directions the content of a strip with the given geometry is hidden. */
+/** Whether and in which directions the content of a strip with the given geometry is hidden. */
 export function stripOverflow(g: StripGeometry): StripOverflow {
   return {
+    overflows: g.scrollWidth > g.clientWidth + (g.spare ?? 0) + EPSILON,
     canScrollStart: g.scrollLeft > EPSILON,
     canScrollEnd: g.scrollLeft < maxScroll(g) - EPSILON,
   };
@@ -88,9 +102,20 @@ export function pageScrollLeft(g: StripGeometry, edge: StripEdge): number {
   return clamp(g, g.scrollLeft + (edge === EDGE_START ? -step : step));
 }
 
+/** The width the elements beside the given strip element take: its scroll buttons, see {@link StripGeometry.spare}. */
+function spareOf(list: HTMLElement): number {
+  let spare = 0;
+  for (const sibling of Array.from(list.parentElement?.children ?? [])) {
+    if (sibling !== list) {
+      spare += sibling.getBoundingClientRect().width;
+    }
+  }
+  return spare;
+}
+
 /** The geometry of the given strip element. */
 function geometryOf(list: HTMLElement): StripGeometry {
-  return { scrollLeft: list.scrollLeft, clientWidth: list.clientWidth, scrollWidth: list.scrollWidth };
+  return { scrollLeft: list.scrollLeft, clientWidth: list.clientWidth, scrollWidth: list.scrollWidth, spare: spareOf(list) };
 }
 
 /** The extent of the given element in the scrolled content of the given strip element. */
@@ -141,16 +166,23 @@ export interface ScrollStrip extends StripOverflow {
   reveal: (element: Element, smooth?: boolean) => void;
 }
 
-const NO_OVERFLOW: StripOverflow = { canScrollStart: false, canScrollEnd: false };
+const NO_OVERFLOW: StripOverflow = { overflows: false, canScrollStart: false, canScrollEnd: false };
 
 /**
  * A horizontally scrolling strip with buttons at its ends, as the tab strip uses it.
  *
- * <p>Tracks in which directions content is hidden ({@link StripOverflow}), through the scroll
- * events of the element and a resize observer on the element and its children, so that the buttons
- * at the ends show only while there is something to scroll to. Keeps the element given by
- * {@link ScrollStripOptions.target} in view: on mount, whenever its size or content changes, and
- * whenever {@link ScrollStripOptions.revealKey} changes.</p>
+ * <p>Tracks whether and in which directions content is hidden ({@link StripOverflow}), through the
+ * scroll events of the scrolling element and a resize observer on it and its children. The buttons
+ * beside the scrolling element (its siblings) are there while the content overflows and take their
+ * space for that whole time; at an edge with nothing more in its direction a button is disabled,
+ * not removed. So scrolling never changes the width of the strip, and a reveal or a page scroll is
+ * never undone by a button coming or going.</p>
+ *
+ * <p>Keeps the element given by {@link ScrollStripOptions.target} in view: on mount, whenever
+ * {@link ScrollStripOptions.revealKey} changes, whenever the overflow starts or ends (the buttons
+ * take or return their space), and whenever the space or the content of the strip changes - the
+ * scrolling element resizes (the container resized, a hidden host shown) or its children do
+ * (added, removed, relabelled).</p>
  *
  * <p>Revealing sets the scroll offset of the strip itself, never through
  * {@link Element.scrollIntoView}, which would scroll every scrolling ancestor as well.</p>
@@ -164,7 +196,8 @@ export function useScrollStrip({ revealKey, target }: ScrollStripOptions = {}): 
   const update = useCallback((element: HTMLElement) => {
     const next = stripOverflow(geometryOf(element));
     setOverflow(prev =>
-      prev.canScrollStart === next.canScrollStart && prev.canScrollEnd === next.canScrollEnd ? prev : next);
+      prev.overflows === next.overflows && prev.canScrollStart === next.canScrollStart
+        && prev.canScrollEnd === next.canScrollEnd ? prev : next);
   }, []);
 
   const reveal = useCallback((element: Element, smooth = false) => {
@@ -196,6 +229,8 @@ export function useScrollStrip({ revealKey, target }: ScrollStripOptions = {}): 
     if (typeof ResizeObserver === 'undefined') {
       return () => list.removeEventListener('scroll', onScroll);
     }
+    // The width of the scrolling element changes only with the space of the strip or when the
+    // overflow starts or ends, never by scrolling: each change is one to reveal the target for.
     const resize = new ResizeObserver(() => revealTarget(false));
     const observeAll = () => {
       resize.disconnect();
@@ -225,6 +260,13 @@ export function useScrollStrip({ revealKey, target }: ScrollStripOptions = {}): 
     revealTarget(revealed.current);
     revealed.current = true;
   }, [list, revealKey, revealTarget]);
+
+  // The buttons taking or returning their space change the visible part: reveal again in the same
+  // frame, measured with the buttons as they are now.
+  const overflows = overflow.overflows;
+  useLayoutEffect(() => {
+    revealTarget(false);
+  }, [overflows, revealTarget]);
 
   const scrollPage = useCallback((edge: StripEdge) => {
     if (list) {

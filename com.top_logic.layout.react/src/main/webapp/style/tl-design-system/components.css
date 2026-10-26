@@ -5780,10 +5780,15 @@ button.tl-swatch:not(:disabled):hover {
 }
 .tl-tabs__list[hidden] { display: none; }
 
-/* Der Knopf am Ende der Reiterreihe: da, solange in seiner Richtung etwas verdeckt ist, sonst hidden
-   (das setzt tl-button). */
+/* Die Knöpfe an den Enden der Reiterreihe: beide da, solange die Reiter überlaufen, sonst hidden (das setzt
+   tl-button). Am Ende ohne Weiteres in seiner Richtung ist ein Knopf disabled und unsichtbar, behält aber
+   seinen Platz: Scrollen ändert die Breite der Reiterreihe nie, ein Sprung zum Reiter bleibt, wo er ist. */
 .tl-tabs__scroll {
   flex-shrink: 0;
+}
+
+.tl-tabs__scroll:disabled {
+  visibility: hidden;
 }
 
 /* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
@@ -6402,4 +6407,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:f1b5e9ab32b2c7a05902f4d9184ab3bd0d5225a05fb60fa5a9005fffd42a7eeb — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:e6600779a25945c751f5fe3b79ee2a44cd2ac6c79e60f2f94ced49b7be914b0b — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

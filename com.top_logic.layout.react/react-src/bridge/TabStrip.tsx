@@ -49,15 +49,17 @@ function keepFocus(e: React.MouseEvent): void {
 /**
  * The strip of a tab bar (tl-tabs__strip): the tab list between two scroll buttons.
  *
- * <p>The tab list scrolls horizontally by itself when the tabs are wider than the strip; a scroll
- * button stands outside the list at each end and shows only while there are tabs hidden in its
- * direction ({@link useScrollStrip}). The selected tab is kept in view inside the list only.</p>
+ * <p>The tab list scrolls horizontally by itself when the tabs are wider than the strip. While they
+ * are, a scroll button stands outside the list at each end and keeps its space; a button with no
+ * tabs hidden in its direction is disabled, which the design system draws invisible
+ * ({@link useScrollStrip}). Without overflow both buttons are hidden. The selected tab is kept in
+ * view inside the list only.</p>
  */
 export function TabStrip({ selected, onKeyDown, 'aria-label': ariaLabel, children }: TabStripProps) {
   const i18n = useI18N(I18N_KEYS);
   const strip = useScrollStrip({ revealKey: selected, target: selectedTab });
 
-  const button = (edge: StripEdge, hidden: boolean, labelKey: string, icon: string) => (
+  const button = (edge: StripEdge, canScroll: boolean, labelKey: string, icon: string) => (
     <button
       type="button"
       className={SCROLL_BUTTON_CLASS}
@@ -65,7 +67,8 @@ export function TabStrip({ selected, onKeyDown, 'aria-label': ariaLabel, childre
       tabIndex={-1}
       aria-label={i18n[labelKey]}
       {...tooltipProps(i18n[labelKey])}
-      hidden={hidden}
+      hidden={!strip.overflows}
+      disabled={!canScroll}
       onMouseDown={keepFocus}
       onClick={() => strip.scrollPage(edge)}
     >
@@ -75,11 +78,11 @@ export function TabStrip({ selected, onKeyDown, 'aria-label': ariaLabel, childre
 
   return (
     <div className="tl-tabs__strip">
-      {button(EDGE_START, !strip.canScrollStart, SCROLL_START_KEY, ICON_SCROLL_START)}
+      {button(EDGE_START, strip.canScrollStart, SCROLL_START_KEY, ICON_SCROLL_START)}
       <div ref={strip.listRef} className="tl-tabs__list" role="tablist" aria-label={ariaLabel} onKeyDown={onKeyDown}>
         {children}
       </div>
-      {button(EDGE_END, !strip.canScrollEnd, SCROLL_END_KEY, ICON_SCROLL_END)}
+      {button(EDGE_END, strip.canScrollEnd, SCROLL_END_KEY, ICON_SCROLL_END)}
     </div>
   );
 }

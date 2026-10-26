@@ -35,7 +35,11 @@
 			<input channel="testInput"/>
 		</inputs>
 		<presets initial="all-active">
-			<preset name="mine">
+			<preset
+				count="true"
+				css-class="tl-preset--mine"
+				name="mine"
+			>
 				<label>
 					<en>My rows</en>
 					<de>Meine Zeilen</de>

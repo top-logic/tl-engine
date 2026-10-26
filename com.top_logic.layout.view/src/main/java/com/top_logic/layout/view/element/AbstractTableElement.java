@@ -447,6 +447,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		/** Configuration name for {@link #getCriteria()}. */
 		String CRITERIA = "criteria";
 
+		/** Configuration name for {@link #getCount()}. */
+		String COUNT = "count";
+
+		/** Configuration name for {@link #getCssClass()}. */
+		String CSS_CLASS = "css-class";
+
 		/**
 		 * Technical name identifying this preset among the table's named filters.
 		 *
@@ -476,6 +482,40 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Name(CRITERIA)
 		@DefaultContainer
 		List<CriterionConfig> getCriteria();
+
+		/**
+		 * Whether this preset's chip shows the number of rows the preset selects after its label.
+		 *
+		 * <p>
+		 * The number counts the rows matching this preset's criteria alone - exactly the rows a
+		 * click on the chip shows. The column filters and the search the user currently applies to
+		 * the table do not change it, so every chip tells what it would show, whichever is active.
+		 * The number follows the rows of the table: it is computed again whenever they change, e.g.
+		 * after a commit touching objects of the table's observed types, without the page being
+		 * reloaded.
+		 * </p>
+		 *
+		 * <p>
+		 * A table whose rows cannot be counted without loading them all shows no number, even
+		 * if this is set.
+		 * </p>
+		 */
+		@Name(COUNT)
+		@Label("Show row count")
+		boolean getCount();
+
+		/**
+		 * A CSS class put on this preset's chip, whether the preset is active or not.
+		 *
+		 * <p>
+		 * It lets an application mark a preset of particular meaning - one selecting the items
+		 * waiting for someone, the overdue ones - with a style of its own. Without it, the chip looks
+		 * like every other preset's.
+		 * </p>
+		 */
+		@Name(CSS_CLASS)
+		@Nullable
+		String getCssClass();
 	}
 
 	/**
@@ -643,8 +683,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The name to display.
 	 * @param criteria
 	 *        The compiled criteria, in declaration order.
+	 * @param cssClass
+	 *        The {@link PresetConfig#getCssClass() CSS class} of the preset's chip, or {@code null}.
+	 * @param counted
+	 *        Whether the preset's chip shows the {@link PresetConfig#getCount() number of rows} it
+	 *        selects.
 	 */
-	private record CompiledPreset(String id, ResKey label, List<CompiledCriterion> criteria) {
+	private record CompiledPreset(String id, ResKey label, List<CompiledCriterion> criteria, String cssClass,
+			boolean counted) {
 		// Pure data carrier.
 	}
 
@@ -828,14 +874,23 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * from the inputs, so a changed input means other criteria - they are resolved again, and a chip
 	 * the user has applied goes on filtering by what it now means.
 	 *
+	 * <p>
+	 * Only the {@link ReadOnlyTable#view() view} takes up the resolved presets. A caller that does
+	 * not push the table again anyway - by {@link TableViewControl#refreshData()} after the rows
+	 * changed - pushes it by {@link TableViewControl#refreshFilters()} when this returns
+	 * {@code true}.
+	 * </p>
+	 *
 	 * @param inputValues
 	 *        The values of the input channels now.
+	 * @return Whether the table declares presets, so that its named filters were replaced.
 	 */
-	protected final void refreshPresets(ReadOnlyTable<?> table, Object[] inputValues) {
+	protected final boolean refreshPresets(ReadOnlyTable<?> table, Object[] inputValues) {
 		if (_presets.isEmpty()) {
-			return;
+			return false;
 		}
 		table.view().setDeclaredFilters(declaredFilters(table.columns(), table.declaredNames(), inputValues));
+		return true;
 	}
 
 	/**
@@ -963,7 +1018,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			for (CompiledCriterion criterion : preset.criteria()) {
 				criteria.add(criterion.evaluate(arguments));
 			}
-			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria));
+			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria,
+				preset.cssClass(), preset.counted()));
 		}
 		return DeclaredFilters.resolve(_log, tableId().value(), declarations, columns,
 			ColumnDeclarations.withheld(declaredNames, columns));
@@ -1026,7 +1082,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			}
 			ResKey label = presetConfig.getLabel();
 			result.add(new CompiledPreset(presetConfig.getName(),
-				label != null ? label : ResKey.text(presetConfig.getName()), criteria));
+				label != null ? label : ResKey.text(presetConfig.getName()), criteria,
+				presetConfig.getCssClass(), presetConfig.getCount()));
 		}
 		return result;
 	}

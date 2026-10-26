@@ -225,6 +225,22 @@ public class TestTableElement extends TestCase {
 	}
 
 	/**
+	 * Tests that a preset's chip presentation - the row count and the CSS class - is parsed, and
+	 * that a preset declaring neither shows no count and carries no class.
+	 */
+	public void testParsePresetPresentation() throws Exception {
+		List<PresetConfig> presets = readTableConfig().getPresets().getPresets();
+
+		PresetConfig mine = presets.get(0);
+		assertTrue("The preset declares its count shown.", mine.getCount());
+		assertEquals("The preset declares a CSS class of its own.", "tl-preset--mine", mine.getCssClass());
+
+		PresetConfig allActive = presets.get(1);
+		assertFalse("A preset shows no count unless it says so.", allActive.getCount());
+		assertNull("A preset carries no CSS class unless it declares one.", allActive.getCssClass());
+	}
+
+	/**
 	 * Tests that a criterion written in the form of the column's filter is parsed with its matching
 	 * options, and that a criterion inverting its column is marked as such.
 	 */

@@ -225,7 +225,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			@Override
 			public void inputsChanged() {
 				// The rows and their cells stay; the criteria of the presets may read the inputs.
-				refreshPresets(table, ChannelInputs.arguments(inputChannels));
+				if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+					control.refreshFilters();
+				}
 			}
 		}, treeModel, _functions::root, builder, _functions.parentFunction(inputChannels),
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels)

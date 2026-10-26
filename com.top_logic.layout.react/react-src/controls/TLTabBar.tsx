@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, ThemeIcon, useTabList } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, ThemeIcon, useTabList, TabStrip } from 'tl-react-bridge';
 import type { TLCellProps, TabBarStateJson } from 'tl-react-bridge';
 
 /** A tab as the server describes it, always with its ID and label. */
@@ -9,7 +9,8 @@ const { useCallback } = React;
 /**
  * A tab strip above the content of the selected tab (tl-tabs).
  *
- * Always fills its container, so the strip stays pinned and only the tab content scrolls. The
+ * Always fills its container, so the strip stays pinned and only the tab content scrolls. Tabs wider
+ * than the strip scroll inside it (TabStrip), keeping the selected tab in view. The
  * content region is bounded by that and ends the fill chain: a filling control inside a tab
  * resolves its height against the region and scrolls internally.
  *
@@ -39,7 +40,7 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <div id={controlId} className={rootClassName(state, 'tl-tabs ' + fillClass)}>
-      <div className="tl-tabs__list" role="tablist" onKeyDown={list.onListKeyDown}>
+      <TabStrip selected={activeTabId ?? ''} onKeyDown={list.onListKeyDown}>
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -50,7 +51,7 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
             <span>{tab.label}</span>
           </button>
         ))}
-      </div>
+      </TabStrip>
       <div
         {...panel}
         hidden={false}

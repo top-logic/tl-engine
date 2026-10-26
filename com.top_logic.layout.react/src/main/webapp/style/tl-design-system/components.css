@@ -5744,23 +5744,47 @@ button.tl-swatch:not(:disabled):hover {
    role=tablist/tab/tabpanel; Roving-Tabindex, Pfeile wählen. Aktiv ist aria-selected: Akzentlinie
    unten und text-primary, kein Fettdruck — nichts springt beim Wechsel. Den Fokusring liefert base.css.
    Ein Reiter ist size-bar hoch, so hoch wie die Toolbar (docs/skalen.md „Leisten und Hilfe“).
-   Das Panel ist eine Flex-Spalte, damit füllende Kinder (die virtualisierte Tabelle) ihre Höhe bekommen. */
+   Das Panel ist eine Flex-Spalte, damit füllende Kinder (die virtualisierte Tabelle) ihre Höhe bekommen.
+   Überlauf: die Reiterreihe scrollt in sich, nie ein Vorfahr; die Knöpfe an ihren Enden stehen außerhalb und
+   bleiben stehen (Vertrag „Überlauf“). */
 
 .tl-tabs {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
 }
 .tl-tabs[hidden] { display: none; }
 
-.tl-tabs__list {
+/* Die Leiste: Knopf, Reiterreihe, Knopf. Sie trägt die Linie, damit sie unter den Knöpfen durchläuft. */
+.tl-tabs__strip {
   display: flex;
-  gap: var(--tl-space-xs);
+  align-items: center;
+  min-width: 0;
   padding: 0 var(--tl-space-sm);
   border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
   flex-shrink: 0;
 }
+.tl-tabs__strip[hidden] { display: none; }
+
+/* Schrumpft auf die Leiste und scrollt waagerecht ohne eigenen Balken — Mausrad, Trackpad, die Knöpfe. */
+.tl-tabs__list {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: var(--tl-space-xs);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
 .tl-tabs__list[hidden] { display: none; }
+
+/* Der Knopf am Ende der Reiterreihe: da, solange in seiner Richtung etwas verdeckt ist, sonst hidden
+   (das setzt tl-button). */
+.tl-tabs__scroll {
+  flex-shrink: 0;
+}
 
 /* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
 :where(.tl-tabs__tab) { font: inherit; }
@@ -5779,6 +5803,11 @@ button.tl-swatch:not(:disabled):hover {
   cursor: pointer;
 }
 .tl-tabs__tab[hidden] { display: none; }
+
+/* Die Reiterreihe scrollt und schneidet: der Ring liegt innen. */
+.tl-tabs__tab:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
 
 .tl-tabs__tab:hover {
   color: var(--tl-text-primary);
@@ -6373,4 +6402,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:5eee426e61fb6a821f76758694a780695f8f380a9f5fecf1ac3e1bce9c3b9ef7 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:f1b5e9ab32b2c7a05902f4d9184ab3bd0d5225a05fb60fa5a9005fffd42a7eeb — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

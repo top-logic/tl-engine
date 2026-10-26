@@ -130,6 +130,11 @@ interface ColumnState {
    * Absent for a label that describes itself.
    */
   tooltip?: string;
+  /**
+   * How the column's cells sit in it, their heading included: `end` for numbers, which the column
+   * then aligns at the end so that their digits line up. Absent for the start, the default.
+   */
+  align?: 'end';
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -376,6 +381,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // The client measures what the design system says (3b §3): a row is size-row high, so the table
   // follows the density (36 px normal, 32 px compact). The server knows no height. The grid is
   // rendered from the first layout on, so the token is read where the rows inherit it.
+  const viewDensity = (state.viewDensity as string) ?? '';
   const rowHeight = useTokenPx(gridRef, '--tl-size-row', 36);
   const selectionMode = (state.selectionMode as string) ?? 'single';
   /**
@@ -1615,6 +1621,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     />
     <div ref={rootRef} id={controlId}
       className={rootClassName(state, 'tl-table', fillClass)}
+      // The look of the table the person chose (view options): its density, stripes and column lines. The
+      // package styles by these attributes; the density also reaches the row height (useTokenPx above).
+      data-tl-density={viewDensity === 'normal' || viewDensity === 'compact' ? viewDensity : undefined}
+      data-tl-striped={state.striped ? '' : undefined}
+      data-tl-column-lines={state.columnLines ? '' : undefined}
       data-tl-state={dropState ? (dropRefused
           ? (dropState.row === null ? 'drop-refused' : undefined)
           : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
@@ -1751,7 +1762,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             // A label cut off by its ellipsis offers its full text by itself (tooltip host, master
             // #29752); only a tooltip the column declares is set here.
             const label = (
-              <span className="tl-table__label" {...tooltipProps(col.tooltip)}>{col.label}</span>
+              <span className="tl-table__label tl-type-overline" {...tooltipProps(col.tooltip)}>{col.label}</span>
             );
             const filterLabel = col.filterActive ? i18n['js.table.filterActive'] : i18n['js.table.filter'];
             return (
@@ -1762,6 +1773,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')}
                 data-col={col.name}
                 data-col-idx={colIdx}
+                data-tl-align={col.align}
                 data-tl-state={stateAttr(...words, col.filterActive && 'filtered',
                   reorderState(columnReorder.itemState(colIdx)))}
                 style={{
@@ -1810,7 +1822,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     display="icon-only"
                     appearance="ghost"
                     small
-                    className="tl-table__filter"
+                    className="tl-table__filter tl-reveal-on-hover"
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => handleOpenFilter(col.name, e)}
                   />
@@ -1891,7 +1903,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
               // The selection wins over a highlight: a selected row carries no role.
               data-tl-role={isSelected(row) ? undefined : statusRole(row.cssClass)}
-              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
+              // `even` comes from the row's index, not its place in the DOM: the rows are virtualized, so the
+              // stripes stay put while the window scrolls.
+              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', row.groupCount != null && 'group',
+                row.index % 2 === 0 && 'even', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
                 top: row.index * rowHeight,
@@ -1955,6 +1970,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                       + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
                     data-col={col.name}
+                    data-tl-align={col.align}
                     data-tl-state={stateAttr(...words)}
                     data-tl-role={isSelected(row) ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
                     {...(isTreeColumn ? {} : cellTooltipProps)}

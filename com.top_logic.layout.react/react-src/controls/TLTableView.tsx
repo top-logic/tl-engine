@@ -1,10 +1,12 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
+import { TableViewButton } from './table/TableViewOptions';
+import type { TableDensity, TableViewValues } from './table/TableViewOptions';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -81,7 +83,6 @@ const I18N_KEYS = {
   'js.table.filter': 'Filter',
   'js.table.filterActive': 'Filter (active)',
   'js.table.columnWidth': 'Change the width of {0}',
-  'js.table.columns': 'Columns',
   'js.table.search': 'Search',
   'js.table.searchHint': 'Search the displayed columns',
   'js.table.clearFilter': 'Show all rows again',
@@ -300,35 +301,6 @@ function editableInRow(
 const FILTER_CHIP_ATTR = 'data-tl-filter-chip';
 
 /**
- * Opens the column selection. Rendered either over the right edge of the header, where it needs a
- * strip of the header kept clear of the columns, or inside the heading of the rightmost pinned
- * column — that heading carries no label, so the button takes no room from the columns there. The
- * strip (tl-table__columns) places the button, the part `Button` draws it.
- */
-const ColumnsButton: React.FC<{
-  label: string;
-  inCell?: boolean;
-  onClick: (event: React.MouseEvent) => void;
-}> = ({ label, inCell, onClick }) => {
-  const Button = usePart('Button');
-  return (
-    <div className="tl-table__columns">
-      <Button
-        label={label}
-        image={ICON_COLUMNS}
-        display="icon-only"
-        appearance="ghost"
-        small={inCell}
-        // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
-        // button's business.
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={onClick}
-      />
-    </div>
-  );
-};
-
-/**
  * React table component with virtual scrolling, server-driven cell controls,
  * multi-selection with checkbox column, and column resize.
  *
@@ -403,6 +375,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   /** The column the rows are grouped by, empty when they are not grouped. */
   const grouping = (state.grouping as string) ?? '';
   const columnSelect = (state.columnSelect as boolean) ?? false;
+  /** Whether the table offers the view of its own (density, stripes, column lines): the gear is there then. */
+  const viewOptions = (state.viewOptions as boolean) ?? false;
   const filterBar = (state.filterBar as boolean) ?? false;
   const namedFilters = (state.namedFilters as NamedFilterState[]) ?? [];
   const activeNamedFilter = (state.activeNamedFilter as string) ?? '';
@@ -1308,12 +1282,29 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('openFilter', { column: columnName });
   }, [sendCommand]);
 
-  // -- Column selection: open the server-side dialog choosing the displayed columns. --
-  const handleOpenColumnSelect = React.useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
+  // -- View: the gear opens the popover of the view of this table; its entries are these commands. --
+  const viewDensityWord: TableDensity = viewDensity === 'normal' || viewDensity === 'compact' ? viewDensity : '';
+  const handleViewChange = React.useCallback((values: TableViewValues) => {
+    sendCommand('setViewOptions', { density: values.density, striped: values.striped, columnLines: values.columnLines });
+  }, [sendCommand]);
+  const handleOpenColumnSelect = React.useCallback(() => {
     sendCommand('openColumnSelect', {});
   }, [sendCommand]);
+  const handleResetView = React.useCallback(() => {
+    sendCommand('resetView', {});
+  }, [sendCommand]);
+  const viewButton = (inCell: boolean) => (
+    <TableViewButton
+      inCell={inCell}
+      density={viewDensityWord}
+      striped={(state.striped as boolean) ?? false}
+      columnLines={(state.columnLines as boolean) ?? false}
+      columnSelect={columnSelect}
+      onChange={handleViewChange}
+      onColumns={handleOpenColumnSelect}
+      onReset={handleResetView}
+    />
+  );
 
   // -- Filter bar: named filters, the cross-column search, saving the current criteria. --
 
@@ -1438,7 +1429,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // A table ending in a pinned column has a heading without a label there, so the column button
   // goes into that heading: it then needs no room of its own, and the pinned column reaches the
   // right edge of the table.
-  const cogInHeaderCell = columnSelect && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
+  const cogInHeaderCell = viewOptions && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
 
   // Without such a heading, both the header row and the body end this much behind the last column,
   // keeping the column button clear of it: otherwise the button covers the last column's funnel as
@@ -1450,7 +1441,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // confined to the content box - ever reaching underneath the button. The design system sizes every
   // box as border-box, so a minimum width given for a row includes its padding: it must add the
   // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
-  const buttonReserve = columnSelect && !cogInHeaderCell ? columnsButtonWidth : 0;
+  const buttonReserve = viewOptions && !cogInHeaderCell ? columnsButtonWidth : 0;
 
   // Whether columns run on underneath the column button: the table is wider than its header and
   // not scrolled to its right end. The header then fades out in front of the button, so the column
@@ -1828,7 +1819,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   />
                 )}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
-                  <ColumnsButton label={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
+                  viewButton(true)
                 )}
                 {!isPinned && (
                   <div
@@ -2027,9 +2018,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {...tooltipProps(i18n['js.table.freezeSplitter'])}
           onPointerDown={handleFrozenSplitStart}
         />
-        {columnSelect && !cogInHeaderCell && (
-          <ColumnsButton label={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
-        )}
+        {viewOptions && !cogInHeaderCell && viewButton(false)}
         {/* Where the frozen area would end if the grip were dropped now, over heading and rows. */}
         {frozenPreview && (
           <div className="tl-table__freeze-preview" style={{ left: frozenPreview.x }} />

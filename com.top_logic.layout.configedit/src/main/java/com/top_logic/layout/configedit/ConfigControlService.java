@@ -417,7 +417,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			}
 			return withFormModel(selectModel, formModel);
 		}
-		if (property.getAnnotation(Encrypted.class) == null && isClaimed(property, formatProvider)) {
+		if (annotation(property, Encrypted.class) == null && isClaimed(property, formatProvider)) {
 			// Claimed: the claim states that the control bound to this model edits the value in
 			// its typed form, regardless of whether isDirectlyEditable's built-in set happens to
 			// include this property's Java type. Structural, not coincidental: a future mapping
@@ -476,7 +476,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		// map: a module may choose the control for a property, but it must never be able to make a
 		// secret readable by choosing a control that displays it in the clear. This is a security
 		// decision, independent of anything the other steps decide.
-		if (property.getAnnotation(Encrypted.class) != null) {
+		if (annotation(property, Encrypted.class) != null) {
 			return new ReactPasswordInputControl(context, model);
 		}
 
@@ -752,7 +752,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        it has none.
 	 */
 	private boolean isSelect(PropertyDescriptor property, DerivedProperty<? extends Iterable<?>> optionProvider) {
-		if (property.getAnnotation(Encrypted.class) != null) {
+		if (annotation(property, Encrypted.class) != null) {
 			// A secret is never offered as a dropdown of options - see this method's own doc comment.
 			return false;
 		}
@@ -901,7 +901,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 */
 	private boolean isSpecialized(PropertyDescriptor property, DerivedProperty<? extends Iterable<?>> optionProvider,
 			ConfigControlProvider formatProvider) {
-		if (property.getAnnotation(Encrypted.class) != null) {
+		if (annotation(property, Encrypted.class) != null) {
 			return true;
 		}
 		if (optionProvider != null) {
@@ -1001,6 +1001,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * else on its value type.
 	 *
 	 * <p>
+	 * Resolved through the {@link ConfigPropertyOptions#customizations() customizations of the
+	 * application}, as the {@link com.top_logic.layout.form.values.edit.EditorFactory} does: an
+	 * annotation given there takes precedence over the one in code.
+	 * </p>
+	 *
+	 * <p>
 	 * This is where the {@link Config#getAnnotationControls() annotation map} looks for an
 	 * annotation, so a provider looking up further annotations of the property finds them the same
 	 * way.
@@ -1010,11 +1016,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *         one.
 	 */
 	public static <A extends Annotation> A annotation(PropertyDescriptor property, Class<A> annotationType) {
-		A annotation = property.getAnnotation(annotationType);
-		if (annotation == null) {
-			annotation = property.getType().getAnnotation(annotationType);
-		}
-		return annotation;
+		return ConfigPropertyOptions.customizations().getAnnotation(property, annotationType);
 	}
 
 	/**

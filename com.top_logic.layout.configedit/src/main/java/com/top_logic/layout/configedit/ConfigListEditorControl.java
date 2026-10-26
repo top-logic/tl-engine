@@ -965,7 +965,8 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 
 		// 2. @TitleProperty on the element type.
-		TitleProperty titleOnType = item.descriptor().getConfigurationInterface().getAnnotation(TitleProperty.class);
+		TitleProperty titleOnType =
+			ConfigPropertyOptions.customizations().getAnnotation(item.descriptor(), TitleProperty.class);
 		if (titleOnType != null && !titleOnType.name().isEmpty()) {
 			PropertyDescriptor prop = item.descriptor().getProperty(titleOnType.name());
 			if (prop != null) {

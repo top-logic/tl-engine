@@ -144,7 +144,8 @@ public final class ConfigItemValue implements ConfigCollection {
 
 	@Override
 	public PropertyDescriptor titleProperty(ConfigurationItem entry) {
-		TitleProperty declared = _property.getAnnotation(TitleProperty.class);
+		TitleProperty declared =
+			ConfigPropertyOptions.customizations().getAnnotation(_property, TitleProperty.class);
 		if (declared == null || declared.name().isEmpty()) {
 			return null;
 		}

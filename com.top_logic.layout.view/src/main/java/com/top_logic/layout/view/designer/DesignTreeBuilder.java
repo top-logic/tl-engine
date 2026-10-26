@@ -15,6 +15,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.configedit.ConfigChildren;
+import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.view.ReferenceElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
@@ -133,10 +134,11 @@ public class DesignTreeBuilder {
 
 	/**
 	 * Whether the given property is annotated with {@link TreeProperty} and should be traversed.
+	 *
+	 * @see ConfigEditorControl#isTreeProperty(PropertyDescriptor)
 	 */
 	private boolean isTreeProperty(PropertyDescriptor property) {
-		TreeProperty annotation = property.getAnnotation(TreeProperty.class);
-		return annotation != null && annotation.value();
+		return ConfigEditorControl.isTreeProperty(property);
 	}
 
 	private void addChild(DesignTreeNode parent, ConfigurationItem childConfig,

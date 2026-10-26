@@ -28,6 +28,11 @@
 						<options fun="test.com.top_logic.layout.configedit.TestConfigPropertyOptions$Colors"/>
 					</annotations>
 				</property>
+				<property name="test.com.top_logic.layout.configedit.TestConfigEditorControl$CustomizedConfig#hidden-by-configuration">
+					<annotations>
+						<hidden/>
+					</annotations>
+				</property>
 			</customizations>
 		</config>
 	</configs>

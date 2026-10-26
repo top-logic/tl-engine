@@ -6379,4 +6379,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:5eee426e61fb6a821f76758694a780695f8f380a9f5fecf1ac3e1bce9c3b9ef7 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:fb578b7c392ff356ce9eaed7eaefcd504f7194f1e233d04201407dc58488faf9 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

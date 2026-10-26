@@ -40,6 +40,8 @@ import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.layout.view.table.DropTargetMode;
+import com.top_logic.layout.view.table.RowClassConfig;
+import com.top_logic.layout.view.table.RowClassFunction;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
@@ -72,7 +74,8 @@ import com.top_logic.table.impl.TreeRowSource;
  * Everything else - the columns, the filter bar, the activation and the dragging of rows - is that
  * of every {@link AbstractTableElement}. The {@link Config#getDrops() drops} take a
  * table's targets, and an insertion among the rows refers to the row it is made under as well as to
- * the row it is made before, as in a tree.
+ * the row it is made before, as in a tree. As a table, it marks its rows with the
+ * {@link Config#getRowClass() row class}.
  * </p>
  *
  * @implNote A drop is compiled with the {@link DropTargetMode#treeSignature()} of its target.
@@ -84,7 +87,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	 * Configuration for {@link TreeTableElement}.
 	 */
 	@TagName("tree-table")
-	public interface Config extends AbstractTableElement.Config, TreeStructureConfig {
+	public interface Config extends AbstractTableElement.Config, TreeStructureConfig, RowClassConfig {
 
 		/** Access to the default methods of this interface for the configuration proxy. */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -182,6 +185,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
 	private final List<DeclaredDrop> _drops;
 
+	/** The compiled {@link Config#getRowClass() row class function}. */
+	private final RowClassFunction _rowClass;
+
 	/**
 	 * Creates a {@link TreeTableElement} from configuration.
 	 */
@@ -190,6 +196,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		super(context, config);
 		_functions = new TreeFunctions(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().treeSignature());
+		_rowClass = RowClassFunction.compile(config);
 	}
 
 	@Override
@@ -199,6 +206,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		DefaultTreeUINodeModel treeModel = _functions.treeModel(builder, inputChannels);
 		NodeStructure structure = new NodeStructure(treeModel, _config.getCanExpandAll());
 
+		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
 		// The function saying what holds an object serves the observation (where an object that
 		// moved went, where an object of an observed type belongs) and the selection (which row an
 		// object of the channel has). The node of an object read from the channel is looked for in
@@ -217,7 +225,8 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 		ReadOnlyTable<TreeRowSource<DefaultTreeUINode, Object>, TreeSelectionBinding> table = createTable(context,
 			resolveRowType(structure.topLevelObjects()), ChannelInputs.arguments(inputChannels),
-			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, null, selectionBinder);
+			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, rowCssClass,
+			selectionBinder);
 		TableViewControl<Object> control = table.control();
 		TreeRowSource<DefaultTreeUINode, Object> source = table.source();
 
@@ -246,9 +255,13 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 			@Override
 			public void inputsChanged() {
-				// The rows and their cells stay; the criteria of the presets may read the inputs.
+				// The rows and their cells stay; the criteria of the presets and the row class may read
+				// the inputs.
 				if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
 					control.refreshFilters();
+				}
+				if (rowCssClass != null) {
+					control.repaintRows();
 				}
 			}
 		}, treeModel, _functions::root, builder, parentFunction,

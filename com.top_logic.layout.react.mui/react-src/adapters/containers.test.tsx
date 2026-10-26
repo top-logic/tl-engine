@@ -272,7 +272,7 @@ describe('a split handle is a separator', () => {
     expect(sent).toHaveBeenCalledWith('resetSizes', expect.anything());
   });
 
-  it('lays out each pane as a column, so that a filling child takes the height of the pane', async () => {
+  it('makes each pane a bounded region, so that a filling child takes the height of the pane', async () => {
     mountAdapter(TLSplitPanel, {
       ...SPLIT,
       children: [
@@ -285,8 +285,8 @@ describe('a split handle is a separator', () => {
     expect(filling.classList).toContain(FILL_CLASS);
     const pane = filling.parentElement!;
     expect(pane.classList).toContain('tl-split__pane');
-    expect(pane.style.display).toBe('flex');
-    expect(pane.style.flexDirection).toBe('column');
+    expect(pane.classList).toContain('tl-region');
+    expect(pane.style.display).toBe('');
     expect(pane.style.overflow).toBe('auto');
   });
 

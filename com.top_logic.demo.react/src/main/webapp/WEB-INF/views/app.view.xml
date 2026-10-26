@@ -135,6 +135,15 @@
 						<de>Baum-Demo</de>
 					</label>
 				</nav-item>
+				<nav-item id="tree-table-display-demo"
+					icon="css:bi bi-list-nested"
+				>
+					<view-ref view="demo/tree-table-display-demo.view.xml"/>
+					<label>
+						<en>Tree table display</en>
+						<de>Baumtabellen-Anzeige</de>
+					</label>
+				</nav-item>
 				<nav-item id="charts"
 					icon="css:bi bi-bar-chart-line"
 				>
@@ -295,6 +304,15 @@
 					<label>
 						<en>Table and Card</en>
 						<de>Tabelle und Karte</de>
+					</label>
+				</nav-item>
+				<nav-item id="panel-stack-demo"
+					icon="css:bi bi-view-stacked"
+				>
+					<view-ref view="demo/panel-stack-demo.view.xml"/>
+					<label>
+						<en>Panels in a Tab</en>
+						<de>Panels im Reiter</de>
 					</label>
 				</nav-item>
 				<nav-item id="errors"

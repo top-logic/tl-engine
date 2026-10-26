@@ -133,3 +133,11 @@
 	box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-status-warning-border);
 	color: var(--tl-text-on-brand);
 }
+
+/*
+ * A node of the tree table display demo standing for an approved milestone: its label in the
+ * color a success is reported in.
+ */
+.tlDemoApproved {
+	color: var(--tl-status-success-text);
+}

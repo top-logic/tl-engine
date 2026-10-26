@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -13,7 +14,17 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.provider.CollectionLabelProvider;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
@@ -71,6 +82,18 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        The tooltip of a cell, computed from its row and its value, or {@code null} for a column
  *        whose cells have none. In the header row of a group, the row is {@code null} and the value
  *        is the value the group is formed by.
+ * @param cellClass
+ *        The CSS class of a data cell, computed from its row and its value, or {@code null} for a
+ *        column whose cells have none. It is never passed the
+ *        {@link ColumnProviderService#UNREADABLE} marker: a cell the user may not read has no class.
+ *        An empty class counts as none.
+ * @param display
+ *        How a cell displays its value, in place of the display its {@link #type()} derives, or
+ *        {@code null} for the type-derived display. It displays a value only: an empty cell, a cell
+ *        the user may not read and a cell being edited keep the display of the column its
+ *        {@link #binding()} built. A collection of values is displayed value by value. A display
+ *        that is a {@link LabelProvider} gives the cells the text the free-text search finds them
+ *        by, the labels of a collection's values joined as for any cell holding several values.
  * @param sortable
  *        Whether the column sorts at all. A column that does not sort offers no sorting and
  *        ignores its {@link #comparator()}; a table grouped by it keeps its groups in the order of
@@ -91,6 +114,8 @@ public record ColumnSetup(
 		boolean hiddenByDefault,
 		ColumnExport export,
 		BiFunction<Object, Object, String> tooltip,
+		BiFunction<Object, Object, String> cellClass,
+		ReactControlProvider display,
 		boolean sortable) {
 
 	/**
@@ -101,13 +126,58 @@ public record ColumnSetup(
 	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
 			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
-			ColumnExport export, BiFunction<Object, Object, String> tooltip) {
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, ReactControlProvider display) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, true);
+			export, tooltip, cellClass, display, true);
 	}
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column that sorts and whose cells have no tooltip.
+	 * Creates a {@link ColumnSetup} of a column that sorts and whose cells display their values as
+	 * the type of the values derives.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, null);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column whose cells have neither a CSS class of their own nor
+	 * a display of their own.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip, boolean sortable) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, null, null, sortable);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that sorts and whose cells have no CSS class of
+	 * their own.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, null);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that sorts and whose cells have neither a tooltip
+	 * nor a CSS class of their own.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -116,7 +186,7 @@ public record ColumnSetup(
 			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
 			ColumnExport export) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, null);
+			export, null, null);
 	}
 
 	/**
@@ -147,8 +217,10 @@ public record ColumnSetup(
 	 * in the {@link #width() configured width} when there is one, showing the
 	 * {@link #aggregate()} in the header row of a group when it computes one, sorting by the
 	 * {@link #comparator()} when it declares one and not at all when it is not {@link #sortable()},
-	 * with the {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
-	 * computes one, and left out of exports when its {@link #export()} says so.
+	 * displaying its values through the {@link #display()} when it declares one, with the
+	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
+	 * computes one, with the {@link #cellClass()} on its cells when it computes one, and left out
+	 * of exports when its {@link #export()} says so.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -163,10 +235,8 @@ public record ColumnSetup(
 			result = DelegatingColumn.withDefaultWidth(result, width);
 		}
 		if (aggregate != null) {
-			ColumnType columnType = type;
 			Function<List<Object>, Object> function = aggregate;
-			Aggregator<Object, V> aggregator =
-				group -> ColumnProviderService.displayContent(columnType, function.apply(group.members()));
+			Aggregator<Object, V> aggregator = group -> content(function.apply(group.members()));
 			result = new DelegatingColumn<>(result) {
 				@Override
 				public Optional<Aggregator<Object, V>> aggregate() {
@@ -185,13 +255,119 @@ public record ColumnSetup(
 				}
 			};
 		}
+		if (display != null) {
+			result = withDisplay(result, display);
+		}
 		if (tooltip != null) {
 			result = withTooltip(result, tooltip);
+		}
+		if (cellClass != null) {
+			result = withCellClass(result, cellClass);
 		}
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
 		}
 		return result;
+	}
+
+	/**
+	 * The content of a cell showing the given value, as the {@link #display()} shows it where it
+	 * displays the value, as the {@link #type()} derives otherwise.
+	 */
+	private CellContent content(Object cellValue) {
+		if (display != null && displays(cellValue)) {
+			return displayed(display, cellValue);
+		}
+		return ColumnProviderService.displayContent(type, cellValue);
+	}
+
+	/**
+	 * Whether a declared {@link #display()} displays the given cell value: any value but nothing, an
+	 * empty collection and a value the user may not read.
+	 */
+	private static boolean displays(Object cellValue) {
+		if (cellValue == null || ColumnProviderService.hasUnreadable(cellValue)) {
+			return false;
+		}
+		return !(cellValue instanceof Collection<?> collection && collection.isEmpty());
+	}
+
+	/** The content of a cell the given display shows the given value in. */
+	private static CellContent displayed(ReactControlProvider display, Object cellValue) {
+		return new CellContent.Raw((CellControlFactory) context -> displayControl(context, display, cellValue));
+	}
+
+	/**
+	 * The control the given display shows the given value with.
+	 *
+	 * <p>
+	 * A collection of values is shown value by value, each by the control the display creates for
+	 * it, arranged as the read-only {@link ReactValueListControl} arranges the values of any field
+	 * holding several of them.
+	 * </p>
+	 */
+	private static ReactControl displayControl(ReactContext context, ReactControlProvider display,
+			Object cellValue) {
+		if (!(cellValue instanceof Collection<?> values)) {
+			return display.createControl(context, cellValue);
+		}
+		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<>(values));
+		model.setEditable(false);
+		FieldSpec field = FieldSpec.of(Object.class, null).setMultiple(true);
+		return new ReactValueListControl(context, model, field,
+			(elementContext, elementField, element) -> display.createControl(elementContext, element.getValue()));
+	}
+
+	/**
+	 * The text the free-text search finds a cell holding the given value by, as the given labels
+	 * write it: a collection of values as the labels of its values, joined with
+	 * {@link ColumnProviderService#VALUE_SEPARATOR} as for any cell holding several values.
+	 */
+	private static String labelText(LabelProvider labels, Object cellValue) {
+		if (cellValue instanceof Collection<?>) {
+			return new CollectionLabelProvider(labels, ColumnProviderService.VALUE_SEPARATOR).getLabel(cellValue);
+		}
+		return labels.getLabel(cellValue);
+	}
+
+	/**
+	 * The given column displaying its values through the given display.
+	 *
+	 * <p>
+	 * A data cell and the header row of a group show their value as the given display does, where
+	 * it {@link #displays(Object) displays} the value, and as the given column does otherwise; a
+	 * collection of values value by value. A display that is a {@link LabelProvider} is what the
+	 * free-text search reads a cell by, so that the search finds what the cell shows.
+	 * </p>
+	 */
+	private static <V> Column<Object, V> withDisplay(Column<Object, V> column, ReactControlProvider display) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public CellContent renderCell(Object row) {
+				V cellValue = super.value(row);
+				if (displays(cellValue)) {
+					return displayed(display, cellValue);
+				}
+				return super.renderCell(row);
+			}
+
+			@Override
+			public CellRenderer<V> renderer() {
+				CellRenderer<V> inner = super.renderer();
+				return groupValue -> displays(groupValue) ? displayed(display, groupValue) : inner.render(groupValue);
+			}
+
+			@Override
+			public String searchText(Object row) {
+				if (display instanceof LabelProvider labels) {
+					V cellValue = super.value(row);
+					if (displays(cellValue)) {
+						return labelText(labels, cellValue);
+					}
+				}
+				return super.searchText(row);
+			}
+		};
 	}
 
 	/**
@@ -220,6 +396,33 @@ public record ColumnSetup(
 			public CellRenderer<V> renderer() {
 				CellRenderer<V> inner = super.renderer();
 				return groupValue -> CellContent.withTooltip(inner.render(groupValue), tooltip.apply(null, groupValue));
+			}
+		};
+	}
+
+	/**
+	 * The given column with the given CSS class on its data cells.
+	 *
+	 * <p>
+	 * A data cell gets the class computed from its row and its value, in addition to the class the
+	 * given column puts on it. A cell the user may not read gets no class of its own.
+	 * </p>
+	 */
+	private static <V> Column<Object, V> withCellClass(Column<Object, V> column,
+			BiFunction<Object, Object, String> cellClass) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public String cssClass(Object row) {
+				String inner = super.cssClass(row);
+				V cellValue = super.value(row);
+				if (cellValue == ColumnProviderService.UNREADABLE) {
+					return inner;
+				}
+				String own = cellClass.apply(row, cellValue);
+				if (StringServices.isEmpty(own)) {
+					return inner;
+				}
+				return StringServices.isEmpty(inner) ? own : inner + " " + own;
 			}
 		};
 	}

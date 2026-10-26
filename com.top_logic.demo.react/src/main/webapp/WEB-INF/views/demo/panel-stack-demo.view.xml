@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Panels in the content region of a tab.
+	
+	The tab "Stacked panels" holds a column <stack> of two panels: the summary panel A is as high as
+	its text, the object panel B fills the rest of the tab, and its table scrolls the rows that do not
+	fit.
+	
+	The tab "Single panel" holds one panel with a form of its own size; it spans the whole tab region.
+	The form shows the object selected in the table of the first tab.
+-->
+<view>
+	<channels>
+		<channel name="selectedDemo"/>
+	</channels>
+	<tab-bar active-tab="stacked">
+		<tab id="stacked"
+			icon="css:bi bi-view-stacked"
+		>
+			<label>
+				<en>Stacked panels</en>
+				<de>Gestapelte Panels</de>
+			</label>
+			<stack
+				direction="column"
+				gap="default"
+			>
+				<panel>
+					<title>
+						<en>Summary</en>
+						<de>Übersicht</de>
+					</title>
+					<inset>
+						<text>
+							<label>
+								<en>This panel is as high as its text. The panel below holds a table, which fills the rest of the tab and scrolls its rows itself.</en>
+								<de>Dieses Panel ist so hoch wie sein Text. Das Panel darunter enthält eine Tabelle, die den Rest des Reiters füllt und ihre Zeilen selbst scrollt.</de>
+							</label>
+						</text>
+					</inset>
+				</panel>
+				<panel>
+					<title>
+						<en>Objects</en>
+						<de>Objekte</de>
+					</title>
+					<table
+						observed-types="demo.react:Demo"
+						selection="selectedDemo"
+						types="demo.react:Demo"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="priority"/>
+						</columns>
+						<rows>all(`demo.react:Demo`)</rows>
+					</table>
+				</panel>
+			</stack>
+		</tab>
+		<tab id="single"
+			icon="css:bi bi-window"
+		>
+			<label>
+				<en>Single panel</en>
+				<de>Einzelnes Panel</de>
+			</label>
+			<panel with-inset="true">
+				<title>
+					<en>Selected object</en>
+					<de>Gewähltes Objekt</de>
+				</title>
+				<text>
+					<label>
+						<en>A panel of its own size spans the whole tab. The form shows the object selected in the table of the first tab.</en>
+						<de>Ein Panel eigener Größe nimmt den ganzen Reiter ein. Das Formular zeigt das in der Tabelle des ersten Reiters gewählte Objekt.</de>
+					</label>
+				</text>
+				<form input="selectedDemo">
+					<field attribute="name"/>
+					<field attribute="priority"/>
+				</form>
+			</panel>
+		</tab>
+	</tab-bar>
+</view>

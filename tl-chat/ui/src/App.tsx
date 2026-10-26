@@ -18,6 +18,8 @@ import { SourcesIcon, SourcesSection, type CitedSource } from './sources'
 import { progressBadge, unseenBadge } from './progress-model'
 import { RailToggle, SideRail, SideStrip } from './rail'
 import { SHEET_MAX, SidePane } from './side-pane'
+import { readComposerControls } from './chat-conversation'
+import { gateComposerControls } from './features'
 import { Thread } from './thread'
 import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
 import {
@@ -60,6 +62,11 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   useEffect(() => preloadWorkingIndicator(workingIndicator), [workingIndicator])
   const chatId = chatIdOf(state, controlId)
   const { chat, actions, runs } = useChat(chatId, boot)
+  // The composer offers what the open conversation supports; `App` configures nothing else away.
+  const composerControls = useMemo(
+    () => gateComposerControls(readComposerControls({}), chat.features),
+    [chat.features],
+  )
   // A chat renamed elsewhere - a script, another tab (#596).
   useSessionsRevision(state, actions)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
@@ -364,6 +371,8 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             effort={chat.effort}
             onEditSend={onEditSend}
             onRegenerate={actions.regenerate}
+            canRegenerate={chat.features.regenerate}
+            canEdit={chat.features.editMessages}
             onRate={actions.rate}
             onOpenRail={() => setRailOpen(true)}
             railCollapsed={railCollapsed}
@@ -437,6 +446,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             placeholder={placeholder || undefined}
             extraMenuItems={extensions?.composerAddons?.extraMenuItems}
             referenceCandidates={extensions?.composerAddons?.referenceCandidates}
+            {...composerControls}
           />
         </div>
         {/*

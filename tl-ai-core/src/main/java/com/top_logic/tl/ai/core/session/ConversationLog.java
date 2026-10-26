@@ -83,8 +83,22 @@ public class ConversationLog {
 	 * </p>
 	 */
 	public Turn startTurn(Instant timestamp) {
+		return startTurn(UUID.randomUUID().toString(), timestamp);
+	}
+
+	/**
+	 * Start a turn read back from a transcript under the ID it was recorded with, as
+	 * {@link #startTurn(Instant)} does otherwise.
+	 *
+	 * <p>
+	 * What else is recorded about the turn - the run that ended with it, what that run cost and
+	 * when it started and ended - names it by that ID, so a turn read back under a new one would
+	 * lose it.
+	 * </p>
+	 */
+	public Turn startTurn(String id, Instant timestamp) {
 		int number = _turnCounter.incrementAndGet();
-		Turn turn = new Turn(UUID.randomUUID().toString(), number, timestamp);
+		Turn turn = new Turn(id, number, timestamp);
 		turn.addObserver(_partForwarder);
 		_turns.add(turn);
 		_currentTurn = turn;

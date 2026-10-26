@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.window;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.top_logic.layout.react.servlet.DeliveryScope;
@@ -17,7 +18,9 @@ import com.top_logic.layout.react.servlet.DeliveryScope;
  * <p>
  * An interaction holds the session's request lock, so a second request waits until the trees are
  * consistent again, and it opens the {@link DeliveryScope} that holds SSE delivery back until it
- * closes. Obtained from {@link ReactWindowRegistry#beginInteraction()} and used as a resource:
+ * closes. Obtained from {@link ReactWindowRegistry#beginInteraction()} - or, by a thread that must
+ * not wait long, from {@link ReactWindowRegistry#tryBeginInteraction(long)} - and used as a
+ * resource:
  * </p>
  *
  * <pre>
@@ -43,14 +46,55 @@ public final class Interaction implements AutoCloseable {
 	private final ReentrantLock _lock;
 
 	/**
-	 * Creates an {@link Interaction}, acquiring the given lock and opening the delivery scope.
+	 * Begins an {@link Interaction}, waiting for the given lock as long as another thread holds it.
 	 *
 	 * @param lock
 	 *        The session's request lock, held until the interaction is {@link #close() closed}.
+	 * @return The open interaction.
 	 */
-	Interaction(ReentrantLock lock) {
-		_lock = lock;
+	static Interaction begin(ReentrantLock lock) {
 		lock.lock();
+		return new Interaction(lock);
+	}
+
+	/**
+	 * Begins an {@link Interaction}, unless another thread holds the given lock for longer than the
+	 * given time.
+	 *
+	 * <p>
+	 * A thread that already holds the lock gets the interaction at once. A thread interrupted while
+	 * it waits gets none, and its interrupt flag stays set.
+	 * </p>
+	 *
+	 * @param lock
+	 *        The session's request lock, held until the interaction is {@link #close() closed}.
+	 * @param timeoutMillis
+	 *        The time in milliseconds to wait at most for another thread to release the lock,
+	 *        {@code 0} not to wait.
+	 * @return The open interaction, or {@code null} if the lock was not acquired.
+	 */
+	static Interaction tryBegin(ReentrantLock lock, long timeoutMillis) {
+		try {
+			if (!lock.tryLock(timeoutMillis, TimeUnit.MILLISECONDS)) {
+				return null;
+			}
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			return null;
+		}
+		return new Interaction(lock);
+	}
+
+	/**
+	 * Creates an {@link Interaction} on the given lock, which the calling thread has just acquired,
+	 * and opens the delivery scope.
+	 *
+	 * @param lock
+	 *        The session's request lock, held until the interaction is {@link #close() closed},
+	 *        released at once if the delivery scope cannot be opened.
+	 */
+	private Interaction(ReentrantLock lock) {
+		_lock = lock;
 		try {
 			DeliveryScope.enter();
 		} catch (RuntimeException | Error ex) {

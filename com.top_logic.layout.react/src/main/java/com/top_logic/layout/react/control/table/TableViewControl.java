@@ -959,6 +959,29 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Expands the rows with the given {@link Row#key() row keys}, as the user does with their
+	 * toggles, and re-renders the rows.
+	 *
+	 * <p>
+	 * A row is expanded in the order the keys are given, so a row below another one becomes
+	 * displayed when the keys name the row above it first. A key of a row that is expanded already
+	 * changes nothing.
+	 * </p>
+	 *
+	 * @param keys
+	 *        The keys of the rows to expand.
+	 */
+	public void expandRows(Collection<?> keys) {
+		if (keys.isEmpty()) {
+			return;
+		}
+		for (Object key : keys) {
+			_view.setExpanded(key, true);
+		}
+		rebuildAfterRowChange();
+	}
+
+	/**
 	 * Registers a view-supplied custom filter UI for a column, used instead of the built-in filter
 	 * editor when the column's funnel is opened.
 	 */

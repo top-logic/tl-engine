@@ -95,8 +95,6 @@ public class PollServlet extends HttpServlet {
 			response.getWriter().write("{\"last\":" + queue.lastSeq() + "}");
 			return;
 		}
-		// A request of the session like any other, see SSEServlet.
-		registry.noteActivity(session);
 		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
 		queue.getPollToken();
 		AsyncContext context = startPoll(request, response);

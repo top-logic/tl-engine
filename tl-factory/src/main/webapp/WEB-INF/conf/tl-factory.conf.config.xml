@@ -7,6 +7,8 @@
 				<modules>
 					<module key="com.top_logic.factory.workspace.WorkspaceService$Module" value="true"/>
 					<module key="com.top_logic.factory.project.ProjectWorkspaces$Module" value="true"/>
+					<module key="com.top_logic.factory.llm.LLMProxyService$Module" value="true"/>
+					<module key="com.top_logic.factory.agent.WorkspaceAgentService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -19,12 +21,19 @@
 					public-host="%FACTORY_PUBLIC_HOST%"
 					host-port-min="%FACTORY_HOST_PORT_MIN%"
 					host-port-max="%FACTORY_HOST_PORT_MAX%"
+					cpu-limit="%FACTORY_WORKSPACE_CPUS%"
+					extra-hosts="%FACTORY_DOCKER_EXTRA_HOSTS%"
+					host-ip="%FACTORY_HOST_IP%"
+					isolate-workspaces="%FACTORY_DOCKER_ISOLATE%"
+					memory-limit="%FACTORY_WORKSPACE_MEMORY%"
+					pids-limit="%FACTORY_WORKSPACE_PIDS%"
 				/>
 				<applications
 					engine-version="%FACTORY_ENGINE_VERSION%"
 					image-repository="%FACTORY_IMAGE_REPOSITORY%"
 					repository-url="%FACTORY_REPOSITORY_URL%"
 					start-timeout="%FACTORY_START_TIMEOUT%"
+					build-timeout="%FACTORY_BUILD_TIMEOUT%"
 				/>
 			</instance>
 		</config>
@@ -34,6 +43,60 @@
 				log-flush-interval="%FACTORY_LOG_FLUSH_INTERVAL%"
 				max-log-size="%FACTORY_MAX_LOG_SIZE%"
 			/>
+		</config>
+
+		<!--
+			The LLM proxy of the workspaces: the API key of the named provider of the
+			LLMProviderService is added to their requests, no workspace container gets it.
+		-->
+		<config service-class="com.top_logic.factory.llm.LLMProxyService">
+			<instance class="com.top_logic.factory.llm.LLMProxyService"
+				allowed-sources="%FACTORY_LLM_ALLOWED_SOURCES%"
+				listen-address="%FACTORY_LLM_PROXY_ADDRESS%"
+				listen-port="%FACTORY_LLM_PROXY_PORT%"
+				provider="%FACTORY_LLM_PROVIDER%"
+				proxy-url="%FACTORY_LLM_PROXY_URL%"
+				rate-limit="%FACTORY_LLM_RATE_LIMIT%"
+				servlet-enabled="%FACTORY_LLM_PROXY_SERVLET%"
+			/>
+		</config>
+
+		<!--
+			The coding agent of the workspaces: Claude Code, one process per agent conversation,
+			answering the chats whose subject is a tl.factory:AgentConversation.
+		-->
+		<config service-class="com.top_logic.factory.agent.WorkspaceAgentService">
+			<instance class="com.top_logic.factory.agent.WorkspaceAgentService"
+				idle-timeout="%FACTORY_AGENT_IDLE_TIMEOUT%"
+				token-lifetime="%FACTORY_AGENT_TOKEN_LIFETIME%"
+			>
+				<harness class="com.top_logic.factory.agent.claude.ClaudeCodeHarness"
+					extra-args="%FACTORY_AGENT_EXTRA_ARGS%"
+					model="%FACTORY_AGENT_MODEL%"
+					thinking-display="%FACTORY_AGENT_THINKING_DISPLAY%"
+				/>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.ai.chat.backend.ConversationBackendService">
+			<instance>
+				<resolvers>
+					<resolver class="com.top_logic.factory.agent.AgentConversationResolver"/>
+				</resolvers>
+			</instance>
+		</config>
+
+		<!-- The stylesheet of the views of the control application, in the engine's layer "tl". -->
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<stylesheet name="tl-factory-css"
+						layer="tl"
+						requires="tl-react-controls-css"
+						resource="/style/tl-factory.css"
+					/>
+				</resources>
+			</instance>
 		</config>
 
 		<config service-class="com.top_logic.util.model.ModelService">

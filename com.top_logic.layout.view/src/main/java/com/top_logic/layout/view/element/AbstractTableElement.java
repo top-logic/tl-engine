@@ -759,10 +759,46 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
-	 * A read-only table built by {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function)}.
+	 * Binds the selection of a table built by
+	 * {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
+	 * to its {@link Config#getSelection() selection channel}.
+	 *
+	 * @param <B>
+	 *        The type of the binding.
+	 */
+	@FunctionalInterface
+	protected interface SelectionBinder<B> {
+
+		/**
+		 * Binds the selection of the given control to the given channel, for as long as the control
+		 * lives.
+		 *
+		 * @param control
+		 *        The control displaying the table.
+		 * @param channel
+		 *        The selection channel.
+		 * @return The binding.
+		 */
+		B bind(TableViewControl<Object> control, ViewChannel channel);
+	}
+
+	/**
+	 * {@link SelectionBinder} of a table selecting its rows by a {@link TableSelectionBinding}.
+	 */
+	protected static final SelectionBinder<TableSelectionBinding> ROW_SELECTION = (control, channel) -> {
+		TableSelectionBinding binding = new TableSelectionBinding(control, channel);
+		control.addCleanupAction(binding::dispose);
+		return binding;
+	};
+
+	/**
+	 * A read-only table built by
+	 * {@link AbstractTableElement#createTable(ViewContext, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
 	 *
 	 * @param <S>
 	 *        The type of the row source.
+	 * @param <B>
+	 *        The type of the binding of the selection channel.
 	 * @param control
 	 *        The control displaying the table.
 	 * @param view
@@ -778,9 +814,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * @param setups
 	 *        The descriptors of the declared columns.
 	 */
-	protected record ReadOnlyTable<S extends RowSource<Object>>(TableViewControl<Object> control,
+	protected record ReadOnlyTable<S extends RowSource<Object>, B>(TableViewControl<Object> control,
 			DefaultTableView<Object> view, S source, List<Column<Object, ?>> columns, List<String> declaredNames,
-			TableSelectionBinding selectionBinding, List<ColumnSetup> setups) {
+			B selectionBinding, List<ColumnSetup> setups) {
 		// Pure data.
 	}
 
@@ -805,10 +841,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * @param rowCssClass
 	 *        The CSS class of a row computed from its object, {@code null} for a table whose rows
 	 *        carry none.
+	 * @param selectionBinder
+	 *        Binds the selection of the table to the {@link Config#getSelection() selection
+	 *        channel}, if one is configured.
 	 */
-	protected final <S extends RowSource<Object>> ReadOnlyTable<S> createTable(ViewContext context,
+	protected final <S extends RowSource<Object>, B> ReadOnlyTable<S, B> createTable(ViewContext context,
 			TLStructuredType rowType, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
-			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass) {
+			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass,
+			SelectionBinder<B> selectionBinder) {
 		ViewCommandModel activation = activationModel(context);
 
 		List<ColumnDeclaration> declarations = columns(rowType);
@@ -853,11 +893,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		}
 
 		ChannelRef selectionRef = _config.getSelection();
-		TableSelectionBinding selectionBinding =
-			selectionRef != null ? new TableSelectionBinding(control, context.resolveChannel(selectionRef)) : null;
-		if (selectionBinding != null) {
-			control.addCleanupAction(selectionBinding::dispose);
-		}
+		B selectionBinding =
+			selectionRef != null ? selectionBinder.bind(control, context.resolveChannel(selectionRef)) : null;
 
 		TableFilterBinding filterBinding = filterBinding(context, control);
 		if (filterBinding != null) {
@@ -885,7 +922,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The values of the input channels now.
 	 * @return Whether the table declares presets, so that its named filters were replaced.
 	 */
-	protected final boolean refreshPresets(ReadOnlyTable<?> table, Object[] inputValues) {
+	protected final boolean refreshPresets(ReadOnlyTable<?, ?> table, Object[] inputValues) {
 		if (_presets.isEmpty()) {
 			return false;
 		}

@@ -5,15 +5,10 @@
  */
 package com.top_logic.tl.ai.core.access;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.HexFormat;
 import java.util.Iterator;
 
 import com.top_logic.basic.util.ResKey;
@@ -33,8 +28,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * A token is {@value #PREFIX} followed by {@value #SECRET_LENGTH} characters drawn uniformly from
- * {@code [0-9A-Za-z]} by a {@link SecureRandom} - {@code 43 * log2(62)}, about 256 bits of
- * randomness. The prefix makes a token recognisable: a secret scanner (the secret scanning of a
+ * {@code [0-9A-Za-z]} by a secure random generator - {@code 43 * log2(62)}, about 256 bits of
+ * randomness, see {@link SecretTokens}. The prefix makes a token recognisable: a secret scanner (the secret scanning of a
  * code host, a pre-commit hook) can match a leaked one by pattern, a person can tell it from a
  * password at a glance, and the {@link AccessTokenAuthenticator authenticator} can tell it from
  * another bearer token without a database lookup. Base 62 rather than base 64, so that a double
@@ -63,7 +58,7 @@ public final class AccessTokens {
 	public static final String PREFIX = "tlpat_";
 
 	/** Number of random characters after the {@link #PREFIX}. */
-	static final int SECRET_LENGTH = 43;
+	static final int SECRET_LENGTH = SecretTokens.SECRET_LENGTH;
 
 	/** Number of secret characters the {@link #hint(String) hint} keeps. */
 	static final int HINT_LENGTH = 4;
@@ -77,10 +72,6 @@ public final class AccessTokens {
 	 * </p>
 	 */
 	static final Duration LAST_USED_GRANULARITY = Duration.ofMinutes(1);
-
-	private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private AccessTokens() {
 		// Static utility.
@@ -197,40 +188,21 @@ public final class AccessTokens {
 	 * {@link #SECRET_LENGTH} characters of the alphabet.
 	 */
 	public static boolean hasFormat(String candidate) {
-		if (candidate == null || candidate.length() != PREFIX.length() + SECRET_LENGTH
-			|| !candidate.startsWith(PREFIX)) {
-			return false;
-		}
-		for (int n = PREFIX.length(); n < candidate.length(); n++) {
-			if (ALPHABET.indexOf(candidate.charAt(n)) < 0) {
-				return false;
-			}
-		}
-		return true;
+		return SecretTokens.hasFormat(PREFIX, candidate);
 	}
 
 	/**
 	 * A new random token.
 	 */
 	static String newToken() {
-		StringBuilder result = new StringBuilder(PREFIX.length() + SECRET_LENGTH).append(PREFIX);
-		for (int n = 0; n < SECRET_LENGTH; n++) {
-			result.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
-		}
-		return result.toString();
+		return SecretTokens.newToken(PREFIX);
 	}
 
 	/**
 	 * What is stored to find {@code token} again: the lower-case hex SHA-256 of its UTF-8 bytes.
 	 */
 	static String hash(String token) {
-		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			return HexFormat.of().formatHex(digest.digest(token.getBytes(StandardCharsets.UTF_8)));
-		} catch (NoSuchAlgorithmException ex) {
-			// Every Java platform is required to provide SHA-256.
-			throw new IllegalStateException(ex);
-		}
+		return SecretTokens.hash(token);
 	}
 
 	/**

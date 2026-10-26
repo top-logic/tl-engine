@@ -27,6 +27,11 @@
 	sorted by that number (tickets without one at the end, by name). A ticket dropped on another
 	column lands where it was dropped: the status is set first, then the column is renumbered.
 	
+	"Show in ticket list" beside the form jumps to the Tickets page with the selected ticket selected
+	there: <show-view> creates that page when it has not been opened yet and writes its channels in
+	the same request - the ticket onto its selection, and the preset all, no search term and no
+	status onto its filters, so the ticket is in the list that holds it, Open or Closed.
+	
 	"Generate samples" on the object list page creates tickets in every status.
 -->
 <view>
@@ -94,6 +99,39 @@
 						<en>Ticket</en>
 						<de>Ticket</de>
 					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-list-ul"
+							inputs="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Show in ticket list</en>
+								<de>In der Ticketliste zeigen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<show-view view="tickets.view.xml">
+								<bind
+									channel="activeFilter"
+									expr="'all'"
+								/>
+								<bind
+									channel="searchTerm"
+									expr="null"
+								/>
+								<bind
+									channel="status"
+									expr="null"
+								/>
+								<bind
+									channel="ticket"
+									expr="$ticket"
+								/>
+							</show-view>
+						</generic-command>
+					</commands>
 					<form
 						input="ticket"
 						with-inset="true"

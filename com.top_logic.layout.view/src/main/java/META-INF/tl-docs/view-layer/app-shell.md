@@ -32,6 +32,8 @@ order: 80
 </view>
 ```
 
+`<session-timeout-notice/>` counts down to the end of the session and warns `lead-seconds` (300) before it. Every request that carries the session restarts the container's inactivity timeout, whatever servlet answers it - a React command, a page, a stylesheet, an application's own servlet such as the chat's `/chat/*` - and the `SessionActivityFilter` of `tl-layout-react`, mapped to every request, tells the notice about each of them (`ReactWindowRegistry.noteActivity`). A servlet of an application therefore needs nothing of its own for the notice to count from its requests.
+
 An application that defines its whole shell itself writes `<app-shell config:override="true">` in its copy; the copy then takes the place of the shipped shell as a whole (channels of its `<view>` are still added to the shell's, which has none). `com.top_logic.demo.react`'s `app.view.xml` is a complete overlay example; `TestAppShellOverlay` pins the merge behavior.
 
 ## The sidebar: item kinds, badges and the rail chrome

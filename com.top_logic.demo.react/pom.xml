@@ -20,17 +20,13 @@
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-view</artifactId>
+      <artifactId>tl-starter-react</artifactId>
+      <type>pom</type>
     </dependency>
 
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-view-agent</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-view-contact</artifactId>
     </dependency>
 
     <!-- External login through an OpenID Connect provider; configured in conf/pac4j-keycloak-demo.xml. -->
@@ -41,42 +37,12 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-model-wysiwyg</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-react-wysiwyg</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-react-codeedit</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-model-search-react</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-react-chartjs</artifactId>
     </dependency>
 
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-react-flow-server</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-configedit</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-dev-tools</artifactId>
     </dependency>
 
     <!-- Websocket API of the demo endpoint; the servlet container provides the implementation. -->

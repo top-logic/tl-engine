@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLCommand, useI18N, TLChild, useFill, startPointerDrag, rootClassName, stateAttr,
+  React, useTLState, useTLCommand, useI18N, TLChild, useFill, FillBarrier, startPointerDrag, rootClassName, stateAttr,
   separatorMove, separatorStep, movedSize,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -43,7 +43,9 @@ function share(before: ChildDescriptor, after: ChildDescriptor): number | null {
  * click. The sizes reach the server when a drag ends and when a key is released.
  *
  * Always fills its container: the panes are sized proportionally and the handle between them has to span the
- * available extent. Each pane scrolls what does not fit into it, which ends the fill chain there.
+ * available extent. Each pane is a bounded region of the fill contract: a column flex box that scrolls what does not
+ * fit into it and ends the fill chain (a FillBarrier), so that whatever fills - a table, a switch showing a tab bar,
+ * a stack around a table - takes the height of the pane, while content of its own size keeps its size.
  */
 const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -85,7 +87,11 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   }, [children, sendCommand]);
 
   const computeChildStyle = (child: ChildDescriptor): React.CSSProperties => {
-    const style: React.CSSProperties = { overflow: child.scrolling || 'auto' };
+    const style: React.CSSProperties = {
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: child.scrolling || 'auto',
+    };
     if (child.collapsed) {
       // Horizontal split, all collapsed -> flipped to rows: share the height equally.
       style.flex = allCollapsed && !effectiveHorizontal ? '1 0 0%' : '0 0 auto';
@@ -188,7 +194,9 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
         data-tl-state={stateAttr(child.collapsed && effectiveHorizontal && 'collapsed')}
         style={computeChildStyle(child)}
       >
-        <TLChild control={child.control} />
+        <FillBarrier>
+          <TLChild control={child.control} />
+        </FillBarrier>
       </div>
     );
 

@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -23,6 +25,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
+import com.top_logic.ai.chat.view.AgentViewRefreshService.WindowAccess;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.sched.SchedulerService;
@@ -30,6 +33,7 @@ import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.model.listen.ModelListener;
@@ -132,6 +136,85 @@ public class TestAgentViewRefresh extends BasicTestCase {
 		assertTrue(RunWindow.get().inWindow(subSession(), root -> {
 			// Only whether the window is reached.
 		}));
+	}
+
+	/**
+	 * A write from a thread with no context of its own runs in the window's sub-session.
+	 */
+	public void testAWriteRunsInTheWindowsSubSession() throws Exception {
+		TLSubSessionContext window = subSession();
+		AtomicReference<TLSubSessionContext> seen = new AtomicReference<>();
+		AtomicReference<WindowAccess> access = new AtomicReference<>();
+
+		Thread agent = new Thread(
+			() -> access.set(AgentViewRefreshService.inWindow(window, () -> seen.set(TLContextManager.getSubSession()))),
+			"agent");
+		agent.start();
+		agent.join(TIMEOUT);
+
+		assertEquals(WindowAccess.DONE, access.get());
+		assertSame("The write runs in the window's sub-session.", window, seen.get());
+	}
+
+	/**
+	 * A window another thread keeps busy for longer than a write waits is reported as busy, and the
+	 * write does not run: the caller tells its model that nothing was written.
+	 */
+	public void testABusyWindowSkipsTheWrite() throws Exception {
+		CountDownLatch holding = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		Thread command = new Thread(() -> {
+			try (Interaction interaction = _registry.beginInteraction()) {
+				holding.countDown();
+				release.await(TIMEOUT, TimeUnit.MILLISECONDS);
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
+		}, "browser-command");
+		command.start();
+		AtomicInteger runs = new AtomicInteger();
+		WindowAccess access;
+		try {
+			assertTrue(holding.await(TIMEOUT, TimeUnit.MILLISECONDS));
+			access = AgentViewRefreshService.inWindow(subSession(), runs::incrementAndGet);
+		} finally {
+			release.countDown();
+			command.join(TIMEOUT);
+		}
+
+		assertEquals(WindowAccess.BUSY, access);
+		assertEquals(0, runs.get());
+	}
+
+	/**
+	 * A caller that already holds the window's interaction - an agent run synchronously from a
+	 * button, on the request thread - writes within it at once instead of waiting for itself.
+	 */
+	public void testTheHolderOfTheInteractionWritesAtOnce() {
+		AtomicInteger runs = new AtomicInteger();
+
+		WindowAccess access;
+		long start = System.currentTimeMillis();
+		try (Interaction command = _registry.beginInteraction()) {
+			access = AgentViewRefreshService.inWindow(subSession(), runs::incrementAndGet);
+		}
+		long elapsed = System.currentTimeMillis() - start;
+
+		assertEquals(WindowAccess.DONE, access);
+		assertEquals(1, runs.get());
+		assertTrue("The write waited for its own interaction: " + elapsed + " ms", elapsed < 2_000);
+	}
+
+	/** What a write throws reaches the caller. */
+	public void testAFailingWriteReachesTheCaller() {
+		try {
+			AgentViewRefreshService.inWindow(subSession(), () -> {
+				throw new IllegalStateException("broken channel");
+			});
+			fail("The failure was swallowed.");
+		} catch (IllegalStateException ex) {
+			assertEquals("broken channel", ex.getMessage());
+		}
 	}
 
 	/**

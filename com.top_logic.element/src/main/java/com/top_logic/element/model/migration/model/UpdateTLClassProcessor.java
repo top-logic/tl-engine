@@ -159,7 +159,7 @@ public class UpdateTLClassProcessor extends TLModelBaseLineMigrationProcessor<Up
 		log.info("Updated type " + _util.qualifiedName(typeName));
 
 		if (newModule != null || className != null) {
-			String assNamePrefix = typeName.getName() + "$";
+			String assNamePrefix = TLStructuredTypeColumns.syntheticAssociationName(typeName.getTypeName(), "");
 			List<Type> allTypes = new ArrayList<>();
 			_util.addTLStructuredTypeIdentifiers(connection, type.getModule(), allTypes);
 			for (Type typeInModule : allTypes) {

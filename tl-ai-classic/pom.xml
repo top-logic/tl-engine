@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-ai-classic</artifactId>
+  <name>${project.artifactId}</name>
+  <description>The AI administration of a classic LayoutServlet application: the agent editor, the agent activity monitor with its charts, and the editor of the agents' tool access policy.</description>
+  <url>https://github.com/top-logic/tl-engine/</url>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-core</artifactId>
+    </dependency>
+
+    <!-- The form layouts of the agent editor (form.template.xml, EditFormBuilder). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
+
+    <!-- The TL-Script providers and the create dialog template the layouts are configured with. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search</artifactId>
+    </dependency>
+
+    <!-- The Chart.js component of the four charts of the agent activity monitor (admin/agentActivity). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-chart-chartjs</artifactId>
+    </dependency>
+
+    <!-- Tests -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- The tests live in packages mirroring the production code, see the comment in tl-ai-core/pom.xml. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <includes>
+            <include>%regex[test[/.]TestAll(\.class)?]</include>
+            <include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
+          </includes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

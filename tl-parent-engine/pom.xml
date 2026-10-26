@@ -139,6 +139,7 @@
 		<!-- AI modules -->
 		<module>../tl-ai-tool-api</module>
 		<module>../tl-ai-core</module>
+		<module>../tl-ai-classic</module>
 		<module>../tl-ai-mcp-server</module>
 		<module>../tl-ai-a2a</module>
 		<module>../tl-chat</module>

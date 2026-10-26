@@ -40,6 +40,11 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-chat</artifactId>
     </dependency>
+    <!-- The AI administration of the classic UI: agent editor, agent activity monitor, tool access policy. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-classic</artifactId>
+    </dependency>
 
     <!-- Tests -->
     <dependency>

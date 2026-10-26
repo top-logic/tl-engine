@@ -299,7 +299,8 @@ mvn exec:java@migrate-ticket28336
   happens to serve.
 - **tl-ai-\*/, tl-chat/, tl-chat-classic/** - The AI modules: `tl-ai-tool-api` (tool
   contracts), `tl-ai-core` (agent loop, LLM providers, tools, MCP client, delegation,
-  TL-Script bindings), `tl-ai-mcp-server`, `tl-ai-a2a`, `tl-chat` (React chat UI),
+  TL-Script bindings), `tl-ai-classic` (the agent editor, agent activity monitor and tool access
+  policy editor of the classic UI), `tl-ai-mcp-server`, `tl-ai-a2a`, `tl-chat` (React chat UI),
   `tl-chat-classic` (the chat in a classic LayoutServlet tab), `tl-ai-views` (agents
   editing `.view.xml` views), `tl-ai-vector-index`, `tl-ai-index` / `tl-ai-index-onnx`
   (hybrid search), `tl-ai-eval` (model eval harness) and the demo application

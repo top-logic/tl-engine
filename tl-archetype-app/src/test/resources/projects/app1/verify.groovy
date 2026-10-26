@@ -93,7 +93,11 @@ def classicOnly = [
 	"tl-layout-wysiwyg",
 	"tl-model-wysiwyg",
 	"tl-monitoring",
-	"ext-com-ckeditor"
+	"ext-com-ckeditor",
+	"tl-chart-chartjs",
+	"ext-org-chartjs",
+	"tl-ai-classic",
+	"tl-chat-classic"
 ];
 def leaked = classicOnly.findAll { resolved.contains(it) };
 if (!leaked.isEmpty()) {

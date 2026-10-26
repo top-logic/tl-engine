@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the module tl-security-selfservice (InvitationModule and its mail scripts, the model type tl.security.selfservice:Invitation, the TL-Script function sendInvitation, the login hook CreateLoginHoook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml).
+description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule and its mail scripts, the model type tl.security.selfservice:Invitation), the classic module tl-security-selfservice (the TL-Script function sendInvitation, the login hook CreateLoginHoook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml).
 order: 20
 ---
 
@@ -7,19 +7,20 @@ order: 20
 
 Users reset a forgotten password or a lost second factor themselves, and an administrator invites
 people by e-mail to create their own account. The identity proof in all three is a verification code
-sent by e-mail. The flows live in two modules:
+sent by e-mail. The flows live in three modules:
 
 | Module (artifact) | UI | Contents |
 |---|---|---|
-| `tl-security-selfservice` | classic | `InvitationModule`, the `Invitation` model, `sendInvitation`, the dialogs for password reset, MFA reset and account creation, the admin dialogs for invitations |
-| `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset; depends on `tl-security-selfservice` for `InvitationModule` |
+| `tl-security-selfservice-core` | none | `InvitationModule`, the `Invitation` model, its schema and migrations |
+| `tl-security-selfservice` | classic | `sendInvitation`, the dialogs for password reset, MFA reset and account creation, the admin dialogs for invitations; depends on `tl-security-selfservice-core` |
+| `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset; depends on `tl-security-selfservice-core` for `InvitationModule` |
 
 The second factor itself is described in [Multi-factor authentication](doc:authentication/mfa).
 
 ## Prerequisites
 
-- Mail delivery: the module depends on `tl-mail-smtp`; the mails are sent by the TL-Script function
-  `sendMail(...)`. Without a configured `MailSenderService` the classic "Forgot password" and
+- Mail delivery: `tl-security-selfservice-core` depends on `tl-mail-smtp`; the mails are sent by
+  the TL-Script function `sendMail(...)`. Without a configured `MailSenderService` the classic "Forgot password" and
   "Reset multi-factor authentication" commands are hidden.
 - An e-mail address on the account (`getUser().getEMail()`), and for a password reset an
   `AuthenticationDevice` that allows password changes (`allowPwdChange()`).
@@ -27,7 +28,8 @@ The second factor itself is described in [Multi-factor authentication](doc:authe
 ## Configuration: `InvitationModule`
 
 `InvitationModule` (`com.top_logic.security.selfservice.invitation`) holds the code parameters and
-the four mail scripts. The module configures it in `tl-security-selfservice.conf.config.xml`:
+the four mail scripts. `tl-security-selfservice-core` configures it in
+`tl-security-selfservice-core.conf.config.xml`:
 
 ```xml
 <config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
@@ -117,8 +119,8 @@ Invitations are secured below the `SecurityStructure` singleton (access parent r
 
 ### Creating and sending
 
-The module overlays the classic account table (`admin/security/accounts/accountsTable.layout.overlay.xml`)
-with two dialogs:
+The classic module `tl-security-selfservice` overlays the account table
+(`admin/security/accounts/accountsTable.layout.overlay.xml`) with two dialogs:
 
 - "Invite users" creates an `Invitation` for an e-mail address with `mfaRequirement` `optional` and
   sends it with `sendInvitation`.

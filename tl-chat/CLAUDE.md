@@ -173,6 +173,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 ### Key Classes
 
 - **`ChatProcessor`** – Static utility: orchestrator execution, state sync, and the two pre-checks a send passes before anything is written down (pool room, per-account run cap)
+- **`ConversationBackend`** (`…chat.backend`) – What answers a conversation instead of the framework's agent (an external process); chosen per run by the `ConversationBackendResolver`s of `ConversationBackendService` (none configured here). `ChatProcessor.executeOrchestrator` is the run frame both share, `runInternal` the framework agent's part, `BackendRun` the backend's (recording through `RunRecording`, events only on the worker thread). Its `BackendFeatures` reach the browser as `features` of `GET /chat/sessions/{id}` and `POST /chat/send`, where `ui/src/features.ts` gates the controls; `ChatServlet` refuses an unsupported regenerate, edit or attachment and skips the agent policy for such a chat. See the developer article `ai/chat-ui`
 - **`ChatRunExecutor`** – The pool the chat's agent runs execute on. Unbounded unless `<capacity>` on `AgentRuntimeService` (tl-ai-core) names a `chat-workers` ceiling, next to the per-account cap; with a ceiling a send that finds every worker busy waits, and it is refused only where `chat-queue` bounds the waiting room. See `tl-ai-core/doc/run-limits.md`
 - **`TaskProgressTracker`** – One window's chat: its processing states, and accessors that read and write the `ChatState` of the chat the window shows
 - **`ChatEventHandler`** – The contract a chat UI implements to observe a run: the `AgentEvent` stream plus the
@@ -347,7 +348,7 @@ upstream as one clean diff.
 | `rows` | TL-Script producing the row objects, the way `<table>` binds its rows. Mandatory. |
 | `<inputs><input channel="…"/>` | Channel values passed to `rows` as positional arguments. |
 | `observed-types` | Types whose create/update/delete re-runs `rows`, so the list follows the model. |
-| `<lines><line attribute=…\|<value>…` | What a row shows, top to bottom - a table's columns, stacked. `emphasis` is `primary` / `secondary`. |
+| `<lines><line attribute=…\|<value>…` | What a row shows, top to bottom - a table's columns, stacked. An attribute holding a point in time is written in the format a form field and a table cell show it in (`FieldControlService.dateFormat`), so a `tl.core:DateTime` shows its time of day. `emphasis` is `primary` / `secondary`. |
 | `group-by` | TL-Script of one row giving its group header; unset means a flat list. |
 | `row-css-class` | TL-Script of one row giving extra classes on the row element - its *state* (`is-done`, `is-running`, `is-pending` are the ones the stylesheet defines). Called `css-class` up to 2.0.5; that name is now the engine's class of the list itself, and a row function written under it is refused at startup. |
 | `css-class` | A class on the list's root element, as on every view element of the engine. |
@@ -530,7 +531,7 @@ Rules to know when touching this:
 **Browser support.** `container-type`, `@container` and the container query units (`cqi`) are
 Baseline **Widely available**, across browsers since **February 2023** (MDN). They raise no floor
 this product did not already have: the engine's React layer and this application's own shell are
-written with `:has()` - `.tlStack:has(> .tlPanel--fill)`, `button:has(.bi-moon-stars)` - which is
+written with `:has()` - `.tl-item:has(> .tlFill)`, `button:has(.bi-moon-stars)` - which is
 Baseline Widely available only since **December 2023**, ten months later. The repo's own browser
 tests run current Chromium (`tools/web`, Playwright); there is no listed minimum browser beyond
 that.
@@ -867,9 +868,10 @@ conversation and nothing in the product says so.
 ```
 
 `<chat>` is a `<stack>` that carries an id: same `direction`, `gap` and `align`, no chrome of its
-own, and any element may sit inside it. **Put it where the stack was** rather than adding a level:
-the engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a `<panel fill="true">`
-that stops being a direct child of the page's stack loses its height.
+own, and any element may sit inside it. **Put it where the stack was** rather than adding a level
+that does nothing. Like every stack it takes part in the view layer's fill contract as a container
+(`useFillHost`): a `<panel fill="true">` inside makes the `<chat>` fill its own container, however
+deep it is nested.
 
 That panel is there for the height alone and carries no title. Its header, which the engine draws
 anyway (padding, a tinted band and a border line), is hidden by a rule in `styles.css` for as long
@@ -938,9 +940,9 @@ what writes it:
 
 | | |
 |--|--|
-| When | Once, when the user's first message brings a conversation into being. Which of the two a reported session is - created here, or opened - is the **browser's** answer (`sessionReport` in `chat-conversation.tsx`, carried as `created` on `publishSession`): the server sees an id arrive either way, and a reload re-opens what this window had. |
+| When | Once, by the request that brings the conversation into being - `POST /chat/sessions`, which the browser makes before it sends the first message. The element offers its channel to its chat (`ChatViewBinding.offerSubject`) while it is displayed, and the request reads it there (`ChatViewBinding.subjectOf`), so the subject stands before the first run asks the `ConversationBackendResolver`s. A conversation started on the server - `chatStart(chatId, subject, text)`, `ChatStart` - is created with its subject the same way. |
 | Never | On the way in. Which conversation is shown stays `input`'s business, and which ones the user may pick stays the `<data-list>`'s. A conversation opened beside another object is not moved there, and one started while the channel was empty is not given a subject later - `AgentExecutionStore.setSubject` refuses a session that already has one, and no path backfills the rest. |
-| What counts | One model object, or a one-row selection. Several objects name no single subject, and nothing on the channel means the page was showing nothing; both stamp nothing (`ChatConversationControl.subjectFor`). |
+| What counts | One model object, or a one-row selection. Several objects name no single subject, and nothing on the channel means the page was showing nothing; both stamp nothing (`ChatViewBinding.singleObject`). |
 | Scoping the list | The `<data-list>`'s own `rows`, by navigating back - which is the point of a reference rather than a remembered id (see below). `referers` is not a security boundary, so the owner filter stays. |
 | A deleted subject | Clears the reference (the default deletion policy): the conversation outlives the object it was about, and it drops out of that object's list. **But navigating back from the deleted object itself throws** - `TLObject.tReferers`, which TL-Script's `referers` calls, refuses a lookup from a deleted object, and TL-Script has no "is this still there" to guard with. So the expression below answers while the channel is empty and while it holds a live object, and fails in the window where it still holds one that was deleted meanwhile. That window is not this feature's: a `<form>` or a `<table>` over the same channel is in the same position, and a page that must survive it asks the sessions (`all(...).filter(s -> $s.get(...) == $x)`) instead of the object. `TestSessionSubject` pins both halves. |
 
@@ -1532,7 +1534,7 @@ a mounting point, nothing more: the dock is `position: fixed`, so it takes no ro
 
 | Surface | Kind | |
 |--|--|--|
-| *(content)* | nested elements | Write **one**. The engine's `.tlStack:has(> .tlPanel--fill)` rule looks one level deep, so a second child adds a wrapping stack and the conversation loses its bounded height. |
+| *(content)* | nested elements | Normally one `<chat>`. The dock body ends the view layer's fill chain (a `FillBarrier`) and its stylesheet stretches a `<chat>`, a `<stack>` or a `<panel>` over the panel, so the conversation's `<panel fill="true">` takes the panel's height and scrolls inside it. Several children are combined into one stack (`ContentControls`), which is stretched alike; the filling ones among them share the height the others leave. |
 | `chat-id` | String, `@Nullable` | **Repeated**, not inherited - see above. Needed only so the launcher can read `badgeTotal` / `badgeSeen` / `busy` from the browser store. |
 | `icon` | ThemeImage | The launcher's glyph, default `css:bi bi-chat-dots`. An open dock shows a close cross instead. |
 | `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |

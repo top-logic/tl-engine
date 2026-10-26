@@ -5,9 +5,11 @@
  */
 package com.top_logic.ai.chat.view.list;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +42,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
+import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
@@ -451,11 +454,15 @@ public class DataListControl extends ReactControl {
 	private List<Map<String, Object>> lines(TLObject object) {
 		List<Map<String, Object>> lines = new ArrayList<>();
 		for (LineSpec spec : _lineSpecs) {
-			Object value = spec.executor() != null
-				? spec.executor().execute(object)
-				: attributeValue(object, spec.attribute());
+			String text;
+			if (spec.executor() != null) {
+				text = label(spec.executor().execute(object));
+			} else {
+				TLStructuredTypePart part = attribute(object, spec.attribute());
+				text = attributeLabel(part, part == null ? null : object.tValue(part));
+			}
 			Map<String, Object> line = new LinkedHashMap<>();
-			line.put("text", label(value));
+			line.put("text", text);
 			if (spec.emphasis() != null) {
 				line.put("emphasis", spec.emphasis());
 			}
@@ -469,13 +476,27 @@ public class DataListControl extends ReactControl {
 		return lines;
 	}
 
-	private static Object attributeValue(TLObject object, String attribute) {
+	private static TLStructuredTypePart attribute(TLObject object, String attribute) {
 		if (attribute == null || attribute.isEmpty()) {
 			return null;
 		}
 		TLStructuredType type = object.tType();
-		TLStructuredTypePart part = type == null ? null : type.getPart(attribute);
-		return part == null ? null : object.tValue(part);
+		return type == null ? null : type.getPart(attribute);
+	}
+
+	/**
+	 * The display label of the value of an attribute: a point in time in the format the attribute
+	 * is displayed in everywhere else (a date with its time of day for a {@code tl.core:DateTime}),
+	 * every other value as {@link #label(Object)}.
+	 */
+	private static String attributeLabel(TLStructuredTypePart part, Object value) {
+		if (value instanceof Date date) {
+			DateFormat format = FieldControlService.dateFormat(part);
+			if (format != null) {
+				return format.format(date);
+			}
+		}
+		return label(value);
 	}
 
 	/** A display label for an expression result (formats dates, objects and text uniformly). */

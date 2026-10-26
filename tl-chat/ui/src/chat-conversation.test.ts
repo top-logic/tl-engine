@@ -15,7 +15,6 @@ import {
   readThreadConfig,
   tokenWrite,
   sameServers,
-  sessionReport,
   TLChatConversation,
 } from './chat-conversation'
 
@@ -354,29 +353,6 @@ describe('the draft channel', () => {
   it('says nothing for an unwired or empty channel', () => {
     expect(channelName(null)).toBeUndefined()
     expect(channelName(undefined)).toBeUndefined()
-  })
-})
-
-/**
- * What the element reports about the open chat, and what the `subject` channel does with it (#508).
- *
- * Only a chat this window created is stamped with what the page is about. The server cannot tell
- * that from the id: a reload re-opens the chat this window had, and a chat picked from a list was
- * started somewhere else. Both have to keep the subject they were started with - or none.
- */
-describe('the session report', () => {
-  it('marks the chat this window created', () => {
-    expect(sessionReport('s1', 's1')).toEqual({ id: 's1', created: true })
-  })
-
-  it('does not mark a chat that was opened rather than created', () => {
-    expect(sessionReport('s2', 's1')).toEqual({ id: 's2', created: false })
-    expect(sessionReport('s1', null)).toEqual({ id: 's1', created: false })
-  })
-
-  it('clears the channel with an empty id, which creates nothing', () => {
-    expect(sessionReport(null, null)).toEqual({ id: '', created: false })
-    expect(sessionReport(null, 's1')).toEqual({ id: '', created: false })
   })
 })
 

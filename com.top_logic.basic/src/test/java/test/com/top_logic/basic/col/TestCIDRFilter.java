@@ -139,7 +139,43 @@ public class TestCIDRFilter extends BasicTestCase {
     }
     
     
-     /**
+ 	/**
+	 * IPv6 ranges and addresses, and that IPv4 and IPv6 never match each other.
+	 */
+	public void testIPv6() throws ParseException, UnknownHostException {
+		CIDRFilter filter = CIDRFilter.fromString("fd00:1234::/32");
+		assertTrue(filter.matches(InetAddress.getByName("fd00:1234::1")));
+		assertTrue(filter.matches(InetAddress.getByName("fd00:1234:ffff::1")));
+		assertFalse(filter.matches(InetAddress.getByName("fd00:1235::1")));
+		assertFalse(filter.matches(InetAddress.getByName("10.0.0.1")));
+		assertTrue(filter.accept("fd00:1234::abcd"));
+
+		CIDRFilter single = CIDRFilter.fromString("::1");
+		assertTrue(single.matches(InetAddress.getByName("::1")));
+		assertFalse(single.matches(InetAddress.getByName("::2")));
+		assertEquals(CIDRFilter.class.getName() + " [fd00:1234:0:0:0:0:0:0/32]", filter.toString());
+
+		CIDRFilter ipv4 = CIDRFilter.fromString("10.0.0.0/8");
+		assertTrue(ipv4.matches(InetAddress.getByName("10.1.2.3")));
+		assertFalse(ipv4.matches(InetAddress.getByName("fd00::1")));
+		assertFalse(ipv4.matches((InetAddress) null));
+	}
+
+	/**
+	 * Invalid IPv6 ranges are refused without looking up a host name.
+	 */
+	public void testIPv6Format() {
+		for (String invalid : new String[] { "fd00::/129", "fd00::/-1", "example.com:80", "fd00::g" }) {
+			try {
+				CIDRFilter.fromString(invalid);
+				fail("Accepted: " + invalid);
+			} catch (ParseException ex) {
+				// Expected.
+			}
+		}
+	}
+
+    /**
      * The method constructing a test suite for this class.
      *
      * @return    The test to be executed.

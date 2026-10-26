@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
@@ -26,7 +27,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
+import com.top_logic.tl.ai.core.execution.RunRecording;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.memory.CompactionStrategies;
@@ -220,34 +221,25 @@ public class DelegationTool implements Tool {
 			// thread: this code runs inside a tool call, whose view of the database predates the
 			// parent's execution row, so `parentExecution.getSession()` here would throw "created
 			// after access revision N" and take the whole delegation down with it (Gitea #405).
-			ExecutionRecorder recorder = null;
-			AgentEventListener effectiveChildListener = childListener;
 			AgentExecution parentExecution = toolContext.executionHandle().get();
 			AgentSession parentSession =
 				parentExecution == null || !AgentExecutionStore.Module.INSTANCE.isActive() ? null
 					: AgentExecutionStore.getInstance().sessionOf(parentExecution);
-			if (parentSession != null) {
-				recorder = new ExecutionRecorder(parentSession, _targetAgentName,
-					parentExecution, childContext.executionHandle(), childListener);
-				effectiveChildListener = recorder;
-			}
+			RunRecording recording = RunRecording.open(_targetAgentName, parentSession, parentExecution,
+				childContext.executionHandle(), (Supplier<String>) null, childListener);
 
 			AgentResult result;
 			try {
 				// The delegate's conversation is its own and may outgrow its model's window: it
 				// compacts like a chat run instead of ending in an overflow.
 				result = targetLoop.run(conversation, CompactionStrategies.forDefaultModel(), childContext,
-					effectiveChildListener);
+					recording);
 			} catch (RuntimeException e) {
-				if (recorder != null) {
-					recorder.complete(null, e);
-				}
+				recording.fail(e);
 				throw e;
 			}
-			if (recorder != null) {
-				recorder.complete(null, null);
-			}
-			String childRunId = recorder != null ? recorder.runId() : null;
+			recording.finish(null);
+			String childRunId = recording.runId();
 			// The child's answer is now the parent's to use, and so is what that answer rested on.
 			toolContext.readingList().addAll(childContext.readingList());
 

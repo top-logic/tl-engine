@@ -23,7 +23,7 @@ import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
  * @param baseUrl
  *        The URL of the API without the version path, e.g. {@code https://api.anthropic.com}.
  * @param apiKey
- *        The API key sent as {@link LLMProxyServlet#X_API_KEY}.
+ *        The API key sent as {@link LLMProxyHandler#X_API_KEY}.
  * @param version
  *        The {@link LLMProxyHandler#ANTHROPIC_VERSION} sent when the client sends none.
  * @param connectTimeout

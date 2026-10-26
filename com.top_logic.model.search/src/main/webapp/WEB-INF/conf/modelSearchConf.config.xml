@@ -68,21 +68,10 @@
 							<impl class="com.top_logic.model.search.code.CodeEditorFieldProvider"/>
 						</field-provider>
 
-						<tag-provider>
-							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
-								controlProvider="com.top_logic.model.search.code.CodeEditorControlProvider"
-							/>
-						</tag-provider>
-
 						<column-info>
 							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
 								<tooltipRenderer class="com.top_logic.model.search.code.CodeEditorTooltipRenderer"/>
 							</renderer>
-
-							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
-								<tooltipRenderer class="com.top_logic.model.search.code.CodeEditorTooltipRenderer"/>
-								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
-							</editControlProvider>
 
 							<comparator class=""/>
 						</column-info>
@@ -94,31 +83,6 @@
 					>
 						<label-position value="above-value"/>
 						<code-editor-language value="ace/mode/json"/>
-						<tag-provider>
-							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
-								controlProvider="com.top_logic.model.search.code.CodeEditorControlProvider"
-							/>
-						</tag-provider>
-
-						<column-info>
-							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
-								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider"
-									maxChars="50"
-								>
-									<fullTextProvider class="com.top_logic.layout.provider.label.JSONLabelProvider"
-										pretty="false"
-									/>
-								</labelProvider>
-								<tooltipRenderer class="com.top_logic.layout.renderers.PreformattedContentRenderer">
-									<content-renderer class="com.top_logic.layout.renderers.ConfiguredLabelRenderer">
-										<labels class="com.top_logic.layout.provider.label.JSONLabelProvider"
-											pretty="true"
-										/>
-									</content-renderer>
-								</tooltipRenderer>
-								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
-							</editControlProvider>
-						</column-info>
 					</attribute-setting>
 									
 					<attribute-setting
@@ -132,21 +96,10 @@
 							</impl>
 						</field-provider>
 
-						<tag-provider>
-							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
-								controlProvider="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"
-							/>
-						</tag-provider>
-
 						<column-info>
 							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
 								<tooltipRenderer class="com.top_logic.model.search.ui.TLScriptRenderer"/>
 							</renderer>
-
-							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
-								<tooltipRenderer class="com.top_logic.model.search.ui.TLScriptRenderer"/>
-								<editControlProvider class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-							</editControlProvider>
 
 							<sortKeyProvider class="com.top_logic.basic.col.mapping.ToStringMapping"/>
 							<comparator class=""/>
@@ -169,10 +122,6 @@
 							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
 							</renderer>
 
-							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
-								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
-							</editControlProvider>
-
 							<sortKeyProvider class="com.top_logic.basic.col.mapping.ToStringMapping"/>
 							<comparator class=""/>
 						</column-info>
@@ -194,10 +143,6 @@
 							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
 							</renderer>
 
-							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
-								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
-							</editControlProvider>
-
 							<sortKeyProvider class="com.top_logic.basic.col.mapping.ToStringMapping"/>
 							<comparator class=""/>
 						</column-info>
@@ -215,10 +160,6 @@
 						<column-info>
 							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
 							</renderer>
-
-							<editControlProvider class="com.top_logic.layout.form.control.PopupEditControl$CP">
-								<editControlProvider class="com.top_logic.model.search.code.CodeEditorControlProvider"/>
-							</editControlProvider>
 
 							<sortKeyProvider class="com.top_logic.basic.col.mapping.ToStringMapping"/>
 							<comparator class=""/>
@@ -696,24 +637,6 @@
 					<!-- CommandHandlerByExpression can contain references to TLModelParts. -->
 					<dependency key="com.top_logic.util.model.ModelService" value="true" />
 				</dependencies>
-				<handlers>
-					<handler id="deleteModelSearch" class="com.top_logic.model.search.ui.selector.DeleteSearchCommand"
-						clique="delete">
-						<executability>
-							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
-						</executability>
-					</handler>
-					<handler id="resetModelSearch" class="com.top_logic.model.search.ui.selector.ResetSearchCommand"
-						clique="reset"/>
-					<handler id="saveModelSearch" class="com.top_logic.model.search.ui.selector.SaveSearchCommand"
-						clique="save">
-						<executability>
-							<rule class="com.top_logic.tool.execution.NullSelectionDisabled"/>
-						</executability>
-					</handler>
-					<handler id="saveModelSearchAs" class="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsCommand"
-						clique="save" group="System"/>
-				</handlers>
 			</instance>
 		</config>
 		
@@ -722,14 +645,6 @@
 				<schemes>
 					<scheme class="com.top_logic.model.search.providers.ScriptValueNaming" priority="resolve-only"/>
 				</schemes>
-			</instance>
-		</config>
-		
-		<config service-class="com.top_logic.gui.JSFileCompiler">
-			<instance>
-				<files>
-					<file resource="tlscripteditor.js" />
-				</files>
 			</instance>
 		</config>
 		
@@ -781,27 +696,6 @@
 					</annotations>
 				</type>
 			</customizations>
-			<type-controls>
-				<!-- TL-Script, also the script of a script function, is edited in the TL-Script code editor. -->
-				<type-control type="com.top_logic.model.search.expr.config.dom.Expr">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction0">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction1">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction2">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction3">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction4">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-			</type-controls>
 		</config>
 	</configs>
 	

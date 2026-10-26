@@ -28,15 +28,11 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>tl-reporting-common</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-reporting-flex</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-codeedit</artifactId>
     </dependency>
     <dependency>
 		<groupId>com.fasterxml.jackson.dataformat</groupId>

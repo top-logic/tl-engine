@@ -82,8 +82,9 @@ rows of the text area used when no dedicated editor is present.
 A mapping by value type covers every property of that type without an annotation. The engine
 contributes:
 
-- Classic UI, `com.top_logic.model.search`: TL-Script (`Expr`) and script functions
-  (`ScriptFunction0` to `ScriptFunction4`) are edited in the TL-Script code editor.
+- Classic UI, `tl-model-search-classic`: TL-Script (`Expr`) and script functions
+  (`ScriptFunction0` to `ScriptFunction4`) are edited in the TL-Script code editor
+  `TLScriptCodeEditorControl$CP`.
 - React UI, `com.top_logic.layout.configedit`: `ThemeImage` (icon select), `Color` (color input);
   `com.top_logic.model.search.react`: `Expr` (TL-Script editor).
 

@@ -687,6 +687,8 @@ public class MigrationUtil {
 
 		makeTransitive(log, migrations);
 
+		logModulesWithoutDataVersion(log, versionsByModule, dbVersion, applicationModules);
+
 		// Remember all migrations that need no longer be executed, because they are
 		// reflexive-transitive dependencies of the version currently stored in the database
 		// ("dbVersion").
@@ -1237,6 +1239,67 @@ public class MigrationUtil {
 		Map<String, Map<Version, MigrationConfig>> migrationScripts = readMigrationScripts(log, migrationModules);
 		Map<String, List<Version>> versionByModule = getVersionsByModule(log, migrationScripts);
 		return getMaximalVersions(versionByModule);
+	}
+
+	/**
+	 * Logs the migrations skipped, because their module has no version in the given data version.
+	 * 
+	 * <p>
+	 * A module without data version is considered new to the application, its migrations are not
+	 * applied, see {@link #getMigrations(Log, Map, Map, Map, List)}. This is wrong if the module's
+	 * data already exists, which must then be declared in
+	 * {@link MigrationService.Config#getMinimumModules()}.
+	 * </p>
+	 * 
+	 * @param versionsByModule
+	 *        Totally ordered versions for each module, see {@link #getVersionsByModule(Log, Map)}.
+	 * @param dataVersion
+	 *        The versions stored for the data, indexed by module. When empty, nothing is logged.
+	 * @param modules
+	 *        The migration modules in dependency order.
+	 */
+	private static void logModulesWithoutDataVersion(Log log, Map<String, List<Version>> versionsByModule,
+			Map<String, Version> dataVersion, List<String> modules) {
+		if (dataVersion.isEmpty()) {
+			return;
+		}
+		for (String module : modules) {
+			if (dataVersion.containsKey(module)) {
+				continue;
+			}
+			List<Version> versions = versionsByModule.get(module);
+			if (versions == null) {
+				continue;
+			}
+			String initial = initialVersion(module).getName();
+			List<String> skipped = versions.stream()
+				.map(Version::getName)
+				.filter(name -> !initial.equals(name))
+				.collect(Collectors.toList());
+			if (skipped.isEmpty()) {
+				continue;
+			}
+			log.info("Skipping migrations of module '" + module + "', because no version of it is stored: "
+				+ skipped + ". The module is considered new to the application. If the data of module '" + module
+				+ "' already exists (e.g. for the first migration of an application whose database was created"
+				+ " without its migration folder), add it to '" + MigrationService.Config.MINIMUM_MODULES
+				+ "' of '" + MigrationService.class.getName() + "'.");
+		}
+	}
+
+	/**
+	 * The given versions whose module has no entry in the given stored versions.
+	 * 
+	 * @param versions
+	 *        The versions to filter, e.g. {@link #maximalVersions(Log)}.
+	 * @param storedVersions
+	 *        Versions indexed by module, e.g. {@link #readStoredVersions(PooledConnection, List)}.
+	 */
+	public static List<Version> versionsOfUnstoredModules(Collection<Version> versions,
+			Map<String, Version> storedVersions) {
+		return versions.stream()
+			.filter(v -> !storedVersions.containsKey(v.getModule()))
+			.collect(Collectors.toList());
 	}
 
 	/**

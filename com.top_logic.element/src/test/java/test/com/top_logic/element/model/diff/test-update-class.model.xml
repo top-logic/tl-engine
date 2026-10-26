@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model>
+
+	<module name="m0">
+		<class name="A">
+			<attributes>
+				<reference name="ref" type="A"/>
+			</attributes>
+		</class>
+	</module>
+</model>

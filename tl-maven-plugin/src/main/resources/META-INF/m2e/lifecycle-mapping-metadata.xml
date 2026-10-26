@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Eclipse m2e lifecycle mapping of the goals of this plugin, read by m2e from the plugin jar. The
+	goals mapped here produce nothing that the IDE build requires.
+-->
+<lifecycleMappingMetadata>
+	<pluginExecutions>
+		<pluginExecution>
+			<pluginExecutionFilter>
+				<goals>
+					<goal>resolve</goal>
+					<goal>touch</goal>
+					<goal>generate-java</goal>
+				</goals>
+			</pluginExecutionFilter>
+			<action>
+				<ignore />
+			</action>
+		</pluginExecution>
+	</pluginExecutions>
+</lifecycleMappingMetadata>

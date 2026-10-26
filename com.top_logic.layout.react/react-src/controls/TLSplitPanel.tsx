@@ -6,6 +6,18 @@ import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback, useRef } = React;
 
+/** Command sending the sizes of the open panes after a splitter was moved, each in the unit of its pane. */
+const UPDATE_SIZES_COMMAND = 'updateSizes';
+
+/** Argument of {@link UPDATE_SIZES_COMMAND}: map of the control IDs of the open panes to their sizes. */
+const SIZES_ARG = 'sizes';
+
+/** Command giving the panes their configured sizes back. */
+const RESET_SIZES_COMMAND = 'resetSizes';
+
+/** The unit of a pane whose size is given in pixels; any other pane is sized in percent. */
+const UNIT_PX = 'px';
+
 const I18N_KEYS = {
   'js.splitPanel.handle': 'Change the size of the areas',
 };
@@ -31,6 +43,52 @@ function share(before: ChildDescriptor, after: ChildDescriptor): number | null {
 }
 
 /**
+ * The `flex` value a pane is rendered with.
+ *
+ * A pane sized in pixels keeps its size while there is room for it and shrinks in a container too small for it (down
+ * to its minimum size, set as minimum width or height). The panes sized in percent share the rest, their sizes acting
+ * as weights among each other.
+ *
+ * @param allCollapsed Whether all panes of the split panel are collapsed.
+ * @param effectiveHorizontal Whether the panes are laid out side by side.
+ */
+function paneFlex(child: ChildDescriptor, allCollapsed: boolean, effectiveHorizontal: boolean): string {
+  if (child.collapsed) {
+    // Horizontal split, all collapsed -> flipped to rows: share the height equally.
+    return allCollapsed && !effectiveHorizontal ? '1 0 0%' : '0 0 auto';
+  }
+  return child.unit === UNIT_PX ? `0 1 ${child.size}px` : `${child.size} 1 0%`;
+}
+
+/**
+ * The panes with the sizes measured in pixels, each converted to the unit of its pane: a pane in pixels gets its
+ * measured size, a pane in percent its share of the summed sizes of the open panes in percent, scaled to a sum of
+ * 100. A collapsed pane keeps its descriptor.
+ *
+ * @param pixels The size of each pane in pixels, in the order of the panes.
+ */
+function resized(children: ChildDescriptor[], pixels: number[]): ChildDescriptor[] {
+  let percentPixels = 0;
+  children.forEach((child, i) => {
+    if (!child.collapsed && child.unit !== UNIT_PX) {
+      percentPixels += pixels[i] ?? 0;
+    }
+  });
+  return children.map((child, i) => {
+    if (child.collapsed) {
+      return child;
+    }
+    if (child.unit === UNIT_PX) {
+      return { ...child, size: Math.round(pixels[i] ?? child.size) };
+    }
+    if (percentPixels <= 0) {
+      return child;
+    }
+    return { ...child, size: Math.round((10000 * (pixels[i] ?? 0)) / percentPixels) / 100 };
+  });
+}
+
+/**
  * A split panel that arranges children along a single axis with resizable handles between them (tl-split).
  *
  * State:
@@ -40,11 +98,13 @@ function share(before: ChildDescriptor, after: ChildDescriptor): number | null {
  *
  * A handle is a separator (role="separator"): dragged with the pointer, moved with the arrow keys by one step, with
  * Home and End to the smallest and the largest size of the pane before it, reset to the configured sizes by a double
- * click. The sizes reach the server when a drag ends and when a key is released.
+ * click. The sizes of the open panes reach the server, each in the unit of its pane, when a drag ends and when a key
+ * is released.
  *
- * Always fills its container: the panes are sized proportionally and the handle between them has to span the
- * available extent. Each pane is a bounded region (tl-region) that ends the fill chain: it stretches a child of its own
- * size to its height, holds a filling child to exactly that height, and scrolls what does not fit into it.
+ * Always fills its container: a pane sized in pixels keeps its size while there is room for it, the panes sized in
+ * percent share the rest, and the handle between them has to span the available extent. Each pane is a bounded region
+ * (tl-region) that ends the fill chain: it stretches a child of its own size to its height, holds a filling child to
+ * exactly that height, and scrolls what does not fit into it.
  */
 const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -74,26 +134,32 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const measure = useCallback((): number[] =>
     panes().map(el => (isHorizontal ? el.offsetWidth : el.offsetHeight)), [panes, isHorizontal]);
 
-  const sendSizes = useCallback((sizes: number[]) => {
+  /**
+   * Sends the sizes the panes have after a move, given in pixels, and gives the panes the sizing they are rendered
+   * with for these sizes: the move wrote pixel sizes onto the elements, past the React rendering, which keeps them
+   * wherever the sizes the server answers with render as before.
+   */
+  const commitSizes = useCallback((pixels: number[]) => {
+    const sized = resized(children, pixels);
     const map: Record<string, number> = {};
-    children.forEach((child, i) => {
+    sized.forEach(child => {
       const ctrl = child.control as { controlId: string };
-      if (ctrl?.controlId) {
-        map[ctrl.controlId] = sizes[i];
+      if (!child.collapsed && ctrl?.controlId) {
+        map[ctrl.controlId] = child.size;
       }
     });
-    sendCommand('updateSizes', { sizes: map });
-  }, [children, sendCommand]);
+    sendCommand(UPDATE_SIZES_COMMAND, { [SIZES_ARG]: map });
+    const els = panes();
+    sized.forEach((child, i) => {
+      if (els[i]) els[i].style.flex = paneFlex(child, allCollapsed, effectiveHorizontal);
+    });
+  }, [children, sendCommand, panes, allCollapsed, effectiveHorizontal]);
 
   const computeChildStyle = (child: ChildDescriptor): React.CSSProperties => {
-    const style: React.CSSProperties = { overflow: child.scrolling || 'auto' };
-    if (child.collapsed) {
-      // Horizontal split, all collapsed -> flipped to rows: share the height equally.
-      style.flex = allCollapsed && !effectiveHorizontal ? '1 0 0%' : '0 0 auto';
-    } else {
-      // Size as proportional flex-grow weight (works for % and px alike), so the layout scales with the viewport.
-      style.flex = `${child.size} 1 0%`;
-    }
+    const style: React.CSSProperties = {
+      overflow: child.scrolling || 'auto',
+      flex: paneFlex(child, allCollapsed, effectiveHorizontal),
+    };
     if (child.minSize > 0 && !child.collapsed) {
       style.minWidth = isHorizontal ? child.minSize : undefined;
       style.minHeight = !isHorizontal ? child.minSize : undefined;
@@ -107,8 +173,8 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     const sizes = measure();
     const before = els[index];
     const after = els[index + 1];
-    // The proportional sizing the panes are rendered with, to fall back on when the gesture is cancelled: the drag
-    // writes pixel sizes onto the elements, past the React rendering.
+    // The sizing the panes are rendered with, to fall back on when the gesture is cancelled: the drag writes pixel
+    // sizes onto the elements, past the React rendering.
     const flexBefore = before?.style.flex ?? '';
     const flexAfter = after?.style.flex ?? '';
     const startPos = isHorizontal ? e.clientX : e.clientY;
@@ -129,10 +195,10 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
         if (before) before.style.flex = `0 0 ${size}px`;
         if (after) after.style.flex = `0 0 ${total - size}px`;
       },
-      // A press that stayed where it was leaves the panes alone: it would turn the proportional sizes into pixels.
+      // A press that stayed where it was leaves the panes alone.
       onEnd: (_event, dragged) => {
         if (dragged) {
-          sendSizes(sizes);
+          commitSizes(sizes);
         }
       },
       onCancel: () => {
@@ -140,7 +206,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
         if (after) after.style.flex = flexAfter;
       },
     });
-  }, [panes, measure, isHorizontal, children, sendSizes]);
+  }, [panes, measure, isHorizontal, children, commitSizes]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLElement>, index: number) => {
     const handle = e.currentTarget;
@@ -171,12 +237,12 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
     const sizes = keySizes.current;
     keySizes.current = null;
     if (sizes) {
-      sendSizes(sizes);
+      commitSizes(sizes);
     }
-  }, [sendSizes]);
+  }, [commitSizes]);
 
   const handleReset = useCallback(() => {
-    sendCommand('resetSizes');
+    sendCommand(RESET_SIZES_COMMAND);
   }, [sendCommand]);
 
   const elements: React.ReactElement[] = [];

@@ -1,2 +1,4 @@
+#if ($moduleType != "fragment")
 db-default.xml
+#end
 \${projectName}.conf.xml

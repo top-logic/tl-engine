@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selected"/>
+		<channel name="childLists"/>
+		<channel name="holders"/>
+	</channels>
+
+	<tree-table
+		children="$childLists[$node]"
+		parents="$holders[$node]"
+		root="'root'"
+		selection="selected"
+	>
+		<inputs>
+			<input channel="childLists"/>
+			<input channel="holders"/>
+		</inputs>
+		<columns>
+			<computed-column name="value"
+				type="tl.core:String"
+			>
+				<value>toString($row)</value>
+			</computed-column>
+		</columns>
+	</tree-table>
+</view>

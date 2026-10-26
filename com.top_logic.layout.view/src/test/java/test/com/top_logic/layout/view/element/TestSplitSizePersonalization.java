@@ -82,21 +82,40 @@ public class TestSplitSizePersonalization extends TestCase {
 	}
 
 	/**
-	 * Dragged sizes stored for the same configuration apply in pixels, keeping the configured
-	 * minimum size.
+	 * Dragged sizes stored for the same configuration apply in the configured unit of their pane,
+	 * keeping the configured minimum size.
 	 */
 	public void testStoredSizesApply() {
-		create(configured(32)).saveSizes(dragged(400, 900));
+		create(configured(32)).saveSizes(dragged(40, 60));
 
 		SplitSizePersonalization personalization = create(configured(32));
 		ChildConstraint selector = personalization.constraint(0);
-		assertEquals(400f, selector.getSize());
-		assertEquals(DisplayUnit.PIXEL, selector.getUnit());
+		assertEquals(40f, selector.getSize());
+		assertEquals(DisplayUnit.PERCENT, selector.getUnit());
 		assertEquals(240, selector.getMinSize());
 		ChildConstraint detail = personalization.constraint(1);
-		assertEquals(900f, detail.getSize());
-		assertEquals(DisplayUnit.PIXEL, detail.getUnit());
+		assertEquals(60f, detail.getSize());
+		assertEquals(DisplayUnit.PERCENT, detail.getUnit());
 		assertEquals(320, detail.getMinSize());
+	}
+
+	/**
+	 * A stored size of a pane sized in pixels applies in pixels, of a pane sized in percent in
+	 * percent.
+	 */
+	public void testStoredSizesKeepUnitOfPane() {
+		List<ChildConstraint> configured = List.of(
+			new ChildConstraint(300, DisplayUnit.PIXEL, 0, Scrolling.AUTO),
+			new ChildConstraint(100, DisplayUnit.PERCENT, 0, Scrolling.AUTO));
+		create(configured).saveSizes(dragged(420, 100));
+
+		SplitSizePersonalization personalization = create(configured);
+		ChildConstraint fixed = personalization.constraint(0);
+		assertEquals(420f, fixed.getSize());
+		assertEquals(DisplayUnit.PIXEL, fixed.getUnit());
+		ChildConstraint flexible = personalization.constraint(1);
+		assertEquals(100f, flexible.getSize());
+		assertEquals(DisplayUnit.PERCENT, flexible.getUnit());
 	}
 
 	/**

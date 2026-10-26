@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.table;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -212,9 +211,7 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 	 */
 	@Override
 	public List<InputRef> inputs() {
-		List<InputRef> result = new ArrayList<>(_functions.inputs());
-		result.addAll(super.inputs());
-		return result;
+		return union(_functions.inputs(), super.inputs());
 	}
 
 	@Override

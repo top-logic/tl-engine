@@ -1,5 +1,5 @@
 ---
-description: Read before configuring a <tree-table> in a .view.xml - a table whose rows form a tree (root and children functions, columns, selection, expansion) - or drag and drop on it (<drag>, <drop target="ordered"> with the arguments objects / parent / before and as / parent-as / before-as), and before touching TreeTableElement, AbstractTableElement, TreeFunctions, RowHierarchy or TreeDropPlace.
+description: Read before configuring a <tree-table> in a .view.xml - a table whose rows form a tree (root and children functions, columns, selection, expansion, row-class, showing a node in the tree column with a display) - or drag and drop on it (<drag>, <drop target="ordered"> with the arguments objects / parent / before and as / parent-as / before-as), and before touching TreeTableElement, AbstractTableElement, TreeFunctions, RowHierarchy or TreeDropPlace.
 order: 65
 ---
 
@@ -25,7 +25,22 @@ A `<tree-table>` is a table whose rows form a tree: each object is a row with th
 
 - **The tree**: `root`, `children`, `parents`, `node-as` and `canExpandAll` are the properties of a `<tree>` (`TreeStructureConfig`), compiled and evaluated by the same `TreeFunctions`. Its scripts see the inputs, and `children` and `parents` the object of the node as `$node` (renamed by `node-as`), while the scripts of the columns see the same object as the row, `$row` (renamed by `row-as`; see [which names a script sees](doc:view-layer/channels#which-names-a-script-sees)). The object `root` computes is not displayed; the objects `children` returns for it are the top-level rows, and the rows are the objects `children` returns - so a cell, the selection channel, a drag and a drop all see business objects, never nodes. A row's children are computed when it is opened (and to tell whether it has any).
 - **Following the model** is that of a `<tree>`: the tree is held in a `DefaultTreeUINodeModel` kept in sync by the same `ObservableTreeModel` (through its `Display` seam), so a deleted object loses its row, an object that appeared in a child list gets one, the rows the user opened stay open, and an input naming another root builds the tree anew. An object of an `observed-types` type that is created or changed while the tree table has no row for it is placed through `parents`: the row of what holds it now has its children computed again when that row is open, and a closed row computes them when it is opened - so `observed-types` requires `parents` (see [a tree follows the model it displays](doc:view-layer/tables#selecting-rows-and-nodes)). The rows are keyed by their business object (`TreeStructure.key`), so expansion and selection survive a rebuild.
-- **The table**: `types`, `<columns>` (whose scripts see the row as `$row`, or by the name `row-as` gives it), `fixed-columns`, `selection`, `selection-mode`, `<on-activate>`, `activation-button`, `filter-bar`, `<presets>`, `active-preset`, `search-term`, `<drag>` and `<export>` (the tree written as an outline, see [the export](doc:view-layer/tables#exporting-a-table-to-excel-export)) are those of a `<table>` (`AbstractTableElement.Config`), built by the same code (`AbstractTableElement.createTable`). Sorting orders siblings; a filter keeps the rows that match and their ancestors, all opened. A tree table has no `rows`, no `group-by` and no `row-edit`.
+- **The table**: `types`, `<columns>` (whose scripts see the row as `$row`, or by the name `row-as` gives it), `fixed-columns`, `selection`, `selection-mode`, `<on-activate>`, `activation-button`, `filter-bar`, `<presets>`, `active-preset`, `search-term`, `row-class` (with the `cell-class` of its columns, see [marking rows and cells](doc:view-layer/tables#row-classes-marking-rows-and-cells-by-their-data)) `<drag>` and `<export>` (the tree written as an outline, see [the export](doc:view-layer/tables#exporting-a-table-to-excel-export)) are those of a `<table>` (`AbstractTableElement.Config`), built by the same code (`AbstractTableElement.createTable`). Sorting orders siblings; a filter keeps the rows that match and their ancestors, all opened. A tree table has no `rows`, no `group-by` and no `row-edit`.
+- **Showing a node in the tree column**: the toggle stands in front of the first column, which shows what its declaration says. A node shown by its icon, a label of its own and a class is a column over the row object with a [display](doc:view-layer/tables#displaying-a-cell-or-a-node-display-and-nodecontent) computing these parts - no column class of the application's own:
+
+  ```xml
+  <columns>
+  	<computed-column name="device" value="$row">
+  		<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
+  			label="$value.get(`my:Device#name`) + ' (' + $value.get(`my:Device#address`) + ')'"
+  			css-class="$value.get(`my:Device#active`) ? null : 'tl-status-warning'"
+  		/>
+  	</computed-column>
+  	…
+  </columns>
+  ```
+
+  The display leaves the click to the row (`link` is off by default), and the search of the tree table finds the row by the computed label.
 - **Selection** works as in a `<tree>` (`TreeSelectionBinding`, shown on the rows through `TreeSelectionDisplay.of(TableViewControl, …)`): the channel holds the selected object, a set of them, or nothing, and an object written to it is revealed - the rows above it are opened (`TableViewControl#expandRows`), it is selected and its row scrolled into view; its row is found through `parents` where the tree table declares it, and by searching otherwise. When the selected object loses its row - deleted, or taken out of the child list it hung in, also while the tree table was off screen - the nearest remaining row above it becomes the selection and is written to the channel; where no row above it is left, the channel is cleared (see [selecting rows and nodes](doc:view-layer/tables#selecting-rows-and-nodes)).
 - The control is the `TableViewControl` in tree mode, fed by a `TreeRowSource`; the source is the table's `RowHierarchy` (`TableView.hierarchy()`): which row holds a row, and the children of a row in display order, whether it is open or not.
 

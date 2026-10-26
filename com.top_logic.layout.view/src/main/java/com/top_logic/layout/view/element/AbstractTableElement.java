@@ -982,7 +982,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *
 	 * <p>
 	 * What a column shows or filters follows the channels its declaration reads - the
-	 * {@code inputs} of its functions and of its filter - only by the table being refreshed, which
+	 * {@link ColumnDeclaration#inputs() inputs} of its functions, of its filter, and of the scripts
+	 * computing its aggregate, its order, its tooltips and its cell classes, which for a column
+	 * without inputs of its own are the inputs of the table - only by the table being refreshed, which
 	 * builds the cells again and filters the rows anew. A change of such a "cell input" therefore
 	 * refreshes the table in any case. Every other input is cell-independent: where its change
 	 * leaves the rows equal, the cells stay, and only what is computed from the inputs apart from

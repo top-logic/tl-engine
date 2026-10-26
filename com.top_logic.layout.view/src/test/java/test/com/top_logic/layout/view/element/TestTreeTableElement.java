@@ -16,6 +16,8 @@ import junit.framework.Test;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.view.form.IdentifiedObject;
+import test.com.top_logic.layout.view.form.RecordingScope;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationException;
@@ -42,13 +44,18 @@ import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.element.TreeTableElement;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Row;
 import com.top_logic.util.model.ModelService;
 
 /**
  * Tests the {@code <tree-table>}: the rows it computes from the root and the children function, its
- * selection channel, and its {@code <drag>} and {@code <drop>} - an insertion among the rows
+ * selection channel - revealing the object written to it, and selecting the row a deleted selected
+ * object hung in -, and its {@code <drag>} and {@code <drop>} - an insertion among the rows
  * publishing the row it inserts under and the row it inserts before, next to a drop onto a row
  * taking what the insertion refuses.
  */
@@ -56,6 +63,15 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	/** The view declaring the tree table. */
 	private static final String VIEW = "test-tree-table.view.xml";
+
+	/** A view declaring a tree table over objects that can be deleted. */
+	private static final String OBJECT_VIEW = "test-tree-table-objects.view.xml";
+
+	/** Name of the channel holding the child lists of the {@link #OBJECT_VIEW}. */
+	private static final String CHILD_LISTS = "childLists";
+
+	/** Name of the channel holding what holds an object in the {@link #OBJECT_VIEW}. */
+	private static final String HOLDERS = "holders";
 
 	/** A view declaring options its drops cannot use. */
 	private static final String ERROR_VIEW = "test-tree-table-dnd-error.view.xml";
@@ -107,7 +123,7 @@ public class TestTreeTableElement extends BasicTestCase {
 	 */
 	private static final String TREE_MODE = "treeMode";
 
-	private ViewChannel _selected;
+	private DefaultViewChannel _selected;
 
 	private ViewChannel _parent;
 
@@ -117,20 +133,28 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	private ViewContext _context;
 
+	private RecordingScope _scope;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
+		_scope = new RecordingScope();
 		_context = new DefaultViewContext(
-			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")) {
+				@Override
+				public ModelScope getModelScope() {
+					return _scope;
+				}
+			});
 		_selected = register(SELECTED);
 		_parent = register(PARENT);
 		_before = register(BEFORE);
 		_target = register(TARGET);
 	}
 
-	private ViewChannel register(String name) {
-		ViewChannel channel = new DefaultViewChannel(name);
+	private DefaultViewChannel register(String name) {
+		DefaultViewChannel channel = new DefaultViewChannel(name);
 		_context.registerChannel(name, channel);
 		return channel;
 	}
@@ -138,6 +162,7 @@ public class TestTreeTableElement extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		_context = null;
+		_scope = null;
 		_selected = null;
 		_parent = null;
 		_before = null;
@@ -177,6 +202,73 @@ public class TestTreeTableElement extends BasicTestCase {
 
 		_selected.set(A1);
 		assertEquals(Set.of(A1), control.getSelectedKeys());
+	}
+
+	/**
+	 * An object below a closed row written to the selection channel is revealed: the rows above it
+	 * are opened, so that its row is displayed, and it is selected.
+	 */
+	public void testChannelValueIsRevealed() throws Exception {
+		ObjectTree tree = new ObjectTree();
+		TableViewControl<?> control = createControl(OBJECT_VIEW);
+		control.attach();
+		assertEquals(List.of(tree._a, tree._b), rows(control));
+
+		_selected.set(tree._a1);
+
+		assertEquals(Set.of(tree._a1), control.getSelectedKeys());
+		assertEquals("The row above the selected object is opened.",
+			List.of(tree._a, tree._a1, tree._a2, tree._b), rows(control));
+		assertEquals("The channel keeps the object written to it.", tree._a1, _selected.get());
+	}
+
+	/**
+	 * A selected object that is deleted hands the selection to the row it hung in, which is written
+	 * to the channel.
+	 */
+	public void testDeletedSelectionSelectsItsParent() throws Exception {
+		ObjectTree tree = new ObjectTree();
+		_selected.attach(_scope);
+		TableViewControl<?> control = createControl(OBJECT_VIEW);
+		control.attach();
+		_selected.set(tree._a1);
+
+		tree.delete(tree._a1);
+		_scope.reportDeletion(tree._a1);
+
+		assertEquals(List.of(tree._a, tree._a2, tree._b), rows(control));
+		assertEquals("The row the deleted object hung in is the selection.", Set.of(tree._a),
+			control.getSelectedKeys());
+		assertEquals(tree._a, _selected.get());
+		_selected.detach();
+	}
+
+	/**
+	 * A selected object that is deleted while the tree table is off screen hands the selection to
+	 * the row it hung in once the tree table is displayed again.
+	 */
+	public void testSelectionDeletedWhileDetachedSelectsItsParent() throws Exception {
+		ObjectTree tree = new ObjectTree();
+		_selected.attach(_scope);
+		TableViewControl<?> control = createControl(OBJECT_VIEW);
+		control.attach();
+		_selected.set(tree._a1);
+
+		control.detach();
+		_selected.detach();
+		tree.delete(tree._a1);
+		_scope.reportDeletion(tree._a1);
+
+		// The channel is displayed with the view, and announces the deletion it missed.
+		_selected.attach(_scope);
+		assertNull(_selected.get());
+		control.attach();
+
+		assertEquals(List.of(tree._a, tree._a2, tree._b), rows(control));
+		assertEquals("The row the deleted object hung in is the selection.", Set.of(tree._a),
+			control.getSelectedKeys());
+		assertEquals(tree._a, _selected.get());
+		_selected.detach();
 	}
 
 	/** The row rules decide which row object may be dragged. */
@@ -317,6 +409,59 @@ public class TestTreeTableElement extends BasicTestCase {
 			return (Map<?, ?>) JSON.fromString(json);
 		} catch (JSON.ParseException ex) {
 			throw new AssertionError("Not the JSON state of a control: " + json, ex);
+		}
+	}
+
+	/**
+	 * The tree of the {@link #OBJECT_VIEW}: below its root, the objects {@link #_a} with the
+	 * children {@link #_a1} and {@link #_a2}, and {@link #_b}, all of which can be deleted.
+	 */
+	private final class ObjectTree {
+
+		final IdentifiedObject _a;
+
+		final IdentifiedObject _a1;
+
+		final IdentifiedObject _a2;
+
+		final IdentifiedObject _b;
+
+		private final Map<Object, List<Object>> _childLists = new HashMap<>();
+
+		private final Map<Object, Object> _holders = new HashMap<>();
+
+		/**
+		 * Creates the tree and puts it on the input channels of the {@link #OBJECT_VIEW}.
+		 */
+		ObjectTree() {
+			TLModelImpl model = new TLModelImpl();
+			model.addCoreModule();
+			TLClass type = TLModelUtil.addClass(TLModelUtil.addModule(model, "test"), "Node");
+			_a = new IdentifiedObject(type);
+			_a1 = new IdentifiedObject(type);
+			_a2 = new IdentifiedObject(type);
+			_b = new IdentifiedObject(type);
+			add(ROOT, _a);
+			add(ROOT, _b);
+			add(_a, _a1);
+			add(_a, _a2);
+
+			register(CHILD_LISTS).set(_childLists);
+			register(HOLDERS).set(_holders);
+		}
+
+		private void add(Object parent, Object child) {
+			_childLists.computeIfAbsent(parent, x -> new ArrayList<>()).add(child);
+			_holders.put(child, parent);
+		}
+
+		/**
+		 * Deletes the given object, as a committed transaction does: it is invalid and gone from
+		 * the child list it was in.
+		 */
+		void delete(IdentifiedObject object) {
+			object.delete();
+			_childLists.get(_holders.remove(object)).remove(object);
 		}
 	}
 

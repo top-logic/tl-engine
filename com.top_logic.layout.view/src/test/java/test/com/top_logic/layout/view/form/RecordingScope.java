@@ -16,6 +16,7 @@ import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelChangeEvent;
+import com.top_logic.model.listen.ModelChangeEvent.ChangeType;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 
@@ -78,8 +79,18 @@ public class RecordingScope implements ModelScope {
 	 * Reports the given object as updated to everybody listening for it.
 	 */
 	public void reportUpdate(TLObject object) {
-		ModelChangeEvent event = new UpdateOf(object);
-		for (ModelListener listener : listeners(object)) {
+		report(new ChangeOf(ChangeType.UPDATED, object));
+	}
+
+	/**
+	 * Reports the given object as deleted to everybody listening for it.
+	 */
+	public void reportDeletion(TLObject object) {
+		report(new ChangeOf(ChangeType.DELETED, object));
+	}
+
+	private void report(ChangeOf event) {
+		for (ModelListener listener : listeners(event.object())) {
 			listener.notifyChange(event);
 		}
 	}
@@ -87,19 +98,21 @@ public class RecordingScope implements ModelScope {
 	/**
 	 * The change of a single object, as a {@link ModelScope} reports it.
 	 *
+	 * @param kind
+	 *        What happened to the object.
 	 * @param object
-	 *        The object that was updated.
+	 *        The object that changed.
 	 */
-	private record UpdateOf(TLObject object) implements ModelChangeEvent {
+	private record ChangeOf(ChangeType kind, TLObject object) implements ModelChangeEvent {
 
 		@Override
 		public ChangeType getChange(TLObject existingObject) {
-			return existingObject == object ? ChangeType.UPDATED : ChangeType.NONE;
+			return existingObject == object ? kind : ChangeType.NONE;
 		}
 
 		@Override
 		public Stream<? extends TLObject> getUpdated() {
-			return Stream.of(object);
+			return objects(ChangeType.UPDATED);
 		}
 
 		@Override
@@ -119,12 +132,16 @@ public class RecordingScope implements ModelScope {
 
 		@Override
 		public Stream<? extends TLObject> getDeleted() {
-			return Stream.empty();
+			return objects(ChangeType.DELETED);
 		}
 
 		@Override
 		public Stream<? extends TLObject> getDeleted(TLStructuredType type) {
-			return Stream.empty();
+			return object.tType() == type ? getDeleted() : Stream.empty();
+		}
+
+		private Stream<? extends TLObject> objects(ChangeType change) {
+			return kind == change ? Stream.of(object) : Stream.empty();
 		}
 	}
 

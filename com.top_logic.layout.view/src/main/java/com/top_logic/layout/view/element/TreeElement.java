@@ -58,6 +58,7 @@ import com.top_logic.layout.view.dnd.DragSourceBinding;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
+import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
@@ -470,8 +471,9 @@ public class TreeElement implements UIElement {
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			TreeSelectionBinding selectionBinding = new TreeSelectionBinding(treeControl, selectionModel,
-				observableModel::getTreeModel, TreeFunctions.nodeLocator(parentFunction), selectionChannel);
+			TreeSelectionBinding selectionBinding = new TreeSelectionBinding(
+				TreeSelectionDisplay.of(treeControl, selectionModel), observableModel::getTreeModel,
+				TreeFunctions.nodeLocator(parentFunction), selectionChannel);
 			observableModel.addStructureListener(selectionBinding::structureChanged);
 
 			// The channel and the selection outlive the control, so the binding is dropped with it.

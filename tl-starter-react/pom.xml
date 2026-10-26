@@ -56,7 +56,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-model-wysiwyg</artifactId>
+			<artifactId>tl-model-wysiwyg-core</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>

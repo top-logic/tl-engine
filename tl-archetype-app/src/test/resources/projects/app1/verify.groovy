@@ -78,3 +78,23 @@ def appViewConfigs = viewConfigs(new File(project, "src/main/webapp/WEB-INF/conf
 if (appViewConfigs*.getAttribute("title") != ["tl.title"]) {
 	throw new AssertionError("Expected the view title tl.title in myapp.conf.config.xml.");
 }
+
+// The artifact IDs of all dependencies the build resolved, transitive ones included (written by
+// the goal dependency:list into target/dependencies.txt).
+def resolved = new File(project, "target/dependencies.txt").readLines()
+	.collect { (it =~ /^\s+[^:\s]+:([^:\s]+):/) }
+	.findAll { it.find() }
+	.collect { it.group(1) } as Set;
+if (resolved.isEmpty()) {
+	throw new AssertionError("No resolved dependencies found in " + project + "/target/dependencies.txt.");
+}
+// Modules that exist only for the classic UI and must not reach a React-only application.
+def classicOnly = [
+	"tl-layout-wysiwyg",
+	"tl-model-wysiwyg",
+	"ext-com-ckeditor"
+];
+def leaked = classicOnly.findAll { resolved.contains(it) };
+if (!leaked.isEmpty()) {
+	throw new AssertionError("Classic UI modules " + leaked + " in the dependencies of the React-only application " + project + ".");
+}

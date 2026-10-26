@@ -59,3 +59,23 @@ def buildPlugins = children(child(child(pom, "build"), "plugins"), "plugin").col
 if (buildPlugins != ["tl-maven-plugin"]) {
 	throw new AssertionError("Expected only the build plugin tl-maven-plugin, found " + buildPlugins + ".");
 }
+
+// The artifact IDs of all dependencies the build resolved, transitive ones included (written by
+// the goal dependency:list into target/dependencies.txt).
+def resolved = new File(project, "target/dependencies.txt").readLines()
+	.collect { (it =~ /^\s+[^:\s]+:([^:\s]+):/) }
+	.findAll { it.find() }
+	.collect { it.group(1) } as Set;
+if (resolved.isEmpty()) {
+	throw new AssertionError("No resolved dependencies found in " + project + "/target/dependencies.txt.");
+}
+// Modules of the classic UI an application with the classic UI must contain.
+def classicModules = [
+	"tl-layout-wysiwyg",
+	"tl-model-wysiwyg",
+	"ext-com-ckeditor"
+];
+def missing = classicModules.findAll { !resolved.contains(it) };
+if (!missing.isEmpty()) {
+	throw new AssertionError("Classic UI modules " + missing + " missing in the dependencies of " + project + ".");
+}

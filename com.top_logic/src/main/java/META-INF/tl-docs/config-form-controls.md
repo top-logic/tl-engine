@@ -68,7 +68,7 @@ evaluate them before any map, so no map entry can change their control.
 | `@MultiLine(rows)` | The text spans several lines. | text area | text area |
 | `@CommonMark` | The text is CommonMark; implies `@MultiLine`. | text area, formatted when read-only | same |
 | `@Code(language)` | The text is source code in a `CodeLanguage` (`PLAIN`, `XML`, `HTML`, `JSON`, `CSS`, `JAVASCRIPT`, `MARKDOWN`). | code editor if `tl-layout-codeedit` is present, else text area | code editor if `tl-layout-react-codeedit` is present, else text area |
-| `@Html(features)` | The text is HTML; `features` names a feature set of the editor (`""` = standard, `macro` = with source view for embedded TL-Script). | WYSIWYG editor if `tl-layout-wysiwyg` is present, else HTML source | WYSIWYG editor if `tl-layout-react-wysiwyg` is present, else HTML source |
+| `@Html(features)` | The text is HTML; `features` names a feature set of the editor (`""` = standard, `macro` = with source view for embedded TL-Script). | CKEditor if `tl-layout-wysiwyg` is present, else HTML source | WYSIWYG editor if `tl-layout-react-wysiwyg` is present, else HTML source |
 | `@Inline` | A nested item is shown without a group of its own: no heading, no type selector, no remove button. Only for `ITEM` properties edited as nested form. | properties inline | properties inline |
 | `@OptionLabels(labelProvider)` | The `LabelProvider` for the options and the value. | labels of the select; read-only value of a property that cannot be set | same |
 | `@Encrypted` (`com.top_logic.basic.config.annotation`) | The value is a secret. | password input (always, see above) | password input (always, see above) |

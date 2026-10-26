@@ -68,3 +68,23 @@ def conf = new File(project, "src/main/webapp/WEB-INF/conf/classicapp.conf.confi
 if (conf.text.contains("com.top_logic.layout.view.ViewConfig")) {
 	throw new AssertionError("Unexpected view configuration in " + conf + ".");
 }
+
+// The artifact IDs of all dependencies the build resolved, transitive ones included (written by
+// the goal dependency:list into target/dependencies.txt).
+def resolved = new File(project, "target/dependencies.txt").readLines()
+	.collect { (it =~ /^\s+[^:\s]+:([^:\s]+):/) }
+	.findAll { it.find() }
+	.collect { it.group(1) } as Set;
+if (resolved.isEmpty()) {
+	throw new AssertionError("No resolved dependencies found in " + project + "/target/dependencies.txt.");
+}
+// Modules of the classic UI an application with the classic UI must contain.
+def classicModules = [
+	"tl-layout-wysiwyg",
+	"tl-model-wysiwyg",
+	"ext-com-ckeditor"
+];
+def missing = classicModules.findAll { !resolved.contains(it) };
+if (!missing.isEmpty()) {
+	throw new AssertionError("Classic UI modules " + missing + " missing in the dependencies of " + project + ".");
+}

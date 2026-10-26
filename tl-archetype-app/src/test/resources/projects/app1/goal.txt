@@ -1,1 +1,1 @@
-install -DskipTests=false
+install -DskipTests=false org.apache.maven.plugins:maven-dependency-plugin:3.7.0:list -DoutputFile=target/dependencies.txt

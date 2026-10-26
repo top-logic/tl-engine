@@ -1467,7 +1467,7 @@
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>grpc-protobuf</artifactId>
-				<version>1.85.0</version>
+				<version>1.85.1</version>
 			</dependency>
 			<dependency>
 				<!-- LangChain4j: embedding models and vector stores of tl-ai-vector-index. -->

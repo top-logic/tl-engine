@@ -1447,7 +1447,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				// The relation leads nowhere: nobody decides for the object, so nobody may access it.
 				return false;
 			}
-			if (!(parentObject instanceof BoundObject) || !isCommitted(parentObject)) {
+			if (!CheckedObjects.isStored(parentObject)) {
 				// The parent is not access controlled, or it is being built in the current
 				// transaction and has no computed roles yet (see isAllowed(Person, TLObject,
 				// BoundCommandGroup)): its decision is not meaningful, and the object follows it.
@@ -1632,8 +1632,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * An object deleted in a committed transaction still counts as committed here; the access
 	 * checks deny it before, see {@link #isDeleted(TLObject)}.
 	 * </p>
+	 *
+	 * <p>
+	 * Unlike {@link CheckedObjects#isStored(TLObject)}, an object that is no {@link BoundObject}
+	 * counts as committed: walking the access parents of an object to be created stops at the first
+	 * committed object, access controlled or not.
+	 * </p>
 	 */
-	private static boolean isCommitted(TLObject object) {
+	static boolean isCommitted(TLObject object) {
 		if (object == null || object.tTransient()) {
 			return false;
 		}

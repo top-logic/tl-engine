@@ -32,7 +32,7 @@ one object before the function runs, no checks inside it.
 |---|---|
 | Configured function | A TL-Script function defined in the application configuration of `ConfiguredTLScriptFunctions` by a name, parameters and an implementation expression. |
 | Privileged function | A configured function of the type `privileged-script` (`PrivilegedScript`). |
-| Security object | The object the access check of a privileged function is made on, computed from the arguments of the call. |
+| Security object | The object(s) the access check of a privileged function is made on, computed from the arguments of the call: a single object or a collection. |
 | Command group | The operation (`BoundCommandGroup`) the user must hold on the security object, e.g. `Approve`. |
 | Secured / unsecured evaluation | See R12 of [the Discover specification](doc:access-discover-spec). |
 
@@ -61,7 +61,7 @@ and adds:
 
 | Property | Type | Meaning |
 |---|---|---|
-| `security-object` | expression over the parameters, mandatory | Computes the security object (P3). Like `implementation`, the expression accesses the parameters as variables (`$milestone`), it is no function. |
+| `security-object` | expression over the parameters, mandatory | Computes the security object, a single object or a collection (P3). Like `implementation`, the expression accesses the parameters as variables (`$milestone`), it is no function. |
 | `command-group` | command group reference (`CommandGroupReference`, resolved like the `operation` of a grant), mandatory | The operation checked on the security object (P3). An unknown command group is a configuration error at startup. |
 | `on-denied` | expression over the parameters, optional | The result of a denied call (P4). |
 
@@ -83,18 +83,39 @@ A privileged function called from a secured evaluation
    discoverable objects (R4), so the unsecured evaluation starts from objects the user may see; it
    may navigate to objects the user may not see (e.g. the project of a watched ticket). An
    exception raised by the expression propagates; it does not deny silently.
-2. checks `ModelAccessRights.isAllowed(currentUser, securityObject, commandGroup)`. A result that is
-   no single object (`null`, a collection, or anything that is no `TLObject`) denies the call. An
-   edit overlay of a form (a `TLFormObjectBase` that is no create overlay, e.g. the edited object
-   an edit form passes as argument) is checked as the object it edits. A create overlay, a
-   transient object, or an object created in the current transaction denies the call: the access
-   check allows everything on such an object, so the caller could otherwise authorize the call
-   with an object of its own making (`new(..., transient: true)`).
+2. checks the command group on the security object, with the rule for checked objects shared with
+   views and commands (`CheckedObjects.checkStored`, next to `ModelAccessRights`):
+   - a single object: `ModelAccessRights.isAllowed(currentUser, securityObject, commandGroup)`;
+   - a collection: the user must hold the command group on **every** element, each element
+     checked like a single object;
+   - `null` or an empty collection: there is no object, the call is denied.
+
+   An edit overlay of a form (a `TLFormObjectBase` that is no create overlay, e.g. the edited
+   object an edit form passes as argument) is checked as the object it edits. A value that is no
+   `TLObject`, a create overlay, a transient object, or an object created in the current
+   transaction denies the whole call, also as one element of a collection: the access check
+   allows everything on such an object, so the caller could otherwise authorize the call with an
+   object of its own making (`new(..., transient: true)`).
 3. allowed: evaluates `implementation` **unsecured** with the arguments and filters its result for
    `Discover` (R4): a single object the user does not hold `Discover` on becomes `null`, such an
    element of a collection is dropped. Computed values (numbers, strings, ...) are not filtered;
    like a derived attribute (R12), the modeler decides what the function discloses.
 4. denied: see P4.
+
+A function acting on several objects checks all of them, e.g. the projects of all given
+milestones:
+
+```xml
+<privileged-script name="approveMilestones"
+	command-group="Approve"
+	security-object="$milestones.map(m -> $m.container())"
+>
+	<parameters>
+		<parameter name="milestones"/>
+	</parameters>
+	<implementation>...</implementation>
+</privileged-script>
+```
 
 The result is filtered at the call, not only at the end of the calling script: the calling script
 continues secured and must not hold objects it may not discover.
@@ -107,7 +128,7 @@ outer check authorizes the whole operation.
 | Configuration | Result of a denied call |
 |---|---|
 | `on-denied` set | The result of `on-denied`, evaluated **secured** with the arguments of the call. |
-| no `on-denied` | A `TopLogicException` naming the function ("no permission to call ..."). |
+| no `on-denied` | A `TopLogicException` naming the function and the reason: no security object, a security object that is no stored object, or the command group not held on a security object (naming it). |
 
 `on-denied` expresses the behaviour fitting the operation: `null` or `list()` for a reading
 function (like reading an attribute without the right), `throw(...)` with a message of its own for
@@ -135,11 +156,12 @@ canCall(approveMilestone($milestone))
   is compiled. An unknown function name is the usual compile error of a call.
 - The arguments of the call are evaluated and bound as in the call itself (named arguments and
   default values included), but the function is not called.
-- For a privileged function: the security object is computed unsecured (P3, step 1) and the result
-  of `isAllowed(currentUser, securityObject, commandGroup)` is returned; `false` for a security
-  object `null`, a create overlay, a transient object, or an object created in the current
-  transaction. An edit overlay of a form is checked as the object it edits (P3, step 2).
-  `on-denied` is not evaluated.
+- For a privileged function: the security object is computed unsecured (P3, step 1) and checked
+  as in the call (P3, step 2): `true` iff the user holds the command group on the security object,
+  on every element of a collection. `false` for `null`, an empty collection, and a security
+  object or element that is no stored object (a create overlay, a transient object, an object
+  created in the current transaction). An edit overlay of a form is checked as the object it
+  edits. `on-denied` is not evaluated.
 - For a plain configured function: `true`, it has no function level permission.
 - Like `canExecute`, the check is always made for the current user, also in an unsecured
   evaluation.
@@ -252,11 +274,17 @@ Not part of this specification:
 
 JUnit tests in `com.top_logic.model.search` (`test.com.top_logic.model.search.configured.TestPrivilegedScript`
 and `TestPrivilegedScriptConfig`, next to `TestDiscoverRight`, `TestTLScriptSecurity`), on the test
-model type `Proposal`:
+model type `Proposal`. The rule for checked objects itself is tested in
+`test.com.top_logic.model.security.TestCheckedObjects` (`com.top_logic`) and, on persistent
+objects, in `test.com.top_logic.model.search.expr.TestOperationDeclarations`:
 
 - allowed call reads / writes attributes the user holds no right on,
 - denied call without `on-denied` throws, with `on-denied` returns its (secured) result,
 - security object `null` denies, a transient or uncommitted security object denies,
+- a collection as security object: allowed iff the command group is held on every element; one
+  element without it, an empty collection, `null`, or a transient element denies the call (with
+  the message naming the case), `canCall` agrees in each case; an edit overlay in the collection
+  is checked as the edited object,
 - an edit overlay is checked as the object it edits, a create overlay denies,
 - undiscoverable objects in the result are filtered at the call (observed by the calling
   script), computed values are not,

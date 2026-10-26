@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.model.search.expr;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +33,11 @@ import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.ApplicableOperations;
+import com.top_logic.model.security.CheckedObjects;
+import com.top_logic.model.security.CheckedObjects.Decision;
+import com.top_logic.model.security.CheckedObjects.Outcome;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -238,6 +243,41 @@ public class TestOperationDeclarations extends AbstractSearchExpressionTest {
 		assertTrue("Review on the task is implied by Write on the task, which is Write on its project.",
 			rights().isAllowed(_responsible, _task, group("Review")));
 		assertFalse(rights().isAllowed(_reader, _task, group("Review")));
+	}
+
+	public void testCheckedObjectsCollection() {
+		assertSame(Decision.ALLOWED,
+			CheckedObjects.check(_responsible, Arrays.asList(_project, _special), group("Approve")));
+
+		Decision denied = CheckedObjects.check(_reader, Arrays.asList(_project, _special), group("Show"));
+		assertEquals(Outcome.DENIED, denied.getOutcome());
+		assertSame("Show is denied to the reader on the special project only.", _special, denied.getElement());
+
+		assertSame(Decision.ALLOWED, CheckedObjects.check(_reader, _project, group("Show")));
+		assertSame(Decision.ALLOWED, CheckedObjects.check(_reader, Collections.singleton(_project), group("Show")));
+		assertEquals(Outcome.DENIED, CheckedObjects.check(_other, _project, group("Show")).getOutcome());
+	}
+
+	public void testCheckedObjectsNoObject() {
+		assertSame(Decision.NO_OBJECT, CheckedObjects.check(_responsible, null, group("Approve")));
+		assertSame(Decision.NO_OBJECT, CheckedObjects.check(_responsible, Collections.emptyList(), group("Approve")));
+		assertSame(Decision.NO_OBJECT, CheckedObjects.checkStored(_responsible, null, group("Approve")));
+		assertSame(Decision.NO_OBJECT,
+			CheckedObjects.checkStored(_responsible, Collections.emptyList(), group("Approve")));
+	}
+
+	public void testCheckedObjectsStoredOnly() {
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type("Project"));
+		assertFalse(CheckedObjects.isStored(draft));
+		assertTrue(CheckedObjects.isStored(_project));
+
+		assertSame("The access check allows everything on a transient object.", Decision.ALLOWED,
+			CheckedObjects.check(_other, draft, group("Approve")));
+
+		Decision stored = CheckedObjects.checkStored(_responsible, Arrays.asList(_project, draft), group("Approve"));
+		assertEquals(Outcome.INVALID, stored.getOutcome());
+		assertSame(draft, stored.getElement());
+		assertSame(Decision.ALLOWED, CheckedObjects.checkStored(_responsible, _project, group("Approve")));
 	}
 
 	public void testSingletonImpliedBy() throws Exception {

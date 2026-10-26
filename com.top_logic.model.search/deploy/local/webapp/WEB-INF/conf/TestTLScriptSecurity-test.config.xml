@@ -132,12 +132,13 @@
 						</parameters>
 						<implementation>'allowed'</implementation>
 					</privileged-script>
+					<!-- Checks every element of the given collection. -->
 					<privileged-script name="testPrivilegedCollection"
 						command-group="Approve"
-						security-object="list($proposal, $proposal)"
+						security-object="$proposals"
 					>
 						<parameters>
-							<parameter name="proposal"/>
+							<parameter name="proposals"/>
 						</parameters>
 						<implementation>'allowed'</implementation>
 					</privileged-script>

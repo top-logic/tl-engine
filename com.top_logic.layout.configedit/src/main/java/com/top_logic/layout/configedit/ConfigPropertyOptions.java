@@ -14,7 +14,6 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
-import com.top_logic.basic.config.customization.ConfiguredAnnotationCustomizations;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.model.FieldMode;
@@ -39,6 +38,12 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  * </p>
  *
  * <p>
+ * Annotations are resolved through the {@link #customizations() customizations of the
+ * application}, so an annotation given in configuration counts as if it were written on the
+ * property.
+ * </p>
+ *
+ * <p>
  * Each instance is created fresh for a single lookup and starts with an empty
  * {@link TypedAnnotatable} store: unlike the classic {@link EditorFactory}, it carries no form
  * context supplied by a caller. An {@link Options#fun()} function that expects such context will
@@ -46,9 +51,6 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
  * </p>
  */
 public class ConfigPropertyOptions extends LazyTypedAnnotatable implements DeclarativeFormOptions {
-
-	private static final AnnotationCustomizations NO_CUSTOMIZATIONS =
-		new ConfiguredAnnotationCustomizations();
 
 	private final PropertyDescriptor _property;
 
@@ -94,8 +96,17 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 
 	@Override
 	public AnnotationCustomizations getCustomizations() {
-		// No form-local customizations: the annotations on the property itself decide.
-		return NO_CUSTOMIZATIONS;
+		return customizations();
+	}
+
+	/**
+	 * The {@link AnnotationCustomizations} through which annotations of a configuration property are
+	 * resolved: those of the application, as in the classic {@link EditorFactory}.
+	 *
+	 * @see EditorFactory#applicationCustomizations()
+	 */
+	public static AnnotationCustomizations customizations() {
+		return EditorFactory.applicationCustomizations();
 	}
 
 	/**
@@ -191,7 +202,7 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	 *        The property whose mode is resolved.
 	 */
 	public static DerivedProperty<FieldMode> modeProvider(ConfigurationItem formModel, PropertyDescriptor property) {
-		DynamicMode annotation = NO_CUSTOMIZATIONS.getAnnotation(property, DynamicMode.class);
+		DynamicMode annotation = customizations().getAnnotation(property, DynamicMode.class);
 		if (annotation == null) {
 			return null;
 		}
@@ -219,7 +230,7 @@ public class ConfigPropertyOptions extends LazyTypedAnnotatable implements Decla
 	 * </p>
 	 */
 	public static Options optionsAnnotation(PropertyDescriptor property) {
-		return NO_CUSTOMIZATIONS.getAnnotation(property, Options.class);
+		return customizations().getAnnotation(property, Options.class);
 	}
 
 	/**

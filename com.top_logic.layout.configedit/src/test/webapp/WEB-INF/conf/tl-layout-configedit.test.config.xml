@@ -19,4 +19,16 @@
 			</instance>
 		</config>
 	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
+			<customizations>
+				<property name="test.com.top_logic.layout.configedit.TestConfigPropertyOptions$TestConfig#customized">
+					<annotations>
+						<options fun="test.com.top_logic.layout.configedit.TestConfigPropertyOptions$Colors"/>
+					</annotations>
+				</property>
+			</customizations>
+		</config>
+	</configs>
 </application>

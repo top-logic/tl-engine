@@ -22,7 +22,6 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
-import com.top_logic.basic.config.customization.NoCustomizations;
 import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.model.FieldMode;
@@ -755,7 +754,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @see DisplayOrder
 	 */
 	private static List<PropertyDescriptor> displayProperties(ConfigurationItem config) {
-		return new DefaultOrderStrategy.Collector(NoCustomizations.INSTANCE, config.descriptor()).collect();
+		return new DefaultOrderStrategy.Collector(ConfigPropertyOptions.customizations(), config.descriptor())
+			.collect();
 	}
 
 	/**

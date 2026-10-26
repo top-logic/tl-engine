@@ -397,6 +397,16 @@ public class EditorFactory implements AnnotationCustomizations {
 		TypedConfiguration.getConfigurationDescriptor(PolymorphicConfiguration.class).getProperty(
 			PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME).identifier();
 
+	/**
+	 * The {@link Config} together with the {@link AnnotationCustomizations} built from it, see
+	 * {@link EditorFactory#customizations(Config)}.
+	 */
+	private record ConfiguredCustomizations(Config config, AnnotationCustomizations customizations) {
+		// Pure data.
+	}
+
+	private static volatile ConfiguredCustomizations _lastCustomizations;
+
 	private AnnotationCustomizations _customizations = NoCustomizations.INSTANCE;
 
 	private final AnnotationCustomizations _defaultCustomizations;
@@ -428,9 +438,42 @@ public class EditorFactory implements AnnotationCustomizations {
 	private EditorFactory(Config config, ConfiguredControls controls, InitializerProvider initializerProvider) {
 		_config = config;
 		_controls = controls;
-		_defaultCustomizations = new ConfiguredAnnotationCustomizations(_config);
+		_defaultCustomizations = customizations(_config);
 		_initializer = wrapInitializers(initializerProvider);
 		_orderStrategy = createOrderStrategy();
+	}
+
+	/**
+	 * The {@link AnnotationCustomizations} of the application, given in the
+	 * {@link Config#getCustomizations() customizations} of the application's {@link Config}.
+	 *
+	 * <p>
+	 * These are the customizations an {@link EditorFactory} created for the application applies in
+	 * addition to the annotations in code. An editor for configuration items that does not build its
+	 * form through an {@link EditorFactory} resolves annotations through them, so that it sees the
+	 * same annotations.
+	 * </p>
+	 */
+	public static AnnotationCustomizations applicationCustomizations() {
+		return customizations(ApplicationConfig.getInstance().getConfig(Config.class));
+	}
+
+	/**
+	 * The {@link AnnotationCustomizations} given in the given {@link Config}.
+	 *
+	 * <p>
+	 * The customizations of the most recently requested {@link Config} are kept, since they are
+	 * requested for each property lookup of an editor.
+	 * </p>
+	 */
+	private static AnnotationCustomizations customizations(Config config) {
+		ConfiguredCustomizations last = _lastCustomizations;
+		if (last != null && last.config() == config) {
+			return last.customizations();
+		}
+		AnnotationCustomizations result = new ConfiguredAnnotationCustomizations(config);
+		_lastCustomizations = new ConfiguredCustomizations(config, result);
+		return result;
 	}
 
 	protected OrderStrategy createOrderStrategy() {

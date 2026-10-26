@@ -14,6 +14,7 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Sort;
 
@@ -60,6 +61,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final boolean _pinnedEnd;
 
+	private final ColumnAlignment _alignment;
+
 	private final String _cssClass;
 
 	private final Function<? super R, String> _css;
@@ -83,6 +86,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		// is visible there at every scroll position already.
 		_frozenEligible = builder._frozenEligible && !_pinnedEnd;
 		_selectable = builder._selectable && !_pinnedEnd;
+		_alignment = builder._alignment;
 		_cssClass = builder._cssClass;
 		_css = builder._css;
 		_existence = builder._existence;
@@ -163,6 +167,11 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public ColumnAlignment alignment() {
+		return _alignment;
+	}
+
+	@Override
 	public String cssClass() {
 		return _cssClass;
 	}
@@ -218,6 +227,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		Aggregator<R, V> _aggregate;
 
 		int _width = 150;
+
+		ColumnAlignment _alignment = ColumnAlignment.START;
 
 		String _cssClass;
 
@@ -346,6 +357,16 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> pinnedEnd(boolean pinnedEnd) {
 			_pinnedEnd = pinnedEnd;
+			return this;
+		}
+
+		/**
+		 * Sets the side of its cells the column puts its content on.
+		 *
+		 * @see Column#alignment()
+		 */
+		public Builder<R, V> alignment(ColumnAlignment alignment) {
+			_alignment = alignment;
 			return this;
 		}
 

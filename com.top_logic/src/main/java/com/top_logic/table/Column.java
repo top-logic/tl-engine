@@ -190,6 +190,19 @@ public interface Column<R, V> {
 	}
 
 	/**
+	 * The side of its cells this column puts its content on, its heading included.
+	 *
+	 * <p>
+	 * A column of numbers ends at the end of its cells, so that the digits of the values below each
+	 * other line up; any other column starts at the beginning, which is what this method answers
+	 * unless a column says otherwise.
+	 * </p>
+	 */
+	default ColumnAlignment alignment() {
+		return ColumnAlignment.START;
+	}
+
+	/**
 	 * Optional CSS class put on every cell of this column, its heading included, or {@code null}
 	 * for none.
 	 *

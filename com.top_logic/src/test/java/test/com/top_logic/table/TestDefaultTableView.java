@@ -17,6 +17,7 @@ import junit.framework.TestCase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
@@ -103,6 +104,7 @@ public class TestDefaultTableView extends TestCase {
 			.build();
 		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
 			.sort(() -> Comparator.naturalOrder())
+			.alignment(ColumnAlignment.END)
 			.build();
 		return List.of(name, age);
 	}
@@ -138,6 +140,14 @@ public class TestDefaultTableView extends TestCase {
 		assertTrue(name.filterable());
 		assertNull(name.sortDirection());
 		assertEquals(0, name.sortPriority());
+	}
+
+	/** The view of a column carries the alignment the column reports, the start by default. */
+	public void testColumnViewCarriesTheAlignment() {
+		List<ColumnView> columns = newView().columns();
+
+		assertEquals(ColumnAlignment.START, columns.get(0).alignment());
+		assertEquals(ColumnAlignment.END, columns.get(1).alignment());
 	}
 
 	public void testCellRendering() {

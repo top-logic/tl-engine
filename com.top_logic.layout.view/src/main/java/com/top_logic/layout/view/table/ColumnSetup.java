@@ -19,6 +19,7 @@ import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.Sort;
 import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.tool.export.ExcelCellRenderer;
@@ -71,6 +72,9 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        The tooltip of a cell, computed from its row and its value, or {@code null} for a column
  *        whose cells have none. In the header row of a group, the row is {@code null} and the value
  *        is the value the group is formed by.
+ * @param align
+ *        The side of its cells the column puts its content on, or {@code null} for the one its
+ *        values call for: the end for numbers, the start for everything else.
  */
 public record ColumnSetup(
 		String name,
@@ -85,7 +89,21 @@ public record ColumnSetup(
 		Comparator<Object> comparator,
 		boolean hiddenByDefault,
 		ColumnExport export,
-		BiFunction<Object, Object, String> tooltip) {
+		BiFunction<Object, Object, String> tooltip,
+		ColumnAlignment align) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column whose content is aligned as its values call for.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, null);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column whose cells have no tooltip.
@@ -129,10 +147,22 @@ public record ColumnSetup(
 	 * {@link #aggregate()} in the header row of a group when it computes one, sorting by the
 	 * {@link #comparator()} when it declares one, with the {@link #tooltip()} on its cells and on
 	 * the header rows of the groups it forms when it computes one, and left out of exports when its
-	 * {@link #export()} says so.
+	 * {@link #export()} says so. It puts its content on the side its {@link #alignment()
+	 * alignment} names.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
+	}
+
+	/**
+	 * The side of its cells the column puts its content on: the one {@link #align() declared}, and
+	 * where there is none, the end for a column of numbers and the start for every other.
+	 */
+	public ColumnAlignment alignment() {
+		if (align != null) {
+			return align;
+		}
+		return ColumnProviderService.isNumeric(type) ? ColumnAlignment.END : ColumnAlignment.START;
 	}
 
 	/**
@@ -140,6 +170,12 @@ public record ColumnSetup(
 	 */
 	private <V> Column<Object, V> decorate(Column<Object, V> column) {
 		Column<Object, V> result = column;
+		ColumnAlignment alignment = alignment();
+		if (alignment != result.alignment() && (align != null || alignment == ColumnAlignment.END)) {
+			// A binding building a column of its own may align it itself; only a declaration or a
+			// column of numbers overrules it.
+			result = DelegatingColumn.withAlignment(result, alignment);
+		}
 		if (width > 0) {
 			result = DelegatingColumn.withDefaultWidth(result, width);
 		}

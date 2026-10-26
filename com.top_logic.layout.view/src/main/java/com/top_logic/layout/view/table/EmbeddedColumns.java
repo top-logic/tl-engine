@@ -374,7 +374,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			comparator != null && target.multiple() ? ColumnSetup.elementwise(comparator) : comparator,
 			setup.hiddenByDefault(),
 			setup.export(),
-			embeddedTooltip(setup.tooltip(), navigation));
+			embeddedTooltip(setup.tooltip(), navigation),
+			setup.align());
 	}
 
 	/**

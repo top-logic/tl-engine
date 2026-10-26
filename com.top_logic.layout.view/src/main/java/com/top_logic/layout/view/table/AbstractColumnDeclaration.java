@@ -32,6 +32,7 @@ import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
@@ -104,6 +105,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getTooltip()}. */
 		String TOOLTIP = "tooltip";
+
+		/** Configuration name for {@link #getAlign()}. */
+		String ALIGN = "align";
 
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
@@ -229,6 +233,21 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTooltip();
 
+		/**
+		 * The side of its cells the column puts its content on.
+		 *
+		 * <p>
+		 * Unset (the default), a column of numbers ends at the end of its cells, so that their
+		 * digits line up, and every other column starts at the beginning. Set it where that is not
+		 * what the column's values call for - a column computed by a script that yields a number,
+		 * or a number that is an identifier and reads like text.
+		 * </p>
+		 */
+		@Name(ALIGN)
+		@Nullable
+		@NullDefault
+		ColumnAlignment getAlign();
+
 	}
 
 	private final ResKey _label;
@@ -246,6 +265,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final QueryExecutor _comparator;
 
 	private final QueryExecutor _tooltip;
+
+	private final ColumnAlignment _align;
 
 	/**
 	 * The inputs whose values the {@link #_aggregate} and the {@link #_comparator} see, empty for
@@ -277,6 +298,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_aggregate = InputScript.compile(config, Config.AGGREGATE);
 		_comparator = InputScript.compile(config, Config.COMPARATOR);
 		_tooltip = InputScript.compile(config, Config.TOOLTIP);
+		_align = config.getAlign();
 		_scriptInputs = InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE));
 		_hiddenByDefault = !config.getVisible();
 		_export = ColumnExport.of(context, config);
@@ -314,6 +336,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_aggregate = null;
 		_comparator = null;
 		_tooltip = null;
+		_align = null;
 		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
 		_export = ColumnExport.DEFAULT;
@@ -367,7 +390,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			: ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export, tooltip(_tooltip, inputs));
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs), _align);
 	}
 
 	/**

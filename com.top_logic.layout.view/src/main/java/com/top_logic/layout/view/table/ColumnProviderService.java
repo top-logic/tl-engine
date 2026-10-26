@@ -504,6 +504,17 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
+	 * Whether the described values are numbers, whole or fractional, so that a column showing them
+	 * aligns them at their end.
+	 *
+	 * @param columnType
+	 *        What the column's values are, see {@link ColumnType}.
+	 */
+	static boolean isNumeric(ColumnType columnType) {
+		return columnKind(columnType) == ColumnKind.NUMBER;
+	}
+
+	/**
 	 * Which kind of column the described values are shown in.
 	 *
 	 * @param columnType

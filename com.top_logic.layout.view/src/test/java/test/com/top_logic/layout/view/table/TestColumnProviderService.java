@@ -29,6 +29,7 @@ import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.FloatMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
 import com.top_logic.layout.view.table.ColumnBinding;
+import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnType;
@@ -48,6 +49,7 @@ import com.top_logic.model.config.annotation.UnorderedEnum;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
@@ -278,6 +280,51 @@ public class TestColumnProviderService extends TestCase {
 		assertEquals(120, config().getEnumerationWidth());
 		assertEquals(150, config().getStringWidth());
 		assertEquals(150, config().getLabelWidth());
+	}
+
+	/** A column of numbers ends at the end of its cells. */
+	public void testNumbersAlignToTheEnd() {
+		assertEquals(ColumnAlignment.END, setup("count", ColumnBinding.TYPE_DERIVED, 0).alignment());
+		assertEquals(ColumnAlignment.END, setup("amount", ColumnBinding.TYPE_DERIVED, 0).alignment());
+		assertEquals("The column built from it reports it.", ColumnAlignment.END,
+			setup("count", ColumnBinding.TYPE_DERIVED, 0).buildColumn().alignment());
+	}
+
+	/** Every column that does not show numbers starts at the start of its cells. */
+	public void testOtherKindsAlignToTheStart() {
+		for (String attribute : List.of("name", "flag", "state", "day", "startTime", "timestamp", "priority",
+			"owner", "color", "tags")) {
+			assertEquals(attribute, ColumnAlignment.START,
+				setup(attribute, ColumnBinding.TYPE_DERIVED, 0).alignment());
+		}
+		assertEquals("Values nothing is known about.", ColumnAlignment.START,
+			new ColumnSetup("x", ResKey.text("x"), ColumnType.UNRESOLVED, row -> null, null,
+				ColumnBinding.TYPE_DERIVED, 0).alignment());
+		assertEquals("A column built from a text attribute reports the start.", ColumnAlignment.START,
+			setup("name", ColumnBinding.TYPE_DERIVED, 0).buildColumn().alignment());
+	}
+
+	/** A declared alignment wins over what the type of the values calls for. */
+	public void testDeclaredAlignmentWinsOverTheType() {
+		ColumnSetup number = new ColumnSetup("count", ResKey.text("count"), ColumnType.of(part("count")),
+			row -> ColumnProviderService.attributeValue(row, "count"), null, ColumnBinding.TYPE_DERIVED, 0, null, null,
+			null, false, ColumnExport.DEFAULT, null, ColumnAlignment.START);
+		ColumnSetup text = new ColumnSetup("name", ResKey.text("name"), ColumnType.of(part("name")),
+			row -> ColumnProviderService.attributeValue(row, "name"), null, ColumnBinding.TYPE_DERIVED, 0, null, null,
+			null, false, ColumnExport.DEFAULT, null, ColumnAlignment.END);
+
+		assertEquals(ColumnAlignment.START, number.buildColumn().alignment());
+		assertEquals(ColumnAlignment.END, text.buildColumn().alignment());
+	}
+
+	/** A column of a binding building its own column is aligned like any other. */
+	public void testABindingBuildingItsOwnColumnIsAligned() {
+		ColumnBinding binding = setup -> DefaultColumn.builder(setup.name(), setup.value())
+			.label(setup.label())
+			.build();
+
+		assertEquals(ColumnAlignment.END, setup("count", binding, 0).buildColumn().alignment());
+		assertEquals(ColumnAlignment.START, setup("name", binding, 0).buildColumn().alignment());
 	}
 
 	/** The name of the column over an enumeration, and the key of its value in a row. */

@@ -16,6 +16,7 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Sort;
 import com.top_logic.table.filter.TextColumnFilter;
@@ -58,6 +59,7 @@ public class TestDelegatingColumn extends TestCase {
 			.filter(FILTER)
 			.aggregate(AGGREGATE)
 			.width(42)
+			.alignment(ColumnAlignment.END)
 			.frozenEligible(false)
 			.selectable(false)
 			.cssClass(COLUMN_CSS)
@@ -73,6 +75,17 @@ public class TestDelegatingColumn extends TestCase {
 		Column<Person, String> wider = DelegatingColumn.withDefaultWidth(inner, 220);
 		assertEquals("The width override replaces the wrapped column's own width.", 220, wider.defaultWidth());
 		assertEquals("The wrapped column is untouched.", 42, inner.defaultWidth());
+	}
+
+	public void testAlignmentOverride() {
+		Column<Person, String> inner = column();
+		assertEquals(ColumnAlignment.END, inner.alignment());
+
+		Column<Person, String> aligned = DelegatingColumn.withAlignment(inner, ColumnAlignment.START);
+		assertEquals("The override replaces the wrapped column's own alignment.", ColumnAlignment.START,
+			aligned.alignment());
+		assertEquals("The wrapped column is untouched.", ColumnAlignment.END, inner.alignment());
+		assertEquals("Everything else is the wrapped column's.", 42, aligned.defaultWidth());
 	}
 
 	public void testEveryOtherAspectIsDelegated() {
@@ -91,6 +104,7 @@ public class TestDelegatingColumn extends TestCase {
 		assertEquals(Optional.of(AGGREGATE), wrapped.aggregate());
 		assertFalse(wrapped.frozenEligible());
 		assertFalse(wrapped.selectable());
+		assertEquals(ColumnAlignment.END, wrapped.alignment());
 		assertFalse(wrapped.pinnedEnd());
 		assertEquals(COLUMN_CSS, wrapped.cssClass());
 		assertEquals(ROW_CSS, wrapped.cssClass(row));

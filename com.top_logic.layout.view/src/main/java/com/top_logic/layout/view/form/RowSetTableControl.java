@@ -56,6 +56,7 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
@@ -1066,6 +1067,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public ResKey label() {
 			return _inner.label();
+		}
+
+		@Override
+		public ColumnAlignment alignment() {
+			return _inner.alignment();
 		}
 
 		@Override

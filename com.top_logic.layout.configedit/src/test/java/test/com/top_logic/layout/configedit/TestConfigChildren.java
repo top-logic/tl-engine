@@ -10,6 +10,7 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
@@ -372,6 +373,7 @@ public class TestConfigChildren extends TestCase {
 	 * Test suite requiring the {@link TypeIndex} module, used to resolve property options.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestConfigChildren.class, TypeIndex.Module.INSTANCE);
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestConfigChildren.class, TypeIndex.Module.INSTANCE));
 	}
 }

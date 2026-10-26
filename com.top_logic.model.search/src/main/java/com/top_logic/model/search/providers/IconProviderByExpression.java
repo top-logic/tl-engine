@@ -75,9 +75,20 @@ public class IconProviderByExpression extends AbstractConfiguredInstance<IconPro
 
 	@Override
 	public ThemeImage getIcon(Object object, Flavor flavor) {
-		Object result = _iconFunction.execute(object);
-		if (result instanceof ThemeImage) {
-			return (ThemeImage) result;
+		return toIcon(_iconFunction.execute(object));
+	}
+
+	/**
+	 * Converts the result of an icon function to the icon it denotes.
+	 *
+	 * @param result
+	 *        The function result.
+	 * @return The result itself, if it is a {@link ThemeImage}, the icon the text of any other value
+	 *         encodes (e.g. "css:fas fa-car-side"), {@code null} for a {@code null} result.
+	 */
+	public static ThemeImage toIcon(Object result) {
+		if (result instanceof ThemeImage image) {
+			return image;
 		}
 		if (result == null) {
 			return null;

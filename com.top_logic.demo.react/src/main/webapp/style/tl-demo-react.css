@@ -109,3 +109,11 @@
 	box-shadow: var(--shadow-glow);
 	backdrop-filter: blur(var(--surface-blur));
 }
+
+/*
+ * A node of the tree table display demo standing for an approved milestone: its label in the
+ * color a success is reported in.
+ */
+.tlDemoApproved {
+	color: var(--tl-status-success-text);
+}

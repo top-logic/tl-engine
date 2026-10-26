@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.table;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,12 +35,16 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
+import com.top_logic.layout.view.element.ResourceDisplayByExpression;
 import com.top_logic.layout.view.element.TableElement;
+import com.top_logic.layout.view.element.TreeTableElement;
 import com.top_logic.layout.view.table.AbstractColumnDeclaration;
 import com.top_logic.layout.view.table.AttributeColumn;
+import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnFunctions;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -64,6 +69,8 @@ public class TestTableScripts extends BasicTestCase {
 	private static final String TABLE = "table";
 
 	private static final String COMPOSITION_TABLE = "composition-table";
+
+	private static final String TREE_TABLE = "tree-table";
 
 	private static final String SCRIPTED_FILTER = ScriptedFilter.class.getName();
 
@@ -102,6 +109,67 @@ public class TestTableScripts extends BasicTestCase {
 			"<composition-table attribute='parts' row-class='$row'/>");
 		assertScope(List.of("row"), composition, RowClassConfig.ROW_CLASS);
 		assertEquals("part", RowClassFunction.compile(composition).bind(List.of()).apply("part"));
+
+		TreeTableElement.Config treeTable = (TreeTableElement.Config) parse(TREE_TABLE,
+			"<tree-table inputs='factor as f' row-as='item' root='1' children='[]' row-class='[$item, $f]'/>");
+		assertScope(List.of("f", "item"), treeTable, RowClassConfig.ROW_CLASS);
+		assertEquals("row f", RowClassFunction.compile(treeTable).bind(List.of(_factor)).apply("row"));
+
+		TreeTableElement.Config plainTree = (TreeTableElement.Config) parse(TREE_TABLE,
+			"<tree-table root='1' children='[]'/>");
+		assertNull("A tree table without a row class marks no row.",
+			RowClassFunction.compile(plainTree).bind(List.of()));
+	}
+
+	/**
+	 * Tests that the cell class of a column sees the inputs of the column, the row by the name the
+	 * table gives it and the value by the name the column gives it, and that its result becomes the
+	 * class of the cell: nothing and an empty list none, a list all of its members.
+	 */
+	public void testCellClass() throws Exception {
+		TreeTableElement.Config treeTable = (TreeTableElement.Config) parse(TREE_TABLE,
+			"<tree-table inputs='other' row-as='item' root='1' children='[]'><columns>"
+				+ "<computed-column name='c' type='tl.core:String' value-as='v'>"
+				+ "<inputs><input channel='factor' as='f'/></inputs>"
+				+ "<value>$item</value>"
+				+ "<cell-class>$v == 'none' ? null : ($v == 'empty' ? [] : [$item, $v + $f])</cell-class>"
+				+ "</computed-column>"
+				+ "<column attribute='x' cell-class='$row'/>"
+				+ "</columns></tree-table>");
+		ComputedColumn.Config column = (ComputedColumn.Config) treeTable.getColumns().getColumns().get(0);
+		assertScope(List.of("f", "item", "v"), column, AbstractColumnDeclaration.Config.CELL_CLASS);
+
+		// A column without inputs of its own sees the inputs of the table.
+		AttributeColumn.Config attribute = (AttributeColumn.Config) treeTable.getColumns().getColumns().get(1);
+		assertScope(List.of("other", "item", "value"), attribute, AbstractColumnDeclaration.Config.CELL_CLASS);
+
+		ColumnSetup setup = single(instantiate(column).resolve(new ColumnResolution(null, _context)));
+		assertEquals("r af", setup.cellClass().apply("r", "a"));
+		assertNull(setup.cellClass().apply("r", "none"));
+		assertNull(setup.cellClass().apply("r", "empty"));
+
+		TableElement.Config table = (TableElement.Config) parse(TABLE,
+			"<table rows='[]'><columns>"
+				+ "<computed-column name='c' type='tl.core:String'><value>$row</value></computed-column>"
+				+ "</columns></table>");
+		ColumnSetup plain = single(instantiate(table.getColumns().getColumns().get(0))
+			.resolve(new ColumnResolution(null, _context)));
+		assertNull("A column without a cell class marks no cell.", plain.cellClass());
+
+		// An embedded column computes its cell class with the embedded object as its row.
+		TableElement.Config embedding = (TableElement.Config) parse(TABLE,
+			"<table rows='[]'><columns>"
+				+ "<embedded-columns name='e' label='E' type='tl.model:TLClass' object='$row + \"/e\"'>"
+				+ "<computed-column name='c' type='tl.core:String' value='$row' cell-class='$row + \":\" + $value'/>"
+				+ "</embedded-columns>"
+				+ "</columns></table>");
+		List<ColumnSetup> embeddedSetups = instantiate(embedding.getColumns().getColumns().get(0))
+			.resolve(new ColumnResolution(null, _context));
+		ColumnSetup embedded = embeddedSetups.get(0);
+		assertEquals("e.c", embedded.name());
+		assertEquals("r/e:v", embedded.cellClass().apply("r", "v"));
+		// The offered attribute columns of the embedded type declare no cell class.
+		assertNull(embeddedSetups.get(1).cellClass());
 	}
 
 	/**
@@ -174,6 +242,7 @@ public class TestTableScripts extends BasicTestCase {
 				+ "<can-update>$item == $m</can-update>"
 				+ "<aggregate>$members.size() + $m</aggregate>"
 				+ "<comparator>compare($right, $left)</comparator>"
+				+ "<cell-class>$v == 'none' ? null : [$item, $m + $v]</cell-class>"
 				+ "</dynamic-columns>"
 				+ "</columns></table>");
 		DynamicColumns.Config dynamic = (DynamicColumns.Config) table.getColumns().getColumns().get(0);
@@ -192,6 +261,7 @@ public class TestTableScripts extends BasicTestCase {
 			List.of("factor", AbstractColumnDeclaration.Config.LEFT_VARIABLE,
 				AbstractColumnDeclaration.Config.RIGHT_VARIABLE),
 			dynamic, DynamicColumns.Config.COMPARATOR);
+		assertScope(List.of("factor", "item", "m", "v"), dynamic, DynamicColumns.Config.CELL_CLASS);
 
 		List<ColumnSetup> columns = instantiate(dynamic).resolve(new ColumnResolution(null, _context));
 		assertEquals(2, columns.size());
@@ -203,6 +273,90 @@ public class TestTableScripts extends BasicTestCase {
 		assertEquals("rowfa", first.value().apply("row"));
 		assertEquals("2fa", first.aggregate().apply(List.of("x", "y")));
 		assertTrue(first.comparator().compare("a", "b") > 0);
+		assertEquals("row fax", first.cellClass().apply("row", "x"));
+		assertNull(first.cellClass().apply("row", "none"));
+	}
+
+	/**
+	 * Tests that a column and a set of dynamic columns take a display of their values, whose scripts
+	 * see the value by the name the column gives it and none of the inputs of the table, so that a
+	 * display adds no input to the column.
+	 */
+	public void testDisplay() throws Exception {
+		String display = "<display class='" + ResourceDisplayByExpression.class.getName() + "'"
+			+ " label=\"'L:' + $v\" css-class=\"['c', $v]\"/>";
+		TableElement.Config table = (TableElement.Config) parse(TABLE,
+			"<table inputs='factor' rows='[]'><columns>"
+				+ "<computed-column name='c' type='tl.core:String' value-as='v' value='$row'>" + display
+				+ "</computed-column>"
+				+ "<dynamic-columns name='d' value-as='v' type='tl.core:String' columns=\"['m']\" value='$row'>"
+				+ display + "</dynamic-columns>"
+				+ "<column attribute='x'><display class='" + ResourceDisplayByExpression.class.getName()
+				+ "' label='$value'/></column>"
+				+ "</columns></table>");
+		List<PolymorphicConfiguration<? extends ColumnDeclaration>> declarations = table.getColumns().getColumns();
+
+		ComputedColumn.Config computed = (ComputedColumn.Config) declarations.get(0);
+		ConfigurationItem computedDisplay = computed.getDisplay();
+		assertTrue(computedDisplay instanceof ResourceDisplayByExpression.Config);
+		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.LABEL);
+		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.CSS_CLASS);
+		ColumnSetup setup = single(instantiate(computed).resolve(new ColumnResolution(null, _context)));
+		ResourceDisplayByExpression provider = (ResourceDisplayByExpression) setup.display();
+		assertEquals("L:a", provider.getLabel("a"));
+		assertEquals("c a", provider.getCssClass("a"));
+
+		DynamicColumns.Config dynamic = (DynamicColumns.Config) declarations.get(1);
+		assertScope(List.of("v"), dynamic.getDisplay(), ResourceDisplayByExpression.Config.LABEL);
+		ColumnSetup dynamicSetup = single(instantiate(dynamic).resolve(new ColumnResolution(null, _context)));
+		assertEquals("L:b", ((ResourceDisplayByExpression) dynamicSetup.display()).getLabel("b"));
+
+		AttributeColumn.Config attribute = (AttributeColumn.Config) declarations.get(2);
+		assertScope(List.of("value"), attribute.getDisplay(), ResourceDisplayByExpression.Config.LABEL);
+		assertEquals("A display reads no input of the table.", List.of(), instantiate(attribute).inputs());
+
+		ColumnSetup plain = single(instantiate(table.getColumns().getColumns().get(0))
+			.resolve(new ColumnResolution(null, _context)));
+		assertNotNull(plain.display());
+		TableElement.Config withoutDisplay = (TableElement.Config) parse(TABLE,
+			"<table rows='[]'><columns><computed-column name='c' value='$row'/></columns></table>");
+		assertNull("A column without a display shows its values as their type derives.",
+			single(instantiate(withoutDisplay.getColumns().getColumns().get(0))
+				.resolve(new ColumnResolution(null, _context))).display());
+	}
+
+	/**
+	 * Tests that a column reports the inputs its scripts see as the channels its cells follow: a
+	 * column without inputs of its own those of the table as soon as it computes anything with a
+	 * script, and nothing while it computes nothing.
+	 */
+	public void testScriptInputsAreCellInputs() throws Exception {
+		TableElement.Config table = (TableElement.Config) parse(TABLE,
+			"<table inputs='factor as f, other' rows='[]'><columns>"
+				+ "<column attribute='plain'/>"
+				+ "<column attribute='marked' cell-class='$value'/>"
+				+ "<column attribute='explained' tooltip='$value'/>"
+				+ "<column attribute='summed' aggregate='$members.size()'/>"
+				+ "<column attribute='ordered' comparator='compare($left, $right)'/>"
+				+ "<computed-column name='c' type='tl.core:String' cell-class='$f'>"
+				+ "<inputs><input channel='factor' as='f'/></inputs>"
+				+ "<value>$f</value>"
+				+ "</computed-column>"
+				+ "</columns></table>");
+		List<InputRef> tableInputs = table.getInputs();
+		List<List<InputRef>> inputs = new ArrayList<>();
+		for (PolymorphicConfiguration<? extends ColumnDeclaration> column : table.getColumns().getColumns()) {
+			inputs.add(instantiate(column).inputs());
+		}
+
+		assertEquals("A column computing nothing with a script reads no input.", List.of(), inputs.get(0));
+		assertEquals("cell-class", tableInputs, inputs.get(1));
+		assertEquals("tooltip", tableInputs, inputs.get(2));
+		assertEquals("aggregate", tableInputs, inputs.get(3));
+		assertEquals("comparator", tableInputs, inputs.get(4));
+		ComputedColumn.Config computed = (ComputedColumn.Config) table.getColumns().getColumns().get(5);
+		assertEquals("A column with inputs of its own reports each of them once.", computed.getInputs(),
+			inputs.get(5));
 	}
 
 	/**
@@ -296,7 +450,8 @@ public class TestTableScripts extends BasicTestCase {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableScripts.class);
 		Map<String, ConfigurationDescriptor> descriptors = Map.of(
 			TABLE, TypedConfiguration.getConfigurationDescriptor(TableElement.Config.class),
-			COMPOSITION_TABLE, TypedConfiguration.getConfigurationDescriptor(CompositionTableElement.Config.class));
+			COMPOSITION_TABLE, TypedConfiguration.getConfigurationDescriptor(CompositionTableElement.Config.class),
+			TREE_TABLE, TypedConfiguration.getConfigurationDescriptor(TreeTableElement.Config.class));
 		ConfigurationReader reader =
 			new ConfigurationReader(context, Collections.singletonMap(tag, descriptors.get(tag)));
 		reader.setSource(CharacterContents.newContent(xml));

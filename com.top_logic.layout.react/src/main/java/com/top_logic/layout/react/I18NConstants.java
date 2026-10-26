@@ -902,6 +902,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED;
 
 	/**
+	 * @en Filter: {0}
+	 */
+	public static ResKey1 TABLE_FILTER_PRESET__NAME;
+
+	/**
+	 * @en {0,choice,1#1 filter active|2#{0} filters active}
+	 */
+	public static ResKey1 TABLE_FILTERS_ACTIVE__COUNT;
+
+	/**
 	 * @en Selection changed.
 	 */
 	public static ResKey REACT_DROPDOWN_SELECT_VALUE_CHANGED;

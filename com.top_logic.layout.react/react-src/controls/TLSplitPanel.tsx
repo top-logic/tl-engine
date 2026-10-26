@@ -103,9 +103,8 @@ function resized(children: ChildDescriptor[], pixels: number[]): ChildDescriptor
  *
  * Always fills its container: a pane sized in pixels keeps its size while there is room for it, the panes sized in
  * percent share the rest, and the handle between them has to span the available extent. Each pane is a bounded region
- * of the fill contract: a column flex box that scrolls what does not fit into it and ends the fill chain (a
- * FillBarrier), so that whatever fills - a table, a switch showing a tab bar, a stack around a table - takes the height
- * of the pane, while content of its own size keeps its size.
+ * (tl-region) that ends the fill chain: it stretches a child of its own size to its height, holds a filling child to
+ * exactly that height, and scrolls what does not fit into it.
  */
 const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -158,8 +157,6 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
 
   const computeChildStyle = (child: ChildDescriptor): React.CSSProperties => {
     const style: React.CSSProperties = {
-      display: 'flex',
-      flexDirection: 'column',
       overflow: child.scrolling || 'auto',
       flex: paneFlex(child, allCollapsed, effectiveHorizontal),
     };
@@ -254,7 +251,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         key={`child-${i}`}
         id={paneId(i)}
-        className="tl-split__pane"
+        className="tl-split__pane tl-region"
         data-tl-state={stateAttr(child.collapsed && effectiveHorizontal && 'collapsed')}
         style={computeChildStyle(child)}
       >

@@ -30,10 +30,11 @@ const TABS_SX: SxProps<Theme> = { flexShrink: 0, borderBottom: 1, borderColor: '
 /** A tab with an icon beside its label rather than above it, at the height of a label-only tab. */
 const TAB_SX: SxProps<Theme> = { minHeight: 48 };
 
-/** The content region: bounded by the root, scrolling what does not fit. */
+/**
+ * The content region: bounded by the root, scrolling what does not fit. Its layout is the bounded
+ * region of the design system (tl-region), which stretches the content to the region's height.
+ */
 const PANEL_STYLE: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
   flex: '1 1 auto',
   minHeight: 0,
   overflow: 'auto',
@@ -135,6 +136,7 @@ const MuiTabBarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         id={panelId}
         role="tabpanel"
         aria-labelledby={selected === false ? undefined : tabElementId(selected)}
+        className="tl-region"
         style={PANEL_STYLE}
       >
         <FillBarrier>

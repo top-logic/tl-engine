@@ -453,7 +453,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
             <ThemeIcon encoded={ICON_CLOSE} className="tl-button__icon tl-icon-sm" />
           </button>
         </div>
-        <div className="tl-dialog__body">
+        <div className="tl-dialog__body tl-region">
           <SurfaceProvider value={OVERLAY_SURFACE}>
             <FillBarrier>
               <TLChild control={child} />

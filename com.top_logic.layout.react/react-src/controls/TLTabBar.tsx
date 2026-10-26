@@ -10,8 +10,9 @@ const { useCallback } = React;
  * A tab strip above the content of the selected tab (tl-tabs).
  *
  * Always fills its container, so the strip stays pinned and only the tab content scrolls. The
- * content region is bounded by that and ends the fill chain: a filling control inside a tab
- * resolves its height against the region and scrolls internally.
+ * content region is bounded by that (tl-region) and ends the fill chain: it stretches a content of
+ * its own size to its height, and a filling control inside a tab resolves its height against the
+ * region and scrolls internally.
  *
  * Keyboard: roving tabindex - only the selected tab is in the tab order. The arrow keys, Home and
  * End move the focus and select the tab reached in one step, through the same command a click
@@ -54,7 +55,7 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
       <div
         {...panel}
         hidden={false}
-        className="tl-tabs__panel"
+        className="tl-tabs__panel tl-region"
         role="tabpanel"
       >
         <FillBarrier>

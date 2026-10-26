@@ -28,6 +28,11 @@
 		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
 			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
 				<group name="Approve" type="write"/>
+				<!-- Operations declared on the test types, see TestOperationDeclarations. -->
+				<group name="Show" type="read"/>
+				<group name="Inspect" type="read"/>
+				<group name="Review" type="write"/>
+				<group name="Audit" type="read"/>
 			</instance>
 		</config>
 
@@ -161,7 +166,28 @@
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance>
 				<security-config>
+					<module name="TestTLScriptSecurity">
+						<!-- Applies to every class of the module. -->
+						<operations>
+							<operation name="Audit"/>
+						</operations>
+					</module>
 					<class name="TestTLScriptSecurity:Project">
+						<!--
+							Whoever reads a project may show it; the application layer adds Inspect,
+							implied by Show. Only the responsible may approve a project.
+						-->
+						<operations>
+							<operation name="Show"
+								implied-by="Read"
+							/>
+							<operation name="Approve"/>
+						</operations>
+						<grant
+							inherit="true"
+							operation="Approve"
+							roles="TestTLScriptSecurity.ProjectResponsible"
+						/>
 						<!-- Both roles may read; only the responsible may write and delete. -->
 						<grant
 							inherit="true"
@@ -180,6 +206,9 @@
 						/>
 					</class>
 					<class name="TestTLScriptSecurity:Proposal">
+						<operations>
+							<operation name="Approve"/>
+						</operations>
 						<!-- A reader reads a proposal, an approver reads it and may approve it. -->
 						<grant
 							inherit="true"
@@ -201,7 +230,20 @@
 						/>
 					</class>
 					<class name="TestTLScriptSecurity:ProjectTask">
-						<!-- A task follows the project its assignee is responsible for. -->
+						<!--
+							A task follows the project its assignee is responsible for. Approve and
+							Show are checked on the project; Review, which the project does not
+							declare, is held by whoever may write the project.
+						-->
+						<operations>
+							<operation name="Approve"/>
+							<operation name="Show"
+								implied-by="Read"
+							/>
+							<operation name="Review"
+								implied-by="Write"
+							/>
+						</operations>
 						<access-parent>
 							<script expr="t -> $t.get(`TestTLScriptSecurity:ProjectTask#assignee`).referers(`TestTLScriptSecurity:Project#responsible`)"/>
 						</access-parent>
@@ -273,6 +315,12 @@
 						/>
 					</class>
 					<singleton name="TestTLScriptSecurity#HOME">
+						<!-- Whoever may write the home may review it. -->
+						<operations>
+							<operation name="Review"
+								implied-by="Write"
+							/>
+						</operations>
 						<!-- The singleton additionally grants Write without Read. -->
 						<grant
 							operation="Read"

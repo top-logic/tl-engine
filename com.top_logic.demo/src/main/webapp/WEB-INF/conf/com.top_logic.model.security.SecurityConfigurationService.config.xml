@@ -8,6 +8,12 @@
 			<instance class="com.top_logic.model.security.SecurityConfigurationService">
 				<security-config>
 					<module name="orgStructure">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -55,6 +61,12 @@
 						/>
 					</module>
 					<module name="tl.model">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -102,6 +114,12 @@
 						/>
 					</module>
 					<module name="Contacts">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -161,6 +179,12 @@
 						without-security="true"
 					/>
 					<module name="tl.units">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -208,6 +232,12 @@
 						/>
 					</module>
 					<module name="tl.core">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -255,6 +285,12 @@
 						/>
 					</module>
 					<module name="Tag">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -302,6 +338,12 @@
 						/>
 					</module>
 					<module name="SearchExpressionStructure">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -355,6 +397,12 @@
 						without-security="true"
 					/>
 					<module name="tl.folder">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -408,6 +456,12 @@
 						without-security="true"
 					/>
 					<module name="tl.contact.ui">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -458,6 +512,12 @@
 						without-security="true"
 					/>
 					<module name="DemoTypes">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -565,6 +625,9 @@
 						/>
 					</part>
 					<class name="DemoTypes:DemoTypes.A">
+						<operations>
+							<operation name="PromoteAdmin"/>
+						</operations>
 						<!--
 							Only an administrator may promote the responsible person of an A to an administrator
 							(privileged script makeResponsibleAdmin). The operation must not be granted to
@@ -577,6 +640,12 @@
 						/>
 					</class>
 					<module name="DemoSecurity">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -624,6 +693,12 @@
 						/>
 					</module>
 					<module name="tl5.enum">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -677,6 +752,12 @@
 						without-security="true"
 					/>
 					<module name="LoginMessages">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -724,6 +805,12 @@
 						/>
 					</module>
 					<module name="tl.doc">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -780,6 +867,12 @@
 						without-security="true"
 					/>
 					<module name="tl.imagegallery">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -833,6 +926,12 @@
 						without-security="true"
 					/>
 					<module name="tl.security.selfservice">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -880,6 +979,12 @@
 						/>
 					</module>
 					<module name="tl.demo.forms">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -927,6 +1032,12 @@
 						/>
 					</module>
 					<module name="tl.reporting">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -974,6 +1085,12 @@
 						/>
 					</module>
 					<module name="tl.bpe.execution">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1024,6 +1141,12 @@
 						without-security="true"
 					/>
 					<module name="mandatorStructure">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1071,6 +1194,12 @@
 						/>
 					</module>
 					<module name="tl.accounts">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1127,6 +1256,12 @@
 						without-security="true"
 					/>
 					<module name="tl.element">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1174,6 +1309,12 @@
 						/>
 					</module>
 					<module name="SecurityStructure">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1221,6 +1362,12 @@
 						/>
 					</module>
 					<module name="tl.comments">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1268,6 +1415,12 @@
 						/>
 					</module>
 					<module name="tl.changelog">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1315,6 +1468,12 @@
 						/>
 					</module>
 					<module name="tl.model.i18n">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1362,6 +1521,12 @@
 						/>
 					</module>
 					<module name="tl.model.search">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1412,6 +1577,12 @@
 						without-security="true"
 					/>
 					<module name="tl.contact.external">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1459,6 +1630,12 @@
 						/>
 					</module>
 					<module name="tl.bpe.app">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1506,6 +1683,12 @@
 						/>
 					</module>
 					<module name="tl.model.wysiwyg">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1559,6 +1742,12 @@
 						without-security="true"
 					/>
 					<module name="tl.util">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1609,6 +1798,12 @@
 						without-security="true"
 					/>
 					<module name="tl.search">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1659,6 +1854,12 @@
 						without-security="true"
 					/>
 					<module name="tl.bpe.bpml">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1709,6 +1910,12 @@
 						without-security="true"
 					/>
 					<module name="tl.mail">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1756,6 +1963,12 @@
 						/>
 					</module>
 					<module name="tl.demo.graph">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1803,6 +2016,12 @@
 						/>
 					</module>
 					<module name="tl.demo.aspect">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"
@@ -1850,6 +2069,12 @@
 						/>
 					</module>
 					<module name="DemoPlain">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="restrictedWrite"/>
+							<operation name="ownerWrite"/>
+							<operation name="publish"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"

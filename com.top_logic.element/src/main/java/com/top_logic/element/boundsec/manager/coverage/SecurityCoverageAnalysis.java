@@ -235,7 +235,7 @@ public class SecurityCoverageAnalysis {
 				// Its roles are derived; every source grant is already checked on its own.
 				continue;
 			}
-			Set<BoundedRole> granted = _accessRights.getAllowedRoles(type, operation);
+			Set<BoundedRole> granted = grantedNotImplied(type, operation);
 			if (granted.isEmpty()) {
 				continue;
 			}
@@ -249,6 +249,29 @@ public class SecurityCoverageAnalysis {
 				findings.add(CoverageFinding.deadGrant(type, operation, dead));
 			}
 		}
+	}
+
+	/**
+	 * The roles allowed the given operation on the given type, without those allowed it only
+	 * because they are allowed an operation implying it.
+	 *
+	 * <p>
+	 * A dead role of an implying operation is reported for that operation alone.
+	 * </p>
+	 */
+	private Set<BoundedRole> grantedNotImplied(TLClass type, BoundCommandGroup operation) {
+		Set<BoundedRole> granted = _accessRights.getAllowedRoles(type, operation);
+		Set<BoundCommandGroup> implying = _accessRights.getOperations(type).getImplying(operation);
+		if (implying.isEmpty() || granted.isEmpty()) {
+			return granted;
+		}
+		Set<BoundedRole> result = new LinkedHashSet<>(granted);
+		for (BoundCommandGroup implyingOperation : implying) {
+			if (implyingOperation != operation) {
+				result.removeAll(_accessRights.getAllowedRoles(type, implyingOperation));
+			}
+		}
+		return result;
 	}
 
 	/**

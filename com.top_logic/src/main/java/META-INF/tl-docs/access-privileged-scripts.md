@@ -157,6 +157,9 @@ The project model of the React demo (`com.top_logic.demo.react`, module
 
 ```xml
 <class name="tl.demo.projectManagement:ProjectScope">
+	<operations>
+		<operation name="Approve"/>
+	</operations>
 	<grant operation="Approve" roles="demo.react.ProjectMember"/>
 </class>
 ```
@@ -208,8 +211,11 @@ by `canCall`:
 - **The security object decides.** A security object expression that does not lead to the object
   the operation affects (e.g. a constant global object) grants the operation for all objects. The
   documentation of the configuration points this out.
-- **The command group is an operation of its own.** It needs labels (`commandGroup.<Name>`,
-  `commandGroup.<Name>.tooltip`) in an application resource bundle, see the example.
+- **The command group is an operation of its own.** It must be declared for the type it is
+  granted on (`<operation name="..."/>`, see
+  [Operations](doc:access-configuration#operations-which-operations-apply-to-a-type)) and needs
+  labels (`commandGroup.<Name>`, `commandGroup.<Name>.tooltip`) in an application resource bundle,
+  see the example.
 - **Computed values are disclosed.** Only objects in the result are filtered (P3).
 - **Only objects, collections and maps are filtered.** A function value (lambda) returned by the
   implementation is not filtered and runs unsecured when the caller calls it. Objects inside any

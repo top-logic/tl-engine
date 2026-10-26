@@ -24,6 +24,9 @@
 			<instance>
 				<security-config>
 					<class name="TestViewModelAccess:Project">
+						<operations>
+							<operation name="Finish"/>
+						</operations>
 						<!-- The responsible may do everything with a project. -->
 						<grant
 							operation="Read"

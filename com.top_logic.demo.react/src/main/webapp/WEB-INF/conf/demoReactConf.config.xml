@@ -287,6 +287,9 @@
 						/>
 					</module>
 					<class name="tl.demo.projectManagement:ProjectScope">
+						<operations>
+							<operation name="Approve"/>
+						</operations>
 						<grant
 							inherit="true"
 							operation="Write"

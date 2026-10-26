@@ -154,6 +154,54 @@ public interface ModelAccessRights {
 	}
 
 	/**
+	 * The operations that apply to the objects of the given type.
+	 *
+	 * <p>
+	 * Only an operation applying to a type can be granted on it. The
+	 * {@link ApplicableOperations#BUILT_IN built-in operations} apply to every type; any other
+	 * operation applies to a type when the type, one of its generalizations or its module declares
+	 * it. The result also tells which operations imply which others.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects.
+	 *
+	 * @implSpec An implementation without operation declarations answers
+	 *           {@link ApplicableOperations#BUILT_IN_ONLY} for every type.
+	 *
+	 * @see #getObjectOperations(TLObject)
+	 */
+	default ApplicableOperations getOperations(TLClass type) {
+		return ApplicableOperations.BUILT_IN_ONLY;
+	}
+
+	/**
+	 * Whether the given operation applies to the objects of the given type.
+	 *
+	 * @see #getOperations(TLClass)
+	 */
+	default boolean appliesTo(TLClass type, BoundCommandGroup operation) {
+		return getOperations(type).appliesTo(operation);
+	}
+
+	/**
+	 * The operations that apply to the given object.
+	 *
+	 * <p>
+	 * For a module singleton, these are the {@link #getOperations(TLClass) operations of its type}
+	 * plus those declared for the singleton itself. For any other object, these are the operations
+	 * of its type.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object. An object whose type is no {@link TLClass} has the
+	 *        {@link ApplicableOperations#BUILT_IN built-in operations} only.
+	 */
+	default ApplicableOperations getObjectOperations(TLObject object) {
+		return object.tType() instanceof TLClass type ? getOperations(type) : ApplicableOperations.BUILT_IN_ONLY;
+	}
+
+	/**
 	 * Returns the roles granted the given command group on the given attribute. Relevant for READ
 	 * and WRITE command groups to implement attribute-level access rights.
 	 *

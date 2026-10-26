@@ -28,7 +28,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
-import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.OpenDialogAction;
 import com.top_logic.layout.view.command.ViewAction;
@@ -258,8 +258,8 @@ public class LoginAction implements ViewAction {
 
 	/**
 	 * Completes a successful authentication: records the deferred login on the HTTP session, closes
-	 * the top dialog, and triggers the client reload that lets {@link PendingSessionAction} perform
-	 * the actual session swap.
+	 * the top dialog, and sends the client a reload as {@link PageNavigationEvent} that lets
+	 * {@link PendingSessionAction} perform the actual session swap.
 	 *
 	 * <p>
 	 * Re-checks the maintenance mode before recording the login: the follow-up steps (OTP
@@ -283,7 +283,7 @@ public class LoginAction implements ViewAction {
 		if (dialogManager != null) {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
 		}
-		context.getSSEQueue().enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+		context.getSSEQueue().enqueue(PageNavigationEvent.create());
 	}
 
 	private static String asString(Object value) {

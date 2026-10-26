@@ -25,7 +25,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
-import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.protocol.WindowFocusEvent;
 import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -910,7 +910,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	private static void requestReload(SSEUpdateQueue queue) {
 		try {
-			queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+			queue.enqueue(PageNavigationEvent.create());
 		} catch (RuntimeException ex) {
 			// A window that cannot be reached must not keep the remaining ones from being told.
 			Logger.error("Failed to request a reload of a window.", ex,

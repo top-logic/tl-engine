@@ -5,6 +5,7 @@ import type {
   FragmentInsertionData,
   FunctionCallData,
   JSSnippletData,
+  PageNavigationEventData,
   PatchEventData,
   PropertyUpdateData,
   RangeReplacementData,
@@ -27,6 +28,7 @@ import {
 } from './route-sync';
 import { handlePick, type PickEventData } from './element-picker';
 import { handleDownload, type DownloadEventData } from './download';
+import { afterNavigationGrace, isPageLeaving, leavePage, mayBeNavigating, onPageLeave, reloadForStaleUi } from './page-leave';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -36,13 +38,7 @@ let _url: string | null = null;
 let _lastMessageTime: number = 0;
 let _heartbeatCheckInterval: ReturnType<typeof setInterval> | null = null;
 let _firstMessageTimer: ReturnType<typeof setTimeout> | null = null;
-/**
- * Set once the page starts navigating away (e.g. an external SSO redirect). The EventSource then
- * closes as a side effect of the navigation; that must NOT be treated as a lost session and trigger
- * a reload, which would abort the intentional navigation.
- */
-let _navigatingAway = false;
-let _unloadListenerRegistered = false;
+let _leaveListenerRegistered = false;
 
 /**
  * Whether the events come by polling, because the stream does not arrive.
@@ -72,10 +68,11 @@ const FIRST_MESSAGE_TIMEOUT_MS = 3_000;
 /** The longest wait between two failed polls. */
 const MAX_POLL_BACKOFF_MS = 10_000;
 
-/** A page reloaded for a lost session within this does not reload at once again. */
-const RELOAD_GUARD_MS = 10_000;
-
-const RELOAD_GUARD_KEY = 'tl-react-sse-reload';
+/**
+ * Type code of the event telling the page to leave. Must match
+ * {@code PageNavigationEvent#PAGE_NAVIGATION_EVENT__TYPE}.
+ */
+const PAGE_NAVIGATION_EVENT = 'PageNavigationEvent';
 
 /**
  * Session-storage key marking a tab that had to poll. The proxy between the browser and the server
@@ -88,13 +85,12 @@ const POLLING_KEY = 'tl-react-sse-polling';
  * Connects to the SSE endpoint. Should be called once on page load.
  */
 export function connect(url: string): void {
+  if (isPageLeaving()) return;
   _url = url;
 
-  if (!_unloadListenerRegistered) {
-    _unloadListenerRegistered = true;
-    const markNavigatingAway = () => { _navigatingAway = true; };
-    window.addEventListener('beforeunload', markNavigatingAway);
-    window.addEventListener('pagehide', markNavigatingAway);
+  if (!_leaveListenerRegistered) {
+    _leaveListenerRegistered = true;
+    onPageLeave(disconnect);
   }
 
   if (_heartbeatCheckInterval) {
@@ -114,6 +110,26 @@ export function connect(url: string): void {
       usePolling('no heartbeat received');
     }
   }, HEARTBEAT_CHECK_INTERVAL_MS);
+}
+
+/**
+ * Stops receiving events, because the page is leaving: the stream closing as a side effect of the
+ * navigation must not be taken for a lost session, and a stream or poll opened now would reach the
+ * server the navigation already changed.
+ */
+function disconnect(): void {
+  if (_firstMessageTimer) {
+    clearTimeout(_firstMessageTimer);
+    _firstMessageTimer = null;
+  }
+  if (_heartbeatCheckInterval) {
+    clearInterval(_heartbeatCheckInterval);
+    _heartbeatCheckInterval = null;
+  }
+  if (_eventSource) {
+    _eventSource.close();
+    _eventSource = null;
+  }
 }
 
 /**
@@ -146,9 +162,19 @@ function createEventSource(url: string): void {
   };
 
   source.onerror = () => {
-    if (_navigatingAway) {
-      // The page is navigating away (e.g. an external SSO redirect). The connection closing is
-      // expected; reloading here would abort the navigation.
+    if (isPageLeaving()) {
+      // The connection closing is expected; reloading here would abort the navigation.
+      return;
+    }
+    if (mayBeNavigating()) {
+      // The browser aborts the stream when a navigation it starts by itself begins (the reload
+      // button), long before the page is left, and the server ends it when it renders the next
+      // page: no reason to poll, and no reconnect that would take the stream from the next page. A
+      // page that is still there afterwards - the user stayed on it - opens its stream again.
+      source.close();
+      afterNavigationGrace(() => {
+        if (_eventSource === source && !_polling) createEventSource(_url!);
+      });
       return;
     }
     if (source.readyState === EventSource.CLOSED) {
@@ -172,9 +198,12 @@ function dispatchMessage(text: string): void {
 
 /**
  * Gives up the event stream and receives the events by polling from now on.
+ *
+ * Not while a navigation may be starting ({@link mayBeNavigating}): a stream the navigation
+ * aborted or held up says nothing about a proxy, and the tab would poll for good.
  */
 function usePolling(reason: string): void {
-  if (_polling || _navigatingAway) return;
+  if (_polling || isPageLeaving() || mayBeNavigating()) return;
   _polling = true;
   console.warn('[TLReact] polling: ' + reason);
   writeStorage(POLLING_KEY, '1');
@@ -205,7 +234,13 @@ async function pollLoop(): Promise<void> {
   // have arrived either.
   let full = true;
   let backoff = 0;
-  while (!_navigatingAway) {
+  while (!isPageLeaving()) {
+    if (mayBeNavigating()) {
+      // The events from now on may be the next page's: the server keeps them until a poll reads
+      // them, so a page that is still there after the navigation it announced reads them then.
+      await new Promise<void>((resolve) => afterNavigationGrace(resolve));
+      continue;
+    }
     try {
       const withToken = !full && _pollToken !== '';
       const url = withToken
@@ -232,6 +267,7 @@ async function pollLoop(): Promise<void> {
       if (answer.token) _pollToken = answer.token;
       _lastSeq = answer.last;
       for (const event of answer.events) {
+        if (isPageLeaving()) return;
         dispatch(event);
       }
     } catch (e) {
@@ -268,7 +304,7 @@ const DELIVERY_CHECK_MS = 3_000;
  * checked by the next one.
  */
 export function expectEvents(serverLast?: number): void {
-  if (_polling || !_url) return;
+  if (_polling || !_url || isPageLeaving()) return;
   if (serverLast === undefined) {
     _peekWanted = true;
   } else if (serverLast > _lastSeq) {
@@ -290,7 +326,7 @@ async function checkDelivery(): Promise<void> {
   _expectedSeq = 0;
   _peekWanted = false;
   try {
-    if (_polling) return;
+    if (_polling || isPageLeaving()) return;
     if (peek) expected = Math.max(expected, await peekLastSeq());
     if (expected <= _lastSeq) return;
     await new Promise((resolve) => setTimeout(resolve, 1_000));
@@ -317,16 +353,11 @@ async function peekLastSeq(): Promise<number> {
  * waits before it reloads again.
  */
 function reloadForLostSession(): void {
-  const last = Number(readStorage(RELOAD_GUARD_KEY)) || 0;
-  const wait = Date.now() - last < RELOAD_GUARD_MS ? RELOAD_GUARD_MS : 0;
-  console.warn('[TLReact] Session lost. Reloading page' + (wait ? ' in ' + wait + ' ms.' : '.'));
-  setTimeout(() => {
-    writeStorage(RELOAD_GUARD_KEY, String(Date.now()));
-    // The server itself answered that the session or the window is gone, so no proxy held the
-    // stream back: a tab reloaded for a lost session or window tries the stream first again.
-    removeStorage(POLLING_KEY);
-    window.location.reload();
-  }, wait);
+  if (isPageLeaving()) return;
+  // The server itself answered that the session or the window is gone, so no proxy held the
+  // stream back: a tab reloaded for a lost session or window tries the stream first again.
+  removeStorage(POLLING_KEY);
+  reloadForStaleUi({ waitForGuard: true });
 }
 
 /** A value of the tab's session storage, `null` where there is none or no storage. */
@@ -465,6 +496,9 @@ function dispatch(data: unknown): void {
       break;
     case 'DownloadEvent':
       handleDownload(payload as unknown as DownloadEventData);
+      break;
+    case PAGE_NAVIGATION_EVENT:
+      leavePage((payload as unknown as PageNavigationEventData).url);
       break;
     default:
       console.warn('[TLReact] Unknown SSE event type:', typeCode);

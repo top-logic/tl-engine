@@ -25,6 +25,18 @@
 		<maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 
+		<!-- 
+			JavaDoc check of javac. Engine modules set it to "-Xdoclint:reference/private" to fail on 
+			JavaDoc references ({@link}, @see, @throws, {@value}) that do not resolve. 
+		-->
+		<tl.javac.doclint>-Xdoclint:none</tl.javac.doclint>
+
+		<!-- 
+			Whether to skip the check for unused imports. Engine modules set it to "false" to fail on an 
+			import that is not used. 
+		-->
+		<tl.unused-imports.skip>true</tl.unused-imports.skip>
+
 		<skipTests>true</skipTests>
 		<skipDependencyCheck>false</skipDependencyCheck>
 		<skipNormalizeLayouts>true</skipNormalizeLayouts>
@@ -190,8 +202,41 @@
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
 					<compilerArgs>
 	                    <arg>-parameters</arg>
+	                    <arg>${tl.javac.doclint}</arg>
 	                </compilerArgs>
 				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unused-imports</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<skip>${tl.unused-imports.skip}</skip>
+							<checkstyleRules>
+								<module name="Checker">
+									<module name="TreeWalker">
+										<!-- An import used only in JavaDoc counts as used, as in Eclipse. -->
+										<module name="UnusedImports">
+											<property name="processJavadoc" value="true" />
+										</module>
+									</module>
+								</module>
+							</checkstyleRules>
+							<includeTestSourceDirectory>true</includeTestSourceDirectory>
+							<!-- Checkstyle cannot parse module declarations. -->
+							<excludes>**/module-info.java</excludes>
+							<consoleOutput>true</consoleOutput>
+							<violationSeverity>warning</violationSeverity>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
@@ -658,6 +703,18 @@
 		
 		<pluginManagement>
 			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-checkstyle-plugin</artifactId>
+					<version>3.6.0</version>
+					<dependencies>
+						<dependency>
+							<groupId>com.puppycrawl.tools</groupId>
+							<artifactId>checkstyle</artifactId>
+							<version>10.21.4</version>
+						</dependency>
+					</dependencies>
+				</plugin>
 				<plugin>
 					<groupId>com.github.eirslett</groupId>
 					<artifactId>frontend-maven-plugin</artifactId>

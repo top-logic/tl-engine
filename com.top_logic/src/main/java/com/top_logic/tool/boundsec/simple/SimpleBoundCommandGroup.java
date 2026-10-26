@@ -169,7 +169,7 @@ public class SimpleBoundCommandGroup implements BoundCommandGroup {
     public static final Set<BoundCommandGroup> READWRITECREATE_SET = 
         new HashSet<>(Arrays.asList(new BoundCommandGroup[] {READ, WRITE, CREATE}));
     
-	/** Set of {@value #READ}, {@link #WRITE}, {@link #CREATE} and {@link #DELETE}. */
+	/** Set of {@link #READ}, {@link #WRITE}, {@link #CREATE} and {@link #DELETE}. */
     public static final Set<BoundCommandGroup> READWRITECREATEDEL_SET = 
         new HashSet<>(Arrays.asList(new BoundCommandGroup[] {READ, WRITE, CREATE, DELETE}));
 

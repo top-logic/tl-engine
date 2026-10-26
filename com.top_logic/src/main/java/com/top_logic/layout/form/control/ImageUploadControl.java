@@ -688,7 +688,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	 */
 	private static class UploadPerformedCommand extends ImageUploadCommand {
 		/**
-		 * Singleton {@link DataItemControl.UploadPerformedCommand} instance.
+		 * Singleton {@link UploadPerformedCommand} instance.
 		 */
 		public static final UploadPerformedCommand INSTANCE = new UploadPerformedCommand();
 

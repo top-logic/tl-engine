@@ -9,7 +9,6 @@ import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.progress.AbstractProgressComponent;
 import com.top_logic.layout.progress.ProgressInfo;
-import com.top_logic.layout.scripting.action.ApplicationAction;
 import com.top_logic.layout.scripting.action.AwaitProgressAction;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -36,7 +35,7 @@ public class AwaitProgressActionOp extends ComponentActionOp<AwaitProgressAction
 	 * Creates a {@link AwaitProgressActionOp}.
 	 * 
 	 * @see AbstractApplicationActionOp#AbstractApplicationActionOp(InstantiationContext,
-	 *      ApplicationAction)
+	 *      com.top_logic.layout.scripting.action.ApplicationAction)
 	 */
     public AwaitProgressActionOp(InstantiationContext context, AwaitProgressAction config) {
         super(context, config);

@@ -41,6 +41,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.DownloadEvent;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
@@ -75,7 +76,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * does not react at all. The queue therefore numbers every event it writes, sends the number as
  * the event's {@code id}, and keeps what it wrote until the client has read it (at most
  * {@link #MAX_RETAINED_CHARS} characters, since the last {@link #setConnection(AsyncContext)
- * connection} or {@link #discardPendingEvents() rendering}). A client whose stream brings nothing
+ * connection} or {@link #beginPage() page}). A client whose stream brings nothing
  * changes to {@link #poll(AsyncContext, long, boolean) polling} and continues after the last number
  * it saw. Its first poll asks for the full state of the controls, because the state the connection
  * sent may not have arrived either; the events written since the connection that address no
@@ -743,6 +744,48 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * Starts a new page of the window: the browser loads the window's page, for the first time or
+	 * again.
+	 *
+	 * <p>
+	 * Called before the page is rendered and before anything is enqueued for it. The page the
+	 * browser displayed before is gone, or about to be: its event stream is closed, its waiting poll
+	 * is answered without events, and what was written for it or still waits for it is dropped (see
+	 * {@link #discardPendingEvents()}). From now on the queue holds events for the page being
+	 * rendered: they wait until its client connects a stream or polls, and reach it numbered.
+	 * </p>
+	 *
+	 * <p>
+	 * Without this, the events the rendering enqueues - the title of the page's route, say - are
+	 * written to the stream of the previous page, which the server still holds while the browser has
+	 * already given it up, and are lost for the new page; and the first poll of a page would read
+	 * what the previous page was sent, a navigation that made it leave included.
+	 * </p>
+	 */
+	public void beginPage() {
+		SSEConnection previous;
+		synchronized (this) {
+			_pendingEvents.clear();
+			forgetWritten();
+			previous = _connection;
+			_connection = null;
+			_polling = false;
+			_streamLostAt = System.currentTimeMillis();
+			// After forgetting what was written, the previous page's poll ends empty.
+			answerWaitingPoll(true);
+		}
+		if (previous != null) {
+			Logger.info("SSE connection closed for window '" + _windowName + "' (queue@"
+				+ System.identityHashCode(this) + "): its page is loaded anew.", SSEUpdateQueue.class);
+			try {
+				previous.getContext().complete();
+			} catch (Exception ex) {
+				// Already closed.
+			}
+		}
+	}
+
+	/**
 	 * Drops all events that are still waiting for a client.
 	 *
 	 * <p>
@@ -850,7 +893,7 @@ public class SSEUpdateQueue {
 	 * An event is removed from the queue only after it has been written successfully. If the write
 	 * fails (a dead or half-open connection), the event stays queued and is retried on the next
 	 * {@link #setConnection(jakarta.servlet.AsyncContext) (re)connection}. This matters for one-off
-	 * events such as the login/logout {@code window.location.reload()}: dropping such an event on a
+	 * events such as the {@link PageNavigationEvent} of a login or logout: dropping such an event on a
 	 * silently-broken connection would leave the action half-applied (e.g. a logout that never
 	 * reloads the page), since reconnects only replay control state via {@link #sendFullState}, not
 	 * one-off events.

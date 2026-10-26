@@ -277,6 +277,87 @@ public class TestListRowSource extends TestCase {
 		assertEquals(List.of("Bob"), source.matchingKeys());
 	}
 
+	/**
+	 * Tests that {@link RowSource#matchCount(FilterSpec)} counts the elements the given filter lets
+	 * pass, whatever the source is currently filtered, sorted and grouped by, and that counting
+	 * leaves the displayed rows as they are.
+	 */
+	public void testMatchCountOfAFilterIgnoresTheCurrentState() {
+		ListRowSource<Person> source = new ListRowSource<>(people(), columns());
+		source.withFilter(new FilterSpec(java.util.Map.of("age", new AtLeast(30))));
+		source.withOrder(SortSpec.ascending("name"));
+		source.withGrouping(new GroupSpec(List.of("age")));
+		List<Row<Person>> before = source.window(0, source.size());
+		assertEquals("Charlie (30) and Bob (40), each below a header of their own.", 4, source.size());
+
+		assertEquals("alice and alma contain 'al', although the current filter hides both.", 2,
+			source.matchCount(new FilterSpec(java.util.Map.of("name", new Contains("al")))));
+		assertEquals("Criteria of several columns combine: only alice and alma are 25, of whom "
+			+ "only alma contains 'lm'.", 1,
+			source.matchCount(new FilterSpec(java.util.Map.of("name", new Contains("lm"), "age", new AtLeast(25)))));
+		assertEquals("The empty filter lets every element pass.", 4, source.matchCount(FilterSpec.NONE));
+
+		assertEquals("Counting does not apply the filter.", 2, source.matchCount());
+		assertEquals(4, source.size());
+		assertEquals(before, source.window(0, source.size()));
+	}
+
+	/**
+	 * Tests that a {@link RowSource} that does not count answers
+	 * {@link RowSource#UNKNOWN_COUNT} for a given filter.
+	 */
+	public void testMatchCountOfAFilterDefaultsToUnknown() {
+		ListRowSource<Person> counting = new ListRowSource<>(people(), columns());
+		RowSource<Person> source = new RowSource<>() {
+			@Override
+			public int size() {
+				return counting.size();
+			}
+
+			@Override
+			public List<Row<Person>> window(int from, int to) {
+				return counting.window(from, to);
+			}
+
+			@Override
+			public java.util.Set<Object> containedKeys(Collection<?> keys) {
+				return counting.containedKeys(keys);
+			}
+
+			@Override
+			public RowSource<Person> withOrder(SortSpec sort) {
+				return this;
+			}
+
+			@Override
+			public RowSource<Person> withFilter(FilterSpec filter) {
+				return this;
+			}
+
+			@Override
+			public RowSource<Person> withGrouping(GroupSpec grouping) {
+				return this;
+			}
+
+			@Override
+			public void setExpanded(Object rowKey, boolean expanded) {
+				// Nothing to expand.
+			}
+
+			@Override
+			public void addListener(com.top_logic.table.RowSourceListener listener) {
+				// Never changes.
+			}
+
+			@Override
+			public void removeListener(com.top_logic.table.RowSourceListener listener) {
+				// Never changes.
+			}
+		};
+		assertEquals(RowSource.UNKNOWN_COUNT,
+			source.matchCount(new FilterSpec(java.util.Map.of("name", new Contains("al")))));
+	}
+
 	/** The names of the people with the given keys. */
 	private static List<String> names(List<Object> keys) {
 		return keys.stream().map(key -> ((Person) key).name()).toList();

@@ -137,12 +137,12 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     return null;
   }
 
-  // The panel spans the box of definite height it stands in also around content of its own size - a split pane, a
-  // tab panel - where it carries no fill class: such a box ends the fill chain, so nothing makes the panel fill there.
-  // Maximized, the design system places the panel over its container.
+  // The height comes from the container: a bounded region (a split pane, a tab content) stretches the panel to its
+  // own height, a column (a stack) leaves it the height of its content unless it fills. Maximized, the design system
+  // places the panel over its container.
   const panelStyle: React.CSSProperties | undefined = isMaximized
     ? undefined
-    : { width: width ?? '100%', ...(width ? { maxWidth: '100%' } : {}), height: '100%' };
+    : { width: width ?? '100%', ...(width ? { maxWidth: '100%' } : {}) };
 
   // Render the head only when it carries something: a title, a toolbar, or a button. A chrome-less panel (a fill
   // panel whose tab already labels it) then shows just its content.

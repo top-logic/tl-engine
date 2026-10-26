@@ -28,7 +28,6 @@ import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
-import com.top_logic.layout.react.control.nav.ReactAppBarControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.AppBarState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;

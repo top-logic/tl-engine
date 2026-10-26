@@ -5,6 +5,8 @@
  */
 package com.top_logic.contact.layout.person;
 
+import java.util.List;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
@@ -12,11 +14,19 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.contact.business.AbstractContact;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
  * {@link PersonManager} that initializes new accounts with contact information.
+ *
+ * <p>
+ * At startup, each account without contact information is assigned one.
+ * </p>
+ *
+ * @see #repairAccountsWithoutContact()
  */
 public class ContactPersonManager extends PersonManager {
 
@@ -43,6 +53,49 @@ public class ContactPersonManager extends PersonManager {
 	@Override
 	public Config getConfig() {
 		return (Config) super.getConfig();
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+		repairAccountsWithoutContact();
+	}
+
+	/**
+	 * Assigns contact information to each account that has none.
+	 *
+	 * <p>
+	 * An account has no contact information, if it was created before the contact module was added
+	 * to the application. Each such account is initialized with {@link #initUser(Person)} in a
+	 * transaction of its own: an account that cannot be committed (e.g. because it violates another
+	 * constraint) is logged and left as it is without affecting the other accounts.
+	 * </p>
+	 *
+	 * @return The number of accounts that were assigned contact information.
+	 */
+	public int repairAccountsWithoutContact() {
+		KnowledgeBase kb = kb();
+		List<Person> accounts = Person.all(kb).stream()
+			.filter(account -> account.tValid() && account.getUser() == null)
+			.toList();
+		if (accounts.isEmpty()) {
+			return 0;
+		}
+
+		int repaired = 0;
+		for (Person account : accounts) {
+			try (Transaction tx = kb.beginTransaction(I18NConstants.ASSIGNED_CONTACT_TO_ACCOUNT)) {
+				initUser(account);
+				tx.commit();
+				repaired++;
+			} catch (RuntimeException ex) {
+				Logger.error("Cannot assign contact data to account '" + account.getName() + "'.", ex,
+					ContactPersonManager.class);
+			}
+		}
+		Logger.info("Assigned contact data to " + repaired + " of " + accounts.size()
+			+ " accounts without contact data.", ContactPersonManager.class);
+		return repaired;
 	}
 
 	@Override

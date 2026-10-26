@@ -306,6 +306,15 @@
 						<de>Tabelle und Karte</de>
 					</label>
 				</nav-item>
+				<nav-item id="panel-stack-demo"
+					icon="css:bi bi-view-stacked"
+				>
+					<view-ref view="demo/panel-stack-demo.view.xml"/>
+					<label>
+						<en>Panels in a Tab</en>
+						<de>Panels im Reiter</de>
+					</label>
+				</nav-item>
 				<nav-item id="errors"
 					icon="css:bi bi-exclamation-triangle"
 				>

@@ -30,6 +30,16 @@
 		<tl.unused-imports.skip>false</tl.unused-imports.skip>
 	</properties>
 
+	<dependencies>
+		<!-- The scripted tests of the classic UI the test applications run. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-scripting-template</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<plugins>
 			<!-- Do not deploy these modules to Nexus. -->

@@ -15,8 +15,8 @@
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
     <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.top_logic.element.model.generate.WrapperGenerator"/>
-    <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="tl-security-selfservice"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="tl-security-selfservice-core"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out src/main/java&#13;&#10;-languages de,en&#13;&#10;-module tl.security.selfservice"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="tl-security-selfservice"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="tl-security-selfservice-core"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

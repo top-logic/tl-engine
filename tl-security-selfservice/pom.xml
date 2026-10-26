@@ -11,10 +11,14 @@
 	
 	<artifactId>tl-security-selfservice</artifactId>
 	<name>${project.artifactId}</name>
-	<description>Self-service for users</description>
+	<description>Self-service for users in the classic UI.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 		
 	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-security-selfservice-core</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-layout-formeditor</artifactId>

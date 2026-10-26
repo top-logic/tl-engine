@@ -1197,6 +1197,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   // -- Column context menu handlers --
   const handleColumnContextMenu = React.useCallback((colIdx: number, event: React.MouseEvent) => {
+    // An event of something portaled out of the heading (the popover of the view) reaches the heading through
+    // the React tree only: it is not the heading's.
+    if (!event.currentTarget.contains(event.target as Node)) {
+      return;
+    }
     event.preventDefault();
     setContextMenu({ x: event.clientX, y: event.clientY, colIdx });
   }, []);

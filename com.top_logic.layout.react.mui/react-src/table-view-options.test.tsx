@@ -3,7 +3,7 @@
 // gives the focus back to the gear.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { replacePart } from 'tl-react-bridge';
 import TLTableView from '../../com.top_logic.layout.react/react-src/controls/TLTableView';
@@ -274,5 +274,30 @@ describe('closing the view', () => {
     await userEvent.keyboard('{Enter}');
     await settle();
     expect(screen.getByRole('dialog', { name: VIEW })).toBeTruthy();
+  });
+});
+
+describe('the gear in a heading', () => {
+  it('opens no column menu on a right-click inside the view popover', async () => {
+    // A table ending in a pinned column carries the gear in that heading; the popover is portaled out of it.
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false },
+        { name: 'pin', label: 'Pin', width: 60, sortable: false, filterable: false, pinnedEnd: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+      viewOptions: true,
+    });
+    await settle();
+    await openView();
+    fireEvent.contextMenu(screen.getByRole('radio', { name: DENSITY_NORMAL }));
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    // The heading itself still opens its menu.
+    fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Name/ }));
+    await settle();
+    expect(screen.getByRole('menu')).toBeTruthy();
   });
 });

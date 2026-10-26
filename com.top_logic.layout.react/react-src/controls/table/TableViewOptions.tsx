@@ -1,5 +1,6 @@
 import { React, useI18N, usePart, pressClosedSurface, ICON_COLUMNS } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
+import { radioArrowTarget } from '../radioGroupKey';
 
 const { useState, useEffect, useRef, useCallback, useId } = React;
 
@@ -84,17 +85,10 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
   const selectedIndex = Math.max(0, DENSITIES.findIndex((entry) => entry.value === shown.density));
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    let step = 0;
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-      step = 1;
-    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-      step = -1;
-    } else {
+    const next = radioArrowTarget(event, selectedIndex, DENSITIES.length);
+    if (next === null) {
       return;
     }
-    event.preventDefault();
-    event.stopPropagation();
-    const next = (selectedIndex + step + DENSITIES.length) % DENSITIES.length;
     segmentRefs.current[next]?.focus();
     change({ density: DENSITIES[next].value });
   };

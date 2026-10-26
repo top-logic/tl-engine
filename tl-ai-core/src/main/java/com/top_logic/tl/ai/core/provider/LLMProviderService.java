@@ -773,6 +773,36 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	}
 
 	/**
+	 * Whether a run on the given model can be served now: whether one of the providers
+	 * {@link #getProvidersOf(String) exposing} it is {@link LLMProviderConfig#isAvailable()
+	 * available}.
+	 *
+	 * <p>
+	 * Asked anew on each call, so a provider whose secret is provided later serves the model from
+	 * then on without a restart. For what is offered to a user to choose from; what is checked
+	 * against the configuration - a model named in an agent override or in an access policy - is
+	 * checked against the {@link #getConfiguredModelNames() configured} models instead.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model to look up.
+	 * @return Whether a provider exposing the model has its credentials; <code>false</code> for a
+	 *         model no provider exposes.
+	 */
+	public boolean isServable(String modelName) {
+		if (_providerConfigs == null) {
+			return false;
+		}
+		for (String providerName : getProvidersOf(modelName)) {
+			LLMProviderConfig providerConfig = _providerConfigs.get(providerName);
+			if (providerConfig != null && providerConfig.isAvailable()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Builds an {@link LLMProvider} for an unqualified model reference.
 	 *
 	 * @see #buildProvider(String, String)

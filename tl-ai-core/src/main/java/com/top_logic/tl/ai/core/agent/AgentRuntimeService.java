@@ -385,9 +385,10 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		 * {@link #getAgentOverrides() agent overrides}.
 		 *
 		 * <p>
-		 * Left empty, an agent without a model of its own cannot run, and says so when it is
-		 * started. A model named here must be exposed by a provider of the LLM providers - otherwise
-		 * this service does not start.
+		 * Left empty, an agent without a model of its own runs on the first model of the first
+		 * available provider of the LLM providers, and cannot run while none is available. A model
+		 * named here must be exposed by a provider of the LLM providers - otherwise this service does
+		 * not start.
 		 * </p>
 		 *
 		 * @see #DEFAULT_MODEL

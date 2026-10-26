@@ -68,8 +68,8 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * Error of a run that needs an AI model while no configured provider has its credentials.
 	 *
-	 * @en No AI provider is configured. Provide the API key of a provider as one of the secrets {0}.
-	 * @de Es ist kein KI-Anbieter eingerichtet. Hinterlegen Sie den API-Schlüssel eines Anbieters als
+	 * @en No AI provider is available. Provide the API key of a provider as one of the secrets {0}.
+	 * @de Es ist kein KI-Anbieter verfügbar. Hinterlegen Sie den API-Schlüssel eines Anbieters als
 	 *     eines der Secrets {0}.
 	 */
 	public static ResKey1 ERROR_NO_PROVIDER_AVAILABLE__SECRETS;

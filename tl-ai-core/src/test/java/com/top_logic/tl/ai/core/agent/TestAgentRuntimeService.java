@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.I18NConstants;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.LLMProviderServiceFixture;
+import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
 import com.top_logic.util.error.TopLogicException;
 
@@ -143,6 +144,23 @@ public class TestAgentRuntimeService extends TestCase {
 		assertEquals("Without a default model, a run uses the first model of the first available provider.",
 			"app-model", assignment.model());
 		assertEquals("anthropic", assignment.provider());
+	}
+
+	/**
+	 * An empty default model - what the shipped alias of an unset {@code tl_ai_default_model}
+	 * gives - is no default model: the service starts, and a run uses the first available provider.
+	 */
+	public void testAnEmptyDefaultModelIsUnset() throws Exception {
+		start(ServiceConfigFixture.file(AgentRuntimeService.class.getName(),
+			"<instance class=\"com.top_logic.tl.ai.core.agent.AgentRuntimeService\" default-model=\"\""
+				+ " default-provider=\"\"/>"));
+
+		assertNull(_runtime.getDefaultModel());
+		assertNull(_runtime.getDefaultProvider());
+		ModelTarget target = _runtime.defaultTarget();
+		assertEquals("app-model", target.model());
+		assertEquals("anthropic", target.provider());
+		assertEquals("app-model", _runtime.resolveModel("App_Agent"));
 	}
 
 	/**

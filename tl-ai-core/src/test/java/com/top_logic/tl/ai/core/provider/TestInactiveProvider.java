@@ -68,6 +68,9 @@ public class TestInactiveProvider extends TestCase {
 
 	private static final String THIRD = "third-model";
 
+	/** A model two providers expose. */
+	private static final String SHARED = "shared-model";
+
 	/** Prefix of the variables holding the keys; the provider name is appended. */
 	private static final String KEY_PREFIX = "test_inactive_provider_key_";
 
@@ -128,6 +131,21 @@ public class TestInactiveProvider extends TestCase {
 
 		assertEquals(StopReason.COMPLETE, run.result().stopReason());
 		assertEquals(List.of(PRIMARY), script(PRIMARY).calledModels());
+	}
+
+	/**
+	 * A model can be served while one of the providers exposing it has its key - asked anew each
+	 * time, so a key provided later counts at once.
+	 */
+	public void testAModelIsServableWhileOneOfItsProvidersHasItsKey() {
+		start(noFailover(), keyed(PRIMARY, SHARED), keyed(SECOND, SHARED), keyed(THIRD));
+
+		assertFalse("No provider of the model has its key.", _service.isServable(SHARED));
+		assertFalse("No provider exposes this model.", _service.isServable("unknown-model"));
+
+		provideKey(SECOND);
+		assertTrue("One of the two providers has its key.", _service.isServable(SHARED));
+		assertFalse("The key of another provider serves nothing here.", _service.isServable(THIRD));
 	}
 
 	/** A caller building a provider for immediate use is refused while the key is missing. */
@@ -356,14 +374,19 @@ public class TestInactiveProvider extends TestCase {
 	 * variable {@link #key(String)} of its name. Named after the model it serves.
 	 */
 	private static LLMProviderConfig.Config keyed(String model) {
+		return keyed(model, model);
+	}
+
+	/** A provider of the given name exposing the given model, keyed by its own variable. */
+	private static LLMProviderConfig.Config keyed(String providerName, String model) {
 		ScriptedProviderConfig.Config result =
 			TypedConfiguration.newConfigItem(ScriptedProviderConfig.Config.class);
 		set(result, PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME, ScriptedProviderConfig.class);
-		result.setName(model);
+		result.setName(providerName);
 		set(result, LLMProviderConfig.Config.MODELS, List.of(model));
 		set(result, LLMProviderConfig.Config.CATALOG_PROVIDER_ID, "scripted");
-		result.setCredentials(HeaderCredentials.config("x-api-key", null, envSecret(key(model))));
-		script(model);
+		result.setCredentials(HeaderCredentials.config("x-api-key", null, envSecret(key(providerName))));
+		script(providerName);
 		return result;
 	}
 

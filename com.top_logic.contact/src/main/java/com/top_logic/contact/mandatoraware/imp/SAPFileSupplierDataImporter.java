@@ -507,7 +507,10 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
      */
     protected void updateCompanyContact(Mandator aMandator, CompanyContact aContact, DataObject aDo, Object aFKey) throws Exception {
         
-		TLClass type = aContact.tType();
+		// The cast is redundant for javac, which takes the TLClass result of AttributedObject.tType().
+		// Eclipse resolves tType() to TLObject.tType() returning TLStructuredType, inherited through
+		// the superclass AbstractTLObject, and reports a type mismatch without it.
+		TLClass type = (TLClass) aContact.tType();
         
         boolean isUpdate = false; // only for count and logger out.
         String [] theAttrs = aDo.getAttributeNames();

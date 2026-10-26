@@ -5,11 +5,23 @@
  */
 package test.com.top_logic.security.auth.pac4j.config;
 
+import java.io.File;
+import java.lang.reflect.Proxy;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import junit.framework.Test;
 
+import org.pac4j.core.context.CallContext;
+import org.pac4j.core.context.WebContext;
+import org.pac4j.core.exception.http.FoundAction;
+import org.pac4j.jee.context.JEEContext;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.credentials.OidcCredentials;
 import org.pac4j.oidc.credentials.authenticator.OidcAuthenticator;
@@ -21,17 +33,23 @@ import com.nimbusds.oauth2.sdk.token.RefreshToken;
 
 import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
+import com.top_logic.base.accesscontrol.ApplicationPages;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
+import com.top_logic.base.accesscontrol.loginmethod.LoginMethods;
 import com.top_logic.basic.ConfigurationEncryption;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.credential.FileSecretSource;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
 import com.top_logic.security.auth.pac4j.config.DefaultOidcClientConfigurator;
+import com.top_logic.security.auth.pac4j.login.Pac4jLoginMethod;
 
 /**
  * Tests the client secret of a {@link DefaultOidcClientConfigurator} given by a secret source: the
@@ -47,6 +65,9 @@ public class TestOidcClientSecret extends AbstractTypedConfigurationTestCase {
 	private static final String VARIABLE = "test_oidc_client_secret";
 
 	private static final String SECRET = "the-client-secret";
+
+	/** The context path of the application in the requests of this test. */
+	private static final String CONTEXT_PATH = "/app";
 
 	private static final String CLIENT_CLASS = " class='" + DefaultOidcClientConfigurator.class.getName() + "'";
 
@@ -178,17 +199,93 @@ public class TestOidcClientSecret extends AbstractTypedConfigurationTestCase {
 		assertEquals(rotated, tokenRequestSecret(client));
 	}
 
-	/** Starting a login without the secret fails before the browser is sent to the provider. */
+	/**
+	 * Starting a login without the secret sends the browser back to the page shown after a failed
+	 * single-sign-on instead of to the provider.
+	 */
 	public void testMissingSecretAtLoginStart() throws Exception {
 		OidcClient client = createClient();
 		client.init();
 
 		try {
-			client.getRedirectionActionBuilder().getRedirectionAction(null);
+			client.getRedirectionActionBuilder().getRedirectionAction(new CallContext(webContext(), null));
 			fail("Login started without secret.");
-		} catch (I18NRuntimeException ex) {
-			// Expected: the secret is missing.
+		} catch (FoundAction ex) {
+			assertEquals(CONTEXT_PATH + ApplicationPages.getInstance().getLoginRetrySSOPage(), ex.getLocation());
 		}
+	}
+
+	/** The login option of a client is offered only while its secret is available. */
+	public void testLoginOptionAvailability() throws Exception {
+		Config config = read(xml("", environmentSecret()));
+		ClientConfigurator configurator = getInstance(config.getClient());
+		List<LoginMethod> options = List.of(new Pac4jLoginMethod("test-oidc", ResKey.text("test-oidc"), null, configurator));
+
+		assertEquals(List.of(), LoginMethods.available(options));
+
+		System.setProperty(VARIABLE, SECRET);
+		assertEquals(options, LoginMethods.available(options));
+
+		System.clearProperty(VARIABLE);
+		assertEquals(List.of(), LoginMethods.available(options));
+	}
+
+	/**
+	 * A client whose secret file is missing is not offered, and is offered as soon as the file is
+	 * created, as when a secret is put into the secret directory of a running application.
+	 */
+	public void testLoginOptionAvailableAfterFileCreated() throws Exception {
+		Path directory = Files.createTempDirectory("oidc-secrets");
+		Path file = directory.resolve("client_secret");
+		try {
+			Config config = read(xml("",
+				"<" + DefaultOidcClientConfigurator.Config.SECRET + " class='" + FileSecretSource.class.getName()
+					+ "' path='" + file + "'/>"));
+			ClientConfigurator configurator = getInstance(config.getClient());
+			List<LoginMethod> options =
+				List.of(new Pac4jLoginMethod("test-oidc", ResKey.text("test-oidc"), null, configurator));
+
+			assertEquals(List.of(), LoginMethods.available(options));
+
+			Files.writeString(file, SECRET);
+			assertEquals(options, LoginMethods.available(options));
+		} finally {
+			Files.deleteIfExists(file);
+			Files.delete(directory);
+		}
+	}
+
+	/** A client whose secret is present but cannot be read is not offered. */
+	public void testBrokenSecretNotAvailable() throws Exception {
+		File empty = File.createTempFile("oidc-secret", "");
+		try {
+			Config config = read(xml("",
+				"<" + DefaultOidcClientConfigurator.Config.SECRET + " class='" + FileSecretSource.class.getName()
+					+ "' path='" + empty.getAbsolutePath() + "'/>"));
+			ClientConfigurator configurator = getInstance(config.getClient());
+
+			assertFalse(configurator.isAvailable());
+		} finally {
+			empty.delete();
+		}
+	}
+
+	/**
+	 * A {@link WebContext} of a GET request to an application deployed under
+	 * {@link #CONTEXT_PATH}.
+	 */
+	private static WebContext webContext() {
+		HttpServletRequest request = (HttpServletRequest) Proxy.newProxyInstance(
+			TestOidcClientSecret.class.getClassLoader(), new Class<?>[] { HttpServletRequest.class },
+			(proxy, method, args) -> switch (method.getName()) {
+				case "getContextPath" -> CONTEXT_PATH;
+				case "getMethod" -> "GET";
+				default -> null;
+			});
+		HttpServletResponse response = (HttpServletResponse) Proxy.newProxyInstance(
+			TestOidcClientSecret.class.getClassLoader(), new Class<?>[] { HttpServletResponse.class },
+			(proxy, method, args) -> null);
+		return new JEEContext(request, response);
 	}
 
 	private OidcClient createClient() throws Exception {

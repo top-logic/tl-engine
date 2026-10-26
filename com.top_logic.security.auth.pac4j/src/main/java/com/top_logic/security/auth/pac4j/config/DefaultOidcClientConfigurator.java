@@ -189,7 +189,8 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * <p>
 		 * The secret is not read at startup, so that the application starts without it. It is read
 		 * when a login with this client starts and before each token request, so that a rotated
-		 * secret is used without restart. A login while the secret is missing fails.
+		 * secret is used without restart. While the secret is missing, the login page does not offer
+		 * this client.
 		 * </p>
 		 * 
 		 * @see OidcClientSecret
@@ -296,6 +297,16 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	public DefaultOidcClientConfigurator(InstantiationContext context, C config) {
 		super(context, config);
 		_secret = context.getInstance(config.getSecret());
+	}
+
+	/**
+	 * Whether the client secret is available now.
+	 *
+	 * @see OidcClientSecret#isAvailable(SecretSource, String)
+	 */
+	@Override
+	public boolean isAvailable() {
+		return OidcClientSecret.isAvailable(_secret, getConfig().getName());
 	}
 
 	@Override

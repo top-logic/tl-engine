@@ -159,7 +159,7 @@ The configurations shipped with the engine reference their secrets by name and c
 | `pac4j-azure`, `pac4j-generic`, `pac4j-google`, `pac4j-keycloak` (`.config.xml`) | `secret` of the OIDC client | `tl_pac_secret` | `%PAC_SECRET%` |
 | `azureStorageConf.config.xml` | `connect-string` of `CloudBasedRepository` | `blob_connect` | `%BLOB_CONNECT%`, `%BLOB_USER%`, `%BLOB_PASS%` |
 
-A missing `tl_pac_secret` does not prevent the start of the application: the OIDC client reads its secret when a login with it starts, and only that login fails.
+A missing `tl_pac_secret` does not prevent the start of the application: the OIDC client reads its secret when a login with it starts, and the login page does not offer the client while its secret is missing.
 
 ### The variables hold the plain value
 

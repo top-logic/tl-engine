@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethods;
@@ -39,6 +40,12 @@ import com.top_logic.util.Resources;
  * asked for. Renders nothing when no login method is configured, so it can be placed in any login
  * view unconditionally.
  * </p>
+ *
+ * <p>
+ * The buttons are determined each time the element is rendered, also when a reloaded page renders
+ * the control tree its window keeps, so that only the methods {@link LoginMethod#isAvailable()
+ * available} at that moment are offered.
+ * </p>
  */
 public class LoginMethodsElement implements UIElement {
 
@@ -55,35 +62,103 @@ public class LoginMethodsElement implements UIElement {
 
 	private final String _cssClass;
 
+	private final Supplier<? extends List<? extends LoginMethod>> _methods;
+
 	/**
 	 * Creates a new {@link LoginMethodsElement} from configuration.
 	 */
 	@CalledByReflection
 	public LoginMethodsElement(InstantiationContext context, Config config) {
-		_cssClass = config.getCssClass();
+		this(config.getCssClass(), LoginMethods::all);
+	}
+
+	/**
+	 * Creates a {@link LoginMethodsElement}.
+	 *
+	 * @param cssClass
+	 *        The CSS class of the stack of buttons, or <code>null</code>.
+	 * @param methods
+	 *        The login methods to offer, asked each time the buttons are rendered.
+	 */
+	public LoginMethodsElement(String cssClass, Supplier<? extends List<? extends LoginMethod>> methods) {
+		_cssClass = cssClass;
+		_methods = methods;
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		String returnTo = returnPath(context);
+		LoginMethodsControl result = new LoginMethodsControl(context, _methods);
+		result.setCssClass(_cssClass);
+		return result;
+	}
 
-		List<LoginMethod> methods = LoginMethods.all();
-		List<ReactControl> buttons = new ArrayList<>(methods.size());
-		for (LoginMethod method : methods) {
+	/**
+	 * Stack of the buttons of the login methods available when it is rendered.
+	 *
+	 * <p>
+	 * A window keeps its control tree across page reloads, so the buttons are not fixed when the
+	 * control is created: a login method that becomes available or unavailable later - e.g. when the
+	 * secret of an identity provider is provided or removed - shows up or disappears with the next
+	 * rendering, without restarting the application.
+	 * </p>
+	 */
+	private static class LoginMethodsControl extends ReactStackControl {
+
+		private final ViewContext _context;
+
+		private final Supplier<? extends List<? extends LoginMethod>> _methods;
+
+		/**
+		 * The IDs of the methods and the return path the current buttons were built for,
+		 * <code>null</code> before the first rendering.
+		 */
+		private List<String> _builtFor;
+
+		LoginMethodsControl(ViewContext context, Supplier<? extends List<? extends LoginMethod>> methods) {
+			super(context, StackDirection.COLUMN, StackGap.COMPACT, StackAlign.STRETCH, false, List.of());
+			_context = context;
+			_methods = methods;
+		}
+
+		@Override
+		protected void onBeforeWrite() {
+			super.onBeforeWrite();
+
+			String returnTo = returnPath(_context);
+			List<? extends LoginMethod> methods = _methods.get();
+			List<String> builtFor = new ArrayList<>(methods.size() + 1);
+			builtFor.add(returnTo);
+			for (LoginMethod method : methods) {
+				builtFor.add(method.getId());
+			}
+			if (builtFor.equals(_builtFor)) {
+				return;
+			}
+
+			List<ReactControl> previous = childControls();
+			List<ReactControl> buttons = new ArrayList<>(methods.size());
+			for (LoginMethod method : methods) {
+				buttons.add(createButton(method, returnTo));
+			}
+			setChildren(buttons);
+			for (ReactControl button : previous) {
+				button.cleanupTree();
+			}
+			_builtFor = builtFor;
+		}
+
+		private ReactButtonControl createButton(LoginMethod method, String returnTo) {
 			String label = Resources.getInstance().getString(method.getLabel());
-			ReactButtonControl button = new ReactButtonControl(context, label, ctx -> HandlerResult.DEFAULT_RESULT);
+			ReactButtonControl button = new ReactButtonControl(_context, label, ctx -> HandlerResult.DEFAULT_RESULT);
 			// Navigate the browser directly to the external login (no server/SSE round-trip).
 			button.setNavigateUrl(method.getInitiationUrl(returnTo));
 			ThemeImage icon = method.getIcon();
 			if (icon != null) {
 				button.setImage(icon);
 			}
-			buttons.add(button);
+			return button;
 		}
-		ReactStackControl result = new ReactStackControl(context, StackDirection.COLUMN, StackGap.COMPACT,
-			StackAlign.STRETCH, false, buttons);
-		result.setCssClass(_cssClass);
-		return result;
+
 	}
 
 	/**

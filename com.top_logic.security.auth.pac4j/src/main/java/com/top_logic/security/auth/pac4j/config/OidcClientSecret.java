@@ -8,8 +8,13 @@ package com.top_logic.security.auth.pac4j.config;
 import java.util.Optional;
 
 import org.pac4j.core.context.CallContext;
+import org.pac4j.core.context.WebContext;
+import org.pac4j.core.credentials.Credentials;
+import org.pac4j.core.exception.http.HttpAction;
 import org.pac4j.core.exception.http.RedirectionAction;
+import org.pac4j.core.util.HttpActionHelper;
 import org.pac4j.core.util.InitializableObject;
+import org.pac4j.jee.context.JEEContext;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.oidc.credentials.authenticator.OidcAuthenticator;
@@ -21,6 +26,8 @@ import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.TokenRequest;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 
+import com.top_logic.base.accesscontrol.ApplicationPages;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.exception.I18NRuntimeException;
 
@@ -42,24 +49,31 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * rotated secret - the resolver is therefore loaded again, so that both use the current secret.
  * </p>
  *
+ * <p>
+ * A login with a client whose secret is not available - the login page does not offer it, see
+ * {@link #isAvailable(SecretSource, String)}, but its URL may be called directly - sends the browser
+ * back to the {@link ApplicationPages.Config#getLoginRetrySSOPage() page} an application shows after
+ * a failed single-sign-on.
+ * </p>
+ *
  * @see #install(OidcClient, SecretSource)
  */
 public class OidcClientSecret {
 
-	private final OidcConfiguration _configuration;
+	private final OidcClient _client;
 
 	private final SecretSource _secret;
 
 	/**
 	 * Creates an {@link OidcClientSecret}.
 	 *
-	 * @param configuration
-	 *        The pac4j configuration of the client to hand the secret to.
+	 * @param client
+	 *        The client to hand the secret to.
 	 * @param secret
 	 *        The source of the client secret.
 	 */
-	public OidcClientSecret(OidcConfiguration configuration, SecretSource secret) {
-		_configuration = configuration;
+	public OidcClientSecret(OidcClient client, SecretSource secret) {
+		_client = client;
 		_secret = secret;
 	}
 
@@ -73,9 +87,33 @@ public class OidcClientSecret {
 	 * </p>
 	 */
 	public static void install(OidcClient client, SecretSource secret) {
-		OidcClientSecret clientSecret = new OidcClientSecret(client.getConfiguration(), secret);
+		OidcClientSecret clientSecret = new OidcClientSecret(client, secret);
 		client.setRedirectionActionBuilder(new RedirectionActionBuilder(client, clientSecret));
 		client.setAuthenticator(new Authenticator(client, clientSecret));
+	}
+
+	/**
+	 * Whether the given secret of a client is available now, so that a login with the client can
+	 * succeed.
+	 *
+	 * <p>
+	 * A secret that is present but cannot be read counts as not available and is reported as
+	 * warning.
+	 * </p>
+	 *
+	 * @param secret
+	 *        The source of the client secret.
+	 * @param clientName
+	 *        The name of the client, for the warning.
+	 */
+	public static boolean isAvailable(SecretSource secret, String clientName) {
+		try {
+			return secret.lookup() != null;
+		} catch (I18NRuntimeException ex) {
+			Logger.warn("The secret of the login client '" + clientName + "' cannot be read: " + ex.getMessage(),
+				ex, OidcClientSecret.class);
+			return false;
+		}
 	}
 
 	/**
@@ -86,23 +124,47 @@ public class OidcClientSecret {
 	 */
 	public void update() {
 		String current = _secret.getSecret();
-		synchronized (_configuration) {
-			String used = _configuration.getSecret();
+		OidcConfiguration configuration = _client.getConfiguration();
+		synchronized (configuration) {
+			String used = configuration.getSecret();
 			if (current.equals(used)) {
 				return;
 			}
-			_configuration.setSecret(current);
+			configuration.setSecret(current);
 			try {
-				IOidcOpMetadataResolver resolver = _configuration.getOpMetadataResolver();
+				IOidcOpMetadataResolver resolver = configuration.getOpMetadataResolver();
 				if (resolver instanceof InitializableObject initializable) {
 					initializable.reinit();
 				}
 			} catch (RuntimeException ex) {
 				// Try again with the next use.
-				_configuration.setSecret(used);
+				configuration.setSecret(used);
 				throw ex;
 			}
 		}
+	}
+
+	/**
+	 * Reads the current secret and hands it to pac4j for a login in the given context.
+	 *
+	 * @throws HttpAction
+	 *         Sending the browser back to the page shown after a failed single-sign-on, if the
+	 *         secret is not available.
+	 */
+	void updateForLogin(WebContext context) {
+		try {
+			update();
+		} catch (I18NRuntimeException ex) {
+			Logger.warn("Login with client '" + _client.getName() + "' refused: " + ex.getMessage(),
+				OidcClientSecret.class);
+			throw HttpActionHelper.buildRedirectUrlAction(context, loginRetryUrl(context));
+		}
+	}
+
+	private static String loginRetryUrl(WebContext context) {
+		String contextPath =
+			context instanceof JEEContext jeeContext ? jeeContext.getNativeRequest().getContextPath() : "";
+		return contextPath + ApplicationPages.getInstance().getLoginRetrySSOPage();
 	}
 
 	/**
@@ -120,7 +182,7 @@ public class OidcClientSecret {
 
 		@Override
 		public Optional<RedirectionAction> getRedirectionAction(CallContext ctx) {
-			_clientSecret.update();
+			_clientSecret.updateForLogin(ctx.webContext());
 			return super.getRedirectionAction(ctx);
 		}
 
@@ -136,6 +198,12 @@ public class OidcClientSecret {
 		Authenticator(OidcClient client, OidcClientSecret clientSecret) {
 			super(client.getConfiguration(), client);
 			_clientSecret = clientSecret;
+		}
+
+		@Override
+		public Optional<Credentials> validate(CallContext ctx, Credentials cred) {
+			_clientSecret.updateForLogin(ctx.webContext());
+			return super.validate(ctx, cred);
 		}
 
 		@Override

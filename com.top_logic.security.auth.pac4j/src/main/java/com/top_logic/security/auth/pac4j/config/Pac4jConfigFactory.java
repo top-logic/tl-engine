@@ -6,7 +6,6 @@
 package com.top_logic.security.auth.pac4j.config;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -99,7 +98,7 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 
 	}
 
-	private final Collection<? extends ClientConfigurator> _clientConfigurators;
+	private final Map<String, ? extends ClientConfigurator> _clientConfigurators;
 
 	private org.pac4j.core.config.Config _pac4jConfig;
 
@@ -115,7 +114,16 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	public Pac4jConfigFactory(InstantiationContext context, C config) {
 		super(context, config);
 
-		_clientConfigurators = TypedConfiguration.getInstanceMap(context, config.getClients()).values();
+		_clientConfigurators = TypedConfiguration.getInstanceMap(context, config.getClients());
+	}
+
+	/**
+	 * The {@link ClientConfigurator} of the client configured under the given
+	 * {@link ClientConfigurator.Config#getName() name}, or <code>null</code> if no such client is
+	 * configured.
+	 */
+	public ClientConfigurator getClientConfigurator(String configuredName) {
+		return _clientConfigurators.get(configuredName);
 	}
 
 	/**
@@ -178,7 +186,7 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	 */
 	protected org.pac4j.core.config.Config buildPac4jConfig(ServletContext context) {
 		List<Client> clientList = new ArrayList<>();
-		for (ClientConfigurator configurator : _clientConfigurators) {
+		for (ClientConfigurator configurator : _clientConfigurators.values()) {
 			Client client = configurator.createClient(context);
 			if (client != null) {
 				clientList.add(client);
@@ -186,7 +194,7 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 		}
 		// After the login clients, so that a request that names no client keeps being answered by a
 		// login client.
-		for (ClientConfigurator configurator : _clientConfigurators) {
+		for (ClientConfigurator configurator : _clientConfigurators.values()) {
 			Client client = configurator.createReauthenticationClient(context);
 			if (client != null) {
 				clientList.add(client);

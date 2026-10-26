@@ -34,6 +34,7 @@ import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
@@ -55,11 +56,13 @@ import com.top_logic.tl.ai.tool.api.AICategory;
  * The service listens for committed changes, coalesces them (many task updates within one turn cost
  * one refresh, see {@link Config#getRefreshDelayMillis()}) and then, for each registered window of
  * the affected account, synthesizes the events in that window's sub-session and <em>within the
- * window's {@link com.top_logic.layout.react.window.Interaction interaction}</em>, as the engine's
- * own request handling does. The interaction is what makes this safe beside a browser command: a
- * React control's state map is a plain {@code HashMap}, so pushing state from two threads at once
- * would corrupt it. (The engine's SSE heartbeat synthesizes without it; this deliberately does not
- * copy that.) It is entered with a time limit, see {@link WindowInteraction}.
+ * window's {@link Interaction interaction}</em>, as the engine's own request handling and its SSE
+ * heartbeat do. The interaction is what makes this safe beside a browser command: a React
+ * control's state map is a plain {@code HashMap}, so pushing state from two threads at once would
+ * corrupt it. The interaction is entered on the calling thread with a time limit, which the
+ * {@link ReactWindowRegistry} offers: an agent thread must not wait for a browser command that may
+ * itself be waiting for the agent - a script that runs an agent synchronously from a button, whose
+ * tools run on worker threads. A window that stays busy for longer is left alone.
  * </p>
  *
  * <p>
@@ -79,6 +82,8 @@ import com.top_logic.tl.ai.tool.api.AICategory;
  * target:</b> the engine should push model events to every live window by itself when a background
  * thread commits, and offer a way to enumerate a session's windows; then delete this class.
  * </p>
+ *
+ * @see ReactWindowRegistry#tryBeginInteraction(long)
  */
 @ServiceDependencies({
 	AgentExecutionStore.Module.class,
@@ -206,9 +211,6 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	 */
 	private final PendingRefreshes _pending = new PendingRefreshes();
 
-	/** Enters a window's interaction for the refresh and for {@link #inWindow}, bounded in time. */
-	private WindowInteraction _interaction;
-
 	/** The scheduled refresh, or <code>null</code> when none is due. */
 	private volatile ScheduledFuture<?> _scheduled;
 
@@ -243,7 +245,6 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	@Override
 	protected void startUp() {
 		super.startUp();
-		_interaction = new WindowInteraction();
 		_instance = this;
 		AgentExecutionStore.getInstance().addChangeListener(this);
 		RunWindow.install(this::inWindowNow);
@@ -263,7 +264,6 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		_windows.clear();
 		_pending.clear();
 		_instance = null;
-		_interaction.close();
 		super.shutDown();
 	}
 
@@ -333,9 +333,9 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	 * {@link ReactWindowReplay#inWindow(ReactWindowRegistry, String, Runnable) way into a window}.
 	 *
 	 * <p>
-	 * Unlike {@link #inWindow(TLSubSessionContext, Runnable)}, which hands the action to a thread of
-	 * its own, this keeps the run's security context: a tool reading the page sees what the user may
-	 * see, not what a scheduler thread may. It waits for a browser command in progress to finish.
+	 * Unlike {@link #inWindow(TLSubSessionContext, Runnable)}, which gives up on a window that stays
+	 * busy for longer than {@link Config#getWriteTimeoutMillis()}, this waits for a browser command
+	 * in progress to finish.
 	 * </p>
 	 */
 	private boolean inWindowNow(TLSubSessionContext subSession, Consumer<Object> action) {
@@ -382,9 +382,10 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 	 *        The window's sub-session; on the agent thread that is the bound one. May be
 	 *        <code>null</code>, which is {@link WindowAccess#NO_WINDOW}.
 	 * @param action
-	 *        What to do in the window. Runs on a thread that holds the window's interaction, in the
-	 *        window's sub-session, while the calling thread waits for it; an exception it throws is
-	 *        thrown here.
+	 *        What to do in the window. Runs on the calling thread, within the window's interaction
+	 *        and in the window's sub-session; an exception it throws is thrown here. A caller that
+	 *        already holds the interaction - an agent run synchronously from a button, on the
+	 *        request thread - acts within it at once.
 	 * @return What became of it; never <code>null</code>.
 	 */
 	public static WindowAccess inWindow(TLSubSessionContext subSession, Runnable action) {
@@ -400,7 +401,7 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		if (registry == null) {
 			return WindowAccess.NO_WINDOW;
 		}
-		boolean ran = service._interaction.run(registry, subSession, service.getConfig().getWriteTimeoutMillis(),
+		boolean ran = runInWindow(registry, subSession, service.getConfig().getWriteTimeoutMillis(),
 			() -> {
 				registry.synthesizeModelEvents(window.windowName());
 				action.run();
@@ -551,7 +552,7 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 		try {
 			// A window that stays busy is skipped: the browser command holding it synthesizes the
 			// same events itself when it finishes, so this refresh has nothing left to do.
-			_interaction.run(registry, subSession, getConfig().getLockTimeoutMillis(), () -> {
+			runInWindow(registry, subSession, getConfig().getLockTimeoutMillis(), () -> {
 				if (isDelivering(registry, window.windowName())) {
 					registry.synthesizeModelEvents(window.windowName());
 				}
@@ -560,6 +561,41 @@ public class AgentViewRefreshService extends ConfiguredManagedClass<AgentViewRef
 			Logger.warn("Could not refresh chat window '" + window.windowName() + "': "
 				+ ex.getMessage(), ex, AgentViewRefreshService.class);
 		}
+	}
+
+	/**
+	 * Runs {@code work} on the calling thread in the given window's sub-session and interaction, if
+	 * that interaction can be begun within {@code timeoutMillis}.
+	 *
+	 * <p>
+	 * A thread that already holds the interaction gets a nested one at once, see
+	 * {@link ReactWindowRegistry#tryBeginInteraction(long)}.
+	 * </p>
+	 *
+	 * @param registry
+	 *        The registry of the session the window belongs to.
+	 * @param subSession
+	 *        The window's sub-session, in which {@code work} runs.
+	 * @param timeoutMillis
+	 *        How long to wait for a browser command that holds the interaction.
+	 * @param work
+	 *        What to do in the window. An exception it throws is thrown here.
+	 * @return Whether {@code work} ran. <code>false</code> when another thread kept the interaction
+	 *         for longer than {@code timeoutMillis}, or the calling thread was interrupted while it
+	 *         waited; {@code work} then has not run.
+	 */
+	private static boolean runInWindow(ReactWindowRegistry registry, TLSubSessionContext subSession,
+			long timeoutMillis, Runnable work) {
+		return ThreadContextManager.inContext(subSession,
+			(ComputationEx2<Boolean, RuntimeException, RuntimeException>) () -> {
+				try (Interaction interaction = registry.tryBeginInteraction(timeoutMillis)) {
+					if (interaction == null) {
+						return false;
+					}
+					work.run();
+					return true;
+				}
+			});
 	}
 
 	/**

@@ -92,6 +92,7 @@ if (resolved.isEmpty()) {
 def classicOnly = [
 	"tl-layout-wysiwyg",
 	"tl-model-wysiwyg",
+	"tl-monitoring",
 	"ext-com-ckeditor"
 ];
 def leaked = classicOnly.findAll { resolved.contains(it) };

@@ -1,4 +1,4 @@
 db-h2.xml
 devel-h2.xml
-devel-secrets.config.xml
+devel-secrets.xml
 enable-debug.xml

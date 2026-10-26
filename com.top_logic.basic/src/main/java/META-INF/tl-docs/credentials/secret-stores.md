@@ -1,5 +1,5 @@
 ---
-description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure), prefix and per-secret overrides, development secrets of an application (ChainSecretStore of env-store and directory-store on deploy/local/secrets, devel-secrets.config.xml), putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
+description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure), prefix and per-secret overrides, development secrets (devel-secrets.xml / devel-secrets.config.xml of com.top_logic.basic: ChainSecretStore of env-store, directory-store on ~/.top-logic/secrets and literal-store with h2_passwd), putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
 order: 15
 ---
 
@@ -154,14 +154,7 @@ The `source` takes all forms of a secret property; `<source name="other_secret"/
 
 ## Development secrets
 
-The configurations shipped with the engine contain no secrets, not even defaults, so that an installation without a secret notices it. An application that should start locally without any variable keeps the secrets of its development deployment as files in its own project, one file per secret named like the secret, in `deploy/local/secrets`:
-
-```
-deploy/local/secrets/h2_passwd        password
-deploy/local/secrets/tl_pac_secret    <client secret of the demo client>
-```
-
-Its local deployment adds the folder after the environment, in `deploy/local/webapp/WEB-INF/conf/devel-secrets.config.xml` listed in the `metaConf.txt` of `deploy/local`:
+The configurations shipped with an application contain no secrets, not even defaults, so that an installation without a secret notices it. A local development deployment reads its secrets through `devel-secrets.config.xml` of `com.top_logic.basic`, which the `metaConf.txt` of `deploy/local` lists as `devel-secrets.xml`:
 
 ```xml
 <config service-class="com.top_logic.basic.credential.SecretStoreService">
@@ -169,19 +162,32 @@ Its local deployment adds the folder after the environment, in `deploy/local/web
 		<store class="com.top_logic.basic.credential.ChainSecretStore">
 			<stores>
 				<env-store/>
-				<directory-store directory="./deploy/local/secrets"/>
+				<directory-store directory="%DEVEL_SECRETS_DIR%"/>
+				<literal-store>
+					<secrets>
+						<secret name="h2_passwd" value="unencrypted:password"/>
+					</secrets>
+				</literal-store>
 			</stores>
 		</store>
 	</instance>
 </config>
 ```
 
-- A variable still takes precedence over the file.
-- The relative directory is resolved against the working directory, which is the project directory when the application is started from Maven or Eclipse - like the development database `./tmp/h2`.
-- The folder lies outside `deploy/local/webapp`, so it is never packaged into the web application; a production deployment (`deploy/prod`) does not list the configuration.
+- A system property or environment variable named like the secret takes precedence.
+- Otherwise the file named like the secret in the folder `~/.top-logic/secrets` of the developer delivers it (alias `%DEVEL_SECRETS_DIR%` in `devel-secrets.xml`). The folder is shared by all workspaces and applications of the developer and lies outside every project, so a real key never ends up in a repository:
+
+  ```
+  ~/.top-logic/secrets/translation_api_key    <DeepL API key>
+  ~/.top-logic/secrets/tl_pac_secret          <client secret of the Keycloak demo client>
+  ```
+
+  A missing folder is no error; its secrets are then missing.
+- Otherwise the value in the configuration: only the password `password` of the development database `./tmp/h2`, so that a fresh checkout starts without any setup.
+- Files named `devel-*` are not packaged into the web application, and a production deployment (`deploy/prod`) does not list them.
 - The configuration is the only `SecretStoreService` fragment of the deployment: two fragments both configuring a `ChainSecretStore` would append their stores to one chain.
 
-Applications created by the archetype start with this folder holding `h2_passwd`.
+Applications created by the archetype list `devel-secrets.xml` in the `metaConf.txt` of `deploy/local`.
 
 ## The configuration in an installation
 

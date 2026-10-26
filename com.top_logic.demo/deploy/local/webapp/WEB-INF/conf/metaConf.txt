@@ -1,6 +1,6 @@
 db-h2.xml
 devel-h2.xml
-devel-secrets.config.xml
+devel-secrets.xml
 db-logging.xml
 enable-debug.xml
 devel-dump-missing-resources.config.xml

@@ -46,6 +46,7 @@ import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -778,11 +779,11 @@ public class SSEUpdateQueue {
 	 * Enqueues an event for delivery to the connected SSE client.
 	 *
 	 * <p>
-	 * Outside an interaction the event is flushed immediately: an SSE (re)connection, the model
-	 * events synthesized on the heartbeat and background activity deliver state that nothing is
-	 * about to revise. Within an open {@link DeliveryScope} the event only queues and this queue is
-	 * noted as touched, so that delivery is {@link #settle() settled} once the interaction has
-	 * completed.
+	 * Outside an interaction the event is flushed immediately: an SSE (re)connection and background
+	 * activity deliver state that nothing is about to revise. Within an open {@link DeliveryScope}
+	 * the event only queues and this queue is noted as touched, so that delivery is
+	 * {@link #settle() settled} once the interaction has completed. This includes the model events
+	 * the heartbeat synthesizes, since it synthesizes them within an interaction.
 	 * </p>
 	 */
 	public void enqueue(SSEEvent event) {
@@ -1291,7 +1292,17 @@ public class SSEUpdateQueue {
 		return _polling && (_waitingPoll != null || now - _lastPoll < POLL_ORPHAN_MILLIS);
 	}
 
-	private void sendHeartbeat() {
+	/**
+	 * Sends one heartbeat, as the scheduler does every {@link #HEARTBEAT_INTERVAL_SECONDS} seconds.
+	 *
+	 * <p>
+	 * Expires the downloads that were not fetched in time. While a client is present, synthesizes
+	 * the model events of the window, see {@link #synthesizeModelEventsIfPossible()}, writes the
+	 * heartbeat message to its stream and flushes the queue. While the client is gone, reports its
+	 * absence, see {@link #checkAbandoned(long)}.
+	 * </p>
+	 */
+	public void sendHeartbeat() {
 		long now = System.currentTimeMillis();
 		expireDownloads(now);
 		SSEConnection conn = _connection;
@@ -1362,6 +1373,21 @@ public class SSEUpdateQueue {
 		}
 	}
 
+	/**
+	 * Synthesizes the model events of this queue's window in its sub-session.
+	 *
+	 * <p>
+	 * The events are synthesized within an {@link Interaction}, like every other change of the
+	 * window's controls, so that a commit is never delivered to a control tree that a request is
+	 * building or changing. The heartbeat does not wait for that request: while another thread holds
+	 * the session's interaction, nothing is synthesized. The commit is delivered at the end of that
+	 * interaction, or by the next heartbeat.
+	 * </p>
+	 *
+	 * <p>
+	 * A queue without window context, or whose window has no sub-session, synthesizes nothing.
+	 * </p>
+	 */
 	private void synthesizeModelEventsIfPossible() {
 		ReactWindowRegistry registry = _windowRegistry;
 		TLSessionContext sessionCtx = _sessionContext;
@@ -1374,7 +1400,14 @@ public class SSEUpdateQueue {
 			return;
 		}
 		ThreadContextManager.inContext(subSession, () -> {
-			registry.synthesizeModelEvents(windowName);
+			try (Interaction interaction = registry.tryBeginInteraction(0)) {
+				if (interaction == null) {
+					// The window is busy: the interaction holding it synthesizes at its end, or the
+					// next heartbeat does.
+					return;
+				}
+				registry.synthesizeModelEvents(windowName);
+			}
 		});
 	}
 

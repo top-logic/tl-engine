@@ -354,7 +354,37 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @return The open interaction, to be closed when the change is complete.
 	 */
 	public Interaction beginInteraction() {
-		return new Interaction(_requestLock);
+		return Interaction.begin(_requestLock);
+	}
+
+	/**
+	 * Begins an {@link Interaction} with the control trees of this session, unless another thread
+	 * keeps one open for longer than the given time.
+	 *
+	 * <p>
+	 * For a thread that must not wait for a long command, such as a background thread that
+	 * delivers model events to a window: it either acts within an interaction, as
+	 * {@link #beginInteraction()} does, or leaves the trees alone. A thread that already has an
+	 * interaction open gets a nested one at once.
+	 * </p>
+	 *
+	 * <pre>
+	 * try (Interaction interaction = registry.tryBeginInteraction(timeout)) {
+	 * 	if (interaction != null) {
+	 * 		registry.synthesizeModelEvents(windowId);
+	 * 	}
+	 * }
+	 * </pre>
+	 *
+	 * @param timeoutMillis
+	 *        The time in milliseconds to wait at most for another thread's interaction to end,
+	 *        {@code 0} not to wait.
+	 * @return The open interaction, to be closed when the change is complete, or {@code null} if
+	 *         another thread kept its interaction open for the given time, or the calling thread
+	 *         was interrupted while it waited.
+	 */
+	public Interaction tryBeginInteraction(long timeoutMillis) {
+		return Interaction.tryBegin(_requestLock, timeoutMillis);
 	}
 
 	/**

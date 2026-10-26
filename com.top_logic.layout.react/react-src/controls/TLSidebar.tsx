@@ -674,7 +674,7 @@ const TLSidebar: React.FC<TLCellProps> = ({ controlId }) => {
       )}
 
       {/* The region stretches the active view to its own bounded height either way, which ends the fill chain here. */}
-      <div className="tl-sidebar__content">
+      <div className="tl-sidebar__content tl-region">
         <FillBarrier>
           {!!state.activeContent && <TLChild control={state.activeContent} />}
         </FillBarrier>

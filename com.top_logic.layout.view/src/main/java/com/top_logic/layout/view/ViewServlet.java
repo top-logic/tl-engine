@@ -227,6 +227,9 @@ public class ViewServlet extends TopLogicServlet {
 		// Collect the windows whose page was unloaded and did not come back within the grace period.
 		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
+		// The page rendered now replaces the one the window displayed: the previous page's stream and
+		// poll end, and what is enqueued from here on waits for this page's client.
+		sseQueue.beginPage();
 		// Every window is represented by an entry, an ordinary browser tab as well: it holds the tree
 		// the window displays, which the registry detaches when the page is unloaded and disposes when
 		// the window is torn down.
@@ -344,8 +347,9 @@ public class ViewServlet extends TopLogicServlet {
 	 *
 	 * <p>
 	 * The rendered output carries the full state of every control and reuses their IDs, so the new
-	 * client addresses the same controls as the old one. Events still queued for the previous client
-	 * are dropped: they describe steps towards a state the rendering below already contains.
+	 * client addresses the same controls as the old one. The events queued for the previous client
+	 * are dropped already ({@link SSEUpdateQueue#beginPage()}): they describe steps towards a state
+	 * the rendering below contains.
 	 * </p>
 	 *
 	 * @param routePath
@@ -361,7 +365,6 @@ public class ViewServlet extends TopLogicServlet {
 			throws IOException {
 		ReactContext context = rootControl.getReactContext();
 
-		sseQueue.discardPendingEvents();
 		sseQueue.setRootControl(rootControl);
 		wireRouteManager(context, sseQueue, routePath, loginView);
 

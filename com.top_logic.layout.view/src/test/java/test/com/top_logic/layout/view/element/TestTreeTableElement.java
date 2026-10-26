@@ -33,6 +33,8 @@ import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.table.ExpandArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ChildControl;
+import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
@@ -63,6 +65,49 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	/** The view declaring the tree table. */
 	private static final String VIEW = "test-tree-table.view.xml";
+
+	/** A view marking its rows and the cells of its column with classes computed from its inputs. */
+	private static final String CLASSES_VIEW = "test-tree-table-classes.view.xml";
+
+	/** Name of the input channel the cell class of {@link #CLASSES_VIEW} reads. */
+	private static final String MARK = "mark";
+
+	/** A view showing the objects of its rows through a display computing their parts. */
+	private static final String DISPLAY_VIEW = "test-tree-table-display.view.xml";
+
+	/** Name of the column of {@link #DISPLAY_VIEW}. */
+	private static final String MODULE_COLUMN = "module";
+
+	/**
+	 * Row state key of the cell controls of a row, by column name.
+	 *
+	 * @implNote Restated here because {@link TableViewControl} keeps it private.
+	 */
+	private static final String ROW_CELLS = "cells";
+
+	/** Name of the column of {@link #CLASSES_VIEW}. */
+	private static final String NAME_COLUMN = "name";
+
+	/**
+	 * State key of the rows pushed to the client.
+	 *
+	 * @implNote Restated here because {@link TableViewControl} keeps it private.
+	 */
+	private static final String ROWS = "rows";
+
+	/**
+	 * Row state key of the CSS classes of the cells of a row, by column name.
+	 *
+	 * @implNote Restated here because {@link TableViewControl} keeps it private.
+	 */
+	private static final String ROW_CELL_CLASSES = "cellClasses";
+
+	/**
+	 * Row state key of the CSS class of a row.
+	 *
+	 * @implNote Restated here because {@link TableViewControl} keeps it private.
+	 */
+	private static final String ROW_CSS_CLASS = "cssClass";
 
 	/** A view declaring a tree table over objects that can be deleted. */
 	private static final String OBJECT_VIEW = "test-tree-table-objects.view.xml";
@@ -131,6 +176,8 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	private ViewChannel _target;
 
+	private ViewChannel _mark;
+
 	private ViewContext _context;
 
 	private RecordingScope _scope;
@@ -151,6 +198,7 @@ public class TestTreeTableElement extends BasicTestCase {
 		_parent = register(PARENT);
 		_before = register(BEFORE);
 		_target = register(TARGET);
+		_mark = register(MARK);
 	}
 
 	private DefaultViewChannel register(String name) {
@@ -167,6 +215,7 @@ public class TestTreeTableElement extends BasicTestCase {
 		_parent = null;
 		_before = null;
 		_target = null;
+		_mark = null;
 
 		super.tearDown();
 	}
@@ -202,6 +251,63 @@ public class TestTreeTableElement extends BasicTestCase {
 
 		_selected.set(A1);
 		assertEquals(Set.of(A1), control.getSelectedKeys());
+	}
+
+	/**
+	 * The rows carry the row class and the cells the cell class computed from the inputs, and both
+	 * follow a change of the inputs they read: the cell class of a column without inputs of its own
+	 * reads the inputs of the tree table - its selection included - so its cells are built again
+	 * when one of them changes.
+	 */
+	public void testClassesFollowTheInputs() throws Exception {
+		_mark.set("m1");
+		TableViewControl<?> control = createControl(CLASSES_VIEW);
+		control.attach();
+		try {
+			assertEquals("m1-tl.core", cellClass(control, 0));
+			assertNull(rowState(control, 0).get(ROW_CSS_CLASS));
+
+			_mark.set("m2");
+			assertEquals("m2-tl.core", cellClass(control, 0));
+
+			// The cell class reads the selection, so a selection change builds the cells again.
+			_selected.set(rows(control).get(0));
+			assertEquals("chosen", rowState(control, 0).get(ROW_CSS_CLASS));
+			assertEquals("m2-tl.core sel", cellClass(control, 0));
+		} finally {
+			control.detach();
+		}
+	}
+
+	/**
+	 * The cell of a column with a display is the control of that display, showing the label and the
+	 * CSS class it computes for the object of the row.
+	 */
+	public void testCellShowsTheDisplayOfItsColumn() throws Exception {
+		TableViewControl<?> control = createControl(DISPLAY_VIEW);
+		control.attach();
+		try {
+			Map<?, ?> cell = (Map<?, ?>) ((Map<?, ?>) rowState(control, 0).get(ROW_CELLS)).get(MODULE_COLUMN);
+			assertNotNull("The row has no cell of the column.", cell);
+			Map<?, ?> cellState = (Map<?, ?>) cell.get(ChildControl.STATE__PROP);
+			assertEquals("TLResourceCell", cell.get(ChildControl.MODULE__PROP));
+			assertEquals("Module tl.core", cellState.get("label"));
+			assertEquals("module", cellState.get(ControlState.CSS_CLASS__PROP));
+		} finally {
+			control.detach();
+		}
+	}
+
+	/** The CSS class of the cell of the column of {@link #CLASSES_VIEW} in the given pushed row. */
+	private static Object cellClass(TableViewControl<?> control, int index) {
+		Map<?, ?> classes = (Map<?, ?>) rowState(control, index).get(ROW_CELL_CLASSES);
+		assertNotNull("No cell of the row has a class.", classes);
+		return classes.get(NAME_COLUMN);
+	}
+
+	/** The state of the given row as the client receives it. */
+	private static Map<?, ?> rowState(TableViewControl<?> control, int index) {
+		return (Map<?, ?>) ((List<?>) state(control).get(ROWS)).get(index);
 	}
 
 	/**

@@ -15,6 +15,10 @@
   
   <properties>
 	<gwt.module>com.top_logic.graph.diagramjs.client.TLGraphClientDiagramJS</gwt.module>  	
+    <!-- Fail on JavaDoc references that do not resolve, also in private members. -->
+    <tl.javac.doclint>-Xdoclint:reference/private</tl.javac.doclint>
+    <!-- Fail on imports that are not used. -->
+    <tl.unused-imports.skip>false</tl.unused-imports.skip>
   </properties>
   
   <dependencies>

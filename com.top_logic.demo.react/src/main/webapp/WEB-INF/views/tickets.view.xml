@@ -36,6 +36,13 @@
 	preset, under the identifier it was given - it carries the text that was searched when it was
 	saved, so it is the marked one only while exactly that text is searched for again.
 	
+	Each preset chip shows the number of tickets its criteria select (count="true"), whatever the
+	list is searched for at the moment - the tickets a click on the chip shows. The numbers follow
+	the data without a reload: closing a ticket by dragging it to the Closed list takes it out of
+	the counts of the Open list's chips. The "Without comments" chip carries a CSS class of its own
+	(css-class), which the stylesheet of this application draws in the colours of a warning, marking
+	the tickets nobody has looked at as the ones needing attention.
+	
 	The inputs above the lists show that an input is bound to a channel for a value of any type:
 	the search term is a tl.core:String and is written in a text field, while the status is an
 	enumeration and is chosen from a dropdown of its classifiers. The search term is what a table
@@ -429,13 +436,17 @@
 									<input channel="status"/>
 								</inputs>
 								<presets initial="mine">
-									<preset name="all">
+									<preset name="all"
+										count="true"
+									>
 										<label>
 											<en>All</en>
 											<de>Alle</de>
 										</label>
 									</preset>
-									<preset name="mine">
+									<preset name="mine"
+										count="true"
+									>
 										<label>
 											<en>Commented by me</en>
 											<de>Von mir kommentiert</de>
@@ -445,7 +456,9 @@
 											expr="true"
 										/>
 									</preset>
-									<preset name="discussed">
+									<preset name="discussed"
+										count="true"
+									>
 										<label>
 											<en>Discussed</en>
 											<de>Diskutiert</de>
@@ -458,7 +471,10 @@
 											/>
 										</criterion>
 									</preset>
-									<preset name="untouched">
+									<preset name="untouched"
+										count="true"
+										css-class="tlDemoNeedsAttention"
+									>
 										<label>
 											<en>Without comments</en>
 											<de>Ohne Kommentare</de>

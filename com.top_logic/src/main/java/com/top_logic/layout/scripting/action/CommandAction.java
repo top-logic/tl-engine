@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.scripting.action;
 
-import java.util.Map;
-
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.scripting.runtime.action.CommandActionOpBase;
@@ -20,7 +18,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
  * 
  * @see CommandActionOp
  * @see CommandHandler#handleCommand(com.top_logic.layout.DisplayContext,
- *      com.top_logic.mig.html.layout.LayoutComponent, Object, Map)
+ *      com.top_logic.mig.html.layout.LayoutComponent, Object, java.util.Map)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

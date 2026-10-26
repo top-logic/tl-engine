@@ -27,26 +27,41 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.provider.LLMProviderService.ModelCatalogConfig;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
+import com.top_logic.tl.ai.core.provider.catalog.CatalogStatus;
+import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
+import com.top_logic.tl.ai.core.provider.catalog.ResolvedModel;
+import com.top_logic.util.autoconf.InAppServiceConfigStore;
 
 /**
  * Tests that the remote model catalog never holds the start of {@link LLMProviderService} (issue
- * #898).
+ * #898), and that the catalog the service resolves is service state - with the origin of every
+ * entry and the state of the remote load - rather than part of its configuration (ticket #29954).
  */
 public class TestModelCatalogLoad extends TestCase {
 
 	/** A model the bundled catalog knows. */
-	private static final String MODEL = "claude-sonnet-4-20250514";
+	public static final String MODEL = "claude-sonnet-4-20250514";
 
 	/** The context window the test catalog gives {@link #MODEL}, which the bundled one does not. */
 	private static final int REMOTE_CONTEXT = 4242;
+
+	/** A configured model that neither catalog lists. */
+	public static final String LOCAL_MODEL = "local-test-model";
+
+	/** The context window the model overrides of a test give a model. */
+	public static final int OVERRIDE_CONTEXT = 777;
+
+	/** The path of the test server that answers every request with a server error. */
+	private static final String BROKEN_PATH = "/broken.json";
 
 	private HttpServer _server;
 
@@ -72,6 +87,7 @@ public class TestModelCatalogLoad extends TestCase {
 		_server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
 		_server.createContext("/catalog.json", this::answerCatalog);
 		_server.createContext("/slow.json", this::answerSlowly);
+		_server.createContext(BROKEN_PATH, this::answerError);
 		_serverThreads = Executors.newCachedThreadPool();
 		_server.setExecutor(_serverThreads);
 		_server.start();
@@ -101,6 +117,8 @@ public class TestModelCatalogLoad extends TestCase {
 		ModelInfo info = _service.getModel(MODEL);
 		assertNotNull("The bundled catalog answers until the remote one arrives.", info);
 		assertTrue(info.limits().contextWindow() != REMOTE_CONTEXT);
+		assertEquals(ResolvedModel.Origin.BUNDLED, _service.getCatalogEntry(MODEL).origin());
+		assertEquals(CatalogStatus.State.LOADING, _service.catalogStatus().state());
 	}
 
 	/**
@@ -123,16 +141,23 @@ public class TestModelCatalogLoad extends TestCase {
 	 * A catalog that arrives replaces the bundled one.
 	 */
 	public void testRemoteCatalogIsInstalled() throws InterruptedException {
-		_service = start(url("/catalog.json"), true);
+		String url = url("/catalog.json");
+		_service = start(url, true);
+		CatalogStatus bundledStatus = _service.catalogStatus();
 
-		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
-		while (_service.getModel(MODEL).limits().contextWindow() != REMOTE_CONTEXT) {
-			assertTrue("The remote catalog was not installed.", System.nanoTime() < deadline);
-			Thread.sleep(20);
-		}
+		awaitState(CatalogStatus.State.LOADED);
 		assertEquals(1, _requests.get());
-		assertEquals(REMOTE_CONTEXT,
-			_service.getConfig().getModelCatalog().getModelConfiguration().get(MODEL).getContextWindow().intValue());
+
+		ResolvedModel entry = _service.getCatalogEntry(MODEL);
+		assertEquals(ResolvedModel.Origin.REMOTE, entry.origin());
+		assertEquals(REMOTE_CONTEXT, entry.info().limits().contextWindow());
+		assertSame(entry.info(), _service.getModel(MODEL));
+
+		CatalogStatus status = _service.catalogStatus();
+		assertEquals(url, status.catalogUrl());
+		assertNull(status.failure());
+		assertFalse("The remote catalog is installed after the bundled one.",
+			status.installedAt().isBefore(bundledStatus.installedAt()));
 	}
 
 	/**
@@ -146,6 +171,88 @@ public class TestModelCatalogLoad extends TestCase {
 		assertEquals(0, _requests.get());
 	}
 
+	/**
+	 * Switched off, every model the bundled catalog lists is marked as bundled, and the status says
+	 * that no remote catalog is loaded.
+	 */
+	public void testSwitchedOffUsesTheBundledCatalog() {
+		ModelInfo snapshot =
+			ModelsDevFetcher.loadSnapshot(Map.of("anthropic", Set.of(MODEL))).get(MODEL);
+		assertNotNull("The bundled catalog lists the test model.", snapshot);
+
+		_service = start(url("/catalog.json"), false);
+
+		ResolvedModel entry = _service.getCatalogEntry(MODEL);
+		assertEquals(ResolvedModel.Origin.BUNDLED, entry.origin());
+		assertEquals(snapshot, entry.info());
+
+		CatalogStatus status = _service.catalogStatus();
+		assertEquals(CatalogStatus.State.DISABLED, status.state());
+		assertNotNull(status.installedAt());
+		assertNull(status.failure());
+		assertSame(status, _service.catalog().status());
+	}
+
+	/**
+	 * A model override takes precedence over the catalog and is marked as such; a configured model
+	 * nothing describes is listed with its provider but has no catalog entry.
+	 */
+	public void testOverrideTakesPrecedence() {
+		_service = start(url("/catalog.json"), false, List.of(MODEL, LOCAL_MODEL), MODEL);
+
+		ResolvedModel entry = _service.getCatalogEntry(MODEL);
+		assertEquals(ResolvedModel.Origin.OVERRIDE, entry.origin());
+		assertEquals(OVERRIDE_CONTEXT, entry.info().limits().contextWindow());
+
+		assertNull(_service.getCatalogEntry(LOCAL_MODEL));
+		assertEquals(List.of(MODEL, LOCAL_MODEL), _service.getModelsOf("anthropic"));
+		assertEquals(List.of(), _service.getModelsOf("no-such-provider"));
+	}
+
+	/**
+	 * A remote catalog that cannot be loaded leaves the bundled catalog in use and says why.
+	 */
+	public void testFailedRemoteCatalog() throws InterruptedException {
+		_service = start(url(BROKEN_PATH), true);
+
+		awaitState(CatalogStatus.State.FAILED);
+
+		CatalogStatus status = _service.catalogStatus();
+		assertEquals(url(BROKEN_PATH), status.catalogUrl());
+		assertTrue(status.failure(), status.failure().contains("500"));
+		assertEquals(ResolvedModel.Origin.BUNDLED, _service.getCatalogEntry(MODEL).origin());
+	}
+
+	/**
+	 * Saving the configuration of the running service writes no model metadata: the catalog is not
+	 * part of the configuration.
+	 */
+	public void testSavedConfigurationHoldsNoCatalog() throws InterruptedException {
+		_service = start(url("/catalog.json"), true);
+		awaitState(CatalogStatus.State.LOADED);
+
+		ApplicationConfig.Config application = TypedConfiguration.newConfigItem(ApplicationConfig.Config.class);
+		application.getServices().put(LLMProviderService.class,
+			InAppServiceConfigStore.newServiceEntry(LLMProviderService.class, _service.getConfig()));
+		String written = InAppServiceConfigStore.toXml(InAppServiceConfigStore.APPLICATION_TAG, application,
+			InAppServiceConfigStore.overrideTypes(false));
+
+		assertTrue(written, written.contains(LLMProviderService.class.getName()));
+		assertFalse(written, written.contains("<model "));
+		assertFalse(written, written.contains(ModelCatalogEntry.OverrideConfig.CONTEXT_WINDOW));
+		assertFalse(written, written.contains(ModelCatalogEntry.OverrideConfig.MAX_OUTPUT));
+		assertFalse(written, written.contains(String.valueOf(REMOTE_CONTEXT)));
+	}
+
+	private void awaitState(CatalogStatus.State expected) throws InterruptedException {
+		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+		while (_service.catalogStatus().state() != expected) {
+			assertTrue("The catalog did not reach the state " + expected + ": " + _service.catalogStatus(),
+				System.nanoTime() < deadline);
+			Thread.sleep(20);
+		}
+	}
+
 	private void answerCatalog(HttpExchange exchange) throws IOException {
 		_requests.incrementAndGet();
 		byte[] body = ("{\"anthropic\": {\"models\": {\"" + MODEL + "\": {\"id\": \"" + MODEL
@@ -155,6 +262,12 @@ public class TestModelCatalogLoad extends TestCase {
 		try (OutputStream out = exchange.getResponseBody()) {
 			out.write(body);
 		}
+	}
+
+	private void answerError(HttpExchange exchange) throws IOException {
+		_requests.incrementAndGet();
+		exchange.sendResponseHeaders(500, -1);
+		exchange.close();
 	}
 
 	private void answerSlowly(HttpExchange exchange) throws IOException {
@@ -181,6 +294,28 @@ public class TestModelCatalogLoad extends TestCase {
 	}
 
 	private static LLMProviderService start(String catalogUrl, boolean fetchRemote) {
+		return start(catalogUrl, fetchRemote, List.of(MODEL), null);
+	}
+
+	/**
+	 * Starts a service with one Anthropic provider named "anthropic" exposing the given models.
+	 *
+	 * <p>
+	 * The caller shuts the service down.
+	 * </p>
+	 *
+	 * @param catalogUrl
+	 *        The URL of the remote catalog.
+	 * @param fetchRemote
+	 *        Whether the service loads the remote catalog.
+	 * @param models
+	 *        The models the provider is configured to serve.
+	 * @param overridden
+	 *        The model to give a model override with the context window {@link #OVERRIDE_CONTEXT},
+	 *        or <code>null</code> for none.
+	 */
+	public static LLMProviderService start(String catalogUrl, boolean fetchRemote, List<String> models,
+			String overridden) {
 		@SuppressWarnings("unchecked")
 		LLMProviderService.Config<LLMProviderService> config =
 			(LLMProviderService.Config<LLMProviderService>) TypedConfiguration.newConfigItem(
@@ -189,19 +324,33 @@ public class TestModelCatalogLoad extends TestCase {
 		AnthropicProviderConfig.Config provider = TypedConfiguration.newConfigItem(AnthropicProviderConfig.Config.class);
 		set(provider, PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME, AnthropicProviderConfig.class);
 		provider.setName("anthropic");
-		set(provider, LLMProviderConfig.Config.MODELS, List.of(MODEL));
+		set(provider, LLMProviderConfig.Config.MODELS, models);
 		set(provider, AnthropicProviderConfig.Config.API_KEY, FixedCredentials.secret("test"));
 		config.getProviders().put(provider.getName(), provider);
 
 		ModelCatalogConfig catalog = TypedConfiguration.newConfigItem(ModelCatalogConfig.class);
 		set(catalog, ModelCatalogConfig.CATALOG_URL, catalogUrl);
 		set(catalog, ModelCatalogConfig.FETCH_REMOTE_CATALOG, fetchRemote);
+		if (overridden != null) {
+			ModelCatalogEntry.OverrideConfig override =
+				TypedConfiguration.newConfigItem(ModelCatalogEntry.OverrideConfig.class);
+			set(override, ModelCatalogEntry.OverrideConfig.NAME_ATTRIBUTE, overridden);
+			set(override, ModelCatalogEntry.OverrideConfig.CONTEXT_WINDOW, OVERRIDE_CONTEXT);
+			catalog.getModelOverrides().put(overridden, override);
+		}
 		set(config, LLMProviderService.Config.MODEL_CATALOG, catalog);
 
 		LLMProviderService service =
 			new LLMProviderService(new DefaultInstantiationContext(TestModelCatalogLoad.class), config);
 		service.startUp();
 		return service;
+	}
+
+	/**
+	 * Stops a service {@link #start(String, boolean, List, String) started} by a test.
+	 */
+	public static void stop(LLMProviderService service) {
+		service.shutDown();
 	}
 
 	private static void set(ConfigurationItem item, String property, Object value) {

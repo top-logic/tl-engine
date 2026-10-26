@@ -374,20 +374,23 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			comparator != null && target.multiple() ? ColumnSetup.elementwise(comparator) : comparator,
 			setup.hiddenByDefault(),
 			setup.export(),
-			embeddedTooltip(setup.tooltip(), navigation),
+			embeddedCellFunction(setup.tooltip(), navigation),
+			embeddedCellFunction(setup.cellClass(), navigation),
+			setup.display(),
 			setup.sortable());
 	}
 
 	/**
-	 * The tooltip of an embedded column: the tooltip of the embedded declaration, seeing the
-	 * embedded object as its row.
+	 * A function of a cell of an embedded column - its tooltip, its CSS class: the function of the
+	 * embedded declaration, seeing the embedded object as its row; {@code null} where the embedded
+	 * declaration has none.
 	 */
-	private static BiFunction<Object, Object, String> embeddedTooltip(BiFunction<Object, Object, String> tooltip,
-			Function<Object, Object> navigation) {
-		if (tooltip == null) {
+	private static BiFunction<Object, Object, String> embeddedCellFunction(
+			BiFunction<Object, Object, String> function, Function<Object, Object> navigation) {
+		if (function == null) {
 			return null;
 		}
-		return (row, value) -> tooltip.apply(row == null ? null : navigation.apply(row), value);
+		return (row, value) -> function.apply(row == null ? null : navigation.apply(row), value);
 	}
 
 	/** The name of an embedded column, under the path leading to the object it shows. */

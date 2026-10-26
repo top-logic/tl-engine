@@ -159,6 +159,8 @@ The configurations shipped with the engine reference their secrets by name and c
 | `pac4j-azure`, `pac4j-generic`, `pac4j-google`, `pac4j-keycloak` (`.config.xml`) | `secret` of the OIDC client | `tl_pac_secret` | `%PAC_SECRET%` |
 | `azureStorageConf.config.xml` | `connect-string` of `CloudBasedRepository` | `blob_connect` | `%BLOB_CONNECT%`, `%BLOB_USER%`, `%BLOB_PASS%` |
 
+A missing `tl_pac_secret` does not prevent the start of the application: the OIDC client reads its secret when a login with it starts, and only that login fails.
+
 ### The variables hold the plain value
 
 With the default store, each secret is read from the variable (or system property) of its name. The variable holds the **plain** value; the form with the prefix `unencrypted:`, which a variable read through the aliases needed, is still accepted and the prefix is stripped, so that existing environments - containers, start scripts, `.mvn/jvm.config`, Eclipse launch configurations, JNDI entries, the site configuration of a build server - keep working unchanged:

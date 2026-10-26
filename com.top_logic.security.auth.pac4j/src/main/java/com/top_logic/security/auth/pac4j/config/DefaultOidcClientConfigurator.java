@@ -187,9 +187,12 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * </p>
 		 * 
 		 * <p>
-		 * The secret is read when the client is created at startup.
+		 * The secret is not read at startup, so that the application starts without it. It is read
+		 * when a login with this client starts and before each token request, so that a rotated
+		 * secret is used without restart. A login while the secret is missing fails.
 		 * </p>
 		 * 
+		 * @see OidcClientSecret
 		 * @see OidcConfiguration#getSecret()
 		 */
 		@Name(SECRET)
@@ -320,6 +323,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		C config = getConfig();
 		client.setCallbackUrl(Pac4jConfigFactory.resolveCallbackUrl(context, config));
 		client.setUrlResolver(Pac4jConfigFactory.createUrlResolver(config));
+		OidcClientSecret.install(client, _secret);
 
 		return client;
 	}
@@ -359,6 +363,12 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	/**
 	 * Fills the given {@link OidcClient} configuration object with values from the application
 	 * configuration.
+	 * 
+	 * <p>
+	 * The client secret is not part of it, it is handed to the client when it is used.
+	 * </p>
+	 * 
+	 * @see OidcClientSecret
 	 */
 	protected void fillConfig(OidcConfiguration odic) {
 		Config<?> config = getConfig();
@@ -391,7 +401,6 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		odic.setResponseMode(config.getResponseMode());
 		odic.setResponseType(config.getResponseType());
 		odic.setScope(config.getScope());
-		odic.setSecret(_secret.getSecret());
 		ValueGenerator stateGenerator = config.getStateGenerator();
 		if (stateGenerator != null) {
 			odic.setStateGenerator(stateGenerator);

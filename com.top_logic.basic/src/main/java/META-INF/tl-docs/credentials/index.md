@@ -19,7 +19,8 @@ A secret source is asked for the secret each time the consumer uses it; the cons
 
 - HTTP consumers read their credentials for each request.
 - The database pool reads a password for each new connection; the JMS clients and the mail receiver for each new connection to their server.
-- A few consumers read the secret once when they start: the password pepper of `Argon2Hashing`, the OIDC client secret of pac4j, the Azure blob connection string and the key of the vector index. The documentation of each property says when it is read.
+- The OIDC client secret of pac4j is read when a login with the client starts and before each token request, not at startup: the application starts without it, a login fails while it is missing. pac4j derives the authentication of its token requests from the secret and keeps it, so a changed secret makes the client load the provider metadata once more.
+- A few consumers read the secret once when they start: the password pepper of `Argon2Hashing`, the Azure blob connection string and the key of the vector index. The documentation of each property says when it is read.
 
 A credential provider that obtains tokens caches them until shortly before they expire. A request rejected with HTTP 401 makes the consumer drop the cached credentials and repeat the request once with fresh ones.
 

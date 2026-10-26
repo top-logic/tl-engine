@@ -10,8 +10,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 
 /**
  * Service to access the persistency layers of the application.
@@ -20,6 +22,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  */
 @ServiceDependencies(KnowledgeBaseFactory.Module.class)
 @Label("Persistency layer")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class PersistencyLayer extends ManagedClass {
 
 	/** The {@link KnowledgeBase#getName() name} of the default {@link KnowledgeBase} */

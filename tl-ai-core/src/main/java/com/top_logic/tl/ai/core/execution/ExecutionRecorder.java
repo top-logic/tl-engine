@@ -31,7 +31,8 @@ import com.top_logic.tl.ai.tool.api.RunInfo;
  * the run's {@link ExecutionHandle}. On {@code RunCompleted} it captures the terminal
  * {@link AgentResult}. The caller finalizes the row by invoking
  * {@link #complete(String, Throwable)} after the loop returns (or throws), supplying the
- * serialized transcript.
+ * serialized transcript. {@link RunRecording} does that wiring for a run that keeps its transcript
+ * in a {@link com.top_logic.tl.ai.core.session.ConversationLog}.
  * </p>
  *
  * <p>

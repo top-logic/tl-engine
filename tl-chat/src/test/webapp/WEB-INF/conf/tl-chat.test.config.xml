@@ -33,6 +33,16 @@
 				</agents>
 			</instance>
 		</config>
+		<!--
+			Claims the conversations a test installs a backend for. For TestChatBackend.
+		-->
+		<config service-class="com.top_logic.ai.chat.backend.ConversationBackendService">
+			<instance>
+				<resolvers>
+					<resolver class="com.top_logic.ai.chat.layout.ScriptedBackend"/>
+				</resolvers>
+			</instance>
+		</config>
 	</services>
 	<configs>
 		<config config:interface="test.com.top_logic.basic.TestComment$Config">

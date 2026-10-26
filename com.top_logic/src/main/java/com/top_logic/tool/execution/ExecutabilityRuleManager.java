@@ -25,8 +25,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig;
@@ -41,6 +43,7 @@ import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig;
 	PersistencyLayer.Module.class,
 })
 @Label("Executability rules")
+@ServiceCategory.Of(AccessControlCategory.class)
 public final class ExecutabilityRuleManager extends ManagedClass {
 
 	/**

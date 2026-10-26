@@ -16,6 +16,8 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.module.services.ServletContextService;
 
 /**
@@ -27,6 +29,7 @@ import com.top_logic.basic.module.services.ServletContextService;
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
 @Label("Servlet container detection")
+@ServiceCategory.Of(UICategory.class)
 public class ContainerDetector extends ManagedClass {
     
     static ContainerDetector instance; 

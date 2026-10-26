@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
@@ -34,12 +35,13 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
+import com.top_logic.util.Resources;
 
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
- * such column has: its label, its filter, its width, whether it can be edited, the order it sorts
- * the table in, the order of its values, what it aggregates over a group of rows, and the display
- * annotations it states over the ones of its values' attribute or type.
+ * such column has: its label, its filter, its width, whether it can be edited, whether it sorts at
+ * all, the order it sorts the table in, the order of its values, what it aggregates over a group of
+ * rows, and the display annotations it states over the ones of its values' attribute or type.
  *
  * <p>
  * A subclass says what the column is named and what its cells hold; everything the table does with
@@ -100,6 +102,12 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		/** Configuration name for {@link #getComparator()}. */
 		String COMPARATOR = "comparator";
 
+		/** Configuration name for {@link #getTooltip()}. */
+		String TOOLTIP = "tooltip";
+
+		/** Configuration name for {@link #getSortable()}. */
+		String SORTABLE = "sortable";
+
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
 		 * attribute it shows, and the column's name where no attribute says it.
@@ -128,6 +136,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * Sorting by several columns is expressed by setting this on more than one of them; the
 		 * declaration order decides which one sorts first. The default only applies until the user
 		 * sorts the table themselves, from then on their own order is remembered.
+		 * </p>
+		 *
+		 * <p>
+		 * The rows are sorted in the order of the {@link #getComparator() comparator}. A column that
+		 * is not {@link #getSortable() sortable} has no direction.
 		 * </p>
 		 */
 		@Name(SORT)
@@ -195,12 +208,53 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * from them, a group without a value comes last. Unset (the default) keeps the order derived
 		 * from the type of the column's values.
 		 * </p>
+		 *
+		 * <p>
+		 * The comparator decides the order the {@link #getSort() sort direction} applies to. A
+		 * column that is not {@link #getSortable() sortable} has no comparator.
+		 * </p>
 		 */
 		@Name(COMPARATOR)
 		@Supplies(LEFT_VARIABLE)
 		@Supplies(RIGHT_VARIABLE)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getComparator();
+
+		/**
+		 * The tooltip of a cell of the column: an expression computing what the user reads when
+		 * pointing at the cell.
+		 *
+		 * <p>
+		 * The expression sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the
+		 * name the table gives it with {@value RowAsConfig#ROW_AS}, and the value of the cell as the
+		 * variable {@value ValueAsConfig#DEFAULT_VALUE_AS}, or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}. In the header row of a group formed by the column, it is
+		 * evaluated for the value of the group, without a row. It sees the values of the inputs of
+		 * the column as well, of the table for a column without inputs of its own. It yields a text
+		 * or an internationalized text, written as <code>#('Text'@en, 'Text'@de)</code>; nothing at
+		 * all leaves the cell without a tooltip. Unset (the default), a cell offers its own text
+		 * where it does not fit.
+		 * </p>
+		 */
+		@Name(TOOLTIP)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getTooltip();
+
+		/**
+		 * Whether the table can be sorted by this column.
+		 *
+		 * <p>
+		 * {@code false} offers no sorting by the column, and a table grouped by it keeps its groups
+		 * in the order of the rows the table is given, whatever the table is sorted by; a sort
+		 * orders the rows within each group. Such a column has neither a {@link #getSort() sort direction} nor a
+		 * {@link #getComparator() comparator}.
+		 * </p>
+		 */
+		@Name(SORTABLE)
+		@BooleanDefault(true)
+		boolean getSortable();
 
 	}
 
@@ -218,6 +272,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final QueryExecutor _comparator;
 
+	private final QueryExecutor _tooltip;
+
 	/**
 	 * The inputs whose values the {@link #_aggregate} and the {@link #_comparator} see, empty for
 	 * a declaration without them.
@@ -225,6 +281,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final List<InputRef> _scriptInputs;
 
 	private final boolean _hiddenByDefault;
+
+	private final boolean _sortable;
 
 	private final ColumnExport _export;
 
@@ -247,10 +305,17 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_width = config.getWidth();
 		_aggregate = InputScript.compile(config, Config.AGGREGATE);
 		_comparator = InputScript.compile(config, Config.COMPARATOR);
+		_tooltip = InputScript.compile(config, Config.TOOLTIP);
 		_scriptInputs = InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE));
 		_hiddenByDefault = !config.getVisible();
+		_sortable = config.getSortable();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
+
+		if (!_sortable && (_sort != null || _comparator != null)) {
+			context.error("A column that is not '" + Config.SORTABLE + "' has neither a '" + Config.SORT
+				+ "' direction nor a '" + Config.COMPARATOR + "': column at " + config.location() + ".");
+		}
 	}
 
 	/**
@@ -283,8 +348,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_width = 0;
 		_aggregate = null;
 		_comparator = null;
+		_tooltip = null;
 		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
+		_sortable = true;
 		_export = ColumnExport.DEFAULT;
 		_annotations = null;
 	}
@@ -331,12 +398,12 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
-		List<ViewChannel> inputs = _aggregate == null && _comparator == null
+		List<ViewChannel> inputs = _aggregate == null && _comparator == null && _tooltip == null
 			? List.of()
 			: ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export);
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs), _sortable);
 	}
 
 	/**
@@ -390,6 +457,39 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			return null;
 		}
 		return order((value1, value2) -> executor.execute(ChannelInputs.arguments(inputs, value1, value2)));
+	}
+
+	/**
+	 * The function computing the tooltip of a cell from its row and its value, {@code null} for a
+	 * column whose cells have none.
+	 *
+	 * @param executor
+	 *        The compiled {@link Config#getTooltip()}.
+	 * @param inputs
+	 *        The channels of its inputs.
+	 */
+	private static BiFunction<Object, Object, String> tooltip(QueryExecutor executor, List<ViewChannel> inputs) {
+		if (executor == null) {
+			return null;
+		}
+		return (row, value) -> tooltipText(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The text of a tooltip a script computed: the text itself, an internationalized text in the
+	 * language of the user, the label of any other value, {@code null} for nothing at all.
+	 */
+	static String tooltipText(Object result) {
+		if (result == null) {
+			return null;
+		}
+		if (result instanceof ResKey key) {
+			return Resources.getInstance().getString(key);
+		}
+		if (result instanceof CharSequence text) {
+			return text.toString();
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(result);
 	}
 
 	/**

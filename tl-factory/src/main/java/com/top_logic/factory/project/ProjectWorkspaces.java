@@ -23,17 +23,23 @@ import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.DevelopmentCategory;
 import com.top_logic.basic.sched.DaemonThreadFactory;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.agent.WorkspaceAgentService;
+import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.factory.workspace.WorkspaceState;
+import com.top_logic.factory.workspace.app.ApplicationFailedException;
 import com.top_logic.factory.workspace.app.ApplicationSpec;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces.ApplicationState;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -68,7 +74,9 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	SchedulerService.Module.class,
 	SecureRandomService.Module.class,
+	LLMProxyService.Module.class,
 })
+@ServiceCategory.Of(DevelopmentCategory.class)
 public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.Config<?>> {
 
 	/**
@@ -85,6 +93,29 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		 * Configuration property name of {@link #getMaxLogSize()}.
 		 */
 		String MAX_LOG_SIZE = "max-log-size";
+
+		/**
+		 * Configuration property name of {@link #getApplicationCheckInterval()}.
+		 */
+		String APPLICATION_CHECK_INTERVAL = "application-check-interval";
+
+		/**
+		 * Milliseconds between two checks of the applications of the workspaces whose container
+		 * runs, {@code 0} for no checks.
+		 *
+		 * <p>
+		 * The application of a running container may stop or start without an operation of the
+		 * control application, e.g. when the agent of the workspace restarts it. The check
+		 * stores {@link WorkspaceStatus#APP_STOPPED} for a {@link WorkspaceStatus#RUNNING}
+		 * workspace whose application stopped or failed, and {@link WorkspaceStatus#RUNNING} for
+		 * an {@link WorkspaceStatus#APP_STOPPED} one whose application answers again.
+		 * </p>
+		 *
+		 * @see #APPLICATION_CHECK_INTERVAL
+		 */
+		@Name(APPLICATION_CHECK_INTERVAL)
+		@IntDefault(10000)
+		int getApplicationCheckInterval();
 
 		/**
 		 * Milliseconds between two commits of the output of a running operation.
@@ -126,6 +157,8 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 
 	private ExecutorService _workers;
 
+	private ScheduledFuture<?> _applicationCheck;
+
 	/**
 	 * Creates a {@link ProjectWorkspaces} from configuration.
 	 *
@@ -143,10 +176,20 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		super.startUp();
 		_workers = Executors.newCachedThreadPool(DaemonThreadFactory.daemonThreadFactory());
 		_workers.execute(() -> ThreadContext.inSystemContext(ProjectWorkspaces.class, this::reconcile));
+		long interval = getConfig().getApplicationCheckInterval();
+		if (interval > 0) {
+			_applicationCheck = SchedulerService.getInstance().scheduleWithFixedDelay(
+				() -> ThreadContext.inSystemContext(ProjectWorkspaces.class, this::checkApplications), interval, interval,
+				TimeUnit.MILLISECONDS);
+		}
 	}
 
 	@Override
 	protected void shutDown() {
+		if (_applicationCheck != null) {
+			_applicationCheck.cancel(false);
+			_applicationCheck = null;
+		}
 		_workers.shutdownNow();
 		_workers = null;
 		super.shutDown();
@@ -154,6 +197,15 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 
 	private static ApplicationWorkspaces applications() {
 		return WorkspaceService.getInstance().getApplications();
+	}
+
+	/**
+	 * The workspaces the operations of this service work on.
+	 *
+	 * @implSpec The applications of the {@link WorkspaceService}.
+	 */
+	protected ApplicationWorkspaces getApplications() {
+		return applications();
 	}
 
 	/**
@@ -166,7 +218,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 *
 	 * <p>
 	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password},
-	 * which the application in it sets for its account {@code root}.
+	 * which the application in it sets for its account {@code root}. If the
+	 * {@link LLMProxyService LLM proxy} is switched on, the container gets the URL of the proxy in
+	 * its environment.
 	 * </p>
 	 *
 	 * @param project
@@ -194,27 +248,182 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		if (!_busy.add(workspaceId)) {
 			throw new TopLogicException(I18NConstants.ERROR_WORKSPACE_BUSY__PROJECT.fill(project));
 		}
-		String initialPassword = SecureRandomService.getInstance().getRandomString();
-		TLObject workspace;
+		NewWorkspace created;
 		try {
-			workspace = commitInRequest(
-				() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING));
+			created = commitNewWorkspace(project, workspaceId);
 		} catch (RuntimeException ex) {
 			_busy.remove(workspaceId);
 			throw ex;
 		}
-		ApplicationSpec spec = new ApplicationSpec(workspaceId, groupId, artifactId)
-			.setEngineVersion(version)
-			.setInitialPassword(initialPassword);
+		TLObject workspace = created.workspace();
+		ApplicationSpec spec = created.spec();
 		run(workspace, "Creating application " + groupId + ":" + artifactId + " " + version + ".", log -> {
-			WorkspaceInfo info = applications().create(spec, log);
+			WorkspaceInfo info = getApplications().create(spec, log);
 			log.update(w -> {
+				w.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());
 				FactoryModel.setStatus(w, WorkspaceStatus.STARTING);
 				FactoryModel.setEndpoint(w, port(info), null);
 			});
 			awaitApplication(log, workspaceId, artifactId);
 		});
 		return workspace;
+	}
+
+	/**
+	 * A workspace that is stored and the description of the application to create in it.
+	 *
+	 * @param workspace
+	 *        The stored workspace.
+	 * @param spec
+	 *        The application to create in the container of the workspace, including the
+	 *        environment the container gets.
+	 */
+	public record NewWorkspace(TLObject workspace, ApplicationSpec spec) {
+		@Override
+		public String toString() {
+			// The environment of the spec holds secrets.
+			return "NewWorkspace[" + workspace + "]";
+		}
+	}
+
+	/**
+	 * Stores a new workspace of a project in state {@link WorkspaceStatus#BUILDING}, in a
+	 * transaction of its own, without creating its container.
+	 *
+	 * <p>
+	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
+	 * The password and, if the {@link LLMProxyService LLM proxy} is switched on, the URL of the
+	 * proxy are in the environment of the returned {@link NewWorkspace#spec() spec}.
+	 * </p>
+	 *
+	 * @param project
+	 *        A project without workspace whose group, artifact and engine version are valid.
+	 * @param workspaceId
+	 *        The identifier of the container of the workspace.
+	 */
+	public static NewWorkspace commitNewWorkspace(TLObject project, String workspaceId) {
+		String initialPassword = SecureRandomService.getInstance().getRandomString();
+		TLObject workspace = commitInRequest(
+			() -> FactoryModel.createWorkspace(project, workspaceId, initialPassword, WorkspaceStatus.BUILDING));
+		return new NewWorkspace(workspace, applicationSpec(project, workspaceId, initialPassword));
+	}
+
+	/**
+	 * The description of the application of a workspace, with the environment its container gets.
+	 */
+	private static ApplicationSpec applicationSpec(TLObject project, String workspaceId, String initialPassword) {
+		ApplicationSpec spec = new ApplicationSpec(workspaceId,
+			FactoryModel.getString(project, FactoryModel.PROJECT_GROUP_ID),
+			FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID))
+			.setEngineVersion(FactoryModel.getString(project, FactoryModel.PROJECT_ENGINE_VERSION))
+			.setInitialPassword(initialPassword);
+		LLMProxyService llmProxy = LLMProxyService.getInstance();
+		if (llmProxy != null) {
+			spec.putEnv(llmProxy.containerEnv());
+		}
+		return spec;
+	}
+
+	/**
+	 * Creates the container of the workspace of a project anew on the current workspace image in
+	 * the background, keeping its sources, its Maven repository and its database.
+	 *
+	 * <p>
+	 * The container gets the {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password} of
+	 * the workspace and, if the {@link LLMProxyService LLM proxy} is switched on, its current URL.
+	 * A workspace that was running is started again and waited for like by
+	 * {@link #start(TLObject)}.
+	 * </p>
+	 *
+	 * @param project
+	 *        A project with a workspace on which no operation runs.
+	 * @see #isImageOutdated(TLObject)
+	 */
+	public void update(TLObject project) {
+		TLObject existing = FactoryModel.getWorkspace(project);
+		// Prepared before the state is stored, so that a failure leaves the workspace as it is.
+		WorkspaceUpdate update = existing == null ? null : prepareUpdate(existing);
+		TLObject workspace = begin(project, WorkspaceStatus.UPDATING, WorkspaceStatus.values());
+		String workspaceId = FactoryModel.getWorkspaceId(workspace);
+		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
+		run(workspace, "Updating the workspace to the current image.", log -> {
+			boolean wasRunning =
+				getApplications().getProvider().status(workspaceId).getState() == WorkspaceState.RUNNING;
+			WorkspaceInfo info = getApplications().update(update.spec(), log);
+			log.line("Container created on image " + info.getImage() + ".");
+			log.update(w -> {
+				recordUpdate(w, info);
+				FactoryModel.setStatus(w, wasRunning ? WorkspaceStatus.STARTING : WorkspaceStatus.of(info.getState()));
+				FactoryModel.setEndpoint(w, null, null);
+			});
+			if (wasRunning) {
+				WorkspaceInfo started = getApplications().start(workspaceId);
+				log.update(w -> FactoryModel.setEndpoint(w, port(started), null));
+				awaitApplication(log, workspaceId, artifactId);
+			}
+		});
+	}
+
+	/**
+	 * What the container of an updated workspace gets.
+	 *
+	 * @param spec
+	 *        The application of the workspace, including the environment the container gets.
+	 */
+	public record WorkspaceUpdate(ApplicationSpec spec) {
+		@Override
+		public String toString() {
+			// The environment of the spec holds secrets.
+			return "WorkspaceUpdate[" + spec.getWorkspaceId() + "]";
+		}
+	}
+
+	/**
+	 * Describes the container of an updated workspace without storing anything.
+	 *
+	 * <p>
+	 * The workspace keeps its {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
+	 * </p>
+	 *
+	 * @param workspace
+	 *        The stored workspace.
+	 */
+	public static WorkspaceUpdate prepareUpdate(TLObject workspace) {
+		ApplicationSpec spec = applicationSpec(FactoryModel.getProject(workspace),
+			FactoryModel.getWorkspaceId(workspace),
+			FactoryModel.getString(workspace, FactoryModel.WORKSPACE_INITIAL_PASSWORD));
+		return new WorkspaceUpdate(spec);
+	}
+
+	/**
+	 * Stores in the current transaction that the container of a workspace was created anew: the
+	 * {@link FactoryModel#WORKSPACE_IMAGE image} of the container.
+	 *
+	 * @param workspace
+	 *        The stored workspace.
+	 * @param info
+	 *        The workspace in its new container.
+	 */
+	public static void recordUpdate(TLObject workspace, WorkspaceInfo info) {
+		workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());
+	}
+
+	/**
+	 * Whether the container of a workspace was created from another image than the
+	 * {@link ApplicationWorkspaces#currentImage() current workspace image}.
+	 *
+	 * <p>
+	 * A workspace without recorded image has no container yet - it is being built, or its build
+	 * failed before the container was created - and is not outdated. The image of a container
+	 * created before images were recorded is taken over when the states are compared with the
+	 * containers after a restart (see {@link WorkspaceReconciliation}).
+	 * </p>
+	 *
+	 * @see #update(TLObject)
+	 */
+	public static boolean isImageOutdated(TLObject workspace) {
+		String image = FactoryModel.getString(workspace, FactoryModel.WORKSPACE_IMAGE);
+		return image != null && !image.equals(applications().currentImage());
 	}
 
 	/**
@@ -245,18 +454,37 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * Starts the workspace of a project in the background and waits until its application
 	 * answers.
 	 *
+	 * <p>
+	 * A workspace whose container runs but whose application does not
+	 * ({@link WorkspaceStatus#APP_STOPPED}) gets only its application started, through the
+	 * supervisor in the container.
+	 * </p>
+	 *
 	 * @param project
 	 *        A project whose workspace is {@link WorkspaceStatus#STOPPED},
-	 *        {@link WorkspaceStatus#CREATED} or {@link WorkspaceStatus#UNKNOWN}.
+	 *        {@link WorkspaceStatus#CREATED}, {@link WorkspaceStatus#APP_STOPPED} or
+	 *        {@link WorkspaceStatus#UNKNOWN}.
 	 */
 	public void start(TLObject project) {
 		TLObject workspace = begin(project, WorkspaceStatus.STARTING, WorkspaceStatus.STOPPED, WorkspaceStatus.CREATED,
-			WorkspaceStatus.UNKNOWN);
+			WorkspaceStatus.APP_STOPPED, WorkspaceStatus.UNKNOWN);
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
 		String artifactId = FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID);
 		run(workspace, "Starting the workspace.", log -> {
-			WorkspaceInfo info = applications().start(workspaceId);
-			log.update(w -> FactoryModel.setEndpoint(w, port(info), null));
+			WorkspaceInfo current = getApplications().getProvider().status(workspaceId);
+			if (current.getState() == WorkspaceState.RUNNING) {
+				log.line("The container runs, starting the application.");
+				log.flush();
+				try {
+					getApplications().startApplication(workspaceId, log);
+				} catch (ApplicationFailedException ex) {
+					applicationStopped(log, workspaceId, ex);
+					return;
+				}
+			} else {
+				WorkspaceInfo info = getApplications().start(workspaceId);
+				log.update(w -> FactoryModel.setEndpoint(w, port(info), null));
+			}
 			awaitApplication(log, workspaceId, artifactId);
 		});
 	}
@@ -265,15 +493,16 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * Stops the workspace of a project in the background.
 	 *
 	 * @param project
-	 *        A project whose workspace is {@link WorkspaceStatus#RUNNING}, or whose container may
-	 *        run: {@link WorkspaceStatus#UNKNOWN} or {@link WorkspaceStatus#ERROR}.
+	 *        A project whose workspace is {@link WorkspaceStatus#RUNNING} or
+	 *        {@link WorkspaceStatus#APP_STOPPED}, or whose container may run:
+	 *        {@link WorkspaceStatus#UNKNOWN} or {@link WorkspaceStatus#ERROR}.
 	 */
 	public void stop(TLObject project) {
-		TLObject workspace = begin(project, WorkspaceStatus.STOPPING, WorkspaceStatus.RUNNING, WorkspaceStatus.UNKNOWN,
-			WorkspaceStatus.ERROR);
+		TLObject workspace = begin(project, WorkspaceStatus.STOPPING, WorkspaceStatus.RUNNING,
+			WorkspaceStatus.APP_STOPPED, WorkspaceStatus.UNKNOWN, WorkspaceStatus.ERROR);
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
 		run(workspace, "Stopping the workspace.", log -> {
-			applications().stop(workspaceId);
+			getApplications().stop(workspaceId);
 			log.line("Workspace stopped.");
 			log.update(w -> {
 				FactoryModel.setStatus(w, WorkspaceStatus.STOPPED);
@@ -286,6 +515,12 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * Removes the container and the volumes of the workspace of a project in the background, and
 	 * then the workspace itself; the project is kept.
 	 *
+	 * <p>
+	 * The agents working in the workspace are stopped and the tokens the {@link LLMProxyService LLM
+	 * proxy} issued for the workspace are revoked first; the agent conversations are removed with the
+	 * workspace.
+	 * </p>
+	 *
 	 * @param project
 	 *        A project with a workspace on which no operation runs.
 	 */
@@ -293,9 +528,17 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		TLObject workspace = begin(project, WorkspaceStatus.REMOVING, WorkspaceStatus.values());
 		String workspaceId = FactoryModel.getWorkspaceId(workspace);
 		run(workspace, "Removing the workspace.", log -> {
-			WorkspaceInfo info = applications().getProvider().status(workspaceId);
+			WorkspaceAgentService agents = WorkspaceAgentService.getInstance();
+			if (agents != null) {
+				agents.stopAll(workspaceId);
+			}
+			LLMProxyService llmProxy = LLMProxyService.getInstance();
+			if (llmProxy != null) {
+				llmProxy.revokeAll(workspaceId);
+			}
+			WorkspaceInfo info = getApplications().getProvider().status(workspaceId);
 			if (info.getState() != WorkspaceState.MISSING || !info.getVolumes().isEmpty()) {
-				applications().remove(workspaceId);
+				getApplications().remove(workspaceId);
 			}
 			log.line("Workspace removed.");
 			log.update(TLObject::tDelete);
@@ -375,12 +618,31 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			throws InterruptedException {
 		log.line("Waiting for the application to answer.");
 		log.flush();
-		String url = applications().awaitApplication(workspaceId, artifactId);
-		WorkspaceInfo info = applications().getProvider().status(workspaceId);
+		String url;
+		try {
+			url = getApplications().awaitApplication(workspaceId, artifactId, log);
+		} catch (ApplicationFailedException ex) {
+			applicationStopped(log, workspaceId, ex);
+			return;
+		}
+		WorkspaceInfo info = getApplications().getProvider().status(workspaceId);
 		log.line("Application running at " + url);
 		log.update(w -> {
 			FactoryModel.setStatus(w, WorkspaceStatus.RUNNING);
 			FactoryModel.setEndpoint(w, port(info), url);
+		});
+	}
+
+	/**
+	 * Ends an operation whose application failed to start in a running container in state
+	 * {@link WorkspaceStatus#APP_STOPPED}.
+	 */
+	private void applicationStopped(WorkspaceLog log, String workspaceId, ApplicationFailedException ex) {
+		log.line("Failed: " + message(ex));
+		WorkspaceInfo info = getApplications().getProvider().status(workspaceId);
+		log.update(w -> {
+			FactoryModel.setStatus(w, WorkspaceStatus.APP_STOPPED);
+			FactoryModel.setEndpoint(w, port(info), null);
 		});
 	}
 
@@ -432,14 +694,17 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 		try {
 			Map<String, WorkspaceReconciliation.Outcome> outcomes =
-				new WorkspaceReconciliation(applications().getProvider(), ProjectWorkspaces::applicationUrl)
-					.reconcile(stored);
+				new WorkspaceReconciliation(getApplications().getProvider(), ProjectWorkspaces::applicationUrl,
+					this::applicationState).reconcile(stored);
 			commit(() -> {
 				for (Map.Entry<String, WorkspaceReconciliation.Outcome> entry : outcomes.entrySet()) {
 					TLObject workspace = workspaces.get(entry.getKey());
 					WorkspaceReconciliation.Outcome outcome = entry.getValue();
 					FactoryModel.setStatus(workspace, outcome.status());
 					FactoryModel.setEndpoint(workspace, outcome.hostPort(), outcome.previewUrl());
+					if (outcome.image() != null) {
+						workspace.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, outcome.image());
+					}
 					if (outcome.message() != null) {
 						String log = FactoryModel.getString(workspace, FactoryModel.WORKSPACE_LOG);
 						workspace.tUpdateByName(FactoryModel.WORKSPACE_LOG,
@@ -453,6 +718,58 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			Logger.error("Failed to reconcile the states of the workspaces.", ex, ProjectWorkspaces.class);
 		} finally {
 			_busy.removeAll(workspaces.keySet());
+		}
+	}
+
+	/**
+	 * Updates the stored states of the workspaces whose container runs to the states of their
+	 * applications, see {@link Config#getApplicationCheckInterval()}.
+	 */
+	public void checkApplications() {
+		for (TLObject workspace : FactoryModel.allWorkspaces()) {
+			WorkspaceStatus stored = FactoryModel.getStatus(workspace);
+			if (!stored.isContainerRunning()) {
+				continue;
+			}
+			String id = FactoryModel.getWorkspaceId(workspace);
+			if (!_busy.add(id)) {
+				continue;
+			}
+			try {
+				ApplicationState state = applicationState(id);
+				if (stored == WorkspaceStatus.RUNNING && WorkspaceReconciliation.applicationDown(state)) {
+					commit(() -> {
+						FactoryModel.setStatus(workspace, WorkspaceStatus.APP_STOPPED);
+						workspace.tUpdateByName(FactoryModel.WORKSPACE_PREVIEW_URL, null);
+					});
+					Logger.info("The application of workspace " + id + " is " + state + ".", ProjectWorkspaces.class);
+				} else if (stored == WorkspaceStatus.APP_STOPPED && state == ApplicationState.RUNNING) {
+					WorkspaceInfo info = getApplications().getProvider().status(id);
+					String url = info.hasHostPort() ? applicationUrl(info) : null;
+					commit(() -> {
+						FactoryModel.setStatus(workspace, WorkspaceStatus.RUNNING);
+						FactoryModel.setEndpoint(workspace, port(info), url);
+					});
+					Logger.info("The application of workspace " + id + " runs again.", ProjectWorkspaces.class);
+				}
+			} catch (RuntimeException ex) {
+				Logger.error("Failed to check the application of workspace " + id + ".", ex, ProjectWorkspaces.class);
+			} finally {
+				_busy.remove(id);
+			}
+		}
+	}
+
+	/**
+	 * The state of the application of a running workspace, {@link ApplicationState#UNKNOWN} if it
+	 * cannot be asked.
+	 */
+	private ApplicationState applicationState(String workspaceId) {
+		try {
+			return getApplications().applicationState(workspaceId);
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			return ApplicationState.UNKNOWN;
 		}
 	}
 

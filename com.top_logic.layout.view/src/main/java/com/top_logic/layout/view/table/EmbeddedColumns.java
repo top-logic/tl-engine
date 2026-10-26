@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
@@ -345,9 +346,9 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * row: named and labelled after the path leading to the embedded object, reading its value
 	 * through that path, and displayed but not edited - an embedded object is shown through the
 	 * row, and what it holds is changed where that object itself is edited. It orders its values
-	 * as the embedded column does; a column collecting the values of several objects orders those
-	 * collections {@link ColumnSetup#elementwise(Comparator) element by element} by the same
-	 * comparator.
+	 * as the embedded column does, and does not sort where the embedded column does not; a column
+	 * collecting the values of several objects orders those collections
+	 * {@link ColumnSetup#elementwise(Comparator) element by element} by the same comparator.
 	 *
 	 * @param setup
 	 *        The column as the embedded object's own table would show it.
@@ -372,7 +373,21 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			aggregate == null ? null : rows -> aggregate.apply(objects(rows, navigation)),
 			comparator != null && target.multiple() ? ColumnSetup.elementwise(comparator) : comparator,
 			setup.hiddenByDefault(),
-			setup.export());
+			setup.export(),
+			embeddedTooltip(setup.tooltip(), navigation),
+			setup.sortable());
+	}
+
+	/**
+	 * The tooltip of an embedded column: the tooltip of the embedded declaration, seeing the
+	 * embedded object as its row.
+	 */
+	private static BiFunction<Object, Object, String> embeddedTooltip(BiFunction<Object, Object, String> tooltip,
+			Function<Object, Object> navigation) {
+		if (tooltip == null) {
+			return null;
+		}
+		return (row, value) -> tooltip.apply(row == null ? null : navigation.apply(row), value);
 	}
 
 	/** The name of an embedded column, under the path leading to the object it shows. */

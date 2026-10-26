@@ -62,6 +62,11 @@ public class DeleteTLModuleProcessor extends TLModelBaseLineMigrationProcessor<D
 		 */
 		boolean isFailOnExistingTypes();
 
+		/**
+		 * Setter for {@link #isFailOnExistingTypes()}.
+		 */
+		void setFailOnExistingTypes(boolean value);
+
 	}
 
 	private Util _util;

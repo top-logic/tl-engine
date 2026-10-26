@@ -27,7 +27,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.contact.external.ExternalContact;
@@ -49,6 +51,7 @@ import com.top_logic.util.Resources;
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Label("Mail helper")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Config<MailHelper>> {
 
     /** Attribute - subject of the e-mail */

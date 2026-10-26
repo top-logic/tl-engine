@@ -20,12 +20,14 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.Resources;
 
 /**
@@ -47,6 +49,7 @@ import com.top_logic.util.Resources;
  *
  * @see CitationValidator
  */
+@ServiceCategory.Of(AICategory.class)
 public class CitationKinds extends ConfiguredManagedClass<CitationKinds.Config> {
 
 	/** A web page {@code webFetch} or the browser read. */

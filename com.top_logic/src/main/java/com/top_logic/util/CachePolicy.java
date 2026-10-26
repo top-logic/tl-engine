@@ -15,7 +15,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 
 /**
  * Configures the HTTP cache-control headers sent for most JSP pages and servlets.
@@ -28,6 +30,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:klaus.halfmann@top-logic.com">Klaus Halfmann</a>
  */
 @Label("HTTP cache policy")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class CachePolicy extends ConfiguredManagedClass<CachePolicy.Config> {
 
 	/**

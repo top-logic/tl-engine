@@ -118,7 +118,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	static final String COLUMN_DETAIL = "_detail";
 
 	/** Column name for the row-removal action column. */
-	static final String COLUMN_DELETE = "_delete";
+	public static final String COLUMN_DELETE = "_delete";
+
+	/** Display width in pixels of the detail and the row-removal action columns. */
+	public static final int ACTION_COLUMN_WIDTH = 48;
 
 	/** Command name for {@link #handleAddRow()}. */
 	private static final String CMD_ADD_ROW = "addRow";
@@ -680,7 +683,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DETAIL, row -> row)
 				.label(ResKey.text(""))
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDetailButton(ctx, row))))
-				.width(48)
+				.width(ACTION_COLUMN_WIDTH)
 				.frozenEligible(false)
 				// Holds a per-row button, not data: nothing to offer in the column selection.
 				.selectable(false)
@@ -692,16 +695,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		_dataSetups = setups;
 
-		// Removal action column (edit mode only, when the binding supports removal, last, no header
-		// label - see detail column).
+		// Removal action column (edit mode only, when the binding supports removal, no header label -
+		// see detail column). Like every per-row command column it is pinned to the end of the
+		// table: it keeps its width, and the last data column takes the room the columns leave.
 		if (editMode && binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE) {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DELETE, row -> row)
 				.label(ResKey.text(""))
 				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
-				.width(48)
-				.frozenEligible(false)
-				// Holds a per-row button, not data: nothing to offer in the column selection.
-				.selectable(false)
+				.width(ACTION_COLUMN_WIDTH)
+				.pinnedEnd(true)
 				.build());
 		}
 

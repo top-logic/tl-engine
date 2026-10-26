@@ -16,8 +16,10 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
@@ -41,6 +43,7 @@ import com.top_logic.layout.basic.ThemeImage;
  * @see FlagIcon
  */
 @ServiceDependencies({})
+@ServiceCategory.Of(I18NCategory.class)
 public class LanguageFlags extends ConfiguredManagedClass<LanguageFlags.Config> {
 
 	/**

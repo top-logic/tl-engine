@@ -8,8 +8,6 @@ package com.top_logic.layout.admin.component;
 
 import java.util.Map;
 
-import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -27,7 +25,7 @@ public class ModuleHasConfigurationRule implements ExecutabilityRule {
 		if (model instanceof BasicRuntimeModule<?>) {
 			BasicRuntimeModule<?> module = (BasicRuntimeModule<?>) model;
 
-			if (hasServiceConfig(module)) {
+			if (TLServiceUtils.hasServiceConfiguration(module)) {
 				return ExecutableState.EXECUTABLE;
 			} else {
 				return ExecutableState.NOT_EXEC_HIDDEN;
@@ -35,14 +33,6 @@ public class ModuleHasConfigurationRule implements ExecutabilityRule {
 		}
 
 		return ExecutableState.NO_EXEC_NOT_SUPPORTED;
-	}
-
-	private boolean hasServiceConfig(BasicRuntimeModule<?> module) {
-		try {
-			return ApplicationConfig.getInstance().getServiceConfiguration(module.getImplementation()) != null;
-		} catch (ConfigurationException exception) {
-			return false;
-		}
 	}
 
 }

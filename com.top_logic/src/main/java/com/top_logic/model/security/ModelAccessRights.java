@@ -271,6 +271,11 @@ public interface ModelAccessRights {
 	/**
 	 * Checks whether the given person can perform the given command group on the given instance.
 	 * Works for both built-in and custom operations.
+	 *
+	 * <p>
+	 * A deleted object is accessible for nobody, not even for a person bypassing the model
+	 * security.
+	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup);
 
@@ -314,6 +319,10 @@ public interface ModelAccessRights {
 	/**
 	 * Checks whether the given person can perform the given command group on the given attribute of
 	 * the given instance.
+	 *
+	 * <p>
+	 * No attribute of a deleted object is accessible to anybody.
+	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
 
@@ -397,6 +406,9 @@ public interface ModelAccessRights {
 	 * own: creating one of its objects in a context is writing that context, and creating one
 	 * without a context is not restricted, since the object is inaccessible until it is put into a
 	 * container, which is a write of the container.
+	 * </p>
+	 * <p>
+	 * Nobody may create an object in a deleted context.
 	 * </p>
 	 */
 	boolean isAllowedCreate(Person person, TLClass type, TLObject context);

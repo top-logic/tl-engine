@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -19,8 +20,8 @@ import com.top_logic.table.ColumnOption;
 import com.top_logic.util.Resources;
 
 /**
- * The column selection of a table as a layer panel: each column with its handle, its name, a lock that freezes it and
- * an eye that shows or hides it.
+ * The column selection of a table as a layer panel: each column with its handle, its name, a lock that freezes it, an
+ * eye that shows or hides it and a toggle grouping the rows by it.
  *
  * <p>
  * The locked columns form a block at the start of the list - the columns the table freezes. Locking puts a column at
@@ -35,10 +36,16 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * The control edits a working copy - a table's columns change only when the surrounding dialog applies
- * {@link #visibleColumns()} and {@link #lockedColumns()}, so cancelling discards the edits. The order, the eyes and
- * the locks all live on the server: every gesture is a command, and the resulting list is pushed back, exactly as
- * dragging a column header is handled by the {@link TableViewControl}.
+ * The rows are grouped by one column at a time, which may also be a hidden one: the header menu of the table offers
+ * the displayed columns alone, so the dialog is where the rows are grouped by a column the table does not display. A
+ * tree table offers no grouping, its rows are structured by their nodes already.
+ * </p>
+ *
+ * <p>
+ * The control edits a working copy - a table's columns and grouping change only when the surrounding dialog applies
+ * {@link #visibleColumns()}, {@link #lockedColumns()} and {@link #groupedColumn()}, so cancelling discards the edits.
+ * The order, the eyes, the locks and the grouping all live on the server: every gesture is a command, and the
+ * resulting list is pushed back, exactly as dragging a column header is handled by the {@link TableViewControl}.
  * </p>
  */
 public class ReactColumnSelectControl extends ReactControl {
@@ -51,6 +58,15 @@ public class ReactColumnSelectControl extends ReactControl {
 
 	/** Command freezing or releasing one column. */
 	public static final String CMD_COLUMN_LOCK = "columnLock";
+
+	/**
+	 * Command choosing the column to group the rows by, or none, with the arguments of the table's own
+	 * {@link TableViewControl#CMD_GROUP}.
+	 */
+	public static final String CMD_GROUP = TableViewControl.CMD_GROUP;
+
+	/** State key of whether the rows can be grouped at all. */
+	public static final String GROUPABLE = "groupable";
 
 	/** State key of the edited column list. */
 	private static final String ENTRIES = "entries";
@@ -67,6 +83,9 @@ public class ReactColumnSelectControl extends ReactControl {
 	/** Per-entry state key of whether the column is frozen. */
 	private static final String ENTRY_LOCKED = "locked";
 
+	/** Per-entry state key of whether the rows are grouped by the column. */
+	private static final String ENTRY_GROUPED = "grouped";
+
 	/** One edited column. */
 	private record Entry(String name, ResKey label, boolean visible, boolean locked) {
 
@@ -82,6 +101,12 @@ public class ReactColumnSelectControl extends ReactControl {
 	/** The edited columns, in the edited order, the locked ones first. */
 	private final List<Entry> _entries;
 
+	/** Whether the rows can be grouped at all. */
+	private final boolean _groupable;
+
+	/** The edited grouping: the column to group the rows by, {@code null} for none. */
+	private String _groupedColumn;
+
 	/**
 	 * Creates a {@link ReactColumnSelectControl}.
 	 *
@@ -92,9 +117,18 @@ public class ReactColumnSelectControl extends ReactControl {
 	 *        {@link com.top_logic.table.TableView#columnOptions()}).
 	 * @param lockedColumns
 	 *        The names of the columns the table freezes when the dialog opens.
+	 * @param groupedColumn
+	 *        The column the rows are grouped by when the dialog opens, {@code null} for none.
+	 * @param groupable
+	 *        Whether the rows can be grouped at all. A tree table cannot: its rows are structured by their nodes
+	 *        already, so no column offers grouping then.
 	 */
-	public ReactColumnSelectControl(ReactContext context, List<ColumnOption> options, Set<String> lockedColumns) {
+	public ReactColumnSelectControl(ReactContext context, List<ColumnOption> options, Set<String> lockedColumns,
+			String groupedColumn, boolean groupable) {
 		super(context, null, "TLColumnSelect");
+		_groupable = groupable;
+		_groupedColumn = groupedColumn;
+		putState(GROUPABLE, Boolean.valueOf(groupable));
 		List<Entry> locked = new ArrayList<>();
 		List<Entry> rest = new ArrayList<>();
 		for (ColumnOption option : options) {
@@ -133,6 +167,17 @@ public class ReactColumnSelectControl extends ReactControl {
 	}
 
 	/**
+	 * The column to group the rows by, {@code null} for none - the third part of the result.
+	 *
+	 * <p>
+	 * Unless the rows can be grouped, this is the grouping the dialog opened with.
+	 * </p>
+	 */
+	public String groupedColumn() {
+		return _groupedColumn;
+	}
+
+	/**
 	 * All columns in the edited order, displayed or not.
 	 */
 	public List<String> order() {
@@ -152,6 +197,7 @@ public class ReactColumnSelectControl extends ReactControl {
 			state.put(ENTRY_LABEL, resources.getString(entry.label()));
 			state.put(ENTRY_VISIBLE, Boolean.valueOf(entry.visible()));
 			state.put(ENTRY_LOCKED, Boolean.valueOf(entry.locked()));
+			state.put(ENTRY_GROUPED, Boolean.valueOf(entry.name().equals(_groupedColumn)));
 			entries.add(state);
 		}
 		putState(ENTRIES, entries);
@@ -225,6 +271,32 @@ public class ReactColumnSelectControl extends ReactControl {
 		}
 		Entry entry = _entries.remove(index).withLocked(args.isLocked());
 		_entries.add(lockedCount(), args.isLocked() ? entry.withVisible(true) : entry);
+		pushEntries();
+	}
+
+	/**
+	 * Handles a click on the group toggle: the rows are grouped by the given column, or by none when the column is
+	 * empty.
+	 *
+	 * <p>
+	 * The rows are grouped by one column at a time, so the client moves the grouping by naming another column and
+	 * removes it by naming none. A column the dialog does not offer, and any grouping of a table that cannot be grouped,
+	 * is ignored.
+	 * </p>
+	 */
+	@ReactCommandHandler(CMD_GROUP)
+	void handleGroup(GroupArguments args) {
+		if (!_groupable) {
+			return;
+		}
+		String column = args.getColumn();
+		if (StringServices.isEmpty(column)) {
+			_groupedColumn = null;
+		} else if (indexOf(column) >= 0) {
+			_groupedColumn = column;
+		} else {
+			return;
+		}
 		pushEntries();
 	}
 

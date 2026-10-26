@@ -13,8 +13,10 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.keystorages.KeyStorageCheckerRegistry;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 
 
 /**
@@ -24,6 +26,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  */
 @ServiceDependencies(KeyStorageCheckerRegistry.Module.class)
 @Label("Type key registry")
+@ServiceCategory.Of(RuntimeCategory.class)
 public final class TypeKeyRegistry extends ManagedClass {
 
 	public static final String PROVIDER_CLASS_CONFIGNAME = "provider";

@@ -15,8 +15,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.FileLocation;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.DevelopmentCategory;
 import com.top_logic.layout.scripting.template.ScriptTemplateFinder.ScriptTemplateFinderConfig;
 import com.top_logic.template.xml.source.TemplateSourceFactory;
 
@@ -36,6 +38,7 @@ import com.top_logic.template.xml.source.TemplateSourceFactory;
 @ServiceDependencies({
 	TemplateSourceFactory.Module.class,
 })
+@ServiceCategory.Of(DevelopmentCategory.class)
 public class ScriptTemplateFinder extends ConfiguredManagedClass<ScriptTemplateFinderConfig> {
 
 	/**

@@ -39,8 +39,6 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.util.TLContext;
@@ -86,14 +84,6 @@ public class ChatConversationControl extends ReactControl {
 	 * element wires none and the browser's store is the source.
 	 */
 	private final SessionSelection _selection;
-
-	/**
-	 * The channel naming what a conversation started here is about, or <code>null</code> when the
-	 * element names none.
-	 *
-	 * @see Config#getSubject()
-	 */
-	private final ViewChannel _subjectChannel;
 
 	private final ViewChannel _busyChannel;
 
@@ -264,12 +254,20 @@ public class ChatConversationControl extends ReactControl {
 		addAttachListener(() -> sessions.attach(context.getModelScope()));
 		addDetachListener(sessions::detach);
 
-		// What a conversation started here is about. Read only when one comes into being, so the
-		// browser has to report that - which it does through publishSession, whether or not this
-		// element also wires an input channel.
+		// What a conversation started here is about: offered to the chat while displayed, and read by
+		// the request that creates the conversation, before its first message is sent.
 		ChannelRef subjectRef = config.getSubject();
-		_subjectChannel = subjectRef == null ? null : context.resolveChannel(subjectRef);
-		putState("hasSubject", Boolean.valueOf(_subjectChannel != null));
+		if (subjectRef != null) {
+			ViewChannel subject = context.resolveChannel(subjectRef);
+			Runnable offer = () -> _binding.offerSubject(subject);
+			Runnable withdraw = () -> _binding.withdrawSubject(subject);
+			addAttachListener(offer);
+			addDetachListener(withdraw);
+			addCleanupAction(withdraw);
+			if (isAttached()) {
+				offer.run();
+			}
+		}
 
 		ChannelRef busyRef = config.getBusy();
 		_busyChannel = busyRef == null ? null : context.resolveChannel(busyRef);
@@ -416,72 +414,19 @@ public class ChatConversationControl extends ReactControl {
 	 * {@link SessionSelection}.
 	 * </p>
 	 *
-	 * <p>
-	 * It is also where a conversation learns what it is about: a session the browser reports as
-	 * <em>created</em> here is stamped with the {@code subject} channel's object. The browser has to
-	 * say which of the two this is, because the server cannot tell a first send from a restore - a
-	 * reload re-opens what this window had, and re-opening a conversation must not move it to
-	 * whatever the page is showing now.
-	 * </p>
-	 *
 	 * @param args
-	 *        {@code id} is the owned chat session id, or empty to clear; {@code created} says
-	 *        whether that session is the one this send brought into being.
+	 *        {@code id} is the owned chat session id, or empty to clear.
 	 */
 	@ReactCommandHandler(value = "publishSession", params = {
-		@ReactParam(name = "id", type = "string", description = "Owned chat session id, or empty to clear."),
-		@ReactParam(name = "created", type = "boolean",
-			description = "Whether the chat was created by this window, rather than opened.")
+		@ReactParam(name = "id", type = "string", description = "Owned chat session id, or empty to clear.")
 	})
 	public void publishSession(Map<String, Object> args) {
 		String id = args == null ? "" : String.valueOf(args.getOrDefault("id", "")).trim();
 		TLObject session = id.isEmpty() ? null : ChatSessionIds.ownedSession(id, currentPerson());
-		stampSubject(session, truthy(args == null ? null : args.get("created")));
 		if (_selection == null) {
 			return;
 		}
 		_selection.publish(id, session);
-	}
-
-	/**
-	 * Writes what this page is about onto a conversation that has just come into being.
-	 *
-	 * <p>
-	 * Only on the way out, and only once: the store refuses a session that is already about
-	 * something.
-	 * </p>
-	 */
-	private void stampSubject(TLObject session, boolean created) {
-		if (_subjectChannel == null || !(session instanceof AgentSession conversation)) {
-			return;
-		}
-		TLObject subject = subjectFor(_subjectChannel.get(), created);
-		if (subject == null) {
-			return;
-		}
-		AgentExecutionStore.getInstance().setSubject(conversation, subject);
-	}
-
-	/**
-	 * What a conversation the browser has just reported is about, or <code>null</code> to stamp
-	 * nothing.
-	 *
-	 * <p>
-	 * Three ways to stamp nothing, and each is the honest answer rather than a fallback: a
-	 * conversation that was <em>opened</em> rather than created keeps the subject it was started
-	 * with, an empty channel means the page was showing nothing, and several objects on it name no
-	 * single thing the conversation could be about. A conversation with no subject is simply in no
-	 * scoped list.
-	 * </p>
-	 *
-	 * @param channelValue
-	 *        What stands on the {@code subject} channel: one object, a one-row selection, several,
-	 *        or nothing.
-	 * @param created
-	 *        Whether this window is what brought the conversation into being.
-	 */
-	static TLObject subjectFor(Object channelValue, boolean created) {
-		return created ? referencedObject(channelValue) : null;
 	}
 
 	/**
@@ -567,7 +512,7 @@ public class ChatConversationControl extends ReactControl {
 	 * </p>
 	 */
 	private void applyReferenceFromChannel(Object value) {
-		TLObject object = referencedObject(value);
+		TLObject object = ChatViewBinding.singleObject(value);
 		if (object == null) {
 			putState("referenceWrite", null);
 			return;
@@ -603,18 +548,6 @@ public class ChatConversationControl extends ReactControl {
 		}
 		token.put("seq", Integer.valueOf(++_quoteWrites));
 		applying(() -> putState("quoteWrite", token));
-	}
-
-	/** The object a host wrote, also when a selection channel handed over its single row. */
-	private static TLObject referencedObject(Object value) {
-		if (value instanceof TLObject object) {
-			return object;
-		}
-		if (value instanceof Collection<?> many && many.size() == 1) {
-			Object single = many.iterator().next();
-			return single instanceof TLObject object ? object : null;
-		}
-		return null;
 	}
 
 	private void applyAgentFromChannel(Object value) {

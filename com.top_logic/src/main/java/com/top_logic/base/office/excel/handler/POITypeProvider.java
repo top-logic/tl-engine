@@ -19,7 +19,9 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 
 /**
  * Manages the type handlers used to write values of different object types into Excel sheets.
@@ -29,6 +31,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 @Label("Excel cell type handlers")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class POITypeProvider extends ManagedClass {
 
 	/**

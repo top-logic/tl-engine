@@ -137,8 +137,9 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     return null;
   }
 
-  // The size spans a container of definite height that is no flex column - a split pane - where the fill class
-  // cannot size the panel. Maximized, the design system places the panel over its container.
+  // The panel spans the box of definite height it stands in also around content of its own size - a split pane, a
+  // tab panel - where it carries no fill class: such a box ends the fill chain, so nothing makes the panel fill there.
+  // Maximized, the design system places the panel over its container.
   const panelStyle: React.CSSProperties | undefined = isMaximized
     ? undefined
     : { width: width ?? '100%', ...(width ? { maxWidth: '100%' } : {}), height: '100%' };

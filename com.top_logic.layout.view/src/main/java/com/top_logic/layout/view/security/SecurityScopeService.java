@@ -21,8 +21,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
@@ -60,6 +62,7 @@ import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 	SecurityComponentCache.Module.class,
 	BoundHelper.Module.class,
 })
+@ServiceCategory.Of(AccessControlCategory.class)
 public class SecurityScopeService extends KBBasedManagedClass<SecurityScopeService.Config> {
 
 	/**

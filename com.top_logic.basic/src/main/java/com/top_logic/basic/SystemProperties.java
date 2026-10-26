@@ -14,7 +14,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.util.Utils;
 
 /**
@@ -27,6 +29,7 @@ import com.top_logic.basic.util.Utils;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("System properties")
+@ServiceCategory.Of(RuntimeCategory.class)
 public class SystemProperties extends ManagedClass {
 	
 	/**

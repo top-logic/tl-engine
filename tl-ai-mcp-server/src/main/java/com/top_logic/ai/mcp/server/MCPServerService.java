@@ -45,6 +45,7 @@ import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
@@ -56,6 +57,7 @@ import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentica
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointSecret;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
@@ -105,6 +107,7 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 	ToolRegistryService.Module.class,
 	AiToolAccessService.Module.class,
 })
+@ServiceCategory.Of(AICategory.class)
 public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {
 
 	/** Path for the MCP endpoint (must match web.xml servlet mapping /mcp). */

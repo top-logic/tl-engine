@@ -21,8 +21,10 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.kafka.services.common.TopicChecker;
 
@@ -33,6 +35,7 @@ import com.top_logic.kafka.services.common.TopicChecker;
  */
 @Label("Kafka consumers")
 @ServiceDependencies(ThreadContextManager.Module.class)
+@ServiceCategory.Of(InterfacesCategory.class)
 public class KafkaConsumerService extends ConfiguredManagedClass<KafkaConsumerService.Config> {
 	
 	/**

@@ -17,7 +17,9 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.importer.base.AbstractImportParser;
 import com.top_logic.importer.base.AbstractImportPerformer;
 
@@ -27,6 +29,7 @@ import com.top_logic.importer.base.AbstractImportPerformer;
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 @Label("Data importers")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class ImporterService extends ConfiguredManagedClass<ImporterService.Config> {
     
     /**

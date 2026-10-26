@@ -13,7 +13,9 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -29,6 +31,7 @@ import com.top_logic.tool.boundsec.compound.CompoundSecurityLayout;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Security component cache")
+@ServiceCategory.Of(AccessControlCategory.class)
 public class SecurityComponentCache extends KBBasedManagedClass<SecurityComponentCache.Config> {
 
 	/**

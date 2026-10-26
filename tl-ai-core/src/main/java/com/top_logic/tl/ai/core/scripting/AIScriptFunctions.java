@@ -50,6 +50,7 @@ import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.CancelSignalObserver;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
+import com.top_logic.tl.ai.core.execution.RunRecording;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
@@ -386,22 +387,16 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			int messageCountBefore = conversation.size();
 
 			AgentSession session = createScriptSession("ai.chat (" + modelName + ")");
-			ExecutionRecorder recorder = session != null
-				? new ExecutionRecorder(session, "ai.chat", null, context.executionHandle(),
-					NO_LISTENER)
-				: null;
+			RunRecording recording = RunRecording.open("ai.chat", session, null, context.executionHandle(),
+				() -> scriptTranscript(env), NO_LISTENER);
 			AgentResult result;
 			try {
-				result = loop.run(conversation, context, recorder != null ? recorder : NO_LISTENER);
+				result = loop.run(conversation, context, recording);
 			} catch (RuntimeException ex) {
-				if (recorder != null) {
-					recorder.complete(scriptTranscript(env), ex);
-				}
+				recording.fail(ex);
 				throw ex;
 			}
-			if (recorder != null) {
-				recorder.complete(scriptTranscript(env), null);
-			}
+			recording.finish(null);
 			// The run is recorded before this throws: a failed run is a row an administrator can
 			// look at, and an exception the script cannot mistake for an empty answer.
 			checkRunSucceeded(result);

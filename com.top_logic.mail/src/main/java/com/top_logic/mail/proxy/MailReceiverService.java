@@ -9,7 +9,9 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.InterfacesCategory;
 
 /**
  * Connects to a configured mail server to receive incoming mails.
@@ -17,6 +19,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Mail receiver")
+@ServiceCategory.Of(InterfacesCategory.class)
 public class MailReceiverService extends ManagedClass {
 
 	/**

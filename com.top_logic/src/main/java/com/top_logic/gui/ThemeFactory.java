@@ -31,7 +31,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.format.BuiltInFormats;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ComputationEx2;
@@ -55,6 +57,7 @@ import com.top_logic.util.TLContext;
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 @Label("Theme management")
+@ServiceCategory.Of(UICategory.class)
 public abstract class ThemeFactory extends ConfiguredManagedClass<ThemeFactory.Config> implements Reloadable {
 
 	/**

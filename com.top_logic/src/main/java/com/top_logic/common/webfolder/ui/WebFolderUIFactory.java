@@ -27,7 +27,9 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.format.MemorySizeFormat;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.model.FolderNode;
 import com.top_logic.common.webfolder.model.WebFolderAccessor;
@@ -76,6 +78,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 @Label("Web folder UI")
+@ServiceCategory.Of(UICategory.class)
 public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactory.Config> {
 
 	/** {@link ConfigurationItem} for the {@link WebFolderUIFactory}. */

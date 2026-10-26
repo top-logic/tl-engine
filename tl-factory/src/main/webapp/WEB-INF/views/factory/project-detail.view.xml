@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The selected project of the control application with its workspace: the project's settings, the
+	address of its running application, a warning when the workspace runs an outdated image, and the
+	state and the output of the last operation on the workspace.
+	
+	The embedding view (factory/projects.view.xml) binds all four channels; it computes the workspace
+	and the values derived from it once for this content and for its commands, and shows this content
+	in its project panel.
+-->
+<view>
+	<channels>
+		<channel name="project"/>
+		<channel name="workspace"/>
+		<channel name="outdated"/>
+		<channel name="previewLink"/>
+	</channels>
+	<inset>
+		<form
+			input="project"
+			mode-switch="false"
+		>
+			<field attribute="name"/>
+			<field attribute="groupId"/>
+			<field attribute="artifactId"/>
+			<field attribute="engineVersion"/>
+		</form>
+		<html input="previewLink"/>
+		<alert
+			inputs="outdated"
+			severity="warning"
+			visible-if="$outdated == true"
+		>
+			<title>
+				<en>Image outdated</en>
+				<de>Image veraltet</de>
+			</title>
+			<message>
+				<en>The container of the workspace runs another image than the current workspace image and misses its tools. "Update workspace" creates the container anew on the current image and keeps sources, Maven repository, database and the conversations of the agent.</en>
+				<de>Der Container des Workspaces läuft auf einem anderen als dem aktuellen Workspace-Image und hat dessen Werkzeuge nicht. "Workspace aktualisieren" legt den Container auf dem aktuellen Image neu an und behält Quellen, Maven-Repository, Datenbank und die Unterhaltungen des Agenten.</de>
+			</message>
+		</alert>
+		<form
+			input="workspace"
+			mode-switch="false"
+		>
+			<field attribute="initialPassword"/>
+			<field attribute="status"/>
+			<field attribute="workspaceId"/>
+			<field attribute="hostPort"/>
+			<field attribute="image"/>
+			<field attribute="log"/>
+		</form>
+	</inset>
+</view>

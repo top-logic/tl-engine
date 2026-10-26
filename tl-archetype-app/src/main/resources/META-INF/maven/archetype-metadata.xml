@@ -56,8 +56,27 @@
 		<requiredProperty key="useBranches">
 			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}false</defaultValue>
 		</requiredProperty>
-		<requiredProperty key="parentArtifactId">
-			<defaultValue>tl-parent-app</defaultValue>
+		<!--
+			The AI agents (tl-starter-ai, with ui=classic or ui=both also the chat in the classic UI
+			tl-chat-classic). The application configures the LLM providers of its agents.
+		-->
+		<requiredProperty key="useAI">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}false</defaultValue>
+		</requiredProperty>
+		<!-- The hybrid search over the objects of the application (tl-starter-ai-search), requires useAI=true. -->
+		<requiredProperty key="useAISearch">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}false</defaultValue>
+		</requiredProperty>
+		<!-- Single sign-on through pac4j (tl-security-auth-pac4j). -->
+		<requiredProperty key="useSSO">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}false</defaultValue>
+		</requiredProperty>
+		<!--
+			The kind of module: app (a runnable application, packaging tl-app) or fragment (a library
+			module used by applications, packaging tl-fragment).
+		-->
+		<requiredProperty key="moduleType">
+			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}app</defaultValue>
 		</requiredProperty>
 	</requiredProperties>
 

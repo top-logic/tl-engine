@@ -17,7 +17,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.OperationsCategory;
 
 /**
  * Collects the health-check results of all registered {@link MonitorComponent}s.
@@ -33,6 +35,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 @Label("Application monitor")
+@ServiceCategory.Of(OperationsCategory.class)
 public class ApplicationMonitor extends ManagedClass {
 
 	/**

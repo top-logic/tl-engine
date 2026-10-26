@@ -21,8 +21,10 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.ScriptingCategory;
 import com.top_logic.convert.FormatConverterFactory;
 import com.top_logic.convert.converters.FormatConverter;
 import com.top_logic.dob.DataObject;
@@ -51,6 +53,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 	KnowledgeBaseFactory.Module.class
 })
 @Label("Full-text indexing")
+@ServiceCategory.Of(ScriptingCategory.class)
 public abstract class DefaultIndexingService
 		extends KBBasedManagedClass<DefaultIndexingService.DefaultIndexingServiceConfig>
 		implements IndexingService, UpdateListener {

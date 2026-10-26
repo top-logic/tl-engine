@@ -1,0 +1,75 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.factory.agent;
+
+import com.top_logic.factory.project.FactoryModel;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.model.TLObject;
+
+/**
+ * The {@link ConversationTarget} of a stored {@link FactoryModel#AGENT_CONVERSATION}.
+ *
+ * <p>
+ * The agent works in the directory of the application of the workspace's project.
+ * </p>
+ */
+public class StoredConversation implements ConversationTarget {
+
+	private final TLObject _conversation;
+
+	/**
+	 * Creates a {@link StoredConversation}.
+	 *
+	 * @param conversation
+	 *        The stored {@link FactoryModel#AGENT_CONVERSATION}.
+	 */
+	public StoredConversation(TLObject conversation) {
+		_conversation = conversation;
+	}
+
+	/**
+	 * The stored {@link FactoryModel#AGENT_CONVERSATION}.
+	 */
+	public TLObject getConversation() {
+		return _conversation;
+	}
+
+	private TLObject workspace() {
+		return FactoryModel.getConversationWorkspace(_conversation);
+	}
+
+	@Override
+	public String workspaceId() {
+		return FactoryModel.getWorkspaceId(workspace());
+	}
+
+	@Override
+	public Object displayName() {
+		return FactoryModel.getProject(workspace());
+	}
+
+	@Override
+	public String workingDir() {
+		TLObject project = FactoryModel.getProject(workspace());
+		return ApplicationWorkspaces.appDir(FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID));
+	}
+
+	@Override
+	public String sessionId() {
+		return FactoryModel.getSessionId(_conversation);
+	}
+
+	@Override
+	public void storeSessionId(String sessionId) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.COMMIT_SESSION_ID)) {
+			_conversation.tUpdateByName(FactoryModel.CONVERSATION_SESSION_ID, sessionId);
+			tx.commit();
+		}
+	}
+
+}

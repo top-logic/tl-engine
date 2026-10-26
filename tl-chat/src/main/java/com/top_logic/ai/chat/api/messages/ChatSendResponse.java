@@ -24,11 +24,16 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getReason() */
 	public static final String REASON__PROP = "reason";
 
+	/** @see #getFeatures() */
+	public static final String FEATURES__PROP = "features";
+
 	private String _taskId = "";
 
 	private String _status = "";
 
 	private String _reason = "";
+
+	private com.top_logic.ai.chat.api.messages.ConversationFeaturesDto _features = null;
 
 	/**
 	 * Creates a {@link ChatSendResponse} instance.
@@ -99,6 +104,34 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_reason = value;
 	}
 
+	/**
+	 * Which functions beyond sending the conversation the message was sent in supports. Absent for a
+	 * send that names no conversation.
+	 */
+	public final com.top_logic.ai.chat.api.messages.ConversationFeaturesDto getFeatures() {
+		return _features;
+	}
+
+	/**
+	 * @see #getFeatures()
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatSendResponse setFeatures(com.top_logic.ai.chat.api.messages.ConversationFeaturesDto value) {
+		internalSetFeatures(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFeatures()} without chain call utility. */
+	protected final void internalSetFeatures(com.top_logic.ai.chat.api.messages.ConversationFeaturesDto value) {
+		_features = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getFeatures()} has a value.
+	 */
+	public final boolean hasFeatures() {
+		return _features != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return CHAT_SEND_RESPONSE__TYPE;
@@ -109,7 +142,8 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		java.util.List<String> local = java.util.Arrays.asList(
 			TASK_ID__PROP, 
 			STATUS__PROP, 
-			REASON__PROP);
+			REASON__PROP, 
+			FEATURES__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -137,6 +171,7 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TASK_ID__PROP: return getTaskId();
 			case STATUS__PROP: return getStatus();
 			case REASON__PROP: return getReason();
+			case FEATURES__PROP: return getFeatures();
 			default: return null;
 		}
 	}
@@ -147,6 +182,7 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TASK_ID__PROP: internalSetTaskId((String) value); break;
 			case STATUS__PROP: internalSetStatus((String) value); break;
 			case REASON__PROP: internalSetReason((String) value); break;
+			case FEATURES__PROP: internalSetFeatures((com.top_logic.ai.chat.api.messages.ConversationFeaturesDto) value); break;
 		}
 	}
 
@@ -171,6 +207,10 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		out.value(getStatus());
 		out.name(REASON__PROP);
 		out.value(getReason());
+		if (hasFeatures()) {
+			out.name(FEATURES__PROP);
+			getFeatures().writeTo(out);
+		}
 	}
 
 	@Override
@@ -179,6 +219,7 @@ public class ChatSendResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case TASK_ID__PROP: setTaskId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STATUS__PROP: setStatus(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case REASON__PROP: setReason(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case FEATURES__PROP: setFeatures(com.top_logic.ai.chat.api.messages.ConversationFeaturesDto.readConversationFeaturesDto(in)); break;
 			default: super.readField(in, field);
 		}
 	}

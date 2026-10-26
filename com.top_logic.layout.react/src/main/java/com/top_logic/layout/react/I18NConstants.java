@@ -1377,6 +1377,13 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.jobStatus.steps")
 	public static ResKey JS_JOB_STATUS_STEPS;
 
+	/**
+	 * @en {0} – {1}
+	 *
+	 * @see com.top_logic.layout.react.routing.RouteManager#currentTitle()
+	 */
+	public static ResKey2 PAGE_TITLE__LABEL_APP;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

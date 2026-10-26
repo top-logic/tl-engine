@@ -1095,6 +1095,9 @@ public class TLDoclet implements Doclet {
 						collectThemeConstantsDoc(type);
 					} else if (isWithPropertiesClass(typeMirror)) {
 						collectWithPropertiesDoc(type);
+					} else if (isServiceCategory(typeMirror)) {
+						// A category of services is shown by its label in the services administration.
+						collectType(type, type);
 					} else if (_wellKnown.hasInAppAnnotation(type)) {
 						collectType(type, type);
 					}
@@ -1697,6 +1700,11 @@ public class TLDoclet implements Doclet {
 		boolean isThemeConstantsClass(TypeMirror typeElement) {
 			return _wellKnown._themeConstantsType != null
 				&& isSubType(typeElement, _wellKnown._themeConstantsType);
+		}
+
+		boolean isServiceCategory(TypeMirror typeElement) {
+			return _wellKnown._serviceCategoryType != null
+				&& isSubType(typeElement, _wellKnown._serviceCategoryType);
 		}
 
 		boolean isWithPropertiesClass(TypeMirror typeElement) {

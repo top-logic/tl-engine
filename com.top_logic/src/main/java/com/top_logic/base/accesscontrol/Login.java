@@ -27,8 +27,10 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.monitor.FailedLogin;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -55,6 +57,7 @@ import com.top_logic.util.Resources;
  */
 @ServiceDependencies(CommandGroupRegistry.Module.class)
 @Label("Login")
+@ServiceCategory.Of(AuthenticationCategory.class)
 public class Login extends ConfiguredManagedClass<Login.Config> {
 
 	/**

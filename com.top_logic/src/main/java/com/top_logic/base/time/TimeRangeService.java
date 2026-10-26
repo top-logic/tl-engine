@@ -18,7 +18,9 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.I18NCategory;
 
 /**
  * A service managing {@link TimeRangeIterator}s.
@@ -26,6 +28,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href=mailto:Dmitry.Ivanizki@top-logic.com>Dmitry Ivanizki</a>
  */
 @Label("Time ranges")
+@ServiceCategory.Of(I18NCategory.class)
 public class TimeRangeService extends ConfiguredManagedClass<TimeRangeService.Config> {
 
 	/**

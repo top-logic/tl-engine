@@ -36,7 +36,9 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
+import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.basic.vars.VariableExpander;
 
 /**
@@ -47,6 +49,7 @@ import com.top_logic.basic.vars.VariableExpander;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Label("Application configuration")
+@ServiceCategory.Of(RuntimeCategory.class)
 public final class ApplicationConfig extends ManagedClass implements Reloadable {
 
 	/**

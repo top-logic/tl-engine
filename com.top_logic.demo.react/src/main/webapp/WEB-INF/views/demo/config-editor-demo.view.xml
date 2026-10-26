@@ -6,6 +6,15 @@
 			<en>Config Editor Demo</en>
 			<de>Konfigurationseditor-Demo</de>
 		</title>
-		<config-form type="com.top_logic.demo.react.view.DemoEditorConfig"/>
+		<config-form type="com.top_logic.demo.react.view.DemoEditorConfig">
+			<save-action>
+				<notify
+					expr="if($config['title'].isEmpty(), #('A title is required to save.'@en, 'Zum Speichern ist ein Titel nötig.'@de))"
+					kind="error"
+					stop="true"
+				/>
+				<notify expr="#('Saved &quot;{0}&quot;.'@en, '&quot;{0}&quot; gespeichert.'@de).fill($config['title'])"/>
+			</save-action>
+		</config-form>
 	</panel>
 </view>

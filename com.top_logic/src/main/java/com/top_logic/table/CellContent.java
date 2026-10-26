@@ -122,4 +122,36 @@ public sealed interface CellContent {
 		return EMPTY;
 	}
 
+	/**
+	 * The given content with the given {@link #tooltip() tooltip}.
+	 *
+	 * <p>
+	 * Text and empty content become {@link Labeled} content showing the same; an {@link Editable}
+	 * cell carries no tooltip and is returned unchanged.
+	 * </p>
+	 *
+	 * @param content
+	 *        The content of a cell.
+	 * @param tooltip
+	 *        The tooltip, {@code null} or empty to keep the content as it is.
+	 */
+	static CellContent withTooltip(CellContent content, String tooltip) {
+		if (tooltip == null || tooltip.isEmpty()) {
+			return content;
+		}
+		if (content instanceof Text text) {
+			return new Labeled(text.text(), tooltip, null, null);
+		}
+		if (content instanceof Labeled labeled) {
+			return new Labeled(labeled.text(), tooltip, labeled.icon(), labeled.cssClass());
+		}
+		if (content instanceof Raw raw) {
+			return new Raw(raw.payload(), tooltip);
+		}
+		if (content instanceof Empty) {
+			return new Labeled("", tooltip, null, null);
+		}
+		return content;
+	}
+
 }

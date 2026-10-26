@@ -16,8 +16,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.PersistenceCategory;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
@@ -52,6 +54,7 @@ import com.top_logic.knowledge.service.migration.MigrationService;
  */
 @ServiceExtensionPoint(ConnectionPoolRegistry.Module.class)
 @Label("Database table setup")
+@ServiceCategory.Of(PersistenceCategory.class)
 public class InitialTableSetup extends ManagedClass {
 
 	/**

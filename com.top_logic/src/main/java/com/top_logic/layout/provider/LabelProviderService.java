@@ -32,8 +32,10 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -91,6 +93,7 @@ import com.top_logic.util.model.ModelService;
 	CommandHandlerFactory.Module.class,
 })
 @Label("Object presentation providers")
+@ServiceCategory.Of(UICategory.class)
 public class LabelProviderService extends ManagedClass implements UpdateListener, ContextMenuCommandsProvider {
 
 	/**

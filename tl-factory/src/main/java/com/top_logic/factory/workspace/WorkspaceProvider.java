@@ -5,6 +5,8 @@
  */
 package com.top_logic.factory.workspace;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -62,8 +64,8 @@ public interface WorkspaceProvider extends AutoCloseable {
 	 *        The files to build the image from.
 	 * @param output
 	 *        Receiver of the output of the build while it runs.
-	 * @return The reference of the image, the repository followed by {@code :} and the content
-	 *         hash.
+	 * @return The reference of the image, the repository tagged with the content hash, see
+	 *         {@link ImageContext#imageReference(String)}.
 	 */
 	String buildImage(String repository, ImageContext context, ExecOutput output) throws InterruptedException;
 
@@ -114,6 +116,34 @@ public interface WorkspaceProvider extends AutoCloseable {
 	WorkspaceInfo create(WorkspaceSpec spec) throws InterruptedException;
 
 	/**
+	 * Creates the container of an existing workspace anew from the given spec, keeping its
+	 * volumes.
+	 *
+	 * <p>
+	 * The container the workspace has is stopped and removed, its volumes are kept and mounted by
+	 * the new container, which may use another {@link WorkspaceSpec#getImage() image} and another
+	 * environment. The image is made available before the container is removed, so that a
+	 * workspace whose image cannot be pulled keeps its container. A workspace that has lost its
+	 * container but still has volumes gets a container again. The new container is not started.
+	 * </p>
+	 *
+	 * @param spec
+	 *        The workspace to create anew, addressed by its {@link WorkspaceSpec#getWorkspaceId()
+	 *        identifier}.
+	 * @return The workspace in state {@link WorkspaceState#CREATED}.
+	 */
+	default WorkspaceInfo recreate(WorkspaceSpec spec) throws InterruptedException {
+		String workspaceId = spec.getWorkspaceId();
+		WorkspaceInfo existing = status(workspaceId);
+		if (existing.getState() == WorkspaceState.MISSING && existing.getVolumes().isEmpty()) {
+			throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_WORKSPACE__ID.fill(workspaceId));
+		}
+		ensureImage(spec.getImage());
+		removeContainer(workspaceId);
+		return create(spec);
+	}
+
+	/**
 	 * Starts the container of a workspace and publishes its
 	 * {@link WorkspaceSpec#getContainerPort() container port} on a free port of the host.
 	 *
@@ -149,11 +179,37 @@ public interface WorkspaceProvider extends AutoCloseable {
 	void remove(String workspaceId);
 
 	/**
+	 * Removes the container of a workspace and keeps its volumes.
+	 *
+	 * <p>
+	 * A running container is stopped first. Removing the container of a workspace that has none
+	 * does nothing.
+	 * </p>
+	 *
+	 * @see #recreate(WorkspaceSpec)
+	 */
+	void removeContainer(String workspaceId);
+
+	/**
 	 * The current state of a workspace.
 	 *
 	 * @return The workspace, in state {@link WorkspaceState#MISSING} if it has no container.
 	 */
 	WorkspaceInfo status(String workspaceId);
+
+	/**
+	 * The address ranges of the network the workspace containers are attached to, as CIDR
+	 * strings, e.g. {@code 172.18.0.0/16} or {@code fd00:1::/64}.
+	 *
+	 * <p>
+	 * A request from one of these addresses comes from a workspace container (or from another
+	 * container attached to that network).
+	 * </p>
+	 *
+	 * @return The ranges, empty if the network does not exist yet or the platform does not report
+	 *         them.
+	 */
+	List<String> networkSubnets();
 
 	/**
 	 * All workspaces of this provider, including those that have only volumes left.
@@ -180,7 +236,19 @@ public interface WorkspaceProvider extends AutoCloseable {
 	List<String> cleanup(Collection<String> keep);
 
 	/**
+	 * Value of the number of lines of {@link #followLog(String, int, Instant, ExecOutput)} that
+	 * delivers the whole log.
+	 */
+	int ALL_LINES = -1;
+
+	/**
 	 * Runs a command inside the container of a running workspace and waits for it to finish.
+	 *
+	 * <p>
+	 * The command reads an empty standard input. If it does not finish within its
+	 * {@link ExecCommand#getTimeout() timeout}, it is {@link ExecProcess#terminate() terminated}
+	 * and the call fails. If the waiting thread is interrupted, the command is killed.
+	 * </p>
 	 *
 	 * @param workspaceId
 	 *        The workspace to run the command in.
@@ -190,7 +258,64 @@ public interface WorkspaceProvider extends AutoCloseable {
 	 *        Receiver of the output of the command while it runs.
 	 * @return The exit code of the command.
 	 */
-	int exec(String workspaceId, ExecCommand command, ExecOutput output) throws InterruptedException;
+	default int exec(String workspaceId, ExecCommand command, ExecOutput output) throws InterruptedException {
+		try (ExecProcess process = startExec(workspaceId, command, output)) {
+			try {
+				process.closeStdin();
+			} catch (IOException ex) {
+				// The command has ended before its input was closed, its exit code tells how.
+			}
+			if (!process.waitFor(command.getTimeout())) {
+				process.terminate();
+				throw new TopLogicException(I18NConstants.ERROR_COMMAND_TIMEOUT__WORKSPACE_COMMAND_SECONDS
+					.fill(workspaceId, command.toString(), command.getTimeout().toSeconds()));
+			}
+			return process.exitCode();
+		}
+	}
+
+	/**
+	 * Starts a command inside the container of a running workspace and returns without waiting
+	 * for it.
+	 *
+	 * <p>
+	 * The command reads its standard input from the returned handle, which also waits for and
+	 * terminates the command. The {@link ExecCommand#getTimeout() timeout} of the command does
+	 * not apply, the command runs until it ends, is terminated, or the workspace stops.
+	 * </p>
+	 *
+	 * @param workspaceId
+	 *        The workspace to run the command in.
+	 * @param command
+	 *        The command to run.
+	 * @param output
+	 *        Receiver of the output of the command while it runs.
+	 * @return The handle of the running command, to be closed by the caller.
+	 */
+	ExecProcess startExec(String workspaceId, ExecCommand command, ExecOutput output);
+
+	/**
+	 * Delivers the output of the main process of a workspace: what it has written so far and,
+	 * while it runs, what it writes from now on.
+	 *
+	 * <p>
+	 * The output of a stopped workspace is the one of its last run; its delivery ends after the
+	 * existing output.
+	 * </p>
+	 *
+	 * @param workspaceId
+	 *        The workspace whose output is delivered.
+	 * @param tailLines
+	 *        The number of the last lines of the existing output to deliver, {@link #ALL_LINES} for
+	 *        all of them.
+	 * @param since
+	 *        The time from which on existing output is delivered, {@code null} for all of it. The
+	 *        precision is a second.
+	 * @param output
+	 *        Receiver of the output, called from a thread of the provider.
+	 * @return The handle of the delivery, to be closed by the caller.
+	 */
+	LogFollower followLog(String workspaceId, int tailLines, Instant since, ExecOutput output);
 
 	/**
 	 * Releases the connection to the container platform. The workspaces are not affected.

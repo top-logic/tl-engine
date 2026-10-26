@@ -44,8 +44,10 @@ import com.top_logic.basic.config.misc.NamedRegexp;
 import com.top_logic.basic.io.FileSystemCache;
 import com.top_logic.basic.io.PathUpdate;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.thread.ThreadContext;
@@ -91,6 +93,7 @@ import com.top_logic.util.error.TopLogicException;
 	FileSystemCache.Module.class,
 })
 @Label("Layout storage")
+@ServiceCategory.Of(UICategory.class)
 public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 	/**

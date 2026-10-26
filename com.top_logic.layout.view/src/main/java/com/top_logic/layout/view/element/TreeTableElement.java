@@ -36,6 +36,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -195,6 +196,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, null);
 		TableViewControl<Object> control = table.control();
 		TreeRowSource<DefaultTreeUINode, Object> source = table.source();
+
+		contributeExportCommand(context, control, table::view,
+			() -> ColumnDeclarations.exportRenderers(table.setups()), inputChannels);
 
 		// The rows follow the tree, which follows the model and the input.
 		Runnable refresh = () -> {

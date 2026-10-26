@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<!--
+		Feature starter: the TopLogic AI modules as a single dependency: the agent loop with its LLM providers,
+		the chat, the agents editing views, the MCP server and A2A. An application enables its AI agents by
+		depending on this POM:
+
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-starter-ai</artifactId>
+				<type>pom</type>
+			</dependency>
+
+		The parent is tl-parent-all, not tl-parent-core: a starter contributes no code and no resources, so it
+		needs only the version management and publishing settings, but none of the module build of a
+		TopLogic fragment.
+
+		An application using it configures its LLM providers itself.
+	-->
+
+	<parent>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-all</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+		<relativePath>..</relativePath>
+	</parent>
+
+	<artifactId>tl-starter-ai</artifactId>
+
+	<name>${project.artifactId}</name>
+	<description>Feature starter bundling the TopLogic AI modules: agent loop and LLM providers, React chat, view-editing agents, MCP server and A2A.</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+	<organization>
+		<name>Business Operation Systems GmbH</name>
+		<url>https://www.top-logic.com</url>
+	</organization>
+
+	<packaging>pom</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chat</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-views</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-mcp-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-ai-a2a</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view-agent</artifactId>
+		</dependency>
+	</dependencies>
+</project>

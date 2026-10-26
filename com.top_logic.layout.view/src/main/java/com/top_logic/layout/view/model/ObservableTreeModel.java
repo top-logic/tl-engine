@@ -371,9 +371,13 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 * </p>
 	 *
 	 * <p>
-	 * An observation that resumes - one that was stopped by {@link #detach()} - reconciles the tree
-	 * on top of that, because every change of the displayed objects passed unnoticed while the
-	 * display was suspended. An observation beginning for the first time needs none: the tree was
+	 * An observation that resumes - one that was stopped by {@link #detach()} - brings the whole
+	 * display up to date on top of that, because every change of the displayed objects passed
+	 * unnoticed while the display was suspended: it reconciles the child lists of the tree,
+	 * {@link Display#invalidateNode(DefaultTreeUINode) invalidates} every displayed node, since an
+	 * attribute shown for it may have changed without changing the tree, and tells the display and
+	 * the {@link #addStructureListener(Runnable) structure listeners} about it, whether the tree
+	 * changed or not. An observation beginning for the first time needs none of it: the tree was
 	 * just built from the objects as they are.
 	 * </p>
 	 */
@@ -397,8 +401,23 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		}
 		if (changed) {
 			syncObjectListeners();
-			_display.nodesChanged();
-			notifyStructureChanged();
+		}
+		invalidateSubtree(_treeModel.getRoot());
+		_display.nodesChanged();
+		notifyStructureChanged();
+	}
+
+	/**
+	 * {@link Display#invalidateNode(DefaultTreeUINode) Invalidates} the given node and every node
+	 * below it whose children were computed already.
+	 */
+	private void invalidateSubtree(DefaultTreeUINode node) {
+		_display.invalidateNode(node);
+		if (!node.isInitialized()) {
+			return;
+		}
+		for (DefaultTreeUINode child : node.getChildren()) {
+			invalidateSubtree(child);
 		}
 	}
 

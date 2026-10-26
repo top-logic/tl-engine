@@ -521,6 +521,10 @@
 			</filters>
 		</config>
 			
+		<config config:interface="com.top_logic.basic.credential.SecretStores$Config">
+			<store class="com.top_logic.basic.credential.EnvironmentSecretStore"/>
+		</config>
+
 		<config config:interface="com.top_logic.basic.config.template.TemplateExpression$GlobalConfig">
 			<functions>
 				<function name="size" impl="com.top_logic.basic.func.Size" />

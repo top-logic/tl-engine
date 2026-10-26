@@ -20,7 +20,8 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * A consumer asks for the secret each time it needs it instead of keeping the value. This allows
  * rotating a secret without restarting the application: an {@link EnvironmentSecretSource} reads
  * the variable on each call, a {@link FileSecretSource} re-reads its file after it has been
- * replaced, e.g. when a Kubernetes or Docker secret is updated.
+ * replaced, e.g. when a Kubernetes or Docker secret is updated, and a {@link NamedSecretSource}
+ * asks the {@link SecretStore} of the installation each time.
  * </p>
  *
  * <p>
@@ -39,24 +40,32 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * </p>
  *
  * <ul>
- * <li>An element selects a {@link SecretSource} implementation by its class, e.g. a
- * {@link FileSecretSource}. An element without <code>class</code> attribute is an
- * {@link EnvironmentSecretSource} naming the variable that holds the secret (the explicit form
- * <code>class="com.top_logic.basic.credential.EnvironmentSecretSource"</code> is valid as well):
+ * <li>An element without <code>class</code> attribute is a {@link NamedSecretSource} naming the
+ * secret. Where the named secrets live is decided once per installation in {@link SecretStores}:
+ * by default in system properties or environment variables of the same name, in production e.g. in
+ * the files of a mounted secret directory or in a vault:
  *
  * <pre>
  * &lt;my-service&gt;
  *   &lt;api-key name="my_api_key"/&gt;
  * &lt;/my-service&gt;
+ * </pre>
  *
+ * This is the recommended form: the configuration holds the name of the secret, not the secret,
+ * and stays the same in all installations, whereas a secret resolved from an alias is part of the
+ * effective configuration and ends up in a file the service editor stores.</li>
+ * <li>An element with <code>class</code> attribute selects another {@link SecretSource}
+ * implementation for a secret that lives apart from the secret storage of the installation, e.g. a
+ * {@link FileSecretSource} or an {@link EnvironmentSecretSource} reading a variable regardless of
+ * the configured storage:
+ *
+ * <pre>
  * &lt;my-service&gt;
  *   &lt;api-key class="com.top_logic.basic.credential.FileSecretSource" path="/run/secrets/my-api-key"/&gt;
  * &lt;/my-service&gt;
  * </pre>
  *
- * This is the recommended form for a secret from the environment: the configuration holds the
- * name of the variable, not the secret, whereas a secret resolved from an alias is part of the
- * effective configuration and ends up in a file the service editor stores.</li>
+ * </li>
  * <li>An attribute value is an encrypted secret (or a value with the prefix
  * <code>unencrypted:</code>) and stands for a {@link LiteralSecretSource}. This is the form of an
  * encrypted {@link String} property, so existing configurations keep working:
@@ -70,16 +79,16 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  *
  * <p>
  * Writing such a configuration back produces the attribute form (with the secret encrypted) for a
- * {@link LiteralSecretSource}, the element without <code>class</code> for an
- * {@link EnvironmentSecretSource} and the element with <code>class</code> for all other sources.
- * The service editor preselects the {@link EnvironmentSecretSource} for a new mandatory secret,
- * since it keeps the secret out of the configuration files. A property may choose another default
- * with an {@link ImplementationClassDefault} annotation of its own.
+ * {@link LiteralSecretSource}, the element without <code>class</code> for a
+ * {@link NamedSecretSource} and the element with <code>class</code> for all other sources. The
+ * service editor preselects the {@link NamedSecretSource} for a new mandatory secret, since it
+ * keeps the secret out of the configuration files. A property may choose another default with an
+ * {@link ImplementationClassDefault} annotation of its own.
  * </p>
  *
  * @see Format
  */
-@ImplementationClassDefault(EnvironmentSecretSource.class)
+@ImplementationClassDefault(NamedSecretSource.class)
 public interface SecretSource {
 
 	/**

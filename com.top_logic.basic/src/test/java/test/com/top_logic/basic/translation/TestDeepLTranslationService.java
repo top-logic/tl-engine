@@ -30,7 +30,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.translation.DeepLTranslationService;
@@ -225,10 +225,10 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 	}
 
 	/**
-	 * A configuration referencing the API key by its variable is written in the form it was read,
-	 * holding only the name of the variable.
+	 * A configuration referencing the API key by its secret name is written in the form it was
+	 * read, holding only the name of the secret.
 	 */
-	public void testEnvironmentApiKeyStorage() throws Exception {
+	public void testNamedApiKeyStorage() throws Exception {
 		System.setProperty(VARIABLE, API_KEY);
 		try (MockApi api = new MockApi(index -> 200)) {
 			Config config = read(serviceXml(api, "", environmentApiKey()));
@@ -238,7 +238,7 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 			assertFalse(written, written.contains(API_KEY));
 
 			Config reread = read(written);
-			EnvironmentSecretSource.Config apiKey = (EnvironmentSecretSource.Config)
+			NamedSecretSource.Config apiKey = (NamedSecretSource.Config)
 				((TranslationService.Config) reread.getService()).getApiKey();
 			assertEquals(VARIABLE, apiKey.getName());
 			assertEquals(written, toXML(reread));

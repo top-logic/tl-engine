@@ -5,7 +5,6 @@
  */
 package com.top_logic.basic.credential;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -25,13 +24,19 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * </p>
  *
  * <p>
- * It is the default {@link SecretSource}: an element without <code>class</code> attribute names
- * the variable:
+ * It references a variable of the environment explicitly, regardless of the secret storage of the
+ * installation:
  * </p>
  *
  * <pre>
- * &lt;api-key name="MY_API_KEY"/&gt;
+ * &lt;api-key class="com.top_logic.basic.credential.EnvironmentSecretSource" name="MY_API_KEY"/&gt;
  * </pre>
+ *
+ * <p>
+ * An element without <code>class</code> attribute is a {@link NamedSecretSource} instead, whose
+ * secret is fetched from the {@link SecretStores secret storage} of the installation, by default
+ * from the variable with the same name.
+ * </p>
  *
  * @see Environment#getSystemPropertyOrEnvironmentVariable(String, String)
  */
@@ -83,9 +88,9 @@ public class EnvironmentSecretSource extends AbstractConfiguredInstance<Environm
 	@Override
 	public String getSecret() {
 		String name = getConfig().getName();
-		String value = Environment.getSystemPropertyOrEnvironmentVariable(name, null);
-		if (StringServices.isEmpty(value)) {
-			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_VARIABLE_UNDEFINED__NAME.fill(name));
+		String value = EnvironmentSecretStore.variable(name);
+		if (value == null) {
+			throw new I18NRuntimeException(EnvironmentSecretStore.undefined(name));
 		}
 		return value;
 	}

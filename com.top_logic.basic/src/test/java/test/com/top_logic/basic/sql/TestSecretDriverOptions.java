@@ -30,7 +30,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
-import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.io.character.CharacterContents;
@@ -164,7 +164,7 @@ public class TestSecretDriverOptions extends AbstractTypedConfigurationTestCase 
 		}
 	}
 
-	/** A reference to a variable is written as element without class holding only the name. */
+	/** A reference to a named secret is written as element without class holding only the name. */
 	public void testWriteEnvironmentPassword() throws Exception {
 		System.setProperty(VARIABLE, PASSWORD);
 		Config config = read(config("", environmentPassword()));
@@ -174,7 +174,7 @@ public class TestSecretDriverOptions extends AbstractTypedConfigurationTestCase 
 		assertTrue("Not written in short form: " + xml, xml.contains("<value name=\"" + VARIABLE + "\""));
 
 		Config copy = (Config) fromXML(xml);
-		assertTrue(password(copy) instanceof EnvironmentSecretSource.Config);
+		assertTrue(password(copy) instanceof NamedSecretSource.Config);
 		assertEquals(xml, toXML(copy));
 		assertConnects(copy);
 	}

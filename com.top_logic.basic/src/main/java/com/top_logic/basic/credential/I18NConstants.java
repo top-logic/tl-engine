@@ -37,6 +37,26 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_SECRET_NOT_CONFIGURED;
 
 	/**
+	 * @en The secret "{0}" is not available in the secret storage.
+	 */
+	public static ResKey1 ERROR_SECRET_UNDEFINED__NAME;
+
+	/**
+	 * @en The secret "{0}" is empty.
+	 */
+	public static ResKey1 ERROR_SECRET_EMPTY__NAME;
+
+	/**
+	 * @en "{0}" is not a valid name of a secret file.
+	 */
+	public static ResKey1 ERROR_SECRET_NAME_INVALID__NAME;
+
+	/**
+	 * @en The override of the secret "{0}" refers to itself.
+	 */
+	public static ResKey1 ERROR_SECRET_OVERRIDE_CYCLE__NAME;
+
+	/**
 	 * Error reported when a consumer of an external service is configured with both explicit
 	 * credentials and an API key.
 	 *

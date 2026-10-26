@@ -7,8 +7,9 @@
 	<alias>
         <!--
             The variable translation_api_key, for a configuration referencing the key of the translation
-            service by alias. The engine configuration reads the variable through an
-            EnvironmentSecretSource, which expects the plain key without the prefix "unencrypted:".
+            service by alias. The engine configuration references the key by the secret name
+            translation_api_key, which the default secret store reads from this variable as plain key
+            without the prefix "unencrypted:".
         -->
         <entry name="%TRANSLATION_API_KEY%" value="${env:translation_api_key:unencrypted:}" />
         <entry name="%TRANSLATION_ENABLED%" value="${env:translation_enabled:false}" />

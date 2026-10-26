@@ -33,6 +33,7 @@ import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.FileSecretSource;
 import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.LiteralSecretSource;
+import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
@@ -150,15 +151,15 @@ public class TestSecretSource extends AbstractTypedConfigurationTestCase {
 		assertEquals("Variable must be read on each use.", "second", source.getSecret());
 	}
 
-	public void testElementWithoutClassIsEnvironment() throws Exception {
+	public void testElementWithoutClassIsNamed() throws Exception {
 		System.setProperty(TEST_VARIABLE, "from-env");
 		Config config = read("<config><api-key name='" + TEST_VARIABLE + "'/></config>");
 
-		assertTrue(config.getApiKey() instanceof EnvironmentSecretSource.Config);
-		assertEquals("from-env", secret(config));
+		assertTrue(config.getApiKey() instanceof NamedSecretSource.Config);
+		assertEquals("Default store reads the variable.", "from-env", secret(config));
 
 		Config copy = (Config) fromXML(toXML(config));
-		assertTrue(copy.getApiKey() instanceof EnvironmentSecretSource.Config);
+		assertTrue(copy.getApiKey() instanceof NamedSecretSource.Config);
 		assertEquals("from-env", secret(copy));
 	}
 

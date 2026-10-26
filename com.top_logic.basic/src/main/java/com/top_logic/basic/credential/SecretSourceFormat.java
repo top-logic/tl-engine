@@ -29,7 +29,9 @@ import com.top_logic.basic.config.annotation.Format;
  *
  * <p>
  * When writing, a {@link LiteralSecretSource} with a non-empty secret is written as encrypted
- * attribute value. Any other {@link SecretSource} is written as element and read back from it.
+ * attribute value. Any other {@link SecretSource} is written as element and read back from it: a
+ * {@link NamedSecretSource}, the default implementation of {@link SecretSource}, as element
+ * without <code>class</code> attribute, all others with their <code>class</code>.
  * </p>
  *
  * <p>

@@ -5,14 +5,7 @@
  */
 package com.top_logic.basic.credential;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.util.Objects;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -44,6 +37,12 @@ import com.top_logic.basic.exception.I18NRuntimeException;
  * <code>..data</code> symbolic link to it: the configured path then resolves to a different file
  * with a different file key (inode) and last-modified time, so the change is detected with a single
  * <code>stat</code> per use instead of reading the content each time.
+ * </p>
+ *
+ * <p>
+ * A file referenced by an explicit {@link FileSecretSource} holds a secret that lives apart from
+ * the other secrets of the installation. Secrets mounted as files of one directory are found by
+ * their name through a {@link DirectorySecretStore}.
  * </p>
  */
 public class FileSecretSource extends AbstractConfiguredInstance<FileSecretSource.Config> implements SecretSource {
@@ -85,9 +84,7 @@ public class FileSecretSource extends AbstractConfiguredInstance<FileSecretSourc
 
 	}
 
-	private final Path _path;
-
-	private volatile Snapshot _snapshot;
+	private final SecretFile _file;
 
 	/**
 	 * Creates a {@link FileSecretSource} from configuration.
@@ -99,63 +96,17 @@ public class FileSecretSource extends AbstractConfiguredInstance<FileSecretSourc
 	 */
 	public FileSecretSource(InstantiationContext context, Config config) {
 		super(context, config);
-		_path = Paths.get(config.getPath());
+		_file = new SecretFile(Paths.get(config.getPath()));
 	}
 
 	@Override
 	public String getSecret() {
-		try {
-			BasicFileAttributes attributes = Files.readAttributes(_path, BasicFileAttributes.class);
-			Snapshot snapshot = _snapshot;
-			if (snapshot == null || !snapshot.matches(attributes)) {
-				String secret = new String(Files.readAllBytes(_path), StandardCharsets.UTF_8).strip();
-				snapshot = new Snapshot(attributes, secret);
-				_snapshot = snapshot;
-			}
-			if (snapshot.getSecret().isEmpty()) {
-				throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_FILE_EMPTY__PATH.fill(_path.toString()));
-			}
-			return snapshot.getSecret();
-		} catch (IOException ex) {
-			_snapshot = null;
-			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_FILE_UNREADABLE__PATH.fill(_path.toString()),
-				ex);
+		String secret = _file.lookup();
+		if (secret == null) {
+			throw new I18NRuntimeException(
+				I18NConstants.ERROR_SECRET_FILE_UNREADABLE__PATH.fill(_file.getPath().toString()));
 		}
-	}
-
-	/**
-	 * The content of the secret file together with the attributes of the file it was read from.
-	 */
-	private static final class Snapshot {
-
-		private final Object _fileKey;
-
-		private final FileTime _lastModified;
-
-		private final long _size;
-
-		private final String _secret;
-
-		Snapshot(BasicFileAttributes attributes, String secret) {
-			_fileKey = attributes.fileKey();
-			_lastModified = attributes.lastModifiedTime();
-			_size = attributes.size();
-			_secret = secret;
-		}
-
-		/**
-		 * Whether the file with the given attributes is the one this snapshot was read from.
-		 */
-		boolean matches(BasicFileAttributes attributes) {
-			return Objects.equals(_fileKey, attributes.fileKey())
-				&& _lastModified.equals(attributes.lastModifiedTime())
-				&& _size == attributes.size();
-		}
-
-		String getSecret() {
-			return _secret;
-		}
-
+		return secret;
 	}
 
 }

@@ -27,7 +27,7 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
  */
 public class TestSplitPanelReset extends TestCase {
 
-	/** A drag turns the panes into pixel sizes; the reset gives them their configured percentages back. */
+	/** A drag changes the sizes of the panes; the reset gives them their configured sizes back. */
 	public void testResetGivesTheConfiguredSizesBack() {
 		ReactContext context = context();
 		int[] resets = { 0 };
@@ -38,10 +38,11 @@ public class TestSplitPanelReset extends TestCase {
 		split.addChild(a, ChildConstraint.percent(30));
 		split.addChild(b, ChildConstraint.percent(70));
 
-		split.executeCommand("updateSizes", Map.of("sizes", Map.of(a.getID(), 400, b.getID(), 600)));
-		assertEquals(DisplayUnit.PIXEL.getExternalName(), child(split, 0).get("unit"));
+		split.executeCommand(ReactSplitPanelControl.UPDATE_SIZES_COMMAND,
+			Map.of(ReactSplitPanelControl.SIZES_ARG, Map.of(a.getID(), 40, b.getID(), 60)));
+		assertEquals(40.0, ((Number) child(split, 0).get("size")).doubleValue(), 0.001);
 
-		split.executeCommand("resetSizes", Map.of());
+		split.executeCommand(ReactSplitPanelControl.RESET_SIZES_COMMAND, Map.of());
 		assertEquals(30.0, ((Number) child(split, 0).get("size")).doubleValue(), 0.001);
 		assertEquals(DisplayUnit.PERCENT.getExternalName(), child(split, 0).get("unit"));
 		assertEquals(70.0, ((Number) child(split, 1).get("size")).doubleValue(), 0.001);
@@ -56,7 +57,7 @@ public class TestSplitPanelReset extends TestCase {
 		split.addChild(a, ChildConstraint.pixels(420));
 		split.setDefaultSize(a, 25, DisplayUnit.PERCENT);
 
-		split.executeCommand("resetSizes", Map.of());
+		split.executeCommand(ReactSplitPanelControl.RESET_SIZES_COMMAND, Map.of());
 		assertEquals(25.0, ((Number) child(split, 0).get("size")).doubleValue(), 0.001);
 		assertEquals(DisplayUnit.PERCENT.getExternalName(), child(split, 0).get("unit"));
 	}

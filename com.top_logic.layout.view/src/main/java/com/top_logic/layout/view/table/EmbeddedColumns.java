@@ -346,9 +346,9 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * row: named and labelled after the path leading to the embedded object, reading its value
 	 * through that path, and displayed but not edited - an embedded object is shown through the
 	 * row, and what it holds is changed where that object itself is edited. It orders its values
-	 * as the embedded column does; a column collecting the values of several objects orders those
-	 * collections {@link ColumnSetup#elementwise(Comparator) element by element} by the same
-	 * comparator.
+	 * as the embedded column does, and does not sort where the embedded column does not; a column
+	 * collecting the values of several objects orders those collections
+	 * {@link ColumnSetup#elementwise(Comparator) element by element} by the same comparator.
 	 *
 	 * @param setup
 	 *        The column as the embedded object's own table would show it.
@@ -376,7 +376,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			setup.export(),
 			embeddedCellFunction(setup.tooltip(), navigation),
 			embeddedCellFunction(setup.cellClass(), navigation),
-			setup.display());
+			setup.display(),
+			setup.sortable());
 	}
 
 	/**

@@ -75,6 +75,15 @@ public class TestDelegatingColumn extends TestCase {
 		assertEquals("The wrapped column is untouched.", 42, inner.defaultWidth());
 	}
 
+	public void testNotSortable() {
+		Column<Person, String> inner = column();
+
+		Column<Person, String> unsorted = DelegatingColumn.notSortable(inner);
+		assertEquals("The column offers no sorting.", Optional.empty(), unsorted.sort());
+		assertEquals("The wrapped column is untouched.", Optional.of(SORT), inner.sort());
+		assertEquals("Everything else is delegated.", Optional.of(FILTER), unsorted.filter());
+	}
+
 	public void testEveryOtherAspectIsDelegated() {
 		Column<Person, String> inner = column();
 		Column<Person, String> wrapped = DelegatingColumn.withDefaultWidth(inner, 220);

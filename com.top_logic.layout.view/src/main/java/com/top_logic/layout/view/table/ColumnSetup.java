@@ -94,6 +94,11 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        {@link #binding()} built. A collection of values is displayed value by value. A display
  *        that is a {@link LabelProvider} gives the cells the text the free-text search finds them
  *        by, the labels of a collection's values joined as for any cell holding several values.
+ * @param sortable
+ *        Whether the column sorts at all. A column that does not sort offers no sorting and
+ *        ignores its {@link #comparator()}; a table grouped by it keeps its groups in the order of
+ *        the rows it is given, whatever it is sorted by, and a sort orders the rows within each
+ *        group.
  */
 public record ColumnSetup(
 		String name,
@@ -110,11 +115,26 @@ public record ColumnSetup(
 		ColumnExport export,
 		BiFunction<Object, Object, String> tooltip,
 		BiFunction<Object, Object, String> cellClass,
-		ReactControlProvider display) {
+		ReactControlProvider display,
+		boolean sortable) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column whose cells display their values as the type of the
-	 * values derives.
+	 * Creates a {@link ColumnSetup} of a column that sorts.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, ReactControlProvider display) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, display, true);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that sorts and whose cells display their values as
+	 * the type of the values derives.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -128,7 +148,22 @@ public record ColumnSetup(
 	}
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column whose cells have no CSS class of their own.
+	 * Creates a {@link ColumnSetup} of a column whose cells have neither a CSS class of their own nor
+	 * a display of their own.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip, boolean sortable) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, null, null, sortable);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that sorts and whose cells have no CSS class of
+	 * their own.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -137,12 +172,12 @@ public record ColumnSetup(
 			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
 			ColumnExport export, BiFunction<Object, Object, String> tooltip) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, null, null);
+			export, tooltip, null);
 	}
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column whose cells have neither a tooltip nor a CSS class
-	 * of their own.
+	 * Creates a {@link ColumnSetup} of a column that sorts and whose cells have neither a tooltip
+	 * nor a CSS class of their own.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -151,7 +186,7 @@ public record ColumnSetup(
 			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
 			ColumnExport export) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, null, null, null);
+			export, null, null);
 	}
 
 	/**
@@ -181,10 +216,11 @@ public record ColumnSetup(
 	 * The runtime column for this descriptor: the column its {@link #binding()} builds, displayed
 	 * in the {@link #width() configured width} when there is one, showing the
 	 * {@link #aggregate()} in the header row of a group when it computes one, sorting by the
-	 * {@link #comparator()} when it declares one, displaying its values through the
-	 * {@link #display()} when it declares one, with the {@link #tooltip()} on its cells and on the
-	 * header rows of the groups it forms when it computes one, with the {@link #cellClass()} on its
-	 * cells when it computes one, and left out of exports when its {@link #export()} says so.
+	 * {@link #comparator()} when it declares one and not at all when it is not {@link #sortable()},
+	 * displaying its values through the {@link #display()} when it declares one, with the
+	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
+	 * computes one, with the {@link #cellClass()} on its cells when it computes one, and left out
+	 * of exports when its {@link #export()} says so.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -208,7 +244,9 @@ public record ColumnSetup(
 				}
 			};
 		}
-		if (comparator != null) {
+		if (!sortable) {
+			result = DelegatingColumn.notSortable(result);
+		} else if (comparator != null) {
 			Sort<V> sort = sort(binding().order(ColumnProviderService.unreadableLast(comparator)));
 			result = new DelegatingColumn<>(result) {
 				@Override

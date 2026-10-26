@@ -44,10 +44,10 @@ import com.top_logic.util.Resources;
 
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
- * such column has: its label, its filter, its width, whether it can be edited, the order it sorts
- * the table in, the order of its values, what it aggregates over a group of rows, how its cells
- * display their values, and the display annotations it states over the ones of its values'
- * attribute or type.
+ * such column has: its label, its filter, its width, whether it can be edited, whether it sorts at
+ * all, the order it sorts the table in, the order of its values, what it aggregates over a group of
+ * rows, how its cells display their values, and the display annotations it states over the ones of
+ * its values' attribute or type.
  *
  * <p>
  * A subclass says what the column is named and what its cells hold; everything the table does with
@@ -117,6 +117,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = "display";
 
+		/** Configuration name for {@link #getSortable()}. */
+		String SORTABLE = "sortable";
+
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
 		 * attribute it shows, and the column's name where no attribute says it.
@@ -145,6 +148,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * Sorting by several columns is expressed by setting this on more than one of them; the
 		 * declaration order decides which one sorts first. The default only applies until the user
 		 * sorts the table themselves, from then on their own order is remembered.
+		 * </p>
+		 *
+		 * <p>
+		 * The rows are sorted in the order of the {@link #getComparator() comparator}. A column that
+		 * is not {@link #getSortable() sortable} has no direction.
 		 * </p>
 		 */
 		@Name(SORT)
@@ -211,6 +219,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * inputs of its own. The values are never empty; rows without a value are ordered apart
 		 * from them, a group without a value comes last. Unset (the default) keeps the order derived
 		 * from the type of the column's values.
+		 * </p>
+		 *
+		 * <p>
+		 * The comparator decides the order the {@link #getSort() sort direction} applies to. A
+		 * column that is not {@link #getSortable() sortable} has no comparator.
 		 * </p>
 		 */
 		@Name(COMPARATOR)
@@ -311,6 +324,20 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@Name(DISPLAY)
 		PolymorphicConfiguration<ReactControlProvider> getDisplay();
 
+		/**
+		 * Whether the table can be sorted by this column.
+		 *
+		 * <p>
+		 * {@code false} offers no sorting by the column, and a table grouped by it keeps its groups
+		 * in the order of the rows the table is given, whatever the table is sorted by; a sort
+		 * orders the rows within each group. Such a column has neither a {@link #getSort() sort direction} nor a
+		 * {@link #getComparator() comparator}.
+		 * </p>
+		 */
+		@Name(SORTABLE)
+		@BooleanDefault(true)
+		boolean getSortable();
+
 	}
 
 	private final ResKey _label;
@@ -343,6 +370,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final boolean _hiddenByDefault;
 
+	private final boolean _sortable;
+
 	private final ColumnExport _export;
 
 	/** The display annotations the declaration states, {@code null} where it states none. */
@@ -371,8 +400,14 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_scriptInputs =
 			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
 		_hiddenByDefault = !config.getVisible();
+		_sortable = config.getSortable();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
+
+		if (!_sortable && (_sort != null || _comparator != null)) {
+			context.error("A column that is not '" + Config.SORTABLE + "' has neither a '" + Config.SORT
+				+ "' direction nor a '" + Config.COMPARATOR + "': column at " + config.location() + ".");
+		}
 	}
 
 	/**
@@ -426,6 +461,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_display = null;
 		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
+		_sortable = true;
 		_export = ColumnExport.DEFAULT;
 		_annotations = null;
 	}
@@ -476,7 +512,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			_scriptInputs.isEmpty() ? List.of() : ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs), _display);
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs), _display,
+			_sortable);
 	}
 
 	/**

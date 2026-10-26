@@ -41,6 +41,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.DownloadEvent;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
@@ -850,7 +851,7 @@ public class SSEUpdateQueue {
 	 * An event is removed from the queue only after it has been written successfully. If the write
 	 * fails (a dead or half-open connection), the event stays queued and is retried on the next
 	 * {@link #setConnection(jakarta.servlet.AsyncContext) (re)connection}. This matters for one-off
-	 * events such as the login/logout {@code window.location.reload()}: dropping such an event on a
+	 * events such as the {@link PageNavigationEvent} of a login or logout: dropping such an event on a
 	 * silently-broken connection would leave the action half-applied (e.g. a logout that never
 	 * reloads the page), since reconnects only replay control state via {@link #sendFullState}, not
 	 * one-off events.

@@ -71,6 +71,11 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        The tooltip of a cell, computed from its row and its value, or {@code null} for a column
  *        whose cells have none. In the header row of a group, the row is {@code null} and the value
  *        is the value the group is formed by.
+ * @param sortable
+ *        Whether the column sorts at all. A column that does not sort offers no sorting and
+ *        ignores its {@link #comparator()}; a table grouped by it keeps its groups in the order of
+ *        the rows it is given, whatever it is sorted by, and a sort orders the rows within each
+ *        group.
  */
 public record ColumnSetup(
 		String name,
@@ -85,10 +90,24 @@ public record ColumnSetup(
 		Comparator<Object> comparator,
 		boolean hiddenByDefault,
 		ColumnExport export,
-		BiFunction<Object, Object, String> tooltip) {
+		BiFunction<Object, Object, String> tooltip,
+		boolean sortable) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column whose cells have no tooltip.
+	 * Creates a {@link ColumnSetup} of a column that sorts.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, true);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that sorts and whose cells have no tooltip.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -127,9 +146,9 @@ public record ColumnSetup(
 	 * The runtime column for this descriptor: the column its {@link #binding()} builds, displayed
 	 * in the {@link #width() configured width} when there is one, showing the
 	 * {@link #aggregate()} in the header row of a group when it computes one, sorting by the
-	 * {@link #comparator()} when it declares one, with the {@link #tooltip()} on its cells and on
-	 * the header rows of the groups it forms when it computes one, and left out of exports when its
-	 * {@link #export()} says so.
+	 * {@link #comparator()} when it declares one and not at all when it is not {@link #sortable()},
+	 * with the {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
+	 * computes one, and left out of exports when its {@link #export()} says so.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -155,7 +174,9 @@ public record ColumnSetup(
 				}
 			};
 		}
-		if (comparator != null) {
+		if (!sortable) {
+			result = DelegatingColumn.notSortable(result);
+		} else if (comparator != null) {
 			Sort<V> sort = sort(binding().order(ColumnProviderService.unreadableLast(comparator)));
 			result = new DelegatingColumn<>(result) {
 				@Override

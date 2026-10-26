@@ -41,8 +41,8 @@
 		<panes>
 			<pane
 				min-size="200"
-				size="16"
-				unit="%"
+				size="280"
+				unit="px"
 			>
 				<split-panel orientation="vertical">
 					<panes>

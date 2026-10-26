@@ -279,6 +279,15 @@
 						<de>Akkordeon</de>
 					</label>
 				</nav-item>
+				<nav-item id="tabs-overflow-demo"
+					icon="css:bi bi-segmented-nav"
+				>
+					<view-ref view="demo/tabs-overflow-demo.view.xml"/>
+					<label>
+						<en>Tab Overflow</en>
+						<de>Reiterüberlauf</de>
+					</label>
+				</nav-item>
 				<nav-item id="popover-demo"
 					icon="css:bi bi-chat-square-text"
 				>

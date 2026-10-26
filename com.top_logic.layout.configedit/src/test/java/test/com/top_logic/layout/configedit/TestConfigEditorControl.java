@@ -37,6 +37,7 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -2865,6 +2866,42 @@ public class TestConfigEditorControl extends TestCase {
 	 * Suite requiring {@link TypeIndex} for {@link TypedConfiguration} and
 	 * {@link ThreadContextManager} for the polymorphic type selector's class-label resolution.
 	 */
+	/**
+	 * Configuration whose properties are customized in the application configuration of the test.
+	 */
+	public interface CustomizedConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getShown()}. */
+		String SHOWN = "shown";
+
+		/** Property name for {@link #getHiddenByConfiguration()}. */
+		String HIDDEN_BY_CONFIGURATION = "hidden-by-configuration";
+
+		/** A property without customization. */
+		@Name(SHOWN)
+		String getShown();
+
+		/** A property hidden by the customizations of the application configuration only. */
+		@Name(HIDDEN_BY_CONFIGURATION)
+		String getHiddenByConfiguration();
+	}
+
+	/**
+	 * A {@link Hidden} annotation given for a property in the customizations of the application
+	 * configuration hides the property as if it were written in code.
+	 */
+	public void testHiddenByConfiguration() {
+		CustomizedConfig config = TypedConfiguration.newConfigItem(CustomizedConfig.class);
+		assertNull("Test setup: the property must not be hidden in code.",
+			config.descriptor().getProperty(CustomizedConfig.HIDDEN_BY_CONFIGURATION)
+				.getAnnotation(Hidden.class));
+
+		assertTrue("A property without customization must be rendered.",
+			rendersProperty(config, CustomizedConfig.SHOWN));
+		assertFalse("A property hidden by configuration must not be rendered.",
+			rendersProperty(config, CustomizedConfig.HIDDEN_BY_CONFIGURATION));
+	}
+
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestConfigEditorControl.class,

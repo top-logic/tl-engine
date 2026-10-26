@@ -164,7 +164,7 @@ public class OidcClientSecret {
 	private static String loginRetryUrl(WebContext context) {
 		String contextPath =
 			context instanceof JEEContext jeeContext ? jeeContext.getNativeRequest().getContextPath() : "";
-		return contextPath + ApplicationPages.getInstance().getLoginRetrySSOPage();
+		return LoginFailureLogic.loginRetryUrl(contextPath);
 	}
 
 	/**

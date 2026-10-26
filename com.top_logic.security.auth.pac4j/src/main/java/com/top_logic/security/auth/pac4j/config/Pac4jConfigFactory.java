@@ -8,6 +8,7 @@ package com.top_logic.security.auth.pac4j.config;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import jakarta.servlet.ServletContext;
 
@@ -213,6 +214,10 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 		final org.pac4j.core.config.Config config = new org.pac4j.core.config.Config(clients);
 
 		config.addAuthorizer("admin", new RequireAnyRoleAuthorizer("ROLE_ADMIN"));
+		String contextPath = context.getContextPath();
+		Supplier<String> errorUrl = () -> LoginFailureLogic.loginRetryUrl(contextPath);
+		config.setSecurityLogic(new LoginFailureLogic.Security(errorUrl));
+		config.setCallbackLogic(new LoginFailureLogic.Callback(errorUrl));
 		FrameworkAdapter.INSTANCE.applyDefaultSettingsIfUndefined(config);
 		return config;
 	}

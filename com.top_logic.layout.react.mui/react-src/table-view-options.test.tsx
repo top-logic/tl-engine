@@ -83,6 +83,16 @@ describe('the gear of the table', () => {
     expect(screen.queryByRole('button', { name: VIEW })).toBeNull();
   });
 
+  it('is there for a table that keeps no view but offers the column selection, and not for one that offers neither', async () => {
+    mountTable({ viewOptions: false, columnSelect: true });
+    await settle();
+    expect(gear()).toBeTruthy();
+    cleanup();
+    mountTable({ viewOptions: false, columnSelect: false });
+    await settle();
+    expect(screen.queryByRole('button', { name: VIEW })).toBeNull();
+  });
+
   it('opens a dialog named "View" and says so on the gear', async () => {
     mountTable();
     await settle();
@@ -98,6 +108,28 @@ describe('the gear of the table', () => {
     await settle();
     await openView();
     expect(sent).not.toHaveBeenCalled();
+  });
+});
+
+describe('the entries of a table that keeps no view', () => {
+  it('offers no density and no switches, only the column selection and the reset', async () => {
+    mountTable({ viewOptions: false, columnSelect: true });
+    await settle();
+    await openView();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByRole('switch')).toBeNull();
+    expect(screen.getByRole('button', { name: CHOOSE_COLUMNS })).toBeTruthy();
+    expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
+  });
+
+  it('sends the command opening the column selection', async () => {
+    const sent = mountTable({ viewOptions: false, columnSelect: true });
+    await settle();
+    await openView();
+    await userEvent.click(screen.getByRole('button', { name: CHOOSE_COLUMNS }));
+    await settle();
+    expect(sent).toHaveBeenCalledWith('openColumnSelect', {});
   });
 });
 

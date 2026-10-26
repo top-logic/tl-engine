@@ -34,6 +34,12 @@ const DENSITIES: ReadonlyArray<{ value: TableDensity; key: keyof typeof I18N_KEY
 ];
 
 export interface TableViewOptionsProps extends TableViewValues {
+  /**
+   * Whether the table keeps the view of the user: the density and the two switches are offered only then, since a
+   * choice that is lost at once is none.
+   */
+  viewOptions: boolean;
+
   /** Whether the table offers the column selection: the entry opening it is there only then. */
   columnSelect: boolean;
 
@@ -48,8 +54,9 @@ export interface TableViewOptionsProps extends TableViewValues {
 }
 
 /**
- * The content of the popover "View" of a table: the density as three segments, stripes and column lines as
- * switches, the entry opening the column selection (where the table offers it) and the reset.
+ * The content of the popover "View" of a table: the density as three segments and stripes and column lines as
+ * switches (where the table keeps the view, see `viewOptions`), the entry opening the column selection (where the
+ * table offers it) and the reset.
  *
  * <p>A change takes effect at once and is sent with the other two values. The values shown are held here until
  * the server echoes others, so that a second change, made before the echo of the first has arrived, is sent with
@@ -59,7 +66,7 @@ export interface TableViewOptionsProps extends TableViewValues {
  * selection (and with it the focus) and wrap around at the ends.</p>
  */
 export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
-  density, striped, columnLines, columnSelect, onChange, onColumns, onReset,
+  density, striped, columnLines, viewOptions, columnSelect, onChange, onColumns, onReset,
 }) => {
   const i18n = useI18N(I18N_KEYS);
   const Checkbox = usePart('Checkbox');
@@ -95,45 +102,51 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
 
   return (
     <>
-      <div className="tl-menu__header tl-type-label">{i18n['js.table.view']}</div>
-      <div id={headingId} className="tl-menu__header tl-type-label">{i18n['js.table.viewDensity']}</div>
-      <div
-        role="radiogroup"
-        aria-labelledby={headingId}
-        className="tl-segmented"
-        onKeyDown={handleKeyDown}
-      >
-        {DENSITIES.map((entry, index) => (
-          <button
-            key={entry.value}
-            ref={(element) => {
-              segmentRefs.current[index] = element;
-            }}
-            type="button"
-            role="radio"
-            aria-checked={index === selectedIndex}
-            // One segment is the tab stop; within the group the arrows move on.
-            tabIndex={index === selectedIndex ? 0 : -1}
-            className="tl-segmented__segment tl-type-label"
-            onClick={() => change({ density: entry.value })}
+      <div className="tl-table-view-options__title tl-type-label-strong">{i18n['js.table.view']}</div>
+      {viewOptions && (
+        <>
+          <div id={headingId} className="tl-menu__header tl-type-label">{i18n['js.table.viewDensity']}</div>
+          <div
+            role="radiogroup"
+            aria-labelledby={headingId}
+            className="tl-segmented tl-table-view-options__segments"
+            onKeyDown={handleKeyDown}
           >
-            <span className="tl-segmented__label">{i18n[entry.key]}</span>
-          </button>
-        ))}
-      </div>
-      <Checkbox
-        display="switch"
-        label={i18n['js.table.viewStripes']}
-        checked={shown.striped}
-        onChange={(checked) => change({ striped: checked })}
-      />
-      <Checkbox
-        display="switch"
-        label={i18n['js.table.viewColumnLines']}
-        checked={shown.columnLines}
-        onChange={(checked) => change({ columnLines: checked })}
-      />
-      <div role="separator" className="tl-menu__separator" />
+            {DENSITIES.map((entry, index) => (
+              <button
+                key={entry.value}
+                ref={(element) => {
+                  segmentRefs.current[index] = element;
+                }}
+                type="button"
+                role="radio"
+                aria-checked={index === selectedIndex}
+                // One segment is the tab stop; within the group the arrows move on.
+                tabIndex={index === selectedIndex ? 0 : -1}
+                className="tl-segmented__segment tl-type-label"
+                onClick={() => change({ density: entry.value })}
+              >
+                <span className="tl-segmented__label">{i18n[entry.key]}</span>
+              </button>
+            ))}
+          </div>
+          <Checkbox
+            display="switch"
+            className="tl-table-view-options__switch"
+            label={i18n['js.table.viewStripes']}
+            checked={shown.striped}
+            onChange={(checked) => change({ striped: checked })}
+          />
+          <Checkbox
+            display="switch"
+            className="tl-table-view-options__switch"
+            label={i18n['js.table.viewColumnLines']}
+            checked={shown.columnLines}
+            onChange={(checked) => change({ columnLines: checked })}
+          />
+          <hr className="tl-divider" />
+        </>
+      )}
       {columnSelect && (
         <button type="button" className="tl-menu__item tl-type-body" onClick={onColumns}>
           <span className="tl-menu__label">{i18n['js.table.viewChooseColumns']}</span>
@@ -146,14 +159,15 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
   );
 };
 
-/** The focus starts on the segment of the density in force. */
+/** The focus starts on the segment of the density in force, where the table offers the density, else on the first entry. */
 function selectedSegment(root: HTMLElement): HTMLElement | null {
-  return root.querySelector<HTMLElement>('[role="radio"][tabindex="0"]');
+  return root.querySelector<HTMLElement>('[role="radio"][tabindex="0"]') ?? root.querySelector<HTMLElement>('button');
 }
 
 export interface TableViewButtonProps extends TableViewValues {
   /** Whether the button sits in a column heading, drawn small there. */
   inCell?: boolean;
+  viewOptions: boolean;
   columnSelect: boolean;
   onChange(values: TableViewValues): void;
   /** Called when the column selection is chosen; the popover closes on its own. */

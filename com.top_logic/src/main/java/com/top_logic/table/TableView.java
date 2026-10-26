@@ -288,6 +288,19 @@ public interface TableView<R> {
 	boolean savesNamedFilters();
 
 	/**
+	 * Whether this table keeps the view of the user - the density, the stripes, the column lines -
+	 * so that a choice made through {@link #setViewOptions(String, boolean, boolean)} survives the session.
+	 *
+	 * <p>
+	 * A UI asks this before offering these choices: a table without a place to keep them would
+	 * lose every choice at once.
+	 * </p>
+	 */
+	default boolean isPersonalized() {
+		return false;
+	}
+
+	/**
 	 * Saves the current column filters and search term as a {@link NamedFilter} of the user's own,
 	 * under the given name.
 	 *

@@ -884,6 +884,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
+	public boolean isPersonalized() {
+		return _store != null && _id != null;
+	}
+
+	@Override
 	public boolean savesNamedFilters() {
 		return _filterStore != null && _id != null;
 	}

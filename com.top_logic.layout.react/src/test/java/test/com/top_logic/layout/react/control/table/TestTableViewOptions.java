@@ -149,6 +149,27 @@ public class TestTableViewOptions extends TestCase {
 	}
 
 	/**
+	 * Tests that a table without a place to keep the view does not offer the view options: every
+	 * choice would be lost at once.
+	 */
+	public void testNoViewOptionsWithoutStore() {
+		List<Column<Item, ?>> columns = columns();
+		TableView<Item> view = DefaultTableView.create(columns,
+			new ListRowSource<>(new ArrayList<>(List.of(ALPHA, BETA, GAMMA)), columns));
+		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
+			new ReactWindowRegistry("test"));
+
+		assertFalse(view.isPersonalized());
+		assertEquals(Boolean.FALSE, new TestTable(context, view).clientState(STATE_VIEW_OPTIONS));
+	}
+
+	/** Tests that a table with a store and an identity offers the view options. */
+	public void testViewOptionsWithStore() {
+		assertTrue(_view.isPersonalized());
+		assertEquals(Boolean.TRUE, _table.clientState(STATE_VIEW_OPTIONS));
+	}
+
+	/**
 	 * Tests that the command changes the view, pushes the new options to the client, and persists
 	 * them.
 	 */

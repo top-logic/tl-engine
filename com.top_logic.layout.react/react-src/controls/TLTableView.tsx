@@ -1305,6 +1305,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       density={viewDensityWord}
       striped={(state.striped as boolean) ?? false}
       columnLines={(state.columnLines as boolean) ?? false}
+      viewOptions={viewOptions}
       columnSelect={columnSelect}
       onChange={handleViewChange}
       onColumns={handleOpenColumnSelect}
@@ -1435,7 +1436,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // A table ending in a pinned column has a heading without a label there, so the column button
   // goes into that heading: it then needs no room of its own, and the pinned column reaches the
   // right edge of the table.
-  const cogInHeaderCell = viewOptions && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
+  const cogInHeaderCell = (viewOptions || columnSelect) && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
 
   // Without such a heading, both the header row and the body end this much behind the last column,
   // keeping the column button clear of it: otherwise the button covers the last column's funnel as
@@ -1447,7 +1448,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // confined to the content box - ever reaching underneath the button. The design system sizes every
   // box as border-box, so a minimum width given for a row includes its padding: it must add the
   // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
-  const buttonReserve = viewOptions && !cogInHeaderCell ? columnsButtonWidth : 0;
+  const buttonReserve = (viewOptions || columnSelect) && !cogInHeaderCell ? columnsButtonWidth : 0;
 
   // Whether columns run on underneath the column button: the table is wider than its header and
   // not scrolled to its right end. The header then fades out in front of the button, so the column
@@ -2016,7 +2017,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {...tooltipProps(i18n['js.table.freezeSplitter'])}
           onPointerDown={handleFrozenSplitStart}
         />
-        {viewOptions && !cogInHeaderCell && viewButton(false)}
+        {(viewOptions || columnSelect) && !cogInHeaderCell && viewButton(false)}
         {/* Where the frozen area would end if the grip were dropped now, over heading and rows. */}
         {frozenPreview && (
           <div className="tl-table__freeze-preview" style={{ left: frozenPreview.x }} />

@@ -1075,6 +1075,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		@Override
+		public boolean pinnedEnd() {
+			return _inner.pinnedEnd();
+		}
+
+		@Override
+		public String cssClass() {
+			return _inner.cssClass();
+		}
+
+		@Override
 		public V value(TLObject row) {
 			return _inner.value(row);
 		}

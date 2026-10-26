@@ -383,7 +383,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * State key telling the client whether to offer the view options (density, stripes, column
-	 * lines); true for every table.
+	 * lines); true for a table that {@link TableView#isPersonalized() keeps} the choice.
 	 */
 	private static final String VIEW_OPTIONS = "viewOptions";
 
@@ -678,7 +678,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putState(SELECTION_MODE, _selectionMode.getExternalName());
 		putState(COLUMN_SELECT, Boolean.valueOf(_columnSelect));
 		putState(FILTER_BAR, Boolean.valueOf(_filterBar));
-		putState(VIEW_OPTIONS, Boolean.TRUE);
+		putState(VIEW_OPTIONS, Boolean.valueOf(view.isPersonalized()));
 		pushViewOptions();
 		pushGrouping();
 		buildFullState();

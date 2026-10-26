@@ -5185,6 +5185,14 @@ button.tl-swatch:not(:disabled):hover {
   flex: none;
 }
 
+/* Der Chevron steht im Label, hinter dem Text (der Chip bekommt ihn als Teil seiner Beschriftung): das Label ordnet
+   ihn mit der Lücke des Chips an, sonst klebte er am Text (U39a). */
+.tl-table__more .tl-chip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+
 /* Suche und Speichern stehen am rechten Ende, gleich wie viele Filter davor stehen. */
 .tl-table__search {
   flex: 0 1 auto;
@@ -5197,6 +5205,33 @@ button.tl-swatch:not(:disabled):hover {
   gap: var(--tl-space-2xs);
 }
 .tl-table__save[hidden] { display: none; }
+
+/* --- Ansicht: das Popover des Zahnrads ---------------------------------------------- */
+
+/* Der Inhalt des Popovers „Ansicht“ (tl-popover tl-picker tl-menu tl-table-view-options): Titel, Abschnitt „Dichte“
+   mit Segmenten, zwei Schalter, Trennlinie, Einträge. Alles steht auf der Einrückung der Menüeinträge
+   (space-control-x), damit die Zeilen untereinander bündig sind. Die Hülle tl-picker setzt eine Lücke von space-sm
+   zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
+.tl-popover.tl-table-view-options {
+  gap: var(--tl-space-2xs);
+}
+
+/* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element),
+   der Abschnitt „Dichte“ darunter bleibt der leise Kopf tl-menu__header. */
+.tl-table-view-options__title {
+  padding: var(--tl-space-2xs) var(--tl-space-control-x);
+  color: var(--tl-text-primary);
+}
+
+/* Die Segmente rücken von den Rändern des Popovers ab wie der Text der Einträge. */
+.tl-table-view-options__segments {
+  margin-inline: var(--tl-space-control-x);
+}
+
+/* Ein Schalter ist eine Zeile des Popovers: Einrückung wie der Eintrag, der Zeiger-Hof gehört zur Marke. */
+.tl-table-view-options__switch {
+  padding-inline: var(--tl-space-control-x);
+}
 
 /* --- Rahmen und Raster ------------------------------------------------------------ */
 
@@ -6493,4 +6528,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:825ea9c207c6690b416e4c170b46b182873fbece4a5a4e15e9b110e38cb58285 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:e4dec9bfb20cd700c83cf1f19c63afb1a5eddad3245b563c8ebcf31562521e6b — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

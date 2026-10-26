@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +15,7 @@ import junit.framework.Test;
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
 import com.top_logic.base.locking.handler.NoTokenHandling;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -27,6 +29,8 @@ import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.RowEditPolicy;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.table.CellRenderer;
+import com.top_logic.table.Column;
 
 /**
  * Tests that a {@link RowSetTableControl} keeps the {@link com.top_logic.table.Column#alignment()
@@ -62,6 +66,59 @@ public class TestRowSetTableAlignment extends AbstractModelAccessTest {
 		Matcher name = columnState(NAME).matcher(json);
 		assertTrue("The name column is displayed: " + json, name.find());
 		assertFalse(name.group(), name.group().contains("\"align\""));
+	}
+
+	/**
+	 * The column a row-set table adapts to its rows keeps the place at the end and the CSS class
+	 * its original column asks for: an action column must stay pinned, and keep dropping the padding
+	 * of a text cell.
+	 */
+	public void testAdaptedColumnKeepsPinningAndCssClass() throws ReflectiveOperationException {
+		becomeUser(_responsible);
+		ReactContext reactContext =
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		FormControl form = new FormControl(reactContext, _project, "no model", NoTokenHandling.INSTANCE);
+		RowSetTableControl table = new RowSetTableControl(new DefaultViewContext(reactContext), form,
+			new AttributeRowSetBinding(TASKS), List.of(), RowEditPolicy.ALL);
+
+		Column<Object, Object> inner = new Column<>() {
+			@Override
+			public String name() {
+				return "action";
+			}
+
+			@Override
+			public ResKey label() {
+				return ResKey.text("action");
+			}
+
+			@Override
+			public Object value(Object row) {
+				return null;
+			}
+
+			@Override
+			public CellRenderer<Object> renderer() {
+				return null;
+			}
+
+			@Override
+			public boolean pinnedEnd() {
+				return true;
+			}
+
+			@Override
+			public String cssClass() {
+				return "tl-test-class";
+			}
+		};
+		Class<?> adapter = Class.forName(RowSetTableControl.class.getName() + "$EditAwareColumn");
+		Constructor<?> constructor = adapter.getDeclaredConstructors()[0];
+		constructor.setAccessible(true);
+		Column<?, ?> adapted = (Column<?, ?>) constructor.newInstance(table, inner, null, false);
+
+		assertTrue(adapted.pinnedEnd());
+		assertEquals("tl-test-class", adapted.cssClass());
 	}
 
 	/** The test suite, starting the theme, the resources and the services the table builds its columns and cells through. */

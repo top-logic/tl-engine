@@ -49,16 +49,16 @@ import com.top_logic.util.autoconf.InAppServiceConfigStore;
 public class TestModelCatalogLoad extends TestCase {
 
 	/** A model the bundled catalog knows. */
-	private static final String MODEL = "claude-sonnet-4-20250514";
+	public static final String MODEL = "claude-sonnet-4-20250514";
 
 	/** The context window the test catalog gives {@link #MODEL}, which the bundled one does not. */
 	private static final int REMOTE_CONTEXT = 4242;
 
 	/** A configured model that neither catalog lists. */
-	private static final String LOCAL_MODEL = "local-test-model";
+	public static final String LOCAL_MODEL = "local-test-model";
 
 	/** The context window the model overrides of a test give a model. */
-	private static final int OVERRIDE_CONTEXT = 777;
+	public static final int OVERRIDE_CONTEXT = 777;
 
 	/** The path of the test server that answers every request with a server error. */
 	private static final String BROKEN_PATH = "/broken.json";
@@ -298,13 +298,23 @@ public class TestModelCatalogLoad extends TestCase {
 	}
 
 	/**
-	 * Starts a service with one Anthropic provider exposing the given models.
+	 * Starts a service with one Anthropic provider named "anthropic" exposing the given models.
 	 *
+	 * <p>
+	 * The caller shuts the service down.
+	 * </p>
+	 *
+	 * @param catalogUrl
+	 *        The URL of the remote catalog.
+	 * @param fetchRemote
+	 *        Whether the service loads the remote catalog.
+	 * @param models
+	 *        The models the provider is configured to serve.
 	 * @param overridden
 	 *        The model to give a model override with the context window {@link #OVERRIDE_CONTEXT},
 	 *        or <code>null</code> for none.
 	 */
-	private static LLMProviderService start(String catalogUrl, boolean fetchRemote, List<String> models,
+	public static LLMProviderService start(String catalogUrl, boolean fetchRemote, List<String> models,
 			String overridden) {
 		@SuppressWarnings("unchecked")
 		LLMProviderService.Config<LLMProviderService> config =
@@ -334,6 +344,13 @@ public class TestModelCatalogLoad extends TestCase {
 			new LLMProviderService(new DefaultInstantiationContext(TestModelCatalogLoad.class), config);
 		service.startUp();
 		return service;
+	}
+
+	/**
+	 * Stops a service {@link #start(String, boolean, List, String) started} by a test.
+	 */
+	public static void stop(LLMProviderService service) {
+		service.shutDown();
 	}
 
 	private static void set(ConfigurationItem item, String property, Object value) {

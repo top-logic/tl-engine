@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.provider.catalog;
 
 import java.util.Objects;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 
 /**
@@ -40,18 +41,21 @@ public record ResolvedModel(ModelInfo info, Origin origin) {
 		 *
 		 * @see ModelsDevFetcher#loadSnapshot(java.util.Map)
 		 */
+		@Label("Bundled catalog")
 		BUNDLED,
 
 		/**
 		 * The remote catalog loaded from the configured
 		 * {@link LLMProviderService.ModelCatalogConfig#getCatalogUrl() catalog URL}.
 		 */
+		@Label("Remote catalog")
 		REMOTE,
 
 		/**
 		 * An entry of the {@link LLMProviderService.ModelCatalogConfig#getModelOverrides() model
 		 * overrides}, which takes precedence over a catalog entry of the same model.
 		 */
+		@Label("Model override")
 		OVERRIDE;
 	}
 }

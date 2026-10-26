@@ -28,7 +28,7 @@ import com.top_logic.basic.credential.SecretSourceFormat;
  * </p>
  *
  * <pre>
- * &lt;master-credential name="LDAP_CREDENTIAL"/&gt;
+ * &lt;master-credential name="ldap_credential"/&gt;
  * </pre>
  *
  * <p>

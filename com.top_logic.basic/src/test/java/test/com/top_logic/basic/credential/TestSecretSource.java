@@ -152,6 +152,23 @@ public class TestSecretSource extends AbstractTypedConfigurationTestCase {
 		assertEquals("Variable must be read on each use.", "second", source.getSecret());
 	}
 
+	/**
+	 * The variable may hold the secret with the prefix <code>unencrypted:</code>, which is
+	 * stripped; the plain value stays the documented form.
+	 */
+	public void testEnvironmentPrefixed() throws ConfigurationException {
+		Config config = read("<config><api-key class='" + EnvironmentSecretSource.class.getName()
+			+ "' name='" + TEST_VARIABLE + "'/></config>");
+		SecretSource source = getInstance(config.getApiKey());
+
+		System.setProperty(TEST_VARIABLE, "unencrypted:prefixed");
+		assertEquals("prefixed", source.getSecret());
+		assertEquals("prefixed", source.lookup());
+
+		System.setProperty(TEST_VARIABLE, "plain");
+		assertEquals("plain", source.getSecret());
+	}
+
 	public void testElementWithoutClassIsNamed() throws Exception {
 		System.setProperty(TEST_VARIABLE, "from-env");
 		Config config = read("<config><api-key name='" + TEST_VARIABLE + "'/></config>");

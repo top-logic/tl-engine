@@ -6,6 +6,5 @@
         <entry name="%ORACLE19_PORT%" value="${env:oracle19_port:1521}" />
         <entry name="%ORACLE19_NAME%" value="${env:oracle19_name:pdb}" />
         <entry name="%ORACLE19_USER%" value="${env:oracle19_user:user}"/>
-        <entry name="%ORACLE19_PASSWD%" value="${env:oracle19_passwd:unencrypted:passwd}"/>
 	</alias>
 </root>

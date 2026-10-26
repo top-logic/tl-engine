@@ -2,4 +2,5 @@ ElementConf.local.xml
 db-default.xml
 db-h2.xml
 devel-h2.xml
+devel-secrets.config.xml
 enable-debug.xml

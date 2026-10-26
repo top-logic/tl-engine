@@ -25,6 +25,7 @@ import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.ConfigurationEncryption;
+import com.top_logic.basic.FileManager;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -74,6 +75,9 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 
 	private static final String PREFIX = "pfx_";
 
+	/** The configuration of the engine holding the {@link SecretStoreService}. */
+	private static final String ENGINE_CONFIG = "/WEB-INF/conf/tl_basic.config.xml";
+
 	public interface Config extends ConfigurationItem {
 
 		String API_KEY = "api-key";
@@ -98,6 +102,12 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 		SecretStoreService.Config global = global();
 		_savedStore = global.getStore();
 		_savedOverrides = new LinkedHashMap<>(global.getOverrides());
+
+		// The test configuration delivers the passwords of the test databases through a chain
+		// with defaults; the tests start from the environment store the engine configures.
+		global.setStore(TypedConfiguration.createConfigItemForImplementationClass(EnvironmentSecretStore.class));
+		global.getOverrides().clear();
+		restartService();
 	}
 
 	@Override
@@ -364,7 +374,8 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 		List<BinaryContent> engine = XMLProperties.Module.INSTANCE.config().getTypedConfigs();
 		assertTrue("No engine configuration loaded.", !engine.isEmpty());
 
-		SecretStoreService.Config engineOnly = serviceConfig(engine);
+		SecretStoreService.Config engineOnly =
+			serviceConfig(Collections.singletonList(FileManager.getInstance().getData(ENGINE_CONFIG)));
 		assertTrue("Engine store: " + engineOnly.getStore(), engineOnly.getStore() instanceof EnvironmentSecretStore.Config);
 
 		BinaryContent base = fragment("base.config.xml",
@@ -389,6 +400,48 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 		assertEquals("from-directory", named(SECRET).getSecret());
 		assertEquals("from-base", named("base_secret").getSecret());
 		assertEquals("from-overlay", named("overlay_secret").getSecret());
+	}
+
+	/**
+	 * The development secrets of an application: a {@link ChainSecretStore} asking the environment
+	 * first and a {@link DirectorySecretStore} with one file per secret after it. A variable takes
+	 * precedence over the file, in plain form or with the prefix <code>unencrypted:</code>.
+	 */
+	public void testDevelopmentSecretsDirectory() throws Exception {
+		install("<store class='" + ChainSecretStore.class.getName() + "'><stores>"
+			+ "<" + EnvironmentSecretStore.Config.TAG_NAME + "/>"
+			+ "<" + DirectorySecretStore.Config.TAG_NAME + " directory='" + _dir + "'/>"
+			+ "</stores></store>");
+		write(_dir.resolve(SECRET), "from-file\n");
+
+		assertEquals("from-file", named(SECRET).getSecret());
+
+		System.setProperty(SECRET, "from-env");
+		assertEquals("from-env", named(SECRET).getSecret());
+
+		System.setProperty(SECRET, "unencrypted:prefixed-env");
+		assertEquals("prefixed-env", named(SECRET).getSecret());
+
+		assertFailure(I18NConstants.ERROR_SECRET_UNDEFINED__NAME.fill(OTHER), named(OTHER));
+	}
+
+	/**
+	 * A variable read by the environment store holds the plain secret or, as accepted form, the
+	 * secret with the prefix <code>unencrypted:</code>; the prefix alone counts as undefined.
+	 */
+	public void testEnvironmentStorePrefix() throws Exception {
+		System.setProperty(SECRET, "plain-value");
+		assertEquals("plain-value", named(SECRET).getSecret());
+
+		System.setProperty(SECRET, "unencrypted:prefixed-value");
+		assertEquals("prefixed-value", named(SECRET).getSecret());
+		assertEquals("prefixed-value", named(SECRET).lookup());
+
+		System.setProperty(SECRET, "unencrypted:");
+		assertNull(named(SECRET).lookup());
+		I18NRuntimeException ex = failure(named(SECRET));
+		assertEquals(I18NConstants.ERROR_SECRET_VARIABLE_UNDEFINED__NAME.fill(SECRET), ex.getErrorKey());
+		assertNoSecret(ex, "unencrypted:");
 	}
 
 	/**

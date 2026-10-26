@@ -75,8 +75,8 @@ public class TestOidcClientSecret extends AbstractTypedConfigurationTestCase {
 	}
 
 	/**
-	 * The secret given as element text, as in the configurations shipped with the module
-	 * (<code>&lt;secret&gt;%PAC_SECRET%&lt;/secret&gt;</code>), keeps working.
+	 * The secret given as element text, e.g. through an alias of the application
+	 * (<code>&lt;secret&gt;%MY_PAC_SECRET%&lt;/secret&gt;</code>), keeps working.
 	 */
 	public void testUnencryptedElementText() throws Exception {
 		assertEquals(SECRET, clientSecret(read(xml("", "<secret>unencrypted:" + SECRET + "</secret>"))));

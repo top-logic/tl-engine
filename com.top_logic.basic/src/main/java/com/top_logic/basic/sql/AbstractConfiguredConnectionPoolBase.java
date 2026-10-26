@@ -179,8 +179,13 @@ public abstract class AbstractConfiguredConnectionPoolBase extends AbstractConne
 			 * </p>
 			 * 
 			 * <p>
-			 * The secret is read each time a new connection to the database is opened. Without a
-			 * value, the option is passed with an empty value.
+			 * The secret is read each time a new connection to the database is opened. A secret its
+			 * source does not hold - e.g. a named secret that is not set - leaves the option out of
+			 * the driver options with a warning in the log naming the option and the secret, so
+			 * that the driver behaves as without the option; this way an
+			 * optional secret, such as the password of a trust store, needs no value. A secret
+			 * that is present but cannot be read, e.g. an empty secret file, fails the connection.
+			 * Without a value, the option is passed with an empty value.
 			 * </p>
 			 */
 			@Name(VALUE)

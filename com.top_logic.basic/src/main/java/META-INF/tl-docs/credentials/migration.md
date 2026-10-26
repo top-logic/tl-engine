@@ -1,5 +1,5 @@
 ---
-description: Read when upgrading an application to the engine version with secret sources, secret stores and credential providers - the short form <api-key name="..."/> as NamedSecretSource resolved through the SecretStoreService (environment by default, @ServiceDependencies of an own service reading a named secret, explicit EnvironmentSecretSource where a variable is meant regardless of the store), the key variables tl_*_api_key and translation_api_key holding the plain key, the %..._API_KEY% / %TRANSLATION_API_KEY% / %BLOB_CONNECT% aliases, removed bearer-token-env-var (HttpMcpTransport) and token-env (A2A remote agent), vector index and search engine keys, and the Java API changes (getters returning PolymorphicConfiguration<? extends SecretSource>, DataSourceConfig#getDriverOptions, ServiceProviderInfo#createFromConfig, mcp-json-jackson3).
+description: Read when upgrading an application to the engine version with secret sources, secret stores and credential providers - the short form <api-key name="..."/> as NamedSecretSource resolved through the SecretStoreService (environment by default, @ServiceDependencies of an own service reading a named secret, explicit EnvironmentSecretSource where a variable is meant regardless of the store), the key variables tl_*_api_key and translation_api_key holding the plain key, the %..._API_KEY% / %TRANSLATION_API_KEY% aliases, the shipped configurations referencing the database, LDAP, mail, pac4j and blob storage secrets by name (h2_passwd, mysql_passwd, ..., ldap_credential, smtp_pass, imap_pass, tl_pac_secret, blob_connect) with the removed aliases %..._PASSWD%, %LDAP_CREDENTIAL%, %SMTP_PASS%, %IMAP_PASS%, %PAC_SECRET%, %BLOB_CONNECT%, development secrets of an application as files in deploy/local/secrets read by a ChainSecretStore of env-store and directory-store (devel-secrets.config.xml), variables in plain form with the unencrypted: prefix still accepted, removed bearer-token-env-var (HttpMcpTransport) and token-env (A2A remote agent), vector index and search engine keys, and the Java API changes (getters returning PolymorphicConfiguration<? extends SecretSource>, DataSourceConfig#getDriverOptions, ServiceProviderInfo#createFromConfig, mcp-json-jackson3).
 order: 50
 ---
 
@@ -20,7 +20,7 @@ What changes:
 
 ## Key variables hold the plain key
 
-The engine configuration references the keys by secret name (`<api-key name="..."/>`); with the default store, the variable of that name holds the **plain key**, without the prefix `unencrypted:`:
+The engine configuration references the keys by secret name (`<api-key name="..."/>`); with the default store, the variable of that name holds the **plain key**. The form with the prefix `unencrypted:` that a variable read through an alias needed is still accepted - the prefix is stripped - so that existing environments keep working; an encrypted value is not supported in a variable:
 
 | Variable | Read by |
 |---|---|
@@ -28,19 +28,12 @@ The engine configuration references the keys by secret name (`<api-key name="...
 | `tl_brave_api_key`, `tl_tavily_api_key` | the search engines of `webSearch` |
 | `translation_api_key` | `DeepLTranslationService` (`tl_basic.config.xml`) |
 
-Before:
-
 ```bash
-export tl_anthropic_api_key="unencrypted:sk-ant-..."
+export tl_anthropic_api_key="sk-ant-..."                # documented form
+export tl_anthropic_api_key="unencrypted:sk-ant-..."    # still accepted
 ```
 
-After:
-
-```bash
-export tl_anthropic_api_key="sk-ant-..."
-```
-
-The Eclipse launch `Start TL AI Demo.launch` passes the Eclipse variables `tl_*_api_key` on unchanged; they hold the plain key. An Eclipse variable `translation_api_key` that was set up with the prefix `unencrypted:` loses it.
+The Eclipse launch `Start TL AI Demo.launch` passes the Eclipse variables `tl_*_api_key` on unchanged.
 
 ## Aliases referencing a key
 
@@ -91,7 +84,7 @@ An `autoconf` file the Service Editor wrote from such a configuration holds the 
 A value given as element content is read like an attribute value, aliases included, so this form keeps working:
 
 ```xml
-<secret>%PAC_SECRET%</secret>
+<secret>%MY_PAC_SECRET%</secret>
 ```
 
 As with an attribute, the alias must resolve to an encrypted value or to a value with the prefix `unencrypted:`. Referencing the secret by name avoids both:
@@ -150,21 +143,58 @@ The vector index reads its key from the secret `tl_mistral_api_key`; `aiVectorIn
 
 Without a key, the vector index is disabled with a warning instead of aborting the start of the application.
 
-## Azure blob storage
+## Secrets of the shipped configurations
 
-The `connect-string` of `CloudBasedRepository` is a secret property. The alias `%BLOB_CONNECT%` of `azureStorageConf.xml` now carries the prefix `unencrypted:`. An application that overrides `%BLOB_CONNECT%` with a plain connection string, or sets `connect-string` to one, adds the prefix (or encrypts the value), or references a named secret holding the plain connection string:
+The configurations shipped with the engine reference their secrets by name and contain no default for them. The secret names are the names of the variables the aliases read before:
 
-```xml
-<!-- Before -->
-<entry name="%BLOB_CONNECT%" value="${env:blob_connect}"/>
+| Configuration | Property | Secret | Removed alias |
+|---|---|---|---|
+| `db-h2.config.xml`, `db-mysql.config.xml`, `db-postgresql.config.xml`, `db-oracle.config.xml`, `db-mssql.config.xml`, `db-db2.config.xml` | `<encrypted-option name="password">` of the pool `default` | `h2_passwd`, `mysql_passwd`, `postgresql_passwd`, `oracle_passwd`, `mssql_passwd`, `db2_passwd` | `%H2_PASSWD%`, `%MYSQL_PASSWD%`, `%POSTGRESQL_PASSWD%`, `%ORACLE_PASSWD%`, `%MSSQL_PASSWD%`, `%DB2_PASSWD%` |
+| `devel-oracle.config.xml`, `devel-oracle-12.config.xml`, `devel-oracle-19.config.xml` | the same | `oracle_passwd`, `oracle12_passwd`, `oracle19_passwd` | `%ORACLE_PASSWD%`, `%ORACLE12_PASSWD%`, `%ORACLE19_PASSWD%` |
+| `db-mssql.config.xml` | `<encrypted-option name="trustStorePassword">` | `mssql_trust_store_passwd` | `%MSSQL_TRUST_STORE_PASSWD%` |
+| `db-mysql.config.xml` | `<encrypted-option name="clientCertificateKeyStorePassword">`, `<encrypted-option name="trustCertificateKeyStorePassword">` | `mysql_client_certificate_key_store_password`, `mysql_trust_certificate_key_store_password` | `%MYSQL_CLIENT_CERTIFICATE_KEY_STORE_PASSWORD%`, `%MYSQL_TRUST_CERTIFICATE_KEY_STORE_PASSWORD%` |
+| `ldapConf.config.xml` | `master-credential` | `ldap_credential` | `%LDAP_CREDENTIAL%` |
+| `tl-mail-smtp.config.xml` | `password` of `MailSenderService` | `smtp_pass` | `%SMTP_PASS%` |
+| `MailConf.config.xml` | `password` of `MailReceiverService` | `imap_pass` | `%IMAP_PASS%` |
+| `pac4j-azure`, `pac4j-generic`, `pac4j-google`, `pac4j-keycloak` (`.config.xml`) | `secret` of the OIDC client | `tl_pac_secret` | `%PAC_SECRET%` |
+| `azureStorageConf.config.xml` | `connect-string` of `CloudBasedRepository` | `blob_connect` | `%BLOB_CONNECT%`, `%BLOB_USER%`, `%BLOB_PASS%` |
 
-<!-- After -->
-<entry name="%BLOB_CONNECT%" value="unencrypted:${env:blob_connect}"/>
+### The variables hold the plain value
+
+With the default store, each secret is read from the variable (or system property) of its name. The variable holds the **plain** value; the form with the prefix `unencrypted:`, which a variable read through the aliases needed, is still accepted and the prefix is stripped, so that existing environments - containers, start scripts, `.mvn/jvm.config`, Eclipse launch configurations, JNDI entries, the site configuration of a build server - keep working unchanged:
+
+```bash
+export h2_passwd="my-password"                # documented form
+export h2_passwd="unencrypted:my-password"    # still accepted
 ```
 
-## Database, mail, LDAP and other passwords
+An **encrypted** value in a variable is not supported: a variable set up with an encrypted value for an alias is replaced by the plain value. Files read by a `FileSecretSource` or `DirectorySecretStore` hold the plain value only.
 
-The attribute forms are unchanged: `<encrypted-option name="password" value="..."/>` of a data source, the `password` of `MailSenderService` and `MailReceiver`, the `secret` of the pac4j OIDC client, the `pepper` of `Argon2Hashing`, the Kafka SSL and SASL settings, the JMS passwords, the passwords and client secrets of the OpenAPI client and server. Each now also takes the element forms, e.g. `<value name="DB_PASSWORD"/>` in an `encrypted-option`. The LDAP `master-credential` keeps its attribute form encoded with `CryptSupport` (or plain).
+### No default in a production installation
+
+The aliases had defaults, e.g. `theautomatedappengine` for the H2 password of `db-h2.xml`, `your-password` for the LDAP credential, a placeholder connection string for the blob storage. The secrets have none: an installation that relied on such a default sets the secret (e.g. `h2_passwd=theautomatedappengine` for an H2 database created with the old default), otherwise the database refuses the login, the LDAP bind or the blob storage connection fails. *System > Secrets* lists which secrets are missing.
+
+Secrets that are not set are left out where the consumer can do without them:
+
+- An `encrypted-option` of a data source whose secret source does not hold the secret (`SecretSource#lookup()` answers `null`, e.g. an unset named secret) is left out of the driver options; the driver behaves as without the option. A warning in the log names the option and the secret, e.g. `Driver option 'password' is left out: its secret is not set (h2_passwd).` This makes the trust and key store passwords of `db-mssql.config.xml` and `db-mysql.config.xml` optional, as their empty aliases did before. The database password is left out the same way - the database then refuses the login, and the warning tells why. A secret that is present but cannot be read (an empty secret file, a vault denying access) still fails the connection.
+- The SMTP and IMAP passwords: a password the store does not hold is sent empty, for a mail server without login, as the empty default of the alias did before.
+
+### Development secrets of an application
+
+The engine ships no secrets and no defaults. An application that is started locally keeps the secrets of its development deployment - the password of its development database, a demo client secret - as files in its own project, in the folder `deploy/local/secrets`, one file per secret named like the secret and holding the plain value (see [secret stores](doc:credentials/secret-stores#development-secrets)). The local deployment configures the secret store as chain of the environment and this folder in `deploy/local/webapp/WEB-INF/conf/devel-secrets.config.xml`, listed in the `metaConf.txt` of `deploy/local`:
+
+- `tl-demo`, `tl-demo-react`: `h2_passwd` (`password`, the password of `./tmp/h2`) and `tl_pac_secret` (the client secret of the Keycloak demo client).
+- `tl-ai-demo`, `tl-kafka-demo`, the migration test applications and every application created by the archetype: `h2_passwd`.
+
+An application created before this version adds the folder and the configuration the same way; without them, its local deployment reads `h2_passwd` from the environment only, and the database `./tmp/h2` created with the password `password` refuses the login. The test configuration of the engine (`testingConnectionPool.config.xml`) holds the passwords of the test databases.
+
+### An application redefining one of the removed aliases
+
+An application that set one of the removed aliases in its own configuration (e.g. `<entry name="%H2_PASSWD%" value="..."/>` in a deployment file) no longer reaches the password, because the shipped configuration does not read the alias any more. It removes the entry and provides the secret instead: as variable holding the plain value, in the store of its installation, or - for a development deployment - as file in the development secrets folder described above. An application that copied one of the shipped configurations with the alias keeps working as long as it defines the alias itself; switching to the named form is recommended.
+
+## Other passwords
+
+The attribute forms are unchanged: `<encrypted-option name="..." value="..."/>` of a data source, the `password` of `MailSenderService` and `MailReceiver`, the `secret` of the pac4j OIDC client, the `pepper` of `Argon2Hashing`, the Kafka SSL and SASL settings, the JMS passwords, the passwords and client secrets of the OpenAPI client and server. Each now also takes the element forms, e.g. `<value name="db_password"/>` in an `encrypted-option`. The LDAP `master-credential` keeps its attribute form encoded with `CryptSupport` (or plain).
 
 ## Java API
 

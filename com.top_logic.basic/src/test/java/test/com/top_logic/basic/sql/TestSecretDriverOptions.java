@@ -5,13 +5,19 @@
  */
 package test.com.top_logic.basic.sql;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.sql.DataSource;
+
+import org.h2.jdbcx.JdbcDataSource;
 
 import junit.framework.Test;
 
@@ -30,10 +36,12 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.credential.FileSecretSource;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig;
 import com.top_logic.basic.sql.AbstractConfiguredConnectionPoolBase.DataSourceConfig.EncryptedDriverOption;
@@ -57,6 +65,12 @@ public class TestSecretDriverOptions extends AbstractTypedConfigurationTestCase 
 	private static final String VARIABLE = "test_secret_driver_options_password";
 
 	private static final String ALIAS = "%TEST_SECRET_DRIVER_OPTIONS_PASSWD%";
+
+	/** A secret that is never set. */
+	private static final String UNDEFINED = "test_secret_driver_options_undefined";
+
+	/** An optional driver option holding the secret {@link #UNDEFINED}. */
+	private static final String UNDEFINED_OPTION = "trustStorePassword";
 
 	private static final String USER = "sa";
 
@@ -112,7 +126,10 @@ public class TestSecretDriverOptions extends AbstractTypedConfigurationTestCase 
 		assertRotation(dataSource);
 	}
 
-	/** An undefined variable is reported when a connection is opened, without the password. */
+	/**
+	 * A variable that is no longer defined leaves the password out: the database refuses the
+	 * login, and the message does not contain the password.
+	 */
 	public void testEnvironmentPasswordUndefined() throws Exception {
 		System.setProperty(VARIABLE, PASSWORD);
 		DataSource dataSource = dataSource(read(config("", environmentPassword())));
@@ -123,10 +140,42 @@ public class TestSecretDriverOptions extends AbstractTypedConfigurationTestCase 
 			try (Connection other = dataSource.getConnection()) {
 				fail("Connection opened without password.");
 			} catch (SQLException ex) {
-				assertTrue(ex.getMessage(), ex.getMessage().contains(VARIABLE));
 				assertFalse(ex.getMessage(), ex.getMessage().contains(PASSWORD));
 			}
 			shutdown(connection);
+		}
+	}
+
+	/** A named secret that is not set leaves its option out of the driver options. */
+	public void testAbsentOptionLeftOut() throws Exception {
+		System.setProperty(VARIABLE, PASSWORD);
+		Properties options = driverOptions(config("", environmentPassword() + namedOption(UNDEFINED_OPTION, UNDEFINED)));
+		assertEquals(PASSWORD, options.getProperty(PASSWORD_OPTION));
+		assertFalse("Absent secret passed: " + options, options.containsKey(UNDEFINED_OPTION));
+	}
+
+	/** A named secret that is set is passed as option value. */
+	public void testPresentOptionPassed() throws Exception {
+		System.setProperty(VARIABLE, PASSWORD);
+		Properties options = driverOptions(config("", environmentPassword()));
+		assertEquals(PASSWORD, options.getProperty(PASSWORD_OPTION));
+	}
+
+	/** A secret that is present but cannot be read, e.g. an empty file, is an error. */
+	public void testBrokenOptionFails() throws Exception {
+		Path file = Files.createTempFile("TestSecretDriverOptions", ".secret");
+		try {
+			Files.write(file, " \n".getBytes(StandardCharsets.UTF_8));
+			String option = "<encrypted-option name='" + PASSWORD_OPTION + "'><value class='"
+				+ FileSecretSource.class.getName() + "' path='" + file + "'/></encrypted-option>";
+			try {
+				driverOptions(config("", option));
+				fail("Unreadable secret accepted.");
+			} catch (I18NRuntimeException ex) {
+				// Expected.
+			}
+		} finally {
+			Files.delete(file);
 		}
 	}
 
@@ -270,6 +319,24 @@ public class TestSecretDriverOptions extends AbstractTypedConfigurationTestCase 
 
 	private static String environmentPassword() {
 		return "<encrypted-option name='" + PASSWORD_OPTION + "'><value name='" + VARIABLE + "'/></encrypted-option>";
+	}
+
+	private static String namedOption(String option, String secret) {
+		return "<encrypted-option name='" + option + "'><value name='" + secret + "'/></encrypted-option>";
+	}
+
+	/**
+	 * The driver options the data source of the given configuration is created with.
+	 */
+	private Properties driverOptions(String xml) throws Exception {
+		Config config = read(xml);
+		Properties[] result = { null };
+		DefaultDataSourceFactory.createDataSource(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			config.getDataSource(), options -> {
+				result[0] = options;
+				return new JdbcDataSource();
+			});
+		return result[0];
 	}
 
 	private static String encryptedOption(String value) {

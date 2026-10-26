@@ -21,7 +21,9 @@ import com.top_logic.basic.util.ResKey;
  * <p>
  * The variable is looked up each time the secret is used, in the same order as the
  * <code>env</code> aliases of the configuration: a JNDI value of the application context first,
- * then a system property, then an environment variable.
+ * then a system property, then an environment variable. The variable is read like by the
+ * {@link EnvironmentSecretStore}: it holds the plain secret, a value with the prefix
+ * <code>unencrypted:</code> is accepted with the prefix stripped.
  * </p>
  *
  * <p>

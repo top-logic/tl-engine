@@ -44,7 +44,7 @@ public class TestAliasedXMLReader extends TestCase {
 
 	/**
 	 * The text of a character event, as read by the formatted content of an item-valued
-	 * configuration property (<code>&lt;secret&gt;%PAC_SECRET%&lt;/secret&gt;</code>).
+	 * configuration property (<code>&lt;secret&gt;%MY_PAC_SECRET%&lt;/secret&gt;</code>).
 	 */
 	public void testText() throws XMLStreamException {
 		XMLStreamReader reader = reader("<secret>" + ALIAS + "</secret>");

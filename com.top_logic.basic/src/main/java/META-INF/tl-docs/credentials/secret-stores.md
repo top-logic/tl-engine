@@ -1,5 +1,5 @@
 ---
-description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure), prefix and per-secret overrides, putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
+description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure), prefix and per-secret overrides, development secrets of an application (ChainSecretStore of env-store and directory-store on deploy/local/secrets, devel-secrets.config.xml), putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
 order: 15
 ---
 
@@ -54,7 +54,7 @@ All stores are in `com.top_logic.basic.credential`, the Key Vault store in `tl-c
 
 ### EnvironmentSecretStore
 
-The default. Reads the system property or environment variable named like the secret - a JNDI value of the application context first, then a system property, then an environment variable, the order of the `${env:...}` aliases. An empty variable counts as not set. The variable holds the plain secret:
+The default. Reads the system property or environment variable named like the secret - a JNDI value of the application context first, then a system property, then an environment variable, the order of the `${env:...}` aliases. An empty variable counts as not set. The variable holds the plain secret; a value with the prefix `unencrypted:` is accepted as well and the prefix is stripped, an encrypted value is not:
 
 ```bash
 export tl_openai_api_key="sk-..."
@@ -151,6 +151,37 @@ A single secret that lives apart from the others gets an override with any secre
 ```
 
 The `source` takes all forms of a secret property; `<source name="other_secret"/>` makes the name an alias of another named secret. An override referring back to itself is reported as error.
+
+## Development secrets
+
+The configurations shipped with the engine contain no secrets, not even defaults, so that an installation without a secret notices it. An application that should start locally without any variable keeps the secrets of its development deployment as files in its own project, one file per secret named like the secret, in `deploy/local/secrets`:
+
+```
+deploy/local/secrets/h2_passwd        password
+deploy/local/secrets/tl_pac_secret    <client secret of the demo client>
+```
+
+Its local deployment adds the folder after the environment, in `deploy/local/webapp/WEB-INF/conf/devel-secrets.config.xml` listed in the `metaConf.txt` of `deploy/local`:
+
+```xml
+<config service-class="com.top_logic.basic.credential.SecretStoreService">
+	<instance class="com.top_logic.basic.credential.SecretStoreService">
+		<store class="com.top_logic.basic.credential.ChainSecretStore">
+			<stores>
+				<env-store/>
+				<directory-store directory="./deploy/local/secrets"/>
+			</stores>
+		</store>
+	</instance>
+</config>
+```
+
+- A variable still takes precedence over the file.
+- The relative directory is resolved against the working directory, which is the project directory when the application is started from Maven or Eclipse - like the development database `./tmp/h2`.
+- The folder lies outside `deploy/local/webapp`, so it is never packaged into the web application; a production deployment (`deploy/prod`) does not list the configuration.
+- The configuration is the only `SecretStoreService` fragment of the deployment: two fragments both configuring a `ChainSecretStore` would append their stores to one chain.
+
+Applications created by the archetype start with this folder holding `h2_passwd`.
 
 ## The configuration in an installation
 

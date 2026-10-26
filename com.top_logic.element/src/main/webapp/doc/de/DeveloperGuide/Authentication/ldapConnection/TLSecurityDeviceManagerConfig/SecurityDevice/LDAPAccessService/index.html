@@ -13,7 +13,7 @@
 <p><strong>Typ: </strong><code class="hljs inlineCode">SecretSource</code></p>
 <p>Das Passwort des Masteraccounts, das zum Herstellen einer Verbindung zwischen der Anwendung und dem LDAP Dienst verwendet wird. Das Passwort wird bei jedem Öffnen einer Verbindung mit dem Masteraccount gelesen.</p>
 <p>Empfohlen ist ein Verweis auf die Umgebungsvariable (oder Datei), die das Passwort enthält, damit das Passwort nicht Teil der Konfiguration ist:</p>
-<pre><code>&lt;master-credential name="LDAP_CREDENTIAL"/&gt;</code></pre>
+<pre><code>&lt;master-credential name="ldap_credential"/&gt;</code></pre>
 <p>Ein Attributwert ist das mit <code class="hljs inlineCode">CryptSupport</code> verschlüsselte Passwort oder das Passwort im Klartext.</p>
 <h2>base-dn</h2>
 <p><strong>Typ: </strong><code class="hljs inlineCode">String</code></p>

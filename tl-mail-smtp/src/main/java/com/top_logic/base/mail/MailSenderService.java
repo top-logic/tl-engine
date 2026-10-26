@@ -220,14 +220,16 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 		 * 
 		 * <p>
 		 * Recommended is a reference to the password by its secret name, so that the password is
-		 * not part of the configuration, e.g. <code>&lt;password name="SMTP_PASSWORD"/&gt;</code>,
+		 * not part of the configuration, e.g. <code>&lt;password name="smtp_pass"/&gt;</code>,
 		 * which the default secret store reads from the environment variable of that name holding
 		 * the plain password. An attribute value is an encrypted password, or a plain password
 		 * with the prefix <code>unencrypted:</code>.
 		 * </p>
 		 * 
 		 * <p>
-		 * The password is read each time a new connection to the SMTP server is opened.
+		 * The password is read each time a new connection to the SMTP server is opened. A password
+		 * its source does not hold, e.g. an unset named secret, is sent empty, for a server without
+		 * login.
 		 * </p>
 		 */
 		@Name(PASSWORD)
@@ -904,10 +906,12 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
     }
     
 	/**
-	 * The current value of the configured password, the empty string if none is configured.
+	 * The current value of the configured password, the empty string if none is configured or its
+	 * source does not hold it (e.g. the named secret is not set for a server without login).
 	 */
 	private String password() {
-		return _password == null ? StringServices.EMPTY_STRING : _password.getSecret();
+		String password = _password == null ? null : _password.lookup();
+		return password == null ? StringServices.EMPTY_STRING : password;
 	}
 
     /**

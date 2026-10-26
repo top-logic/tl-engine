@@ -42,7 +42,7 @@ The recommended form is the named secret: the configuration holds the name, neve
 
 ## The content of a variable or file
 
-A variable or file read by a secret source or secret store holds the **plain secret**: no `unencrypted:` prefix, no encryption. A secret file may end with a line break; leading and trailing white space is not part of the secret.
+A variable or file read by a secret source or secret store holds the **plain secret**, without encryption. A variable may also hold the secret with the prefix `unencrypted:`, as written for an alias read into an attribute; the prefix is stripped. A secret file may end with a line break; leading and trailing white space is not part of the secret.
 
 Some engine aliases still exist for configurations referencing a secret through an alias in an attribute (e.g. `%OPENAI_API_KEY%`); they are read as encrypted values, so such a configuration writes `api-key="unencrypted:%OPENAI_API_KEY%"`. The [migration](doc:credentials/migration) article lists them.
 

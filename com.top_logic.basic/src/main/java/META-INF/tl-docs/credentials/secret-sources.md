@@ -117,7 +117,7 @@ In AKS with workload identity, the default credentials already use the pod's fed
 
 ## CryptSupportSecretSource (LDAP)
 
-The master credential of an LDAP device (`master-credential` of `ServiceProviderInfo`) uses the `CryptSupportSecretSourceFormat`: an attribute value is decoded with `CryptSupport` (the list of decimal numbers this property always used) or taken as plain text. The element forms are those of all other secret properties, e.g. `<master-credential name="LDAP_CREDENTIAL"/>`.
+The master credential of an LDAP device (`master-credential` of `ServiceProviderInfo`) uses the `CryptSupportSecretSourceFormat`: an attribute value is decoded with `CryptSupport` (the list of decimal numbers this property always used) or taken as plain text. The element forms are those of all other secret properties, e.g. `<master-credential name="ldap_credential"/>`.
 
 ## A secret property in an own service
 

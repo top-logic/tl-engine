@@ -128,6 +128,12 @@ public class TestSecretReferences extends AbstractTypedConfigurationTestCase {
 		SecretStoreService.Config global = global();
 		_savedStore = global.getStore();
 		_savedOverrides = new LinkedHashMap<>(global.getOverrides());
+
+		// The test configuration delivers the passwords of the test databases through a chain
+		// with defaults; the tests start from the environment store the engine configures.
+		global.setStore(TypedConfiguration.createConfigItemForImplementationClass(EnvironmentSecretStore.class));
+		global.getOverrides().clear();
+		restartService();
 	}
 
 	@Override

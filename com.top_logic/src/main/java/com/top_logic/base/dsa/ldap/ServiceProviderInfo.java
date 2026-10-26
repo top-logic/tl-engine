@@ -50,7 +50,7 @@ public class ServiceProviderInfo extends Hashtable {
 		 * <p>
 		 * Recommended is a reference to the password by its secret name, so that the password is
 		 * not part of the configuration, e.g. <code>&lt;master-credential
-		 * name="LDAP_CREDENTIAL"/&gt;</code>, which the default secret store reads from the
+		 * name="ldap_credential"/&gt;</code>, which the default secret store reads from the
 		 * environment variable of that name holding the plain password. An attribute value is the
 		 * password encoded by {@link CryptSupport}, or the password in plain text.
 		 * </p>

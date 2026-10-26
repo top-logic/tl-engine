@@ -8,6 +8,5 @@
         <entry name="%ORACLE12_USER%" value="${env:oracle12_user:test}"/>
         <entry name="%ORACLE12_USER_TEST_UNIT%" value="${env:oracle12_user_testUnit:testUnit}"/>
         <entry name="%ORACLE12_USER_TEST_MIGRATION%" value="${env:oracle12_user_testMigration:testMigration}"/>
-        <entry name="%ORACLE12_PASSWD%" value="${env:oracle12_passwd:unencrypted:passwd}"/>
 	</alias>
 </root>

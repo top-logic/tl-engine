@@ -6,6 +6,7 @@
 package com.top_logic.basic.credential;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.EncodingConfigurationValueProvider;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
@@ -20,6 +21,13 @@ import com.top_logic.basic.util.ResKey;
  * The variable is looked up each time the secret is used, in the same order as the
  * <code>env</code> aliases of the configuration: a JNDI value of the application context first,
  * then a system property, then an environment variable. An empty variable counts as undefined.
+ * </p>
+ *
+ * <p>
+ * The variable holds the plain secret. A value with the prefix
+ * {@link EncodingConfigurationValueProvider#UNENCRYPTED_PREFIX}, as written for an alias read into
+ * an encrypted configuration property, is accepted as well; the prefix is stripped. An encrypted
+ * value is not decrypted.
  * </p>
  *
  * <p>
@@ -69,12 +77,16 @@ public class EnvironmentSecretStore extends AbstractSecretStore<EnvironmentSecre
 	}
 
 	/**
-	 * The value of the system property or environment variable with the given name.
+	 * The value of the system property or environment variable with the given name, without the
+	 * prefix {@link EncodingConfigurationValueProvider#UNENCRYPTED_PREFIX}.
 	 *
 	 * @return The value, or <code>null</code> if the variable is undefined or empty.
 	 */
 	static String variable(String name) {
 		String value = Environment.getSystemPropertyOrEnvironmentVariable(name, null);
+		if (value != null && value.startsWith(EncodingConfigurationValueProvider.UNENCRYPTED_PREFIX)) {
+			value = value.substring(EncodingConfigurationValueProvider.UNENCRYPTED_PREFIX.length());
+		}
 		return StringServices.isEmpty(value) ? null : value;
 	}
 

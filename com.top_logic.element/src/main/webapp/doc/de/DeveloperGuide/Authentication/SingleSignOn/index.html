@@ -14,10 +14,10 @@
   &lt;alias&gt;
     &lt;entry name="%PAC_DOMAIN%" value="..." /&gt;
     &lt;entry name="%PAC_CLIENT_ID%" value="..." /&gt;
-    &lt;entry name="%PAC_SECRET%" value="..." /&gt;
   &lt;/alias&gt;
 &lt;/root&gt;</code></pre>
-<p>Hierbei wird die <code class="hljs inlineCode">PAC_CLIENT_ID</code> und <code class="hljs inlineCode">PAC_SECRET</code> vom OpenID-Provider zur Verfügung gestellt. Die <code class="hljs inlineCode">PAC_DOMAIN</code> muss mit dem Domain-Eintrag des TopLogic-Sercurity-Devices übereinstimmen, welches die Nutzer enthält, die sich über den Provider einloggen können. Wenn die Nutzer über LDAP in die Anwendung geladen werden, muss diese Domain mit der LDAP-Domain übereinstimmen.</p>
+<p>Das Client-Secret ist kein Platzhalter, die Konfigurationsfragmente verweisen darauf über den Namen des Geheimnisses (<code class="hljs inlineCode">&lt;secret name="tl_pac_secret"/&gt;</code>). Die Geheimnisablage der Installation liefert es, standardmäßig aus der Systemeigenschaft oder Umgebungsvariable <code class="hljs inlineCode">tl_pac_secret</code>, die das Secret im Klartext enthält.</p>
+<p>Hierbei wird die <code class="hljs inlineCode">PAC_CLIENT_ID</code> und das Client-Secret vom OpenID-Provider zur Verfügung gestellt. Die <code class="hljs inlineCode">PAC_DOMAIN</code> muss mit dem Domain-Eintrag des TopLogic-Sercurity-Devices übereinstimmen, welches die Nutzer enthält, die sich über den Provider einloggen können. Wenn die Nutzer über LDAP in die Anwendung geladen werden, muss diese Domain mit der LDAP-Domain übereinstimmen.</p>
 <p>Wenn der App-Server seinen eigenen Host-Namen nicht auflösen kann, oder dieser hinter einer Fassade steht, kann es notwendig sein, die öffentliche Adresse zu konfigurieren, an die der Nutzer vom OpenID-Provider zurückverwiesen wird:</p>
 <pre><code class="language-xml">&lt;entry name="%PAC_CALLBACK_URL%" value="https://my-host-name/my-app/servlet/callback" /&gt;
 &lt;entry name="%PAC_CALLBACK_ABSOLUTE%" value="true" /&gt;</code></pre>

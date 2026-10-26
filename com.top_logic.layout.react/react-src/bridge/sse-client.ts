@@ -28,7 +28,7 @@ import {
 } from './route-sync';
 import { handlePick, type PickEventData } from './element-picker';
 import { handleDownload, type DownloadEventData } from './download';
-import { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './page-leave';
+import { afterNavigationGrace, isPageLeaving, leavePage, mayBeNavigating, onPageLeave, reloadForStaleUi } from './page-leave';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -166,6 +166,15 @@ function createEventSource(url: string): void {
       // The connection closing is expected; reloading here would abort the navigation.
       return;
     }
+    if (source.readyState === EventSource.CLOSED && mayBeNavigating()) {
+      // The browser aborts the stream when a navigation it starts by itself begins (the reload
+      // button), long before the page is left: no reason to poll. A page that is still there
+      // afterwards - the user stayed on it - opens its stream again.
+      afterNavigationGrace(() => {
+        if (_eventSource === source && !_polling) createEventSource(_url!);
+      });
+      return;
+    }
     if (source.readyState === EventSource.CLOSED) {
       // The stream was refused: the session is gone (401 after a server restart), or a proxy does
       // not let an event stream through. Polling tells the two apart - its first request answers
@@ -187,9 +196,12 @@ function dispatchMessage(text: string): void {
 
 /**
  * Gives up the event stream and receives the events by polling from now on.
+ *
+ * Not while a navigation may be starting ({@link mayBeNavigating}): a stream the navigation
+ * aborted or held up says nothing about a proxy, and the tab would poll for good.
  */
 function usePolling(reason: string): void {
-  if (_polling || isPageLeaving()) return;
+  if (_polling || isPageLeaving() || mayBeNavigating()) return;
   _polling = true;
   console.warn('[TLReact] polling: ' + reason);
   writeStorage(POLLING_KEY, '1');

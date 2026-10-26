@@ -14,6 +14,13 @@
  * {@code pagehide}. From then on the command channel sends nothing, and neither a stale answer nor a
  * lost event stream reloads the page.</p>
  *
+ * <p>A navigation the browser starts by itself announces itself earlier, on {@code beforeunload},
+ * and the browser may abort the event stream right then - long before {@code pagehide}. That is
+ * only a hint ({@link mayBeNavigating}): a page may cancel {@code beforeunload} to ask about unsaved
+ * changes, and the user may stay. So it does not stop the commands; the event stream merely does
+ * not take a close within {@link NAVIGATION_START_GRACE_MS} after it for a lost connection, and
+ * looks again once that time has passed ({@link afterNavigationGrace}).</p>
+ *
  * <p>When the server does not know the page any more for a reason of its own - the session was
  * replaced in another tab, the server restarted - {@link reloadForStaleUi} loads it again, guarded
  * against loops, and through {@link reentryUrl}: the address without the name of the window, which
@@ -36,13 +43,50 @@ const VIEW_SEGMENT = '/view/';
 /** A window name as the view application's bootstrap page creates it. */
 const WINDOW_NAME_PATTERN = /^v[0-9a-f]+$/i;
 
+/**
+ * How long after {@code beforeunload} the page counts as possibly navigating away: long enough for
+ * the next page to replace this one on an ordinary server, short enough that a page whose user
+ * decided to stay is back to normal soon.
+ */
+export const NAVIGATION_START_GRACE_MS = 3_000;
+
 let _leaving = false;
+
+/** The time of the last {@code beforeunload}, `0` while there was none. */
+let _navigationStart = 0;
 
 const _leaveListeners = new Set<() => void>();
 
 /** Whether the page is navigating away and must not talk to the server any more. */
 export function isPageLeaving(): boolean {
   return _leaving;
+}
+
+/**
+ * Whether a navigation the browser started may be under way: {@code beforeunload} fired within
+ * {@link NAVIGATION_START_GRACE_MS}, and the page has not left (yet). A hint only - the user may
+ * have decided to stay - so nothing but reactions to a lost connection may depend on it.
+ */
+export function mayBeNavigating(): boolean {
+  return !_leaving && _navigationStart > 0 && Date.now() - _navigationStart < NAVIGATION_START_GRACE_MS;
+}
+
+/**
+ * Calls the given function once {@link mayBeNavigating} no longer holds, unless the page has left by
+ * then: for a page that is still there after the navigation it announced, because the navigation
+ * was cancelled or keeps the page (a download).
+ */
+export function afterNavigationGrace(callback: () => void): void {
+  const wait = _navigationStart + NAVIGATION_START_GRACE_MS - Date.now();
+  setTimeout(() => {
+    if (_leaving) return;
+    if (mayBeNavigating()) {
+      // Another navigation was announced meanwhile.
+      afterNavigationGrace(callback);
+      return;
+    }
+    callback();
+  }, Math.max(wait, 0));
 }
 
 /**
@@ -144,6 +188,10 @@ export function withoutWindowName(path: string): string {
 
 // Not beforeunload: a page may cancel that one (unsaved changes), and would then stay leaving.
 window.addEventListener('pagehide', markLeaving);
+
+window.addEventListener('beforeunload', () => {
+  _navigationStart = Date.now();
+});
 
 // A page the browser kept in its back-forward cache and shows again stopped talking to the server
 // when it left, and the server detached its window's tree on the unload report: it loads itself

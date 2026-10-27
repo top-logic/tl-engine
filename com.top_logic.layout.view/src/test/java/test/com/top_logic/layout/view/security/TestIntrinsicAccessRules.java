@@ -214,6 +214,22 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A creation into a reference of an abstract type is allowed where one of its concrete
+	 * specializations may be created.
+	 */
+	public void testCreateAbstractReferenceType() throws Exception {
+		ViewExecutabilityRule rule = creation(null, CHANNEL, "deliverables");
+		_channel.set(_project);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
+
+		becomeUser(_roleless);
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
+			rule.isExecutable(null));
+	}
+
+	/**
 	 * A container that is no single object is refused: the action creates in one container only.
 	 */
 	public void testCreateInCollectionContainer() throws Exception {

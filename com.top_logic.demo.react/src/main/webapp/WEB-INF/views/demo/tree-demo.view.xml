@@ -171,7 +171,6 @@
 								<create
 									in="$milestone.container()"
 									reference="tl.demo.projectManagement:ProjectScope#tickets"
-									type="tl.demo.projectManagement:Ticket"
 								/>
 							</access>
 							<executability>

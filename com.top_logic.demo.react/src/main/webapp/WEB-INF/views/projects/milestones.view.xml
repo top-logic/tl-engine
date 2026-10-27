@@ -3,7 +3,7 @@
 <!--
 	Second frame of the project drill-down: the cockpit of the project the frame was opened for.
 	
-	The cockpit is a dashboard of four tiles. The Project tile displays the project and nothing
+	The cockpit is a dashboard of tiles. The Project tile displays the project and nothing
 	else; it spans two rows, so all fields of the project fit without scrolling. The Milestones and
 	Notes tiles are entry points: pressing one pushes the frame listing that collection, announced
 	by a label of its own. The engine marks such a tile only by how it answers the user, so each of
@@ -13,6 +13,9 @@
 	the first note through the card's own button lifts the refusal, because the action observes the
 	project. The create buttons inside the cards answer a press themselves, so they open their
 	dialog instead of pushing the list behind the tile.
+	
+	The Deliverables tile pushes the list of the deliverables of the project, where a deliverable of
+	a kind the user chooses is created (see projects/deliverables.view.xml).
 	
 	The Planning tile lists the due dates and approvals of the milestones. It is guarded by the
 	operation "ShowPlanning" on the project, which only the administrators of the project hold, so
@@ -33,6 +36,10 @@
 		/>
 		<derived-channel name="noteCount"
 			expr="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#notes`).size())"
+			inputs="project"
+		/>
+		<derived-channel name="deliverableCount"
+			expr="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#deliverables`).size())"
 			inputs="project"
 		/>
 	</channels>
@@ -187,6 +194,35 @@
 						<value>
 							<en>Notes</en>
 							<de>Notizen</de>
+						</value>
+					</frame-label>
+				</action>
+			</tile>
+			<tile id="deliverables"
+				width="quarter"
+			>
+				<card>
+					<title>
+						<en>Deliverables</en>
+						<de>Liefergegenstände</de>
+					</title>
+					<header-content>
+						<theme-icon image="css:bi bi-chevron-right"/>
+					</header-content>
+					<text input="deliverableCount"/>
+				</card>
+				<action class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+					bind-input-to="project"
+					inputs="project"
+					view="projects/deliverables.view.xml"
+				>
+					<executability>
+						<null-input-disabled/>
+					</executability>
+					<frame-label class="com.top_logic.layout.view.tiles.StaticTileLabel">
+						<value>
+							<en>Deliverables</en>
+							<de>Liefergegenstände</de>
 						</value>
 					</frame-label>
 				</action>

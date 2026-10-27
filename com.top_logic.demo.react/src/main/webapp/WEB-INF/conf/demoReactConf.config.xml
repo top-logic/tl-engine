@@ -335,6 +335,18 @@
 							roles="demo.react.ProjectManager"
 						/>
 					</class>
+					<!--
+						The deliverables of a project are of one of three kinds. A project administrator
+						creates every kind, by the module grant above; a project member creates
+						specifications only. The deliverables take the project roles by the role rules
+						below, so they decide for themselves rather than through the project.
+					-->
+					<class name="tl.demo.projectManagement:Specification">
+						<grant
+							operation="Create"
+							roles="demo.react.ProjectMember"
+						/>
+					</class>
 					<part name="tl.demo.projectManagement:ProjectScope#members">
 						<grant
 							operation="Write"
@@ -560,6 +572,32 @@
 							<path>
 								<step
 									attribute="tl.demo.projectManagement:ProjectScope#tickets"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="MembersOnDeliverables"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Deliverable"
+							role="demo.react.ProjectMember"
+							source-role="demo.react.ProjectMember"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:ProjectScope#deliverables"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="AdminsOnDeliverables"
+							inherit="true"
+							meta-element="tl.demo.projectManagement:Deliverable"
+							role="demo.react.ProjectAdmin"
+							source-role="demo.react.ProjectAdmin"
+						>
+							<path>
+								<step
+									attribute="tl.demo.projectManagement:ProjectScope#deliverables"
 									inverse="true"
 								/>
 							</path>

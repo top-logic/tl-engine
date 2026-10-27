@@ -7,6 +7,7 @@ package com.top_logic.layout.view.security;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Registration;
@@ -24,7 +25,6 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -96,11 +96,16 @@ public final class IntrinsicAccessRules {
 	 * <ul>
 	 * <li>With a container, the creation is checked in the context of the container and, with a
 	 * reference, together with the right to write that reference of the container, see
-	 * {@link ModelAccessPolicy#onCreate(TLClass, TLStructuredTypePart, Object)}, the check of a
-	 * {@link CreateAccess} as well. An empty container channel is nothing to check.</li>
+	 * {@link ModelAccessPolicy#onCreate(TLClass, Set, TLStructuredTypePart, Object)}, the check of
+	 * a {@link CreateAccess} as well. An empty container channel is nothing to check.</li>
 	 * <li>Without a container, the creation is checked against the security root, see
-	 * {@link ModelAccessPolicy#onType(BoundCommandGroup, TLClass)}.</li>
+	 * {@link ModelAccessPolicy#onCreateWithoutContext(TLClass, Set)}.</li>
 	 * </ul>
+	 *
+	 * <p>
+	 * An abstract created type is allowed where at least one of its concrete specializations may be
+	 * created, see {@link ModelAccessPolicy#concreteTypes(TLClass)}.
+	 * </p>
 	 *
 	 * <p>
 	 * The created type is the given type, the type of the reference, or the type of the
@@ -139,6 +144,10 @@ public final class IntrinsicAccessRules {
 		private final String _reference;
 
 		private ViewChannel _containerChannel;
+
+		private TLClass _lastType;
+
+		private Set<TLClass> _lastConcreteTypes;
 
 		CreationRule(TLModelPartRef type, ChannelRef container, String reference) {
 			_typeRef = type;
@@ -181,7 +190,7 @@ public final class IntrinsicAccessRules {
 				// No object to be created, nothing to check.
 				return ExecutableState.EXECUTABLE;
 			}
-			return ModelAccessPolicy.onType(SimpleBoundCommandGroup.CREATE, type);
+			return ModelAccessPolicy.onCreateWithoutContext(type, concreteTypes(type));
 		}
 
 		private ExecutableState inContainer(Object input) {
@@ -214,8 +223,24 @@ public final class IntrinsicAccessRules {
 					// No object to be created, nothing to check.
 					return ExecutableState.EXECUTABLE;
 				}
+			} else if (!(reference.getType() instanceof TLClass referenceType)) {
+				return ExecutableState.NOT_EXEC_HIDDEN;
+			} else {
+				type = referenceType;
 			}
-			return ModelAccessPolicy.onCreate(type, reference, container);
+			return ModelAccessPolicy.onCreate(type, concreteTypes(type), reference, container);
+		}
+
+		/**
+		 * The concrete types an object of the given type is created as, remembered for the type
+		 * asked last.
+		 */
+		private Set<TLClass> concreteTypes(TLClass type) {
+			if (type != _lastType) {
+				_lastConcreteTypes = ModelAccessPolicy.concreteTypes(type);
+				_lastType = type;
+			}
+			return _lastConcreteTypes;
 		}
 
 		/**

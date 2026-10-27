@@ -73,7 +73,6 @@
 							<create
 								in="$ticket"
 								reference="demo.tickets:Ticket#comments"
-								type="demo.tickets:Comment"
 							/>
 						</access>
 						<store-form-state>

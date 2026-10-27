@@ -64,6 +64,24 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 	/** The tag of a generic command. */
 	private static final String GENERIC_COMMAND = "generic-command";
 
+	/** The abstract type of the composition {@link #DELIVERABLES} of a project. */
+	private static final String DELIVERABLE = "Deliverable";
+
+	/** The concrete {@link #DELIVERABLE} the responsible may create. */
+	private static final String SPEC = "Spec";
+
+	/** The concrete {@link #DELIVERABLE} no role may create. */
+	private static final String PLAN = "Plan";
+
+	/** The project composition of {@link #DELIVERABLE}s. */
+	private static final String DELIVERABLES = "deliverables";
+
+	/** The project composition of an abstract type whose only concrete specialization no role may create. */
+	private static final String ARCHIVE = "archive";
+
+	/** An abstract type without concrete specialization. */
+	private static final String EMPTY = "Empty";
+
 	/** The operation declared for the security root by the engine. */
 	private static final String ADMINISTRATION = "Administration";
 
@@ -336,6 +354,10 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 			command(OBJECT_CHANNEL, create(CATEGORY, "$object", CATEGORY_REF)), _context);
 		assertInvalid("The created type must be compatible with the reference.",
 			command(OBJECT_CHANNEL, create(CATEGORY, "$object", TASKS)), _context);
+		assertInvalid("A creation without reference needs a type.",
+			command(OBJECT_CHANNEL, "<create in='$object'/>"), _context);
+		assertInvalid("An abstract type needs a concrete specialization.",
+			command(OBJECT_CHANNEL, create(EMPTY, "$object", null)), _context);
 		assertInvalid("A reference needs a context.",
 			command(null, "<create type='" + qualified(TASK) + "' reference='" + qualified(PROJECT) + "#" + TASKS
 				+ "'/>"),
@@ -429,6 +451,65 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * Without a type, the created type is the type of the reference.
+	 */
+	public void testCreateTypeOfReference() throws ConfigurationException {
+		ViewExecutabilityRule rule = rule(command(OBJECT_CHANNEL, createByReference("$object", TASKS)), _context);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
+
+		becomeUser(_roleless);
+		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, rule.isExecutable(_project));
+	}
+
+	/**
+	 * An abstract type is created where at least one of its concrete specializations may be
+	 * created; in a collection of contexts, in every one.
+	 */
+	public void testCreateAbstractType() throws ConfigurationException {
+		TLObject other = newObject(qualified(PROJECT), "other");
+		ViewExecutabilityRule byReference =
+			rule(command(OBJECT_CHANNEL, createByReference("$object", DELIVERABLES)), _context);
+		ViewExecutabilityRule byType = rule(command(OBJECT_CHANNEL, create(DELIVERABLE, "$object", null)), _context);
+
+		becomeUser(_responsible);
+		assertSame("The responsible may create a spec.", ExecutableState.EXECUTABLE, byReference.isExecutable(_project));
+		assertSame(ExecutableState.EXECUTABLE, byType.isExecutable(_project));
+		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
+			byReference.isExecutable(List.of(_project, other)));
+
+		becomeUser(_roleless);
+		// Some role may create a spec, but not this user.
+		assertDisabled(I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE, byReference.isExecutable(_project));
+	}
+
+	/**
+	 * An abstract type no concrete specialization of which any role may create hides the command.
+	 */
+	public void testCreateAbstractTypeNotCreatable() throws ConfigurationException {
+		ViewExecutabilityRule rule = rule(command(OBJECT_CHANNEL, createByReference("$object", ARCHIVE)), _context);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(_project));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
+	}
+
+	/**
+	 * An explicit type narrows the type of the reference to the concrete type created.
+	 */
+	public void testCreateNarrowerType() throws ConfigurationException {
+		ViewExecutabilityRule spec = rule(command(OBJECT_CHANNEL, create(SPEC, "$object", DELIVERABLES)), _context);
+		ViewExecutabilityRule plan = rule(command(OBJECT_CHANNEL, create(PLAN, "$object", DELIVERABLES)), _context);
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, spec.isExecutable(_project));
+		assertSame("No role may create a plan.", ExecutableState.NOT_EXEC_HIDDEN, plan.isExecutable(_project));
+	}
+
+	/**
 	 * All checks must pass: the first failing one gives the reason, and a check that can never
 	 * pass hides the command.
 	 */
@@ -480,6 +561,14 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 			return "<operation name='" + operation + "'/>";
 		}
 		return "<operation name='" + operation + "' object='$object' type='" + qualified(typeName) + "'/>";
+	}
+
+	/**
+	 * A creation in the given context, added to the given reference of a project, of the type of the
+	 * reference.
+	 */
+	private static String createByReference(String in, String projectReference) {
+		return "<create in='" + in + "' reference='" + qualified(PROJECT) + "#" + projectReference + "'/>";
 	}
 
 	/**

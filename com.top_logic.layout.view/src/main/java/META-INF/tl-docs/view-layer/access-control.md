@@ -133,7 +133,7 @@ its own.
 		<operation name="Approve" object="$milestones.map(m -> $m.container())"
 			type="tl.demo.projectManagement:ProjectScope"/>
 		<!-- A comment created in the ticket and added to its comments. -->
-		<create type="demo.tickets:Comment" in="$ticket" reference="demo.tickets:Ticket#comments"/>
+		<create in="$ticket" reference="demo.tickets:Ticket#comments"/>
 	</access>
 	...
 </generic-command>
@@ -176,13 +176,39 @@ on that reference.
 
 | Attribute | Meaning |
 |---|---|
-| `type` | Mandatory. The qualified name of the type of the created object. |
+| `type` | The qualified name of the type of the created object. Mandatory without `reference`; with `reference`, it defaults to the type of the reference and must be compatible with it (e.g. a specialization). |
 | `in` | The context(s) the object is created in. Without `in`, the context is the object of the enclosing unit with an `<access-control>`; without such a unit, or for a unit checked on the security root, the object is created without context, decided against the security root. |
 | `reference` | The qualified name of the composition reference of the context the object is added to, e.g. `demo.tickets:Ticket#comments`. It needs a context. |
 
 The command is hidden when the user can never create the type (no role is granted `Create` on it,
 or, with `reference`, no role may write the reference), and disabled with the refusal when the
-creation is refused in a context. The actions creating objects (`<create-transient>`,
+creation is refused in a context.
+
+**An abstract type** stands for the choice among its concrete specializations, e.g. a command
+asking the user which kind of object to create. The check passes in a context where *at least one*
+concrete specialization may be created (`ModelAccessRights.isAllowedCreate` per concrete type, with
+`reference` together with `Write` on the reference); in a collection of contexts, in every one. It
+hides the command only when no role can ever create any of them, and disables it otherwise. The
+concrete specializations are computed once, when the command is built. The chooser should offer only
+the kinds the user may create there, with the TL-Script function `canCreate(parent, reference,
+type)`:
+
+```xml
+<value-input inputs="project" type="tl.model:TLClass" value="kind"
+	options="[`my.app:Specification`, `my.app:Prototype`, `my.app:Report`]
+		.filter(t -> $project.canCreate(`my.app:Project#deliverables`, $t))"/>
+<generic-command inputs="project, kind">
+	<access>
+		<create in="$project" reference="my.app:Project#deliverables"/>
+	</access>
+	<execute-script function="new($kind, context: $project, transient: true)">…</execute-script>
+</generic-command>
+```
+
+The demo `tl-demo-react` shows this in the Deliverables tile of a project cockpit
+(`projects/deliverables.view.xml`).
+
+The actions creating objects (`<create-transient>`,
 `<persist-transient>`) bring the same check of their own, see
 [creating and deleting objects](doc:view-layer/commands#creating-and-deleting-objects-create-transient-persist-transient-delete-object).
 
@@ -191,7 +217,8 @@ creation is refused in a context. The actions creating objects (`<create-transie
 The operation of an `<operation>` must apply to its `type`, or, without `object`, to the type of the
 enclosing unit or to the security root. An `object` needs a `type` and vice versa. The `type` of a
 `<create>` must be a class, its `reference` a composition reference whose type is compatible with
-the `type`. A violation is a configuration error.
+the `type`. A `<create>` without `reference` needs a `type`, and an abstract created type needs at
+least one concrete specialization. A violation is a configuration error.
 
 ## Editing a form
 

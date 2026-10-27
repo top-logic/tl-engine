@@ -541,23 +541,49 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
+	 * The concrete types an object of the given type is created as: the type itself when it is
+	 * concrete, its concrete specializations when it is abstract.
+	 *
+	 * <p>
+	 * A creation of an abstract type stands for the choice among its concrete specializations: it
+	 * is allowed where at least one of them may be created. The result is meant to be computed
+	 * once, when the check is set up.
+	 * </p>
+	 *
+	 * @return The concrete types, empty for an abstract type without concrete specialization.
+	 */
+	public static Set<TLClass> concreteTypes(TLClass type) {
+		if (!type.isAbstract()) {
+			return Collections.singleton(type);
+		}
+		return Collections.unmodifiableSet(TLModelUtil.getConcreteSpecializations(type));
+	}
+
+	/**
 	 * Whether the current user can create objects of the given type at all, independent of the
 	 * context they are created in.
 	 *
 	 * <p>
 	 * The creation is out of reach when the {@link SimpleBoundCommandGroup#CREATE creation} is not
-	 * {@link #isOffered(BoundCommandGroup, TLClass) offered} on the type, or, for a creation into a
-	 * reference, when writing the reference is out of reach: its own write grant lists no role, or,
-	 * without one, writing is not offered on the type defining the reference.
+	 * {@link #isOffered(BoundCommandGroup, TLClass) offered} on any of the concrete types, or, for a
+	 * creation into a reference, when writing the reference is out of reach: its own write grant
+	 * lists no role, or, without one, writing is not offered on the type defining the reference.
 	 * </p>
 	 *
-	 * @param type
-	 *        The type of the created object.
+	 * @param concreteTypes
+	 *        The concrete types the object may be created as, see {@link #concreteTypes(TLClass)}.
 	 * @param reference
 	 *        The composition reference the object is added to, {@code null} for none.
 	 */
-	public static boolean isCreateOffered(TLClass type, TLStructuredTypePart reference) {
-		if (!isOffered(SimpleBoundCommandGroup.CREATE, type)) {
+	public static boolean isCreateOffered(Set<TLClass> concreteTypes, TLStructuredTypePart reference) {
+		boolean offered = false;
+		for (TLClass type : concreteTypes) {
+			if (isOffered(SimpleBoundCommandGroup.CREATE, type)) {
+				offered = true;
+				break;
+			}
+		}
+		if (!offered) {
 			return false;
 		}
 		if (reference == null) {
@@ -575,20 +601,45 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
+	 * The state of a command creating an object of the given type without a context, checked
+	 * against the security root: executable when at least one of the concrete types may be
+	 * created there, hidden otherwise.
+	 *
+	 * @param type
+	 *        The declared type of the created object, naming it in the reason.
+	 * @param concreteTypes
+	 *        The concrete types the object may be created as, see {@link #concreteTypes(TLClass)}.
+	 */
+	public static ExecutableState onCreateWithoutContext(TLClass type, Set<TLClass> concreteTypes) {
+		ExecutableState result = ExecutableState.NOT_EXEC_HIDDEN;
+		for (TLClass concreteType : concreteTypes) {
+			result = onType(SimpleBoundCommandGroup.CREATE, concreteType);
+			if (result.isExecutable()) {
+				return result;
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * The state of a command creating an object of the given type in the given context(s).
 	 *
 	 * <ul>
-	 * <li>Hidden, when the user can never create the type, see
-	 * {@link #isCreateOffered(TLClass, TLStructuredTypePart)}.</li>
+	 * <li>Hidden, when the user can never create any of the concrete types, see
+	 * {@link #isCreateOffered(Set, TLStructuredTypePart)}.</li>
 	 * <li>{@link ExecutableState#NO_EXEC_NO_MODEL Disabled}, when there is no context
 	 * ({@code null} or an empty collection).</li>
-	 * <li>Otherwise as {@link #createIn(TLObject, TLStructuredTypePart, TLClass)} decides for each
-	 * context: a hidden refusal hides the command, else the first refusal disables it. A context
-	 * that is no object, or no instance of the type defining the reference, is refused.</li>
+	 * <li>Otherwise, in every context at least one of the concrete types must be allowed, see
+	 * {@link #createIn(TLObject, TLStructuredTypePart, TLClass)}. A context where all of them are
+	 * refused hides the command when every refusal hides it, else disables it with the refusal of
+	 * the declared type as reason. A context that is no object, or no instance of the type defining
+	 * the reference, is refused.</li>
 	 * </ul>
 	 *
 	 * @param type
-	 *        The type of the created object, {@code null} for the type of the given reference.
+	 *        The declared type of the created object, naming it in the reason.
+	 * @param concreteTypes
+	 *        The concrete types the object may be created as, see {@link #concreteTypes(TLClass)}.
 	 * @param reference
 	 *        The composition reference of the context the object is added to, {@code null} for a
 	 *        creation in the context only.
@@ -596,9 +647,9 @@ public final class ModelAccessPolicy {
 	 *        A single context object, a collection of context objects (the creation must be allowed
 	 *        in every one), or {@code null}.
 	 */
-	public static ExecutableState onCreate(TLClass type, TLStructuredTypePart reference, Object contexts) {
-		TLClass createdType = type != null ? type : targetClass(reference);
-		if (createdType == null || !isCreateOffered(createdType, reference)) {
+	public static ExecutableState onCreate(TLClass type, Set<TLClass> concreteTypes, TLStructuredTypePart reference,
+			Object contexts) {
+		if (!isCreateOffered(concreteTypes, reference)) {
 			return ExecutableState.NOT_EXEC_HIDDEN;
 		}
 		Collection<?> elements;
@@ -614,7 +665,7 @@ public final class ModelAccessPolicy {
 		}
 		ExecutableState firstRefusal = null;
 		for (Object element : elements) {
-			ExecutableState state = createInElement(createdType, reference, element);
+			ExecutableState state = createInElement(type, concreteTypes, reference, element);
 			if (state.isHidden()) {
 				return state;
 			}
@@ -625,7 +676,8 @@ public final class ModelAccessPolicy {
 		return firstRefusal != null ? firstRefusal : ExecutableState.EXECUTABLE;
 	}
 
-	private static ExecutableState createInElement(TLClass type, TLStructuredTypePart reference, Object element) {
+	private static ExecutableState createInElement(TLClass type, Set<TLClass> concreteTypes,
+			TLStructuredTypePart reference, Object element) {
 		if (!(element instanceof TLObject candidate)) {
 			return ExecutableState.createDisabledState(createReason(type));
 		}
@@ -635,8 +687,17 @@ public final class ModelAccessPolicy {
 				+ TLModelUtil.qualifiedName(reference) + "'.", ModelAccessPolicy.class);
 			return ExecutableState.createDisabledState(createReason(type));
 		}
-		return createIn(context, reference, type);
+		boolean allHidden = true;
+		for (TLClass concreteType : concreteTypes) {
+			ExecutableState state = createIn(context, reference, concreteType);
+			if (state.isExecutable()) {
+				return state;
+			}
+			allHidden &= state.isHidden();
+		}
+		return allHidden ? ExecutableState.NOT_EXEC_HIDDEN : ExecutableState.createDisabledState(createReason(type));
 	}
+
 
 	/**
 	 * Whether the given operation is the creation of objects.

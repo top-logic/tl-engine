@@ -83,7 +83,7 @@ public class ValueEditor extends AbstractEditor {
 		Mapping<Object, Object> uiConversion = Identity.INSTANCE;
 		Mapping<Object, Object> storageConversion = Converters.valueConverter(property);
 
-		DeclarativeFormOptions formOptions = editorFactory.formOptions(property);
+		DeclarativeFormOptions formOptions = editorFactory.formOptions(property, container);
 		DerivedProperty<? extends Iterable<?>> optionProvider = optionProvider(formOptions);
 		boolean hasOptionProvider = optionProvider != null;
 		boolean hasFormatAnnotation = property.getAnnotation(Format.class) != null;

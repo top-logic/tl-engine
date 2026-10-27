@@ -964,6 +964,12 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.dropdownSelect.error")
 	public static ResKey JS_DROPDOWN_SELECT_ERROR;
 
+	/**
+	 * @en Use "{0}"
+	 */
+	@CustomKey("js.dropdownSelect.useText")
+	public static ResKey JS_DROPDOWN_SELECT_USE_TEXT;
+
 	// -- Color input client-side i18n keys --
 
 	/**

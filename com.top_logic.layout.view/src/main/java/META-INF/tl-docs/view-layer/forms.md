@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, a selection also taking a freely typed text with free-entry and create, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -43,6 +43,47 @@ configured at the control by label.
 <field attribute="priority">
 	<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
 		display="segmented"
+	/>
+</field>
+```
+
+**A selection taking a text of its own** — `SelectControlProvider`, option `free-entry="true"`:
+the dropdown also takes a text the user types into its search field, for a value that is mostly one
+of a known set but now and then a new one (keywords, tags, a place). A text naming an option,
+ignoring case and surrounding blanks, chooses that option; any other text becomes a value of its
+own - the value of a single-valued field, one more value of a multi-valued one (a text entered
+twice yields one value). The list offers the entry `Use "…"` at its end while the text names no
+option; Enter takes the highlighted option or, with none highlighted, the text, and leaving the
+field (Tab, a click outside) takes the text as well, while Escape drops it. With free entry the
+dropdown always has its search field, whatever `filter` says; the shapes showing every option
+ignore `free-entry`. A text the field refuses - a text with a comma in an attribute stored as one
+comma separated text, say - is reported like a failed command.
+
+Without more, the text itself becomes the value, which suits a field holding texts:
+
+```xml
+<value-input
+	options="['Berlin', 'Hamburg', 'Munich']"
+	value="place"
+>
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+		free-entry="true"
+	/>
+</value-input>
+```
+
+For any other value, `create` is a TL-Script expression making the value of the text: `$text` is
+the entered text without surrounding blanks, `$self` the edited object (nothing where the field
+edits no attribute of an object). A new object is created transient, so storing the form creates
+it and cancelling the form drops it; a text naming an option, a value of the field or a value
+created before chooses that value without evaluating `create`, and a result of nothing leaves the
+field unchanged. Without `create`, a field holding no texts refuses free entry and logs an error.
+
+```xml
+<field attribute="keywords">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+		create="new(`my:Keyword`, transient: true)..set(`my:Keyword#name`, $text)"
+		free-entry="true"
 	/>
 </field>
 ```

@@ -72,7 +72,7 @@ class SelectionRectangle {
 		public void handleEvent(Event evt) {
 			KeyboardEvent event = (KeyboardEvent) evt;
 			if ("Escape".equals(event.key)) {
-				cancel();
+				abort();
 				event.stopPropagation();
 				event.preventDefault();
 			}
@@ -84,6 +84,11 @@ class SelectionRectangle {
 
 	/** Whether the rectangle is being drawn. */
 	private boolean _active;
+
+	/**
+	 * Whether {@code Escape} dropped the gesture, which still lasts until the button is released.
+	 */
+	private boolean _aborted;
 
 	/** The pointer that started the gesture. */
 	private int _pointerId;
@@ -113,7 +118,7 @@ class SelectionRectangle {
 	 * </p>
 	 */
 	boolean isStarted() {
-		return _pending || _active;
+		return _pending || _active || _aborted;
 	}
 
 	/**
@@ -124,11 +129,13 @@ class SelectionRectangle {
 	 * </p>
 	 */
 	void onDown(PointerEvent event) {
+		// A press always starts anew: an aborted gesture whose release went elsewhere is over.
+		cancel();
+
 		Diagram diagram = _control._diagram;
 		if (diagram == null || !diagram.isMultiSelect() || event.button != 0 || !event.ctrlKey) {
 			return;
 		}
-		cancel();
 		_pending = true;
 		_pointerId = event.pointerId;
 		_startX = event.clientX;
@@ -144,6 +151,10 @@ class SelectionRectangle {
 	boolean onMove(PointerEvent event) {
 		if (!isStarted() || event.pointerId != _pointerId) {
 			return false;
+		}
+		if (_aborted) {
+			// Nothing is drawn any more, but the gesture lasts until the release.
+			return true;
 		}
 		_endX = event.clientX;
 		_endY = event.clientY;
@@ -165,6 +176,13 @@ class SelectionRectangle {
 	boolean onUp(PointerEvent event) {
 		if (!isStarted() || event.pointerId != _pointerId) {
 			return false;
+		}
+		if (_aborted) {
+			// The release ends the gesture dropped by Escape and clicks nothing: a click on the
+			// diagram background would give up the whole selection.
+			cancel();
+			suppressNextClick();
+			return true;
 		}
 		if (_pending) {
 			// A click, left to the elements.
@@ -188,14 +206,32 @@ class SelectionRectangle {
 	void cancel() {
 		DomGlobal.window.removeEventListener("keydown", _escape, true);
 		_pending = false;
-		if (!_active) {
-			return;
-		}
 		_active = false;
+		_aborted = false;
 		Element svgElement = svgElement();
 		if (svgElement.hasPointerCapture(_pointerId)) {
 			svgElement.releasePointerCapture(_pointerId);
 		}
+		removeRectangle();
+	}
+
+	/**
+	 * Drops the gesture on {@code Escape} without changing the selection.
+	 *
+	 * <p>
+	 * The rectangle disappears, but the gesture lasts until the button is released, so that the
+	 * release does not click the element under the mouse.
+	 * </p>
+	 */
+	private void abort() {
+		DomGlobal.window.removeEventListener("keydown", _escape, true);
+		_pending = false;
+		_active = false;
+		_aborted = true;
+		removeRectangle();
+	}
+
+	private void removeRectangle() {
 		if (_rectangle != null) {
 			if (_rectangle.getParentNode() != null) {
 				_rectangle.getParentNode().removeChild(_rectangle);

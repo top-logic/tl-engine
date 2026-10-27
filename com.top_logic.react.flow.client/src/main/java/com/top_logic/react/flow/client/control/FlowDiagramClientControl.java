@@ -544,18 +544,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_keyDownEsc = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
-				KeyboardEvent ke = (KeyboardEvent) evt;
-				if (_selectionRectangle.isStarted()) {
-					if ("Escape".equals(ke.key)) {
-						_selectionRectangle.cancel();
-						ke.stopPropagation();
-						ke.preventDefault();
-					}
-					return;
-				}
 				if (!_dragHandler.isActive()) {
 					return;
 				}
+				KeyboardEvent ke = (KeyboardEvent) evt;
 				if ("Escape".equals(ke.key)) {
 					_dragHandler.cancel();
 					_svg.getElement().getStyle().setProperty("cursor", "default");

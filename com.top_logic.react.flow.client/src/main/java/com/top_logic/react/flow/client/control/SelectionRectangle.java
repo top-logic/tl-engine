@@ -22,6 +22,7 @@ import elemental2.dom.DomGlobal;
 import elemental2.dom.Element;
 import elemental2.dom.Event;
 import elemental2.dom.EventListener;
+import elemental2.dom.KeyboardEvent;
 import elemental2.dom.NodeList;
 import elemental2.dom.PointerEvent;
 import jsinterop.base.Js;
@@ -34,7 +35,8 @@ import jsinterop.base.Js;
  * and the point it is released. Releasing the button adds every selectable element lying completely
  * inside the rectangle to the selection, as a click with {@code Ctrl} on each of them would (see
  * {@link com.top_logic.react.flow.operations.DiagramOperations#addToSelection(Iterable)}). The
- * gesture is only offered in a diagram with {@link Diagram#isMultiSelect() multiple selection}.
+ * gesture is only offered in a diagram with {@link Diagram#isMultiSelect() multiple selection};
+ * {@code Escape} drops it.
  * </p>
  *
  * <p>
@@ -57,11 +59,36 @@ class SelectionRectangle {
 
 	private final OMSVGSVGElement _svg;
 
+	/**
+	 * Drops the gesture on {@code Escape}, registered only while the gesture lasts.
+	 *
+	 * <p>
+	 * Registered for the capture phase, so that the key reaches it even if the key handling of the
+	 * surrounding page does not let a key event bubble up to the window.
+	 * </p>
+	 */
+	private final EventListener _escape = new EventListener() {
+		@Override
+		public void handleEvent(Event evt) {
+			KeyboardEvent event = (KeyboardEvent) evt;
+			if ("Escape".equals(event.key)) {
+				abort();
+				event.stopPropagation();
+				event.preventDefault();
+			}
+		}
+	};
+
 	/** Whether the button was pressed with {@code Ctrl}, but the mouse has not moved far yet. */
 	private boolean _pending;
 
 	/** Whether the rectangle is being drawn. */
 	private boolean _active;
+
+	/**
+	 * Whether {@code Escape} dropped the gesture, which still lasts until the button is released.
+	 */
+	private boolean _aborted;
 
 	/** The pointer that started the gesture. */
 	private int _pointerId;
@@ -91,7 +118,7 @@ class SelectionRectangle {
 	 * </p>
 	 */
 	boolean isStarted() {
-		return _pending || _active;
+		return _pending || _active || _aborted;
 	}
 
 	/**
@@ -101,15 +128,18 @@ class SelectionRectangle {
 	 *         may still turn out to be a click.
 	 */
 	boolean onDown(PointerEvent event) {
+		// A press always starts anew: an aborted gesture whose release went elsewhere is over.
+		cancel();
+
 		Diagram diagram = _control._diagram;
 		if (diagram == null || !diagram.isMultiSelect() || event.button != 0 || !event.ctrlKey) {
 			return false;
 		}
-		cancel();
 		_pending = true;
 		_pointerId = event.pointerId;
 		_startX = event.clientX;
 		_startY = event.clientY;
+		DomGlobal.window.addEventListener("keydown", _escape, true);
 		return true;
 	}
 
@@ -121,6 +151,10 @@ class SelectionRectangle {
 	boolean onMove(PointerEvent event) {
 		if (!isStarted() || event.pointerId != _pointerId) {
 			return false;
+		}
+		if (_aborted) {
+			// Nothing is drawn any more, but the gesture lasts until the release.
+			return true;
 		}
 		_endX = event.clientX;
 		_endY = event.clientY;
@@ -143,16 +177,23 @@ class SelectionRectangle {
 		if (!isStarted() || event.pointerId != _pointerId) {
 			return false;
 		}
+		if (_aborted) {
+			// The release ends the gesture dropped by Escape and clicks nothing: a click on the
+			// diagram background would give up the whole selection.
+			cancel();
+			suppressNextClick();
+			return true;
+		}
 		if (_pending) {
 			// A click, left to the elements.
-			_pending = false;
+			cancel();
 			return false;
 		}
 		_endX = event.clientX;
 		_endY = event.clientY;
 
 		List<Widget> enclosed = findEnclosed();
-		finish();
+		cancel();
 		suppressNextClick();
 
 		_control._diagram.addToSelection(enclosed);
@@ -163,10 +204,40 @@ class SelectionRectangle {
 	 * Drops the gesture without changing the selection.
 	 */
 	void cancel() {
-		if (_active) {
-			finish();
-		}
+		DomGlobal.window.removeEventListener("keydown", _escape, true);
 		_pending = false;
+		_active = false;
+		_aborted = false;
+		Element svgElement = svgElement();
+		if (svgElement.hasPointerCapture(_pointerId)) {
+			svgElement.releasePointerCapture(_pointerId);
+		}
+		removeRectangle();
+	}
+
+	/**
+	 * Drops the gesture on {@code Escape} without changing the selection.
+	 *
+	 * <p>
+	 * The rectangle disappears, but the gesture lasts until the button is released, so that the
+	 * release does not click the element under the mouse.
+	 * </p>
+	 */
+	private void abort() {
+		DomGlobal.window.removeEventListener("keydown", _escape, true);
+		_pending = false;
+		_active = false;
+		_aborted = true;
+		removeRectangle();
+	}
+
+	private void removeRectangle() {
+		if (_rectangle != null) {
+			if (_rectangle.getParentNode() != null) {
+				_rectangle.getParentNode().removeChild(_rectangle);
+			}
+			_rectangle = null;
+		}
 	}
 
 	private void start() {
@@ -182,20 +253,6 @@ class SelectionRectangle {
 		// Keep the outline thin, whatever the zoom.
 		_rectangle.setAttribute("vector-effect", "non-scaling-stroke");
 		_svg.appendChild(_rectangle);
-	}
-
-	private void finish() {
-		_active = false;
-		Element svgElement = svgElement();
-		if (svgElement.hasPointerCapture(_pointerId)) {
-			svgElement.releasePointerCapture(_pointerId);
-		}
-		if (_rectangle != null) {
-			if (_rectangle.getParentNode() != null) {
-				_rectangle.getParentNode().removeChild(_rectangle);
-			}
-			_rectangle = null;
-		}
 	}
 
 	private void updateRectangle() {

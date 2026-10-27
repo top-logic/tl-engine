@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.navigation;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -18,7 +19,14 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.react.routing.RouteChangeListener;
+import com.top_logic.layout.react.routing.RouteManager;
+import com.top_logic.layout.react.routing.RouteMatch;
+import com.top_logic.layout.react.routing.RoutePattern;
+import com.top_logic.layout.react.routing.RouteSegment;
+import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.navigation.Binding;
 import com.top_logic.layout.view.navigation.DisplayTarget;
 import com.top_logic.layout.view.navigation.DisplayTargets;
@@ -211,6 +219,63 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 	}
 
 	/**
+	 * A display passing through several routes on its way to the object reports one history entry,
+	 * for the place it arrives at.
+	 */
+	public void testDisplayIsOneHistoryEntry() {
+		RouteManager routes = _root.getRouteManager();
+		Watcher watcher = new Watcher();
+		routes.register(watcher);
+		// The page is loaded with an address the display reproduces.
+		routes.adoptUrl("");
+		routes.finishAdoption();
+		List<String> urls = new ArrayList<>();
+		List<Boolean> replaceFlags = new ArrayList<>();
+		routes.setUrlChangeHandler((url, title, replace) -> {
+			urls.add(url);
+			replaceFlags.add(replace);
+		});
+		// Drilling down changes the route twice, as revealing an area and then writing the path do.
+		_root.resolveChannel(new ChannelRef(PATH_CHANNEL)).addListener((sender, oldValue, newValue) -> {
+			watcher.show("area");
+			watcher.show("area/frame");
+		});
+
+		TLObject object = newObject();
+		Recorder chain = new Recorder();
+		ObjectNavigation.show(_root,
+			targets(target(plainShow(HOME_VIEW), plainShow(FRAME_VIEW), itemShow(ITEM_VIEW))), object, chain);
+
+		assertEquals("The display took place.", List.of(object), chain._resumed);
+		assertEquals(List.of("area/frame"), urls);
+		assertEquals(List.of(Boolean.FALSE), replaceFlags);
+	}
+
+	/**
+	 * A display failing on its way leaves the address bar following the display afterwards.
+	 */
+	public void testFailedDisplayEndsItsNavigation() {
+		RouteManager routes = _root.getRouteManager();
+		Watcher watcher = new Watcher();
+		routes.register(watcher);
+		// The page is loaded with an address the display reproduces.
+		routes.adoptUrl("");
+		routes.finishAdoption();
+		List<String> urls = new ArrayList<>();
+		routes.setUrlChangeHandler((url, title, replace) -> urls.add(url));
+
+		try {
+			ObjectNavigation.show(_root, targets(showing(ORPHAN_VIEW)), newObject(), new Recorder());
+			fail("Nothing here holds a stack of drilled-down views.");
+		} catch (TopLogicException expected) {
+			// Expected.
+		}
+
+		watcher.show("elsewhere");
+		assertEquals(List.of("elsewhere"), urls);
+	}
+
+	/**
 	 * Nothing to display passes the surrounding command chain on unchanged.
 	 */
 	public void testNoInputPassesThrough() {
@@ -234,6 +299,51 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 		action.execute(_root, selection, chain);
 
 		assertEquals(List.of(selection), chain._resumed);
+	}
+
+	/**
+	 * A participant of the window's routing whose route the test sets.
+	 */
+	private static final class Watcher implements RoutingParticipant {
+
+		private final List<RouteChangeListener> _listeners = new ArrayList<>();
+
+		private RouteSegment _segment;
+
+		/**
+		 * Displays the given route and reports the change.
+		 */
+		void show(String path) {
+			_segment = new RouteSegment(path);
+			for (RouteChangeListener listener : new ArrayList<>(_listeners)) {
+				listener.onRouteChange(this, _segment);
+			}
+		}
+
+		@Override
+		public List<RoutePattern> declaredRoutes() {
+			return List.of();
+		}
+
+		@Override
+		public void activateRoute(RouteMatch match) {
+			// Declares no route.
+		}
+
+		@Override
+		public RouteSegment activeRouteSegment() {
+			return _segment;
+		}
+
+		@Override
+		public void addRouteChangeListener(RouteChangeListener listener) {
+			_listeners.add(listener);
+		}
+
+		@Override
+		public void removeRouteChangeListener(RouteChangeListener listener) {
+			_listeners.remove(listener);
+		}
 	}
 
 	private DisplayTargets targets(DisplayTarget... targets) {

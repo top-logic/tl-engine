@@ -16,6 +16,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.reveal.ChildRevealer;
+import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -53,6 +54,12 @@ import com.top_logic.util.error.TopLogicException;
  * on the way may hold unsaved changes and veto: the user is then asked how to proceed, and the
  * display continues once they answered - which is why the caller hands over a {@link Continuation}
  * rather than being returned to.
+ * </p>
+ *
+ * <p>
+ * However many containers open and channels change on the way, the display is one
+ * {@link RouteManager#beginNavigation() navigation}: the browser history gains one entry, for the
+ * place the display ends at, and none for the places it passes through.
  * </p>
  */
 public final class ObjectNavigation {
@@ -216,6 +223,12 @@ public final class ObjectNavigation {
 
 		private boolean _mountsResolved;
 
+		/**
+		 * The navigation this display is carried out as, open from {@link #start()} until the display
+		 * completes, fails or is given up. {@code null} where the window has no routing.
+		 */
+		private RouteManager.Navigation _navigation;
+
 		Display(ViewContext origin, MountPath hint, Supplier<ViewMounts> declaredMounts, List<ShowStep> shows,
 				ActionArguments arguments, Continuation continuation) {
 			_origin = origin;
@@ -229,7 +242,36 @@ public final class ObjectNavigation {
 		}
 
 		void start() {
-			step(0);
+			RouteManager routes = _origin.getRouteManager();
+			_navigation = routes == null ? null : routes.beginNavigation();
+			proceed(() -> step(0));
+		}
+
+		/**
+		 * Carries out the given part of the display, ending its navigation where the part fails.
+		 *
+		 * <p>
+		 * A part that suspends the display at a question about unsaved changes returns normally and
+		 * leaves the navigation open: the display continues, or is given up, once the user answered.
+		 * </p>
+		 */
+		private void proceed(Runnable part) {
+			try {
+				part.run();
+			} catch (Throwable ex) {
+				// What the display changed before it failed is displayed and reported.
+				endNavigation();
+				throw ex;
+			}
+		}
+
+		/**
+		 * Ends the navigation this display is carried out as, reporting the place it arrived at.
+		 */
+		private void endNavigation() {
+			if (_navigation != null) {
+				_navigation.end();
+			}
 		}
 
 		/**
@@ -237,6 +279,9 @@ public final class ObjectNavigation {
 		 */
 		private void step(int index) {
 			if (index >= _shows.size()) {
+				// The display is complete before whatever the caller continues with: that is no part of
+				// the place the object is displayed at.
+				endNavigation();
 				_continuation.resume(_arguments.value());
 				return;
 			}
@@ -446,16 +491,23 @@ public final class ObjectNavigation {
 				DialogManager dialogs = _origin.getDialogManager();
 				if (dialogs == null) {
 					// Nothing can ask the user, and displaying the object would silently discard
-					// what they entered.
+					// what they entered. What earlier steps displayed is displayed nevertheless.
+					endNavigation();
 					_continuation.abort();
 					return;
 				}
 				DirtyConfirmDialogControl.openDialog(_origin, dialogs, veto.getDirtyHandlers(),
-					() -> guarded(step, onDone),
+					() -> proceed(() -> guarded(step, onDone)),
 					() -> {
-						Runnable rollback = veto.getRollback();
-						if (rollback != null) {
-							rollback.run();
+						try {
+							Runnable rollback = veto.getRollback();
+							if (rollback != null) {
+								rollback.run();
+							}
+						} finally {
+							// The display stops where the user declined to go on, and what earlier
+							// steps displayed is where the user is now.
+							endNavigation();
 						}
 						_continuation.abort();
 					});

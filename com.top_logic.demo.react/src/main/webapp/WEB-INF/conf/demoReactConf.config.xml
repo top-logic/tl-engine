@@ -57,6 +57,7 @@
 		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
 			<instance class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
 				<group name="Approve" type="write"/>
+				<group name="ShowPlanning" type="read"/>
 			</instance>
 		</config>
 		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
@@ -76,6 +77,22 @@
 						<implementation>{
 							$milestone.set(`tl.demo.projectManagement:Milestone#approved`, true);
 							$milestone;
+						}</implementation>
+					</privileged-script>
+					<!--
+						Approves several milestones at once, which may belong to different projects: the
+						caller must hold "Approve" on the project of every milestone.
+					-->
+					<privileged-script name="approveMilestones"
+						command-group="Approve"
+						security-object="$milestones.map(m -> $m.container())"
+					>
+						<parameters>
+							<parameter name="milestones"/>
+						</parameters>
+						<implementation>{
+							$milestones.foreach(m -> $m.set(`tl.demo.projectManagement:Milestone#approved`, true));
+							$milestones;
 						}</implementation>
 					</privileged-script>
 					<!--
@@ -261,8 +278,15 @@
 						milestone that is not approved. The ticket demo shows its tickets, but neither
 						creates nor deletes nor edits one.
 
-						A member approves a milestone of P1 with the "Approve" command of the milestone list
-						(the privileged script approveMilestone), a ticket watcher cannot.
+						A member or an administrator of P1 approves a milestone of P1 with the "Approve"
+						command of the milestone list (the privileged script approveMilestone), a ticket
+						watcher cannot. The "Approve" command of the tree demo approves all selected
+						milestones (the privileged script approveMilestones): selecting milestones of P1
+						and P2 disables it for an account that is a member of P1 only.
+
+						The "Planning" tile of the project cockpit needs the operation "ShowPlanning" on
+						the project, which only its administrators hold: a member of the project sees
+						the "no access" placeholder in its place.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant
@@ -289,6 +313,7 @@
 					<class name="tl.demo.projectManagement:ProjectScope">
 						<operations>
 							<operation name="Approve"/>
+							<operation name="ShowPlanning"/>
 						</operations>
 						<grant
 							inherit="true"
@@ -297,7 +322,11 @@
 						/>
 						<grant
 							operation="Approve"
-							roles="demo.react.ProjectMember"
+							roles="demo.react.ProjectMember, demo.react.ProjectAdmin"
+						/>
+						<grant
+							operation="ShowPlanning"
+							roles="demo.react.ProjectAdmin"
 						/>
 						<grant
 							inherit="true"

@@ -3,7 +3,7 @@
 <!--
 	Second frame of the project drill-down: the cockpit of the project the frame was opened for.
 	
-	The cockpit is a dashboard of three tiles. The Project tile displays the project and nothing
+	The cockpit is a dashboard of four tiles. The Project tile displays the project and nothing
 	else; it spans two rows, so all fields of the project fit without scrolling. The Milestones and
 	Notes tiles are entry points: pressing one pushes the frame listing that collection, announced
 	by a label of its own. The engine marks such a tile only by how it answers the user, so each of
@@ -13,6 +13,10 @@
 	the first note through the card's own button lifts the refusal, because the action observes the
 	project. The create buttons inside the cards answer a press themselves, so they open their
 	dialog instead of pushing the list behind the tile.
+	
+	The Planning tile lists the due dates and approvals of the milestones. It is guarded by the
+	operation "ShowPlanning" on the project, which only the administrators of the project hold, so
+	a member of the project sees the "no access" placeholder in its place.
 	
 	The milestone channel carries what the create dialog reports back: the milestone it created,
 	which the milestone list picks up when the Milestones tile is pressed.
@@ -184,6 +188,41 @@
 						</value>
 					</frame-label>
 				</action>
+			</tile>
+			<!--
+				The planning of the project is shown to the administrators of the project alone, who
+				hold the operation "ShowPlanning" on it: a member of the project sees a "no access"
+				placeholder in place of the tile's content.
+			-->
+			<tile id="planning"
+				width="half"
+			>
+				<access-control
+					inputs="project"
+					object="$project"
+					operation="ShowPlanning"
+					type="tl.demo.projectManagement:ProjectScope"
+				/>
+				<panel>
+					<title>
+						<en>Planning</en>
+						<de>Planung</de>
+					</title>
+					<table
+						observed-types="tl.demo.projectManagement:Milestone"
+						types="tl.demo.projectManagement:Milestone"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="dueDate"/>
+							<column attribute="approved"/>
+						</columns>
+						<inputs>
+							<input channel="project"/>
+						</inputs>
+						<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
+					</table>
+				</panel>
 			</tile>
 		</dashboard>
 	</panel>

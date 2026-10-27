@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.factory.llm;
+package com.top_logic.factory.proxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,41 +24,47 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 /**
- * The {@link LLMProxyHandler LLM proxy} on a port of its own, at {@link LLMProxyHandler#PATH}.
+ * The {@link WorkspaceProxyHandler workspace proxy} on a port of its own, its routes at their
+ * {@link ProxyRoute#getPath() paths} below the root.
  *
  * <p>
  * The listener is an HTTP server of the JDK, independent of the server the control application
  * runs in. It is bound to one address, so that the proxy is reachable from the workspaces without
- * being reachable through the public port of the control application.
+ * being reachable through the public port of the control application. All requests go to one
+ * handler, which chooses the route by the path, so that the routes may change without the server
+ * and every other path is answered the same way.
  * </p>
  */
-public class LLMProxyListener implements AutoCloseable {
+public class WorkspaceProxyListener implements AutoCloseable {
 
-	private static final String THREAD_NAME_PREFIX = "llm-proxy-";
+	private static final String THREAD_NAME_PREFIX = "workspace-proxy-";
+
+	private static final String ROOT_PATH = "/";
 
 	/**
 	 * Seconds the running requests get to finish when the listener is closed.
 	 */
 	private static final int STOP_DELAY_SECONDS = 1;
 
-	private final LLMProxyHandler _handler;
+	private final WorkspaceProxyHandler _handler;
 
 	private final HttpServer _server;
 
 	private final ExecutorService _executor;
 
 	/**
-	 * Starts a {@link LLMProxyListener}.
+	 * Starts a {@link WorkspaceProxyListener}.
 	 *
 	 * @param address
 	 *        The address and port to listen on; port {@code 0} chooses a free one.
 	 * @param proxy
-	 *        Supplier of the {@link LLMProxy} asked for each request.
+	 *        Supplier of the {@link WorkspaceProxy} asked for each request.
 	 * @throws IOException
 	 *         If the address cannot be bound.
 	 */
-	public LLMProxyListener(InetSocketAddress address, Supplier<LLMProxy> proxy) throws IOException {
-		_handler = new LLMProxyHandler(proxy);
+	public WorkspaceProxyListener(InetSocketAddress address, Supplier<? extends WorkspaceProxy> proxy)
+			throws IOException {
+		_handler = new WorkspaceProxyHandler(proxy);
 		_server = HttpServer.create(address, 0);
 		AtomicInteger threads = new AtomicInteger();
 		ThreadFactory factory = runnable -> {
@@ -66,10 +72,10 @@ public class LLMProxyListener implements AutoCloseable {
 			thread.setDaemon(true);
 			return thread;
 		};
-		// A streamed answer holds its thread as long as the model writes.
+		// A streamed request or answer holds its thread as long as it is transferred.
 		_executor = Executors.newCachedThreadPool(factory);
 		_server.setExecutor(_executor);
-		_server.createContext(LLMProxyHandler.PATH, exchange -> {
+		_server.createContext(ROOT_PATH, exchange -> {
 			try (exchange) {
 				_handler.handle(new JdkExchange(exchange));
 			}
@@ -93,13 +99,12 @@ public class LLMProxyListener implements AutoCloseable {
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 		}
-		_handler.close();
 	}
 
 	/**
-	 * {@link LLMProxyExchange} of a request to the HTTP server of the JDK.
+	 * {@link ProxyExchange} of a request to the HTTP server of the JDK.
 	 */
-	private static final class JdkExchange implements LLMProxyExchange {
+	private static final class JdkExchange implements ProxyExchange {
 
 		private final HttpExchange _exchange;
 
@@ -114,12 +119,7 @@ public class LLMProxyListener implements AutoCloseable {
 
 		@Override
 		public String path() {
-			String path = _exchange.getRequestURI().getPath();
-			if (path == null || !path.startsWith(LLMProxyHandler.PATH)) {
-				return null;
-			}
-			String rest = path.substring(LLMProxyHandler.PATH.length());
-			return rest.isEmpty() ? null : rest;
+			return _exchange.getRequestURI().getPath();
 		}
 
 		@Override

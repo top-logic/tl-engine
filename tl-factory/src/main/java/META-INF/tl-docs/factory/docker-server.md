@@ -1,5 +1,5 @@
 ---
-description: Read before deploying the control application (tl-factory-app) on a shared Docker server, or when an administrator asks what access it needs - the Docker API calls DockerWorkspaceProvider makes, why the raw system socket is never given to it, what a socket proxy does and does not restrict, the recommended dedicated rootless Docker daemon with its setup, resource cap and checks, the resource limits per workspace with the delegation of the cgroup controllers (Delegate=cpu cpuset io memory pids), the published ports on one host address, recreating the workspace network for its isolation, a dedicated remote daemon with TLS as alternative, and how control application and workspaces reach each other in each setup, including the port of the LLM proxy, TLS and which accepted sources of the LLM proxy fit.
+description: Read before deploying the control application (tl-factory-app) on a shared Docker server, or when an administrator asks what access it needs - the Docker API calls DockerWorkspaceProvider makes, why the raw system socket is never given to it, what a socket proxy does and does not restrict, the recommended dedicated rootless Docker daemon with its setup, resource cap and checks, the resource limits per workspace with the delegation of the cgroup controllers (Delegate=cpu cpuset io memory pids), the published ports on one host address, recreating the workspace network for its isolation, a dedicated remote daemon with TLS as alternative, and how control application and workspaces reach each other in each setup, including the port of the workspace proxy, TLS and which accepted sources of the workspace proxy fit.
 order: 10
 ---
 
@@ -168,14 +168,14 @@ They reach each other through ports published on the server:
 - A workspace reaches the control application under the URL the control application is published
   at, with the server's name, e.g. `http://<name of the server>:<published port>/`.
 
-The LLM proxy of the control application listens on a port of its own
+The workspace proxy of the control application listens on a port of its own
 ([the port of the proxy](doc:factory#the-port-of-the-proxy), default `8091`). Publish it from the
 control application's container on an internal address of the server only, e.g.
 `-p 10.0.0.5:8091:8091`, never on all addresses, and give the workspaces
-`tl_factory_llm_proxy_url=http://10.0.0.5:8091/llm-proxy`. The proxy sees a request of a workspace
+`tl_factory_proxy_url=http://10.0.0.5:8091`. The proxy sees a request of a workspace
 coming from the server's gateway or from the userland proxy of the daemon that publishes the port,
 not from the workspace network, and the same for all workspaces. Its `allowed-sources` therefore
-stay empty in this setup (`tl_factory_llm_allowed_sources`, see
+stay empty in this setup (`tl_factory_proxy_allowed_sources`, see
 [accepted sources](doc:factory#accepted-sources)), and the binding of a token to its first source
 address only refuses addresses other than that gateway
 ([token checks](doc:factory#token-checks)): the address the port is published on, the token and

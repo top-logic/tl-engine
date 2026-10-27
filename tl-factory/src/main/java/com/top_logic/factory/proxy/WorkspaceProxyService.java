@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.factory.llm;
+package com.top_logic.factory.proxy;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +20,10 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -31,56 +35,60 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.factory.llm.LLMRoute;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Access of the workspaces to the Anthropic Messages API without an API key in the workspace.
+ * Access of the workspaces to services of the control application's environment without a
+ * credential in the workspace.
  *
  * <p>
- * A workspace container gets no API key and no token in its environment, only the URL of the
- * {@link LLMProxyHandler proxy} of the control application in {@link #ENV_BASE_URL}. A process that may
- * use the API - an agent run - gets a token of its own, {@link #issue(String, Duration) issued} for
- * its workspace and passed only to that process in {@link #ENV_AUTH_TOKEN}; Claude Code sends it
- * as bearer token. The proxy accepts a request from an {@link Config#getAllowedSources() accepted
- * address} whose token admits it, adds the API key of the {@link Config#getProvider() configured
- * provider} of the {@link LLMProviderService} and forwards the request.
+ * A workspace container gets no credential and no token in its environment, only what its
+ * {@link Config#getRoutes() routes} need to find the proxy, e.g. the URL of the {@link LLMRoute LLM
+ * route} - the {@link Config#getProxyUrl() URL of the proxy} followed by the path of the route.
+ * A process that may use the proxy - an agent run - gets a token of its own,
+ * {@link #issue(String, Duration) issued} for its workspace and passed only to that process, in
+ * the {@link #processEnv(String) environment} of its command. The proxy accepts a request from an
+ * {@link Config#getAllowedSources() accepted address} whose token admits it and passes it to the
+ * route of its path, which adds the credentials of its upstream and forwards it, see
+ * {@link WorkspaceProxyHandler}.
  * </p>
  *
  * <p>
- * A token is {@value #TOKEN_PREFIX} followed by a random secret of about 256 bits. It is valid until
- * it is {@link #revoke(String) revoked} - when its run ends -, until its lifetime ends (at most
- * {@link Config#getMaxTokenLifetime()}), or until its workspace is removed. It is bound to the
- * address of its first request and limited to {@link Config#getRateLimit()} requests per minute,
- * see {@link TokenGrants}. Tokens are kept in memory only, as their hashes; a restart of the
- * control application invalidates all of them, together with the runs it started.
+ * A token is {@value TokenGrants#TOKEN_PREFIX} followed by a random secret of about 256 bits. It is
+ * valid for all routes until it is {@link #revoke(String) revoked} - when its run ends -, until its
+ * lifetime ends (at most {@link Config#getMaxTokenLifetime()}), or until its workspace is removed.
+ * It is bound to the address of its first request and limited to {@link Config#getRateLimit()}
+ * requests per minute, see {@link TokenGrants}. Tokens are kept in memory only, as their hashes; a
+ * restart of the control application invalidates all of them, together with the runs it started.
  * </p>
  *
  * <p>
  * The proxy is switched on by its {@link Config#getProxyUrl() URL}: without one, workspaces get no
  * URL, no token is issued, and the proxy answers every request with 404. It listens on a port of
- * its own ({@link LLMProxyListener}, {@link Config#getListenAddress()},
- * {@link Config#getListenPort()}); the {@link LLMProxyServlet} in the web application answers only
- * if {@link Config#isServletEnabled()} is set.
+ * its own ({@link WorkspaceProxyListener}, {@link Config#getListenAddress()},
+ * {@link Config#getListenPort()}); the {@link WorkspaceProxyServlet} in the web application answers
+ * only if {@link Config#isServletEnabled()} is set.
  * </p>
  */
 @ServiceDependencies({
+	// Used by the LLM route.
 	LLMProviderService.Module.class,
 	PersistencyLayer.Module.class,
 	ModelService.Module.class,
 	WorkspaceService.Module.class,
 })
-public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Config<?>> implements LLMProxy, LLMTokens {
+public class WorkspaceProxyService extends ConfiguredManagedClass<WorkspaceProxyService.Config<?>>
+		implements WorkspaceProxy, ProxyTokens {
 
 	/**
-	 * Configuration of {@link LLMProxyService}.
+	 * Configuration of {@link WorkspaceProxyService}.
 	 */
-	public interface Config<I extends LLMProxyService> extends ConfiguredManagedClass.Config<I> {
+	public interface Config<I extends WorkspaceProxyService> extends ConfiguredManagedClass.Config<I> {
 
 		/**
 		 * Configuration property name of {@link #getProxyUrl()}.
@@ -88,9 +96,9 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		String PROXY_URL = "proxy-url";
 
 		/**
-		 * Configuration property name of {@link #getProvider()}.
+		 * Configuration property name of {@link #getRoutes()}.
 		 */
-		String PROVIDER = "provider";
+		String ROUTES = "routes";
 
 		/**
 		 * Configuration property name of {@link #getMaxTokenLifetime()}.
@@ -123,13 +131,18 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		String SERVLET_ENABLED = "servlet-enabled";
 
 		/**
-		 * The URL of the proxy as the workspace containers reach it: the
-		 * {@link #getListenPort() port of its own}, e.g.
-		 * {@code http://host.docker.internal:8091/llm-proxy}, or the {@link LLMProxyServlet}, e.g.
-		 * {@code http://host.docker.internal:8080/tl-factory-app/llm-proxy}.
+		 * Tag of an entry of {@link #getRoutes()}.
+		 */
+		String ROUTE = "route";
+
+		/**
+		 * The URL of the root of the proxy as the workspace containers reach it, without the path
+		 * of a route: the {@link #getListenPort() port of its own}, e.g.
+		 * {@code http://host.docker.internal:8091}, or the web application with the
+		 * {@link WorkspaceProxyServlet}, e.g. {@code http://host.docker.internal:8080/tl-factory-app}.
 		 *
 		 * <p>
-		 * It is passed to the workspace containers in {@link LLMProxyService#ENV_BASE_URL}. Empty
+		 * A route is reached at this URL followed by its {@link ProxyRoute#getPath() path}. Empty
 		 * switches the proxy off.
 		 * </p>
 		 *
@@ -140,14 +153,14 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		String getProxyUrl();
 
 		/**
-		 * The name of the Anthropic provider of the {@link LLMProviderService} whose API key, base
-		 * URL, version and timeouts the proxy uses.
+		 * The services the proxy gives the workspaces access to, each below a path of its own.
 		 *
-		 * @see #PROVIDER
+		 * @see #ROUTES
 		 */
-		@Name(PROVIDER)
-		@StringDefault("anthropic")
-		String getProvider();
+		@Name(ROUTES)
+		@EntryTag(ROUTE)
+		@Key(ProxyRoute.Config.PATH)
+		List<ProxyRoute.Config<?>> getRoutes();
 
 		/**
 		 * The longest lifetime of a token in milliseconds, e.g. {@code 4h}; a longer one asked for
@@ -217,8 +230,8 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		 * for no port of its own.
 		 *
 		 * <p>
-		 * The proxy is reached there at {@link LLMProxyHandler#PATH}. The port is opened only if
-		 * the proxy is switched on by its {@link #getProxyUrl() URL}.
+		 * The routes are reached there at their {@link ProxyRoute#getPath() paths}. The port is
+		 * opened only if the proxy is switched on by its {@link #getProxyUrl() URL}.
 		 * </p>
 		 *
 		 * @see #LISTEN_PORT
@@ -228,13 +241,13 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		int getListenPort();
 
 		/**
-		 * Whether the proxy also answers at {@link LLMProxyHandler#PATH} of the web application,
-		 * through the port of the control application.
+		 * Whether the proxy also answers in the web application, through the port of the control
+		 * application, at the paths the {@link WorkspaceProxyServlet} is mapped to.
 		 *
 		 * <p>
 		 * Off by default: the port of the control application is the one its users reach, and the
 		 * proxy needs not be reachable there. Switched on, a reverse proxy in front of the control
-		 * application must keep clients from outside from reaching that path.
+		 * application must keep clients from outside from reaching these paths.
 		 * </p>
 		 *
 		 * @see #SERVLET_ENABLED
@@ -244,23 +257,6 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		boolean isServletEnabled();
 
 	}
-
-	/**
-	 * Environment variable of a workspace container naming the URL of the proxy, read by Claude
-	 * Code as the base URL of the Anthropic API.
-	 */
-	public static final String ENV_BASE_URL = "ANTHROPIC_BASE_URL";
-
-	/**
-	 * Environment variable of a process in a workspace - never of the container - holding its
-	 * token, which Claude Code sends as bearer token.
-	 */
-	public static final String ENV_AUTH_TOKEN = "ANTHROPIC_AUTH_TOKEN";
-
-	/**
-	 * What every workspace token starts with.
-	 */
-	public static final String TOKEN_PREFIX = "tlwst_";
 
 	/**
 	 * Default of {@link Config#getRateLimit()}.
@@ -277,34 +273,46 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	 */
 	public static final int DEFAULT_LISTEN_PORT = 8091;
 
+	private static final String PATH_SEPARATOR = "/";
+
 	private final TokenGrants _grants;
 
 	private final SourceFilter _sources;
 
-	private LLMProxyListener _listener;
+	private final List<ProxyRoute> _routes;
+
+	private WorkspaceProxyListener _listener;
 
 	/**
-	 * Creates a {@link LLMProxyService} from configuration.
+	 * Creates a {@link WorkspaceProxyService} from configuration.
 	 *
 	 * @param context
 	 *        The context for instantiating sub configurations.
 	 * @param config
 	 *        The configuration.
 	 */
-	public LLMProxyService(InstantiationContext context, Config<?> config) {
+	public WorkspaceProxyService(InstantiationContext context, Config<?> config) {
 		super(context, config);
 		try {
 			_sources = new SourceFilter(config.getAllowedSources(),
 				() -> WorkspaceService.getInstance().getProvider().networkSubnets());
 		} catch (ParseException ex) {
 			throw new ConfigurationError(
-				"Invalid entry in '" + Config.ALLOWED_SOURCES + "' of the LLM proxy: " + ex.getMessage(), ex);
+				"Invalid entry in '" + Config.ALLOWED_SOURCES + "' of the workspace proxy: " + ex.getMessage(), ex);
 		}
 		if (config.getRateLimit() < 0 || config.getListenPort() < 0) {
 			throw new ConfigurationError("Negative '" + Config.RATE_LIMIT + "' or '" + Config.LISTEN_PORT
-				+ "' of the LLM proxy.");
+				+ "' of the workspace proxy.");
 		}
-		_grants = new TokenGrants(Clock.systemUTC(), LLMProxyService::workspaceExists, config.getRateLimit());
+		for (ProxyRoute.Config<?> route : config.getRoutes()) {
+			String path = route.getPath();
+			if (path == null || !path.startsWith(PATH_SEPARATOR) || path.endsWith(PATH_SEPARATOR)) {
+				throw new ConfigurationError("The '" + ProxyRoute.Config.PATH + "' of a route of the workspace proxy"
+					+ " must start with a slash and not end with one: " + path);
+			}
+		}
+		_routes = List.copyOf(TypedConfiguration.getInstanceList(context, config.getRoutes()));
+		_grants = new TokenGrants(Clock.systemUTC(), WorkspaceProxyService::workspaceExists, config.getRateLimit());
 	}
 
 	@Override
@@ -314,11 +322,13 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 			InetSocketAddress address =
 				new InetSocketAddress(getConfig().getListenAddress().strip(), getConfig().getListenPort());
 			try {
-				_listener = new LLMProxyListener(address, () -> this);
-				Logger.info("LLM proxy listening on " + _listener.getAddress() + ".", LLMProxyService.class);
+				_listener = new WorkspaceProxyListener(address, () -> this);
+				Logger.info("Workspace proxy listening on " + _listener.getAddress() + ".",
+					WorkspaceProxyService.class);
 			} catch (IOException ex) {
-				Logger.error("LLM proxy: cannot listen on " + address + ", the workspaces have no LLM access: "
-					+ ex.getMessage(), ex, LLMProxyService.class);
+				Logger.error("Workspace proxy: cannot listen on " + address
+					+ ", the workspaces have no access to its routes: " + ex.getMessage(), ex,
+					WorkspaceProxyService.class);
 			}
 		}
 	}
@@ -329,6 +339,9 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 			_listener.close();
 			_listener = null;
 		}
+		for (ProxyRoute route : _routes) {
+			route.close();
+		}
 		super.shutDown();
 	}
 
@@ -336,17 +349,17 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	 * The address the proxy listens on with a port of its own, {@code null} if it does not.
 	 */
 	public InetSocketAddress getListenerAddress() {
-		LLMProxyListener listener = _listener;
+		WorkspaceProxyListener listener = _listener;
 		return listener == null ? null : listener.getAddress();
 	}
 
 	/**
-	 * The {@link LLMProxy} the {@link LLMProxyServlet} of the web application serves: the
-	 * {@link LLMProxyService} if it is running and {@link Config#isServletEnabled() serves the
-	 * servlet}, {@code null} otherwise.
+	 * The {@link WorkspaceProxy} the {@link WorkspaceProxyServlet} of the web application serves:
+	 * the {@link WorkspaceProxyService} if it is running and {@link Config#isServletEnabled() serves
+	 * the servlet}, {@code null} otherwise.
 	 */
-	public static LLMProxy servletProxy() {
-		LLMProxyService service = getInstance();
+	public static WorkspaceProxy servletProxy() {
+		WorkspaceProxyService service = getInstance();
 		return service != null && service.getConfig().isServletEnabled() ? service : null;
 	}
 
@@ -354,6 +367,11 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	public boolean isEnabled() {
 		String url = getConfig().getProxyUrl();
 		return url != null && !url.isBlank();
+	}
+
+	@Override
+	public List<ProxyRoute> routes() {
+		return _routes;
 	}
 
 	/**
@@ -366,8 +384,8 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	}
 
 	/**
-	 * The environment variables a workspace container gets for the proxy: the URL of the proxy, no
-	 * token.
+	 * The environment variables a workspace container gets for the routes of the proxy, e.g. their
+	 * URLs; no token.
 	 *
 	 * @return The variables, empty if the proxy is not {@link #isEnabled() switched on}.
 	 */
@@ -375,15 +393,32 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		if (!isEnabled()) {
 			return Collections.emptyMap();
 		}
-		return Collections.singletonMap(ENV_BASE_URL, getConfig().getProxyUrl().strip());
+		String proxyUrl = getConfig().getProxyUrl().strip();
+		while (proxyUrl.endsWith(PATH_SEPARATOR)) {
+			proxyUrl = proxyUrl.substring(0, proxyUrl.length() - 1);
+		}
+		Map<String, String> result = new LinkedHashMap<>();
+		for (ProxyRoute route : _routes) {
+			result.putAll(route.containerEnv(proxyUrl + route.getPath()));
+		}
+		return result;
+	}
+
+	@Override
+	public Map<String, String> processEnv(String token) {
+		Map<String, String> result = new LinkedHashMap<>();
+		for (ProxyRoute route : _routes) {
+			result.putAll(route.processEnv(token));
+		}
+		return result;
 	}
 
 	/**
 	 * Issues a token for a process in a workspace, e.g. an agent run.
 	 *
 	 * <p>
-	 * The token is to be passed only to that process, in {@link #ENV_AUTH_TOKEN}, and
-	 * {@link #revoke(String) revoked} when it ends.
+	 * The token is to be passed only to that process, in its {@link #processEnv(String)
+	 * environment}, and {@link #revoke(String) revoked} when it ends.
 	 * </p>
 	 *
 	 * @param workspaceId
@@ -433,47 +468,28 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 	}
 
 	@Override
-	public LLMAdmission admit(String token, String remoteAddress) {
+	public ProxyAdmission admit(String token, String remoteAddress) {
 		return _grants.admit(token, remoteAddress);
 	}
 
 	private static boolean workspaceExists(String workspaceId) {
 		return ThreadContext.<Boolean, RuntimeException, RuntimeException> inSystemContext(
-			LLMProxyService.class,
+			WorkspaceProxyService.class,
 			() -> Boolean.valueOf(FactoryModel.findWorkspace(workspaceId) != null)).booleanValue();
 	}
 
-	@Override
-	public LLMUpstream upstream() {
-		LLMProviderService providers = LLMProviderService.getInstance();
-		if (providers == null) {
-			Logger.warn("LLM proxy: the LLM providers are not running.", LLMProxyService.class);
-			return null;
-		}
-		String name = getConfig().getProvider();
-		LLMProviderConfig provider = providers.getProvider(name);
-		if (!(provider instanceof AnthropicProviderConfig)) {
-			Logger.warn("LLM proxy: no Anthropic provider '" + name + "' is configured.", LLMProxyService.class);
-			return null;
-		}
-		LLMUpstream result = LLMUpstream.fromProvider((AnthropicProviderConfig) provider);
-		if (result == null) {
-			Logger.warn("LLM proxy: the provider '" + name + "' has neither API key nor credentials.", LLMProxyService.class);
-		}
-		return result;
-	}
-
 	/**
-	 * The {@link LLMProxyService} of the running application, {@code null} if it is not started.
+	 * The {@link WorkspaceProxyService} of the running application, {@code null} if it is not
+	 * started.
 	 */
-	public static LLMProxyService getInstance() {
+	public static WorkspaceProxyService getInstance() {
 		return Module.INSTANCE.isActive() ? Module.INSTANCE.getImplementationInstance() : null;
 	}
 
 	/**
-	 * Module of the {@link LLMProxyService}.
+	 * Module of the {@link WorkspaceProxyService}.
 	 */
-	public static final class Module extends TypedRuntimeModule<LLMProxyService> {
+	public static final class Module extends TypedRuntimeModule<WorkspaceProxyService> {
 
 		/** Singleton {@link Module} instance. */
 		public static final Module INSTANCE = new Module();
@@ -483,8 +499,8 @@ public class LLMProxyService extends ConfiguredManagedClass<LLMProxyService.Conf
 		}
 
 		@Override
-		public Class<LLMProxyService> getImplementation() {
-			return LLMProxyService.class;
+		public Class<WorkspaceProxyService> getImplementation() {
+			return WorkspaceProxyService.class;
 		}
 	}
 

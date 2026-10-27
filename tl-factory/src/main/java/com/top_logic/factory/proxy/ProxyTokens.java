@@ -3,22 +3,23 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.factory.llm;
+package com.top_logic.factory.proxy;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 
 /**
- * Issues the tokens a process in a workspace presents to the LLM proxy.
+ * Issues the tokens a process in a workspace presents to the workspace proxy.
  *
  * <p>
- * A token belongs to one process: it is passed to it in {@link LLMProxyService#ENV_AUTH_TOKEN} of
- * its command and revoked when the process ends.
+ * A token belongs to one process: it is passed to it in the {@link #processEnv(String) environment}
+ * of its command and revoked when the process ends.
  * </p>
  *
- * @see LLMProxyService
+ * @see WorkspaceProxyService
  */
-public interface LLMTokens {
+public interface ProxyTokens {
 
 	/**
 	 * Issues a token for a process in the given workspace.
@@ -42,5 +43,19 @@ public interface LLMTokens {
 	 * Revokes a token: the next request presenting it is refused.
 	 */
 	void revoke(String token);
+
+	/**
+	 * The environment variables a process with the given token gets for the routes of the proxy,
+	 * e.g. the token for the LLM API.
+	 *
+	 * <p>
+	 * They are passed to that process only, in the environment of its command, never to the
+	 * container of the workspace.
+	 * </p>
+	 *
+	 * @param token
+	 *        A token {@link #issue(String, Duration) issued} for the process.
+	 */
+	Map<String, String> processEnv(String token);
 
 }

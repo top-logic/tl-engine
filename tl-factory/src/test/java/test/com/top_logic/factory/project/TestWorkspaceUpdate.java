@@ -19,11 +19,12 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.factory.llm.LLMProxyService;
+import com.top_logic.factory.llm.LLMRoute;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.ProjectWorkspaces.NewWorkspace;
 import com.top_logic.factory.project.ProjectWorkspaces.WorkspaceUpdate;
+import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.VolumeMount;
 import com.top_logic.factory.workspace.WorkspaceInfo;
@@ -94,10 +95,10 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 				mountPaths(second).contains(ApplicationWorkspaces.AGENT_SESSIONS_PATH));
 			Map<String, String> env = second.getEnv();
 			assertEquals(created.spec().getInitialPassword(), env.get(ApplicationWorkspaces.ENV_INITIAL_PASSWORD));
-			assertNotNull(env.get(LLMProxyService.ENV_BASE_URL));
-			assertEquals(first.getEnv().get(LLMProxyService.ENV_BASE_URL), env.get(LLMProxyService.ENV_BASE_URL));
-			assertFalse("No container gets a token.", env.containsKey(LLMProxyService.ENV_AUTH_TOKEN)
-				|| first.getEnv().containsKey(LLMProxyService.ENV_AUTH_TOKEN));
+			assertNotNull(env.get(LLMRoute.ENV_BASE_URL));
+			assertEquals(first.getEnv().get(LLMRoute.ENV_BASE_URL), env.get(LLMRoute.ENV_BASE_URL));
+			assertFalse("No container gets a token.", env.containsKey(LLMRoute.ENV_AUTH_TOKEN)
+				|| first.getEnv().containsKey(LLMRoute.ENV_AUTH_TOKEN));
 			assertEquals(first.getEnv().get(ApplicationWorkspaces.ENV_APP_DIR), env.get(ApplicationWorkspaces.ENV_APP_DIR));
 
 			commit(() -> ProjectWorkspaces.recordUpdate(workspace, updated));
@@ -145,7 +146,7 @@ public class TestWorkspaceUpdate extends BasicTestCase {
 				SecureRandomService.Module.INSTANCE,
 				// The configuration of the workspace image; starting it contacts no container platform.
 				WorkspaceService.Module.INSTANCE,
-				LLMProxyService.Module.INSTANCE));
+				WorkspaceProxyService.Module.INSTANCE));
 	}
 
 }

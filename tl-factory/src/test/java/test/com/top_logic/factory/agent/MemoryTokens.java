@@ -13,14 +13,15 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.top_logic.factory.llm.LLMProxyService;
-import com.top_logic.factory.llm.LLMTokens;
+import com.top_logic.factory.llm.LLMRoute;
+import com.top_logic.factory.proxy.ProxyTokens;
+import com.top_logic.factory.proxy.TokenGrants;
 import com.top_logic.tl.ai.core.access.SecretTokens;
 
 /**
- * {@link LLMTokens} kept in memory, recording what was issued and revoked.
+ * {@link ProxyTokens} kept in memory, recording what was issued and revoked.
  */
-public class MemoryTokens implements LLMTokens {
+public class MemoryTokens implements ProxyTokens {
 
 	private final Clock _clock;
 
@@ -39,7 +40,7 @@ public class MemoryTokens implements LLMTokens {
 
 	@Override
 	public String issue(String workspaceId, Duration lifetime) {
-		String token = SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX);
+		String token = SecretTokens.newToken(TokenGrants.TOKEN_PREFIX);
 		_valid.put(token, _clock.instant().plus(lifetime));
 		_issued.add(token);
 		return token;
@@ -48,6 +49,11 @@ public class MemoryTokens implements LLMTokens {
 	@Override
 	public Instant expiresAt(String token) {
 		return _valid.get(token);
+	}
+
+	@Override
+	public Map<String, String> processEnv(String token) {
+		return Map.of(LLMRoute.ENV_AUTH_TOKEN, token);
 	}
 
 	@Override

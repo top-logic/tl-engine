@@ -12,22 +12,22 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-import com.top_logic.factory.llm.LLMProxy;
-import com.top_logic.factory.llm.LLMProxyHandler;
-import com.top_logic.factory.llm.LLMProxyListener;
+import com.top_logic.factory.llm.LLMRoute;
+import com.top_logic.factory.proxy.WorkspaceProxy;
+import com.top_logic.factory.proxy.WorkspaceProxyListener;
 
 /**
  * The tests of {@link TestLLMProxyServlet} against the proxy on a port of its own, the
- * {@link LLMProxyListener}.
+ * {@link WorkspaceProxyListener}.
  */
 public class TestLLMProxyListener extends TestLLMProxyServlet {
 
-	private LLMProxyListener _listener;
+	private WorkspaceProxyListener _listener;
 
 	@Override
-	protected String startProxy(LLMProxy proxy) throws Exception {
-		_listener = new LLMProxyListener(new InetSocketAddress(LOOPBACK, 0), () -> proxy);
-		return "http://" + LOOPBACK + ":" + _listener.getAddress().getPort() + LLMProxyHandler.PATH;
+	protected String startProxy(WorkspaceProxy proxy) throws Exception {
+		_listener = new WorkspaceProxyListener(new InetSocketAddress(LOOPBACK, 0), () -> proxy);
+		return "http://" + LOOPBACK + ":" + _listener.getAddress().getPort() + LLMRoute.DEFAULT_PATH;
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class TestLLMProxyListener extends TestLLMProxyServlet {
 	 */
 	public void testOtherPathsOfListenerNotFound() throws Exception {
 		try (HttpClient client = HttpClient.newHttpClient()) {
-			for (String path : new String[] { "/", "/tl-factory-app/", LLMProxyHandler.PATH + "x/v1/messages" }) {
+			for (String path : new String[] { "/", "/tl-factory-app/", LLMRoute.DEFAULT_PATH + "x/v1/messages" }) {
 				HttpResponse<String> response = client.send(
 					HttpRequest.newBuilder(URI.create("http://" + LOOPBACK + ":" + _listener.getAddress().getPort() + path))
 						.timeout(Duration.ofSeconds(10))

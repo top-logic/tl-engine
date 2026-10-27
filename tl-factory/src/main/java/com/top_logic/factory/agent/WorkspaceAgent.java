@@ -34,7 +34,7 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  * <ul>
  * <li>The process is started on the first message, in the {@link ConversationTarget#workingDir()
- * working directory} of the workspace, with a token of its own for the LLM proxy, issued for
+ * working directory} of the workspace, with a token of its own for the workspace proxy, issued for
  * {@link AgentRuntime#tokenLifetime()} and revoked when the process ends. It continues the
  * conversation stored under its {@link ConversationTarget#sessionId() session ID}, if there is one.
  * </li>
@@ -324,7 +324,8 @@ public class WorkspaceAgent implements ConversationBackend {
 			throw new TopLogicException(I18NConstants.ERROR_NO_LLM_ACCESS);
 		}
 		AgentHarness harness = _runtime.harness();
-		AgentLaunch launch = new AgentLaunch(_conversation.workingDir(), _conversation.sessionId(), token);
+		AgentLaunch launch = new AgentLaunch(_conversation.workingDir(), _conversation.sessionId(),
+			_runtime.tokens().processEnv(token));
 		Logger.info("Starting agent '" + harness.agentName() + "' in workspace '" + workspaceId + "': " + launch,
 			WorkspaceAgent.class);
 		return AgentProcess.start(_runtime.provider(), workspaceId, harness.command(launch), token,

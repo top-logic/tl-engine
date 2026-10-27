@@ -29,10 +29,10 @@ import com.top_logic.factory.agent.AgentTasks;
 import com.top_logic.factory.agent.I18NConstants;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.WorkspaceAgentService;
-import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.WorkspaceStatus;
+import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -240,7 +240,7 @@ public class TestAgentTasks extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				SecureRandomService.Module.INSTANCE,
 				WorkspaceService.Module.INSTANCE,
-				LLMProxyService.Module.INSTANCE,
+				WorkspaceProxyService.Module.INSTANCE,
 				WorkspaceAgentService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				ToolRegistryService.Module.INSTANCE,

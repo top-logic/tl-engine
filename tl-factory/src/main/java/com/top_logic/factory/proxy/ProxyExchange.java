@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.factory.llm;
+package com.top_logic.factory.proxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,11 +11,11 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * A request to the LLM proxy and its answer, independent of the server receiving it.
+ * A request to the workspace proxy and its answer, independent of the server receiving it.
  *
- * @see LLMProxyHandler#handle(LLMProxyExchange)
+ * @see WorkspaceProxyHandler#handle(ProxyExchange)
  */
-public interface LLMProxyExchange {
+public interface ProxyExchange {
 
 	/**
 	 * The method of the request, e.g. {@code POST}.
@@ -23,8 +23,9 @@ public interface LLMProxyExchange {
 	String method();
 
 	/**
-	 * The path of the request below {@link LLMProxyHandler#PATH}, e.g.
-	 * {@value LLMProxyHandler#MESSAGES_PATH}; {@code null} if there is none.
+	 * The path of the request below the root of the proxy - the root of the
+	 * {@link WorkspaceProxyListener} or the context of the web application -, starting with the
+	 * {@link ProxyRoute#getPath() path of a route}; {@code null} if there is none.
 	 */
 	String path();
 
@@ -49,7 +50,7 @@ public interface LLMProxyExchange {
 	List<String> headers(String name);
 
 	/**
-	 * The body of the request.
+	 * The body of the request, read as it arrives.
 	 */
 	InputStream body() throws IOException;
 

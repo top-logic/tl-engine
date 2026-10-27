@@ -7,7 +7,7 @@
 				<modules>
 					<module key="com.top_logic.factory.workspace.WorkspaceService$Module" value="true"/>
 					<module key="com.top_logic.factory.project.ProjectWorkspaces$Module" value="true"/>
-					<module key="com.top_logic.factory.llm.LLMProxyService$Module" value="true"/>
+					<module key="com.top_logic.factory.proxy.WorkspaceProxyService$Module" value="true"/>
 					<module key="com.top_logic.factory.agent.WorkspaceAgentService$Module" value="true"/>
 				</modules>
 			</instance>
@@ -46,19 +46,25 @@
 		</config>
 
 		<!--
-			The LLM proxy of the workspaces: the API key of the named provider of the
-			LLMProviderService is added to their requests, no workspace container gets it.
+			The workspace proxy: the workspaces reach services through its routes, which add the
+			credentials of the control application to their requests; no workspace container gets
+			one. The LLM route adds the API key of the named provider of the LLMProviderService.
 		-->
-		<config service-class="com.top_logic.factory.llm.LLMProxyService">
-			<instance class="com.top_logic.factory.llm.LLMProxyService"
-				allowed-sources="%FACTORY_LLM_ALLOWED_SOURCES%"
-				listen-address="%FACTORY_LLM_PROXY_ADDRESS%"
-				listen-port="%FACTORY_LLM_PROXY_PORT%"
-				provider="%FACTORY_LLM_PROVIDER%"
-				proxy-url="%FACTORY_LLM_PROXY_URL%"
-				rate-limit="%FACTORY_LLM_RATE_LIMIT%"
-				servlet-enabled="%FACTORY_LLM_PROXY_SERVLET%"
-			/>
+		<config service-class="com.top_logic.factory.proxy.WorkspaceProxyService">
+			<instance class="com.top_logic.factory.proxy.WorkspaceProxyService"
+				allowed-sources="%FACTORY_PROXY_ALLOWED_SOURCES%"
+				listen-address="%FACTORY_PROXY_ADDRESS%"
+				listen-port="%FACTORY_PROXY_PORT%"
+				proxy-url="%FACTORY_PROXY_URL%"
+				rate-limit="%FACTORY_PROXY_RATE_LIMIT%"
+				servlet-enabled="%FACTORY_PROXY_SERVLET%"
+			>
+				<routes>
+					<route class="com.top_logic.factory.llm.LLMRoute"
+						provider="%FACTORY_LLM_PROVIDER%"
+					/>
+				</routes>
+			</instance>
 		</config>
 
 		<!--

@@ -6,13 +6,13 @@
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
 		<!--
-			The LLM proxy switched on, so that new workspaces get a token; without a port of its own,
-			which a running control application may use.
+			The workspace proxy switched on, so that new workspaces get a token; without a port of its
+			own, which a running control application may use.
 		-->
-		<config service-class="com.top_logic.factory.llm.LLMProxyService">
-			<instance class="com.top_logic.factory.llm.LLMProxyService"
+		<config service-class="com.top_logic.factory.proxy.WorkspaceProxyService">
+			<instance class="com.top_logic.factory.proxy.WorkspaceProxyService"
 				listen-port="0"
-				proxy-url="http://llm-proxy.test/llm-proxy"
+				proxy-url="http://workspace-proxy.test"
 			/>
 		</config>
 

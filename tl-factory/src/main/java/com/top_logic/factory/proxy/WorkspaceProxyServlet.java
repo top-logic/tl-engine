@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.factory.llm;
+package com.top_logic.factory.proxy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,37 +17,39 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * The {@link LLMProxyHandler LLM proxy} in the web application of the control application, mounted
- * at {@link LLMProxyHandler#PATH}.
+ * The {@link WorkspaceProxyHandler workspace proxy} in the web application of the control
+ * application.
  *
  * <p>
- * Requests reach it through the port of the control application, with all other requests. The
- * {@link LLMProxyService} lets it answer only if {@link LLMProxyService.Config#isServletEnabled()}
- * is set; otherwise it answers with 404, and the proxy is reached through the
- * {@link LLMProxyListener} on a port of its own.
+ * The servlet is mapped to the {@link ProxyRoute#getPath() paths of the routes} it serves (in the
+ * {@code web-fragment.xml} of the module), each with {@code /*}; the path of a request is its path
+ * within the web application. Requests reach it through the port of the control application, with
+ * all other requests. The {@link WorkspaceProxyService} lets it answer only if
+ * {@link WorkspaceProxyService.Config#isServletEnabled()} is set; otherwise it answers with 404, and
+ * the proxy is reached through the {@link WorkspaceProxyListener} on a port of its own.
  * </p>
  */
-public class LLMProxyServlet extends HttpServlet {
+public class WorkspaceProxyServlet extends HttpServlet {
 
-	private final LLMProxyHandler _handler;
+	private final WorkspaceProxyHandler _handler;
 
 	/**
-	 * Creates a {@link LLMProxyServlet} using the {@link LLMProxyService} of the application if it
-	 * {@link LLMProxyService#servletProxy() serves the servlet}.
+	 * Creates a {@link WorkspaceProxyServlet} using the {@link WorkspaceProxyService} of the
+	 * application if it {@link WorkspaceProxyService#servletProxy() serves the servlet}.
 	 */
-	public LLMProxyServlet() {
-		this(LLMProxyService::servletProxy);
+	public WorkspaceProxyServlet() {
+		this(WorkspaceProxyService::servletProxy);
 	}
 
 	/**
-	 * Creates a {@link LLMProxyServlet}.
+	 * Creates a {@link WorkspaceProxyServlet}.
 	 *
 	 * @param proxy
-	 *        Supplier of the {@link LLMProxy} asked for each request; it may supply {@code null}
-	 *        when there is none, which answers requests with 404.
+	 *        Supplier of the {@link WorkspaceProxy} asked for each request; it may supply
+	 *        {@code null} when there is none, which answers requests with 404.
 	 */
-	public LLMProxyServlet(Supplier<LLMProxy> proxy) {
-		_handler = new LLMProxyHandler(proxy);
+	public WorkspaceProxyServlet(Supplier<? extends WorkspaceProxy> proxy) {
+		_handler = new WorkspaceProxyHandler(proxy);
 	}
 
 	@Override
@@ -55,16 +57,10 @@ public class LLMProxyServlet extends HttpServlet {
 		_handler.handle(new ServletExchange(req, resp));
 	}
 
-	@Override
-	public void destroy() {
-		_handler.close();
-		super.destroy();
-	}
-
 	/**
-	 * {@link LLMProxyExchange} of a servlet request.
+	 * {@link ProxyExchange} of a servlet request.
 	 */
-	private static final class ServletExchange implements LLMProxyExchange {
+	private static final class ServletExchange implements ProxyExchange {
 
 		private final HttpServletRequest _req;
 
@@ -82,7 +78,8 @@ public class LLMProxyServlet extends HttpServlet {
 
 		@Override
 		public String path() {
-			return _req.getPathInfo();
+			String pathInfo = _req.getPathInfo();
+			return _req.getServletPath() + (pathInfo == null ? "" : pathInfo);
 		}
 
 		@Override

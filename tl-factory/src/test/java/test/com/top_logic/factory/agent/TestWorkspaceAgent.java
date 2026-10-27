@@ -28,6 +28,8 @@ import test.com.top_logic.factory.agent.claude.Fixtures;
 import test.com.top_logic.factory.workspace.RecordingWorkspaceProvider;
 
 import com.top_logic.ai.chat.backend.BackendTurn;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.DaemonThreadFactory;
@@ -36,14 +38,12 @@ import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.claude.ClaudeCodeHarness;
 import com.top_logic.factory.agent.claude.ClaudeCodeProtocol;
 import com.top_logic.factory.agent.claude.StreamJson;
-import com.top_logic.factory.llm.LLMProxyService;
+import com.top_logic.factory.llm.LLMRoute;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -130,7 +130,7 @@ public class TestWorkspaceAgent extends TestCase {
 		assertFalse("A new conversation.", command.getCommand().contains(ClaudeCodeHarness.OPTION_RESUME));
 		assertEquals(1, _tokens.issued().size());
 		String token = _tokens.issued().get(0);
-		assertEquals(Map.of(LLMProxyService.ENV_AUTH_TOKEN, token), command.getEnv());
+		assertEquals(Map.of(LLMRoute.ENV_AUTH_TOKEN, token), command.getEnv());
 		assertFalse("The token is not on the command line.", command.getCommand().toString().contains(token));
 		assertTrue("Kept for the next message.", _tokens.isValid(token));
 

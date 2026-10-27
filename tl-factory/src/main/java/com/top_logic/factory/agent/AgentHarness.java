@@ -34,8 +34,8 @@ public interface AgentHarness {
 	 * The command starting the agent process.
 	 *
 	 * @param launch
-	 *        Where the process runs, the conversation it continues, and its token for the LLM
-	 *        proxy, which the command passes to the process only.
+	 *        Where the process runs, the conversation it continues, and its environment with the
+	 *        token for the workspace proxy, which the command passes to the process only.
 	 */
 	ExecCommand command(AgentLaunch launch);
 

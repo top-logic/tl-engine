@@ -21,10 +21,10 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.WorkspaceLogFollow;
+import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.LogFollower;
 import com.top_logic.factory.workspace.WorkspaceService;
@@ -249,7 +249,7 @@ public class TestWorkspaceLogFollow extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				SecureRandomService.Module.INSTANCE,
 				WorkspaceService.Module.INSTANCE,
-				LLMProxyService.Module.INSTANCE));
+				WorkspaceProxyService.Module.INSTANCE));
 	}
 
 }

@@ -23,10 +23,10 @@ import com.top_logic.factory.agent.StoredConversation;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.WorkspaceAgentService;
 import com.top_logic.factory.agent.claude.ClaudeCodeHarness;
-import com.top_logic.factory.llm.LLMProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.ProjectWorkspaces.NewWorkspace;
+import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -165,7 +165,7 @@ public class TestAgentConversationResolver extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				SecureRandomService.Module.INSTANCE,
 				WorkspaceService.Module.INSTANCE,
-				LLMProxyService.Module.INSTANCE,
+				WorkspaceProxyService.Module.INSTANCE,
 				WorkspaceAgentService.Module.INSTANCE));
 	}
 

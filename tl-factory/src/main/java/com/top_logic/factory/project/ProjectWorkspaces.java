@@ -32,7 +32,7 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.agent.WorkspaceAgentService;
-import com.top_logic.factory.llm.LLMProxyService;
+import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.factory.workspace.WorkspaceState;
@@ -74,7 +74,7 @@ import com.top_logic.util.model.ModelService;
 	ModelService.Module.class,
 	SchedulerService.Module.class,
 	SecureRandomService.Module.class,
-	LLMProxyService.Module.class,
+	WorkspaceProxyService.Module.class,
 })
 @ServiceCategory.Of(DevelopmentCategory.class)
 public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.Config<?>> {
@@ -219,8 +219,8 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * <p>
 	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password},
 	 * which the application in it sets for its account {@code root}. If the
-	 * {@link LLMProxyService LLM proxy} is switched on, the container gets the URL of the proxy in
-	 * its environment.
+	 * {@link WorkspaceProxyService workspace proxy} is switched on, the container gets what its
+	 * routes need to find it, e.g. their URLs, in its environment.
 	 * </p>
 	 *
 	 * @param project
@@ -292,8 +292,8 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 *
 	 * <p>
 	 * The workspace gets a random {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password}.
-	 * The password and, if the {@link LLMProxyService LLM proxy} is switched on, the URL of the
-	 * proxy are in the environment of the returned {@link NewWorkspace#spec() spec}.
+	 * The password and, if the {@link WorkspaceProxyService workspace proxy} is switched on, the
+	 * URLs of its routes are in the environment of the returned {@link NewWorkspace#spec() spec}.
 	 * </p>
 	 *
 	 * @param project
@@ -317,9 +317,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID))
 			.setEngineVersion(FactoryModel.getString(project, FactoryModel.PROJECT_ENGINE_VERSION))
 			.setInitialPassword(initialPassword);
-		LLMProxyService llmProxy = LLMProxyService.getInstance();
-		if (llmProxy != null) {
-			spec.putEnv(llmProxy.containerEnv());
+		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
+		if (proxy != null) {
+			spec.putEnv(proxy.containerEnv());
 		}
 		return spec;
 	}
@@ -330,7 +330,8 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 *
 	 * <p>
 	 * The container gets the {@link FactoryModel#WORKSPACE_INITIAL_PASSWORD initial password} of
-	 * the workspace and, if the {@link LLMProxyService LLM proxy} is switched on, its current URL.
+	 * the workspace and, if the {@link WorkspaceProxyService workspace proxy} is switched on, the
+	 * current URLs of its routes.
 	 * A workspace that was running is started again and waited for like by
 	 * {@link #start(TLObject)}.
 	 * </p>
@@ -516,9 +517,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * then the workspace itself; the project is kept.
 	 *
 	 * <p>
-	 * The agents working in the workspace are stopped and the tokens the {@link LLMProxyService LLM
-	 * proxy} issued for the workspace are revoked first; the agent conversations are removed with the
-	 * workspace.
+	 * The agents working in the workspace are stopped and the tokens the
+	 * {@link WorkspaceProxyService workspace proxy} issued for the workspace are revoked first; the
+	 * agent conversations are removed with the workspace.
 	 * </p>
 	 *
 	 * @param project
@@ -532,9 +533,9 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			if (agents != null) {
 				agents.stopAll(workspaceId);
 			}
-			LLMProxyService llmProxy = LLMProxyService.getInstance();
-			if (llmProxy != null) {
-				llmProxy.revokeAll(workspaceId);
+			WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
+			if (proxy != null) {
+				proxy.revokeAll(workspaceId);
 			}
 			WorkspaceInfo info = getApplications().getProvider().status(workspaceId);
 			if (info.getState() != WorkspaceState.MISSING || !info.getVolumes().isEmpty()) {

@@ -8,6 +8,7 @@ package com.top_logic.factory.agent.claude;
 import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -21,7 +22,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.factory.agent.AgentHarness;
 import com.top_logic.factory.agent.AgentLaunch;
 import com.top_logic.factory.agent.AgentProtocol;
-import com.top_logic.factory.llm.LLMProxyService;
+import com.top_logic.factory.llm.LLMRoute;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 
@@ -40,9 +41,9 @@ import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
  *
  * <p>
  * as the {@link ApplicationWorkspaces#WORKSPACE_USER workspace user} - Claude Code refuses to
- * bypass its permission prompts as root - with the token of the process in
- * {@link LLMProxyService#ENV_AUTH_TOKEN}. The container has the URL of the LLM proxy in
- * {@link LLMProxyService#ENV_BASE_URL}. The output is translated by {@link ClaudeCodeProtocol}.
+ * bypass its permission prompts as root - with the {@link AgentLaunch#env() environment of the
+ * process}, e.g. its token for the workspace proxy in {@link LLMRoute#ENV_AUTH_TOKEN}. The container
+ * has the URL of the LLM route of the proxy in {@link LLMRoute#ENV_BASE_URL}. The output is translated by {@link ClaudeCodeProtocol}.
  * </p>
  */
 public class ClaudeCodeHarness extends AbstractConfiguredInstance<ClaudeCodeHarness.Config<?>>
@@ -198,10 +199,13 @@ public class ClaudeCodeHarness extends AbstractConfiguredInstance<ClaudeCodeHarn
 				command.add(arg.strip());
 			}
 		}
-		return ExecCommand.of(command)
+		ExecCommand result = ExecCommand.of(command)
 			.setWorkingDir(launch.workingDir())
-			.setUser(ApplicationWorkspaces.WORKSPACE_USER)
-			.putEnv(LLMProxyService.ENV_AUTH_TOKEN, launch.token());
+			.setUser(ApplicationWorkspaces.WORKSPACE_USER);
+		for (Map.Entry<String, String> env : launch.env().entrySet()) {
+			result.putEnv(env.getKey(), env.getValue());
+		}
+		return result;
 	}
 
 	@Override

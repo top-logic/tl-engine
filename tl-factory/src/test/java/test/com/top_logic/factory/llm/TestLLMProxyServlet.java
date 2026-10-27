@@ -19,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,18 +49,21 @@ import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.listener.Listener;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.factory.llm.LLMAdmission;
-import com.top_logic.factory.llm.LLMProxy;
-import com.top_logic.factory.llm.LLMProxyHandler;
-import com.top_logic.factory.llm.LLMProxyServlet;
+import com.top_logic.factory.llm.LLMRoute;
 import com.top_logic.factory.llm.LLMUpstream;
-import com.top_logic.factory.llm.SourceFilter;
-import com.top_logic.factory.llm.TokenGrants;
+import com.top_logic.factory.proxy.ProxyAdmission;
+import com.top_logic.factory.proxy.ProxyError;
+import com.top_logic.factory.proxy.ProxyForwarding;
+import com.top_logic.factory.proxy.SourceFilter;
+import com.top_logic.factory.proxy.TokenGrants;
+import com.top_logic.factory.proxy.WorkspaceProxy;
+import com.top_logic.factory.proxy.WorkspaceProxyHandler;
+import com.top_logic.factory.proxy.WorkspaceProxyServlet;
 
 /**
- * Test of the {@link LLMProxyHandler LLM proxy} in the {@link LLMProxyServlet} over HTTP: the
- * servlet runs in an embedded Jetty, the Anthropic API is a fake upstream server recording what it
- * receives.
+ * Test of the {@link LLMRoute LLM route} of the workspace proxy in the {@link WorkspaceProxyServlet}
+ * over HTTP: the servlet runs in an embedded Jetty, the Anthropic API is a fake upstream server
+ * recording what it receives.
  *
  * <p>
  * {@link TestLLMProxyListener} runs the same tests against the proxy on a port of its own.
@@ -91,14 +96,21 @@ public class TestLLMProxyServlet extends TestCase {
 	 */
 	private static final int RATE_LIMIT = 2;
 
+	/**
+	 * Size of the body of {@link #testLargeBodyStreamed()}, more than any buffer of the proxy.
+	 */
+	private static final long LARGE_BODY_SIZE = 40L * 1024 * 1024;
+
 	private Server _jetty;
 
 	/**
-	 * The URL of the proxy, {@link LLMProxyHandler#PATH} included.
+	 * The URL of the LLM route, {@link LLMRoute#DEFAULT_PATH} included.
 	 */
 	private String _proxyBase;
 
-	private LLMAdmission _admission = LLMAdmission.ADMITTED;
+	private ProxyAdmission _admission = ProxyAdmission.admitted("ws-valid");
+
+	private LLMRoute _route;
 
 	private final TokenGrants _grants = new TokenGrants(Clock.systemUTC(), workspace -> true, RATE_LIMIT);
 
@@ -140,7 +152,8 @@ public class TestLLMProxyServlet extends TestCase {
 		_upstreamConfig = upstreamAt("http://127.0.0.1:" + _upstream.getAddress().getPort());
 		_sources = new SourceFilter(List.of(), Collections::emptyList);
 
-		LLMProxy proxy = new LLMProxy() {
+		_route = new LLMRoute(LLMRoute.DEFAULT_PATH, () -> _upstreamConfig);
+		WorkspaceProxy proxy = new WorkspaceProxy() {
 			@Override
 			public boolean isEnabled() {
 				return _enabled;
@@ -152,7 +165,7 @@ public class TestLLMProxyServlet extends TestCase {
 			}
 
 			@Override
-			public LLMAdmission admit(String token, String remoteAddress) {
+			public ProxyAdmission admit(String token, String remoteAddress) {
 				if (VALID_TOKEN.equals(token)) {
 					return _admission;
 				}
@@ -160,8 +173,8 @@ public class TestLLMProxyServlet extends TestCase {
 			}
 
 			@Override
-			public LLMUpstream upstream() {
-				return _upstreamConfig;
+			public List<LLMRoute> routes() {
+				return List.of(_route);
 			}
 		};
 
@@ -175,6 +188,7 @@ public class TestLLMProxyServlet extends TestCase {
 		try {
 			_client.close();
 			stopProxy();
+			_route.close();
 			_upstream.stop(0);
 			for (String message : _logged) {
 				assertFalse("API key in log: " + message, message.contains(API_KEY));
@@ -188,9 +202,9 @@ public class TestLLMProxyServlet extends TestCase {
 	/**
 	 * Starts the proxy answering on {@link #LOOPBACK}.
 	 *
-	 * @return The URL of the proxy, {@link LLMProxyHandler#PATH} included.
+	 * @return The URL of the LLM route, {@link LLMRoute#DEFAULT_PATH} included.
 	 */
-	protected String startProxy(LLMProxy proxy) throws Exception {
+	protected String startProxy(WorkspaceProxy proxy) throws Exception {
 		_jetty = new Server();
 		ServerConnector connector = new ServerConnector(_jetty);
 		connector.setHost(LOOPBACK);
@@ -198,21 +212,21 @@ public class TestLLMProxyServlet extends TestCase {
 		_jetty.addConnector(connector);
 		ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath(CONTEXT_PATH);
-		context.addServlet(new ServletHolder(new LLMProxyServlet(() -> proxy)), LLMProxyHandler.PATH + "/*");
+		context.addServlet(new ServletHolder(new WorkspaceProxyServlet(() -> proxy)), LLMRoute.DEFAULT_PATH + "/*");
 		_jetty.setHandler(context);
 		_jetty.start();
-		return "http://" + LOOPBACK + ":" + connector.getLocalPort() + CONTEXT_PATH + LLMProxyHandler.PATH;
+		return "http://" + LOOPBACK + ":" + connector.getLocalPort() + CONTEXT_PATH + LLMRoute.DEFAULT_PATH;
 	}
 
 	/**
-	 * Stops the proxy started by {@link #startProxy(LLMProxy)}.
+	 * Stops the proxy started by {@link #startProxy(WorkspaceProxy)}.
 	 */
 	protected void stopProxy() throws Exception {
 		_jetty.stop();
 	}
 
 	private static LLMUpstream upstreamAt(String baseUrl) {
-		return upstreamAt(baseUrl, request -> request.setHeader(LLMProxyHandler.X_API_KEY, API_KEY));
+		return upstreamAt(baseUrl, request -> request.setHeader(LLMRoute.X_API_KEY, API_KEY));
 	}
 
 	private static LLMUpstream upstreamAt(String baseUrl, CredentialProvider credentials) {
@@ -224,11 +238,11 @@ public class TestLLMProxyServlet extends TestCase {
 	 * A valid token is forwarded with the API key instead of the credentials of the client.
 	 */
 	public void testForwardsWithInjectedKey() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{\"id\":\"msg_1\"}", "request-id", "req_1");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{\"id\":\"msg_1\"}", "request-id", "req_1");
 
-		HttpResponse<String> response = send(HttpRequest.newBuilder(proxyUri(LLMProxyHandler.MESSAGES_PATH + "?beta=true"))
-			.header(LLMProxyHandler.AUTHORIZATION, LLMProxyHandler.BEARER_PREFIX + VALID_TOKEN)
-			.header(LLMProxyHandler.X_API_KEY, "client-key")
+		HttpResponse<String> response = send(HttpRequest.newBuilder(proxyUri(LLMRoute.MESSAGES_PATH + "?beta=true"))
+			.header(ProxyForwarding.AUTHORIZATION, WorkspaceProxyHandler.BEARER_PREFIX + VALID_TOKEN)
+			.header(LLMRoute.X_API_KEY, "client-key")
 			.header("anthropic-beta", "some-beta")
 			.header("Cookie", "JSESSIONID=control-session")
 			.header("Content-Type", "application/json")
@@ -241,13 +255,13 @@ public class TestLLMProxyServlet extends TestCase {
 		assertEquals(1, _received.size());
 		Recorded received = _received.get(0);
 		assertEquals("POST", received.method());
-		assertEquals(LLMProxyHandler.MESSAGES_PATH, received.path());
+		assertEquals(LLMRoute.MESSAGES_PATH, received.path());
 		assertEquals("beta=true", received.query());
 		assertEquals(REQUEST_BODY, received.body());
-		assertEquals(List.of(API_KEY), received.headers().get(LLMProxyHandler.X_API_KEY));
-		assertNull("The bearer token is not forwarded.", received.headers().get(LLMProxyHandler.AUTHORIZATION));
+		assertEquals(List.of(API_KEY), received.headers().get(LLMRoute.X_API_KEY));
+		assertNull("The bearer token is not forwarded.", received.headers().get(ProxyForwarding.AUTHORIZATION));
 		assertNull("Cookies are not forwarded.", received.headers().get("Cookie"));
-		assertEquals(PROVIDER_VERSION, received.headers().getFirst(LLMProxyHandler.ANTHROPIC_VERSION));
+		assertEquals(PROVIDER_VERSION, received.headers().getFirst(LLMRoute.ANTHROPIC_VERSION));
 		assertEquals("some-beta", received.headers().getFirst("anthropic-beta"));
 		assertEquals("application/json", received.headers().getFirst("Content-Type"));
 	}
@@ -256,17 +270,17 @@ public class TestLLMProxyServlet extends TestCase {
 	 * The version a client asks for is kept; the token counting is forwarded as well.
 	 */
 	public void testClientVersionAndCountTokens() throws Exception {
-		upstreamAnswers(LLMProxyHandler.COUNT_TOKENS_PATH, 200, "{\"input_tokens\":3}");
+		upstreamAnswers(LLMRoute.COUNT_TOKENS_PATH, 200, "{\"input_tokens\":3}");
 
-		HttpResponse<String> response = send(authorized(LLMProxyHandler.COUNT_TOKENS_PATH)
-			.header(LLMProxyHandler.ANTHROPIC_VERSION, "2099-01-01")
+		HttpResponse<String> response = send(authorized(LLMRoute.COUNT_TOKENS_PATH)
+			.header(LLMRoute.ANTHROPIC_VERSION, "2099-01-01")
 			.POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 
 		assertEquals(200, response.statusCode());
 		assertEquals("{\"input_tokens\":3}", response.body());
 		Recorded received = _received.get(0);
-		assertEquals(LLMProxyHandler.COUNT_TOKENS_PATH, received.path());
-		assertEquals(List.of("2099-01-01"), received.headers().get(LLMProxyHandler.ANTHROPIC_VERSION));
+		assertEquals(LLMRoute.COUNT_TOKENS_PATH, received.path());
+		assertEquals(List.of("2099-01-01"), received.headers().get(LLMRoute.ANTHROPIC_VERSION));
 	}
 
 	/**
@@ -274,7 +288,7 @@ public class TestLLMProxyServlet extends TestCase {
 	 */
 	public void testStreamsIncrementally() throws Exception {
 		CountDownLatch firstSeen = new CountDownLatch(1);
-		_upstream.createContext(LLMProxyHandler.MESSAGES_PATH, exchange -> {
+		_upstream.createContext(LLMRoute.MESSAGES_PATH, exchange -> {
 			record(exchange);
 			exchange.getResponseHeaders().add("Content-Type", "text/event-stream");
 			exchange.sendResponseHeaders(200, 0);
@@ -291,7 +305,7 @@ public class TestLLMProxyServlet extends TestCase {
 		});
 
 		HttpResponse<InputStream> response = _client.send(
-			authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)).build(),
+			authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)).build(),
 			HttpResponse.BodyHandlers.ofInputStream());
 		assertEquals(200, response.statusCode());
 		assertEquals("text/event-stream", response.headers().firstValue("Content-Type").orElse(null));
@@ -315,20 +329,20 @@ public class TestLLMProxyServlet extends TestCase {
 	 * A request without or with a wrong token is refused and not forwarded.
 	 */
 	public void testInvalidTokenRefused() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
 
 		List<HttpRequest.Builder> requests = new ArrayList<>();
-		requests.add(HttpRequest.newBuilder(proxyUri(LLMProxyHandler.MESSAGES_PATH)));
-		requests.add(HttpRequest.newBuilder(proxyUri(LLMProxyHandler.MESSAGES_PATH))
-			.header(LLMProxyHandler.AUTHORIZATION, LLMProxyHandler.BEARER_PREFIX + "tlwst_wrong"));
-		requests.add(HttpRequest.newBuilder(proxyUri(LLMProxyHandler.MESSAGES_PATH))
-			.header(LLMProxyHandler.AUTHORIZATION, "Basic " + VALID_TOKEN));
-		requests.add(HttpRequest.newBuilder(proxyUri(LLMProxyHandler.MESSAGES_PATH))
-			.header(LLMProxyHandler.X_API_KEY, VALID_TOKEN));
+		requests.add(HttpRequest.newBuilder(proxyUri(LLMRoute.MESSAGES_PATH)));
+		requests.add(HttpRequest.newBuilder(proxyUri(LLMRoute.MESSAGES_PATH))
+			.header(ProxyForwarding.AUTHORIZATION, WorkspaceProxyHandler.BEARER_PREFIX + "tlwst_wrong"));
+		requests.add(HttpRequest.newBuilder(proxyUri(LLMRoute.MESSAGES_PATH))
+			.header(ProxyForwarding.AUTHORIZATION, "Basic " + VALID_TOKEN));
+		requests.add(HttpRequest.newBuilder(proxyUri(LLMRoute.MESSAGES_PATH))
+			.header(LLMRoute.X_API_KEY, VALID_TOKEN));
 		for (HttpRequest.Builder request : requests) {
 			HttpResponse<String> response = send(request.POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 			assertEquals(401, response.statusCode());
-			assertTrue(response.body(), response.body().contains(LLMProxyHandler.AUTHENTICATION_ERROR));
+			assertTrue(response.body(), response.body().contains(LLMRoute.AUTHENTICATION_ERROR));
 			assertFalse(response.body().contains(API_KEY));
 		}
 		assertEquals(Collections.emptyList(), _received);
@@ -340,7 +354,7 @@ public class TestLLMProxyServlet extends TestCase {
 	public void testOtherPathsAndMethodsNotFound() throws Exception {
 		upstreamAnswers("/", 200, "{}");
 
-		assertEquals(404, send(authorized(LLMProxyHandler.MESSAGES_PATH).GET()).statusCode());
+		assertEquals(404, send(authorized(LLMRoute.MESSAGES_PATH).GET()).statusCode());
 		assertEquals(404,
 			send(authorized("/v1/models").POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY))).statusCode());
 		assertEquals(404,
@@ -355,14 +369,14 @@ public class TestLLMProxyServlet extends TestCase {
 	 * whatever a forwarding header claims; the refusal is logged with the address.
 	 */
 	public void testForeignSourceRefused() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
 		_sources = new SourceFilter(List.of("10.0.0.0/8", "fd00::/8"), Collections::emptyList);
 
-		HttpResponse<String> response = send(authorized(LLMProxyHandler.MESSAGES_PATH)
+		HttpResponse<String> response = send(authorized(LLMRoute.MESSAGES_PATH)
 			.header("X-Forwarded-For", "10.1.2.3")
 			.POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(403, response.statusCode());
-		assertTrue(response.body(), response.body().contains(LLMProxyHandler.PERMISSION_ERROR));
+		assertTrue(response.body(), response.body().contains(LLMRoute.PERMISSION_ERROR));
 		assertEquals(Collections.emptyList(), _received);
 		assertTrue("The refusal is logged with the address: " + _logged,
 			_logged.stream().anyMatch(message -> message.contains("127.0.0.1")));
@@ -375,11 +389,11 @@ public class TestLLMProxyServlet extends TestCase {
 	 * A request from an accepted range is forwarded.
 	 */
 	public void testAcceptedSourceForwarded() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
 		_sources = new SourceFilter(List.of("127.0.0.0/8"), Collections::emptyList);
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(200, response.statusCode());
 		assertEquals(1, _received.size());
 	}
@@ -388,11 +402,11 @@ public class TestLLMProxyServlet extends TestCase {
 	 * A switched off proxy does not exist.
 	 */
 	public void testDisabled() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
 		_enabled = false;
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(404, response.statusCode());
 		assertEquals(Collections.emptyList(), _received);
 	}
@@ -402,10 +416,10 @@ public class TestLLMProxyServlet extends TestCase {
 	 */
 	public void testUpstreamErrorPassedThrough() throws Exception {
 		String error = "{\"type\":\"error\",\"error\":{\"type\":\"rate_limit_error\",\"message\":\"Slow down.\"}}";
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 429, error, "retry-after", "7");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 429, error, "retry-after", "7");
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(429, response.statusCode());
 		assertEquals(error, response.body());
 		assertEquals("7", response.headers().firstValue("retry-after").orElse(null));
@@ -420,7 +434,7 @@ public class TestLLMProxyServlet extends TestCase {
 		_upstreamConfig = upstreamAt("http://127.0.0.1:" + port);
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(502, response.statusCode());
 		assertFalse(response.body().contains(API_KEY));
 		assertFalse("The failure is logged.", _logged.isEmpty());
@@ -433,7 +447,7 @@ public class TestLLMProxyServlet extends TestCase {
 		_upstreamConfig = null;
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(503, response.statusCode());
 	}
 
@@ -442,13 +456,13 @@ public class TestLLMProxyServlet extends TestCase {
 	 * 503; nothing is forwarded.
 	 */
 	public void testCredentialsNotAvailable() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
 		_upstreamConfig = upstreamAt(_upstreamConfig.baseUrl(), request -> {
 			throw new I18NRuntimeException(ResKey.text("API key not set."));
 		});
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(503, response.statusCode());
 		assertTrue(_received.isEmpty());
 		assertFalse("The failure is logged.", _logged.isEmpty());
@@ -458,12 +472,12 @@ public class TestLLMProxyServlet extends TestCase {
 	 * A 401 of the upstream makes the credentials drop what they cached.
 	 */
 	public void testUnauthorizedInvalidatesCredentials() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 401, "{}");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 401, "{}");
 		AtomicInteger invalidated = new AtomicInteger();
 		_upstreamConfig = upstreamAt(_upstreamConfig.baseUrl(), new CredentialProvider() {
 			@Override
 			public void authenticate(RequestAuthentication request) {
-				request.setHeader(LLMProxyHandler.X_API_KEY, API_KEY);
+				request.setHeader(LLMRoute.X_API_KEY, API_KEY);
 			}
 
 			@Override
@@ -473,7 +487,7 @@ public class TestLLMProxyServlet extends TestCase {
 		});
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(401, response.statusCode());
 		assertEquals(1, invalidated.get());
 	}
@@ -482,13 +496,13 @@ public class TestLLMProxyServlet extends TestCase {
 	 * A valid token used from another address than its first request is refused with 403.
 	 */
 	public void testTokenOfOtherSourceRefused() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
-		_admission = LLMAdmission.FOREIGN_SOURCE;
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
+		_admission = ProxyAdmission.FOREIGN_SOURCE;
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
 		assertEquals(403, response.statusCode());
-		assertTrue(response.body(), response.body().contains(LLMProxyHandler.PERMISSION_ERROR));
+		assertTrue(response.body(), response.body().contains(LLMRoute.PERMISSION_ERROR));
 		assertEquals(Collections.emptyList(), _received);
 	}
 
@@ -496,14 +510,14 @@ public class TestLLMProxyServlet extends TestCase {
 	 * A token over its rate limit is refused with 429 and the seconds to wait, rounded up.
 	 */
 	public void testRateLimitedRefused() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
-		_admission = LLMAdmission.rateLimited(Duration.ofMillis(6500));
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
+		_admission = ProxyAdmission.rateLimited(Duration.ofMillis(6500));
 
 		HttpResponse<String> response =
-			send(authorized(LLMProxyHandler.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
-		assertEquals(LLMProxyHandler.SC_TOO_MANY_REQUESTS, response.statusCode());
-		assertTrue(response.body(), response.body().contains(LLMProxyHandler.RATE_LIMIT_ERROR));
-		assertEquals("7", response.headers().firstValue(LLMProxyHandler.RETRY_AFTER).orElse(null));
+			send(authorized(LLMRoute.MESSAGES_PATH).POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+		assertEquals(ProxyError.SC_TOO_MANY_REQUESTS, response.statusCode());
+		assertTrue(response.body(), response.body().contains(LLMRoute.RATE_LIMIT_ERROR));
+		assertEquals("7", response.headers().firstValue(WorkspaceProxyHandler.RETRY_AFTER).orElse(null));
 		assertEquals(Collections.emptyList(), _received);
 	}
 
@@ -512,14 +526,14 @@ public class TestLLMProxyServlet extends TestCase {
 	 * refused and logged, the token keeps working from its own address.
 	 */
 	public void testTokenBoundToFirstSource() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
 		String token = _grants.issue("ws-1", Duration.ofHours(1));
 
 		assertEquals(200, sendFrom(LOOPBACK, token).statusCode());
 
 		HttpResponse<String> foreign = sendFrom(OTHER_LOOPBACK, token);
 		assertEquals(403, foreign.statusCode());
-		assertTrue(foreign.body(), foreign.body().contains(LLMProxyHandler.PERMISSION_ERROR));
+		assertTrue(foreign.body(), foreign.body().contains(LLMRoute.PERMISSION_ERROR));
 		assertTrue("The refusal is logged with the address: " + _logged,
 			_logged.stream().anyMatch(message -> message.contains(OTHER_LOOPBACK) && message.contains("ws-1")));
 		for (String message : _logged) {
@@ -537,20 +551,143 @@ public class TestLLMProxyServlet extends TestCase {
 	 * A token making more requests than its rate limit is refused until its allowance refills.
 	 */
 	public void testTokenRateLimit() throws Exception {
-		upstreamAnswers(LLMProxyHandler.MESSAGES_PATH, 200, "{}");
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
 		String token = _grants.issue("ws-1", Duration.ofHours(1));
 
 		for (int n = 0; n < RATE_LIMIT; n++) {
 			assertEquals(200, sendFrom(LOOPBACK, token).statusCode());
 		}
 		HttpResponse<String> limited = sendFrom(LOOPBACK, token);
-		assertEquals(LLMProxyHandler.SC_TOO_MANY_REQUESTS, limited.statusCode());
-		long retryAfter = Long.parseLong(limited.headers().firstValue(LLMProxyHandler.RETRY_AFTER).orElseThrow());
+		assertEquals(ProxyError.SC_TOO_MANY_REQUESTS, limited.statusCode());
+		long retryAfter = Long.parseLong(limited.headers().firstValue(WorkspaceProxyHandler.RETRY_AFTER).orElseThrow());
 		assertTrue("Retry after " + retryAfter, retryAfter > 0 && retryAfter <= 60 / RATE_LIMIT);
 		assertEquals(RATE_LIMIT, _received.size());
 
 		String other = _grants.issue("ws-1", Duration.ofHours(1));
 		assertEquals("The limit is per token.", 200, sendFrom(LOOPBACK, other).statusCode());
+	}
+
+	/**
+	 * A token is also accepted as password of basic authentication, whatever the user name.
+	 */
+	public void testBasicAuthentication() throws Exception {
+		upstreamAnswers(LLMRoute.MESSAGES_PATH, 200, "{}");
+		String token = _grants.issue("ws-1", Duration.ofHours(1));
+
+		HttpResponse<String> response = send(HttpRequest.newBuilder(proxyUri(LLMRoute.MESSAGES_PATH))
+			.timeout(Duration.ofSeconds(20))
+			.header(ProxyForwarding.AUTHORIZATION, WorkspaceProxyHandler.BASIC_PREFIX + basic("any-user", token))
+			.POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+		assertEquals(200, response.statusCode());
+		assertEquals(1, _received.size());
+		assertNull("The credentials are not forwarded.", _received.get(0).headers().get(ProxyForwarding.AUTHORIZATION));
+
+		HttpResponse<String> noPassword = send(HttpRequest.newBuilder(proxyUri(LLMRoute.MESSAGES_PATH))
+			.timeout(Duration.ofSeconds(20))
+			.header(ProxyForwarding.AUTHORIZATION, WorkspaceProxyHandler.BASIC_PREFIX
+				+ Base64.getEncoder().encodeToString(token.getBytes(StandardCharsets.UTF_8)))
+			.POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY)));
+		assertEquals("The token as user name without password.", 401, noPassword.statusCode());
+		assertEquals(1, _received.size());
+	}
+
+	/**
+	 * A request body is streamed to the upstream as it arrives: the upstream receives the first
+	 * bytes while the client still holds back the rest, and gets all of a body far larger than any
+	 * buffer, with its length.
+	 */
+	public void testLargeBodyStreamed() throws Exception {
+		CountDownLatch upstreamReading = new CountDownLatch(1);
+		long[] received = { 0 };
+		List<String> lengths = new CopyOnWriteArrayList<>();
+		_upstream.createContext(LLMRoute.MESSAGES_PATH, exchange -> {
+			String length = exchange.getRequestHeaders().getFirst(ProxyForwarding.CONTENT_LENGTH);
+			lengths.add(String.valueOf(length));
+			long count = 0;
+			byte[] buffer = new byte[64 * 1024];
+			try (InputStream in = exchange.getRequestBody()) {
+				int n;
+				while ((n = in.read(buffer)) >= 0) {
+					count += n;
+					upstreamReading.countDown();
+				}
+			}
+			received[0] = count;
+			byte[] answer = "{}".getBytes(StandardCharsets.UTF_8);
+			exchange.sendResponseHeaders(200, answer.length);
+			try (OutputStream out = exchange.getResponseBody()) {
+				out.write(answer);
+			}
+		});
+
+		long size = LARGE_BODY_SIZE;
+		HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.fromPublisher(
+			HttpRequest.BodyPublishers.ofInputStream(() -> new HeldBackBody(size, upstreamReading)), size);
+		HttpResponse<String> response = _client.send(authorized(LLMRoute.MESSAGES_PATH)
+			.timeout(Duration.ofMinutes(2))
+			.POST(body)
+			.build(), HttpResponse.BodyHandlers.ofString());
+
+		assertEquals(response.body(), 200, response.statusCode());
+		assertEquals(size, received[0]);
+		assertEquals("The length of the client.", List.of(Long.toString(size)), lengths);
+	}
+
+	private static String basic(String user, String password) {
+		return Base64.getEncoder().encodeToString((user + ":" + password).getBytes(StandardCharsets.UTF_8));
+	}
+
+	/**
+	 * A request body of the given size, generated as it is read: after its first
+	 * {@link #HELD_BACK_AFTER} bytes it waits until the upstream has received some, so that a proxy
+	 * collecting the body before forwarding it fails.
+	 */
+	private static final class HeldBackBody extends InputStream {
+
+		private static final int HELD_BACK_AFTER = 1024 * 1024;
+
+		private final long _size;
+
+		private final CountDownLatch _upstreamReading;
+
+		private long _read;
+
+		HeldBackBody(long size, CountDownLatch upstreamReading) {
+			_size = size;
+			_upstreamReading = upstreamReading;
+		}
+
+		@Override
+		public int read() throws IOException {
+			byte[] one = new byte[1];
+			return read(one, 0, 1) < 0 ? -1 : one[0] & 0xFF;
+		}
+
+		@Override
+		public int read(byte[] buffer, int offset, int length) throws IOException {
+			if (_read >= _size) {
+				return -1;
+			}
+			if (_read >= HELD_BACK_AFTER) {
+				awaitUpstream();
+			}
+			long limit = _read < HELD_BACK_AFTER ? HELD_BACK_AFTER : _size;
+			int count = (int) Math.min(length, limit - _read);
+			Arrays.fill(buffer, offset, offset + count, (byte) 'x');
+			_read += count;
+			return count;
+		}
+
+		private void awaitUpstream() throws IOException {
+			try {
+				if (!_upstreamReading.await(30, TimeUnit.SECONDS)) {
+					throw new IOException("The upstream got nothing of the body before the client sent all of it.");
+				}
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+				throw new IOException(ex);
+			}
+		}
 	}
 
 	/**
@@ -561,9 +698,9 @@ public class TestLLMProxyServlet extends TestCase {
 			.localAddress(InetAddress.getByName(localAddress))
 			.connectTimeout(Duration.ofSeconds(5))
 			.build()) {
-			return client.send(HttpRequest.newBuilder(proxyUri(LLMProxyHandler.MESSAGES_PATH))
+			return client.send(HttpRequest.newBuilder(proxyUri(LLMRoute.MESSAGES_PATH))
 				.timeout(Duration.ofSeconds(20))
-				.header(LLMProxyHandler.AUTHORIZATION, LLMProxyHandler.BEARER_PREFIX + token)
+				.header(ProxyForwarding.AUTHORIZATION, WorkspaceProxyHandler.BEARER_PREFIX + token)
 				.POST(HttpRequest.BodyPublishers.ofString(REQUEST_BODY))
 				.build(), HttpResponse.BodyHandlers.ofString());
 		}
@@ -604,7 +741,7 @@ public class TestLLMProxyServlet extends TestCase {
 	private HttpRequest.Builder authorized(String path) {
 		return HttpRequest.newBuilder(proxyUri(path))
 			.timeout(Duration.ofSeconds(20))
-			.header(LLMProxyHandler.AUTHORIZATION, LLMProxyHandler.BEARER_PREFIX + VALID_TOKEN);
+			.header(ProxyForwarding.AUTHORIZATION, WorkspaceProxyHandler.BEARER_PREFIX + VALID_TOKEN);
 	}
 
 	private HttpResponse<String> send(HttpRequest.Builder request) throws IOException, InterruptedException {

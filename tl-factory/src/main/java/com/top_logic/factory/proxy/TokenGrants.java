@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.factory.llm;
+package com.top_logic.factory.proxy;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -16,10 +16,10 @@ import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.access.SecretTokens;
 
 /**
- * The valid tokens of the {@link LLMProxyService}, kept in memory by their hashes.
+ * The valid tokens of the {@link WorkspaceProxyService}, kept in memory by their hashes.
  *
  * <p>
- * A token is {@value LLMProxyService#TOKEN_PREFIX} followed by a random secret (see
+ * A token is {@value #TOKEN_PREFIX} followed by a random secret (see
  * {@link SecretTokens}), issued for a workspace with a lifetime. Besides its validity, the
  * {@link #admit(String, String) admission} of a request checks:
  * </p>
@@ -34,6 +34,11 @@ import com.top_logic.tl.ai.core.access.SecretTokens;
  * </ul>
  */
 public class TokenGrants {
+
+	/**
+	 * What every workspace token starts with.
+	 */
+	public static final String TOKEN_PREFIX = "tlwst_";
 
 	/**
 	 * What a request costs from the allowance of a token, a minute in nanoseconds: the allowance
@@ -162,7 +167,7 @@ public class TokenGrants {
 	public String issue(String workspaceId, Duration lifetime) {
 		Instant now = _clock.instant();
 		dropExpired(now);
-		String plain = SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX);
+		String plain = SecretTokens.newToken(TOKEN_PREFIX);
 		_grants.put(SecretTokens.hash(plain), new Grant(workspaceId, now.plus(lifetime), _rateLimit, now));
 		return plain;
 	}
@@ -181,7 +186,7 @@ public class TokenGrants {
 	 * Revokes a token: the next request presenting it is refused.
 	 */
 	public void revoke(String token) {
-		if (SecretTokens.hasFormat(LLMProxyService.TOKEN_PREFIX, token)) {
+		if (SecretTokens.hasFormat(TOKEN_PREFIX, token)) {
 			_grants.remove(SecretTokens.hash(token));
 		}
 	}
@@ -196,41 +201,41 @@ public class TokenGrants {
 	/**
 	 * Decides about a request presenting the given token from the given address.
 	 *
-	 * @see LLMProxy#admit(String, String)
+	 * @see WorkspaceProxy#admit(String, String)
 	 */
-	public LLMAdmission admit(String token, String source) {
+	public ProxyAdmission admit(String token, String source) {
 		Grant grant = lookup(token);
 		if (grant == null) {
-			return LLMAdmission.INVALID_TOKEN;
+			return ProxyAdmission.INVALID_TOKEN;
 		}
 		if (source == null) {
-			return LLMAdmission.FOREIGN_SOURCE;
+			return ProxyAdmission.FOREIGN_SOURCE;
 		}
 		String hash = SecretTokens.hash(token);
 		Instant now = _clock.instant();
 		if (!now.isBefore(grant.expires())) {
 			_grants.remove(hash, grant);
-			return LLMAdmission.INVALID_TOKEN;
+			return ProxyAdmission.INVALID_TOKEN;
 		}
 		if (!_workspaceExists.test(grant.workspaceId())) {
 			_grants.remove(hash, grant);
-			return LLMAdmission.INVALID_TOKEN;
+			return ProxyAdmission.INVALID_TOKEN;
 		}
 		String bound = grant.bind(source);
 		if (!bound.equals(source)) {
-			Logger.warn("LLM proxy: refused a request from " + source + " with a token of workspace "
+			Logger.warn("Workspace proxy: refused a request from " + source + " with a token of workspace "
 				+ grant.workspaceId() + " that is bound to " + bound + ".", TokenGrants.class);
-			return LLMAdmission.FOREIGN_SOURCE;
+			return ProxyAdmission.FOREIGN_SOURCE;
 		}
 		Duration wait = grant.take(_rateLimit, now);
 		if (!wait.isZero()) {
-			return LLMAdmission.rateLimited(wait);
+			return ProxyAdmission.rateLimited(wait);
 		}
-		return LLMAdmission.ADMITTED;
+		return ProxyAdmission.admitted(grant.workspaceId());
 	}
 
 	private Grant lookup(String token) {
-		if (!SecretTokens.hasFormat(LLMProxyService.TOKEN_PREFIX, token)) {
+		if (!SecretTokens.hasFormat(TOKEN_PREFIX, token)) {
 			return null;
 		}
 		return _grants.get(SecretTokens.hash(token));

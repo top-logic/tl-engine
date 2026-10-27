@@ -45,12 +45,12 @@ import com.top_logic.factory.agent.AgentProtocol;
 import com.top_logic.factory.agent.AgentRuntime;
 import com.top_logic.factory.agent.WorkspaceAgent;
 import com.top_logic.factory.agent.claude.ClaudeCodeHarness;
-import com.top_logic.factory.llm.LLMAdmission;
-import com.top_logic.factory.llm.LLMProxy;
-import com.top_logic.factory.llm.LLMProxyHandler;
-import com.top_logic.factory.llm.LLMProxyService;
-import com.top_logic.factory.llm.LLMProxyServlet;
+import com.top_logic.factory.llm.LLMRoute;
 import com.top_logic.factory.llm.LLMUpstream;
+import com.top_logic.factory.proxy.ProxyAdmission;
+import com.top_logic.factory.proxy.TokenGrants;
+import com.top_logic.factory.proxy.WorkspaceProxy;
+import com.top_logic.factory.proxy.WorkspaceProxyServlet;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
 import com.top_logic.factory.workspace.ExecProcess;
@@ -63,7 +63,7 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Integration test of Claude Code in a workspace container, talking to the Anthropic API through
- * an {@link LLMProxyServlet} of this test.
+ * an {@link WorkspaceProxyServlet} of this test.
  *
  * <p>
  * {@link #testRecordStreams()} records the stream-json output of the pinned Claude Code version,
@@ -154,8 +154,9 @@ public class TestClaudeCodeIntegration extends TestCase {
 		super.setUp();
 		_tokens = new MemoryTokens(Clock.systemUTC());
 		LLMUpstream upstream =
-			new LLMUpstream(API_URL, request -> request.setHeader(LLMProxyHandler.X_API_KEY, apiKey()), API_VERSION, Duration.ofSeconds(10), Duration.ofMinutes(10), Map.of());
-		LLMProxy proxy = new LLMProxy() {
+			new LLMUpstream(API_URL, request -> request.setHeader(LLMRoute.X_API_KEY, apiKey()), API_VERSION, Duration.ofSeconds(10), Duration.ofMinutes(10), Map.of());
+		LLMRoute route = new LLMRoute(LLMRoute.DEFAULT_PATH, () -> upstream);
+		WorkspaceProxy proxy = new WorkspaceProxy() {
 			@Override
 			public boolean isEnabled() {
 				return true;
@@ -167,13 +168,13 @@ public class TestClaudeCodeIntegration extends TestCase {
 			}
 
 			@Override
-			public LLMAdmission admit(String token, String remoteAddress) {
-				return _tokens.isValid(token) ? LLMAdmission.ADMITTED : LLMAdmission.INVALID_TOKEN;
+			public ProxyAdmission admit(String token, String remoteAddress) {
+				return _tokens.isValid(token) ? ProxyAdmission.admitted(_workspaceId) : ProxyAdmission.INVALID_TOKEN;
 			}
 
 			@Override
-			public LLMUpstream upstream() {
-				return upstream;
+			public List<LLMRoute> routes() {
+				return List.of(route);
 			}
 		};
 		_jetty = new Server();
@@ -184,10 +185,10 @@ public class TestClaudeCodeIntegration extends TestCase {
 		_jetty.addConnector(connector);
 		ServletContextHandler context = new ServletContextHandler();
 		context.setContextPath(CONTEXT_PATH);
-		context.addServlet(new ServletHolder(new LLMProxyServlet(() -> proxy)), LLMProxyHandler.PATH + "/*");
+		context.addServlet(new ServletHolder(new WorkspaceProxyServlet(() -> proxy)), LLMRoute.DEFAULT_PATH + "/*");
 		_jetty.setHandler(context);
 		_jetty.start();
-		String proxyUrl = "http://" + GATEWAY_HOST + ":" + connector.getLocalPort() + CONTEXT_PATH + LLMProxyHandler.PATH;
+		String proxyUrl = "http://" + GATEWAY_HOST + ":" + connector.getLocalPort() + CONTEXT_PATH + LLMRoute.DEFAULT_PATH;
 
 		_provider = createProvider();
 		ApplicationWorkspaces applications =
@@ -199,7 +200,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 			.putEnv(ApplicationWorkspaces.ENV_BUILT_MARKER, "/tmp/never-built")
 			.putEnv(ApplicationWorkspaces.ENV_APP_DIR, APP_DIR)
 			.putEnv(ApplicationWorkspaces.ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT))
-			.putEnv(LLMProxyService.ENV_BASE_URL, proxyUrl));
+			.putEnv(LLMRoute.ENV_BASE_URL, proxyUrl));
 		_provider.start(_workspaceId);
 		_provider.exec(_workspaceId, ExecCommand.of("mkdir", "-p", APP_DIR), ExecOutput.NONE);
 		_provider.exec(_workspaceId,
@@ -229,7 +230,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 		try (Recorder recorder = new Recorder()) {
 			String token = _tokens.issue(_workspaceId, Duration.ofHours(1));
 			ExecProcess process =
-				_provider.startExec(_workspaceId, harness.command(new AgentLaunch(APP_DIR, null, token)), recorder);
+				_provider.startExec(_workspaceId, harness.command(launch(null, token)), recorder);
 			try {
 				recorder.turn(process, Fixtures.OK, protocol.userMessage(PROMPT_OK));
 				sessionId = recorder.sessionId();
@@ -251,7 +252,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 		try (Recorder recorder = new Recorder()) {
 			String token = _tokens.issue(_workspaceId, Duration.ofHours(1));
 			ExecProcess process =
-				_provider.startExec(_workspaceId, harness.command(new AgentLaunch(APP_DIR, sessionId, token)),
+				_provider.startExec(_workspaceId, harness.command(launch(sessionId, token)),
 					recorder);
 			try {
 				recorder.turn(process, Fixtures.RESUME,
@@ -265,9 +266,9 @@ public class TestClaudeCodeIntegration extends TestCase {
 		}
 		try (Recorder recorder = new Recorder()) {
 			// A well-formed token the proxy never issued.
-			String refused = LLMProxyService.TOKEN_PREFIX + UUID.randomUUID();
+			String refused = TokenGrants.TOKEN_PREFIX + UUID.randomUUID();
 			ExecProcess process =
-				_provider.startExec(_workspaceId, harness.command(new AgentLaunch(APP_DIR, null, refused)), recorder);
+				_provider.startExec(_workspaceId, harness.command(launch(null, refused)), recorder);
 			try {
 				recorder.turn(process, Fixtures.LOGIN_FAILED, protocol.userMessage(PROMPT_OK));
 				process.closeStdin();
@@ -280,7 +281,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 			// A conversation Claude Code never had, as one whose store was lost with its container.
 			String token = _tokens.issue(_workspaceId, Duration.ofHours(1));
 			ExecProcess process = _provider.startExec(_workspaceId,
-				harness.command(new AgentLaunch(APP_DIR, UUID.randomUUID().toString(), token)), recorder);
+				harness.command(launch(UUID.randomUUID().toString(), token)), recorder);
 			try {
 				recorder.turn(process, Fixtures.SESSION_NOT_FOUND, protocol.userMessage(PROMPT_OK));
 				assertTrue("The process ends after refusing the conversation.", process.waitFor(WAIT));
@@ -301,7 +302,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 		try (Recorder recorder = new Recorder()) {
 			String token = _tokens.issue(_workspaceId, Duration.ofHours(1));
 			ExecProcess process =
-				_provider.startExec(_workspaceId, harness.command(new AgentLaunch(APP_DIR, null, token)), recorder);
+				_provider.startExec(_workspaceId, harness.command(launch(null, token)), recorder);
 			try {
 				content = recorder.turn(process, Fixtures.THINKING, protocol.userMessage(PROMPT_THINK));
 				process.closeStdin();
@@ -375,6 +376,10 @@ public class TestClaudeCodeIntegration extends TestCase {
 			scheduler.shutdownNow();
 			watchers.shutdownNow();
 		}
+	}
+
+	private AgentLaunch launch(String sessionId, String token) {
+		return new AgentLaunch(APP_DIR, sessionId, _tokens.processEnv(token));
 	}
 
 	private static BackendTurn turn(String text) {

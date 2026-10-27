@@ -6,17 +6,18 @@
   <name>tl-factory</name>
 
   <!--
-    The LLM proxy of the workspace containers (LLMProxyHandler.PATH) in the web application. It answers
-    only if servlet-enabled of the LLMProxyService is set; by default the proxy listens on a port of its
-    own instead. The servlet authenticates the requests itself by the token of a workspace.
+    The workspace proxy of the workspace containers in the web application, mapped to the paths of
+    its routes (the LLM route: LLMRoute.DEFAULT_PATH). It answers only if servlet-enabled of the
+    WorkspaceProxyService is set; by default the proxy listens on a port of its own instead. The
+    servlet authenticates the requests itself by the token of a workspace.
   -->
   <servlet>
-    <servlet-name>LLMProxyServlet</servlet-name>
-    <servlet-class>com.top_logic.factory.llm.LLMProxyServlet</servlet-class>
+    <servlet-name>WorkspaceProxyServlet</servlet-name>
+    <servlet-class>com.top_logic.factory.proxy.WorkspaceProxyServlet</servlet-class>
   </servlet>
 
   <servlet-mapping>
-    <servlet-name>LLMProxyServlet</servlet-name>
+    <servlet-name>WorkspaceProxyServlet</servlet-name>
     <url-pattern>/llm-proxy/*</url-pattern>
   </servlet-mapping>
 </web-fragment>

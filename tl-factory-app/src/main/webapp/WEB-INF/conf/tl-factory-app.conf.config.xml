@@ -18,9 +18,9 @@
 
 	<services>
 		<!--
-			The provider whose API key the LLM proxy of the workspaces adds to their requests
-			(LLMProxyService, provider "anthropic"); the key is read from the environment variable
-			tl_anthropic_api_key. It exposes no models: the control application runs no agent itself; the
+			The provider whose API key the workspace proxy adds to the LLM requests of the workspaces
+			(the LLM route of the WorkspaceProxyService, provider "anthropic"); the key is read from the
+			environment variable tl_anthropic_api_key. It exposes no models: the control application runs no agent itself; the
 			chats of the Agent tab are answered by the coding agents in the workspaces.
 		-->
 		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">

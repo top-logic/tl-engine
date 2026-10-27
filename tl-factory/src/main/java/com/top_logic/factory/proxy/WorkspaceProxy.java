@@ -3,16 +3,18 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.factory.llm;
+package com.top_logic.factory.proxy;
+
+import java.util.List;
 
 /**
- * What the {@link LLMProxyHandler} asks before it forwards a request: whether the proxy is switched
- * on, whether the request comes from an accepted address, whether the token of the caller admits
- * it, and where the request goes.
+ * What the {@link WorkspaceProxyHandler} asks before it passes a request to a route: whether the
+ * proxy is switched on, which routes it has, whether the request comes from an accepted address,
+ * and whether the token of the caller admits it.
  *
- * @see LLMProxyService
+ * @see WorkspaceProxyService
  */
-public interface LLMProxy {
+public interface WorkspaceProxy {
 
 	/**
 	 * Whether the proxy accepts requests at all.
@@ -22,6 +24,12 @@ public interface LLMProxy {
 	 * </p>
 	 */
 	boolean isEnabled();
+
+	/**
+	 * The routes of the proxy; a request goes to the one whose {@link ProxyRoute#getPath() path}
+	 * is the longest prefix of its own.
+	 */
+	List<? extends ProxyRoute> routes();
 
 	/**
 	 * Whether a request from the given client address is accepted.
@@ -38,7 +46,7 @@ public interface LLMProxy {
 	 * <p>
 	 * The token must be valid: issued for a workspace that still exists, neither revoked nor
 	 * expired. It is bound to the address of its first admitted request, and it is limited in its
-	 * requests per minute.
+	 * requests per minute. A token is valid for every route of the proxy.
 	 * </p>
 	 *
 	 * <p>
@@ -50,13 +58,6 @@ public interface LLMProxy {
 	 * @param remoteAddress
 	 *        The address of the client the server reports, never a header of the request.
 	 */
-	LLMAdmission admit(String token, String remoteAddress);
-
-	/**
-	 * Where an authenticated request is forwarded to.
-	 *
-	 * @return The upstream, {@code null} if none is configured.
-	 */
-	LLMUpstream upstream();
+	ProxyAdmission admit(String token, String remoteAddress);
 
 }

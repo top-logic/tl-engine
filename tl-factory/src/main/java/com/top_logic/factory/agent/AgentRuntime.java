@@ -12,7 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
 import com.top_logic.basic.util.I18NBundle;
-import com.top_logic.factory.llm.LLMTokens;
+import com.top_logic.factory.proxy.ProxyTokens;
 import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.knowledge.wrap.person.Person;
 
@@ -24,7 +24,8 @@ import com.top_logic.knowledge.wrap.person.Person;
  * @param provider
  *        The provider of the workspaces.
  * @param tokens
- *        Issues the tokens of the agent processes; {@code null} when there is no LLM proxy.
+ *        Issues the tokens of the agent processes; {@code null} when the workspace proxy is
+ *        switched off.
  * @param idleTimeout
  *        How long an agent process is kept after its last run.
  * @param tokenLifetime
@@ -46,7 +47,7 @@ import com.top_logic.knowledge.wrap.person.Person;
  *        The messages to the user a run is done for, in the language of the user; the user is
  *        {@code null} when the run names none.
  */
-public record AgentRuntime(AgentHarness harness, WorkspaceProvider provider, LLMTokens tokens,
+public record AgentRuntime(AgentHarness harness, WorkspaceProvider provider, ProxyTokens tokens,
 		Duration idleTimeout, Duration tokenLifetime, Duration interruptTimeout, Duration stopTimeout,
 		ScheduledExecutorService scheduler, Executor watchers, Clock clock,
 		Function<Person, ? extends I18NBundle> messages) {

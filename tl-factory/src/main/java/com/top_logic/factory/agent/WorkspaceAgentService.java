@@ -27,7 +27,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.sched.DaemonThreadFactory;
 import com.top_logic.basic.util.I18NBundle;
-import com.top_logic.factory.llm.LLMProxyService;
+import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -48,7 +48,7 @@ import com.top_logic.util.model.ModelService;
  */
 @ServiceDependencies({
 	WorkspaceService.Module.class,
-	LLMProxyService.Module.class,
+	WorkspaceProxyService.Module.class,
 	PersistencyLayer.Module.class,
 	ModelService.Module.class,
 })
@@ -95,8 +95,9 @@ public class WorkspaceAgentService extends ConfiguredManagedClass<WorkspaceAgent
 		long getIdleTimeout();
 
 		/**
-		 * The lifetime of the token of an agent process for the LLM proxy, e.g. {@code 4h}; at most
-		 * the {@link LLMProxyService.Config#getMaxTokenLifetime() longest lifetime} of the proxy.
+		 * The lifetime of the token of an agent process for the workspace proxy, e.g. {@code 4h}; at
+		 * most the {@link WorkspaceProxyService.Config#getMaxTokenLifetime() longest lifetime} of the
+		 * proxy.
 		 *
 		 * <p>
 		 * A process whose token has less than half of its lifetime left is replaced by a new one
@@ -158,7 +159,7 @@ public class WorkspaceAgentService extends ConfiguredManagedClass<WorkspaceAgent
 		_scheduler = Executors.newSingleThreadScheduledExecutor(DaemonThreadFactory.daemonThreadFactory());
 		_watchers = Executors.newCachedThreadPool(DaemonThreadFactory.daemonThreadFactory());
 		Config<?> config = getConfig();
-		LLMProxyService proxy = LLMProxyService.getInstance();
+		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
 		boolean llmAccess = proxy != null && proxy.isEnabled();
 		Duration tokenLifetime = Duration.ofMillis(config.getTokenLifetime());
 		if (llmAccess && tokenLifetime.compareTo(proxy.getMaxTokenLifetime()) > 0) {

@@ -17,11 +17,13 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.factory.llm.LLMAdmission;
-import com.top_logic.factory.llm.LLMProxyService;
+import com.top_logic.factory.llm.LLMRoute;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.ProjectWorkspaces.NewWorkspace;
+import com.top_logic.factory.proxy.ProxyAdmission;
+import com.top_logic.factory.proxy.TokenGrants;
+import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -40,7 +42,10 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	 */
 	private static final String SOURCE = "172.30.0.5";
 
-	private static final String PROXY_URL = "http://llm-proxy.test/llm-proxy";
+	/**
+	 * The URL of the LLM route: the proxy URL of the test configuration and the path of the route.
+	 */
+	private static final String PROXY_URL = "http://workspace-proxy.test" + LLMRoute.DEFAULT_PATH;
 
 	private static final String WORKSPACE_ID = "llm-token-test-1";
 
@@ -48,7 +53,7 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 
 	private TLObject _workspace;
 
-	private LLMProxyService _proxy;
+	private WorkspaceProxyService _proxy;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -63,9 +68,9 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 		});
 		NewWorkspace created = ProjectWorkspaces.commitNewWorkspace(_project, WORKSPACE_ID);
 		_workspace = created.workspace();
-		assertEquals(PROXY_URL, created.spec().getEnv().get(LLMProxyService.ENV_BASE_URL));
-		assertNull("The container gets no token.", created.spec().getEnv().get(LLMProxyService.ENV_AUTH_TOKEN));
-		_proxy = LLMProxyService.getInstance();
+		assertEquals(PROXY_URL, created.spec().getEnv().get(LLMRoute.ENV_BASE_URL));
+		assertNull("The container gets no token.", created.spec().getEnv().get(LLMRoute.ENV_AUTH_TOKEN));
+		_proxy = WorkspaceProxyService.getInstance();
 	}
 
 	@Override
@@ -82,13 +87,23 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	}
 
 	/**
+	 * The proxy of the application configuration has the LLM route, also with the proxy settings
+	 * of the test configuration.
+	 */
+	public void testLLMRouteConfigured() {
+		assertEquals(1, _proxy.routes().size());
+		assertTrue(_proxy.routes().get(0) instanceof LLMRoute);
+		assertEquals(LLMRoute.DEFAULT_PATH, _proxy.routes().get(0).getPath());
+	}
+
+	/**
 	 * An issued token is valid, another well-formed one is not, a revoked one no longer.
 	 */
 	public void testIssueAndRevoke() {
 		String token = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
 		assertTrue(admitted(token));
 		assertFalse("Another well-formed token.",
-			admitted(SecretTokens.newToken(LLMProxyService.TOKEN_PREFIX)));
+			admitted(SecretTokens.newToken(TokenGrants.TOKEN_PREFIX)));
 
 		String other = _proxy.issue(WORKSPACE_ID, Duration.ofMinutes(5));
 		_proxy.revoke(token);
@@ -153,14 +168,14 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 				SecureRandomService.Module.INSTANCE,
 				// The default engine version of a new project; starting it contacts no container platform.
 				WorkspaceService.Module.INSTANCE,
-				LLMProxyService.Module.INSTANCE));
+				WorkspaceProxyService.Module.INSTANCE));
 	}
 
 	/**
 	 * Whether the proxy admits a request with the given token.
 	 */
 	private boolean admitted(String token) {
-		return _proxy.admit(token, SOURCE).status() == LLMAdmission.Status.ADMITTED;
+		return _proxy.admit(token, SOURCE).status() == ProxyAdmission.Status.ADMITTED;
 	}
 
 }

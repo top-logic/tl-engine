@@ -306,7 +306,7 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		if (source != null) {
 			spec.setSource(source);
 		}
-		run(workspace, "Creating application " + groupId + ":" + artifactId + " " + version + ".", log -> {
+		run(workspace, "Creating the workspace of application " + groupId + ":" + artifactId + " " + version + ".", log -> {
 			WorkspaceInfo info = getApplications().create(spec, log);
 			log.update(w -> {
 				w.tUpdateByName(FactoryModel.WORKSPACE_IMAGE, info.getImage());

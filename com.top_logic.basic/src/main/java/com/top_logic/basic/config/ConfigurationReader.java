@@ -2184,7 +2184,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 							 * be "forgotten". */
 							return newBuilder(expectedDescriptor);
 						}
-						ConfigBuilder scriptBuilder = createScriptBuilder(reader, defaultDescriptor, owningProperty);
+						ConfigBuilder scriptBuilder = createScriptBuilder(defaultDescriptor, owningProperty);
 						if (scriptBuilder != null) {
 							return scriptBuilder;
 						}
@@ -2216,23 +2216,11 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		/**
 		 * Creates the builder for a script implementation configured in element form.
 		 *
-		 * @return The builder of the {@link ScriptImplementationProvider}, or <code>null</code>, if
-		 *         the given property does not accept scripts in element form, or has a concrete
-		 *         default implementation class that the element configures.
-		 * 
-		 * @see ScriptImplementationProvider#createScriptBuilder(PropertyDescriptor)
+		 * @see ScriptImplementations#createScriptBuilder(PropertyDescriptor, ConfigurationDescriptor)
 		 */
-		private ConfigBuilder createScriptBuilder(XMLStreamReader reader, ConfigurationDescriptor defaultDescriptor,
+		private ConfigBuilder createScriptBuilder(ConfigurationDescriptor defaultDescriptor,
 				PropertyDescriptor owningProperty) throws ConfigurationException {
-			if (!ScriptImplementations.acceptsScript(owningProperty)) {
-				return null;
-			}
-			Class<?> implementationClass = (Class<?>) classProperty(reader, defaultDescriptor).getDefaultValue();
-			if (implementationClass != null && !implementationClass.isInterface()
-				&& DefaultConfigConstructorScheme.getFactory(implementationClass).isConcrete()) {
-				return null;
-			}
-			return ScriptImplementations.getProvider().createScriptBuilder(owningProperty);
+			return ScriptImplementations.createScriptBuilder(owningProperty, defaultDescriptor);
 		}
 
 		private ConfigBuilder newBuilderForDefaultImplementationClass(XMLStreamReader reader, ConfigurationDescriptor defaultDescriptor)

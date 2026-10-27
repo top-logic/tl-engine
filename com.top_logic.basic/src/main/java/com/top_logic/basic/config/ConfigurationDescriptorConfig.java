@@ -25,6 +25,9 @@ public interface ConfigurationDescriptorConfig extends ConfigurationItem {
 	/** @see #getExtensions() */
 	String EXTENSION_NAME = "extends";
 
+	/** @see #getInterface() */
+	String INTERFACE = "interface";
+
 	/**
 	 * {@link Annotation}s (indexed by the type of the annotation) for this descriptor.
 	 */
@@ -59,6 +62,21 @@ public interface ConfigurationDescriptorConfig extends ConfigurationItem {
 	 */
 	@Name(EXTENSION_NAME)
 	Class<? extends ConfigurationItem>[] getExtensions();
+
+	/**
+	 * The Java interface that identifies configurations of the configured
+	 * {@link ConfigurationDescriptor} in Java code.
+	 *
+	 * <p>
+	 * The value is the {@link ConfigurationDescriptor#getConfigurationInterface() configuration
+	 * interface} of the configured descriptor, e.g. it decides whether its configurations are
+	 * {@link PolymorphicConfiguration}s. It must be one of the {@link #getExtensions() extended
+	 * interfaces} or one of their super interfaces. If not given, the configuration interface is
+	 * {@link ConfigurationItem}.
+	 * </p>
+	 */
+	@Name(INTERFACE)
+	Class<? extends ConfigurationItem> getInterface();
 
 	/**
 	 * Definitions of the {@link PropertyDescriptor} for the configured

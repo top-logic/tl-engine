@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.format.FuzzyClassFormat;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Configuration describing a {@link PropertyDescriptor} of a {@link ConfigurationDescriptorConfig}.
@@ -41,6 +42,9 @@ public interface PropertyDescriptorConfig extends NamedConfigMandatory {
 
 	/** Configuration name for the value of {@link #getInstanceType()}. */
 	String INSTANCE_TYPE = "instance-type";
+
+	/** Configuration name for the value of {@link #getLabel()}. */
+	String LABEL = "label";
 
 	/**
 	 * The {@link PropertyDescriptor#getType() value type} of this property.
@@ -98,6 +102,21 @@ public interface PropertyDescriptorConfig extends NamedConfigMandatory {
 	 */
 	@Name(INSTANCE_TYPE)
 	Class<?> getInstanceType();
+
+	/**
+	 * The label of the property, if there is no resource for its
+	 * {@link ConfigurationDescriptor#getPropertyLabel(String, String) label key}.
+	 *
+	 * <p>
+	 * A label is useful for generated properties, for which no resources exist. If not given, a
+	 * missing label resource is reported as missing.
+	 * </p>
+	 *
+	 * @see PropertyDescriptor#labelKey(String)
+	 */
+	@Nullable
+	@Name(LABEL)
+	ResKey getLabel();
 
 	/**
 	 * Additional {@link Annotation}s (indexed by the type of the annotation) for this property.

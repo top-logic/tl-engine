@@ -416,7 +416,22 @@ public final class ConfigurationDescriptorBuilder {
 		return ConfigurationDescriptorBuilder.class.getName() + "(" + configurationInterface.getName() + ")";
 	}
 
-	static String getDefaultConfigurationName(String propertyName) {
+	/**
+	 * The configuration name derived from the camel case name of a property.
+	 *
+	 * <p>
+	 * The words of the camel case name are converted to lower case and joined with hyphens, e.g.
+	 * <code>supportsModel</code> becomes <code>supports-model</code>, <code>getURLPrefix</code>
+	 * becomes <code>get-url-prefix</code>. This is the name of a property, if its getter has no
+	 * {@link com.top_logic.basic.config.annotation.Name} annotation, applied to the getter name
+	 * without its prefix.
+	 * </p>
+	 *
+	 * @param propertyName
+	 *        The camel case name.
+	 * @return The hyphenated lower case name.
+	 */
+	public static String getDefaultConfigurationName(String propertyName) {
 		List<String> camelCaseParts = Arrays.asList(PROPERTY_NAME_SPLITTER.split(propertyName));
 		List<String> lowerCaseParts = Mappings.map(TO_LOWER_CASE, camelCaseParts);
 		return StringServices.join(lowerCaseParts, "-");

@@ -31,6 +31,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyDescriptorImpl;
 import com.top_logic.basic.config.PropertyKind;
+import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.customization.NoCustomizations;
 import com.top_logic.basic.config.order.DefaultOrderStrategy;
@@ -162,6 +163,20 @@ public class JsonConfigurationWriter {
 	 */
 	protected void writeContent(ConfigurationDescriptor staticType, ConfigurationItem item,
 			Set<String> skippedProperties) throws IOException {
+		writeContent(staticType, item, skippedProperties, false);
+	}
+
+	/**
+	 * Writes the given {@link ConfigurationItem} when the actually expected type would be the given
+	 * static type.
+	 *
+	 * @param impliedType
+	 *        Whether the type of the item is implied by the property it is written for, so that
+	 *        neither a type annotation nor an implementation class is written, see
+	 *        {@link ScriptImplementations#isImpliedScriptElement(PropertyDescriptor, ConfigurationItem)}.
+	 */
+	private void writeContent(ConfigurationDescriptor staticType, ConfigurationItem item,
+			Set<String> skippedProperties, boolean impliedType) throws IOException {
 		ConfigurationDescriptor descriptor = item.descriptor();
 
 		final PropertyDescriptor implClassProperty;
@@ -177,7 +192,7 @@ public class JsonConfigurationWriter {
 		// Check, whether the concrete configuration interface cannot be
 		// reconstructed from from the content.
 		Class<?> typeAnnotation;
-		if (staticTypeFinal) {
+		if (staticTypeFinal || impliedType) {
 			// Final types never need type annotations - the expected type is always used.
 			typeAnnotation = null;
 		} else if (descriptor == staticType) {
@@ -280,7 +295,7 @@ public class JsonConfigurationWriter {
 			}.collect();
 
 		if (!_schemaAware) {
-			if (implClassProperty != null && !implClassAnnotated(typeAnnotation)) {
+			if (implClassProperty != null && !implClassAnnotated(typeAnnotation) && !impliedType) {
 				// The implementation class property must be written first to prevent it from being
 				// serialized as sub-tag, if another property serialized before cannot be written as
 				// attribute.
@@ -637,7 +652,8 @@ public class JsonConfigurationWriter {
 
 	private void writeItemTag(PropertyDescriptor property, ConfigurationItem valueConfig) throws IOException {
 		writeName(property);
-		writeContent(property.getDefaultDescriptor(), valueConfig, Collections.emptySet());
+		writeContent(property.getDefaultDescriptor(), valueConfig, Collections.emptySet(),
+			ScriptImplementations.isImpliedScriptElement(property, valueConfig));
 	}
 
 	/**

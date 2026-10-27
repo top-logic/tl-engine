@@ -9,7 +9,9 @@ import java.io.StringWriter;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -27,11 +29,15 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.config.format.JavaTypeFormat;
+import com.top_logic.basic.config.json.JsonConfigurationReader;
+import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.func.IFunction1;
 import com.top_logic.basic.func.IFunction2;
 import com.top_logic.basic.io.character.CharacterContents;
@@ -39,14 +45,19 @@ import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ScriptFunction1;
 import com.top_logic.layout.ScriptFunction2;
+import com.top_logic.mig.html.ElementUpdate;
+import com.top_logic.mig.html.ListModelBuilder;
+import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.operations.I18NConstants;
 import com.top_logic.model.search.form.ScriptFunction1Impl;
 import com.top_logic.model.search.form.ScriptFunction2Impl;
 import com.top_logic.model.search.form.ScriptImplementation;
+import com.top_logic.model.search.form.ScriptImplementationType;
 import com.top_logic.model.search.form.TLScriptImplementationProvider;
 import com.top_logic.model.search.form.WithExpression;
 import com.top_logic.model.search.form.WithImplementedType;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -97,6 +108,28 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * Interface with two abstract methods and a default method of different result types.
+	 */
+	public interface Multi {
+		String name(Object x);
+
+		int size(Object x);
+
+		default boolean isEmpty(Object x) {
+			return size(x) == 0;
+		}
+	}
+
+	/**
+	 * Interface with an overloaded abstract method.
+	 */
+	public interface Overloaded {
+		Object call(Object x);
+
+		Object call(Object x, Object y);
+	}
+
+	/**
 	 * Java implementation of {@link Filter} configured by class name.
 	 */
 	public static class AcceptAll implements Filter<Object> {
@@ -141,6 +174,14 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 
 		String LEGACY = "legacy";
 
+		String MULTI = "multi";
+
+		String BUILDER = "builder";
+
+		String OVERLOADED = "overloaded";
+
+		String COMPARATOR = "comparator";
+
 		@Name(FILTER)
 		PolymorphicConfiguration<Filter<Object>> getFilter();
 
@@ -176,6 +217,18 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 
 		@Name(LEGACY)
 		ScriptFunction1<Object, Object> getLegacy();
+
+		@Name(MULTI)
+		PolymorphicConfiguration<Multi> getMulti();
+
+		@Name(BUILDER)
+		PolymorphicConfiguration<ListModelBuilder> getBuilder();
+
+		@Name(OVERLOADED)
+		PolymorphicConfiguration<Overloaded> getOverloaded();
+
+		@Name(COMPARATOR)
+		PolymorphicConfiguration<Comparator<Object>> getComparator();
 	}
 
 	public void testRealProvider() {
@@ -343,12 +396,194 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 
 	public void testNewScriptConfig() throws Exception {
 		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(A.class);
-		WithExpression config = TLScriptImplementationProvider.newScriptConfig(descriptor.getProperty(A.INT_FUN));
+		PolymorphicConfiguration<?> config =
+			TLScriptImplementationProvider.newScriptConfig(descriptor.getProperty(A.INT_FUN));
 		assertTrue(config instanceof ScriptImplementation.Config<?>);
-		config.setExpression(ExprFormat.INSTANCE.getValue("test", "x -> 1"));
+		config.update(config.descriptor().getProperty("compute"), ExprFormat.INSTANCE.getValue("test", "x -> 1"));
 		A a = TypedConfiguration.newConfigItem(A.class);
 		a.update(descriptor.getProperty(A.INT_FUN), config);
 		assertEquals(1, ((IntFun) instance(a.getIntFun())).compute(null));
+
+		PolymorphicConfiguration<?> function =
+			TLScriptImplementationProvider.newScriptConfig(descriptor.getProperty(A.LEGACY));
+		assertTrue(function instanceof ScriptFunction1Impl.Config<?, ?>);
+	}
+
+	public void testMultiMethodElements() throws ConfigurationException {
+		A a = read("<a><multi>"
+			+ "<name>x -> 'n' + $x</name>"
+			+ "<size><![CDATA[x -> $x * 1]]></size>"
+			+ "</multi></a>");
+		Multi multi = instance(a.getMulti());
+		assertEquals("Result of the first method.", "n1", multi.name(1));
+		assertEquals("Result of the second method converted to int.", 3, multi.size(3));
+		assertFalse("Java default method based on the script.", multi.isEmpty(3));
+		assertTrue(multi.isEmpty(0));
+	}
+
+	public void testMultiMethodAttributes() throws ConfigurationException {
+		A a = read("<a><multi name=\"x -> 'a'\" size='x -> 0'/></a>");
+		Multi multi = instance(a.getMulti());
+		assertEquals("a", multi.name(null));
+		assertTrue(multi.isEmpty(null));
+	}
+
+	public void testDefaultMethodOverride() throws ConfigurationException {
+		A a = read("<a><multi name=\"x -> 'a'\" size='x -> 0' is-empty='x -> false'/></a>");
+		Multi multi = instance(a.getMulti());
+		assertEquals(0, multi.size(null));
+		assertFalse("Script overrides the default method.", multi.isEmpty(null));
+	}
+
+	public void testMissingAbstractMethod() {
+		try {
+			read("<a><multi><name>x -> 'a'</name></multi></a>");
+			fail("Abstract method size not implemented.");
+		} catch (ConfigurationException | ConfigurationError ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("size"));
+		}
+	}
+
+	public void testOverloadedMethod() {
+		try {
+			read("<a><overloaded><call>x -> $x</call></overloaded></a>");
+			fail("Overloaded abstract method cannot be implemented by TL-Script.");
+		} catch (ConfigurationException | ConfigurationError ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains(Overloaded.class.getName()));
+		}
+	}
+
+	public void testComparator() throws ConfigurationException {
+		A a = read("<a comparator='x -> y -> $x - $y'/>");
+		Comparator<Object> comparator = instance(a.getComparator());
+		assertTrue(comparator.compare(3, 1) > 0);
+		assertTrue("Java default method.", comparator.reversed().compare(3, 1) < 0);
+	}
+
+	public void testListModelBuilder() throws ConfigurationException {
+		A a = read("<a><builder>"
+			+ "<get-model>m -> c -> list($m, 'x')</get-model>"
+			+ "<supports-model>m -> c -> $m != null</supports-model>"
+			+ "<retrieve-model-from-list-element>c -> e -> 'model-' + $e</retrieve-model-from-list-element>"
+			+ "</builder></a>");
+		ListModelBuilder builder = instance(a.getBuilder());
+		Collection<?> model = builder.getModel("m", null);
+		assertEquals(List.of("m", "x"), List.copyOf(model));
+		assertTrue(builder.supportsModel("m", null));
+		assertFalse(builder.supportsModel(null, null));
+		assertEquals("model-e", builder.retrieveModelFromListElement(null, "e"));
+		assertEquals("Java default method.", ElementUpdate.NO_CHANGE, builder.supportsListElement(null, "e"));
+
+		ModelBuilder asModelBuilder = builder;
+		assertTrue("Call through the super interface.", asModelBuilder.getModel("m", null) instanceof Collection<?>);
+	}
+
+	public void testListModelBuilderDefaultOverride() throws ConfigurationException {
+		A a = read("<a><builder>"
+			+ "<get-model>m -> c -> list()</get-model>"
+			+ "<supports-model>m -> c -> true</supports-model>"
+			+ "<retrieve-model-from-list-element>c -> e -> null</retrieve-model-from-list-element>"
+			+ "<supports-list-element>c -> e -> 'ADD'</supports-list-element>"
+			+ "</builder></a>");
+		ListModelBuilder builder = instance(a.getBuilder());
+		assertEquals("Script result converted to the enum.", ElementUpdate.ADD,
+			builder.supportsListElement(null, "e"));
+	}
+
+	public void testFunctionalElementForm() throws ConfigurationException {
+		A element = read("<a><filter><accept>x -> $x == 'a'</accept></filter></a>");
+		A text = read("<a filter=\"x -> $x == 'a'\"/>");
+		assertEquals("Element and text form give the same configuration.", text, element);
+		assertTrue(((Filter<Object>) instance(element.getFilter())).accept("a"));
+	}
+
+	public void testWriteClassLessElement() throws Exception {
+		A a = read("<a><multi name=\"x -> 'a'\" size='x -> 0'/>"
+			+ "<builder>"
+			+ "<get-model>m -> c -> list()</get-model>"
+			+ "<supports-model>m -> c -> true</supports-model>"
+			+ "<retrieve-model-from-list-element><![CDATA[c -> e -> $e < 2]]></retrieve-model-from-list-element>"
+			+ "</builder></a>");
+		String xml = toXML(a);
+		assertFalse("No implementation class: " + xml, xml.contains("class="));
+		assertFalse("No configuration interface: " + xml, xml.contains("interface="));
+		assertFalse("No implemented type: " + xml, xml.contains(WithImplementedType.IMPLEMENTED_TYPE));
+		assertTrue(xml, xml.contains("<multi "));
+		assertTrue(xml, xml.contains("size=\"x -&gt; 0\"") || xml.contains("size=\"x -> 0\""));
+		assertTrue(xml, xml.contains("<retrieve-model-from-list-element>"));
+
+		A copy = read(xml);
+		assertEquals(a, copy);
+		assertEquals("a", ((Multi) instance(copy.getMulti())).name(null));
+	}
+
+	public void testWriteFunctionalWithDefaultAsElement() throws Exception {
+		A a = read("<a><filter accept=\"x -> $x == 'a'\" test='x -> true'/></a>");
+		Filter<Object> filter = instance(a.getFilter());
+		assertFalse(filter.accept("b"));
+		assertTrue("Default method implemented by the script.", filter.test("b"));
+
+		String xml = toXML(a);
+		assertTrue("Not in text form, since a default method is implemented: " + xml, xml.contains("<filter "));
+		assertFalse(xml, xml.contains("class="));
+		A copy = read(xml);
+		assertEquals(a, copy);
+	}
+
+	public void testJsonRoundTrip() throws Exception {
+		A a = read("<a filter=\"x -> $x == 'a'\"><multi name=\"x -> 'a'\" size='x -> 0'/></a>");
+		ConfigurationDescriptor staticType = TypedConfiguration.getConfigurationDescriptor(A.class);
+		StringWriter buffer = new StringWriter();
+		new JsonConfigurationWriter(buffer).write(staticType, a);
+		String json = buffer.toString();
+		assertFalse("No type annotation: " + json, json.contains(ScriptImplementation.class.getName()));
+		assertFalse("No implemented type: " + json, json.contains(WithImplementedType.IMPLEMENTED_TYPE));
+
+		A copy = (A) new JsonConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			staticType).setSource(CharacterContents.newContent(json)).read();
+		assertEquals(a, copy);
+		assertEquals("a", ((Multi) instance(copy.getMulti())).name(null));
+	}
+
+	public void testJsonClassLessObject() throws Exception {
+		ConfigurationDescriptor staticType = TypedConfiguration.getConfigurationDescriptor(A.class);
+		A a = (A) new JsonConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, staticType)
+			.setSource(CharacterContents.newContent("{\"multi\": {\"name\": \"x -> 'j'\", \"size\": \"x -> 2\"}}"))
+			.read();
+		Multi multi = instance(a.getMulti());
+		assertEquals("j", multi.name(null));
+		assertEquals(2, multi.size(null));
+	}
+
+	public void testJavaImplementationUnchanged() throws Exception {
+		A a = read("<a><int-fun class='" + Seven.class.getName() + "'/></a>");
+		assertEquals(Seven.class, a.getIntFun().getImplementationClass());
+		assertEquals(7, ((IntFun) instance(a.getIntFun())).compute(null));
+		String xml = toXML(a);
+		assertTrue(xml, xml.contains("<int-fun class=\"" + Seven.class.getName() + "\""));
+	}
+
+	public void testScriptTypePerImplementedType() throws Exception {
+		A a = read("<a int-fun='x -> 1' boolean-fun='x -> 1' mapping='x -> $x'/>");
+		assertNotSame(a.getIntFun().descriptor(), a.getBooleanFun().descriptor());
+		assertFalse("Scripts of different interfaces differ.",
+			ConfigEquality.INSTANCE_ALL_BUT_DERIVED.equals(a.getIntFun(), a.getBooleanFun()));
+		assertEquals(a.getIntFun(), read("<a int-fun='x -> 1'/>").getIntFun());
+
+		ScriptImplementationType type = ScriptImplementationType.forDescriptor(a.getMapping().descriptor());
+		assertSame(type, ScriptImplementationType.of(type.getImplementedType()));
+		assertEquals(ScriptImplementation.Config.class, type.getDescriptor().getConfigurationInterface());
+	}
+
+	public void testLabels() throws ConfigurationException {
+		A a = read("<a><multi name=\"x -> 'a'\" size='x -> 0'/></a>");
+		ConfigurationDescriptor descriptor = a.getMulti().descriptor();
+		PropertyDescriptor property = descriptor.getProperty("is-empty");
+		assertEquals("Property name is the label of a method without resource.", "is-empty",
+			Resources.getInstance().getString(property.labelKey(null)));
+		assertNull("No tooltip.", Resources.getInstance().getString(property.labelKey(null).tooltip(), null));
+		assertEquals(Multi.class.getName().replace('$', '.') + ".is-empty",
+			descriptor.getPropertyLabel("is-empty", null).getKey());
 	}
 
 	private static Type implementedType(PolymorphicConfiguration<?> config) {

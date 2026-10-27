@@ -30,6 +30,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
+import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.Content;
@@ -105,20 +106,31 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 			throws IOException, ConfigurationException {
 		_currentSource = source;
 		_input = toReader(source);
-		return nextItem(_rootDescriptor, currentResult);
+		return nextItem(_rootDescriptor, null, currentResult);
 	}
 
-	private ConfigBuilder nextItem(ConfigurationDescriptor expectedDescriptor, ConfigurationItem baseItem)
+	/**
+	 * Reads the next item.
+	 *
+	 * @param expectedDescriptor
+	 *        The type of the item, if no other type is given in the input.
+	 * @param owningProperty
+	 *        The property whose value is read, <code>null</code> for the root item.
+	 * @param baseItem
+	 *        The item whose values are updated, may be <code>null</code>.
+	 */
+	private ConfigBuilder nextItem(ConfigurationDescriptor expectedDescriptor, PropertyDescriptor owningProperty,
+			ConfigurationItem baseItem)
 			throws IOException, ConfigurationException {
 		if (_schemaAware) {
-			return readPolymorphicInlineItem(expectedDescriptor, baseItem);
+			return readPolymorphicInlineItem(expectedDescriptor, owningProperty, baseItem);
 		} else {
 			JsonToken currentState = _input.peek();
 			switch (currentState) {
 				case BEGIN_ARRAY:
 					return readPolymorphicArrayItem(expectedDescriptor, baseItem);
 				case BEGIN_OBJECT:
-					return readMonomorphicItem(expectedDescriptor, baseItem);
+					return readMonomorphicItem(expectedDescriptor, owningProperty, baseItem);
 				default:
 					throw new IOException(
 						"Unexpected input state " + currentState + " when reading item" + inSourceAtPath() + ".");
@@ -126,7 +138,8 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 		}
 	}
 
-	private ConfigBuilder readPolymorphicInlineItem(ConfigurationDescriptor staticType, ConfigurationItem baseItem)
+	private ConfigBuilder readPolymorphicInlineItem(ConfigurationDescriptor staticType,
+			PropertyDescriptor owningProperty, ConfigurationItem baseItem)
 			throws IOException, ConfigurationException {
 		_input.beginObject();
 
@@ -143,11 +156,11 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 
 				result = createBuilder(staticType, typeName);
 			} else {
-				result = TypedConfiguration.createConfigBuilder(staticType);
+				result = createUntypedBuilder(staticType, owningProperty, baseItem);
 			}
 		} else {
 			firstProperty = null;
-			result = TypedConfiguration.createConfigBuilder(staticType);
+			result = createUntypedBuilder(staticType, owningProperty, baseItem);
 		}
 
 		readProperties(result, baseItem, firstProperty);
@@ -424,7 +437,7 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 		} else {
 			configForUpdate = null;
 		}
-		ConfigurationItem nextItem = nextItem(property.getDefaultDescriptor(), configForUpdate);
+		ConfigurationItem nextItem = nextItem(property.getDefaultDescriptor(), property, configForUpdate);
 		if (nextItem == null) {
 			return null;
 		}
@@ -455,11 +468,32 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 		return staticType.getProperty(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME);
 	}
 
-	private ConfigBuilder readMonomorphicItem(ConfigurationDescriptor descriptor, ConfigurationItem baseItem)
+	private ConfigBuilder readMonomorphicItem(ConfigurationDescriptor descriptor, PropertyDescriptor owningProperty,
+			ConfigurationItem baseItem)
 			throws IOException, ConfigurationException {
-		ConfigBuilder result = TypedConfiguration.createConfigBuilder(descriptor);
+		ConfigBuilder result = createUntypedBuilder(descriptor, owningProperty, baseItem);
 		readObject(result, baseItem);
 		return result;
+	}
+
+	/**
+	 * Creates the builder for an object without type annotation.
+	 *
+	 * <p>
+	 * If the owning property accepts a script implementation in object form, the object is read
+	 * into the builder of the {@link ScriptImplementations#createScriptBuilder(PropertyDescriptor,
+	 * ConfigurationDescriptor) script provider}, unless it updates an item of another type.
+	 * </p>
+	 */
+	private ConfigBuilder createUntypedBuilder(ConfigurationDescriptor staticType, PropertyDescriptor owningProperty,
+			ConfigurationItem baseItem) throws ConfigurationException {
+		if (owningProperty != null) {
+			ConfigBuilder scriptBuilder = ScriptImplementations.createScriptBuilder(owningProperty, staticType);
+			if (scriptBuilder != null && (baseItem == null || baseItem.descriptor() == scriptBuilder.descriptor())) {
+				return scriptBuilder;
+			}
+		}
+		return TypedConfiguration.createConfigBuilder(staticType);
 	}
 
 	private String inSourceAtPath() {

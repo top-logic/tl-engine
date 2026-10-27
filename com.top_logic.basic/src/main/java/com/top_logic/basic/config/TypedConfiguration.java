@@ -947,8 +947,16 @@ public class TypedConfiguration {
 	public static ConfigurationDescriptor getConfigurationDescriptor(Protocol protocol,
 			ConfigurationDescriptorConfig config) {
 		ConfigurationDescriptor[] superDescriptors = resolveDescriptors(config.getExtensions());
-		DeclarativeConfigDescriptor configDescriptor =
-			new DeclarativeConfigDescriptor(config.getAnnotations(), superDescriptors, config.location());
+		Class<?> configInterface = config.getInterface();
+		if (configInterface == null) {
+			configInterface = ConfigurationItem.class;
+		} else if (!isExtended(configInterface, superDescriptors)) {
+			protocol.error("The interface '" + configInterface.getName()
+				+ "' of a configuration descriptor is not extended: " + config.location());
+			configInterface = ConfigurationItem.class;
+		}
+		DeclarativeConfigDescriptor configDescriptor = new DeclarativeConfigDescriptor(configInterface,
+			config.getAnnotations(), superDescriptors, config.location());
 		if (config.isAbstract()) {
 			configDescriptor.setAbstract();
 		}
@@ -971,6 +979,15 @@ public class TypedConfiguration {
 		configDescriptor.freeze(protocol);
 	
 		return configDescriptor;
+	}
+
+	private static boolean isExtended(Class<?> configInterface, ConfigurationDescriptor[] superDescriptors) {
+		for (ConfigurationDescriptor superDescriptor : superDescriptors) {
+			if (configInterface.isAssignableFrom(superDescriptor.getConfigurationInterface())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static void addProperties(Protocol protocol, DeclarativeConfigDescriptor configDescriptor,
@@ -1063,6 +1080,7 @@ public class TypedConfiguration {
 		}
 		propertyDescriptor.setType(returnType);
 		propertyDescriptor.setDeclaredInstanceType(propertyConfig.getInstanceType());
+		propertyDescriptor.setLabel(propertyConfig.getLabel());
 	
 		if (propertyConfig.getElementType() != null) {
 			propertyDescriptor.setElementType(propertyConfig.getElementType());

@@ -8,6 +8,7 @@ package com.top_logic.basic.config;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.ServiceLoader;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
@@ -122,6 +123,86 @@ public final class ScriptImplementations {
 	 */
 	public static boolean acceptsScript(PropertyDescriptor property) {
 		return property instanceof PropertyDescriptorImpl && ((PropertyDescriptorImpl) property).acceptsScript();
+	}
+
+	/**
+	 * Creates the builder for a script implementation of the given property configured in element
+	 * form, i.e. by an element (or JSON object) without implementation class.
+	 *
+	 * @param property
+	 *        The property whose value is read, may be <code>null</code>.
+	 * @param defaultDescriptor
+	 *        The descriptor that an element without implementation class is read into, if it is
+	 *        no script implementation.
+	 * @return The builder created by the {@link ScriptImplementationProvider}, or
+	 *         <code>null</code>, if the given property does not accept scripts in element form, or
+	 *         has a concrete default implementation class that the element configures.
+	 * @throws ConfigurationException
+	 *         If creating the builder fails, e.g. because the implemented interface cannot be
+	 *         implemented by a script.
+	 *
+	 * @see ScriptImplementationProvider#createScriptBuilder(PropertyDescriptor)
+	 */
+	public static ConfigBuilder createScriptBuilder(PropertyDescriptor property,
+			ConfigurationDescriptor defaultDescriptor) throws ConfigurationException {
+		if (!acceptsScript(property)) {
+			return null;
+		}
+		PropertyDescriptor classProperty = defaultDescriptor.getProperty(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME);
+		if (classProperty == null) {
+			return null;
+		}
+		Class<?> implementationClass = (Class<?>) classProperty.getDefaultValue();
+		if (implementationClass != null && !implementationClass.isInterface()
+			&& DefaultConfigConstructorScheme.getFactory(implementationClass).isConcrete()) {
+			return null;
+		}
+		return getProvider().createScriptBuilder(property);
+	}
+
+	/**
+	 * Whether the given value of the given property is written as element without implementation
+	 * class and without configuration interface annotation.
+	 *
+	 * <p>
+	 * This is the case, if reading such an element creates a configuration of the same type with
+	 * the same implementation class, i.e. if the value has the descriptor of the
+	 * {@link #createScriptBuilder(PropertyDescriptor, ConfigurationDescriptor) script builder} of
+	 * the property, its implementation class is the default of that descriptor, and it has the
+	 * values the provider sets in the builder.
+	 * </p>
+	 *
+	 * @param property
+	 *        The property whose value is written.
+	 * @param value
+	 *        The value to write.
+	 * @return Whether the type of the given value is implied by the property.
+	 */
+	public static boolean isImpliedScriptElement(PropertyDescriptor property, ConfigurationItem value) {
+		if (!(value instanceof PolymorphicConfiguration<?>) || !acceptsScript(property)) {
+			return false;
+		}
+		ConfigBuilder builder;
+		try {
+			builder = createScriptBuilder(property, property.getDefaultDescriptor());
+		} catch (ConfigurationException ex) {
+			return false;
+		}
+		if (builder == null) {
+			return false;
+		}
+		ConfigurationDescriptor descriptor = value.descriptor();
+		if (builder.descriptor() != descriptor) {
+			return false;
+		}
+		for (PropertyDescriptor builderProperty : descriptor.getProperties()) {
+			if (builder.valueSet(builderProperty)
+				&& !Objects.equals(builder.value(builderProperty), value.value(builderProperty))) {
+				return false;
+			}
+		}
+		PropertyDescriptor classProperty = descriptor.getProperty(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME);
+		return Objects.equals(value.value(classProperty), classProperty.getDefaultValue());
 	}
 
 	/**

@@ -192,7 +192,8 @@ public class JavaTypeUtil {
 	 *        The interface to analyze.
 	 * @return The abstract methods of the given type in declaration order of
 	 *         {@link Class#getMethods()}. Of methods with the same signature (resolved in the context
-	 *         of the given type), only the first one is contained.
+	 *         of the given type), only the most specific declaration is contained, see
+	 *         {@link #isMoreSpecific(Method, Method)}.
 	 */
 	public static List<Method> getAbstractMethods(Class<?> type) {
 		Map<List<Object>, Method> abstractMethods = new LinkedHashMap<>();
@@ -207,7 +208,11 @@ public class JavaTypeUtil {
 			}
 			List<Object> signature = resolvedSignature(context, method);
 			if (Modifier.isAbstract(method.getModifiers())) {
-				abstractMethods.putIfAbsent(signature, method);
+				Method before = abstractMethods.get(signature);
+				if (before == null || isMoreSpecific(method, before)) {
+					// Note: Replacing the value keeps the position of the signature.
+					abstractMethods.put(signature, method);
+				}
 			} else {
 				implemented.put(signature, Boolean.TRUE);
 			}
@@ -221,13 +226,65 @@ public class JavaTypeUtil {
 		return result;
 	}
 
-	private static boolean isObjectMethod(Method method) {
+	/**
+	 * Whether the given method is a more specific declaration than another declaration with the
+	 * same signature.
+	 *
+	 * <p>
+	 * A declaration is more specific, if it has a more specific (covariant) return type, or if it
+	 * has the same return type and is declared in a sub interface of the other declaration's
+	 * interface, e.g. with a type argument bound to its return type.
+	 * </p>
+	 *
+	 * @param method
+	 *        A method declaration.
+	 * @param other
+	 *        Another declaration of a method with the same signature.
+	 * @return Whether the given method describes the method more precisely than the other
+	 *         declaration.
+	 */
+	public static boolean isMoreSpecific(Method method, Method other) {
+		Class<?> returnType = method.getReturnType();
+		Class<?> otherReturnType = other.getReturnType();
+		if (returnType != otherReturnType) {
+			return otherReturnType.isAssignableFrom(returnType);
+		}
+		Class<?> declaringClass = method.getDeclaringClass();
+		Class<?> otherDeclaringClass = other.getDeclaringClass();
+		return declaringClass != otherDeclaringClass && otherDeclaringClass.isAssignableFrom(declaringClass);
+	}
+
+	/**
+	 * Whether the given method has the signature of a public method of {@link Object}, e.g. an
+	 * abstract re-declaration of {@link Object#equals(Object)} in an interface.
+	 */
+	public static boolean isObjectMethod(Method method) {
 		try {
 			Object.class.getMethod(method.getName(), method.getParameterTypes());
 			return true;
 		} catch (NoSuchMethodException ex) {
 			return false;
 		}
+	}
+
+	/**
+	 * The signature of the given method resolved in the context of the given type.
+	 *
+	 * <p>
+	 * Two declarations of an interface method in different super interfaces of the given type have
+	 * the same resolved signature, if the given type inherits them as one method, e.g. a method
+	 * declared with a type variable parameter and its re-declaration with the type argument bound.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type inheriting the given method.
+	 * @param method
+	 *        A method of the given type or one of its super types.
+	 * @return The method name followed by the erasures of its parameter types resolved in the
+	 *         context of the given type. Signatures are comparable with {@link Object#equals(Object)}.
+	 */
+	public static List<Object> getResolvedSignature(Class<?> type, Method method) {
+		return resolvedSignature(TypeToken.of(type), method);
 	}
 
 	private static List<Object> resolvedSignature(TypeToken<?> context, Method method) {

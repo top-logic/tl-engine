@@ -12,6 +12,7 @@ import java.lang.reflect.Type;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link PropertyDescriptorImpl} which is created directly.
@@ -22,6 +23,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 public class DeclarativePropertyDescriptor extends PropertyDescriptorImpl {
 
 	private AnnotatedElement _annotations = SimpleAnnotatedElement.NO_ANNOTATIONS;
+
+	private ResKey _label;
 
 	private Class<?> _declaredType = null;
 
@@ -48,6 +51,39 @@ public class DeclarativePropertyDescriptor extends PropertyDescriptorImpl {
 	 */
 	public void setAnnotations(AnnotatedElement annotations) {
 		_annotations = annotations;
+	}
+
+	/**
+	 * Sets the label to use, if there is no resource for the label key of this property.
+	 *
+	 * @param label
+	 *        The label, or <code>null</code> to report a missing label resource.
+	 *
+	 * @see #labelKey(String)
+	 * @see PropertyDescriptorConfig#getLabel()
+	 */
+	public void setLabel(ResKey label) {
+		_label = label;
+	}
+
+	/**
+	 * The resource key of the label of this property.
+	 *
+	 * <p>
+	 * The {@link #setLabel(ResKey) label} of this property is the fall-back of the standard label
+	 * key, see {@link PropertyDescriptor#labelKey(String)}.
+	 * </p>
+	 */
+	@Override
+	public ResKey labelKey(String keySuffix) {
+		ResKey result = getDescriptor().getPropertyLabel(getPropertyName(), keySuffix);
+		if (isInherited()) {
+			result = ResKey.fallback(result, getSuperProperties()[0].labelKey(keySuffix));
+		}
+		if (keySuffix == null && _label != null) {
+			return ResKey.fallback(result, _label);
+		}
+		return result;
 	}
 
 	/**

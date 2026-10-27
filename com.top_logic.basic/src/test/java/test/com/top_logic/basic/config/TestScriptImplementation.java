@@ -410,6 +410,47 @@ public class TestScriptImplementation extends AbstractTypedConfigurationTestCase
 		assertScript("both", copy.getTwo());
 	}
 
+	public void testXmlClassLessElement() throws Exception {
+		A a = read("<A><two text='both'/></A>");
+		String xml = toXML(a);
+		assertTrue(xml, xml.contains("<two "));
+		assertFalse("Implementation class implied by the property: " + xml, xml.contains("class="));
+		assertFalse("Configuration interface implied by the property: " + xml, xml.contains("interface=\""
+			+ StubScript.Config.class.getName()));
+
+		A copy = (A) fromXML(xml);
+		assertEquals(a, copy);
+		assertScript("both", copy.getTwo());
+	}
+
+	public void testXmlExplicitClassStaysExplicit() throws Exception {
+		A a = read("<A><two class='" + StubScript.class.getName() + "' text='both'/></A>");
+		String xml = toXML(a);
+		assertTrue("Without the interface preset by the provider, the element is not implied: " + xml,
+			xml.contains("class="));
+		assertEquals(a, fromXML(xml));
+	}
+
+	public void testJsonClassLessObject() throws Exception {
+		ConfigurationDescriptor staticType = TypedConfiguration.getConfigurationDescriptor(A.class);
+		A a = (A) new JsonConfigurationReader(context, staticType)
+			.setSource(CharacterContents.newContent("{\"two\": {\"text\": \"both\"}}"))
+			.read();
+		assertScript("both", a.getTwo());
+		assertEquals("both", ((TwoMethods) getInstance(a.getTwo())).second());
+
+		StringWriter buffer = new StringWriter();
+		new JsonConfigurationWriter(buffer).write(staticType, a);
+		String json = buffer.toString();
+		assertFalse("Type implied by the property: " + json, json.contains(StubScript.class.getName()));
+
+		A copy = (A) new JsonConfigurationReader(context, staticType)
+			.setSource(CharacterContents.newContent(json))
+			.read();
+		assertEquals(a, copy);
+		assertScript("both", copy.getTwo());
+	}
+
 	public void testXmlRoundTripSpecialCharacters() throws Exception {
 		A a = read("<A><fun><![CDATA[x -> $x < 2]]></fun></A>");
 		String xml = toXML(a);

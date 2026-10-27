@@ -19,6 +19,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.factory.ci.RecordingCIProvider;
 import test.com.top_logic.factory.git.RecordingGitHostingProvider;
 import test.com.top_logic.factory.workspace.RecordingWorkspaceProvider;
 import test.com.top_logic.knowledge.KBSetup;
@@ -27,12 +28,17 @@ import com.sun.net.httpserver.HttpServer;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.ci.CIBuild;
+import com.top_logic.factory.ci.CIBuildStart;
+import com.top_logic.factory.ci.CIBuildState;
+import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.git.GitHostingService;
 import com.top_logic.factory.git.GitRepository;
 import com.top_logic.factory.git.GitRoute;
 import com.top_logic.factory.git.I18NConstants;
 import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.factory.git.RepositorySource;
+import com.top_logic.factory.project.FactoryFunctions;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.project.WorkspaceStatus;
@@ -55,7 +61,9 @@ import com.top_logic.util.model.ModelService;
  * {@link ProjectWorkspaces} against a knowledge base, a {@link RecordingGitHostingProvider} and a
  * {@link RecordingWorkspaceProvider} simulating git in the workspace: a new repository with the
  * generated application pushed before the branch is protected, an adopted repository cloned and
- * checked, the retries after a failed run, and no repository without git hosting.
+ * checked, the retries after a failed run, and no repository without git hosting; with a
+ * {@link RecordingCIProvider CI server}, the pipeline definition in the first commit, the CI job
+ * set up after the protection, a failing CI server only a warning, and the CI build a user starts.
  */
 public class TestProjectRepository extends BasicTestCase {
 
@@ -130,6 +138,19 @@ public class TestProjectRepository extends BasicTestCase {
 
 	private volatile boolean _commitIdentity;
 
+	private RecordingCIProvider _ci;
+
+	/**
+	 * The content of the pipeline file written into the generated application, {@code null} if
+	 * none was written.
+	 */
+	private volatile String _writtenPipeline;
+
+	/**
+	 * The remotes whose default branch has a pipeline file.
+	 */
+	private final Set<String> _pipelines = ConcurrentHashMap.newKeySet();
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -146,6 +167,7 @@ public class TestProjectRepository extends BasicTestCase {
 			WorkspaceService.getInstance().getApplications().getConfig(), _provider));
 		_hosting = new RecordingGitHostingProvider();
 		TestingProjectWorkspaces.setGitHosting(_hosting);
+		_ci = new RecordingCIProvider();
 		_proxy = WorkspaceProxyService.getInstance();
 	}
 
@@ -166,6 +188,7 @@ public class TestProjectRepository extends BasicTestCase {
 		} finally {
 			TestingProjectWorkspaces.setApplications(null);
 			TestingProjectWorkspaces.setGitHosting(null);
+			TestingProjectWorkspaces.setCI(null);
 			_server.stop(0);
 			super.tearDown();
 		}
@@ -360,6 +383,152 @@ public class TestProjectRepository extends BasicTestCase {
 	}
 
 	/**
+	 * With CI, the first commit of a new application has the pipeline definition of the template;
+	 * after the protection, the CI job of the repository is set up, recorded on the project and
+	 * builds the application once.
+	 */
+	public void testNewRepositoryWithCI() throws Exception {
+		TestingProjectWorkspaces.setCI(_ci);
+		TLObject project = project("ci-new", null);
+		TLObject workspace = ProjectWorkspaces.getInstance().create(project);
+		assertEquals(log(workspace), WorkspaceStatus.RUNNING, awaitOperation(workspace));
+
+		assertEquals(List.of("ls-remote", "generate", "write " + RecordingCIProvider.PIPELINE_FILE, "init", "add",
+			"commit", "remote", "push", "build"), steps());
+		assertEquals(CIService.readResource(CIService.DEFAULT_PIPELINE_TEMPLATE), _writtenPipeline);
+		assertTrue(_writtenPipeline, _writtenPipeline.contains("mvn -B verify"));
+
+		String fullName = RecordingGitHostingProvider.DEFAULT_OWNER + "/ci-new";
+		String job = RecordingCIProvider.FOLDER + "/" + fullName;
+		assertEquals(List.of(RecordingCIProvider.ENSURE + " " + fullName, RecordingCIProvider.START + " " + job),
+			_ci.calls());
+		assertTrue("The job is set up after the protection.",
+			_hosting.calls().contains(RecordingGitHostingProvider.PROTECT + " " + fullName + " "
+				+ RecordingGitHostingProvider.DEFAULT_BRANCH));
+		assertEquals(job, FactoryModel.getCIJob(project));
+		assertEquals(RecordingCIProvider.jobUrl(job), FactoryModel.getString(project, FactoryModel.PROJECT_CI_JOB_URL));
+		assertTrue(log(workspace), log(workspace).contains("First CI build 1 started"));
+		assertTrue("The pipeline file is protected.",
+			_hosting.protection(repository(fullName), RecordingGitHostingProvider.DEFAULT_BRANCH)
+				.contains(RecordingCIProvider.PIPELINE_FILE));
+	}
+
+	/**
+	 * An adopted repository keeps its own pipeline definition; one without gets a warning, and its
+	 * job is set up anyway.
+	 */
+	public void testAdoptRepositoryWithCI() throws Exception {
+		TestingProjectWorkspaces.setCI(_ci);
+		GitRepository withPipeline = existing("with-pipeline", pom("with-pipeline", ENGINE_VERSION));
+		_pipelines.add(GitRoute.remoteUrl(ROUTE_URL, withPipeline.getName()));
+		TLObject first = ProjectWorkspaces.getInstance().create(project("with-pipeline", withPipeline.getFullName(), null));
+		assertEquals(log(first), WorkspaceStatus.RUNNING, awaitOperation(first));
+		assertEquals(List.of("ls-remote", "clone", "build"), steps());
+		assertNull("Nothing written.", _writtenPipeline);
+		assertFalse(log(first), log(first).contains(RepositorySource.WARNING));
+
+		_steps.clear();
+		GitRepository without = existing("without-pipeline", pom("without-pipeline", ENGINE_VERSION));
+		TLObject project = project("without-pipeline", without.getFullName(), null);
+		TLObject second = ProjectWorkspaces.getInstance().create(project);
+		assertEquals(log(second), WorkspaceStatus.RUNNING, awaitOperation(second));
+		assertEquals(List.of("ls-remote", "clone", "build"), steps());
+		assertTrue(log(second), log(second).contains(RepositorySource.WARNING + "The repository "
+			+ without.getFullName() + " has no CI pipeline " + RecordingCIProvider.PIPELINE_FILE));
+		assertEquals(RecordingCIProvider.jobName(without), FactoryModel.getCIJob(project));
+		assertEquals(2, _ci.calls().stream().filter(call -> call.startsWith(RecordingCIProvider.START + " ")).count());
+	}
+
+	/**
+	 * A failing CI server is a warning in the output only: the workspace runs, the project has no
+	 * CI job.
+	 */
+	public void testCIFailureIsWarning() throws Exception {
+		TestingProjectWorkspaces.setCI(_ci);
+		_ci.setFailure(new TopLogicException(com.top_logic.factory.ci.I18NConstants.ERROR_CI_UNREACHABLE__SERVICE_PROBLEM
+			.fill(RecordingCIProvider.BASE_URL, "connection refused")));
+		TLObject project = project("ci-down", null);
+		TLObject workspace = ProjectWorkspaces.getInstance().create(project);
+		assertEquals(log(workspace), WorkspaceStatus.RUNNING, awaitOperation(workspace));
+		assertTrue(log(workspace), log(workspace).contains(RepositorySource.WARNING + "Setting up the CI job failed"));
+		assertTrue(log(workspace), log(workspace).contains("connection refused"));
+		assertNull(FactoryModel.getCIJob(project));
+		assertTrue("Built anyway.", steps().contains("build"));
+		assertTrue("The pipeline is in the first commit anyway.", _pipelines.contains(_remote));
+	}
+
+	/**
+	 * The command of a user sets up the job if it is missing and starts a build; it is unavailable
+	 * without CI or without repository. The last build is read for the views.
+	 */
+	public void testStartBuild() throws Exception {
+		ProjectWorkspaces service = ProjectWorkspaces.getInstance();
+		TLObject project = project("ci-command", null);
+		assertEquals(com.top_logic.factory.ci.I18NConstants.ERROR_NO_CI, service.ciUnavailable(project));
+		assertEquals(com.top_logic.factory.ci.I18NConstants.ERROR_NO_CI, FactoryFunctions.ciUnavailable(project));
+
+		TestingProjectWorkspaces.setCI(_ci);
+		assertEquals(com.top_logic.factory.ci.I18NConstants.ERROR_NO_REPOSITORY__PROJECT.fill(project),
+			service.ciUnavailable(project));
+		try {
+			service.startBuild(project);
+			fail("A build without repository.");
+		} catch (TopLogicException expected) {
+			// Expected.
+		}
+		assertNull(FactoryFunctions.lastBuild(project));
+
+		// A repository adopted while CI was down: no job yet.
+		GitRepository existing = existing("ci-command", pom("ci-command", ENGINE_VERSION));
+		TLObject adopted = project("ci-command", existing.getFullName(), RecordingGitHostingProvider.BASE_URL
+			+ existing.getFullName());
+		assertNull(service.ciUnavailable(adopted));
+		assertNull(FactoryModel.getCIJob(adopted));
+
+		CIBuildStart started = service.startBuild(adopted);
+		HistoryUtils.updateSessionRevision();
+		String job = RecordingCIProvider.jobName(existing);
+		assertEquals("The missing job is created.", job, FactoryModel.getCIJob(adopted));
+		assertEquals(Integer.valueOf(1), started.number());
+		assertEquals(com.top_logic.factory.ci.I18NConstants.BUILD_STARTED__NUMBER_JOB.fill(2, job),
+			FactoryFunctions.startBuild(adopted));
+
+		_ci.finish(job, CIBuildState.SUCCESS);
+		CIBuild last = service.lastBuild(adopted);
+		assertEquals(2, last.number());
+		assertEquals(CIBuildState.SUCCESS, last.state());
+		Map<String, Object> shown = FactoryFunctions.lastBuild(adopted);
+		assertEquals(Integer.valueOf(2), shown.get(FactoryFunctions.BUILD_NUMBER));
+		assertEquals(CIBuildState.SUCCESS.name(), shown.get(FactoryFunctions.BUILD_STATE));
+		assertEquals(CIBuildState.SUCCESS.label(), shown.get(FactoryFunctions.BUILD_STATE_LABEL));
+		assertEquals(last.webUrl(), shown.get(FactoryFunctions.BUILD_URL));
+
+		_ci.setQueued(true);
+		assertEquals(com.top_logic.factory.ci.I18NConstants.BUILD_QUEUED__JOB.fill(job),
+			FactoryFunctions.startBuild(adopted));
+
+		_ci.setFailure(new TopLogicException(com.top_logic.factory.ci.I18NConstants.ERROR_CI_UNREACHABLE__SERVICE_PROBLEM
+			.fill(RecordingCIProvider.BASE_URL, "down")));
+		assertNotNull("The view shows why.", FactoryFunctions.lastBuild(adopted).get(FactoryFunctions.BUILD_ERROR));
+	}
+
+	/**
+	 * With CI, the pipeline file is a protected file, added unless it is listed.
+	 */
+	public void testProtectedFilesWithCI() {
+		assertEquals(List.of("Jenkinsfile", "deploy/**", "ci/pipeline.groovy"),
+			com.top_logic.factory.ci.ProjectCI.withPipelineFile(List.of("Jenkinsfile", "deploy/**"),
+				new RecordingCIProvider() {
+					@Override
+					public String pipelineFile() {
+						return "ci/pipeline.groovy";
+					}
+				}));
+		assertEquals(List.of("Jenkinsfile"),
+			com.top_logic.factory.ci.ProjectCI.withPipelineFile(List.of("Jenkinsfile"), _ci));
+	}
+
+	/**
 	 * The pom of the archetype names the TopLogic version in a property, that of an older
 	 * application in its parent; an expression is not read.
 	 */
@@ -403,6 +572,15 @@ public class TestProjectRepository extends BasicTestCase {
 		String program = line.get(0);
 		if (program.equals(RepositorySource.GIT)) {
 			return git(command, output);
+		}
+		if (program.equals("sh") && line.size() == 5 && line.get(2).equals(RepositorySource.WRITE_FILE)) {
+			String path = line.get(4);
+			step("write " + path.substring(path.lastIndexOf('/') + 1));
+			_writtenPipeline = command.getEnv().get(RepositorySource.ENV_FILE_CONTENT);
+			return 0;
+		}
+		if (program.equals("test") && line.get(line.size() - 1).endsWith("/" + RecordingCIProvider.PIPELINE_FILE)) {
+			return _pipelines.contains(_remote) ? 0 : 1;
 		}
 		if (program.equals("mvn") && line.stream().anyMatch(arg -> arg.startsWith("-DarchetypeArtifactId="))) {
 			step("generate");
@@ -456,6 +634,9 @@ public class TestProjectRepository extends BasicTestCase {
 					return 1;
 				}
 				_remotes.put(_remote, "pushed");
+				if (_writtenPipeline != null) {
+					_pipelines.add(_remote);
+				}
 				_poms.put(_remote, pom(artifactOf(_remote), ENGINE_VERSION));
 				return 0;
 			}
@@ -622,6 +803,7 @@ public class TestProjectRepository extends BasicTestCase {
 				WorkspaceService.Module.INSTANCE,
 				WorkspaceProxyService.Module.INSTANCE,
 				GitHostingService.Module.INSTANCE,
+				CIService.Module.INSTANCE,
 				ProjectWorkspaces.Module.INSTANCE));
 	}
 

@@ -96,6 +96,27 @@
 							<visibility value="read-only"/>
 						</annotations>
 					</property>
+					<!--
+						The job of the project on the CI server, which builds the default branch of its
+						repository; set by the control application when it sets up the job.
+					-->
+					<property name="ciJob"
+						type="tl.core:String"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The page of the CI job in the web interface of the CI server. -->
+					<property name="ciJobUrl"
+						type="tl.core:String"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
 					<reference name="workspace"
 						composite="true"
 						kind="forwards"

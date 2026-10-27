@@ -5,10 +5,13 @@
  */
 package com.top_logic.factory.agent;
 
+import com.top_logic.factory.ci.CIRoute;
+import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.factory.git.RepositorySource;
 import com.top_logic.factory.project.FactoryModel;
 import com.top_logic.factory.project.ProjectWorkspaces;
+import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -66,7 +69,9 @@ public class StoredConversation implements ConversationTarget {
 	/**
 	 * For a project with a {@link FactoryModel#PROJECT_REPOSITORY repository}, that the work of the
 	 * agent reaches the application only by commit and push, see
-	 * {@link RepositorySource#agentInstructions(String, java.util.List)}.
+	 * {@link RepositorySource#agentInstructions(String, java.util.List)}; with {@link CIService CI}
+	 * and the {@link CIRoute} in the workspace proxy, how it builds the application on the CI
+	 * server, see {@link CIRoute#agentInstructions()}.
 	 */
 	@Override
 	public String instructions() {
@@ -74,7 +79,21 @@ public class StoredConversation implements ConversationTarget {
 		if (repository == null) {
 			return null;
 		}
-		return RepositorySource.agentInstructions(repository.getFullName(), ProjectWorkspaces.getProtectedFiles());
+		String result =
+			RepositorySource.agentInstructions(repository.getFullName(), ProjectWorkspaces.getProtectedFiles());
+		if (hasCIRoute()) {
+			result = result + " " + CIRoute.agentInstructions();
+		}
+		return result;
+	}
+
+	/**
+	 * Whether a CI server is configured and the running workspace proxy has a {@link CIRoute}.
+	 */
+	private static boolean hasCIRoute() {
+		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
+		return CIService.configuredProvider() != null && proxy != null && proxy.isEnabled()
+			&& proxy.getRoute(CIRoute.class) != null;
 	}
 
 	@Override

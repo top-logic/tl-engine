@@ -5,15 +5,24 @@
  */
 package com.top_logic.factory.project;
 
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.agent.AgentTasks;
+import com.top_logic.factory.ci.CIBuild;
+import com.top_logic.factory.ci.CIBuildStart;
+import com.top_logic.factory.ci.ProjectCI;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * TL-Script functions managing the workspaces of the projects of the control application.
@@ -34,6 +43,27 @@ public class FactoryFunctions extends TLScriptFunctions {
 
 	/** Prefix of the names of the functions of this class. */
 	public static final String PREFIX = "factory";
+
+	/** Key of the dictionary of {@link #lastBuild(TLObject)}: the number of the build. */
+	public static final String BUILD_NUMBER = "number";
+
+	/** Key of the dictionary of {@link #lastBuild(TLObject)}: the state as its name, e.g. SUCCESS. */
+	public static final String BUILD_STATE = "state";
+
+	/** Key of the dictionary of {@link #lastBuild(TLObject)}: the state for a user. */
+	public static final String BUILD_STATE_LABEL = "stateLabel";
+
+	/** Key of the dictionary of {@link #lastBuild(TLObject)}: the page of the build. */
+	public static final String BUILD_URL = "url";
+
+	/** Key of the dictionary of {@link #lastBuild(TLObject)}: when the build started. */
+	public static final String BUILD_START_TIME = "startTime";
+
+	/** Key of the dictionary of {@link #lastBuild(TLObject)}: the duration in seconds. */
+	public static final String BUILD_DURATION = "durationSeconds";
+
+	/** Key of the dictionary of {@link #lastBuild(TLObject)}: why the CI server cannot be asked. */
+	public static final String BUILD_ERROR = "error";
 
 	/**
 	 * The TopLogic version a new project builds its application on, unless it chooses another one.
@@ -202,6 +232,74 @@ public class FactoryFunctions extends TLScriptFunctions {
 	@Label("Create an agent conversation")
 	public static TLObject createConversation(@Mandatory TLObject workspace, @Mandatory String task) {
 		return AgentTasks.createConversation(workspace, task);
+	}
+
+	/**
+	 * Why no CI build of a project can be started: CI or git hosting is switched off, or the
+	 * project has no repository.
+	 *
+	 * @param project
+	 *        The project, empty for none.
+	 * @return The reason, nothing if a build can be started.
+	 */
+	@Label("CI build unavailable")
+	@SideEffectFree
+	public static ResKey ciUnavailable(TLObject project) {
+		if (!ProjectWorkspaces.Module.INSTANCE.isActive()) {
+			return com.top_logic.factory.ci.I18NConstants.ERROR_NO_CI;
+		}
+		return ProjectWorkspaces.getInstance().ciUnavailable(project);
+	}
+
+	/**
+	 * Starts a build of the application of a project on the CI server. The CI job of the project is
+	 * created first if it does not exist, and set to build the repository of the project.
+	 *
+	 * @param project
+	 *        A project with repository.
+	 * @return The message telling which build was started.
+	 */
+	@Label("Start a CI build")
+	public static ResKey startBuild(@Mandatory TLObject project) {
+		CIBuildStart build = ProjectWorkspaces.getInstance().startBuild(project);
+		return ProjectCI.startedMessage(build, FactoryModel.getCIJob(project));
+	}
+
+	/**
+	 * The last build of the CI job of a project, asked from the CI server.
+	 *
+	 * @param project
+	 *        The project.
+	 * @return A dictionary with the number (key "number"), the state ("state", e.g. "SUCCESS", and
+	 *         "stateLabel" for display), the page ("url"), the start time ("startTime") and the
+	 *         duration in seconds ("durationSeconds") of the build; if the CI server cannot be
+	 *         asked, a dictionary with the reason only ("error"); nothing if CI is switched off,
+	 *         the project has no CI job, or the job has no build.
+	 */
+	@Label("Last CI build")
+	@SideEffectFree
+	public static Map<String, Object> lastBuild(TLObject project) {
+		if (project == null || !ProjectWorkspaces.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		CIBuild build;
+		try {
+			build = ProjectWorkspaces.getInstance().lastBuild(project);
+		} catch (TopLogicException ex) {
+			Logger.info("Cannot read the last CI build of " + project + ": " + ex.getMessage(), FactoryFunctions.class);
+			return Map.of(BUILD_ERROR, ex.getErrorKey());
+		}
+		if (build == null) {
+			return null;
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(BUILD_NUMBER, Integer.valueOf(build.number()));
+		result.put(BUILD_STATE, build.state().name());
+		result.put(BUILD_STATE_LABEL, build.state().label());
+		result.put(BUILD_URL, build.webUrl());
+		result.put(BUILD_START_TIME, Date.from(build.startTime()));
+		result.put(BUILD_DURATION, Long.valueOf(build.duration().toSeconds()));
+		return result;
 	}
 
 	/**

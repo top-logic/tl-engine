@@ -7,6 +7,7 @@
 				<modules>
 					<module key="com.top_logic.factory.workspace.WorkspaceService$Module" value="true"/>
 					<module key="com.top_logic.factory.git.GitHostingService$Module" value="true"/>
+					<module key="com.top_logic.factory.ci.CIService$Module" value="true"/>
 					<module key="com.top_logic.factory.project.ProjectWorkspaces$Module" value="true"/>
 					<module key="com.top_logic.factory.proxy.WorkspaceProxyService$Module" value="true"/>
 					<module key="com.top_logic.factory.agent.WorkspaceAgentService$Module" value="true"/>
@@ -50,6 +51,15 @@
 			/>
 		</config>
 
+		<!--
+			The CI server building the applications of the projects, switched off: an installation
+			configures a provider, e.g. the JenkinsCIProvider of the module tl-factory-jenkins. A new
+			application gets the pipeline-template as its pipeline definition.
+		-->
+		<config service-class="com.top_logic.factory.ci.CIService">
+			<instance class="com.top_logic.factory.ci.CIService"/>
+		</config>
+
 		<config service-class="com.top_logic.factory.project.ProjectWorkspaces">
 			<instance class="com.top_logic.factory.project.ProjectWorkspaces"
 				log-flush-interval="%FACTORY_LOG_FLUSH_INTERVAL%"
@@ -63,7 +73,9 @@
 			one. The LLM route adds the API key of the named provider of the LLMProviderService, the git
 			route the credentials of the GitHostingService for the repository of the project of a
 			workspace; without a git hosting provider, it answers every request with 404. The git route
-			also gives every git process in a workspace the identity its commits are made with.
+			also gives every git process in a workspace the identity its commits are made with. The CI
+			route lets the agent start and follow the builds of the CI job of its project; without a CI
+			provider, it answers every request with 404.
 		-->
 		<config service-class="com.top_logic.factory.proxy.WorkspaceProxyService">
 			<instance class="com.top_logic.factory.proxy.WorkspaceProxyService"
@@ -82,6 +94,7 @@
 						user-email="%FACTORY_GIT_USER_EMAIL%"
 						user-name="%FACTORY_GIT_USER_NAME%"
 					/>
+					<route class="com.top_logic.factory.ci.CIRoute"/>
 				</routes>
 			</instance>
 		</config>

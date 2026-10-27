@@ -219,6 +219,14 @@
 				<scope>test</scope>
 			</dependency>
 			<dependency>
+				<!-- The Gitea test server, used by the integration test of tl-factory-jenkins. -->
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-factory-gitea</artifactId>
+				<version>${tl.version}</version>
+				<type>test-jar</type>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-layout-scripting-template</artifactId>
 				<version>${tl.version}</version>
@@ -691,6 +699,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-factory-gitea</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-factory-jenkins</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>

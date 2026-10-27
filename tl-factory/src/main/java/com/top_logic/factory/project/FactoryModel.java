@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.factory.ci.CIJob;
 import com.top_logic.factory.git.GitRepository;
 import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.model.TLClass;
@@ -68,6 +69,16 @@ public class FactoryModel {
 	 * on the git hosting service.
 	 */
 	public static final String PROJECT_REPOSITORY_URL = "repositoryUrl";
+
+	/**
+	 * Attribute of a {@link #PROJECT}: the {@link CIJob#name() name} of its job on the CI server.
+	 */
+	public static final String PROJECT_CI_JOB = "ciJob";
+
+	/**
+	 * Attribute of a {@link #PROJECT}: the {@link CIJob#webUrl() page} of its job on the CI server.
+	 */
+	public static final String PROJECT_CI_JOB_URL = "ciJobUrl";
 
 	/** Attribute of a {@link #PROJECT}: its {@link #WORKSPACE}, a composition. */
 	public static final String PROJECT_WORKSPACE = "workspace";
@@ -259,6 +270,26 @@ public class FactoryModel {
 	public static void setRepository(TLObject project, GitRepository repository) {
 		project.tUpdateByName(PROJECT_REPOSITORY, repository == null ? null : repository.getFullName());
 		project.tUpdateByName(PROJECT_REPOSITORY_URL, repository == null ? null : repository.getWebUrl());
+	}
+
+	/**
+	 * The {@link CIJob#name() name} of the job of the given project on the CI server.
+	 *
+	 * @return The name, {@code null} if the project has no job.
+	 */
+	public static String getCIJob(TLObject project) {
+		return getString(project, PROJECT_CI_JOB);
+	}
+
+	/**
+	 * Sets the CI job of the given project in the current transaction.
+	 *
+	 * @param job
+	 *        The job on the CI server, {@code null} for none.
+	 */
+	public static void setCIJob(TLObject project, CIJob job) {
+		project.tUpdateByName(PROJECT_CI_JOB, job == null ? null : job.name());
+		project.tUpdateByName(PROJECT_CI_JOB_URL, job == null ? null : job.webUrl());
 	}
 
 	/**

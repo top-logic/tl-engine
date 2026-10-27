@@ -34,6 +34,12 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.agent.WorkspaceAgentService;
+import com.top_logic.factory.ci.CIBuild;
+import com.top_logic.factory.ci.CIBuildStart;
+import com.top_logic.factory.ci.CIPipeline;
+import com.top_logic.factory.ci.CIProvider;
+import com.top_logic.factory.ci.CIService;
+import com.top_logic.factory.ci.ProjectCI;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitHostingService;
 import com.top_logic.factory.git.GitRoute;
@@ -83,6 +89,7 @@ import com.top_logic.util.model.ModelService;
 	SecureRandomService.Module.class,
 	WorkspaceProxyService.Module.class,
 	GitHostingService.Module.class,
+	CIService.Module.class,
 })
 @ServiceCategory.Of(DevelopmentCategory.class)
 public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.Config<?>> {
@@ -240,6 +247,13 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * the application is generated in the workspace only.
 	 * </p>
 	 *
+	 * <p>
+	 * With {@link CIService CI} in addition, a new application gets the pipeline definition in its
+	 * first commit, and the CI job of the repository is set up and builds the application once the
+	 * branch is protected (see {@link CIPipeline}); a failure of the CI server is only a warning in
+	 * the output of the operation.
+	 * </p>
+	 *
 	 * @param project
 	 *        A project without workspace.
 	 * @return The workspace.
@@ -304,10 +318,85 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
 		GitRoute route = proxy == null ? null : proxy.getRoute(GitRoute.class);
 		String routeUrl = route == null ? null : proxy.getRouteUrl(route);
+		CIProvider ci = getCI();
+		String name = FactoryModel.getString(project, FactoryModel.PROJECT_NAME);
+		CIPipeline pipeline = ci == null ? null
+			: new CIPipeline(ci, pipelineTemplate(), name, job -> commit(() -> FactoryModel.setCIJob(project, job)));
 		return new RepositorySource(hosting, proxy, routeUrl,
-			FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY),
-			FactoryModel.getString(project, FactoryModel.PROJECT_NAME), getProtectedFiles(),
-			repository -> commit(() -> FactoryModel.setRepository(project, repository)));
+			FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY), name,
+			ProjectCI.withPipelineFile(getConfiguredProtectedFiles(), ci),
+			repository -> commit(() -> FactoryModel.setRepository(project, repository)), pipeline);
+	}
+
+	/**
+	 * The CI server building the applications of the projects.
+	 *
+	 * @implSpec The provider of the {@link CIService}.
+	 *
+	 * @return The provider, {@code null} if CI is switched off.
+	 */
+	protected CIProvider getCI() {
+		return CIService.configuredProvider();
+	}
+
+	/**
+	 * Whether the projects have CI jobs.
+	 */
+	public boolean isCIEnabled() {
+		return getCI() != null;
+	}
+
+	/**
+	 * The pipeline definition of a new application.
+	 *
+	 * @see CIService#pipelineTemplate()
+	 */
+	private static String pipelineTemplate() {
+		if (!CIService.Module.INSTANCE.isActive()) {
+			return CIService.readResource(CIService.DEFAULT_PIPELINE_TEMPLATE);
+		}
+		return CIService.getInstance().pipelineTemplate();
+	}
+
+	/**
+	 * Why no CI build of the given project can be started now.
+	 *
+	 * @return The reason, {@code null} if a build can be started.
+	 * @see ProjectCI#unavailable(CIProvider, GitHostingProvider, TLObject)
+	 */
+	public ResKey ciUnavailable(TLObject project) {
+		return ProjectCI.unavailable(getCI(), getGitHosting(), project);
+	}
+
+	/**
+	 * Makes sure the CI job of the given project exists and builds its repository, records it on
+	 * the project in a transaction of its own, and starts a build.
+	 *
+	 * <p>
+	 * Must be called outside of a transaction.
+	 * </p>
+	 *
+	 * @param project
+	 *        A project with repository.
+	 * @return The started build.
+	 * @see ProjectCI#startBuild(CIProvider, GitHostingProvider, TLObject, java.util.function.Consumer)
+	 */
+	public CIBuildStart startBuild(TLObject project) {
+		return ProjectCI.startBuild(getCI(), getGitHosting(), project, job -> commitInRequest(() -> {
+			FactoryModel.setCIJob(project, job);
+			return null;
+		}));
+	}
+
+	/**
+	 * The last build of the CI job of the given project.
+	 *
+	 * @return The build, {@code null} if CI is switched off, the project has no CI job or the job
+	 *         has no build.
+	 * @see ProjectCI#lastBuild(CIProvider, TLObject)
+	 */
+	public CIBuild lastBuild(TLObject project) {
+		return ProjectCI.lastBuild(getCI(), project);
 	}
 
 	/**
@@ -333,11 +422,21 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	}
 
 	/**
-	 * The protected files of the default branch of a project repository.
+	 * The protected files of the default branch of a project repository: the configured ones and,
+	 * with {@link CIService CI}, the {@link CIProvider#pipelineFile() pipeline file}.
 	 *
 	 * @see GitHostingService#getProtectedFiles()
 	 */
 	public static List<String> getProtectedFiles() {
+		return ProjectCI.withPipelineFile(getConfiguredProtectedFiles(), CIService.configuredProvider());
+	}
+
+	/**
+	 * The protected files configured for the default branch of a project repository.
+	 *
+	 * @see GitHostingService#getProtectedFiles()
+	 */
+	private static List<String> getConfiguredProtectedFiles() {
 		if (!GitHostingService.Module.INSTANCE.isActive()) {
 			return TypedConfiguration.newConfigItem(GitHostingService.Config.class).getProtectedFiles();
 		}

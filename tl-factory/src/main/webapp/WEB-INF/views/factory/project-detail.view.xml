@@ -2,11 +2,11 @@
 
 <!--
 	The selected project of the control application with its workspace: the project's settings, the
-	link to its repository on the git hosting service, the address of its running application, a
-	warning when the workspace runs an outdated image, and the state and the output of the last
-	operation on the workspace.
+	link to its repository on the git hosting service, its CI job with the last CI build, the address
+	of its running application, a warning when the workspace runs an outdated image, and the state and
+	the output of the last operation on the workspace.
 	
-	The embedding view (factory/projects.view.xml) binds all five channels; it computes the workspace
+	The embedding view (factory/projects.view.xml) binds all six channels; it computes the workspace
 	and the values derived from it once for this content and for its commands, and shows this content
 	in its project panel.
 -->
@@ -17,6 +17,7 @@
 		<channel name="outdated"/>
 		<channel name="previewLink"/>
 		<channel name="repositoryLink"/>
+		<channel name="ciBuild"/>
 	</channels>
 	<inset>
 		<form
@@ -29,6 +30,7 @@
 			<field attribute="engineVersion"/>
 		</form>
 		<html input="repositoryLink"/>
+		<html input="ciBuild"/>
 		<html input="previewLink"/>
 		<alert
 			inputs="outdated"

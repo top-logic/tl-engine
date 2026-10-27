@@ -3,8 +3,8 @@
 <!--
 	The projects of the control application and their workspaces: a list of the projects with the
 	state of each workspace and the address of its running application, and beside it the selected
-	project with the link to its repository, its workspace and the output of the last operation on it
-	(factory/project-detail.view.xml).
+	project with the link to its repository, its CI job and last CI build, its workspace and the output
+	of the last operation on it (factory/project-detail.view.xml).
 	While the project has a workspace, the project panel shows these in a tab "Details", beside it a
 	tab "Agent" with the conversations with the coding agent of the workspace
 	(factory/workspace-agent.view.xml) and a tab "Application log" with the log of the application
@@ -14,7 +14,9 @@
 	The operations on a workspace run in the background (ProjectWorkspaces) and commit their output
 	and state while they run. The source channel "commits" brings these commits to the window as
 	soon as they are made, so the list, the state and the output follow the operation without a
-	click. The commands are offered according to the state of the selected workspace.
+	click. The commands are offered according to the state of the selected workspace. The last CI
+	build is asked from the CI server when the project is selected or "Start CI build" or "Refresh CI
+	build" asks for it, not in the background.
 -->
 <view>
 	<channels>
@@ -91,6 +93,38 @@
 	url = $project.get(`tl.factory:Project#repositoryUrl`);
 	name = $project.get(`tl.factory:Project#repository`);
 	if($url == null, null, {{{<p>{#('Repository'@en, 'Repository'@de)}: <a href="{$url}" target="_blank" rel="noopener">{$name}</a></p>}}});
+}]]></expr>
+		</derived-channel>
+		<!--
+			Why no CI build of the selected project can be started, empty when one can: what
+			"Start CI build" says while it is disabled.
+		-->
+		<derived-channel name="ciUnavailable"
+			expr="factoryCiUnavailable($project)"
+			inputs="project"
+			observed-types="tl.factory:Project"
+		/>
+		<!-- Written by the CI commands to ask the CI server again for the last build. -->
+		<channel name="ciRefresh"/>
+		<!--
+			The CI job of the selected project as link to its page on the CI server, with its last build
+			asked from the CI server when the project is selected or changes, or a CI command asks for it;
+			empty while the project has no CI job.
+		-->
+		<derived-channel name="ciBuild"
+			inputs="project, ciRefresh"
+			observed-types="tl.factory:Project"
+		>
+			<expr><![CDATA[{
+	jobUrl = $project.get(`tl.factory:Project#ciJobUrl`);
+	job = $project.get(`tl.factory:Project#ciJob`);
+	build = if($jobUrl == null, null, factoryLastBuild($project));
+	last = if($build == null,
+		{{{<p>{#('No CI build yet.'@en, 'Noch kein CI-Build.'@de)}</p>}}},
+		if($build['error'] != null,
+			{{{<p>{#('The CI server cannot be asked: {0}'@en, 'Der CI-Server kann nicht gefragt werden: {0}'@de).fill($build['error'])}</p>}}},
+			{{{<p>{#('Last CI build'@en, 'Letzter CI-Build'@de)}: <a href="{$build['url']}" target="_blank" rel="noopener">{#('Build {0}'@en, 'Build {0}'@de).fill($build['number'])}</a> {$build['stateLabel']}, {$build['startTime']} ({$build['durationSeconds']} s)</p>}}}));
+	if($jobUrl == null, null, {{{<p>{#('CI job'@en, 'CI-Job'@de)}: <a href="{$jobUrl}" target="_blank" rel="noopener">{$job}</a></p>{$last}}}});
 }]]></expr>
 		</derived-channel>
 		<derived-channel name="previewLink"
@@ -292,8 +326,50 @@
 						<en>Project</en>
 						<de>Projekt</de>
 					</title>
-					<!-- Commands about the agent of the selected workspace. -->
+					<!-- Commands about the agent of the selected workspace and the CI build of the project. -->
 					<commands>
+						<generic-command name="startBuild"
+							image="css:bi bi-hammer"
+							inputs="project, ciUnavailable"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Start CI build</en>
+								<de>CI-Build starten</de>
+							</label>
+							<executability>
+								<visible-if expr="$project != null"/>
+								<disabled-if expr="$ciUnavailable"/>
+							</executability>
+							<execute-script function="factoryStartBuild($project)">
+								<with-result>
+									<notify expr="$result"/>
+								</with-result>
+							</execute-script>
+							<execute-script function="now()">
+								<with-result>
+									<write-channel name="ciRefresh"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+						<generic-command name="refreshBuild"
+							image="css:bi bi-arrow-clockwise"
+							inputs="project"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Refresh CI build</en>
+								<de>CI-Build aktualisieren</de>
+							</label>
+							<executability>
+								<visible-if expr="$project != null &amp;&amp; $project.get(`tl.factory:Project#ciJob`) != null"/>
+							</executability>
+							<execute-script function="now()">
+								<with-result>
+									<write-channel name="ciRefresh"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
 						<generic-command name="assignTask"
 							image="css:bi bi-robot"
 							inputs="workspace, agentUnavailable"
@@ -361,6 +437,10 @@
 										<bind
 											channel="repositoryLink"
 											to="repositoryLink"
+										/>
+										<bind
+											channel="ciBuild"
+											to="ciBuild"
 										/>
 									</view-ref>
 								</tab>
@@ -431,6 +511,10 @@
 								<bind
 									channel="repositoryLink"
 									to="repositoryLink"
+								/>
+								<bind
+									channel="ciBuild"
+									to="ciBuild"
 								/>
 							</view-ref>
 						</default>

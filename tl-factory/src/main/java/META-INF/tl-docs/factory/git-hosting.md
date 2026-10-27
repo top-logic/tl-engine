@@ -184,13 +184,14 @@ adopts the repository by entering it instead.
 **The agent.** For a project with repository, `StoredConversation.instructions()` tells the coding
 agent (`RepositorySource.agentInstructions`, passed by `ClaudeCodeHarness` as
 `--append-system-prompt`) that its work reaches the application only by commit and push to the
-default branch, that it must not force push, and which files are protected.
+default branch, that it must not force push, and which files are protected; with
+[CI](doc:factory/ci#the-ci-route), also how it builds the application on the CI server.
 
 ### Protected files and commit identity
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `protected-files` of `GitHostingService` (`%FACTORY_GIT_PROTECTED_FILES%`, environment `tl_factory_git_protected_files`) | `Jenkinsfile, deploy/**` | Glob patterns of the files no push to the default branch of a project repository may change. |
+| `protected-files` of `GitHostingService` (`%FACTORY_GIT_PROTECTED_FILES%`, environment `tl_factory_git_protected_files`) | `Jenkinsfile, deploy/**` | Glob patterns of the files no push to the default branch of a project repository may change; with [CI](doc:factory/ci#the-pipeline-definition), the pipeline file of the CI server is added if it is not listed. |
 | `user-name` of `GitRoute` (`%FACTORY_GIT_USER_NAME%`, `tl_factory_git_user_name`) | `TopLogic Factory` | Author and committer name of the commits made in a workspace; empty for none. |
 | `user-email` of `GitRoute` (`%FACTORY_GIT_USER_EMAIL%`, `tl_factory_git_user_email`) | `tl-factory@localhost` | Author and committer e-mail address; empty for none. |
 

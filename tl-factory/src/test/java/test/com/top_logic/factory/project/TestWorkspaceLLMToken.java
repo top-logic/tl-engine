@@ -17,6 +17,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.factory.ci.CIRoute;
 import com.top_logic.factory.git.GitRoute;
 import com.top_logic.factory.llm.LLMRoute;
 import com.top_logic.factory.project.FactoryModel;
@@ -88,13 +89,14 @@ public class TestWorkspaceLLMToken extends BasicTestCase {
 	}
 
 	/**
-	 * The proxy of the application configuration has the LLM route and the git route, also with
-	 * the proxy settings of the test configuration.
+	 * The proxy of the application configuration has the LLM route, the git route and the CI route,
+	 * also with the proxy settings of the test configuration.
 	 */
 	public void testLLMRouteConfigured() {
-		assertEquals(2, _proxy.routes().size());
+		assertEquals(3, _proxy.routes().size());
 		assertEquals(LLMRoute.DEFAULT_PATH, _proxy.getRoute(LLMRoute.class).getPath());
 		assertEquals(GitRoute.DEFAULT_PATH, _proxy.getRoute(GitRoute.class).getPath());
+		assertEquals(CIRoute.DEFAULT_PATH, _proxy.getRoute(CIRoute.class).getPath());
 	}
 
 	/**

@@ -32,6 +32,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.Frame;
@@ -55,6 +56,7 @@ import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.factory.gitea.GiteaHostingProvider;
 import com.top_logic.factory.gitea.client.ApiClient;
+import com.top_logic.factory.gitea.client.Configuration;
 import com.top_logic.factory.gitea.client.api.OrganizationApi;
 import com.top_logic.factory.gitea.client.model.CreateOrgOption;
 
@@ -108,6 +110,8 @@ public final class GiteaTestServer implements AutoCloseable {
 	private static final String READ_SCOPES = "read:organization,read:repository";
 
 	private static final String DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
+
+	private static final String IMAGE_REPOSITORY = "gitea/gitea";
 
 	/**
 	 * User the Gitea process runs as in the container, and its commands must.
@@ -179,9 +183,33 @@ public final class GiteaTestServer implements AutoCloseable {
 	}
 
 	/**
+	 * The Gitea image of the version the client is generated from, the version of its OpenAPI
+	 * specification.
+	 */
+	public static String pinnedImage() {
+		return IMAGE_REPOSITORY + ":" + Configuration.VERSION;
+	}
+
+	/**
 	 * Starts a server of the given image.
 	 */
 	public static GiteaTestServer start(String image) throws Exception {
+		return start(image, null, null);
+	}
+
+	/**
+	 * Starts a server of the given image, also reachable from the containers of a Docker network.
+	 *
+	 * @param image
+	 *        The Gitea image.
+	 * @param network
+	 *        The Docker network the server joins, {@code null} for none.
+	 * @param alias
+	 *        The host name of the server in the network, e.g. {@code gitea}: the containers of the
+	 *        network reach it at {@code http://<alias>:}{@value #GITEA_PORT}{@code /}. Ignored
+	 *        without network.
+	 */
+	public static GiteaTestServer start(String image, String network, String alias) throws Exception {
 		DockerClient docker = createClient();
 		try {
 			docker.inspectImageCmd(image).exec();
@@ -192,7 +220,12 @@ public final class GiteaTestServer implements AutoCloseable {
 		int port = freePort();
 		String baseUrl = "http://" + LOOPBACK + ":" + port + "/";
 		ExposedPort http = ExposedPort.tcp(GITEA_PORT);
-		String containerId = docker.createContainerCmd(image)
+		HostConfig hostConfig = HostConfig.newHostConfig()
+			.withPortBindings(new PortBinding(Ports.Binding.bindIpAndPort(LOOPBACK, port), http));
+		if (network != null) {
+			hostConfig.withNetworkMode(network);
+		}
+		CreateContainerCmd create = docker.createContainerCmd(image)
 			.withName("tl-factory-gitea-test-" + UUID.randomUUID().toString().substring(0, 8))
 			.withLabels(Map.of(CONTAINER_LABEL, "true"))
 			.withEnv(
@@ -202,10 +235,11 @@ public final class GiteaTestServer implements AutoCloseable {
 				"GITEA__repository__DEFAULT_BRANCH=" + BRANCH,
 				"GITEA__service__DISABLE_REGISTRATION=true")
 			.withExposedPorts(http)
-			.withHostConfig(HostConfig.newHostConfig()
-				.withPortBindings(new PortBinding(Ports.Binding.bindIpAndPort(LOOPBACK, port), http)))
-			.exec()
-			.getId();
+			.withHostConfig(hostConfig);
+		if (network != null && alias != null) {
+			create.withAliases(alias);
+		}
+		String containerId = create.exec().getId();
 		GiteaTestServer server = new GiteaTestServer(docker, containerId, baseUrl);
 		try {
 			docker.startContainerCmd(containerId).exec();
@@ -330,6 +364,18 @@ public final class GiteaTestServer implements AutoCloseable {
 		return exec("sh", "-c", commandLine);
 	}
 
+	/**
+	 * Runs a shell command line in the container with the given arguments, {@code $0} the first.
+	 */
+	public ExecResult git(String commandLine, String... args) throws InterruptedException {
+		List<String> command = new ArrayList<>();
+		command.add("sh");
+		command.add("-c");
+		command.add(commandLine);
+		command.addAll(List.of(args));
+		return exec(command.toArray(new String[0]));
+	}
+
 	private ExecResult exec(String... command) throws InterruptedException {
 		String execId = _docker.execCreateCmd(_containerId)
 			.withUser(GITEA_USER)
@@ -376,12 +422,19 @@ public final class GiteaTestServer implements AutoCloseable {
 		}
 	}
 
-	private static String dockerHost() {
+	/**
+	 * The Docker daemon of the tests: the one at the environment variable {@code DOCKER_HOST}, or
+	 * the local socket.
+	 */
+	public static String dockerHost() {
 		String host = System.getenv("DOCKER_HOST");
 		return host == null || host.isEmpty() ? DEFAULT_DOCKER_HOST : host;
 	}
 
-	private static DockerClient createClient() {
+	/**
+	 * A client of the {@link #dockerHost() Docker daemon of the tests}.
+	 */
+	public static DockerClient createClient() {
 		DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
 			.withDockerHost(dockerHost())
 			.build();
@@ -389,7 +442,10 @@ public final class GiteaTestServer implements AutoCloseable {
 			new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).build());
 	}
 
-	private static boolean dockerAvailable() {
+	/**
+	 * Whether the {@link #dockerHost() Docker daemon of the tests} answers.
+	 */
+	public static boolean dockerAvailable() {
 		try (DockerClient client = createClient()) {
 			client.pingCmd().exec();
 			return true;

@@ -27,8 +27,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_CHAT_NOT_CREATED;
 
 	/**
-	 * Message with the reason why the message was refused, in the user's language.
-	 *
 	 * @en The message was not sent: {0}
 	 * @de Die Nachricht wurde nicht gesendet: {0}
 	 */

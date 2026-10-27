@@ -10,6 +10,12 @@ import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table
 import { TextStyle, Color } from '@tiptap/extension-text-style';
 import WysiwygToolbar from './WysiwygToolbar';
 import { HtmlPassthrough, restoreHtmlSources } from './HtmlPassthrough';
+import {
+  ObjectMention, MentionList, useMentions, mentionConfigs, CMD_MENTION, ARG_TRIGGER, ARG_QUERY, STATE_MENTIONS,
+  STATE_MENTION_OPTIONS,
+} from './mentions';
+import { ObjectLink, TL_OBJECT } from './ObjectLink';
+import type { MentionAnswer } from './mentions';
 import './TLWysiwygEditor.css';
 
 /** Command sent when the user follows an object link in displayed content. */
@@ -39,8 +45,8 @@ const STATE_SOURCE_EDITING = 'sourceEditing';
 /** Time a change of the text is waited out before it is reported, in milliseconds. */
 const REPORT_DELAY = 300;
 
-/** CSS class marking an anchor as a link to an application object. */
-const TL_OBJECT = 'tlObject';
+/** Options of the command asking for the objects of a mention: it reads nothing but its arguments. */
+const MENTION_OPTIONS = { flushFields: false } as const;
 
 /** The class of the design system for text from the server: the writing surface, and the view. */
 const PROSE_CLASS = 'tl-prose';
@@ -87,8 +93,28 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   // at the textbox, which assistive technology reads; the frame shows it.
   const inputId = fieldInputId(controlId);
   const labelledBy = useFieldLabelProps(controlId, inputId)['aria-labelledby'];
+
+  // A mention is detected only while the text is edited. The objects of a mention are asked for
+  // with the trigger and the text typed after it alone.
+  const mentionsValue: unknown = state[STATE_MENTIONS];
+  const mentionList = React.useMemo(
+    () => editable ? mentionConfigs(mentionsValue) : [],
+    [editable, mentionsValue]);
+  const mentions = useMentions({
+    id: inputId,
+    mentions: mentionList,
+    answer: (state[STATE_MENTION_OPTIONS] as MentionAnswer | undefined) || null,
+    request: (trigger, query) => {
+      void sendCommand(CMD_MENTION, { [ARG_TRIGGER]: trigger, [ARG_QUERY]: query }, MENTION_OPTIONS);
+    },
+  });
+  const mentionAttributes = mentions.ariaAttributes;
+  const dismissMention = mentions.dismiss;
+
   const editorProps = React.useMemo(() => {
-    const attributes: Record<string, string> = sourceMode ? { class: PROSE_CLASS } : { id: inputId, class: PROSE_CLASS };
+    const attributes: Record<string, string> = sourceMode
+      ? { class: PROSE_CLASS }
+      : { id: inputId, class: PROSE_CLASS, ...mentionAttributes };
     if (labelledBy !== undefined) {
       attributes['aria-labelledby'] = labelledBy;
     }
@@ -96,7 +122,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       attributes['aria-invalid'] = 'true';
     }
     return { attributes };
-  }, [inputId, labelledBy, hasError, sourceMode]);
+  }, [inputId, labelledBy, hasError, sourceMode, mentionAttributes]);
 
   const imageUrl: string | null = (state.imageUrl as string) || null;
   const commitEdits: boolean = state.commitEdits === true;
@@ -142,13 +168,17 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       // First, so that an element of unknown type encloses the formatting of its content.
       HtmlPassthrough,
       StarterKit.configure({
-        // The link extension carries the CSS class of an anchor, which is what tells an object
-        // link from an ordinary one, through parsing and rendering alike.
-        link: { openOnClick: false },
+        // The link is the one writing object links as they are stored, see below.
+        link: false,
         // Opening existing content must not change its stored markup, so no empty paragraph is
         // appended after a trailing table or code block.
         trailingNode: false,
       }),
+      // The link extension carries the CSS class of an anchor, which is what tells an object link
+      // from an ordinary one, through parsing and rendering alike.
+      ObjectLink.configure({ openOnClick: false }),
+      ObjectMention,
+      ...mentions.extensions,
       Image.configure({ allowBase64: true, inline: true }),
       Table.configure({ resizable: true }),
       TableRow,
@@ -171,6 +201,8 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       }, REPORT_DELAY);
     },
     onBlur: ({ editor: ed }) => {
+      // A mention left unfinished stays as typed.
+      dismissMention();
       // Flush pending debounced value immediately on blur so the server has
       // the latest content before any save command executes.
       flushValue(ed);
@@ -181,7 +213,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
         sendCommand(CMD_COMMIT);
       }
     },
-  }, [editable]);
+  }, [editable, mentions.extensions]);
 
   // The editor takes its options again on a render only while it has no dependencies; with the
   // dependency above it keeps the attributes it was created with. Changed attributes are handed to
@@ -301,6 +333,14 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_SHOW_OBJECT_LINK, { [ARG_HREF]: anchor.getAttribute('href') || '' });
   }, [sendCommand]);
 
+  // In the edited text, a click places the cursor; with Ctrl (Cmd) held, an object link leads to
+  // the object it names, as in displayed content.
+  const handleEditClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.ctrlKey || e.metaKey) {
+      handleContentClick(e);
+    }
+  }, [handleContentClick]);
+
   // Cleanup debounce on unmount.
   React.useEffect(() => {
     return () => {
@@ -345,7 +385,10 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
           onBlur={handleSourceBlur}
         />
       )}
-      <EditorContent editor={editor} hidden={sourceMode} />
+      <EditorContent editor={editor} hidden={sourceMode} onClick={handleEditClick} />
+      {mentions.list !== null && !sourceMode && (
+        <MentionList {...mentions.list} aria-labelledby={labelledBy} />
+      )}
       <input
         ref={fileInputRef}
         type="file"

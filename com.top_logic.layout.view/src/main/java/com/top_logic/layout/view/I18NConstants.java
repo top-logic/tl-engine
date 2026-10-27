@@ -157,6 +157,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_DROP_REFUSED;
 
+	/**
+	 * @en The entry "{0}" contains a comma. The values of this field are stored separated by commas,
+	 *     so a single value cannot contain one.
+	 */
+	public static ResKey1 ERROR_ENTRY_CONTAINS_SEPARATOR__TEXT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

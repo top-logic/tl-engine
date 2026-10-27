@@ -6,8 +6,11 @@
 package com.top_logic.layout.view.form;
 
 import java.util.Comparator;
+import java.util.List;
+import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
@@ -16,7 +19,9 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
+import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.OptionProvider;
+import com.top_logic.element.meta.kbbased.storage.StringSetStorage;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -29,8 +34,23 @@ import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
+import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.InputRef;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.Supplies;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ReactFieldControlProvider} for attributes that are edited by selecting from a set of
@@ -61,6 +81,12 @@ import com.top_logic.model.annotate.ui.ReferenceDisplay;
  * field deviates from how the attribute is displayed elsewhere.
  * </p>
  *
+ * <p>
+ * A list that opens on demand can accept {@link Config#hasFreeEntry() free entry}: the user picks
+ * an option or types a text that becomes the value, or from which the {@link Config#getCreate()
+ * create} script makes the value - a new keyword named by the text, say.
+ * </p>
+ *
  * @implNote What the field asks for is read from {@link FieldSpec#getSelectDisplay()},
  *           {@link FieldSpec#getSelectOrientation()} and {@link FieldSpec#getOptionOrder()}.
  */
@@ -85,6 +111,18 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 
 		/** Configuration name for {@link #hasFilter()}. */
 		String FILTER = "filter";
+
+		/** Configuration name for {@link #hasFreeEntry()}. */
+		String FREE_ENTRY = "free-entry";
+
+		/** Configuration name for {@link #getCreate()}. */
+		String CREATE = "create";
+
+		/** Name of the variable holding the entered text in the {@link #getCreate()} script. */
+		String TEXT_VARIABLE = "text";
+
+		/** Name of the variable holding the edited object in the {@link #getCreate()} script. */
+		String SELF_VARIABLE = "self";
 
 		@Override
 		@ClassDefault(SelectControlProvider.class)
@@ -180,6 +218,68 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		@Name(FILTER)
 		@BooleanDefault(true)
 		boolean hasFilter();
+
+		/**
+		 * Whether the user may enter a text that is none of the options, instead of choosing one.
+		 *
+		 * <p>
+		 * For a value that is mostly one of a known set but now and then a new one: the keywords of
+		 * a document, the tags of a task, the place of a meeting. The user types into the list
+		 * that opens on demand; a text matching the label of an option, ignoring case, chooses that
+		 * option, any other text becomes a value of its own. A field holding several values adds it
+		 * to them, a field holding one value takes it as its value. A text entered twice yields one
+		 * value, not two.
+		 * </p>
+		 *
+		 * <p>
+		 * The value a text becomes is the result of the {@link #getCreate() create} script. Without
+		 * a script, only an attribute holding texts accepts free entry, and the text itself becomes
+		 * the value; for any other attribute, free entry is switched off and an error is logged. The
+		 * values of an attribute stored as one comma separated text cannot contain a comma: such a
+		 * text is refused.
+		 * </p>
+		 *
+		 * <p>
+		 * Only the list that opens on demand has an input to type into; the shapes of the
+		 * {@link #getDisplay() display} that show every option ignore it.
+		 * </p>
+		 */
+		@Name(FREE_ENTRY)
+		boolean hasFreeEntry();
+
+		/**
+		 * The value a text the user entered becomes, where the field accepts {@link #hasFreeEntry()
+		 * free entry}.
+		 *
+		 * <p>
+		 * A TL-Script expression using the variables {@code $text}, the entered text without
+		 * leading and trailing white space, and {@code $self}, the edited object (nothing where the
+		 * field edits no attribute of an object), without declaring them. Typically it creates a
+		 * new object named by the text, which becomes the value of a reference:
+		 * </p>
+		 *
+		 * <pre>
+		 * new(`my:Keyword`, transient: true)..set(`my:Keyword#name`, $text)
+		 * </pre>
+		 *
+		 * <p>
+		 * The new object is created as transient object, as the editing of a form keeps everything
+		 * the user changes: storing the form creates it, cancelling the form drops it. A text
+		 * matching the label of an option, of a value of the field, or of a value created before,
+		 * ignoring case, chooses that value without the script being evaluated. A result of nothing
+		 * leaves the value of the field unchanged.
+		 * </p>
+		 *
+		 * <p>
+		 * Without a script, the text itself becomes the value, which suits an attribute holding
+		 * texts only.
+		 * </p>
+		 */
+		@Name(CREATE)
+		@Supplies(TEXT_VARIABLE)
+		@Supplies(SELF_VARIABLE)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCreate();
 	}
 
 	private final OptionProvider _optionProvider;
@@ -192,6 +292,18 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 
 	private final boolean _filter;
 
+	private final boolean _freeEntry;
+
+	/**
+	 * The compiled {@link Config#getCreate()} script, {@code null} for none.
+	 */
+	private final QueryExecutor _create;
+
+	/**
+	 * The inputs the {@link #_create} script sees ahead of the values it is supplied with.
+	 */
+	private final List<InputRef> _createInputs;
+
 	/**
 	 * Creates a {@link SelectControlProvider} without a configured option source (options are
 	 * derived from the attribute), offering them in the shape and the order each field asks for.
@@ -202,6 +314,9 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		_orientation = null;
 		_order = null;
 		_filter = true;
+		_freeEntry = false;
+		_create = null;
+		_createInputs = List.of();
 	}
 
 	/**
@@ -214,6 +329,10 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		_orientation = config.getOrientation();
 		_order = config.getOrder();
 		_filter = config.hasFilter();
+		_freeEntry = config.hasFreeEntry();
+		_create = InputScript.compile(config, Config.CREATE);
+		_createInputs = _create == null ? List.of()
+			: InputScript.inputs(config, config.descriptor().getProperty(Config.CREATE));
 	}
 
 	/**
@@ -253,6 +372,15 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	}
 
 	/**
+	 * Whether the user may enter a text that is none of the options.
+	 *
+	 * @see Config#hasFreeEntry()
+	 */
+	public boolean hasFreeEntry() {
+		return _freeEntry;
+	}
+
+	/**
 	 * A selection is made on one control, however many options it accepts.
 	 *
 	 * <p>
@@ -285,7 +413,86 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		if (!_filter) {
 			control.setFilter(false);
 		}
+		if (_freeEntry && display == SelectDisplay.DROPDOWN) {
+			Function<String, Object> textToValue = textToValue(context, field, model);
+			if (textToValue != null) {
+				control.setFreeEntry(textToValue);
+			}
+		}
 		return control;
+	}
+
+	/**
+	 * The function making the value of the given field from a text the user entered, see
+	 * {@link Config#hasFreeEntry()}, or {@code null} where the field cannot accept free entry.
+	 */
+	private Function<String, Object> textToValue(ReactContext context, FieldSpec field, FieldModel model) {
+		TLStructuredTypePart part = model instanceof AttributeFieldModel attribute ? attribute.getPart() : null;
+		Function<String, Object> conversion;
+		if (_create != null) {
+			conversion = createScript(context, model);
+		} else if (holdsText(part, field)) {
+			conversion = text -> text;
+		} else {
+			Logger.error("The field '" + fieldName(part, field) + "' cannot accept free entry: its values are no texts,"
+				+ " and no '" + Config.CREATE + "' script makes a value from an entered text.",
+				SelectControlProvider.class);
+			return null;
+		}
+		if (part != null && part.isMultiple()
+			&& AttributeOperations.getStorageImplementation(part) instanceof StringSetStorage) {
+			return text -> checkNoSeparator(conversion.apply(text));
+		}
+		return conversion;
+	}
+
+	/**
+	 * The {@link #_create} script as function of the entered text, evaluated for the object the
+	 * given model edits at the time of the entry.
+	 */
+	private Function<String, Object> createScript(ReactContext context, FieldModel model) {
+		List<ViewChannel> inputs;
+		if (_createInputs.isEmpty()) {
+			inputs = List.of();
+		} else if (context instanceof ViewContext viewContext) {
+			inputs = ChannelInputs.resolve(viewContext, _createInputs);
+		} else {
+			throw new IllegalStateException("A select whose '" + Config.CREATE
+				+ "' script reads the values of channels must be created in a view, but is created in: " + context);
+		}
+		return text -> {
+			TLObject self = model instanceof AttributeFieldModel attribute ? attribute.getObject() : null;
+			return _create.execute(ChannelInputs.arguments(inputs, text, self));
+		};
+	}
+
+	/**
+	 * Refuses a text value containing the separator of the values of an attribute that stores them
+	 * as one text, see {@link StringSetStorage}.
+	 */
+	private static Object checkNoSeparator(Object value) {
+		if (value instanceof String text && text.indexOf(StringSetStorage.VALUE_SEPARATOR) >= 0) {
+			throw new TopLogicException(I18NConstants.ERROR_ENTRY_CONTAINS_SEPARATOR__TEXT.fill(text));
+		}
+		return value;
+	}
+
+	/**
+	 * Whether the values of the field are texts, which an entered text can be taken as.
+	 *
+	 * @param part
+	 *        The edited attribute, deciding by its type; {@code null} where the field edits no
+	 *        attribute, and the value type of the field decides.
+	 */
+	private static boolean holdsText(TLStructuredTypePart part, FieldSpec field) {
+		if (part != null) {
+			return part.getType() instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.STRING;
+		}
+		return field.getValueType() == String.class;
+	}
+
+	private static String fieldName(TLStructuredTypePart part, FieldSpec field) {
+		return part != null ? TLModelUtil.qualifiedName(part) : field.getLabel();
 	}
 
 }

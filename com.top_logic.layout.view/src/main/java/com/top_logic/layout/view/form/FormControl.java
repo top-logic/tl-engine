@@ -687,7 +687,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * {@link FormParticipant#persist(Transaction) persist} its KB-specific changes (e.g. a composition
 	 * table creates its new rows and writes the persisted row list into the overlay).</li>
 	 * <li>Lets every participant {@link FormParticipant#applyState() apply} its state.</li>
-	 * <li>Applies the overlay to the base object, and commits the transaction.</li>
+	 * <li>Stores the overlay through {@link BufferSave}: writes the attributes it changed into the
+	 * base object, with each new (transient) object it holds in a reference that is no composition -
+	 * a keyword the user created by typing its name into a select, say - created as persistent
+	 * object and written in its place. Then commits the transaction.</li>
 	 * </ol>
 	 *
 	 * <p>
@@ -699,8 +702,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * <p>
 	 * For a transient base object (e.g. in a create dialog), no transaction is opened: all changes
-	 * are applied to the transient object and its transient rows, which become persistent together
-	 * when the object is made persistent.
+	 * are applied to the transient object and its transient rows, and the new objects it refers to
+	 * stay new objects; they all become persistent together when the object is made persistent.
 	 * </p>
 	 *
 	 * @return The base object with overlay changes applied, or {@code null} if no overlay exists.
@@ -720,7 +723,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		TLObject base = _overlay.getBase();
 		if (base.tTransient()) {
-			applyState();
+			applyParticipantStates();
+			// The transient base buffers the changes as well; it is made persistent as a whole.
+			_overlay.apply();
 			return base;
 		}
 
@@ -730,7 +735,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			for (FormParticipant participant : _participants) {
 				participant.persist(tx);
 			}
-			applyState();
+			applyParticipantStates();
+			BufferSave.save(_overlay);
+			// The base now holds all values, so the overlay has no unsaved changes anymore.
+			_overlay.reset();
 			tx.commit();
 		} finally {
 			tx.rollback();
@@ -739,13 +747,12 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Transfers the state of all participants and of the overlay to the base objects.
+	 * Transfers the state of all participants to the base objects.
 	 */
-	private void applyState() {
+	private void applyParticipantStates() {
 		for (FormParticipant participant : _participants) {
 			participant.applyState();
 		}
-		_overlay.apply();
 	}
 
 	/**

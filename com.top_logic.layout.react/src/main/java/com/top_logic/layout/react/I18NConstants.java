@@ -1221,6 +1221,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_OPTION_KEYS_UNRESOLVED__KEYS;
 
 	/**
+	 * @en The field accepts only a value chosen from its options, no text of your own.
+	 */
+	public static ResKey ERROR_NO_FREE_ENTRY;
+
+	/**
 	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}
 	 */
 	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;

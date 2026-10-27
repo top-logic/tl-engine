@@ -262,6 +262,9 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	/** @see #isNoFilter() */
 	String NO_FILTER__PROP = "noFilter";
 
+	/** @see #isFreeEntry() */
+	String FREE_ENTRY__PROP = "freeEntry";
+
 	/** @see #getEmptyOptionLabel() */
 	String EMPTY_OPTION_LABEL__PROP = "emptyOptionLabel";
 
@@ -350,6 +353,20 @@ public interface DropdownSelectState extends com.top_logic.layout.react.state.Fi
 	 * @see #isNoFilter()
 	 */
 	com.top_logic.layout.react.state.DropdownSelectState setNoFilter(boolean value);
+
+	/**
+	 * Whether the user may enter a text that is no option: the text becomes the value, or a value
+	 * created from it, and is sent with the command {@code enterText} as argument {@code text}.
+	 * A text matching the label of an option or of a value entered before, ignoring case, chooses
+	 * that one instead. Absent means the user only chooses among the options. Only the shape
+	 * {@link Display#DROPDOWN} reads it.
+	 */
+	boolean isFreeEntry();
+
+	/**
+	 * @see #isFreeEntry()
+	 */
+	com.top_logic.layout.react.state.DropdownSelectState setFreeEntry(boolean value);
 
 	/**
 	 * The label of the choice of no object: the option of its own a group of radio buttons offers

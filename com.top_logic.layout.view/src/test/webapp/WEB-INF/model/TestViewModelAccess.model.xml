@@ -37,6 +37,17 @@
 								<visibility value="read-only"/>
 							</annotations>
 						</property>
+						<property name="keywords"
+							multiple="true"
+							type="tl.core:String"
+						>
+							<annotations>
+								<config-type value="STRING_SET"/>
+								<storage-algorithm>
+									<string-set-storage/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 						<reference name="responsible"
 							type="tl.accounts:Person"
 						/>

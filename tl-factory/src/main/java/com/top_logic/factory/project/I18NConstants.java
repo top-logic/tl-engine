@@ -53,6 +53,25 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_INVALID_ARTIFACT_ID__VALUE;
 
+	/**
+	 * @en "{0}" is not a valid artifact ID: the part "{1}" starts with a digit. Each part between
+	 *     dashes becomes a name of the Java package of the application and has to start with a
+	 *     letter, e.g. "my-app2" instead of "my-2app".
+	 */
+	public static ResKey2 ERROR_ARTIFACT_ID_PART_STARTS_WITH_DIGIT__VALUE_PART;
+
+	/**
+	 * @en "{0}" is not a valid artifact ID: it has an empty part between dashes or ends with a dash.
+	 *     Each part between dashes becomes a name of the Java package of the application.
+	 */
+	public static ResKey1 ERROR_ARTIFACT_ID_EMPTY_PART__VALUE;
+
+	/**
+	 * @en "{0}" cannot be used: its part "{1}" is a reserved word of Java and cannot be a name of
+	 *     the Java package of the application.
+	 */
+	public static ResKey2 ERROR_JAVA_KEYWORD__VALUE_PART;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

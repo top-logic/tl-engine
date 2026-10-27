@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or working on the CI of the control application (the build of the project repositories on a CI server) - CIService with its optional provider and pipeline-template, CIProvider (pipelineFile, ensureJob, startBuild with the queue, lastBuild, console bounded to its end) and its value types CIJob, CIBuild, CIBuildState, CIBuildStart, CIConsole, the test double RecordingCIProvider, the CI job of a project (tl.factory:Project ciJob and ciJobUrl), how a workspace sets it up (the Jenkinsfile in the first commit of a new application from /WEB-INF/factory/ci/Jenkinsfile, the warning for an adopted repository without one, ensureJob and the first build after protectBranch, a CI failure only a warning, CIPipeline as RepositorySource.Pipeline, the pipeline file added to the protected files), the CI route of the workspace proxy (CIRoute at /ci with POST /builds, GET /builds/last, GET /builds/<n>/log, max-log-size, TL_FACTORY_CI_URL, the agent instructions with curl), the views (factoryCiUnavailable, factoryStartBuild, factoryLastBuild, the commands Start CI build and Refresh CI build, the ciBuild channel), the Jenkins implementation JenkinsCIProvider of the module tl-factory-jenkins (base-url, user, the secret tl_factory_jenkins_token, credentials, folder, scm-credentials-id, script-path, job-template pipeline-job.xml with its placeholders, timeout, queue-wait, the JSON API, createItem and config.xml, build and the queue item, progressiveText with X-Text-Size and the console notes, no CSRF crumb with an API token), the Jenkins-side prerequisites (user and permissions, SCM credential, agent with JDK and Maven, plugins), its integration test against a Jenkins container next to a Gitea (JenkinsTestServer, TestJenkinsCIProvider, src/test/docker/jenkins with Dockerfile, plugins.txt and the init script) and updating Jenkins and its plugins (Renovate).
+description: Read before configuring or working on the CI of the control application (the build of the project repositories on a CI server) - CIService with its optional provider and pipeline-template, CIProvider (pipelineFile, ensureJob, startBuild with the queue, lastBuild, console bounded to its end) and its value types CIJob, CIBuild, CIBuildState, CIBuildStart, CIConsole, the test double RecordingCIProvider, the CI job of a project (tl.factory:Project ciJob and ciJobUrl), how a workspace sets it up (the Jenkinsfile in the first commit of a new application from /WEB-INF/factory/ci/Jenkinsfile, the warning for an adopted repository without one, ensureJob and the first build after protectBranch, a CI failure only a warning, CIPipeline as RepositorySource.Pipeline, the pipeline file added to the protected files), the CI route of the workspace proxy (CIRoute at /ci with POST /builds, GET /builds/last, GET /builds/<n>/log, max-log-size, TL_FACTORY_CI_URL, the agent instructions with curl), the views (factoryCiUnavailable, factoryStartBuild, factoryLastBuild, the commands Start CI build and Refresh CI build, the ciBuild channel), the Jenkins implementation JenkinsCIProvider of the module tl-factory-jenkins (its configuration from the environment variables tl_factory_jenkins_url, tl_factory_jenkins_user, tl_factory_jenkins_folder and tl_factory_jenkins_scm_credentials, switched off by an empty base-url through ServerProviderConfig, base-url, user, the secret tl_factory_jenkins_token, credentials, folder, scm-credentials-id, script-path, job-template pipeline-job.xml with its placeholders, timeout, queue-wait, the JSON API, createItem and config.xml, build and the queue item, progressiveText with X-Text-Size and the console notes, no CSRF crumb with an API token), the Jenkins-side prerequisites (user and permissions, SCM credential, agent with JDK and Maven, plugins), its integration test against a Jenkins container next to a Gitea (JenkinsTestServer, TestJenkinsCIProvider, src/test/docker/jenkins with Dockerfile and its targets ci and devel, plugins.txt and the init script tl-factory.groovy with the TL_JENKINS_* variables), the end-to-end test TestProjectCI of a new project and its first build against an external Gitea and Jenkins and updating Jenkins and its plugins (Renovate).
 order: 40
 ---
 
@@ -24,19 +24,35 @@ server; without a provider, CI is off and the control application works as witho
 ## Configuration
 
 `tl-factory` registers the service without provider. An installation that uses CI adds the module
-`tl-factory-jenkins` (`com.top-logic:tl-factory-jenkins`) and configures the provider:
+`tl-factory-jenkins` (`com.top-logic:tl-factory-jenkins`; `tl-factory-app` depends on it). Its
+configuration `tl-factory-jenkins.conf.config.xml` adds the provider, with its settings taken from
+the environment:
 
 ```xml
 <config service-class="com.top_logic.factory.ci.CIService">
 	<instance class="com.top_logic.factory.ci.CIService">
 		<provider class="com.top_logic.factory.jenkins.JenkinsCIProvider"
-			base-url="https://jenkins.example.com/"
-			user="tl-factory"
-			scm-credentials-id="gitea-read"
+			base-url="%FACTORY_JENKINS_URL%"
+			folder="%FACTORY_JENKINS_FOLDER%"
+			scm-credentials-id="%FACTORY_JENKINS_SCM_CREDENTIALS%"
+			user="%FACTORY_JENKINS_USER%"
 		/>
 	</instance>
 </config>
 ```
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `tl_factory_jenkins_url` | *(empty)* | `base-url`, the URL of the Jenkins; empty switches CI off. |
+| `tl_factory_jenkins_user` | `tl-factory` | `user`, the Jenkins user of the requests. |
+| `tl_factory_jenkins_folder` | `tl-factory` | `folder` of the jobs; empty for the top level. |
+| `tl_factory_jenkins_scm_credentials` | *(empty)* | `scm-credentials-id`, the Jenkins credential the jobs check out with; empty for none. |
+| `tl_factory_jenkins_token` | - | The API token of the user, a [named secret](doc:credentials/secret-stores) read by the default `credentials`. |
+
+Like a git hosting provider, a provider whose `base-url` is empty is switched off: `CIService`
+does not create it and is disabled as without provider (`ServerProviderConfig.isSwitchedOn`, see
+[git hosting](doc:factory/git-hosting#configuration)). CI needs git hosting: without it, no
+project has a repository to build.
 
 | Property of `CIService` | Default | Meaning |
 |---|---|---|
@@ -45,7 +61,7 @@ server; without a provider, CI is off and the control application works as witho
 
 | Property of `JenkinsCIProvider` | Default | Meaning |
 |---|---|---|
-| `base-url` | *(mandatory)* | URL of the Jenkins, its "Jenkins URL"; the pages of jobs and builds are reported below it. |
+| `base-url` | *(empty: off)* | URL of the Jenkins, its "Jenkins URL"; the pages of jobs and builds are reported below it. |
 | `user` | none | Jenkins user of the requests, if `credentials` is not set. |
 | `credentials` | basic authentication of `user` with the API token in the secret `tl_factory_jenkins_token` | How the requests are authenticated, any `CredentialProvider`, see [credential providers](doc:credentials/credential-providers). |
 | `folder` | `tl-factory` | Folder of the jobs, nested folders separated by `/`; empty for the top level. Created if missing. |
@@ -66,7 +82,8 @@ rejected again, it fails with `ERROR_CI_AUTHENTICATION_FAILED__SERVICE`. Neither
 ### Prerequisites in Jenkins
 
 - **Plugins**: Pipeline (`workflow-job`, `workflow-cps`, and for the default Jenkinsfile the
-  declarative pipeline of `workflow-aggregator`), Git (`git`), Credentials (`credentials`), Folders
+  declarative pipeline `pipeline-model-definition` with the steps of `workflow-basic-steps` and
+  `workflow-durable-task-step`), Git (`git`), Credentials (`credentials`), Folders
   (`cloudbees-folder`).
 - **A user with an API token** for the control application, with the permissions Overall/Read,
   Job/Create, Job/Configure, Job/Read and Job/Build in the folder of the jobs (and Job/Create in
@@ -217,41 +234,67 @@ repository and the warning without one, `ensureJob` and the first build after th
 failing CI server only a warning) and the functions of the views.
 
 `TestJenkinsCIProvider` of `tl-factory-jenkins` runs against a real Jenkins (`JenkinsTestServer`):
-the test builds the image from `tl-factory-jenkins/src/test/docker/jenkins` - the system property
-`tl.factory.jenkins.context` set by the build names it -, and starts it on a Docker network of its
-own next to a Gitea of `GiteaTestServer` (test-jar of `tl-factory-gitea`, the version its client is
-generated from), which Jenkins reaches as `http://gitea:3000/`. The init script
-`init.groovy.d/tl-factory-test.groovy` creates, from the environment of the container, the
-administrator with an API token (`addFixedNewToken`), full control for logged-in users, the SCM
-credential with the read token of the Gitea, and two executors on the built-in node; the setup
-wizard is off. The test checks: `ensureJob` creating the folders and the job and replacing its
-configuration (clone URL, branch, credential, escaped description), a build of an `echo` pipeline
-pushed to the Gitea ending `SUCCESS` with its console and a cut console, a build of an `error`
-pipeline ending `FAILURE` with the error in its console, missing jobs and builds, and a wrong token
-failing with `ERROR_CI_AUTHENTICATION_FAILED__SERVICE`. Containers and the network are removed
-afterwards. Building the image (cached by Docker after the first run) and starting both servers
-takes well under a minute; without a reachable Docker daemon or without the system property
-(e.g. from the IDE) the suite is empty.
+the test builds the target `ci` of the image context `tl-factory-jenkins/src/test/docker/jenkins` -
+the system property `tl.factory.jenkins.context` set by the build names it -, and starts it on a
+Docker network of its own next to a Gitea of `GiteaTestServer` (test-jar of `tl-factory-gitea`, the
+version its client is generated from), which Jenkins reaches as `http://gitea:3000/`. The init
+script `init.groovy.d/tl-factory.groovy` sets Jenkins up at every start from the environment of the
+container: the administrator `TL_JENKINS_ADMIN` with the password `TL_JENKINS_ADMIN_PASSWORD` and
+the API token `TL_JENKINS_API_TOKEN` (`addFixedNewToken`, kept while it is valid), full control for
+logged-in users, the SCM credential `TL_JENKINS_SCM_CREDENTIALS_ID` with `TL_JENKINS_SCM_USER` and
+`TL_JENKINS_SCM_PASSWORD` (here the read token of the Gitea), `TL_JENKINS_EXECUTORS` executors on
+the built-in node (default 2) and optionally the Jenkins URL `TL_JENKINS_URL`; the setup wizard is
+off. The test checks: `ensureJob` creating the folders and the job and replacing its configuration
+(clone URL, branch, credential, escaped description), a build of an `echo` pipeline pushed to the
+Gitea ending `SUCCESS` with its console and a cut console, a build of an `error` pipeline ending
+`FAILURE` with the error in its console, missing jobs and builds, and a wrong token failing with
+`ERROR_CI_AUTHENTICATION_FAILED__SERVICE`. Containers and the network are removed afterwards.
+Building the image (cached by Docker after the first run) and starting both servers takes well
+under a minute; without a reachable Docker daemon or without the system property (e.g. from the
+IDE) the suite is empty. `TestJenkinsSwitch` checks that an empty `base-url` switches CI off.
 
 ```bash
 mvn test -DskipTests=false -pl tl-factory-jenkins
 mvn test -DskipTests=false -pl tl-factory-jenkins -Dtest=test.com.top_logic.factory.jenkins.TestJenkinsCIProvider
 ```
 
+`TestProjectCI` of `tl-factory-jenkins` runs the creation flow of a new project end to end against
+an external Gitea and Jenkins, e.g. the [local setup](doc:factory#local-setup): it starts
+`GitHostingService` and `CIService` from the configuration of the modules - the environment
+variables and secrets of the control application -, creates a Docker workspace whose new
+application is pushed with the default `Jenkinsfile` to a new repository through the git route of
+a workspace proxy on the host, and waits for the first build of its job, which must end `SUCCESS`
+(`mvn -B verify` of the generated application); the end of the console is printed. It runs only
+with `-Dtl.factory.integration=true`, `tl_factory_gitea_url` and `tl_factory_jenkins_url` set and a
+Docker daemon, and leaves a repository and a job of a new name behind:
+
+```bash
+export tl_factory_gitea_url=http://localhost:3300/ tl_factory_jenkins_url=http://localhost:8380/
+export tl_factory_jenkins_scm_credentials=tl-factory-gitea
+export tl_factory_gitea_token="$(cat ~/.top-logic/secrets/tl_factory_gitea_token)"
+export tl_factory_jenkins_token="$(cat ~/.top-logic/secrets/tl_factory_jenkins_token)"
+mvn test -DskipTests=false -pl tl-factory-jenkins -Dtest=test.com.top_logic.factory.jenkins.TestProjectCI -Dtl.factory.integration=true
+```
+
 ## Updating Jenkins
 
-The Jenkins of the test is pinned in one place, its image context
-`tl-factory-jenkins/src/test/docker/jenkins`:
+The Jenkins of the tests and of the [local setup](doc:factory#local-setup) is pinned in one
+place, its image context `tl-factory-jenkins/src/test/docker/jenkins`:
 
 - `Dockerfile`: the LTS release in `ARG JENKINS_VERSION`, e.g. `2.580.1-lts-jdk21`, annotated with
   `# renovate: datasource=docker depName=jenkins/jenkins`; a `customManagers` entry of
   `renovate.json` reads it, and the tag suffix `-lts-jdk21` keeps the updates on the LTS line with
-  Java 21.
+  Java 21. The target `ci` is the Jenkins of the tests; the target `devel` adds Maven
+  (`ARG MAVEN_VERSION`, annotated the same way) and the Maven settings of the workspace image
+  (`settings.xml` of its image context, given as the additional build context `workspace-image`,
+  with `REPOSITORY_URL` for its repository), the build tools of the default Jenkinsfile.
 - `plugins.txt`: every plugin with its version, the ones the jobs need and all their dependencies,
   installed by `jenkins-plugin-cli`. Renovate's manager `jenkins` proposes updates of each.
 
 Both are grouped into one pull request (package rule *Jenkins of tl-factory-jenkins*), which is not
-merged automatically: run `mvn test -DskipTests=false -pl tl-factory-jenkins` first. If an updated
+merged automatically: run `mvn test -DskipTests=false -pl tl-factory-jenkins` first, and
+`TestProjectCI` against the local setup rebuilt with `tl-factory-devel.sh` for the build of a real
+application. If an updated
 plugin needs a newer or an additional dependency, `jenkins-plugin-cli` fails the image build naming
 it; list all plugins the image gets after the update with
 

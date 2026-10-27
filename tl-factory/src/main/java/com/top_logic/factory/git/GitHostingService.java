@@ -20,6 +20,7 @@ import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.DevelopmentCategory;
+import com.top_logic.factory.server.ServerProviderConfig;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -27,8 +28,9 @@ import com.top_logic.util.error.TopLogicException;
  * the projects live on.
  *
  * <p>
- * Git hosting is optional: without a {@link Config#getProvider() provider}, the service is
- * {@link #isEnabled() disabled}, and the projects have no repository on a hosting service.
+ * Git hosting is optional: without a {@link Config#getProvider() provider}, or with one switched off by an
+ * empty {@link ServerProviderConfig#getBaseUrl() base URL}, the service is {@link #isEnabled()
+ * disabled}, and the projects have no repository on a hosting service.
  * </p>
  *
  * <p>
@@ -59,7 +61,8 @@ public class GitHostingService extends ConfiguredManagedClass<GitHostingService.
 		 * The git hosting service the repositories of the projects are created on.
 		 *
 		 * <p>
-		 * If not set, git hosting is switched off.
+		 * If not set, git hosting is switched off; so it is with a provider whose
+		 * {@link ServerProviderConfig#getBaseUrl() base URL} is empty, which is not created then.
 		 * </p>
 		 *
 		 * @see #PROVIDER
@@ -114,7 +117,8 @@ public class GitHostingService extends ConfiguredManagedClass<GitHostingService.
 	 */
 	public GitHostingService(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_provider = context.getInstance(config.getProvider());
+		PolymorphicConfiguration<? extends GitHostingProvider> provider = config.getProvider();
+		_provider = ServerProviderConfig.isSwitchedOn(provider) ? context.getInstance(provider) : null;
 	}
 
 	/**

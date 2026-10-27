@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,7 +37,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
@@ -56,6 +56,7 @@ import com.top_logic.factory.ci.CIProvider;
 import com.top_logic.factory.ci.CIService;
 import com.top_logic.factory.ci.I18NConstants;
 import com.top_logic.factory.git.GitRepository;
+import com.top_logic.factory.server.ServerProviderConfig;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -95,12 +96,7 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 	/**
 	 * Configuration of {@link JenkinsCIProvider}.
 	 */
-	public interface Config<I extends JenkinsCIProvider> extends PolymorphicConfiguration<I> {
-
-		/**
-		 * Configuration property name of {@link #getBaseUrl()}.
-		 */
-		String BASE_URL = "base-url";
+	public interface Config<I extends JenkinsCIProvider> extends ServerProviderConfig<I> {
 
 		/**
 		 * Configuration property name of {@link #getUser()}.
@@ -150,10 +146,15 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 		 * and builds the provider reports are below it.
 		 * </p>
 		 *
+		 * <p>
+		 * Empty switches the provider off, see {@link ServerProviderConfig}.
+		 * </p>
+		 *
 		 * @see #BASE_URL
 		 */
+		@Override
 		@Name(BASE_URL)
-		@Mandatory
+		@Nullable
 		String getBaseUrl();
 
 		/**
@@ -493,7 +494,7 @@ public class JenkinsCIProvider extends AbstractConfiguredInstance<JenkinsCIProvi
 	@CalledByReflection
 	public JenkinsCIProvider(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_baseUrl = withSlash(config.getBaseUrl().strip());
+		_baseUrl = withSlash(Objects.toString(config.getBaseUrl(), "").strip());
 		URI base;
 		try {
 			base = URI.create(_baseUrl);

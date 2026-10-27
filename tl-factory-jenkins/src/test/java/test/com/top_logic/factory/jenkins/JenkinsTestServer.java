@@ -55,7 +55,8 @@ import com.top_logic.factory.jenkins.JenkinsCIProvider;
  * <p>
  * The image is built from the image context named by the system property {@link #CONTEXT_PROPERTY}
  * (the build sets it to {@code src/test/docker/jenkins}), which pins the Jenkins release and its
- * plugins. The container gets the administrator {@link #ADMIN} with a random API token and the
+ * plugins; its target {@value #IMAGE_TARGET}, without the build tools of the local development
+ * setup. The container gets the administrator {@link #ADMIN} with a random API token and the
  * Jenkins credential {@link #SCM_CREDENTIALS_ID} with the read token of the Gitea. The Gitea is
  * reached from the Jenkins container at {@link #GITEA_HOST}. If no Docker daemon answers or the
  * image context is not given, {@link #suite(Class, Consumer)} contains no tests.
@@ -108,6 +109,43 @@ public final class JenkinsTestServer implements AutoCloseable {
 	private static final String LABEL = "test.tl-factory-jenkins";
 
 	private static final Duration STARTUP = Duration.ofSeconds(180);
+
+	/**
+	 * The build target of the image context for the integration tests, the Jenkins without the
+	 * build tools of the local development setup.
+	 */
+	private static final String IMAGE_TARGET = "ci";
+
+	/**
+	 * Environment variable of the container naming the administrator, read by the init script of
+	 * the image.
+	 */
+	private static final String ENV_ADMIN = "TL_JENKINS_ADMIN";
+
+	/**
+	 * Environment variable of the container with the password of the administrator.
+	 */
+	private static final String ENV_ADMIN_PASSWORD = "TL_JENKINS_ADMIN_PASSWORD";
+
+	/**
+	 * Environment variable of the container with the API token of the administrator.
+	 */
+	private static final String ENV_API_TOKEN = "TL_JENKINS_API_TOKEN";
+
+	/**
+	 * Environment variable of the container with the ID of the SCM credential.
+	 */
+	private static final String ENV_SCM_CREDENTIALS_ID = "TL_JENKINS_SCM_CREDENTIALS_ID";
+
+	/**
+	 * Environment variable of the container with the user of the SCM credential.
+	 */
+	private static final String ENV_SCM_USER = "TL_JENKINS_SCM_USER";
+
+	/**
+	 * Environment variable of the container with the password of the SCM credential.
+	 */
+	private static final String ENV_SCM_PASSWORD = "TL_JENKINS_SCM_PASSWORD";
 
 	private final DockerClient _docker;
 
@@ -185,7 +223,7 @@ public final class JenkinsTestServer implements AutoCloseable {
 		String containerId = null;
 		try {
 			gitea = GiteaTestServer.start(GiteaTestServer.pinnedImage(), network, GITEA_HOST);
-			docker.buildImageCmd(context).withTags(Set.of(IMAGE)).exec(new BuildImageResultCallback()).awaitImageId();
+			docker.buildImageCmd(context).withTarget(IMAGE_TARGET).withTags(Set.of(IMAGE)).exec(new BuildImageResultCallback()).awaitImageId();
 
 			byte[] secret = new byte[TOKEN_BYTES];
 			new SecureRandom().nextBytes(secret);
@@ -197,12 +235,12 @@ public final class JenkinsTestServer implements AutoCloseable {
 				.withName("tl-factory-jenkins-test-" + suffix)
 				.withLabels(Map.of(LABEL, "true"))
 				.withEnv(
-					"TL_TEST_ADMIN=" + ADMIN,
-					"TL_TEST_ADMIN_PASSWORD=" + ADMIN_PASSWORD,
-					"TL_TEST_API_TOKEN=" + token,
-					"TL_TEST_SCM_CREDENTIALS_ID=" + SCM_CREDENTIALS_ID,
-					"TL_TEST_SCM_USER=" + GiteaTestServer.ADMIN,
-					"TL_TEST_SCM_PASSWORD=" + gitea.readToken())
+					ENV_ADMIN + "=" + ADMIN,
+					ENV_ADMIN_PASSWORD + "=" + ADMIN_PASSWORD,
+					ENV_API_TOKEN + "=" + token,
+					ENV_SCM_CREDENTIALS_ID + "=" + SCM_CREDENTIALS_ID,
+					ENV_SCM_USER + "=" + GiteaTestServer.ADMIN,
+					ENV_SCM_PASSWORD + "=" + gitea.readToken())
 				.withExposedPorts(http)
 				.withHostConfig(HostConfig.newHostConfig()
 					.withNetworkMode(network)

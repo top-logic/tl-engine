@@ -24,6 +24,16 @@
       <artifactId>tl-factory</artifactId>
     </dependency>
     <dependency>
+      <!-- Gitea as git hosting service, switched on by tl_factory_gitea_url. -->
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-factory-gitea</artifactId>
+    </dependency>
+    <dependency>
+      <!-- Jenkins as CI server, switched on by tl_factory_jenkins_url. -->
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-factory-jenkins</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-view</artifactId>
     </dependency>

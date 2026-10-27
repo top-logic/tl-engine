@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<alias>
+		<entry name="%FACTORY_GITEA_URL%" value="${env:tl_factory_gitea_url:}" comment="URL of the Gitea server the repositories of the projects are created on, its ROOT_URL; empty switches git hosting off."/>
+		<entry name="%FACTORY_GITEA_OWNER%" value="${env:tl_factory_gitea_owner:tl-factory}" comment="Organization of the Gitea server the repositories of the projects are created in."/>
+		<entry name="%FACTORY_GITEA_REQUIRED_APPROVALS%" value="${env:tl_factory_gitea_required_approvals:1}" comment="Approvals a pull request to the protected default branch of a project repository needs."/>
+	</alias>
+</root>

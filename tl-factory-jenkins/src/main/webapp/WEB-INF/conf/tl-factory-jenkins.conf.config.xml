@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			Jenkins as CI server of the project repositories, configured from the environment: switched
+			off as long as tl_factory_jenkins_url is empty. The requests are authenticated as the user
+			tl_factory_jenkins_user with the API token in the secret tl_factory_jenkins_token.
+		-->
+		<config service-class="com.top_logic.factory.ci.CIService">
+			<instance class="com.top_logic.factory.ci.CIService">
+				<provider class="com.top_logic.factory.jenkins.JenkinsCIProvider"
+					base-url="%FACTORY_JENKINS_URL%"
+					folder="%FACTORY_JENKINS_FOLDER%"
+					scm-credentials-id="%FACTORY_JENKINS_SCM_CREDENTIALS%"
+					user="%FACTORY_JENKINS_USER%"
+				/>
+			</instance>
+		</config>
+	</services>
+</application>

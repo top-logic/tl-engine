@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -33,6 +34,7 @@ import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitRepository;
+import com.top_logic.factory.server.ServerProviderConfig;
 import com.top_logic.factory.git.I18NConstants;
 import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.factory.gitea.client.ApiClient;
@@ -107,12 +109,7 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 	/**
 	 * Configuration of {@link GiteaHostingProvider}.
 	 */
-	public interface Config<I extends GiteaHostingProvider> extends PolymorphicConfiguration<I> {
-
-		/**
-		 * Configuration property name of {@link #getBaseUrl()}.
-		 */
-		String BASE_URL = "base-url";
+	public interface Config<I extends GiteaHostingProvider> extends ServerProviderConfig<I> {
 
 		/**
 		 * Configuration property name of {@link #getOwner()}.
@@ -142,10 +139,15 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 		 * server. The REST API is expected below it, at {@value GiteaHostingProvider#API_PATH}.
 		 * </p>
 		 *
+		 * <p>
+		 * Empty switches the provider off, see {@link ServerProviderConfig}.
+		 * </p>
+		 *
 		 * @see #BASE_URL
 		 */
+		@Override
 		@Name(BASE_URL)
-		@Mandatory
+		@Nullable
 		String getBaseUrl();
 
 		/**
@@ -280,7 +282,7 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 	@CalledByReflection
 	public GiteaHostingProvider(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		_baseUrl = withSlash(config.getBaseUrl().trim());
+		_baseUrl = withSlash(Objects.toString(config.getBaseUrl(), "").strip());
 		URI apiUri;
 		try {
 			apiUri = URI.create(_baseUrl).resolve(API_PATH);

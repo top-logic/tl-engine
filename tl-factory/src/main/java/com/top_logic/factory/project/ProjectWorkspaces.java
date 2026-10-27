@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import javax.lang.model.SourceVersion;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -163,6 +165,18 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * application and the start of the workspace identifier.
 	 */
 	private static final Pattern ARTIFACT_ID = Pattern.compile("[a-z][a-z0-9-]*");
+
+	/**
+	 * Separator of the names of a Maven group, which are the names of the Java package of an
+	 * application.
+	 */
+	private static final String GROUP_ID_SEPARATOR = ".";
+
+	/**
+	 * Separator of the parts of a Maven artifact, each of which becomes a name of the Java package
+	 * of an application.
+	 */
+	private static final String ARTIFACT_ID_SEPARATOR = "-";
 
 	private static final String WORKSPACE_ID_SEPARATOR = "-";
 
@@ -629,23 +643,52 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	/**
 	 * Checks the Maven group of an application.
 	 *
+	 * <p>
+	 * The group is the start of the Java package of the application, so its names must be Java
+	 * identifiers, none a reserved word.
+	 * </p>
+	 *
 	 * @return The problem with the given value, {@code null} if it is valid.
 	 */
 	public static ResKey checkGroupId(String groupId) {
 		if (groupId == null || !GROUP_ID.matcher(groupId).matches()) {
 			return I18NConstants.ERROR_INVALID_GROUP_ID__VALUE.fill(groupId);
 		}
-		return null;
+		return checkKeywords(groupId, GROUP_ID_SEPARATOR);
 	}
 
 	/**
 	 * Checks the Maven artifact of an application.
+	 *
+	 * <p>
+	 * The artifact is the context path of the application, the name of its repository and CI job
+	 * and the start of the workspace identifier. The archetype derives the end of the Java package
+	 * and the module name of the application from it, a name for each part between dashes: each
+	 * part must start with a letter and must not be a reserved word of Java.
+	 * </p>
 	 *
 	 * @return The problem with the given value, {@code null} if it is valid.
 	 */
 	public static ResKey checkArtifactId(String artifactId) {
 		if (artifactId == null || !ARTIFACT_ID.matcher(artifactId).matches()) {
 			return I18NConstants.ERROR_INVALID_ARTIFACT_ID__VALUE.fill(artifactId);
+		}
+		for (String part : artifactId.split(ARTIFACT_ID_SEPARATOR, -1)) {
+			if (part.isEmpty()) {
+				return I18NConstants.ERROR_ARTIFACT_ID_EMPTY_PART__VALUE.fill(artifactId);
+			}
+			if (!Character.isLetter(part.charAt(0))) {
+				return I18NConstants.ERROR_ARTIFACT_ID_PART_STARTS_WITH_DIGIT__VALUE_PART.fill(artifactId, part);
+			}
+		}
+		return checkKeywords(artifactId, ARTIFACT_ID_SEPARATOR);
+	}
+
+	private static ResKey checkKeywords(String value, String separator) {
+		for (String part : value.split(Pattern.quote(separator))) {
+			if (SourceVersion.isKeyword(part, SourceVersion.latest())) {
+				return I18NConstants.ERROR_JAVA_KEYWORD__VALUE_PART.fill(value, part);
+			}
 		}
 		return null;
 	}

@@ -200,12 +200,12 @@ public class TestProjectRepository extends BasicTestCase {
 	 * that is revoked afterwards; the branch is protected after the push and before the build.
 	 */
 	public void testNewRepository() throws Exception {
-		TLObject project = project("new-repo", null);
+		TLObject project = project("fresh-repo", null);
 		TLObject workspace = ProjectWorkspaces.getInstance().create(project);
 		assertEquals(log(workspace), WorkspaceStatus.RUNNING, awaitOperation(workspace));
 
-		String fullName = RecordingGitHostingProvider.DEFAULT_OWNER + "/new-repo";
-		assertEquals(List.of(RecordingGitHostingProvider.CREATE + " new-repo",
+		String fullName = RecordingGitHostingProvider.DEFAULT_OWNER + "/fresh-repo";
+		assertEquals(List.of(RecordingGitHostingProvider.CREATE + " fresh-repo",
 			RecordingGitHostingProvider.PROTECT + " " + fullName + " " + RecordingGitHostingProvider.DEFAULT_BRANCH),
 			_hosting.calls());
 		assertEquals(fullName, FactoryModel.getRepository(project).getFullName());
@@ -389,7 +389,7 @@ public class TestProjectRepository extends BasicTestCase {
 	 */
 	public void testNewRepositoryWithCI() throws Exception {
 		TestingProjectWorkspaces.setCI(_ci);
-		TLObject project = project("ci-new", null);
+		TLObject project = project("ci-fresh", null);
 		TLObject workspace = ProjectWorkspaces.getInstance().create(project);
 		assertEquals(log(workspace), WorkspaceStatus.RUNNING, awaitOperation(workspace));
 
@@ -398,7 +398,7 @@ public class TestProjectRepository extends BasicTestCase {
 		assertEquals(CIService.readResource(CIService.DEFAULT_PIPELINE_TEMPLATE), _writtenPipeline);
 		assertTrue(_writtenPipeline, _writtenPipeline.contains("mvn -B verify"));
 
-		String fullName = RecordingGitHostingProvider.DEFAULT_OWNER + "/ci-new";
+		String fullName = RecordingGitHostingProvider.DEFAULT_OWNER + "/ci-fresh";
 		String job = RecordingCIProvider.FOLDER + "/" + fullName;
 		assertEquals(List.of(RecordingCIProvider.ENSURE + " " + fullName, RecordingCIProvider.START + " " + job),
 			_ci.calls());

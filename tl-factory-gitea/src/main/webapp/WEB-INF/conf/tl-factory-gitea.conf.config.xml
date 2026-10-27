@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			Gitea as git hosting service of the project repositories, configured from the environment:
+			switched off as long as tl_factory_gitea_url is empty. The requests are authenticated with the
+			access token in the secret tl_factory_gitea_token.
+		-->
+		<config service-class="com.top_logic.factory.git.GitHostingService">
+			<instance class="com.top_logic.factory.git.GitHostingService">
+				<provider class="com.top_logic.factory.gitea.GiteaHostingProvider"
+					base-url="%FACTORY_GITEA_URL%"
+					owner="%FACTORY_GITEA_OWNER%"
+					required-approvals="%FACTORY_GITEA_REQUIRED_APPROVALS%"
+				/>
+			</instance>
+		</config>
+	</services>
+</application>

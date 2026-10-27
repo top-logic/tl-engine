@@ -55,7 +55,17 @@
     },
     {
       "customType": "regex",
-      "description": "Jenkins release of the integration test of tl-factory-jenkins in the ARG of its Dockerfile, annotated by a preceding '# renovate:' comment; the tag suffix (-lts-jdk21) keeps it on the LTS line.",
+      "description": "Gitea image of the local development setup of tl-factory-app, annotated by a preceding '# renovate:' comment; updated together with gitea.version of tl-factory-gitea.",
+      "managerFilePatterns": [
+        "/(^|/)tl-factory-app/devel/compose\\.yaml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+image: [^:\\s]+:(?<currentValue>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Jenkins release (and Maven of the target devel) of the image of tl-factory-jenkins in the ARGs of its Dockerfile, each annotated by a preceding '# renovate:' comment; the tag suffix (-lts-jdk21) keeps it on the LTS line.",
       "managerFilePatterns": [
         "/(^|/)tl-factory-jenkins/src/test/docker/jenkins/Dockerfile$/"
       ],
@@ -109,13 +119,15 @@
       "enabled": false
     },
     {
-      "description": "Gitea of tl-factory-gitea: an update also needs the specification of the new version in src/main/openapi (the build fails without it) and the integration test against the new image, see the developer article factory/git-hosting.",
+      "description": "Gitea of tl-factory-gitea and of the local development setup of tl-factory-app: an update also needs the specification of the new version in src/main/openapi (the build fails without it) and the integration test against the new image, see the developer article factory/git-hosting.",
       "matchFileNames": [
-        "tl-factory-gitea/pom.xml"
+        "tl-factory-gitea/pom.xml",
+        "tl-factory-app/devel/compose.yaml"
       ],
       "matchDepNames": [
         "gitea/gitea"
       ],
+      "groupName": "Gitea of tl-factory",
       "automerge": false,
       "labels": [
         "manual-step"

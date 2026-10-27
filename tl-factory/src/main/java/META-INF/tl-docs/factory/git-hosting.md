@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or working on the git hosting service of the control application (the repositories of the projects on a hosting service) - GitHostingService with its optional provider, GitHostingProvider (createRepository, findRepository with RepositoryName.parse for a clone URL or owner/name, protectBranch, gitUrl, gitCredentials), GitRepository, the repository of a project (tl.factory:Project repository and repositoryUrl) and how a workspace gets it (RepositorySource as ApplicationSource of ApplicationWorkspaces.create: create, record, generate and initial push before protectBranch, clone of an existing or adopted repository with the pom.xml check of artifactId and tl.version, retry after a failed run, cleanup and deletion keeping the repository, factoryGitHosting and factoryCheckRepository of the create form, the agent instructions with --append-system-prompt), the protected-files of GitHostingService and the commit identity user-name / user-email of the GitRoute, the git route of the workspace proxy (GitRoute at /git passing git's smart HTTP protocol through - info/refs, git-upload-pack, git-receive-pack -, the repository of the project of the workspace only, FORWARDED_REQUEST_HEADERS with Git-Protocol and Content-Encoding, the 401 challenge with WWW-Authenticate, the credential helper through GIT_CONFIG_COUNT / GIT_CONFIG_KEY_n / GIT_CONFIG_VALUE_n and TL_FACTORY_PROXY_TOKEN, TL_FACTORY_GIT_URL, remoteUrl and projectRemoteUrl, git commands of the control application with issueProcessToken), what Gitea accepts for git over HTTP, the test double RecordingGitHostingProvider, the Gitea implementation GiteaHostingProvider of the module tl-factory-gitea (base-url, owner, credentials, the secret tl_factory_gitea_token and the scopes of its access token, required-approvals), what its branch protection enforces in Gitea (no force push, protected_file_patterns, block_admin_merge_override), the error keys, the client generated from the OpenAPI specification of Gitea with openapi-generator-maven-plugin (gitea.version, apisToGenerate, FILTER, modelsToGenerate, the exclusions from doclint and TLDoclet), its integration tests against a Gitea container (GiteaTestServer, TestGiteaHostingProvider, TestGitRouteGitea with the git command line, TestRepositoryWorkspaces with Docker workspaces), TestProjectRepository, and updating Gitea.
+description: Read before configuring or working on the git hosting service of the control application (the repositories of the projects on a hosting service) - GitHostingService with its optional provider, GitHostingProvider (createRepository, findRepository with RepositoryName.parse for a clone URL or owner/name, protectBranch, gitUrl, gitCredentials), GitRepository, the repository of a project (tl.factory:Project repository and repositoryUrl) and how a workspace gets it (RepositorySource as ApplicationSource of ApplicationWorkspaces.create: create, record, generate and initial push before protectBranch, clone of an existing or adopted repository with the pom.xml check of artifactId and tl.version, retry after a failed run, cleanup and deletion keeping the repository, factoryGitHosting and factoryCheckRepository of the create form, the agent instructions with --append-system-prompt), the protected-files of GitHostingService and the commit identity user-name / user-email of the GitRoute, the git route of the workspace proxy (GitRoute at /git passing git's smart HTTP protocol through - info/refs, git-upload-pack, git-receive-pack -, the repository of the project of the workspace only, FORWARDED_REQUEST_HEADERS with Git-Protocol and Content-Encoding, the 401 challenge with WWW-Authenticate, the credential helper through GIT_CONFIG_COUNT / GIT_CONFIG_KEY_n / GIT_CONFIG_VALUE_n and TL_FACTORY_PROXY_TOKEN, TL_FACTORY_GIT_URL, remoteUrl and projectRemoteUrl, git commands of the control application with issueProcessToken), what Gitea accepts for git over HTTP, the test double RecordingGitHostingProvider, the Gitea implementation GiteaHostingProvider of the module tl-factory-gitea (its configuration from the environment variables tl_factory_gitea_url, tl_factory_gitea_owner and tl_factory_gitea_required_approvals, switched off by an empty base-url through ServerProviderConfig, base-url, owner, credentials, the secret tl_factory_gitea_token and the scopes of its access token, required-approvals), what its branch protection enforces in Gitea (no force push, protected_file_patterns, block_admin_merge_override), the error keys, the client generated from the OpenAPI specification of Gitea with openapi-generator-maven-plugin (gitea.version, apisToGenerate, FILTER, modelsToGenerate, the exclusions from doclint and TLDoclet), its integration tests against a Gitea container (GiteaTestServer, TestGiteaHostingProvider, TestGitRouteGitea with the git command line, TestRepositoryWorkspaces with Docker workspaces), TestProjectRepository, and updating Gitea.
 order: 30
 ---
 
@@ -23,22 +23,37 @@ repositories.
 ## Configuration
 
 `tl-factory` registers the service without provider. An installation that uses git hosting adds
-the module `tl-factory-gitea` (`com.top-logic:tl-factory-gitea`) and configures the provider:
+the module `tl-factory-gitea` (`com.top-logic:tl-factory-gitea`; `tl-factory-app` depends on it).
+Its configuration `tl-factory-gitea.conf.config.xml` adds the provider, with its settings taken
+from the environment:
 
 ```xml
 <config service-class="com.top_logic.factory.git.GitHostingService">
 	<instance class="com.top_logic.factory.git.GitHostingService">
 		<provider class="com.top_logic.factory.gitea.GiteaHostingProvider"
-			base-url="https://git.example.com/"
-			owner="factory-projects"
+			base-url="%FACTORY_GITEA_URL%"
+			owner="%FACTORY_GITEA_OWNER%"
+			required-approvals="%FACTORY_GITEA_REQUIRED_APPROVALS%"
 		/>
 	</instance>
 </config>
 ```
 
+| Variable | Default | Meaning |
+|---|---|---|
+| `tl_factory_gitea_url` | *(empty)* | `base-url`, the URL of the Gitea; empty switches git hosting off. |
+| `tl_factory_gitea_owner` | `tl-factory` | `owner`, the organization of the repositories. |
+| `tl_factory_gitea_required_approvals` | `1` | `required-approvals`. |
+| `tl_factory_gitea_token` | - | The access token, a [named secret](doc:credentials/secret-stores) read by the default `credentials`, see [the access token](#the-access-token). |
+
+A provider whose `base-url` is empty is switched off: `GitHostingService` does not create it and is
+disabled as without provider (`ServerProviderConfig.isSwitchedOn`; the configurations of
+`GiteaHostingProvider` and `JenkinsCIProvider` are `ServerProviderConfig`s). So the module can be
+part of an application that runs with and without git hosting, switched on by the URL alone.
+
 | Property | Default | Meaning |
 |---|---|---|
-| `base-url` | *(mandatory)* | URL of the Gitea server, its `ROOT_URL`; the REST API is expected at `api/v1` below it. |
+| `base-url` | *(empty: off)* | URL of the Gitea server, its `ROOT_URL`; the REST API is expected at `api/v1` below it. |
 | `owner` | *(mandatory)* | Organization the repositories are created in. |
 | `credentials` | the token in the secret `tl_factory_gitea_token` | How the requests are authenticated, any `CredentialProvider`, see [credential providers](doc:credentials/credential-providers). |
 | `timeout` | `30s` | How long a connection and each request may take. |
@@ -376,7 +391,10 @@ adopted repository, and no repository without git hosting.
 Without a reachable Docker daemon, run without the build's system property (e.g. from the IDE
 without `-Dtl.factory.gitea.image=gitea/gitea:<version>`), or - for `TestGitRouteGitea` - without
 `git` on the path, the suite is empty. `TestGitRoute` and `TestGitRouteServlet` of `tl-factory`
-test the route against a fake hosting service.
+test the route against a fake hosting service. `TestGiteaSwitch` checks that an empty `base-url`
+switches git hosting off. The whole creation flow of a new project with its CI build against an
+external Gitea and Jenkins is `TestProjectCI` of `tl-factory-jenkins`, see [the tests of
+CI](doc:factory/ci#the-tests).
 
 ```bash
 mvn test -DskipTests=false -pl tl-factory-gitea
@@ -387,7 +405,9 @@ mvn test -DskipTests=false -pl tl-factory-gitea -Dtest=test.com.top_logic.factor
 
 Renovate proposes a new Gitea version by changing `gitea.version` (a `customManagers` entry of
 `renovate.json` reads the comment `<!-- renovate: datasource=docker depName=gitea/gitea -->` above
-it). Such a pull request fails until the specification of the new version is added: the enforcer
+it), together with the image of the [local development setup](doc:factory#local-setup) in
+`tl-factory-app/devel/compose.yaml` (comment `# renovate: datasource=docker depName=gitea/gitea`
+above `image:`), in one pull request (package rule *Gitea of tl-factory*). Such a pull request fails until the specification of the new version is added: the enforcer
 rule `gitea-specification` of the module stops the build in `validate`, naming the missing file.
 The pull request carries the label `manual-step` and these steps in its description
 (`prBodyNotes` of the package rule):

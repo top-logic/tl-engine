@@ -1,5 +1,5 @@
 ---
-description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to services of the control application's environment through the workspace proxy or adding a route to it (WorkspaceProxyService, its routes, ProxyRoute, WorkspaceProxyHandler with the dispatch by path, the token as bearer token or basic-auth password, ProxyForwarding with the streamed request body, proxy-url) or the git route (GitRoute at /git, see factory/git-hosting) or the CI route (CIRoute at /ci, see factory/ci) or the Anthropic API (LLMRoute at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN and TL_FACTORY_PROXY_TOKEN with issue/revoke/processEnv/issueProcessToken and max-token-lifetime, the git configuration of the routes (gitConfig, GitEnvironment), allowed-sources with workspace-network, the port of its own (WorkspaceProxyListener, listen-address, listen-port), WorkspaceProxyServlet with servlet-enabled, TLS for the proxy, the token checks (TokenGrants, rate-limit with 429 and Retry-After, binding to the first source address), tl_factory_proxy_url, tl_factory_proxy_allowed_sources), before hardening or changing the limits of the workspace containers (memory-limit, cpu-limit, pids-limit, CapDrop ALL, no-new-privileges, host-ip, isolate-workspaces with enable_icc, recreating the workspace network, tl_factory_host_ip, tl_factory_workspace_*), before running the control application on Windows (WSL2), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root, no command as root), and before updating its tool versions or the base image digest or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, the agent-sessions volume, a lost conversation (isSessionLost), idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab).
+description: Read before running, configuring or embedding the control application for agent-built TopLogic applications (tl-factory, tl-factory-app) - projects and their workspace containers (WorkspaceService, DockerWorkspaceProvider, ApplicationWorkspaces, ProjectWorkspaces, the tl.factory model and the factory* TL-Script functions), the tl_factory_* environment variables, and running the control application on the host or in a container (Docker socket proxy, remote daemon with TLS, named volumes only, the workspace network, public host, label-based ownership), and before running commands in a workspace (startExec, ExecProcess with stdin, terminate and timeouts), following the log of its application (followLog) or letting workspaces reach the control application (extra hosts, host-gateway), before giving workspaces access to services of the control application's environment through the workspace proxy or adding a route to it (WorkspaceProxyService, its routes, ProxyRoute, WorkspaceProxyHandler with the dispatch by path, the token as bearer token or basic-auth password, ProxyForwarding with the streamed request body, proxy-url) or the git route (GitRoute at /git, see factory/git-hosting) or the CI route (CIRoute at /ci, see factory/ci) or the Anthropic API (LLMRoute at /llm-proxy, ANTHROPIC_BASE_URL, tokens per agent run in ANTHROPIC_AUTH_TOKEN and TL_FACTORY_PROXY_TOKEN with issue/revoke/processEnv/issueProcessToken and max-token-lifetime, the git configuration of the routes (gitConfig, GitEnvironment), allowed-sources with workspace-network, the port of its own (WorkspaceProxyListener, listen-address, listen-port), WorkspaceProxyServlet with servlet-enabled, TLS for the proxy, the token checks (TokenGrants, rate-limit with 429 and Retry-After, binding to the first source address), tl_factory_proxy_url, tl_factory_proxy_allowed_sources), before hardening or changing the limits of the workspace containers (memory-limit, cpu-limit, pids-limit, CapDrop ALL, no-new-privileges, host-ip, isolate-workspaces with enable_icc, recreating the workspace network, tl_factory_host_ip, tl_factory_workspace_*), before running the control application on Windows (WSL2), before changing the workspace image or the supervision of its application (the init process, the entry script as supervisor, tl-workspace-app and TL_APP_CONTROL, a failed start, APP_STOPPED, application-check-interval, the non-root user tl, Claude Code, the tl-claude-tools plugin, the Playwright MCP server with headless Chromium, pinned versions, volumes owned by root, no command as root), and before updating its tool versions or the base image digest or moving workspaces to a new image (the Renovate customManagers of the Dockerfile, the integration test before a merge, "Update workspace", WorkspaceProvider.recreate, the image attribute, factoryUpdate, factoryImageOutdated), and before working on the coding agent of a workspace (WorkspaceAgentService, WorkspaceAgent, AgentHarness, ClaudeCodeHarness, ClaudeCodeProtocol, the stream-json mapping to AgentEvents, tl.factory:AgentConversation as chat subject, AgentConversationResolver, --resume with the stored session ID, the agent-sessions volume, a lost conversation (isSessionLost), idle timeout, token per process, a refused token ending the run, --thinking-display, interrupt, tl_factory_agent_*), and before working on the views giving the agent a task and showing its conversations or the application log (Give a task, factoryCreateConversation, factoryAgentUnavailable, chatStart, the Agent tab, WorkspaceLogSource, WorkspaceLogFollow, the Application log tab), and before running the whole loop on one machine with the local development setup tl-factory-app/devel (compose.yaml with Gitea and Jenkins, tl-factory-devel.sh up / down / reset, the generated credentials in ~/.top-logic/secrets, the clone URLs with insteadOf, the environment of tl-factory-app).
 ---
 
 # Control application (tl-factory)
@@ -32,6 +32,13 @@ gets access to the container platform itself.
 | `CIService` / `CIProvider` | The CI jobs building the repositories of the projects, optional; `JenkinsCIProvider` of the module `tl-factory-jenkins` for Jenkins, see [CI](doc:factory/ci). |
 | `WorkspaceAgentService` / `WorkspaceAgent` | The coding agent of a workspace answering a chat, see [the agent in the workspace](#the-agent-in-the-workspace). |
 | `FactoryFunctions` | The TL-Script functions the views call: `factoryCreateWorkspace`, `factoryStart`, `factoryStop`, `factoryCleanup`, `factoryUpdate`, `factoryImageOutdated`, `factoryEngineVersion`, `factoryCheckGroupId`, `factoryCheckArtifactId`; for CI `factoryCiUnavailable`, `factoryStartBuild`, `factoryLastBuild` (see [CI](doc:factory/ci#the-project-and-its-views)). |
+
+The coordinates of a project are checked by `factoryCheckGroupId` and `factoryCheckArtifactId`
+(`ProjectWorkspaces.checkGroupId`, `checkArtifactId`): the archetype derives the Java package of
+the application from them - the group, then each part of the artifact between dashes as a name -,
+so every name of the group and every part of the artifact must be a Java identifier and none a
+reserved word of Java (`my-app2`, not `my-2app` or `my-new-app`). The artifact ID, lower case
+letters, digits and dashes, also names the context path, the repository and the CI job.
 
 The model module `tl.factory` has the classes `Project` (name, group ID, artifact ID, engine
 version, its repository on the git hosting service, the workspace as a composition) and `Workspace` (workspace ID, status, host port,
@@ -345,6 +352,10 @@ then.
 Further properties of the Docker provider (`tls-cert-path`, `connect-timeout`, `label-namespace`,
 `name-prefix`, `stop-timeout`, `terminate-timeout`) are set in the configuration of `WorkspaceService` of the
 application.
+
+The modules `tl-factory-gitea` and `tl-factory-jenkins`, on which `tl-factory-app` depends, define
+the variables of their providers: `tl_factory_gitea_*` switch [git hosting](doc:factory/git-hosting#configuration)
+on, `tl_factory_jenkins_*` [CI](doc:factory/ci#configuration); without their URLs, both are off.
 
 ### Hardening of the workspace containers
 
@@ -730,3 +741,59 @@ browsers on Windows reach the control application and the previews through `loca
 forwards; keep the sources of the control application and its database inside the WSL2 file system
 for speed. The resource limits of the workspaces apply inside the WSL2 VM, whose own size is set in
 `.wslconfig`.
+
+## Local setup
+
+`tl-factory-app/devel` runs the services of a complete loop on one machine - a Gitea as [git
+hosting](doc:factory/git-hosting) and a Jenkins as [CI server](doc:factory/ci) - for the control
+application running on the host (see [control application on the
+host](#control-application-on-the-host)):
+
+| File | Content |
+|---|---|
+| `compose.yaml` | Gitea of the version `tl-factory-gitea` generates its client from (`gitea.version`), and the Jenkins of `tl-factory-jenkins` (target `devel` of its image context: the pinned release and plugins with Maven and the Maven settings of the workspace image), on the Docker network `tl-factory-devel`. Gitea is published at `127.0.0.1:3300`, Jenkins at `127.0.0.1:8380` (`TL_FACTORY_DEVEL_GITEA_PORT`, `TL_FACTORY_DEVEL_JENKINS_PORT`). |
+| `tl-factory-devel.sh` | Starts, stops and resets the setup. |
+
+```bash
+tl-factory-app/devel/tl-factory-devel.sh          # start; set up on the first start
+tl-factory-app/devel/tl-factory-devel.sh down     # stop, keep the data
+tl-factory-app/devel/tl-factory-devel.sh reset    # remove containers, data and generated credentials
+```
+
+The first start creates the Gitea administrator `factory-admin`, the organization `tl-factory`, an
+access token with the scopes of the control application and a read token for Jenkins, and the
+Jenkins administrator `tl-factory` with an API token and the SCM credential `tl-factory-gitea`
+holding the read token. All credentials are generated and written to the secret folder of the
+developer (`tl_devel_secrets_dir`, default `~/.top-logic/secrets`, mode 600): the secrets
+`tl_factory_gitea_token` and `tl_factory_jenkins_token` of the control application, the passwords
+and tokens of the setup in `tl_factory_devel_gitea.env` and `tl_factory_devel_jenkins.env` (the
+environment of the Jenkins container). The script prints the URLs and logins. A start of an
+existing setup keeps the credentials; one that no longer works, e.g. a revoked token, is
+generated anew. A secret file of the control application holding a value not generated by the
+setup is never overwritten: the script stops and asks to move it.
+
+**URLs.** Gitea reports its clone URLs below its `ROOT_URL` `http://localhost:3300/`, which the
+control application, its workspace proxy and the browsers reach. Jenkins clones from these URLs
+as well: in its container, a system git configuration rewrites them to the Gitea service on the
+network of the setup (`url.http://gitea:3000/.insteadOf http://localhost:3300/`). The workspaces
+never talk to Gitea or Jenkins; they reach both through the [workspace
+proxy](#the-workspace-proxy).
+
+**The control application** runs on the host with this environment; the secrets are read from
+the secret folder by the development secret store of `deploy/local`:
+
+```bash
+export tl_factory_gitea_url=http://localhost:3300/
+export tl_factory_jenkins_url=http://localhost:8380/
+export tl_factory_jenkins_scm_credentials=tl-factory-gitea
+# The workspace proxy, reached by the workspaces through the gateway of Docker's default bridge.
+export tl_factory_proxy_url=http://host.docker.internal:8091
+export tl_factory_proxy_address=172.17.0.1
+export tl_factory_docker_extra_hosts=host.docker.internal:host-gateway
+export tl_factory_proxy_allowed_sources=workspace-network
+```
+
+`tl_factory_proxy_address` is the gateway of the default bridge (`docker network inspect bridge`).
+The agent of a workspace needs an Anthropic API key in `tl_anthropic_api_key` in addition; creating
+projects and workspaces, their repositories and CI builds work without. `TestProjectCI` runs the
+creation of a new project with its first build against the setup, see [the tests](doc:factory/ci#the-tests).

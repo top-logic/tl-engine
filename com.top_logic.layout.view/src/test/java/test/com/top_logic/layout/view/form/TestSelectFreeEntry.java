@@ -135,22 +135,30 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 	public void testEnteredValueIsOffered() throws Exception {
 		ReactDropdownSelectControl control = colors(FREE_TEXT);
 		assertSuccess(enter(control, "purple"));
-		assertSuccess(enter(control, "red"));
-		assertEquals("red", single(control));
+		assertEquals("purple", single(control));
 
-		control.executeCommand("loadOptions", Map.of());
-		String purpleId = null;
-		for (Object option : (List<?>) control.scriptingScalarState().get(DropdownSelectState.OPTIONS__PROP)) {
-			Map<?, ?> descriptor = (Map<?, ?>) option;
-			if ("purple".equals(descriptor.get(DropdownSelectState.Option.LABEL__PROP))) {
-				purpleId = (String) descriptor.get(DropdownSelectState.Option.VALUE__PROP);
-			}
-		}
-		assertNotNull("The entered value is offered.", purpleId);
+		String purpleId = offeredId(control, "purple");
+		assertNotNull("The entered value is offered while the field holds it.", purpleId);
 
 		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
 			Map.of(FieldValueArguments.VALUE, List.of(purpleId)));
 		assertEquals("purple", single(control));
+
+		assertSuccess(enter(control, "red"));
+		assertEquals("red", single(control));
+		assertNull("A replaced entered value is offered no longer.", offeredId(control, "purple"));
+	}
+
+	/** The option id of the option with the given label after loading the options, or null. */
+	private static String offeredId(ReactDropdownSelectControl control, String label) {
+		control.executeCommand("loadOptions", Map.of());
+		for (Object option : (List<?>) control.scriptingScalarState().get(DropdownSelectState.OPTIONS__PROP)) {
+			Map<?, ?> descriptor = (Map<?, ?>) option;
+			if (label.equals(descriptor.get(DropdownSelectState.Option.LABEL__PROP))) {
+				return (String) descriptor.get(DropdownSelectState.Option.VALUE__PROP);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -220,14 +228,16 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 		assertSame("A text matching an option chooses the option.", _category, value(control));
 
 		assertSuccess(enter(control, "FRESH"));
-		assertSame("The object created before is still chosen by its label.", keyword, value(control));
+		Object recreated = value(control);
+		assertNotSame("An object taken out of the field again is not chosen by its label.", keyword, recreated);
+		assertEquals("FRESH", ((TLObject) recreated).tValueByName(NAME));
 
 		_form.executeSave();
 		TLObject stored = (TLObject) _project.tValueByName(CATEGORY_REF);
 		try {
 			assertFalse(stored.tTransient());
 			assertNotSame(_category, stored);
-			assertEquals("Fresh", stored.tValueByName(NAME));
+			assertEquals("FRESH", stored.tValueByName(NAME));
 		} finally {
 			delete(stored);
 		}
@@ -299,12 +309,12 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 
 	private static void assertRefused(ResKey expected, HandlerResult result) {
 		assertFalse(result.isSuccess());
-		assertEquals(expected.getKey(), result.getEncodedErrors().get(0).getKey());
+		assertEquals("The message is the title of the report.", expected.getKey(), result.getErrorTitle().getKey());
 	}
 
 	private static void assertRefused(ResKeyTemplate expected, HandlerResult result) {
 		assertFalse(result.isSuccess());
-		assertEquals(expected.getKey(), result.getEncodedErrors().get(0).getKey());
+		assertEquals("The message is the title of the report.", expected.getKey(), result.getErrorTitle().getKey());
 	}
 
 	/** A select picking one of the {@link #COLORS}, built by a provider of the given configuration. */

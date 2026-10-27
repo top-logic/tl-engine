@@ -145,9 +145,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * the order they were created.
 	 *
 	 * <p>
-	 * They are offered like options from then on, so a value that was entered and taken out of the
-	 * selection again can be chosen again, and a text entered once more chooses the value created
-	 * the first time instead of creating another one.
+	 * They are offered like options while the field holds them, so a text entered once more chooses
+	 * the value created the first time instead of creating another one. A value taken out of the
+	 * selection again is offered no longer: it was never stored, and the options show the values
+	 * the field can be set to, not the typing that led to the current value.
 	 * </p>
 	 */
 	private final List<Object> _enteredValues = new ArrayList<>();
@@ -679,7 +680,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		if (!hasFreeEntry()) {
-			return HandlerResult.error(I18NConstants.ERROR_NO_FREE_ENTRY);
+			return HandlerResult.error(I18NConstants.ERROR_NO_FREE_ENTRY, null);
 		}
 		String text = arguments.getText() == null ? "" : arguments.getText().trim();
 		if (text.isEmpty()) {
@@ -691,7 +692,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			try {
 				value = _textToValue.apply(text);
 			} catch (TopLogicException ex) {
-				return HandlerResult.error(ex.getErrorKey());
+				// With the exception, its message is the title of the report, not an internal error.
+				return HandlerResult.error(ex.getErrorKey(), ex);
 			}
 			if (value == null) {
 				return HandlerResult.DEFAULT_RESULT;
@@ -862,11 +864,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	/**
 	 * The options of the field followed by the {@link #_enteredValues values created from entered
-	 * texts} that are no options.
+	 * texts} that are no options and are still selected.
 	 */
 	private List<Object> offeredOptions() {
 		List<Object> result = new ArrayList<>(_selectModel.getOptions());
 		if (!_enteredValues.isEmpty()) {
+			_enteredValues.retainAll(selection());
 			Set<Object> contained = new HashSet<>(result);
 			for (Object entered : _enteredValues) {
 				if (contained.add(entered)) {

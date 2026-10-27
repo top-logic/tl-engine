@@ -6,6 +6,7 @@
 package com.top_logic.factory.project;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -32,11 +34,16 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.factory.agent.WorkspaceAgentService;
+import com.top_logic.factory.git.GitHostingProvider;
+import com.top_logic.factory.git.GitHostingService;
+import com.top_logic.factory.git.GitRoute;
+import com.top_logic.factory.git.RepositorySource;
 import com.top_logic.factory.proxy.WorkspaceProxyService;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceService;
 import com.top_logic.factory.workspace.WorkspaceState;
 import com.top_logic.factory.workspace.app.ApplicationFailedException;
+import com.top_logic.factory.workspace.app.ApplicationSource;
 import com.top_logic.factory.workspace.app.ApplicationSpec;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces.ApplicationState;
@@ -75,6 +82,7 @@ import com.top_logic.util.model.ModelService;
 	SchedulerService.Module.class,
 	SecureRandomService.Module.class,
 	WorkspaceProxyService.Module.class,
+	GitHostingService.Module.class,
 })
 @ServiceCategory.Of(DevelopmentCategory.class)
 public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.Config<?>> {
@@ -223,6 +231,15 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 	 * routes need to find it, e.g. their URLs, in its environment.
 	 * </p>
 	 *
+	 * <p>
+	 * With {@link GitHostingService git hosting}, the sources live in the
+	 * {@link FactoryModel#PROJECT_REPOSITORY repository of the project} (see
+	 * {@link RepositorySource}): a project without repository gets one, created with the generated
+	 * application as its first commit; the repository of a project that has one - entered when the
+	 * project was created, or created for an earlier workspace - is cloned. Without git hosting,
+	 * the application is generated in the workspace only.
+	 * </p>
+	 *
 	 * @param project
 	 *        A project without workspace.
 	 * @return The workspace.
@@ -257,6 +274,10 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 		}
 		TLObject workspace = created.workspace();
 		ApplicationSpec spec = created.spec();
+		ApplicationSource source = applicationSource(project);
+		if (source != null) {
+			spec.setSource(source);
+		}
 		run(workspace, "Creating application " + groupId + ":" + artifactId + " " + version + ".", log -> {
 			WorkspaceInfo info = getApplications().create(spec, log);
 			log.update(w -> {
@@ -267,6 +288,85 @@ public class ProjectWorkspaces extends ConfiguredManagedClass<ProjectWorkspaces.
 			awaitApplication(log, workspaceId, artifactId);
 		});
 		return workspace;
+	}
+
+	/**
+	 * Where the sources of the application of the given project come from.
+	 *
+	 * @return The {@link RepositorySource} of the repository of the project if git hosting is
+	 *         {@link #getGitHosting() switched on}, {@code null} for the default, the archetype.
+	 */
+	protected ApplicationSource applicationSource(TLObject project) {
+		GitHostingProvider hosting = getGitHosting();
+		if (hosting == null) {
+			return null;
+		}
+		WorkspaceProxyService proxy = WorkspaceProxyService.getInstance();
+		GitRoute route = proxy == null ? null : proxy.getRoute(GitRoute.class);
+		String routeUrl = route == null ? null : proxy.getRouteUrl(route);
+		return new RepositorySource(hosting, proxy, routeUrl,
+			FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY),
+			FactoryModel.getString(project, FactoryModel.PROJECT_NAME), getProtectedFiles(),
+			repository -> commit(() -> FactoryModel.setRepository(project, repository)));
+	}
+
+	/**
+	 * The git hosting service the repositories of the projects are on.
+	 *
+	 * @implSpec The provider of the {@link GitHostingService}.
+	 *
+	 * @return The provider, {@code null} if git hosting is switched off.
+	 */
+	protected GitHostingProvider getGitHosting() {
+		if (!GitHostingService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		GitHostingService service = GitHostingService.getInstance();
+		return service.isEnabled() ? service.getProvider() : null;
+	}
+
+	/**
+	 * Whether the projects have repositories on a git hosting service.
+	 */
+	public boolean isGitHostingEnabled() {
+		return getGitHosting() != null;
+	}
+
+	/**
+	 * The protected files of the default branch of a project repository.
+	 *
+	 * @see GitHostingService#getProtectedFiles()
+	 */
+	public static List<String> getProtectedFiles() {
+		if (!GitHostingService.Module.INSTANCE.isActive()) {
+			return TypedConfiguration.newConfigItem(GitHostingService.Config.class).getProtectedFiles();
+		}
+		return GitHostingService.getInstance().getProtectedFiles();
+	}
+
+	/**
+	 * Checks the existing repository entered for a new project.
+	 *
+	 * <p>
+	 * A repository the project has recorded - with the {@link FactoryModel#PROJECT_REPOSITORY_URL
+	 * page} the hosting service reported for it - is not checked again: the hosting service is not
+	 * asked when the recorded repository is stored.
+	 * </p>
+	 *
+	 * @param project
+	 *        The project, {@code null} for none.
+	 * @param reference
+	 *        The repository as the user enters it: its full name {@code owner/name}, its clone
+	 *        URL or the URL of one of its pages; empty for a repository to create.
+	 * @return The problem with the reference, {@code null} if it is empty, names an existing
+	 *         repository, is recorded, or git hosting is switched off.
+	 */
+	public ResKey checkRepository(TLObject project, String reference) {
+		if (project != null && FactoryModel.getString(project, FactoryModel.PROJECT_REPOSITORY_URL) != null) {
+			return null;
+		}
+		GitHostingProvider hosting = getGitHosting();
+		return hosting == null ? null : RepositorySource.checkReference(hosting, reference);
 	}
 
 	/**

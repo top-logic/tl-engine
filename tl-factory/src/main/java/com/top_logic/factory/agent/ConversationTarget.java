@@ -33,6 +33,16 @@ public interface ConversationTarget {
 	String sessionId();
 
 	/**
+	 * What the agent is told about the workspace in addition to the instructions of its harness,
+	 * e.g. how its work reaches the application; no secret.
+	 *
+	 * @return The text, {@code null} for nothing.
+	 */
+	default String instructions() {
+		return null;
+	}
+
+	/**
 	 * Stores the session ID the agent reported.
 	 *
 	 * @param sessionId

@@ -21,6 +21,8 @@ public class MemoryConversation implements ConversationTarget {
 
 	private volatile String _sessionId;
 
+	private volatile String _instructions;
+
 	private final List<String> _stored = new CopyOnWriteArrayList<>();
 
 	/**
@@ -44,6 +46,20 @@ public class MemoryConversation implements ConversationTarget {
 	@Override
 	public String workingDir() {
 		return _workingDir;
+	}
+
+	@Override
+	public String instructions() {
+		return _instructions;
+	}
+
+	/**
+	 * Sets what the agent is told in addition to the instructions of its harness.
+	 *
+	 * @see #instructions()
+	 */
+	public void setInstructions(String instructions) {
+		_instructions = instructions;
 	}
 
 	@Override

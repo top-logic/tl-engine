@@ -71,14 +71,20 @@
 					<!--
 						The repository of the project on the git hosting service, its full name
 						owner/name. The workspace pushes to it through the git route of the workspace
-						proxy.
+						proxy. When the project is created, an existing repository may be entered,
+						also as clone URL; empty, the first workspace creates one. The first workspace
+						records the repository under its full name.
 					-->
 					<property name="repository"
 						type="tl.core:String"
 					>
 						<annotations>
-							<create-visibility value="hidden"/>
 							<visibility value="read-only"/>
+							<constraints>
+								<constraint-by-expression>
+									<check>value -&gt; object -&gt; factoryCheckRepository($object, $value)</check>
+								</constraint-by-expression>
+							</constraints>
 						</annotations>
 					</property>
 					<!-- The page of the repository in the web interface of the git hosting service. -->

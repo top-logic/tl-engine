@@ -13,6 +13,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -114,6 +115,16 @@ public class GitRoute implements ProxyRoute {
 		 */
 		String RESPONSE_TIMEOUT = "response-timeout";
 
+		/**
+		 * Configuration property name of {@link #getUserName()}.
+		 */
+		String USER_NAME = "user-name";
+
+		/**
+		 * Configuration property name of {@link #getUserEmail()}.
+		 */
+		String USER_EMAIL = "user-email";
+
 		@Override
 		@ClassDefault(GitRoute.class)
 		Class<? extends I> getImplementationClass();
@@ -148,7 +159,54 @@ public class GitRoute implements ProxyRoute {
 		@LongDefault(30 * 60 * 1000)
 		long getResponseTimeout();
 
+		/**
+		 * The author and committer name of the commits made in a workspace, by the agent and by the
+		 * control application; empty for none.
+		 *
+		 * <p>
+		 * Every git process in a workspace that gets the {@link GitRoute#gitConfig(String) git
+		 * configuration} of the route has it as {@link GitRoute#GIT_USER_NAME}, which takes
+		 * precedence over the configuration files of the workspace.
+		 * </p>
+		 *
+		 * @see #USER_NAME
+		 */
+		@Name(USER_NAME)
+		@StringDefault(DEFAULT_USER_NAME)
+		String getUserName();
+
+		/**
+		 * The author and committer e-mail address of the commits made in a workspace; empty for
+		 * none.
+		 *
+		 * @see #USER_EMAIL
+		 * @see #getUserName()
+		 */
+		@Name(USER_EMAIL)
+		@StringDefault(DEFAULT_USER_EMAIL)
+		String getUserEmail();
+
 	}
+
+	/**
+	 * Default of {@link Config#getUserName()}.
+	 */
+	public static final String DEFAULT_USER_NAME = "TopLogic Factory";
+
+	/**
+	 * Default of {@link Config#getUserEmail()}.
+	 */
+	public static final String DEFAULT_USER_EMAIL = "tl-factory@localhost";
+
+	/**
+	 * Key of git's configuration of the name of the author and committer of a commit.
+	 */
+	public static final String GIT_USER_NAME = "user.name";
+
+	/**
+	 * Key of git's configuration of the e-mail address of the author and committer of a commit.
+	 */
+	public static final String GIT_USER_EMAIL = "user.email";
 
 	/**
 	 * Default of {@link Config#getPath()}.
@@ -292,6 +350,10 @@ public class GitRoute implements ProxyRoute {
 
 	private final Duration _responseTimeout;
 
+	private final String _userName;
+
+	private final String _userEmail;
+
 	private HttpClient _client;
 
 	/**
@@ -305,7 +367,19 @@ public class GitRoute implements ProxyRoute {
 	 */
 	public GitRoute(InstantiationContext context, Config<?> config) {
 		this(config.getPath(), GitRoute::configuredProvider, GitRoute::workspaceRepository,
-			Duration.ofMillis(config.getConnectTimeout()), Duration.ofMillis(config.getResponseTimeout()));
+			Duration.ofMillis(config.getConnectTimeout()), Duration.ofMillis(config.getResponseTimeout()),
+			config.getUserName(), config.getUserEmail());
+	}
+
+	/**
+	 * Creates a {@link GitRoute} that sets no commit identity.
+	 *
+	 * @see #GitRoute(String, Supplier, Function, Duration, Duration, String, String)
+	 */
+	public GitRoute(String path, Supplier<? extends GitHostingProvider> provider,
+			Function<String, RepositoryName> repositoryOfWorkspace, Duration connectTimeout,
+			Duration responseTimeout) {
+		this(path, provider, repositoryOfWorkspace, connectTimeout, responseTimeout, null, null);
 	}
 
 	/**
@@ -323,15 +397,25 @@ public class GitRoute implements ProxyRoute {
 	 *        See {@link Config#getConnectTimeout()}.
 	 * @param responseTimeout
 	 *        See {@link Config#getResponseTimeout()}.
+	 * @param userName
+	 *        See {@link Config#getUserName()}; {@code null} for none.
+	 * @param userEmail
+	 *        See {@link Config#getUserEmail()}; {@code null} for none.
 	 */
 	public GitRoute(String path, Supplier<? extends GitHostingProvider> provider,
 			Function<String, RepositoryName> repositoryOfWorkspace, Duration connectTimeout,
-			Duration responseTimeout) {
+			Duration responseTimeout, String userName, String userEmail) {
 		_path = path;
 		_provider = provider;
 		_repositoryOfWorkspace = repositoryOfWorkspace;
 		_connectTimeout = connectTimeout;
 		_responseTimeout = responseTimeout;
+		_userName = blankToNull(userName);
+		_userEmail = blankToNull(userEmail);
+	}
+
+	private static String blankToNull(String value) {
+		return value == null || value.isBlank() ? null : value.strip();
 	}
 
 	@Override
@@ -346,18 +430,32 @@ public class GitRoute implements ProxyRoute {
 
 	/**
 	 * The {@link #CREDENTIAL_HELPER credential helper} for the URL of the route: an empty helper
-	 * first, which drops the helpers configured before for the URL, so that only this one answers.
+	 * first, which drops the helpers configured before for the URL, so that only this one answers;
+	 * then the commit identity, {@link #GIT_USER_NAME} and {@link #GIT_USER_EMAIL}, as far as
+	 * configured.
 	 *
 	 * <p>
 	 * Git matches the URL of the route against the URL of a request as prefix of its path, so the
 	 * helper answers for the repositories of the route only and the token never goes to another
 	 * host.
 	 * </p>
+	 *
+	 * @see Config#getUserName()
+	 * @see Config#getUserEmail()
 	 */
 	@Override
 	public List<Map.Entry<String, String>> gitConfig(String routeUrl) {
 		String key = helperKey(routeUrl);
-		return List.of(Map.entry(key, ""), Map.entry(key, CREDENTIAL_HELPER));
+		List<Map.Entry<String, String>> result = new ArrayList<>();
+		result.add(Map.entry(key, ""));
+		result.add(Map.entry(key, CREDENTIAL_HELPER));
+		if (_userName != null) {
+			result.add(Map.entry(GIT_USER_NAME, _userName));
+		}
+		if (_userEmail != null) {
+			result.add(Map.entry(GIT_USER_EMAIL, _userEmail));
+		}
+		return result;
 	}
 
 	/**

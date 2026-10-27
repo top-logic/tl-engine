@@ -77,8 +77,41 @@ public class FactoryFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Creates the workspace of a project: a container in which an empty application is generated,
-	 * built and started.
+	 * Whether the projects have repositories on a git hosting service.
+	 *
+	 * @return Whether git hosting is switched on.
+	 */
+	@Label("Git hosting enabled")
+	@SideEffectFree
+	public static boolean gitHosting() {
+		return ProjectWorkspaces.getInstance().isGitHostingEnabled();
+	}
+
+	/**
+	 * Checks the existing repository entered for a new project on the git hosting service.
+	 *
+	 * @param project
+	 *        The project the repository is entered for.
+	 * @param value
+	 *        The full name of the repository (owner/name), its clone URL or the URL of one of its
+	 *        pages; empty for a repository the control application creates.
+	 * @return The message describing what is wrong with the value; nothing if the value is empty
+	 *         or names a repository the control application can read, if the project has recorded
+	 *         its repository already, or if git hosting is switched off or the workspace service is
+	 *         not running.
+	 */
+	@Label("Check a repository")
+	@SideEffectFree
+	public static ResKey checkRepository(TLObject project, String value) {
+		if (value == null || value.isBlank() || !ProjectWorkspaces.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return ProjectWorkspaces.getInstance().checkRepository(project, value);
+	}
+
+	/**
+	 * Creates the workspace of a project: a container in which the application is generated - or,
+	 * with git hosting, cloned from the repository of the project -, built and started.
 	 *
 	 * @param project
 	 *        A project without workspace.

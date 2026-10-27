@@ -325,7 +325,7 @@ public class WorkspaceAgent implements ConversationBackend {
 		}
 		AgentHarness harness = _runtime.harness();
 		AgentLaunch launch = new AgentLaunch(_conversation.workingDir(), _conversation.sessionId(),
-			_runtime.tokens().processEnv(token));
+			_runtime.tokens().processEnv(token), _conversation.instructions());
 		Logger.info("Starting agent '" + harness.agentName() + "' in workspace '" + workspaceId + "': " + launch,
 			WorkspaceAgent.class);
 		return AgentProcess.start(_runtime.provider(), workspaceId, harness.command(launch), token,

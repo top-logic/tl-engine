@@ -3,7 +3,8 @@
 <!--
 	The projects of the control application and their workspaces: a list of the projects with the
 	state of each workspace and the address of its running application, and beside it the selected
-	project with its workspace and the output of the last operation on it (factory/project-detail.view.xml).
+	project with the link to its repository, its workspace and the output of the last operation on it
+	(factory/project-detail.view.xml).
 	While the project has a workspace, the project panel shows these in a tab "Details", beside it a
 	tab "Agent" with the conversations with the coding agent of the workspace
 	(factory/workspace-agent.view.xml) and a tab "Application log" with the log of the application
@@ -78,6 +79,20 @@
 			inputs="workspace"
 			observed-types="tl.factory:Workspace"
 		/>
+		<!--
+			The repository of the selected project as link to its page on the git hosting service; empty
+			while the project has none.
+		-->
+		<derived-channel name="repositoryLink"
+			inputs="project"
+			observed-types="tl.factory:Project"
+		>
+			<expr><![CDATA[{
+	url = $project.get(`tl.factory:Project#repositoryUrl`);
+	name = $project.get(`tl.factory:Project#repository`);
+	if($url == null, null, {{{<p>{#('Repository'@en, 'Repository'@de)}: <a href="{$url}" target="_blank" rel="noopener">{$name}</a></p>}}});
+}]]></expr>
+		</derived-channel>
 		<derived-channel name="previewLink"
 			inputs="workspace"
 		>
@@ -343,11 +358,13 @@
 											channel="previewLink"
 											to="previewLink"
 										/>
+										<bind
+											channel="repositoryLink"
+											to="repositoryLink"
+										/>
 									</view-ref>
 								</tab>
-								<!--
-									The conversations with the coding agent working in the workspace.
-								-->
+								<!-- The conversations with the coding agent working in the workspace. -->
 								<tab id="agent"
 									icon="css:bi bi-robot"
 									route="none"
@@ -410,6 +427,10 @@
 								<bind
 									channel="previewLink"
 									to="previewLink"
+								/>
+								<bind
+									channel="repositoryLink"
+									to="repositoryLink"
 								/>
 							</view-ref>
 						</default>

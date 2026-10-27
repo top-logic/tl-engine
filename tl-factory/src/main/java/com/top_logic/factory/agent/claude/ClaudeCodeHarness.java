@@ -36,7 +36,7 @@ import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
  * <pre>
  * claude -p --input-format stream-json --output-format stream-json --verbose --include-partial-messages
  *     --permission-mode bypassPermissions [--thinking-display &lt;display&gt;] [--model &lt;model&gt;]
- *     [--resume &lt;session ID&gt;] [&lt;extra args&gt;]
+ *     [--resume &lt;session ID&gt;] [--append-system-prompt &lt;instructions&gt;] [&lt;extra args&gt;]
  * </pre>
  *
  * <p>
@@ -154,6 +154,12 @@ public class ClaudeCodeHarness extends AbstractConfiguredInstance<ClaudeCodeHarn
 	public static final String OPTION_RESUME = "--resume";
 
 	/**
+	 * Option: text appended to the system prompt of Claude Code, the
+	 * {@link AgentLaunch#instructions() instructions} of the launch.
+	 */
+	public static final String OPTION_APPEND_SYSTEM_PROMPT = "--append-system-prompt";
+
+	/**
 	 * Creates a {@link ClaudeCodeHarness} from configuration.
 	 */
 	public ClaudeCodeHarness(InstantiationContext context, Config<?> config) {
@@ -193,6 +199,11 @@ public class ClaudeCodeHarness extends AbstractConfiguredInstance<ClaudeCodeHarn
 		if (resume != null && !resume.isEmpty()) {
 			command.add(OPTION_RESUME);
 			command.add(resume);
+		}
+		String instructions = launch.instructions();
+		if (instructions != null && !instructions.isBlank()) {
+			command.add(OPTION_APPEND_SYSTEM_PROMPT);
+			command.add(instructions);
 		}
 		for (String arg : config.getExtraArgs()) {
 			if (!arg.isBlank()) {

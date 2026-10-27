@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or working on the git hosting service of the control application (the repositories of the projects on a hosting service) - GitHostingService with its optional provider, GitHostingProvider (createRepository, findRepository with RepositoryName.parse for a clone URL or owner/name, protectBranch, gitUrl, gitCredentials), GitRepository, the repository of a project (tl.factory:Project repository and repositoryUrl), the git route of the workspace proxy (GitRoute at /git passing git's smart HTTP protocol through - info/refs, git-upload-pack, git-receive-pack -, the repository of the project of the workspace only, FORWARDED_REQUEST_HEADERS with Git-Protocol and Content-Encoding, the 401 challenge with WWW-Authenticate, the credential helper through GIT_CONFIG_COUNT / GIT_CONFIG_KEY_n / GIT_CONFIG_VALUE_n and TL_FACTORY_PROXY_TOKEN, TL_FACTORY_GIT_URL, remoteUrl and projectRemoteUrl, git commands of the control application with issueProcessToken), what Gitea accepts for git over HTTP, the test double RecordingGitHostingProvider, the Gitea implementation GiteaHostingProvider of the module tl-factory-gitea (base-url, owner, credentials, the secret tl_factory_gitea_token and the scopes of its access token, required-approvals), what its branch protection enforces in Gitea (no force push, protected_file_patterns, block_admin_merge_override), the error keys, the client generated from the OpenAPI specification of Gitea with openapi-generator-maven-plugin (gitea.version, apisToGenerate, FILTER, modelsToGenerate, the exclusions from doclint and TLDoclet), its integration tests against a Gitea container (GiteaTestServer, TestGiteaHostingProvider, TestGitRouteGitea with the git command line), and updating Gitea.
+description: Read before configuring or working on the git hosting service of the control application (the repositories of the projects on a hosting service) - GitHostingService with its optional provider, GitHostingProvider (createRepository, findRepository with RepositoryName.parse for a clone URL or owner/name, protectBranch, gitUrl, gitCredentials), GitRepository, the repository of a project (tl.factory:Project repository and repositoryUrl) and how a workspace gets it (RepositorySource as ApplicationSource of ApplicationWorkspaces.create: create, record, generate and initial push before protectBranch, clone of an existing or adopted repository with the pom.xml check of artifactId and tl.version, retry after a failed run, cleanup and deletion keeping the repository, factoryGitHosting and factoryCheckRepository of the create form, the agent instructions with --append-system-prompt), the protected-files of GitHostingService and the commit identity user-name / user-email of the GitRoute, the git route of the workspace proxy (GitRoute at /git passing git's smart HTTP protocol through - info/refs, git-upload-pack, git-receive-pack -, the repository of the project of the workspace only, FORWARDED_REQUEST_HEADERS with Git-Protocol and Content-Encoding, the 401 challenge with WWW-Authenticate, the credential helper through GIT_CONFIG_COUNT / GIT_CONFIG_KEY_n / GIT_CONFIG_VALUE_n and TL_FACTORY_PROXY_TOKEN, TL_FACTORY_GIT_URL, remoteUrl and projectRemoteUrl, git commands of the control application with issueProcessToken), what Gitea accepts for git over HTTP, the test double RecordingGitHostingProvider, the Gitea implementation GiteaHostingProvider of the module tl-factory-gitea (base-url, owner, credentials, the secret tl_factory_gitea_token and the scopes of its access token, required-approvals), what its branch protection enforces in Gitea (no force push, protected_file_patterns, block_admin_merge_override), the error keys, the client generated from the OpenAPI specification of Gitea with openapi-generator-maven-plugin (gitea.version, apisToGenerate, FILTER, modelsToGenerate, the exclusions from doclint and TLDoclet), its integration tests against a Gitea container (GiteaTestServer, TestGiteaHostingProvider, TestGitRouteGitea with the git command line, TestRepositoryWorkspaces with Docker workspaces), TestProjectRepository, and updating Gitea.
 order: 30
 ---
 
@@ -126,11 +126,81 @@ The provider reports failures as `TopLogicException` with the keys of
 
 ## The repository of a project
 
-A project has at most one repository. `tl.factory:Project` holds it in `repository`, its full name
-`owner/name`, and `repositoryUrl`, the page of the repository in the web interface; both are
-read-only and not shown in the form creating a project. `FactoryModel.getRepository(project)` reads
-the full name as `RepositoryName`, `FactoryModel.setRepository(project, repository)` sets both from
-a `GitRepository`.
+A project has at most one repository, the source of truth of its application. `tl.factory:Project`
+holds it in `repository`, its full name `owner/name`, and `repositoryUrl`, the page of the
+repository in the web interface; both are read-only once the project exists.
+`FactoryModel.getRepository(project)` reads the full name as `RepositoryName`,
+`FactoryModel.setRepository(project, repository)` sets both from a `GitRepository`. The detail view
+of a project shows the repository as a link to its page.
+
+### How a project gets its repository
+
+With git hosting switched on, `ProjectWorkspaces.create` (TL-Script `factoryCreateWorkspace`) puts
+a `RepositorySource` on the `ApplicationSpec` of the new workspace. `ApplicationWorkspaces.create`
+runs this `ApplicationSource` in the started workspace in place of the archetype generation, then
+builds the application as always. All git commands run in the workspace through the git route,
+with a token issued for them by `issueProcessToken` and revoked as soon as they are done:
+
+| Case | Steps |
+|---|---|
+| New application: `repository` empty | `createRepository(artifactId, project name)` and record it on the project at once, in a transaction of its own; `git ls-remote` finds the repository empty; generate from the archetype; `git init --initial-branch=<default branch>`, `git add --all`, `git commit` (message `RepositorySource.INITIAL_COMMIT_MESSAGE` and the engine version), `git remote add origin <remote>`, `git push --set-upstream origin <default branch>`; `protectBranch(default branch, protected files)`; build. |
+| Existing repository: `repository` set | `findRepository(reference)`, not found fails with `ERROR_UNKNOWN_REPOSITORY__REFERENCE`; record it under its full name; `git ls-remote` finds commits; `git clone <remote> /workspace/<artifactId>`; check the `pom.xml`; `protectBranch`; build. |
+| No git hosting provider | Generate from the archetype and build; the project has no repository. |
+
+The remote is `GitRoute.remoteUrl(<route URL>, repository)`; without workspace proxy or git route
+the source fails with `ERROR_NO_GIT_ROUTE`. The branch is protected after the first push, which
+Gitea rejects for a branch with protected files (see [branch protection](#branch-protection)), and
+also for an existing repository, which has its default branch already.
+
+**Adopting a repository.** The form creating a project has the field *Existing repository* while
+git hosting is on (TL-Script `factoryGitHosting()`): the full name `owner/name`, the clone URL or the
+URL of a page of a repository, as `RepositoryName.parse` reads it. The constraint of the attribute
+(`factoryCheckRepository($object, $value)`, `RepositorySource.checkReference`) asks
+`findRepository` and names the reference in `ERROR_UNKNOWN_REPOSITORY__REFERENCE` if there is no
+such repository; it does not ask again once the project has recorded its repository (its
+`repositoryUrl` is set), so storing the recorded repository does not contact the hosting service.
+The group, artifact and engine version are entered as for a new application. After the clone,
+`RepositorySource.Pom` reads the `pom.xml`: its own `artifactId` must be the artifact of the project
+(`ERROR_ARTIFACT_MISMATCH__REPOSITORY_FOUND_EXPECTED`), and if it names the TopLogic version
+literally - the property `tl.version` of an application of the archetype `tl-archetype-app`,
+otherwise the version of the parent `tl-parent-app` - it must be the engine version of the project
+(`ERROR_ENGINE_VERSION_MISMATCH__REPOSITORY_FOUND_EXPECTED`). A repository without `pom.xml` fails
+with `ERROR_NO_POM__REPOSITORY`. A failed check leaves the branch unprotected.
+
+**Retry.** A failure puts the workspace into state `ERROR` with the output in its log. The
+repository created by a failed run stays recorded, so the retry - *Clean up*, then *Create
+workspace* - finds it instead of failing with `ERROR_REPOSITORY_EXISTS__REPOSITORY`:
+
+- Failed before the first push (e.g. the push was rejected): `git ls-remote` finds the repository
+  empty, and the retry generates and pushes again.
+- Failed after the push (e.g. the protection or the build): the retry clones the repository.
+
+**Cleanup and deletion keep the repository.** *Clean up* removes the workspace with its clone; the
+project keeps its repository, and the next workspace clones it - work the agent did not push is
+lost with the workspace. Deleting the project leaves the repository on the hosting service as
+well; a new project of the same artifact then fails with `ERROR_REPOSITORY_EXISTS__REPOSITORY` and
+adopts the repository by entering it instead.
+
+**The agent.** For a project with repository, `StoredConversation.instructions()` tells the coding
+agent (`RepositorySource.agentInstructions`, passed by `ClaudeCodeHarness` as
+`--append-system-prompt`) that its work reaches the application only by commit and push to the
+default branch, that it must not force push, and which files are protected.
+
+### Protected files and commit identity
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `protected-files` of `GitHostingService` (`%FACTORY_GIT_PROTECTED_FILES%`, environment `tl_factory_git_protected_files`) | `Jenkinsfile, deploy/**` | Glob patterns of the files no push to the default branch of a project repository may change. |
+| `user-name` of `GitRoute` (`%FACTORY_GIT_USER_NAME%`, `tl_factory_git_user_name`) | `TopLogic Factory` | Author and committer name of the commits made in a workspace; empty for none. |
+| `user-email` of `GitRoute` (`%FACTORY_GIT_USER_EMAIL%`, `tl_factory_git_user_email`) | `tl-factory@localhost` | Author and committer e-mail address; empty for none. |
+
+The protected files are a policy of the repositories on the hosting service, independent of the
+provider and of the route, so they belong to `GitHostingService`. The identity belongs to the git
+route: it contributes `user.name` and `user.email` (`GitRoute.GIT_USER_NAME`,
+`GitRoute.GIT_USER_EMAIL`) to the git configuration of every process with a proxy token - the
+agent and the git commands of the control application alike -, after the credential helper. As
+`GIT_CONFIG_*` entries they take precedence over the configuration files in the workspace; the
+container has no identity in its environment.
 
 ## The git route
 
@@ -239,7 +309,10 @@ credentials with 401 and `WWW-Authenticate: Basic realm="Gitea"`, finds reposito
 ```xml
 <routes>
 	<route class="com.top_logic.factory.llm.LLMRoute" provider="%FACTORY_LLM_PROVIDER%"/>
-	<route class="com.top_logic.factory.git.GitRoute"/>
+	<route class="com.top_logic.factory.git.GitRoute"
+		user-email="%FACTORY_GIT_USER_EMAIL%"
+		user-name="%FACTORY_GIT_USER_NAME%"
+	/>
 </routes>
 ```
 
@@ -285,6 +358,19 @@ its own through `GiteaTestServer.suite(testClass, ...)`.
   refused repository of another project, a revoked token, the challenge without credential
   helper, and the rejections of a push changing a protected file and of a force push, with
   Gitea's message reaching git.
+- `TestRepositoryWorkspaces` (only with `-Dtl.factory.integration=true`; it builds the workspace
+  image, fills the release repository and builds three applications) runs `RepositorySource` in
+  Docker workspaces that reach a `GitRoute` on the host as `host.docker.internal`
+  (`extra-hosts=host.docker.internal:host-gateway`, the listener on `0.0.0.0`): the first workspace
+  creates the repository, pushes the generated application with the configured identity and
+  protects the branch; a workspace created anew clones the same commit, and a push of the agent's
+  environment changing the `Jenkinsfile` is refused while another one passes; a second project
+  adopting the repository by its clone URL clones it.
+
+`TestProjectRepository` of `tl-factory` checks the steps of all cases against a
+`RecordingGitHostingProvider` and a simulated git in a `RecordingWorkspaceProvider`: the order
+push before protection before build, the revoked token of the push, the retries, the checks of an
+adopted repository, and no repository without git hosting.
 
 Without a reachable Docker daemon, run without the build's system property (e.g. from the IDE
 without `-Dtl.factory.gitea.image=gitea/gitea:<version>`), or - for `TestGitRouteGitea` - without
@@ -293,6 +379,7 @@ test the route against a fake hosting service.
 
 ```bash
 mvn test -DskipTests=false -pl tl-factory-gitea
+mvn test -DskipTests=false -pl tl-factory-gitea -Dtest=test.com.top_logic.factory.gitea.TestRepositoryWorkspaces -Dtl.factory.integration=true
 ```
 
 ## Updating Gitea

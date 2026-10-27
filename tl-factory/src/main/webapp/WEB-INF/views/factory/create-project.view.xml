@@ -3,6 +3,8 @@
 <!--
 	Dialog creating a project: the form edits the draft in "model". Creating stores the project and
 	starts building its workspace in the background; the new project is written to "selection".
+	With git hosting, an existing repository can be entered, which the workspace clones; without
+	one, the workspace creates the repository of the project.
 -->
 <view>
 	<channels>
@@ -24,6 +26,17 @@
 			<field attribute="groupId"/>
 			<field attribute="artifactId"/>
 			<field attribute="engineVersion"/>
+			<visible-if
+				expr="factoryGitHosting()"
+				input="model"
+			>
+				<field attribute="repository">
+					<label>
+						<en>Existing repository</en>
+						<de>Bestehendes Repository</de>
+					</label>
+				</field>
+			</visible-if>
 			<commands>
 				<generic-command key="ENTER"
 					inputs="model"

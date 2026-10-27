@@ -26,6 +26,8 @@ public final class ApplicationSpec {
 
 	private String _initialPassword;
 
+	private ApplicationSource _source = ApplicationSource.ARCHETYPE;
+
 	private final Map<String, String> _env = new LinkedHashMap<>();
 
 	/**
@@ -107,6 +109,24 @@ public final class ApplicationSpec {
 	 */
 	public ApplicationSpec setInitialPassword(String initialPassword) {
 		_initialPassword = initialPassword;
+		return this;
+	}
+
+	/**
+	 * Where the sources of the application come from, by default
+	 * {@link ApplicationSource#ARCHETYPE generated from the archetype}.
+	 */
+	public ApplicationSource getSource() {
+		return _source;
+	}
+
+	/**
+	 * Sets where the sources of the application come from.
+	 *
+	 * @see #getSource()
+	 */
+	public ApplicationSpec setSource(ApplicationSource source) {
+		_source = Objects.requireNonNull(source, "source");
 		return this;
 	}
 

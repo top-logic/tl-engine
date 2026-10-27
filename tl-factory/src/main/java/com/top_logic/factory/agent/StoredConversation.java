@@ -5,7 +5,10 @@
  */
 package com.top_logic.factory.agent;
 
+import com.top_logic.factory.git.RepositoryName;
+import com.top_logic.factory.git.RepositorySource;
 import com.top_logic.factory.project.FactoryModel;
+import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -15,7 +18,8 @@ import com.top_logic.model.TLObject;
  * The {@link ConversationTarget} of a stored {@link FactoryModel#AGENT_CONVERSATION}.
  *
  * <p>
- * The agent works in the directory of the application of the workspace's project.
+ * The agent works in the directory of the application of the workspace's project; it is told how
+ * its work reaches the application if the project has a repository.
  * </p>
  */
 public class StoredConversation implements ConversationTarget {
@@ -57,6 +61,20 @@ public class StoredConversation implements ConversationTarget {
 	public String workingDir() {
 		TLObject project = FactoryModel.getProject(workspace());
 		return ApplicationWorkspaces.appDir(FactoryModel.getString(project, FactoryModel.PROJECT_ARTIFACT_ID));
+	}
+
+	/**
+	 * For a project with a {@link FactoryModel#PROJECT_REPOSITORY repository}, that the work of the
+	 * agent reaches the application only by commit and push, see
+	 * {@link RepositorySource#agentInstructions(String, java.util.List)}.
+	 */
+	@Override
+	public String instructions() {
+		RepositoryName repository = FactoryModel.getRepository(FactoryModel.getProject(workspace()));
+		if (repository == null) {
+			return null;
+		}
+		return RepositorySource.agentInstructions(repository.getFullName(), ProjectWorkspaces.getProtectedFiles());
 	}
 
 	@Override

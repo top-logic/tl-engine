@@ -112,17 +112,34 @@ public class TestWorkspaceProxyService extends TestCase {
 		Map<String, String> env = service.processEnv(token);
 		assertEquals(token, env.get(ProxyTokens.ENV_PROXY_TOKEN));
 		assertEquals(token, env.get(LLMRoute.ENV_AUTH_TOKEN));
-		assertEquals("2", env.get(GitEnvironment.ENV_CONFIG_COUNT));
+		assertEquals("4", env.get(GitEnvironment.ENV_CONFIG_COUNT));
 		assertEquals(GitRoute.helperKey(gitUrl), env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 0));
 		assertEquals("Resets the helpers of the URL.", "", env.get(GitEnvironment.ENV_CONFIG_VALUE_PREFIX + 0));
 		assertEquals(GitRoute.helperKey(gitUrl), env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 1));
 		assertEquals(GitRoute.CREDENTIAL_HELPER, env.get(GitEnvironment.ENV_CONFIG_VALUE_PREFIX + 1));
+		assertEquals(GitRoute.GIT_USER_NAME, env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 2));
+		assertEquals(GitRoute.DEFAULT_USER_NAME, env.get(GitEnvironment.ENV_CONFIG_VALUE_PREFIX + 2));
+		assertEquals(GitRoute.GIT_USER_EMAIL, env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 3));
+		assertEquals(GitRoute.DEFAULT_USER_EMAIL, env.get(GitEnvironment.ENV_CONFIG_VALUE_PREFIX + 3));
 		for (Map.Entry<String, String> entry : env.entrySet()) {
 			if (!entry.getKey().equals(ProxyTokens.ENV_PROXY_TOKEN) && !entry.getKey().equals(LLMRoute.ENV_AUTH_TOKEN)) {
 				assertFalse("Token in " + entry.getKey(), entry.getValue().contains(token));
 			}
 		}
-		assertEquals(7, env.size());
+		assertEquals(11, env.size());
+	}
+
+	/**
+	 * A git route without identity contributes the credential helper only.
+	 */
+	public void testGitRouteWithoutIdentity() {
+		GitRoute.Config<?> route = TypedConfiguration.newConfigItem(GitRoute.Config.class);
+		TypedConfigUtil.setProperty(route, GitRoute.Config.USER_NAME, "");
+		TypedConfigUtil.setProperty(route, GitRoute.Config.USER_EMAIL, "");
+		WorkspaceProxyService service = service(PROXY_URL, route);
+		Map<String, String> env = service.processEnv("token");
+		assertEquals("2", env.get(GitEnvironment.ENV_CONFIG_COUNT));
+		assertFalse(env.containsValue(GitRoute.GIT_USER_NAME));
 	}
 
 	/**
@@ -135,8 +152,8 @@ public class TestWorkspaceProxyService extends TestCase {
 		TypedConfigUtil.setProperty(second, ProxyRoute.Config.PATH, "/git2");
 		WorkspaceProxyService service = service(PROXY_URL, first, second);
 		Map<String, String> env = service.processEnv("token");
-		assertEquals("4", env.get(GitEnvironment.ENV_CONFIG_COUNT));
-		assertEquals(GitRoute.helperKey(PROXY_URL + "/git2"), env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 3));
+		assertEquals("8", env.get(GitEnvironment.ENV_CONFIG_COUNT));
+		assertEquals(GitRoute.helperKey(PROXY_URL + "/git2"), env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 5));
 	}
 
 	/**

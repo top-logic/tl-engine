@@ -496,12 +496,14 @@ public class ApplicationWorkspaces {
 	}
 
 	/**
-	 * Creates a workspace with a TopLogic application generated from the archetype, builds the
-	 * application and lets the workspace run it.
+	 * Creates a workspace with a TopLogic application, builds the application and lets the
+	 * workspace run it.
 	 *
 	 * <p>
-	 * The method returns as soon as the application is built; the application is starting then.
-	 * Use {@link #awaitApplication(String, String)} to wait until it answers. If a step fails, the
+	 * The sources of the application come from the {@link ApplicationSpec#getSource() source} of
+	 * the spec, by default they are generated from the archetype. The method returns as soon as the
+	 * application is built; the application is starting then. Use
+	 * {@link #awaitApplication(String, String)} to wait until it answers. If a step fails, the
 	 * workspace is left as it is for inspection.
 	 * </p>
 	 *
@@ -521,9 +523,7 @@ public class ApplicationWorkspaces {
 		_provider.create(workspaceSpec(spec, image, releaseVolume));
 		_provider.start(workspaceId);
 
-		step(progress, "Generating application " + spec.getGroupId() + ":" + spec.getArtifactId() + " " + version);
-		run(workspaceId, generateCommand(version, spec.getGroupId(), spec.getArtifactId()).setWorkingDir(SOURCE_PATH)
-			.setTimeout(buildTimeout()), progress);
+		spec.getSource().provide(new SourceContext(spec, version, progress));
 
 		step(progress, "Building application");
 		run(workspaceId, ExecCommand.of("mvn", "-B", "install").setWorkingDir(appDir).setTimeout(buildTimeout()),
@@ -1052,6 +1052,89 @@ public class ApplicationWorkspaces {
 
 	private static String xmlText(String value) {
 		return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+	}
+
+	/**
+	 * The {@link ApplicationSource.Context} of an application being created.
+	 */
+	private final class SourceContext implements ApplicationSource.Context {
+
+		private final ApplicationSpec _spec;
+
+		private final String _version;
+
+		private final ExecOutput _progress;
+
+		SourceContext(ApplicationSpec spec, String version, ExecOutput progress) {
+			_spec = spec;
+			_version = version;
+			_progress = progress;
+		}
+
+		@Override
+		public ApplicationSpec spec() {
+			return _spec;
+		}
+
+		@Override
+		public String engineVersion() {
+			return _version;
+		}
+
+		@Override
+		public String appDir() {
+			return ApplicationWorkspaces.appDir(_spec);
+		}
+
+		@Override
+		public Duration commandTimeout() {
+			return buildTimeout();
+		}
+
+		@Override
+		public void step(String message) {
+			ApplicationWorkspaces.step(_progress, message);
+		}
+
+		@Override
+		public void run(ExecCommand command) throws InterruptedException {
+			ApplicationWorkspaces.this.run(_spec.getWorkspaceId(), command, _progress);
+		}
+
+		@Override
+		public String output(ExecCommand command) throws InterruptedException {
+			StringBuilder stdout = new StringBuilder();
+			OutputTail tail = new OutputTail(new ExecOutput() {
+				@Override
+				public void stdout(String text) {
+					stdout.append(text);
+				}
+
+				@Override
+				public void stderr(String text) {
+					_progress.stderr(text);
+				}
+			});
+			int exitCode = _provider.exec(_spec.getWorkspaceId(), command, tail);
+			if (exitCode != 0) {
+				throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__WORKSPACE_COMMAND_CODE_OUTPUT
+					.fill(_spec.getWorkspaceId(), command.toString(), exitCode, tail.toString()));
+			}
+			return stdout.toString();
+		}
+
+		@Override
+		public int exec(ExecCommand command, ExecOutput output) throws InterruptedException {
+			return _provider.exec(_spec.getWorkspaceId(), command, output);
+		}
+
+		@Override
+		public void generate() throws InterruptedException {
+			step("Generating application " + _spec.getGroupId() + ":" + _spec.getArtifactId() + " " + _version);
+			run(generateCommand(_version, _spec.getGroupId(), _spec.getArtifactId()).setWorkingDir(SOURCE_PATH)
+				.setTimeout(buildTimeout()));
+		}
+
 	}
 
 	/**

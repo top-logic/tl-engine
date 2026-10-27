@@ -5,10 +5,15 @@
  */
 package com.top_logic.factory.git;
 
+import java.util.List;
+
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
@@ -63,7 +68,39 @@ public class GitHostingService extends ConfiguredManagedClass<GitHostingService.
 		@Nullable
 		PolymorphicConfiguration<? extends GitHostingProvider> getProvider();
 
+		/**
+		 * Configuration property name of {@link #getProtectedFiles()}.
+		 *
+		 * @see #getProtectedFiles()
+		 */
+		String PROTECTED_FILES = "protected-files";
+
+		/**
+		 * Glob patterns of the files of a project repository that no push may change, e.g. the
+		 * build pipeline and the deployment of the application.
+		 *
+		 * <p>
+		 * The default branch of every repository of a project is protected with these patterns
+		 * when a workspace of the project has the sources in it: a change of such a file reaches
+		 * the branch only through a reviewed pull request, neither the agent nor the control
+		 * application pushes one. Patterns are relative to the root of the repository, {@code *}
+		 * matches within a path segment, {@code **} across segments.
+		 * </p>
+		 *
+		 * @see #PROTECTED_FILES
+		 * @see GitHostingProvider#protectBranch(GitRepository, String, List)
+		 */
+		@Name(PROTECTED_FILES)
+		@Format(CommaSeparatedStrings.class)
+		@FormattedDefault(DEFAULT_PROTECTED_FILES)
+		List<String> getProtectedFiles();
+
 	}
+
+	/**
+	 * Default of {@link Config#getProtectedFiles()}.
+	 */
+	public static final String DEFAULT_PROTECTED_FILES = "Jenkinsfile, deploy/**";
 
 	private final GitHostingProvider _provider;
 
@@ -85,6 +122,16 @@ public class GitHostingService extends ConfiguredManagedClass<GitHostingService.
 	 */
 	public boolean isEnabled() {
 		return _provider != null;
+	}
+
+	/**
+	 * The glob patterns of the files no push to the default branch of a project repository may
+	 * change.
+	 *
+	 * @see Config#getProtectedFiles()
+	 */
+	public List<String> getProtectedFiles() {
+		return getConfig().getProtectedFiles();
 	}
 
 	/**

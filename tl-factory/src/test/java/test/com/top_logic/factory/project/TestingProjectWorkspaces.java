@@ -6,16 +6,20 @@
 package test.com.top_logic.factory.project;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.project.ProjectWorkspaces;
 import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
 
 /**
  * {@link ProjectWorkspaces} of the tests, working on the {@link ApplicationWorkspaces} a test
- * sets with {@link #setApplications(ApplicationWorkspaces)}.
+ * sets with {@link #setApplications(ApplicationWorkspaces)} and the git hosting service it sets
+ * with {@link #setGitHosting(GitHostingProvider)}.
  */
 public class TestingProjectWorkspaces extends ProjectWorkspaces {
 
 	private static volatile ApplicationWorkspaces _applications;
+
+	private static volatile GitHostingProvider _gitHosting;
 
 	/**
 	 * Creates a {@link TestingProjectWorkspaces} from configuration.
@@ -35,6 +39,20 @@ public class TestingProjectWorkspaces extends ProjectWorkspaces {
 	 */
 	public static void setApplications(ApplicationWorkspaces applications) {
 		_applications = applications;
+	}
+
+	/**
+	 * Sets the git hosting service the repositories of the projects are on, {@code null} for that
+	 * of the {@link com.top_logic.factory.git.GitHostingService}.
+	 */
+	public static void setGitHosting(GitHostingProvider gitHosting) {
+		_gitHosting = gitHosting;
+	}
+
+	@Override
+	protected GitHostingProvider getGitHosting() {
+		GitHostingProvider gitHosting = _gitHosting;
+		return gitHosting != null ? gitHosting : super.getGitHosting();
 	}
 
 	@Override

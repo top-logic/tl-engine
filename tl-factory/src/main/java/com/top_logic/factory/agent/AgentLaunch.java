@@ -23,8 +23,11 @@ import com.top_logic.factory.proxy.ProxyTokens;
  *        The environment variables of the process, e.g. its token for the workspace proxy (see
  *        {@link ProxyTokens#processEnv(String)}); passed to the process only, in the environment
  *        of its command, never to the container.
+ * @param instructions
+ *        What the agent is told in addition to the instructions of its harness, see
+ *        {@link ConversationTarget#instructions()}; {@code null} for nothing.
  */
-public record AgentLaunch(String workingDir, String resumeSessionId, Map<String, String> env) {
+public record AgentLaunch(String workingDir, String resumeSessionId, Map<String, String> env, String instructions) {
 
 	/**
 	 * Creates an {@link AgentLaunch}.
@@ -33,11 +36,18 @@ public record AgentLaunch(String workingDir, String resumeSessionId, Map<String,
 		env = env == null ? Collections.emptyMap() : Collections.unmodifiableMap(new LinkedHashMap<>(env));
 	}
 
+	/**
+	 * Creates an {@link AgentLaunch} without additional instructions.
+	 */
+	public AgentLaunch(String workingDir, String resumeSessionId, Map<String, String> env) {
+		this(workingDir, resumeSessionId, env, null);
+	}
+
 	@Override
 	public String toString() {
 		// Never the values of the environment: they carry the token.
 		return "AgentLaunch[workingDir=" + workingDir + ", resumeSessionId=" + resumeSessionId + ", env="
-			+ env.keySet() + "]";
+			+ env.keySet() + ", instructions=" + (instructions != null) + "]";
 	}
 
 }

@@ -40,10 +40,13 @@ import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.configedit.PolymorphicOptions;
+import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.ScriptImplOptionMapping;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -52,6 +55,7 @@ import com.top_logic.model.search.form.ScriptImplementation;
 import com.top_logic.model.search.form.ScriptImplementationType;
 import com.top_logic.model.search.form.WithExpression;
 import com.top_logic.model.search.react.TLScriptEditorReactControl;
+import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -194,7 +198,7 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 		assertEquals(List.of(Greeter.GREET), propertyNames(index, script));
 		List<TLScriptEditorReactControl> greetEditors = scriptEditors(greeter.getNestedEditor());
 		assertEquals(1, greetEditors.size());
-		assertEquals("", value(greetEditors.get(0)));
+		assertEquals("Skeleton with the arguments of the method.", "arg1 -> null", value(greetEditors.get(0)));
 
 		PolymorphicItemControl function = polymorphic(editor, function(config));
 		function.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptFunction1Impl.class));
@@ -262,6 +266,113 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 		greeter.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptImplementation.class));
 		assertNotNull(ScriptImplementationType.forDescriptor(config.getGreeter().descriptor()));
 		assertEquals(1, scriptEditors(greeter.getNestedEditor()).size());
+	}
+
+	/**
+	 * Interface with two methods, implemented by a script with one script per method.
+	 */
+	public interface Converter {
+
+		/** Property name of the TL-Script implementation of {@link #first(Object)}. */
+		String FIRST = "first";
+
+		/** Property name of the TL-Script implementation of {@link #second(String, List)}. */
+		String SECOND = "second";
+
+		/**
+		 * The first conversion.
+		 */
+		String first(Object x);
+
+		/**
+		 * The second conversion.
+		 */
+		Integer second(String a, List<String> b);
+	}
+
+	public interface ConverterProperties extends ConfigurationItem {
+
+		/** Property name of {@link #getConverter()}. */
+		String CONVERTER = "converter";
+
+		@Name(CONVERTER)
+		PolymorphicConfiguration<Converter> getConverter();
+	}
+
+	public void testSingleScriptCarriesTheOwnersLabelAndSignature() {
+		ScriptProperties config = TypedConfiguration.newConfigItem(ScriptProperties.class);
+		ConfigEditorControl editor = editor(config, new ConfigFieldIndex());
+
+		PolymorphicItemControl greeter = polymorphic(editor, greeter(config));
+		greeter.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptImplementation.class));
+		ReactFormFieldChromeControl greet = chromeOf(greeter, scriptEditors(greeter.getNestedEditor()).get(0));
+		assertEquals(Labels.propertyLabel(greeter(config), false), label(greet));
+		assertTrue(tooltip(greet).contains(signature("1. Object", "String")));
+
+		PolymorphicItemControl function = polymorphic(editor, function(config));
+		function.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptFunction1Impl.class));
+		ReactFormFieldChromeControl expression = chromeOf(function, scriptEditors(function.getNestedEditor()).get(0));
+		assertEquals(Labels.propertyLabel(function(config), false), label(expression));
+		assertTrue(tooltip(expression).contains(signature("1. Object", "Object")));
+	}
+
+	public void testSeveralScriptsKeepTheirMethodLabels() {
+		ConverterProperties config = TypedConfiguration.newConfigItem(ConverterProperties.class);
+		PropertyDescriptor converter = config.descriptor().getProperty(ConverterProperties.CONVERTER);
+		ConfigFieldIndex index = new ConfigFieldIndex();
+		ConfigEditorControl editor = new ConfigEditorControl(createContext(), config, Set.of(), false, index);
+
+		PolymorphicItemControl poly = find(editor, PolymorphicItemControl.class).get(0);
+		poly.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptImplementation.class));
+		ConfigurationItem script = config.getConverter();
+
+		List<TLScriptEditorReactControl> scripts = scriptEditors(poly.getNestedEditor());
+		assertEquals(2, scripts.size());
+		for (TLScriptEditorReactControl control : scripts) {
+			ReactFormFieldChromeControl chrome = chromeOf(poly, control);
+			String label = label(chrome);
+			if (label.equals(Labels.propertyLabel(script.descriptor().getProperty(Converter.FIRST), false))) {
+				assertTrue(tooltip(chrome).contains(signature("1. Object", "String")));
+				assertEquals("arg1 -> null", value(control));
+			} else {
+				assertEquals(Labels.propertyLabel(script.descriptor().getProperty(Converter.SECOND), false), label);
+				assertTrue(tooltip(chrome),
+					tooltip(chrome).contains(signature("1. String, 2. List&lt;String&gt;", "Integer")));
+				assertEquals("arg1 -> arg2 -> null", value(control));
+			}
+		}
+	}
+
+	/**
+	 * The signature text for the given arguments and result, in the language of the test.
+	 */
+	private static String signature(String arguments, String result) {
+		return Resources.getInstance().getString(
+			com.top_logic.layout.form.values.edit.I18NConstants.SCRIPT_SIGNATURE__ARGUMENTS_RESULT.fill(arguments,
+				result));
+	}
+
+	/**
+	 * The chrome below the given root that displays the given field.
+	 */
+	private static ReactFormFieldChromeControl chromeOf(ReactControl root, ReactControl field) {
+		for (ReactFormFieldChromeControl chrome : find(root, ReactFormFieldChromeControl.class)) {
+			if (find(chrome, field.getClass()).contains(field)) {
+				return chrome;
+			}
+		}
+		fail("No chrome around: " + field);
+		return null;
+	}
+
+	private static String label(ReactFormFieldChromeControl chrome) {
+		return (String) chrome.scriptingScalarState().get("label");
+	}
+
+	private static String tooltip(ReactFormFieldChromeControl chrome) {
+		TooltipContent content = chrome.getTooltipContent("tooltip");
+		assertNotNull("No tooltip.", content);
+		return content.getHtml();
 	}
 
 	private static PropertyDescriptor greeter(ConfigurationItem config) {

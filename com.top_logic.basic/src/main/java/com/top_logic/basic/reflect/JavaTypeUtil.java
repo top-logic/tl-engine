@@ -272,9 +272,14 @@ public class JavaTypeUtil {
 	}
 
 	/**
-	 * The given type, or its upper bound, if it is a wildcard or type variable.
+	 * The given type, or its (first) upper bound, if it is a wildcard or type variable.
+	 *
+	 * @param type
+	 *        The type to resolve.
+	 * @return The given type, if it is neither a wildcard nor a type variable, otherwise its upper
+	 *         bound, resolved repeatedly until it is neither.
 	 */
-	private static Type upperBound(Type type) {
+	public static Type upperBound(Type type) {
 		while (true) {
 			if (type instanceof WildcardType wildcard) {
 				type = wildcard.getUpperBounds()[0];
@@ -558,52 +563,75 @@ public class JavaTypeUtil {
 	 */
 	public static String toTypeName(Type type) {
 		StringBuilder result = new StringBuilder();
-		appendTypeName(result, type);
+		appendTypeName(result, type, false);
 		return result.toString();
 	}
 
-	private static void appendTypeName(StringBuilder out, Type type) {
+	/**
+	 * The notation of the given type for a reader, using simple names for classes.
+	 *
+	 * <p>
+	 * Like {@link #toTypeName(Type)}, but classes are written without their package, nested
+	 * classes with their enclosing classes separated by dots, e.g.
+	 * <code>Map.Entry&lt;String, ? extends Number&gt;[]</code>. A type variable is written as its
+	 * {@link #getRawClass(Type) erasure}.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to write.
+	 * @return The simple notation of the given type.
+	 */
+	public static String toSimpleTypeName(Type type) {
+		StringBuilder result = new StringBuilder();
+		appendTypeName(result, type, true);
+		return result.toString();
+	}
+
+	private static void appendTypeName(StringBuilder out, Type type, boolean simple) {
 		if (type instanceof Class<?> cls) {
 			if (cls.isArray()) {
-				appendTypeName(out, cls.getComponentType());
+				appendTypeName(out, cls.getComponentType(), simple);
 				out.append("[]");
+			} else if (simple) {
+				String name = cls.getName();
+				out.append(name.substring(name.lastIndexOf('.') + 1).replace('$', '.'));
 			} else {
 				out.append(cls.getName());
 			}
 		} else if (type instanceof ParameterizedType parameterized) {
-			appendTypeName(out, parameterized.getRawType());
+			appendTypeName(out, parameterized.getRawType(), simple);
 			out.append('<');
-			appendTypeNames(out, parameterized.getActualTypeArguments(), ", ");
+			appendTypeNames(out, parameterized.getActualTypeArguments(), ", ", simple);
 			out.append('>');
 		} else if (type instanceof WildcardType wildcard) {
 			out.append('?');
 			Type[] lower = wildcard.getLowerBounds();
 			if (lower.length > 0) {
 				out.append(" super ");
-				appendTypeNames(out, lower, " & ");
+				appendTypeNames(out, lower, " & ", simple);
 			} else {
 				Type[] upper = wildcard.getUpperBounds();
 				if (upper.length > 0 && upper[0] != Object.class) {
 					out.append(" extends ");
-					appendTypeNames(out, upper, " & ");
+					appendTypeNames(out, upper, " & ", simple);
 				}
 			}
 		} else if (type instanceof GenericArrayType array) {
-			appendTypeName(out, array.getGenericComponentType());
+			appendTypeName(out, array.getGenericComponentType(), simple);
 			out.append("[]");
 		} else if (type instanceof TypeVariable<?> variable) {
-			appendTypeName(out, getRawClass(variable));
+			appendTypeName(out, getRawClass(variable), simple);
 		} else {
 			throw new IllegalArgumentException("Type not expected: " + type);
 		}
 	}
 
-	private static void appendTypeNames(StringBuilder out, Type[] types, String separator) {
+	private static void appendTypeNames(StringBuilder out, Type[] types, String separator, boolean simple) {
 		for (int n = 0; n < types.length; n++) {
 			if (n > 0) {
 				out.append(separator);
 			}
-			appendTypeName(out, types[n]);
+			appendTypeName(out, types[n], simple);
 		}
 	}
 

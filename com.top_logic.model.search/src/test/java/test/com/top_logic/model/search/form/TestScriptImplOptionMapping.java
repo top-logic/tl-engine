@@ -36,9 +36,12 @@ import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.ImplOptionMapping;
 import com.top_logic.layout.form.values.ScriptImplOptionMapping;
 import com.top_logic.layout.form.values.edit.EditorFactory;
+import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.ScriptImplementationLabels;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.form.ScriptFunction1Impl;
@@ -48,6 +51,7 @@ import com.top_logic.model.search.form.ScriptImplementationType;
 import com.top_logic.model.search.form.TLScriptImplementationProvider;
 import com.top_logic.model.search.form.WithExpression;
 import com.top_logic.model.search.ui.model.options.NavigationOptions;
+import com.top_logic.util.Resources;
 
 /**
  * Test of the TL-Script option that the configuration editors offer through
@@ -130,6 +134,23 @@ public class TestScriptImplOptionMapping extends TestCase {
 		assertFalse(label.options().contains(NavigationOptions.class));
 	}
 
+	/**
+	 * The tooltip of a script function names the resolved signature of the implemented method.
+	 */
+	public void testScriptTooltipNamesTheSignature() {
+		A a = TypedConfiguration.newConfigItem(A.class);
+		ConfigurationItem labelScript =
+			(ConfigurationItem) options(a, LABEL).mapping().toSelection(ScriptFunction3Impl.class);
+		String tooltip = ScriptImplementationLabels.tooltip(property(LABEL), labelScript,
+			labelScript.descriptor().getProperty(WithExpression.EXPRESSION));
+		String signature = Resources.getInstance().getString(
+			com.top_logic.layout.form.values.edit.I18NConstants.SCRIPT_SIGNATURE__ARGUMENTS_RESULT
+				.fill("1. TLObject, 2. ResKey, 3. TLStructuredTypePart", "Object"));
+		assertTrue(tooltip, tooltip.contains(signature));
+		assertEquals(Labels.propertyLabel(property(LABEL), false), ScriptImplementationLabels.label(property(LABEL),
+			labelScript, labelScript.descriptor().getProperty(WithExpression.EXPRESSION)));
+	}
+
 	public void testNoScriptOptionForOtherProperties() {
 		A a = TypedConfiguration.newConfigItem(A.class);
 		PropertyDescriptor custom = property(CUSTOM);
@@ -149,15 +170,19 @@ public class TestScriptImplOptionMapping extends TestCase {
 		ScriptImplementationType filterType =
 			ScriptImplementationType.of(TLScriptImplementationProvider.implementedType(property(FILTER)));
 		assertSame(filterType.getDescriptor(), ((ConfigurationItem) filterScript).descriptor());
-		assertNull("Empty script.", ((ConfigurationItem) filterScript)
-			.value(filterType.getProperty(filterType.getFunctionalMethod())));
+		assertEquals("Skeleton with the arguments of the method.", "arg1 -> null", ExprFormat.INSTANCE.getSpecification(
+			(Expr) ((ConfigurationItem) filterScript).value(filterType.getProperty(filterType.getFunctionalMethod()))));
 		assertNotSame("A fresh configuration for each selection.", filterScript,
 			filter.mapping().toSelection(scriptOption(filter)));
 
 		Options function = options(a, FUNCTION);
 		Object functionScript = function.mapping().toSelection(scriptOption(function));
 		assertTrue(functionScript instanceof ScriptFunction1Impl.Config<?, ?>);
-		assertNull("Empty script.", ((WithExpression) functionScript).getExpression());
+		assertEquals("Skeleton with the arguments of the function.", "arg1 -> null",
+			ExprFormat.INSTANCE.getSpecification(((WithExpression) functionScript).getExpression()));
+		Object labelScript = options(a, LABEL).mapping().toSelection(ScriptFunction3Impl.class);
+		assertEquals("arg1 -> arg2 -> arg3 -> null",
+			ExprFormat.INSTANCE.getSpecification(((WithExpression) labelScript).getExpression()));
 
 		// The selected value is a valid value of the property.
 		a.update(property(FILTER), filterScript);

@@ -30,6 +30,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_NO_CONTROL_ANNOTATION__CLASS;
 
+	/**
+	 * @en Arguments: {0} – Result: {1}
+	 */
+	public static ResKey2 SCRIPT_SIGNATURE__ARGUMENTS_RESULT;
+
+	/**
+	 * @en Result: {0}
+	 */
+	public static ResKey1 SCRIPT_SIGNATURE__RESULT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

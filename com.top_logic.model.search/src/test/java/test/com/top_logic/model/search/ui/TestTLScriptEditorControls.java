@@ -21,6 +21,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -37,14 +38,17 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.values.edit.EditorFactory;
+import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerUtil;
+import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.form.ScriptFunction1Impl;
 import com.top_logic.model.search.form.ScriptImplementation;
 import com.top_logic.model.search.form.ScriptImplementationType;
 import com.top_logic.model.search.form.WithExpression;
 import com.top_logic.model.search.ui.TLScriptCodeEditorControl;
+import com.top_logic.util.Resources;
 
 /**
  * Test that the configuration of this module edits TL-Script valued configuration properties in a
@@ -153,7 +157,33 @@ public class TestTLScriptEditorControls extends TestCase {
 		assertNotNull(ScriptImplementationType.forDescriptor(model.getFilter().descriptor()));
 		FormField accept = find(filter, ACCEPT_FIELD);
 		assertCodeEditor(accept);
-		assertNull("Empty script.", accept.getValue());
+		assertEquals("Skeleton with the arguments of the method.", "arg1 -> null",
+			ExprFormat.INSTANCE.getSpecification((Expr) accept.getValue()));
+	}
+
+	/**
+	 * The only script of a script implementation is labelled and documented like the property it
+	 * implements, and its tooltip names the signature of the implemented method.
+	 */
+	public void testSingleScriptCarriesTheOwnersLabelAndSignature() throws ConfigurationException {
+		ScriptProperties model = read("<a function1=\"x -> $x\" filter=\"x -> true\"/>");
+		FormGroup group = build(model);
+
+		PropertyDescriptor function1 = model.descriptor().getProperty("function1");
+		FormField expression = find((FormContainer) group.getMember("function1"), EXPRESSION_FIELD);
+		assertEquals(Labels.propertyLabel(function1, false), expression.getLabel());
+		assertTrue(expression.getTooltip(), expression.getTooltip().contains(signature("1. Object", "Object")));
+
+		PropertyDescriptor filter = model.descriptor().getProperty("filter");
+		FormField accept = find((FormContainer) group.getMember("filter"), ACCEPT_FIELD);
+		assertEquals(Labels.propertyLabel(filter, false), accept.getLabel());
+		assertTrue(accept.getTooltip(), accept.getTooltip().contains(signature("1. Object", "boolean")));
+	}
+
+	private static String signature(String arguments, String result) {
+		return Resources.getInstance().getString(
+			com.top_logic.layout.form.values.edit.I18NConstants.SCRIPT_SIGNATURE__ARGUMENTS_RESULT.fill(arguments,
+				result));
 	}
 
 	private static void assertCodeEditor(FormField field) {

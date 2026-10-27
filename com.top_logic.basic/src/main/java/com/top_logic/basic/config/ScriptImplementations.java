@@ -5,6 +5,7 @@
  */
 package com.top_logic.basic.config;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -161,7 +162,29 @@ public final class ScriptImplementations {
 	}
 
 	/**
-	 * Creates an empty script implementation for the given property.
+	 * The method of the implemented interface that the given property of the given script
+	 * configuration implements.
+	 *
+	 * @param script
+	 *        A configuration item.
+	 * @param property
+	 *        A property of the given configuration item.
+	 * @return The implemented method, or <code>null</code>, if there is no
+	 *         {@link ScriptImplementationProvider}, or the given property is no script of a method
+	 *         of a script configuration.
+	 *
+	 * @see ScriptImplementationProvider#getImplementedMethod(ConfigurationItem, PropertyDescriptor)
+	 */
+	public static Method getImplementedMethod(ConfigurationItem script, PropertyDescriptor property) {
+		ScriptImplementationProvider provider = getProvider();
+		if (provider == null) {
+			return null;
+		}
+		return provider.getImplementedMethod(script, property);
+	}
+
+	/**
+	 * Creates a new script implementation for the given property, as starting point for editing.
 	 *
 	 * @param property
 	 *        The property to create a value for, may be <code>null</code>.

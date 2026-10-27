@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.form;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
@@ -218,9 +219,79 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 		return type;
 	}
 
+	/**
+	 * Creates the script configuration with a {@link #skeleton(Method) skeleton} for each method
+	 * that must be implemented: the expression of a script function, and the abstract methods of a
+	 * {@link ScriptImplementationType}. A default method keeps its Java implementation, until a
+	 * script is entered for it.
+	 */
 	@Override
 	public PolymorphicConfiguration<?> createScriptConfig(PropertyDescriptor property) throws ConfigurationException {
-		return newScriptConfig(property);
+		PolymorphicConfiguration<?> result = newScriptConfig(property);
+		ScriptImplementationType type = ScriptImplementationType.forDescriptor(result.descriptor());
+		if (type != null) {
+			for (MethodProperty method : type.getMethods()) {
+				if (method.isAbstract()) {
+					result.update(type.getProperty(method), skeleton(method.getMethod()));
+				}
+			}
+		} else {
+			PropertyDescriptor expression = result.descriptor().getProperty(WithExpression.EXPRESSION);
+			Method method = getImplementedMethod(result, expression);
+			if (method != null) {
+				((WithExpression) result).setExpression(skeleton(method));
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The expression to start the implementation of the given method with: a function taking the
+	 * arguments of the method under generic names and returning <code>null</code>, e.g.
+	 * <code>arg1 -> arg2 -> null</code> for a method with two arguments, and <code>null</code>
+	 * for a method without arguments.
+	 *
+	 * @param method
+	 *        The method to implement.
+	 * @return The skeleton expression.
+	 * @throws ConfigurationException
+	 *         If the skeleton cannot be parsed, which does not happen.
+	 */
+	public static Expr skeleton(Method method) throws ConfigurationException {
+		StringBuilder text = new StringBuilder();
+		for (int n = 1, cnt = method.getParameterCount(); n <= cnt; n++) {
+			text.append(SKELETON_ARGUMENT).append(n).append(" -> ");
+		}
+		text.append("null");
+		return ExprFormat.INSTANCE.getValue(method.getName(), text);
+	}
+
+	/**
+	 * Prefix of the argument names in a {@link #skeleton(Method) skeleton}.
+	 */
+	private static final String SKELETON_ARGUMENT = "arg";
+
+	@Override
+	public Method getImplementedMethod(ConfigurationItem script, PropertyDescriptor property) {
+		ScriptImplementationType type = ScriptImplementationType.forDescriptor(script.descriptor());
+		if (type != null) {
+			for (MethodProperty method : type.getMethods()) {
+				if (method.getPropertyName().equals(property.getPropertyName())) {
+					return method.getMethod();
+				}
+			}
+			return null;
+		}
+		if (script instanceof WithExpression && script instanceof WithImplementedType function
+			&& WithExpression.EXPRESSION.equals(property.getPropertyName())) {
+			Type implementedType = function.getImplementedType();
+			if (implementedType == null) {
+				return null;
+			}
+			List<Method> methods = JavaTypeUtil.getAbstractMethods(JavaTypeUtil.getRawClass(implementedType));
+			return methods.size() == 1 ? methods.get(0) : null;
+		}
+		return null;
 	}
 
 	/**

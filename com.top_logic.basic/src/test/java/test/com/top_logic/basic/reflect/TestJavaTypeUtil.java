@@ -209,6 +209,14 @@ public class TestJavaTypeUtil extends TestCase {
 		assertFalse(JavaTypeUtil.isCompatibleImplementation(D.class, wildcard));
 	}
 
+	public void testToSimpleTypeName() {
+		assertEquals("List<String>", JavaTypeUtil.toSimpleTypeName(new TypeToken<List<String>>() {}.getType()));
+		assertEquals("Map.Entry<? extends Number, ? super Integer>[]", JavaTypeUtil.toSimpleTypeName(
+			new TypeToken<java.util.Map.Entry<? extends Number, ? super Integer>[]>() {}.getType()));
+		assertEquals("TestJavaTypeUtil.A", JavaTypeUtil.toSimpleTypeName(A.class));
+		assertEquals("int[]", JavaTypeUtil.toSimpleTypeName(int[].class));
+	}
+
 	private static boolean compatible(Class<?> implementationClass, TypeToken<?> expected) {
 		return JavaTypeUtil.isCompatibleImplementation(implementationClass, expected.getType());
 	}

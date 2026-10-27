@@ -32,6 +32,7 @@ import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.ListenerBinding;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.Labels;
+import com.top_logic.layout.form.values.edit.ScriptImplementationLabels;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
@@ -113,6 +114,11 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	private final boolean _editable;
 
 	private final ConfigurationItem _formModel;
+
+	/**
+	 * The property whose value the edited item is, {@code null} if unknown.
+	 */
+	private final PropertyDescriptor _owner;
 
 	/**
 	 * How this editor displays properties of the edited item, beyond what the properties declare
@@ -252,7 +258,26 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, Map<PropertyDescriptor, FieldDisplay> displays,
 			boolean skipTreeProperties, ConfigFieldIndex index, boolean editable, ConfigurationItem formModel) {
+		this(context, config, hiddenProperties, displays, skipTreeProperties, index, editable, formModel, null);
+	}
+
+	/**
+	 * Creates a {@link ConfigEditorControl} for an item that is the value of the given property.
+	 *
+	 * @param owner
+	 *        The property whose value the edited item is, {@code null} if unknown. If the item is a
+	 *        script implementation of this property, its scripts are labelled and documented as
+	 *        described in {@link ScriptImplementationLabels}.
+	 *
+	 * @see #ConfigEditorControl(ReactContext, ConfigurationItem, Set, Map, boolean,
+	 *      ConfigFieldIndex, boolean, ConfigurationItem)
+	 */
+	public ConfigEditorControl(ReactContext context, ConfigurationItem config,
+			Set<PropertyDescriptor> hiddenProperties, Map<PropertyDescriptor, FieldDisplay> displays,
+			boolean skipTreeProperties, ConfigFieldIndex index, boolean editable, ConfigurationItem formModel,
+			PropertyDescriptor owner) {
 		super(context);
+		_owner = owner;
 		_index = index;
 		_editable = editable;
 		_formModel = formModel;
@@ -287,7 +312,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 				if (nested != null && isInline(property)) {
 					// The configuration of an instance that already exists cannot be changed.
 					ConfigEditorControl inline = newEditor(context, nested, Collections.emptySet(), false,
-						_index, groupEditable && !property.isInstanceValued(), _formModel);
+						_index, groupEditable && !property.isInstanceValued(), _formModel, property);
 					inline.setInline(true);
 					addChild(inline);
 					followMode(config, property, inline, null);
@@ -359,8 +384,10 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			ReactControl input = ConfigControlService.getInstance().createControl(context, model);
 
-			String label = resolveLabel(property);
-			String tooltip = resolveTooltip(property);
+			String scriptLabel = ScriptImplementationLabels.label(_owner, config, property);
+			String label = scriptLabel != null ? scriptLabel : resolveLabel(property);
+			String scriptTooltip = ScriptImplementationLabels.tooltip(_owner, config, property);
+			String tooltip = scriptTooltip != null ? scriptTooltip : resolveTooltip(property);
 
 			LabelPosition labelPosition = (property.getType() == boolean.class || property.getType() == Boolean.class)
 				? LabelPosition.AFTER : null;
@@ -465,7 +492,20 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @return A new editor control for the nested item.
 	 */
 	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested) {
-		return newEditor(context, nested, Collections.emptySet(), false, _index, _editable, _formModel);
+		return createNestedEditor(context, nested, null);
+	}
+
+	/**
+	 * Creates a nested {@link ConfigEditorControl} for the value of the given ITEM property.
+	 *
+	 * @param owner
+	 *        The property whose value the nested item is, {@code null} if unknown.
+	 *
+	 * @see #createNestedEditor(ReactContext, ConfigurationItem)
+	 */
+	protected ConfigEditorControl createNestedEditor(ReactContext context, ConfigurationItem nested,
+			PropertyDescriptor owner) {
+		return newEditor(context, nested, Collections.emptySet(), false, _index, _editable, _formModel, owner);
 	}
 
 	/**
@@ -494,13 +534,15 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *        nobody is collecting.
 	 * @param editable
 	 *        Whether the built editor's fields and collection actions accept input.
+	 * @param owner
+	 *        The property whose value the given item is, {@code null} if unknown.
 	 * @return A new editor control.
 	 */
 	protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
 			Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
-			boolean editable, ConfigurationItem formModel) {
-		return new ConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index, editable,
-			formModel);
+			boolean editable, ConfigurationItem formModel, PropertyDescriptor owner) {
+		return new ConfigEditorControl(context, config, hiddenProperties, Collections.emptyMap(),
+			skipTreeProperties, index, editable, formModel, owner);
 	}
 
 	/**
@@ -524,8 +566,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
 			ConfigurationItem parentConfig, PropertyDescriptor property, boolean editable) {
-		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor, editable,
-			_index);
+		return new PolymorphicItemControl(context, label, parentConfig, property,
+			(nestedContext, nested) -> createNestedEditor(nestedContext, nested, property), editable, _index);
 	}
 
 	/**

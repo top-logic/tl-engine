@@ -27,6 +27,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
+import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -363,8 +364,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * @param property
 	 *        The property to bind to. Must be a {@link PropertyKind#PLAIN} or
 	 *        {@link PropertyKind#REF} property, or a {@link PropertyKind#COMPLEX} or
-	 *        {@link PropertyKind#ITEM} one whose current value
-	 *        {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}.
+	 *        {@link PropertyKind#ITEM} one that is
+	 *        {@link #isEditedAsText(ConfigurationItem, PropertyDescriptor) edited as text}.
 	 * @throws IllegalArgumentException
 	 *         If {@code property} is none of those, see
 	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
@@ -462,8 +463,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        The field model, created by {@link #createModel(ConfigurationItem, PropertyDescriptor)}.
 	 *        Its {@link ConfigFieldModel#getProperty() property} must be a
 	 *        {@link PropertyKind#PLAIN} or {@link PropertyKind#REF} property, or a
-	 *        {@link PropertyKind#COMPLEX} or {@link PropertyKind#ITEM} one whose current value
-	 *        {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}.
+	 *        {@link PropertyKind#COMPLEX} or {@link PropertyKind#ITEM} one that is
+	 *        {@link #isEditedAsText(ConfigurationItem, PropertyDescriptor) edited as text}.
 	 * @throws IllegalArgumentException
 	 *         If the model's property is none of those, see
 	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
@@ -580,6 +581,31 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	}
 
 	/**
+	 * Whether the given {@link PropertyKind#ITEM} or {@link PropertyKind#COMPLEX} property is
+	 * edited as the text of its value in a single widget.
+	 *
+	 * <p>
+	 * That is the case where the value the property currently holds
+	 * {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}, unless the
+	 * property {@link ScriptImplementations#acceptsScript(PropertyDescriptor) accepts a script}
+	 * as implementation. Such a property is implemented either by a Java class or by a script, and
+	 * which of the two is chosen in the type selector of a polymorphic item, the same as for a
+	 * property implemented by Java classes only. A script is then edited in the nested form of its
+	 * script configuration, one script editor per method. The text form of a script value is only
+	 * the way the configuration writes it: editing it as plain text would hide the choice of the
+	 * implementation and offer no way to switch to a Java implementation.
+	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property.
+	 * @param property
+	 *        The property to decide for.
+	 */
+	public static boolean isEditedAsText(ConfigurationItem config, PropertyDescriptor property) {
+		return hasTextForm(config, property) && !ScriptImplementations.acceptsScript(property);
+	}
+
+	/**
 	 * Ensures the given property is one this service can actually put into a single widget.
 	 *
 	 * <p>
@@ -609,7 +635,10 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * {@link PropertyKind#ITEM} property qualifies under the very same rule as {@code COMPLEX}: a
 	 * sub-configuration is a nested form and is rejected, but one the configuration writes as text
 	 * - a TL-Script expression, whose {@code Expr} type carries a {@code @Format} - is edited as
-	 * that text, exactly like a {@code PLAIN} property with a format.
+	 * that text, exactly like a {@code PLAIN} property with a format. A property that accepts a
+	 * script implementation is the exception, see
+	 * {@link #isEditedAsText(ConfigurationItem, PropertyDescriptor)}: it is a polymorphic item,
+	 * although a script value has a text form.
 	 * A {@link PropertyKind#DERIVED} property is rejected as well, by the same rule read from the
 	 * other side: its value is computed from other properties, so there is nothing to write back -
 	 * it is displayed rather than edited, and a widget bound to it would offer an input that cannot
@@ -624,7 +653,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		PropertyKind kind = property.kind();
 		boolean supported = kind == PropertyKind.PLAIN || kind == PropertyKind.REF
 			|| ((kind == PropertyKind.COMPLEX || kind == PropertyKind.ITEM)
-				&& hasTextForm(config, property));
+				&& isEditedAsText(config, property));
 		if (!supported) {
 			throw new IllegalArgumentException(
 				"ConfigControlService cannot edit property '" + property.getPropertyName() + "' (kind "

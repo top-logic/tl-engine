@@ -581,8 +581,8 @@ public final class ConfigValidation {
 	 * <p>
 	 * An ITEM property written as text, like a TL-Script expression, is the exception:
 	 * {@link ConfigEditorControl} edits an item that
-	 * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}
-	 * in a field of its own, so an unset mandatory one is checked like any other field.
+	 * {@link ConfigControlService#isEditedAsText(ConfigurationItem, PropertyDescriptor) is edited
+	 * as text} in a field of its own, so an unset mandatory one is checked like any other field.
 	 * </p>
 	 *
 	 * <p>
@@ -605,7 +605,7 @@ public final class ConfigValidation {
 				return false;
 
 			case ITEM:
-				if (ConfigControlService.hasTextForm(item, property)) {
+				if (ConfigControlService.isEditedAsText(item, property)) {
 					// An item written as text is edited in a field of its own, see
 					// ConfigEditorControl.
 					break;

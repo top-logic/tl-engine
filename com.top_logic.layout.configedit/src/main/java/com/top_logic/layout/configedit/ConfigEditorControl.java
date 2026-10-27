@@ -58,7 +58,10 @@ import com.top_logic.util.Resources;
  * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
  * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
  * nested {@link ConfigEditorControl} - unless the configuration writes the item as text, a
- * TL-Script expression for instance, in which case that text is edited as a field. LIST, ARRAY,
+ * TL-Script expression for instance, in which case that text is edited as a field. A polymorphic
+ * ITEM property, also one implemented either in Java or in TL-Script, gets a
+ * {@link PolymorphicItemControl}, see
+ * {@link ConfigControlService#isEditedAsText(ConfigurationItem, PropertyDescriptor)}. LIST, ARRAY,
  * and MAP properties are rendered as collapsible sections containing nested editors for each
  * element - the same editor for all three, MAP differing only in the value's shape and in being
  * unordered. DERIVED and a COMPLEX property without a text form are skipped.
@@ -275,9 +278,11 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 			// An item the configuration writes as text - a TL-Script expression, for instance - is
 			// edited as that text below, instead of as a form over its syntax tree. An item whose
 			// format cannot express the value it currently holds has no such text and gets the
-			// structured editor, the same as an item without a format at all.
+			// structured editor, the same as an item without a format at all. So does an item
+			// implemented either in Java or in TL-Script: its implementation is chosen in the type
+			// selector, see ConfigControlService#isEditedAsText.
 			if (property.kind() == PropertyKind.ITEM
-				&& !ConfigControlService.hasTextForm(config, property)) {
+				&& !ConfigControlService.isEditedAsText(config, property)) {
 				ConfigurationItem nested = property.getConfigurationAccess().getConfig(config.value(property));
 				if (nested != null && isInline(property)) {
 					// The configuration of an instance that already exists cannot be changed.

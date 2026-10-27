@@ -100,6 +100,21 @@ public enum FindingKind {
 	 * @see CoverageFinding#getOperationName()
 	 * @see CoverageFinding#getUses()
 	 */
-	UNKNOWN_OPERATION;
+	UNKNOWN_OPERATION,
+
+	/**
+	 * An operation declared for the application, not a built-in one, is granted on the type, but
+	 * no view, command, form or privileged script checks it - nor an operation it implies - on
+	 * objects of the type. The grant has no effect.
+	 *
+	 * <p>
+	 * Reported only when the places checking an operation are known. A place not declaring the
+	 * type it checks counts as checking every type.
+	 * </p>
+	 *
+	 * @see CoverageFinding#getOperation()
+	 * @see CoverageFinding#getRoles()
+	 */
+	UNCHECKED_GRANT;
 
 }

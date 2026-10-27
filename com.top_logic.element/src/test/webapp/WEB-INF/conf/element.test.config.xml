@@ -153,6 +153,15 @@
 			</instance>
 		</config>
 
+		<!-- An operation of the test model TestSecurityCoverage implied by Finish. -->
+		<config service-class="com.top_logic.tool.boundsec.simple.CommandGroupRegistry">
+			<instance>
+				<group name="TestCoverageShow"
+					type="read"
+				/>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance>
 				<security-config>
@@ -231,6 +240,18 @@
 						</operations>
 						<grant
 							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:GrantedOperation">
+						<operations>
+							<operation name="Finish"/>
+							<operation name="TestCoverageShow"
+								implied-by="Finish"
+							/>
+						</operations>
+						<grant
+							operation="Finish"
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</class>

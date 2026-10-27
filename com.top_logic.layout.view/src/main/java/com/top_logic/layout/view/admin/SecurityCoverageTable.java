@@ -1220,6 +1220,9 @@ public class SecurityCoverageTable implements UIElement {
 				.fill(finding.getOperationLabel(), users(finding));
 			case UNKNOWN_OPERATION -> I18NConstants.COVERAGE_PROBLEM_UNKNOWN_OPERATION__OPERATION_USERS
 				.fill(finding.getOperationLabel(), users(finding));
+			case UNCHECKED_GRANT -> I18NConstants.COVERAGE_PROBLEM_UNCHECKED_GRANT__OPERATION_ROLES.fill(
+				finding.getOperationLabel(),
+				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
 		};
 	}
 
@@ -1264,6 +1267,10 @@ public class SecurityCoverageTable implements UIElement {
 			case UNKNOWN_OPERATION -> {
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_REGISTER_OPERATION);
 				solutions.add(I18NConstants.COVERAGE_SOLUTION_CHECK_OTHER_OPERATION);
+			}
+			case UNCHECKED_GRANT -> {
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_REMOVE_UNCHECKED_GRANT);
+				solutions.add(I18NConstants.COVERAGE_SOLUTION_ADD_CHECK);
 			}
 		}
 		return solutions;

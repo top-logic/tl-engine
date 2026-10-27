@@ -26,6 +26,7 @@ import com.top_logic.element.boundsec.manager.coverage.OperationUse.Kind;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.security.ApplicableOperations;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
@@ -62,6 +63,12 @@ public class TestOperationCoverage extends BasicTestCase {
 
 	/** Type declaring Finish implied by Read. */
 	private static final String IMPLIED_OPERATION = MODULE + ":ImpliedOperation";
+
+	/** Type granting Finish, which TestCoverageShow is implied by. */
+	private static final String GRANTED_OPERATION = MODULE + ":GrantedOperation";
+
+	/** The operation implied by Finish on {@link #GRANTED_OPERATION}. */
+	private static final String IMPLIED_BY_FINISH = "TestCoverageShow";
 
 	/** Type delegating to its container. */
 	private static final String EXPLICIT_PART = MODULE + ":ExplicitPart";
@@ -123,6 +130,50 @@ public class TestOperationCoverage extends BasicTestCase {
 			.getString(CoverageFinding.operationLabel(finding.getOperation()))));
 		assertFalse("The internal name is not shown where the label differs: " + german,
 			german.contains("\"" + FINISH_NAME + "\""));
+	}
+
+	public void testGrantNothingChecksIsReported() {
+		CoverageFinding finding = single(coverage(List.of()).get(GRANTED_OPERATION), FindingKind.UNCHECKED_GRANT);
+		assertEquals(finish(), finding.getOperation());
+		assertEquals(Set.of(ROLE_READER), roleNames(finding.getRoles()));
+	}
+
+	public void testCheckedGrantIsNoFinding() {
+		OperationUse use = OperationUse.onType(Kind.COMMAND, FINISH_NAME, type(GRANTED_OPERATION), "test.view.xml:6");
+		assertFalse(coverage(List.of(use)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
+	}
+
+	public void testGrantCheckedWithoutDeclaredTypeIsNoFinding() {
+		OperationUse script = OperationUse.onUnknown(Kind.SCRIPT, FINISH_NAME, "TL-Script finish()");
+		assertFalse("A place not declaring its type may check every type.",
+			coverage(List.of(script)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
+	}
+
+	public void testCheckOfAnImpliedOperationUsesTheGrant() {
+		OperationUse use =
+			OperationUse.onType(Kind.VIEW, IMPLIED_BY_FINISH, type(GRANTED_OPERATION), "test.view.xml:7");
+		assertFalse("Holding Finish means holding the operation it implies, which is checked.",
+			coverage(List.of(use)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
+	}
+
+	public void testCheckOnAnotherTypeDoesNotUseTheGrant() {
+		OperationUse use = OperationUse.onType(Kind.COMMAND, FINISH_NAME, type(WITH_OPERATIONS), "test.view.xml:8");
+		assertTrue(coverage(List.of(use)).get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
+	}
+
+	public void testBuiltInGrantIsNeverReported() {
+		for (TypeCoverage coverage : coverage(List.of()).values()) {
+			for (CoverageFinding finding : coverage.findings(FindingKind.UNCHECKED_GRANT)) {
+				assertFalse(finding.toString(), ApplicableOperations.isBuiltIn(finding.getOperation()));
+			}
+		}
+		assertFalse(coverage(List.of()).get(COVERED).hasFinding(FindingKind.UNCHECKED_GRANT));
+	}
+
+	public void testUnknownUsesReportNoUncheckedGrant() {
+		Map<String, TypeCoverage> coverage = byType(SecurityCoverageAnalysis.newInstance(Set.of(EXCLUDED_MODULE)).analyze());
+		assertFalse("Without knowing the places checking operations, no grant is reported as unchecked.",
+			coverage.get(GRANTED_OPERATION).hasFinding(FindingKind.UNCHECKED_GRANT));
 	}
 
 	public void testInapplicableOperation() {

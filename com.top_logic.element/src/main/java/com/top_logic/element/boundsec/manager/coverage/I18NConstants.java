@@ -64,6 +64,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 UNKNOWN_OPERATION__OPERATION_USERS;
 
+	/**
+	 * @en The operation "{1}" is granted on the type "{0}" to the roles "{2}", but no view,
+	 *     command, form or privileged script checks it - nor an operation it implies - on objects
+	 *     of the type. The grant has no effect: remove it, or add the check that should use it.
+	 */
+	public static ResKey3 UNCHECKED_GRANT__TYPE_OPERATION_ROLES;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

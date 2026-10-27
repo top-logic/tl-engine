@@ -106,19 +106,31 @@ public class SecurityCoverageAnalysis {
 	private final List<OperationUse> _uses;
 
 	/**
+	 * Whether {@link #_uses} are all the places of the application checking an operation, so that
+	 * a grant none of them checks can be reported.
+	 */
+	private final boolean _usesKnown;
+
+	/**
 	 * The findings about the {@link #_uses}, by the type they are reported for; the key
 	 * <code>null</code> holds those of uses not declaring the type they check.
 	 */
 	private final Map<TLClass, List<CoverageFinding>> _useFindings;
 
 	/**
-	 * Creates a {@link SecurityCoverageAnalysis} without {@link OperationUse}s.
+	 * Creates a {@link SecurityCoverageAnalysis} that does not know the {@link OperationUse}s of the
+	 * application.
+	 *
+	 * <p>
+	 * Without knowing where operations are checked, the analysis reports no
+	 * {@link FindingKind#UNCHECKED_GRANT}.
+	 * </p>
 	 *
 	 * @see #SecurityCoverageAnalysis(TLModel, ElementAccessManager, ModelAccessRights, Set, List)
 	 */
 	public SecurityCoverageAnalysis(TLModel model, ElementAccessManager accessManager, ModelAccessRights accessRights,
 			Set<String> excludedModules) {
-		this(model, accessManager, accessRights, excludedModules, Collections.emptyList());
+		this(model, accessManager, accessRights, excludedModules, null);
 	}
 
 	/**
@@ -133,7 +145,8 @@ public class SecurityCoverageAnalysis {
 	 * @param excludedModules
 	 *        Names of the modules whose types are not analyzed. Must not be <code>null</code>.
 	 * @param uses
-	 *        The places of the application checking an operation. Must not be <code>null</code>.
+	 *        The places of the application checking an operation; <code>null</code> when they are
+	 *        not known, so that a grant nothing checks is not reported.
 	 */
 	public SecurityCoverageAnalysis(TLModel model, ElementAccessManager accessManager, ModelAccessRights accessRights,
 			Set<String> excludedModules, List<OperationUse> uses) {
@@ -141,7 +154,8 @@ public class SecurityCoverageAnalysis {
 		_accessManager = Objects.requireNonNull(accessManager);
 		_accessRights = Objects.requireNonNull(accessRights);
 		_excludedModules = Set.copyOf(excludedModules);
-		_uses = List.copyOf(uses);
+		_usesKnown = uses != null;
+		_uses = uses == null ? Collections.emptyList() : List.copyOf(uses);
 
 		_operations = new ArrayList<>(CommandGroupRegistry.getInstance().getAllCommandGroups());
 		_operations.sort(Comparator.comparing(BoundCommandGroup::getID));
@@ -161,7 +175,7 @@ public class SecurityCoverageAnalysis {
 	 * @return The analysis over the application model and the started security services.
 	 */
 	public static SecurityCoverageAnalysis newInstance(Set<String> excludedModules) {
-		return newInstance(excludedModules, Collections.emptyList());
+		return newInstance(excludedModules, null);
 	}
 
 	/**
@@ -170,7 +184,8 @@ public class SecurityCoverageAnalysis {
 	 * @param excludedModules
 	 *        Names of the modules whose types are not analyzed.
 	 * @param uses
-	 *        The places of the application checking an operation.
+	 *        The places of the application checking an operation, <code>null</code> when they are
+	 *        not known.
 	 * @return The analysis over the application model and the started security services.
 	 */
 	public static SecurityCoverageAnalysis newInstance(Set<String> excludedModules, List<OperationUse> uses) {
@@ -343,6 +358,7 @@ public class SecurityCoverageAnalysis {
 			}
 			addDeadGrantFindings(type, findings);
 			addUngrantedOperationFindings(type, findings);
+			addUncheckedGrantFindings(type, findings);
 		}
 		if (withoutSecurity == null && internal == null) {
 			findings.addAll(_useFindings.getOrDefault(type, Collections.emptyList()));
@@ -414,6 +430,118 @@ public class SecurityCoverageAnalysis {
 				findings.add(CoverageFinding.ungrantedOperation(type, operation));
 			}
 		}
+	}
+
+	/**
+	 * Reports every operation declared for an application, not a built-in one, that is granted on
+	 * the given type although no place of the application checks it there.
+	 *
+	 * <p>
+	 * A grant of an operation is in use when a place checks the operation itself or an operation
+	 * it implies on objects of the type: holding an operation means holding every operation it
+	 * implies, so a check of an implied operation is a use of the grant. An operation implying a
+	 * built-in one is in use, since the model access rights check the built-in operations on every
+	 * access. A place checks objects of the type when it checks objects of the type or of one of
+	 * its generalizations, when it checks objects delegating to an access parent of the type, when
+	 * it checks the security root and the root is of the type, and when it does not declare which
+	 * type it checks at all - a privileged script, a form, a command outside a unit of its view -
+	 * so that an operation such a place checks is in use on every type.
+	 * </p>
+	 *
+	 * <p>
+	 * Only reported when the places checking an operation are known.
+	 * </p>
+	 */
+	private void addUncheckedGrantFindings(TLClass type, List<CoverageFinding> findings) {
+		if (!_usesKnown) {
+			return;
+		}
+		ApplicableOperations applicable = _accessRights.getOperations(type);
+		for (BoundCommandGroup operation : sortedById(applicable.getOperations())) {
+			if (ApplicableOperations.isBuiltIn(operation)) {
+				continue;
+			}
+			Set<BoundedRole> granted = getGrantedRoles(type, operation);
+			if (granted.isEmpty()) {
+				continue;
+			}
+			Set<BoundCommandGroup> checked = withImplied(applicable, operation);
+			if (checked.stream().anyMatch(ApplicableOperations::isBuiltIn)) {
+				continue;
+			}
+			boolean used = _uses.stream()
+				.filter(use -> checked.stream().anyMatch(op -> op.getID().equals(use.operation())))
+				.anyMatch(use -> checks(use, type));
+			if (!used) {
+				findings.add(CoverageFinding.uncheckedGrant(type, operation, granted));
+			}
+		}
+	}
+
+	/**
+	 * The given operation and all operations it implies, directly or transitively.
+	 */
+	private static Set<BoundCommandGroup> withImplied(ApplicableOperations applicable, BoundCommandGroup operation) {
+		Set<BoundCommandGroup> result = new LinkedHashSet<>();
+		result.add(operation);
+		for (BoundCommandGroup other : applicable.getOperations()) {
+			if (applicable.getImplying(other).contains(operation)) {
+				result.add(other);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Whether the given place checks its operation on objects of the given type.
+	 *
+	 * @see #addUncheckedGrantFindings(TLClass, List)
+	 */
+	private boolean checks(OperationUse use, TLClass type) {
+		return switch (use.target()) {
+			case UNKNOWN -> true;
+			case ROOT -> {
+				TLObject root = securityRoot();
+				yield root != null && root.tType() instanceof TLClass rootType
+					&& TLModelUtil.isGeneralization(type, rootType);
+			}
+			case TYPE -> checksType(use.type(), type, new HashSet<>());
+		};
+	}
+
+	/**
+	 * Whether a check on objects of the given checked type is decided on objects of the given
+	 * type: the checked type is a generalization of the type, or an object of the checked type
+	 * delegates to an access parent of the type.
+	 *
+	 * @param visited
+	 *        The checked types inspected along the access parents, guarding against cycles.
+	 * @return Also <code>true</code> when the type of an access parent cannot be determined
+	 *         statically, so that an undecidable delegation never produces a finding.
+	 */
+	private boolean checksType(TLClass checked, TLClass type, Set<TLClass> visited) {
+		if (!visited.add(checked)) {
+			return false;
+		}
+		if (TLModelUtil.isGeneralization(checked, type)) {
+			return true;
+		}
+		for (TLClass delegating : TLModelUtil.getReflexiveTransitiveSpecializations(checked)) {
+			AccessParentFunction parent = _accessRights.getAccessParent(delegating);
+			if (parent == null) {
+				continue;
+			}
+			Set<TLClass> parentTypes = parent.getParentTypes(delegating);
+			if (parentTypes == null) {
+				return true;
+			}
+			for (TLClass parentType : parentTypes) {
+				if (checksType(parentType, type, visited)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private static List<BoundCommandGroup> sortedById(Collection<BoundCommandGroup> operations) {

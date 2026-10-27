@@ -269,6 +269,26 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COVERAGE_SOLUTION_CHECK_OTHER_OPERATION;
 
 	/**
+	 * @en Unchecked grant: the operation "{0}" is granted to the roles {1}, but no view, command,
+	 *     form or privileged script checks it - nor an operation it implies - on objects of the
+	 *     type, so the grant has no effect.
+	 */
+	public static ResKey2 COVERAGE_PROBLEM_UNCHECKED_GRANT__OPERATION_ROLES;
+
+	/**
+	 * @en Remove the grant ("Grants" tab, or the access rights configuration of the type, its
+	 *     generalization or its module that grants it).
+	 */
+	public static ResKey COVERAGE_SOLUTION_REMOVE_UNCHECKED_GRANT;
+
+	/**
+	 * @en Add the check that should use the operation: an access control of a view unit, the
+	 *     access of a command, the edit operation of a form, or the command group of a privileged
+	 *     script.
+	 */
+	public static ResKey COVERAGE_SOLUTION_ADD_CHECK;
+
+	/**
 	 * @en Operation uses without a checked type
 	 */
 	public static ResKey COVERAGE_UNATTACHED_GROUP;

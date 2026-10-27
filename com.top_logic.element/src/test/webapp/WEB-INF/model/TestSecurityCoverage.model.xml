@@ -150,6 +150,9 @@
 					</attributes>
 				</class>
 
+				<!-- Grants an operation of its own, which another declared operation is implied by. -->
+				<class name="GrantedOperation"/>
+
 				<!-- Role rule and read grant, declares an operation implied by Read. -->
 				<class name="ImpliedOperation">
 					<attributes>

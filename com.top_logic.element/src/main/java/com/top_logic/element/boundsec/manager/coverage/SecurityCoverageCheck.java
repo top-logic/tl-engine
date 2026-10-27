@@ -201,7 +201,9 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 	 * </p>
 	 */
 	public SecurityCoverageAnalysis newAnalysis() {
-		return SecurityCoverageAnalysis.newInstance(getConfig().getExcludedModules(), getOperationUses());
+		// Without a provider the places checking an operation are unknown, not absent.
+		return SecurityCoverageAnalysis.newInstance(getConfig().getExcludedModules(),
+			_useProviders.isEmpty() ? null : getOperationUses());
 	}
 
 	/**

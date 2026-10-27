@@ -5,6 +5,7 @@
 package com.top_logic.element.boundsec.manager.coverage;
 
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -151,6 +152,26 @@ public final class CoverageFinding {
 	}
 
 	/**
+	 * Creates a {@link FindingKind#UNCHECKED_GRANT} finding.
+	 *
+	 * @param type
+	 *        The type carrying the grant.
+	 * @param operation
+	 *        The granted operation nothing checks on the type.
+	 * @param roles
+	 *        The roles the operation is granted to.
+	 * @return The new finding.
+	 */
+	public static CoverageFinding uncheckedGrant(TLClass type, BoundCommandGroup operation, Set<BoundedRole> roles) {
+		String roleNames =
+			roles.stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(DETAIL_SEPARATOR));
+		ResKey message = I18NConstants.UNCHECKED_GRANT__TYPE_OPERATION_ROLES
+			.fill(TLModelUtil.qualifiedName(type), operationLabel(operation), roleNames);
+		return new CoverageFinding(FindingKind.UNCHECKED_GRANT, type, message, operation,
+			Collections.unmodifiableSet(new LinkedHashSet<>(roles)), Collections.emptyList());
+	}
+
+	/**
 	 * Creates a {@link FindingKind#INAPPLICABLE_OPERATION} finding.
 	 *
 	 * @param type
@@ -281,9 +302,11 @@ public final class CoverageFinding {
 
 	/**
 	 * The granted roles that cannot be delivered on {@link #getType()}, neither by a rule nor by a
-	 * direct role assignment.
+	 * direct role assignment, or, for a {@link FindingKind#UNCHECKED_GRANT}, the roles granted the
+	 * operation nothing checks.
 	 * 
-	 * @return An empty set for a finding other than {@link FindingKind#DEAD_GRANT}.
+	 * @return An empty set for a finding other than {@link FindingKind#DEAD_GRANT} and
+	 *         {@link FindingKind#UNCHECKED_GRANT}.
 	 */
 	public Set<BoundedRole> getRoles() {
 		return _roles;

@@ -395,6 +395,7 @@ module not listed in its `excluded-modules` and reports, per type:
 | ungranted operation | an operation declared for the type (not a built-in one) is held by no role there, neither by a grant nor through an implying operation, so every check of it on the type is refused | grant it to a role, or declare it `implied-by` an operation the roles hold |
 | inapplicable operation | a view unit, a command, a form or a privileged script checks an operation on the type that does not apply to it (a check on the security root is reported for the type of the root) | declare the operation for the type, or check another one |
 | unknown operation | such a place checks an operation that is no registered command group | register the command group, or check another one |
+| unchecked grant | an operation declared for the application (not a built-in one) is granted on the type, but no view unit, command, form or privileged script checks it - nor an operation it implies - on objects of the type; the grant has no effect | remove the grant, or add the check that should use it |
 
 The places checking an operation are reported to the check by the `OperationUseProvider`s of its
 `operation-uses`: `com.top_logic.layout.view` contributes the `OperationUseIndex`, which scans the
@@ -406,6 +407,17 @@ delegating to an access parent is not checked for applicability. A place not dec
 privileged script, a form, a command whose unit lies in another view file) is only checked for an
 unknown operation; such findings belong to no type and are reported by
 `SecurityCoverageAnalysis.getUnattachedFindings()`.
+
+A grant of an operation counts as checked on a type when a place checks the operation itself, or an
+operation it implies (holding an operation means holding every operation it implies; an operation
+implying a built-in one is always in use, since the model access rights check the built-in
+operations on every access), on objects of the type: on the type or one of its generalizations, on a
+type whose objects delegate to an access parent of the type, on the security root when the root is of
+the type, or without declaring the checked type at all - a place that does not declare its type
+(privileged script, form, command outside a unit of its view file) counts as checking every type, so
+that it never causes an unchecked-grant finding. Grants of built-in operations are never reported.
+The unchecked grants are only reported when the places checking an operation are known, i.e. when a
+module contributes an `OperationUseProvider` (as `com.top_logic.layout.view` does).
 
 A type is **covered** when it has a role source and at least one role may read it, **delegated**
 when it has an access parent (whether the parent is accessible is reported with the parent's type),

@@ -28,6 +28,7 @@ import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function3;
 import com.top_logic.basic.func.IFunction1;
 import com.top_logic.basic.io.character.CharacterContents;
@@ -78,6 +79,8 @@ public class TestScriptImplOptionMapping extends TestCase {
 
 	private static final String PROVIDER = "provider";
 
+	private static final String CHOSEN = "chosen";
+
 	private static final String CREATE_DEFAULT = "create-default";
 
 	private static final String COMPUTED_IN_TRANSACTION = "is-computed-in-transaction";
@@ -105,6 +108,31 @@ public class TestScriptImplOptionMapping extends TestCase {
 
 		@Name(PROVIDER)
 		PolymorphicConfiguration<DefaultProvider> getProvider();
+
+		@Name(CHOSEN)
+		@com.top_logic.layout.form.values.edit.annotation.Options(fun = ChosenFilters.class,
+			mapping = ImplOptionMapping.class)
+		PolymorphicConfiguration<Filter<Object>> getChosen();
+	}
+
+	/**
+	 * Java implementation of a filter offered by {@link ChosenFilters}.
+	 */
+	public static class AcceptAll implements Filter<Object> {
+		@Override
+		public boolean accept(Object obj) {
+			return true;
+		}
+	}
+
+	/**
+	 * {@link com.top_logic.layout.form.values.edit.annotation.Options} function offering a fixed choice of implementation classes.
+	 */
+	public static class ChosenFilters extends Function0<List<Class<?>>> {
+		@Override
+		public List<Class<?>> apply() {
+			return List.of(AcceptAll.class);
+		}
 	}
 
 	/**
@@ -228,6 +256,27 @@ public class TestScriptImplOptionMapping extends TestCase {
 			Resources.getInstance().getString(ResKey.forClass(DefaultProvider.class).suffix(suffix).optional());
 		assertNotNull("Missing resource: " + suffix, result);
 		return result;
+	}
+
+	/**
+	 * Implementation classes computed by an
+	 * {@link com.top_logic.layout.form.values.edit.annotation.Options} function are completed with the script
+	 * option, as the generic implementation classes are.
+	 */
+	public void testScriptOptionForOptionsFunction() throws ConfigurationException {
+		A a = TypedConfiguration.newConfigItem(A.class);
+		Options chosen = options(a, CHOSEN);
+		assertTrue(chosen.mapping() instanceof ScriptImplOptionMapping);
+		assertEquals(List.of(AcceptAll.class, ScriptImplementation.class), chosen.options());
+
+		Object script = chosen.mapping().toSelection(ScriptImplementation.class);
+		assertNotNull(ScriptImplementationType.forDescriptor(((ConfigurationItem) script).descriptor()));
+		a.update(property(CHOSEN), script);
+		assertSame(ScriptImplementation.class, chosen.mapping().asOption(chosen.options(), script));
+
+		Object java = chosen.mapping().toSelection(AcceptAll.class);
+		assertEquals(AcceptAll.class, ((PolymorphicConfiguration<?>) java).getImplementationClass());
+		assertSame(AcceptAll.class, chosen.mapping().asOption(chosen.options(), java));
 	}
 
 	public void testNoScriptOptionForOtherProperties() {

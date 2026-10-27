@@ -8,6 +8,7 @@ package com.top_logic.model.annotate;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -33,6 +34,7 @@ public interface TLDefaultValue extends TLAttributeAnnotation, TLTypeAnnotation 
 	 */
 	@Mandatory
 	@Name(PROVIDER_NAME)
+	@Label("Default value")
 	@DefaultContainer
 	PolymorphicConfiguration<DefaultProvider> getProvider();
 

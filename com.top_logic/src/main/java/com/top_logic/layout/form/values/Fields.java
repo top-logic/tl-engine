@@ -34,7 +34,6 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme;
-import com.top_logic.basic.config.DerivedPropertyAlgorithm;
 import com.top_logic.basic.config.NamePath;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
@@ -42,6 +41,7 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.func.Function0;
+import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.func.IGenericFunction;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.reflect.JavaTypeUtil;
@@ -828,6 +828,8 @@ public class Fields {
 	 * If the property accepts scripts, they additionally contain the
 	 * {@link ScriptImplOptionMapping#getScriptOption() script option}, and the
 	 * {@link #optionMapping(DerivedProperty) option mapping} is a {@link ScriptImplOptionMapping}.
+	 * The same holds for implementation classes an {@link Options} function computes for the
+	 * property, i.e. options with an {@link ImplOptionMapping}.
 	 * </p>
 	 * 
 	 * @see #optionMapping(DerivedProperty)
@@ -922,19 +924,91 @@ public class Fields {
 		Class<? extends IGenericFunction<? extends Iterable<?>>> functionClass = optionsAnnotation.fun();
 		Ref[] argumentsSpec = optionsAnnotation.args();
 
+		@SuppressWarnings("unchecked")
+		IGenericFunction<? extends Iterable<?>> function =
+			getInstance(options, IGenericFunction.class, functionClass);
+		OptionMapping optionMapping = getOptionMapping(optionsAnnotation, function, options);
+		if (optionMapping instanceof ImplOptionMapping) {
+			// The options are implementation classes. A property that accepts scripts additionally
+			// offers the script option, as for its generic options.
+			ScriptImplOptionMapping scriptMapping = ScriptImplOptionMapping.forProperty(property);
+			if (scriptMapping != null) {
+				function = new WithScriptOption(function, scriptMapping.getScriptOption());
+				optionMapping = scriptMapping;
+			}
+		}
+		AlgorithmSpec spec = AlgorithmSpec.create(function, argumentsSpec);
 		DerivedProperty derivedValue =
-			getDerivedValue(options, descriptor, Iterable.class, functionClass, argumentsSpec, location);
-		derivedValue.set(OPTION_MAPPING, getOptionMapping(optionsAnnotation, derivedValue, options));
+			DerivedProperty.createDerivedProperty(Iterable.class, descriptor, spec, property, location);
+		derivedValue.set(OPTION_MAPPING, optionMapping);
 		return derivedValue;
 	}
 
-	private static OptionMapping getOptionMapping(Options optionsAnnotation, DerivedProperty<?> derivedProp,
+	/**
+	 * Option function adding the script option of a property that accepts scripts to the
+	 * implementation classes an {@link Options} function computes for it.
+	 *
+	 * @see ScriptImplOptionMapping
+	 */
+	private static final class WithScriptOption extends GenericFunction<Iterable<?>> {
+
+		private final IGenericFunction<? extends Iterable<?>> _options;
+
+		private final Object _scriptOption;
+
+		WithScriptOption(IGenericFunction<? extends Iterable<?>> options, Object scriptOption) {
+			_options = options;
+			_scriptOption = scriptOption;
+		}
+
+		@Override
+		public int getArgumentCount() {
+			return _options instanceof GenericFunction<?> generic ? generic.getArgumentCount() : 0;
+		}
+
+		@Override
+		public boolean hasVarArgs() {
+			return _options instanceof GenericFunction<?> generic ? generic.hasVarArgs() : true;
+		}
+
+		@Override
+		public Iterable<?> invoke(Object... args) {
+			Iterable<?> options = _options.invoke(args);
+			List<Object> result = new ArrayList<>();
+			if (options != null) {
+				for (Object option : options) {
+					result.add(option);
+				}
+			}
+			if (!result.contains(_scriptOption)) {
+				result.add(_scriptOption);
+			}
+			Object defaultValue = options instanceof OptionModel<?> model ? model.getDefaultValue() : null;
+			return new DefaultListOptionModel<>(result) {
+				@Override
+				public Object getDefaultValue() {
+					return defaultValue;
+				}
+			};
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return obj instanceof WithScriptOption other && other._options.equals(_options)
+				&& other._scriptOption.equals(_scriptOption);
+		}
+
+		@Override
+		public int hashCode() {
+			return _options.hashCode() * 31 + _scriptOption.hashCode();
+		}
+	}
+
+	private static OptionMapping getOptionMapping(Options optionsAnnotation, IGenericFunction<?> function,
 			DeclarativeFormOptions options) {
 		Class<? extends OptionMapping> mappingFun = optionsAnnotation.mapping();
 		OptionMapping optionMapping;
 		if (mappingFun == InvalidOptionMapping.class) {
-			DerivedPropertyAlgorithm algorithm = derivedProp.getAlgorithm();
-			IGenericFunction<?> function = algorithm.getFunction();
 			if (function instanceof OptionMappingProvider) {
 				optionMapping = ((OptionMappingProvider) function).getOptionMapping();
 			} else {

@@ -29,5 +29,12 @@
 				</type-system>
 			</type-systems>
 		</config>
+#if ($ui != "classic" && $moduleType != "fragment")
+
+		<!-- The browser tab names the application: the title of the application, see tl.title. -->
+		<config config:interface="com.top_logic.layout.view.ViewConfig"
+			title="tl.title"
+		/>
+#end
 	</configs>
 </application>

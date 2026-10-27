@@ -23,9 +23,10 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
  *
  * <p>
  * A split is configured with one {@link ChildConstraint} per pane. When the user drags a splitter,
- * the resulting pixel sizes of all panes are stored together with a {@link #configSignature(List)
- * signature} of the configured constraints; when the user collapses or expands a pane, its collapse
- * state is stored. The next time the split is built, the stored sizes replace the configured ones -
+ * the resulting sizes of all panes are stored together with a {@link #configSignature(List)
+ * signature} of the configured constraints, each size in the configured unit of its pane: pixels for
+ * a pane sized in pixels, a weight among the percent panes for a pane sized in percent. When the user
+ * collapses or expands a pane, its collapse state is stored. The next time the split is built, the stored sizes replace the configured ones -
  * unless the signature has changed in the meantime: then the configuration was edited after the user
  * personalized the split, and the configured sizes take effect again.
  * </p>
@@ -186,8 +187,9 @@ public class SplitSizePersonalization {
 	}
 
 	/**
-	 * The constraint the pane with the given index is laid out with: the pixel size the user dragged
-	 * it to, if stored for the current configuration, otherwise the configured size.
+	 * The constraint the pane with the given index is laid out with: the size the user dragged it to,
+	 * if stored for the current configuration, otherwise the configured size. The pane keeps its
+	 * configured unit in both cases.
 	 *
 	 * <p>
 	 * The result is a fresh instance on each call, never one of the configured constraints: a split
@@ -201,7 +203,7 @@ public class SplitSizePersonalization {
 			return new ChildConstraint(configured.getSize(), configured.getUnit(), configured.getMinSize(),
 				configured.getScrolling());
 		}
-		return new ChildConstraint(size.floatValue(), DisplayUnit.PIXEL, configured.getMinSize(),
+		return new ChildConstraint(size.floatValue(), configured.getUnit(), configured.getMinSize(),
 			configured.getScrolling());
 	}
 
@@ -216,7 +218,8 @@ public class SplitSizePersonalization {
 	 * Stores the pane sizes reported by a split panel after a drag.
 	 *
 	 * @param controlIdToSize
-	 *        The pixel size of each pane in pane order, keyed by the ID of the pane's control.
+	 *        The size of each pane in pane order in the unit of the pane, keyed by the ID of the
+	 *        pane's control.
 	 */
 	public void saveSizes(Map<String, Float> controlIdToSize) {
 		Map<String, Object> indexed = new HashMap<>();

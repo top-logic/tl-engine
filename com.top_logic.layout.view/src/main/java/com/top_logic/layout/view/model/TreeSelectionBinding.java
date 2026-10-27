@@ -16,9 +16,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.listener.Registration;
-import com.top_logic.layout.component.model.SelectionEvent;
-import com.top_logic.layout.component.model.SelectionListener;
-import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TLTreeModelUtil;
@@ -26,11 +23,16 @@ import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.layout.tree.model.TreeNodeComparator;
 import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.model.TLObject;
 
 /**
- * Two-way binding between the selection of a {@link ReactTreeControl} and a {@link ViewChannel}.
+ * Two-way binding between the selection of a tree and a {@link ViewChannel}.
+ *
+ * <p>
+ * The tree is shown by a {@link TreeSelectionDisplay} - a tree control, or a table displaying the
+ * tree as its rows -, which the binding tells the selection to show and which reports the selection
+ * the user makes.
+ * </p>
  *
  * <p>
  * What lands on the channel are the {@link TLTreeNode#getBusinessObject() business objects} of the
@@ -99,9 +101,7 @@ import com.top_logic.model.TLObject;
  */
 public class TreeSelectionBinding {
 
-	private final ReactTreeControl _tree;
-
-	private final SelectionModel<Object> _selectionModel;
+	private final TreeSelectionDisplay _display;
 
 	private final Supplier<DefaultTreeUINodeModel> _treeModel;
 
@@ -111,7 +111,7 @@ public class TreeSelectionBinding {
 
 	private final Registration _channelRegistration;
 
-	private final SelectionListener<Object> _selectionListener = this::handleSelectionChanged;
+	private final Registration _selectionRegistration;
 
 	/** Whether a channel value is currently being applied, so the tree's echo is not written back. */
 	private boolean _applyingFromChannel;
@@ -132,10 +132,8 @@ public class TreeSelectionBinding {
 	/**
 	 * Creates a {@link TreeSelectionBinding} and applies the channel's current value to the tree.
 	 *
-	 * @param tree
-	 *        The control displaying the tree, told to push a selection made here to the client.
-	 * @param selectionModel
-	 *        The selection of that tree, holding its nodes.
+	 * @param display
+	 *        The display of the tree, showing its selection.
 	 * @param treeModel
 	 *        The tree displayed now, which is another one after the tree was built anew.
 	 * @param locator
@@ -143,15 +141,14 @@ public class TreeSelectionBinding {
 	 * @param channel
 	 *        The channel holding the selection.
 	 */
-	public TreeSelectionBinding(ReactTreeControl tree, SelectionModel<Object> selectionModel,
-			Supplier<DefaultTreeUINodeModel> treeModel, NodeLocator locator, ViewChannel channel) {
-		_tree = tree;
-		_selectionModel = selectionModel;
+	public TreeSelectionBinding(TreeSelectionDisplay display, Supplier<DefaultTreeUINodeModel> treeModel,
+			NodeLocator locator, ViewChannel channel) {
+		_display = display;
 		_treeModel = treeModel;
 		_locator = locator;
 		_channel = channel;
 
-		selectionModel.addSelectionListener(_selectionListener);
+		_selectionRegistration = display.addSelectionListener(this::handleSelectionChanged);
 		_channelRegistration = channel.addListener((sender, oldValue, newValue) -> applyChannelValue());
 
 		applyChannelValue();
@@ -251,16 +248,15 @@ public class TreeSelectionBinding {
 	 */
 	public void dispose() {
 		_channelRegistration.dispose();
-		_selectionModel.removeSelectionListener(_selectionListener);
+		_selectionRegistration.dispose();
 	}
 
 	/**
 	 * Writes a selection made in the tree to the channel.
 	 */
-	private void handleSelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
-		Set<? extends Object> newSelection = event.getNewSelection();
+	private void handleSelectionChanged(Collection<DefaultTreeUINode> newSelection) {
 		if (!_applyingFromChannel) {
-			writeSelection(businessObjects(newSelection));
+			writeSelection(TreeSelectionDisplay.businessObjects(newSelection));
 		}
 		recordDisplayed(newSelection);
 	}
@@ -268,11 +264,8 @@ public class TreeSelectionBinding {
 	/**
 	 * Remembers the given selected nodes as {@link #_displayed}.
 	 */
-	private void recordDisplayed(Collection<?> selectedNodes) {
-		List<DefaultTreeUINode> nodes = new ArrayList<>();
-		for (Object node : selectedNodes) {
-			nodes.add((DefaultTreeUINode) node);
-		}
+	private void recordDisplayed(Collection<DefaultTreeUINode> selectedNodes) {
+		List<DefaultTreeUINode> nodes = new ArrayList<>(selectedNodes);
 		if (nodes.size() > 1) {
 			nodes.sort(displayOrder(nodes.get(0)));
 		}
@@ -331,7 +324,7 @@ public class TreeSelectionBinding {
 			return;
 		}
 		if (value instanceof Collection<?> objects) {
-			if (!_selectionModel.isMultiSelectionSupported()) {
+			if (!_display.canDisplaySeveral()) {
 				// A tree selecting one node at a time has no way of showing a selection of several.
 				showSelection(Set.of(), false);
 				return;
@@ -349,37 +342,28 @@ public class TreeSelectionBinding {
 	}
 
 	/**
-	 * Makes the given nodes the tree's selection, and pushes that to the client.
+	 * Makes the given nodes the tree's selection, see
+	 * {@link TreeSelectionDisplay#showSelection(Set, boolean)}.
 	 *
 	 * @param nodes
 	 *        The nodes to select, empty to select nothing.
 	 * @param reveal
-	 *        Whether to open the subtrees above the given nodes, so that they are displayed.
+	 *        Whether to make the given nodes visible.
 	 */
 	private void showSelection(Set<DefaultTreeUINode> nodes, boolean reveal) {
 		_applyingFromChannel = true;
 		try {
-			if (reveal) {
-				for (DefaultTreeUINode node : nodes) {
-					TreeNodes.revealNode(node);
-				}
-			}
-			_selectionModel.setSelection(nodes);
+			_display.showSelection(nodes, reveal);
 		} finally {
 			_applyingFromChannel = false;
 		}
-
-		// Unlike a selection or an expansion the user made, which flows through the control's own
-		// command handlers, this change is made on the models directly, so the control's visible
-		// node state has to be rebuilt explicitly.
-		_tree.updateVisibleState();
 	}
 
 	/**
 	 * Whether the tree's current selection is exactly the given channel value.
 	 */
 	private boolean isDisplayed(Object value) {
-		Set<Object> selected = businessObjects(_selectionModel.getSelection());
+		Set<Object> selected = _display.getSelectedObjects();
 		if (value == null) {
 			return selected.isEmpty();
 		}
@@ -422,17 +406,6 @@ public class TreeSelectionBinding {
 		}
 		DefaultTreeUINodeModel treeModel = _treeModel.get();
 		return treeModel == null ? null : _locator.locate(treeModel.getRoot(), businessObject);
-	}
-
-	/**
-	 * The business objects the given nodes stand for.
-	 */
-	private static Set<Object> businessObjects(Collection<?> nodes) {
-		Set<Object> objects = new LinkedHashSet<>();
-		for (Object node : nodes) {
-			objects.add(TLTreeModelUtil.getInnerBusinessObject(node));
-		}
-		return objects;
 	}
 
 }

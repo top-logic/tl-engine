@@ -51,12 +51,16 @@ import com.top_logic.ai.chat.api.messages.TaskUpdateEvent;
 import com.top_logic.ai.chat.api.messages.TransactionRolledBackEvent;
 import com.top_logic.ai.chat.api.messages.TurnCompletedEvent;
 import com.top_logic.ai.chat.api.messages.TurnStartedEvent;
+import com.top_logic.ai.chat.backend.ConversationBackend;
+import com.top_logic.ai.chat.backend.ConversationBackendService;
+import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.protocol.PatchEvent;
+import com.top_logic.model.TLObject;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
@@ -66,6 +70,7 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.cost.CostConversion;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
@@ -170,6 +175,16 @@ public class ChatSSEHandler implements ChatEventHandler {
 	private final List<String> _frames = new ArrayList<>();
 
 	private final AtomicBoolean _closed = new AtomicBoolean(false);
+
+	/**
+	 * The context window the frames of the current run carry when a {@link ConversationBackend}
+	 * answers it, {@code null} while the framework's agent does.
+	 *
+	 * <p>
+	 * Decided when the run starts, on the thread of the run.
+	 * </p>
+	 */
+	private volatile Integer _runContextWindow;
 
 	/** Thread-safe event buffer between agent thread and SSE flush thread. */
 	/**
@@ -326,7 +341,35 @@ public class ChatSSEHandler implements ChatEventHandler {
 			}
 			return;
 		}
+		if (event instanceof AgentEvent.RunStarted) {
+			// On the thread of the run, which can ask what answers the conversation.
+			_runContextWindow = backendContextWindow(_tracker);
+		}
 		_eventQueue.add(event);
+	}
+
+	/**
+	 * The context window a {@link ConversationBackend} answering the chat the given window shows reports,
+	 * {@code null} for a chat the framework's agent answers, whose window is that of its memory.
+	 */
+	static Integer backendContextWindow(TaskProgressTracker tracker) {
+		if (tracker == null) {
+			return null;
+		}
+		String sessionId = tracker.getActiveSessionId();
+		Person owner = tracker.getSessionOwner();
+		if (sessionId == null || owner == null) {
+			return null;
+		}
+		try {
+			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+			ConversationBackend backend =
+				session instanceof AgentSession agentSession ? ConversationBackendService.backendFor(agentSession) : null;
+			return backend == null ? null : Integer.valueOf(backend.contextWindow());
+		} catch (RuntimeException ex) {
+			Logger.warn("Could not ask which backend answers chat " + sessionId + ".", ex, ChatSSEHandler.class);
+			return null;
+		}
 	}
 
 	/**
@@ -862,6 +905,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	private int contextWindow() {
+		Integer backendWindow = _runContextWindow;
+		if (backendWindow != null) {
+			return backendWindow.intValue();
+		}
 		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
 		return memory == null ? 0 : memory.contextWindowTokens();
 	}

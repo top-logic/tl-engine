@@ -19,35 +19,20 @@
   </properties>
 
   <dependencies>
+    <!-- Chat, MCP server, A2A and Living Views (agents build and change the demo's views; see views-demo.config.xml). -->
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-ai-mcp-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-ai-a2a</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-chat</artifactId>
+      <artifactId>tl-starter-ai</artifactId>
+      <type>pom</type>
     </dependency>
     <!-- The "Albert" tab of the classic LayoutServlet UI, hosting the React chat. -->
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-chat-classic</artifactId>
     </dependency>
-    <!-- Living Views: agents build and change the demo's views; see views-demo.config.xml. -->
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-ai-views</artifactId>
-    </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-view</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-ai-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -56,51 +41,17 @@
     <!-- Hybrid search over the demo's events and sessions; see ai-index.config.xml. -->
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-ai-index</artifactId>
+      <artifactId>tl-starter-ai-search</artifactId>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-ai-index-onnx</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-themes-core</artifactId>
+      <artifactId>tl-starter-classic</artifactId>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-bpe-app</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-scripting-template</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-formeditor</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-themeedit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-graph-diagramjs-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-monitoring</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-doc</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-model-search</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-contact</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

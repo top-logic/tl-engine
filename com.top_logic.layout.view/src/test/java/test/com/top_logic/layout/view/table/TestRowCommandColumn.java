@@ -204,7 +204,7 @@ public class TestRowCommandColumn extends TestCase {
 	 * recording the rows it is run with.
 	 */
 	private Column<String, String> columnWithAction(ViewExecutabilityRule rule) {
-		return single(new RowCommandColumn.RowCommand<String>(model(rule), row -> {
+		return single(new RowCommandColumn.RowCommand<>(model(rule), row -> {
 			_acted.add(row);
 			return HandlerResult.DEFAULT_RESULT;
 		}, DEFAULT_IMAGE, DEFAULT_LABEL));

@@ -11,7 +11,14 @@ import { bundle } from './i18n'
 import { unseenBadge } from './progress-model'
 import { cardsForTurn } from './subagent-card'
 import type { ChatMessage, SubagentRef } from './types'
-import { emitPatch, isSubscribed, resetTLBridge } from '../test/tl-react-bridge'
+import {
+  emitPatch,
+  isSubscribed,
+  resetTLBridge,
+  setPageLeaving,
+  setStaleReload,
+  staleReloadCalls,
+} from '../test/tl-react-bridge'
 
 /**
  * The store's world, without a browser.
@@ -2025,43 +2032,6 @@ describe('eventBelongsToChat', () => {
  * `reference` channels do is exactly these two calls, so the store is where "a write replaces the
  * text" and "a write inserts a token" can be held without a browser.
  */
-/**
- * Which chat this window brought into being (#508).
- *
- * A host that stamps a new conversation with what its page is about needs that difference, and only
- * the browser has it: the first send is what creates a chat, while selecting one and restoring one
- * after a reload both open a chat that was started somewhere else.
- */
-describe('the chat this window created', () => {
-  it('records the chat the first send brought into being', async () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
-
-    expect(store.getState().createdSessionId).toBeNull()
-
-    await store.actions.send('allererste Frage', [])
-
-    expect(store.getState().sessionId).toBe('s1')
-    expect(store.getState().createdSessionId).toBe('s1')
-
-    await settle()
-    release()
-  })
-
-  it('records nothing for a chat that was only opened', async () => {
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined)
-
-    await store.actions.selectSession('s1')
-
-    expect(store.getState().sessionId).toBe('s1')
-    expect(store.getState().createdSessionId).toBeNull()
-
-    await settle()
-    release()
-  })
-})
-
 describe('the composer seam', () => {
   it('replaces the draft, and the composer is what focuses and moves the caret', () => {
     const store = chatStore('alpha', BOOT)
@@ -2589,7 +2559,6 @@ describe('a window opened while the run is in flight', () => {
  */
 describe('a window the server no longer knows', () => {
   let storage: Map<string, string>
-  let reloads: number
 
   /** The server's answer for a window it cannot resolve (`ChatServlet#sendStaleWindow`). */
   function staleAnswer() {
@@ -2617,18 +2586,11 @@ describe('a window the server no longer knows', () => {
 
   beforeEach(() => {
     storage = new Map()
-    reloads = 0
     const win = (globalThis as unknown as { window: Record<string, unknown> }).window
     win.sessionStorage = {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => storage.set(key, value),
       removeItem: (key: string) => storage.delete(key),
-    }
-    win.location = {
-      pathname: '/app/view/chat',
-      reload: () => {
-        reloads++
-      },
     }
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
@@ -2659,7 +2621,7 @@ describe('a window the server no longer knows', () => {
     expect(staleDrafts).toEqual([])
 
     expect(sent).toBe(false)
-    expect(reloads).toBe(1)
+    expect(staleReloadCalls()).toBe(1)
     // Not the "agent is still working" hint a 409 used to be read as: nothing is running.
     expect(store.getState().notice).toBe('')
     expect(store.getState().busy).toBe(false)
@@ -2699,7 +2661,7 @@ describe('a window the server no longer knows', () => {
     const sent = await store.actions.send('Neue Frage', [])
 
     expect(sent).toBe(false)
-    expect(reloads).toBe(1)
+    expect(staleReloadCalls()).toBe(1)
     expect(sentTexts).toEqual([])
     expect([...storage.values()]).toContain('Neue Frage')
 
@@ -2708,7 +2670,7 @@ describe('a window the server no longer knows', () => {
   })
 
   it('does not reload again right after a reload, and says why instead', async () => {
-    storage.set('tlReactStaleUiReloadTime', String(Date.now() - 2_000))
+    setStaleReload(false)
     staleOn('/chat/send')
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined)
@@ -2717,8 +2679,26 @@ describe('a window the server no longer knows', () => {
     const sent = await store.actions.send('noch einmal', [])
 
     expect(sent).toBe(false)
-    expect(reloads).toBe(0)
+    expect(staleReloadCalls()).toBe(1)
     expect(store.getState().notice).toBe(bundle('de').staleWindow)
+
+    await settle()
+    release()
+  })
+
+  it('keeps the text and stays quiet when the page is on its way to another one', async () => {
+    setPageLeaving(true)
+    staleOn('/chat/send')
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined)
+    store.actions.dispatch({ type: 'ADD_USER', id: 'u0', text: 'erste Frage' })
+
+    const sent = await store.actions.send('kurz vor dem Login', [])
+
+    expect(sent).toBe(false)
+    expect(staleReloadCalls()).toBe(0)
+    expect(store.getState().notice).toBe('')
+    expect([...storage.values()]).toContain('kurz vor dem Login')
 
     await settle()
     release()
@@ -2734,7 +2714,7 @@ describe('a window the server no longer knows', () => {
 
     expect(requested.filter((url) => url.includes('/chat/stream'))).toHaveLength(1)
     expect(streams).toHaveLength(0)
-    expect(reloads).toBe(1)
+    expect(staleReloadCalls()).toBe(1)
 
     release()
   })
@@ -2760,7 +2740,7 @@ describe('a window the server no longer knows', () => {
     expect(requested.filter((url) => url.includes('/chat/stream'))).toHaveLength(2)
     expect(streams).toHaveLength(1)
     expect(streams[0].closed).toBe(false)
-    expect(reloads).toBe(0)
+    expect(staleReloadCalls()).toBe(0)
 
     release()
   })

@@ -66,7 +66,7 @@ public class CompileJSP {
 		}
 	};
 
-	/** {@link FileFilter} accepting directories and files accepted by {@value #JSP_FILTER} */
+	/** {@link FileFilter} accepting directories and files accepted by {@link #JSP_FILTER} */
 	static FileFilter JSP_DIR_FILTER = new FileFilter() {
 
 		@Override

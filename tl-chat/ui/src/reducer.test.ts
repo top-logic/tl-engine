@@ -108,3 +108,16 @@ describe('removing turns', () => {
     expect(messages.map((m) => m.id)).toEqual(['u2'])
   })
 })
+
+describe('the cost of a run', () => {
+  it('is put on the line of the run it was reported for', () => {
+    const messages = run([
+      { type: 'START_RUN', runId: 'r1' },
+      { type: 'START_RUN', runId: 'r2' },
+      { type: 'SET_RUN_COST', runId: 'r2', cost: 0.0024, currency: 'USD' },
+    ])
+    const metas = messages.filter((m) => m.type === 'run_meta')
+    expect(metas.map((m) => ('cost' in m ? m.cost : undefined))).toEqual([undefined, 0.0024])
+    expect(metas.map((m) => ('currency' in m ? m.currency : undefined))).toEqual([undefined, 'USD'])
+  })
+})

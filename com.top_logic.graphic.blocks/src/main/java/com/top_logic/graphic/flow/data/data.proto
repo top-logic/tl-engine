@@ -180,7 +180,7 @@ message TreeLayout extends FloatingLayout {
 	double parentAlign;
 	
 	/**
-	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentRatio}.
+	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentAlign}.
 	 */	
 	double parentOffset;
 	

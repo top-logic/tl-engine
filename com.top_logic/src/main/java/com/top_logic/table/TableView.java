@@ -276,6 +276,30 @@ public interface TableView<R> {
 	void applyNamedFilter(String id);
 
 	/**
+	 * The number of data rows the table would show after {@link #applyNamedFilter(String)
+	 * applying} the given {@link NamedFilter}.
+	 *
+	 * <p>
+	 * The count is of the rows the filter's criteria select on their own: the filter is counted as
+	 * applying it would set it - its column criteria replacing the live ones, a criterion for a
+	 * column this table does not have or does not filter by dropped, and its
+	 * {@link NamedFilter#search() search term} replacing the live one - so the column filters and
+	 * the search the table is currently filtered by do not change the result. Counting changes
+	 * nothing: the table goes on showing what it shows.
+	 * </p>
+	 *
+	 * @param filter
+	 *        The filter to count, usually one of the {@link #namedFilters() offered ones}.
+	 * @return The count, or {@link RowSource#UNKNOWN_COUNT} if the table's rows cannot be counted
+	 *         without loading them.
+	 *
+	 * @see NamedFilter#counted()
+	 */
+	default int matchCount(NamedFilter filter) {
+		return RowSource.UNKNOWN_COUNT;
+	}
+
+	/**
 	 * Whether this table keeps {@link NamedFilter}s of the user's own, so that
 	 * {@link #saveNamedFilter(String)} saves one and {@link #deleteNamedFilter(String)} deletes
 	 * one.

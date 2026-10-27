@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The conversations with the coding agent of a workspace (tab "Agent" of factory/projects.view.xml):
+	the list of the conversations of the workspace, newest first, and the chat of the selected one.
+
+	The chat's subject is the conversation: a chat about a tl.factory:AgentConversation is answered
+	by the agent in the workspace (AgentConversationResolver), which continues the conversation of
+	the agent. Typing into the chat of a conversation continues it, also one started by another
+	user. "New conversation" gives the agent a task (factory/assign-task.view.xml), which starts a
+	new conversation with the task as its first message.
+
+	The embedding view binds all four channels: the workspace, the selected conversation, the chat
+	session of the current user about it, and why the agent cannot work in the workspace now.
+-->
+<view>
+	<channels>
+		<channel name="workspace"/>
+		<channel name="conversation"/>
+		<channel name="agentSession"/>
+		<channel name="agentUnavailable"/>
+	</channels>
+	<chat chat-id="workspace-agent"
+		direction="row"
+	>
+		<data-list
+			collapsible="true"
+			observed-types="tl.factory:AgentConversation"
+			selection="conversation"
+		>
+			<commands>
+				<generic-command
+					image="css:bi bi-plus-lg"
+					inputs="workspace, agentUnavailable"
+				>
+					<label>
+						<en>New conversation</en>
+						<de>Neue Unterhaltung</de>
+					</label>
+					<executability>
+						<disabled-if expr="$agentUnavailable"/>
+					</executability>
+					<create-transient type="tl.factory:AgentConversation">
+						<with-result>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="factory/assign-task.view.xml"
+							>
+								<bind
+									channel="workspace"
+									to="workspace"
+								/>
+								<bind
+									channel="conversation"
+									to="conversation"
+								/>
+								<bind
+									channel="agentSession"
+									to="agentSession"
+								/>
+							</open-dialog>
+						</with-result>
+					</create-transient>
+				</generic-command>
+			</commands>
+			<empty-text>
+				<en>No conversations yet</en>
+				<de>Noch keine Unterhaltungen</de>
+			</empty-text>
+			<inputs>
+				<input channel="workspace"/>
+			</inputs>
+			<rows><![CDATA[workspace -> if($workspace == null, list(),
+	$workspace.get(`tl.factory:Workspace#conversations`)
+		.sort((c -> $c.get(`tl.factory:AgentConversation#createdAt`)).comparator().desc()))]]></rows>
+			<lines>
+				<line attribute="task"/>
+				<line
+					attribute="createdAt"
+					emphasis="secondary"
+				/>
+			</lines>
+			<title>
+				<en>Conversations</en>
+				<de>Unterhaltungen</de>
+			</title>
+		</data-list>
+		<panel fill="true">
+			<chat-conversation
+				input="agentSession"
+				subject="conversation"
+				trace="summary"
+			>
+				<controls enter-hint="true"/>
+			</chat-conversation>
+		</panel>
+	</chat>
+</view>

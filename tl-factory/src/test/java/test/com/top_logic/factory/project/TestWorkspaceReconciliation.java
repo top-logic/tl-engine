@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.factory.project;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,15 +16,20 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.factory.project.WorkspaceReconciliation;
+import com.top_logic.factory.project.WorkspaceReconciliation.ApplicationStateCheck;
 import com.top_logic.factory.project.WorkspaceReconciliation.Outcome;
 import com.top_logic.factory.project.WorkspaceStatus;
 import com.top_logic.factory.workspace.ExecCommand;
 import com.top_logic.factory.workspace.ExecOutput;
+import com.top_logic.factory.workspace.ExecProcess;
 import com.top_logic.factory.workspace.ImageContext;
+import com.top_logic.factory.workspace.LogFollower;
 import com.top_logic.factory.workspace.WorkspaceInfo;
 import com.top_logic.factory.workspace.WorkspaceProvider;
 import com.top_logic.factory.workspace.WorkspaceSpec;
 import com.top_logic.factory.workspace.WorkspaceState;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces;
+import com.top_logic.factory.workspace.app.ApplicationWorkspaces.ApplicationState;
 
 /**
  * Test of {@link WorkspaceReconciliation} against a {@link WorkspaceProvider} reporting a fixed set
@@ -32,6 +38,8 @@ import com.top_logic.factory.workspace.WorkspaceState;
 public class TestWorkspaceReconciliation extends TestCase {
 
 	private static final String URL_SUFFIX = "app/";
+
+	private static final String IMAGE = "tl-factory-workspace:0123456789abcdef";
 
 	/**
 	 * A workspace that runs is stored as running with the address of its application, one that is
@@ -66,6 +74,31 @@ public class TestWorkspaceReconciliation extends TestCase {
 		assertNull("An unchanged state needs no explanation.", c.message());
 
 		assertEquals(WorkspaceStatus.UNKNOWN, result.get("d").status());
+	}
+
+	/**
+	 * The image of an existing container is reported, so that a workspace whose image was not
+	 * recorded learns it; a workspace without container and one whose platform cannot be asked
+	 * report none.
+	 */
+	public void testImage() {
+		FakeProvider provider = new FakeProvider()
+			.add(running("a", 20006))
+			.add(info("b", WorkspaceState.STOPPED))
+			.add(WorkspaceInfo.missing("c", Collections.emptyList()));
+
+		Map<String, Outcome> result = reconcile(provider,
+			"a", WorkspaceStatus.RUNNING,
+			"b", WorkspaceStatus.BUILDING,
+			"c", WorkspaceStatus.STOPPED);
+
+		assertEquals(IMAGE, result.get("a").image());
+		assertEquals("Also after an interrupted operation.", IMAGE, result.get("b").image());
+		assertNull(result.get("c").image());
+
+		Map<String, Outcome> unknown = reconcile(new FakeProvider().setReachable(false),
+			"a", WorkspaceStatus.RUNNING);
+		assertNull(unknown.get("a").image());
 	}
 
 	/**
@@ -162,21 +195,85 @@ public class TestWorkspaceReconciliation extends TestCase {
 		assertEquals(List.of("a"), new ArrayList<>(result.keySet()));
 	}
 
+	/**
+	 * A running container whose application is stopped or failed makes the workspace
+	 * {@link WorkspaceStatus#APP_STOPPED} with its port but without the URL of the application; an
+	 * application starting, running or not telling its state leaves it running, and an
+	 * {@link WorkspaceStatus#APP_STOPPED} workspace whose application answers again runs.
+	 */
+	public void testApplicationState() {
+		FakeProvider provider = new FakeProvider()
+			.add(running("stopped", 20007))
+			.add(running("failed", 20008))
+			.add(running("changing", 20009))
+			.add(running("unknown", 20010))
+			.add(running("again", 20011));
+		Map<String, ApplicationState> states = Map.of(
+			"stopped", ApplicationState.STOPPED,
+			"failed", ApplicationState.FAILED,
+			"changing", ApplicationState.CHANGING,
+			"unknown", ApplicationState.UNKNOWN,
+			"again", ApplicationState.RUNNING);
+
+		Map<String, Outcome> result = reconcile(provider, states::get,
+			"stopped", WorkspaceStatus.RUNNING,
+			"failed", WorkspaceStatus.STARTING,
+			"changing", WorkspaceStatus.RUNNING,
+			"unknown", WorkspaceStatus.RUNNING,
+			"again", WorkspaceStatus.APP_STOPPED);
+
+		Outcome stopped = result.get("stopped");
+		assertEquals(WorkspaceStatus.APP_STOPPED, stopped.status());
+		assertEquals(Integer.valueOf(20007), stopped.hostPort());
+		assertNull(stopped.previewUrl());
+		assertNotNull(stopped.message());
+		assertEquals(WorkspaceStatus.APP_STOPPED, result.get("failed").status());
+		assertEquals(WorkspaceStatus.RUNNING, result.get("changing").status());
+		assertEquals(WorkspaceStatus.RUNNING, result.get("unknown").status());
+		Outcome again = result.get("again");
+		assertEquals(WorkspaceStatus.RUNNING, again.status());
+		assertEquals("http://localhost:20011/" + URL_SUFFIX, again.previewUrl());
+	}
+
+	/**
+	 * The state of an application is read from the exit code and the status line of the control
+	 * command; an image without the command tells nothing.
+	 */
+	public void testApplicationStateOfStatus() {
+		assertEquals(ApplicationState.RUNNING,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_RUNNING, "status: running\nurl: x\n"));
+		assertEquals(ApplicationState.FAILED,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_FAILED, "status: failed\nexit: 143\n"));
+		assertEquals(ApplicationState.STOPPED,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_NOT_RUNNING, "status: stopped\nexit: 143\n"));
+		assertEquals(ApplicationState.STOPPED,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_NOT_RUNNING, "status: unbuilt\n"));
+		assertEquals(ApplicationState.CHANGING,
+			ApplicationState.of(ApplicationWorkspaces.APP_STATUS_NOT_RUNNING, "status: starting\n"));
+		assertEquals(ApplicationState.UNKNOWN, ApplicationState.of(127, ""));
+	}
+
 	private static Map<String, Outcome> reconcile(WorkspaceProvider provider, Object... idsAndStates) {
+		return reconcile(provider, id -> ApplicationState.RUNNING, idsAndStates);
+	}
+
+	private static Map<String, Outcome> reconcile(WorkspaceProvider provider, ApplicationStateCheck applications,
+			Object... idsAndStates) {
 		Map<String, WorkspaceStatus> stored = new LinkedHashMap<>();
 		for (int n = 0; n < idsAndStates.length; n += 2) {
 			stored.put((String) idsAndStates[n], (WorkspaceStatus) idsAndStates[n + 1]);
 		}
-		return new WorkspaceReconciliation(provider, info -> info.getPreviewUrl() + URL_SUFFIX).reconcile(stored);
+		return new WorkspaceReconciliation(provider, info -> info.getPreviewUrl() + URL_SUFFIX, applications)
+			.reconcile(stored);
 	}
 
 	private static WorkspaceInfo running(String id, int port) {
-		return new WorkspaceInfo(id, WorkspaceState.RUNNING, "container-" + id, "image", port,
+		return new WorkspaceInfo(id, WorkspaceState.RUNNING, "container-" + id, IMAGE, port,
 			"http://localhost:" + port + "/", Collections.emptyList());
 	}
 
 	private static WorkspaceInfo info(String id, WorkspaceState state) {
-		return new WorkspaceInfo(id, state, "container-" + id, "image", WorkspaceInfo.NO_PORT, null,
+		return new WorkspaceInfo(id, state, "container-" + id, IMAGE, WorkspaceInfo.NO_PORT, null,
 			Collections.emptyList());
 	}
 
@@ -202,6 +299,11 @@ public class TestWorkspaceReconciliation extends TestCase {
 		@Override
 		public boolean isAvailable() {
 			return _reachable;
+		}
+
+		@Override
+		public List<String> networkSubnets() {
+			return Collections.emptyList();
 		}
 
 		@Override
@@ -268,12 +370,22 @@ public class TestWorkspaceReconciliation extends TestCase {
 		}
 
 		@Override
+		public void removeContainer(String workspaceId) {
+			throw unsupported();
+		}
+
+		@Override
 		public List<String> cleanup(Collection<String> keep) {
 			throw unsupported();
 		}
 
 		@Override
-		public int exec(String workspaceId, ExecCommand command, ExecOutput output) {
+		public ExecProcess startExec(String workspaceId, ExecCommand command, ExecOutput output) {
+			throw unsupported();
+		}
+
+		@Override
+		public LogFollower followLog(String workspaceId, int tailLines, Instant since, ExecOutput output) {
 			throw unsupported();
 		}
 

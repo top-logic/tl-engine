@@ -145,6 +145,13 @@ interface NamedFilterState {
   id: string;
   label: string;
   deletable: boolean;
+  /** The CSS class of the filter's chip, active or not; absent: none. */
+  cssClass?: string;
+  /**
+   * The number of data rows the filter selects on its own - the rows a click on its chip shows,
+   * whatever the table is filtered by now; absent for a filter that is not counted.
+   */
+  count?: number;
 }
 
 interface RowState {

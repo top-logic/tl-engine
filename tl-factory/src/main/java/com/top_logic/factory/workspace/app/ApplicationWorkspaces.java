@@ -15,8 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.Logger;
@@ -41,9 +43,10 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * All workspaces run the image built from the {@link #imageContext(String) workspace image
  * context}. The entry script of the image keeps the container alive until the application is built
- * (the file {@link #BUILT_MARKER} exists in the source volume), and from then on runs the
- * application in the foreground on the {@link WorkspaceSpec#getContainerPort() container port}.
- * Starting and stopping the workspace therefore starts and stops the application, and its source,
+ * (the file {@link #BUILT_MARKER} exists in the source volume), and from then on supervises the
+ * application on the {@link WorkspaceSpec#getContainerPort() container port}. Starting and stopping
+ * the workspace therefore starts and stops the application; in between, the
+ * {@link #APP_CONTROL_COMMAND} stops and restarts it without ending the container. Its source,
  * database and Maven repository survive in the volumes of the workspace:
  * </p>
  *
@@ -54,6 +57,8 @@ import com.top_logic.util.error.TopLogicException;
  * workspace.</li>
  * <li>The release repository of the engine version, a {@link VolumeMount#isShared() shared} volume
  * mounted read-only at {@link #RELEASE_PATH} and used as tail of the local Maven repository.</li>
+ * <li>{@link #AGENT_SESSIONS_VOLUME} at {@link #AGENT_SESSIONS_PATH}: the conversations of the
+ * coding agent, so that a conversation continues after the container was created anew.</li>
  * </ul>
  *
  * <p>
@@ -61,6 +66,15 @@ import com.top_logic.util.error.TopLogicException;
  * that builds a throwaway application of the same archetype into it, so that building an
  * application downloads (almost) nothing. The file {@link #RELEASE_COMPLETE_MARKER} records that
  * the repository is complete; a repository without it is filled again.
+ * </p>
+ *
+ * <p>
+ * The entry script and all commands run as the {@link #WORKSPACE_USER}, which is not root. The
+ * image creates the mount points of all volumes owned by this user, so that a fresh volume belongs
+ * to it as well. No command runs as root: the containers have no capabilities, so root could do
+ * nothing the {@link #WORKSPACE_USER} cannot. A release repository the {@link #WORKSPACE_USER}
+ * cannot write - filled by an image whose commands ran as root - is replaced by an empty one when
+ * it has to be filled.
  * </p>
  */
 public class ApplicationWorkspaces {
@@ -97,6 +111,13 @@ public class ApplicationWorkspaces {
 		 * @see #getStartTimeout()
 		 */
 		String START_TIMEOUT = "start-timeout";
+
+		/**
+		 * Configuration property name of {@link #getBuildTimeout()}.
+		 *
+		 * @see #getBuildTimeout()
+		 */
+		String BUILD_TIMEOUT = "build-timeout";
 
 		/**
 		 * Name of the workspace image without tag.
@@ -140,6 +161,21 @@ public class ApplicationWorkspaces {
 		@IntDefault(600)
 		int getStartTimeout();
 
+		/**
+		 * Seconds a Maven run may take: generating an application, building it, filling a release
+		 * repository.
+		 *
+		 * <p>
+		 * A run that takes longer is terminated and fails the operation.
+		 * </p>
+		 *
+		 * @see #BUILD_TIMEOUT
+		 * @see ExecCommand#getTimeout()
+		 */
+		@Name(BUILD_TIMEOUT)
+		@IntDefault(1800)
+		int getBuildTimeout();
+
 	}
 
 	/**
@@ -166,6 +202,11 @@ public class ApplicationWorkspaces {
 	 * Mount path of the release repository.
 	 */
 	public static final String RELEASE_PATH = "/release";
+
+	/**
+	 * Logical name of the volume holding the conversations of the coding agent of a workspace.
+	 */
+	public static final String AGENT_SESSIONS_VOLUME = "agent-sessions";
 
 	/**
 	 * Prefix of the logical name of the shared volume holding the release repository of an engine
@@ -224,6 +265,44 @@ public class ApplicationWorkspaces {
 	public static final String BROWSER_NONE = "none";
 
 	/**
+	 * The user in the workspace image that runs the entry script and all commands.
+	 */
+	public static final String WORKSPACE_USER = "tl";
+
+	/**
+	 * Mount path of the {@link #AGENT_SESSIONS_VOLUME}: the directory in which Claude Code keeps the
+	 * conversations it resumes, one directory per working directory.
+	 *
+	 * <p>
+	 * Only this directory is a volume, not the configuration directory of Claude Code around it:
+	 * the plugin, the MCP servers and the user instructions installed there come from the image, so
+	 * that a workspace created anew on a current image has the current ones.
+	 * </p>
+	 */
+	public static final String AGENT_SESSIONS_PATH = "/home/" + WORKSPACE_USER + "/.claude/projects";
+
+	/**
+	 * Placeholder in the {@link ImageContext#DOCKERFILE} of the image replaced by the
+	 * {@link #WORKSPACE_USER}.
+	 */
+	public static final String WORKSPACE_USER_PLACEHOLDER = "@WORKSPACE_USER@";
+
+	/**
+	 * Placeholder in the {@link ImageContext#DOCKERFILE} of the image replaced by the mount paths
+	 * of all volumes, separated by spaces.
+	 *
+	 * @see #VOLUME_PATHS
+	 */
+	public static final String VOLUME_PATHS_PLACEHOLDER = "@VOLUME_PATHS@";
+
+	/**
+	 * The mount paths of all volumes a workspace of this class has, the paths the image creates
+	 * owned by the {@link #WORKSPACE_USER}.
+	 */
+	public static final List<String> VOLUME_PATHS =
+		Collections.unmodifiableList(Arrays.asList(SOURCE_PATH, REPOSITORY_PATH, RELEASE_PATH, AGENT_SESSIONS_PATH));
+
+	/**
 	 * Placeholder in the Maven settings of the image replaced by the
 	 * {@link Config#getRepositoryUrl() repository URL}.
 	 */
@@ -238,6 +317,93 @@ public class ApplicationWorkspaces {
 	 * Path of the entry script in the {@link #imageContext(String) image context}.
 	 */
 	public static final String ENTRY_SCRIPT = "entrypoint.sh";
+
+	/**
+	 * Path of the script of the {@link #APP_CONTROL_COMMAND} in the {@link #imageContext(String)
+	 * image context}.
+	 */
+	public static final String APP_CONTROL_SCRIPT = "tl-workspace-app.sh";
+
+	/**
+	 * Path of the user instructions of Claude Code in the {@link #imageContext(String) image
+	 * context}, installed for the {@link #WORKSPACE_USER}.
+	 */
+	public static final String USER_INSTRUCTIONS = "CLAUDE.md";
+
+	/**
+	 * Command in the workspace image controlling the application the entry script supervises:
+	 * {@code status}, {@code start}, {@code stop}, {@code restart}, {@code log}.
+	 *
+	 * @see #ENV_APP_CONTROL
+	 */
+	public static final String APP_CONTROL_COMMAND = "tl-workspace-app";
+
+	/**
+	 * Environment variable of the workspace image naming the {@link #APP_CONTROL_COMMAND}, to which
+	 * the {@code tl-app} skill of the TopLogic plugin hands starting and stopping the application.
+	 */
+	public static final String ENV_APP_CONTROL = "TL_APP_CONTROL";
+
+	/**
+	 * Argument of the {@link #APP_CONTROL_COMMAND} printing the state of the application.
+	 */
+	public static final String APP_CONTROL_STATUS = "status";
+
+	/**
+	 * Argument of the {@link #APP_CONTROL_COMMAND} starting the application and waiting until it
+	 * answers.
+	 */
+	public static final String APP_CONTROL_START = "start";
+
+	/**
+	 * Argument of the {@link #APP_CONTROL_COMMAND} printing the end of the log of the application.
+	 */
+	public static final String APP_CONTROL_LOG = "log";
+
+	/**
+	 * Environment variable of the {@link #APP_CONTROL_COMMAND} giving the seconds {@code start}
+	 * waits for the application.
+	 */
+	public static final String ENV_APP_TIMEOUT = "TL_WORKSPACE_APP_TIMEOUT";
+
+	/**
+	 * Environment variable of the {@link #APP_CONTROL_COMMAND} giving the number of lines
+	 * {@code log} prints.
+	 */
+	public static final String ENV_APP_LOG_LINES = "TL_WORKSPACE_APP_LOG_LINES";
+
+	/**
+	 * Exit code of {@code status} of the {@link #APP_CONTROL_COMMAND}: the application answers.
+	 */
+	public static final int APP_STATUS_RUNNING = 0;
+
+	/**
+	 * Exit code of {@code status} of the {@link #APP_CONTROL_COMMAND}: the application does not
+	 * answer (yet).
+	 */
+	public static final int APP_STATUS_NOT_RUNNING = 3;
+
+	/**
+	 * Exit code of {@code status} of the {@link #APP_CONTROL_COMMAND}: the application failed.
+	 */
+	public static final int APP_STATUS_FAILED = 4;
+
+	/**
+	 * Start of the line of {@code status} of the {@link #APP_CONTROL_COMMAND} naming the state of
+	 * the supervisor.
+	 */
+	public static final String APP_STATUS_PREFIX = "status: ";
+
+	/**
+	 * States of the supervisor in which the application does not run and is not about to.
+	 */
+	private static final Set<String> SUPERVISOR_STOPPED = Set.of("stopped", "unbuilt");
+
+	private static final Duration APP_STATUS_TIMEOUT = Duration.ofSeconds(30);
+
+	private static final Duration APP_CONTROL_GRACE = Duration.ofSeconds(60);
+
+	private static final int FAILURE_LOG_LINES = 60;
 
 	/**
 	 * Prefix of the identifier of the workspace filling a release repository, followed by the
@@ -300,6 +466,8 @@ public class ApplicationWorkspaces {
 
 	private final Map<String, Object> _releaseLocks = new ConcurrentHashMap<>();
 
+	private volatile String _currentImage;
+
 	/**
 	 * Creates {@link ApplicationWorkspaces}.
 	 *
@@ -349,33 +517,65 @@ public class ApplicationWorkspaces {
 		String releaseVolume = ensureReleaseRepository(image, version, progress);
 
 		String workspaceId = spec.getWorkspaceId();
-		String appDir = SOURCE_PATH + PATH_SEPARATOR + spec.getArtifactId();
-		WorkspaceSpec workspace = new WorkspaceSpec(workspaceId, image)
-			.addVolume(new VolumeMount(SOURCE_VOLUME, SOURCE_PATH))
-			.addVolume(new VolumeMount(REPOSITORY_VOLUME, REPOSITORY_PATH))
-			.addVolume(VolumeMount.shared(releaseVolume, RELEASE_PATH, true))
-			.putEnv(ENV_MAVEN_ARGS, String.join(" ", workspaceMavenArgs()))
-			.putEnv(ENV_APP_DIR, appDir)
-			.putEnv(ENV_BUILT_MARKER, builtMarker())
-			.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT))
-			.putEnv(ENV_BROWSER, BROWSER_NONE);
-		String initialPassword = spec.getInitialPassword();
-		if (initialPassword != null) {
-			workspace.putEnv(ENV_INITIAL_PASSWORD, initialPassword);
-		}
-		_provider.create(workspace);
+		String appDir = appDir(spec);
+		_provider.create(workspaceSpec(spec, image, releaseVolume));
 		_provider.start(workspaceId);
 
 		step(progress, "Generating application " + spec.getGroupId() + ":" + spec.getArtifactId() + " " + version);
-		run(workspaceId, generateCommand(version, spec.getGroupId(), spec.getArtifactId()).setWorkingDir(SOURCE_PATH),
-			progress);
+		run(workspaceId, generateCommand(version, spec.getGroupId(), spec.getArtifactId()).setWorkingDir(SOURCE_PATH)
+			.setTimeout(buildTimeout()), progress);
 
 		step(progress, "Building application");
-		run(workspaceId, ExecCommand.of("mvn", "-B", "install").setWorkingDir(appDir), progress);
+		run(workspaceId, ExecCommand.of("mvn", "-B", "install").setWorkingDir(appDir).setTimeout(buildTimeout()),
+			progress);
 
 		run(workspaceId, ExecCommand.of("touch", builtMarker()), progress);
 		step(progress, "Application built, starting it");
 		return _provider.status(workspaceId);
+	}
+
+	/**
+	 * Creates the container of an existing workspace anew on the current workspace image, keeping
+	 * its application, its database and its Maven repository.
+	 *
+	 * <p>
+	 * The image is built if necessary, the release repository of the engine version is filled if
+	 * it is not complete. The container gets the environment of the given spec, which must
+	 * describe the application the workspace was created with. A running workspace is stopped; the
+	 * new container is not started.
+	 * </p>
+	 *
+	 * @param spec
+	 *        The application of the workspace.
+	 * @param progress
+	 *        Receiver of the output of all steps while they run.
+	 * @return The workspace in its new container, see {@link WorkspaceInfo#getImage()}.
+	 * @see WorkspaceProvider#recreate(WorkspaceSpec)
+	 */
+	public WorkspaceInfo update(ApplicationSpec spec, ExecOutput progress) throws InterruptedException {
+		String image = ensureImage(progress);
+		String releaseVolume = ensureReleaseRepository(image, engineVersion(spec), progress);
+		step(progress, "Creating the container anew on image " + image);
+		return _provider.recreate(workspaceSpec(spec, image, releaseVolume));
+	}
+
+	/**
+	 * The reference of the image new and updated workspaces run, whether or not it is built yet.
+	 *
+	 * <p>
+	 * A workspace whose container runs another image is outdated, see
+	 * {@link #update(ApplicationSpec, ExecOutput)}.
+	 * </p>
+	 *
+	 * @see #ensureImage(ExecOutput)
+	 */
+	public String currentImage() {
+		String result = _currentImage;
+		if (result == null) {
+			result = workspaceImageContext().imageReference(_config.getImageRepository());
+			_currentImage = result;
+		}
+		return result;
 	}
 
 	/**
@@ -385,6 +585,134 @@ public class ApplicationWorkspaces {
 	 */
 	public WorkspaceInfo start(String workspaceId) {
 		return _provider.start(workspaceId);
+	}
+
+	/**
+	 * Starts the stopped or failed application of a running workspace through the
+	 * {@link #APP_CONTROL_COMMAND} and waits until it answers, at most
+	 * {@link Config#getStartTimeout()}.
+	 *
+	 * @param workspaceId
+	 *        The running workspace.
+	 * @param progress
+	 *        Receiver of the output of the command, the end of the log of the application if it
+	 *        fails.
+	 * @throws ApplicationFailedException
+	 *         If the application failed to start.
+	 */
+	public void startApplication(String workspaceId, ExecOutput progress) throws InterruptedException {
+		int timeout = _config.getStartTimeout();
+		ExecCommand command = ExecCommand.of(APP_CONTROL_COMMAND, APP_CONTROL_START)
+			.putEnv(ENV_APP_TIMEOUT, Integer.toString(timeout))
+			// The command ends by itself after the start timeout.
+			.setTimeout(Duration.ofSeconds(timeout).plus(APP_CONTROL_GRACE));
+		OutputTail tail = new OutputTail(progress);
+		int exitCode = _provider.exec(workspaceId, command, tail);
+		if (exitCode != 0) {
+			if (applicationState(workspaceId) == ApplicationState.FAILED) {
+				throw new ApplicationFailedException(workspaceId);
+			}
+			throw new TopLogicException(I18NConstants.ERROR_COMMAND_FAILED__WORKSPACE_COMMAND_CODE_OUTPUT
+				.fill(workspaceId, command.toString(), exitCode, tail.toString()));
+		}
+	}
+
+	/**
+	 * The state of the application in a running workspace, as its supervisor reports it.
+	 *
+	 * @param workspaceId
+	 *        The running workspace.
+	 * @return The state, {@link ApplicationState#UNKNOWN} if the workspace does not tell, e.g.
+	 *         because its image has no {@link #APP_CONTROL_COMMAND}.
+	 */
+	public ApplicationState applicationState(String workspaceId) throws InterruptedException {
+		StringBuilder output = new StringBuilder();
+		int exitCode;
+		try {
+			exitCode = _provider.exec(workspaceId,
+				ExecCommand.of(APP_CONTROL_COMMAND, APP_CONTROL_STATUS).setTimeout(APP_STATUS_TIMEOUT),
+				new ExecOutput() {
+					@Override
+					public void stdout(String text) {
+						output.append(text);
+					}
+				});
+		} catch (TopLogicException ex) {
+			Logger.info("No application state of workspace " + workspaceId + ": " + ex.getMessage(),
+				ApplicationWorkspaces.class);
+			return ApplicationState.UNKNOWN;
+		}
+		return ApplicationState.of(exitCode, output.toString());
+	}
+
+	/**
+	 * Writes the end of the log of a failed application to the given output and fails.
+	 */
+	private void failure(String workspaceId, ExecOutput progress) throws InterruptedException {
+		_provider.exec(workspaceId, ExecCommand.of(APP_CONTROL_COMMAND, APP_CONTROL_LOG)
+			.putEnv(ENV_APP_LOG_LINES, Integer.toString(FAILURE_LOG_LINES))
+			.setTimeout(APP_STATUS_TIMEOUT), progress);
+		throw new ApplicationFailedException(workspaceId);
+	}
+
+	/**
+	 * The state of the application in a running workspace, as the {@link #APP_CONTROL_COMMAND}
+	 * reports it.
+	 */
+	public enum ApplicationState {
+
+		/**
+		 * The application answers.
+		 */
+		RUNNING,
+
+		/**
+		 * The application is starting or stopping.
+		 */
+		CHANGING,
+
+		/**
+		 * The application is stopped on request, or not built yet.
+		 */
+		STOPPED,
+
+		/**
+		 * The application ended by itself or its initialization failed.
+		 */
+		FAILED,
+
+		/**
+		 * The workspace does not tell.
+		 */
+		UNKNOWN;
+
+		/**
+		 * The state reported by {@code status} of the {@link #APP_CONTROL_COMMAND}.
+		 *
+		 * @param exitCode
+		 *        The exit code of the command.
+		 * @param output
+		 *        Its output, with a line {@value ApplicationWorkspaces#APP_STATUS_PREFIX} followed by
+		 *        the state of the supervisor.
+		 */
+		public static ApplicationState of(int exitCode, String output) {
+			switch (exitCode) {
+				case APP_STATUS_RUNNING:
+					return RUNNING;
+				case APP_STATUS_FAILED:
+					return FAILED;
+				case APP_STATUS_NOT_RUNNING:
+					for (String line : output.split(LINE_END)) {
+						if (line.startsWith(APP_STATUS_PREFIX)) {
+							String state = line.substring(APP_STATUS_PREFIX.length()).trim();
+							return SUPERVISOR_STOPPED.contains(state) ? STOPPED : CHANGING;
+						}
+					}
+					return UNKNOWN;
+				default:
+					return UNKNOWN;
+			}
+		}
 	}
 
 	/**
@@ -412,10 +740,21 @@ public class ApplicationWorkspaces {
 	/**
 	 * Waits until the application of a running workspace answers HTTP requests.
 	 *
+	 * @see #awaitApplication(String, String, ExecOutput)
+	 */
+	public String awaitApplication(String workspaceId, String contextPath) throws InterruptedException {
+		return awaitApplication(workspaceId, contextPath, ExecOutput.NONE);
+	}
+
+	/**
+	 * Waits until the application of a running workspace answers HTTP requests.
+	 *
 	 * <p>
 	 * The application answers when a request of its context path is answered with status 200 or a
 	 * redirect, e.g. to the login page. The wait fails if the workspace stops or the application
-	 * does not answer within {@link Config#getStartTimeout()}.
+	 * does not answer within {@link Config#getStartTimeout()}. It fails at once if the supervisor in
+	 * the container reports the application as {@link ApplicationState#FAILED failed}; the end of
+	 * the log of the application is written to the given output then.
 	 * </p>
 	 *
 	 * @param workspaceId
@@ -423,9 +762,14 @@ public class ApplicationWorkspaces {
 	 * @param contextPath
 	 *        The context path of the application, its {@link ApplicationSpec#getArtifactId()
 	 *        artifact}.
+	 * @param progress
+	 *        Receiver of the end of the log of an application that failed.
 	 * @return The URL of the application.
+	 * @throws ApplicationFailedException
+	 *         If the application failed to start.
 	 */
-	public String awaitApplication(String workspaceId, String contextPath) throws InterruptedException {
+	public String awaitApplication(String workspaceId, String contextPath, ExecOutput progress)
+			throws InterruptedException {
 		long timeoutMillis = _config.getStartTimeout() * 1000L;
 		long deadline = System.currentTimeMillis() + timeoutMillis;
 		HttpClient client = HttpClient.newBuilder()
@@ -447,6 +791,9 @@ public class ApplicationWorkspaces {
 				}
 			} catch (IOException ex) {
 				// Not yet listening.
+			}
+			if (applicationState(workspaceId) == ApplicationState.FAILED) {
+				failure(workspaceId, progress);
 			}
 			if (System.currentTimeMillis() >= deadline) {
 				throw new TopLogicException(I18NConstants.ERROR_APPLICATION_NOT_REACHABLE__WORKSPACE_URL_SECONDS
@@ -477,9 +824,32 @@ public class ApplicationWorkspaces {
 	 */
 	public String ensureImage(ExecOutput progress) throws InterruptedException {
 		synchronized (_imageLock) {
-			return _provider.buildImage(_config.getImageRepository(), imageContext(_config.getRepositoryUrl()),
-				progress);
+			return _provider.buildImage(_config.getImageRepository(), workspaceImageContext(), progress);
 		}
+	}
+
+	/**
+	 * The files the image of the workspaces is built from.
+	 *
+	 * @implSpec The {@link #imageContext(String) workspace image context} for the configured
+	 *           {@link Config#getRepositoryUrl() repository URL}.
+	 */
+	protected ImageContext workspaceImageContext() {
+		return imageContext(_config.getRepositoryUrl());
+	}
+
+	/**
+	 * Creates and starts the workspace filling a release repository.
+	 */
+	private void startResolver(String resolverId, String image, String volume) throws InterruptedException {
+		_provider.create(new WorkspaceSpec(resolverId, image)
+			.addVolume(VolumeMount.shared(volume, RELEASE_PATH, false))
+			.putEnv(ENV_MAVEN_ARGS, "-Dmaven.repo.local=" + RELEASE_PATH)
+			// There is no application in the resolver, the entry script only keeps it alive.
+			.putEnv(ENV_BUILT_MARKER, builtMarker())
+			.putEnv(ENV_APP_DIR, SOURCE_PATH)
+			.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT)));
+		_provider.start(resolverId);
 	}
 
 	/**
@@ -505,27 +875,32 @@ public class ApplicationWorkspaces {
 			if (leftOver.getState() != WorkspaceState.MISSING || !leftOver.getVolumes().isEmpty()) {
 				_provider.remove(resolverId);
 			}
-			_provider.create(new WorkspaceSpec(resolverId, image)
-				.addVolume(VolumeMount.shared(volume, RELEASE_PATH, false))
-				.putEnv(ENV_MAVEN_ARGS, "-Dmaven.repo.local=" + RELEASE_PATH)
-				// There is no application in the resolver, the entry script only keeps it alive.
-				.putEnv(ENV_BUILT_MARKER, builtMarker())
-				.putEnv(ENV_APP_DIR, SOURCE_PATH)
-				.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT)));
+			startResolver(resolverId, image, volume);
 			try {
-				_provider.start(resolverId);
 				String marker = RELEASE_PATH + PATH_SEPARATOR + RELEASE_COMPLETE_MARKER;
 				if (_provider.exec(resolverId, ExecCommand.of("test", "-f", marker), ExecOutput.NONE) == 0) {
 					return volume;
+				}
+				if (_provider.exec(resolverId, ExecCommand.of("test", "-w", RELEASE_PATH), ExecOutput.NONE) != 0) {
+					// An incomplete repository filled by an image whose commands ran as root.
+					step(progress, "Replacing the incomplete release repository of TopLogic " + version
+						+ ", which the workspace user cannot write");
+					_provider.remove(resolverId);
+					_provider.removeSharedVolume(volume);
+					_provider.ensureSharedVolume(volume);
+					startResolver(resolverId, image, volume);
 				}
 
 				step(progress, "Filling the release repository of TopLogic " + version);
 				String appDir = RESOLVER_DIR + PATH_SEPARATOR + RESOLVER_ARTIFACT_ID;
 				run(resolverId, ExecCommand.of("rm", "-rf", appDir), progress);
 				run(resolverId,
-					generateCommand(version, RESOLVER_GROUP_ID, RESOLVER_ARTIFACT_ID).setWorkingDir(RESOLVER_DIR),
+					generateCommand(version, RESOLVER_GROUP_ID, RESOLVER_ARTIFACT_ID).setWorkingDir(RESOLVER_DIR)
+						.setTimeout(buildTimeout()),
 					progress);
-				run(resolverId, ExecCommand.of(resolveCommand(version)).setWorkingDir(appDir), progress);
+				run(resolverId,
+					ExecCommand.of(resolveCommand(version)).setWorkingDir(appDir).setTimeout(buildTimeout()),
+					progress);
 				run(resolverId, ExecCommand.of("touch", marker), progress);
 				return volume;
 			} finally {
@@ -550,9 +925,14 @@ public class ApplicationWorkspaces {
 	 */
 	public static ImageContext imageContext(String repositoryUrl) {
 		String settings = resource(SETTINGS_FILE).replace(REPOSITORY_URL_PLACEHOLDER, xmlText(repositoryUrl));
+		String dockerfile = resource(ImageContext.DOCKERFILE)
+			.replace(WORKSPACE_USER_PLACEHOLDER, WORKSPACE_USER)
+			.replace(VOLUME_PATHS_PLACEHOLDER, String.join(" ", VOLUME_PATHS));
 		return new ImageContext()
-			.add(ImageContext.DOCKERFILE, resource(ImageContext.DOCKERFILE))
+			.add(ImageContext.DOCKERFILE, dockerfile)
 			.add(ENTRY_SCRIPT, resource(ENTRY_SCRIPT))
+			.add(APP_CONTROL_SCRIPT, resource(APP_CONTROL_SCRIPT))
+			.add(USER_INSTRUCTIONS, resource(USER_INSTRUCTIONS))
 			.add(SETTINGS_FILE, settings);
 	}
 
@@ -598,9 +978,47 @@ public class ApplicationWorkspaces {
 		return result;
 	}
 
+	/**
+	 * The description of the container of the application of a workspace.
+	 */
+	private WorkspaceSpec workspaceSpec(ApplicationSpec spec, String image, String releaseVolume) {
+		WorkspaceSpec workspace = new WorkspaceSpec(spec.getWorkspaceId(), image)
+			.addVolume(new VolumeMount(SOURCE_VOLUME, SOURCE_PATH))
+			.addVolume(new VolumeMount(REPOSITORY_VOLUME, REPOSITORY_PATH))
+			.addVolume(VolumeMount.shared(releaseVolume, RELEASE_PATH, true))
+			.addVolume(new VolumeMount(AGENT_SESSIONS_VOLUME, AGENT_SESSIONS_PATH))
+			.putEnv(ENV_MAVEN_ARGS, String.join(" ", workspaceMavenArgs()))
+			.putEnv(ENV_APP_DIR, appDir(spec))
+			.putEnv(ENV_BUILT_MARKER, builtMarker())
+			.putEnv(ENV_PORT, Integer.toString(WorkspaceSpec.DEFAULT_CONTAINER_PORT))
+			.putEnv(ENV_BROWSER, BROWSER_NONE);
+		String initialPassword = spec.getInitialPassword();
+		if (initialPassword != null) {
+			workspace.putEnv(ENV_INITIAL_PASSWORD, initialPassword);
+		}
+		spec.getEnv().forEach(workspace::putEnv);
+		return workspace;
+	}
+
+	private static String appDir(ApplicationSpec spec) {
+		return appDir(spec.getArtifactId());
+	}
+
+	/**
+	 * The directory in a workspace holding the sources of the application with the given artifact
+	 * ID.
+	 */
+	public static String appDir(String artifactId) {
+		return SOURCE_PATH + PATH_SEPARATOR + artifactId;
+	}
+
 	private String engineVersion(ApplicationSpec spec) {
 		String version = spec.getEngineVersion();
 		return version == null || version.isEmpty() ? _config.getEngineVersion() : version;
+	}
+
+	private Duration buildTimeout() {
+		return Duration.ofSeconds(_config.getBuildTimeout());
 	}
 
 	private static String builtMarker() {

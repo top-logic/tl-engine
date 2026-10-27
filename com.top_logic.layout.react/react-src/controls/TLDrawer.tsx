@@ -95,7 +95,7 @@ const TLDrawer: React.FC<TLCellProps> = ({ controlId }) => {
           />
         </div>
       )}
-      <div className="tl-drawer__body">
+      <div className="tl-drawer__body tl-region">
         <SurfaceProvider value={OVERLAY_SURFACE}>
           <FillBarrier>
             {!!child && <TLChild control={child} />}

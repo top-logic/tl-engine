@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, useButtonDefaults, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, useButtonDefaults, usePart, leavePage } from 'tl-react-bridge';
 import type { TLCellProps, ButtonStateJson, ButtonAppearance, ButtonPartProps, buttonPartAttributes, ThemeIcon } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -105,7 +105,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
         // the target closes itself once its work is done.
         window.open(navigateUrl, '_blank');
       } else {
-        window.location.assign(navigateUrl);
+        leavePage(navigateUrl);
       }
       return;
     }

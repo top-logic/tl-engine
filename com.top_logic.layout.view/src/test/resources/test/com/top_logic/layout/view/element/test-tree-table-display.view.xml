@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="selected"/>
+	</channels>
+
+	<tree-table
+		children="if($node == 'root', [`tl.core`], [])"
+		root="'root'"
+		selection="selected"
+	>
+		<columns>
+			<computed-column name="module"
+				value="$row"
+			>
+				<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
+					css-class="'module'"
+					label="'Module ' + $value.get(`tl.model:TLNamedPart#name`)"
+				/>
+			</computed-column>
+		</columns>
+	</tree-table>
+</view>

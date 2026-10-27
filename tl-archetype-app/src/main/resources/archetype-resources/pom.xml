@@ -2,108 +2,105 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.top-logic</groupId>
-		<artifactId>\${parentArtifactId}</artifactId>
-		<version>${tlVersion}</version>	
-	</parent>
-	
 	<groupId>\${groupId}</groupId>
 	<artifactId>\${artifactId}</artifactId>
 	<version>\${version}</version>
-	<name>${project.artifactId}</name>
-	
+	<name>\${project.artifactId}</name>
+
+#if ($moduleType == "fragment")
+	<!--
+		A TopLogic fragment: a library module contributing model, configuration and UI to the
+		applications depending on it. The packaging tl-fragment of the tl-maven-plugin (declared
+		with extensions below) builds it with the configuration of the TopLogic parent POM
+		tl-parent-core, without inheriting from it.
+	-->
+	<packaging>tl-fragment</packaging>
+#else
+	<!--
+		A TopLogic application. The packaging tl-app of the tl-maven-plugin (declared with
+		extensions below) builds it with the configuration of the TopLogic parent POM
+		tl-parent-app, without inheriting from it.
+	-->
+	<packaging>tl-app</packaging>
+#end
+
 #if ($ProfessionalEdition == "false")
 	<licenses>
-        <license>
-            <name>AGPL-3.0-only</name>
-            <url>https://www.gnu.org/licenses/agpl-3.0.txt</url>
-        </license>
+		<license>
+			<name>AGPL-3.0-only</name>
+			<url>https://www.gnu.org/licenses/agpl-3.0.txt</url>
+		</license>
 	</licenses>
 #else
 	<licenses>
 		<license>
-            <name>BOS-TopLogic-1.0</name>
-            <url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
-        </license>
+			<name>BOS-TopLogic-1.0</name>
+			<url>https://github.com/top-logic/.github/blob/main/LICENSES/LicenseRef-BOS-TopLogic-1.0.md</url>
+		</license>
 	</licenses>
 #end
-	
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		
-		<!-- Enable for Debian package deployment. -->
-		<tl.deb.skip>true</tl.deb.skip>
-		
-		<tl.deb.attach>false</tl.deb.attach>
-		<tl.deb.maintainer>info@\${project.groupId}</tl.deb.maintainer>
-		<tl.deb.section>misc</tl.deb.section>
-		<tl.deb.priority>optional</tl.deb.priority>
-		<tl.deb.distribution>development</tl.deb.distribution>
-		<tl.deb.dbSchema>\${project.artifactId}</tl.deb.dbSchema>
-		<tl.deb.dbUser>\${project.artifactId}</tl.deb.dbUser>
-		<tl.deb.contextName>\${project.artifactId}</tl.deb.contextName>
-		<tl.deb.installDir>/opt/\${project.artifactId}</tl.deb.installDir>
 
-		<!-- Deployment to APT repository. -->
+	<properties>
+		<!-- The TopLogic version: the version of the BOM tl-bom and of the tl-maven-plugin. -->
+		<tl.version>\${tlVersion}</tl.version>
+
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+#if ($moduleType != "fragment")
+
+		<!--
+			Debian package of the application, built from src/main/deb by the build of the TopLogic
+			parent POM tl-parent-app. Set tl.deb.skip to false to build it. The further tl.deb.*
+			properties (maintainer, install directory, database schema, ...) have their defaults in
+			tl-parent-app.
+		-->
+		<tl.deb.skip>true</tl.deb.skip>
+
+		<!-- Deployment to APT repository. Set tl.deb.skipDeploy to false to upload the package. -->
 		<tl.deb.skipDeploy>true</tl.deb.skipDeploy>
 		<tl.deb.repositoryUrl>Enter URL here.</tl.deb.repositoryUrl>
-		<tl.deb.repositoryPath>/</tl.deb.repositoryPath>
-		<tl.deb.serverId>tl-deb</tl.deb.serverId>
+#end
 	</properties>
 
+	<!-- The versions of the TopLogic modules and of the libraries they are built with. -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-bom</artifactId>
+				<version>\${tl.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
+#if ($moduleType != "fragment")
 #if ($ProfessionalEdition == "true")
 		<!-- Using TopLogic Professional Edition. -->
 		<dependency>
-		    <groupId>com.top-logic</groupId>
-		    <artifactId>tl-license-professional</artifactId>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-license-professional</artifactId>
 		</dependency>
 #else
 		<!-- Using TopLogic OpenSource Edition. AGPL license conditions apply. -->
 		<!-- To switch to TopLogic Professional Edition, uncomment the following dependency: -->
 		<!--
 		<dependency>
-		    <groupId>com.top-logic</groupId>
-		    <artifactId>tl-license-professional</artifactId>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-license-professional</artifactId>
 		</dependency>
 		-->
 #end
 
+#end
 		<!-- TopLogic -->
 #if ($ui != "classic")
 		<!-- React UI: the views of tl-layout-view, entry point /view/. -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-view</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-view-contact</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-react-codeedit</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-react-wysiwyg</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-model-wysiwyg</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-model-search-react</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-react-flow-server</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-dev-tools</artifactId>
+			<artifactId>tl-starter-react</artifactId>
+			<type>pom</type>
 		</dependency>
 #if ($useSelfService == "true")
 		<dependency>
@@ -122,7 +119,8 @@
 		<!-- Classic UI: the layouts of the LayoutServlet. -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-themes-core</artifactId>
+			<artifactId>tl-starter-classic</artifactId>
+			<type>pom</type>
 		</dependency>
 #if ($useBPE == "true")
 		<!-- The process engine has a classic UI only. -->
@@ -131,42 +129,6 @@
 			<artifactId>tl-bpe-app</artifactId>
 		</dependency>
 #end
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-scripting-template</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-formeditor</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-layout-themeedit</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-graph-diagramjs-server</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-monitoring</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-doc</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-model-search</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-contact</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
-			<artifactId>tl-graphic-blocks-server</artifactId>
-		</dependency>
 #if ($useSelfService == "true")
 		<dependency>
 			<groupId>com.top-logic</groupId>
@@ -180,19 +142,49 @@
 		</dependency>
 #end
 #end
+#if ($useAI == "true")
+		<!-- AI agents. The application configures the LLM providers its agents use. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-starter-ai</artifactId>
+			<type>pom</type>
+		</dependency>
+#if ($ui != "react")
+		<!-- The chat in a tab of the classic UI. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-chat-classic</artifactId>
+		</dependency>
+#end
+#end
+#if ($useAISearch == "true")
+		<!-- Hybrid (full-text and semantic) search over the objects of the application. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-starter-ai-search</artifactId>
+			<type>pom</type>
+		</dependency>
+#end
+#if ($useSSO == "true")
+		<!-- Single sign-on through OpenID Connect, SAML and other protocols (pac4j). -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-security-auth-pac4j</artifactId>
+		</dependency>
+#end
 #if ($useApiClient == "true")
 		<!-- Allow to integrate REST services through OpenAPI interface definitions. -->
-        <dependency>
-                <groupId>com.top-logic</groupId>
-                <artifactId>tl-service-openapi-client</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-service-openapi-client</artifactId>
+		</dependency>
 #end
 #if ($useApiServer == "true")
 		<!-- Provide REST services through OpenAPI interface definitions. -->
-        <dependency>
-                <groupId>com.top-logic</groupId>
-                <artifactId>tl-service-openapi-server</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-service-openapi-server</artifactId>
+		</dependency>
 #end
 
 		<!-- Tests -->
@@ -213,123 +205,11 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.vafer</groupId>
-				<artifactId>jdeb</artifactId>
-
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>jdeb</goal>
-						</goals>
-
-						<configuration>
-							<skip>\${tl.deb.skip}</skip>
-							<attach>\${tl.deb.attach}</attach>
-							<deb>\${project.build.directory}/\${project.artifactId}_\${project.version}_all.deb</deb>
-							<controlDir>\${basedir}/src/main/deb/control</controlDir>
-							<dataSet>
-								<data>
-									<src>\${project.build.directory}/\${project.build.finalName}-app.war</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>\${tl.deb.installDir}</prefix>
-										<user>root</user>
-										<group>root</group>
-										<filemode>644</filemode>
-									</mapper>
-								</data>
-
-								<data>
-									<src>\${basedir}/src/main/deb/data/tomcat/context.xml</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>\${tl.deb.installDir}/tomcat</prefix>
-										<user>root</user>
-										<group>root</group>
-										<filemode>644</filemode>
-									</mapper>
-								</data>
-
-								<data>
-									<src>\${basedir}/src/main/deb/data/apache/site.conf</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>\${tl.deb.installDir}/apache</prefix>
-										<user>root</user>
-										<group>root</group>
-										<filemode>644</filemode>
-									</mapper>
-								</data>
-
-								<data>
-									<src>\${basedir}/src/main/deb/data/bin/setup-db.sh</src>
-									<type>file</type>
-									<mapper>
-										<type>perm</type>
-										<prefix>\${tl.deb.installDir}/bin</prefix>
-										<user>root</user>
-										<group>root</group>
-										<filemode>755</filemode>
-									</mapper>
-								</data>
-
-								<data>
-									<type>link</type>
-									<linkName>/var/lib/tomcat10/webapps/\${tl.deb.contextName}.war</linkName>
-									<linkTarget>\${tl.deb.installDir}/\${project.build.finalName}-app.war</linkTarget>
-									<symlink>true</symlink>
-								</data>
-
-								<data>
-									<type>link</type>
-									<linkName>/etc/tomcat10/Catalina/localhost/\${tl.deb.contextName}.xml</linkName>
-									<linkTarget>\${tl.deb.installDir}/tomcat/context.xml</linkTarget>
-									<symlink>true</symlink>
-								</data>
-
-								<data>
-									<type>link</type>
-									<linkName>/etc/apache2/sites-available/\${tl.deb.contextName}.conf</linkName>
-									<linkTarget>\${tl.deb.installDir}/apache/site.conf</linkTarget>
-									<symlink>true</symlink>
-								</data>
-
-								<data>
-									<type>link</type>
-									<linkName>/var/lib/tomcat10/lib/mariadb-java-client.jar</linkName>
-									<linkTarget>/usr/share/java/mariadb-java-client.jar</linkTarget>
-									<symlink>true</symlink>
-								</data>
-							</dataSet>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-
-			<plugin>
-				<groupId>net.lopht.maven-plugins</groupId>
-				<artifactId>upload-maven-plugin</artifactId>
-
-				<executions>
-					<execution>
-						<goals>
-							<goal>upload-file</goal>
-						</goals>
-
-						<configuration>
-							<skip>\${tl.deb.skipDeploy}</skip>
-							<file>\${project.build.directory}/\${project.artifactId}_\${project.version}_all.deb</file>
-							<repositoryUrl>\${tl.deb.repositoryUrl}</repositoryUrl>
-							<repositoryPath>\${tl.deb.repositoryPath}</repositoryPath>
-							<serverId>\${tl.deb.serverId}</serverId>
-							<usePOST>true</usePOST>
-						</configuration>
-					</execution>
-				</executions>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-maven-plugin</artifactId>
+				<version>\${tl.version}</version>
+				<!-- Provides the packaging of this project. -->
+				<extensions>true</extensions>
 			</plugin>
 		</plugins>
 	</build>
@@ -359,10 +239,10 @@
 	</distributionManagement>
 
 	<!--
-		The TopLogic repositories, which also resolve this project's parent POM and the
-		TopLogic build plugins. With them declared here, the application builds against a
-		TopLogic SNAPSHOT version by only changing the version of the parent POM above,
-		without any Maven settings.
+		The TopLogic repositories, which resolve the BOM tl-bom, the TopLogic modules and the
+		TopLogic build plugins. With them declared here, the project builds against a TopLogic
+		SNAPSHOT version by only changing the property tl.version above, without any Maven
+		settings.
 	-->
 	<repositories>
 		<repository>

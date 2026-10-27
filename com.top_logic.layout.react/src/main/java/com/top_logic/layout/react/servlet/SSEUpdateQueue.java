@@ -41,11 +41,13 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.DownloadEvent;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -74,7 +76,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * does not react at all. The queue therefore numbers every event it writes, sends the number as
  * the event's {@code id}, and keeps what it wrote until the client has read it (at most
  * {@link #MAX_RETAINED_CHARS} characters, since the last {@link #setConnection(AsyncContext)
- * connection} or {@link #discardPendingEvents() rendering}). A client whose stream brings nothing
+ * connection} or {@link #beginPage() page}). A client whose stream brings nothing
  * changes to {@link #poll(AsyncContext, long, boolean) polling} and continues after the last number
  * it saw. Its first poll asks for the full state of the controls, because the state the connection
  * sent may not have arrived either; the events written since the connection that address no
@@ -742,6 +744,48 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * Starts a new page of the window: the browser loads the window's page, for the first time or
+	 * again.
+	 *
+	 * <p>
+	 * Called before the page is rendered and before anything is enqueued for it. The page the
+	 * browser displayed before is gone, or about to be: its event stream is closed, its waiting poll
+	 * is answered without events, and what was written for it or still waits for it is dropped (see
+	 * {@link #discardPendingEvents()}). From now on the queue holds events for the page being
+	 * rendered: they wait until its client connects a stream or polls, and reach it numbered.
+	 * </p>
+	 *
+	 * <p>
+	 * Without this, the events the rendering enqueues - the title of the page's route, say - are
+	 * written to the stream of the previous page, which the server still holds while the browser has
+	 * already given it up, and are lost for the new page; and the first poll of a page would read
+	 * what the previous page was sent, a navigation that made it leave included.
+	 * </p>
+	 */
+	public void beginPage() {
+		SSEConnection previous;
+		synchronized (this) {
+			_pendingEvents.clear();
+			forgetWritten();
+			previous = _connection;
+			_connection = null;
+			_polling = false;
+			_streamLostAt = System.currentTimeMillis();
+			// After forgetting what was written, the previous page's poll ends empty.
+			answerWaitingPoll(true);
+		}
+		if (previous != null) {
+			Logger.info("SSE connection closed for window '" + _windowName + "' (queue@"
+				+ System.identityHashCode(this) + "): its page is loaded anew.", SSEUpdateQueue.class);
+			try {
+				previous.getContext().complete();
+			} catch (Exception ex) {
+				// Already closed.
+			}
+		}
+	}
+
+	/**
 	 * Drops all events that are still waiting for a client.
 	 *
 	 * <p>
@@ -778,11 +822,11 @@ public class SSEUpdateQueue {
 	 * Enqueues an event for delivery to the connected SSE client.
 	 *
 	 * <p>
-	 * Outside an interaction the event is flushed immediately: an SSE (re)connection, the model
-	 * events synthesized on the heartbeat and background activity deliver state that nothing is
-	 * about to revise. Within an open {@link DeliveryScope} the event only queues and this queue is
-	 * noted as touched, so that delivery is {@link #settle() settled} once the interaction has
-	 * completed.
+	 * Outside an interaction the event is flushed immediately: an SSE (re)connection and background
+	 * activity deliver state that nothing is about to revise. Within an open {@link DeliveryScope}
+	 * the event only queues and this queue is noted as touched, so that delivery is
+	 * {@link #settle() settled} once the interaction has completed. This includes the model events
+	 * the heartbeat synthesizes, since it synthesizes them within an interaction.
 	 * </p>
 	 */
 	public void enqueue(SSEEvent event) {
@@ -849,7 +893,7 @@ public class SSEUpdateQueue {
 	 * An event is removed from the queue only after it has been written successfully. If the write
 	 * fails (a dead or half-open connection), the event stays queued and is retried on the next
 	 * {@link #setConnection(jakarta.servlet.AsyncContext) (re)connection}. This matters for one-off
-	 * events such as the login/logout {@code window.location.reload()}: dropping such an event on a
+	 * events such as the {@link PageNavigationEvent} of a login or logout: dropping such an event on a
 	 * silently-broken connection would leave the action half-applied (e.g. a logout that never
 	 * reloads the page), since reconnects only replay control state via {@link #sendFullState}, not
 	 * one-off events.
@@ -1291,7 +1335,17 @@ public class SSEUpdateQueue {
 		return _polling && (_waitingPoll != null || now - _lastPoll < POLL_ORPHAN_MILLIS);
 	}
 
-	private void sendHeartbeat() {
+	/**
+	 * Sends one heartbeat, as the scheduler does every {@link #HEARTBEAT_INTERVAL_SECONDS} seconds.
+	 *
+	 * <p>
+	 * Expires the downloads that were not fetched in time. While a client is present, synthesizes
+	 * the model events of the window, see {@link #synthesizeModelEventsIfPossible()}, writes the
+	 * heartbeat message to its stream and flushes the queue. While the client is gone, reports its
+	 * absence, see {@link #checkAbandoned(long)}.
+	 * </p>
+	 */
+	public void sendHeartbeat() {
 		long now = System.currentTimeMillis();
 		expireDownloads(now);
 		SSEConnection conn = _connection;
@@ -1362,6 +1416,21 @@ public class SSEUpdateQueue {
 		}
 	}
 
+	/**
+	 * Synthesizes the model events of this queue's window in its sub-session.
+	 *
+	 * <p>
+	 * The events are synthesized within an {@link Interaction}, like every other change of the
+	 * window's controls, so that a commit is never delivered to a control tree that a request is
+	 * building or changing. The heartbeat does not wait for that request: while another thread holds
+	 * the session's interaction, nothing is synthesized. The commit is delivered at the end of that
+	 * interaction, or by the next heartbeat.
+	 * </p>
+	 *
+	 * <p>
+	 * A queue without window context, or whose window has no sub-session, synthesizes nothing.
+	 * </p>
+	 */
 	private void synthesizeModelEventsIfPossible() {
 		ReactWindowRegistry registry = _windowRegistry;
 		TLSessionContext sessionCtx = _sessionContext;
@@ -1374,7 +1443,14 @@ public class SSEUpdateQueue {
 			return;
 		}
 		ThreadContextManager.inContext(subSession, () -> {
-			registry.synthesizeModelEvents(windowName);
+			try (Interaction interaction = registry.tryBeginInteraction(0)) {
+				if (interaction == null) {
+					// The window is busy: the interaction holding it synthesizes at its end, or the
+					// next heartbeat does.
+					return;
+				}
+				registry.synthesizeModelEvents(windowName);
+			}
 		});
 	}
 

@@ -70,9 +70,9 @@ public class TestOldLLMServiceConfiguration extends TestCase {
 						</prompt-contributors>
 						<failover quota-ttl-seconds="60"/>
 						<model-catalog>
-							<llm-configuration>
+							<model-overrides>
 								<model name="app-model" context-window="1000" max-output="100"/>
-							</llm-configuration>
+							</model-overrides>
 						</model-catalog>
 					</instance>""");
 

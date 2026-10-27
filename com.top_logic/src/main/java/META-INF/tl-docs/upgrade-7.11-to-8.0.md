@@ -695,6 +695,29 @@ case-insensitive.
   `tl: Ticket_29492_enlarge_layout_key`, `tl-element: Ticket_29548_create_email_phone`,
   `tl-contact: Ticket_28557_enlarge_contact_attributes`, `tl-model-search: Ticket_28710_Added_TLSearch`,
   `tl-bpe: Ticket_29037_Update_diagram_attribute`.
+- A migration module without a version stored in the database is treated as new to the application
+  (e.g. a framework module just added as dependency): its data is assumed not to exist, and all its
+  migrations are skipped. The log names the module and the skipped migrations ("Skipping migrations of
+  module ..."), while the overall result still reads "No migration required.". An application whose
+  database was created before it had `WEB-INF/kbase/migration/<module>/` has no stored version of its own
+  module, so its first own migration is skipped and the automatic model upgrade runs instead. Such an
+  application must list its module in `minimum-modules` of the `MigrationService`, in the same release as
+  its first migration:
+
+  ```xml
+  <config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+  	<instance minimum-modules="my-app">
+  		<modules>
+  			<module name="my-app" />
+  		</modules>
+  	</instance>
+  </config>
+  ```
+
+  Every startup stores the maximal version of each module that has no stored
+  version yet. After a start that skipped the migration, its version therefore counts as applied, and
+  `minimum-modules` no longer has an effect. Apps created from the archetype ship the folder (with a
+  `README.md`) and get the `<initial>` version of their module stored at database setup.
 - Remove `<post-processor class="...MoveRolesFromSingletonsToModules"/>` from old app migrations (class deleted).
 - New processors available: `RecollateStringColumnsProcessor`, `UpdateTLPropertiesProcessor`
   (`<update-tl-properties>`), `ResolvePersonNameCollisionsProcessor`, `AddDatabaseColumnProcessor`,

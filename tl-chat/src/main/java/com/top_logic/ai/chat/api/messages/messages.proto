@@ -208,6 +208,47 @@ message ChatSendResponse {
 	 * Why the request was refused, in the acting user's language; empty unless it was.
 	 */
 	string reason;
+
+	/**
+	 * Which functions beyond sending the conversation the message was sent in supports. Absent for a
+	 * send that names no conversation.
+	 */
+	ConversationFeaturesDto features;
+}
+
+/**
+ * Which functions beyond sending a message the answerer of a conversation supports.
+ *
+ * <p>
+ * The framework's own agent supports all of them. A conversation answered by an external backend
+ * supports what the backend states; the chat hides what it does not support, and the server refuses
+ * it.
+ * </p>
+ */
+message ConversationFeaturesDto {
+	/** Whether an answer can be produced again for the same message. */
+	boolean regenerate;
+
+	/** Whether a sent message can be edited, which drops it and everything after it. */
+	boolean editMessages;
+
+	/** Whether the user can choose the agent that answers. */
+	boolean agentPicker;
+
+	/** Whether the user can choose the model. */
+	boolean modelPicker;
+
+	/** Whether the user can choose the thinking effort. */
+	boolean effortPicker;
+
+	/** Whether the user can choose the MCP servers attached to the run. */
+	boolean mcpPicker;
+
+	/** Whether a message may carry files. */
+	boolean attachments;
+
+	/** Whether the run asks the user for approvals in the chat, which the auto-approve switch answers. */
+	boolean approvals;
 }
 
 /**
@@ -627,6 +668,44 @@ message ChatSessionDetailResponse {
 	 * in flight.
 	 */
 	InFlightRunDto inFlight;
+
+	/**
+	 * Which functions beyond sending this conversation supports.
+	 */
+	ConversationFeaturesDto features;
+
+	/**
+	 * The recorded runs of the conversation, by the turn of <code>turnsJson</code> each run ended
+	 * with.
+	 */
+	repeated RecordedRunDto runs;
+}
+
+/**
+ * What the history of a conversation knows about one of its runs.
+ */
+message RecordedRunDto {
+	/** ID of the last turn the run wrote, as in <code>turnsJson</code>. */
+	string turnId;
+
+	/**
+	 * When the run started, in milliseconds since the epoch; zero if not recorded.
+	 *
+	 * <p>
+	 * The moment the run reported its start, which is what a live chat measures the run from: a
+	 * turn starts with the user's message, possibly before the process answering it is running.
+	 * </p>
+	 */
+	long startedAt;
+
+	/** When the run ended, in milliseconds since the epoch; zero while it has not ended. */
+	long endedAt;
+
+	/** The cost in {@link #currency}; zero without a {@link #currency}. */
+	double cost;
+
+	/** The ISO 4217 code of the currency of {@link #cost}; empty if the run reported no cost. */
+	string currency;
 }
 
 /**

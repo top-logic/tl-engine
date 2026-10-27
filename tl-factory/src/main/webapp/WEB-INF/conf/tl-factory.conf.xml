@@ -7,10 +7,29 @@
 		<entry name="%FACTORY_PUBLIC_HOST%" value="${env:tl_factory_public_host:localhost}" comment="Host name under which a browser reaches the published workspace ports."/>
 		<entry name="%FACTORY_HOST_PORT_MIN%" value="${env:tl_factory_host_port_min:20000}" comment="Lowest host port a workspace port is published on."/>
 		<entry name="%FACTORY_HOST_PORT_MAX%" value="${env:tl_factory_host_port_max:20999}" comment="Highest host port a workspace port is published on."/>
+		<entry name="%FACTORY_HOST_IP%" value="${env:tl_factory_host_ip:127.0.0.1}" comment="Address of the daemon host the workspace ports are published on; empty for all addresses."/>
+		<entry name="%FACTORY_DOCKER_ISOLATE%" value="${env:tl_factory_docker_isolate:true}" comment="Whether the workspace containers are kept from reaching each other on the workspace network (set when the network is created)."/>
+		<entry name="%FACTORY_WORKSPACE_MEMORY%" value="${env:tl_factory_workspace_memory:8g}" comment="Memory a workspace container may use, e.g. 8g; 0 for no limit."/>
+		<entry name="%FACTORY_WORKSPACE_CPUS%" value="${env:tl_factory_workspace_cpus:4}" comment="CPUs a workspace container may use, e.g. 4 or 1.5; 0 for no limit."/>
+		<entry name="%FACTORY_WORKSPACE_PIDS%" value="${env:tl_factory_workspace_pids:4096}" comment="Processes and threads a workspace container may run at once; 0 for no limit."/>
 		<entry name="%FACTORY_ENGINE_VERSION%" value="${env:tl_factory_engine_version:8.0.0-alpha11}" comment="TopLogic version a new application is built on."/>
 		<entry name="%FACTORY_IMAGE_REPOSITORY%" value="${env:tl_factory_image_repository:tl-factory-workspace}" comment="Name (without tag) of the image the application workspaces run."/>
 		<entry name="%FACTORY_REPOSITORY_URL%" value="${env:tl_factory_repository_url:https://dev.top-logic.com/nexus/repository/toplogic/}" comment="Maven repository the TopLogic releases are taken from."/>
 		<entry name="%FACTORY_START_TIMEOUT%" value="${env:tl_factory_start_timeout:600}" comment="Seconds to wait for a started application to answer."/>
+		<entry name="%FACTORY_BUILD_TIMEOUT%" value="${env:tl_factory_build_timeout:1800}" comment="Seconds a Maven run in a workspace may take."/>
+		<entry name="%FACTORY_DOCKER_EXTRA_HOSTS%" value="${env:tl_factory_docker_extra_hosts:}" comment="Comma separated host:address entries added to the host names a workspace container resolves, e.g. host.docker.internal:host-gateway."/>
+		<entry name="%FACTORY_LLM_PROXY_URL%" value="${env:tl_factory_llm_proxy_url:}" comment="URL of the LLM proxy as the workspace containers reach it, e.g. http://host.docker.internal:8091/llm-proxy; empty switches the proxy off."/>
+		<entry name="%FACTORY_LLM_PROXY_ADDRESS%" value="${env:tl_factory_llm_proxy_address:127.0.0.1}" comment="Address the LLM proxy listens on with a port of its own."/>
+		<entry name="%FACTORY_LLM_PROXY_PORT%" value="${env:tl_factory_llm_proxy_port:8091}" comment="Port the LLM proxy listens on, apart from the port of the control application; 0 for none."/>
+		<entry name="%FACTORY_LLM_PROXY_SERVLET%" value="${env:tl_factory_llm_proxy_servlet:false}" comment="Whether the LLM proxy also answers at /llm-proxy of the web application."/>
+		<entry name="%FACTORY_LLM_RATE_LIMIT%" value="${env:tl_factory_llm_rate_limit:120}" comment="Requests per minute an LLM proxy token may make; 0 for no limit."/>
+		<entry name="%FACTORY_LLM_PROVIDER%" value="${env:tl_factory_llm_provider:anthropic}" comment="Name of the Anthropic provider of the LLMProviderService whose API key the LLM proxy adds to the requests of the workspaces."/>
+		<entry name="%FACTORY_LLM_ALLOWED_SOURCES%" value="${env:tl_factory_llm_allowed_sources:}" comment="Comma separated client addresses the LLM proxy accepts requests from: CIDR ranges (IPv4 or IPv6) or workspace-network for the network of the workspace containers; empty accepts every address."/>
+		<entry name="%FACTORY_AGENT_MODEL%" value="${env:tl_factory_agent_model:}" comment="Model the coding agent of the workspaces works with, e.g. claude-sonnet-4-6; empty for the default of Claude Code."/>
+		<entry name="%FACTORY_AGENT_THINKING_DISPLAY%" value="${env:tl_factory_agent_thinking_display:summarized}" comment="How the thinking of the coding agent appears in its output: summarized for a summary the chat shows, omitted for none, empty for the default of Claude Code."/>
+		<entry name="%FACTORY_AGENT_EXTRA_ARGS%" value="${env:tl_factory_agent_extra_args:}" comment="Comma separated further arguments of the command line of the coding agent, e.g. --max-turns,50."/>
+		<entry name="%FACTORY_AGENT_IDLE_TIMEOUT%" value="${env:tl_factory_agent_idle_timeout:15min}" comment="How long the process of an agent conversation is kept after its last answer."/>
+		<entry name="%FACTORY_AGENT_TOKEN_LIFETIME%" value="${env:tl_factory_agent_token_lifetime:4h}" comment="Lifetime of the LLM proxy token of an agent process; at most the longest token lifetime of the proxy."/>
 		<entry name="%FACTORY_LOG_FLUSH_INTERVAL%" value="${env:tl_factory_log_flush_interval:1000}" comment="Milliseconds between two commits of the output of a running workspace operation."/>
 		<entry name="%FACTORY_MAX_LOG_SIZE%" value="${env:tl_factory_max_log_size:65536}" comment="Number of characters of the output of a workspace operation that are stored."/>
 	</alias>

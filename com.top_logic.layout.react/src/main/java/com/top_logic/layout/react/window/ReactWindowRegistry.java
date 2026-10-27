@@ -25,7 +25,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
-import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.protocol.WindowFocusEvent;
 import com.top_logic.layout.react.protocol.WindowOpenEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -158,6 +158,15 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	}
 
 	/**
+	 * The registry of the given session, or {@code null} if the session has none yet.
+	 *
+	 * @see #forSession(HttpSession)
+	 */
+	public static ReactWindowRegistry lookup(HttpSession session) {
+		return (ReactWindowRegistry) session.getAttribute(SESSION_ATTRIBUTE_KEY);
+	}
+
+	/**
 	 * Gets the registry for the given session, creating it if necessary.
 	 */
 	public static ReactWindowRegistry forSession(HttpSession session) {
@@ -208,6 +217,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 *
 	 * @param session
 	 *        The session the request belongs to, read for its inactivity interval.
+	 *
+	 * @see com.top_logic.layout.react.servlet.SessionActivityFilter
 	 *
 	 * @implNote The reference point passed on is the current time rather than
 	 *           {@link HttpSession#getLastAccessedTime()}: the latter reports the request before
@@ -354,7 +365,37 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * @return The open interaction, to be closed when the change is complete.
 	 */
 	public Interaction beginInteraction() {
-		return new Interaction(_requestLock);
+		return Interaction.begin(_requestLock);
+	}
+
+	/**
+	 * Begins an {@link Interaction} with the control trees of this session, unless another thread
+	 * keeps one open for longer than the given time.
+	 *
+	 * <p>
+	 * For a thread that must not wait for a long command, such as a background thread that
+	 * delivers model events to a window: it either acts within an interaction, as
+	 * {@link #beginInteraction()} does, or leaves the trees alone. A thread that already has an
+	 * interaction open gets a nested one at once.
+	 * </p>
+	 *
+	 * <pre>
+	 * try (Interaction interaction = registry.tryBeginInteraction(timeout)) {
+	 * 	if (interaction != null) {
+	 * 		registry.synthesizeModelEvents(windowId);
+	 * 	}
+	 * }
+	 * </pre>
+	 *
+	 * @param timeoutMillis
+	 *        The time in milliseconds to wait at most for another thread's interaction to end,
+	 *        {@code 0} not to wait.
+	 * @return The open interaction, to be closed when the change is complete, or {@code null} if
+	 *         another thread kept its interaction open for the given time, or the calling thread
+	 *         was interrupted while it waited.
+	 */
+	public Interaction tryBeginInteraction(long timeoutMillis) {
+		return Interaction.tryBegin(_requestLock, timeoutMillis);
 	}
 
 	/**
@@ -869,7 +910,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 */
 	private static void requestReload(SSEUpdateQueue queue) {
 		try {
-			queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+			queue.enqueue(PageNavigationEvent.create());
 		} catch (RuntimeException ex) {
 			// A window that cannot be reached must not keep the remaining ones from being told.
 			Logger.error("Failed to request a reload of a window.", ex,

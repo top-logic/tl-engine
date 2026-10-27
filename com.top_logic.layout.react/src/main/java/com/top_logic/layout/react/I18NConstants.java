@@ -431,6 +431,20 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.toolbar.overflow")
 	public static ResKey JS_TOOLBAR_OVERFLOW;
 
+	// -- Tab strip client-side i18n keys --
+
+	/**
+	 * @en Show previous tabs
+	 */
+	@CustomKey("js.tabs.scrollStart")
+	public static ResKey JS_TABS_SCROLL_START;
+
+	/**
+	 * @en Show next tabs
+	 */
+	@CustomKey("js.tabs.scrollEnd")
+	public static ResKey JS_TABS_SCROLL_END;
+
 	// -- Dashboard client-side i18n keys --
 
 	/**

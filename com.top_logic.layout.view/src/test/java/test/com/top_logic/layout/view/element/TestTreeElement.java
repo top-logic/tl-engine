@@ -29,7 +29,10 @@ import com.top_logic.layout.react.controlprovider.MetaResourceControlProvider;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.element.ResourceDisplayByExpression;
 import com.top_logic.layout.view.element.TreeElement;
+import com.top_logic.layout.view.table.ValueAsConfig;
 import com.top_logic.table.SelectionMode;
 
 /**
@@ -170,6 +173,40 @@ public class TestTreeElement extends TestCase {
 	public void testAConfiguredNodeContentLeadsToItsObject() {
 		assertTrue("A display of an object leads to the place the application shows it at.",
 			TypedConfiguration.newConfigItem(MetaResourceControlProvider.Config.class).getLink());
+	}
+
+	/**
+	 * Tests that a tree shows its nodes through a display computing their parts with expressions,
+	 * whose expressions see the object of a node as their only variable - a display gets no
+	 * channels, so the inputs of the tree are none of its variables.
+	 */
+	public void testScriptedNodeContent() throws Exception {
+		ViewElement.Config config = ViewLoader.parseConfig(List.of(CharacterContents.newContent("""
+			<view>
+				<channels>
+					<channel name="rootInput"/>
+				</channels>
+				<tree>
+					<inputs>
+						<input channel="rootInput"/>
+					</inputs>
+					<root>$rootInput</root>
+					<children>list()</children>
+					<nodeContent class="%s" label="'Node ' + $value"/>
+				</tree>
+			</view>
+			""".formatted(ResourceDisplayByExpression.class.getName()), INLINE_VIEW)));
+		TreeElement.Config tree = (TreeElement.Config) config.getContent();
+
+		PolymorphicConfiguration<?> nodeContent = tree.getNodeContent();
+		assertTrue("Node content: " + nodeContent, nodeContent instanceof ResourceDisplayByExpression.Config);
+		ResourceDisplayByExpression.Config display = (ResourceDisplayByExpression.Config) nodeContent;
+		assertEquals(List.of(ValueAsConfig.DEFAULT_VALUE_AS), InputScript.variables(display,
+			display.descriptor().getProperty(ResourceDisplayByExpression.Config.LABEL)));
+
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTreeElement.class);
+		assertNotNull(context.getInstance(tree));
+		context.checkErrors();
 	}
 
 	private void assertNodeDisplay(String message, TreeElement.Config treeConfig) {

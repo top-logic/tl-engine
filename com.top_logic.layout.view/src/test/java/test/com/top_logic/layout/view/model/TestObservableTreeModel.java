@@ -416,6 +416,63 @@ public class TestObservableTreeModel extends TestCase {
 	}
 
 	/**
+	 * Tests that a change of an object made while nobody was observing reaches the display when the
+	 * observation begins again, although it leaves the tree as it is: what a display shows of an
+	 * object may be an attribute that changed.
+	 */
+	public void testAttributeChangeWhileDetachedReachesTheDisplay() {
+		RecordingDisplay recorder = new RecordingDisplay();
+		startTree(Set.of(), null, List.of(_input), List.of(), recorder);
+		DefaultTreeUINode nodeA = expand(_a);
+		DefaultTreeUINode nodeA1 = node(_a1);
+		DefaultTreeUINode nodeB = node(_b);
+
+		_observer.detach();
+		recorder.clear();
+		_observer.attach(_scope);
+
+		assertSame("The tree stays as it is.", nodeA, node(_a));
+		assertSame("The tree stays as it is.", nodeA1, node(_a1));
+		assertTrue("Every displayed node is invalidated.",
+			recorder._invalidated.containsAll(List.of(root(), nodeA, nodeB, nodeA1, node(_a2))));
+		assertEquals("The display is told that its nodes changed.", 1, recorder._nodesChanged);
+	}
+
+	/**
+	 * Tests that the structure listeners are told when the observation begins again, so that what
+	 * they compute from the tree follows what happened while nobody was observing.
+	 */
+	public void testResumeIsAnnounced() {
+		startTree(Set.of());
+		expand(_a);
+		int[] announced = { 0 };
+		_observer.addStructureListener(() -> announced[0]++);
+
+		_observer.detach();
+		_observer.attach(_scope);
+		assertEquals("Resuming announces the tree, even where it stays as it is.", 1, announced[0]);
+
+		_observer.detach();
+		_children.put(_root, new ArrayList<>(List.of(_a)));
+		_observer.attach(_scope);
+		assertEquals("Resuming announces the tree that changed meanwhile.", 2, announced[0]);
+		assertEquals(List.of(_a), childObjects(root()));
+	}
+
+	/**
+	 * Tests that an observation beginning for the first time tells the display nothing: the tree
+	 * was just built from the objects as they are.
+	 */
+	public void testFirstAttachTellsTheDisplayNothing() {
+		RecordingDisplay recorder = new RecordingDisplay();
+		startTree(Set.of(), null, List.of(_input), List.of(), recorder);
+
+		assertEquals("Nothing is invalidated.", List.of(), recorder._invalidated);
+		assertEquals("The display is not told about changed nodes.", 0, recorder._nodesChanged);
+		assertEquals("The tree is not replaced.", 0, recorder._replaced);
+	}
+
+	/**
 	 * Tests that a change of an object the tree does not display leaves it alone: no child list is
 	 * computed for an object nobody displays.
 	 */
@@ -704,6 +761,54 @@ public class TestObservableTreeModel extends TestCase {
 		@Override
 		public String toString() {
 			return _name;
+		}
+	}
+
+	/**
+	 * Wraps the display of the tree control and records what it is told.
+	 */
+	private static class RecordingDisplay
+			implements Function<ObservableTreeModel.Display, ObservableTreeModel.Display> {
+
+		/** The nodes invalidated, in the order they were. */
+		final List<DefaultTreeUINode> _invalidated = new ArrayList<>();
+
+		/** How often the display was told that its nodes changed. */
+		int _nodesChanged;
+
+		/** How often the tree was replaced. */
+		int _replaced;
+
+		/**
+		 * Forgets what was recorded so far.
+		 */
+		void clear() {
+			_invalidated.clear();
+			_nodesChanged = 0;
+			_replaced = 0;
+		}
+
+		@Override
+		public ObservableTreeModel.Display apply(ObservableTreeModel.Display display) {
+			return new ObservableTreeModel.Display() {
+				@Override
+				public void invalidateNode(DefaultTreeUINode node) {
+					_invalidated.add(node);
+					display.invalidateNode(node);
+				}
+
+				@Override
+				public void nodesChanged() {
+					_nodesChanged++;
+					display.nodesChanged();
+				}
+
+				@Override
+				public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+					_replaced++;
+					display.treeReplaced(treeModel);
+				}
+			};
 		}
 	}
 

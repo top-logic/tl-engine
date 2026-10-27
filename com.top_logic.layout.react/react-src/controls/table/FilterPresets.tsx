@@ -8,6 +8,10 @@ export interface FilterPreset {
   label: string;
   /** Whether the preset is the user's own and can be deleted; a declared one cannot. */
   deletable: boolean;
+  /** The CSS class of the preset's chip, active or not; absent: none. */
+  cssClass?: string;
+  /** The number of data rows the preset selects on its own, shown on its chip; absent for one that is not counted. */
+  count?: number;
 }
 
 /** The attribute naming the preset a chip of the row stands for. */
@@ -74,12 +78,17 @@ function widthOf(element: Element): number {
 }
 
 /**
- * What the filter bar needs to know of a preset to measure it: the label it was measured with, so that a
- * preset renamed is measured again.
+ * What the filter bar needs to know of a preset to measure it: what its chip showed when it was measured
+ * (see {@link shapeOf}), so that a preset renamed, recounted or restyled is measured again.
  */
 interface Measured {
-  label: string;
+  shape: string;
   width: number;
+}
+
+/** What decides the width of the chip of a preset: its label, its count and its class. */
+function shapeOf(preset: FilterPreset): string {
+  return [preset.label, preset.count ?? '', preset.cssClass ?? ''].join('\u0000');
 }
 
 export interface FilterPresetsProps {
@@ -164,7 +173,7 @@ const FilterPresetsRow: React.FC<FilterPresetsProps> = ({
       const preset = presets.find((candidate) => candidate.id === chip.getAttribute(PRESET_ATTR));
       const width = widthOf(chip);
       if (preset && width > 0) {
-        measured.current.set(preset.id, { label: preset.label, width });
+        measured.current.set(preset.id, { shape: shapeOf(preset), width });
       }
     }
     const more = group.querySelector(`.${MORE_CLASS}`);
@@ -173,7 +182,7 @@ const FilterPresetsRow: React.FC<FilterPresetsProps> = ({
     }
 
     const barWidth = widthOf(bar);
-    const unknown = presets.some((preset) => measured.current.get(preset.id)?.label !== preset.label);
+    const unknown = presets.some((preset) => measured.current.get(preset.id)?.shape !== shapeOf(preset));
     if (barWidth <= 0 || (unknown && count === null)) {
       // Not laid out (hidden, or no layout at all), or laid out but not measurable: all of them stay.
       if (count !== null) {
@@ -182,7 +191,7 @@ const FilterPresetsRow: React.FC<FilterPresetsProps> = ({
       return;
     }
     if (unknown) {
-      // A preset new since the row was cut back: lay out all of them, then measure.
+      // A preset new or changed since the row was cut back: lay out all of them, then measure.
       setCount(null);
       return;
     }
@@ -312,6 +321,8 @@ const FilterPresetsRow: React.FC<FilterPresetsProps> = ({
             <Chip
               key={preset.id}
               label={preset.label}
+              detail={preset.count !== undefined ? String(preset.count) : undefined}
+              className={preset.cssClass}
               pressed={isActive}
               tooltip={isActive ? clearLabel : preset.label}
               onClick={() => onToggle(preset.id)}

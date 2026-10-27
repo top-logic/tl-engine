@@ -96,6 +96,16 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 
 	private String _tooltipHtml;
 
+	/**
+	 * The CSS class the {@link #_provider} gave the displayed value, {@code null} for none.
+	 *
+	 * <p>
+	 * Only this class is taken back when the value is resolved again, so a class another party set
+	 * on the control stays.
+	 * </p>
+	 */
+	private String _resolvedCssClass;
+
 	private GotoListener _gotoListener;
 
 	/**
@@ -189,18 +199,21 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 			putState(LABEL, label != null ? label : "");
 		}
 
-		if (_useImage && value != null) {
+		if (_useImage) {
 			resolveIcon(value);
 		}
 
 		putState(ReactValueColor.ROLE, ReactValueColor.roleOf(value));
 
-		if (value != null) {
-			String cssClass = _provider.getCssClass(value);
-			if (cssClass != null) {
-				setCssClass(cssClass);
-			}
+		String cssClass = value != null ? _provider.getCssClass(value) : null;
+		if (cssClass != null) {
+			setCssClass(cssClass);
+		} else if (_resolvedCssClass != null) {
+			setCssClass(null);
+		}
+		_resolvedCssClass = cssClass;
 
+		if (value != null) {
 			String tooltip = _provider.getTooltip(value);
 			_tooltipHtml = (tooltip == null || tooltip.isEmpty()) ? null : tooltip;
 		} else {
@@ -250,23 +263,36 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		return new TooltipContent(_tooltipHtml, null, true);
 	}
 
+	/**
+	 * Sends the icon of the given value, taking back an icon sent for an earlier value that the
+	 * given one does not have.
+	 */
 	private void resolveIcon(Object value) {
-		ThemeImage image = _provider.getImage(value, Flavor.DEFAULT);
-		if (image == null) {
-			return;
+		String iconCss = null;
+		String iconSrc = null;
+		ThemeImage image = value == null ? null : _provider.getImage(value, Flavor.DEFAULT);
+		ThemeImage resolved = image == null ? null : image.resolve();
+		if (resolved != null && resolved != ThemeImage.none()) {
+			String encoded = ReactImages.encode(getReactContext(), resolved);
+			if (encoded.startsWith(CSS_PREFIX)) {
+				iconCss = encoded.substring(CSS_PREFIX.length());
+			} else if (encoded.startsWith(COLORED_CSS_PREFIX)) {
+				iconCss = encoded.substring(COLORED_CSS_PREFIX.length());
+			} else {
+				// The URL of an image file.
+				iconSrc = encoded;
+			}
 		}
-		ThemeImage resolved = image.resolve();
-		if (resolved == ThemeImage.none()) {
-			return;
-		}
-		String encoded = ReactImages.encode(getReactContext(), resolved);
-		if (encoded.startsWith(CSS_PREFIX)) {
-			putState(ICON_CSS, encoded.substring(CSS_PREFIX.length()));
-		} else if (encoded.startsWith(COLORED_CSS_PREFIX)) {
-			putState(ICON_CSS, encoded.substring(COLORED_CSS_PREFIX.length()));
-		} else {
-			// The URL of an image file.
-			putState(ICON_SRC, encoded);
+		putIconState(ICON_CSS, iconCss);
+		putIconState(ICON_SRC, iconSrc);
+	}
+
+	/**
+	 * Sends the given part of the icon, or takes back the one sent before where there is none.
+	 */
+	private void putIconState(String key, String value) {
+		if (value != null || getState(key) != null) {
+			putState(key, value);
 		}
 	}
 

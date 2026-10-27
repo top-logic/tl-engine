@@ -308,10 +308,10 @@ public class TestColumnProviderService extends TestCase {
 	public void testDeclaredAlignmentWinsOverTheType() {
 		ColumnSetup number = new ColumnSetup("count", ResKey.text("count"), ColumnType.of(part("count")),
 			row -> ColumnProviderService.attributeValue(row, "count"), null, ColumnBinding.TYPE_DERIVED, 0, null, null,
-			null, false, ColumnExport.DEFAULT, null, ColumnAlignment.START);
+			null, false, ColumnExport.DEFAULT, null, null, null, true, ColumnAlignment.START);
 		ColumnSetup text = new ColumnSetup("name", ResKey.text("name"), ColumnType.of(part("name")),
 			row -> ColumnProviderService.attributeValue(row, "name"), null, ColumnBinding.TYPE_DERIVED, 0, null, null,
-			null, false, ColumnExport.DEFAULT, null, ColumnAlignment.END);
+			null, false, ColumnExport.DEFAULT, null, null, null, true, ColumnAlignment.END);
 
 		assertEquals(ColumnAlignment.START, number.buildColumn().alignment());
 		assertEquals(ColumnAlignment.END, text.buildColumn().alignment());

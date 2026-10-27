@@ -7,10 +7,13 @@ package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -21,6 +24,7 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
@@ -31,6 +35,7 @@ import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.providers.CellClassProviderByExpression;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
@@ -40,9 +45,10 @@ import com.top_logic.util.Resources;
 
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
- * such column has: its label, its filter, its width, whether it can be edited, the order it sorts
- * the table in, the order of its values, what it aggregates over a group of rows, and the display
- * annotations it states over the ones of its values' attribute or type.
+ * such column has: its label, its filter, its width, whether it can be edited, whether it sorts at
+ * all, the order it sorts the table in, the order of its values, what it aggregates over a group of
+ * rows, how its cells display their values, and the display annotations it states over the ones of
+ * its values' attribute or type.
  *
  * <p>
  * A subclass says what the column is named and what its cells hold; everything the table does with
@@ -109,6 +115,15 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		/** Configuration name for {@link #getAlign()}. */
 		String ALIGN = "align";
 
+		/** Configuration name for {@link #getCellClass()}. */
+		String CELL_CLASS = "cell-class";
+
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
+
+		/** Configuration name for {@link #getSortable()}. */
+		String SORTABLE = "sortable";
+
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
 		 * attribute it shows, and the column's name where no attribute says it.
@@ -137,6 +152,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * Sorting by several columns is expressed by setting this on more than one of them; the
 		 * declaration order decides which one sorts first. The default only applies until the user
 		 * sorts the table themselves, from then on their own order is remembered.
+		 * </p>
+		 *
+		 * <p>
+		 * The rows are sorted in the order of the {@link #getComparator() comparator}. A column that
+		 * is not {@link #getSortable() sortable} has no direction.
 		 * </p>
 		 */
 		@Name(SORT)
@@ -204,6 +224,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * from them, a group without a value comes last. Unset (the default) keeps the order derived
 		 * from the type of the column's values.
 		 * </p>
+		 *
+		 * <p>
+		 * The comparator decides the order the {@link #getSort() sort direction} applies to. A
+		 * column that is not {@link #getSortable() sortable} has no comparator.
+		 * </p>
 		 */
 		@Name(COMPARATOR)
 		@Supplies(LEFT_VARIABLE)
@@ -232,6 +257,90 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTooltip();
+
+		/**
+		 * The CSS class of a cell of the column: an expression computing the class from the row and
+		 * the value of the cell.
+		 *
+		 * <p>
+		 * The expression sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the
+		 * name the table gives it with {@value RowAsConfig#ROW_AS}, and the value of the cell as the
+		 * variable {@value ValueAsConfig#DEFAULT_VALUE_AS}, or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}. It sees the values of the inputs of the column as well,
+		 * of the table for a column without inputs of its own.
+		 * </p>
+		 *
+		 * <p>
+		 * The result is put on the cell: nothing or an empty string gives the cell no class, a list
+		 * gives it all of its members as classes, any other value its text. The standard classes
+		 * tl-status-error, tl-status-warning, tl-status-success and tl-status-info tint the cell in
+		 * the color of the corresponding status. Any other class is styled by the application's own
+		 * stylesheet.
+		 * </p>
+		 *
+		 * <p>
+		 * The class follows the cell: it is computed whenever the cell is built. A cell the user may
+		 * not read and the header row of a group get no class. Unset (the default) leaves the cells
+		 * without a class of their own.
+		 * </p>
+		 *
+		 * <p>
+		 * Example marking the overdue dates of a column:
+		 * </p>
+		 *
+		 * <pre>
+		 * $value != null &amp;&amp; $value &lt; today() ? "tl-status-error" : null
+		 * </pre>
+		 */
+		@Name(CELL_CLASS)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCellClass();
+
+		/**
+		 * How a cell of the column displays its value, in place of the display the type of the
+		 * values derives.
+		 *
+		 * <p>
+		 * The display is given the value of the cell and creates the control showing it - the same
+		 * displays a <code>&lt;tree&gt;</code> shows its nodes with. It shows a value only: an empty
+		 * cell, a cell the user may not read and a cell being edited keep the display of the type.
+		 * The header row of a group formed by the column and the result of its
+		 * {@link #getAggregate() aggregate} show their value through it as well. A display that
+		 * computes a label for the value is also what the search of the table finds the cell by.
+		 * Unset (the default), the cells show their values as the type of the values derives.
+		 * </p>
+		 *
+		 * <p>
+		 * Example showing a device by its icon and a label of its own, computed with
+		 * {@link com.top_logic.layout.view.element.ResourceDisplayByExpression}:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;computed-column name="device" value="$row"&gt;
+		 *     &lt;display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
+		 *         label="$value.get(`my:Device#name`) + ' (' + $value.get(`my:Device#address`) + ')'"
+		 *     /&gt;
+		 * &lt;/computed-column&gt;
+		 * </pre>
+		 */
+		@Name(DISPLAY)
+		PolymorphicConfiguration<ReactControlProvider> getDisplay();
+
+		/**
+		 * Whether the table can be sorted by this column.
+		 *
+		 * <p>
+		 * {@code false} offers no sorting by the column, and a table grouped by it keeps its groups
+		 * in the order of the rows the table is given, whatever the table is sorted by; a sort
+		 * orders the rows within each group. Such a column has neither a {@link #getSort() sort direction} nor a
+		 * {@link #getComparator() comparator}.
+		 * </p>
+		 */
+		@Name(SORTABLE)
+		@BooleanDefault(true)
+		boolean getSortable();
 
 		/**
 		 * The side of its cells the column puts its content on.
@@ -267,14 +376,21 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final QueryExecutor _tooltip;
 
 	private final ColumnAlignment _align;
+	private final QueryExecutor _cellClass;
+
+	/** The configured {@link Config#getDisplay() display}, {@code null} for the type-derived one. */
+	private final ReactControlProvider _display;
 
 	/**
-	 * The inputs whose values the {@link #_aggregate} and the {@link #_comparator} see, empty for
-	 * a declaration without them.
+	 * The inputs whose values the {@link #_aggregate}, the {@link #_comparator}, the
+	 * {@link #_tooltip} and the {@link #_cellClass} see, empty for a declaration setting none of
+	 * them.
 	 */
 	private final List<InputRef> _scriptInputs;
 
 	private final boolean _hiddenByDefault;
+
+	private final boolean _sortable;
 
 	private final ColumnExport _export;
 
@@ -299,22 +415,48 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_comparator = InputScript.compile(config, Config.COMPARATOR);
 		_tooltip = InputScript.compile(config, Config.TOOLTIP);
 		_align = config.getAlign();
-		_scriptInputs = InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE));
+		_cellClass = InputScript.compile(config, Config.CELL_CLASS);
+		_display = context.getInstance(config.getDisplay());
+		boolean scripted = _aggregate != null || _comparator != null || _tooltip != null || _cellClass != null;
+		_scriptInputs =
+			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
 		_hiddenByDefault = !config.getVisible();
+		_sortable = config.getSortable();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
+
+		if (!_sortable && (_sort != null || _comparator != null)) {
+			context.error("A column that is not '" + Config.SORTABLE + "' has neither a '" + Config.SORT
+				+ "' direction nor a '" + Config.COMPARATOR + "': column at " + config.location() + ".");
+		}
 	}
 
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * The channels the declared filter reads.
+	 * The channels the declared filter reads, and the inputs of the column - of the table, for a
+	 * column without inputs of its own - where the column computes its
+	 * {@link Config#getAggregate() aggregate}, its {@link Config#getComparator() order}, its
+	 * {@link Config#getTooltip() tooltips} or its {@link Config#getCellClass() cell classes} with
+	 * a script: the script sees their values, so the cells follow them.
 	 * </p>
 	 */
 	@Override
 	public List<InputRef> inputs() {
-		return _binding.inputs();
+		return union(_scriptInputs, _binding.inputs());
+	}
+
+	/**
+	 * The given lists of inputs joined, each input once, in the order of their first occurrence.
+	 */
+	@SafeVarargs
+	protected static List<InputRef> union(List<InputRef>... inputs) {
+		Set<InputRef> result = new LinkedHashSet<>();
+		for (List<InputRef> list : inputs) {
+			result.addAll(list);
+		}
+		return new ArrayList<>(result);
 	}
 
 	/**
@@ -337,8 +479,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_comparator = null;
 		_tooltip = null;
 		_align = null;
+		_cellClass = null;
+		_display = null;
 		_scriptInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
+		_sortable = true;
 		_export = ColumnExport.DEFAULT;
 		_annotations = null;
 	}
@@ -385,12 +530,12 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
-		List<ViewChannel> inputs = _aggregate == null && _comparator == null && _tooltip == null
-			? List.of()
-			: ChannelInputs.resolve(scope.context(), _scriptInputs);
+		List<ViewChannel> inputs =
+			_scriptInputs.isEmpty() ? List.of() : ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export, tooltip(_tooltip, inputs), _align);
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs), _display,
+			_sortable, _align);
 	}
 
 	/**
@@ -463,10 +608,35 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	}
 
 	/**
+	 * The function computing the CSS class of a cell from its row and its value, {@code null} for a
+	 * column whose cells have none. The function answers {@code null} for a cell without a class.
+	 *
+	 * @param executor
+	 *        The compiled {@link Config#getCellClass()}.
+	 * @param inputs
+	 *        The channels of its inputs.
+	 */
+	private static BiFunction<Object, Object, String> cellClass(QueryExecutor executor, List<ViewChannel> inputs) {
+		if (executor == null) {
+			return null;
+		}
+		return (row, value) -> cssClass(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The CSS class of a cell a script computed, {@code null} for none.
+	 *
+	 * @see CellClassProviderByExpression#toCssClass(Object)
+	 */
+	public static String cssClass(Object result) {
+		return StringServices.nonEmpty(CellClassProviderByExpression.toCssClass(result));
+	}
+
+	/**
 	 * The text of a tooltip a script computed: the text itself, an internationalized text in the
 	 * language of the user, the label of any other value, {@code null} for nothing at all.
 	 */
-	static String tooltipText(Object result) {
+	public static String tooltipText(Object result) {
 		if (result == null) {
 			return null;
 		}

@@ -34,6 +34,7 @@ export type ChatAction =
   | { type: 'RESUME_TEXT'; id: string }
   | { type: 'ADD_TOOL'; toolUseId: string; name: string; input: unknown; depth?: number }
   | { type: 'UPDATE_TOOL'; toolUseId: string; status: ToolCallStatus; durationMs?: number }
+  | { type: 'SET_RUN_COST'; runId: string; cost: number; currency: string }
   | { type: 'ADD_TOOL_RESULT'; toolUseId: string; output: string; isError?: boolean }
   | { type: 'APPEND_THINKING'; delta: string }
   | { type: 'ADD_ERROR'; message: string; code?: string }
@@ -296,6 +297,10 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
         m.type === 'run_meta' && m.runId === action.runId && m.durationMs == null
           ? { ...m, durationMs: Date.now() - m.startedAt }
           : m,
+      )
+    case 'SET_RUN_COST':
+      return messages.map((m) =>
+        m.type === 'run_meta' && m.runId === action.runId ? { ...m, cost: action.cost, currency: action.currency } : m,
       )
     case 'RESUME_RUN':
       // The inverse, for a turn restored while its run is still going (#544): the transcript

@@ -16,16 +16,19 @@ import java.util.function.Predicate;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
@@ -136,6 +139,15 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getTooltip()}. */
 		String TOOLTIP = AbstractColumnDeclaration.Config.TOOLTIP;
+
+		/** Configuration name for {@link #getCellClass()}. */
+		String CELL_CLASS = AbstractColumnDeclaration.Config.CELL_CLASS;
+
+		/** Configuration name for {@link #getDisplay()}. */
+		String DISPLAY = AbstractColumnDeclaration.Config.DISPLAY;
+
+		/** Configuration name for {@link #getSortable()}. */
+		String SORTABLE = AbstractColumnDeclaration.Config.SORTABLE;
 
 		@Override
 		@ClassDefault(DynamicColumns.class)
@@ -372,7 +384,7 @@ public class DynamicColumns implements ColumnDeclaration {
 		 * written <code>compare($left.get(`m:Type#position`), $right.get(`m:Type#position`))</code>.
 		 * The values are never empty; rows without a value are ordered apart from them, a group
 		 * without a value comes last. Unset, the columns keep the order derived from the type of
-		 * their values.
+		 * their values. Columns that are not {@link #getSortable() sortable} have no comparator.
 		 * </p>
 		 */
 		@Name(COMPARATOR)
@@ -402,6 +414,54 @@ public class DynamicColumns implements ColumnDeclaration {
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getTooltip();
 
+		/**
+		 * The CSS class of a cell of every column: an expression computing the class from the row,
+		 * the object the column stands for and the value of the cell.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getValue() value} - the row and the
+		 * object the column stands for - and the value of the cell as the variable
+		 * {@value ValueAsConfig#DEFAULT_VALUE_AS}, or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}. Its result is put on the cell as the one of a single
+		 * column's {@link AbstractColumnDeclaration.Config#getCellClass() cell class}: nothing or an
+		 * empty string gives the cell no class, a list all of its members, any other value its
+		 * text. A cell the user may not read and the header row of a group get no class.
+		 * </p>
+		 */
+		@Name(CELL_CLASS)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCellClass();
+
+		/**
+		 * How a cell of every column displays its value, in place of the display the type of the
+		 * values derives.
+		 *
+		 * <p>
+		 * The display is given the value of the cell, as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getDisplay() display}: an empty cell, a cell the
+		 * user may not read and a cell being edited keep the display of the type. Unset, the cells
+		 * show their values as the type of the values derives.
+		 * </p>
+		 */
+		@Name(DISPLAY)
+		PolymorphicConfiguration<ReactControlProvider> getDisplay();
+
+		/**
+		 * Whether the table can be sorted by the columns.
+		 *
+		 * <p>
+		 * {@code false} offers no sorting by any of the columns, and a table grouped by one of them
+		 * keeps its groups in the order of the rows the table is given, whatever the table is sorted
+		 * by; a sort orders the rows within each group. Such columns have no {@link #getComparator() comparator}.
+		 * </p>
+		 */
+		@Name(SORTABLE)
+		@BooleanDefault(true)
+		boolean getSortable();
+
 	}
 
 	private final String _name;
@@ -412,10 +472,15 @@ public class DynamicColumns implements ColumnDeclaration {
 
 	private final ColumnExport _export;
 
+	private final boolean _sortable;
+
 	private final Function<ColumnResolution, DynamicColumnSet> _columns;
 
 	/** @see #inputs() */
 	private final List<InputRef> _inputs;
+
+	/** How the cells display their values, {@code null} for the display their type derives. */
+	private final ReactControlProvider _display;
 
 	/**
 	 * Creates a {@link DynamicColumns} showing one column per object of the given set.
@@ -457,12 +522,69 @@ public class DynamicColumns implements ColumnDeclaration {
 	 */
 	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export,
 			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs) {
+		this(name, width, readonly, export, true, columns, inputs);
+	}
+
+	/**
+	 * Creates a {@link DynamicColumns} showing one column per object of the given set, computed
+	 * with the values of the given channels.
+	 *
+	 * @param name
+	 *        The name every column is named after, ahead of the name of the object it stands for.
+	 * @param width
+	 *        The default display width of every column in pixels, {@code 0} to keep the width the
+	 *        type of its values derives.
+	 * @param readonly
+	 *        Whether the columns stay read-only while the rows of the table are edited.
+	 * @param export
+	 *        How every column takes part in an export of the table.
+	 * @param sortable
+	 *        Whether the table can be sorted by the columns, see {@link ColumnSetup#sortable()}.
+	 * @param columns
+	 *        The columns to show, computed for what the table resolves its columns against.
+	 * @param inputs
+	 *        The channels the given columns are computed with, see {@link #inputs()}.
+	 */
+	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export, boolean sortable,
+			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs) {
+		this(name, width, readonly, export, sortable, columns, inputs, null);
+	}
+
+	/**
+	 * Creates a {@link DynamicColumns} showing one column per object of the given set, computed
+	 * with the values of the given channels, whose cells display their values through the given
+	 * display.
+	 *
+	 * @param name
+	 *        The name every column is named after, ahead of the name of the object it stands for.
+	 * @param width
+	 *        The default display width of every column in pixels, {@code 0} to keep the width the
+	 *        type of its values derives.
+	 * @param readonly
+	 *        Whether the columns stay read-only while the rows of the table are edited.
+	 * @param export
+	 *        How every column takes part in an export of the table.
+	 * @param sortable
+	 *        Whether the table can be sorted by the columns, see {@link ColumnSetup#sortable()}.
+	 * @param columns
+	 *        The columns to show, computed for what the table resolves its columns against.
+	 * @param inputs
+	 *        The channels the given columns are computed with, see {@link #inputs()}.
+	 * @param display
+	 *        How the cells display their values, {@code null} for the display their type derives,
+	 *        see {@link ColumnSetup#display()}.
+	 */
+	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export, boolean sortable,
+			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs,
+			ReactControlProvider display) {
 		_name = name;
 		_width = width;
 		_readonly = readonly;
 		_export = export;
+		_sortable = sortable;
 		_columns = columns;
 		_inputs = inputs;
+		_display = display;
 	}
 
 	/**
@@ -471,12 +593,14 @@ public class DynamicColumns implements ColumnDeclaration {
 	@CalledByReflection
 	public DynamicColumns(InstantiationContext context, Config config) {
 		this(config.getName(), config.getWidth(), config.getReadonly(), ColumnExport.of(context, config),
-			scripted(context, config), config.getInputs());
+			config.getSortable(), scripted(context, config), config.getInputs(),
+			context.getInstance(config.getDisplay()));
 	}
 
 	/**
 	 * The columns the declared functions compute, reporting a declaration that says what its values
-	 * are in more than one way - or that edits values of a type nothing says.
+	 * are in more than one way, that edits values of a type nothing says, or that orders the values
+	 * of columns that do not sort.
 	 */
 	private static Function<ColumnResolution, DynamicColumnSet> scripted(InstantiationContext context,
 			Config config) {
@@ -487,6 +611,10 @@ public class DynamicColumns implements ColumnDeclaration {
 		if (config.getUpdate() != null && config.getType() == null && config.getColumnType() == null) {
 			context.error("Edited columns must declare the type of their values, so that it is known"
 				+ " which control enters them: columns '" + config.getName() + "'.");
+		}
+		if (!config.getSortable() && config.getComparator() != null) {
+			context.error("Columns that are not '" + Config.SORTABLE + "' have no '" + Config.COMPARATOR
+				+ "': columns '" + config.getName() + "'.");
 		}
 		return new ScriptedColumns(config);
 	}
@@ -537,7 +665,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
-				set.comparator(column), !set.visible(column), _export, set.tooltip(column)));
+				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
+				_display, _sortable));
 		}
 		return result;
 	}
@@ -563,6 +692,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		private final QueryExecutor _tooltip;
 
+		private final QueryExecutor _cellClass;
+
 		private final ColumnFunctions _functions;
 
 		private final TLModelPartRef _typeRef;
@@ -583,6 +714,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			_aggregate = InputScript.compile(config, Config.AGGREGATE);
 			_comparator = InputScript.compile(config, Config.COMPARATOR);
 			_tooltip = InputScript.compile(config, Config.TOOLTIP);
+			_cellClass = InputScript.compile(config, Config.CELL_CLASS);
 			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
 			_typeRef = config.getType();
 			_multiple = config.getMultiple();
@@ -705,6 +837,16 @@ public class DynamicColumns implements ColumnDeclaration {
 				QueryExecutor tooltip = _tooltip;
 				return (row, value) -> AbstractColumnDeclaration
 					.tooltipText(tooltip.execute(_cells.inputs(row, column, value)));
+			}
+
+			@Override
+			public BiFunction<Object, Object, String> cellClass(Object column) {
+				if (_cellClass == null) {
+					return null;
+				}
+				QueryExecutor cellClass = _cellClass;
+				return (row, value) -> AbstractColumnDeclaration
+					.cssClass(cellClass.execute(_cells.inputs(row, column, value)));
 			}
 
 		}

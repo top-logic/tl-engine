@@ -122,7 +122,7 @@ import com.top_logic.util.TLCollator;
 public class ColumnProviderService extends ConfiguredManagedClass<ColumnProviderService.Config> {
 
 	/** What separates the values a cell holding several of them shows. */
-	private static final String VALUE_SEPARATOR = ", ";
+	static final String VALUE_SEPARATOR = ", ";
 
 	/**
 	 * Configuration of the {@link ColumnProviderService}.
@@ -856,7 +856,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * displaying them does.
 	 * </p>
 	 */
-	private static Function<Object, String> displayText(ColumnType type) {
+	static Function<Object, String> displayText(ColumnType type) {
 		Function<Object, String> elementText = elementText(type);
 		if (!type.multiple()) {
 			return elementText;

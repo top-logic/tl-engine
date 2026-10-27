@@ -103,6 +103,37 @@
               <arguments>run build</arguments>
             </configuration>
           </execution>
+
+          <!--
+            The JS tests run in the `test` phase, after surefire, and not with the
+            bundle in `generate-resources`: bound before `compile`, a single
+            broken frontend test aborts the module and the state of its Java
+            tests is not merely unreported but unproduced - no surefire-reports
+            directory exists at all. Behind surefire, both answers are always in.
+
+            Surefire runs first because it is declared in the parent pom and this
+            plugin in the child, and Maven orders executions of one phase by the
+            order their plugins appear in the effective pom.
+
+            In the `test` phase the frontend plugin binds `skipTests` to
+            `${skipTests}` and `testFailureIgnore` to `${maven.test.failure.ignore}`,
+            so the JS tests follow the same switches as the Java tests: they run
+            with `-DskipTests=false` and are skipped by default, and a failure
+            fails the build unless failures are ignored. Vitest writes a JUnit
+            report into `target/surefire-reports` (see `vitest.config.ts`), so a CI
+            build that collects the surefire reports shows JS failures together
+            with the Java ones.
+          -->
+          <execution>
+            <id>npm-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>test</arguments>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
 

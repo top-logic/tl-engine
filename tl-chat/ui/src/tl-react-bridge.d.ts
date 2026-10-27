@@ -24,6 +24,12 @@ declare module 'tl-react-bridge' {
    */
   export const TLChild: ReactTypes.FC<{ control: unknown }>
 
+  /**
+   * Ends the view layer's fill chain for the children rendered inside: a child that fills resolves
+   * its height against the element around them, and nothing further out reacts to it.
+   */
+  export const FillBarrier: ReactTypes.FC<{ children?: ReactTypes.ReactNode }>
+
   export function useTLState(): Record<string, unknown>
 
   /**
@@ -39,6 +45,17 @@ declare module 'tl-react-bridge' {
    * fallback.
    */
   export const expectEvents: ((serverLast?: number) => void) | undefined
+
+  /**
+   * Loads the page again because the server no longer knows it, unless that was done within the
+   * last seconds (one guard for every part of the page) or the page is leaving anyway.
+   *
+   * @returns whether the page is being or will be loaded again.
+   */
+  export function reloadForStaleUi(options?: { waitForGuard?: boolean }): boolean
+
+  /** Whether the page is navigating away and must not talk to the server any more. */
+  export function isPageLeaving(): boolean
 
   /** Stops a listener `subscribe` added. */
   export function unsubscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void

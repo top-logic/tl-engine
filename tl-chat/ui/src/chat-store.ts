@@ -1,4 +1,5 @@
 import { React } from 'tl-react-bridge'
+import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
 import type { ReactNode } from 'react'
 import {
   autoTitle,
@@ -445,15 +446,6 @@ export interface ChatState {
   sessionsLoading: boolean
   sessionsError: string
   sessionId: string | null
-  /**
-   * The chat this window brought into being, as opposed to one it opened.
-   *
-   * Only the browser knows which of the two a chat is: the server sees a session id arrive either
-   * way, and a reload re-opens what this window had. A host that stamps a new conversation with what
-   * the page is about (`<chat-conversation subject>`) needs the difference, and this is where it is
-   * known. Never cleared - ids are unique, and it says what happened to this one id.
-   */
-  createdSessionId: string | null
   sessionTitle: string
 
   // Turn settings.
@@ -464,6 +456,12 @@ export interface ChatState {
   effort: string
   autoApprove: boolean
   traceMode: TraceMode
+
+  /**
+   * Which functions beyond sending the open conversation supports, as the server stated it with the
+   * conversation or the last send; everything for a new chat.
+   */
+  features: ConversationFeatures
 
   // Transcript.
   messages: ChatMessage[]
@@ -594,6 +592,7 @@ const EMPTY_CONVERSATION: Pick<
   | 'notice'
   | 'noticeDetail'
   | 'noticeTone'
+  | 'features'
 > = {
   subagents: [],
   subagentBudget: undefined,
@@ -604,6 +603,7 @@ const EMPTY_CONVERSATION: Pick<
   notice: '',
   noticeDetail: '',
   noticeTone: 'warn',
+  features: ALL_FEATURES,
 }
 
 /** What a send needs from the element that triggered it. */
@@ -1043,7 +1043,6 @@ export class ChatStore {
       sessionsLoading: true,
       sessionsError: '',
       sessionId: null,
-      createdSessionId: null,
       sessionTitle: '',
       agent: '',
       model: '',
@@ -1746,7 +1745,12 @@ export class ChatStore {
         if (data.turnUsage) setTokens(data.contextWindow, undefined, data.turnUsage)
       })
       on('run_completed', (e) => {
-        const data = frameData<{ reason?: string }>(e.data, {})
+        const data = frameData<{ reason?: string; totalCost?: number; currency?: string }>(e.data, {})
+        // What the run cost, when it reported it - whoever answered: the framework's agent or a
+        // backend.
+        if (this.runId && data.currency && data.totalCost !== undefined) {
+          this.dispatch({ type: 'SET_RUN_COST', runId: this.runId, cost: data.totalCost, currency: data.currency })
+        }
         // A run the user stopped is not a failure, and the server does not report it as one
         // (#549). It says so once, in the transcript where the answer stops - the same line the
         // server records for a reload or another window - and not a second time in the strip.
@@ -2054,7 +2058,7 @@ export class ChatStore {
       const detail = await loadSession(at, sessionId)
       // The user may have moved to another chat while this was in flight.
       if (this.state.sessionId !== sessionId) return
-      this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson) })
+      this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson, detail.runs) })
     } catch {
       // Best effort: what is on screen is a turn of this conversation either way.
     }
@@ -2143,8 +2147,9 @@ export class ChatStore {
         this.patch({
           sessionId: id,
           sessions: withTitle(this.state.sessions, id, detail.title),
-          messages: turnsJsonToMessages(detail.turnsJson),
+          messages: turnsJsonToMessages(detail.turnsJson, detail.runs),
           feedback: detail.feedback ?? [],
+          features: readFeatures(detail.features),
           ...(detail.lastEffort ? { effort: detail.lastEffort } : {}),
           // The switch shows the mode the server now runs this chat with, not the one the
           // previous chat or the page load left behind (#658); a chat that stores none is
@@ -2240,7 +2245,7 @@ export class ChatStore {
           }
           active = created.id
           createdHere = true
-          this.patch({ sessionId: active, createdSessionId: active })
+          this.patch({ sessionId: active })
           await this.refreshSessions()
         }
         this.showNotice('')
@@ -2268,7 +2273,7 @@ export class ChatStore {
         this.patch({ busy: true })
         this.setRun((s) => ({ ...s, busy: true }))
         try {
-          await sendMessage(at, {
+          const accepted = await sendMessage(at, {
             text: outbound,
             sessionId: active,
             agent: this.state.agent,
@@ -2281,6 +2286,11 @@ export class ChatStore {
             // The turn runs with what the switch shows now, not with what reached the server.
             approvalMode: this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
           })
+          // The send is where a new chat learns who answers it: its session is created by this send.
+          if (accepted?.features && this.state.sessionId === active) {
+            const features = readFeatures(accepted.features)
+            if (!sameFeatures(features, this.state.features)) this.patch({ features })
+          }
           expectFrames()
         } catch (err) {
           this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })

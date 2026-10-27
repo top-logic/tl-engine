@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<tree-table
+		children="if($node == 'root', ['a', 'b'], if($node == 'a', ['a1', 'a2'], []))"
+		root="'root'"
+	>
+		<columns>
+			<computed-column name="value"
+				type="tl.core:String"
+			>
+				<value>$row</value>
+			</computed-column>
+		</columns>
+		<export/>
+	</tree-table>
+</view>

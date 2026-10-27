@@ -5,9 +5,9 @@
  */
 package com.top_logic.service.openapi.server.authentication.http.basic;
 
+import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.service.openapi.common.authentication.http.LoginCredentials;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.util.TLContext;
@@ -18,9 +18,9 @@ import com.top_logic.util.TLContext;
 public class BasicUserAuthenticator extends BasicAuthenticator {
 
 	@Override
-	protected Person authenticateUser(LoginCredentials login) throws AuthenticationFailure {
+	protected Person authenticateUser(String user, char[] password) throws AuthenticationFailure {
 		return TLContext.inSystemContext(BasicUserAuthenticator.class, () -> {
-			Person person = Person.byName(login.getUser());
+			Person person = Person.byName(user);
 			if (person == null) {
 				throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
 			}
@@ -31,8 +31,7 @@ public class BasicUserAuthenticator extends BasicAuthenticator {
 			}
 			
 			boolean authenticated = authDevice.authentify(
-				com.top_logic.base.accesscontrol.LoginCredentials.fromUserAndPassword(person,
-					login.getPassword().toCharArray()));
+				LoginCredentials.fromUserAndPassword(person, password));
 			if (!authenticated) {
 				throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
 			}

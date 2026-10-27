@@ -20,6 +20,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_INVALID_URI__URL;
 
+	/**
+	 * @en The token URI provider {0} knows no token endpoint.
+	 */
+	public static ResKey1 ERROR_NO_TOKEN_ENDPOINT__PROVIDER;
+
     static {
         initConstants(I18NConstants.class);
     }

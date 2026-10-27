@@ -15,6 +15,7 @@ import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
+import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -94,6 +95,10 @@ public final class InAppServiceConfigStore {
 	/**
 	 * Reads the application configuration from the given file.
 	 *
+	 * <p>
+	 * Aliases in the file are resolved as when the application configuration is loaded at startup.
+	 * </p>
+	 *
 	 * @param file
 	 *        The file to read.
 	 * @return The stored configuration, an empty one when the file does not exist.
@@ -109,6 +114,7 @@ public final class InAppServiceConfigStore {
 			TypedConfiguration.getConfigurationDescriptor(ApplicationConfig.Config.class));
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
 		reader.setSource(BinaryDataFactory.createBinaryData(file));
+		reader.setVariableExpander(AliasManager.getInstance().getExpander());
 		return (ApplicationConfig.Config) reader.read();
 	}
 

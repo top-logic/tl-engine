@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A tab strip wider than its container. The left pane takes 30% of the width and holds ten tabs with long
+	labels, far more than fit side by side: the strip scrolls by itself, a scroll button appears at the
+	end where tabs are hidden, and selecting a tab scrolls only the strip so that the tab is in view.
+	The panel around it never scrolls sideways, so the text of every tab starts at its left edge.
+	
+	The right pane holds three short tabs that fit, so it shows no scroll buttons. Drag the splitter to
+	make the left pane wider until all ten tabs fit and its scroll buttons disappear as well. The demo
+	needs no model objects.
+-->
+<view>
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="300"
+				size="30"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Ten tabs in a narrow pane</en>
+						<de>Zehn Reiter in einem schmalen Bereich</de>
+					</title>
+					<tab-bar active-tab="projects-north">
+						<tab id="projects-north">
+							<label>
+								<en>Project overview north region</en>
+								<de>Projektübersicht Nordregion</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 1 of 10: Project overview north region. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 1 von 10: Projektübersicht Nordregion. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="projects-south">
+							<label>
+								<en>Project overview south region</en>
+								<de>Projektübersicht Südregion</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 2 of 10: Project overview south region. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 2 von 10: Projektübersicht Südregion. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="budget">
+							<label>
+								<en>Budget planning for the fiscal year</en>
+								<de>Budgetplanung für das Geschäftsjahr</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 3 of 10: Budget planning for the fiscal year. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 3 von 10: Budgetplanung für das Geschäftsjahr. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="staff">
+							<label>
+								<en>Staff allocation and capacities</en>
+								<de>Personalzuordnung und Kapazitäten</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 4 of 10: Staff allocation and capacities. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 4 von 10: Personalzuordnung und Kapazitäten. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="risks">
+							<label>
+								<en>Risk assessment and countermeasures</en>
+								<de>Risikobewertung und Gegenmaßnahmen</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 5 of 10: Risk assessment and countermeasures. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 5 von 10: Risikobewertung und Gegenmaßnahmen. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="milestones">
+							<label>
+								<en>Milestones and delivery dates</en>
+								<de>Meilensteine und Liefertermine</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 6 of 10: Milestones and delivery dates. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 6 von 10: Meilensteine und Liefertermine. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="suppliers">
+							<label>
+								<en>Supplier contracts and conditions</en>
+								<de>Lieferantenverträge und Konditionen</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 7 of 10: Supplier contracts and conditions. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 7 von 10: Lieferantenverträge und Konditionen. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="quality">
+							<label>
+								<en>Quality assurance and audits</en>
+								<de>Qualitätssicherung und Prüfungen</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 8 of 10: Quality assurance and audits. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 8 von 10: Qualitätssicherung und Prüfungen. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="documents">
+							<label>
+								<en>Documentation and archive</en>
+								<de>Dokumentation und Ablage</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 9 of 10: Documentation and archive. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 9 von 10: Dokumentation und Ablage. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="reports">
+							<label>
+								<en>Reports for the steering committee</en>
+								<de>Berichte für den Lenkungsausschuss</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 10 of 10: Reports for the steering committee. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 10 von 10: Berichte für den Lenkungsausschuss. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+					</tab-bar>
+				</panel>
+			</pane>
+			<pane
+				size="70"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Three tabs in a wide pane</en>
+						<de>Drei Reiter in einem breiten Bereich</de>
+					</title>
+					<tab-bar active-tab="general">
+						<tab id="general">
+							<label>
+								<en>General</en>
+								<de>Allgemein</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 1 of 3: General. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 1 von 3: Allgemein. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="details">
+							<label>
+								<en>Details</en>
+								<de>Details</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 2 of 3: Details. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 2 von 3: Details. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+						<tab id="history">
+							<label>
+								<en>History</en>
+								<de>Verlauf</de>
+							</label>
+							<inset>
+								<text>
+									<label>
+										<en>Tab 3 of 3: History. This sentence starts at the left edge of the tab content; if the tab strip pushed the content sideways, its first words would be cut off.</en>
+										<de>Reiter 3 von 3: Verlauf. Dieser Satz beginnt am linken Rand des Reiterinhalts; würde die Reiterleiste den Inhalt seitlich verschieben, wären seine ersten Wörter abgeschnitten.</de>
+									</label>
+								</text>
+							</inset>
+						</tab>
+					</tab-bar>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

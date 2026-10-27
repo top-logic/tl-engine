@@ -18,7 +18,9 @@
 								<option name="databaseName" value="%MSSQL_SCHEMA%" />
 								<option name="maxStatements" value="128" />
 								<option name="user" value="%MSSQL_USER%" />
-								<encrypted-option name="password" value="%MSSQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="mssql_passwd"/>
+								</encrypted-option>
 								<option name="trustServerCertificate" value="true" />
 							</options>
 						</data-source>
@@ -37,7 +39,9 @@
 								<option name="databaseName" value="%MSSQL_SCHEMA_TEST_UNIT%" />
 								<option name="maxStatements" value="128" />
 								<option name="user" value="%MSSQL_USER%" />
-								<encrypted-option name="password" value="%MSSQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="mssql_passwd"/>
+								</encrypted-option>
 								<option name="trustServerCertificate" value="true" />
 							</options>
 						</data-source>
@@ -56,7 +60,9 @@
 								<option name="databaseName" value="%MSSQL_SCHEMA_TEST_MIGRATION%" />
 								<option name="maxStatements" value="128" />
 								<option name="user" value="%MSSQL_USER%" />
-								<encrypted-option name="password" value="%MSSQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="mssql_passwd"/>
+								</encrypted-option>
 								<option name="trustServerCertificate" value="true" />
 							</options>
 						</data-source>

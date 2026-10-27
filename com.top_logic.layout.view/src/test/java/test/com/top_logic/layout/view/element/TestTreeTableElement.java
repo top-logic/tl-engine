@@ -5,7 +5,9 @@
  */
 package test.com.top_logic.layout.view.element;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,19 +15,28 @@ import java.util.Set;
 
 import junit.framework.Test;
 
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.layout.view.form.IdentifiedObject;
 import test.com.top_logic.layout.view.form.RecordingScope;
 
+import com.top_logic.base.office.excel.handler.POITypeProvider;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropSupport;
@@ -42,6 +53,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.element.TreeTableElement;
 import com.top_logic.layout.view.form.FieldControlService;
@@ -52,6 +64,7 @@ import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Row;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -59,12 +72,15 @@ import com.top_logic.util.model.ModelService;
  * selection channel - revealing the object written to it, and selecting the row a deleted selected
  * object hung in -, and its {@code <drag>} and {@code <drop>} - an insertion among the rows
  * publishing the row it inserts under and the row it inserts before, next to a drop onto a row
- * taking what the insertion refuses.
+ * taking what the insertion refuses - and its {@code <export>}.
  */
 public class TestTreeTableElement extends BasicTestCase {
 
 	/** The view declaring the tree table. */
 	private static final String VIEW = "test-tree-table.view.xml";
+
+	/** A view declaring a tree table with an export. */
+	private static final String EXPORT_VIEW = "test-tree-table-export.view.xml";
 
 	/** A view marking its rows and the cells of its column with classes computed from its inputs. */
 	private static final String CLASSES_VIEW = "test-tree-table-classes.view.xml";
@@ -176,6 +192,22 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	private ViewChannel _target;
 
+	/**
+	 * A window queue remembering the files delivered to it, without a browser connected.
+	 */
+	private static final class Window extends SSEUpdateQueue {
+
+		final List<BinaryData> _delivered = Collections.synchronizedList(new ArrayList<>());
+
+		@Override
+		public String deliverDownload(BinaryData data, Runnable discard) {
+			_delivered.add(data);
+			return super.deliverDownload(data, discard);
+		}
+	}
+
+	private Window _window;
+
 	private ViewChannel _mark;
 
 	private ViewContext _context;
@@ -186,9 +218,10 @@ public class TestTreeTableElement extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
+		_window = new Window();
 		_scope = new RecordingScope();
 		_context = new DefaultViewContext(
-			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")) {
+			new DefaultReactContext("", "test", _window, new ReactWindowRegistry("test")) {
 				@Override
 				public ModelScope getModelScope() {
 					return _scope;
@@ -210,6 +243,7 @@ public class TestTreeTableElement extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		_context = null;
+		_window = null;
 		_scope = null;
 		_selected = null;
 		_parent = null;
@@ -454,6 +488,53 @@ public class TestTreeTableElement extends BasicTestCase {
 	}
 
 	/**
+	 * The {@code <export>} of a tree table is offered in the toolbar of the enclosing element while
+	 * the tree table is displayed, and writes the whole tree as an outline of the sheet: also the
+	 * rows below a closed row, visible at their depth, with no row marked as collapsed.
+	 */
+	public void testExport() throws Exception {
+		CommandScope scope = new CommandScope(List.of());
+		_context = _context.withScope(CommandScope.class, scope);
+		TableViewControl<?> control = createControl(EXPORT_VIEW);
+		assertEquals("Offered only while the tree table is displayed.", List.of(), scope.getAllCommands());
+
+		control.attach();
+		assertEquals(1, scope.getAllCommands().size());
+		CommandModel export = scope.getAllCommands().get(0);
+
+		HandlerResult result = export.perform(_context);
+		assertTrue(result.isSuccess());
+		assertEquals(1, _window._delivered.size());
+		try (InputStream in = _window._delivered.get(0).getStream(); Workbook workbook = WorkbookFactory.create(in)) {
+			Sheet sheet = workbook.getSheetAt(0);
+			String[] values = { A, A1, A2, B };
+			int[] levels = { 0, 1, 1, 0 };
+			for (int n = 0; n < values.length; n++) {
+				org.apache.poi.ss.usermodel.Row row = sheet.getRow(n + 1);
+				assertEquals("Value of row " + (n + 1), values[n], row.getCell(0).getStringCellValue());
+				assertEquals("Level of row " + (n + 1), levels[n], row.getOutlineLevel());
+				assertFalse("Row " + (n + 1) + " must be visible.", row.getZeroHeight());
+				assertFalse("Row " + (n + 1) + " must not be marked collapsed.",
+					((XSSFRow) row).getCTRow().isSetCollapsed() && ((XSSFRow) row).getCTRow().getCollapsed());
+			}
+			assertEquals("No row beyond the tree.", values.length, sheet.getLastRowNum());
+		}
+
+		control.detach();
+		assertEquals("Withdrawn when the tree table is no longer displayed.", List.of(), scope.getAllCommands());
+	}
+
+	/** A tree table without {@code <export>} offers no export. */
+	public void testNoExportWithoutDeclaration() throws Exception {
+		CommandScope scope = new CommandScope(List.of());
+		_context = _context.withScope(CommandScope.class, scope);
+		TableViewControl<?> control = createControl(VIEW);
+
+		control.attach();
+		assertEquals(List.of(), scope.getAllCommands());
+	}
+
+	/**
 	 * Drops the row of the given object in the given zone of the row of the given target, beside
 	 * the rows for a {@code null} target.
 	 *
@@ -582,7 +663,8 @@ public class TestTreeTableElement extends BasicTestCase {
 		return KBSetup.getSingleKBTest(TestTreeTableElement.class,
 			ServiceTestSetup.createStarterFactoryForModules(
 				TypeIndex.Module.INSTANCE, SearchBuilder.Module.INSTANCE, ModelService.Module.INSTANCE,
-				ColumnProviderService.Module.INSTANCE, FieldControlService.Module.INSTANCE));
+				ColumnProviderService.Module.INSTANCE, FieldControlService.Module.INSTANCE,
+				LabelProviderService.Module.INSTANCE, POITypeProvider.Module.INSTANCE));
 	}
 
 }

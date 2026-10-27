@@ -24,7 +24,9 @@
 							<options>
 								<option name="URL" value="%ORACLE19_URL%" />
 								<option name="user" value="%ORACLE19_USER%" />
-								<encrypted-option name="password" value="%ORACLE19_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="oracle19_passwd"/>
+								</encrypted-option>
 								<option name="implicitCachingEnabled" value="true" />
 								<option name="optimizerFeatures" value="19.1.0" />
 							</options>
@@ -50,7 +52,9 @@
 							<options>
 								<option name="URL" value="%ORACLE19_URL%" />
 								<option name="user" value="%ORACLE19_USER_TEST_UNIT%" />
-								<encrypted-option name="password" value="%ORACLE19_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="oracle19_passwd"/>
+								</encrypted-option>
 								<option name="implicitCachingEnabled" value="true" />
 								<option name="optimizerFeatures" value="19.1.0" />
 							</options>
@@ -76,7 +80,9 @@
 							<options>
 								<option name="URL" value="%ORACLE19_URL%" />
 								<option name="user" value="%ORACLE19_USER_TEST_MIGRATION%" />
-								<encrypted-option name="password" value="%ORACLE19_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="oracle19_passwd"/>
+								</encrypted-option>
 								<option name="implicitCachingEnabled" value="true" />
 								<option name="optimizerFeatures" value="19.1.0" />
 							</options>

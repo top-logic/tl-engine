@@ -326,3 +326,42 @@ Such a project uses the packaging `jar`, needs neither the BOM import nor the pl
 and may override the version properties of `tl-bom` (e.g. `jetty.version`), since it inherits
 them. A fragment correspondingly inherits `tl-parent-core`. The project then cannot have a company
 parent; without the version of its own it also inherits the TopLogic version as its own version.
+
+## Enabling LDAP and OpenID Connect in the WAR
+
+The login with an LDAP directory and with OpenID Connect providers is switched on when the
+application WAR is built: the build adds the configuration of the feature to the `metaConf.txt` of
+the WAR. `tl-parent-app` has a profile for each of them:
+
+| Profile | Enables | Settings from the environment |
+|---|---|---|
+| `with-ldap` | `ldapConf.xml`: login with and user synchronization from an LDAP directory | `ldap_url`, `ldap_principal`, `ldap_credential`, `ldap_base_dn`, `ldap_filter`, `ldap_group_1` ... `ldap_group_3`, `ldap_mapping_*` |
+| `with-openid-keycloak` | `pac4j-keycloak.xml` | `tl_pac_keycloak_base_uri`, `tl_pac_keycloak_realm` |
+| `with-openid-azure` | `pac4j-azure.xml` | `tl_pac_azure_tenant` |
+| `with-openid-google` | `pac4j-google.xml` | - |
+| `with-openid-generic` | `pac4j-generic.xml` | `tl_pac_discovery_uri` |
+
+The OpenID Connect profiles also add the module `tl-security-auth-pac4j`, whose client reads
+`tl_pac_client_id`, `tl_pac_secret` and further `tl_pac_*` settings. The profiles combine with
+each other and with a database profile:
+
+```bash
+mvn package -P with-postgresql,with-ldap,with-openid-keycloak,with-openid-azure
+```
+
+Each profile sets a property of its own whose name starts with `tl.app.metaConfAddons.`: the
+database profiles `tl.app.metaConfAddons.db` (default `db-jndi.xml`, one database at a time), the
+profiles above e.g. `tl.app.metaConfAddons.ldap`. The packaging `tl-app` adds the comma-separated
+references of `tl.app.metaConfAddons` - free for references of the application itself - and then
+those of all prefixed properties in the order of their names. A project with the packaging `tl-app`
+and without `tl-parent-app` defines such profiles itself, as can an application for configuration
+of its own:
+
+```xml
+<profile>
+	<id>with-ldap</id>
+	<properties>
+		<tl.app.metaConfAddons.ldap>ldapConf.xml</tl.app.metaConfAddons.ldap>
+	</properties>
+</profile>
+```

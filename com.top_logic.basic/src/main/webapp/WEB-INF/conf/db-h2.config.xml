@@ -12,7 +12,9 @@
 							<options>
 								<option name="url" value="jdbc:h2:%H2_SCHEMA%" />
 								<option name="user" value="%H2_USER%" />
-								<encrypted-option name="password" value="%H2_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="h2_passwd"/>
+								</encrypted-option>
 							</options>
 						</data-source>
 					</pool>

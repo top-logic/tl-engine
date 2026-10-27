@@ -11,6 +11,5 @@
 		<entry name="%IMAP_STARTTLS%"  value="${env:imap_starttls:false}" />
         <entry name="%IMAP_PORT%"    value="${env:imap_port:-1}" comment="Port to receive mails, -1 means default port."/>
         <entry name="%IMAP_USER%"    value="${env:imap_user:}" />
-        <entry name="%IMAP_PASS%"    value="${env:imap_pass:}" />
     </alias>
 </root>

@@ -16,7 +16,7 @@
 			>
 				<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
 					css-class="'module'"
-					label="'Module ' + $value"
+					label="'Module ' + $value.get(`tl.model:TLNamedPart#name`)"
 				/>
 			</computed-column>
 		</columns>

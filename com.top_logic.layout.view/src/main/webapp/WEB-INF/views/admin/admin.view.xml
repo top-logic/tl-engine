@@ -152,6 +152,13 @@
 							</label>
 							<view-ref view="admin/system/services.view.xml"/>
 						</tab>
+						<tab id="secrets">
+							<label>
+								<en>Secrets</en>
+								<de>Geheimnisse</de>
+							</label>
+							<view-ref view="admin/system/secrets.view.xml"/>
+						</tab>
 						<tab id="locks">
 							<label>
 								<en>Locks</en>

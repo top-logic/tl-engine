@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 
+import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.AbstractStreamingProvider;
 import com.top_logic.tl.ai.core.provider.ContentBlockAccumulator;
@@ -57,6 +58,16 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 	private static final String PROVIDER_ID = "anthropic";
 
 
+	/**
+	 * Request header carrying the API key of the Anthropic Messages API.
+	 */
+	public static final String API_KEY_HEADER = "x-api-key";
+
+	/**
+	 * Request header carrying the version of the Anthropic Messages API.
+	 */
+	public static final String VERSION_HEADER = "anthropic-version";
+
 	private static final String DEFAULT_BASE_URL = "https://api.anthropic.com";
 
 	private static final String DEFAULT_API_VERSION = "2023-06-01";
@@ -64,25 +75,25 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 	private final String _apiVersion;
 
 	/** Creates an {@link AnthropicMessagesProvider}. */
-	public AnthropicMessagesProvider(String apiKey) {
-		this(apiKey, DEFAULT_BASE_URL, DEFAULT_API_VERSION);
+	public AnthropicMessagesProvider(CredentialProvider credentials) {
+		this(credentials, DEFAULT_BASE_URL, DEFAULT_API_VERSION);
 	}
 
 	/** Creates an {@link AnthropicMessagesProvider}. */
-	public AnthropicMessagesProvider(String apiKey, String baseUrl, String apiVersion) {
-		this(apiKey, baseUrl, apiVersion, defaultHttpClient());
+	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion) {
+		this(credentials, baseUrl, apiVersion, defaultHttpClient());
 	}
 
 	/** Creates an {@link AnthropicMessagesProvider}. */
-	public AnthropicMessagesProvider(String apiKey, String baseUrl, String apiVersion, HttpClient httpClient) {
-		super(apiKey, baseUrl, httpClient);
+	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion, HttpClient httpClient) {
+		super(credentials, baseUrl, httpClient);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
 	}
 
 	/** Creates an {@link AnthropicMessagesProvider} with configurable timeouts and headers. */
-	public AnthropicMessagesProvider(String apiKey, String baseUrl, String apiVersion,
+	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion,
 			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
-		super(apiKey, baseUrl, defaultHttpClient(connectTimeoutSeconds),
+		super(credentials, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
 	}
@@ -93,15 +104,8 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 	}
 
 	@Override
-	protected void addAuthHeaders(HttpRequest.Builder builder) {
-		if (_apiKey != null && !_apiKey.isBlank()) {
-			builder.header("x-api-key", _apiKey);
-		}
-	}
-
-	@Override
 	protected void addExtraHeaders(HttpRequest.Builder builder) {
-		builder.header("anthropic-version", _apiVersion);
+		builder.header(VERSION_HEADER, _apiVersion);
 	}
 
 	@Override

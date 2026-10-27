@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -12,12 +14,14 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.credential.CredentialProvider;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
@@ -47,59 +51,51 @@ public final class ModelDiscoveryHelper {
 	}
 
 	/**
-	 * Fetches model IDs from the given provider's {@code /v1/models} endpoint using Bearer
-	 * authentication.
+	 * Fetches model IDs from the given provider's {@code /v1/models} endpoint.
 	 *
-	 * @param apiKey
-	 *        The API key for authentication, or {@code null} for unauthenticated endpoints.
+	 * @param credentials
+	 *        Authentication of the request.
 	 * @param baseUrl
 	 *        The provider base URL (without trailing slash or {@code /v1}).
 	 * @return List of discovered model IDs, or empty list on failure.
 	 */
-	public static List<String> fetchModels(String apiKey, String baseUrl) {
-		Map<String, String> headers = Map.of();
-		if (isValidApiKey(apiKey)) {
-			headers = Map.of("Authorization", "Bearer " + apiKey);
-		}
-		return fetchModels(baseUrl, headers);
+	public static List<String> fetchModels(CredentialProvider credentials, String baseUrl) {
+		return fetchModels(credentials, baseUrl, Map.of());
 	}
 
 	/**
-	 * Fetches model IDs from the given provider's {@code /v1/models} endpoint using custom
-	 * authentication headers.
+	 * Fetches model IDs from the given provider's {@code /v1/models} endpoint, sending additional
+	 * headers.
 	 *
+	 * @param credentials
+	 *        Authentication of the request.
 	 * @param baseUrl
 	 *        The provider base URL (without trailing slash or {@code /v1}).
 	 * @param headers
-	 *        Custom HTTP headers for authentication (e.g. {@code x-api-key} for Anthropic).
+	 *        Additional HTTP headers the provider requires (e.g. its API version).
 	 * @return List of discovered model IDs, or empty list on failure.
 	 */
-	public static List<String> fetchModels(String baseUrl, Map<String, String> headers) {
-		String cacheKey = baseUrl + "|" + headers.hashCode();
-		long now = System.currentTimeMillis();
-
-		CachedModelList cached = CACHE.get(cacheKey);
-		if (cached != null && (now - cached._loadedAtMillis) < CACHE_TTL_MILLIS) {
-			return cached._models;
-		}
-
-		String endpoint = baseUrl + "/v1/models";
-		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-			.uri(URI.create(endpoint))
-			.GET()
-			.timeout(Duration.ofSeconds(30));
-
-		for (Map.Entry<String, String> header : headers.entrySet()) {
-			requestBuilder.header(header.getKey(), header.getValue());
-		}
-
+	public static List<String> fetchModels(CredentialProvider credentials, String baseUrl,
+			Map<String, String> headers) {
 		try {
-			HttpClient client = HttpClient.newBuilder()
-				.connectTimeout(Duration.ofSeconds(10))
-				.build();
-			HttpResponse<String> response = client.send(
-				requestBuilder.build(),
-				HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+			Map<String, String> requestHeaders = requestHeaders(credentials, headers);
+			String cacheKey = cacheKey(baseUrl, requestHeaders);
+			long now = System.currentTimeMillis();
+
+			CachedModelList cached = CACHE.get(cacheKey);
+			if (cached != null && (now - cached._loadedAtMillis) < CACHE_TTL_MILLIS) {
+				return cached._models;
+			}
+
+			HttpResponse<String> response = send(baseUrl, requestHeaders);
+			if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+				// Cached credentials (an access token) may have expired or been revoked: one more
+				// attempt with fresh ones.
+				credentials.invalidate();
+				requestHeaders = requestHeaders(credentials, headers);
+				cacheKey = cacheKey(baseUrl, requestHeaders);
+				response = send(baseUrl, requestHeaders);
+			}
 
 			if (response.statusCode() != 200) {
 				Logger.warn("Model discovery failed for " + baseUrl + ": HTTP " + response.statusCode(),
@@ -118,6 +114,38 @@ public final class ModelDiscoveryHelper {
 	}
 
 	/**
+	 * The headers of a discovery request: the given ones and the current credentials.
+	 */
+	private static Map<String, String> requestHeaders(CredentialProvider credentials, Map<String, String> headers) {
+		Map<String, String> result = new LinkedHashMap<>(headers);
+		credentials.authenticate(result::put);
+		return result;
+	}
+
+	/**
+	 * The key of the discovery result for the given endpoint, distinguishing the credentials used.
+	 */
+	private static String cacheKey(String baseUrl, Map<String, String> requestHeaders) {
+		return baseUrl + "|" + requestHeaders.hashCode();
+	}
+
+	private static HttpResponse<String> send(String baseUrl, Map<String, String> requestHeaders)
+			throws IOException, InterruptedException {
+		HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+			.uri(URI.create(baseUrl + "/v1/models"))
+			.GET()
+			.timeout(Duration.ofSeconds(30));
+		for (Map.Entry<String, String> header : requestHeaders.entrySet()) {
+			requestBuilder.header(header.getKey(), header.getValue());
+		}
+
+		HttpClient client = HttpClient.newBuilder()
+			.connectTimeout(Duration.ofSeconds(10))
+			.build();
+		return client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+	}
+
+	/**
 	 * Normalizes a base URL by stripping trailing slashes and {@code /v1} suffix.
 	 */
 	public static String normalizeBaseUrl(String baseUrl) {
@@ -132,16 +160,6 @@ public final class ModelDiscoveryHelper {
 			trimmed = trimmed.substring(0, trimmed.length() - 3);
 		}
 		return trimmed;
-	}
-
-	private static boolean isValidApiKey(String apiKey) {
-		if (apiKey == null || apiKey.trim().isEmpty()) {
-			return false;
-		}
-		if (apiKey.startsWith("%") && apiKey.endsWith("%")) {
-			return false;
-		}
-		return true;
 	}
 
 	private static List<String> parseModelIds(String json) {

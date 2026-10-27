@@ -98,6 +98,16 @@ public final class ExecCommand {
 	}
 
 	/**
+	 * Adds the given environment variables to the environment of the command.
+	 *
+	 * @see #getEnv()
+	 */
+	public ExecCommand putEnv(Map<String, String> env) {
+		_env.putAll(env);
+		return this;
+	}
+
+	/**
 	 * Sets the time {@link WorkspaceProvider#exec(String, ExecCommand, ExecOutput)} waits for the
 	 * command to finish.
 	 *

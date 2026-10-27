@@ -7,7 +7,7 @@
 
   <!--
     The workspace proxy of the workspace containers in the web application, mapped to the paths of
-    its routes (the LLM route: LLMRoute.DEFAULT_PATH). It answers only if servlet-enabled of the
+    its routes (the LLM route: LLMRoute.DEFAULT_PATH, the git route: GitRoute.DEFAULT_PATH). It answers only if servlet-enabled of the
     WorkspaceProxyService is set; by default the proxy listens on a port of its own instead. The
     servlet authenticates the requests itself by the token of a workspace.
   -->
@@ -19,5 +19,6 @@
   <servlet-mapping>
     <servlet-name>WorkspaceProxyServlet</servlet-name>
     <url-pattern>/llm-proxy/*</url-pattern>
+    <url-pattern>/git/*</url-pattern>
   </servlet-mapping>
 </web-fragment>

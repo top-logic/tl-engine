@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.List;
 
 import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.factory.git.GitRepository;
+import com.top_logic.factory.git.RepositoryName;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -54,6 +56,18 @@ public class FactoryModel {
 
 	/** Attribute of a {@link #PROJECT}: the TopLogic version its application is built on. */
 	public static final String PROJECT_ENGINE_VERSION = "engineVersion";
+
+	/**
+	 * Attribute of a {@link #PROJECT}: the {@link RepositoryName#getFullName() full name} of its
+	 * repository on the git hosting service.
+	 */
+	public static final String PROJECT_REPOSITORY = "repository";
+
+	/**
+	 * Attribute of a {@link #PROJECT}: the {@link GitRepository#getWebUrl() page} of its repository
+	 * on the git hosting service.
+	 */
+	public static final String PROJECT_REPOSITORY_URL = "repositoryUrl";
 
 	/** Attribute of a {@link #PROJECT}: its {@link #WORKSPACE}, a composition. */
 	public static final String PROJECT_WORKSPACE = "workspace";
@@ -225,6 +239,26 @@ public class FactoryModel {
 	 */
 	public static TLObject getProject(TLObject workspace) {
 		return workspace.tContainer();
+	}
+
+	/**
+	 * The repository of the given project on the git hosting service.
+	 *
+	 * @return Its full name, {@code null} if the project has none.
+	 */
+	public static RepositoryName getRepository(TLObject project) {
+		return RepositoryName.fromFullName(getString(project, PROJECT_REPOSITORY));
+	}
+
+	/**
+	 * Sets the repository of the given project in the current transaction.
+	 *
+	 * @param repository
+	 *        The repository on the git hosting service, {@code null} for none.
+	 */
+	public static void setRepository(TLObject project, GitRepository repository) {
+		project.tUpdateByName(PROJECT_REPOSITORY, repository == null ? null : repository.getFullName());
+		project.tUpdateByName(PROJECT_REPOSITORY_URL, repository == null ? null : repository.getWebUrl());
 	}
 
 	/**

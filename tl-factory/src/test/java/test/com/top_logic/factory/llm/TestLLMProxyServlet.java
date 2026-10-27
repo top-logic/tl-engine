@@ -19,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +40,8 @@ import org.eclipse.jetty.server.ServerConnector;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+
+import test.com.top_logic.factory.proxy.HeldBackBody;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Logger.LogEntry;
@@ -635,59 +636,6 @@ public class TestLLMProxyServlet extends TestCase {
 
 	private static String basic(String user, String password) {
 		return Base64.getEncoder().encodeToString((user + ":" + password).getBytes(StandardCharsets.UTF_8));
-	}
-
-	/**
-	 * A request body of the given size, generated as it is read: after its first
-	 * {@link #HELD_BACK_AFTER} bytes it waits until the upstream has received some, so that a proxy
-	 * collecting the body before forwarding it fails.
-	 */
-	private static final class HeldBackBody extends InputStream {
-
-		private static final int HELD_BACK_AFTER = 1024 * 1024;
-
-		private final long _size;
-
-		private final CountDownLatch _upstreamReading;
-
-		private long _read;
-
-		HeldBackBody(long size, CountDownLatch upstreamReading) {
-			_size = size;
-			_upstreamReading = upstreamReading;
-		}
-
-		@Override
-		public int read() throws IOException {
-			byte[] one = new byte[1];
-			return read(one, 0, 1) < 0 ? -1 : one[0] & 0xFF;
-		}
-
-		@Override
-		public int read(byte[] buffer, int offset, int length) throws IOException {
-			if (_read >= _size) {
-				return -1;
-			}
-			if (_read >= HELD_BACK_AFTER) {
-				awaitUpstream();
-			}
-			long limit = _read < HELD_BACK_AFTER ? HELD_BACK_AFTER : _size;
-			int count = (int) Math.min(length, limit - _read);
-			Arrays.fill(buffer, offset, offset + count, (byte) 'x');
-			_read += count;
-			return count;
-		}
-
-		private void awaitUpstream() throws IOException {
-			try {
-				if (!_upstreamReading.await(30, TimeUnit.SECONDS)) {
-					throw new IOException("The upstream got nothing of the body before the client sent all of it.");
-				}
-			} catch (InterruptedException ex) {
-				Thread.currentThread().interrupt();
-				throw new IOException(ex);
-			}
-		}
 	}
 
 	/**

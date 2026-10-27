@@ -7,6 +7,7 @@ package com.top_logic.factory.proxy;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -63,13 +64,34 @@ public interface ProxyRoute {
 	}
 
 	/**
-	 * The environment variables a process in a workspace gets for this route.
+	 * The environment variables a process in a workspace gets for this route, besides the token in
+	 * {@link ProxyTokens#ENV_PROXY_TOKEN} and the {@link #gitConfig(String) git configuration}.
 	 *
 	 * @param token
 	 *        The token of the process, valid for all routes of the proxy.
 	 */
 	default Map<String, String> processEnv(String token) {
 		return Collections.emptyMap();
+	}
+
+	/**
+	 * Configuration entries of git a process in a workspace gets for this route, e.g. a credential
+	 * helper for the URL of the route.
+	 *
+	 * <p>
+	 * The {@link WorkspaceProxyService} collects the entries of all routes and passes them to the
+	 * process in one set of {@link GitEnvironment git configuration variables}, so that the
+	 * entries of several routes do not overwrite each other. An entry may repeat a key, e.g. to
+	 * reset a list-valued setting with an empty value before adding to it. No secret: a token is
+	 * referred to by its variable {@link ProxyTokens#ENV_PROXY_TOKEN}.
+	 * </p>
+	 *
+	 * @param routeUrl
+	 *        The URL of this route as the workspace containers reach it.
+	 * @return Key and value of each entry, in the order git reads them.
+	 */
+	default List<Map.Entry<String, String>> gitConfig(String routeUrl) {
+		return Collections.emptyList();
 	}
 
 	/**

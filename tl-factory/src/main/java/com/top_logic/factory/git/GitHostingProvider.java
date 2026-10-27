@@ -7,6 +7,7 @@ package com.top_logic.factory.git;
 
 import java.util.List;
 
+import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -107,5 +108,29 @@ public interface GitHostingProvider {
 	 *         credentials may not administer it.
 	 */
 	void protectBranch(GitRepository repository, String branch, List<String> protectedFiles);
+
+	/**
+	 * The URL git's smart HTTP protocol reaches the given repository at, without a slash at its
+	 * end, e.g. {@code https://git.example.com/my-org/my-app.git}.
+	 *
+	 * <p>
+	 * The requests of the protocol go to this URL followed by {@code /info/refs},
+	 * {@code /git-upload-pack} or {@code /git-receive-pack}, see {@link GitRoute}. The repository
+	 * is not looked up.
+	 * </p>
+	 */
+	String gitUrl(RepositoryName repository);
+
+	/**
+	 * The credentials of the control application for git's smart HTTP protocol at
+	 * {@link #gitUrl(RepositoryName)}, the ones a push or fetch of the {@link GitRoute} is
+	 * authenticated with.
+	 *
+	 * <p>
+	 * The {@link GitRoute} {@link CredentialProvider#invalidate() invalidates} them when the
+	 * hosting service rejects them.
+	 * </p>
+	 */
+	CredentialProvider gitCredentials();
 
 }

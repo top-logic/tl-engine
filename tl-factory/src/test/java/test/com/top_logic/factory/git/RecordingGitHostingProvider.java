@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.factory.git.GitHostingProvider;
 import com.top_logic.factory.git.GitRepository;
 import com.top_logic.factory.git.I18NConstants;
@@ -22,6 +23,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The repositories live at {@link #BASE_URL}; their default branch is {@link #DEFAULT_BRANCH}.
+ * The {@link #gitUrl(RepositoryName) git URLs} are below a {@link #getGitBaseUrl() base URL of its
+ * own}, by default {@link #BASE_URL}, so that a test can serve git's protocol itself.
  * </p>
  */
 public class RecordingGitHostingProvider implements GitHostingProvider {
@@ -58,6 +61,10 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 
 	private final String _owner;
 
+	private final String _gitBaseUrl;
+
+	private final CredentialProvider _gitCredentials;
+
 	private final Map<RepositoryName, GitRepository> _repositories = new LinkedHashMap<>();
 
 	private final Map<String, List<String>> _protections = new LinkedHashMap<>();
@@ -78,7 +85,42 @@ public class RecordingGitHostingProvider implements GitHostingProvider {
 	 *        See {@link #getOwner()}.
 	 */
 	public RecordingGitHostingProvider(String owner) {
+		this(owner, BASE_URL, request -> {
+			// No credentials.
+		});
+	}
+
+	/**
+	 * Creates a {@link RecordingGitHostingProvider} whose git protocol is served elsewhere.
+	 *
+	 * @param owner
+	 *        See {@link #getOwner()}.
+	 * @param gitBaseUrl
+	 *        See {@link #getGitBaseUrl()}.
+	 * @param gitCredentials
+	 *        See {@link #gitCredentials()}.
+	 */
+	public RecordingGitHostingProvider(String owner, String gitBaseUrl, CredentialProvider gitCredentials) {
 		_owner = owner;
+		_gitBaseUrl = gitBaseUrl;
+		_gitCredentials = gitCredentials;
+	}
+
+	/**
+	 * The URL the {@link #gitUrl(RepositoryName) git URLs} are below, with a slash at its end.
+	 */
+	public String getGitBaseUrl() {
+		return _gitBaseUrl;
+	}
+
+	@Override
+	public String gitUrl(RepositoryName repository) {
+		return _gitBaseUrl + repository.getFullName() + RepositoryName.GIT_SUFFIX;
+	}
+
+	@Override
+	public CredentialProvider gitCredentials() {
+		return _gitCredentials;
 	}
 
 	@Override

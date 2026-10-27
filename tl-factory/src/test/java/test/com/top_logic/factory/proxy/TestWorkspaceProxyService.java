@@ -25,8 +25,13 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.factory.git.GitRoute;
 import com.top_logic.factory.llm.LLMRoute;
+import com.top_logic.factory.proxy.GitEnvironment;
+import com.top_logic.factory.proxy.ProcessToken;
 import com.top_logic.factory.proxy.ProxyAdmission;
+import com.top_logic.factory.proxy.ProxyRoute;
+import com.top_logic.factory.proxy.ProxyTokens;
 import com.top_logic.factory.proxy.SourceFilter;
 import com.top_logic.factory.proxy.TokenGrants;
 import com.top_logic.factory.proxy.WorkspaceProxyService;
@@ -88,7 +93,68 @@ public class TestWorkspaceProxyService extends TestCase {
 	public void testProcessEnvironment() {
 		WorkspaceProxyService service = service(PROXY_URL);
 		String token = service.issue(WORKSPACE, Duration.ofMinutes(5));
-		assertEquals(Map.of(LLMRoute.ENV_AUTH_TOKEN, token), service.processEnv(token));
+		assertEquals(Map.of(ProxyTokens.ENV_PROXY_TOKEN, token, LLMRoute.ENV_AUTH_TOKEN, token),
+			service.processEnv(token));
+	}
+
+	/**
+	 * With the git route, a container gets the URL of the route, a process the credential helper
+	 * for that URL in one set of git configuration variables, without the token in it.
+	 */
+	public void testGitRouteEnvironment() {
+		WorkspaceProxyService service = service(PROXY_URL + "/", TypedConfiguration.newConfigItem(GitRoute.Config.class));
+		String gitUrl = PROXY_URL + GitRoute.DEFAULT_PATH;
+		assertEquals(gitUrl, service.getRouteUrl(service.getRoute(GitRoute.class)));
+		assertEquals(gitUrl, service.containerEnv().get(GitRoute.ENV_GIT_URL));
+		assertEquals(LLM_URL, service.containerEnv().get(LLMRoute.ENV_BASE_URL));
+
+		String token = service.issue(WORKSPACE, Duration.ofMinutes(5));
+		Map<String, String> env = service.processEnv(token);
+		assertEquals(token, env.get(ProxyTokens.ENV_PROXY_TOKEN));
+		assertEquals(token, env.get(LLMRoute.ENV_AUTH_TOKEN));
+		assertEquals("2", env.get(GitEnvironment.ENV_CONFIG_COUNT));
+		assertEquals(GitRoute.helperKey(gitUrl), env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 0));
+		assertEquals("Resets the helpers of the URL.", "", env.get(GitEnvironment.ENV_CONFIG_VALUE_PREFIX + 0));
+		assertEquals(GitRoute.helperKey(gitUrl), env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 1));
+		assertEquals(GitRoute.CREDENTIAL_HELPER, env.get(GitEnvironment.ENV_CONFIG_VALUE_PREFIX + 1));
+		for (Map.Entry<String, String> entry : env.entrySet()) {
+			if (!entry.getKey().equals(ProxyTokens.ENV_PROXY_TOKEN) && !entry.getKey().equals(LLMRoute.ENV_AUTH_TOKEN)) {
+				assertFalse("Token in " + entry.getKey(), entry.getValue().contains(token));
+			}
+		}
+		assertEquals(7, env.size());
+	}
+
+	/**
+	 * The git configuration of several routes is numbered through, so that no route overwrites the
+	 * entries of another.
+	 */
+	public void testGitConfigOfSeveralRoutes() {
+		GitRoute.Config<?> first = TypedConfiguration.newConfigItem(GitRoute.Config.class);
+		GitRoute.Config<?> second = TypedConfiguration.newConfigItem(GitRoute.Config.class);
+		TypedConfigUtil.setProperty(second, ProxyRoute.Config.PATH, "/git2");
+		WorkspaceProxyService service = service(PROXY_URL, first, second);
+		Map<String, String> env = service.processEnv("token");
+		assertEquals("4", env.get(GitEnvironment.ENV_CONFIG_COUNT));
+		assertEquals(GitRoute.helperKey(PROXY_URL + "/git2"), env.get(GitEnvironment.ENV_CONFIG_KEY_PREFIX + 3));
+	}
+
+	/**
+	 * A token for one command of the control application carries the environment of a process and
+	 * is revoked when closed.
+	 */
+	public void testProcessToken() {
+		WorkspaceProxyService service = service(PROXY_URL);
+		String token;
+		try (ProcessToken processToken = service.issueProcessToken(WORKSPACE, Duration.ofMinutes(1))) {
+			token = processToken.env().get(ProxyTokens.ENV_PROXY_TOKEN);
+			assertNotNull(token);
+			assertEquals(service.processEnv(token), processToken.env());
+			assertFalse("No token in the string form.", processToken.toString().contains(token));
+			assertNotNull(service.expiresAt(token));
+		}
+		assertNull("Revoked.", service.expiresAt(token));
+		assertNull("Switched off.", service("").issueProcessToken(WORKSPACE, Duration.ofMinutes(1)));
 	}
 
 	/**
@@ -287,9 +353,17 @@ public class TestWorkspaceProxyService extends TestCase {
 	}
 
 	private static WorkspaceProxyService service(String proxyUrl) {
+		return service(proxyUrl, new ProxyRoute.Config<?>[0]);
+	}
+
+	/**
+	 * A proxy with the LLM route and the given further routes.
+	 */
+	private static WorkspaceProxyService service(String proxyUrl, ProxyRoute.Config<?>... routes) {
 		WorkspaceProxyService.Config<?> config = TypedConfiguration.newConfigItem(WorkspaceProxyService.Config.class);
 		TypedConfigUtil.setProperty(config, WorkspaceProxyService.Config.PROXY_URL, proxyUrl);
 		config.getRoutes().add(TypedConfiguration.newConfigItem(LLMRoute.Config.class));
+		config.getRoutes().addAll(List.of(routes));
 		return new WorkspaceProxyService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
 	}
 

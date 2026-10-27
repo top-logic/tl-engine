@@ -85,6 +85,28 @@ public final class RepositoryName {
 	}
 
 	/**
+	 * The repository of the given {@link #getFullName() full name}: {@code owner/name}, optionally
+	 * followed by {@link #GIT_SUFFIX}.
+	 *
+	 * @return The repository, {@code null} if the given value is no full name.
+	 */
+	public static RepositoryName fromFullName(String fullName) {
+		if (fullName == null) {
+			return null;
+		}
+		String input = fullName.trim();
+		return FULL_NAME.matcher(input).matches() ? fromSegments(input) : null;
+	}
+
+	/**
+	 * Whether the given repository has the same owner and name as this one, compared without
+	 * regard to case, as the hosting services do.
+	 */
+	public boolean matches(RepositoryName other) {
+		return other != null && _owner.equalsIgnoreCase(other._owner) && _name.equalsIgnoreCase(other._name);
+	}
+
+	/**
 	 * Reads the repository a user names, as he enters it.
 	 *
 	 * <p>

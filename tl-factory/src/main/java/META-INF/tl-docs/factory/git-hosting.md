@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or working on the git hosting service of the control application (the repositories of the projects on a hosting service) - GitHostingService with its optional provider, GitHostingProvider (createRepository, findRepository with RepositoryName.parse for a clone URL or owner/name, protectBranch), GitRepository, the test double RecordingGitHostingProvider, the Gitea implementation GiteaHostingProvider of the module tl-factory-gitea (base-url, owner, credentials, the secret tl_factory_gitea_token and the scopes of its access token, required-approvals), what its branch protection enforces in Gitea (no force push, protected_file_patterns, block_admin_merge_override), the error keys, the client generated from the OpenAPI specification of Gitea with openapi-generator-maven-plugin (gitea.version, apisToGenerate, FILTER, modelsToGenerate, the exclusions from doclint and TLDoclet), its integration test against a Gitea container, and updating Gitea.
+description: Read before configuring or working on the git hosting service of the control application (the repositories of the projects on a hosting service) - GitHostingService with its optional provider, GitHostingProvider (createRepository, findRepository with RepositoryName.parse for a clone URL or owner/name, protectBranch, gitUrl, gitCredentials), GitRepository, the repository of a project (tl.factory:Project repository and repositoryUrl), the git route of the workspace proxy (GitRoute at /git passing git's smart HTTP protocol through - info/refs, git-upload-pack, git-receive-pack -, the repository of the project of the workspace only, FORWARDED_REQUEST_HEADERS with Git-Protocol and Content-Encoding, the 401 challenge with WWW-Authenticate, the credential helper through GIT_CONFIG_COUNT / GIT_CONFIG_KEY_n / GIT_CONFIG_VALUE_n and TL_FACTORY_PROXY_TOKEN, TL_FACTORY_GIT_URL, remoteUrl and projectRemoteUrl, git commands of the control application with issueProcessToken), what Gitea accepts for git over HTTP, the test double RecordingGitHostingProvider, the Gitea implementation GiteaHostingProvider of the module tl-factory-gitea (base-url, owner, credentials, the secret tl_factory_gitea_token and the scopes of its access token, required-approvals), what its branch protection enforces in Gitea (no force push, protected_file_patterns, block_admin_merge_override), the error keys, the client generated from the OpenAPI specification of Gitea with openapi-generator-maven-plugin (gitea.version, apisToGenerate, FILTER, modelsToGenerate, the exclusions from doclint and TLDoclet), its integration tests against a Gitea container (GiteaTestServer, TestGiteaHostingProvider, TestGitRouteGitea with the git command line), and updating Gitea.
 order: 30
 ---
 
@@ -12,10 +12,11 @@ repositories.
 
 | Class | Role |
 |---|---|
-| `GitHostingProvider` | Platform-neutral access to the hosting service: create a repository of the configured owner, find an existing repository, protect a branch. |
+| `GitHostingProvider` | Platform-neutral access to the hosting service: create a repository of the configured owner, find an existing repository, protect a branch; the URL and the credentials of git's smart HTTP protocol (`gitUrl`, `gitCredentials`) for the git route. |
 | `GitRepository` | A repository: full name (`owner/name`), HTTP clone URL, web URL, default branch. |
 | `RepositoryName` | Owner and name of a repository; `parse` reads what a user enters - `owner/name`, the clone URL, the URL of a page of the repository, an SSH clone URL - against the base URL of the service. |
 | `GitHostingService` | Service holding the configured provider; `isEnabled()` tells whether there is one, `getProvider()` fails with `ERROR_NO_GIT_HOSTING` otherwise. |
+| `GitRoute` | The route of the workspace proxy through which a workspace fetches from and pushes to the repository of its project, see [the git route](#the-git-route). |
 | `GiteaHostingProvider` | The implementation for Gitea, in the module `tl-factory-gitea`. |
 | `RecordingGitHostingProvider` | Test double in the tests of `tl-factory`: repositories and branch protections in memory, the calls recorded. |
 
@@ -123,6 +124,129 @@ The provider reports failures as `TopLogicException` with the keys of
 | `ERROR_SERVICE_UNREACHABLE__SERVICE_PROBLEM` | No answer, e.g. connection refused or timeout. |
 | `ERROR_REQUEST_FAILED__SERVICE_OPERATION_STATUS_MESSAGE` | Any other answer, with status and Gitea's message. |
 
+## The repository of a project
+
+A project has at most one repository. `tl.factory:Project` holds it in `repository`, its full name
+`owner/name`, and `repositoryUrl`, the page of the repository in the web interface; both are
+read-only and not shown in the form creating a project. `FactoryModel.getRepository(project)` reads
+the full name as `RepositoryName`, `FactoryModel.setRepository(project, repository)` sets both from
+a `GitRepository`.
+
+## The git route
+
+The agent in a workspace fetches from and pushes to the repository of its project through the
+route `GitRoute` of the [workspace proxy](doc:factory#the-workspace-proxy), at `/git` (its
+`path`). The workspace gets no credential of the hosting service; the route adds the one of the
+control application. The branch protection of the hosting service - no force push, protected
+files only through a reviewed pull request - applies to these pushes as to any other, and its
+rejection reaches the git client as `remote:` lines.
+
+### Requests
+
+A repository is addressed below the route as `/<owner>/<name>.git` (the suffix `.git` may be
+missing). Only git's smart HTTP protocol passes:
+
+| Method | Path below the repository | Query |
+|---|---|---|
+| `GET` | `info/refs` | `service=git-upload-pack` (fetch, clone) or `service=git-receive-pack` (push) |
+| `POST` | `git-upload-pack` | |
+| `POST` | `git-receive-pack` | |
+
+Every other request is answered with 404: another path or method (the dumb protocol, LFS,
+`git-upload-archive`), a path with dot or empty segments, the repository of another project, any
+repository of a workspace whose project has none, and every request while `GitHostingService` has
+no provider. The repository must be the one of the project of the workspace the token was issued
+for, owner and name compared without regard to case; a refused repository is logged at level INFO
+and answered like one that does not exist.
+
+### Forwarding
+
+The route forwards to `gitUrl(repository)` of the provider - for Gitea the clone URL below its
+`base-url` -, with the owner and name as stored in the project, and the query rebuilt from the
+service alone. Of the request, only the headers of git's protocol pass
+(`GitRoute.FORWARDED_REQUEST_HEADERS`): `Content-Type`, `Content-Encoding` (git compresses
+`git-upload-pack` requests with gzip), `Git-Protocol` (protocol version 2), `Accept`,
+`Accept-Encoding`, `Accept-Language`, `User-Agent`. Everything else is dropped - the token of the
+client, cookies, and headers the hosting service might trust from the address of the control
+application, e.g. the user header `X-WEBAUTH-USER` of Gitea's reverse proxy authentication. The
+request is authenticated with `gitCredentials()` of the provider. The body is streamed to the
+hosting service as it arrives, never held as a whole; status, headers (`Content-Type`,
+`Cache-Control`, `Content-Encoding`, ...) and body of the answer are passed back as they come,
+except cookies and hop-by-hop headers.
+
+| Setting of the route | Default | Meaning |
+|---|---|---|
+| `path` | `/git` | Path of the route below the proxy. |
+| `connect-timeout` | `10s` | How long connecting to the hosting service may take. |
+| `response-timeout` | `30min` | How long the hosting service may take until the status of its answer; it answers a push after receiving all of it, so this includes the transfer of the largest push. |
+
+If the hosting service rejects the credentials (401), the route invalidates them (see [credential
+providers](doc:credentials/credential-providers)). A `GET` of `info/refs` has no body and is
+repeated once with fresh credentials; a `POST` cannot be repeated - its body is streamed and gone
+- and is answered with 502, as is a second rejection. Since git starts every fetch and push with
+`info/refs`, rotated credentials are picked up there. The client never gets a 401 of the hosting
+service, which it would take for a rejection of its own token.
+
+Refusals of the proxy are answered as plain text with their status (403, 429). A missing or
+invalid token is answered with 401 and `WWW-Authenticate: Basic realm="TopLogic workspace proxy"`:
+git sends its first request without credentials and asks its credential helper only after such a
+challenge.
+
+### Git in the workspace
+
+The token reaches git without a file in the container, through the environment of the process
+(`ProxyTokens.processEnv`):
+
+- `TL_FACTORY_PROXY_TOKEN` (`ProxyTokens.ENV_PROXY_TOKEN`) holds the token of the process; the
+  proxy exports it for every process, independent of the routes.
+- The route contributes git configuration entries (`ProxyRoute.gitConfig(routeUrl)`), which the
+  proxy passes as `GIT_CONFIG_COUNT`, `GIT_CONFIG_KEY_<n>`, `GIT_CONFIG_VALUE_<n>` (git 2.31 or
+  newer; `GitEnvironment`). The proxy collects the entries of all routes into this one set, so no
+  route overwrites the entries of another. The git route sets, for the URL of the route,
+  `credential.<route URL>.helper` first to the empty value - dropping helpers configured before
+  for that URL - and then to an inline helper (`GitRoute.CREDENTIAL_HELPER`) that answers `get`
+  with `username=tl-factory` and `password=$TL_FACTORY_PROXY_TOKEN` and ignores `store` and
+  `erase`. Git matches the URL as a prefix of the path of a request, so the token goes to the
+  route only, never to another host; neither key nor value contains the token.
+- A workspace container gets the URL of the route in `TL_FACTORY_GIT_URL` (no secret). The remote
+  of the repository of a project is `<TL_FACTORY_GIT_URL>/<owner>/<name>.git`
+  (`GitRoute.remoteUrl`); `GitRoute.projectRemoteUrl(project)` gives it for a stored project
+  through the running proxy.
+
+A git command the control application itself runs in a workspace, e.g. a clone, gets a token of its
+own for that command: `ProxyTokens.issueProcessToken(workspaceId, lifetime)` issues it together with
+the environment, and closing the `ProcessToken` revokes it.
+
+```java
+try (ProcessToken token = WorkspaceProxyService.getInstance().issueProcessToken(workspaceId, lifetime)) {
+	provider.exec(workspaceId, ExecCommand.of("git", "clone", remote, dir).putEnv(token.env()), output);
+}
+```
+
+### Gitea and git over HTTP
+
+Gitea (checked with 28.2.0) accepts an access token for git over HTTP as `Authorization: token
+<token>` - the scheme of its API requests -, as bearer token and as password (or user name) of
+basic authentication; `GiteaHostingProvider.gitCredentials()` are the credentials of its API
+requests. Its token needs `write:repository` for a push. Gitea answers a request without
+credentials with 401 and `WWW-Authenticate: Basic realm="Gitea"`, finds repositories also without
+`.git` and without regard to case, and serves protocol version 2.
+
+### Configuration
+
+`tl-factory` configures the route next to the LLM route:
+
+```xml
+<routes>
+	<route class="com.top_logic.factory.llm.LLMRoute" provider="%FACTORY_LLM_PROVIDER%"/>
+	<route class="com.top_logic.factory.git.GitRoute"/>
+</routes>
+```
+
+It is inactive - every request answered with 404 - while `GitHostingService` has no provider. The
+`WorkspaceProxyServlet` of the web application is mapped to `/git/*` as well; there, the servlet
+container resolves or refuses dot segments before the route sees the path.
+
 ## The generated Gitea client
 
 `tl-factory-gitea` calls Gitea only through a client generated from the OpenAPI (Swagger 2.0)
@@ -146,14 +270,26 @@ specification of Gitea:
 - The credentials are added by the request interceptor of the `ApiClient`
   (`credentials.authenticate(RequestAuthentication.of(builder))`), which runs for every request.
 
-## The integration test
+## The integration tests
 
-`TestGiteaHostingProvider` starts the pinned Gitea image in a container (SQLite, `INSTALL_LOCK`),
-creates an administrator and two access tokens with `gitea admin user create` /
-`gitea admin user generate-access-token` and an organization, and checks creating, finding and
-protecting repositories, the errors, and what the protection enforces on real pushes. Without a
-reachable Docker daemon, or run without the build's system property (e.g. from the IDE without
-`-Dtl.factory.gitea.image=gitea/gitea:<version>`), the suite is empty.
+`GiteaTestServer` starts the pinned Gitea image in a container (SQLite, `INSTALL_LOCK`), creates
+an administrator and two access tokens with `gitea admin user create` /
+`gitea admin user generate-access-token` and an organization; each test class gets a server of
+its own through `GiteaTestServer.suite(testClass, ...)`.
+
+- `TestGiteaHostingProvider` checks creating, finding and protecting repositories, the errors,
+  and what the protection enforces on real pushes.
+- `TestGitRouteGitea` runs the git command line of the host (with an empty home and nothing but
+  the environment of a workspace process) against a `GitRoute` on a `WorkspaceProxyListener`:
+  clone of an empty repository, first and second push, a fetch with protocol version 2, the
+  refused repository of another project, a revoked token, the challenge without credential
+  helper, and the rejections of a push changing a protected file and of a force push, with
+  Gitea's message reaching git.
+
+Without a reachable Docker daemon, run without the build's system property (e.g. from the IDE
+without `-Dtl.factory.gitea.image=gitea/gitea:<version>`), or - for `TestGitRouteGitea` - without
+`git` on the path, the suite is empty. `TestGitRoute` and `TestGitRouteServlet` of `tl-factory`
+test the route against a fake hosting service.
 
 ```bash
 mvn test -DskipTests=false -pl tl-factory-gitea

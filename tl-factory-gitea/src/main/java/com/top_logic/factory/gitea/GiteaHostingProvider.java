@@ -55,6 +55,11 @@ import com.top_logic.util.error.TopLogicException;
  * {@link #TOKEN_SECRET}, sent with the scheme {@link #TOKEN_SCHEME}.
  * </p>
  *
+ * <p>
+ * Git's smart HTTP protocol reaches a repository at its clone URL below the base URL,
+ * authenticated with the same credentials.
+ * </p>
+ *
  * <h2>The access token</h2>
  *
  * <p>
@@ -93,6 +98,8 @@ import com.top_logic.util.error.TopLogicException;
  * patterns ("cannot find the start commit"), so the first push into an empty repository has to
  * happen before.
  * </p>
+ *
+ * @implNote The clone URL of git's smart HTTP protocol is {@link #gitUrl(RepositoryName)}.
  */
 public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostingProvider.Config<?>>
 		implements GitHostingProvider {
@@ -311,6 +318,25 @@ public class GiteaHostingProvider extends AbstractConfiguredInstance<GiteaHostin
 	@Override
 	public String getOwner() {
 		return getConfig().getOwner();
+	}
+
+	/**
+	 * The {@link Config#getBaseUrl() base URL} followed by owner, name and
+	 * {@link RepositoryName#GIT_SUFFIX}, the clone URL of Gitea.
+	 */
+	@Override
+	public String gitUrl(RepositoryName repository) {
+		return _baseUrl + repository.getFullName() + RepositoryName.GIT_SUFFIX;
+	}
+
+	/**
+	 * The {@link Config#getCredentials() credentials} of the API requests: Gitea (checked with
+	 * 28.2.0) accepts an access token for git over HTTP as {@code Authorization: token <token>} as
+	 * well, besides as bearer token and as password of basic authentication.
+	 */
+	@Override
+	public CredentialProvider gitCredentials() {
+		return _credentials;
 	}
 
 	@Override

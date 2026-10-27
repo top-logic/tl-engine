@@ -57,7 +57,9 @@
 		<!--
 			The workspace proxy: the workspaces reach services through its routes, which add the
 			credentials of the control application to their requests; no workspace container gets
-			one. The LLM route adds the API key of the named provider of the LLMProviderService.
+			one. The LLM route adds the API key of the named provider of the LLMProviderService, the git
+			route the credentials of the GitHostingService for the repository of the project of a
+			workspace; without a git hosting provider, it answers every request with 404.
 		-->
 		<config service-class="com.top_logic.factory.proxy.WorkspaceProxyService">
 			<instance class="com.top_logic.factory.proxy.WorkspaceProxyService"
@@ -72,6 +74,7 @@
 					<route class="com.top_logic.factory.llm.LLMRoute"
 						provider="%FACTORY_LLM_PROVIDER%"
 					/>
+					<route class="com.top_logic.factory.git.GitRoute"/>
 				</routes>
 			</instance>
 		</config>

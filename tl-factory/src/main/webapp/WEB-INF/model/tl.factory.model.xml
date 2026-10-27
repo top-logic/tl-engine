@@ -68,6 +68,28 @@
 							</default-value>
 						</annotations>
 					</property>
+					<!--
+						The repository of the project on the git hosting service, its full name
+						owner/name. The workspace pushes to it through the git route of the workspace
+						proxy.
+					-->
+					<property name="repository"
+						type="tl.core:String"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The page of the repository in the web interface of the git hosting service. -->
+					<property name="repositoryUrl"
+						type="tl.core:String"
+					>
+						<annotations>
+							<create-visibility value="hidden"/>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
 					<reference name="workspace"
 						composite="true"
 						kind="forwards"

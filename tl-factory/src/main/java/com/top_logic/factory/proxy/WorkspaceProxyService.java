@@ -11,6 +11,7 @@ import java.text.ParseException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,7 +53,8 @@ import com.top_logic.util.model.ModelService;
  * route} - the {@link Config#getProxyUrl() URL of the proxy} followed by the path of the route.
  * A process that may use the proxy - an agent run - gets a token of its own,
  * {@link #issue(String, Duration) issued} for its workspace and passed only to that process, in
- * the {@link #processEnv(String) environment} of its command. The proxy accepts a request from an
+ * the {@link #processEnv(String) environment} of its command, with the git configuration the routes
+ * contribute. The proxy accepts a request from an
  * {@link Config#getAllowedSources() accepted address} whose token admits it and passes it to the
  * route of its path, which adds the credentials of its upstream and forwards it, see
  * {@link WorkspaceProxyHandler}.
@@ -384,32 +386,96 @@ public class WorkspaceProxyService extends ConfiguredManagedClass<WorkspaceProxy
 	}
 
 	/**
+	 * The first route of the given type.
+	 *
+	 * @return The route, {@code null} if the proxy has none of this type.
+	 */
+	public <R extends ProxyRoute> R getRoute(Class<R> type) {
+		for (ProxyRoute route : _routes) {
+			if (type.isInstance(route)) {
+				return type.cast(route);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The URL of the given route as the workspace containers reach it: the
+	 * {@link Config#getProxyUrl() URL of the proxy} followed by the path of the route.
+	 *
+	 * @return The URL, {@code null} if the proxy is not {@link #isEnabled() switched on}.
+	 */
+	public String getRouteUrl(ProxyRoute route) {
+		String root = proxyRoot();
+		return root == null ? null : root + route.getPath();
+	}
+
+	/**
+	 * The {@link Config#getProxyUrl() URL of the proxy} without slash at its end, {@code null} if
+	 * the proxy is not {@link #isEnabled() switched on}.
+	 */
+	private String proxyRoot() {
+		if (!isEnabled()) {
+			return null;
+		}
+		String proxyUrl = getConfig().getProxyUrl().strip();
+		while (proxyUrl.endsWith(PATH_SEPARATOR)) {
+			proxyUrl = proxyUrl.substring(0, proxyUrl.length() - 1);
+		}
+		return proxyUrl;
+	}
+
+	/**
 	 * The environment variables a workspace container gets for the routes of the proxy, e.g. their
 	 * URLs; no token.
 	 *
 	 * @return The variables, empty if the proxy is not {@link #isEnabled() switched on}.
 	 */
 	public Map<String, String> containerEnv() {
-		if (!isEnabled()) {
+		String proxyRoot = proxyRoot();
+		if (proxyRoot == null) {
 			return Collections.emptyMap();
-		}
-		String proxyUrl = getConfig().getProxyUrl().strip();
-		while (proxyUrl.endsWith(PATH_SEPARATOR)) {
-			proxyUrl = proxyUrl.substring(0, proxyUrl.length() - 1);
 		}
 		Map<String, String> result = new LinkedHashMap<>();
 		for (ProxyRoute route : _routes) {
-			result.putAll(route.containerEnv(proxyUrl + route.getPath()));
+			result.putAll(route.containerEnv(proxyRoot + route.getPath()));
 		}
 		return result;
 	}
 
 	@Override
 	public Map<String, String> processEnv(String token) {
+		return processEnv(_routes, proxyRoot(), token);
+	}
+
+	/**
+	 * The environment variables a process with the given token gets for the given routes.
+	 *
+	 * <p>
+	 * The token in {@link ProxyTokens#ENV_PROXY_TOKEN}, the {@link ProxyRoute#processEnv(String)
+	 * variables of the routes}, and the {@link ProxyRoute#gitConfig(String) git configuration} of
+	 * all routes as one set of {@link GitEnvironment git configuration variables}.
+	 * </p>
+	 *
+	 * @param routes
+	 *        The routes of the proxy.
+	 * @param proxyRoot
+	 *        The URL of the proxy, see {@link Config#getProxyUrl()}, without slash at its end;
+	 *        {@code null} for a proxy that is switched off, which gives no git configuration.
+	 * @param token
+	 *        The token of the process.
+	 */
+	public static Map<String, String> processEnv(List<? extends ProxyRoute> routes, String proxyRoot, String token) {
 		Map<String, String> result = new LinkedHashMap<>();
-		for (ProxyRoute route : _routes) {
+		result.put(ENV_PROXY_TOKEN, token);
+		List<Map.Entry<String, String>> gitConfig = new ArrayList<>();
+		for (ProxyRoute route : routes) {
 			result.putAll(route.processEnv(token));
+			if (proxyRoot != null) {
+				gitConfig.addAll(route.gitConfig(proxyRoot + route.getPath()));
+			}
 		}
+		result.putAll(GitEnvironment.config(gitConfig));
 		return result;
 	}
 

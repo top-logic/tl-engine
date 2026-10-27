@@ -23,6 +23,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.layout.ScriptFunction0;
 import com.top_logic.layout.ScriptFunction4;
+import com.top_logic.layout.form.values.edit.ScriptImplementationLabels;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 
@@ -266,9 +267,17 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 
 	/**
 	 * The expression to start the implementation of the given method with: a function taking the
-	 * arguments of the method under generic names and returning <code>null</code>, e.g.
-	 * <code>arg1 -> arg2 -> null</code> for a method with two arguments, and <code>null</code>
-	 * for a method without arguments.
+	 * arguments of the method and returning <code>null</code>, e.g.
+	 * <code>context -&gt; attribute -&gt; null</code> for a method with the parameters
+	 * <code>context</code> and <code>attribute</code>, and <code>null</code> for a method without
+	 * arguments.
+	 *
+	 * <p>
+	 * An argument is named like its parameter, see
+	 * {@link ScriptImplementationLabels#argumentName(Method, int)}. A parameter name that is no
+	 * valid TL-Script variable name is replaced with the generic name
+	 * {@link ScriptImplementationLabels#ARGUMENT_PREFIX argN}.
+	 * </p>
 	 *
 	 * @param method
 	 *        The method to implement.
@@ -278,17 +287,23 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 	 */
 	public static Expr skeleton(Method method) throws ConfigurationException {
 		StringBuilder text = new StringBuilder();
-		for (int n = 1, cnt = method.getParameterCount(); n <= cnt; n++) {
-			text.append(SKELETON_ARGUMENT).append(n).append(" -> ");
+		for (int n = 0, cnt = method.getParameterCount(); n < cnt; n++) {
+			text.append(variableName(method, n)).append(" -> ");
 		}
 		text.append("null");
 		return ExprFormat.INSTANCE.getValue(method.getName(), text);
 	}
 
-	/**
-	 * Prefix of the argument names in a {@link #skeleton(Method) skeleton}.
-	 */
-	private static final String SKELETON_ARGUMENT = "arg";
+	private static String variableName(Method method, int index) {
+		String name = ScriptImplementationLabels.argumentName(method, index);
+		try {
+			ExprFormat.INSTANCE.getValue(method.getName(), name + " -> null");
+			return name;
+		} catch (ConfigurationException | RuntimeException ex) {
+			// Not a valid variable name in TL-Script, e.g. a keyword.
+			return ScriptImplementationLabels.ARGUMENT_PREFIX + (index + 1);
+		}
+	}
 
 	@Override
 	public Method getImplementedMethod(ConfigurationItem script, PropertyDescriptor property) {

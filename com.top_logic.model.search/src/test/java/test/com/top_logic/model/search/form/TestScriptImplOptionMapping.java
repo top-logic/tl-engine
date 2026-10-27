@@ -5,9 +5,11 @@
  */
 package test.com.top_logic.model.search.form;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -43,6 +45,7 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.form.ScriptFunction1Impl;
 import com.top_logic.model.search.form.ScriptFunction3Impl;
@@ -73,6 +76,12 @@ public class TestScriptImplOptionMapping extends TestCase {
 
 	private static final String LABEL = "label";
 
+	private static final String PROVIDER = "provider";
+
+	private static final String CREATE_DEFAULT = "create-default";
+
+	private static final String COMPUTED_IN_TRANSACTION = "is-computed-in-transaction";
+
 	/**
 	 * Sub interface of {@link PolymorphicConfiguration} that the TL-Script provider does not
 	 * support.
@@ -93,6 +102,9 @@ public class TestScriptImplOptionMapping extends TestCase {
 
 		@Name(LABEL)
 		ScriptFunction3<Object, TLObject, ResKey, TLStructuredTypePart> getLabel();
+
+		@Name(PROVIDER)
+		PolymorphicConfiguration<DefaultProvider> getProvider();
 	}
 
 	/**
@@ -143,12 +155,79 @@ public class TestScriptImplOptionMapping extends TestCase {
 			(ConfigurationItem) options(a, LABEL).mapping().toSelection(ScriptFunction3Impl.class);
 		String tooltip = ScriptImplementationLabels.tooltip(property(LABEL), labelScript,
 			labelScript.descriptor().getProperty(WithExpression.EXPRESSION));
-		String signature = Resources.getInstance().getString(
-			com.top_logic.layout.form.values.edit.I18NConstants.SCRIPT_SIGNATURE__ARGUMENTS_RESULT
-				.fill("1. TLObject, 2. ResKey, 3. TLStructuredTypePart", "Object"));
-		assertTrue(tooltip, tooltip.contains(signature));
+		assertTrue(tooltip, tooltip.contains("<li><code>arg1</code>: <code>TLObject</code>"));
+		assertTrue(tooltip, tooltip.contains("<li><code>arg2</code>: <code>ResKey</code>"));
+		assertTrue(tooltip, tooltip.contains("<li><code>arg3</code>: <code>TLStructuredTypePart</code>"));
+		assertTrue(tooltip, tooltip.contains(" <code>Object</code>"));
 		assertEquals(Labels.propertyLabel(property(LABEL), false), ScriptImplementationLabels.label(property(LABEL),
 			labelScript, labelScript.descriptor().getProperty(WithExpression.EXPRESSION)));
+	}
+
+	/**
+	 * The method properties of a script implementation of a documented interface carry the
+	 * documentation of the interface: the functional method the label and documentation of the
+	 * owner followed by its own documentation and its arguments with names and documentation, a
+	 * value property the label and documentation of its method.
+	 */
+	public void testDocumentedInterface() throws ConfigurationException {
+		PropertyDescriptor owner = property(PROVIDER);
+		ConfigurationItem script = ScriptImplementations.createScriptConfig(owner);
+		PropertyDescriptor createDefault = script.descriptor().getProperty(CREATE_DEFAULT);
+		PropertyDescriptor computedInTransaction = script.descriptor().getProperty(COMPUTED_IN_TRANSACTION);
+
+		assertEquals("context -> attribute -> null",
+			ExprFormat.INSTANCE.getSpecification((Expr) script.value(createDefault)));
+
+		assertEquals(Labels.propertyLabel(owner, false), ScriptImplementationLabels.label(owner, script, createDefault));
+		String tooltip = ScriptImplementationLabels.tooltip(owner, script, createDefault);
+		assertTrue(tooltip, tooltip.contains(resource("createDefault.tooltip")));
+		assertTrue(tooltip, tooltip.contains("<li><code>context</code>: <code>Object</code> \u2013 "
+			+ resource("createDefault.param.context.tooltip")));
+		assertTrue(tooltip, tooltip.contains("<li><code>attribute</code>: <code>TLStructuredTypePart</code> \u2013 "
+			+ resource("createDefault.param.attribute.tooltip")));
+		assertTrue(tooltip, tooltip.contains(
+			"<code>Object</code> \u2013 " + resource("createDefault.return")));
+
+		assertEquals(resource("isComputedInTransaction"),
+			ScriptImplementationLabels.label(owner, script, computedInTransaction));
+		String valueTooltip = ScriptImplementationLabels.tooltip(owner, script, computedInTransaction);
+		assertTrue(valueTooltip, valueTooltip.startsWith("<div>" + resource("isComputedInTransaction.tooltip") + "</div>"));
+		assertTrue(valueTooltip, valueTooltip.contains(resource("isComputedInTransaction.return")));
+		assertFalse("No argument list for a value.", valueTooltip.contains("<ul>"));
+	}
+
+	/**
+	 * Without exported documentation, a method property keeps its own label, and its tooltip
+	 * still lists the signature.
+	 */
+	public void testUndocumentedInterface() throws ConfigurationException {
+		PropertyDescriptor owner = property(FILTER);
+		ConfigurationItem script = ScriptImplementations.createScriptConfig(owner);
+		PropertyDescriptor test = script.descriptor().getProperty("test");
+		assertNull("Default label.", ScriptImplementationLabels.label(owner, script, test));
+		String tooltip = ScriptImplementationLabels.tooltip(owner, script, test);
+		assertTrue(tooltip, tooltip.contains("<li><code>t</code>: <code>Object</code></li>"));
+	}
+
+	/**
+	 * A parameter without name (a class compiled without parameter names) gets a generic name.
+	 */
+	public void testArgumentNameFallback() throws Exception {
+		Method apply = BiFunction.class.getMethod("apply", Object.class, Object.class);
+		assertFalse("Precondition: JDK compiled without parameter names.", apply.getParameters()[0].isNamePresent());
+		assertEquals("arg1", ScriptImplementationLabels.argumentName(apply, 0));
+		assertEquals("arg1 -> arg2 -> null",
+			ExprFormat.INSTANCE.getSpecification(TLScriptImplementationProvider.skeleton(apply)));
+	}
+
+	/**
+	 * The exported documentation of {@link DefaultProvider} with the given key suffix.
+	 */
+	private static String resource(String suffix) {
+		String result =
+			Resources.getInstance().getString(ResKey.forClass(DefaultProvider.class).suffix(suffix).optional());
+		assertNotNull("Missing resource: " + suffix, result);
+		return result;
 	}
 
 	public void testNoScriptOptionForOtherProperties() {
@@ -170,7 +249,7 @@ public class TestScriptImplOptionMapping extends TestCase {
 		ScriptImplementationType filterType =
 			ScriptImplementationType.of(TLScriptImplementationProvider.implementedType(property(FILTER)));
 		assertSame(filterType.getDescriptor(), ((ConfigurationItem) filterScript).descriptor());
-		assertEquals("Skeleton with the arguments of the method.", "arg1 -> null", ExprFormat.INSTANCE.getSpecification(
+		assertEquals("Skeleton with the arguments of the method.", "obj -> null", ExprFormat.INSTANCE.getSpecification(
 			(Expr) ((ConfigurationItem) filterScript).value(filterType.getProperty(filterType.getFunctionalMethod()))));
 		assertNotSame("A fresh configuration for each selection.", filterScript,
 			filter.mapping().toSelection(scriptOption(filter)));
@@ -178,7 +257,7 @@ public class TestScriptImplOptionMapping extends TestCase {
 		Options function = options(a, FUNCTION);
 		Object functionScript = function.mapping().toSelection(scriptOption(function));
 		assertTrue(functionScript instanceof ScriptFunction1Impl.Config<?, ?>);
-		assertEquals("Skeleton with the arguments of the function.", "arg1 -> null",
+		assertEquals("Skeleton with the arguments of the function.", "arg -> null",
 			ExprFormat.INSTANCE.getSpecification(((WithExpression) functionScript).getExpression()));
 		Object labelScript = options(a, LABEL).mapping().toSelection(ScriptFunction3Impl.class);
 		assertEquals("arg1 -> arg2 -> arg3 -> null",

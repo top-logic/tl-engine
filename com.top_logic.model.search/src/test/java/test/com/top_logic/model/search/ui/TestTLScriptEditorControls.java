@@ -171,7 +171,7 @@ public class TestTLScriptEditorControls extends TestCase {
 		assertNotNull(ScriptImplementationType.forDescriptor(model.getFilter().descriptor()));
 		FormField accept = find(filter, ACCEPT_FIELD);
 		assertCodeEditor(accept);
-		assertEquals("Skeleton with the arguments of the method.", "arg1 -> null",
+		assertEquals("Skeleton with the arguments of the method.", "obj -> null",
 			ExprFormat.INSTANCE.getSpecification((Expr) accept.getValue()));
 	}
 
@@ -186,12 +186,12 @@ public class TestTLScriptEditorControls extends TestCase {
 		PropertyDescriptor function1 = model.descriptor().getProperty("function1");
 		FormField expression = find((FormContainer) group.getMember("function1"), EXPRESSION_FIELD);
 		assertEquals(Labels.propertyLabel(function1, false), expression.getLabel());
-		assertTrue(expression.getTooltip(), expression.getTooltip().contains(signature("1. Object", "Object")));
+		assertSignature(expression.getTooltip(), "Object", "arg", "Object");
 
 		PropertyDescriptor filter = model.descriptor().getProperty("filter");
 		FormField accept = find((FormContainer) group.getMember("filter"), ACCEPT_FIELD);
 		assertEquals(Labels.propertyLabel(filter, false), accept.getLabel());
-		assertTrue(accept.getTooltip(), accept.getTooltip().contains(signature("1. Object", "boolean")));
+		assertSignature(accept.getTooltip(), "boolean", "obj", "Object");
 	}
 
 	/**
@@ -225,10 +225,19 @@ public class TestTLScriptEditorControls extends TestCase {
 		assertTrue(find((FormContainer) group.getMember("switch"), "is-on") instanceof BooleanField);
 	}
 
-	private static String signature(String arguments, String result) {
-		return Resources.getInstance().getString(
-			com.top_logic.layout.form.values.edit.I18NConstants.SCRIPT_SIGNATURE__ARGUMENTS_RESULT.fill(arguments,
-				result));
+	/**
+	 * Asserts that the given tooltip lists the given arguments (name and type, alternating) and
+	 * the given result type.
+	 */
+	private static void assertSignature(String tooltip, String result, String... arguments) {
+		assertNotNull(tooltip);
+		for (int n = 0; n < arguments.length; n += 2) {
+			String argument = "<li><code>" + arguments[n] + "</code>: <code>" + arguments[n + 1] + "</code>";
+			assertTrue(tooltip, tooltip.contains(argument));
+		}
+		String resultLabel = Resources.getInstance()
+			.getString(com.top_logic.layout.form.values.edit.I18NConstants.SCRIPT_RESULT);
+		assertTrue(tooltip, tooltip.contains("<b>" + resultLabel + ":</b> <code>" + result + "</code>"));
 	}
 
 	private static void assertCodeEditor(FormField field) {

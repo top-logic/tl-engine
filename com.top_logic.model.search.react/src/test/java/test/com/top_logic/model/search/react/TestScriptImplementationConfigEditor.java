@@ -198,7 +198,7 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 		assertEquals(List.of(Greeter.GREET), propertyNames(index, script));
 		List<TLScriptEditorReactControl> greetEditors = scriptEditors(greeter.getNestedEditor());
 		assertEquals(1, greetEditors.size());
-		assertEquals("Skeleton with the arguments of the method.", "arg1 -> null", value(greetEditors.get(0)));
+		assertEquals("Skeleton with the arguments of the method.", "x -> null", value(greetEditors.get(0)));
 
 		PolymorphicItemControl function = polymorphic(editor, function(config));
 		function.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptFunction1Impl.class));
@@ -307,13 +307,13 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 		greeter.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptImplementation.class));
 		ReactFormFieldChromeControl greet = chromeOf(greeter, scriptEditors(greeter.getNestedEditor()).get(0));
 		assertEquals(Labels.propertyLabel(greeter(config), false), label(greet));
-		assertTrue(tooltip(greet).contains(signature("1. Object", "String")));
+		assertSignature(tooltip(greet), "String", "x", "Object");
 
 		PolymorphicItemControl function = polymorphic(editor, function(config));
 		function.getTypeModel().setValue(PolymorphicOptions.keyFor(ScriptFunction1Impl.class));
 		ReactFormFieldChromeControl expression = chromeOf(function, scriptEditors(function.getNestedEditor()).get(0));
 		assertEquals(Labels.propertyLabel(function(config), false), label(expression));
-		assertTrue(tooltip(expression).contains(signature("1. Object", "Object")));
+		assertSignature(tooltip(expression), "Object", "arg", "Object");
 	}
 
 	public void testSeveralScriptsKeepTheirMethodLabels() {
@@ -332,24 +332,29 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 			ReactFormFieldChromeControl chrome = chromeOf(poly, control);
 			String label = label(chrome);
 			if (label.equals(Labels.propertyLabel(script.descriptor().getProperty(Converter.FIRST), false))) {
-				assertTrue(tooltip(chrome).contains(signature("1. Object", "String")));
-				assertEquals("arg1 -> null", value(control));
+				assertSignature(tooltip(chrome), "String", "x", "Object");
+				assertEquals("x -> null", value(control));
 			} else {
 				assertEquals(Labels.propertyLabel(script.descriptor().getProperty(Converter.SECOND), false), label);
-				assertTrue(tooltip(chrome),
-					tooltip(chrome).contains(signature("1. String, 2. List&lt;String&gt;", "Integer")));
-				assertEquals("arg1 -> arg2 -> null", value(control));
+				assertSignature(tooltip(chrome), "Integer", "a", "String", "b", "List&lt;String&gt;");
+				assertEquals("a -> b -> null", value(control));
 			}
 		}
 	}
 
 	/**
-	 * The signature text for the given arguments and result, in the language of the test.
+	 * Asserts that the given tooltip lists the given arguments (name and type, alternating) and
+	 * the given result type.
 	 */
-	private static String signature(String arguments, String result) {
-		return Resources.getInstance().getString(
-			com.top_logic.layout.form.values.edit.I18NConstants.SCRIPT_SIGNATURE__ARGUMENTS_RESULT.fill(arguments,
-				result));
+	private static void assertSignature(String tooltip, String result, String... arguments) {
+		assertNotNull(tooltip);
+		for (int n = 0; n < arguments.length; n += 2) {
+			String argument = "<li><code>" + arguments[n] + "</code>: <code>" + arguments[n + 1] + "</code>";
+			assertTrue(tooltip, tooltip.contains(argument));
+		}
+		String resultLabel = Resources.getInstance()
+			.getString(com.top_logic.layout.form.values.edit.I18NConstants.SCRIPT_RESULT);
+		assertTrue(tooltip, tooltip.contains("<b>" + resultLabel + ":</b> <code>" + result + "</code>"));
 	}
 
 	/**

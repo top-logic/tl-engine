@@ -264,6 +264,12 @@ public class TestScriptImplementation extends AbstractTypedConfigurationTestCase
 			result.update(result.descriptor().getProperty(StubScript.Config.INTERFACE), property.getInstanceType());
 			return result;
 		}
+
+		@Override
+		public PolymorphicConfiguration<?> createScriptConfig(PropertyDescriptor property)
+				throws ConfigurationException {
+			return parse(property, "");
+		}
 	}
 
 	/**
@@ -303,6 +309,15 @@ public class TestScriptImplementation extends AbstractTypedConfigurationTestCase
 		assertNull("Unsupported property type.", getProperty(A.class, "other").getValueProvider());
 		assertNull("No text form for interfaces with more than one method.",
 			getProperty(A.class, "two").getValueProvider());
+	}
+
+	public void testCreateScriptConfig() throws ConfigurationException {
+		PolymorphicConfiguration<?> script = ScriptImplementations.createScriptConfig(getProperty(A.class, A.FUN));
+		assertTrue(script instanceof StubScript.Config<?>);
+		assertEquals("", ((StubScript.Config<?>) script).getText());
+		assertNull("Unsupported property type.",
+			ScriptImplementations.createScriptConfig(getProperty(A.class, "other")));
+		assertNull(ScriptImplementations.createScriptConfig(null));
 	}
 
 	public void testClassNameAttribute() throws ConfigurationException {

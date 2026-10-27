@@ -818,6 +818,13 @@ public class Fields {
 	 * Computes a derived options property for the given {@link PropertyDescriptor} either from
 	 * {@link Options} annotation or generically from type index lookup.
 	 * 
+	 * <p>
+	 * The generic options of an instance configuration property are its implementation classes.
+	 * If the property accepts scripts, they additionally contain the
+	 * {@link ScriptImplOptionMapping#getScriptOption() script option}, and the
+	 * {@link #optionMapping(DerivedProperty) option mapping} is a {@link ScriptImplOptionMapping}.
+	 * </p>
+	 * 
 	 * @see #optionMapping(DerivedProperty)
 	 * @see EditorFactory#formOptions(PropertyDescriptor)
 	 */
@@ -851,7 +858,9 @@ public class Fields {
 					};
 					optionMapping = ItemOptionMapping.INSTANCE;
 				} else {
-					// Instance configuration, options are implementation classes.
+					// Instance configuration, options are implementation classes, and the script
+					// option, if the property accepts scripts.
+					ScriptImplOptionMapping scriptMapping = ScriptImplOptionMapping.forProperty(property);
 					fun = new Function0<>() {
 						@Override
 						public OptionModel<Class<?>> apply() {
@@ -874,11 +883,14 @@ public class Fields {
 
 								implTypes.add(implType);
 							}
+							if (scriptMapping != null) {
+								implTypes.add(scriptMapping.getScriptOption());
+							}
 
 							return new DefaultListOptionModel<>(implTypes);
 						}
 					};
-					optionMapping = ImplOptionMapping.INSTANCE;
+					optionMapping = scriptMapping != null ? scriptMapping : ImplOptionMapping.INSTANCE;
 				}
 
 				OptionModel<Class<?>> optionModel = fun.invoke();

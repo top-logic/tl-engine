@@ -192,9 +192,13 @@ public class DeclarativePropertyDescriptor extends PropertyDescriptorImpl {
 		result.append(getPropertyName());
 	}
 
+	/**
+	 * A declarative property has no type arguments, its generic type is its raw
+	 * {@link #getType() type}.
+	 */
 	@Override
 	public Type getGenericType() {
-		throw new UnsupportedOperationException("No generic type");
+		return getType();
 	}
 
 }

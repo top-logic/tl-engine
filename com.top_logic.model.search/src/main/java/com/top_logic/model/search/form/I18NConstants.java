@@ -20,9 +20,6 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en {0} is no preview image. */
 	public static ResKey1 ERROR_NO_IMAGE__OBJ;
 
-	/** @en Invalid configured class {0}. */
-	public static ResKey1 INVALID_IMPLEMENTATION_CLASS__CLASS;
-
 	static {
 		initConstants(I18NConstants.class);
 	}

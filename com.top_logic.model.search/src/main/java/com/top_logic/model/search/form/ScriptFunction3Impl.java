@@ -10,14 +10,13 @@ import java.lang.reflect.Method;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.func.Function3;
 import com.top_logic.basic.func.IFunction3;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.layout.ScriptFunction3;
-import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.ValueConverter;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -29,7 +28,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Label("TL-Script function")
+@Label("TL-Script")
+@Hidden
 public class ScriptFunction3Impl<R, A1, A2, A3> extends Function3<R, A1, A2, A3>
 		implements ConfiguredInstance<ScriptFunction3Impl.Config<R, A1, A2, A3>> {
 
@@ -82,28 +82,6 @@ public class ScriptFunction3Impl<R, A1, A2, A3> extends Function3<R, A1, A2, A3>
 	@Override
 	public R apply(A1 arg1, A2 arg2, A3 arg3) {
 		return (R) ScriptImplementation.convertResult(_result, _query.execute(arg1, arg2, arg3));
-	}
-
-	/**
-	 * {@link PlainEditor} for configuration of a {@link Config}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public static class Editor extends ScriptFunctionEditor {
-
-		/** Singleton {@link Editor} instance. */
-		public static final Editor INSTANCE = new Editor();
-
-		@Override
-		protected Class<? extends WithExpression> scriptFunctionType() {
-			return Config.class;
-		}
-
-		@Override
-		protected Class<? extends PolymorphicConfiguration> minScriptFunctionType() {
-			return ScriptFunction3.class;
-		}
-
 	}
 
 }

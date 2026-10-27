@@ -19,7 +19,6 @@ import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.MethodProperty;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.model.search.expr.config.ExprFormat;
@@ -50,12 +49,18 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * current user must not discover.
  * </p>
  *
+ * <p>
+ * This class is the option that a configuration editor offers for implementing a property in
+ * TL-Script, see {@link com.top_logic.layout.form.values.ScriptImplOptionMapping}. Its label is a
+ * resource of the module's resource bundle <code>modelSearchMessages</code>, since the class is
+ * instantiated through a factory method, not a configuration constructor.
+ * </p>
+ *
  * @see TLScriptImplementationProvider
  * @see ScriptImplementationType
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@Label("TL-Script implementation")
 public final class ScriptImplementation {
 
 	/**

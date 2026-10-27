@@ -23,6 +23,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -30,6 +31,7 @@ import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyDescriptorConfig;
 import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -593,6 +595,36 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 	@SuppressWarnings("unchecked")
 	private static <T> T instance(PolymorphicConfiguration<?> config) {
 		return (T) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+	}
+
+	/**
+	 * A script value of a property of a declarative descriptor (e.g. a layout template parameter)
+	 * is read and written, although the property has no generic type.
+	 */
+	public void testDeclarativeProperty() throws Exception {
+		ConfigurationDescriptorConfig config = TypedConfiguration.newConfigItem(ConfigurationDescriptorConfig.class);
+		PropertyDescriptorConfig filterProperty = TypedConfiguration.newConfigItem(PropertyDescriptorConfig.class);
+		filterProperty.setName(A.FILTER);
+		filterProperty.update(filterProperty.descriptor().getProperty(PropertyDescriptorConfig.TYPE),
+			PolymorphicConfiguration.class);
+		filterProperty.update(filterProperty.descriptor().getProperty(PropertyDescriptorConfig.INSTANCE_TYPE),
+			Filter.class);
+		config.getProperties().put(A.FILTER, filterProperty);
+		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(config);
+		PropertyDescriptor property = descriptor.getProperty(A.FILTER);
+		assertTrue(ScriptImplementations.acceptsScript(property));
+
+		ConfigurationItem item = (ConfigurationItem) new ConfigurationReader(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, Collections.singletonMap(ROOT_TAG, descriptor))
+				.setSource(CharacterContents.newContent("<a filter=\"x -> true\"/>")).read();
+		Filter<Object> filter = instance((PolymorphicConfiguration<?>) item.value(property));
+		assertTrue(filter.accept("x"));
+
+		StringWriter buffer = new StringWriter();
+		try (ConfigurationWriter writer = new ConfigurationWriter(buffer)) {
+			writer.write(ROOT_TAG, descriptor, item);
+		}
+		assertTrue(buffer.toString(), buffer.toString().contains("filter=\"x -&gt; true\""));
 	}
 
 	private static A read(String xml) throws ConfigurationException {

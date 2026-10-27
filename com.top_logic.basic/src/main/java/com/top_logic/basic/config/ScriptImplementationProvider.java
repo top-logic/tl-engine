@@ -136,4 +136,25 @@ public interface ScriptImplementationProvider {
 	 */
 	ConfigBuilder createScriptBuilder(PropertyDescriptor property) throws ConfigurationException;
 
+	/**
+	 * Creates an empty script implementation for the given property.
+	 *
+	 * <p>
+	 * This is the value a configuration editor sets, when a script is chosen as implementation of
+	 * the property. The script expressions are filled in afterwards. All script configurations the
+	 * provider creates for the same property have the
+	 * {@link PolymorphicConfiguration#getImplementationClass() implementation class} of the
+	 * returned configuration, and no Java implementation that is offered as option for the
+	 * property has it.
+	 * </p>
+	 *
+	 * @param property
+	 *        A {@link #supports(PropertyDescriptor) supported} property.
+	 * @return A new script configuration without expressions, an instance of the type of the given
+	 *         property.
+	 * @throws ConfigurationException
+	 *         If the interface of the given property cannot be implemented by a script.
+	 */
+	PolymorphicConfiguration<?> createScriptConfig(PropertyDescriptor property) throws ConfigurationException;
+
 }

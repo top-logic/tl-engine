@@ -218,6 +218,11 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 		return type;
 	}
 
+	@Override
+	public PolymorphicConfiguration<?> createScriptConfig(PropertyDescriptor property) throws ConfigurationException {
+		return newScriptConfig(property);
+	}
+
 	/**
 	 * Creates an empty script configuration for the given property.
 	 *

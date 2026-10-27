@@ -10,14 +10,13 @@ import java.lang.reflect.Method;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.IFunction0;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.layout.ScriptFunction0;
-import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.ValueConverter;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -29,7 +28,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Label("TL-Script function")
+@Label("TL-Script")
+@Hidden
 public class ScriptFunction0Impl<R> extends Function0<R> implements ConfiguredInstance<ScriptFunction0Impl.Config<R>> {
 
 	/**
@@ -81,28 +81,6 @@ public class ScriptFunction0Impl<R> extends Function0<R> implements ConfiguredIn
 	@Override
 	public R apply() {
 		return (R) ScriptImplementation.convertResult(_result, _query.execute());
-	}
-
-	/**
-	 * {@link PlainEditor} for configuration of a {@link Config}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public static class Editor extends ScriptFunctionEditor {
-
-		/** Singleton {@link Editor} instance. */
-		public static final Editor INSTANCE = new Editor();
-
-		@Override
-		protected Class<? extends WithExpression> scriptFunctionType() {
-			return Config.class;
-		}
-
-		@Override
-		protected Class<? extends PolymorphicConfiguration> minScriptFunctionType() {
-			return ScriptFunction0.class;
-		}
-
 	}
 
 }

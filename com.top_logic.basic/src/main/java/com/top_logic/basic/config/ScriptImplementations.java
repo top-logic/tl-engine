@@ -161,6 +161,27 @@ public final class ScriptImplementations {
 	}
 
 	/**
+	 * Creates an empty script implementation for the given property.
+	 *
+	 * @param property
+	 *        The property to create a value for, may be <code>null</code>.
+	 * @return The script configuration created by the {@link ScriptImplementationProvider}, or
+	 *         <code>null</code>, if the given property does not {@link #acceptsScript(PropertyDescriptor)
+	 *         accept scripts}.
+	 * @throws ConfigurationException
+	 *         If the interface of the given property cannot be implemented by a script.
+	 *
+	 * @see ScriptImplementationProvider#createScriptConfig(PropertyDescriptor)
+	 */
+	public static PolymorphicConfiguration<?> createScriptConfig(PropertyDescriptor property)
+			throws ConfigurationException {
+		if (!acceptsScript(property)) {
+			return null;
+		}
+		return getProvider().createScriptConfig(property);
+	}
+
+	/**
 	 * Whether the given value of the given property is written as element without implementation
 	 * class and without configuration interface annotation.
 	 *

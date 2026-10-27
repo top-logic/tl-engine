@@ -5,39 +5,74 @@
  */
 package test.com.top_logic.model.search.ui;
 
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.layout.form.values.edit.TestEditorFactoryControls;
 
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.ScriptFunction0;
 import com.top_logic.layout.ScriptFunction1;
 import com.top_logic.layout.ScriptFunction2;
 import com.top_logic.layout.ScriptFunction3;
 import com.top_logic.layout.ScriptFunction4;
+import com.top_logic.layout.form.FormContainer;
+import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.values.edit.EditorFactory;
-import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.layout.form.values.edit.initializer.InitializerUtil;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.form.ScriptFunction1Impl;
+import com.top_logic.model.search.form.ScriptImplementation;
+import com.top_logic.model.search.form.ScriptImplementationType;
+import com.top_logic.model.search.form.WithExpression;
 import com.top_logic.model.search.ui.TLScriptCodeEditorControl;
 
 /**
  * Test that the configuration of this module edits TL-Script valued configuration properties in a
  * declarative form with the {@link TLScriptCodeEditorControl}, chosen by
- * {@link EditorFactory.Config#getTypeControls()}.
+ * {@link EditorFactory.Config#getTypeControls()}, and that properties implemented by TL-Script
+ * offer TL-Script as implementation choice.
  *
  * @see TestEditorFactoryControls
  */
 @SuppressWarnings("javadoc")
 public class TestTLScriptEditorControls extends TestCase {
+
+	private static final String ROOT_TAG = "a";
+
+	/**
+	 * Name of the field selecting the implementation of an item property.
+	 */
+	private static final String OPTIONS_FIELD = "options";
+
+	/**
+	 * Name of the {@link WithExpression#EXPRESSION} field of a script function.
+	 */
+	private static final String EXPRESSION_FIELD = WithExpression.EXPRESSION;
+
+	/**
+	 * Name of the property of the method {@link Filter#accept(Object)} of a script implementation.
+	 */
+	private static final String ACCEPT_FIELD = "accept";
 
 	public interface ScriptProperties extends ConfigurationItem {
 		@Name("expr")
@@ -57,31 +92,115 @@ public class TestTLScriptEditorControls extends TestCase {
 
 		@Name("function4")
 		ScriptFunction4<?, ?, ?, ?, ?> getFunction4();
+
+		@Name("filter")
+		PolymorphicConfiguration<Filter<Object>> getFilter();
 	}
 
 	/**
-	 * Every TL-Script valued property gets the TL-Script code editor with its error display,
-	 * although its field is created by the editor of a {@link PropertyEditor} annotation.
+	 * An {@link Expr} property gets the TL-Script code editor with its error display, although its
+	 * field is created by the editor of a
+	 * {@link com.top_logic.layout.form.values.edit.annotation.PropertyEditor} annotation.
 	 */
 	public void testTLScriptCodeEditor() {
-		FormGroup group = build(ScriptProperties.class);
+		FormGroup group = build(TypedConfiguration.newConfigItem(ScriptProperties.class));
+		assertCodeEditor(group.getField("expr"));
+	}
 
-		for (String field : new String[] { "expr", "function0", "function1", "function2", "function3", "function4" }) {
-			ControlProvider controlProvider = group.getField(field).getControlProvider();
-			assertNotNull("No control for '" + field + "'.", controlProvider);
-			assertEquals("Control for '" + field + "'.", TLScriptCodeEditorControl.CP.class,
-				controlProvider.getClass());
+	/**
+	 * A script function property is edited as polymorphic item.
+	 */
+	public void testScriptFunctionsAreItems() {
+		FormGroup group = build(TypedConfiguration.newConfigItem(ScriptProperties.class));
+		for (String name : new String[] { "function0", "function1", "function2", "function3", "function4" }) {
+			assertTrue("Item editor for '" + name + "'.", group.getMember(name) instanceof FormGroup);
 		}
 	}
 
-	private static FormGroup build(Class<? extends ConfigurationItem> type) {
+	/**
+	 * A script value read from the configuration opens with TL-Script selected and the expression
+	 * in the TL-Script code editor.
+	 */
+	public void testScriptValue() throws ConfigurationException {
+		ScriptProperties model = read("<a function1=\"x -> $x\" filter=\"x -> true\"/>");
+		FormGroup group = build(model);
+
+		FormContainer function = (FormContainer) group.getMember("function1");
+		assertEquals(List.of(ScriptFunction1Impl.class), find(function, OPTIONS_FIELD).getValue());
+		FormField expression = find(function, EXPRESSION_FIELD);
+		assertCodeEditor(expression);
+		assertTrue(expression.getValue() instanceof Expr);
+
+		FormContainer filter = (FormContainer) group.getMember("filter");
+		assertEquals(List.of(ScriptImplementation.class), find(filter, OPTIONS_FIELD).getValue());
+		assertCodeEditor(find(filter, ACCEPT_FIELD));
+	}
+
+	/**
+	 * Selecting the TL-Script option creates an empty script, edited in the TL-Script code
+	 * editor.
+	 */
+	public void testSelectScript() {
+		ScriptProperties model = TypedConfiguration.newConfigItem(ScriptProperties.class);
+		FormGroup group = build(model);
+
+		FormContainer filter = (FormContainer) group.getMember("filter");
+		SelectField options = (SelectField) find(filter, OPTIONS_FIELD);
+		assertTrue(options.getOptions().contains(ScriptImplementation.class));
+		options.setValue(List.of(ScriptImplementation.class));
+
+		assertNotNull(model.getFilter());
+		assertNotNull(ScriptImplementationType.forDescriptor(model.getFilter().descriptor()));
+		FormField accept = find(filter, ACCEPT_FIELD);
+		assertCodeEditor(accept);
+		assertNull("Empty script.", accept.getValue());
+	}
+
+	private static void assertCodeEditor(FormField field) {
+		ControlProvider controlProvider = field.getControlProvider();
+		assertNotNull("No control for '" + field.getName() + "'.", controlProvider);
+		assertEquals("Control for '" + field.getName() + "'.", TLScriptCodeEditorControl.CP.class,
+			controlProvider.getClass());
+	}
+
+	/**
+	 * The field with the given name in the given container or its descendants.
+	 */
+	private static FormField find(FormContainer container, String name) {
+		FormField result = findOrNull(container, name);
+		assertNotNull("No field '" + name + "' in '" + container.getQualifiedName() + "'.", result);
+		return result;
+	}
+
+	private static FormField findOrNull(FormContainer container, String name) {
+		for (Iterator<? extends FormMember> it = container.getMembers(); it.hasNext();) {
+			FormMember member = it.next();
+			if (member instanceof FormField field && name.equals(field.getName())) {
+				return field;
+			}
+			if (member instanceof FormContainer inner) {
+				FormField result = findOrNull(inner, name);
+				if (result != null) {
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+
+	private static FormGroup build(ConfigurationItem model) {
 		EditorFactory.Config config = ApplicationConfig.getInstance().getConfig(EditorFactory.Config.class);
 		FormGroup group = new FormGroup("group", null);
-		ConfigurationItem model = TypedConfiguration.newConfigItem(type);
 		EditorFactory editorFactory = new EditorFactory(config, new InitializerIndex());
 		InitializerUtil.initAll(editorFactory.getInitializer(), model);
 		editorFactory.initEditorGroup(group, model);
 		return group;
+	}
+
+	private static ScriptProperties read(String xml) throws ConfigurationException {
+		return (ScriptProperties) new ConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			Collections.singletonMap(ROOT_TAG, TypedConfiguration.getConfigurationDescriptor(ScriptProperties.class)))
+				.setSource(CharacterContents.newContent(xml)).read();
 	}
 
 	public static Test suite() {

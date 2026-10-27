@@ -321,7 +321,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 	/**
 	 * Create a {@link KnowledgeItem} type with the columns of
-	 * {@link #createFlexDataType(String, String, boolean) flex data} and a custom primary key.
+	 * {@link #createFlexDataType(String, String, boolean, boolean) flex data} and a custom primary key.
 	 * 
 	 * @param typeName
 	 *        The internal name of the flex data type.

@@ -132,7 +132,7 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 		}
 		boolean incrementalSet = false;
 		for (Widget element : elements) {
-			if (!SelectionUtil.canSelect(element) || SelectionUtil.isSelected(element)) {
+			if (!SelectionUtil.isSelectable(element) || SelectionUtil.isSelected(element)) {
 				continue;
 			}
 			if (!incrementalSet) {

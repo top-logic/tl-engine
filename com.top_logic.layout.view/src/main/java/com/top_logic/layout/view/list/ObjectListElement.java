@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.list;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,8 +18,10 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Key;
@@ -41,13 +45,20 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.command.ActionScopes;
+import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.layout.view.security.AccessCheck;
+import com.top_logic.layout.view.security.CommandAccess;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -205,7 +216,10 @@ public class ObjectListElement implements UIElement {
 	 * Configuration for {@link ObjectListElement}.
 	 */
 	@TagName("object-list")
-	public interface Config extends UIElement.Config, Inputs, GridOptions, ElementAsConfig {
+	public interface Config extends UIElement.Config, Inputs, GridOptions, ElementAsConfig, ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		/** Configuration name for {@link #getLayout()}. */
 		String LAYOUT = "layout";
@@ -218,6 +232,12 @@ public class ObjectListElement implements UIElement {
 
 		/** Configuration name for {@link #getRemove()}. */
 		String REMOVE = "remove";
+
+		/** Configuration name for {@link #getLinkAccess()}. */
+		String LINK_ACCESS = "link-access";
+
+		/** Configuration name for {@link #getRemoveAccess()}. */
+		String REMOVE_ACCESS = "remove-access";
 
 		/** Configuration name for {@link #getElementType()}. */
 		String ELEMENT_TYPE = "element-type";
@@ -312,6 +332,56 @@ public class ObjectListElement implements UIElement {
 		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getRemove();
+
+		/**
+		 * What {@link #getLink() linking} an element does in the model, checked in the model access
+		 * rights of the current user before a {@link LinkElementAction &lt;link-element&gt;} runs.
+		 *
+		 * <p>
+		 * The same checks a command declares in its {@link ViewCommand.Config#getAccess() access}:
+		 * {@code <operation>} and {@code <create>}. Their scripts see the values of the
+		 * {@link #getInputs() inputs} and the element, like the {@link #getLink() link expression}.
+		 * A command running {@code <link-element/>} brings these checks as its own rule, so it is
+		 * hidden or disabled where the link would be refused. Without a check, linking is not
+		 * checked here.
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;link-access&gt;
+		 *   &lt;create in="$ticket" reference="my:Ticket#comments"/&gt;
+		 * &lt;/link-access&gt;
+		 * </pre>
+		 */
+		@Name(LINK_ACCESS)
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		List<PolymorphicConfiguration<? extends AccessCheck>> getLinkAccess();
+
+		/**
+		 * What {@link #getRemove() removing} an element does in the model, checked like the
+		 * {@link #getLinkAccess() link access} before a
+		 * {@link RemoveElementAction &lt;remove-element&gt;} runs.
+		 *
+		 * <pre>
+		 * &lt;remove-access&gt;
+		 *   &lt;operation name="Delete" object="$comment" type="my:Comment"/&gt;
+		 * &lt;/remove-access&gt;
+		 * </pre>
+		 */
+		@Name(REMOVE_ACCESS)
+		@Supplies(value = ElementAsConfig.DEFAULT_ELEMENT_AS, renamedBy = ElementAsConfig.ELEMENT_AS)
+		List<PolymorphicConfiguration<? extends AccessCheck>> getRemoveAccess();
+
+		/**
+		 * The checks of the {@link #getLinkAccess() link access} and the
+		 * {@link #getRemoveAccess() remove access} see the values of the inputs and the element.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getLinkAccess(), part) || ActionScopes.contains(getRemoveAccess(), part)) {
+				return accessScope(this);
+			}
+			return outer;
+		}
 
 		/**
 		 * The type of the transient element created for the new-element template.
@@ -452,6 +522,20 @@ public class ObjectListElement implements UIElement {
 		_newElementContent = instantiate(context, config.getNewElement());
 	}
 
+	/**
+	 * The arguments the {@link Config#getLinkAccess() link access} and the
+	 * {@link Config#getRemoveAccess() remove access} of the given list decide over: the values of
+	 * its inputs and the element, which is the default argument.
+	 */
+	static ActionScope accessScope(Config config) {
+		List<String> names = InputRef.names(config.getInputs());
+		String element = config.getElementAs() == null || config.getElementAs().isBlank()
+			? ElementAsConfig.DEFAULT_ELEMENT_AS
+			: config.getElementAs().trim();
+		names.add(element);
+		return ActionScope.of(names, element);
+	}
+
 	private static List<UIElement> instantiate(InstantiationContext context,
 			List<UIElement.Config> content) {
 		if (content == null) {
@@ -474,6 +558,12 @@ public class ObjectListElement implements UIElement {
 		List<ViewChannel> inputs = ChannelInputs.resolve(context, _config.getInputs());
 
 		ObjectListScope scope = new ObjectListScope(inputs, _linkExecutor, _removeExecutor);
+		ActionScope accessScope = accessScope(_config);
+		scope.initAccess(accessScope,
+			CommandAccess.create(_config.getLinkAccess(), accessScope, context,
+				"the link access of the object list at " + _config.location()),
+			CommandAccess.create(_config.getRemoveAccess(), accessScope, context,
+				"the remove access of the object list at " + _config.location()));
 		ViewContext templateContext = context.withScope(ObjectListScope.class, scope);
 
 		ObjectListItems items = new ObjectListItems(templateContext, scope, _config.getLayout(), _config, inputs,

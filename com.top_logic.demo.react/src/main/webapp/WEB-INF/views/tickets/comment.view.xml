@@ -87,12 +87,6 @@
 						<en>Delete</en>
 						<de>Löschen</de>
 					</label>
-					<access>
-						<operation name="Delete"
-							object="$comment"
-							type="demo.tickets:Comment"
-						/>
-					</access>
 					<remove-element/>
 				</generic-command>
 			</commands>

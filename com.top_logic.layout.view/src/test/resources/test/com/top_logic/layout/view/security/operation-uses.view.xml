@@ -50,6 +50,31 @@
 				/>
 			</panel>
 		</tab>
+		<tab id="list">
+			<object-list
+				element-as="task"
+				inputs="project"
+				items="$project.get(`TestViewModelAccess:Project#tasks`)"
+				link="null"
+				remove="null"
+			>
+				<link-access>
+					<create
+						in="$project"
+						reference="TestViewModelAccess:Project#steps"
+					/>
+				</link-access>
+				<remove-access>
+					<operation name="Delete"
+						object="$task"
+						type="TestViewModelAccess:Task"
+					/>
+				</remove-access>
+				<item>
+					<text input="task"/>
+				</item>
+			</object-list>
+		</tab>
 		<tab id="free">
 			<panel id="free-panel">
 				<commands>

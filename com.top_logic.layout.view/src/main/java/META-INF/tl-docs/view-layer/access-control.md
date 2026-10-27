@@ -1,5 +1,5 @@
 ---
-description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), and the edit-operation of a <form>.
+description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), the checks actions bring (<link-access> / <remove-access> of an <object-list>), and the edit-operation of a <form>.
 order: 75
 ---
 
@@ -211,6 +211,20 @@ The demo `tl-demo-react` shows this in the Deliverables tile of a project cockpi
 The actions creating objects (`<create-transient>`,
 `<persist-transient>`) bring the same check of their own, see
 [creating and deleting objects](doc:view-layer/commands#creating-and-deleting-objects-create-transient-persist-transient-delete-object).
+
+### Checks the actions bring
+
+Some actions bring a check of their own, so the command running them needs no `<access>` for it;
+the checks decide on the main argument of the command and combine with the command's `<access>`
+like its own checks:
+
+- `<create-transient>` and `<persist-transient>`: the creation in their container, the check of a
+  `<create>`;
+- `<delete-object>`: `Delete` on every processed object, plus the delete veto;
+- `<link-element>` and `<remove-element>`: the `<link-access>` and `<remove-access>` the enclosing
+  `<object-list>` declares, with the same `<operation>` and `<create>` checks over the inputs of the
+  list and the element (see [the object list](doc:view-layer/layout#repeating-a-template-over-a-computed-list-object-list)). Without a declaration
+  nothing is checked.
 
 ### Checks when the command is built
 

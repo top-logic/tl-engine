@@ -68,7 +68,27 @@ public final class CommandAccess implements ViewExecutabilityRule, ObservableRul
 	 *         If a check is invalid.
 	 */
 	public static ViewExecutabilityRule create(ViewCommand.Config config, ActionScope scope, ViewContext context) {
-		List<PolymorphicConfiguration<? extends AccessCheck>> configs = config.getAccess();
+		return create(config.getAccess(), scope, context, "the command at " + config.location());
+	}
+
+	/**
+	 * Creates the combination of the given access checks, e.g. the checks an element declares for
+	 * an action performed on one of its objects.
+	 *
+	 * @param configs
+	 *        The configured checks.
+	 * @param scope
+	 *        The names of the arguments the checks decide over.
+	 * @param context
+	 *        The build-time context the checks are bound to, {@code null} outside a view.
+	 * @param owner
+	 *        Description of the declaring place in messages.
+	 * @return {@link ViewExecutabilityRule#ALWAYS_EXECUTABLE} for no checks.
+	 * @throws ConfigurationError
+	 *         If a check is invalid.
+	 */
+	public static ViewExecutabilityRule create(List<PolymorphicConfiguration<? extends AccessCheck>> configs,
+			ActionScope scope, ViewContext context, String owner) {
 		if (configs.isEmpty()) {
 			return ViewExecutabilityRule.ALWAYS_EXECUTABLE;
 		}
@@ -83,7 +103,7 @@ public final class CommandAccess implements ViewExecutabilityRule, ObservableRul
 			}
 		}
 		if (problems.hasErrors()) {
-			throw new ConfigurationError("Invalid access of the command at " + config.location() + ".");
+			throw new ConfigurationError("Invalid access of " + owner + ".");
 		}
 		return new CommandAccess(checks);
 	}

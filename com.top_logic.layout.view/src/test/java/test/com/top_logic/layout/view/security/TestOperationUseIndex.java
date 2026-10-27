@@ -43,8 +43,12 @@ public class TestOperationUseIndex extends AbstractModelAccessTest {
 
 	private static final String TASK_TYPE = MODULE + ":" + TASK;
 
+	/** The type of the steps of a project, created through the link access of a list. */
+	private static final String STEP_TYPE = MODULE + ":" + STEP;
+
 	/**
-	 * The places of the fixture view, each as kind, operation and checked type.
+	 * The places of the fixture view, each as kind, operation and checked type; the checks of the
+	 * link and remove access of an object list count as uses of commands.
 	 */
 	public void testScanView() throws Exception {
 		List<OperationUse> uses = OperationUseIndex.scanView(VIEW_REF, readFixture());
@@ -56,10 +60,12 @@ public class TestOperationUseIndex extends AbstractModelAccessTest {
 			"COMMAND Delete " + PROJECT_TYPE,
 			"COMMAND Read " + TASK_TYPE,
 			"COMMAND Create " + TASK_TYPE,
+			"COMMAND Create " + STEP_TYPE,
+			"COMMAND Delete " + TASK_TYPE,
 			"FORM Finish ?",
 			"COMMAND Finish ?"),
 			uses.stream().map(TestOperationUseIndex::describe).collect(Collectors.toSet()));
-		assertEquals("A form keeping the default edit operation is no use of its own.", 8, uses.size());
+		assertEquals("A form keeping the default edit operation is no use of its own.", 10, uses.size());
 	}
 
 	/**

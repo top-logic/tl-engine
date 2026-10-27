@@ -32,6 +32,7 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.search.configured.ConfiguredScript;
 import com.top_logic.model.search.configured.ConfiguredTLScriptFunctions;
@@ -52,7 +53,11 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * checked on its {@code type}, or - without an object - on what the innermost enclosing unit of the
  * same view file checks;</li>
  * <li>a command with an {@code <access>} of a {@code <create type="…">} ({@link CreateAccess}),
- * checking the creation right on the created type;</li>
+ * checking the creation right on the created type, or, without a type, on the type of its
+ * reference;</li>
+ * <li>the same checks in the {@code <link-access>} and {@code <remove-access>} of an
+ * {@code <object-list>}, which its {@code <link-element>} and {@code <remove-element>} actions
+ * check;</li>
  * <li>a {@code <form>} declaring an {@code edit-operation} ({@link FormElement}); the type of the
  * form object is not declared.</li>
  * </ul>
@@ -231,9 +236,11 @@ public class OperationUseIndex implements OperationUseProvider {
 				: operation.getObject() != null || enclosing == null ? Checked.UNKNOWN : enclosing;
 			result.add(checked.use(Kind.COMMAND, operation.getName().id(), describe(viewRef, item)));
 		}
-		if (item instanceof CreateAccess.Config create && create.getType() != null) {
-			result.add(checkedType(create.getType())
-				.use(Kind.COMMAND, SimpleBoundCommandGroup.CREATE_NAME, describe(viewRef, item)));
+		if (item instanceof CreateAccess.Config create
+			&& (create.getType() != null || create.getReference() != null)) {
+			Checked checked =
+				create.getType() != null ? checkedType(create.getType()) : referenceType(create.getReference());
+			result.add(checked.use(Kind.COMMAND, SimpleBoundCommandGroup.CREATE_NAME, describe(viewRef, item)));
 		}
 		if (item instanceof FormElement.Config form
 			&& form.valueSet(form.descriptor().getProperty(FormElement.Config.EDIT_OPERATION))) {
@@ -281,6 +288,20 @@ public class OperationUseIndex implements OperationUseProvider {
 		} catch (ConfigurationException | RuntimeException ex) {
 			return Checked.UNKNOWN;
 		}
+	}
+
+	/**
+	 * What a creation into the given reference checks: the type of the reference.
+	 */
+	private static Checked referenceType(TLModelPartRef ref) {
+		try {
+			if (ref.resolvePart() instanceof TLStructuredTypePart part && part.getType() instanceof TLClass type) {
+				return new Checked(OperationUse.Target.TYPE, type);
+			}
+		} catch (RuntimeException ex) {
+			// Reported when the view is loaded.
+		}
+		return Checked.UNKNOWN;
 	}
 
 	/**

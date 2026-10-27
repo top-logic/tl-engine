@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.util.List;
 import java.util.Locale;
 
 import junit.framework.Test;
@@ -21,7 +22,12 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.command.EnterEditModeAction;
+import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
@@ -276,6 +282,34 @@ public class TestFormEditRights extends AbstractModelAccessTest {
 		categoryForm.setEditOperation(null);
 		assertSame("An unknown operation refuses editing.", ExecutableState.NOT_EXEC_HIDDEN,
 			categoryForm.editPermission());
+	}
+
+	/**
+	 * A command entering the edit mode with {@code <enter-edit-mode/>} follows the edit permission
+	 * of its form, like the form's own Edit button.
+	 */
+	public void testEnterEditModeActionFollowsPermission() {
+		becomeUser(_responsible);
+		FormControl form = newForm(_project);
+		ViewExecutabilityRule rule = enterEditModeRule(form);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
+
+		FormControl category = newForm(_category);
+		assertSame("Writing a category is granted to no role.", ExecutableState.NOT_EXEC_HIDDEN,
+			enterEditModeRule(category).isExecutable(_category));
+
+		becomeUser(_roleless);
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_WRITE_DENIED,
+			enterEditModeRule(newForm(_project)).isExecutable(_project));
+	}
+
+	private static ViewExecutabilityRule enterEditModeRule(FormControl form) {
+		ViewContext context = new DefaultViewContext(new DefaultReactContext("", "test", new SSEUpdateQueue(),
+			new ReactWindowRegistry("test")));
+		context.setFormModel(form);
+		return ViewExecutabilityRules.withIntrinsicRule(context,
+			new GenericViewCommand(List.of(new EnterEditModeAction(null, null))),
+			ViewExecutabilityRule.ALWAYS_EXECUTABLE);
 	}
 
 	private static FormControl newForm(TLObject object) {

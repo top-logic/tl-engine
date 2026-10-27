@@ -48,11 +48,10 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * Root cause E ("duplicates compound") is no longer reproducible on {@code Agent}: issue #172 added
  * a persistence-level unique index on the agent name, so the two same-name agents this suite used
- * to create can no longer be committed at all. That guard is covered by
- * {@link TestUniqueAgentSkillName}; the resolver contract it used to test - delete <em>every</em>
- * match, not just the first - is covered by
- * {@link TestNameBasedInstanceResolver#testResolveDeletesAllDuplicates()} on a type that still
- * permits duplicate names.
+ * to create can no longer be committed at all. That guard is covered by the test of unique agent
+ * and skill names in tl-ai-core; the resolver contract it used to test - delete <em>every</em>
+ * match, not just the first - is covered there by the test of the name-based instance resolver on
+ * a type that still permits duplicate names.
  * </p>
  */
 public class TestImportFromDataFolder extends BasicTestCase {

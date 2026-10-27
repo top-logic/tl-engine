@@ -5495,10 +5495,13 @@ button.tl-swatch:not(:disabled):hover {
 
 /* Was bündig an der Kante von tl-table liegt, trägt den Ring innen — tl-table schneidet (overflow: hidden),
    ein Ring außen wäre ganz oder halb weg (focus-clip.test.mjs): das Raster ohne Cursor (leer, kein
-   aria-activedescendant — es zeigt den Ring selbst), der Körper, die Spaltenwahl in der Ecke. */
+   aria-activedescendant — es zeigt den Ring selbst), der Körper, die Spaltenwahl in der Ecke. In der Engine ist
+   tl-table__columns der Streifen und der Knopf darin das Ziel des Fokus (Part Button seit #29787): der Ring gehört an
+   den Knopf, sonst stand er außen und war rechts abgeschnitten (Hendrik 27.10.). */
 .tl-table__grid:focus-visible,
 .tl-table__body:focus-visible,
-.tl-table__columns:focus-visible {
+.tl-table__columns:focus-visible,
+.tl-table__columns > .tl-button:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
@@ -6579,4 +6582,4 @@ button.tl-swatch:not(:disabled):hover {
 .tl-wizard[data-tl-state~="backward"] .tl-wizard__step[data-tl-state~="exiting"]:dir(rtl) {
   animation-name: tl-slide-out-forward;
 }
-/* tl-design-system sha256:ab91681d94cd10801af9a7b8edc1f8f780299cb983313d64fff872de38891043 — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */
+/* tl-design-system sha256:86e020a59b74573ad9ca408be07fdb7c412fcdb180ce3e9103169898f5c4b12b — checked by TestDesignSystemCopy in tl-engine-7; edit the source and regenerate. */

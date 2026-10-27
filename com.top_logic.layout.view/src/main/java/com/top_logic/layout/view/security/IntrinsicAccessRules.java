@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.security;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.ViewContext;
@@ -31,9 +34,11 @@ import com.top_logic.tool.execution.ExecutableState;
  *
  * <p>
  * The rules decide on the main argument of the command, and display a refusal as derived by
- * {@link ModelAccessPolicy}. A missing object or container is nothing to check: the rules answer
- * executable, so that they compose with a rule like {@link NullInputDisabled} that decides about a
- * missing input.
+ * {@link ModelAccessPolicy}. An operation on the processed object(s) is checked on every element of
+ * a collection, and without an object the command is disabled. A creation whose container channel
+ * is empty, or without a created type, is nothing to check: the rule answers executable, so that it
+ * composes with a rule like {@link NullInputDisabled} deciding about a missing input. A container
+ * that is no single object is refused, the action creates in one container only.
  * </p>
  */
 public final class IntrinsicAccessRules {
@@ -46,13 +51,43 @@ public final class IntrinsicAccessRules {
 	 * The rule checking the given operation on the main argument of the command, see
 	 * {@link ModelAccessPolicy#onObject(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
 	 *
+	 * <p>
+	 * A collection is checked on every element, like the action processes every element: a
+	 * refusal that hides the command on one element hides it, otherwise the first refusal disables
+	 * it. {@code null} or an empty collection is no object, which disables the command. An element
+	 * that is no object is refused.
+	 * </p>
+	 *
 	 * @param operation
-	 *        The operation the action performs on the object it receives.
+	 *        The operation the action performs on the object(s) it receives.
 	 */
 	public static ViewExecutabilityRule onInput(BoundCommandGroup operation) {
-		return input -> input instanceof TLObject object
-			? ModelAccessPolicy.onObject(operation, object, null)
-			: ExecutableState.EXECUTABLE;
+		return input -> {
+			Collection<?> elements;
+			if (input == null) {
+				elements = List.of();
+			} else if (input instanceof Collection<?> collection) {
+				elements = collection;
+			} else {
+				elements = List.of(input);
+			}
+			if (elements.isEmpty()) {
+				return ExecutableState.NO_EXEC_NO_MODEL;
+			}
+			ExecutableState firstRefusal = null;
+			for (Object element : elements) {
+				ExecutableState state = element instanceof TLObject object
+					? ModelAccessPolicy.onObject(operation, object, null)
+					: ExecutableState.createDisabledState(ModelAccessPolicy.deniedReason(operation));
+				if (state.isHidden()) {
+					return state;
+				}
+				if (!state.isExecutable() && firstRefusal == null) {
+					firstRefusal = state;
+				}
+			}
+			return firstRefusal != null ? firstRefusal : ExecutableState.EXECUTABLE;
+		};
 	}
 
 	/**
@@ -151,9 +186,13 @@ public final class IntrinsicAccessRules {
 
 		private ExecutableState inContainer(Object input) {
 			Object containerValue = _containerChannel != null ? _containerChannel.get() : null;
-			if (!(containerValue instanceof TLObject container)) {
+			if (containerValue == null) {
 				// Nothing to check.
 				return ExecutableState.EXECUTABLE;
+			}
+			if (!(containerValue instanceof TLObject container)) {
+				// The action creates in a single container only.
+				return ExecutableState.createDisabledState(I18NConstants.ERROR_CREATE_DENIED);
 			}
 			TLStructuredTypePart reference = null;
 			if (_reference != null) {

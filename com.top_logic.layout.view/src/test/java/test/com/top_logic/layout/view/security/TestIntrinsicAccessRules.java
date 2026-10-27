@@ -159,8 +159,8 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * Without an object or container there is nothing to check: the rule leaves that to rules
-	 * deciding about a missing input.
+	 * Without a processed object there is nothing to delete, which disables the command; an empty
+	 * container channel is nothing to check for a creation.
 	 */
 	public void testNothingToCheck() throws Exception {
 		ViewExecutabilityRule onInput = delete();
@@ -168,8 +168,60 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 			creation(null, CHANNEL, TASKS);
 
 		becomeUser(_roleless);
-		assertSame(ExecutableState.EXECUTABLE, onInput.isExecutable(null));
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, onInput.isExecutable(null));
 		assertSame(ExecutableState.EXECUTABLE, inContainer.isExecutable(null));
+	}
+
+	/**
+	 * Deleting a collection is checked on every element; an empty collection is no object.
+	 */
+	public void testDeleteCollection() throws Exception {
+		TLObject other = newObject(qualified(PROJECT), "other");
+		ViewExecutabilityRule rule = delete();
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(List.of(_project, _task)));
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
+			rule.isExecutable(List.of(_project, other)));
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
+			rule.isExecutable(List.of(other, _project)));
+		assertSame("A type no role may delete hides the command.", ExecutableState.NOT_EXEC_HIDDEN,
+			rule.isExecutable(List.of(_project, _category)));
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutable(List.of()));
+	}
+
+	/**
+	 * A command deleting a collection is offered only when every element may be deleted and none
+	 * vetoes its deletion.
+	 */
+	public void testDeleteObjectActionCollection() throws Exception {
+		ViewAction delete = instantiate(TypedConfiguration.newConfigItem(DeleteObjectAction.Config.class));
+		ViewExecutabilityRule rule = ViewExecutabilityRules.withIntrinsicRule(_context,
+			new GenericViewCommand(List.of(delete)), ViewExecutabilityRule.ALWAYS_EXECUTABLE);
+		Person anonymous = PersonManager.getManager().getAnonymous();
+
+		becomeUser(_root);
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(List.of(_project, _roleless)));
+		// The approval of the deletion refuses the anonymous account before its veto is asked.
+		assertDisabled(
+			com.top_logic.knowledge.gui.layout.person.I18NConstants.ERROR_NOT_EXECUTABLE_FOR_ANONYMOUS_ACCOUNT,
+			rule.isExecutable(List.of(_project, anonymous)));
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutable(List.of()));
+
+		becomeUser(_roleless);
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
+			rule.isExecutable(List.of(_project)));
+	}
+
+	/**
+	 * A container that is no single object is refused: the action creates in one container only.
+	 */
+	public void testCreateInCollectionContainer() throws Exception {
+		ViewExecutabilityRule rule = creation(null, CHANNEL, TASKS);
+		_channel.set(List.of(_project));
+
+		becomeUser(_responsible);
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_DENIED, rule.isExecutable(null));
 	}
 
 	/**

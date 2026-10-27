@@ -116,13 +116,17 @@ public class TLServiceUtils {
 	 *
 	 * @param module
 	 *        The module of the service.
-	 * @return Whether the application configuration contains a configuration for the service.
+	 * @return Whether the service has a configuration, see
+	 *         {@link ApplicationConfig#hasServiceConfiguration(Class)}. A service configured with
+	 *         another configuration interface (like the {@link ApplicationConfig} itself) has none.
+	 * @throws TopLogicException
+	 *         When it cannot be determined whether the service has a configuration.
 	 */
 	public static boolean hasServiceConfiguration(BasicRuntimeModule<?> module) {
 		try {
-			return ApplicationConfig.getInstance().getServiceConfiguration(module.getImplementation()) != null;
+			return ApplicationConfig.getInstance().hasServiceConfiguration(module.getImplementation());
 		} catch (ConfigurationException exception) {
-			return false;
+			throw errorGettingConfiguration(module, exception);
 		}
 	}
 
@@ -133,19 +137,26 @@ public class TLServiceUtils {
 	 *        The module of the service.
 	 * @return A copy of the configuration that can be modified and passed to
 	 *         {@link #storeServiceConfiguration(BasicRuntimeModule, ServiceConfiguration)}, or
-	 *         <code>null</code>, if the service has no configuration.
+	 *         <code>null</code>, if the service has no configuration, see
+	 *         {@link #hasServiceConfiguration(BasicRuntimeModule)}.
+	 * @throws TopLogicException
+	 *         When the configuration of the service cannot be loaded.
 	 */
 	public static ServiceConfiguration<? extends ManagedClass> getServiceConfiguration(BasicRuntimeModule<?> module) {
-		try {
-			ServiceConfiguration<? extends ManagedClass> config =
-				ApplicationConfig.getInstance().getServiceConfiguration(module.getImplementation());
-			if (config == null) {
-				return null;
-			}
-			return ConfigCopier.copy(config);
-		} catch (ConfigurationException exception) {
+		if (!hasServiceConfiguration(module)) {
 			return null;
 		}
+		try {
+			return ConfigCopier.copy(ApplicationConfig.getInstance().getServiceConfiguration(module.getImplementation()));
+		} catch (ConfigurationException exception) {
+			throw errorGettingConfiguration(module, exception);
+		}
+	}
+
+	private static TopLogicException errorGettingConfiguration(BasicRuntimeModule<?> module,
+			ConfigurationException exception) {
+		return new TopLogicException(
+			I18NConstants.ERROR_GETTING_SERVICE_CONFIGURATION__SERVICE.fill(getServiceName(module)), exception);
 	}
 
 	/**

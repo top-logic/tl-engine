@@ -18,6 +18,7 @@ import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -187,6 +188,15 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 		}
 		TLServiceUtils.reloadConfigurations();
 		super.tearDown();
+	}
+
+	/**
+	 * A service configured with another configuration interface than a service configuration has
+	 * no service configuration, which is no error.
+	 */
+	public void testServiceWithoutServiceConfiguration() {
+		assertFalse(TLServiceUtils.hasServiceConfiguration(ApplicationConfig.Module.INSTANCE));
+		assertNull(TLServiceUtils.getServiceConfiguration(ApplicationConfig.Module.INSTANCE));
 	}
 
 	/**

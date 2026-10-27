@@ -35,6 +35,12 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * The placeholder is shown for a unit {@link DeniedUnitDisplay#HIDE hidden} while denied as well:
+ * its container leaves the unit out (see {@link UnitHiding}), but where the user still sees the
+ * content - the open page of a navigation item - the placeholder explains it.
+ * </p>
+ *
+ * <p>
  * The React component {@code TLDeckPane} renders the single {@code activeChild}.
  * </p>
  */

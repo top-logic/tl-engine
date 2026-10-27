@@ -57,6 +57,9 @@ public interface AccessControl extends Inputs {
 	/** Configuration name for {@link #getType()}. */
 	String TYPE = "type";
 
+	/** Configuration name for {@link #getDenied()}. */
+	String DENIED = "denied";
+
 	/**
 	 * The operation the user needs to see the content of the unit.
 	 *
@@ -102,5 +105,19 @@ public interface AccessControl extends Inputs {
 	@Name(TYPE)
 	@Nullable
 	TLModelPartRef getType();
+
+	/**
+	 * How the unit is displayed while the {@link #getOperation() operation} is refused on a checked
+	 * {@link #getObject() object}.
+	 *
+	 * <p>
+	 * By default, the unit is not displayed then ({@link DeniedUnitDisplay#HIDE}).
+	 * {@link DeniedUnitDisplay#PLACEHOLDER} displays it with a "no access" placeholder instead of
+	 * its content. A unit without an object to check is displayed empty either way, and a unit
+	 * whose operation the user can never hold is not built at all.
+	 * </p>
+	 */
+	@Name(DENIED)
+	DeniedUnitDisplay getDenied();
 
 }

@@ -31,7 +31,8 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * <li>{@link Display#EMPTY}: there is no object to check ({@code null} or an empty collection). The
  * unit is shown without content.</li>
  * <li>{@link Display#DENIED}: the operation is refused on a checked object, or a checked value is no
- * object of the declared type. The unit shows a "no access" placeholder instead of its content.</li>
+ * object of the declared type. Depending on {@link #getDenied()}, the unit is not displayed (see
+ * {@link UnitHiding}), or it shows a "no access" placeholder instead of its content.</li>
  * <li>{@link Display#CONTENT}: the operation is allowed on every checked object.</li>
  * </ul>
  *
@@ -71,6 +72,8 @@ public final class UnitAccess {
 
 	private final QueryExecutor _object;
 
+	private final DeniedUnitDisplay _denied;
+
 	/**
 	 * Creates a {@link UnitAccess} from its configuration.
 	 *
@@ -83,6 +86,7 @@ public final class UnitAccess {
 	private UnitAccess(InstantiationContext context, AccessControl config) {
 		_check = new OperationCheck(OWNER, config.getOperation(), config.getType());
 		_inputs = config.getInputs();
+		_denied = config.getDenied();
 		_object = InputScript.compile(config, AccessControl.OBJECT);
 		if (_object != null) {
 			// The checked objects are decided by the check, not filtered by the user's rights before:
@@ -182,6 +186,15 @@ public final class UnitAccess {
 				return Display.DENIED;
 		}
 		throw new IllegalArgumentException("No such outcome: " + decision.getOutcome());
+	}
+
+	/**
+	 * How the unit is displayed while its operation is refused on its object.
+	 *
+	 * @see AccessControl#getDenied()
+	 */
+	public DeniedUnitDisplay getDenied() {
+		return _denied;
 	}
 
 	/**

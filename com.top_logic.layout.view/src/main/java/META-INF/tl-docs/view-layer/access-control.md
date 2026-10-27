@@ -1,5 +1,5 @@
 ---
-description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type), the hidden / empty / "no access" decision, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), and the edit-operation of a <form>.
+description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), and the edit-operation of a <form>.
 order: 75
 ---
 
@@ -33,6 +33,7 @@ operation)` per checked object.
 | `inputs` | The input channels of the unit, written like the inputs of a command: `inputs="selection as projects, mode"`. The `object` expression sees them as variables. |
 | `object` | TL-Script expression over the inputs yielding the checked object(s): a single object, or a collection, where the operation must be allowed on every element. Without `object`, the operation is checked on the security root (the singleton `SecurityStructure#ROOT`). |
 | `type` | The qualified name of the static type of the checked object(s), mandatory with `object`. |
+| `denied` | How the unit is displayed while the operation is refused on a checked object: `hide` (default) or `placeholder`, see below. |
 
 ## Decision
 
@@ -47,8 +48,9 @@ The unit is displayed as the check decides for the current user (`UnitAccess`, m
 - **Empty** - the expression yields `null` or an empty collection (e.g. nothing is selected): the unit
   is shown without content.
 - **No access** - the operation is refused on a checked object, or a checked value is no object of the
-  declared `type` (logged): the unit shows a "no access" placeholder naming the refused operation
-  instead of its content.
+  declared `type` (logged). With `denied="hide"` (the default), the unit is not displayed, see
+  [hiding a denied unit](#hiding-a-denied-unit). With `denied="placeholder"`, the unit stays and shows
+  a "no access" placeholder naming the refused operation instead of its content.
 - **Content** - the operation is allowed on every checked object.
 
 The decision follows the inputs: it is made again when an input channel takes a new value, and when an
@@ -56,6 +58,32 @@ object an input holds is changed. Content that is no longer allowed is retired a
 notification has unwound (`ContentControls.retire`); a content allowed again is built anew. A
 `<group>` with an `<access-control>` applies its check to the content of every `<nav-item>` in it, in
 addition to the check of the item itself.
+
+## Hiding a denied unit
+
+A unit with `denied="hide"` is left out of its container while the check fails on its object, and
+drawn again as soon as the object is allowed again - e.g. when the selection moves to another
+project. The container neither removes nor rebuilds the unit, it only does not draw it:
+
+- a tile is left out of the dashboard grid, which closes the gap; it is not offered to be added
+  again, unlike a tile the user hid;
+- a tab is left out of the tab strip; when the selected tab is hidden, the nearest visible tab is
+  selected (the next one, the previous one at the end of the strip). A tab shown again is not
+  selected again: the selection the user made in the meantime stays;
+- an accordion section is left out, header included, keeping its expansion;
+- a sidebar entry (a `<nav-item>` or a `<group>` with all its items) is left out. An open navigation
+  item stays open: the user navigated there, so its content shows the "no access" placeholder
+  rather than a blank page.
+
+The state is one mechanism, `UnitHiding` (`AccessChecks.hiding(…)`): the container builds the
+entry as hidden or not and binds the state to its control, which follows the inputs of the unit for
+as long as the control lives. The entries carry a `hidden` flag the client skips: `TabBarState.Tab`
+and `AccordionState.Section` in `state.proto`, the items of the sidebar and the tiles of the
+dashboard in their state maps (`ReactTabBarControl.setTabHidden`, `ReactAccordionControl.setSectionHidden`,
+`ReactSidebarControl.setItemWithheld`, `ReactDashboardControl.setTileWithheld`).
+
+A unit checked on the security root is decided once when it is built, and a unit whose expression
+yields no object is displayed empty with either setting.
 
 ## Checks when the view is loaded
 

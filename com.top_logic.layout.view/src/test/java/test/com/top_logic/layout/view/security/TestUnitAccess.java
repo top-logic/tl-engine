@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.security;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,11 +25,13 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.accordion.ReactAccordionControl;
 import com.top_logic.layout.react.control.common.ReactAlertControl;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
+import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.AccordionState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -82,6 +85,33 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 
 	/** A sidebar whose group is checked on the security root. */
 	private static final String DENIED_SIDEBAR = "sidebar-denied-group.view.xml";
+
+	/** A tab bar whose selected tab is hidden while denied. */
+	private static final String HIDE_TABS = "tabs-hide.view.xml";
+
+	/** An accordion with a section hidden while denied and one showing the placeholder. */
+	private static final String HIDE_ACCORDION = "accordion-hide.view.xml";
+
+	/** A sidebar whose open navigation item is hidden while denied. */
+	private static final String HIDE_SIDEBAR = "sidebar-hide.view.xml";
+
+	/** A dashboard with a tile hidden while denied. */
+	private static final String HIDE_DASHBOARD = "dashboard-hide.view.xml";
+
+	/** The ID of the unit checked on the object in the {@code HIDE_*} fixtures. */
+	private static final String GUARDED = "guarded";
+
+	/** The ID of the unit showing the placeholder in {@link #HIDE_ACCORDION}. */
+	private static final String PLACEHOLDER = "placeholder";
+
+	/** The ID of the unguarded unit in the {@code HIDE_*} fixtures. */
+	private static final String OPEN = "open";
+
+	/** The wire name of the flag of an entry that is not drawn. */
+	private static final String HIDDEN = "hidden";
+
+	/** The wire name of the tiles of a dashboard. */
+	private static final String CHILDREN = "children";
 
 	private ViewChannel _object;
 
@@ -269,6 +299,125 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 		becomeUser(_root);
 		items = maps(state((ReactSidebarControl) sidebar.createControl(_context)).get(ITEMS));
 		assertEquals("Root sees the group: " + items, 2, items.size());
+	}
+
+	/**
+	 * Tests that a hidden selected tab passes the selection to the next visible tab, and that the
+	 * tab shown again does not take the selection back.
+	 */
+	public void testHiddenTabPassesSelection() throws ConfigurationException {
+		becomeUser(_responsible);
+		_object.set(_project);
+		ReactTabBarControl tabs = (ReactTabBarControl) content(HIDE_TABS).createControl(_context);
+		tabs.attach();
+		assertFalse(tabs.isTabHidden(GUARDED));
+		assertEquals(GUARDED, tabs.getActiveTabId());
+
+		_object.set(newObject(qualified(PROJECT), "other"));
+		assertTrue(tabs.isTabHidden(GUARDED));
+		assertEquals("The selection moves to the visible tab.", OPEN, tabs.getActiveTabId());
+
+		_object.set(_project);
+		assertFalse("The tab is shown again.", tabs.isTabHidden(GUARDED));
+		assertEquals("The selection of the user stays.", OPEN, tabs.getActiveTabId());
+
+		_object.set(null);
+		assertFalse("Without object, the tab is shown empty.", tabs.isTabHidden(GUARDED));
+	}
+
+	/**
+	 * Tests that a section hidden while denied is left out, while a section showing the placeholder
+	 * stays.
+	 */
+	public void testHiddenSection() throws ConfigurationException {
+		becomeUser(_responsible);
+		ReactAccordionControl accordion =
+			(ReactAccordionControl) content(HIDE_ACCORDION).createControl(_context);
+		accordion.attach();
+		assertFalse("Without object, the section is shown empty.", accordion.isSectionHidden(GUARDED));
+
+		_object.set(newObject(qualified(PROJECT), "other"));
+		assertTrue(accordion.isSectionHidden(GUARDED));
+		assertFalse("The placeholder section stays.", accordion.isSectionHidden(PLACEHOLDER));
+		assertFalse(accordion.isSectionHidden(OPEN));
+		assertEquals(Boolean.TRUE, section(accordion, GUARDED).get(AccordionState.Section.HIDDEN__PROP));
+
+		_object.set(_project);
+		assertFalse("The section is shown again.", accordion.isSectionHidden(GUARDED));
+	}
+
+	/**
+	 * Tests that the entry of an open navigation item hidden while denied is left out, while the item
+	 * stays open and shows the placeholder.
+	 */
+	public void testHiddenOpenNavItemShowsPlaceholder() throws IOException, ConfigurationException {
+		becomeUser(_responsible);
+		_object.set(_project);
+		ReactSidebarControl sidebar = (ReactSidebarControl) content(HIDE_SIDEBAR).createControl(_context);
+		// Rendering the sidebar opens its active item.
+		sidebar.write(new TagWriter());
+		assertNull(item(sidebar, GUARDED).get(HIDDEN));
+		AccessGuardControl guard = guard(sidebar);
+		assertEquals(Display.CONTENT, guard.getDisplay());
+
+		_object.set(newObject(qualified(PROJECT), "other"));
+		assertEquals("The entry is not drawn.", Boolean.TRUE, item(sidebar, GUARDED).get(HIDDEN));
+		assertSame("The item stays open.", guard, guard(sidebar));
+		assertEquals(Display.DENIED, guard.getDisplay());
+		assertTrue("The open item shows the placeholder.", guard.getActive() instanceof ReactAlertControl);
+
+		_object.set(_project);
+		assertNull("The entry is drawn again.", item(sidebar, GUARDED).get(HIDDEN));
+		assertEquals(Display.CONTENT, guard.getDisplay());
+	}
+
+	/**
+	 * Tests that a tile hidden while denied is withheld from the grid, from the start and when its
+	 * object changes.
+	 */
+	public void testHiddenTile() throws ConfigurationException {
+		becomeUser(_responsible);
+		_object.set(newObject(qualified(PROJECT), "other"));
+		ReactControl dashboard = (ReactControl) content(HIDE_DASHBOARD).createControl(_context);
+		dashboard.attach();
+		assertEquals("Denied from the start.", Boolean.TRUE, tile(dashboard, GUARDED).get(HIDDEN));
+		assertNull(tile(dashboard, OPEN).get(HIDDEN));
+
+		_object.set(_project);
+		assertNull("The tile is drawn again.", tile(dashboard, GUARDED).get(HIDDEN));
+
+		_object.set(null);
+		assertNull("Without object, the tile is shown empty.", tile(dashboard, GUARDED).get(HIDDEN));
+	}
+
+	private static AccessGuardControl guard(ReactControl container) {
+		for (ReactControl child : container.visibleChildren()) {
+			if (child instanceof AccessGuardControl guard) {
+				return guard;
+			}
+		}
+		throw new AssertionError("No guarded content displayed by " + container);
+	}
+
+	private static Map<String, Object> item(ReactSidebarControl sidebar, String id) {
+		return entry(state(sidebar).get(ITEMS), ID, id);
+	}
+
+	private static Map<String, Object> section(ReactAccordionControl accordion, String id) {
+		return entry(state(accordion).get(AccordionState.SECTIONS__PROP), AccordionState.Section.ID__PROP, id);
+	}
+
+	private static Map<String, Object> tile(ReactControl dashboard, String id) {
+		return entry(state(dashboard).get(CHILDREN), ID, id);
+	}
+
+	private static Map<String, Object> entry(Object entries, String idKey, String id) {
+		for (Map<String, Object> entry : maps(entries)) {
+			if (id.equals(entry.get(idKey))) {
+				return entry;
+			}
+		}
+		throw new AssertionError("No entry '" + id + "' in " + entries);
 	}
 
 	private Display decide(UnitAccess access) {

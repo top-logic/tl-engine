@@ -17,6 +17,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.SecuredObject;
 import com.top_logic.layout.view.security.UnitAccess;
+import com.top_logic.layout.view.security.UnitHiding;
 import com.top_logic.util.Resources;
 
 /**
@@ -97,6 +98,18 @@ public final class ContentSection {
 	 */
 	public boolean isAccessible() {
 		return AccessChecks.isOffered(_access);
+	}
+
+	/**
+	 * Whether this part is currently left out of its container, see
+	 * {@link AccessChecks#hiding(UnitAccess, ViewContext)}.
+	 *
+	 * @param context
+	 *        The context the container is displayed in.
+	 * @return {@code null} when this part is never left out this way.
+	 */
+	public UnitHiding hiding(ViewContext context) {
+		return AccessChecks.hiding(_access, context);
 	}
 
 	/**

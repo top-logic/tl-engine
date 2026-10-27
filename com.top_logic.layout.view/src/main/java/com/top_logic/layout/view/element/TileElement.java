@@ -31,6 +31,7 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.UnitAccess;
+import com.top_logic.layout.view.security.UnitHiding;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.util.Resources;
 import java.util.List;
@@ -223,6 +224,18 @@ public class TileElement implements UIElement {
 	 */
 	public boolean isAccessible() {
 		return AccessChecks.isOffered(_access);
+	}
+
+	/**
+	 * Whether this tile is currently withheld from the dashboard, see
+	 * {@link AccessChecks#hiding(UnitAccess, ViewContext)}.
+	 *
+	 * @param context
+	 *        The context the dashboard is displayed in.
+	 * @return {@code null} when this tile is never withheld this way.
+	 */
+	public UnitHiding hiding(ViewContext context) {
+		return AccessChecks.hiding(_access, context);
 	}
 
 	/** The stable tile id. */

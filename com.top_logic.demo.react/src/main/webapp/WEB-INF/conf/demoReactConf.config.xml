@@ -286,7 +286,8 @@
 
 						The "Planning" tile of the project cockpit needs the operation "ShowPlanning" on
 						the project, which only its administrators hold: a member of the project sees
-						the "no access" placeholder in its place.
+						the "no access" placeholder in its place. The "Approvals" tile needs the same
+						operation, and is not displayed at all to a member.
 					-->
 					<module name="tl.demo.projectManagement">
 						<grant

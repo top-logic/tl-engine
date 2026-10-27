@@ -16,7 +16,9 @@
 	
 	The Planning tile lists the due dates and approvals of the milestones. It is guarded by the
 	operation "ShowPlanning" on the project, which only the administrators of the project hold, so
-	a member of the project sees the "no access" placeholder in its place.
+	a member of the project sees the "no access" placeholder in its place (denied="placeholder").
+	The Approvals tile is guarded the same way, but with the default denied="hide": a member of
+	the project does not see it at all, and the grid closes the gap.
 	
 	The milestone channel carries what the create dialog reports back: the milestone it created,
 	which the milestone list picks up when the Milestones tile is pressed.
@@ -190,14 +192,43 @@
 				</action>
 			</tile>
 			<!--
+				The progress of the approvals is part of the planning as well. The tile demonstrates
+				the default denied="hide": a member of the project does not see the tile at all, and the
+				Planning tile takes its place next to the Project tile.
+			-->
+			<tile id="approvals"
+				width="half"
+			>
+				<access-control
+					inputs="project"
+					object="$project"
+					operation="ShowPlanning"
+					type="tl.demo.projectManagement:ProjectScope"
+				/>
+				<panel>
+					<title>
+						<en>Approvals</en>
+						<de>Freigaben</de>
+					</title>
+					<progress
+						done="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#milestones`).filter(m -> $m.get(`tl.demo.projectManagement:Milestone#approved`)).size())"
+						input="project"
+						label="#('Approved milestones'@en, 'Freigegebene Meilensteine'@de)"
+						observed-types="tl.demo.projectManagement:Milestone"
+						total="if($project == null, 0, $project.get(`tl.demo.projectManagement:ProjectScope#milestones`).size())"
+					/>
+				</panel>
+			</tile>
+			<!--
 				The planning of the project is shown to the administrators of the project alone, who
-				hold the operation "ShowPlanning" on it: a member of the project sees a "no access"
-				placeholder in place of the tile's content.
+				hold the operation "ShowPlanning" on it. The tile demonstrates the placeholder: a
+				member of the project sees a "no access" placeholder in place of the tile's content.
 			-->
 			<tile id="planning"
 				width="half"
 			>
 				<access-control
+					denied="placeholder"
 					inputs="project"
 					object="$project"
 					operation="ShowPlanning"

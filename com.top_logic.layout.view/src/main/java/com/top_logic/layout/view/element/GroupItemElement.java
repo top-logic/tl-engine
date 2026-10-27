@@ -147,7 +147,9 @@ public class GroupItemElement implements SidebarItemElement {
 		}
 		List<SidebarItem> children = SidebarElement.createItems(_items, context, site.guardedBy(_access));
 		String label = Resources.getInstance().getString(_label);
-		return new GroupItem(_id, label, _icon, children, _expanded);
+		GroupItem result = new GroupItem(_id, label, _icon, children, _expanded);
+		SidebarElement.withholdWhileDenied(result, _access, context, site);
+		return result;
 	}
 
 }

@@ -85,6 +85,9 @@ public class ReactDashboardControl extends ReactControl {
 	/** Descriptor key holding the control rendered inside a tile. */
 	private static final String TILE_CONTROL = "control";
 
+	/** Descriptor key telling that a tile is withheld, see {@link #setTileWithheld(String, boolean)}. */
+	private static final String TILE_HIDDEN = "hidden";
+
 	/** Descriptor key holding a tile's {@link TileAction action}, {@code null} without one. */
 	private static final String TILE_ACTION = "action";
 
@@ -142,6 +145,8 @@ public class ReactDashboardControl extends ReactControl {
 
 		private boolean _visible;
 
+		private boolean _withheld;
+
 		/**
 		 * Creates a {@link Tile}.
 		 *
@@ -173,6 +178,25 @@ public class ReactDashboardControl extends ReactControl {
 		/** Whether this tile is currently shown. */
 		public boolean isVisible() {
 			return _visible;
+		}
+
+		/**
+		 * Whether this tile is currently withheld from the dashboard.
+		 *
+		 * @see ReactDashboardControl#setTileWithheld(String, boolean)
+		 */
+		public boolean isWithheld() {
+			return _withheld;
+		}
+
+		/**
+		 * Sets whether this tile is withheld from the dashboard when the dashboard is built.
+		 *
+		 * @return This instance for fluent chaining.
+		 */
+		public Tile withWithheld(boolean withheld) {
+			_withheld = withheld;
+			return this;
 		}
 	}
 
@@ -232,8 +256,14 @@ public class ReactDashboardControl extends ReactControl {
 			d.put(TILE_ID, t._id);
 			d.put(TILE_WIDTH, t._width.getExternalName());
 			d.put(TILE_ROW_SPAN, Integer.valueOf(t._rowSpan));
-			d.put(TILE_CONTROL, content.control());
+			if (!t._withheld) {
+				// A withheld tile is not drawn, so its content is not part of the displayed tree.
+				d.put(TILE_CONTROL, content.control());
+			}
 			d.put(TILE_ACTION, actionDescriptor(content.action()));
+			if (t._withheld) {
+				d.put(TILE_HIDDEN, Boolean.TRUE);
+			}
 			list.add(d);
 		}
 		return list;
@@ -386,6 +416,37 @@ public class ReactDashboardControl extends ReactControl {
 		fireStateChange();
 	}
 
+	/**
+	 * Withholds the tile with the given ID from the dashboard, or draws it again.
+	 *
+	 * <p>
+	 * Unlike a tile the user {@link #HIDE_COMMAND hid}, a withheld tile is not offered to be added
+	 * again, and nothing is remembered: the tile is withheld e.g. while the current user may not see
+	 * it for the object displayed. The grid closes the gap. The content of the tile is kept, but
+	 * detached while the tile is withheld.
+	 * </p>
+	 *
+	 * @param tileId
+	 *        The ID of the tile.
+	 * @param withheld
+	 *        Whether the tile is left out.
+	 */
+	public void setTileWithheld(String tileId, boolean withheld) {
+		Tile tile = tile(tileId);
+		if (tile == null || tile._withheld == withheld) {
+			return;
+		}
+		tile._withheld = withheld;
+		if (tile._content != null && tile._visible) {
+			if (withheld) {
+				tile._content.control().detach();
+			} else if (isAttached()) {
+				tile._content.control().attach();
+			}
+		}
+		putState(CHILDREN, buildDescriptors());
+	}
+
 	private Tile tile(String tileId) {
 		for (Tile tile : _tiles) {
 			if (tile._id.equals(tileId)) {
@@ -449,8 +510,8 @@ public class ReactDashboardControl extends ReactControl {
 	 * <p>
 	 * The tile's command runs through {@link CommandModel#executeCommand(ReactContext)}: a command
 	 * that currently refuses to run is not executed, and its refusal is the result of the
-	 * activation. An activation of a tile without an action, of a hidden tile, or of an unknown tile
-	 * does nothing.
+	 * activation. An activation of a tile without an action, of a hidden or withheld tile, or of an
+	 * unknown tile does nothing.
 	 * </p>
 	 *
 	 * @param args
@@ -460,7 +521,7 @@ public class ReactDashboardControl extends ReactControl {
 	@FrameworkInternal
 	HandlerResult handleActivate(ActivateTileArguments args) {
 		Tile tile = tile(args.getTileId());
-		if (tile == null || !tile._visible) {
+		if (tile == null || !tile._visible || tile._withheld) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		TileAction action = contentOf(tile).action();

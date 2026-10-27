@@ -56,6 +56,7 @@ import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.routing.WithFinalTitle;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.UnitAccess;
+import com.top_logic.layout.view.security.UnitHiding;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.slot.control.SlotContentControl;
@@ -539,6 +540,7 @@ public class SidebarElement implements UIElement {
 				item.withFinalTitle(_finalTitle);
 			}
 			item.withHidden(_hidden);
+			withholdWhileDenied(item, _access, context, site);
 			if (_badgeRef != null) {
 				bindBadge(context, site, item);
 			}
@@ -573,6 +575,36 @@ public class SidebarElement implements UIElement {
 			String text = ValueLabel.label(value);
 			return text == null || text.isEmpty() ? null : text;
 		}
+	}
+
+	/**
+	 * Leaves the entry of the given item out of the sidebar while its access check fails on its
+	 * object, if the item is {@link com.top_logic.layout.view.security.DeniedUnitDisplay#HIDE
+	 * hidden} then.
+	 *
+	 * <p>
+	 * Used by navigation items and groups alike. An open navigation item whose entry is left out
+	 * stays open: its content shows the "no access" placeholder.
+	 * </p>
+	 *
+	 * @param item
+	 *        The item built.
+	 * @param access
+	 *        The access check of the item, {@code null} for an item without one.
+	 * @param context
+	 *        The context the sidebar is built in.
+	 * @param site
+	 *        The site the item is built at, binding the item to the sidebar control.
+	 */
+	public static void withholdWhileDenied(SidebarItem item, UnitAccess access, ViewContext context,
+			ItemSite site) {
+		UnitHiding hiding = AccessChecks.hiding(access, context);
+		if (hiding == null) {
+			return;
+		}
+		item.setWithheld(hiding.isHidden());
+		site.addBinding(
+			sidebar -> hiding.bind(sidebar, hidden -> sidebar.setItemWithheld(item.getId(), hidden.booleanValue())));
 	}
 
 	/** Value for the {@code route} attribute that explicitly disables routing. */

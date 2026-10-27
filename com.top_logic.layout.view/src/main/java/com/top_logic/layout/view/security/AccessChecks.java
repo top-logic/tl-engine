@@ -15,7 +15,7 @@ import com.top_logic.layout.view.ViewContext;
  * sections, tiles).
  *
  * <p>
- * Every securable unit runs the same three steps, each accepting {@code null} for a unit without
+ * Every securable unit runs the same steps, each accepting {@code null} for a unit without
  * {@link AccessControl}:
  * </p>
  * <ol>
@@ -25,6 +25,9 @@ import com.top_logic.layout.view.ViewContext;
  * {@link SecuredObject} of the unit is published to the content.</li>
  * <li>{@link #guard(UnitAccess, ViewContext, Function)} when the content is created: the content is
  * displayed as the access check decides for the current object of the unit.</li>
+ * <li>{@link #hiding(UnitAccess, ViewContext)} when the container builds the entry of the unit: a
+ * unit {@link DeniedUnitDisplay#HIDE hidden} while it is denied is left out of its container for
+ * as long as the check fails on its object.</li>
  * </ol>
  */
 public class AccessChecks {
@@ -60,6 +63,32 @@ public class AccessChecks {
 			return context;
 		}
 		return context.withScope(SecuredObject.class, access.bind(context));
+	}
+
+	/**
+	 * The state telling whether a UI unit with the given access check is currently not displayed,
+	 * because its operation is refused on its object and it is configured to be
+	 * {@link DeniedUnitDisplay#HIDE hidden} then.
+	 *
+	 * <p>
+	 * Each container implements the state once for its kind of entry: it builds the entry as
+	 * {@link UnitHiding#isHidden() hidden} or not, and {@link UnitHiding#bind(ReactControl,
+	 * java.util.function.Consumer) binds} the state to its control to draw or leave out the entry
+	 * when the state changes.
+	 * </p>
+	 *
+	 * @param access
+	 *        The access check of the unit, {@code null} when the unit is not guarded.
+	 * @param context
+	 *        The context the unit is displayed in.
+	 * @return {@code null} when the unit is never hidden this way: it is not guarded, is checked on
+	 *         the security root, or shows a placeholder when denied.
+	 */
+	public static UnitHiding hiding(UnitAccess access, ViewContext context) {
+		if (access == null || !access.isReactive() || access.getDenied() != DeniedUnitDisplay.HIDE) {
+			return null;
+		}
+		return new UnitHiding(access, access.bind(context), context);
 	}
 
 	/**

@@ -30,7 +30,7 @@ import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -40,6 +40,8 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 
 /**
  * Base class for {@link ClientConfigurator}s allowing to configure common properties.
@@ -62,6 +64,11 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	 * happened before the request.
 	 */
 	private static final int MAX_AGE_IMMEDIATE = 0;
+
+	/**
+	 * Source of {@link Config#getSecret()}.
+	 */
+	private final SecretSource _secret;
 
 	/**
 	 * Configuration options for {@link DefaultOidcClientConfigurator}.
@@ -164,12 +171,40 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		public String getScope();
 
 		/**
+		 * @see #getSecret()
+		 */
+		String SECRET = "secret";
+
+		/**
+		 * The client secret to authenticate this application at the identity provider.
+		 * 
+		 * <p>
+		 * Recommended is a reference to the secret by its name, so that the secret is not part of
+		 * the configuration, e.g. <code>&lt;secret name="OIDC_CLIENT_SECRET"/&gt;</code>, which
+		 * the default secret store reads from the environment variable of that name holding the
+		 * plain secret. An attribute value is an encrypted secret, or a plain secret with the
+		 * prefix <code>unencrypted:</code>.
+		 * </p>
+		 * 
+		 * <p>
+		 * The secret is not read at startup, so that the application starts without it. It is read
+		 * when a login with this client starts and before each token request, so that a rotated
+		 * secret is used without restart. While the secret is missing, the login page does not offer
+		 * this client.
+		 * </p>
+		 * 
+		 * @see OidcClientSecret
 		 * @see OidcConfiguration#getSecret()
 		 */
-		@Name("secret")
+		@Name(SECRET)
 		@Mandatory
-		@Encrypted
-		public String getSecret();
+		@Format(SecretSourceFormat.class)
+		public PolymorphicConfiguration<? extends SecretSource> getSecret();
+
+		/**
+		 * @see #getSecret()
+		 */
+		void setSecret(PolymorphicConfiguration<? extends SecretSource> value);
 
 		/**
 		 * @see OidcConfiguration#getStateGenerator()
@@ -261,6 +296,17 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	@CalledByReflection
 	public DefaultOidcClientConfigurator(InstantiationContext context, C config) {
 		super(context, config);
+		_secret = context.getInstance(config.getSecret());
+	}
+
+	/**
+	 * Whether the client secret is available now.
+	 *
+	 * @see OidcClientSecret#isAvailable(SecretSource, String)
+	 */
+	@Override
+	public boolean isAvailable() {
+		return OidcClientSecret.isAvailable(_secret, getConfig().getName());
 	}
 
 	@Override
@@ -288,6 +334,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		C config = getConfig();
 		client.setCallbackUrl(Pac4jConfigFactory.resolveCallbackUrl(context, config));
 		client.setUrlResolver(Pac4jConfigFactory.createUrlResolver(config));
+		OidcClientSecret.install(client, _secret);
 
 		return client;
 	}
@@ -327,6 +374,12 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	/**
 	 * Fills the given {@link OidcClient} configuration object with values from the application
 	 * configuration.
+	 * 
+	 * <p>
+	 * The client secret is not part of it, it is handed to the client when it is used.
+	 * </p>
+	 * 
+	 * @see OidcClientSecret
 	 */
 	protected void fillConfig(OidcConfiguration odic) {
 		Config<?> config = getConfig();
@@ -359,7 +412,6 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		odic.setResponseMode(config.getResponseMode());
 		odic.setResponseType(config.getResponseType());
 		odic.setScope(config.getScope());
-		odic.setSecret(config.getSecret());
 		ValueGenerator stateGenerator = config.getStateGenerator();
 		if (stateGenerator != null) {
 			odic.setStateGenerator(stateGenerator);

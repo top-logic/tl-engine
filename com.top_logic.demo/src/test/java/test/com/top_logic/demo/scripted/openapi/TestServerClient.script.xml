@@ -1493,12 +1493,70 @@
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
-											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Passwort"
-											>
-												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+												<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
 												/>
+												<path>
+													<labeled-member label="Dienst-Konfiguration"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Geheimnisse"/>
+													<named-member name="content"/>
+													<object>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+															value="1"
+														/>
+													</object>
+													<labeled-member label="HTTP-Authentifizierung (BasicAuth)"/>
+													<labeled-member label="Anmeldung"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Passwort"/>
+													<named-member name="outerContainer"/>
+													<named-member name="options"/>
+												</path>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+												<values>
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+														value="com.top_logic.basic.credential.LiteralSecretSource"
+													/>
+												</values>
+											</value>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="root"
+										>
+											<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+												<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+												/>
+												<path>
+													<labeled-member label="Dienst-Konfiguration"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Geheimnisse"/>
+													<named-member name="content"/>
+													<object>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+															value="1"
+														/>
+													</object>
+													<labeled-member label="HTTP-Authentifizierung (BasicAuth)"/>
+													<labeled-member label="Anmeldung"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Passwort"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Wert"/>
+												</path>
 											</field>
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 												value="TestOpenAPI1234"
@@ -1795,10 +1853,14 @@
 													<named-member name="contentContainer"/>
 													<named-member name="content"/>
 													<labeled-member label="Passwort"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Name"/>
 												</path>
 											</field>
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
-												value="%TEST_OPEN_API_SERVER_SECRET%"
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="tl_test_testopenapi_server_secret"
 											/>
 										</action>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
@@ -1878,6 +1940,10 @@
 													</object>
 													<labeled-member label="API-Schlüssel"/>
 													<labeled-member label="Api-Schlüssel"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Wert"/>
 													<labeled-member label="Token aktualisieren"/>
 												</path>
 											</model-name>
@@ -2530,8 +2596,31 @@
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
+											<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+												<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+												<path>
+													<labeled-member label="Anmeldung"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Passwort"/>
+													<named-member name="outerContainer"/>
+													<named-member name="options"/>
+												</path>
+											</field>
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+												<values>
+													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+														value="com.top_logic.basic.credential.LiteralSecretSource"
+													/>
+												</values>
+											</value>
+										</action>
+										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+											user-id="root"
+										>
 											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Passwort"
+												label="Wert"
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
@@ -2577,12 +2666,33 @@
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
 										>
-											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Passwort"
-											>
-												<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+											<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+												<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
 												/>
+												<path>
+													<labeled-member label="Dienst-Konfiguration"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Geheimnisse"/>
+													<named-member name="content"/>
+													<object>
+														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+															value="1"
+														/>
+													</object>
+													<labeled-member label="HTTP-Authentifizierung (BasicAuth)"/>
+													<labeled-member label="Anmeldung"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Passwort"/>
+													<named-member name="outerContainer"/>
+													<named-member name="contentContainer"/>
+													<named-member name="content"/>
+													<labeled-member label="Wert"/>
+												</path>
 											</field>
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 												value="TestOpenAPI1234"
@@ -2689,12 +2799,12 @@
 											user-id="root"
 										>
 											<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-												label="Passwort"
+												label="Name"
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
-												value="%TEST_OPEN_API_CLIENT_SECRET%"
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="tl_test_testopenapi_client_secret"
 											/>
 										</action>
 										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"

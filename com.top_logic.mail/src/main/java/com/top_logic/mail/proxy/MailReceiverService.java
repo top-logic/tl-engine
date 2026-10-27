@@ -7,9 +7,11 @@ package com.top_logic.mail.proxy;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.InterfacesCategory;
 
@@ -18,6 +20,7 @@ import com.top_logic.basic.module.category.InterfacesCategory;
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 @Label("Mail receiver")
 @ServiceCategory.Of(InterfacesCategory.class)
 public class MailReceiverService extends ManagedClass {
@@ -45,7 +48,7 @@ public class MailReceiverService extends ManagedClass {
 		super(context, config);
 		_activated = config.isActivated();
 		if (_activated) {
-			_server = new MailReceiver(config);
+			_server = new MailReceiver(context, config);
 		}
 	}
 

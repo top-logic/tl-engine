@@ -325,7 +325,7 @@ public class TestModelCatalogLoad extends TestCase {
 		set(provider, PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME, AnthropicProviderConfig.class);
 		provider.setName("anthropic");
 		set(provider, LLMProviderConfig.Config.MODELS, models);
-		set(provider, AnthropicProviderConfig.Config.API_KEY, "unencrypted:test");
+		set(provider, AnthropicProviderConfig.Config.API_KEY, FixedCredentials.secret("test"));
 		config.getProviders().put(provider.getName(), provider);
 
 		ModelCatalogConfig catalog = TypedConfiguration.newConfigItem(ModelCatalogConfig.class);

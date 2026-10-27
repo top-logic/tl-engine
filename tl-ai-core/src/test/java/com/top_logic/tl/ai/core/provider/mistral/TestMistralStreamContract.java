@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.provider.AbstractProviderStreamTest;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
@@ -21,7 +22,7 @@ public class TestMistralStreamContract extends AbstractProviderStreamTest {
 
 	static class TestableProvider extends MistralProvider {
 		TestableProvider() {
-			super("test-key");
+			super(FixedCredentials.NONE);
 		}
 
 		List<StreamEvent> parse(InputStream sse) throws IOException, ProviderException {

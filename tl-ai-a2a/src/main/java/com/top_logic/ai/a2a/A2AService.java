@@ -31,6 +31,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -61,7 +63,8 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 @ServiceDependencies({
 	AgentExecutionStore.Module.class,
 	ToolRegistryService.Module.class,
-	ServletContextService.Module.class
+	ServletContextService.Module.class,
+	SecretStoreService.Module.class
 })
 @ServiceCategory.Of(AICategory.class)
 public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
@@ -262,13 +265,34 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		@Mandatory
 		String getCardUrl();
 
+		/** Configuration property name for {@link #getCredentials()}. */
+		String CREDENTIALS = "credentials";
+
 		/**
-		 * The environment variable (or Java system property) holding the token sent as
-		 * {@code Authorization: Bearer} - a personal access token of the remote application.
+		 * How the calls to the remote agent are authenticated.
+		 *
+		 * <p>
+		 * Typically a personal access token of the remote application, sent as bearer token and
+		 * read from an environment variable or a file:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;remote-agent name="other" card-url="https://example.com/other/a2a/agent/agent-card.json"&gt;
+		 *   &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer"&gt;
+		 *     &lt;secret name="OTHER_A2A_TOKEN"/&gt;
+		 *   &lt;/credentials&gt;
+		 * &lt;/remote-agent&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * If not set, the calls are sent without credentials. The agent card is always fetched
+		 * without credentials. A call whose credentials are rejected (HTTP 401) is repeated once
+		 * with fresh credentials.
+		 * </p>
 		 */
-		@Name("token-env")
+		@Name(CREDENTIALS)
 		@Nullable
-		String getTokenEnv();
+		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
 	}
 
 	/**
@@ -301,7 +325,7 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 
 	private A2ARequestHandler _handler;
 
-	private RemoteAgents _remoteAgents;
+	private final RemoteAgents _remoteAgents;
 
 	/**
 	 * Creates an {@link A2AService} from configuration.
@@ -313,6 +337,7 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		_artifactSources = instances(context, config.getArtifactSources());
 		_dataHandlers = instances(context, config.getDataHandlers());
 		_observers = instances(context, config.getObservers());
+		_remoteAgents = new RemoteAgents(context, config.getRemoteAgents());
 	}
 
 	private static <T> List<T> instances(InstantiationContext context,
@@ -345,7 +370,6 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		_backend = new AgentRunBackend(this);
 		_handler = new A2ARequestHandler(_backend, path -> exposedAgent(path) != null,
 			config.getMaxBlockingSeconds() * 1000L, observer());
-		_remoteAgents = new RemoteAgents(config.getRemoteAgents());
 		_instance = this;
 		Logger.info("A2A service started: agents " + config.getAgents().stream().map(ExposedAgentConfig::getPath).toList()
 			+ ", remote agents " + _remoteAgents.names() + ".", A2AService.class);

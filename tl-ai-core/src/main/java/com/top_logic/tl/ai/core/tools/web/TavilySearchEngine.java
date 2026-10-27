@@ -25,13 +25,16 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.SecretSource;
+import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.core.tools.web.messages.TavilySearchRequest;
 import com.top_logic.tl.ai.core.tools.web.messages.TavilySearchResponse;
@@ -62,6 +65,13 @@ public final class TavilySearchEngine implements WebSearchEngine {
 		String API_KEY = "api-key";
 
 		/**
+		 * Configuration property name for the credentials.
+		 *
+		 * @see #getCredentials()
+		 */
+		String CREDENTIALS = "credentials";
+
+		/**
 		 * Configuration property name for the API base URL.
 		 *
 		 * @see #getBaseUrl()
@@ -90,14 +100,43 @@ public final class TavilySearchEngine implements WebSearchEngine {
 		String INCLUDE_RAW_CONTENT = "include-raw-content";
 
 		/**
-		 * The Tavily API key (stored encrypted).
+		 * The Tavily API key.
+		 *
+		 * <p>
+		 * Sent as bearer token in the header {@link CredentialProvider#AUTHORIZATION}. Recommended
+		 * is a reference to the key by its secret name, so that the key is not part of the
+		 * configuration:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;api-key name="tl_tavily_api_key"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * An attribute value is an encrypted key, or a plain key with the prefix
+		 * <code>unencrypted:</code>. Configuring both an API key and {@link #getCredentials()
+		 * credentials} is an error.
+		 * </p>
 		 *
 		 * @see #API_KEY
 		 */
 		@Name(API_KEY)
-		@Encrypted
-		@Mandatory
-		String getApiKey();
+		@Format(SecretSourceFormat.class)
+		PolymorphicConfiguration<? extends SecretSource> getApiKey();
+
+		/**
+		 * How the requests to Tavily are authenticated, if not with an {@link #getApiKey() API key}.
+		 *
+		 * <p>
+		 * E.g. no credentials at all, when a gateway in between adds them. Configuring both
+		 * credentials and an API key is an error.
+		 * </p>
+		 *
+		 * @see #CREDENTIALS
+		 */
+		@Name(CREDENTIALS)
+		@Nullable
+		PolymorphicConfiguration<? extends CredentialProvider> getCredentials();
 
 		/**
 		 * The Tavily API base URL.
@@ -137,13 +176,16 @@ public final class TavilySearchEngine implements WebSearchEngine {
 		boolean getIncludeRawContent();
 	}
 
+	/** The name of the search engine, in messages. */
+	private static final String LABEL = "Tavily";
+
 	private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
 	private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
 		.connectTimeout(TIMEOUT)
 		.build();
 
-	private final String _apiKey;
+	private final CredentialProvider _credentials;
 
 	private final String _baseUrl;
 
@@ -158,23 +200,23 @@ public final class TavilySearchEngine implements WebSearchEngine {
 	/**
 	 * Creates a {@link TavilySearchEngine} from configuration.
 	 */
-	@SuppressWarnings("unused")
 	@CalledByReflection
 	public TavilySearchEngine(InstantiationContext context, Config config) {
-		this(config, SearchHttp.Sleeper.SYSTEM);
+		this(context, config, SearchHttp.Sleeper.SYSTEM);
 	}
 
 	/**
 	 * Creates a {@link TavilySearchEngine} that waits with {@code sleeper}. Package-visible for
 	 * testing.
 	 */
-	TavilySearchEngine(Config config, SearchHttp.Sleeper sleeper) {
-		_apiKey = config.getApiKey();
+	TavilySearchEngine(InstantiationContext context, Config config, SearchHttp.Sleeper sleeper) {
+		_credentials = CredentialProvider.create(context, LABEL, config.getCredentials(), config.getApiKey(),
+			CredentialProvider.AUTHORIZATION, CredentialProvider.BEARER);
 		_baseUrl = config.getBaseUrl();
 		_searchDepth = config.getSearchDepth();
 		_includeAnswer = config.getIncludeAnswer();
 		_includeRawContent = config.getIncludeRawContent();
-		_http = new SearchHttp("Tavily", HTTP_CLIENT, sleeper, Clock.systemUTC());
+		_http = new SearchHttp(LABEL, HTTP_CLIENT, _credentials, sleeper, Clock.systemUTC());
 	}
 
 	@Override
@@ -208,12 +250,10 @@ public final class TavilySearchEngine implements WebSearchEngine {
 		String payload = DataClassSerializer.toJson(request, TavilySearchEngine.class, "search()");
 
 		String base = _baseUrl.endsWith("/") ? _baseUrl.substring(0, _baseUrl.length() - 1) : _baseUrl;
-		HttpRequest httpRequest = HttpRequest.newBuilder(URI.create(base + "/search"))
+		HttpRequest.Builder httpRequest = HttpRequest.newBuilder(URI.create(base + "/search"))
 			.header("Content-Type", "application/json")
-			.header("Authorization", "Bearer " + _apiKey)
 			.timeout(TIMEOUT)
-			.POST(BodyPublishers.ofString(payload, UTF_8))
-			.build();
+			.POST(BodyPublishers.ofString(payload, UTF_8));
 
 		HttpResponse<String> response = _http.send(httpRequest);
 		if (response.statusCode() / 100 != 2) {

@@ -40,31 +40,99 @@ The providers are configured on `LLMProviderService` (service editor: *LLM provi
 		<providers>
 			<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
 				name="anthropic"
-				api-key="%ANTHROPIC_API_KEY%"
 				models="claude-haiku-4-5-20251001,claude-sonnet-4-6"
-			/>
-			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
-				name="openai"
-				api-key="%OPENAI_API_KEY%"
-			/>
+			>
+				<api-key name="tl_anthropic_api_key"/>
+			</provider>
+			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig" name="openai">
+				<api-key name="tl_openai_api_key"/>
+			</provider>
 		</providers>
 		<model-catalog/>
 	</instance>
 </config>
 ```
 
-The API keys come from environment variables. `tl-ai-core.conf.xml` defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` from the variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key`. An `api-key` is an encrypted configuration value, so a key given in plain text carries the prefix `unencrypted:` - with no space after the colon, which would become part of the key:
+The API keys are named secrets: an `<api-key>` element without `class` attribute is a `NamedSecretSource`, which fetches the secret of that name at each request from the secret store of the installation (see [secret stores](doc:credentials/secret-stores)). The default store reads the system property or environment variable of that name, which holds the plain key:
 
 ```bash
-export tl_openai_api_key="unencrypted:sk-..."
-export tl_anthropic_api_key="unencrypted:sk-ant-..."
-export tl_mistral_api_key="unencrypted:..."
-export tl_xai_api_key="unencrypted:..."
+export tl_openai_api_key="sk-..."
+export tl_anthropic_api_key="sk-ant-..."
 ```
+
+This is the recommended form, because the configuration then holds the name of the secret, not the key: a key resolved from an alias such as `api-key="%ANTHROPIC_API_KEY%"` is part of the effective configuration, and the Service Editor writes it into the file it stores. A secret that is not available does not stop the application; only a request of that provider fails. The chapter [secrets and credentials](doc:credentials) describes all forms a key can take and where it can come from.
+
+The variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key` therefore hold the plain key. `tl-ai-core.conf.xml` still defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` for them, for applications whose configuration references the aliases: an alias is read as an encrypted value, so such an application either writes `api-key="unencrypted:%ANTHROPIC_API_KEY%"` (the variable holding the plain key) or, better, replaces the alias by the `<api-key>` element above ([migration](doc:credentials/migration)).
+
+A key given directly in the configuration is an `api-key` attribute. It is an encrypted configuration value, so a key in plain text carries the prefix `unencrypted:` - with no space after the colon, which would become part of the key: `api-key="unencrypted:sk-..."`.
+
+An `api-key` is a shorthand: the provider sends the key in the header its API expects (`x-api-key` for Anthropic, `api-key` for Azure OpenAI with `auth-scheme="API_KEY"`, otherwise `Authorization: Bearer`). The attribute form is a literal key; an `<api-key>` element selects a secret source (`SecretSource`), read at each request, like the variable above or a mounted secret file:
+
+```xml
+<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig" name="openai">
+	<api-key class="com.top_logic.basic.credential.FileSecretSource" path="/run/secrets/openai-api-key"/>
+</provider>
+```
+
+Instead of a key, a provider takes `<credentials>` (a `CredentialProvider`, see [credential providers](doc:credentials/credential-providers)), so that the application owns no long-lived secret; a provider that configures both does not start. A provider with neither sends its requests without credentials, e.g. to a gateway that adds them.
+
+In development, the requests go through the central [credential gateway](doc:credentials/gateway), which checks the token of the developer's device login and adds the provider key of the route (here `/anthropic/`). The OAuth credential providers come from the module `tl-credential-oauth`:
+
+```xml
+<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+	name="anthropic"
+	base-url="https://llm-gateway.example.com/anthropic"
+	models="claude-sonnet-4-6"
+>
+	<credentials class="com.top_logic.credential.oauth.DeviceLoginProvider"
+		issuer="https://login.example.com/realms/my-realm"
+		client-id="dev-gateway"
+		scope="openid offline_access"
+	>
+		<refresh-token-store class="com.top_logic.credential.oauth.FileRefreshTokenStore"/>
+	</credentials>
+</provider>
+```
+
+In production, the application authenticates itself at the same gateway with the client credentials grant, proving its identity with its Kubernetes service account token:
+
+```xml
+<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
+	name="openai"
+	base-url="https://llm-gateway.example.com/openai"
+>
+	<credentials class="com.top_logic.credential.oauth.ClientCredentialsProvider"
+		issuer="https://login.example.com/realms/my-realm"
+		client-id="my-app"
+	>
+		<client-authentication class="com.top_logic.credential.oauth.ClientAssertionAuthentication">
+			<assertion class="com.top_logic.basic.credential.FileSecretSource" path="/var/run/secrets/tokens/keycloak"/>
+		</client-authentication>
+	</credentials>
+</provider>
+```
+
+On Azure, Azure OpenAI accepts the token of the managed identity of the application (module `tl-credential-azure`):
+
+```xml
+<provider class="com.top_logic.tl.ai.core.provider.openai.AzureOpenAIProviderConfig"
+	name="azure-openai"
+	base-url="https://my-resource.openai.azure.com"
+	models="gpt-5.1"
+>
+	<credentials class="com.top_logic.credential.azure.ManagedIdentityCredentials"
+		resource="https://cognitiveservices.azure.com"
+	/>
+</provider>
+```
+
+A request rejected with HTTP 401 is repeated once with fresh credentials, so that an access token revoked before its announced end does not fail the run.
 
 Which model an agent runs on (`default-model`, `<agent-overrides>`), the turn limit and the chat entry point are set on `AgentRuntimeService`; where a run goes when its model cannot answer is the `<failover>` section of `LLMProviderService`. [Providers and failover](doc:ai/providers) describes the four configuration services and the provider system.
 
-The tool `createGiteaIssue` (factory `gitea`, group `egress`) files issues in a Gitea repository named by the environment variables `tl_gitea_url`, `tl_gitea_token`, `tl_gitea_repo_owner` and `tl_gitea_repo_name`; without them the tool answers with an error and creates nothing.
+The other HTTP services of the agents authenticate the same way. The search engines of `webSearch` (`BraveSearchEngine`, `TavilySearchEngine` on `WebToolsService`) take an `api-key` - best `<api-key name="tl_brave_api_key"/>`, the named secret holding the plain key - or `<credentials>`. A remote MCP server (`HttpMcpTransport`) and a remote A2A agent (`<remote-agent>` of `A2AService`, module `tl-ai-a2a`) take `<credentials>`, e.g. `HeaderCredentials` with `scheme="Bearer"` and a named secret `<secret name="..."/>`. The HTTP embedder of `tl-ai-index` (`OpenAiCompatibleEmbedder`) takes an `api-key`, sent as bearer token, or `<credentials>`. All of them repeat a request rejected with HTTP 401 once with fresh credentials. The vector index of `tl-ai-vector-index` takes its key as `<mistral-api-key name="tl_mistral_api_key"/>` and reads it when it starts; without a key it is disabled - the application starts, a warning is logged, nothing is indexed and a search reports that the index is not available.
+
+The tool `createGiteaIssue` (factory `gitea`, group `egress`) files issues in a Gitea repository named by the environment variables `tl_gitea_url`, `tl_gitea_repo_owner` and `tl_gitea_repo_name`; without them the tool answers with an error and creates nothing. It authenticates with the access token in the secret `tl_gitea_token`, or with the `<credentials>` of its `<tool class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool">` in the factory.
 
 Before an agent can read any business data, the application needs a `<security-config>` (model access rights) - the engine denies every operation to role-based accounts without one. [The security chapter](doc:ai/security) explains the two grant tables an application writes, and the [worked example](doc:ai/security/role-model-worked-example) builds both from scratch.
 

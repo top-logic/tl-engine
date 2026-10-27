@@ -1,0 +1,64 @@
+# Rendered by the nginx image at container start into /etc/nginx/conf.d/default.conf; the
+# variables in ${...} come from the container environment (see docker-compose.yml).
+#
+# Each route checks the access token of the caller through oauth2-proxy, removes it and adds the
+# key of the provider before forwarding the request. A route is the path prefix that the
+# application's provider configuration puts into its base-url, e.g.
+# base-url="https://llm-gateway.example.com/anthropic".
+
+server {
+	listen 8080;
+
+	# Requests of LLM calls carry whole conversations, images and documents.
+	client_max_body_size 50m;
+
+	# Streaming responses (server-sent events) are passed on as they arrive.
+	proxy_buffering off;
+	proxy_request_buffering off;
+	proxy_read_timeout 600s;
+	proxy_send_timeout 600s;
+	proxy_http_version 1.1;
+	proxy_ssl_server_name on;
+
+	# The token check of every request: oauth2-proxy validates signature, issuer, audience,
+	# expiry and role of the bearer token and answers 202 (accepted) or 401.
+	location = /_auth {
+		internal;
+		proxy_pass ${OAUTH2_PROXY_URL}/oauth2/auth;
+		proxy_pass_request_body off;
+		proxy_set_header Content-Length "";
+		proxy_set_header X-Original-URI $request_uri;
+	}
+
+	# Anthropic Messages API: key in x-api-key.
+	location /anthropic/ {
+		auth_request /_auth;
+		proxy_set_header Host $proxy_host;
+		proxy_set_header Connection "";
+		proxy_set_header Authorization "";
+		proxy_set_header x-api-key "${ANTHROPIC_API_KEY}";
+		proxy_pass ${ANTHROPIC_UPSTREAM}/;
+	}
+
+	# OpenAI API: key as bearer token, replacing the caller's token.
+	location /openai/ {
+		auth_request /_auth;
+		proxy_set_header Host $proxy_host;
+		proxy_set_header Connection "";
+		proxy_set_header Authorization "Bearer ${OPENAI_API_KEY}";
+		proxy_pass ${OPENAI_UPSTREAM}/;
+	}
+
+	# Mistral API: key as bearer token, replacing the caller's token.
+	location /mistral/ {
+		auth_request /_auth;
+		proxy_set_header Host $proxy_host;
+		proxy_set_header Connection "";
+		proxy_set_header Authorization "Bearer ${MISTRAL_API_KEY}";
+		proxy_pass ${MISTRAL_UPSTREAM}/;
+	}
+
+	location / {
+		return 404;
+	}
+}

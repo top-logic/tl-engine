@@ -7,6 +7,5 @@
         <entry name="%MYSQL_SCHEMA_TEST_MIGRATION%" value="${env:mysql_schema_testMigration:testMigration}" />
         <entry name="%MYSQL_PORT%" value="${env:mysql_port:3306}" />
         <entry name="%MYSQL_USER%" value="${env:mysql_user:user}"/>
-        <entry name="%MYSQL_PASSWD%" value="${env:mysql_passwd:unencrypted:passwd}"/>
 	</alias>
 </root>

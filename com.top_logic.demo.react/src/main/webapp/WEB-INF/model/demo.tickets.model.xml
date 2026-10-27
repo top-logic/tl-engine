@@ -89,6 +89,45 @@
 						ordered="true"
 						type="Comment"
 					/>
+					<property name="category"
+						type="tl.core:String"
+					>
+						<annotations>
+							<options>
+								<options-by-expression function="t -&gt; all(`demo.tickets:Ticket`).map(x -&gt; $x.get(`demo.tickets:Ticket#category`)).filter(c -&gt; $c != null).toSet()"/>
+							</options>
+						</annotations>
+					</property>
+					<property name="tags"
+						multiple="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<config-type value="STRING_SET"/>
+							<storage-algorithm>
+								<string-set-storage/>
+							</storage-algorithm>
+							<options>
+								<options-by-expression function="t -&gt; all(`demo.tickets:Ticket`).map(x -&gt; $x.get(`demo.tickets:Ticket#tags`)).flatten().toSet()"/>
+							</options>
+						</annotations>
+					</property>
+					<reference name="keywords"
+						kind="forwards"
+						multiple="true"
+						type="Keyword"
+					/>
+				</attributes>
+			</class>
+			<class name="Keyword">
+				<annotations>
+					<main-properties properties="name"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
 				</attributes>
 			</class>
 			<class name="Comment">

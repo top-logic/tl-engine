@@ -114,6 +114,14 @@
 	"Ticket updated." run in one transaction, and <leave-edit-mode/> after it ends the edit
 	session once the transaction is committed - the comment appearing in the conversation shows
 	that the script ran on the stored ticket.
+
+The Category, Tags and Keywords fields of that form are selections that also take a text of
+their own (free-entry="true"): the dropdown offers the values used so far, and a typed text naming
+none of them becomes a new value. Category holds one text, Tags several texts, and each offers the
+texts the tickets carry so far. Keywords references Keyword objects: a typed text creates a
+transient Keyword through the create script, which storing the form makes persistent and Cancel
+drops. "Generate samples" gives the generated tickets a category, tags and keywords, so the
+option lists start filled.
 -->
 <view>
 	<channels>
@@ -257,7 +265,7 @@
 									/>
 								</executability>
 								<with-transaction>
-									<execute-script function="{ areas = ['Login', 'Export', 'Layout', 'Import']; other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
+									<execute-script function="{ areas = ['Login', 'Export', 'Layout', 'Import']; categories = ['Bug', 'Feature', 'Question']; tags = [['backend'], ['ui', 'urgent'], []]; keywords = ['Performance', 'Usability', 'Security'].map(n -> { existing = all(`demo.tickets:Keyword`).filter(k -> $k.get(`demo.tickets:Keyword#name`) == $n).firstElement(); if($existing == null, new(`demo.tickets:Keyword`)..set(`demo.tickets:Keyword#name`, $n), $existing); }); other = all(`tl.accounts:Person`).filter(p -> $p != currentUser()).firstElement(); count(8).foreach(i -> { t = new(`demo.tickets:Ticket`, transient: false); $t.set(`demo.tickets:Ticket#name`, $areas[$i % 4] + ' ' + ($i + 1)); $t.set(`demo.tickets:Ticket#category`, $categories[$i % 3]); $t.set(`demo.tickets:Ticket#tags`, $tags[$i % 3]); $t.set(`demo.tickets:Ticket#keywords`, if($i % 2 == 0, [$keywords[$i % 3]], [])); $t.set(`demo.tickets:Ticket#status`, if($i % 4 == 3, `demo.tickets:TicketStatus#closed`, if($i % 4 == 1, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#open`))); count($i % 3).foreach(j -> { c = new(`demo.tickets:Comment`, $t); $c.set(`demo.tickets:Comment#content`, 'Comment ' + ($j + 1) + '.'); $c.set(`demo.tickets:Comment#author`, if($i % 2 == 0, currentUser(), $other)); $c.set(`demo.tickets:Comment#date`, now()); $t.add(`demo.tickets:Ticket#comments`, $c); }); $t; }); }"/>
 								</with-transaction>
 							</generic-command>
 							<generic-command
@@ -490,6 +498,9 @@
 									<column attribute="name"/>
 									<column attribute="status"/>
 									<column attribute="statusLabel"/>
+									<column attribute="category"/>
+									<column attribute="tags"/>
+									<column attribute="keywords"/>
 									<computed-column name="comments"
 										type="tl.core:Integer"
 									>
@@ -607,6 +618,22 @@
 							<field attribute="statusLabel"/>
 							<field attribute="headline"/>
 							<field attribute="resolution"/>
+							<field attribute="category">
+								<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+									free-entry="true"
+								/>
+							</field>
+							<field attribute="tags">
+								<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+									free-entry="true"
+								/>
+							</field>
+							<field attribute="keywords">
+								<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+									create="new(`demo.tickets:Keyword`, transient: true)..set(`demo.tickets:Keyword#name`, $text)"
+									free-entry="true"
+								/>
+							</field>
 							<commands>
 								<generic-command
 									image="css:bi bi-pencil"

@@ -71,7 +71,7 @@ public class TestTreeElementDragDrop extends BasicTestCase {
 	/** The object the test tree is built from, displayed as no node. */
 	private static final String ROOT = "root";
 
-	/** The first top-level object, with the children {@link #A1} and {@link #A2}. */
+	/** The first top-level object, with the children {@link #A1} and a second one. */
 	private static final String A = "a";
 
 	/** The first child of {@link #A}. */

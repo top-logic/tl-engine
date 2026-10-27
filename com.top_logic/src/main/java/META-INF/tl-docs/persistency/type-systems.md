@@ -221,6 +221,8 @@ The model is handled separately: `DynamicModelService` compares the model of the
 
 An explicit migration is a `*.migration.xml` file in `WEB-INF/kbase/migration/<module>/`, where `<module>` is the name registered in the `modules` of the `MigrationService`. Each file has a `version`, the `dependencies` on the latest versions of the modules it builds on, and processors that run in the phases `pre-processors`, `processors`, `migration` (a replay of the history) and `post-processors`. It runs once, at the first start of an application version that contains it. The archetype ships a launch configuration *Create migration template* that runs `CreateMigrationScriptTemplate --name <name>`, which creates the file with the current dependencies filled in.
 
+A migration runs only if the database stores a version of its module. The database setup stores the maximal version of every module with a migration folder, and every startup stores it for each module that has no stored version yet. A module without stored version is considered new to the application, e.g. a framework module just added as dependency, and its migrations are skipped (logged as "Skipping migrations of module ..."). This is wrong for an application whose database was created before it had its folder `WEB-INF/kbase/migration/<module>/`: its first migration must come with `minimum-modules="<module>"` in the configuration of the `MigrationService`, see [the upgrade guide](doc:upgrade-7.11-to-8.0#83-own-migrations).
+
 Processors are written with their tag name, or as `<processor class="…"/>` for a processor without one. The demo application added a column to its table `DemoTypes` like this (dependencies trimmed); the same `<mo_attribute>` was added to `DemoTypesMeta.xml`:
 
 ```xml

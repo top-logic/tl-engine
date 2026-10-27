@@ -8,7 +8,6 @@ package com.top_logic.knowledge.event.convert;
 import java.util.Map;
 
 import com.top_logic.knowledge.event.ItemChange;
-import com.top_logic.knowledge.event.ItemEvent;
 import com.top_logic.knowledge.event.ItemUpdate;
 
 /**
@@ -22,7 +21,7 @@ public abstract class AbstractValueConverter extends RewritingEventVisitor {
 	/**
 	 * Translates the values of the event using {@link #translateValues(ItemChange, Map)}.
 	 * 
-	 * @see #visitItemEvent(ItemEvent, Void)
+	 * @see #visitUpdate(ItemUpdate, Void)
 	 */
 	@Override
 	protected Object visitItemChange(ItemChange event, Void arg) {

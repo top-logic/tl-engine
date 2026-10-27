@@ -176,6 +176,54 @@ public class TreeRowSource<N, R> implements RowSource<R>, RowHierarchy<R> {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The data rows counted are the nodes of the {@link TreeStructure} whose own business object
+	 * the given filter lets pass. An ancestor the filter displays only to lead to a matching
+	 * descendant is not counted: it is shown for its position in the tree, not because it is one of
+	 * the rows the filter selects. A tree that is not {@link TreeStructure#isFinite() finite}
+	 * cannot be counted, its complete node set cannot be enumerated, so it answers
+	 * {@link #UNKNOWN_COUNT}.
+	 * </p>
+	 *
+	 * <p>
+	 * This source does not tell the {@link #matchCount() count under its current filter}; the
+	 * count answered here does not touch that filter or the expansion of a node, it walks the
+	 * structure on its own.
+	 * </p>
+	 */
+	@Override
+	public int matchCount(FilterSpec filter) {
+		if (!_structure.isFinite()) {
+			return UNKNOWN_COUNT;
+		}
+		Predicate<R> predicate = ColumnLogic.predicate(filter, _byName);
+		int result = 0;
+		for (N root : _structure.roots()) {
+			result += countMatches(root, predicate);
+		}
+		return result;
+	}
+
+	/**
+	 * The number of nodes in the subtree of the given node, the node included, whose own business
+	 * object the given predicate accepts.
+	 *
+	 * @param predicate
+	 *        The filter to count, {@code null} to count every node.
+	 */
+	private int countMatches(N node, Predicate<R> predicate) {
+		int result = predicate == null || predicate.test(_structure.businessObject(node)) ? 1 : 0;
+		if (!_structure.isLeaf(node)) {
+			for (N child : _structure.children(node)) {
+				result += countMatches(child, predicate);
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public RowSource<R> withOrder(SortSpec sort) {
 		_sort = sort;

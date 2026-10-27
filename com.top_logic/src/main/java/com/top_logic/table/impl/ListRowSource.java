@@ -172,6 +172,30 @@ public class ListRowSource<R> implements RowSource<R> {
 		return _matching.size();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Tests every backing element against the given filter, as {@link #withFilter(FilterSpec)}
+	 * would; the grouping does not matter, since the count is of the data rows, not of the group
+	 * rows displayed around them.
+	 * </p>
+	 */
+	@Override
+	public int matchCount(FilterSpec filter) {
+		Predicate<R> predicate = ColumnLogic.predicate(filter, _byName);
+		if (predicate == null) {
+			return _elements.size();
+		}
+		int result = 0;
+		for (R element : _elements) {
+			if (predicate.test(element)) {
+				result++;
+			}
+		}
+		return result;
+	}
+
 	@Override
 	public int dataCount() {
 		return _dataCount;

@@ -347,8 +347,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		// computed from the inputs apart from the rows.
 		InputRoles roles = inputRoles(context, inputChannels);
 		Runnable inputsChanged = () -> {
-			refreshPresets(table, ChannelInputs.arguments(inputChannels));
-			if (rowCssClass != null) {
+			if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+				// Pushes the rows again as well, for their row class.
+				control.refreshFilters();
+			} else if (rowCssClass != null) {
 				control.repaintRows();
 			}
 		};

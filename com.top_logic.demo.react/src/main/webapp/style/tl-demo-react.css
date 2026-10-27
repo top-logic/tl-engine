@@ -109,3 +109,35 @@
 	box-shadow: var(--shadow-glow);
 	backdrop-filter: blur(var(--surface-blur));
 }
+
+/*
+ * A chip standing for something that needs attention, like the preset of the ticket list selecting
+ * the tickets nobody has commented on: unpressed, its line, its label and its count are drawn in
+ * the colours of a warning; pressed, it keeps the brand surface of a chosen chip and shows the
+ * warning as a doubled line around it.
+ *
+ * The rules name the class beside tl-chip, so that they outweigh the chip's own rules for the
+ * line and the label, its hover included.
+ */
+.tl-chip.tlDemoNeedsAttention {
+	border-color: var(--tl-status-warning-border);
+	color: var(--tl-status-warning-text);
+}
+
+.tl-chip.tlDemoNeedsAttention > .tl-chip__detail {
+	color: inherit;
+}
+
+.tl-chip.tlDemoNeedsAttention[aria-pressed="true"] {
+	border-color: var(--tl-status-warning-border);
+	box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-status-warning-border);
+	color: var(--tl-text-on-brand);
+}
+
+/*
+ * A node of the tree table display demo standing for an approved milestone: its label in the
+ * color a success is reported in.
+ */
+.tlDemoApproved {
+	color: var(--tl-status-success-text);
+}

@@ -190,6 +190,17 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		 * The setting is required for upgrading systems from a version before the introduction of
 		 * initial versions.
 		 * </p>
+		 * 
+		 * <p>
+		 * A module without a version stored in the database is considered new to the application:
+		 * Its data does not exist, and all its migrations are skipped. This is wrong for the first
+		 * own migration of an application whose database was created while the application had no
+		 * migration folder: Its data exists, but no version of its module was stored. Such an
+		 * application must list its migration module here, so that its migrations are applied. The
+		 * entry must come with the first migration: Each startup stores the maximal version of each
+		 * module without stored version, so that a skipped migration counts as applied afterwards.
+		 * Skipped migrations of a module without stored version are logged.
+		 * </p>
 		 */
 		@Format(CommaSeparatedStrings.class)
 		@Name(MINIMUM_MODULES)
@@ -560,11 +571,11 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 					// Check that everything is ok.
 					log.checkErrors();
-					if (changes) {
-						commitConnection(log, connection, "Unable to commit automatic schema changes.");
-						return;
-					}
 
+					boolean versionsStored = storeMissingVersions(log, connection);
+					if (changes || versionsStored) {
+						commitConnection(log, connection, "Unable to commit automatic schema and version changes.");
+					}
 				}
 				return;
 			}
@@ -585,6 +596,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				migrate(context, log, connection);
 
 			MigrationUtil.updateStoredVersions(log, connection, maximalVersionByModule.values());
+			storeMissingVersions(log, connection);
 
 			// Update stored schema to be compatible with the current application configuration.
 			StoreTypeConfiguration store = TypedConfigUtil.createInstance(StoreTypeConfiguration.Config.class);
@@ -632,6 +644,32 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			 * Oracle). */
 			_connectionPool.invalidateWriteConnection(connection);
 		}
+	}
+
+	/**
+	 * Stores the maximal version of each migration module that has no version stored in the
+	 * database.
+	 * 
+	 * <p>
+	 * A module without stored version is considered new to the application, its migrations are
+	 * skipped. Storing its current version makes the next migration of the module run.
+	 * </p>
+	 * 
+	 * @return Whether some version was written. The connection is not committed.
+	 */
+	private boolean storeMissingVersions(Protocol log, PooledConnection connection) {
+		Map<String, Version> storedVersions;
+		try {
+			storedVersions = MigrationUtil.readStoredVersions(connection, getConfig().getModules());
+		} catch (SQLException ex) {
+			log.error("Unable to read stored versions.", ex);
+			return false;
+		}
+		List<Version> missingVersions =
+			MigrationUtil.versionsOfUnstoredModules(MigrationUtil.maximalVersions(log), storedVersions);
+		MigrationUtil.updateStoredVersions(log, connection, missingVersions);
+		log.checkErrors();
+		return !missingVersions.isEmpty();
 	}
 
 	private void commitConnection(Protocol log, PooledConnection connection, String failureMessage) {

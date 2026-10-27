@@ -36,6 +36,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_ANONYMOUS_ACCOUNT_NOT_EDITABLE;
 
+	/**
+	 * @en Assigned contact data to account.
+	 */
+	public static ResKey ASSIGNED_CONTACT_TO_ACCOUNT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

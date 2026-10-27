@@ -46,6 +46,17 @@ declare module 'tl-react-bridge' {
    */
   export const expectEvents: ((serverLast?: number) => void) | undefined
 
+  /**
+   * Loads the page again because the server no longer knows it, unless that was done within the
+   * last seconds (one guard for every part of the page) or the page is leaving anyway.
+   *
+   * @returns whether the page is being or will be loaded again.
+   */
+  export function reloadForStaleUi(options?: { waitForGuard?: boolean }): boolean
+
+  /** Whether the page is navigating away and must not talk to the server any more. */
+  export function isPageLeaving(): boolean
+
   /** Stops a listener `subscribe` added. */
   export function unsubscribe(controlId: string, listener: (patch: Record<string, unknown>) => void): void
 

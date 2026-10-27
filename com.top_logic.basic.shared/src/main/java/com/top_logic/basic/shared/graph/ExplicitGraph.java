@@ -358,7 +358,7 @@ public abstract class ExplicitGraph<V extends ExplicitGraph<V, E>.Node, E extend
 	 * 
 	 * @param vertex
 	 *        the vertex to check
-	 * @return {@code true} if the given vertex was {@link #add(Node) added} to this graph,
+	 * @return {@code true} if the given vertex was {@link #add(ExplicitGraph.Node) added} to this graph,
 	 *         {@code false} otherwise
 	 */
 	public boolean containsNode(final V vertex) {

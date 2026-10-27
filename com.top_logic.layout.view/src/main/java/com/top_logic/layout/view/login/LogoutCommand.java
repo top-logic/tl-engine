@@ -11,11 +11,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.layout.view.command.DirtyCheckScope;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -75,15 +74,8 @@ public class LogoutCommand implements ViewCommand {
 	public HandlerResult execute(ReactContext context, Object input) {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		PendingSessionAction.requestLogout(displayContext.asRequest().getSession());
-		context.getSSEQueue().enqueue(JSSnipplet.create().setCode(navigateToRootCode(context)));
+		context.getSSEQueue().enqueue(
+			PageNavigationEvent.create().setUrl(context.getContextPath() + ViewServlet.ROOT_PATH));
 		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	private static String navigateToRootCode(ReactContext context) {
-		StringBuilder code = new StringBuilder();
-		code.append("window.location.href = ");
-		TagUtil.writeJsString(code, context.getContextPath() + ViewServlet.ROOT_PATH);
-		code.append(";");
-		return code.toString();
 	}
 }

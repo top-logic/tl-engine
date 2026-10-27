@@ -13,12 +13,12 @@ import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 
+/*package protected*/
 /**
  * {@link Transaction} implementation of {@link DBKnowledgeBase}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-/*package protected*/
 class TransactionImpl extends AbstractTransaction {
 
 	/**

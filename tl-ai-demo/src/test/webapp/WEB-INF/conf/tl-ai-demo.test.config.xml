@@ -32,24 +32,7 @@
 						models="claude-sonnet-4-5-20250929"
 					/>
 				</providers>
-				<model-catalog fetch-remote-catalog="false">
-					<llm-configuration>
-						<model name="mistral-large-latest"
-							context-window="131072"
-							max-output="8192"
-							reasoning="false"
-							tool-call="true"
-							temperature="true"
-						/>
-						<model name="claude-sonnet-4-5-20250929"
-							context-window="200000"
-							max-output="64000"
-							reasoning="true"
-							tool-call="true"
-							temperature="true"
-						/>
-					</llm-configuration>
-				</model-catalog>
+				<model-catalog fetch-remote-catalog="false"/>
 			</instance>
 		</config>
 

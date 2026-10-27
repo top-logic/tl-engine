@@ -138,4 +138,14 @@ public interface DynamicColumnSet {
 		return null;
 	}
 
+	/**
+	 * The CSS class of a cell of the given column, computed from the row and the value of the
+	 * cell, {@code null} for a column whose cells have none.
+	 *
+	 * @see ColumnSetup#cellClass()
+	 */
+	default BiFunction<Object, Object, String> cellClass(Object column) {
+		return null;
+	}
+
 }

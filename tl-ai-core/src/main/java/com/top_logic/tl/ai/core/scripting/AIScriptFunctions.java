@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
+import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
@@ -67,6 +69,9 @@ import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
+import com.top_logic.tl.ai.core.provider.catalog.CatalogStatus;
+import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.tl.ai.core.provider.catalog.ResolvedModel;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.RunSecurity;
@@ -119,6 +124,78 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	private static final AgentEventListener NO_LISTENER = event -> {
 		// TL-Script functions have no streaming surface.
 	};
+
+	/** Key of a {@link #modelCatalog()} row: the name of the configured provider. */
+	public static final String MODEL_PROVIDER = "provider";
+
+	/** Key of a {@link #modelCatalog()} row: the name of the model. */
+	public static final String MODEL_NAME = "model";
+
+	/**
+	 * Key of a {@link #modelCatalog()} row: where the metadata of the model comes from, a
+	 * {@link ResolvedModel.Origin}.
+	 */
+	public static final String MODEL_ORIGIN = "origin";
+
+	/** Key of a {@link #modelCatalog()} row: the context window in tokens, a {@link Long}. */
+	public static final String MODEL_CONTEXT_WINDOW = "contextWindow";
+
+	/** Key of a {@link #modelCatalog()} row: the maximum output per response in tokens, a {@link Long}. */
+	public static final String MODEL_MAX_OUTPUT = "maxOutput";
+
+	/** Key of a {@link #modelCatalog()} row: US dollars per million input tokens, a {@link Double}. */
+	public static final String MODEL_INPUT_PRICE = "inputPrice";
+
+	/** Key of a {@link #modelCatalog()} row: US dollars per million output tokens, a {@link Double}. */
+	public static final String MODEL_OUTPUT_PRICE = "outputPrice";
+
+	/** Key of a {@link #modelCatalog()} row: US dollars per million cache-read tokens, a {@link Double}. */
+	public static final String MODEL_CACHE_READ_PRICE = "cacheReadPrice";
+
+	/** Key of a {@link #modelCatalog()} row: US dollars per million cache-write tokens, a {@link Double}. */
+	public static final String MODEL_CACHE_WRITE_PRICE = "cacheWritePrice";
+
+	/** Key of a {@link #modelCatalog()} row: whether the model reasons before answering, a {@link Boolean}. */
+	public static final String MODEL_REASONING = "reasoning";
+
+	/** Key of a {@link #modelCatalog()} row: whether the model calls tools, a {@link Boolean}. */
+	public static final String MODEL_TOOL_CALL = "toolCall";
+
+	/** Key of a {@link #modelCatalog()} row: whether the model accepts attachments, a {@link Boolean}. */
+	public static final String MODEL_ATTACHMENT = "attachment";
+
+	/**
+	 * Key of a {@link #modelCatalog()} row: whether the model answers in a requested JSON structure,
+	 * a {@link Boolean}.
+	 */
+	public static final String MODEL_STRUCTURED_OUTPUT = "structuredOutput";
+
+	/** Key of a {@link #modelCatalog()} row: the end of the training data, a text like "2025-03-31". */
+	public static final String MODEL_KNOWLEDGE_CUTOFF = "knowledgeCutoff";
+
+	/** Key of a {@link #modelCatalog()} row: the release date of the model, a text like "2025-05-22". */
+	public static final String MODEL_RELEASE_DATE = "releaseDate";
+
+	/**
+	 * Key of a {@link #modelCatalog()} row: the lifecycle status the catalog reports
+	 * ({@code alpha}, {@code beta}, {@code deprecated}); absent for a generally available model.
+	 */
+	public static final String MODEL_STATUS = "status";
+
+	/** Key of the {@link #modelCatalogStatus()} map: the {@link CatalogStatus.State}. */
+	public static final String CATALOG_STATE = "state";
+
+	/** Key of the {@link #modelCatalogStatus()} map: the URL of the remote catalog. */
+	public static final String CATALOG_URL = "url";
+
+	/**
+	 * Key of the {@link #modelCatalogStatus()} map: when the metadata in use was installed, a
+	 * {@link Date}.
+	 */
+	public static final String CATALOG_INSTALLED_AT = "installedAt";
+
+	/** Key of the {@link #modelCatalogStatus()} map: why loading the remote catalog failed. */
+	public static final String CATALOG_FAILURE = "failure";
 
 	/**
 	 * Returns a list of all available model names from the {@link LLMProviderService}.
@@ -1152,6 +1229,144 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			row.put("expiresAt", mark.expiresAt());
 			result.add(row);
 		}
+		return result;
+	}
+
+	/**
+	 * Every model the configured providers serve, with the metadata the model catalog holds for it.
+	 *
+	 * <p>
+	 * One map per pair of a configured provider and a model it is configured to serve, the providers
+	 * and their models in configuration order; a model served by two providers appears twice. The
+	 * keys are {@link #MODEL_PROVIDER}, {@link #MODEL_NAME}, {@link #MODEL_ORIGIN} (where the metadata
+	 * comes from: the bundled catalog, the remote catalog or a model override of the service
+	 * configuration), the limits {@link #MODEL_CONTEXT_WINDOW} and {@link #MODEL_MAX_OUTPUT}, the
+	 * prices in US dollars per million tokens {@link #MODEL_INPUT_PRICE}, {@link #MODEL_OUTPUT_PRICE},
+	 * {@link #MODEL_CACHE_READ_PRICE} and {@link #MODEL_CACHE_WRITE_PRICE}, the capabilities
+	 * {@link #MODEL_REASONING}, {@link #MODEL_TOOL_CALL}, {@link #MODEL_ATTACHMENT} and
+	 * {@link #MODEL_STRUCTURED_OUTPUT}, and {@link #MODEL_KNOWLEDGE_CUTOFF},
+	 * {@link #MODEL_RELEASE_DATE} and {@link #MODEL_STATUS}. A value the catalog does not know is
+	 * absent. A model the catalog does not describe at all has only a provider and a name: the
+	 * service then works without limits and prices for it.
+	 * </p>
+	 *
+	 * <p>
+	 * A read for a monitor, so it takes nothing and needs no permission: which models are configured
+	 * and what is known about them is operational state, not anybody's data.
+	 * </p>
+	 *
+	 * @return One map per configured model of each provider; empty while the LLM provider service
+	 *         is not running.
+	 *
+	 * @see #modelCatalogStatus()
+	 */
+	@SideEffectFree
+	public static List<Map<String, Object>> modelCatalog() {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
+			return List.of();
+		}
+		return modelCatalog(LLMProviderService.getInstance());
+	}
+
+	/**
+	 * The rows of {@link #modelCatalog()} for the given service.
+	 */
+	static List<Map<String, Object>> modelCatalog(LLMProviderService service) {
+		List<Map<String, Object>> result = new ArrayList<>();
+		for (String provider : service.getConfiguredProviderNames()) {
+			for (String model : service.getModelsOf(provider)) {
+				Map<String, Object> row = new LinkedHashMap<>();
+				row.put(MODEL_PROVIDER, provider);
+				row.put(MODEL_NAME, model);
+				ResolvedModel entry = service.getCatalogEntry(model);
+				if (entry != null) {
+					row.put(MODEL_ORIGIN, entry.origin());
+					putModelInfo(row, entry.info());
+				}
+				result.add(row);
+			}
+		}
+		return result;
+	}
+
+	private static void putModelInfo(Map<String, Object> row, ModelInfo info) {
+		ModelInfo.ModelLimits limits = info.limits();
+		if (limits != null) {
+			putPositive(row, MODEL_CONTEXT_WINDOW, limits.contextWindow());
+			putPositive(row, MODEL_MAX_OUTPUT, limits.maxOutput());
+		}
+		ModelInfo.ModelCost cost = info.cost();
+		if (cost != null) {
+			row.put(MODEL_INPUT_PRICE, Double.valueOf(cost.input()));
+			row.put(MODEL_OUTPUT_PRICE, Double.valueOf(cost.output()));
+			putPresent(row, MODEL_CACHE_READ_PRICE, cost.cacheRead());
+			putPresent(row, MODEL_CACHE_WRITE_PRICE, cost.cacheWrite());
+		}
+		ModelInfo.ModelCapabilities capabilities = info.capabilities();
+		if (capabilities != null) {
+			row.put(MODEL_REASONING, Boolean.valueOf(capabilities.reasoning()));
+			row.put(MODEL_TOOL_CALL, Boolean.valueOf(capabilities.toolCall()));
+			row.put(MODEL_ATTACHMENT, Boolean.valueOf(capabilities.attachment()));
+			row.put(MODEL_STRUCTURED_OUTPUT, Boolean.valueOf(capabilities.structuredOutput()));
+		}
+		ModelInfo.ModelDates dates = info.dates();
+		if (dates != null) {
+			putPresent(row, MODEL_KNOWLEDGE_CUTOFF, dates.knowledgeCutoff());
+			putPresent(row, MODEL_RELEASE_DATE, dates.releaseDate());
+		}
+		putPresent(row, MODEL_STATUS, info.status());
+	}
+
+	private static void putPositive(Map<String, Object> row, String key, int value) {
+		if (value > 0) {
+			row.put(key, Long.valueOf(value));
+		}
+	}
+
+	private static void putPresent(Map<String, Object> row, String key, Object value) {
+		if (value != null) {
+			row.put(key, value);
+		}
+	}
+
+	/**
+	 * The state of the model catalog that {@link #modelCatalog()} reports from.
+	 *
+	 * <p>
+	 * The keys are {@link #CATALOG_STATE} (whether the remote catalog is switched off, being loaded,
+	 * loaded or failed to load), {@link #CATALOG_URL} (the remote catalog), {@link #CATALOG_INSTALLED_AT}
+	 * (when the metadata in use was installed: at the start of the service, or when the remote
+	 * catalog arrived) and {@link #CATALOG_FAILURE} (why loading the remote catalog failed, only in
+	 * the state "failed").
+	 * </p>
+	 *
+	 * <p>
+	 * A read for a monitor, so it takes nothing and needs no permission.
+	 * </p>
+	 *
+	 * @return The status; <code>null</code> while the LLM provider service is not running.
+	 */
+	@SideEffectFree
+	public static Map<String, Object> modelCatalogStatus() {
+		if (!LLMProviderService.Module.INSTANCE.isActive()) {
+			return null;
+		}
+		return modelCatalogStatus(LLMProviderService.getInstance());
+	}
+
+	/**
+	 * The map of {@link #modelCatalogStatus()} for the given service.
+	 */
+	static Map<String, Object> modelCatalogStatus(LLMProviderService service) {
+		CatalogStatus status = service.catalogStatus();
+		if (status == null) {
+			return null;
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(CATALOG_STATE, status.state());
+		result.put(CATALOG_URL, status.catalogUrl());
+		result.put(CATALOG_INSTALLED_AT, Date.from(status.installedAt()));
+		result.put(CATALOG_FAILURE, status.failure());
 		return result;
 	}
 

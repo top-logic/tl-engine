@@ -29,6 +29,8 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
  */
 public class TaskTestUtil {
 
+	/* The raw-type "T extends Task" instead of "T extends Task" is a workaround for Eclipse 4.8. If
+	 * it is correctly typed, Eclipse 4.8 shows a compiler error on every call of this method. */
 	/**
 	 * Initialize the field {@link TaskImpl#_log} per reflection for tests that don't need a
 	 * {@link Scheduler}.
@@ -37,8 +39,6 @@ public class TaskTestUtil {
 	 * there is no {@link Scheduler} interface, yet.
 	 * </p>
 	 */
-	/* The raw-type "T extends Task" instead of "T extends Task" is a workaround for Eclipse 4.8. If
-	 * it is correctly typed, Eclipse 4.8 shows a compiler error on every call of this method. */
 	@SuppressWarnings("rawtypes")
 	public static <T extends Task> T initTaskLog(T task) {
 		if (!(task instanceof TaskImpl)) {

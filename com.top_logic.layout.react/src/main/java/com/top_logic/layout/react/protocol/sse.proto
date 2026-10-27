@@ -202,6 +202,26 @@ message RouteChangeEvent extends SSEEvent {
 }
 
 /**
+ * Tells the client to leave the page it displays: to load it again, or to load another address.
+ *
+ * <p>
+ * Sent when what the page shows no longer holds as a whole - a login or logout replaced the session,
+ * the user chose another language, the server discarded the window's tree. The client stops talking
+ * to the server for the page it leaves: it sends no further command and does not react to the
+ * answers that the server, which may already have replaced the session, gives to requests still on
+ * their way.
+ * </p>
+ */
+message PageNavigationEvent extends SSEEvent {
+	/**
+	 * The address to load, as a link names it: absolute, or relative to the address of the page. Empty
+	 * loads the displayed page again. The address names a page that replaces the displayed one, not a
+	 * download: the client does not talk to the server for the page it left any more.
+	 */
+	string url;
+}
+
+/**
  * Tells the client that the history move to this URL, refused over unsaved changes, may now be
  * made: the changes are resolved.
  */

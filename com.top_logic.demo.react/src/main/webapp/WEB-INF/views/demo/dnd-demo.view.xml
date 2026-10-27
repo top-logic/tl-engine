@@ -269,6 +269,7 @@
 													<column attribute="lane"/>
 													<column attribute="notes"/>
 												</columns>
+												<export/>
 											</tree-table>
 										</panel>
 									</pane>

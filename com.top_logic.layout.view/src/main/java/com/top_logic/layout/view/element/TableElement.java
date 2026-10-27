@@ -9,9 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -42,7 +40,6 @@ import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DropConfig;
@@ -61,7 +58,6 @@ import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.layout.view.table.RowClassConfig;
 import com.top_logic.layout.view.table.RowClassFunction;
-import com.top_logic.layout.view.table.TableExportCommand;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -73,10 +69,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
-import com.top_logic.table.TableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
-import com.top_logic.tool.export.ExcelCellRenderer;
 
 /**
  * Declarative {@link UIElement} that renders a model-defined table (the {@code 
@@ -135,9 +129,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 
 		/** Configuration name for {@link #getDrops()}. */
 		String DROPS = "drops";
-
-		/** Configuration name for {@link #getExport()}. */
-		String EXPORT = "export";
 
 		/**
 		 * TL-Script expression computing the row objects (a {@link Collection}).
@@ -248,20 +239,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			}
 			return AbstractTableElement.Config.super.actionScope(part, outer);
 		}
-
-		/**
-		 * The export of this table to Excel, offered as a command in the toolbar of the element the
-		 * table is displayed in, as the first command of its group.
-		 *
-		 * <p>
-		 * The export holds what the user sees: the displayed columns in their order and the
-		 * displayed rows - filtered, searched, sorted and grouped as the table is. A column is left
-		 * out by {@code export="false"} on its declaration, and its cells are written by the
-		 * declaration's {@code export-renderer}. Unset (default), the table offers no export.
-		 * </p>
-		 */
-		@Name(EXPORT)
-		TableExportCommand.Config getExport();
 	}
 
 	/**
@@ -289,9 +266,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
 	private final List<DeclaredDrop> _drops;
 
-	/** The instantiated {@link Config#getExport()} command, {@code null} for a table not exported. */
-	private final TableExportCommand _export;
-
 	/**
 	 * Creates a {@link TableElement} from configuration.
 	 */
@@ -312,8 +286,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			context.error("A <table> with '" + Config.ROW_EDIT + "' is not edited in place ('"
 				+ Config.EDIT_IN_PLACE + "').");
 		}
-		TableExportCommand.Config export = config.getExport();
-		_export = export == null ? null : new TableExportCommand(export);
 	}
 
 	@Override
@@ -352,8 +324,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		// computed from the inputs apart from the rows.
 		InputRoles roles = inputRoles(context, inputChannels);
 		Runnable inputsChanged = () -> {
-			refreshPresets(table, ChannelInputs.arguments(inputChannels));
-			if (rowCssClass != null) {
+			if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+				// Pushes the rows again as well, for their row class.
+				control.refreshFilters();
+			} else if (rowCssClass != null) {
 				control.repaintRows();
 			}
 		};
@@ -438,46 +412,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			control::getExportRenderers, inputChannels);
 
 		return control;
-	}
-
-	/**
-	 * Contributes the {@link Config#getExport() export} command to the enclosing command scope - the
-	 * toolbar of the element the table is displayed in - for as long as the table is displayed.
-	 *
-	 * @param control
-	 *        The control displaying the table.
-	 * @param view
-	 *        The table as it is displayed when the export runs.
-	 * @param renderers
-	 *        The export renderers of the columns displayed when the export runs; asked for only
-	 *        then, since the columns of a row-edit table change with the edit mode.
-	 * @param inputChannels
-	 *        The table's input channels, whose values the download name is computed from.
-	 */
-	private void contributeExportCommand(ViewContext context, ReactControl control,
-			Supplier<? extends TableView<?>> view, Supplier<Map<String, ExcelCellRenderer>> renderers,
-			List<ViewChannel> inputChannels) {
-		if (_export == null) {
-			return;
-		}
-		CommandScope scope = context.getScope(CommandScope.class);
-		if (scope == null) {
-			_log.info("The <" + Config.EXPORT + "> of a <table> needs an enclosing element with a toolbar, "
-				+ "e.g. a <panel>, to be offered.");
-			return;
-		}
-		ViewCommand bound = _export.bind(view, renderers, () -> ChannelInputs.arguments(inputChannels));
-		ViewCommandModel model = ViewCommandModel.forCommand(context, bound, _export.getConfig());
-		control.addAttachListener(() -> {
-			model.attach(context.getModelScope());
-			// The export of the table itself is the primary command of the export group, ahead of
-			// further exports the enclosing element offers.
-			scope.addCommandFirst(model);
-		});
-		control.addDetachListener(() -> {
-			scope.removeCommand(model);
-			model.detach();
-		});
 	}
 
 	/**

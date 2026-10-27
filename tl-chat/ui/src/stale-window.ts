@@ -9,29 +9,11 @@
  * to load the page again: that renders the window, and its chat, in the session the browser holds
  * now.
  *
- * Nothing read that answer before issue #574. A send was taken for "the agent is busy" and the
- * typed message vanished, and a closed event stream was re-opened once a second for as long as the
- * page stayed open. Now every call goes through {@link chatFetch}, which turns the answer into one
- * guarded reload.
+ * Every call goes through {@link chatFetch}, which turns the answer into one guarded reload, so a
+ * send is not taken for "the agent is busy" and the typed message waits for the reloaded page.
  */
 
-/**
- * Where the time of the last such reload is kept.
- *
- * The engine's own key (`STALE_UI_RELOAD_TIME_KEY` in the bridge's `command-channel.ts`), on
- * purpose: the page is reloaded for the same reason when one of its React commands is answered
- * `stale-ui`, and one guard for both is what keeps the chat and the page from reloading each
- * other in turns.
- */
-const RELOAD_TIME_KEY = 'tlReactStaleUiReloadTime'
-
-/**
- * How long after a reload a second one is refused.
- *
- * Long enough that a page which is still unknown right after being loaded again stops there
- * instead of loading itself in a loop; the same value as the engine's guard.
- */
-const RELOAD_GUARD_MS = 10_000
+import { isPageLeaving, reloadForStaleUi } from 'tl-react-bridge'
 
 /** Where a message the reload interrupted waits for the reloaded page, per chat. */
 const UNSENT_KEY = 'tl-chat-unsent'
@@ -39,8 +21,8 @@ const UNSENT_KEY = 'tl-chat-unsent'
 /** A `/chat/*` call refused because the server does not know this page's window. */
 export class StaleWindowError extends Error {
   /**
-   * @param reloading whether the page is being loaded again; `false` when the guard refused the
-   *        reload, and the user has to be told instead
+   * @param reloading whether the page is being replaced - loaded again, or left for another page;
+   *        `false` when the guard refused the reload, and the user has to be told instead
    */
   constructor(public readonly reloading: boolean) {
     super('stale_window')
@@ -62,26 +44,17 @@ export async function isStaleWindow(res: Response): Promise<boolean> {
 /**
  * Loads the page again, unless that was just done.
  *
- * @returns whether the page is being reloaded. `false` means it was reloaded within the guard
- *          interval and is still unknown, so another reload would only repeat itself.
+ * The bridge's {@link reloadForStaleUi} does it: one guard for the chat and the page's own React
+ * commands, which the server answers `stale-ui` for the same reason, keeps the two from reloading
+ * each other in turns. A page that is leaving already ({@link isPageLeaving}) is not reloaded: the
+ * answer belongs to a request the navigation overtook, and the next page takes over.
+ *
+ * @returns whether the page is being replaced - reloaded now, or on its way to another page.
+ *          `false` means it was reloaded within the guard interval and is still unknown, so another
+ *          reload would only repeat itself.
  */
 export function reloadStaleWindow(): boolean {
-  const now = Date.now()
-  try {
-    const last = Number(window.sessionStorage.getItem(RELOAD_TIME_KEY) ?? '0')
-    if (now - last < RELOAD_GUARD_MS) {
-      console.error('[tl-chat] The server still does not know this window right after a reload; not reloading again.')
-      return false
-    }
-    window.sessionStorage.setItem(RELOAD_TIME_KEY, String(now))
-  } catch {
-    // Without storage there is no guard, and a page that cannot remember its last reload must not
-    // risk a loop: it stays as it is.
-    return false
-  }
-  console.warn('[tl-chat] The server no longer knows this window (session replaced). Reloading.')
-  window.location.reload()
-  return true
+  return isPageLeaving() || reloadForStaleUi()
 }
 
 /**

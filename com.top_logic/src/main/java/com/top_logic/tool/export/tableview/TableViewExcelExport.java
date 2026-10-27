@@ -14,14 +14,11 @@ import java.util.Locale;
 import java.util.function.Function;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.WorkbookUtil;
-import org.apache.poi.xssf.streaming.SXSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.top_logic.base.office.POIUtil;
@@ -56,8 +53,9 @@ import com.top_logic.util.Resources;
  * <p>
  * The structure of the table is kept as an outline of the sheet: a group header row is written as a
  * bold row heading its members, which are grouped below it, and a tree node is grouped below its
- * parent at its depth. Nothing is left out for being collapsed: the rows a collapsed group or tree
- * node hides are written as rows the outline hides (see {@link TableView#allRows()}).
+ * parent at its depth. Nothing is left out for being collapsed: every row is written visible at its
+ * outline level, also the rows a collapsed group or tree node hides in the table (see
+ * {@link TableView#allRows()}); the reader folds them with the buttons of the outline.
  * </p>
  *
  * <p>
@@ -209,26 +207,15 @@ public class TableViewExcelExport {
 		}
 
 		List<ExportRow> rows = new ArrayList<>();
-		// Depth of the collapsed row whose subtree is currently being written hidden, MAX_VALUE
-		// outside of such a subtree.
-		int collapsedDepth = Integer.MAX_VALUE;
 		for (com.top_logic.table.Row<R> row : view.allRows()) {
 			int depth = row.depth();
-			boolean hidden = depth > collapsedDepth;
-			if (!hidden) {
-				collapsedDepth = Integer.MAX_VALUE;
-			}
-			boolean collapsed = row.expandable() && !row.expanded();
-			if (collapsed && !hidden) {
-				collapsedDepth = depth;
-			}
 			switch (row.kind()) {
 				case DATA:
-					rows.add(new ExportRow(values(definitions, row.data()), false, depth, hidden, collapsed));
+					rows.add(new ExportRow(values(definitions, row.data()), false, depth));
 					break;
 				case GROUP_HEADER:
 				case AGGREGATE:
-					rows.add(new ExportRow(groupCells(view, row, definitions), true, depth, hidden, collapsed));
+					rows.add(new ExportRow(groupCells(view, row, definitions), true, depth));
 					break;
 			}
 		}
@@ -355,9 +342,9 @@ public class TableViewExcelExport {
 			} else {
 				writeData(writer, columns, contexts, row.cells(), done, excelRow);
 			}
-			if (row.level() > 0 || row.collapsed()) {
+			if (row.level() > 0) {
 				outline = true;
-				applyOutline(workbook.getSheet(sheetName), excelRow, row);
+				applyOutline(workbook.getSheet(sheetName), excelRow, row.level());
 			}
 			done++;
 			monitor.progress(done, total);
@@ -439,33 +426,21 @@ public class TableViewExcelExport {
 	}
 
 	/**
-	 * Puts the row into the outline of the sheet: at its level, hidden when it lies in a collapsed
-	 * group or tree node, and marked as collapsed when it heads one.
+	 * Puts the row into the outline of the sheet at the given level.
+	 *
+	 * <p>
+	 * The row stays visible and no outline group is marked as collapsed: the reader folds the
+	 * groups with the buttons of the outline.
+	 * </p>
 	 *
 	 * <p>
 	 * The row is still in memory when this is done, also for a streaming workbook that keeps only
 	 * the last rows: the outline is set row by row, immediately after a row is written.
 	 * </p>
 	 */
-	private static void applyOutline(Sheet sheet, int excelRow, ExportRow row) {
-		for (int n = 0, levels = Math.min(row.level(), MAX_OUTLINE_LEVEL); n < levels; n++) {
+	private static void applyOutline(Sheet sheet, int excelRow, int level) {
+		for (int n = 0, levels = Math.min(level, MAX_OUTLINE_LEVEL); n < levels; n++) {
 			sheet.groupRow(excelRow, excelRow);
-		}
-		Row sheetRow = sheet.getRow(excelRow);
-		if (sheetRow == null) {
-			return;
-		}
-		if (row.hidden()) {
-			sheetRow.setZeroHeight(true);
-		}
-		if (row.collapsed()) {
-			if (sheetRow instanceof SXSSFRow streamed) {
-				streamed.setCollapsed(Boolean.TRUE);
-			} else if (sheetRow instanceof XSSFRow xssf) {
-				xssf.getCTRow().setCollapsed(true);
-			}
-			// The legacy format offers no way to mark a single row as collapsed: its members are
-			// hidden all the same.
 		}
 	}
 
@@ -548,12 +523,8 @@ public class TableViewExcelExport {
 	 *        Whether the row is a group header (or aggregation row), written from texts.
 	 * @param level
 	 *        The outline level of the row.
-	 * @param hidden
-	 *        Whether the row lies in a collapsed group or tree node.
-	 * @param collapsed
-	 *        Whether the row heads a collapsed group or tree node.
 	 */
-	public record ExportRow(List<Object> cells, boolean header, int level, boolean hidden, boolean collapsed) {
+	public record ExportRow(List<Object> cells, boolean header, int level) {
 		// Pure value type.
 	}
 

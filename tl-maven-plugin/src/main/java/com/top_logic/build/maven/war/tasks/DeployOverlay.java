@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import com.top_logic.build.maven.war.WarContext;
 
 /**
- * {@link AbstractFragmentOverlay} copying the contents of a deploy folder.
+ * {@link AbstractWarTask} copying the contents of a deploy folder.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

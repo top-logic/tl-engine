@@ -13,7 +13,7 @@ import com.top_logic.layout.view.ViewContext;
  *
  * <p>
  * A rule resolving the object of an enclosing unit or a context channel cannot do so from its
- * configuration alone. {@link ViewExecutabilityRules#build(java.util.List, ViewContext)} calls
+ * configuration alone. {@link ViewExecutabilityRules#build(java.util.List, ViewContext, ActionScope)} calls
  * {@link #bind(ViewContext)} once, at control-build time, on every rule implementing this interface,
  * so the rule can capture what it needs from the context.
  * </p>

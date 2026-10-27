@@ -35,6 +35,7 @@ import com.top_logic.layout.view.element.ProgressElement;
 import com.top_logic.layout.view.element.ScrollLinkElement;
 import com.top_logic.layout.view.element.SwitchElement;
 import com.top_logic.layout.view.element.TableElement;
+import com.top_logic.layout.view.element.TreeTableElement;
 import com.top_logic.layout.view.element.VisibleIfElement;
 import com.top_logic.layout.view.list.ObjectListElement;
 import com.top_logic.layout.view.table.FilterStateConfig;
@@ -51,6 +52,8 @@ import com.top_logic.util.model.ModelService;
 public class TestElementInputScripts extends BasicTestCase {
 
 	private static final String TABLE = "table";
+
+	private static final String TREE_TABLE = "tree-table";
 
 	private static final String SWITCH = "switch";
 
@@ -92,6 +95,19 @@ public class TestElementInputScripts extends BasicTestCase {
 
 		TableExportCommand.Config export = table.getExport();
 		assertScope(inputs, export, TableExportCommand.Config.DOWNLOAD_NAME);
+	}
+
+	/**
+	 * Tests that the download name of the export of a tree table sees the inputs of the tree
+	 * table - not the (empty) inputs of the export command itself.
+	 */
+	public void testTreeTableExportScripts() throws Exception {
+		TreeTableElement.Config treeTable = (TreeTableElement.Config) parse(TREE_TABLE,
+			"<tree-table inputs='a, b as second' root='$a' children='[]'>"
+				+ "<export download-name='$second'/>"
+				+ "</tree-table>");
+
+		assertScope(List.of("a", "second"), treeTable.getExport(), TableExportCommand.Config.DOWNLOAD_NAME);
 	}
 
 	/**
@@ -203,6 +219,8 @@ public class TestElementInputScripts extends BasicTestCase {
 		switch (tag) {
 			case TABLE:
 				return TypedConfiguration.getConfigurationDescriptor(TableElement.Config.class);
+			case TREE_TABLE:
+				return TypedConfiguration.getConfigurationDescriptor(TreeTableElement.Config.class);
 			case SWITCH:
 				return TypedConfiguration.getConfigurationDescriptor(SwitchElement.Config.class);
 			case VISIBLE_IF:

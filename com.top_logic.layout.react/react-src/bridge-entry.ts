@@ -30,12 +30,17 @@ export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, 
 export { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export type { CommandOptions } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
+export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
 export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { useTabList } from './bridge/tab-list';
 export type { TabProps, PanelProps, TabListOptions } from './bridge/tab-list';
+export { TabStrip, SCROLL_START_KEY, SCROLL_END_KEY } from './bridge/TabStrip';
+export type { TabStripProps } from './bridge/TabStrip';
+export { useScrollStrip, stripOverflow, revealScrollLeft, pageScrollLeft, EDGE_START, EDGE_END, PAGE_FRACTION } from './bridge/scroll-strip';
+export type { StripEdge, StripGeometry, StripExtent, StripOverflow, ScrollStrip, ScrollStripOptions } from './bridge/scroll-strip';
 export { Menu, MenuItem, MenuHeader, MenuSeparator, useRovingMenu, menuItemClassName } from './bridge/menu';
 export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';

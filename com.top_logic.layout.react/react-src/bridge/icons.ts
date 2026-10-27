@@ -119,6 +119,12 @@ export const ICON_PREVIOUS = 'css:fa-solid fa-chevron-left';
 /** The button moving to the next period, e.g. of a calendar. */
 export const ICON_NEXT = 'css:fa-solid fa-chevron-right';
 
+/** Scrolls a strip towards its start, showing what is hidden before (tab strip). */
+export const ICON_SCROLL_START = 'css:fa-solid fa-chevron-left';
+
+/** Scrolls a strip towards its end, showing what is hidden after (tab strip). */
+export const ICON_SCROLL_END = 'css:fa-solid fa-chevron-right';
+
 /** Bold text (the toolbar of the rich text editor). */
 export const ICON_BOLD = 'css:fa-solid fa-bold';
 

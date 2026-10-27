@@ -626,7 +626,7 @@ public sealed interface AgentEvent {
 	 *
 	 * <p>
 	 * The text is verbatim what the subagent's model is shown, as a user message; a log recording the
-	 * subagent's run keeps it, as {@link #LeadMessageDelivered} does. The ids tell the chat which of
+	 * subagent's run keeps it, as {@link LeadMessageDelivered} does. The ids tell the chat which of
 	 * the user's messages have been read.
 	 * </p>
 	 *

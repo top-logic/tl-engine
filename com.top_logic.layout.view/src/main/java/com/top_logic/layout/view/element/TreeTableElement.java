@@ -39,6 +39,7 @@ import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.layout.view.model.TreeSelectionDisplay;
+import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.RowClassConfig;
 import com.top_logic.layout.view.table.RowClassFunction;
@@ -230,6 +231,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		TableViewControl<Object> control = table.control();
 		TreeRowSource<DefaultTreeUINode, Object> source = table.source();
 
+		contributeExportCommand(context, control, table::view,
+			() -> ColumnDeclarations.exportRenderers(table.setups()), inputChannels);
+
 		// The rows follow the tree, which follows the model and the input.
 		Runnable refresh = () -> {
 			source.refresh();
@@ -257,7 +261,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			public void inputsChanged() {
 				// The rows and their cells stay; the criteria of the presets and the row class may read
 				// the inputs.
-				refreshPresets(table, ChannelInputs.arguments(inputChannels));
+				if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+					control.refreshFilters();
+				}
 				if (rowCssClass != null) {
 					control.repaintRows();
 				}

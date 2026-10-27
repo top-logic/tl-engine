@@ -6,6 +6,7 @@
 package com.top_logic.dob.meta;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.UnreachableAssertion;
@@ -18,7 +19,8 @@ import com.top_logic.dob.sql.DBAttribute;
  * 
  * <p>
  * The index contains the columns to identify the value of a reference valued attribute, i.e. the
- * branch, identifier, and revision of the target object.
+ * branch, identifier, and revision of the target object. The position of the branch column is
+ * determined by {@link IndexColumnOrder#arrange(boolean, List, List, List)}.
  * </p>
  * 
  * @since 5.8.0
@@ -58,20 +60,22 @@ public abstract class MOReferenceIndex<T extends MOReference> extends AbstractMO
 
 	@Override
 	public MOIndex resolve(MOStructure owner) {
-		List<DBAttribute> indexAttributes = new ArrayList<>();
+		List<DBAttribute> branchColumns = new ArrayList<>(1);
 		DBAttribute branchColumn = _reference.getColumn(ReferencePart.branch);
 		if (branchColumn != null) {
-			indexAttributes.add(branchColumn);
+			branchColumns.add(branchColumn);
 		} else {
-			addBranchColumn(owner, indexAttributes);
+			addBranchColumn(owner, branchColumns);
 		}
-		indexAttributes.add(_reference.getColumn(ReferencePart.name));
+		List<DBAttribute> revisionColumns = new ArrayList<>(1);
 		DBAttribute revColumn = _reference.getColumn(ReferencePart.revision);
 		if (revColumn != null) {
-			indexAttributes.add(revColumn);
+			revisionColumns.add(revColumn);
 		} else {
-			addRevisionColumn(owner, indexAttributes);
+			addRevisionColumn(owner, revisionColumns);
 		}
+		List<DBAttribute> indexAttributes = IndexColumnOrder.arrange(owner.getDBMapping().branchLast(), branchColumns,
+			Collections.singletonList(_reference.getColumn(ReferencePart.name)), revisionColumns);
 		try {
 			DBAttribute[] indexColumns = indexAttributes.toArray(new DBAttribute[indexAttributes.size()]);
 			return new MOIndexImpl(getName(), getDBName(), indexColumns, isUnique(), isCustom(), isInMemory(),

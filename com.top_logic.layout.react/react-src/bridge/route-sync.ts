@@ -33,6 +33,7 @@
  */
 
 import { enqueueCommand, type CommandResponse } from './command-channel';
+import { withoutWindowName } from './page-leave';
 
 export interface RouteChangeEventData {
   url: string;
@@ -393,19 +394,7 @@ function initHistoryState(): void {
 
 /** The current path with the window name segment removed. */
 function visiblePath(): string {
-  const path = window.location.pathname;
-  const viewIdx = path.indexOf('/view/');
-  if (viewIdx < 0) return path;
-
-  const afterView = path.substring(viewIdx + 6); // everything after "/view/"
-  const firstSlash = afterView.indexOf('/');
-  // The window name is the whole remainder when no route follows it.
-  const firstSegment = firstSlash >= 0 ? afterView.substring(0, firstSlash) : afterView;
-  // Window names start with 'v' followed by hex characters.
-  if (!firstSegment.match(/^v[0-9a-f]+$/i)) return path;
-
-  const route = firstSlash >= 0 ? afterView.substring(firstSlash + 1) : '';
-  return path.substring(0, viewIdx + 6) + route;
+  return withoutWindowName(window.location.pathname);
 }
 
 /**

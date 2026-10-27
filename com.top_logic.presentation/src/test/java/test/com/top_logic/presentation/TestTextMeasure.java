@@ -364,7 +364,7 @@ public class TestTextMeasure extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * {@link DrawFactory} recording the lines drawn when rendering a slide.
+	 * {@link org.apache.poi.sl.draw.DrawFactory} recording the lines drawn when rendering a slide.
 	 */
 	private static final class Recorder extends TextDrawFactory {
 

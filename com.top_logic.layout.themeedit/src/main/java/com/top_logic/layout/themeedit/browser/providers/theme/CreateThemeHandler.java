@@ -102,6 +102,7 @@ public class CreateThemeHandler extends AbstractCommandHandler {
 			createThemeSettingsConfigFile(themeConfig.getId());
 
 			createThemeSubfolders(themeConfig.getId());
+			ThemeUtil.refreshThemeFiles(themeConfig.getId());
 		} catch (IOException exception) {
 			throw new IOError(exception);
 		}

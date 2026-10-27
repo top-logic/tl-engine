@@ -151,4 +151,19 @@ public class ClientCredentialsProvider extends AbstractConfiguredInstance<Client
 		_tokens.invalidate();
 	}
 
+	/**
+	 * Whether the client credentials are available now.
+	 *
+	 * <p>
+	 * Whether the authorization server issues a token is not checked, a failure is reported by
+	 * {@link #authenticate(RequestAuthentication)}.
+	 * </p>
+	 *
+	 * @see OAuthClient#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _client.isAvailable();
+	}
+
 }

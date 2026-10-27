@@ -191,6 +191,16 @@ public class PrivateKeyJwtAuthentication extends AbstractConfiguredInstance<Priv
 		_privateKey = context.getInstance(config.getPrivateKey());
 	}
 
+	/**
+	 * Whether the private key is available now.
+	 *
+	 * @see SecretSource#isAvailable()
+	 */
+	@Override
+	public boolean isAvailable() {
+		return _privateKey.isAvailable();
+	}
+
 	@Override
 	public com.nimbusds.oauth2.sdk.auth.ClientAuthentication createAuthentication(ClientID clientId,
 			URI tokenEndpoint) {

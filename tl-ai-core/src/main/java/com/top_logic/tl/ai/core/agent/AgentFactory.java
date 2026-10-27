@@ -63,7 +63,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  * <p>
  * This is the primary entry point for constructing agents from model-based definitions
  * ({@code tl.ai.core:Agent} instances). It delegates provider creation to
- * {@link LLMProviderService#buildProvider(String, String)} and tool resolution to the service-level
+ * {@link LLMProviderService#routeProvider(String, String)} and tool resolution to the service-level
  * {@link ToolRegistryService}.
  * </p>
  *
@@ -999,7 +999,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * Creates an {@link LLMProvider} for the given model, served by the named provider.
 	 *
 	 * <p>
-	 * Delegates to {@link LLMProviderService#buildProvider(String, String)}.
+	 * Delegates to {@link LLMProviderService#routeProvider(String, String)}: whether the provider
+	 * has its credentials is decided by the {@link AgentLoop} before each request, so that a run
+	 * passes an inactive provider over for another model of its failover chain, and a loop that
+	 * serves several runs uses the provider as soon as its secret is provided.
 	 * </p>
 	 *
 	 * @param providerName
@@ -1011,7 +1014,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		if (registry == null) {
 			throw new IllegalStateException("LLMProviderService is not available.");
 		}
-		return registry.buildProvider(modelName, providerName);
+		return registry.routeProvider(modelName, providerName);
 	}
 
 	/**

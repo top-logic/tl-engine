@@ -67,6 +67,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_INVALID_LANGUAGE__HANDLER_VALUE;
 
+	/**
+	 * @en The variable "{1}" passed to the condition ({0}) refers to an object that is not yet
+	 *     imported.
+	 */
+	public static ResKey2 ERROR_UNRESOLVED_CONDITION_ARGUMENT__HANDLER_VAR;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -31,6 +31,7 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -197,6 +198,35 @@ public class ChatProcessor {
 	static String errorKind(Throwable ex) {
 		ProviderException provider = providerFailure(ex);
 		return provider != null ? provider.kind().name() : APPLICATION_ERROR;
+	}
+
+	/**
+	 * What the user is told a failed run died of.
+	 *
+	 * <p>
+	 * The provider's own words for a provider failure. For a failure that carries a message for the
+	 * user - a {@link I18NFailure}, such as the {@link com.top_logic.util.error.TopLogicException}
+	 * naming the secret a run without any available provider needs - that message in the user's
+	 * language, looked for one level down as well, like {@link #providerFailure(Throwable)}.
+	 * Otherwise the exception's message.
+	 * </p>
+	 *
+	 * @return The message; <code>null</code> if the exception has none.
+	 */
+	static String errorMessage(Throwable ex) {
+		ProviderException provider = providerFailure(ex);
+		if (provider != null) {
+			return provider.getMessage();
+		}
+		I18NFailure failure = ex instanceof I18NFailure own ? own
+			: ex.getCause() instanceof I18NFailure cause ? cause : null;
+		if (failure != null) {
+			String text = Resources.getInstance().getString(failure.getErrorKey());
+			if (text != null && !text.isBlank()) {
+				return text;
+			}
+		}
+		return ex.getMessage();
 	}
 
 	private ChatProcessor() {
@@ -1255,9 +1285,8 @@ public class ChatProcessor {
 		 * </p>
 		 */
 		private void notifyError(AIProcessingState state, Throwable ex) {
-			ProviderException provider = providerFailure(ex);
 			String kind = errorKind(ex);
-			String message = provider != null ? provider.getMessage() : ex.getMessage();
+			String message = errorMessage(ex);
 			// To whoever is looking at this chat, for the reason completionTargets gives: a run
 			// that died after its window closed leaves every other window spinning on a turn that
 			// has ended, exactly as a completed one does.

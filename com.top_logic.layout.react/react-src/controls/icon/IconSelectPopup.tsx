@@ -1,4 +1,4 @@
-import { React, useI18N, usePart, tooltipProps, useTabList, ThemeIcon, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
+import { React, useI18N, usePart, tooltipProps, useTabList, TabStrip, ThemeIcon, ICON_SEARCH, ICON_CLEAR } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
 import { useRovingFocus } from '../useRovingFocus';
 
@@ -164,14 +164,14 @@ const IconSelectPopup: React.FC<IconSelectPopupProps> = ({
       onClose={onCancel}
     >
       <div className="tl-tabs tl-picker__tabs">
-        <div className="tl-tabs__list" role="tablist" onKeyDown={list.onListKeyDown}>
+        <TabStrip selected={tab} onKeyDown={list.onListKeyDown}>
           <button {...list.tabProps('simple', { controls: panel.id })} className="tl-tabs__tab tl-type-body">
             {i18n['js.iconSelect.simpleTab']}
           </button>
           <button {...list.tabProps('advanced', { controls: panel.id })} className="tl-tabs__tab tl-type-body">
             {i18n['js.iconSelect.advancedTab']}
           </button>
-        </div>
+        </TabStrip>
         <div {...panel} hidden={false} className="tl-tabs__panel">
           <div className="tl-icon-picker__filter">
             <TextInput

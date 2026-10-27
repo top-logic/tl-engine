@@ -39,9 +39,9 @@ export interface TabListOptions {
  *
  * <p>Roving tabindex: only the selected tab, or the first while none is selected, is in the tab
  * order. Arrow right and left (cyclic), Home and End move the focus and select the tab reached in
- * one step, through the same {@code onSelect} a click calls. The list puts {@code onListKeyDown} on
- * its {@code role="tablist"} element and spreads {@code tabProps(id)} on each tab button and
- * {@code panelProps(id)} on each panel.</p>
+ * one step, through the same {@code onSelect} a click calls. The list passes {@code onListKeyDown}
+ * to its {@link TabStrip}, which renders the {@code role="tablist"} element, and spreads
+ * {@code tabProps(id)} on each tab button and {@code panelProps(id)} on each panel.</p>
  */
 export function useTabList({ idPrefix, ids, selected, onSelect }: TabListOptions) {
   const tabId = (id: string) => `${idPrefix}-tab-${id}`;
@@ -61,7 +61,9 @@ export function useTabList({ idPrefix, ids, selected, onSelect }: TabListOptions
     else return;
     e.preventDefault();
     const id = ids[(next + ids.length) % ids.length];
-    (e.currentTarget as HTMLElement).ownerDocument.getElementById(tabId(id))?.focus();
+    // Without scrolling: the tab list keeps the selected tab in view by itself (TabStrip), a focus
+    // scrolling into view would scroll every ancestor as well.
+    (e.currentTarget as HTMLElement).ownerDocument.getElementById(tabId(id))?.focus({ preventScroll: true });
     onSelect(id);
   };
 

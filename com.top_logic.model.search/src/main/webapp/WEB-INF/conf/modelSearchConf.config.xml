@@ -805,22 +805,4 @@
 		</config>
 	</configs>
 	
-	<defaults>
-		<config interface="com.top_logic.layout.ScriptFunction0">
-			<property name="class" value="com.top_logic.model.search.form.ScriptFunction0Impl"/>
-		</config>
-		<config interface="com.top_logic.layout.ScriptFunction1">
-			<property name="class" value="com.top_logic.model.search.form.ScriptFunction1Impl"/>
-		</config>
-		<config interface="com.top_logic.layout.ScriptFunction2">
-			<property name="class" value="com.top_logic.model.search.form.ScriptFunction2Impl"/>
-		</config>
-		<config interface="com.top_logic.layout.ScriptFunction3">
-			<property name="class" value="com.top_logic.model.search.form.ScriptFunction3Impl"/>
-		</config>
-		<config interface="com.top_logic.layout.ScriptFunction4">
-			<property name="class" value="com.top_logic.model.search.form.ScriptFunction4Impl"/>
-		</config>
-	</defaults>
-	
 </application>

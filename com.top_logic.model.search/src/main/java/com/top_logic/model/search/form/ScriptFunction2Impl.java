@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.search.form;
 
+import java.lang.reflect.Method;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -13,9 +15,11 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.func.IFunction2;
+import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.layout.ScriptFunction2;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.operations.ValueConverter;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -35,7 +39,7 @@ public class ScriptFunction2Impl<R, A1, A2> extends Function2<R, A1, A2>
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	public interface Config<r1, a1, a2>
-			extends WithExpression, ScriptFunction2<r1, a1, a2> {
+			extends WithExpression, WithImplementedType, ScriptFunction2<r1, a1, a2> {
 
 		@ClassDefault(ScriptFunction2Impl.class)
 		@Override
@@ -43,9 +47,17 @@ public class ScriptFunction2Impl<R, A1, A2> extends Function2<R, A1, A2>
 
 	}
 
+	/**
+	 * The method implemented by the script, see
+	 * {@link ScriptImplementation#resultConverter(java.lang.reflect.Type, Method)}.
+	 */
+	private static final Method APPLY = JavaTypeUtil.getAbstractMethods(IFunction2.class).get(0);
+
 	private final Config<R, A1, A2> _config;
 
 	private QueryExecutor _query;
+
+	private final ValueConverter _result;
 
 	/**
 	 * Creates a {@link ScriptFunction2Impl} from configuration.
@@ -59,6 +71,7 @@ public class ScriptFunction2Impl<R, A1, A2> extends Function2<R, A1, A2>
 	public ScriptFunction2Impl(InstantiationContext context, Config<R, A1, A2> config) {
 		_config = config;
 		_query = QueryExecutor.compile(config.getExpression());
+		_result = ScriptImplementation.resultConverter(config.getImplementedType(), APPLY);
 	}
 
 	@Override
@@ -69,7 +82,7 @@ public class ScriptFunction2Impl<R, A1, A2> extends Function2<R, A1, A2>
 	@SuppressWarnings("unchecked")
 	@Override
 	public R apply(A1 arg1, A2 arg2) {
-		return (R) _query.execute(arg1, arg2);
+		return (R) ScriptImplementation.convertResult(_result, _query.execute(arg1, arg2));
 	}
 
 	/**

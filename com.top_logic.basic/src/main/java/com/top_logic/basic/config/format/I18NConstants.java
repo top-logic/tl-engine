@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 
 /**
  * Internationalization constants for this package.
@@ -42,6 +43,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Enumeration constant of wrong type configured, expected was {0}, configured is {1}.
 	 */
 	public static ResKey2 ERROR_ENUM_TYPE_MISMATCH__EXPECTED_CONFIGURED;
+
+	/**
+	 * @en Invalid Java type ''{0}'': {1} expected at position {2}.
+	 */
+	public static ResKey3 ERROR_INVALID_JAVA_TYPE__VALUE_EXPECTED_POSITION;
 
 	static {
 		initConstants(I18NConstants.class);

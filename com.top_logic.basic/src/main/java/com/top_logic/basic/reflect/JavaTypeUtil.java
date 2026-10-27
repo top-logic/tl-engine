@@ -13,10 +13,12 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.google.common.reflect.TypeToken;
 
@@ -235,6 +237,342 @@ public class JavaTypeUtil {
 			signature.add(context.resolveType(parameterType).getRawType());
 		}
 		return signature;
+	}
+
+	/**
+	 * The class the given type erases to.
+	 *
+	 * @param type
+	 *        A {@link Class}, {@link ParameterizedType}, {@link GenericArrayType},
+	 *        {@link TypeVariable} or {@link WildcardType}.
+	 * @return The erasure of the given type: the raw type of a parameterized type, the first
+	 *         (upper) bound of a type variable or wildcard.
+	 */
+	public static Class<?> getRawClass(Type type) {
+		return TypeToken.of(type).getRawType();
+	}
+
+	/**
+	 * Creates the parameterized type <code>rawType&lt;typeArguments&gt;</code>.
+	 *
+	 * <p>
+	 * The owner type of the result is the class declaring the given raw type, like for a
+	 * parameterized type obtained through reflection.
+	 * </p>
+	 *
+	 * @param rawType
+	 *        The generic class.
+	 * @param typeArguments
+	 *        The type arguments, one for each type parameter of the given class.
+	 * @return The parameterized type.
+	 * @throws IllegalArgumentException
+	 *         If the number of type arguments does not match the type parameters of the given
+	 *         class.
+	 */
+	public static ParameterizedType newParameterizedType(Class<?> rawType, Type... typeArguments) {
+		int expected = rawType.getTypeParameters().length;
+		if (typeArguments.length != expected) {
+			throw new IllegalArgumentException("Type '" + rawType.getName() + "' expects " + expected
+				+ " type arguments, got " + typeArguments.length + ".");
+		}
+		return new ParameterizedTypeImpl(rawType, rawType.getDeclaringClass(), typeArguments.clone());
+	}
+
+	/**
+	 * Creates the wildcard type with the given bounds.
+	 *
+	 * @param upperBounds
+	 *        The upper bounds, <code>{Object.class}</code> for an unbounded wildcard or a wildcard
+	 *        with a lower bound.
+	 * @param lowerBounds
+	 *        The lower bounds, empty for a wildcard without lower bound.
+	 * @return The wildcard type.
+	 */
+	public static WildcardType newWildcardType(Type[] upperBounds, Type[] lowerBounds) {
+		return new WildcardTypeImpl(upperBounds.clone(), lowerBounds.clone());
+	}
+
+	/**
+	 * Creates the array type with the given component type.
+	 *
+	 * @param componentType
+	 *        The type of the elements of the array.
+	 * @return The array {@link Class}, if the given component type is a {@link Class}, a
+	 *         {@link GenericArrayType} otherwise.
+	 */
+	public static Type newArrayType(Type componentType) {
+		if (componentType instanceof Class<?> componentClass) {
+			return componentClass.arrayType();
+		}
+		return new GenericArrayTypeImpl(componentType);
+	}
+
+	/**
+	 * Replaces all type variables in the given type with their erasure.
+	 *
+	 * <p>
+	 * The result is a type that is fully described by classes, e.g. the type
+	 * <code>Map&lt;K, List&lt;V&gt;&gt;</code> with unbounded type variables <code>K</code> and
+	 * <code>V</code> is turned into <code>Map&lt;Object, List&lt;Object&gt;&gt;</code>.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to transform.
+	 * @return The given type, if it contains no type variables, otherwise a copy of it with its type
+	 *         variables replaced by their {@link #getRawClass(Type) erasure}.
+	 */
+	public static Type eraseTypeVariables(Type type) {
+		if (type instanceof Class<?>) {
+			return type;
+		} else if (type instanceof TypeVariable<?> variable) {
+			return getRawClass(variable);
+		} else if (type instanceof ParameterizedType parameterized) {
+			Type[] arguments = parameterized.getActualTypeArguments();
+			Type[] erased = eraseTypeVariables(arguments);
+			if (erased == arguments) {
+				return type;
+			}
+			return newParameterizedType((Class<?>) parameterized.getRawType(), erased);
+		} else if (type instanceof WildcardType wildcard) {
+			Type[] upper = wildcard.getUpperBounds();
+			Type[] lower = wildcard.getLowerBounds();
+			Type[] erasedUpper = eraseTypeVariables(upper);
+			Type[] erasedLower = eraseTypeVariables(lower);
+			if (erasedUpper == upper && erasedLower == lower) {
+				return type;
+			}
+			return newWildcardType(erasedUpper, erasedLower);
+		} else if (type instanceof GenericArrayType array) {
+			Type component = array.getGenericComponentType();
+			Type erased = eraseTypeVariables(component);
+			if (erased == component) {
+				return type;
+			}
+			return newArrayType(erased);
+		}
+		throw new IllegalArgumentException("Type not expected: " + type);
+	}
+
+	private static Type[] eraseTypeVariables(Type[] types) {
+		Type[] result = types;
+		for (int n = 0; n < types.length; n++) {
+			Type erased = eraseTypeVariables(types[n]);
+			if (erased != types[n]) {
+				if (result == types) {
+					result = types.clone();
+				}
+				result[n] = erased;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The source code notation of the given type, using binary names for classes.
+	 *
+	 * <p>
+	 * Classes are written with their {@link Class#getName() binary name} (nested classes with
+	 * <code>$</code>), arrays with <code>[]</code>, e.g.
+	 * <code>java.util.Map$Entry&lt;java.lang.String, ? extends java.lang.Number&gt;[]</code>. A type
+	 * variable is written as its {@link #getRawClass(Type) erasure}. The owner type of a
+	 * parameterized nested class is not written.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type to write.
+	 * @return The notation of the given type.
+	 */
+	public static String toTypeName(Type type) {
+		StringBuilder result = new StringBuilder();
+		appendTypeName(result, type);
+		return result.toString();
+	}
+
+	private static void appendTypeName(StringBuilder out, Type type) {
+		if (type instanceof Class<?> cls) {
+			if (cls.isArray()) {
+				appendTypeName(out, cls.getComponentType());
+				out.append("[]");
+			} else {
+				out.append(cls.getName());
+			}
+		} else if (type instanceof ParameterizedType parameterized) {
+			appendTypeName(out, parameterized.getRawType());
+			out.append('<');
+			appendTypeNames(out, parameterized.getActualTypeArguments(), ", ");
+			out.append('>');
+		} else if (type instanceof WildcardType wildcard) {
+			out.append('?');
+			Type[] lower = wildcard.getLowerBounds();
+			if (lower.length > 0) {
+				out.append(" super ");
+				appendTypeNames(out, lower, " & ");
+			} else {
+				Type[] upper = wildcard.getUpperBounds();
+				if (upper.length > 0 && upper[0] != Object.class) {
+					out.append(" extends ");
+					appendTypeNames(out, upper, " & ");
+				}
+			}
+		} else if (type instanceof GenericArrayType array) {
+			appendTypeName(out, array.getGenericComponentType());
+			out.append("[]");
+		} else if (type instanceof TypeVariable<?> variable) {
+			appendTypeName(out, getRawClass(variable));
+		} else {
+			throw new IllegalArgumentException("Type not expected: " + type);
+		}
+	}
+
+	private static void appendTypeNames(StringBuilder out, Type[] types, String separator) {
+		for (int n = 0; n < types.length; n++) {
+			if (n > 0) {
+				out.append(separator);
+			}
+			appendTypeName(out, types[n]);
+		}
+	}
+
+	/**
+	 * {@link ParameterizedType} created by {@link JavaTypeUtil#newParameterizedType(Class, Type...)}.
+	 *
+	 * <p>
+	 * Equality and hash code follow the contract of the platform implementation, so that instances
+	 * are equal to parameterized types obtained through reflection.
+	 * </p>
+	 */
+	private static final class ParameterizedTypeImpl implements ParameterizedType {
+
+		private final Class<?> _rawType;
+
+		private final Type _ownerType;
+
+		private final Type[] _arguments;
+
+		ParameterizedTypeImpl(Class<?> rawType, Type ownerType, Type[] arguments) {
+			_rawType = rawType;
+			_ownerType = ownerType;
+			_arguments = arguments;
+		}
+
+		@Override
+		public Type[] getActualTypeArguments() {
+			return _arguments.clone();
+		}
+
+		@Override
+		public Type getRawType() {
+			return _rawType;
+		}
+
+		@Override
+		public Type getOwnerType() {
+			return _ownerType;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this) {
+				return true;
+			}
+			if (!(obj instanceof ParameterizedType other)) {
+				return false;
+			}
+			return _rawType.equals(other.getRawType()) && Objects.equals(_ownerType, other.getOwnerType())
+				&& Arrays.equals(_arguments, other.getActualTypeArguments());
+		}
+
+		@Override
+		public int hashCode() {
+			return Arrays.hashCode(_arguments) ^ Objects.hashCode(_ownerType) ^ _rawType.hashCode();
+		}
+
+		@Override
+		public String toString() {
+			return toTypeName(this);
+		}
+	}
+
+	/**
+	 * {@link WildcardType} created by {@link JavaTypeUtil#newWildcardType(Type[], Type[])}.
+	 */
+	private static final class WildcardTypeImpl implements WildcardType {
+
+		private final Type[] _upperBounds;
+
+		private final Type[] _lowerBounds;
+
+		WildcardTypeImpl(Type[] upperBounds, Type[] lowerBounds) {
+			_upperBounds = upperBounds;
+			_lowerBounds = lowerBounds;
+		}
+
+		@Override
+		public Type[] getUpperBounds() {
+			return _upperBounds.clone();
+		}
+
+		@Override
+		public Type[] getLowerBounds() {
+			return _lowerBounds.clone();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this) {
+				return true;
+			}
+			if (!(obj instanceof WildcardType other)) {
+				return false;
+			}
+			return Arrays.equals(_upperBounds, other.getUpperBounds())
+				&& Arrays.equals(_lowerBounds, other.getLowerBounds());
+		}
+
+		@Override
+		public int hashCode() {
+			return Arrays.hashCode(_upperBounds) ^ Arrays.hashCode(_lowerBounds);
+		}
+
+		@Override
+		public String toString() {
+			return toTypeName(this);
+		}
+	}
+
+	/**
+	 * {@link GenericArrayType} created by {@link JavaTypeUtil#newArrayType(Type)}.
+	 */
+	private static final class GenericArrayTypeImpl implements GenericArrayType {
+
+		private final Type _componentType;
+
+		GenericArrayTypeImpl(Type componentType) {
+			_componentType = componentType;
+		}
+
+		@Override
+		public Type getGenericComponentType() {
+			return _componentType;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this) {
+				return true;
+			}
+			return obj instanceof GenericArrayType other && _componentType.equals(other.getGenericComponentType());
+		}
+
+		@Override
+		public int hashCode() {
+			return _componentType.hashCode();
+		}
+
+		@Override
+		public String toString() {
+			return toTypeName(this);
+		}
 	}
 
 }

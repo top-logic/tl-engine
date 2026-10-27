@@ -17,6 +17,7 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.sql.DBIndex;
+import com.top_logic.dob.sql.DBTableMetaObject;
 
 /**
  * Declaration of an {@link DBIndex}.
@@ -26,6 +27,9 @@ import com.top_logic.dob.sql.DBIndex;
 public class DeferredIndex extends AbstractMOIndex {
 
 	private List<Pair<String, ReferencePart>> attributeParts = Collections.emptyList();
+
+	/** Whether this index is created by {@link #newPrimaryKey(List)}. */
+	private boolean _primaryKey;
 
 	/**
 	 * Creates a {@link DeferredIndex}.
@@ -98,6 +102,9 @@ public class DeferredIndex extends AbstractMOIndex {
 				}
 			}
 		}
+		if (_primaryKey && owner.getDBMapping().branchLast()) {
+			attributes = IndexColumnOrder.branchLast(attributes);
+		}
 		try {
 			return new MOIndexImpl(getName(), getDBName(), attributes.toArray(new DBAttribute[0]), isUnique(),
 				isCustom(), isInMemory(), getCompress());
@@ -138,12 +145,19 @@ public class DeferredIndex extends AbstractMOIndex {
 	/**
 	 * Creates a primary key for the given attributes parts.
 	 * 
+	 * <p>
+	 * If the owner type places the branch last ({@link DBTableMetaObject#branchLast()}), the
+	 * resolved key has its branch column moved behind the identifying columns, see
+	 * {@link IndexColumnOrder#branchLast(List)}.
+	 * </p>
+	 * 
 	 * @see MOIndexImpl#newPrimaryKey(DBAttribute...)
 	 */
 	public static MOIndex newPrimaryKey(List<Pair<String, ReferencePart>> attributeParts) {
 		DeferredIndex primaryKey = new DeferredIndex(MOIndexImpl.PRIMARY_KEY_INDEX_NAME, null, UNIQUE, !DBIndex.CUSTOM,
 			!IN_MEMORY, NO_COMPRESS);
 		primaryKey.setAttributeParts(attributeParts);
+		primaryKey._primaryKey = true;
 		return primaryKey;
 	}
 

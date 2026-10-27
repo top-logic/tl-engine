@@ -898,6 +898,15 @@ public abstract class OracleHelper extends DBHelper {
 	}
 
 	/**
+	 * The primary key of an index-organized table (created with primary key storage) cannot be
+	 * dropped in Oracle.
+	 */
+	@Override
+	public boolean canChangePrimaryKey(boolean pkeyStorage) {
+		return !pkeyStorage;
+	}
+
+	/**
 	 * Create a valid SQL statement to drop an index.
 	 * 
 	 * Oracle does not need (or use) the table name

@@ -774,4 +774,9 @@ public class DBMORepository implements MORepository {
 		return true;
 	}
 
+	@Override
+	public boolean branchLast() {
+		return false;
+	}
+
 }

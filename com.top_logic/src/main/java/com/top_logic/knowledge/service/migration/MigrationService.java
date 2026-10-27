@@ -106,6 +106,7 @@ import com.top_logic.knowledge.service.db2.migration.db.transformers.StoreTypeCo
 import com.top_logic.knowledge.service.db2.migration.sql.InsertWriter;
 import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
 import com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor;
+import com.top_logic.knowledge.service.migration.processors.AlignTableLayoutProcessor;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.util.model.CompatibilityService;
@@ -348,7 +349,13 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	/**
 	 * Checks for schema changes between the stores database schema and the configured one and
 	 * adjusts the current schema.
-	 * 
+	 *
+	 * <p>
+	 * First, the layout of the existing tables is aligned with changed layout options of the
+	 * configured schema (see {@link AlignTableLayoutProcessor}), so that tables for types added
+	 * afterwards are created in the configured layout.
+	 * </p>
+	 *
 	 * @param log
 	 *        {@link ProcessBuilder} to write errors (and any messages) to.
 	 * @param connection
@@ -357,6 +364,34 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 */
 	private boolean executeAutomaticSchemaMigrations(MigrationContext context, Protocol log,
 			PooledConnection connection) {
+		boolean layoutChanged = alignTableLayout(context, log, connection);
+		boolean typesAdded = addApplicationTypes(context, log, connection);
+		return layoutChanged || typesAdded;
+	}
+
+	/**
+	 * Aligns the layout of the existing tables with the layout options of the configured schema,
+	 * if they differ from the ones of the stored schema.
+	 *
+	 * @return Whether any changes have been written to the given connection.
+	 */
+	private boolean alignTableLayout(MigrationContext context, Protocol log, PooledConnection connection) {
+		SchemaConfiguration persistentSchema = context.getPersistentSchema();
+		if (persistentSchema == null
+			|| !AlignTableLayoutProcessor.hasLayoutChange(persistentSchema, context.getApplicationSchema())) {
+			return false;
+		}
+		execute(context, log, connection, TypedConfiguration.newConfigItem(AlignTableLayoutProcessor.Config.class));
+		return true;
+	}
+
+	/**
+	 * Creates tables for the types of the configured schema that are not part of the stored
+	 * schema.
+	 *
+	 * @return Whether any changes have been written to the given connection.
+	 */
+	private boolean addApplicationTypes(MigrationContext context, Protocol log, PooledConnection connection) {
 		Map<String, MetaObjectName> applicationTypes = context.getApplicationSchema().getMetaObjects().getTypes();
 		Map<String, MetaObjectName> persistentTypes = context.getPersistentSchema().getMetaObjects().getTypes();
 
@@ -723,6 +758,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		// processors.
 		migration.executeSQLMigration(context, log, connection);
 
+		// The migration processors work on the table layout of the stored schema, which the state
+		// of the context is derived from. The layout is aligned with the configuration only
+		// afterwards, including the tables the processors have created.
 		executeAutomaticSchemaMigrations(context, log, connection);
 
 		if (migration.isReplayRequired()) {

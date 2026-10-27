@@ -11,7 +11,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -97,7 +97,7 @@ public class TestInteractionDelivery extends TestCase {
 	public void testAnEventWithoutAControlIsDelivered() {
 		int before = pending();
 		try (Interaction interaction = _registry.beginInteraction()) {
-			_queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+			_queue.enqueue(PageNavigationEvent.create());
 
 			_control.cleanupTree();
 		}

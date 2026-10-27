@@ -39,9 +39,12 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.AgentTuning;
+import com.top_logic.tl.ai.core.provider.catalog.CatalogStatus;
+import com.top_logic.tl.ai.core.provider.catalog.ModelCatalog;
 import com.top_logic.tl.ai.core.provider.catalog.ModelCatalogEntry;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelsDevFetcher;
+import com.top_logic.tl.ai.core.provider.catalog.ResolvedModel;
 import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
@@ -59,12 +62,17 @@ import com.top_logic.tl.ai.tool.api.AICategory;
  * allowlists). Each provider entry defines how to reach a specific LLM API endpoint and which
  * models are enabled.</li>
  * <li><b>Failover</b> - where a run goes when the model it was configured with cannot answer.</li>
- * <li><b>Model Catalog</b> - read-only metadata describing each model's capabilities (tool
- * calling, reasoning, temperature support) and limits (context window, max output tokens).
- * Taken from the catalog bundled with the application at startup and from the
+ * <li><b>Model Catalog</b> - where the metadata describing each model's capabilities (tool
+ * calling, reasoning, temperature support) and limits (context window, max output tokens) comes
+ * from: the catalog bundled with the application at startup and the
  * <a href="https://models.dev">models.dev</a> remote catalog in the background after it, with
  * optional manual overrides for local or unlisted models.</li>
  * </ol>
+ *
+ * <p>
+ * The metadata resolved from these sources is state of the running service, not part of its
+ * configuration.
+ * </p>
  *
  * <p>
  * Which agent runs on which of these models is configured on {@link AgentRuntimeService}. This
@@ -75,6 +83,7 @@ import com.top_logic.tl.ai.tool.api.AICategory;
  *
  * @see LLMProviderConfig
  * @see AgentFactory
+ * @see #catalog()
  */
 @Label("LLM providers")
 @ServiceCategory.Of(AICategory.class)
@@ -163,12 +172,12 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		Map<String, LLMProviderConfig.Config> getProviders();
 
 		/**
-		 * Model metadata catalog describing each model's capabilities and limits.
+		 * Where the metadata describing each model's capabilities and limits comes from.
 		 *
 		 * <p>
-		 * Populated automatically from the remote <a href="https://models.dev">models.dev</a>
-		 * catalog on startup. Manual overrides can be added for models not listed in the remote
-		 * catalog (e.g. local or custom-hosted models).
+		 * The metadata is taken from the <a href="https://models.dev">models.dev</a> catalog.
+		 * Manual overrides can be added for models not listed in the catalog (e.g. local or
+		 * custom-hosted models).
 		 * </p>
 		 *
 		 * @see #MODEL_CATALOG
@@ -195,14 +204,17 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * Configuration for the model metadata catalog.
 	 *
 	 * <p>
-	 * Provides read-only metadata about each model's capabilities (tool calling, reasoning,
-	 * temperature support) and limits (context window, max output tokens) for all models
-	 * configured in the provider section. The service starts with the copy of the
+	 * Says where the metadata about each model's capabilities (tool calling, reasoning,
+	 * temperature support) and limits (context window, max output tokens) comes from, for all
+	 * models configured in the provider section. The service starts with the copy of the
 	 * <a href="https://models.dev">models.dev</a> catalog bundled with the application and loads
 	 * the current catalog in the background after its start. Models not found in the catalog
 	 * (e.g. locally hosted models) can be defined manually in the
-	 * {@link #getModelOverrides() model overrides}.
+	 * {@link #getModelOverrides() model overrides}. The resolved metadata is not part of this
+	 * configuration.
 	 * </p>
+	 *
+	 * @see LLMProviderService#catalog()
 	 */
 	public interface ModelCatalogConfig extends ConfigurationItem {
 
@@ -214,9 +226,6 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 
 		/** @see #getFetchRemoteCatalog() */
 		String FETCH_REMOTE_CATALOG = "fetch-remote-catalog";
-
-		/** @see #getModelConfiguration() */
-		String MODEL_CONFIGURATION = "llm-configuration";
 
 		/** @see #getModelOverrides() */
 		String MODEL_OVERRIDES = "model-overrides";
@@ -245,23 +254,6 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		@Name(FETCH_REMOTE_CATALOG)
 		@BooleanDefault(true)
 		boolean getFetchRemoteCatalog();
-
-		/**
-		 * Per-model metadata (limits, capabilities).
-		 *
-		 * <p>
-		 * Populated automatically from the bundled catalog on startup and from the remote catalog
-		 * when it has been loaded. Read-only - do not modify manually.
-		 * </p>
-		 *
-		 * @see #MODEL_CONFIGURATION
-		 */
-		@Name(MODEL_CONFIGURATION)
-		@Label("Model metadata")
-		@ReadOnly
-		@EntryTag("model")
-		@Key(NamedConfigMandatory.NAME_ATTRIBUTE)
-		Map<String, ModelCatalogEntry.Config> getModelConfiguration();
 
 		/**
 		 * Manually defined model metadata for models not in the remote catalog.
@@ -318,9 +310,15 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	private Map<String, LLMProviderConfig> _providerConfigs;
 
 	/**
-	 * Index mapping model IDs to their resolved {@link ModelInfo} metadata.
+	 * The resolved model metadata together with the state of the catalog it was taken from, or
+	 * <code>null</code> while the service is not running.
+	 *
+	 * <p>
+	 * Replaced as a whole, under the lock of this service, so that readers never see models and a
+	 * status that do not belong together.
+	 * </p>
 	 */
-	private volatile Map<String, ModelInfo> _models;
+	private volatile ModelCatalog _catalog;
 
 	/**
 	 * The thread loading the remote catalog, or <code>null</code> when none is loading for this
@@ -465,7 +463,11 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		} else {
 			bundled = ModelsDevFetcher.loadSnapshot(catalogRequested);
 		}
-		installCatalog(bundled);
+		boolean fetchRemote =
+			catalogConfig != null && !catalogRequested.isEmpty() && catalogConfig.getFetchRemoteCatalog();
+		Map<String, ResolvedModel> bundledEntries = withOrigin(bundled, ResolvedModel.Origin.BUNDLED);
+		installCatalog(bundledEntries,
+			fetchRemote ? CatalogStatus.State.LOADING : CatalogStatus.State.DISABLED);
 
 		int overrideCount = catalogConfig == null ? 0 : catalogConfig.getModelOverrides().size();
 		Logger.info("LLMProviderService started with " +
@@ -474,9 +476,10 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 			(overrideCount > 0 ? ", " + overrideCount + " model override(s)" : "") + ".",
 			LLMProviderService.class);
 
-		if (catalogConfig != null && !catalogRequested.isEmpty() && catalogConfig.getFetchRemoteCatalog()) {
+		if (fetchRemote) {
 			String url = catalogConfig.getCatalogUrl();
-			Thread loader = new Thread(() -> loadRemoteCatalog(url, catalogRequested, bundled), "Model catalog");
+			Thread loader =
+				new Thread(() -> loadRemoteCatalog(url, catalogRequested, bundledEntries), "Model catalog");
 			loader.setDaemon(true);
 			synchronized (this) {
 				_catalogLoader = loader;
@@ -489,7 +492,8 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * Loads the remote catalog and installs it over the bundled one, on the
 	 * {@link #_catalogLoader} thread.
 	 */
-	private void loadRemoteCatalog(String url, Map<String, Set<String>> requested, Map<String, ModelInfo> bundled) {
+	private void loadRemoteCatalog(String url, Map<String, Set<String>> requested,
+			Map<String, ResolvedModel> bundled) {
 		Map<String, ModelInfo> remote;
 		try {
 			remote = ModelsDevFetcher.fetch(url, requested, CATALOG_DEADLINE);
@@ -499,51 +503,78 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		} catch (IOException ex) {
 			Logger.warn("Could not load the model catalog from " + url + " (" + ex.getMessage()
 				+ "); the bundled catalog stays in use.", LLMProviderService.class);
+			synchronized (this) {
+				if (_catalogLoader != Thread.currentThread()) {
+					// Stopped or restarted meanwhile.
+					return;
+				}
+				_catalogLoader = null;
+				_catalog = _catalog.withState(CatalogStatus.State.FAILED, failureDetail(ex));
+			}
 			return;
 		}
 
 		// A model the remote catalog does not list keeps what the bundled one knows about it.
-		Map<String, ModelInfo> combined = new LinkedHashMap<>(bundled);
-		combined.putAll(remote);
+		Map<String, ResolvedModel> combined = new LinkedHashMap<>(bundled);
+		combined.putAll(withOrigin(remote, ResolvedModel.Origin.REMOTE));
 		synchronized (this) {
 			if (_catalogLoader != Thread.currentThread()) {
 				// Stopped or restarted meanwhile.
 				return;
 			}
 			_catalogLoader = null;
-			installCatalog(combined);
+			installCatalog(combined, CatalogStatus.State.LOADED);
 		}
 		Logger.info("Loaded " + remote.size() + " model(s) from the model catalog at " + url + ".",
 			LLMProviderService.class);
 	}
 
 	/**
-	 * Makes the given catalog the one {@link #getModel(String)} answers from, with the manual
-	 * overrides applied over it.
+	 * Makes the given catalog the one {@link #catalog()} and {@link #getModel(String)} answer from,
+	 * with the manual overrides applied over it.
+	 *
+	 * @param catalog
+	 *        The catalog entries by model name, each with its origin.
+	 * @param state
+	 *        Where loading the remote catalog stands after this installation.
 	 */
-	private synchronized void installCatalog(Map<String, ModelInfo> catalog) {
+	private synchronized void installCatalog(Map<String, ResolvedModel> catalog, CatalogStatus.State state) {
 		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
-		Map<String, ModelCatalogEntry.OverrideConfig> overrides;
-		if (catalogConfig == null) {
-			overrides = Map.of();
-		} else {
-			// Populate read-only config entries for admin UI visibility
-			Map<String, ModelCatalogEntry.Config> catalogEntries = catalogConfig.getModelConfiguration();
-			catalogEntries.clear();
-			for (Map.Entry<String, ModelInfo> entry : catalog.entrySet()) {
-				catalogEntries.put(entry.getKey(), ModelCatalogEntry.toConfig(entry.getKey(), entry.getValue()));
-			}
-			overrides = catalogConfig.getModelOverrides();
-		}
+		Map<String, ModelCatalogEntry.OverrideConfig> overrides =
+			catalogConfig == null ? Map.of() : catalogConfig.getModelOverrides();
 
-		// Merge manual overrides (take precedence over catalog)
-		Map<String, ModelInfo> merged = new LinkedHashMap<>(catalog);
+		// Manual overrides take precedence over the catalog.
+		Map<String, ResolvedModel> merged = new LinkedHashMap<>(catalog);
 		for (Map.Entry<String, ModelCatalogEntry.OverrideConfig> entry : overrides.entrySet()) {
-			merged.put(entry.getKey(),
-				ModelCatalogEntry.overrideToModelInfo(entry.getValue(), catalog.get(entry.getKey())));
+			ResolvedModel listed = catalog.get(entry.getKey());
+			ModelInfo info =
+				ModelCatalogEntry.overrideToModelInfo(entry.getValue(), listed == null ? null : listed.info());
+			merged.put(entry.getKey(), new ResolvedModel(info, ResolvedModel.Origin.OVERRIDE));
 		}
 
-		_models = Map.copyOf(merged);
+		String url = catalogConfig == null ? null : catalogConfig.getCatalogUrl();
+		_catalog = new ModelCatalog(merged,
+			new CatalogStatus(state, url, Clock.systemUTC().instant(), null));
+	}
+
+	/**
+	 * The given catalog metadata, each entry marked with the given origin.
+	 */
+	private static Map<String, ResolvedModel> withOrigin(Map<String, ModelInfo> catalog,
+			ResolvedModel.Origin origin) {
+		Map<String, ResolvedModel> result = new LinkedHashMap<>();
+		for (Map.Entry<String, ModelInfo> entry : catalog.entrySet()) {
+			result.put(entry.getKey(), new ResolvedModel(entry.getValue(), origin));
+		}
+		return result;
+	}
+
+	/**
+	 * The failure of loading the remote catalog, for {@link CatalogStatus#failure()}.
+	 */
+	private static String failureDetail(IOException ex) {
+		String message = ex.getMessage();
+		return message == null || message.isBlank() ? ex.getClass().getSimpleName() : message;
 	}
 
 	@Override
@@ -560,7 +591,7 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 			_instance = null;
 			_modelProviders = null;
 			_providerConfigs = null;
-			_models = null;
+			_catalog = null;
 		} finally {
 			super.shutDown();
 		}
@@ -767,6 +798,26 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	}
 
 	/**
+	 * The models the given provider exposes, in configuration order.
+	 *
+	 * <p>
+	 * Together with {@link #getConfiguredProviderNames()} the pairs of a provider and a model it
+	 * serves, whether or not the {@link #catalog() catalog} describes that model.
+	 * </p>
+	 *
+	 * @param providerName
+	 *        The name of a configured provider.
+	 * @return The model names; empty if no provider of this name is configured.
+	 */
+	public List<String> getModelsOf(String providerName) {
+		LLMProviderConfig providerConfig = _providerConfigs == null ? null : _providerConfigs.get(providerName);
+		if (providerConfig == null) {
+			return List.of();
+		}
+		return List.copyOf(new LinkedHashSet<>(providerConfig.getConfiguredModels()));
+	}
+
+	/**
 	 * Builds an {@link LLMProvider} for an unqualified model reference.
 	 *
 	 * @see #buildProvider(String, String)
@@ -843,13 +894,54 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 
 	/**
 	 * Returns metadata for the given model, or {@code null} if unknown.
+	 *
+	 * @see #getCatalogEntry(String)
 	 */
 	public ModelInfo getModel(String modelId) {
-		Map<String, ModelInfo> models = _models;
-		if (models == null) {
-			return null;
-		}
-		return models.get(modelId);
+		ResolvedModel entry = getCatalogEntry(modelId);
+		return entry == null ? null : entry.info();
+	}
+
+	/**
+	 * The metadata of the given model together with its origin, or {@code null} if the catalog
+	 * has none for it.
+	 *
+	 * @param modelId
+	 *        The model name.
+	 *
+	 * @see #catalog()
+	 */
+	public ResolvedModel getCatalogEntry(String modelId) {
+		ModelCatalog catalog = _catalog;
+		return catalog == null ? null : catalog.get(modelId);
+	}
+
+	/**
+	 * The model catalog of this service: the metadata of every model it knows, each with its
+	 * origin, and the state of the catalog.
+	 *
+	 * <p>
+	 * An immutable snapshot, replaced as a whole when the remote catalog arrives or fails. A
+	 * configured model the catalog does not list and no override describes has no entry; the
+	 * configured models are {@link #getModelsOf(String) listed per provider}.
+	 * </p>
+	 *
+	 * @return The catalog, or {@code null} while the service is not running.
+	 */
+	public ModelCatalog catalog() {
+		return _catalog;
+	}
+
+	/**
+	 * The state of the model catalog of this service.
+	 *
+	 * @return The status, or {@code null} while the service is not running.
+	 *
+	 * @see #catalog()
+	 */
+	public CatalogStatus catalogStatus() {
+		ModelCatalog catalog = _catalog;
+		return catalog == null ? null : catalog.status();
 	}
 
 	/**

@@ -8,6 +8,7 @@ package com.top_logic.element.util.model;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.MappedIterable;
@@ -15,17 +16,22 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.dob.DataObjectException;
+import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.element.changelog.ChangedValueOwners;
 import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.element.meta.PersistentClass;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
 import com.top_logic.element.meta.kbbased.PersistentAssociation;
 import com.top_logic.element.model.PersistentTLModel;
+import com.top_logic.element.model.cache.ElementModelCacheService;
 import com.top_logic.knowledge.objects.InvalidLinkException;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.label.ObjectLabel;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.model.TLAssociation;
@@ -101,6 +107,36 @@ public class ElementModelService extends ModelService {
 		} finally {
 			tx.rollback();
 		}
+	}
+
+	/**
+	 * Reports the owners of the attribute values stored in the created, updated, or deleted rows.
+	 *
+	 * <p>
+	 * A row in a separate table pulls an object into the constraint check only if it stores a value
+	 * of a model attribute, see {@link ChangedValueOwners}. Rows not storing attribute values (e.g.
+	 * technical associations) do not cause their source object to be checked.
+	 * </p>
+	 */
+	@Override
+	protected Collection<? extends KnowledgeItem> findChangedValueOwners(UpdateEvent event) {
+		if (getModel() == null) {
+			// The model itself is being created, no attribute values exist yet.
+			return List.of();
+		}
+		Set<ObjectKey> owners = ChangedValueOwners.of(ElementModelCacheService.getApplicationModelTables(), event);
+		if (owners.isEmpty()) {
+			return List.of();
+		}
+		KnowledgeBase kb = event.getKnowledgeBase();
+		List<KnowledgeItem> result = new ArrayList<>(owners.size());
+		for (ObjectKey owner : owners) {
+			KnowledgeItem item = kb.resolveObjectKey(owner);
+			if (item != null && item.isAlive()) {
+				result.add(item);
+			}
+		}
+		return result;
 	}
 
 	private void loadModelElements(KnowledgeBase kb, TLModel tlModel) throws InvalidLinkException {

@@ -365,8 +365,7 @@ public class LLMService extends ConfiguredManagedClass<LLMService.Config<?>> {
 		String policy = AgentPolicyService.class.getSimpleName();
 
 		move(moves, old, Config.PROVIDERS, "<providers>", providers + " <providers>");
-		move(moves, old, Config.MODEL_CATALOG, "<model-catalog>",
-			providers + " <model-catalog> (delete <llm-configuration>: it is generated at every start)");
+		move(moves, old, Config.MODEL_CATALOG, "<model-catalog>", providers + " <model-catalog>");
 		move(moves, old, Config.FAILOVER, "<failover>", providers + " <failover>");
 
 		AgentExecutionConfig execution = old.getAgentExecution();

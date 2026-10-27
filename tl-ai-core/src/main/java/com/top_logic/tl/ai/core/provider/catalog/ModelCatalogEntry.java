@@ -10,279 +10,19 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 
 /**
- * Configuration view for a single model's catalog metadata in the {@link LLMProviderService}.
+ * Configuration of the model metadata an administrator gives the {@link LLMProviderService} in
+ * addition to the catalog: the {@link OverrideConfig model overrides} and their
+ * {@link PriceProperties prices}.
  *
- * <p>
- * Populated automatically from the remote url's catalog on startup. All properties are
- * {@link ReadOnly} — the catalog is ground truth and must not be edited by the user.
- * </p>
+ * @see LLMProviderService.ModelCatalogConfig#getModelOverrides()
  */
 public class ModelCatalogEntry {
-
-	/**
-	 * Model metadata configuration.
-	 */
-	@DisplayOrder({
-		Config.CONTEXT_WINDOW,
-		Config.MAX_OUTPUT,
-		Config.MAX_INPUT,
-		Config.REASONING,
-		Config.TOOL_CALL,
-		Config.TEMPERATURE,
-		Config.ATTACHMENT,
-		Config.STRUCTURED_OUTPUT,
-		Config.OPEN_WEIGHTS,
-		Config.STATUS,
-		Config.KNOWLEDGE_CUTOFF,
-		Config.RELEASE_DATE,
-		Config.LAST_UPDATED,
-		Config.INPUT_PRICE,
-		Config.OUTPUT_PRICE,
-		Config.CACHE_READ_PRICE,
-		Config.CACHE_WRITE_PRICE,
-		Config.REASONING_PRICE,
-	})
-	public interface Config extends NamedConfigMandatory, PriceProperties {
-
-		/** @see #getContextWindow() */
-		String CONTEXT_WINDOW = "context-window";
-
-		/** @see #getMaxOutput() */
-		String MAX_OUTPUT = "max-output";
-
-		/** @see #getMaxInput() */
-		String MAX_INPUT = "max-input";
-
-		/** @see #getReasoning() */
-		String REASONING = "reasoning";
-
-		/** @see #getToolCall() */
-		String TOOL_CALL = "tool-call";
-
-		/** @see #getTemperature() */
-		String TEMPERATURE = "temperature";
-
-		/** @see #getAttachment() */
-		String ATTACHMENT = "attachment";
-
-		/** @see #getStructuredOutput() */
-		String STRUCTURED_OUTPUT = "structured-output";
-
-		/** @see #getOpenWeights() */
-		String OPEN_WEIGHTS = "open-weights";
-
-		/** @see #getStatus() */
-		String STATUS = "status";
-
-		/** @see #getKnowledgeCutoff() */
-		String KNOWLEDGE_CUTOFF = "knowledge-cutoff";
-
-		/** @see #getReleaseDate() */
-		String RELEASE_DATE = "release-date";
-
-		/** @see #getLastUpdated() */
-		String LAST_UPDATED = "last-updated";
-
-		// --- Limits ---
-
-		/**
-		 * Maximum input context window size in tokens.
-		 */
-		@Name(CONTEXT_WINDOW)
-		@Nullable
-		@ReadOnly
-		Integer getContextWindow();
-
-		/** @see #getContextWindow() */
-		void setContextWindow(Integer value);
-
-		/**
-		 * Maximum output tokens per response.
-		 */
-		@Name(MAX_OUTPUT)
-		@Nullable
-		@ReadOnly
-		Integer getMaxOutput();
-
-		/** @see #getMaxOutput() */
-		void setMaxOutput(Integer value);
-
-		/**
-		 * Maximum input tokens, if the model distinguishes input from context limits.
-		 */
-		@Name(MAX_INPUT)
-		@Nullable
-		@ReadOnly
-		Integer getMaxInput();
-
-		/** @see #getMaxInput() */
-		void setMaxInput(Integer value);
-
-		// --- Capabilities ---
-
-		/**
-		 * Whether the model supports extended thinking / chain-of-thought reasoning.
-		 */
-		@Name(REASONING)
-		@Label("Reasoning support")
-		@Nullable
-		@ReadOnly
-		Boolean getReasoning();
-
-		/** @see #getReasoning() */
-		void setReasoning(Boolean value);
-
-		/**
-		 * Whether the model supports tool/function calling.
-		 */
-		@Name(TOOL_CALL)
-		@Label("Tool calling")
-		@Nullable
-		@ReadOnly
-		Boolean getToolCall();
-
-		/** @see #getToolCall() */
-		void setToolCall(Boolean value);
-
-		/**
-		 * Whether the model supports the temperature sampling parameter.
-		 */
-		@Name(TEMPERATURE)
-		@Label("Temperature support")
-		@Nullable
-		@ReadOnly
-		Boolean getTemperature();
-
-		/** @see #getTemperature() */
-		void setTemperature(Boolean value);
-
-		/**
-		 * Whether the model supports file attachments.
-		 */
-		@Name(ATTACHMENT)
-		@Label("File attachments")
-		@Nullable
-		@ReadOnly
-		Boolean getAttachment();
-
-		/** @see #getAttachment() */
-		void setAttachment(Boolean value);
-
-		/**
-		 * Whether the model supports structured (JSON) output.
-		 */
-		@Name(STRUCTURED_OUTPUT)
-		@Label("Structured output support")
-		@Nullable
-		@ReadOnly
-		Boolean getStructuredOutput();
-
-		/** @see #getStructuredOutput() */
-		void setStructuredOutput(Boolean value);
-
-		// --- Metadata ---
-
-		/**
-		 * Whether the model weights are publicly available.
-		 */
-		@Name(OPEN_WEIGHTS)
-		@Nullable
-		@ReadOnly
-		Boolean getOpenWeights();
-
-		/** @see #getOpenWeights() */
-		void setOpenWeights(Boolean value);
-
-		/**
-		 * Lifecycle status of the model, e.g. "alpha", "beta", or "deprecated". Empty when the
-		 * model is generally available.
-		 */
-		@Name(STATUS)
-		@Nullable
-		@ReadOnly
-		String getStatus();
-
-		/** @see #getStatus() */
-		void setStatus(String value);
-
-		/**
-		 * Training data knowledge cutoff date (e.g. "2026-01-31").
-		 */
-		@Name(KNOWLEDGE_CUTOFF)
-		@Nullable
-		@ReadOnly
-		String getKnowledgeCutoff();
-
-		/** @see #getKnowledgeCutoff() */
-		void setKnowledgeCutoff(String value);
-
-		/**
-		 * Model release date.
-		 */
-		@Name(RELEASE_DATE)
-		@Nullable
-		@ReadOnly
-		String getReleaseDate();
-
-		/** @see #getReleaseDate() */
-		void setReleaseDate(String value);
-
-		/**
-		 * Date of the last update to this model.
-		 */
-		@Name(LAST_UPDATED)
-		@Nullable
-		@ReadOnly
-		String getLastUpdated();
-
-		/** @see #getLastUpdated() */
-		void setLastUpdated(String value);
-
-		// --- Prices (read-only copies of the catalog's) ---
-
-		@Override
-		@ReadOnly
-		Double getInputPrice();
-
-		/** @see #getInputPrice() */
-		void setInputPrice(Double value);
-
-		@Override
-		@ReadOnly
-		Double getOutputPrice();
-
-		/** @see #getOutputPrice() */
-		void setOutputPrice(Double value);
-
-		@Override
-		@ReadOnly
-		Double getCacheReadPrice();
-
-		/** @see #getCacheReadPrice() */
-		void setCacheReadPrice(Double value);
-
-		@Override
-		@ReadOnly
-		Double getCacheWritePrice();
-
-		/** @see #getCacheWritePrice() */
-		void setCacheWritePrice(Double value);
-
-		@Override
-		@ReadOnly
-		Double getReasoningPrice();
-
-		/** @see #getReasoningPrice() */
-		void setReasoningPrice(Double value);
-
-	}
 
 	/**
 	 * The prices of a model, per million tokens, in US dollars - the unit and the currency of the
@@ -370,8 +110,7 @@ public class ModelCatalogEntry {
 	 * endpoints) that are not in the remote catalog.
 	 *
 	 * <p>
-	 * Unlike {@link Config}, these properties are writable in the admin UI and are not cleared
-	 * on startup.
+	 * An override takes precedence over the catalog entry of the same model.
 	 * </p>
 	 *
 	 * <p>
@@ -503,45 +242,5 @@ public class ModelCatalogEntry {
 			config.getCacheWritePrice(),
 			config.getReasoningPrice(),
 			null, null, null);
-	}
-
-	/**
-	 * Converts a fetched {@link ModelInfo} into a read-only config item.
-	 */
-	public static Config toConfig(String modelId, ModelInfo info) {
-		Config config = com.top_logic.basic.config.TypedConfiguration.newConfigItem(Config.class);
-		config.setName(modelId);
-
-		config.setContextWindow(info.limits().contextWindow());
-		config.setMaxOutput(info.limits().maxOutput());
-		if (info.limits().maxInput() > 0) {
-			config.setMaxInput(info.limits().maxInput());
-		}
-
-		config.setReasoning(info.capabilities().reasoning());
-		config.setToolCall(info.capabilities().toolCall());
-		config.setTemperature(info.capabilities().temperature());
-		config.setAttachment(info.capabilities().attachment());
-		config.setStructuredOutput(info.capabilities().structuredOutput());
-
-		config.setOpenWeights(info.openWeights());
-		config.setStatus(info.status());
-
-		if (info.dates() != null) {
-			config.setKnowledgeCutoff(info.dates().knowledgeCutoff());
-			config.setReleaseDate(info.dates().releaseDate());
-			config.setLastUpdated(info.dates().lastUpdated());
-		}
-
-		ModelInfo.ModelCost cost = info.cost();
-		if (cost != null) {
-			config.setInputPrice(Double.valueOf(cost.input()));
-			config.setOutputPrice(Double.valueOf(cost.output()));
-			config.setCacheReadPrice(cost.cacheRead());
-			config.setCacheWritePrice(cost.cacheWrite());
-			config.setReasoningPrice(cost.reasoning());
-		}
-
-		return config;
 	}
 }

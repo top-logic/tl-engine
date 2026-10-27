@@ -431,11 +431,34 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 
 	private Set<KnowledgeItem> findObjectsToCheck(UpdateEvent event) {
 		Set<KnowledgeItem> result = new LinkedHashSet<>();
-		Collection<KnowledgeItem> createdObjects = event.getCreatedObjects().values();
-		result.addAll(createdObjects);
+		result.addAll(event.getCreatedObjects().values());
 		result.addAll(event.getUpdatedObjects().values());
+		result.addAll(findChangedValueOwners(event));
+		return result;
+	}
+
+	/**
+	 * The objects whose attribute values are changed in the given event by creating, updating, or
+	 * deleting rows other than the objects' own rows.
+	 *
+	 * <p>
+	 * The constraints of these objects are checked in addition to the constraints of the created
+	 * and updated objects in {@link #checkCommit(UpdateEvent)}.
+	 * </p>
+	 *
+	 * <p>
+	 * This implementation reports the source of each created, updated, or deleted
+	 * {@link KnowledgeAssociation}.
+	 * </p>
+	 *
+	 * @param event
+	 *        The changes about to be committed.
+	 * @return The affected objects that are alive after the commit.
+	 */
+	protected Collection<? extends KnowledgeItem> findChangedValueOwners(UpdateEvent event) {
+		Set<KnowledgeItem> result = new LinkedHashSet<>();
 		KnowledgeBase kb = event.getKnowledgeBase();
-		addAssociationSources(kb, result, createdObjects);
+		addAssociationSources(kb, result, event.getCreatedObjects().values());
 		addAssociationSources(kb, result, event.getUpdatedObjects().values());
 
 		if (!event.getDeletedObjectKeys().isEmpty()) {

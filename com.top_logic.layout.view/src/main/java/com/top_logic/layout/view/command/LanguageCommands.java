@@ -21,7 +21,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.SimpleCommandModel;
-import com.top_logic.layout.react.protocol.JSSnipplet;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -114,7 +114,7 @@ public class LanguageCommands implements ViewCommandSource {
 
 	/**
 	 * Stores the given language as the current user's preference, applies it to the running session
-	 * and reloads the page in it.
+	 * and reloads the page in it by sending a {@link PageNavigationEvent}.
 	 *
 	 * <p>
 	 * Activating the language the account already has does nothing: the preference is stored, so
@@ -150,7 +150,7 @@ public class LanguageCommands implements ViewCommandSource {
 
 		SSEUpdateQueue queue = context.getSSEQueue();
 		if (queue != null) {
-			queue.enqueue(JSSnipplet.create().setCode("window.location.reload();"));
+			queue.enqueue(PageNavigationEvent.create());
 		}
 		return HandlerResult.DEFAULT_RESULT;
 	}

@@ -70,6 +70,12 @@ export interface JSSnippletData {
   code: string;
 }
 
+/** Data shape of the msgbuf-generated PageNavigationEvent. */
+export interface PageNavigationEventData {
+  /** The address to load; empty or absent loads the displayed page again. */
+  url?: string;
+}
+
 /** I18N cache invalidation has no payload fields. */
 export type I18NCacheInvalidationData = Record<string, never>;
 

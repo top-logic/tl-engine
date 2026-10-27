@@ -25,11 +25,10 @@
 	Which agent runs on which of them is not here: the default model and the agent overrides are in
 	com.top_logic.tl.ai.core.agent.AgentRuntimeService.config.xml next to this file.
 
-	Model metadata is in <model-overrides>, not in <llm-configuration>: the latter is cleared at
-	startup and repopulated from the remote models.dev catalogue, so hand-written entries there do
-	not survive. The Anthropic entry carries catalog-provider-id="" for the same reason - a test must
-	not depend on reaching the internet, and everything the eval reads about a model (tool-call, the
-	context window) is written here.
+	Model metadata is in <model-overrides>: the catalog the service resolves at startup is not part
+	of its configuration. The Anthropic entry carries catalog-provider-id="" - a test must not depend
+	on reaching the internet, and everything the eval reads about a model (tool-call, the context
+	window) is written here.
 
 	In autoconf rather than in WEB-INF/conf, because that is the layer an application overrides a
 	framework default in.

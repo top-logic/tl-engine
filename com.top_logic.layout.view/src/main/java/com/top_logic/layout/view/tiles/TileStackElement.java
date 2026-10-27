@@ -14,6 +14,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -172,6 +173,7 @@ public class TileStackElement implements UIElement {
 		 */
 		@Name(FRAMES)
 		@DefaultContainer
+		@Key(FrameRouteConfig.ID)
 		List<FrameRouteConfig> getFrames();
 	}
 

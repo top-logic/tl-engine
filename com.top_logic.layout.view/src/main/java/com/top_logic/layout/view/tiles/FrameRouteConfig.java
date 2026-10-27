@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -99,9 +100,6 @@ public interface FrameRouteConfig extends WithFinalTitle, FrameSuccessorConfig {
 	/** Configuration name for {@link #getRoute()}. */
 	String ROUTE = "route";
 
-	/** Configuration name for {@link #getId()}. */
-	String ID = "id";
-
 	/** Configuration name for {@link #getContents()}. */
 	String CONTENTS = "contents";
 
@@ -142,6 +140,7 @@ public interface FrameRouteConfig extends WithFinalTitle, FrameSuccessorConfig {
 	 * Unique within the stack: a second declaration of the same id is a configuration error.
 	 * </p>
 	 */
+	@Override
 	@Name(ID)
 	@Mandatory
 	String getId();
@@ -156,6 +155,7 @@ public interface FrameRouteConfig extends WithFinalTitle, FrameSuccessorConfig {
 	 */
 	@Name(CONTENTS)
 	@DefaultContainer
+	@Key(ID)
 	List<FrameContentConfig> getContents();
 
 	/**

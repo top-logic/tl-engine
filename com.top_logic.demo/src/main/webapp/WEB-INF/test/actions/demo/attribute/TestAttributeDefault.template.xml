@@ -325,9 +325,9 @@
 										/>
 									</object>
 									<labeled-member label="Standard Wert"/>
-									<labeled-member label="Provider"/>
+									<labeled-member label="Standardwert"/>
 									<named-member name="outerContainer"/>
-									<labeled-member label="Provider"/>
+									<labeled-member label="Standardwert"/>
 								</path>
 							</field>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">

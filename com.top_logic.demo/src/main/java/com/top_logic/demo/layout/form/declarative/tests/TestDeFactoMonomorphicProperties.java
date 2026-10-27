@@ -97,19 +97,37 @@ public interface TestDeFactoMonomorphicProperties extends ConfigurationItem {
 
 	/**
 	 * Optional configuration of implementation of {@link F}.
+	 *
+	 * <p>
+	 * The property is typed with the configuration of {@link Impl}: A property of type
+	 * {@link PolymorphicConfiguration PolymorphicConfiguration&lt;F&gt;} additionally accepts a TL-Script
+	 * implementation of {@link F} and therefore has more than one implementation option.
+	 * </p>
 	 */
-	PolymorphicConfiguration<F> getIOptional();
+	Impl.Config<?> getIOptional();
 
 	/**
 	 * Mandatory configuration of implementation of {@link F}.
+	 *
+	 * <p>
+	 * The property is typed with the configuration of {@link Impl}: A property of type
+	 * {@link PolymorphicConfiguration PolymorphicConfiguration&lt;F&gt;} additionally accepts a TL-Script
+	 * implementation of {@link F} and therefore has more than one implementation option.
+	 * </p>
 	 */
 	@Mandatory
-	PolymorphicConfiguration<F> getIMandatory();
+	Impl.Config<?> getIMandatory();
 
 	/**
 	 * List of implementations of {@link F}.
+	 *
+	 * <p>
+	 * The property is typed with the configuration of {@link Impl}: A property of type
+	 * {@link PolymorphicConfiguration PolymorphicConfiguration&lt;F&gt;} additionally accepts a TL-Script
+	 * implementation of {@link F} and therefore has more than one implementation option.
+	 * </p>
 	 */
-	List<PolymorphicConfiguration<F>> getIs();
+	List<Impl.Config<?>> getIs();
 
 	/**
 	 * Optional direct instance of {@link F}.

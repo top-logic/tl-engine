@@ -103,10 +103,6 @@
 						type="tl.core:String"
 					>
 						<annotations>
-							<config-type value="STRING_SET"/>
-							<storage-algorithm>
-								<string-set-storage/>
-							</storage-algorithm>
 							<options>
 								<options-by-expression function="t -&gt; all(`demo.tickets:Ticket`).map(x -&gt; $x.get(`demo.tickets:Ticket#tags`)).flatten().toSet()"/>
 							</options>

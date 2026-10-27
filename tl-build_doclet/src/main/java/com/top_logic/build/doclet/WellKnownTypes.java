@@ -51,6 +51,10 @@ public class WellKnownTypes {
 
 	TypeMirror _polymorphicConfigurationType;
 
+	TypeMirror _collectionType;
+
+	TypeMirror _mapType;
+
 	TypeMirror _i18nConstantsType;
 
 	TypeMirror _themeConstantsType;
@@ -110,6 +114,8 @@ public class WellKnownTypes {
 		_deprecatedAnnotation = typeMirror("java.lang.Deprecated");
 		_configType = typeMirror("com.top_logic.basic.config.ConfigurationItem");
 		_polymorphicConfigurationType = typeMirror("com.top_logic.basic.config.PolymorphicConfiguration");
+		_collectionType = typeMirror("java.util.Collection");
+		_mapType = typeMirror("java.util.Map");
 		_i18nConstantsType = typeMirror("com.top_logic.basic.i18n.I18NConstantsBase");
 		_themeConstantsType = typeMirror("com.top_logic.layout.basic.IconsBase");
 		_withPropertiesType = typeMirror("com.top_logic.layout.template.WithProperties");

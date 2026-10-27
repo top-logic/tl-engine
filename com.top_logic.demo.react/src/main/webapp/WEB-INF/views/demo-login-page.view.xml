@@ -4,20 +4,28 @@
 	What a session that belongs to no account sees in place of the application: the framework's
 	login page, and below it a link to the page such a visitor may browse without logging in.
 	
-	The link is absolute below the context path, so it holds wherever the application is deployed.
+	The link is a button in the appearance of a link. It shows browse.view.xml as the window's new
+	root view: the page is an entry point of the application, which the login page does not contain,
+	so <show-view display="top-level"/> loads it in place of the login page.
 -->
 <view>
-	<channels>
-		<derived-channel name="browseLink">
-			<expr><![CDATA[{{{<a href="{contextPath() + '/view/browse.view.xml'}">{#('Browse anonymously'@en, 'Anonym stöbern'@de)}</a>}}}]]></expr>
-		</derived-channel>
-	</channels>
 	<stack
 		align="center"
 		direction="column"
 		gap="default"
 	>
 		<view-ref view="login-page.view.xml"/>
-		<html input="browseLink"/>
+		<button appearance="link">
+			<action class="com.top_logic.layout.view.command.GenericViewCommand">
+				<label>
+					<en>Browse anonymously</en>
+					<de>Anonym stöbern</de>
+				</label>
+				<show-view
+					display="top-level"
+					view="browse.view.xml"
+				/>
+			</action>
+		</button>
 	</stack>
 </view>

@@ -332,7 +332,6 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
 			(ReactControl) view.createControl(viewContext));
-		content.setViewSource(viewPath);
 		ReactControl rootControl =
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);

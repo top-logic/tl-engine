@@ -83,6 +83,9 @@ public class TestDesignTreeViewRefs extends TestCase {
 		DesignTreeNode ref = single(root, node -> configOf(node) instanceof ReferenceElement.Config);
 		assertEquals("The referenced view is the only child.", 1, ref.getChildren().size());
 		assertEquals(path("a-child.view.xml"), ref.getChildren().get(0).getSourceFile());
+		assertEquals("A view of a file of its own is named by the file.", "a-child.view.xml",
+			ref.getChildren().get(0).getLabel());
+		assertEquals("The view of the root file is named by the file.", "a-root.view.xml", root.getLabel());
 		assertNull("The reference is no child container.", ref.getChildContainer());
 		assertFalse("Nothing can be added to a reference.", AddChildCommand.canExecute(ref));
 		assertNull("The referenced view is no element of the referencing node.",

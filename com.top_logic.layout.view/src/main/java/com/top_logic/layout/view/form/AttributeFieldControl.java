@@ -170,7 +170,10 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 *        The control editing the attribute here, or {@code null} to let the model decide.
 	 *
 	 * @implNote The control is resolved through
-	 *           {@link FieldControlService#createFieldControl(ReactContext, com.top_logic.model.TLStructuredTypePart, com.top_logic.layout.form.model.FieldModel, PolymorphicConfiguration)}.
+	 *           {@link FieldControlService#createFieldControl(ReactContext, com.top_logic.model.TLStructuredTypePart, com.top_logic.layout.form.model.FieldModel, PolymorphicConfiguration)},
+	 *           its model through
+	 *           {@link FieldControlService#createModel(TLObject, TLStructuredTypePart, FormControl, PolymorphicConfiguration)},
+	 *           so the model fits the control.
 	 */
 	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
 			String attributeName, ResKey labelOverride, boolean forceReadonly,
@@ -452,10 +455,11 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	/**
 	 * Creates the {@link AttributeFieldModel} for the given attribute (an
-	 * {@link AttributeSelectFieldModel} for option-based attributes).
+	 * {@link AttributeSelectFieldModel} for option-based attributes), following the control this
+	 * field names.
 	 */
 	private AttributeFieldModel createModel(TLObject object, TLStructuredTypePart part) {
-		return FieldControlService.getInstance().createModel(object, part, _formControl);
+		return FieldControlService.getInstance().createModel(object, part, _formControl, _inputControl);
 	}
 
 	/**

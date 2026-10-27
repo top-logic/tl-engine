@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.view.security.ModelAccessRule;
+import com.top_logic.layout.view.security.IntrinsicAccessRules;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
@@ -40,7 +40,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * checked in the context of the container and, with a {@link Config#getReference() reference},
  * together with the right to write that reference; a refused command is disabled. The reference
  * serves this check only. The dialog receives the container through the bindings of the
- * {@link OpenDialogAction}. See {@link ModelAccessRule} for how a refusal is displayed.
+ * {@link OpenDialogAction}. See {@link IntrinsicAccessRules} for how a refusal is displayed.
  * </p>
  *
  * <p>
@@ -102,7 +102,7 @@ public class CreateTransientAction implements ViewAction {
 	 */
 	@Override
 	public ViewExecutabilityRule getIntrinsicRule() {
-		return ModelAccessRule.creation(_config.getType(), _config.getContainer(), _config.getReference());
+		return IntrinsicAccessRules.creation(_config.getType(), _config.getContainer(), _config.getReference());
 	}
 
 	@Override

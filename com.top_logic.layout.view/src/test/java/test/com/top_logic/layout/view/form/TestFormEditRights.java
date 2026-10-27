@@ -20,18 +20,23 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
  * Tests that editing a {@link FormControl} follows the right to write its object, see
- * {@link ModelAccessPolicy#onEdit(TLObject)}, combined with the configured edit rule.
+ * {@link ModelAccessPolicy#onEdit(BoundCommandGroup, TLObject)}, combined with the configured edit rule.
  */
 @SuppressWarnings("javadoc")
 public class TestFormEditRights extends AbstractModelAccessTest {
@@ -234,6 +239,43 @@ public class TestFormEditRights extends AbstractModelAccessTest {
 
 		assertSame(ExecutableState.EXECUTABLE, form.editPermission());
 		assertTrue(form.enterEditMode());
+	}
+
+	/**
+	 * A form requires {@link SimpleBoundCommandGroup#WRITE} for editing unless configured otherwise.
+	 */
+	public void testDefaultEditOperation() {
+		FormElement.Config config = TypedConfiguration.newConfigItem(FormElement.Config.class);
+		assertEquals(SimpleBoundCommandGroup.WRITE_NAME, config.getEditOperation().id());
+	}
+
+	/**
+	 * A configured edit operation is checked on the displayed object instead of the write right.
+	 */
+	public void testCustomEditOperation() {
+		BoundCommandGroup finish = CommandGroupRegistry.getInstance().getGroup(FINISH);
+
+		becomeUser(_responsible);
+		FormControl form = newForm(_project);
+		form.setEditOperation(finish);
+		assertSame(ExecutableState.EXECUTABLE, form.editPermission());
+
+		becomeUser(_roleless);
+		ExecutableState denied = form.editPermission();
+		assertTrue("Expected a disabled command, got: " + denied, denied.isDisabled());
+		assertEquals("You are not allowed to perform the operation \"Finish\" on this object.",
+			Resources.getInstance(Locale.ENGLISH).getString(denied.getI18NReasonKey()));
+		assertFalse(form.enterEditMode());
+
+		becomeUser(_root);
+		FormControl categoryForm = newForm(_category);
+		categoryForm.setEditOperation(finish);
+		assertSame("The operation does not apply to a category.", ExecutableState.NOT_EXEC_HIDDEN,
+			categoryForm.editPermission());
+
+		categoryForm.setEditOperation(null);
+		assertSame("An unknown operation refuses editing.", ExecutableState.NOT_EXEC_HIDDEN,
+			categoryForm.editPermission());
 	}
 
 	private static FormControl newForm(TLObject object) {

@@ -53,9 +53,10 @@
 	ticket. With <null-input-disabled/> that is the whole of "enabled for such a selection".
 	
 	On top of that, the model access rights of the user decide: <create-transient> and
-	<delete-object> bring the rule for the creation and the deletion they perform, and the script
-	creating a ticket declares its creation with a <model-access> rule.
-
+	<delete-object> bring the rule for the creation and the deletion they perform, and the command
+	running the script creating a ticket declares the creation in its <access>: a ticket created
+	in the scope of the milestone and added to its tickets.
+	
 	The same objects are displayed twice, in the tabs "Tree" and "Tree table": a <tree-table> with
 	the root, children and parents of the tree and with the name, due date and approval as columns.
 	Both bind the "selected" channel, so the commands work on the selection of either, and an object
@@ -64,7 +65,7 @@
 	tab not shown follows the model as well: a name or due date changed in the details form beside
 	the tabs, while the tree table is in the hidden tab, shows in its columns as soon as the tab is
 	opened again, and when its selected object is deleted meanwhile, the row it hung in is selected.
-
+	
 	The details form edits the single selected object: the name, due date and approval of a
 	milestone, the title of a ticket, the name of a scope.
 -->
@@ -160,12 +161,15 @@
 								<en>New ticket</en>
 								<de>Neues Ticket</de>
 							</label>
-							<executability>
-								<null-input-disabled/>
-								<model-access
-									operation="Create"
+							<access>
+								<create
+									in="$milestone.container()"
+									reference="tl.demo.projectManagement:ProjectScope#tickets"
 									type="tl.demo.projectManagement:Ticket"
 								/>
+							</access>
+							<executability>
+								<null-input-disabled/>
 							</executability>
 							<with-transaction>
 								<commitMessage>

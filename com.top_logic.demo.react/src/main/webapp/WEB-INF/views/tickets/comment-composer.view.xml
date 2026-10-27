@@ -62,19 +62,20 @@
 				<commands>
 					<generic-command
 						image="css:bi bi-send"
+						inputs="ticket"
 						placement="TOOLBAR"
 					>
 						<label>
 							<en>Add comment</en>
 							<de>Kommentar hinzufügen</de>
 						</label>
-						<executability>
-							<model-access
-								container="ticket"
-								operation="Create"
-								reference="comments"
+						<access>
+							<create
+								in="$ticket"
+								reference="demo.tickets:Ticket#comments"
+								type="demo.tickets:Comment"
 							/>
-						</executability>
+						</access>
 						<store-form-state>
 							<with-result>
 								<link-element>

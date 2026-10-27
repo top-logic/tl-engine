@@ -11,9 +11,13 @@
  * {@link com.top_logic.model.security.SecurityConfigurationService}). UI units (navigation items,
  * sidebar groups, tabs, accordion sections, tiles) declare with an
  * {@link com.top_logic.layout.view.security.AccessControl} which operation is checked on which
- * object; {@link com.top_logic.layout.view.security.ModelAccessPolicy} maps a decision to hiding or
- * disabling, and {@link com.top_logic.layout.view.security.ModelAccessRule} checks the operation of a
- * command.
+ * object, and a command declares in its
+ * {@link com.top_logic.layout.view.command.ViewCommand.Config#getAccess() access} the operations
+ * it performs ({@link com.top_logic.layout.view.security.OperationAccess}) and the objects it
+ * creates ({@link com.top_logic.layout.view.security.CreateAccess}). Units and operations share
+ * the {@link com.top_logic.layout.view.security.OperationCheck}.
+ * {@link com.top_logic.layout.view.security.ModelAccessPolicy} maps a decision to hiding or
+ * disabling.
  * </p>
  *
  * @see com.top_logic.layout.view.security.AccessControl

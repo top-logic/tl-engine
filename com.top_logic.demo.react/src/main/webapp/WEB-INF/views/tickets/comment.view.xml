@@ -58,21 +58,20 @@
 			<commands>
 				<generic-command
 					image="css:bi bi-reply"
-					inputs="comment"
+					inputs="comment, ticket"
 					placement="TOOLBAR"
 				>
 					<label>
 						<en>Reply</en>
 						<de>Antworten</de>
 					</label>
-					<executability>
-						<model-access
-							container="ticket"
-							operation="Create"
-							reference="comments"
+					<access>
+						<create
+							in="$ticket"
+							reference="demo.tickets:Ticket#comments"
 							type="demo.tickets:Comment"
 						/>
-					</executability>
+					</access>
 					<execute-script function="{ reply = new(`demo.tickets:Comment`, transient: true, context: $comment.container()); $reply.set(`demo.tickets:Comment#cited`, $comment); $reply; }">
 						<with-result>
 							<write-channel name="draft"/>
@@ -89,9 +88,12 @@
 						<en>Delete</en>
 						<de>Löschen</de>
 					</label>
-					<executability>
-						<model-access operation="Delete"/>
-					</executability>
+					<access>
+						<operation name="Delete"
+							object="$comment"
+							type="demo.tickets:Comment"
+						/>
+					</access>
 					<remove-element/>
 				</generic-command>
 			</commands>

@@ -7,7 +7,6 @@ package test.com.top_logic.layout.view.security;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -21,7 +20,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -48,19 +46,19 @@ import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
 import com.top_logic.layout.view.command.WithTransactionAction;
-import com.top_logic.layout.view.security.ModelAccessRule;
+import com.top_logic.layout.view.command.ObservableRule;
+import com.top_logic.layout.view.security.IntrinsicAccessRules;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
-import com.top_logic.tool.boundsec.CommandGroupReference;
+import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.tool.execution.service.CommandApprovalService;
-import com.top_logic.util.Resources;
 
 /**
- * Tests the {@link ModelAccessRule}, the {@link DeleteVetoDisabled} rule, and the executability
+ * Tests the {@link IntrinsicAccessRules}, the {@link DeleteVetoDisabled} rule, and the executability
  * rules that actions bring of their own.
  */
-public class TestModelAccessRule extends AbstractModelAccessTest {
+public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 
 	/** Name of the channel holding the object or container in the tests. */
 	private static final String CHANNEL = "subject";
@@ -88,7 +86,7 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 * Deleting the command input is offered to the user holding the right on it.
 	 */
 	public void testDeleteAllowed() throws Exception {
-		ViewExecutabilityRule rule = rule("<model-access operation='Delete'/>");
+		ViewExecutabilityRule rule = delete();
 
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
@@ -99,7 +97,7 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 * Deleting an object the user has no right on is disabled, naming the operation.
 	 */
 	public void testDeleteDeniedDisabled() throws Exception {
-		ViewExecutabilityRule rule = rule("<model-access operation='Delete'/>");
+		ViewExecutabilityRule rule = delete();
 
 		becomeUser(_roleless);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
@@ -110,7 +108,7 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 * Deleting an object of a type granting the deletion to no role at all is hidden.
 	 */
 	public void testDeleteGrantedToNoRoleHidden() throws Exception {
-		ViewExecutabilityRule rule = rule("<model-access operation='Delete'/>");
+		ViewExecutabilityRule rule = delete();
 
 		becomeUser(_responsible);
 		assertSame(ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(_category));
@@ -120,7 +118,7 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 * A restricted user may never delete, so the command is hidden.
 	 */
 	public void testRestrictedUserHidden() throws Exception {
-		ViewExecutabilityRule rule = rule("<model-access operation='Delete'/>");
+		ViewExecutabilityRule rule = delete();
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 			_responsible.setRestrictedUser(Boolean.TRUE);
 			tx.commit();
@@ -131,31 +129,10 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * An attribute-level check decides by the rights on the attribute. An attribute granting the
-	 * operation to no role refuses it independent of the object: the command is hidden, unless the
-	 * rule demands to disable it.
-	 */
-	public void testAttributeWrite() throws Exception {
-		ViewExecutabilityRule name = rule("<model-access operation='Write' attribute='" + NAME + "'/>");
-		ViewExecutabilityRule secret = rule("<model-access operation='Write' attribute='" + SECRET + "'/>");
-		ViewExecutabilityRule disabledSecret =
-			rule("<model-access operation='Write' attribute='" + SECRET + "' denied='disable'/>");
-
-		becomeUser(_responsible);
-		assertSame(ExecutableState.EXECUTABLE, name.isExecutable(_project));
-		assertSame(ExecutableState.NOT_EXEC_HIDDEN, secret.isExecutable(_project));
-		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_ATTRIBUTE_WRITE_DENIED__ATTRIBUTE,
-			disabledSecret.isExecutable(_project));
-
-		becomeUser(_root);
-		assertSame(ExecutableState.EXECUTABLE, secret.isExecutable(_project));
-	}
-
-	/**
 	 * A creation without container is checked against the security root; refused, it is hidden.
 	 */
 	public void testTopLevelCreateDeniedHidden() throws Exception {
-		ViewExecutabilityRule rule = rule("<model-access operation='Create' type='" + qualified(PROJECT) + "'/>");
+		ViewExecutabilityRule rule = creation(TLModelPartRef.ref(qualified(PROJECT)), null, null);
 
 		becomeUser(_responsible);
 		assertSame(ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(null));
@@ -170,7 +147,7 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 */
 	public void testCreateInContainer() throws Exception {
 		ViewExecutabilityRule rule =
-			rule("<model-access operation='Create' container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+			creation(null, CHANNEL, TASKS);
 		_channel.set(_project);
 
 		becomeUser(_responsible);
@@ -179,36 +156,6 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 		becomeUser(_roleless);
 		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
 			rule.isExecutable(null));
-	}
-
-	/**
-	 * The programmatic creation check agrees with the configured one.
-	 */
-	public void testCreationFactory() {
-		ViewExecutabilityRule rule = ModelAccessRule.creation(null, new ChannelRef(CHANNEL), TASKS);
-		((ContextDependentRule) rule).bind(_context);
-		_channel.set(_project);
-
-		becomeUser(_responsible);
-		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
-
-		becomeUser(_roleless);
-		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
-			rule.isExecutable(null));
-	}
-
-	/**
-	 * The configured display overrides the derived one.
-	 */
-	public void testDeniedOverride() throws Exception {
-		ViewExecutabilityRule disabledCreate =
-			rule("<model-access operation='Create' type='" + qualified(PROJECT) + "' denied='disable'/>");
-		ViewExecutabilityRule hiddenDelete = rule("<model-access operation='Delete' denied='hide'/>");
-
-		becomeUser(_roleless);
-		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
-			disabledCreate.isExecutable(null));
-		assertSame(ExecutableState.NOT_EXEC_HIDDEN, hiddenDelete.isExecutable(_project));
 	}
 
 	/**
@@ -216,33 +163,33 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 * deciding about a missing input.
 	 */
 	public void testNothingToCheck() throws Exception {
-		ViewExecutabilityRule onInput = rule("<model-access operation='Delete'/>");
-		ViewExecutabilityRule onChannel = rule("<model-access operation='Delete' object='" + CHANNEL + "'/>");
+		ViewExecutabilityRule onInput = delete();
 		ViewExecutabilityRule inContainer =
-			rule("<model-access operation='Create' container='" + CHANNEL + "' reference='" + TASKS + "'/>");
+			creation(null, CHANNEL, TASKS);
 
 		becomeUser(_roleless);
 		assertSame(ExecutableState.EXECUTABLE, onInput.isExecutable(null));
-		assertSame(ExecutableState.EXECUTABLE, onChannel.isExecutable(_project));
 		assertSame(ExecutableState.EXECUTABLE, inContainer.isExecutable(null));
 	}
 
 	/**
-	 * The object channel is observed: a new object is a new check.
+	 * The container channel is observed: a new container is a new check.
 	 */
-	public void testObjectChannel() throws Exception {
-		ModelAccessRule rule = (ModelAccessRule) rule("<model-access operation='Delete' object='" + CHANNEL + "'/>");
+	public void testContainerChannel() throws Exception {
+		ViewExecutabilityRule rule = creation(null, CHANNEL, TASKS);
 		int[] revalidations = { 0 };
-		Runnable stop = rule.observe(() -> revalidations[0]++);
+		Runnable stop = ((ObservableRule) rule).observe(() -> revalidations[0]++);
+		TLObject other = newObject(qualified(PROJECT), "other");
 
 		becomeUser(_responsible);
 		_channel.set(_project);
 		assertEquals(1, revalidations[0]);
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(null));
 
-		_channel.set(_category);
+		_channel.set(other);
 		assertEquals(2, revalidations[0]);
-		assertSame(ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(null));
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
+			rule.isExecutable(null));
 
 		stop.run();
 		_channel.set(_project);
@@ -250,38 +197,10 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A custom command group is checked like the built-in ones, the reason naming the operation.
-	 */
-	public void testCustomCommandGroup() throws Exception {
-		ViewExecutabilityRule rule = rule("<model-access operation='" + FINISH + "'/>");
-
-		becomeUser(_responsible);
-		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
-		assertSame("No role may finish a category.", ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutable(_category));
-
-		becomeUser(_roleless);
-		ExecutableState state = rule.isExecutable(_project);
-		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_OPERATION_DENIED__OPERATION, state);
-		assertEquals("You are not allowed to perform the operation \"Finish\" on this object.",
-			Resources.getInstance(Locale.ENGLISH).getString(state.getI18NReasonKey()));
-	}
-
-	/**
-	 * A configuration not describing a check is reported.
-	 */
-	public void testInvalidConfig() throws ConfigurationException {
-		assertInvalid("<model-access operation='Create' reference='" + TASKS + "'/>");
-		assertInvalid("<model-access operation='Delete' container='" + CHANNEL + "' reference='" + TASKS + "'/>");
-		assertInvalid("<model-access operation='Write' type='" + qualified(PROJECT) + "' attribute='" + NAME + "'/>");
-		assertInvalid("<model-access operation='Create' attribute='" + NAME + "'/>");
-		assertInvalid("<model-access operation='Delete' object='" + CHANNEL + "' type='" + qualified(PROJECT) + "'/>");
-	}
-
-	/**
 	 * Without a type, a creation creates an object of the type of the (transient) command input.
 	 */
 	public void testCreateTypeOfInput() throws Exception {
-		ViewExecutabilityRule rule = rule("<model-access operation='Create'/>");
+		ViewExecutabilityRule rule = creation(null, null, null);
 		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(PROJECT));
 
 		becomeUser(_responsible);
@@ -297,7 +216,7 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 * command input.
 	 */
 	public void testCreateTypeOfInputInContainer() throws Exception {
-		ViewExecutabilityRule rule = rule("<model-access operation='Create' container='" + CHANNEL + "'/>");
+		ViewExecutabilityRule rule = creation(null, CHANNEL, null);
 		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(TASK));
 		_channel.set(_project);
 
@@ -316,8 +235,8 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 */
 	public void testGenericCommandCombinesActionRules() {
 		GenericViewCommand command = new GenericViewCommand(List.of(
-			instantiate(ruleAction("Delete", null)),
-			instantiate(ruleAction(FINISH, CHANNEL))));
+			instantiate(ruleAction(null)),
+			instantiate(ruleAction(CHANNEL))));
 		ViewExecutabilityRule rule =
 			ViewExecutabilityRules.withIntrinsicRule(_context, command, NullInputDisabled.INSTANCE);
 
@@ -326,8 +245,9 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 		assertSame(ExecutableState.EXECUTABLE, rule.isExecutable(_project));
 		assertSame("The configured rule takes part.", ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutable(null));
 
-		_channel.set(_category);
-		assertSame("The rule of the second action reads its bound channel.", ExecutableState.NOT_EXEC_HIDDEN,
+		_channel.set(newObject(qualified(PROJECT), "other"));
+		// The rule of the second action reads its bound channel.
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_CREATE_TYPE_DENIED__TYPE,
 			rule.isExecutable(_project));
 
 		becomeUser(_roleless);
@@ -341,7 +261,7 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 */
 	public void testWithTransactionForwardsRules() {
 		WithTransactionAction.Config config = TypedConfiguration.newConfigItem(WithTransactionAction.Config.class);
-		config.getActions().add(ruleAction("Delete", null));
+		config.getActions().add(ruleAction(null));
 		ViewAction transaction = instantiate(config);
 		GenericViewCommand command = new GenericViewCommand(List.of(transaction));
 
@@ -364,61 +284,6 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 		GenericViewCommand command = new GenericViewCommand(List.of(plain));
 
 		assertSame(ViewExecutabilityRule.ALWAYS_EXECUTABLE, command.getIntrinsicRule());
-	}
-
-	/**
-	 * An operation the access rights allow is refused when the {@link CommandApprovalService}
-	 * refuses it on the object: the command is disabled with the reason of the approval.
-	 */
-	public void testApprovalRefuses() throws Exception {
-		ViewExecutabilityRule write = rule("<model-access operation='Write'/>");
-		ViewExecutabilityRule read = rule("<model-access operation='Read'/>");
-		ViewExecutabilityRule hiddenWrite = rule("<model-access operation='Write' denied='hide'/>");
-		TLObject frozen = newObject(qualified(PROJECT), FROZEN);
-
-		becomeUser(_root);
-		assertSame(ExecutableState.EXECUTABLE, write.isExecutable(_project));
-		ExecutableState state = write.isExecutable(frozen);
-		assertTrue("Expected a visible command, got: " + state, state.isVisible());
-		assertFalse("Expected a disabled command, got: " + state, state.isExecutable());
-		assertEquals("The project is frozen.",
-			Resources.getInstance(Locale.ENGLISH).getString(state.getI18NReasonKey()));
-		assertSame("The approval checks writing only.", ExecutableState.EXECUTABLE, read.isExecutable(frozen));
-		assertSame("The configured display overrides the derived one.", ExecutableState.NOT_EXEC_HIDDEN,
-			hiddenWrite.isExecutable(frozen));
-	}
-
-	/**
-	 * An approval check hiding the command hides it, unless the rule demands another display.
-	 */
-	public void testApprovalHides() throws Exception {
-		ViewExecutabilityRule delete = rule("<model-access operation='Delete'/>");
-		ViewExecutabilityRule disabledDelete = rule("<model-access operation='Delete' denied='disable'/>");
-		TLObject frozen = newObject(qualified(PROJECT), FROZEN);
-
-		becomeUser(_root);
-		assertSame(ExecutableState.EXECUTABLE, delete.isExecutable(_project));
-		assertSame(ExecutableState.NOT_EXEC_HIDDEN, delete.isExecutable(frozen));
-		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
-			disabledDelete.isExecutable(frozen));
-	}
-
-	/**
-	 * The approval configured by the framework disables modifying and deleting the anonymous
-	 * account, even for a user the access rights allow everything.
-	 */
-	public void testApprovalAnonymousAccount() throws Exception {
-		ViewExecutabilityRule write = rule("<model-access operation='Write'/>");
-		ViewExecutabilityRule delete = rule("<model-access operation='Delete'/>");
-		Person anonymous = PersonManager.getManager().getAnonymous();
-
-		becomeUser(_root);
-		assertDisabled(com.top_logic.knowledge.gui.layout.person.I18NConstants.ERROR_NOT_EXECUTABLE_FOR_ANONYMOUS_ACCOUNT,
-			write.isExecutable(anonymous));
-		assertDisabled(com.top_logic.knowledge.gui.layout.person.I18NConstants.ERROR_NOT_EXECUTABLE_FOR_ANONYMOUS_ACCOUNT,
-			delete.isExecutable(anonymous));
-		assertSame(ExecutableState.EXECUTABLE, write.isExecutable(_roleless));
-		assertSame(ExecutableState.EXECUTABLE, delete.isExecutable(_roleless));
 	}
 
 	/**
@@ -463,28 +328,30 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 		assertTrue("Deleting the anonymous account is disabled, got: " + anonymous, anonymous.isDisabled());
 	}
 
-	private ViewExecutabilityRule rule(String xml) throws ConfigurationException {
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestModelAccessRule.class);
-		ViewExecutabilityRule rule = context.getInstance(parse(context, xml));
-		context.checkErrors();
+	private static ViewExecutabilityRule delete() {
+		return IntrinsicAccessRules.onInput(SimpleBoundCommandGroup.DELETE);
+	}
+
+	private ViewExecutabilityRule creation(TLModelPartRef type, String container, String reference) {
+		ViewExecutabilityRule rule =
+			IntrinsicAccessRules.creation(type, container == null ? null : new ChannelRef(container), reference);
 		if (rule instanceof ContextDependentRule contextDependent) {
 			contextDependent.bind(_context);
 		}
 		return rule;
 	}
 
-	private void assertInvalid(String xml) throws ConfigurationException {
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestModelAccessRule.class);
-		context.getInstance(parse(context, xml));
-		assertTrue("Expected an error for: " + xml, context.hasErrors());
+	private ViewExecutabilityRule rule(String xml) throws ConfigurationException {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestIntrinsicAccessRules.class);
+		ViewExecutabilityRule rule = context.getInstance(parse(context, xml));
+		context.checkErrors();
+		return rule;
 	}
 
 	@SuppressWarnings("unchecked")
 	private static PolymorphicConfiguration<? extends ViewExecutabilityRule> parse(InstantiationContext context,
 			String xml) throws ConfigurationException {
 		Map<String, ConfigurationDescriptor> descriptors = new HashMap<>();
-		descriptors.put(ModelAccessRule.Config.TAG_NAME,
-			TypedConfiguration.getConfigurationDescriptor(ModelAccessRule.Config.class));
 		descriptors.put(DeleteVetoDisabled.Config.TAG_NAME,
 			TypedConfiguration.getConfigurationDescriptor(DeleteVetoDisabled.Config.class));
 		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
@@ -492,15 +359,14 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 		return (PolymorphicConfiguration<? extends ViewExecutabilityRule>) reader.read();
 	}
 
-	private static RuleAction.Config ruleAction(String operation, String channel) {
+	private static RuleAction.Config ruleAction(String container) {
 		RuleAction.Config config = TypedConfiguration.newConfigItem(RuleAction.Config.class);
-		config.setOperation(new CommandGroupReference(operation));
-		config.setObject(channel == null ? null : new ChannelRef(channel));
+		config.setContainer(container == null ? null : new ChannelRef(container));
 		return config;
 	}
 
 	private static ViewAction instantiate(PolymorphicConfiguration<? extends ViewAction> config) {
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestModelAccessRule.class);
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestIntrinsicAccessRules.class);
 		ViewAction result = context.getInstance(config);
 		try {
 			context.checkErrors();
@@ -530,7 +396,8 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * {@link ViewAction} passing its input on, bringing a {@link ModelAccessRule} of its own.
+	 * {@link ViewAction} passing its input on, bringing a rule of its own: the deletion of the
+	 * command input, or, with a container, the creation of a task in the container.
 	 */
 	public static class RuleAction implements ViewAction {
 
@@ -539,40 +406,26 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 		 */
 		public interface Config extends PolymorphicConfiguration<RuleAction> {
 
-			/** Configuration name for {@link #getOperation()}. */
-			String OPERATION = "operation";
-
-			/** Configuration name for {@link #getObject()}. */
-			String OBJECT = "object";
+			/** Configuration name for {@link #getContainer()}. */
+			String CONTAINER = "container";
 
 			@Override
 			@ClassDefault(RuleAction.class)
 			Class<? extends RuleAction> getImplementationClass();
 
 			/**
-			 * The operation the action performs.
+			 * Channel holding the project a task is created in, the deletion of the command input
+			 * is checked when unset.
 			 */
-			@Name(OPERATION)
-			@Mandatory
-			CommandGroupReference getOperation();
-
-			/**
-			 * @see #getOperation()
-			 */
-			void setOperation(CommandGroupReference value);
-
-			/**
-			 * Channel holding the object operated on, the command input when unset.
-			 */
-			@Name(OBJECT)
+			@Name(CONTAINER)
 			@Nullable
 			@Format(ChannelRefFormat.class)
-			ChannelRef getObject();
+			ChannelRef getContainer();
 
 			/**
-			 * @see #getObject()
+			 * @see #getContainer()
 			 */
-			void setObject(ChannelRef value);
+			void setContainer(ChannelRef value);
 		}
 
 		private final Config _config;
@@ -592,10 +445,10 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 
 		@Override
 		public ViewExecutabilityRule getIntrinsicRule() {
-			ModelAccessRule.Config config = TypedConfiguration.newConfigItem(ModelAccessRule.Config.class);
-			config.setOperation(_config.getOperation());
-			config.setObject(_config.getObject());
-			return ModelAccessRule.create(config);
+			if (_config.getContainer() == null) {
+				return IntrinsicAccessRules.onInput(SimpleBoundCommandGroup.DELETE);
+			}
+			return IntrinsicAccessRules.creation(null, _config.getContainer(), TASKS);
 		}
 	}
 
@@ -603,6 +456,6 @@ public class TestModelAccessRule extends AbstractModelAccessTest {
 	 * The test suite.
 	 */
 	public static Test suite() {
-		return suite(TestModelAccessRule.class);
+		return suite(TestIntrinsicAccessRules.class);
 	}
 }

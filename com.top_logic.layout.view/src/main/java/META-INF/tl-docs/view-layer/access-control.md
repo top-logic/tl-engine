@@ -1,5 +1,5 @@
 ---
-description: Read before restricting who sees a part of a .view.xml - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type), the hidden / empty / "no access" decision, the Administration operation on the security root, and the SecuredObject a unit publishes to its content.
+description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group>, <tab>, accordion <section> and <tile> (operation, inputs, object, type), the hidden / empty / "no access" decision, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), and the edit-operation of a <form>.
 order: 75
 ---
 
@@ -89,3 +89,93 @@ channels and the current checked value (`getValue()`, computed anew from the cur
 and the operations applying to it (`getOperations()`). It is independent of the operation of the unit,
 so that a command inside the unit can check an operation of its own on the same object. The innermost
 unit wins.
+
+
+## Commands: the access they declare
+
+A command (`<generic-command>`, `<upload-command>`, the `<action>` of a `<button>`, …) declares in
+`<access>` what it does in the model (`ViewCommand.Config#getAccess()`, combined by `CommandAccess`):
+the operations it performs on objects and the objects it creates. Like a unit, it has no grants of
+its own.
+
+```xml
+<generic-command inputs="ticket, selection as milestones">
+	<access>
+		<!-- Approve on the projects of all selected milestones. -->
+		<operation name="Approve" object="$milestones.map(m -> $m.container())"
+			type="tl.demo.projectManagement:ProjectScope"/>
+		<!-- A comment created in the ticket and added to its comments. -->
+		<create type="demo.tickets:Comment" in="$ticket" reference="demo.tickets:Ticket#comments"/>
+	</access>
+	...
+</generic-command>
+```
+
+All checks must pass. When one of them can never pass for the current user, the command is
+**hidden**; otherwise the first failing check **disables** it, giving its refusal as tooltip. The
+access comes before the `<executability>` rules: it decides the state of the button and, again,
+whether a command sent by the client runs. It is evaluated anew when an input of the command or an
+input of the enclosing unit changes.
+
+The expressions (`object`, `in`) see the arguments of the command as variables (its inputs and the
+value its trigger supplies, as for the scripts of its actions) and are evaluated without the user's
+rights. They yield a single object, or a collection, where every element must pass; `null` or an
+empty collection is no object, which disables the command.
+
+### Operations on objects: `<operation>`
+
+`<operation name="…" object="…" type="…"/>` (`OperationAccess`):
+
+| Attribute | Meaning |
+|---|---|
+| `name` | Mandatory. A command group, as the `operation` of a unit. |
+| `object` | The object(s) the operation is checked on. Without `object`, the operation is checked on the object of the innermost enclosing unit with an `<access-control>` (its `SecuredObject`), and without such a unit, or for a unit checked on the security root, on the security root. |
+| `type` | The static type of the checked object(s), mandatory with `object`. An object that is no instance of it is refused. |
+
+The command is hidden when the user can never hold the operation on the type (as for a unit), or,
+on the security root, when it is refused there. On a checked object, a refusal disables it, and an
+allowed operation is finally decided by the global `CommandApprovalService`, asked without
+component and command ID (e.g. the anonymous account is neither edited nor deleted).
+
+### Creating objects: `<create>`
+
+`<create type="…" in="…" reference="…"/>` (`CreateAccess`):
+
+Creating an object is no operation on an object: the user needs the `Create` grant of the created
+`type` on the roles held on the context the object is created in (for a type with an access parent:
+`Write` on the context), and, when it is added to a composition `reference` of the context, `Write`
+on that reference.
+
+| Attribute | Meaning |
+|---|---|
+| `type` | Mandatory. The qualified name of the type of the created object. |
+| `in` | The context(s) the object is created in. Without `in`, the context is the object of the enclosing unit with an `<access-control>`; without such a unit, or for a unit checked on the security root, the object is created without context, decided against the security root. |
+| `reference` | The qualified name of the composition reference of the context the object is added to, e.g. `demo.tickets:Ticket#comments`. It needs a context. |
+
+The command is hidden when the user can never create the type (no role is granted `Create` on it,
+or, with `reference`, no role may write the reference), and disabled with the refusal when the
+creation is refused in a context. The actions creating objects (`<create-transient>`,
+`<persist-transient>`) bring the same check of their own, see
+[creating and deleting objects](doc:view-layer/commands#creating-and-deleting-objects-create-transient-persist-transient-delete-object).
+
+### Checks when the command is built
+
+The operation of an `<operation>` must apply to its `type`, or, without `object`, to the type of the
+enclosing unit or to the security root. An `object` needs a `type` and vice versa. The `type` of a
+`<create>` must be a class, its `reference` a composition reference whose type is compatible with
+the `type`. A violation is a configuration error.
+
+## Editing a form
+
+Entering the edit mode of a `<form>` requires the `edit-operation` on the displayed object, `Write` by
+default. It is checked like the operation of a command, with the type of the displayed object: the
+Edit button is hidden for a user who can never hold the operation on that type, and disabled with the
+refusal as reason for a user refused on the object. The draft of a create dialog is always editable.
+An operation that does not apply to the type of the displayed object is reported and refuses editing.
+The rules of `<edit-executability>` decide in addition.
+
+```xml
+<form input="milestone" edit-operation="Approve">
+	...
+</form>
+```

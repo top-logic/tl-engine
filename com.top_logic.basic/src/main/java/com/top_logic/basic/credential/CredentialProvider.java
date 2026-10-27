@@ -10,6 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Authentication of outgoing HTTP requests to an external service.
@@ -98,6 +99,40 @@ public interface CredentialProvider {
 	 */
 	default void invalidate() {
 		// No cached credentials.
+	}
+
+	/**
+	 * Whether this provider can add credentials to a request now.
+	 *
+	 * <p>
+	 * Asked each time a consumer chooses whether to offer the external service, so that the
+	 * service is offered as soon as its credentials, e.g. a secret, are provided. The check is
+	 * local and cheap: it never contacts a server, never reveals a secret and does not fail for an
+	 * absent secret. A provider that cannot tell without contacting a server, e.g. because it
+	 * obtains a token from it, answers <code>true</code>; a failure is then reported by
+	 * {@link #authenticate(RequestAuthentication)}.
+	 * </p>
+	 *
+	 * @see SecretSource#isAvailable()
+	 */
+	default boolean isAvailable() {
+		return true;
+	}
+
+	/**
+	 * Where this provider takes its credentials from, e.g. to tell a user which secret must be
+	 * provided to make a service {@link #isAvailable() available}.
+	 *
+	 * <p>
+	 * The description identifies the secret without revealing it.
+	 * </p>
+	 *
+	 * @return The description, <code>null</code> if this provider cannot tell.
+	 *
+	 * @see SecretSource#reference()
+	 */
+	default ResKey reference() {
+		return null;
 	}
 
 	/**

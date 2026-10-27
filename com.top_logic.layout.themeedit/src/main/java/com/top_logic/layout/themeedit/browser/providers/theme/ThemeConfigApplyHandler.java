@@ -76,6 +76,7 @@ public class ThemeConfigApplyHandler extends AbstractCommandHandler {
 		updateTransientThemeConfig(themeConfig);
 
 		ThemeUtil.writeThemeConfig(themeConfig, getThemeConfigurationFile(themeConfig.getId()));
+		FileManager.getInstance().refresh(ThemeUtil.getThemeConfigPath(themeConfig.getId()));
 		updateTableRow(component, themeConfig);
 
 		return HandlerResult.DEFAULT_RESULT;

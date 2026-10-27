@@ -34,6 +34,7 @@ import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -105,6 +106,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -2492,6 +2494,12 @@ public class AgentLoop {
 	 * and its exception travels out, which is what the loop did before there were chains.
 	 * </p>
 	 *
+	 * <p>
+	 * A model whose provider has no credentials is not called at all: it is passed over without a
+	 * mark, and a run left with no model whose provider has them fails with a
+	 * {@link TopLogicException} naming the secret to provide, not with a provider error.
+	 * </p>
+	 *
 	 * @param call
 	 *        Makes one attempt with whatever model is currently active - the retry-and-compact
 	 *        stack the run loop would otherwise have called directly.
@@ -2500,13 +2508,32 @@ public class AgentLoop {
 			AgentEventListener listener, String runId, int turn) throws ProviderException {
 		List<ModelTarget> chain = _failoverChain;
 		if (chain.size() <= 1) {
+			ResKey unavailable = unavailableReason(chain.get(0));
+			if (unavailable != null) {
+				throw new TopLogicException(unavailable);
+			}
 			return call.call();
 		}
 		ModelAvailability health = LLMProviderService.getInstance().modelHealth();
 		String turnToken = ModelAvailability.turnToken(runId, turn);
 		ProviderException pending = null;
+		int tried = 0;
+		ResKey unavailable = null;
+		int unavailableCount = 0;
 		while (_chainIndex < chain.size()) {
 			ModelTarget target = chain.get(_chainIndex);
+			tried++;
+			// Before the health state is asked: a provider without its credentials is never called,
+			// so it says nothing about the model and leaves no mark against it.
+			ResKey reason = unavailableReason(target);
+			if (reason != null) {
+				if (unavailable == null) {
+					unavailable = reason;
+				}
+				unavailableCount++;
+				skip(target, "its provider has no credentials", runId);
+				continue;
+			}
 			if (!health.claim(target.model(), turnToken)) {
 				ModelHealthMark mark = health.mark(target.model());
 				skip(target, mark == null ? "marked unavailable" : mark.reason(), runId);
@@ -2538,7 +2565,38 @@ public class AgentLoop {
 				detail + exhausted(chain), pending.retryAfter(), pending.requestId(),
 				pending.getCause());
 		}
+		if (unavailable != null && unavailableCount == tried) {
+			// Nothing was called: the user is told which secret to provide, not that models failed.
+			throw new TopLogicException(unavailable);
+		}
 		throw new ProviderException(ProviderException.Kind.UNKNOWN, -1, exhausted(chain));
+	}
+
+	/**
+	 * Why the given entry of the run's chain cannot be called now because its provider has no
+	 * credentials, or <code>null</code> when it can be called.
+	 *
+	 * <p>
+	 * The entry the run is on is asked through its provider, which is the one that would be called.
+	 * Any other entry is asked through {@link LLMProviderService#unavailableReason(String, String)};
+	 * one that does not route is reported by {@link #activate}.
+	 * </p>
+	 */
+	private ResKey unavailableReason(ModelTarget target) {
+		LLMProviderService service = LLMProviderService.getInstance();
+		if (_chainIndex != _activeIndex) {
+			return service == null ? null : service.unavailableReason(target.model(), target.provider());
+		}
+		if (_provider.isAvailable()) {
+			return null;
+		}
+		if (service == null) {
+			return com.top_logic.tl.ai.core.provider.I18NConstants.ERROR_NO_PROVIDER_CONFIGURED;
+		}
+		String providerName = _activeProviderName != null ? _activeProviderName : target.provider();
+		ResKey reason = service.unavailableReason(target.model(), providerName);
+		// A model several providers expose, referenced without one, names no single provider.
+		return reason != null ? reason : service.noProviderAvailable();
 	}
 
 	/** Why no model of the chain was left to try. */

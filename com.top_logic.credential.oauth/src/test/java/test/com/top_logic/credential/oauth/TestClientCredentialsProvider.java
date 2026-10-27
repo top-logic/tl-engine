@@ -63,6 +63,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.FileSecretSource;
 import com.top_logic.credential.oauth.ClientAssertionAuthentication;
 import com.top_logic.credential.oauth.ClientCredentialsProvider;
@@ -87,6 +88,8 @@ public class TestClientCredentialsProvider extends AbstractTypedConfigurationTes
 	private static final String TOKEN_PATH = "/token";
 
 	private static final String REALM_PATH = "/realms/test";
+
+	private static final String SECRET_VARIABLE = "test.client.credentials.secret";
 
 	public interface Config extends ConfigurationItem {
 
@@ -154,6 +157,7 @@ public class TestClientCredentialsProvider extends AbstractTypedConfigurationTes
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
+		System.clearProperty(SECRET_VARIABLE);
 		_dir = Files.createTempDirectory("TestClientCredentialsProvider");
 		_responder = count -> new Object[] { 200, tokenJson("token-" + count, "Bearer", Integer.valueOf(3600)) };
 		_server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
@@ -168,6 +172,7 @@ public class TestClientCredentialsProvider extends AbstractTypedConfigurationTes
 
 	@Override
 	protected void tearDown() throws Exception {
+		System.clearProperty(SECRET_VARIABLE);
 		_server.stop(0);
 		_executor.shutdownNow();
 		try (Stream<Path> files = Files.walk(_dir)) {
@@ -451,6 +456,39 @@ public class TestClientCredentialsProvider extends AbstractTypedConfigurationTes
 			"<client-authentication class='" + ClientAssertionAuthentication.class.getName() + "'>"
 				+ "<assertion class='" + FileSecretSource.class.getName() + "' path='" + assertionFile + "'/>"
 				+ "</client-authentication>");
+	}
+
+	public void testClientSecretAvailability() throws ConfigurationException {
+		CredentialProvider provider = provider("token-url='" + tokenUrl() + "'",
+			"<client-authentication class='" + ClientSecretAuthentication.class.getName() + "' method='post'>"
+				+ "<secret class='" + EnvironmentSecretSource.class.getName() + "' name='" + SECRET_VARIABLE + "'/>"
+				+ "</client-authentication>");
+		assertFalse(provider.isAvailable());
+
+		System.setProperty(SECRET_VARIABLE, "provided-later");
+		assertTrue("A client secret provided later must make the same provider available.", provider.isAvailable());
+		assertEquals("Bearer token-1", authenticate(provider));
+		assertEquals("provided-later", _tokenRequests.get(0).parameter("client_secret"));
+		assertEquals("The availability check must not contact the authorization server.", 1, _tokenRequests.size());
+	}
+
+	public void testClientAssertionAvailability() throws Exception {
+		Path assertionFile = _dir.resolve("sa-token");
+		CredentialProvider provider = assertionProvider(assertionFile);
+		assertFalse(provider.isAvailable());
+
+		Files.write(assertionFile, "assertion-1\n".getBytes(StandardCharsets.UTF_8));
+		assertTrue(provider.isAvailable());
+		assertEquals(0, _tokenRequests.size());
+	}
+
+	public void testPrivateKeyAvailability() throws Exception {
+		Path keyFile = _dir.resolve("missing-key.pem");
+		CredentialProvider provider = privateKeyProvider(JwsAlgorithm.RS256, keyFile, null);
+		assertFalse(provider.isAvailable());
+
+		Files.write(keyFile, "not a key".getBytes(StandardCharsets.UTF_8));
+		assertTrue("A present but invalid key is reported on use, not hidden.", provider.isAvailable());
 	}
 
 	public void testDiscovery() throws ConfigurationException {

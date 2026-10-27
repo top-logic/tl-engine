@@ -80,6 +80,16 @@ public class OAuthClient {
 	}
 
 	/**
+	 * Whether the client credentials are available now; always <code>true</code> for a public
+	 * client.
+	 *
+	 * @see ClientAuthentication#isAvailable()
+	 */
+	public boolean isAvailable() {
+		return _authentication == null || _authentication.isAvailable();
+	}
+
+	/**
 	 * Creates a {@link TokenCache} with the renewal settings of the configuration.
 	 */
 	public TokenCache newTokenCache() {

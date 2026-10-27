@@ -493,7 +493,7 @@
 				<model-access default="assigned">
 					<role name="ticketReader">
 						<grants>
-							<grant models="claude-haiku-4-5-20251001"/>
+							<grant models="claude-haiku-4-5"/>
 						</grants>
 					</role>
 				</model-access>

@@ -90,6 +90,11 @@ public class OpenAICompatibleProviderConfig implements LLMProviderConfig {
 	}
 
 	@Override
+	public CredentialProvider getCredentials() {
+		return _credentials;
+	}
+
+	@Override
 	public LLMProvider createProvider() {
 		Map<String, String> customHeaders = _config.getCustomHeaders();
 		return new ChatCompletionsProvider(

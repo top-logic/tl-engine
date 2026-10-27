@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
@@ -249,6 +250,7 @@ public class TreeElement implements UIElement {
 		@Name(ON_ACTIVATE)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
 
 		/**
@@ -321,6 +323,7 @@ public class TreeElement implements UIElement {
 		 */
 		@Name(DROPS)
 		@DefaultContainer
+		@TreeProperty
 		List<TreeDropConfig> getDrops();
 	}
 

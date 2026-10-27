@@ -45,10 +45,11 @@ public class AddChildCommand {
 
 		// Build the node through the tree builder, so the new element is bound to its own container
 		// properties and can immediately receive children itself. Constructing the node directly
-		// would leave it unbound until the whole tree is rebuilt from disk.
+		// would leave it unbound until the whole tree is rebuilt from disk. The views already shown in
+		// the tree are linked, not expanded a second time.
 		DesignTreeNode child;
 		try {
-			child = new DesignTreeBuilder().build(childConfig, parent.getSourceFile());
+			child = new DesignTreeBuilder().markExpanded(root(parent)).build(childConfig, parent.getSourceFile());
 		} catch (ConfigurationException ex) {
 			Logger.warn("Adding an element whose own structure could not be built: " + childConfig, ex,
 				AddChildCommand.class);
@@ -59,6 +60,17 @@ public class AddChildCommand {
 		parent.markDirty();
 
 		return child;
+	}
+
+	/**
+	 * The root of the tree the given node belongs to.
+	 */
+	private static DesignTreeNode root(DesignTreeNode node) {
+		DesignTreeNode result = node;
+		while (result.getParent() != null) {
+			result = result.getParent();
+		}
+		return result;
 	}
 
 	/**

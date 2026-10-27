@@ -39,6 +39,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.util.ResKey;
@@ -264,6 +265,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Name(ON_ACTIVATE)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getOnActivate();
 
 		/**

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -92,6 +93,7 @@ public class CardElement extends ContainerElement implements TitledElement {
 		@Key(UIElement.Config.ID)
 		@Name(HEADER_CONTENT)
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<UIElement.Config> getHeaderContent();
 	}
 

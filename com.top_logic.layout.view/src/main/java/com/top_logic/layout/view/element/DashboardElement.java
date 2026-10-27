@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.annotation.Subtypes.Subtype;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
@@ -147,6 +148,7 @@ public class DashboardElement implements UIElement {
 		@Subtypes({ @Subtype(tag = TileElement.Config.TAG_NAME, type = TileElement.Config.class) })
 		@com.top_logic.basic.config.annotation.Key(TileElement.Config.ID)
 		@com.top_logic.basic.config.annotation.DefaultContainer
+		@TreeProperty
 		List<TileElement.Config> getTiles();
 	}
 

@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -455,6 +456,7 @@ public class ValueInputElement implements UIElement {
 		@Nullable
 		@ImplementationClassDefault(GenericViewCommand.class)
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ViewCommand> getOnSubmit();
 
 		/**
@@ -523,6 +525,7 @@ public class ValueInputElement implements UIElement {
 		@Name(INPUT_CONTROL)
 		@Nullable
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		PolymorphicConfiguration<? extends ReactFieldControlProvider> getInputControl();
 	}
 

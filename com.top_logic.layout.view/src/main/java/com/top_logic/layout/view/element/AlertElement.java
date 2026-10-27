@@ -252,6 +252,7 @@ public class AlertElement implements UIElement {
 		 */
 		@Name(ON_DISMISS)
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewAction>> getOnDismiss();
 
 		/**

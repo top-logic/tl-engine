@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
@@ -225,6 +226,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		 */
 		@Name(DROPS)
 		@DefaultContainer
+		@TreeProperty
 		List<TableDropConfig> getDrops();
 
 		/**

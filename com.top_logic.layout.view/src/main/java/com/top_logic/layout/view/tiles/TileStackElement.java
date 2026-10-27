@@ -15,10 +15,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
@@ -123,6 +125,7 @@ public class TileStackElement implements UIElement {
 		 * {@code /WEB-INF/views/}.
 		 */
 		@Name(INITIAL)
+		@Label("Initial view")
 		@Mandatory
 		@Format(ViewRefFormat.class)
 		ViewRef getInitial();
@@ -173,6 +176,7 @@ public class TileStackElement implements UIElement {
 		 */
 		@Name(FRAMES)
 		@DefaultContainer
+		@TreeProperty
 		List<FrameRouteConfig> getFrames();
 	}
 

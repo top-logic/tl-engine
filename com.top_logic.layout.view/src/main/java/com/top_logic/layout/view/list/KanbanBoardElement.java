@@ -375,6 +375,7 @@ public class KanbanBoardElement implements UIElement {
 		 */
 		@Name(DROPS)
 		@DefaultContainer
+		@TreeProperty
 		List<KanbanDropConfig> getDrops();
 
 		/**

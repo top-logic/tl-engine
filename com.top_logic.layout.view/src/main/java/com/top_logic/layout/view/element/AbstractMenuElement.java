@@ -113,6 +113,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 		@Name(GROUPS)
 		@Key(CommandGroup.ID)
 		@EntryTag("group")
+		@TreeProperty
 		List<CommandGroup> getGroups();
 
 		/**

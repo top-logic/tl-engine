@@ -123,6 +123,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DESIGNER_ADD_DIALOG_TYPE;
 
 	/**
+	 * @en The view "{0}" is referenced several times. Its content is shown at its first occurrence in
+	 *     the design tree.
+	 */
+	public static ResKey1 DESIGNER_VIEW_LINK__PATH;
+
+	/**
 	 * @en Edit Layout
 	 */
 	public static ResKey DASHBOARD_EDIT;

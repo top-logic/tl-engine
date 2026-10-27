@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
@@ -164,6 +165,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		 */
 		@Name(DROPS)
 		@DefaultContainer
+		@TreeProperty
 		List<TableDropConfig> getDrops();
 
 		/**

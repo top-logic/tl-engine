@@ -19,6 +19,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -106,6 +107,7 @@ public class WithTransactionAction implements ViewAction {
 		@Name(ACTIONS)
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 
 		/**

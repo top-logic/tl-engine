@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
@@ -93,6 +94,7 @@ public class ChartElement implements UIElement {
 		 */
 		@Name(HANDLERS)
 		@EntryTag("handler")
+		@TreeProperty
 		List<ClickHandlerConfig> getHandlers();
 
 		/**

@@ -15,6 +15,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -101,6 +102,7 @@ public class IfAction extends ArgumentsViewAction {
 		 */
 		@Name(THEN)
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewAction>> getThen();
 
 		/**
@@ -108,6 +110,7 @@ public class IfAction extends ArgumentsViewAction {
 		 */
 		@Name(ELSE)
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewAction>> getElse();
 	}
 

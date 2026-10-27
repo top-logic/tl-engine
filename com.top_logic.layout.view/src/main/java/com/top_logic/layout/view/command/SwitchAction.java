@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.MandatoryIfUnset;
@@ -161,6 +162,7 @@ public class SwitchAction extends ArgumentsViewAction {
 		 */
 		@Name(CASES)
 		@DefaultContainer
+		@TreeProperty
 		List<CaseConfig> getCases();
 
 		/**
@@ -168,6 +170,7 @@ public class SwitchAction extends ArgumentsViewAction {
 		 */
 		@Name(DEFAULT)
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewAction>> getDefault();
 
 		/**
@@ -243,6 +246,7 @@ public class SwitchAction extends ArgumentsViewAction {
 		@Name(ACTIONS)
 		@DefaultContainer
 		@Options(fun = AllInAppImplementations.class)
+		@TreeProperty
 		List<PolymorphicConfiguration<? extends ViewAction>> getActions();
 	}
 

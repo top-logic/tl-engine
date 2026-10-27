@@ -19,6 +19,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -29,6 +30,7 @@ import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
 import com.top_logic.util.error.TopLogicException;
@@ -134,9 +136,51 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 	}
 
 	/**
-	 * Module of a test service.
+	 * Service whose module creates it without a configuration.
 	 */
-	abstract static class TestModule<M extends ManagedClass> extends BasicRuntimeModule<M> {
+	public static class PlainService extends ManagedClass {
+
+		/**
+		 * Creates a {@link PlainService}, there is no configuration constructor.
+		 */
+		protected PlainService() {
+			super();
+		}
+
+		/**
+		 * Module of {@link PlainService}.
+		 */
+		public static final class Module extends BasicRuntimeModule<PlainService> {
+
+			/** Singleton {@link Module} instance. */
+			public static final Module INSTANCE = new Module();
+
+			private Module() {
+				super();
+			}
+
+			@Override
+			public Collection<? extends Class<? extends BasicRuntimeModule<?>>> getDependencies() {
+				return NO_DEPENDENCIES;
+			}
+
+			@Override
+			public Class<PlainService> getImplementation() {
+				return PlainService.class;
+			}
+
+			@Override
+			protected PlainService newImplementationInstance() throws ModuleException {
+				return new PlainService();
+			}
+		}
+
+	}
+
+	/**
+	 * Module of a test service created from its service configuration.
+	 */
+	abstract static class TestModule<M extends ManagedClass> extends TypedRuntimeModule<M> {
 
 		private final Class<M> _implementation;
 
@@ -194,9 +238,19 @@ public class TestTLServiceUtilsConfiguration extends BasicTestCase {
 	 * A service configured with another configuration interface than a service configuration has
 	 * no service configuration, which is no error.
 	 */
-	public void testServiceWithoutServiceConfiguration() {
+	public void testServiceWithoutServiceConfiguration() throws ConfigurationException {
+		assertFalse(ApplicationConfig.getInstance().hasServiceConfiguration(ApplicationConfig.class));
 		assertFalse(TLServiceUtils.hasServiceConfiguration(ApplicationConfig.Module.INSTANCE));
 		assertNull(TLServiceUtils.getServiceConfiguration(ApplicationConfig.Module.INSTANCE));
+	}
+
+	/**
+	 * A service whose module creates it itself has no service configuration, also when it cannot
+	 * be created from a configuration at all, which is no error.
+	 */
+	public void testServiceCreatedByModule() {
+		assertFalse(TLServiceUtils.hasServiceConfiguration(PlainService.Module.INSTANCE));
+		assertNull(TLServiceUtils.getServiceConfiguration(PlainService.Module.INSTANCE));
 	}
 
 	/**

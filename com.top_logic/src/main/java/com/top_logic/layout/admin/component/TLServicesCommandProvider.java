@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.channel.ComponentChannel;
@@ -216,7 +217,8 @@ public class TLServicesCommandProvider extends ComponentResolver implements Chan
 	 * <p>
 	 * This is the implementation class of the service configuration, which may be a specialization
 	 * of the {@link BasicRuntimeModule#getImplementation() implementation} of the module. For a
-	 * service without a configuration (like the {@link ApplicationConfig}), this is the
+	 * service without a configuration (see
+	 * {@link TLServiceUtils#hasServiceConfiguration(BasicRuntimeModule)}), this is the
 	 * implementation of the module.
 	 * </p>
 	 * 
@@ -225,6 +227,10 @@ public class TLServicesCommandProvider extends ComponentResolver implements Chan
 	 */
 	private static Class<?> getServiceClass(BasicRuntimeModule<?> module) {
 		Class<? extends ManagedClass> implementation = module.getImplementation();
+		if (!(module instanceof TypedRuntimeModule<?>)) {
+			// The module creates the service itself, e.g. the ApplicationConfig.
+			return implementation;
+		}
 		ApplicationConfig applicationConfig = ApplicationConfig.getInstance();
 		try {
 			if (!applicationConfig.hasServiceConfiguration(implementation)) {

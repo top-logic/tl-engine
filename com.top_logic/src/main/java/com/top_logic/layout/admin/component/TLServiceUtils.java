@@ -25,6 +25,7 @@ import com.top_logic.basic.module.ManagedClass.ServiceConfiguration;
 import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.RestartException;
+import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.autoconf.InAppServiceConfigBaseline;
 import com.top_logic.util.autoconf.InAppServiceConfigStore;
@@ -117,12 +118,16 @@ public class TLServiceUtils {
 	 * @param module
 	 *        The module of the service.
 	 * @return Whether the service has a configuration, see
-	 *         {@link ApplicationConfig#hasServiceConfiguration(Class)}. A service configured with
-	 *         another configuration interface (like the {@link ApplicationConfig} itself) has none.
+	 *         {@link ApplicationConfig#hasServiceConfiguration(Class)}. A service whose module is
+	 *         no {@link TypedRuntimeModule} is not created from a configuration and has none.
 	 * @throws TopLogicException
 	 *         When it cannot be determined whether the service has a configuration.
 	 */
 	public static boolean hasServiceConfiguration(BasicRuntimeModule<?> module) {
+		if (!(module instanceof TypedRuntimeModule<?>)) {
+			// The module creates the service itself, e.g. the ApplicationConfig.
+			return false;
+		}
 		try {
 			return ApplicationConfig.getInstance().hasServiceConfiguration(module.getImplementation());
 		} catch (ConfigurationException exception) {

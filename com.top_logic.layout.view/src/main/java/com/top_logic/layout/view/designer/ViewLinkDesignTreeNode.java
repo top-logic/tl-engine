@@ -11,14 +11,13 @@ import com.top_logic.layout.view.ViewRef;
 import com.top_logic.util.Resources;
 
 /**
- * Design-tree leaf standing in for a referenced view that is expanded at another place of the tree.
+ * Design-tree leaf standing for a view file another view refers to.
  *
  * <p>
- * {@link DesignTreeBuilder} expands each view file only once. Every further reference to it is
- * shown as this node, which names the referenced file instead of repeating its content. This also
- * terminates reference cycles. Selecting the node selects the expanded view instead, see
- * {@link #getSelectionTarget()}. The node carries no
- * {@link com.top_logic.basic.config.ConfigurationItem}, so it is never edited or saved.
+ * A design tree shows the content of a single view file, see {@link DesignTreeBuilder}. A
+ * reference to another view file is shown as this node, which names the referenced file. Selecting
+ * the node opens that file in the designer, see {@link DesignSession#open(String)}. The node
+ * carries no {@link com.top_logic.basic.config.ConfigurationItem}, so it is never edited or saved.
  * </p>
  */
 public class ViewLinkDesignTreeNode extends DesignTreeNode {
@@ -50,21 +49,10 @@ public class ViewLinkDesignTreeNode extends DesignTreeNode {
 
 	/**
 	 * The full path of the referenced view file (e.g. {@code /WEB-INF/views/customers/detail.view.xml}),
-	 * which is the {@link DesignTreeNode#getSourceFile() source file} of the nodes the view is
-	 * expanded to.
+	 * which is the {@link DesignTreeNode#getSourceFile() source file} of the nodes of its tree.
 	 */
 	public String getTargetFile() {
 		return _target.fullPath();
-	}
-
-	/**
-	 * The node the {@link #getTargetFile() referenced view} is expanded to, or this node itself if the
-	 * tree does not show that view.
-	 */
-	@Override
-	public DesignTreeNode getSelectionTarget() {
-		DesignTreeNode target = SelectViewCommand.findViewRoot(getRoot(), getTargetFile());
-		return target != null ? target : this;
 	}
 
 	@Override

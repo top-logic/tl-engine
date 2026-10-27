@@ -43,7 +43,7 @@ import com.top_logic.layout.view.tiles.TileStackElement;
 
 /**
  * Tests that {@link DesignTreeBuilder} shows the views a configuration refers to through its
- * {@link com.top_logic.layout.view.ViewRef} properties.
+ * {@link com.top_logic.layout.view.ViewRef} properties as links, without expanding them.
  */
 public class TestDesignTreeViewRefs extends TestCase {
 
@@ -71,10 +71,10 @@ public class TestDesignTreeViewRefs extends TestCase {
 	}
 
 	/**
-	 * A {@code <view-ref>} shows the referenced view as its only child, which cannot be edited
+	 * A {@code <view-ref>} shows the referenced view as a link leaf, which cannot be edited
 	 * structurally from the referencing node.
 	 */
-	public void testViewRefIsResolved() throws Exception {
+	public void testViewRefIsLink() throws Exception {
 		view("a-root.view.xml", "<view-ref view='a-child.view.xml'/>");
 		view("a-child.view.xml", "<panel title='Child'/>");
 
@@ -82,21 +82,23 @@ public class TestDesignTreeViewRefs extends TestCase {
 
 		DesignTreeNode ref = single(root, node -> configOf(node) instanceof ReferenceElement.Config);
 		assertEquals("The referenced view is the only child.", 1, ref.getChildren().size());
-		assertEquals(path("a-child.view.xml"), ref.getChildren().get(0).getSourceFile());
-		assertEquals("A view of a file of its own is named by the file.", "a-child.view.xml",
-			ref.getChildren().get(0).getLabel());
+		ViewLinkDesignTreeNode link = link(ref.getChildren().get(0), "a-child.view.xml");
+		assertEquals("The link belongs to the referring view.", path("a-root.view.xml"), link.getSourceFile());
+		assertTrue("A link is a leaf.", link.getChildren().isEmpty());
+		assertEquals("→ a-child.view.xml", link.getDisplayLabel());
+		assertNull("A link carries no configuration.", DesignTreeNodes.configOf(link));
 		assertEquals("The view of the root file is named by the file.", "a-root.view.xml", root.getLabel());
 		assertNull("The reference is no child container.", ref.getChildContainer());
 		assertFalse("Nothing can be added to a reference.", AddChildCommand.canExecute(ref));
-		assertNull("The referenced view is no element of the referencing node.",
-			DesignTreeNodes.owningContainer(ref.getChildren().get(0)));
+		assertNull("The link is no element of the referencing node.", DesignTreeNodes.owningContainer(link));
+		assertOnlyFile(root, "a-root.view.xml");
 	}
 
 	/**
-	 * The initial view and the frame views of a tile stack are resolved, each under a group named
-	 * by its property.
+	 * The initial view and the frame views of a tile stack are links, each under a group named by
+	 * its property.
 	 */
-	public void testTileStackFramesAreResolved() throws Exception {
+	public void testTileStackReferencesAreLinks() throws Exception {
 		view("b-root.view.xml",
 			"<channels><channel name='navPath'/></channels>"
 				+ "<tile-stack initial='b-initial.view.xml' path='navPath'>"
@@ -111,7 +113,7 @@ public class TestDesignTreeViewRefs extends TestCase {
 		DesignTreeNode initialGroup = group(stack, TileStackElement.Config.INITIAL);
 		assertNull("A view reference group is no child container.", initialGroup.getChildContainer());
 		assertEquals(1, initialGroup.getChildren().size());
-		assertEquals(path("b-initial.view.xml"), initialGroup.getChildren().get(0).getSourceFile());
+		link(initialGroup.getChildren().get(0), "b-initial.view.xml");
 
 		DesignTreeNode framesGroup = group(stack, TileStackElement.Config.FRAMES);
 		assertNotNull("The frames can be edited.", framesGroup.getChildContainer());
@@ -119,16 +121,17 @@ public class TestDesignTreeViewRefs extends TestCase {
 		DesignTreeNode frame = framesGroup.getChildren().get(0);
 		assertTrue(configOf(frame) instanceof FrameRouteConfig);
 		assertEquals("The frame view is the frame's only child.", 1, frame.getChildren().size());
-		assertEquals(path("b-frame.view.xml"), frame.getChildren().get(0).getSourceFile());
+		link(frame.getChildren().get(0), "b-frame.view.xml");
 
 		assertNotNull("A frame can be added.", AddChildCommand.execute(framesGroup, null));
 		assertEquals(2, ((TileStackElement.Config) configOf(stack)).getFrames().size());
+		assertOnlyFile(root, "b-root.view.xml");
 	}
 
 	/**
-	 * A view pushed from the activation command of a table is resolved below that command.
+	 * A view pushed from the activation command of a table is a link below that command.
 	 */
-	public void testNavigatePushInTableIsResolved() throws Exception {
+	public void testNavigatePushInTableIsLink() throws Exception {
 		view("c-root.view.xml",
 			"<table><rows>list()</rows>"
 				+ "<on-activate class='" + NavigatePushCommand.class.getName() + "' view='c-pushed.view.xml'/>"
@@ -137,7 +140,7 @@ public class TestDesignTreeViewRefs extends TestCase {
 
 		DesignTreeNode root = build("c-root.view.xml");
 
-		DesignTreeNode pushed = viewRoot(root, "c-pushed.view.xml");
+		DesignTreeNode pushed = linkTo(root, "c-pushed.view.xml");
 		assertTrue("The pushed view is shown below its command.",
 			configOf(pushed.getParent()) instanceof NavigatePushCommand.Config);
 		DesignTreeNode group = pushed.getParent().getParent();
@@ -146,9 +149,9 @@ public class TestDesignTreeViewRefs extends TestCase {
 	}
 
 	/**
-	 * A dialog opened by an action of a command is resolved below that action.
+	 * A dialog opened by an action of a command is a link below that action.
 	 */
-	public void testOpenDialogInCommandIsResolved() throws Exception {
+	public void testOpenDialogInCommandIsLink() throws Exception {
 		view("d-root.view.xml",
 			"<panel title='Panel'><commands>"
 				+ "<generic-command name='open'><open-dialog dialog-view='d-dialog.view.xml'/></generic-command>"
@@ -157,51 +160,29 @@ public class TestDesignTreeViewRefs extends TestCase {
 
 		DesignTreeNode root = build("d-root.view.xml");
 
-		DesignTreeNode dialog = viewRoot(root, "d-dialog.view.xml");
+		DesignTreeNode dialog = linkTo(root, "d-dialog.view.xml");
 		assertTrue("The dialog is shown below the action opening it.",
 			configOf(dialog.getParent()) instanceof OpenDialogAction.Config);
 	}
 
 	/**
-	 * A view referenced twice is expanded at its first occurrence only, the second occurrence links
-	 * to it.
+	 * Every reference to a view is a link, a repeated one and one back to the referring view
+	 * included.
 	 */
-	public void testSecondReferenceIsLink() throws Exception {
+	public void testEveryReferenceIsLink() throws Exception {
 		view("e-root.view.xml",
-			"<stack><view-ref view='e-shared.view.xml'/><view-ref view='e-shared.view.xml'/></stack>");
+			"<stack><view-ref view='e-shared.view.xml'/><view-ref view='e-shared.view.xml'/>"
+				+ "<view-ref view='e-root.view.xml'/></stack>");
 		view("e-shared.view.xml", "<panel title='Shared'/>");
 
 		DesignTreeNode root = build("e-root.view.xml");
 
 		List<DesignTreeNode> refs = all(root, node -> configOf(node) instanceof ReferenceElement.Config);
-		assertEquals(2, refs.size());
-		assertEquals(path("e-shared.view.xml"), refs.get(0).getChildren().get(0).getSourceFile());
-
-		DesignTreeNode link = refs.get(1).getChildren().get(0);
-		assertTrue("The second reference is a link: " + link, link instanceof ViewLinkDesignTreeNode);
-		assertEquals(path("e-shared.view.xml"), ((ViewLinkDesignTreeNode) link).getTargetFile());
-		assertTrue("A link is a leaf.", link.getChildren().isEmpty());
-		assertEquals("→ e-shared.view.xml", link.getDisplayLabel());
-		assertNull("A link carries no configuration.", DesignTreeNodes.configOf(link));
-		assertEquals("The shared view is expanded once.", 1,
-			all(root, node -> path("e-shared.view.xml").equals(node.getSourceFile())
-				&& !path("e-shared.view.xml").equals(node.getParent().getSourceFile())).size());
-	}
-
-	/**
-	 * A view referring back to a view containing it ends in a link.
-	 */
-	public void testCycleTerminates() throws Exception {
-		view("f-a.view.xml", "<view-ref view='f-b.view.xml'/>");
-		view("f-b.view.xml", "<view-ref view='f-a.view.xml'/>");
-
-		DesignTreeNode root = build("f-a.view.xml");
-
-		List<DesignTreeNode> links = all(root, node -> node instanceof ViewLinkDesignTreeNode);
-		assertEquals(1, links.size());
-		ViewLinkDesignTreeNode link = (ViewLinkDesignTreeNode) links.get(0);
-		assertEquals("The cycle ends at the root view.", path("f-a.view.xml"), link.getTargetFile());
-		assertEquals("The link belongs to the referring view.", path("f-b.view.xml"), link.getSourceFile());
+		assertEquals(3, refs.size());
+		link(refs.get(0).getChildren().get(0), "e-shared.view.xml");
+		link(refs.get(1).getChildren().get(0), "e-shared.view.xml");
+		link(refs.get(2).getChildren().get(0), "e-root.view.xml");
+		assertOnlyFile(root, "e-root.view.xml");
 	}
 
 	/**
@@ -274,11 +255,29 @@ public class TestDesignTreeViewRefs extends TestCase {
 	}
 
 	/**
-	 * The node the given view file is expanded to.
+	 * The given node as link to the given file.
 	 */
-	private static DesignTreeNode viewRoot(DesignTreeNode root, String name) {
-		return single(root, node -> path(name).equals(node.getSourceFile()) && node.getParent() != null
-			&& !path(name).equals(node.getParent().getSourceFile()));
+	private static ViewLinkDesignTreeNode link(DesignTreeNode node, String name) {
+		assertTrue("Not a link: " + node, node instanceof ViewLinkDesignTreeNode);
+		ViewLinkDesignTreeNode link = (ViewLinkDesignTreeNode) node;
+		assertEquals(path(name), link.getTargetFile());
+		return link;
+	}
+
+	/**
+	 * The single link to the given view file.
+	 */
+	private static DesignTreeNode linkTo(DesignTreeNode root, String name) {
+		return single(root,
+			node -> node instanceof ViewLinkDesignTreeNode link && path(name).equals(link.getTargetFile()));
+	}
+
+	/**
+	 * Checks that the tree shows the content of the given file only.
+	 */
+	private static void assertOnlyFile(DesignTreeNode root, String name) {
+		assertEquals("No other file is expanded into the tree.", List.of(),
+			all(root, node -> !path(name).equals(node.getSourceFile())));
 	}
 
 	private static DesignTreeNode group(DesignTreeNode node, String propertyName) {

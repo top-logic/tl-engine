@@ -18,7 +18,7 @@ import com.top_logic.layout.configedit.ConfigChildren;
  * <p>
  * Concrete subclasses are {@link ConfigDesignTreeNode} (a node bound to a {@link ConfigurationItem}),
  * {@link VirtualDesignTreeNode} (a virtual property group node), {@link ViewLinkDesignTreeNode} (a
- * reference to a view expanded elsewhere in the tree) and {@link ErrorDesignTreeNode} (a referenced
+ * reference to another view file) and {@link ErrorDesignTreeNode} (a referenced
  * view that cannot be loaded).
  * </p>
  */
@@ -29,8 +29,6 @@ public abstract class DesignTreeNode {
 	private final List<DesignTreeNode> _children = new ArrayList<>();
 
 	private final List<Runnable> _labelListeners = new ArrayList<>();
-
-	private final List<Runnable> _structureListeners = new ArrayList<>();
 
 	private DesignTreeNode _parent;
 
@@ -174,59 +172,6 @@ public abstract class DesignTreeNode {
 		for (Runnable listener : new ArrayList<>(_labelListeners)) {
 			listener.run();
 		}
-	}
-
-	/**
-	 * Registers a listener notified by {@link #fireStructureChanged()}, so that a rendered tree can
-	 * show nodes that were added to or removed from the tree below this node.
-	 */
-	public void addStructureListener(Runnable listener) {
-		_structureListeners.add(listener);
-	}
-
-	/**
-	 * Removes a listener registered through {@link #addStructureListener(Runnable)}.
-	 */
-	public void removeStructureListener(Runnable listener) {
-		_structureListeners.remove(listener);
-	}
-
-	/**
-	 * Notifies the {@link #addStructureListener(Runnable) structure listeners} of this node that the
-	 * tree below it changed.
-	 *
-	 * <p>
-	 * A display of a tree listens on the tree's root, so a change is announced on the
-	 * {@link #getRoot() root} of the changed tree.
-	 * </p>
-	 */
-	public void fireStructureChanged() {
-		for (Runnable listener : new ArrayList<>(_structureListeners)) {
-			listener.run();
-		}
-	}
-
-	/**
-	 * The node a display selects when the user selects this node.
-	 *
-	 * <p>
-	 * A node standing in for content shown elsewhere in the tree answers the node showing that
-	 * content, so that the user lands where it can be edited. All other nodes answer themselves.
-	 * </p>
-	 */
-	public DesignTreeNode getSelectionTarget() {
-		return this;
-	}
-
-	/**
-	 * The root of the tree this node belongs to.
-	 */
-	public DesignTreeNode getRoot() {
-		DesignTreeNode node = this;
-		while (node.getParent() != null) {
-			node = node.getParent();
-		}
-		return node;
 	}
 
 	/**

@@ -20,9 +20,9 @@ import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.view.model.TreeSelectionDisplay;
 
 /**
- * Tests {@link TreeSelectionDisplay#redirecting(TreeSelectionDisplay, java.util.function.UnaryOperator)}.
+ * Tests {@link TreeSelectionDisplay#intercepting(TreeSelectionDisplay, java.util.function.Predicate)}.
  */
-public class TestRedirectingTreeSelectionDisplay extends TestCase {
+public class TestInterceptingTreeSelectionDisplay extends TestCase {
 
 	/**
 	 * A display holding its selection in a set and reporting every change of it.
@@ -72,29 +72,44 @@ public class TestRedirectingTreeSelectionDisplay extends TestCase {
 	}
 
 	/**
-	 * Selecting a node that is redirected selects its target, and only the target is reported.
+	 * Selecting a node the handler takes over reaches the handler, not the listeners; what the
+	 * handler selects in answer reaches the listeners.
 	 */
-	public void testRedirectedSelection() {
+	public void testInterceptedSelection() {
 		DefaultTreeUINodeModel tree = new DefaultTreeUINodeModel(new DefaultTreeUIBuilder(), "root");
 		DefaultTreeUINode target = tree.getRoot().createChild("target");
 		DefaultTreeUINode link = tree.getRoot().createChild("link");
 		DefaultTreeUINode plain = tree.getRoot().createChild("plain");
 
 		SetDisplay inner = new SetDisplay();
-		TreeSelectionDisplay display =
-			TreeSelectionDisplay.redirecting(inner, node -> node == link ? target : node);
+		List<DefaultTreeUINode> handled = new ArrayList<>();
+		TreeSelectionDisplay display = TreeSelectionDisplay.intercepting(inner, node -> {
+			if (node != link) {
+				return false;
+			}
+			handled.add(node);
+			inner.showSelection(Set.of(target), true);
+			return true;
+		});
 		List<Collection<DefaultTreeUINode>> reported = new ArrayList<>();
+		List<Collection<DefaultTreeUINode>> reportedToSecond = new ArrayList<>();
 		display.addSelectionListener(reported::add);
+		Registration second = display.addSelectionListener(reportedToSecond::add);
 
 		inner.click(link);
 
+		assertEquals("The handler sees the selection once, whatever the number of listeners.", List.of(link),
+			handled);
 		assertEquals(Set.of(target), inner.selection());
 		assertEquals(List.of(List.of(target)), reported);
+		assertEquals(List.of(List.of(target)), reportedToSecond);
 
 		reported.clear();
+		second.dispose();
 		inner.click(plain);
 
 		assertEquals(Set.of(plain), inner.selection());
 		assertEquals(List.of(List.of(plain)), reported);
+		assertEquals("A disposed listener hears nothing.", 1, reportedToSecond.size());
 	}
 }

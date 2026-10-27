@@ -6,9 +6,7 @@
 package com.top_logic.layout.view.designer;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
@@ -33,9 +31,9 @@ import com.top_logic.layout.view.ViewRef;
  * and the property is the {@link DesignTreeNode#getChildContainer() child container} the structural
  * edit commands work on. This allows configuration authors to explicitly control which structural
  * properties appear as tree nodes vs. editable form fields.</li>
- * <li>Every set plain property of type {@link ViewRef}. The view file it names is loaded through
- * {@link ViewLoader#getOrLoadConfig(String)} and shown as a read-only child: the property itself
- * stays a field of the node's form, and no child container is bound to it.</li>
+ * <li>Every set plain property of type {@link ViewRef}. The view file it names is shown as a
+ * {@link ViewLinkDesignTreeNode} leaf, through which the designer opens that file: the property
+ * itself stays a field of the node's form, and no child container is bound to it.</li>
  * </ul>
  *
  * <p>
@@ -45,40 +43,15 @@ import com.top_logic.layout.view.ViewRef;
  * </p>
  *
  * <p>
- * Each view file is expanded only once per tree, at its first occurrence in build order (the root
- * file counts as expanded). Every further reference to an expanded file becomes a
- * {@link ViewLinkDesignTreeNode}, which also terminates reference cycles. A referenced file that
- * cannot be loaded becomes an {@link ErrorDesignTreeNode}, so that a broken view does not prevent
- * the designer from opening.
+ * A tree shows the content of a single view file: a referenced view is never expanded into the
+ * tree of the file referring to it. A referenced file that cannot be loaded becomes an
+ * {@link ErrorDesignTreeNode} instead of a link, so that the problem is visible and a broken view
+ * does not prevent the designer from opening.
  * </p>
+ *
+ * @see DesignSession
  */
 public class DesignTreeBuilder {
-
-	/**
-	 * The full paths of the view files expanded in the tree being built.
-	 */
-	private final Set<String> _expandedFiles = new HashSet<>();
-
-	/**
-	 * Records the view files shown in the given tree as expanded, so that a subtree built afterwards
-	 * for that tree refers to them through {@link ViewLinkDesignTreeNode}s instead of expanding them
-	 * a second time.
-	 *
-	 * @param tree
-	 *        The tree the subtree built afterwards is inserted into.
-	 * @return This instance for call chaining.
-	 */
-	public DesignTreeBuilder markExpanded(DesignTreeNode tree) {
-		if (tree != null) {
-			if (tree.getSourceFile() != null) {
-				_expandedFiles.add(tree.getSourceFile());
-			}
-			for (DesignTreeNode child : tree.getChildren()) {
-				markExpanded(child);
-			}
-		}
-		return this;
-	}
 
 	/**
 	 * Builds the design tree starting from the given root view path.
@@ -102,9 +75,6 @@ public class DesignTreeBuilder {
 	 * @return The root {@link DesignTreeNode}.
 	 */
 	public DesignTreeNode build(ConfigurationItem rootConfig, String sourceFile) throws ConfigurationException {
-		if (sourceFile != null) {
-			_expandedFiles.add(sourceFile);
-		}
 		return buildNode(rootConfig, sourceFile);
 	}
 
@@ -159,31 +129,23 @@ public class DesignTreeBuilder {
 	}
 
 	/**
-	 * Adds the view the given reference names as child of the given target node: its expanded
-	 * subtree at its first occurrence, a {@link ViewLinkDesignTreeNode} otherwise.
+	 * Adds the view the given reference names as child of the given target node: a
+	 * {@link ViewLinkDesignTreeNode} if the view can be loaded, an {@link ErrorDesignTreeNode}
+	 * otherwise.
 	 */
-	private void addReferencedView(DesignTreeNode target, ViewRef ref, String sourceFile)
-			throws ConfigurationException {
+	private void addReferencedView(DesignTreeNode target, ViewRef ref, String sourceFile) {
 		String refFile = ref.fullPath();
-		if (!_expandedFiles.add(refFile)) {
-			attach(target, new ViewLinkDesignTreeNode(sourceFile, ref));
-			return;
-		}
-
-		ViewElement.Config refViewConfig;
 		try {
-			refViewConfig = ViewLoader.getOrLoadConfig(refFile);
+			ViewLoader.getOrLoadConfig(refFile);
 		} catch (Exception ex) {
-			// A broken referenced view must not abort building the whole design tree: show an error
-			// node instead (keeping the referencing node), so the designer still opens. The file is
-			// not expanded, so every reference to it reports the problem.
-			_expandedFiles.remove(refFile);
+			// A broken referenced view must not abort building the tree: show an error node instead
+			// (keeping the referencing node), so the designer still opens.
 			Logger.warn("Adding error node for invalid referenced view '" + refFile
 				+ "' while building the design tree.", ex, DesignTreeBuilder.class);
 			attach(target, new ErrorDesignTreeNode(sourceFile, ref.getPath(), ex.getMessage()));
 			return;
 		}
-		addChild(target, refViewConfig, refFile);
+		attach(target, new ViewLinkDesignTreeNode(sourceFile, ref));
 	}
 
 	private DesignTreeNode createGroupNode(DesignTreeNode parent, PropertyDescriptor property, String sourceFile) {

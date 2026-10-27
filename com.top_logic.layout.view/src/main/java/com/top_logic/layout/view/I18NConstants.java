@@ -123,17 +123,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DESIGNER_ADD_DIALOG_TYPE;
 
 	/**
-	 * @en The view "{0}" is referenced several times. Its content is shown at its first occurrence in
-	 *     the design tree.
+	 * @en Opens the view "{0}" in the designer.
 	 */
 	public static ResKey1 DESIGNER_VIEW_LINK__PATH;
 
 	/**
-	 * @en Further views
-	 * @tooltip Views picked in the application that are not reached through the references of the
-	 *          views above.
+	 * @en The view "{0}" cannot be opened in the designer: {1}
 	 */
-	public static ResKey DESIGNER_FURTHER_VIEWS;
+	public static ResKey2 ERROR_OPEN_VIEW_FAILED__PATH_DETAILS;
 
 	/**
 	 * @en Edit Layout

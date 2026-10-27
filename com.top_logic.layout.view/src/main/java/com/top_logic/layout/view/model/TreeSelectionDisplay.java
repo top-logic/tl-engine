@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -218,24 +218,38 @@ public interface TreeSelectionDisplay {
 	}
 
 	/**
-	 * The given display, selecting other nodes in place of some of the nodes the user selects.
+	 * The given display, handing a selection of certain nodes to a handler instead of to its
+	 * listeners.
 	 *
 	 * <p>
-	 * When the selection made in the display holds a node the given function maps to another node,
-	 * the mapped nodes are {@link #showSelection(Set, boolean) shown} as selection instead, and only
-	 * that selection reaches the {@link #addSelectionListener(Listener) listeners}. This is what a
-	 * tree needs whose node stands in for one shown at another place - a link to it -, so that the
-	 * selection lands on that place.
+	 * When the selection made in the display holds a node the handler takes over, the handler is
+	 * called with that node, and the selection does not reach the
+	 * {@link #addSelectionListener(Listener) listeners}. The handler typically answers by displaying
+	 * other content and selecting a node of it, which the listeners then learn about. This is what a
+	 * tree needs whose node leads somewhere else - a link to other content - instead of being an
+	 * object to work on.
 	 * </p>
 	 *
 	 * @param display
 	 *        The display to decorate.
-	 * @param redirect
-	 *        The node to select in place of the given node, the given node itself where it is
-	 *        selected as it is.
+	 * @param handler
+	 *        Called with a selected node, answers whether it took over the selection.
 	 */
-	static TreeSelectionDisplay redirecting(TreeSelectionDisplay display,
-			UnaryOperator<DefaultTreeUINode> redirect) {
+	static TreeSelectionDisplay intercepting(TreeSelectionDisplay display, Predicate<DefaultTreeUINode> handler) {
+		List<Listener> listeners = new ArrayList<>();
+		Listener dispatch = selection -> {
+			for (DefaultTreeUINode node : selection) {
+				if (handler.test(node)) {
+					return;
+				}
+			}
+			for (Listener listener : new ArrayList<>(listeners)) {
+				listener.selectionChanged(selection);
+			}
+		};
+		// A single listener on the decorated display, so that the handler sees each selection once,
+		// however many listeners are registered here.
+		Registration[] inner = { null };
 		return new TreeSelectionDisplay() {
 			@Override
 			public Set<Object> getSelectedObjects() {
@@ -254,20 +268,15 @@ public interface TreeSelectionDisplay {
 
 			@Override
 			public Registration addSelectionListener(Listener listener) {
-				return display.addSelectionListener(selection -> {
-					Set<DefaultTreeUINode> redirected = new LinkedHashSet<>();
-					boolean changed = false;
-					for (DefaultTreeUINode node : selection) {
-						DefaultTreeUINode target = redirect.apply(node);
-						redirected.add(target);
-						changed |= target != node;
-					}
-					if (changed) {
-						// Showing the redirected selection reports it to this listener again, as a
-						// selection that needs no redirect.
-						display.showSelection(redirected, true);
-					} else {
-						listener.selectionChanged(selection);
+				listeners.add(listener);
+				if (inner[0] == null) {
+					inner[0] = display.addSelectionListener(dispatch);
+				}
+				return Registration.onDispose(() -> {
+					listeners.remove(listener);
+					if (listeners.isEmpty() && inner[0] != null) {
+						inner[0].dispose();
+						inner[0] = null;
 					}
 				});
 			}

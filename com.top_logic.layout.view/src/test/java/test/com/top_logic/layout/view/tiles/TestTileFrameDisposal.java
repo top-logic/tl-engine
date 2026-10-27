@@ -81,6 +81,9 @@ public class TestTileFrameDisposal extends BasicTestCase {
 	/** The parameter of a detail frame naming the object its form displays. */
 	private static final String ITEM = "item";
 
+	/** The id of the declaration of the detail frame. */
+	private static final String DETAIL = "detail";
+
 	private File _webapp;
 
 	private FileManager _fileManagerBefore;
@@ -307,7 +310,7 @@ public class TestTileFrameDisposal extends BasicTestCase {
 	}
 
 	private TileFrame detail(String name) {
-		return new TileFrame(DETAIL_VIEW, ResKey.text(name), Map.of(ITEM, _items.newItem(name)));
+		return new TileFrame(DETAIL, DETAIL_VIEW, ResKey.text(name), Map.of(ITEM, _items.newItem(name)));
 	}
 
 	private ReactTileStackControl stack() {

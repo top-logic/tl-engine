@@ -104,7 +104,7 @@
 			<rows>if($milestone == null, [], $milestone.get(`tl.demo.projectManagement:Milestone#tickets`))</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="ticket"
-				view="projects/ticket-detail.view.xml"
+				frame="ticket"
 			/>
 		</table>
 	</panel>

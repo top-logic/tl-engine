@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.tiles;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -53,7 +52,7 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  */
 @TagName(FrameParamConfig.TAG_NAME)
 @TitleProperty(name = FrameParamConfig.NAME)
-public interface FrameParamConfig extends ConfigurationItem {
+public interface FrameParamConfig extends FrameContentConfig {
 
 	/** Configuration tag of a {@link FrameParamConfig}. */
 	String TAG_NAME = "param";

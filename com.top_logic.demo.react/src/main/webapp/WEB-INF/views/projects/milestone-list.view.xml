@@ -111,7 +111,7 @@
 			<rows>if($project == null, [], $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))</rows>
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="milestone"
-				view="projects/tickets.view.xml"
+				frame="milestone"
 			/>
 		</table>
 	</panel>

@@ -8,6 +8,7 @@ package test.com.top_logic.layout.view.navigation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import junit.framework.Test;
@@ -35,6 +36,7 @@ import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.ShowObjectAction;
 import com.top_logic.layout.view.navigation.ShowStep;
 import com.top_logic.layout.view.navigation.ViewMounts;
+import com.top_logic.layout.view.tiles.TileFrame;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
@@ -116,7 +118,7 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 		Recorder chain = new Recorder();
 
 		ObjectNavigation.show(_root,
-			targets(target(plainShow(HOME_VIEW), plainShow(FRAME_VIEW), itemShow(ITEM_VIEW))), object, chain);
+			targets(target(plainShow(HOME_VIEW), frameShow(FRAME), itemShow(ITEM_VIEW))), object, chain);
 
 		assertEquals("The tab holding the stack is displayed.", TAB_STACK, activeTab());
 		assertEquals("The frame alone was pushed: what it holds was revealed within it, not drilled"
@@ -142,7 +144,7 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 		Recorder chain = new Recorder();
 
 		ObjectNavigation.show(_root,
-			targets(target(plainShow(HOME_VIEW), plainShow(FRAME_VIEW), itemShow(DETAIL_VIEW))), object, chain);
+			targets(target(plainShow(HOME_VIEW), frameShow(FRAME), itemShow(DETAIL_VIEW))), object, chain);
 
 		assertEquals("The tab holding the stack is displayed.", TAB_STACK, activeTab());
 		assertEquals("The frame alone was pushed: the view it holds was revealed within it, not"
@@ -161,7 +163,7 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 		TLObject object = newObject();
 
 		ObjectNavigation.show(_root,
-			targets(target(plainShow(HOME_VIEW), plainShow(FRAME_VIEW), itemShow(OTHER_VIEW))), object,
+			targets(target(plainShow(HOME_VIEW), frameShow(FRAME), itemShow(OTHER_VIEW))), object,
 			new Recorder());
 
 		assertEquals("The tab holding the view is displayed.", TAB_FIRST, activeTab());
@@ -176,7 +178,7 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 	 * looked for within the window.
 	 */
 	public void testFrameContentNeedsThePrecedingShow() {
-		ObjectNavigation.show(_root, targets(target(plainShow(HOME_VIEW), plainShow(FRAME_VIEW))),
+		ObjectNavigation.show(_root, targets(target(plainShow(HOME_VIEW), frameShow(FRAME))),
 			newObject(), new Recorder());
 		assertEquals(List.of(FRAME_VIEW), pushedViews());
 
@@ -204,17 +206,85 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 	}
 
 	/**
-	 * A view that is displayed nowhere is a drilled-down frame, which needs a stack to be pushed
-	 * onto.
+	 * A view that is displayed nowhere cannot be revealed: a frame to drill down to is named by its
+	 * declaration.
 	 */
-	public void testUnmountedViewNeedsStack() {
+	public void testUnmountedViewIsNotDisplayed() {
 		TLObject object = newObject();
 
 		try {
 			ObjectNavigation.show(_root, targets(showing(ORPHAN_VIEW)), object, new Recorder());
-			fail("Nothing here holds a stack of drilled-down views.");
+			fail("The view is displayed nowhere.");
 		} catch (TopLogicException expected) {
 			assertTrue(expected.getMessage(), expected.getMessage().contains(ORPHAN_VIEW));
+		}
+	}
+
+	/**
+	 * A frame is drilled down to only within a stack.
+	 */
+	public void testFrameNeedsStack() {
+		try {
+			ObjectNavigation.show(_root, targets(target(frameShow(FRAME))), newObject(), new Recorder());
+			fail("Nothing here holds a stack of drilled-down views.");
+		} catch (TopLogicException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains(FRAME));
+		}
+	}
+
+	/**
+	 * The frames of consecutive steps follow the frame graph of the stack: the path the display
+	 * arrives at holds the frames of the declarations the steps name, with the parameters their
+	 * bindings compute.
+	 */
+	public void testFrameChainFollowsGraph() {
+		TLObject object = newObject();
+		Recorder chain = new Recorder();
+
+		ObjectNavigation.show(_root,
+			targets(target(plainShow(HOME_VIEW), frameShow(FRAME), itemFrameShow(ORPHAN_FRAME))), object, chain);
+
+		assertEquals(List.of(FRAME_VIEW, ORPHAN_VIEW), pushedViews());
+		List<?> path = (List<?>) _root.resolveChannel(new ChannelRef(PATH_CHANNEL)).get();
+		TileFrame orphan = (TileFrame) path.get(1);
+		assertEquals(ORPHAN_FRAME, orphan.getFrameId());
+		assertEquals(Map.of(ITEM_CHANNEL, object), orphan.getParams());
+		assertEquals(List.of(object), chain._resumed);
+	}
+
+	/**
+	 * A step naming a frame that does not follow the frame of the step before is reported.
+	 */
+	public void testFrameChainViolatingGraphIsReported() {
+		try {
+			ObjectNavigation.show(_root, targets(target(plainShow(HOME_VIEW), itemFrameShow(ORPHAN_FRAME))),
+				newObject(), new Recorder());
+			fail("The orphan frame follows the frame, not the initial view.");
+		} catch (TopLogicException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains(ORPHAN_FRAME));
+		}
+		assertEquals("Nothing is drilled down to.", List.of(), pushedViews());
+
+		try {
+			ObjectNavigation.show(_root, targets(target(plainShow(HOME_VIEW), frameShow(FRAME), frameShow(FRAME))),
+				newObject(), new Recorder());
+			fail("The frame does not follow itself.");
+		} catch (TopLogicException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains(FRAME));
+		}
+	}
+
+	/**
+	 * A step naming a frame without binding all of its parameters is reported.
+	 */
+	public void testFrameStepMissingParameterIsReported() {
+		try {
+			ObjectNavigation.show(_root,
+				targets(target(plainShow(HOME_VIEW), frameShow(FRAME), frameShow(ORPHAN_FRAME))), newObject(),
+				new Recorder());
+			fail("The orphan frame holds the parameter item.");
+		} catch (TopLogicException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains(ITEM_CHANNEL));
 		}
 	}
 
@@ -244,7 +314,7 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 		TLObject object = newObject();
 		Recorder chain = new Recorder();
 		ObjectNavigation.show(_root,
-			targets(target(plainShow(HOME_VIEW), plainShow(FRAME_VIEW), itemShow(ITEM_VIEW))), object, chain);
+			targets(target(plainShow(HOME_VIEW), frameShow(FRAME), itemShow(ITEM_VIEW))), object, chain);
 
 		assertEquals("The display took place.", List.of(object), chain._resumed);
 		assertEquals(List.of("area/frame"), urls);
@@ -369,6 +439,21 @@ public class TestObjectNavigation extends AbstractNavigationTest {
 	 */
 	private static ShowStep itemShow(String viewRef) {
 		return new ShowStep(viewRef, false, null, null, List.of(new Binding(ITEM_CHANNEL, null)));
+	}
+
+	/**
+	 * Drilling down to the frame of the given declaration, which holds no parameters.
+	 */
+	private static ShowStep frameShow(String frame) {
+		return ShowStep.ofFrame(frame, List.of());
+	}
+
+	/**
+	 * Drilling down to the frame of the given declaration with the shown object as its
+	 * {@link #ITEM_CHANNEL} parameter.
+	 */
+	private static ShowStep itemFrameShow(String frame) {
+		return ShowStep.ofFrame(frame, List.of(new Binding(ITEM_CHANNEL, null)));
 	}
 
 	/**

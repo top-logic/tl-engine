@@ -58,6 +58,7 @@ import com.top_logic.layout.view.form.FormParticipant;
 import com.top_logic.layout.view.navigation.Binding;
 import com.top_logic.layout.view.navigation.ObjectNavigation;
 import com.top_logic.layout.view.navigation.ShowStep;
+import com.top_logic.layout.view.tiles.FrameRoute;
 import com.top_logic.layout.view.tiles.ReactTileStackControl;
 import com.top_logic.layout.view.tiles.TileFrame;
 import com.top_logic.layout.view.tiles.TileStackScope;
@@ -91,6 +92,9 @@ public class TestTileStackDirtyCheck extends TestCase {
 
 	/** The frame parameter delivering the object the form of a frame displays. */
 	private static final String EDITED = "edited";
+
+	/** The id of the declaration of the form frame. */
+	private static final String FORM = "form";
 
 	/** The command a button executes when it is clicked. */
 	private static final String CLICK = "click";
@@ -147,7 +151,8 @@ public class TestTileStackDirtyCheck extends TestCase {
 		_root.write(new TagWriter());
 
 		_path = viewContext.resolveChannel(new ChannelRef(PATH));
-		_scope = new TileStackScope(_path);
+		_scope = new TileStackScope(_path, List.of(
+			new FrameRoute(FORM, FORM_VIEW, null, Map.of(), Map.of(), List.of(EDITED), null, false)));
 		_inStack = viewContext.withScope(TileStackScope.class, _scope);
 		_path.addListener((sender, oldValue, newValue) -> _writes++);
 	}
@@ -337,7 +342,7 @@ public class TestTileStackDirtyCheck extends TestCase {
 	 */
 	public void testShowObjectOfDisplayedFrameKeepsIt() {
 		MockTLObject edited = new MockTLObject();
-		_scope.push(FORM_VIEW, ResKey.text("Named by the push"), Map.of(EDITED, edited));
+		_scope.push(FORM, ResKey.text("Named by the push"), Map.of(EDITED, edited));
 		FormControl form = editForm(1);
 		ReactControl frame = frameControl(1);
 		Object pathBefore = _path.get();
@@ -387,21 +392,21 @@ public class TestTileStackDirtyCheck extends TestCase {
 	}
 
 	private void pushFrame(String label) {
-		_scope.push(FORM_VIEW, ResKey.text(label), Map.of(EDITED, new MockTLObject()));
+		_scope.push(FORM, ResKey.text(label), Map.of(EDITED, new MockTLObject()));
 	}
 
 	/**
 	 * An unnamed frame displaying the given object in its form.
 	 */
 	private static TileFrame formFrame(Object edited) {
-		return new TileFrame(FORM_VIEW, null, Map.of(EDITED, edited));
+		return new TileFrame(FORM, FORM_VIEW, null, Map.of(EDITED, edited));
 	}
 
 	/**
 	 * Displaying the form frame with the shown object, named by nothing of its own.
 	 */
 	private static ShowStep formShow() {
-		return new ShowStep(FORM_VIEW, false, null, null, List.of(new Binding(EDITED, null)));
+		return ShowStep.ofFrame(FORM, List.of(new Binding(EDITED, null)));
 	}
 
 	/**

@@ -284,7 +284,7 @@
 				<rows>all(`tl.demo.projectManagement:ProjectScope`)</rows>
 				<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 					bind-input-to="project"
-					view="projects/milestones.view.xml"
+					frame="project"
 				/>
 			</table>
 		</stack>

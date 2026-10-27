@@ -16,5 +16,8 @@
 				to="shared"
 			/>
 		</bindings>
+		<frame id="frame"
+			view="bindings-frame.view.xml"
+		/>
 	</tile-stack>
 </view>

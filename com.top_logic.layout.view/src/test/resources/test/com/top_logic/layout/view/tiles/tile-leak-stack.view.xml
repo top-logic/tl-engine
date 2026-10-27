@@ -8,5 +8,11 @@
 		bind-path-to="navPath"
 		initial="tile-leak-home.view.xml"
 		path="navPath"
-	/>
+	>
+		<frame id="detail"
+			view="tile-leak-detail.view.xml"
+		>
+			<param name="item"/>
+		</frame>
+	</tile-stack>
 </view>

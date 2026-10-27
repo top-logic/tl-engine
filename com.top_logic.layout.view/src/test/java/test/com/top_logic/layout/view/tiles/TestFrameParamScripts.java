@@ -29,6 +29,7 @@ import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.tiles.FrameParamConfig;
 import com.top_logic.layout.view.tiles.FrameRoute;
 import com.top_logic.layout.view.tiles.FrameRouteConfig;
+import com.top_logic.layout.view.tiles.TileFrame;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.ui.ScriptContextVariablesResolver;
 import com.top_logic.util.model.ModelService;
@@ -57,7 +58,48 @@ public class TestFrameParamScripts extends BasicTestCase {
 		assertEquals("item/id-42", route.segment(Map.of("item", "42")));
 		RouteMatch match = route.pattern().match("item/id-42");
 		assertNotNull(match);
-		assertEquals(Map.of("item", "id-42!"), route.resolveParams(match));
+		assertEquals(Map.of("item", "id-42!"), route.resolveParams(match, List.of()));
+	}
+
+	/**
+	 * Tests that a parameter naming no placeholder of the route is taken from the frames below on
+	 * the path, from the nearest one holding it.
+	 */
+	public void testPathParam() throws Exception {
+		FrameRouteConfig frame = parse("<frame route='items' view='items.view.xml'>"
+			+ "<param name='item'/>"
+			+ "</frame>");
+		FrameRoute route = FrameRoute.create(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, frame);
+		assertEquals(List.of("item"), route.pathParams());
+		assertEquals("The path parameter does not reach the URL.", "items", route.segment(Map.of("item", "42")));
+
+		RouteMatch match = route.pattern().match("items");
+		assertNotNull(match);
+		List<TileFrame> below = List.of(
+			new TileFrame("a.view.xml", null, Map.of("item", "1")),
+			new TileFrame("b.view.xml", null, Map.of("item", "42")),
+			new TileFrame("c.view.xml", null, Map.of("other", "7")));
+		assertEquals("The nearest frame below holding the parameter gives its value.",
+			Map.of("item", "42"), route.resolveParams(match, below));
+		assertNull("Without a frame below holding the parameter, the frame is not restored.",
+			route.resolveParams(match, List.of(new TileFrame("c.view.xml", null, Map.of("other", "7")))));
+	}
+
+	/**
+	 * Tests that a conversion of a parameter that never reaches the URL is rejected.
+	 */
+	public void testPathParamConversionRejected() throws Exception {
+		for (String attribute : List.of(FrameParamConfig.EXPR, FrameParamConfig.REVERSE)) {
+			FrameRouteConfig frame = parse("<frame route='items' view='items.view.xml'>"
+				+ "<param name='item' " + attribute + "='$value'/>"
+				+ "</frame>");
+			try {
+				FrameRoute.create(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, frame);
+				fail("A path parameter with '" + attribute + "' must be rejected.");
+			} catch (RuntimeException ex) {
+				assertTrue(ex.getMessage(), ex.getMessage().contains("item"));
+			}
+		}
 	}
 
 	/**

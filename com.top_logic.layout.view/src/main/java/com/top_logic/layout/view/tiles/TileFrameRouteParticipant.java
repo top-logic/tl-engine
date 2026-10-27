@@ -34,8 +34,10 @@ import com.top_logic.layout.view.channel.ViewChannel;
  * <p>
  * A URL is taken up frame by frame: the participant is offered the route of the frame that follows
  * the ones the URL has already established, puts that frame on the path, and is offered the rest of
- * the URL again for the frame above it. A route naming something the display cannot show - a deleted
- * object, a mistyped identifier - ends the path at the frames the URL established, and the address
+ * the URL again for the frame above it. A frame whose content follows from the frame below it takes
+ * its {@link FrameRoute#pathParams() path parameters} from the frames established so far. A route
+ * naming something the display cannot show - a deleted object, a mistyped identifier, a path
+ * parameter no frame below holds - ends the path at the frames the URL established, and the address
  * bar is then corrected to that path.
  * </p>
  *
@@ -130,7 +132,7 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 		long adoptionId = _routeManager.adoptionId();
 		int base = _scope.restoreBase(adoptionId);
 
-		Map<String, Object> params = route.resolveParams(match);
+		Map<String, Object> params = route.resolveParams(match, _scope.getPath().subList(0, base));
 		if (params == null) {
 			Logger.info("Route '" + match.pattern() + "' names nothing the frame '" + route.viewRef()
 				+ "' can display, ending the path at " + base + " frames.",

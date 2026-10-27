@@ -7,12 +7,12 @@
 	and lands in the drill-down the user already has.
 	
 	The <frame> declarations put the drill-down path into the address bar, one route per frame:
-	project/<id> for the cockpit of a project, milestones/<id> and notes/<id> for the lists the
-	cockpit tiles open (carrying the id of the project, because a list restored from the address
-	has no cockpit to take the project from), milestone/<id> for the tickets of a milestone and
-	ticket/<id> for one ticket, each id the objectId of the object. A ticket reached through the
-	milestone list is /view/projects/project/<id>/milestones/<id>/milestone/<id>/ticket/<id>.
-	Opening such an address restores the frames, and the back button walks out of them again.
+	project/<id> for the cockpit of a project, milestones and notes for the lists the cockpit tiles
+	open, milestone/<id> for the tickets of a milestone and ticket/<id> for one ticket, each id the
+	objectId of the object. The lists take their project from the cockpit frame below them (a
+	<param> naming no placeholder of the route), so the address names the project once. A ticket
+	reached through the milestone list is
+	/view/projects/project/<id>/milestones/milestone/<id>/ticket/<id>. Opening such an address restores the frames, and the back button walks out of them again.
 	
 	The declarations also name the frames: the crumb of an object's frame is the object's name or
 	title, the crumb of a list frame the name of the list. Neither the pushing frames nor the
@@ -52,13 +52,10 @@
 				/>
 			</frame>
 			<frame
-				route="milestones/:project"
+				route="milestones"
 				view="projects/milestone-list.view.xml"
 			>
-				<param name="project"
-					expr="objectId($project)"
-					reverse="$value.objectResolve(`tl.demo.projectManagement:ProjectScope`)"
-				/>
+				<param name="project"/>
 				<label class="com.top_logic.layout.view.tiles.StaticTileLabel">
 					<value>
 						<en>Milestones</en>
@@ -67,13 +64,10 @@
 				</label>
 			</frame>
 			<frame
-				route="notes/:project"
+				route="notes"
 				view="projects/notes.view.xml"
 			>
-				<param name="project"
-					expr="objectId($project)"
-					reverse="$value.objectResolve(`tl.demo.projectManagement:ProjectScope`)"
-				/>
+				<param name="project"/>
 				<label class="com.top_logic.layout.view.tiles.StaticTileLabel">
 					<value>
 						<en>Notes</en>

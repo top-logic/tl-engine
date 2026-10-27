@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.tiles;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,10 +30,16 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * <p>
  * Translates in both directions between a {@link TileFrame} and the piece of URL describing it:
  * {@link #segment(Map)} produces the segments for the parameters a frame holds,
- * {@link #resolveParams(RouteMatch)} turns the parameters a URL carries back into the values a frame
- * is mounted with. Either direction yields nothing where a value has no counterpart on the other
- * side, which is how a frame that cannot be addressed stays out of the URL and a URL that names
+ * {@link #resolveParams(RouteMatch, List)} turns the parameters a URL carries back into the values a
+ * frame is mounted with. Either direction yields nothing where a value has no counterpart on the
+ * other side, which is how a frame that cannot be addressed stays out of the URL and a URL that names
  * nothing displayable restores no frame.
+ * </p>
+ *
+ * <p>
+ * A frame may also hold {@link #pathParams() path parameters}, which the URL does not carry: their
+ * values follow from the frames below on the path and are taken from there when the frame is
+ * restored.
  * </p>
  */
 public final class FrameRoute {
@@ -44,6 +51,8 @@ public final class FrameRoute {
 	private final Map<String, Function<Object, String>> _toUrl;
 
 	private final Map<String, Function<String, Object>> _fromUrl;
+
+	private final List<String> _pathParams;
 
 	private final TileLabelProvider _label;
 
@@ -95,10 +104,47 @@ public final class FrameRoute {
 	 */
 	public FrameRoute(String viewRef, String route, Map<String, Function<Object, String>> toUrl,
 			Map<String, Function<String, Object>> fromUrl, TileLabelProvider label, boolean finalTitle) {
+		this(viewRef, route, toUrl, fromUrl, List.of(), label, finalTitle);
+	}
+
+	/**
+	 * Creates a {@link FrameRoute}.
+	 *
+	 * @param viewRef
+	 *        Path of the frame view this route describes, relative to {@code /WEB-INF/views/}.
+	 * @param route
+	 *        Pattern of the URL segments a frame of that view occupies, e.g.
+	 *        {@code "person/:person"}.
+	 * @param toUrl
+	 *        Conversions of parameter values to URL texts, by parameter name. A parameter without an
+	 *        entry is converted by its own text representation.
+	 * @param fromUrl
+	 *        Conversions of URL texts to parameter values, by parameter name. A parameter without an
+	 *        entry is taken as the text it is.
+	 * @param pathParams
+	 *        Names of the parameters the frame takes from the frames below it on the path, see
+	 *        {@link #pathParams()}. None of them is a placeholder of the route.
+	 * @param label
+	 *        Provider naming a frame of this view, or {@code null} for frames named by whoever
+	 *        pushes them.
+	 * @param finalTitle
+	 *        Whether the label of a frame of this view is the final title of the page, see
+	 *        {@link #isFinalTitle()}.
+	 */
+	public FrameRoute(String viewRef, String route, Map<String, Function<Object, String>> toUrl,
+			Map<String, Function<String, Object>> fromUrl, List<String> pathParams, TileLabelProvider label,
+			boolean finalTitle) {
 		_viewRef = viewRef;
 		_pattern = RoutePattern.compile(route, viewRef);
 		_toUrl = Map.copyOf(toUrl);
 		_fromUrl = Map.copyOf(fromUrl);
+		_pathParams = List.copyOf(pathParams);
+		for (String name : _pathParams) {
+			if (_pattern.paramNames().contains(name)) {
+				throw new IllegalArgumentException("Parameter '" + name + "' of the frame '" + viewRef
+					+ "' is a placeholder of its route '" + route + "' and cannot be taken from the path.");
+			}
+		}
 		_label = label;
 		_finalTitle = finalTitle;
 	}
@@ -112,9 +158,23 @@ public final class FrameRoute {
 	 *        The declaration to compile.
 	 */
 	public static FrameRoute create(InstantiationContext context, FrameRouteConfig config) {
+		List<String> placeholders = RoutePattern.compile(config.getRoute(), config.getView()).paramNames();
 		Map<String, Function<Object, String>> toUrl = new HashMap<>();
 		Map<String, Function<String, Object>> fromUrl = new HashMap<>();
+		List<String> pathParams = new ArrayList<>();
 		for (FrameParamConfig param : config.getParams()) {
+			if (!placeholders.contains(param.getName())) {
+				if (param.getExpr() != null || param.getReverse() != null) {
+					context.error("The parameter '" + param.getName() + "' of the frame '" + config.getView()
+						+ "' at " + param.location() + " is no placeholder of the route '" + config.getRoute()
+						+ "' and is therefore taken from the frames below on the path: it never reaches the URL"
+						+ " and must not have an '" + FrameParamConfig.EXPR + "' or '" + FrameParamConfig.REVERSE
+						+ "' conversion.");
+					continue;
+				}
+				pathParams.add(param.getName());
+				continue;
+			}
 			QueryExecutor expr = InputScript.compile(param, FrameParamConfig.EXPR);
 			if (expr != null) {
 				toUrl.put(param.getName(), value -> asText(expr.execute(value)));
@@ -126,7 +186,7 @@ public final class FrameRoute {
 		}
 		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = config.getLabel();
 		TileLabelProvider label = labelConfig != null ? context.getInstance(labelConfig) : null;
-		return new FrameRoute(config.getView(), config.getRoute(), toUrl, fromUrl, label,
+		return new FrameRoute(config.getView(), config.getRoute(), toUrl, fromUrl, pathParams, label,
 			config.getFinalTitle());
 	}
 
@@ -177,14 +237,33 @@ public final class FrameRoute {
 	}
 
 	/**
-	 * The frame parameters described by the given match of this route.
+	 * Names of the parameters a frame of this view takes from the frames below it on the path.
+	 *
+	 * <p>
+	 * A path parameter is not a placeholder of the {@link #pattern() route} and never reaches the
+	 * URL. When the frame is restored, it gets the value of the nearest frame below that holds a
+	 * parameter of the same name - the value a push from there hands on.
+	 * </p>
+	 *
+	 * @see FrameParamConfig#getName()
+	 */
+	public List<String> pathParams() {
+		return _pathParams;
+	}
+
+	/**
+	 * The frame parameters described by the given match of this route on top of the given frames.
 	 *
 	 * @param match
 	 *        A match of {@link #pattern()}.
+	 * @param below
+	 *        The frames of the path below the frame to restore, lowest first. The
+	 *        {@link #pathParams() path parameters} are taken from them.
 	 * @return The parameter values, or {@code null} if the URL names something the display cannot
-	 *         show - a frame that must not be restored.
+	 *         show, or no frame below holds the value of a path parameter - a frame that must not be
+	 *         restored.
 	 */
-	public Map<String, Object> resolveParams(RouteMatch match) {
+	public Map<String, Object> resolveParams(RouteMatch match, List<TileFrame> below) {
 		Map<String, Object> params = new LinkedHashMap<>();
 		for (String name : _pattern.paramNames()) {
 			String text = match.params().get(name);
@@ -198,7 +277,28 @@ public final class FrameRoute {
 			}
 			params.put(name, value);
 		}
+		for (String name : _pathParams) {
+			Object value = valueBelow(below, name);
+			if (value == null) {
+				return null;
+			}
+			params.put(name, value);
+		}
 		return params;
+	}
+
+	/**
+	 * The value of the parameter with the given name in the nearest of the given frames that holds
+	 * one, or {@code null} if none does.
+	 */
+	private static Object valueBelow(List<TileFrame> below, String name) {
+		for (int n = below.size() - 1; n >= 0; n--) {
+			Object value = below.get(n).getParams().get(name);
+			if (value != null) {
+				return value;
+			}
+		}
+		return null;
 	}
 
 	/**

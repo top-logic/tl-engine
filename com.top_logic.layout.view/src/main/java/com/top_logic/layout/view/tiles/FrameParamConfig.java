@@ -17,8 +17,16 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
- * Conversion of one parameter of a {@link FrameRouteConfig frame route} between the value the frame
- * holds and the text the URL carries.
+ * One parameter of a {@link FrameRouteConfig frame route}: either converted between the value the
+ * frame holds and the text the URL carries, or taken from the frames below it on the path.
+ *
+ * <p>
+ * What kind of parameter an entry declares depends on its {@link #getName() name}. A
+ * <em>placeholder parameter</em> is named like a placeholder of the
+ * {@link FrameRouteConfig#getRoute() route} and is carried in the URL. A <em>path parameter</em>
+ * is named like no placeholder: it never reaches the URL, and a frame restored from a URL takes its
+ * value from the frame below on the path - the value a push from there hands on.
+ * </p>
  *
  * <p>
  * A URL carries text, a frame parameter typically a business object. The two expressions convert
@@ -33,6 +41,14 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  * <p>
  * A parameter of the route without an entry of its own is carried as text: the value names itself in
  * the URL and the text of the URL is the value, which is what a parameter holding a string needs.
+ * </p>
+ *
+ * <p>
+ * A path parameter serves a frame whose content follows from the frame below it, the milestone list
+ * of the project the frame below displays, for instance: the URL names the project once, in the
+ * route of the project frame, and the list frame is declared with <code>route="milestones"</code>
+ * and <code>&lt;param name="project"/&gt;</code>. A path parameter has no conversions: neither
+ * {@link #getExpr() expr} nor {@link #getReverse() reverse} may be given for it.
  * </p>
  */
 @TagName(FrameParamConfig.TAG_NAME)
@@ -61,11 +77,14 @@ public interface FrameParamConfig extends ConfigurationItem {
 	String VALUE = "value";
 
 	/**
-	 * The parameter this conversion applies to.
+	 * The parameter this entry declares, the name of the channel the frame receives the value on.
 	 *
 	 * <p>
-	 * The name of a parameter placeholder of the {@link FrameRouteConfig#getRoute() route}, which is
-	 * at the same time the name of the channel the frame receives the value on.
+	 * The name of a parameter placeholder of the {@link FrameRouteConfig#getRoute() route} declares
+	 * the conversion of a parameter the URL carries. Any other name declares a path parameter: a
+	 * frame restored from a URL gets the value of the nearest frame below it on the path that holds
+	 * a parameter of this name. Without such a frame below, the path restored from the URL ends
+	 * before this frame.
 	 * </p>
 	 */
 	@Name(NAME)
@@ -81,6 +100,10 @@ public interface FrameParamConfig extends ConfigurationItem {
 	 * naming it: <code>objectId($person)</code>. An expression yielding nothing means the value has
 	 * no name in a URL - a transient object, for instance - and the frame then contributes no
 	 * segment: an address that cannot be opened again is better left unwritten.
+	 * </p>
+	 *
+	 * <p>
+	 * Only for a parameter named like a placeholder of the route.
 	 * </p>
 	 */
 	@Name(EXPR)
@@ -98,6 +121,10 @@ public interface FrameParamConfig extends ConfigurationItem {
 	 * expression yielding nothing means the URL names something the display cannot show - an
 	 * object that is deleted, an identifier that was mistyped - and the frame is then not restored
 	 * at all.
+	 * </p>
+	 *
+	 * <p>
+	 * Only for a parameter named like a placeholder of the route.
 	 * </p>
 	 */
 	@Name(REVERSE)

@@ -97,11 +97,13 @@ public interface FrameRouteConfig extends WithFinalTitle {
 	String getRoute();
 
 	/**
-	 * Conversions between the parameter values of the frame and the texts the URL carries.
+	 * The parameters of the frame: conversions between their values and the texts the URL carries,
+	 * and the parameters taken from the frames below on the path.
 	 *
 	 * <p>
 	 * One entry per parameter of the {@link #getRoute() route} that is not a text already. A
-	 * parameter without an entry is carried as text.
+	 * parameter without an entry is carried as text. An entry naming no placeholder of the route
+	 * declares a {@link FrameParamConfig path parameter}.
 	 * </p>
 	 */
 	@Name(PARAMS)

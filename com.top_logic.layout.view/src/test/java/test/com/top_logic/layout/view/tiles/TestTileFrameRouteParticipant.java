@@ -60,6 +60,12 @@ public class TestTileFrameRouteParticipant extends TestCase {
 
 	private static final String NOTE_VIEW = "demo/note.view.xml";
 
+	private static final String PROJECT_VIEW = "demo/project.view.xml";
+
+	private static final String MILESTONES_VIEW = "demo/milestone-list.view.xml";
+
+	private static final String PROJECT = "project";
+
 	/**
 	 * Tests that the URL names every frame of the path, with the parameter values converted to the
 	 * texts naming them.
@@ -389,6 +395,88 @@ public class TestTileFrameRouteParticipant extends TestCase {
 			List.of(), noteFrame.getParams());
 		assertNull("A frame may be named by whoever pushes it.", noteFrame.getLabel());
 		assertFalse("By default, what a frame displays refines the title.", noteFrame.getFinalTitle());
+	}
+
+	/**
+	 * Tests that a frame restored from a URL takes a parameter its route does not carry from the
+	 * frame below it, and then holds the same parameters as the frame a push hands the value to.
+	 */
+	public void testPathParamTakenFromFrameBelow() {
+		ViewChannel path = path();
+		TileStackScope scope = projectScope(path);
+		TileFrameRouteParticipant participant = participant(scope);
+
+		participant.activateRoute(match(participant, "project/pr-1"));
+		participant.activateRoute(match(participant, "milestones"));
+
+		assertEquals(2, scope.getPath().size());
+		TileFrame milestones = scope.getPath().get(1);
+		assertEquals(MILESTONES_VIEW, milestones.getViewRef());
+		assertEquals("The project is taken from the frame below.", Map.of(PROJECT, "1"), milestones.getParams());
+		assertEquals("The label is computed from the parameter taken from the path.",
+			ResKey.text("Milestones of 1"), milestones.getLabel());
+
+		TileStackScope pushed = projectScope(path(scope.getPath().get(0)));
+		pushed.push(MILESTONES_VIEW, null, Map.of(PROJECT, "1"));
+		assertTrue("The restored frame is the one a push from the project frame puts on the path.",
+			pushed.getPath().get(1).showsSame(milestones));
+		assertEquals(pushed.getPath(), scope.getPath());
+	}
+
+	/**
+	 * Tests that a parameter taken from the path does not reach the URL, so that the URL names the
+	 * value once, in the route of the frame below.
+	 */
+	public void testPathParamNotInUrl() {
+		ViewChannel path = path(projectFrame("1"), milestonesFrame("1"));
+		TileFrameRouteParticipant participant = participant(projectScope(path));
+
+		assertEquals("project/pr-1/milestones", participant.activeRouteSegment().path());
+	}
+
+	/**
+	 * Tests that a frame whose path parameter no frame below holds is not restored, and the path ends
+	 * at the frames established before it.
+	 */
+	public void testPathParamWithoutValueBelowEndsPath() {
+		ViewChannel path = path(projectFrame("1"), milestonesFrame("1"));
+		TileStackScope scope = projectScope(path);
+		TileFrameRouteParticipant participant = participant(scope);
+
+		participant.activateRoute(match(participant, "milestones"));
+		assertEquals("Without a frame below, the list has no project.", List.of(), scope.getPath());
+
+		participant.activateRoute(match(participant, "person/p-1"));
+		participant.activateRoute(match(participant, "milestones"));
+		assertEquals("The person frame below holds no project.",
+			List.of(frame(PERSON_VIEW, "1")), scope.getPath());
+	}
+
+	/**
+	 * The stack of the path parameter tests: a project frame carrying its project in the URL, a
+	 * milestone list taking the project from the frame below, and the person frame of
+	 * {@link #scope(ViewChannel)}.
+	 */
+	private static TileStackScope projectScope(ViewChannel path) {
+		return new TileStackScope(path, List.of(
+			new FrameRoute(PROJECT_VIEW, "project/:project",
+				toUrl(PROJECT, value -> value == null ? null : "pr-" + value),
+				fromUrl(PROJECT, text -> known(text, "pr-")),
+				label("Project ", PROJECT)),
+			new FrameRoute(MILESTONES_VIEW, "milestones", Map.of(), Map.of(), List.of(PROJECT),
+				label("Milestones of ", PROJECT), false),
+			new FrameRoute(PERSON_VIEW, "person/:person",
+				toUrl("person", value -> value == null ? null : "p-" + value),
+				fromUrl("person", text -> known(text, "p-")),
+				label("Person ", "person"))));
+	}
+
+	private static TileFrame projectFrame(String project) {
+		return new TileFrame(PROJECT_VIEW, ResKey.text("Project " + project), Map.of(PROJECT, project));
+	}
+
+	private static TileFrame milestonesFrame(String project) {
+		return new TileFrame(MILESTONES_VIEW, ResKey.text("Milestones of " + project), Map.of(PROJECT, project));
 	}
 
 	/**

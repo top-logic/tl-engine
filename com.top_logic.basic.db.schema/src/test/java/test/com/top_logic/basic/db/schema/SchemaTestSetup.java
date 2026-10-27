@@ -5,7 +5,6 @@
  */
 package test.com.top_logic.basic.db.schema;
 
-import java.util.Iterator;
 import java.util.List;
 
 import junit.framework.Test;
@@ -38,8 +37,6 @@ import com.top_logic.dsa.DataAccessService;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class SchemaTestSetup extends RearrangableTestSetup {
-
-	private static final String SINGLE_BRANCH_META = "webinf://kbase/singleBranchMeta.xml";
 
 	private static final MultipleSetupCounter SETUP_CNT = newMultipleCounter();
 
@@ -108,41 +105,41 @@ public class SchemaTestSetup extends RearrangableTestSetup {
 	 * @return Eventually a the same or a new {@link SchemaConfiguration} with desired value.
 	 */
 	public static SchemaConfiguration updateMultipleBranches(SchemaConfiguration schemaConfig, Decision multipleBranches) {
-		PropertyDescriptor multipleBranchesProperty;
-		switch (multipleBranches) {
-			case TRUE:
-				/* Copy the configuration because this is the "static" one from the application
-				 * configuration, which should not be modified. */
-				schemaConfig = TypedConfiguration.copy(schemaConfig);
-				multipleBranchesProperty =
-					schemaConfig.descriptor().getProperty(SchemaConfiguration.MULTIPLE_BRANCHES_ATTRIBUTE);
-				schemaConfig.update(multipleBranchesProperty, true);
-				for (Iterator<ResourceDeclaration> it = schemaConfig.getDeclarations().iterator(); it.hasNext();) {
-					ResourceDeclaration resourceDecl = it.next();
-					if (SINGLE_BRANCH_META.equals(resourceDecl.getResource())) {
-						it.remove();
-					}
-				}
-				break;
-			case FALSE:
-				/* Copy the configuration because this is the "static" one from the application
-				 * configuration, which should not be modified. */
-				schemaConfig = TypedConfiguration.copy(schemaConfig);
-				multipleBranchesProperty =
-					schemaConfig.descriptor().getProperty(SchemaConfiguration.MULTIPLE_BRANCHES_ATTRIBUTE);
-				schemaConfig.update(multipleBranchesProperty, false);
-				schemaConfig.getDeclarations().add(resourceDeclaration(SINGLE_BRANCH_META));
-				break;
-			default:
-				break;
+		if (multipleBranches == Decision.DEFAULT) {
+			return schemaConfig;
 		}
+		/* Copy the configuration because this is the "static" one from the application
+		 * configuration, which should not be modified. */
+		schemaConfig = TypedConfiguration.copy(schemaConfig);
+		PropertyDescriptor multipleBranchesProperty =
+			schemaConfig.descriptor().getProperty(SchemaConfiguration.MULTIPLE_BRANCHES_ATTRIBUTE);
+		schemaConfig.update(multipleBranchesProperty,
+			multipleBranches.toBoolean(SchemaConfiguration.DEFAULT_MULTIPLE_BRANCHES_ATTRIBUTE));
 		return schemaConfig;
 	}
 
-	private static ResourceDeclaration resourceDeclaration(String resource) {
-		ResourceDeclaration decl = TypedConfiguration.newConfigItem(ResourceDeclaration.class);
-		decl.setResource(resource);
-		return decl;
+	/**
+	 * Returns a {@link SchemaConfiguration} where the value of
+	 * {@link SchemaConfiguration#getBranchLast()} is pinned to the value of the given
+	 * {@link Decision}.
+	 * 
+	 * @param schemaConfig
+	 *        The {@link SchemaConfiguration} to update.
+	 * @param branchLast
+	 *        New value of {@link SchemaConfiguration#getBranchLast()}. If {@link Decision#DEFAULT}
+	 *        the call is a no-op, i.e. the configured value or the default of the SQL dialect
+	 *        applies.
+	 * @return The given {@link SchemaConfiguration}, or a copy of it with the desired value.
+	 */
+	public static SchemaConfiguration updateBranchLast(SchemaConfiguration schemaConfig, Decision branchLast) {
+		if (branchLast == Decision.DEFAULT) {
+			return schemaConfig;
+		}
+		/* Copy the configuration because this is the "static" one from the application
+		 * configuration, which should not be modified. */
+		SchemaConfiguration result = TypedConfiguration.copy(schemaConfig);
+		result.setBranchLast(Boolean.valueOf(branchLast == Decision.TRUE));
+		return result;
 	}
 
 	/**

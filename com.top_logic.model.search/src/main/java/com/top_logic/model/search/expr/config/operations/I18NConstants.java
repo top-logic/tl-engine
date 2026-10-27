@@ -106,6 +106,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey4 ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL;
 
 	/**
+	 * @en The TL-Script implementation of method "{1}" of "{0}" returned a wrong result. A value of
+	 *     type "{2}" was expected, but the value was: {3}
+	 */
+	public static ResKey4 ERROR_WRONG_RESULT__TYPE_METHOD_EXPECTED_VAL;
+
+	/**
 	 * @en The value {0} is no object that can be removed from the database. Expected is an object
 	 *     or an object identifier.
 	 */

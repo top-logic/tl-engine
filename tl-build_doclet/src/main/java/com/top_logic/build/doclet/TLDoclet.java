@@ -1045,6 +1045,13 @@ public class TLDoclet implements Doclet {
 	}
 
 	/**
+	 * The plain Java name of the given method.
+	 */
+	static String methodName(ExecutableElement method) {
+		return method.getSimpleName().toString();
+	}
+
+	/**
 	 * Either the annotated Name or the method name.
 	 */
 	private String tlScriptName(ExecutableElement method) {
@@ -1063,6 +1070,12 @@ public class TLDoclet implements Doclet {
 
 		private final Pattern METHOD_NAME_PATTERN =
 			Pattern.compile("^(?:is|should|has|can|must|get|set|)(.*)$");
+
+		/**
+		 * The interfaces whose method documentation is exported, because a TL-Script can implement
+		 * them in a configuration property.
+		 */
+		private final Set<TypeElement> _exportedInterfaces = new LinkedHashSet<>();
 
 		void collectResources(List<TypeElement> includedElements) {
 			Set<TypeElement> included = new HashSet<>(includedElements);
@@ -1108,9 +1121,11 @@ public class TLDoclet implements Doclet {
 				}
 			}
 
-			Set<TypeElement> exportedInterfaces = new HashSet<>();
 			for (TypeElement implementableInterface : implementableInterfaces) {
-				collectInterfaceMethodDoc(implementableInterface, included, exportedInterfaces);
+				addExportedInterface(implementableInterface, included);
+			}
+			for (TypeElement exportedInterface : _exportedInterfaces) {
+				collectMethodDoc(exportedInterface, isImplementableMethod(), TLDoclet::methodName, false);
 			}
 		}
 
@@ -1210,27 +1225,34 @@ public class TLDoclet implements Doclet {
 		}
 
 		/**
-		 * Exports the documentation of the methods that a TL-Script implementing the given
-		 * interface implements.
+		 * Adds the given interface that a TL-Script can implement to
+		 * {@link #_exportedInterfaces}.
 		 *
 		 * <p>
-		 * The documentation of a method is keyed with the interface declaring it. Methods
-		 * inherited from super interfaces are exported, if the source of the super interface is
-		 * part of this doclet run.
+		 * The documentation of a method is keyed with the interface declaring it. Therefore, the
+		 * super interfaces are exported too, if their source is part of this doclet run.
 		 * </p>
 		 */
-		private void collectInterfaceMethodDoc(TypeElement type, Set<TypeElement> included,
-				Set<TypeElement> exported) {
-			if (!exported.add(type)) {
+		private void addExportedInterface(TypeElement type, Set<TypeElement> included) {
+			if (!_exportedInterfaces.add(type)) {
 				return;
 			}
-			collectMethodDoc(type, isImplementableMethod(), method -> method.getSimpleName().toString(), false);
 			for (TypeMirror superInterface : type.getInterfaces()) {
 				TypeElement superElement = asTypeElement(types().asElement(superInterface));
 				if (included.contains(superElement)) {
-					collectInterfaceMethodDoc(superElement, included, exported);
+					addExportedInterface(superElement, included);
 				}
 			}
+		}
+
+		/**
+		 * Whether the given element is a method of an interface in {@link #_exportedInterfaces}
+		 * that a TL-Script implements.
+		 */
+		private boolean isExportedInterfaceMethod(Element element) {
+			return element.getKind() == ElementKind.METHOD
+				&& _exportedInterfaces.contains(containingClass(element))
+				&& isImplementableMethod().test((ExecutableElement) element);
 		}
 
 		private Predicate<ExecutableElement> isImplementableMethod() {
@@ -1372,7 +1394,9 @@ public class TLDoclet implements Doclet {
 		 *
 		 * @param warn
 		 *        Whether to warn about references that cannot be rendered for in-app
-		 *        documentation.
+		 *        documentation. Without warnings, the documentation is that of a method of an
+		 *        exported interface, and a reference to a method of an exported interface is
+		 *        rendered with the label of that method.
 		 */
 		private String extractDoc(TypeElement selfClass, DocTreePath parentPath, List<? extends DocTree> inlineTags,
 				boolean warn) {
@@ -1485,7 +1509,13 @@ public class TLDoclet implements Doclet {
 								case CONSTRUCTOR:
 								case METHOD:
 									TypeElement containingClass = containingClass(referencedElement);
-									if ("config".equals(kind(containingClass))) {
+									if (!warn && isExportedInterfaceMethod(referencedElement)) {
+										ExecutableElement ref = (ExecutableElement) referencedElement;
+										buffer.append("<i>");
+										buffer.append(label(ref, methodName(ref), true));
+										buffer.appendClose(b -> b.append("</i>"));
+										found = true;
+									} else if ("config".equals(kind(containingClass))) {
 										ExecutableElement ref = (ExecutableElement) referencedElement;
 										buffer.append("<i>");
 										buffer.append(label(ref, propertyName(originalDefinition(ref)), true));
@@ -1884,7 +1914,8 @@ public class TLDoclet implements Doclet {
 		 *        The name of a method in its key.
 		 * @param warn
 		 *        Whether to warn about missing descriptions and references that cannot be rendered
-		 *        for in-app documentation.
+		 *        for in-app documentation, see
+		 *        {@link #extractDoc(TypeElement, DocTreePath, List, boolean)}.
 		 */
 		private void collectMethodDoc(TypeElement type, Predicate<? super ExecutableElement> filter,
 				Function<? super ExecutableElement, String> nameFunction, boolean warn) {

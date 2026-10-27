@@ -17,14 +17,14 @@ public interface Provider extends BaseProvider {
 	 *        The context of the new value.
 	 * @param count
 	 *        The number of values.
-	 * @return The created value.
+	 * @return The created value, a {@link Callback}.
 	 */
 	Object create(Object context, int count);
 
 	/**
 	 * Whether the value is transient.
 	 *
-	 * @return Whether the value is not stored.
+	 * @return Whether the value of {@link #create(Object, int)} is not stored.
 	 */
 	default boolean isTransient() {
 		return false;

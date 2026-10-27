@@ -78,14 +78,14 @@ public class TestImplementableInterfaceDoc extends TestCase {
 	public void testDirectBinding() {
 		String key = PACKAGE + ".Provider.create";
 		assertEquals("Create", _messages.getProperty(key));
-		assertEquals("Creates a value for the given context, see <code>#isTransient()</code>.",
+		assertEquals("Creates a value for the given context, see <i>Is transient</i>.",
 			_messages.getProperty(key + ".tooltip"));
 		assertEquals("The context of the new value.", _messages.getProperty(key + ".param.context.tooltip"));
 		assertEquals("The number of values.", _messages.getProperty(key + ".param.count.tooltip"));
-		assertEquals("The created value.", _messages.getProperty(key + ".return"));
+		assertEquals("The created value, a <i>callback</i>.", _messages.getProperty(key + ".return"));
 
 		// Default methods can be implemented, static methods not.
-		assertEquals("Whether the value is not stored.",
+		assertEquals("Whether the value of <i>Create</i> is not stored.",
 			_messages.getProperty(PACKAGE + ".Provider.isTransient.return"));
 		assertNull(_messages.getProperty(PACKAGE + ".Provider.none"));
 	}

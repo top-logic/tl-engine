@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.Location;
@@ -38,6 +39,7 @@ import com.top_logic.basic.io.FileBasedBinaryContent;
 import com.top_logic.basic.vars.IVariableExpander;
 import com.top_logic.basic.xml.AliasedXMLReader;
 import com.top_logic.basic.xml.LogWithStreamLocation;
+import com.top_logic.basic.xml.TopLevelElementFilter;
 import com.top_logic.basic.xml.XMLContent;
 import com.top_logic.basic.xml.XMLStreamUtil;
 
@@ -2349,6 +2351,11 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 	private boolean _checkGlobalKeys;
 
 	/**
+	 * @see #setTopLevelFilter(Predicate)
+	 */
+	private Predicate<String> _topLevelFilter;
+
+	/**
 	 * Creates a {@link ConfigurationReader}, which has to be configured, before {@link #read()} or
 	 * {@link #readConfigBuilder()} can finally be called.
 	 * <p>
@@ -2372,6 +2379,24 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		_protocol = new LogWithStreamLocation(context);
 		_context = new InstantiationContextAdaptor(_protocol, context);
 		_globalDescriptorsByName = globalDescriptorsByName;
+	}
+
+	/**
+	 * Restricts reading to the top-level elements (the children of the root element) whose local
+	 * name is accepted by the given filter.
+	 * 
+	 * <p>
+	 * All other top-level elements are skipped unread, so that their content can neither produce
+	 * errors nor contribute to the result.
+	 * </p>
+	 * 
+	 * @param filter
+	 *        Filter for the local names of the top-level elements to read. <code>null</code> reads
+	 *        all top-level elements.
+	 */
+	public ConfigurationReader setTopLevelFilter(Predicate<String> filter) {
+		_topLevelFilter = filter;
+		return this;
 	}
 
 	static Object listAsGenericArray(PropertyDescriptor property, List<?> list) {
@@ -2414,6 +2439,9 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 
 	private ConfigurationItem parseAndClose(String name, ConfigurationItem baseConfig, XMLStreamReader xmlReader) {
 		try {
+			if (_topLevelFilter != null) {
+				xmlReader = new TopLevelElementFilter(xmlReader, _topLevelFilter);
+			}
 			if (_expander != null) {
 				xmlReader = wrapAliasReader(xmlReader, name, _expander);
 			}

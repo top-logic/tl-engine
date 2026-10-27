@@ -12,6 +12,7 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.service.openapi.client.authentication.I18NConstants;
@@ -58,7 +59,8 @@ public class APIKeyAuthentication extends AbstractConfiguredInstance<APIKeyAuthe
 		Supplier<ResKey> noSecretOrWrongType =
 			() -> I18NConstants.ERROR_NO_API_KEY__AUTHENTICATION_NAME.fill(config.getDomain());
 		BiFunction<APIKeyAuthentication.Config<?>, APIKeySecret, SecurityEnhancer> enhancerFactory =
-			(ac, sc) -> new APIKeyEnhancer(ac.getPosition(), ac.getParameterName(), sc.getAPIKey());
+			(ac, sc) -> new APIKeyEnhancer(ac.getPosition(), ac.getParameterName(),
+				TypedConfigUtil.createInstance(sc.getAPIKey()));
 		return SecurityEnhancerFactory.createEnhancer(config, registry, APIKeySecret.class, noSecretOrWrongType,
 			enhancerFactory);
 	}

@@ -98,7 +98,9 @@ public class TestSearchHttpSlots extends TestCase {
 	}
 
 	private SearchHttp http() {
-		return new SearchHttp("Test", HttpClient.newHttpClient(), duration -> {
+		return new SearchHttp("Test", HttpClient.newHttpClient(), request -> {
+			// The stub accepts every request.
+		}, duration -> {
 			_sleeps.add(duration);
 			if (_interruptNextSleep.getAndSet(false)) {
 				throw new InterruptedException();
@@ -111,8 +113,8 @@ public class TestSearchHttpSlots extends TestCase {
 			List.of("Content-Type: application/json", "X-RateLimit-Policy: 1;w=1"), "{}"));
 	}
 
-	private static HttpRequest request(RecordingServer api) {
-		return HttpRequest.newBuilder(URI.create(api.origin() + "/search")).GET().build();
+	private static HttpRequest.Builder request(RecordingServer api) {
+		return HttpRequest.newBuilder(URI.create(api.origin() + "/search")).GET();
 	}
 
 	/** A clock that stands still until it is moved. */

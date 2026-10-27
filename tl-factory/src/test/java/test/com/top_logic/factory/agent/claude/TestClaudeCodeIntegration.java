@@ -154,7 +154,7 @@ public class TestClaudeCodeIntegration extends TestCase {
 		super.setUp();
 		_tokens = new MemoryTokens(Clock.systemUTC());
 		LLMUpstream upstream =
-			new LLMUpstream(API_URL, apiKey(), API_VERSION, Duration.ofSeconds(10), Duration.ofMinutes(10), Map.of());
+			new LLMUpstream(API_URL, request -> request.setHeader(LLMProxyHandler.X_API_KEY, apiKey()), API_VERSION, Duration.ofSeconds(10), Duration.ofMinutes(10), Map.of());
 		LLMProxy proxy = new LLMProxy() {
 			@Override
 			public boolean isEnabled() {

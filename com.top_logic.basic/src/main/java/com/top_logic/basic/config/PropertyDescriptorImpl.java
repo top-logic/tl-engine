@@ -62,6 +62,7 @@ import com.top_logic.basic.config.annotation.defaults.ShortDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.format.BuiltInFormats;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.basic.func.Identity;
 import com.top_logic.basic.generate.CodeUtil;
@@ -1019,7 +1020,10 @@ public abstract class PropertyDescriptorImpl
 	private Class<?> annotatedImplementationClassDefault() {
 		ImplementationClassDefault annotation = getAnnotation(ImplementationClassDefault.class);
 		if (annotation == null) {
-			return null;
+			annotation = TypedConfigUtil.instanceTypeImplementationClassDefault(this);
+			if (annotation == null) {
+				return null;
+			}
 		}
 		return annotation.value();
 	}
@@ -2323,7 +2327,7 @@ public abstract class PropertyDescriptorImpl
 
 	@Override
 	public boolean isEncrypted() {
-		return _encrypted;
+		return _encrypted || getValueProvider() instanceof EncodingConfigurationValueProvider;
 	}
 
 	/**
@@ -2356,6 +2360,51 @@ public abstract class PropertyDescriptorImpl
 		}
 		computedDefaultValue = defaultValue;
 		setHasMandatoryAnnotation(false);
+	}
+
+	/**
+	 * The part of the state of this {@link PropertyDescriptor} that
+	 * {@link #setConfiguredDefault(Object, boolean)} changes.
+	 *
+	 * @see #setDefaultState(DefaultState)
+	 */
+	DefaultState getDefaultState() {
+		return new DefaultState(_defaultSpec, computedDefaultValue, _isDefaultShared, _localExplicitDefault,
+			_explicitDefault, _hasMandatoryAnnotation, _hasLocalMandatoryAnnotation);
+	}
+
+	/**
+	 * Restores a state retrieved by {@link #getDefaultState()}.
+	 */
+	void setDefaultState(DefaultState state) {
+		_defaultSpec = state.defaultSpec();
+		computedDefaultValue = state.computedDefaultValue();
+		_isDefaultShared = state.isDefaultShared();
+		_localExplicitDefault = state.localExplicitDefault();
+		_explicitDefault = state.explicitDefault();
+		_hasMandatoryAnnotation = state.hasMandatoryAnnotation();
+		_hasLocalMandatoryAnnotation = state.hasLocalMandatoryAnnotation();
+	}
+
+	/**
+	 * Takes over the default of the given super property, as if this {@link PropertyDescriptor}
+	 * declared no default and no mandatory annotation of its own.
+	 */
+	void inheritDefaultState(PropertyDescriptorImpl superProperty) {
+		setDefaultState(new DefaultState(superProperty._defaultSpec, UNRESOLVED_DEFAULT,
+			superProperty._isDefaultShared, false, superProperty._explicitDefault,
+			superProperty._hasMandatoryAnnotation, false));
+	}
+
+	/**
+	 * Snapshot of the state that describes the default value of a {@link PropertyDescriptorImpl}.
+	 *
+	 * @see PropertyDescriptorImpl#getDefaultState()
+	 */
+	record DefaultState(DefaultSpec defaultSpec, Object computedDefaultValue, boolean isDefaultShared,
+			boolean localExplicitDefault, boolean explicitDefault, boolean hasMandatoryAnnotation,
+			boolean hasLocalMandatoryAnnotation) {
+		// Pure value.
 	}
 
 	@Override

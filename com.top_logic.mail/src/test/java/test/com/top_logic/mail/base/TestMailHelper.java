@@ -63,8 +63,6 @@ public class TestMailHelper extends BasicTestCase {
 
 	private static final String SERVER_ALIAS = "%IMAP_SERVER%";
 
-	private static final String PASSWORD_ALIAS = "%IMAP_PASS%";
-
 	private static final String USER_ALIAS = "%IMAP_USER%";
     
     public TestMailHelper (String aName) {

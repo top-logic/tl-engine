@@ -119,6 +119,9 @@ public class VectorIndexSearchTool {
 			if (vectorIndex == null) {
 				throw new IllegalStateException("No VectorIndex Instance was found.");
 			}
+			if (!vectorIndex.isAvailable()) {
+				return errorJson("The vector index is not available: no embedding model is configured.");
+			}
 			hits = vectorIndex.searchVectorIndex(query, null, maxResults, null, readFilter);
 		} catch (IllegalStateException ex) {
 			Logger.error("VectorIndexSearchTool: " + ex.getMessage(), ex, VectorIndexSearchTool.class);

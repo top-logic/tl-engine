@@ -17,7 +17,9 @@
 							<options>
 								<option name="URL" value="jdbc:postgresql://%POSTGRESQL_HOST%:%POSTGRESQL_PORT%/%POSTGRESQL_DATABASE%" />
 								<option name="user" value="%POSTGRESQL_USER%" />
-								<encrypted-option name="password" value="%POSTGRESQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="postgresql_passwd"/>
+								</encrypted-option>
 								
 								<option name="currentSchema" value="%POSTGRESQL_SCHEMA%" />
 								
@@ -41,7 +43,9 @@
 							<options>
 								<option name="URL" value="jdbc:postgresql://%POSTGRESQL_HOST%:%POSTGRESQL_PORT%/%POSTGRESQL_DATABASE_TEST_UNIT%" />
 								<option name="user" value="%POSTGRESQL_USER%" />
-								<encrypted-option name="password" value="%POSTGRESQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="postgresql_passwd"/>
+								</encrypted-option>
 								
 								<option name="currentSchema" value="%POSTGRESQL_SCHEMA%" />
 								
@@ -63,7 +67,9 @@
 							<options>
 								<option name="URL" value="jdbc:postgresql://%POSTGRESQL_HOST%:%POSTGRESQL_PORT%/%POSTGRESQL_DATABASE_TEST_MIGRATION%" />
 								<option name="user" value="%POSTGRESQL_USER%" />
-								<encrypted-option name="password" value="%POSTGRESQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="postgresql_passwd"/>
+								</encrypted-option>
 								
 								<option name="currentSchema" value="%POSTGRESQL_SCHEMA%" />
 								

@@ -17,12 +17,15 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.module.ServiceDependencies;
 
 /**
  * Service to create and verify a password hash using configured {@link PasswordHashingAlgorithm}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@ServiceDependencies(SecretStoreService.Module.class)
 public class PasswordHashingService extends AbstractConfiguredInstance<PasswordHashingService.Config> {
 
 	private static final char HASHING_ALGORITHM_SEPARATOR = '#';

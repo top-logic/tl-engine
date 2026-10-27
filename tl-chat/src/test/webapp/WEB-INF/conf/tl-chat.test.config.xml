@@ -30,6 +30,14 @@
 							<skill name="TL_taskManagement"/>
 						</skills>
 					</agent>
+					<!--
+						Assigned the model of a provider without its key. For TestChatRunAccess.
+					-->
+					<agent name="TestGatedAgent"
+						description="Delegate here to test that the model picker leaves out a model whose provider has no key."
+					>
+						<system-prompt>You are a test agent.</system-prompt>
+					</agent>
 				</agents>
 			</instance>
 		</config>

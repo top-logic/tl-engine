@@ -7,6 +7,9 @@ package com.top_logic.service.openapi.common.authentication.oauth;
 
 import java.net.URI;
 
+import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.credential.oauth.OAuthServerConfig;
+
 /**
  * Provider of {@link URI}s to use for authentication of requests.
  * 
@@ -27,6 +30,28 @@ public interface TokenURIProvider {
 	 * @return May be <code>null</code> when no such endpoint {@link URI} exists.
 	 */
 	URI getTokenEndpointURI();
+
+	/**
+	 * Configures the token endpoint of the given authorization server configuration.
+	 *
+	 * <p>
+	 * The default implementation sets the {@link OAuthServerConfig#getTokenUrl() token URL} to
+	 * the {@link #getTokenEndpointURI() token endpoint URI}.
+	 * </p>
+	 *
+	 * @param server
+	 *        The configuration of the authorization server to request tokens from.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If this provider knows no token endpoint.
+	 */
+	default void initTokenEndpoint(OAuthServerConfig server) {
+		URI tokenEndpoint = getTokenEndpointURI();
+		if (tokenEndpoint == null) {
+			throw new I18NRuntimeException(I18NConstants.ERROR_NO_TOKEN_ENDPOINT__PROVIDER.fill(toString()));
+		}
+		server.setTokenUrl(tokenEndpoint.toString());
+	}
 
 }
 

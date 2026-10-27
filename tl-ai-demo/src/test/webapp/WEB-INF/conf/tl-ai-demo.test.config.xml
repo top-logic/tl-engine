@@ -14,32 +14,14 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService"
-			config:override="true"
-		>
+		<!--
+			The providers tl-ai-core ships, as the demo runs on them; no test calls a provider. The
+			bundled catalog only: a test must not depend on reaching the internet.
+		-->
+		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
-				<providers>
-					<provider class="com.top_logic.tl.ai.core.provider.mistral.MistralProviderConfig"
-						name="mistral"
-						api-key="unencrypted:xxx"
-						base-url="https://api.mistral.ai/v1"
-						models="mistral-large-latest"
-					/>
-					<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
-						name="anthropic"
-						api-key="unencrypted:xxx"
-						base-url="https://api.anthropic.com"
-						models="claude-sonnet-4-5-20250929"
-					/>
-				</providers>
 				<model-catalog fetch-remote-catalog="false"/>
 			</instance>
-		</config>
-
-		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-			<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService"
-				default-model="mistral-large-latest"
-			/>
 		</config>
 	</services>
 	<configs>

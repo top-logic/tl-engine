@@ -14,7 +14,9 @@
 							<options>
 								<option name="URL" value="jdbc:mysql://%MYSQL_HOST%:%MYSQL_PORT%/%MYSQL_SCHEMA%" />
 								<option name="user" value="%MYSQL_USER%" />
-								<encrypted-option name="password" value="%MYSQL_PASSWD%" />
+								<encrypted-option name="password">
+									<value name="mysql_passwd"/>
+								</encrypted-option>
 								
 								<option name="characterEncoding" value="utf-8" />
 								<option name="clobCharacterEncoding" value="utf-8" />
@@ -39,10 +41,14 @@
 								
 								<option name="clientCertificateKeyStoreUrl" value="%MYSQL_CLIENT_CERTIFICATE_KEY_STORE_URL%" />
 								<option name="clientCertificateKeyStoreType" value="%MYSQL_CLIENT_CERTIFICATE_KEY_STORE_TYPE%" />
-								<encrypted-option name="clientCertificateKeyStorePassword" value="%MYSQL_CLIENT_CERTIFICATE_KEY_STORE_PASSWORD%" />
+								<encrypted-option name="clientCertificateKeyStorePassword">
+									<value name="mysql_client_certificate_key_store_password"/>
+								</encrypted-option>
 								<option name="trustCertificateKeyStoreUrl" value="%MYSQL_TRUST_CERTIFICATE_KEY_STORE_URL%" />
 								<option name="trustCertificateKeyStoreType" value="%MYSQL_TRUST_CERTIFICATE_KEY_STORE_TYPE%" />
-								<encrypted-option name="trustCertificateKeyStorePassword" value="%MYSQL_TRUST_CERTIFICATE_KEY_STORE_PASSWORD%" />
+								<encrypted-option name="trustCertificateKeyStorePassword">
+									<value name="mysql_trust_certificate_key_store_password"/>
+								</encrypted-option>
 								
 							</options>
 						</data-source>

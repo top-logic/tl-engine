@@ -81,6 +81,10 @@ public class CreateStylesheetCommand implements Command {
 		try {
 			createPersistentStylesheetFile(getStylesheetFileName(), themeConfig.getId());
 			updatePersistentThemeConfigFile(themeConfig);
+
+			FileManager fileManager = FileManager.getInstance();
+			fileManager.refresh(createStylesheetReferenceName(getStylesheetFileName(), themeConfig));
+			fileManager.refresh(ThemeUtil.getThemeConfigPath(themeConfig.getId()));
 		} catch (IOException exception) {
 			throw new IOError(exception);
 		}

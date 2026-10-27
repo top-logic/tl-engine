@@ -5,8 +5,14 @@
  */
 package com.top_logic.tl.ai.core.provider.xai;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
@@ -20,10 +26,19 @@ import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
  */
 public class TestXAIProviderConfig extends TestCase {
 
+	/**
+	 * Instantiating the credentials of a provider resolves their configuration types through the
+	 * <code>TypeIndex</code>, which needs the module system running.
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.withThreadContext(new TestSuite(TestXAIProviderConfig.class)));
+	}
+
 	/** */
 	public void testChatCompletionsProtocolCreatesChatCompletionsProvider() {
 		XAIProviderConfig.Config config = TypedConfiguration.newConfigItem(XAIProviderConfig.Config.class);
-		config.setApiKey("test-key");
+		config.setApiKey(FixedCredentials.secret("test-key"));
 		config.setProtocol(XAIProviderConfig.Protocol.CHAT_COMPLETIONS);
 
 		XAIProviderConfig providerConfig =
@@ -36,7 +51,7 @@ public class TestXAIProviderConfig extends TestCase {
 	/** */
 	public void testResponsesProtocolCreatesOpenAIResponsesProvider() {
 		XAIProviderConfig.Config config = TypedConfiguration.newConfigItem(XAIProviderConfig.Config.class);
-		config.setApiKey("test-key");
+		config.setApiKey(FixedCredentials.secret("test-key"));
 		config.setProtocol(XAIProviderConfig.Protocol.RESPONSES);
 
 		XAIProviderConfig providerConfig =
@@ -49,7 +64,7 @@ public class TestXAIProviderConfig extends TestCase {
 	/** */
 	public void testDefaultProtocolIsChatCompletions() {
 		XAIProviderConfig.Config config = TypedConfiguration.newConfigItem(XAIProviderConfig.Config.class);
-		config.setApiKey("test-key");
+		config.setApiKey(FixedCredentials.secret("test-key"));
 		// Protocol not set — default should apply.
 
 		XAIProviderConfig providerConfig =

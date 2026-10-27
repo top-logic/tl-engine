@@ -102,6 +102,13 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	public static final String VERIFICATION_PARAM = "verification";
 
 	/**
+	 * Request attribute holding the resolved message for the visitor when the
+	 * {@link ApplicationPages.Config#getLoginRetrySSOPage() login retry page} is shown after a failed
+	 * login.
+	 */
+	public static final String ERROR_MESSAGE_ATTRIBUTE = "errorMessage";
+
+	/**
 	 * Name of the query parameter under which the
 	 * {@link ApplicationPages.Config#getUnknownAccountPage() unknown account page} receives the
 	 * name that the external authentication system has authenticated.
@@ -175,25 +182,21 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			String userName = exception.getPerson() == null ? "null" : getLoginName(exception.getPerson());
 			String message = "User " + userName + " tried to login while the system was in maintenance mode.";
 			Logger.debug(message, ExternalAuthenticationServlet.class);
-			request.setAttribute("errorMessage", Login.getI18NedMaintenanceMessage(userName));
-			forwardToSSOLoginFailed(request, response);
+			forwardToSSOLoginFailed(request, response, ResKey.text(Login.getI18NedMaintenanceMessage(userName)));
 		} catch (UnknownAccountException exception) {
 			Logger.info("No account for externally authenticated user: " + exception.getMessage(),
 				ExternalAuthenticationServlet.class);
 			redirectToUnknownAccountPage(exception.getLoginName(), request, response);
 		} catch (LoginDeniedException exception) {
 			Logger.debug("Access denied: " + exception.getMessage(), exception, ExternalAuthenticationServlet.class);
-			request.setAttribute("errorMessage", Resources.getInstance().getString(I18NConstants.ERROR_NTLM_AUTHEMTICATION_FAILED));
-			forwardToSSOLoginFailed(request, response);
+			forwardToSSOLoginFailed(request, response, I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
 		} catch (LoginFailedException exception) {
 			Logger.error("Login failed: " + exception.getMessage(), exception, ExternalAuthenticationServlet.class);
-			request.setAttribute("errorMessage", Resources.getInstance().getString(I18NConstants.ERROR_NTLM_AUTHEMTICATION_FAILED));
-			forwardToSSOLoginFailed(request, response);
+			forwardToSSOLoginFailed(request, response, I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
 		} catch (Throwable exception) {
 			Logger.error("Problem during login: " + exception.getMessage(), exception,
 				ExternalAuthenticationServlet.class);
-			request.setAttribute("errorMessage", Resources.getInstance().getString(I18NConstants.ERROR_NTLM_AUTHEMTICATION_FAILED));
-			forwardToSSOLoginFailed(request, response);
+			forwardToSSOLoginFailed(request, response, I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
 		}
 	}
 
@@ -367,10 +370,18 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	}
 
 	/**
-	 * Forwards the configured login failed page for SSO logins
+	 * Forwards to the configured login failed page for SSO logins, which tells the visitor the
+	 * given message.
+	 *
+	 * <p>
+	 * The message is given to the page both as request attribute {@value #ERROR_MESSAGE_ATTRIBUTE}
+	 * and as {@link ExternalLoginFailure} of the session.
+	 * </p>
 	 */
-	protected void forwardToSSOLoginFailed(HttpServletRequest req, HttpServletResponse res)
+	protected void forwardToSSOLoginFailed(HttpServletRequest req, HttpServletResponse res, ResKey message)
 			throws IOException, ServletException {
+		req.setAttribute(ERROR_MESSAGE_ATTRIBUTE, Resources.getInstance().getString(message));
+		ExternalLoginFailure.report(req, message);
 		forwardToPage(ApplicationPages.getInstance().getLoginRetrySSOPage(), req, res);
 	}
 

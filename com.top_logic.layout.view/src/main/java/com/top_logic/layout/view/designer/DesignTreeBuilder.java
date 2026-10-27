@@ -108,14 +108,14 @@ public class DesignTreeBuilder {
 		// not abort building the whole design tree: skip it (keeping the referencing node) so the
 		// designer still opens, and log the offending path.
 		if (config instanceof ReferenceElement.Config refConfig) {
-			String refPath = ViewLoader.VIEW_BASE_PATH + refConfig.getView();
+			String refPath = refConfig.getView().fullPath();
 			try {
 				ViewElement.Config refViewConfig = ViewLoader.getOrLoadConfig(refPath);
 				addChild(node, refViewConfig, refPath);
 			} catch (Exception ex) {
 				Logger.warn("Adding error node for invalid referenced view '" + refPath
 					+ "' while building the design tree.", ex, DesignTreeBuilder.class);
-				DesignTreeNode errorNode = new ErrorDesignTreeNode(sourceFile, refConfig.getView(), ex.getMessage());
+				DesignTreeNode errorNode = new ErrorDesignTreeNode(sourceFile, refConfig.getView().getPath(), ex.getMessage());
 				errorNode.setParent(node);
 				node.getChildren().add(errorNode);
 			}

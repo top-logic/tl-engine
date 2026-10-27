@@ -16,6 +16,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -24,6 +25,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
@@ -91,7 +94,8 @@ public class NavigatePushCommand implements ViewCommand {
 		 */
 		@Name(VIEW)
 		@Mandatory
-		String getView();
+		@Format(ViewRefFormat.class)
+		ViewRef getView();
 
 		/**
 		 * Channel bindings from the calling scope to the new frame's channels.
@@ -138,7 +142,7 @@ public class NavigatePushCommand implements ViewCommand {
 		PolymorphicConfiguration<? extends TileLabelProvider> getFrameLabel();
 	}
 
-	private final String _view;
+	private final ViewRef _view;
 
 	private final List<ChannelBindingConfig> _bindings;
 
@@ -180,7 +184,7 @@ public class NavigatePushCommand implements ViewCommand {
 		}
 
 		ResKey label = _frameLabel != null ? _frameLabel.compute(viewContext) : null;
-		scope.push(_view, label, Collections.unmodifiableMap(params));
+		scope.push(_view.getPath(), label, Collections.unmodifiableMap(params));
 		return HandlerResult.DEFAULT_RESULT;
 	}
 }

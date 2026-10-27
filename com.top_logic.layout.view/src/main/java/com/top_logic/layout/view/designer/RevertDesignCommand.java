@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewConfig;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -92,8 +91,7 @@ public class RevertDesignCommand implements ViewCommand {
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
 		// 1. Determine the root view path from application configuration.
-		String defaultView = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
-		String viewPath = ViewLoader.VIEW_BASE_PATH + defaultView;
+		String viewPath = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().fullPath();
 
 		// 2. Build a fresh DesignTreeNode tree from disk.
 		DesignTreeNode newRoot;

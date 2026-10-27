@@ -14,6 +14,7 @@ import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.xml.TagWriter;
@@ -42,6 +43,8 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.RenderedView;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -94,7 +97,8 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		 */
 		@Mandatory
 		@Name(VIEW)
-		String getView();
+		@Format(ViewRefFormat.class)
+		ViewRef getView();
 	}
 
 	/** The CSS class of the element the React view is written into. */
@@ -236,7 +240,7 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		if (windowName == null) {
 			throw new IllegalStateException("Component '" + getName() + "' is rendered outside a classic window.");
 		}
-		String viewPath = ViewLoader.fullPath(((Config) getConfig()).getView());
+		String viewPath = ((Config) getConfig()).getView().fullPath();
 		ViewElement view = loadView(viewPath);
 
 		SSEUpdateQueue queue = registry.getOrCreateQueue(windowName);

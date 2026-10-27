@@ -11,6 +11,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -18,6 +19,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewRef;
+import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.form.AttributeRowSetBinding;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
@@ -112,7 +115,8 @@ public class CompositionTableElement implements UIElement {
 		 */
 		@Name("layout")
 		@Mandatory
-		String getLayout();
+		@Format(ViewRefFormat.class)
+		ViewRef getLayout();
 
 		/**
 		 * Dialog channel name to receive the row object.

@@ -90,8 +90,8 @@ public class OpenDesignerCommand implements ViewCommand {
 			ViewContext designerContext = new DefaultViewContext(windowContext, DESIGNER_VIEW_PATH);
 
 			// Build the design tree from the application's default root view.
-			String rootViewPath = ViewLoader.VIEW_BASE_PATH
-				+ ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView();
+			String rootViewPath =
+				ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().fullPath();
 
 			DesignTreeNode designTree;
 			try {

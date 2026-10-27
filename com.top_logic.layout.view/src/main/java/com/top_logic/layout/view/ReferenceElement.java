@@ -13,6 +13,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -72,7 +73,8 @@ public class ReferenceElement implements UIElement {
 		 */
 		@Name(VIEW)
 		@Mandatory
-		String getView();
+		@Format(ViewRefFormat.class)
+		ViewRef getView();
 
 		/**
 		 * Channel bindings from the parent scope to the referenced view's channels.
@@ -88,7 +90,7 @@ public class ReferenceElement implements UIElement {
 		List<ChannelBindingConfig> getBindings();
 	}
 
-	private final String _viewPath;
+	private final ViewRef _view;
 
 	private final List<ChannelBindingConfig> _bindings;
 
@@ -99,19 +101,19 @@ public class ReferenceElement implements UIElement {
 	 */
 	@CalledByReflection
 	public ReferenceElement(InstantiationContext context, Config config) {
-		_viewPath = config.getView();
+		_view = config.getView();
 		_bindings = config.getBindings();
 		_cssClass = config.getCssClass();
 	}
 
 	@Override
 	public List<ChildGroup> getChildGroups() {
-		return List.of(ChildGroup.view(_viewPath));
+		return List.of(ChildGroup.view(_view));
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext parentContext) {
-		String fullPath = ViewLoader.VIEW_BASE_PATH + _viewPath;
+		String fullPath = _view.fullPath();
 
 		ViewElement referencedView;
 		try {

@@ -82,6 +82,48 @@ public class IDEFileSystemCache extends FileSystemCache {
 	}
 
 	@Override
+	public synchronized void refresh(Path path) {
+		if (_watcher == null) {
+			// Not active.
+			return;
+		}
+
+		// Apply what has already been reported before reconciling with the current state.
+		validateCache();
+
+		Path file = path.normalize();
+		int rootIndex = getIndexOfRootPath(file);
+		if (rootIndex < 0 || isHidden(file)) {
+			return;
+		}
+		String pathFromRoot = FileUtilities.getCombinedPath(getPathFromRoot(file, rootIndex));
+		if (!pathFromRoot.startsWith(ModuleLayoutConstants.WEB_INF_DIR)) {
+			return;
+		}
+
+		if (!Files.exists(file)) {
+			removeFromCache(file);
+			return;
+		}
+
+		if (Files.isDirectory(file)) {
+			walkAndRegisterDirectories(file);
+			removeFromCache(vanishedFiles(file));
+		}
+		addFilesToCache(Collections.singletonList(file));
+	}
+
+	/**
+	 * All cached files at or below the given directory that no longer exist in the file system.
+	 */
+	private List<Path> vanishedFiles(Path dir) {
+		return _fileCache.values().stream()
+			.flatMap(List::stream)
+			.filter(cached -> cached.startsWith(dir) && !Files.exists(cached))
+			.collect(Collectors.toList());
+	}
+
+	@Override
 	public Iterator<PathUpdate> getUpdates() {
 		return _updates.iterator();
 	}

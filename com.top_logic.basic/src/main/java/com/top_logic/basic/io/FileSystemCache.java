@@ -60,6 +60,28 @@ public abstract class FileSystemCache extends ManagedClass {
 	public abstract Path resolveFile(String resourceName);
 
 	/**
+	 * Synchronously brings this cache in line with the file system for the given file or
+	 * directory.
+	 * 
+	 * <p>
+	 * The cache learns about created and deleted files from file system events that arrive
+	 * asynchronously. Code that writes or deletes a file directly in the file system and
+	 * afterwards looks it up through the cache calls this method in between to make the change
+	 * visible immediately. For an existing path, all regular files at or below it become visible,
+	 * for a path that no longer exists, all cached files at or below it are dropped. The file
+	 * system events arriving later for the same change have no further effect on the lookups.
+	 * </p>
+	 * 
+	 * <p>
+	 * A path that is not covered by this cache is ignored.
+	 * </p>
+	 * 
+	 * @param path
+	 *        The file or directory that was written or deleted.
+	 */
+	public abstract void refresh(Path path);
+
+	/**
 	 * A queue of {@link PathUpdate}s.
 	 * 
 	 * <p>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model>
+
+	<module name="m0">
+		<datatype name="D" db_type="string" kind="String">
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.String"
+			/>
+		</datatype>
+
+		<interface name="I"/>
+
+		<class name="A">
+			<attributes>
+				<reference name="r" type="I"/>
+				<reference name="s" type="C"/>
+			</attributes>
+		</class>
+
+		<class name="B">
+			<generalizations>
+				<generalization type="I"/>
+			</generalizations>
+		</class>
+
+		<class name="C"/>
+	</module>
+</model>

@@ -49,28 +49,16 @@ public class AddChildCommand {
 		// the tree are linked, not expanded a second time.
 		DesignTreeNode child;
 		try {
-			child = new DesignTreeBuilder().markExpanded(root(parent)).build(childConfig, parent.getSourceFile());
+			child = new DesignTreeBuilder().markExpanded(parent.getRoot()).build(childConfig, parent.getSourceFile());
 		} catch (ConfigurationException ex) {
 			Logger.warn("Adding an element whose own structure could not be built: " + childConfig, ex,
 				AddChildCommand.class);
 			child = new ConfigDesignTreeNode(childConfig, parent.getSourceFile());
 		}
-		child.setParent(parent);
-		parent.getChildren().add(child);
+		DesignTreeBuilder.attach(parent, child);
 		parent.markDirty();
 
 		return child;
-	}
-
-	/**
-	 * The root of the tree the given node belongs to.
-	 */
-	private static DesignTreeNode root(DesignTreeNode node) {
-		DesignTreeNode result = node;
-		while (result.getParent() != null) {
-			result = result.getParent();
-		}
-		return result;
 	}
 
 	/**

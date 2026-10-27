@@ -22,7 +22,10 @@ import com.top_logic.layout.react.window.ElementPicker;
 import com.top_logic.layout.react.window.PickKind;
 import com.top_logic.layout.react.window.PickResult;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -33,7 +36,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * Toolbar command that starts "select view" mode in the main application window. The user then
  * clicks a view there; the matching design-tree node is selected in the designer.
  *
+ * <p>
+ * A view the design tree does not show yet - one the application opened from a path it computed,
+ * for instance - is added to the tree in the group "Further views" below its root.
+ * </p>
+ *
  * @see ElementPicker
+ * @see #findOrAddViewRoot(DesignTreeNode, String)
  */
 public class SelectViewCommand implements ViewCommand {
 
@@ -105,21 +114,74 @@ public class SelectViewCommand implements ViewCommand {
 			String path = ((PickResult.ViewPicked) result).sourcePath();
 			Object root = designTreeChannel.get();
 			if (root instanceof DesignTreeNode rootNode) {
-				DesignTreeNode node = findViewRoot(rootNode, path);
+				DesignTreeNode node = findOrAddViewRoot(rootNode, path);
 				if (node != null) {
 					selectionChannel.set(node);
 					// The user picked the view in the application window, so the designer is now behind
 					// it. Bring it back to the front to show the view that was selected there.
 					registry.focusWindow(designerWindowId);
-				} else {
-					Logger.info("Select view: no design node for source '" + path + "'.",
-						SelectViewCommand.class);
 				}
 			}
 		};
 		ElementPicker.start(context, mainWindowContext, PickKind.VIEW, onPicked);
 
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The view-root node for the given source file, adding the view to the tree if the tree does not
+	 * show it.
+	 *
+	 * <p>
+	 * A view that is not found by {@link #findViewRoot(DesignTreeNode, String)} is loaded and added
+	 * to the group {@link I18NConstants#DESIGNER_FURTHER_VIEWS} below the root, which is created when
+	 * the first view is added this way. The views the tree already shows are linked from the added
+	 * view, not expanded a second time. The {@link DesignTreeNode#addStructureListener(Runnable)
+	 * structure listeners} of the root are notified about the addition.
+	 * </p>
+	 *
+	 * @param root
+	 *        The root of the design tree.
+	 * @param sourceFile
+	 *        The full path of the view file.
+	 * @return The node the view is expanded to, or {@code null} if the view cannot be loaded.
+	 */
+	public static DesignTreeNode findOrAddViewRoot(DesignTreeNode root, String sourceFile) {
+		DesignTreeNode existing = findViewRoot(root, sourceFile);
+		if (existing != null || root == null || sourceFile == null) {
+			return existing;
+		}
+
+		DesignTreeNode view;
+		try {
+			ViewElement.Config config = ViewLoader.getOrLoadConfig(sourceFile);
+			view = new DesignTreeBuilder().markExpanded(root).build(config, sourceFile);
+		} catch (Exception ex) {
+			Logger.warn("Select view: the view '" + sourceFile + "' cannot be added to the design tree.", ex,
+				SelectViewCommand.class);
+			return null;
+		}
+
+		DesignTreeBuilder.attach(furtherViews(root), view);
+		root.fireStructureChanged();
+		return view;
+	}
+
+	/**
+	 * The group below the given root holding the views added through
+	 * {@link #findOrAddViewRoot(DesignTreeNode, String)}, created if it does not exist yet.
+	 */
+	private static DesignTreeNode furtherViews(DesignTreeNode root) {
+		for (DesignTreeNode child : root.getChildren()) {
+			if (child instanceof VirtualDesignTreeNode group
+				&& I18NConstants.DESIGNER_FURTHER_VIEWS.equals(group.getLabelKey())) {
+				return group;
+			}
+		}
+		// The group belongs to no file: it holds views of several files and is never saved.
+		DesignTreeNode group = new VirtualDesignTreeNode(I18NConstants.DESIGNER_FURTHER_VIEWS, null);
+		DesignTreeBuilder.attach(root, group);
+		return group;
 	}
 
 	/**

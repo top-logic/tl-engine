@@ -143,8 +143,13 @@ public class DesignerTreeElement implements UIElement {
 		TreeSelectionBinding selectionBinding;
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			selectionBinding = new TreeSelectionBinding(TreeSelectionDisplay.of(treeControl, selectionModel),
-				() -> currentModel[0], NodeLocator.SEARCHING, selectionChannel);
+			// A node standing in for one shown elsewhere is not selected itself: the selection lands
+			// on the node it stands for, see DesignTreeNode#getSelectionTarget().
+			TreeSelectionDisplay display = TreeSelectionDisplay.redirecting(
+				TreeSelectionDisplay.of(treeControl, selectionModel),
+				uiNode -> selectionTarget(currentModel[0], uiNode));
+			selectionBinding = new TreeSelectionBinding(display, () -> currentModel[0], NodeLocator.SEARCHING,
+				selectionChannel);
 			treeControl.addCleanupAction(selectionBinding::dispose);
 		} else {
 			selectionBinding = null;
@@ -173,7 +178,72 @@ public class DesignerTreeElement implements UIElement {
 		Registration rootRegistration = inputChannel.addListener(rootListener);
 		treeControl.addCleanupAction(rootRegistration::dispose);
 
+		// 8. Show nodes another party added to or removed from the tree (e.g. a view added by
+		//    "select view"), announced on the root. The listener follows the root to a new one.
+		Runnable structureListener = () -> {
+			rebuildKeepingExpansion(treeControl, builder, inputChannel, currentModel);
+			if (selectionBinding != null) {
+				selectionBinding.structureChanged();
+			}
+			treeControl.updateVisibleState();
+		};
+		DesignTreeNode[] observedRoot = { rootNode };
+		if (rootNode != null) {
+			rootNode.addStructureListener(structureListener);
+		}
+		Registration structureRegistration = inputChannel.addListener((sender, oldValue, newValue) -> {
+			if (observedRoot[0] != null) {
+				observedRoot[0].removeStructureListener(structureListener);
+			}
+			observedRoot[0] = newValue instanceof DesignTreeNode newRoot ? newRoot : null;
+			if (observedRoot[0] != null) {
+				observedRoot[0].addStructureListener(structureListener);
+			}
+		});
+		treeControl.addCleanupAction(() -> {
+			structureRegistration.dispose();
+			if (observedRoot[0] != null) {
+				observedRoot[0].removeStructureListener(structureListener);
+			}
+		});
+
 		return treeControl;
+	}
+
+	/**
+	 * The node to select in place of the given one, see
+	 * {@link DesignTreeNode#getSelectionTarget()}.
+	 */
+	private static DefaultTreeUINode selectionTarget(DefaultTreeUINodeModel treeModel, DefaultTreeUINode uiNode) {
+		DesignTreeNode designNode = designNodeOf(uiNode);
+		if (designNode == null) {
+			return uiNode;
+		}
+		DesignTreeNode target = designNode.getSelectionTarget();
+		if (target == designNode) {
+			return uiNode;
+		}
+		DefaultTreeUINode targetNode = TreeNodes.findNode(treeModel.getRoot(), target);
+		return targetNode != null ? targetNode : uiNode;
+	}
+
+	/**
+	 * Builds the tree model anew from the root the input channel holds and displays it, keeping the
+	 * parts of the tree the user had opened expanded.
+	 *
+	 * @return The tree model displayed now.
+	 */
+	private static DefaultTreeUINodeModel rebuildKeepingExpansion(ReactTreeControl treeControl,
+			TreeBuilder<DefaultTreeUINode> builder, ViewChannel inputChannel, DefaultTreeUINodeModel[] currentModel) {
+		Set<Object> expanded = TreeNodes.collectExpanded(currentModel[0].getRoot());
+
+		DesignTreeNode root = (DesignTreeNode) inputChannel.get();
+		DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
+		newTreeModel.setRootVisible(true);
+		treeControl.setTreeModel(newTreeModel);
+		currentModel[0] = newTreeModel;
+		TreeNodes.restoreExpansion(newTreeModel.getRoot(), expanded);
+		return newTreeModel;
 	}
 
 	/** Clique of the element-creating commands. */
@@ -213,14 +283,8 @@ public class DesignerTreeElement implements UIElement {
 		// Rebuilds the tree after a structural edit and selects the given node, keeping the parts of
 		// the tree the user had opened expanded.
 		Consumer<DesignTreeNode> rebuild = toSelect -> {
-			Set<Object> expanded = TreeNodes.collectExpanded(currentModel[0].getRoot());
-
-			DesignTreeNode root = (DesignTreeNode) inputChannel.get();
-			DefaultTreeUINodeModel newTreeModel = new DefaultTreeUINodeModel(builder, root);
-			newTreeModel.setRootVisible(true);
-			treeControl.setTreeModel(newTreeModel);
-			currentModel[0] = newTreeModel;
-			TreeNodes.restoreExpansion(newTreeModel.getRoot(), expanded);
+			DefaultTreeUINodeModel newTreeModel =
+				rebuildKeepingExpansion(treeControl, builder, inputChannel, currentModel);
 
 			DefaultTreeUINode uiNode = toSelect == null ? null : TreeNodes.findNode(newTreeModel.getRoot(), toSelect);
 			if (uiNode != null) {

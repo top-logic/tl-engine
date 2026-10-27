@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -212,6 +213,63 @@ public interface TreeSelectionDisplay {
 					}
 				}
 				return result;
+			}
+		};
+	}
+
+	/**
+	 * The given display, selecting other nodes in place of some of the nodes the user selects.
+	 *
+	 * <p>
+	 * When the selection made in the display holds a node the given function maps to another node,
+	 * the mapped nodes are {@link #showSelection(Set, boolean) shown} as selection instead, and only
+	 * that selection reaches the {@link #addSelectionListener(Listener) listeners}. This is what a
+	 * tree needs whose node stands in for one shown at another place - a link to it -, so that the
+	 * selection lands on that place.
+	 * </p>
+	 *
+	 * @param display
+	 *        The display to decorate.
+	 * @param redirect
+	 *        The node to select in place of the given node, the given node itself where it is
+	 *        selected as it is.
+	 */
+	static TreeSelectionDisplay redirecting(TreeSelectionDisplay display,
+			UnaryOperator<DefaultTreeUINode> redirect) {
+		return new TreeSelectionDisplay() {
+			@Override
+			public Set<Object> getSelectedObjects() {
+				return display.getSelectedObjects();
+			}
+
+			@Override
+			public boolean canDisplaySeveral() {
+				return display.canDisplaySeveral();
+			}
+
+			@Override
+			public void showSelection(Set<DefaultTreeUINode> nodes, boolean reveal) {
+				display.showSelection(nodes, reveal);
+			}
+
+			@Override
+			public Registration addSelectionListener(Listener listener) {
+				return display.addSelectionListener(selection -> {
+					Set<DefaultTreeUINode> redirected = new LinkedHashSet<>();
+					boolean changed = false;
+					for (DefaultTreeUINode node : selection) {
+						DefaultTreeUINode target = redirect.apply(node);
+						redirected.add(target);
+						changed |= target != node;
+					}
+					if (changed) {
+						// Showing the redirected selection reports it to this listener again, as a
+						// selection that needs no redirect.
+						display.showSelection(redirected, true);
+					} else {
+						listener.selectionChanged(selection);
+					}
+				});
 			}
 		};
 	}

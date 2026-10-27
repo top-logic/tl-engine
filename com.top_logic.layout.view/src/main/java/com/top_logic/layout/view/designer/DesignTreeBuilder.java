@@ -213,7 +213,10 @@ public class DesignTreeBuilder {
 		attach(parent, buildNode(childConfig, sourceFile));
 	}
 
-	private static void attach(DesignTreeNode parent, DesignTreeNode child) {
+	/**
+	 * Appends the given node to the children of the given parent.
+	 */
+	static void attach(DesignTreeNode parent, DesignTreeNode child) {
 		child.setParent(parent);
 		parent.getChildren().add(child);
 	}

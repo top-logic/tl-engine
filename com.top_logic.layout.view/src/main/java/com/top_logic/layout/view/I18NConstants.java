@@ -129,6 +129,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 DESIGNER_VIEW_LINK__PATH;
 
 	/**
+	 * @en Further views
+	 * @tooltip Views picked in the application that are not reached through the references of the
+	 *          views above.
+	 */
+	public static ResKey DESIGNER_FURTHER_VIEWS;
+
+	/**
 	 * @en Edit Layout
 	 */
 	public static ResKey DASHBOARD_EDIT;

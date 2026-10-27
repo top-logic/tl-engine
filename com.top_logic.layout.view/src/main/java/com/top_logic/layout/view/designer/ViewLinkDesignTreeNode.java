@@ -16,7 +16,8 @@ import com.top_logic.util.Resources;
  * <p>
  * {@link DesignTreeBuilder} expands each view file only once. Every further reference to it is
  * shown as this node, which names the referenced file instead of repeating its content. This also
- * terminates reference cycles. The node carries no
+ * terminates reference cycles. Selecting the node selects the expanded view instead, see
+ * {@link #getSelectionTarget()}. The node carries no
  * {@link com.top_logic.basic.config.ConfigurationItem}, so it is never edited or saved.
  * </p>
  */
@@ -54,6 +55,16 @@ public class ViewLinkDesignTreeNode extends DesignTreeNode {
 	 */
 	public String getTargetFile() {
 		return _target.fullPath();
+	}
+
+	/**
+	 * The node the {@link #getTargetFile() referenced view} is expanded to, or this node itself if the
+	 * tree does not show that view.
+	 */
+	@Override
+	public DesignTreeNode getSelectionTarget() {
+		DesignTreeNode target = SelectViewCommand.findViewRoot(getRoot(), getTargetFile());
+		return target != null ? target : this;
 	}
 
 	@Override

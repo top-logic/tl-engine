@@ -46,6 +46,8 @@ public final class ConfigFieldIndex {
 
 	private final List<Consumer<ConfigFieldModel>> _observers = new ArrayList<>();
 
+	private final List<Runnable> _changeObservers = new ArrayList<>();
+
 	private final Map<ConfigurationItem, Map<PropertyDescriptor, ConfigFieldModel>> _fields =
 		new IdentityHashMap<>();
 
@@ -91,12 +93,13 @@ public final class ConfigFieldIndex {
 	 * Watches every field the editor builds, now and on every later rebuild.
 	 *
 	 * <p>
-	 * The way to learn that something in the edited configuration changed. A
-	 * {@link ConfigurationItem} offers listeners per property only, so there is no asking a whole
-	 * tree; but every change the user can make goes through a field the editor built and reported
-	 * here, and every structural change - an element added, removed or reordered - rebuilds the
-	 * affected editor and reports its fields afresh. Watching registration therefore catches both,
-	 * without a listener tree of its own to keep in step.
+	 * Together with {@link #observeChanges(Runnable)}, the way to learn that something in the
+	 * edited configuration changed. A {@link ConfigurationItem} offers listeners per property only,
+	 * so there is no asking a whole tree; but every change of a value the user can make goes
+	 * through a field the editor built and reported here. A structural change - an element added,
+	 * removed, reordered or replaced - is reported through {@link #reportChange()}: it rebuilds the
+	 * affected editor, but the rebuilt editor need not have a field at all, e.g. after the last
+	 * element of a collection was removed.
 	 * </p>
 	 *
 	 * <p>
@@ -107,6 +110,30 @@ public final class ConfigFieldIndex {
 	 */
 	public void observeFields(Consumer<ConfigFieldModel> observer) {
 		_observers.add(observer);
+	}
+
+	/**
+	 * Calls the given observer on every {@link #reportChange() structural change} of the edited
+	 * configuration.
+	 *
+	 * @see #observeFields(Consumer)
+	 */
+	public void observeChanges(Runnable observer) {
+		_changeObservers.add(observer);
+	}
+
+	/**
+	 * Reports a structural change of the edited configuration: an element of a collection was
+	 * added, removed, moved or replaced, or the value of an item property was replaced.
+	 *
+	 * <p>
+	 * Called by the editor that made the change, after it has rebuilt its display.
+	 * </p>
+	 */
+	public void reportChange() {
+		for (Runnable observer : List.copyOf(_changeObservers)) {
+			observer.run();
+		}
 	}
 
 	/**

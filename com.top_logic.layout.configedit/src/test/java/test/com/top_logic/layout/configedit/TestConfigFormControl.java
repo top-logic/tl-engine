@@ -1739,6 +1739,52 @@ public class TestConfigFormControl extends TestCase {
 		assertEquals(4, notifications[0]);
 	}
 
+	/**
+	 * Removing the last entry of a collection is a change, although the editor has no field left
+	 * to report it: the form holds an unsaved change, and Apply stores the empty collection.
+	 */
+	public void testRemovingTheLastEntryIsAChange() {
+		FormatEntriesConfig config = TypedConfiguration.newConfigItem(FormatEntriesConfig.class);
+		config.getEntries().add(TypedConfiguration.newConfigItem(FormatEntry.class));
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		assertFalse(form.isDirty());
+
+		click(findButton(form, REMOVE_BUTTON_LABEL));
+		assertTrue("Removing the only entry leaves an unsaved change.", form.isDirty());
+
+		click(findButton(form, label(I18NConstants.APPLY)));
+		assertTrue("The empty collection is stored.", config.getEntries().isEmpty());
+	}
+
+	/**
+	 * Adding an entry without any field is a change, although the editor reports no new field.
+	 */
+	public void testAddingAnEntryWithoutFieldsIsAChange() {
+		EmptyEntriesConfig config = TypedConfiguration.newConfigItem(EmptyEntriesConfig.class);
+		TestableConfigFormControl form = new TestableConfigFormControl(createTestContext(), config, true);
+		click(findButton(form, label(I18NConstants.EDIT)));
+		assertFalse(form.isDirty());
+
+		click(findAddButton(form));
+		assertTrue("Adding an entry leaves an unsaved change.", form.isDirty());
+	}
+
+	/** An entry without properties. */
+	public interface EmptyEntry extends ConfigurationItem {
+		// No properties.
+	}
+
+	/** A configuration holding {@link EmptyEntry}s. */
+	public interface EmptyEntriesConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getEntries()}. */
+		String ENTRIES = "entries";
+
+		@Name(ENTRIES)
+		java.util.List<EmptyEntry> getEntries();
+	}
+
 	/** Without an edit mode, the form writes straight through and never holds anything unsaved. */
 	public void testWriteThroughIsNeverDirty() {
 		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);

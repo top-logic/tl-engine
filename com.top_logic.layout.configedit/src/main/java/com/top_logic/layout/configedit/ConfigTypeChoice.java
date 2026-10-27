@@ -44,8 +44,9 @@ public final class ConfigTypeChoice {
 	 */
 	public static ConfigTypeChoice of(ConfigChildren children) {
 		List<Choice> choices = new ArrayList<>();
-		for (Object option : children.allowedTypes().options()) {
-			choices.add(new Choice(PolymorphicOptions.labelFor(option), option));
+		PolymorphicOptions.Choices allowed = children.allowedTypes();
+		for (Object option : allowed.options()) {
+			choices.add(new Choice(PolymorphicOptions.labelFor(option, allowed.mapping()), option));
 		}
 		choices.sort(Comparator.comparing(Choice::label));
 		return new ConfigTypeChoice(choices);

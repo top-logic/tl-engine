@@ -177,6 +177,123 @@ public class JavaTypeUtil {
 	}
 
 	/**
+	 * Whether instances of the given implementation class can be used as values of the given
+	 * (potentially parameterized) type.
+	 *
+	 * <p>
+	 * The implementation class is viewed as the raw class of the expected type, with the type
+	 * arguments it binds in its declaration, e.g. a class
+	 * <code>LabelProvider implements Function&lt;Object, String&gt;</code> is viewed as
+	 * <code>Function&lt;Object, String&gt;</code>. It is compatible, if this view is a subtype of
+	 * the expected type by the rules of Java: type arguments are invariant, except for wildcards of
+	 * the expected type, e.g. <code>Function&lt;Object, String&gt;</code> is compatible with
+	 * <code>Function&lt;?, ? extends CharSequence&gt;</code> but not with
+	 * <code>Function&lt;String, String&gt;</code>.
+	 * </p>
+	 *
+	 * <p>
+	 * A type argument that is not known does not restrict the compatibility:
+	 * </p>
+	 * <ul>
+	 * <li>A type argument of the expected type that contains a type variable accepts every type
+	 * argument of the implementation class.</li>
+	 * <li>A type argument of the implementation class that contains one of its own type variables
+	 * (of a generic implementation class) is compatible with every type argument of the expected
+	 * type, since the type variable can be bound accordingly when instantiating the class.</li>
+	 * <li>A raw expected type, and an implementation class implementing the raw class of the
+	 * expected type, only require the implementation class to be assignable to the raw class.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * An expected wildcard or type variable is replaced by its upper bound.
+	 * </p>
+	 *
+	 * @param implementationClass
+	 *        The implementation class to check.
+	 * @param expectedType
+	 *        The type values must have.
+	 * @return Whether the given class is assignable to the raw class of the expected type, and its
+	 *         type arguments for that class are compatible with the ones of the expected type.
+	 */
+	public static boolean isCompatibleImplementation(Class<?> implementationClass, Type expectedType) {
+		Type expected = upperBound(expectedType);
+		Class<?> rawExpected = getRawClass(expected);
+		if (!rawExpected.isAssignableFrom(implementationClass)) {
+			return false;
+		}
+		if (!(expected instanceof ParameterizedType expectedParameterized)) {
+			return true;
+		}
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		Type supertype = TypeToken.of(genericClass(implementationClass)).getSupertype((Class) rawExpected).getType();
+		if (!(supertype instanceof ParameterizedType supertypeParameterized)) {
+			// Implements the raw class of the expected type.
+			return true;
+		}
+
+		Type[] expectedArguments = expectedParameterized.getActualTypeArguments().clone();
+		Type[] actualArguments = supertypeParameterized.getActualTypeArguments().clone();
+		for (int n = 0; n < expectedArguments.length; n++) {
+			if (containsTypeVariable(expectedArguments[n])) {
+				// Unknown: Accepts every type argument.
+				expectedArguments[n] = UNBOUNDED_WILDCARD;
+				actualArguments[n] = eraseTypeVariables(actualArguments[n]);
+			} else if (containsTypeVariable(actualArguments[n])) {
+				// A type variable of the implementation class, bound when instantiating the class.
+				actualArguments[n] = matchingArgument(expectedArguments[n]);
+			}
+		}
+		return TypeToken.of(newParameterizedType(rawExpected, actualArguments))
+			.isSubtypeOf(newParameterizedType(rawExpected, expectedArguments));
+	}
+
+	private static final WildcardType UNBOUNDED_WILDCARD = newWildcardType(new Type[] { Object.class }, NO_TYPES);
+
+	/**
+	 * The type argument that is contained in the given expected type argument.
+	 */
+	private static Type matchingArgument(Type expectedArgument) {
+		if (expectedArgument instanceof WildcardType wildcard) {
+			Type[] lowerBounds = wildcard.getLowerBounds();
+			return lowerBounds.length > 0 ? lowerBounds[0] : wildcard.getUpperBounds()[0];
+		}
+		return expectedArgument;
+	}
+
+	/**
+	 * The given type with its own type variables as type arguments, if it is generic.
+	 */
+	private static Type genericClass(Class<?> type) {
+		TypeVariable<?>[] parameters = type.getTypeParameters();
+		if (parameters.length == 0) {
+			return type;
+		}
+		return newParameterizedType(type, parameters);
+	}
+
+	/**
+	 * The given type, or its upper bound, if it is a wildcard or type variable.
+	 */
+	private static Type upperBound(Type type) {
+		while (true) {
+			if (type instanceof WildcardType wildcard) {
+				type = wildcard.getUpperBounds()[0];
+			} else if (type instanceof TypeVariable<?> variable) {
+				type = variable.getBounds()[0];
+			} else {
+				return type;
+			}
+		}
+	}
+
+	/**
+	 * Whether the given type contains a type variable.
+	 */
+	private static boolean containsTypeVariable(Type type) {
+		return eraseTypeVariables(type) != type;
+	}
+
+	/**
 	 * The abstract methods of the given interface, including the ones inherited from its super
 	 * interfaces.
 	 *

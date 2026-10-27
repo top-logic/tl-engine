@@ -48,10 +48,12 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
  * <b>The copy reaches the field on the first change, not before.</b> A form saves only what is
  * dirty, and dirty is decided by comparing the field's value with the one it started with - so
  * handing the copy over eagerly could make an untouched form look edited. The change signal is the
- * editor's own fields, via {@link ConfigFieldIndex#observeFields}: every change the user can make
- * goes through one of them, and a structural change rebuilds the editor and reports its fields
- * afresh. That is the same answer the legacy declarative editor gives, where the form fields are
- * likewise what says something changed - not the configuration, which is only written from them.
+ * editor's own fields, via {@link ConfigFieldIndex#observeFields}: every change of a value the user
+ * can make goes through one of them. A structural change - an entry added or removed, a type
+ * chosen - is reported by the editor through {@link ConfigFieldIndex#observeChanges}, also where
+ * no field is left afterwards. That is the same answer the legacy declarative editor gives, where
+ * the form fields are likewise what says something changed - not the configuration, which is only
+ * written from them.
  * </p>
  *
  * <p>
@@ -161,7 +163,7 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
 		ConfigFieldPush push = new ConfigFieldPush(() -> binding.push(edited));
-		index.observeFields(push::watch);
+		push.watch(index);
 
 		ReactControl editor =
 			new ConfigEditorControl(context, edited, Collections.emptySet(), false, index, model.isEditable());
@@ -194,7 +196,7 @@ public class ConfigFieldControlProvider implements ReactFieldControlProvider {
 
 		ConfigFieldIndex index = new ConfigFieldIndex();
 		ConfigFieldPush push = new ConfigFieldPush(() -> binding.push(new ArrayList<>(currentOf(holder))));
-		index.observeFields(push::watch);
+		push.watch(index);
 		// Adding, removing and reordering never touch a field, so the holder itself is watched too.
 		holder.addListener(push.listener());
 

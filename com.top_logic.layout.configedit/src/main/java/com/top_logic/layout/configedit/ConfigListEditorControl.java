@@ -475,6 +475,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ReactButtonControl confirmButton = new ReactButtonControl(_context, "\u2713", ctx -> {
 			ResKey refusal = _pending.confirm(pending);
 			if (refusal == null) {
+				reportChange();
 				return HandlerResult.DEFAULT_RESULT;
 			}
 			// Said out loud, not only at the key field: a type-keyed collection has no such field,
@@ -732,7 +733,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		// and may be changed for as long as the form is editable.
 		typeModel.setEditable(key ? _editable && pending != null : _editable);
 
-		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(options);
+		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(options, _choices.mapping());
 
 		typeModel.addListener(new FieldModelListener() {
 			@Override
@@ -791,6 +792,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		}
 		_value.replace(index, replacement);
 		rebuild(replacement);
+		reportChange();
 	}
 
 	private boolean isTypeSelected(ConfigurationItem item) {
@@ -835,6 +837,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ConfigurationItem newItem = newEntry();
 		_value.add(newItem);
 		rebuild(newItem);
+		reportChange();
 	}
 
 	/**
@@ -854,6 +857,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	private void removeElement(int index) {
 		_value.remove(index);
 		rebuild(null);
+		reportChange();
 	}
 
 	/**
@@ -862,6 +866,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	private void moveUp(int index) {
 		_value.move(index, -1);
 		rebuild(null);
+		reportChange();
 	}
 
 	/**
@@ -870,6 +875,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 	private void moveDown(int index) {
 		_value.move(index, 1);
 		rebuild(null);
+		reportChange();
+	}
+
+	/**
+	 * Reports a change of the elements of the collection to the {@link ConfigFieldIndex}, see
+	 * {@link ConfigFieldIndex#reportChange()}.
+	 */
+	private void reportChange() {
+		if (_index != null) {
+			_index.reportChange();
+		}
 	}
 
 	// --- Label resolution ---

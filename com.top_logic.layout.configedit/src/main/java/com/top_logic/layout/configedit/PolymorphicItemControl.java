@@ -55,6 +55,8 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 
 	private ConfigEditorControl _nestedEditor;
 
+	private final ConfigFieldIndex _index;
+
 	private final FieldModelListener _typeChangeListener;
 
 	/**
@@ -91,16 +93,21 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	 *        Factory for creating nested editors (allows test subclass propagation).
 	 * @param editable
 	 *        Whether the type selector accepts a change - see {@link #_editable}.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to {@link ConfigFieldIndex#reportChange() report} a
+	 *        change of the type to, {@code null} if nobody is collecting.
 	 */
 	public PolymorphicItemControl(ReactContext context, String label, ConfigurationItem parentConfig,
 			PropertyDescriptor property,
-			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory, boolean editable) {
+			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory, boolean editable,
+			ConfigFieldIndex index) {
 		super(context, label, true, false, GroupBorder.SUBTLE, true, List.of(), List.of());
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;
 		_editorFactory = editorFactory;
 		_editable = editable;
+		_index = index;
 		_choices = PolymorphicOptions.compute(parentConfig, property);
 
 		ConfigurationItem currentValue = (ConfigurationItem) parentConfig.value(property);
@@ -116,7 +123,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_typeModel.setNullable(nullable);
 		_typeModel.setEditable(_editable);
 
-		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(rawOptions);
+		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(rawOptions, _choices.mapping());
 
 		if (showsSelector(_choices, currentValue, nullable)) {
 			ReactDropdownSelectControl typeSelect = new ReactDropdownSelectControl(context,
@@ -214,6 +221,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		if (selected == null) {
 			_parentConfig.update(_property, null);
 			putState("children", getChildren());
+			reportChange();
 			return;
 		}
 
@@ -227,6 +235,13 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_nestedEditor = _editorFactory.apply(_context, newConfig);
 		addChild(_nestedEditor);
 		putState("children", getChildren());
+		reportChange();
+	}
+
+	private void reportChange() {
+		if (_index != null) {
+			_index.reportChange();
+		}
 	}
 
 	@Override

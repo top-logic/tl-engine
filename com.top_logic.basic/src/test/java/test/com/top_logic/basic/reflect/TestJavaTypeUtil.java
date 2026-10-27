@@ -5,10 +5,14 @@
  */
 package test.com.top_logic.basic.reflect;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 
 import junit.framework.TestCase;
+
+import com.google.common.reflect.TypeToken;
 
 import com.top_logic.basic.reflect.JavaTypeUtil;
 
@@ -142,6 +146,71 @@ public class TestJavaTypeUtil extends TestCase {
 
 	public void testSearchInterfaceType() {
 		assertEquals(String.class, JavaTypeUtil.getTypeBound(N.class, I.class, 0));
+	}
+
+
+	class P implements I<List<String>> {
+		// Empty.
+	}
+
+	public void testCompatibleWithBoundArgument() {
+		assertTrue(compatible(A.class, new TypeToken<I<String>>() {}));
+		assertTrue("Binding inherited.", compatible(B.class, new TypeToken<I<String>>() {}));
+		assertTrue("Binding through a renamed variable.", compatible(D.class, new TypeToken<I<Number>>() {}));
+	}
+
+	public void testIncompatibleArgumentsAreInvariant() {
+		assertFalse(compatible(A.class, new TypeToken<I<Object>>() {}));
+		assertFalse(compatible(A.class, new TypeToken<I<CharSequence>>() {}));
+		assertFalse(compatible(D.class, new TypeToken<I<Integer>>() {}));
+	}
+
+	public void testCompatibleWithWildcard() {
+		assertTrue(compatible(A.class, new TypeToken<I<? extends CharSequence>>() {}));
+		assertTrue(compatible(A.class, new TypeToken<I<? super String>>() {}));
+		assertTrue(compatible(A.class, new TypeToken<I<?>>() {}));
+		assertFalse(compatible(A.class, new TypeToken<I<? extends Number>>() {}));
+		assertFalse(compatible(A.class, new TypeToken<I<? super Integer>>() {}));
+	}
+
+	public void testNestedArguments() {
+		assertTrue(compatible(P.class, new TypeToken<I<List<String>>>() {}));
+		assertTrue(compatible(P.class, new TypeToken<I<? extends List<? extends CharSequence>>>() {}));
+		assertFalse(compatible(P.class, new TypeToken<I<List<Object>>>() {}));
+	}
+
+	public void testGenericImplementationIsCompatible() {
+		assertTrue("Type variable of the implementation can be bound.",
+			compatible(C.class, new TypeToken<I<Integer>>() {}));
+		assertTrue(compatible(C.class, new TypeToken<I<? super Integer>>() {}));
+	}
+
+	public void testRawImplementationIsCompatible() {
+		assertTrue(compatible(E.class, new TypeToken<I<Integer>>() {}));
+	}
+
+	public void testRawOrUnresolvedExpectedTypeIsNotFiltered() {
+		assertTrue(JavaTypeUtil.isCompatibleImplementation(A.class, I.class));
+		assertTrue(JavaTypeUtil.isCompatibleImplementation(D.class, I.class));
+		Type unresolved = JavaTypeUtil.newParameterizedType(I.class, I.class.getTypeParameters()[0]);
+		assertTrue(JavaTypeUtil.isCompatibleImplementation(A.class, unresolved));
+		assertTrue(JavaTypeUtil.isCompatibleImplementation(D.class, unresolved));
+	}
+
+	public void testNotAssignable() {
+		assertFalse(compatible(A.class, new TypeToken<II<String>>() {}));
+		assertFalse(JavaTypeUtil.isCompatibleImplementation(A.class, II.class));
+	}
+
+	public void testExpectedWildcardIsItsUpperBound() {
+		Type wildcard = JavaTypeUtil.newWildcardType(new Type[] { new TypeToken<I<String>>() {}.getType() },
+			new Type[0]);
+		assertTrue(JavaTypeUtil.isCompatibleImplementation(A.class, wildcard));
+		assertFalse(JavaTypeUtil.isCompatibleImplementation(D.class, wildcard));
+	}
+
+	private static boolean compatible(Class<?> implementationClass, TypeToken<?> expected) {
+		return JavaTypeUtil.isCompatibleImplementation(implementationClass, expected.getType());
 	}
 
 }

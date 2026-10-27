@@ -524,7 +524,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 */
 	protected PolymorphicItemControl createPolymorphicGroup(ReactContext context, String label,
 			ConfigurationItem parentConfig, PropertyDescriptor property, boolean editable) {
-		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor, editable);
+		return new PolymorphicItemControl(context, label, parentConfig, property, this::createNestedEditor, editable,
+			_index);
 	}
 
 	/**

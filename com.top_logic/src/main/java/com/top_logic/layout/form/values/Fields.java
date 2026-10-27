@@ -8,6 +8,7 @@ package com.top_logic.layout.form.values;
 import static com.top_logic.basic.util.Utils.*;
 import static com.top_logic.layout.form.values.Values.*;
 
+import java.lang.reflect.Type;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +44,7 @@ import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.IGenericFunction;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
@@ -819,7 +821,10 @@ public class Fields {
 	 * {@link Options} annotation or generically from type index lookup.
 	 * 
 	 * <p>
-	 * The generic options of an instance configuration property are its implementation classes.
+	 * The generic options of an instance configuration property are its implementation classes
+	 * that are {@link JavaTypeUtil#isCompatibleImplementation(Class, Type) compatible} with the
+	 * {@link ConfigUtil#getGenericInstanceType(PropertyDescriptor) generic instance type} of the
+	 * property.
 	 * If the property accepts scripts, they additionally contain the
 	 * {@link ScriptImplOptionMapping#getScriptOption() script option}, and the
 	 * {@link #optionMapping(DerivedProperty) option mapping} is a {@link ScriptImplOptionMapping}.
@@ -861,6 +866,7 @@ public class Fields {
 					// Instance configuration, options are implementation classes, and the script
 					// option, if the property accepts scripts.
 					ScriptImplOptionMapping scriptMapping = ScriptImplOptionMapping.forProperty(property);
+					Type genericInstanceType = ConfigUtil.getGenericInstanceType(property);
 					fun = new Function0<>() {
 						@Override
 						public OptionModel<Class<?>> apply() {
@@ -871,6 +877,10 @@ public class Fields {
 							ArrayList<Class<?>> implTypes = new ArrayList<>(implClasses.size());
 							for (Class<?> implType : implClasses) {
 								if (isHidden(customizations, implType)) {
+									continue;
+								}
+								if (!JavaTypeUtil.isCompatibleImplementation(implType, genericInstanceType)) {
+									// Does not fit the type arguments of the property.
 									continue;
 								}
 

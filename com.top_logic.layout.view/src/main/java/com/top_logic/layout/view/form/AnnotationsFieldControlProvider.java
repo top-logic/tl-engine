@@ -189,7 +189,7 @@ public class AnnotationsFieldControlProvider implements ReactFieldControlProvide
 			binding.push(new ArrayList<>(container.getAnnotations()));
 			validate(model, container, index);
 		});
-		index.observeFields(push::watch);
+		push.watch(index);
 
 		// The container is the form model: an option function or mapping inside an annotation looks
 		// outwards for it - SingletonConfig's type mapping reads the module's name off it - and

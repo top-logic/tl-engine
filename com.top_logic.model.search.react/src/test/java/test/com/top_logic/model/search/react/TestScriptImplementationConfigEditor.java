@@ -32,6 +32,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ScriptFunction1;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigEditorControl;
@@ -39,6 +40,7 @@ import com.top_logic.layout.configedit.ConfigFieldIndex;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.PolymorphicItemControl;
 import com.top_logic.layout.configedit.PolymorphicOptions;
+import com.top_logic.layout.form.values.ScriptImplOptionMapping;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -139,6 +141,22 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 
 		List<Object> functionOptions = PolymorphicOptions.compute(config, function(config)).options();
 		assertTrue(functionOptions.contains(ScriptFunction1Impl.class));
+	}
+
+	public void testScriptOptionIsLabelledWithoutClassName() {
+		ScriptProperties config = TypedConfiguration.newConfigItem(ScriptProperties.class);
+		for (PropertyDescriptor property : List.of(greeter(config), function(config))) {
+			PolymorphicOptions.Choices choices = PolymorphicOptions.compute(config, property);
+			Object scriptOption = ((ScriptImplOptionMapping) choices.mapping()).getScriptOption();
+			LabelProvider labels = PolymorphicOptions.keyLabelProvider(choices.options(), choices.mapping());
+			assertEquals("TL-Script", labels.getLabel(PolymorphicOptions.keyFor(scriptOption)));
+		}
+
+		PolymorphicOptions.Choices greeterChoices = PolymorphicOptions.compute(config, greeter(config));
+		LabelProvider labels =
+			PolymorphicOptions.keyLabelProvider(greeterChoices.options(), greeterChoices.mapping());
+		assertEquals("A Java implementation keeps its label.", PolymorphicOptions.labelFor(FixedGreeter.class),
+			labels.getLabel(PolymorphicOptions.keyFor(FixedGreeter.class)));
 	}
 
 	public void testMandatoryNullShowsSelector() {

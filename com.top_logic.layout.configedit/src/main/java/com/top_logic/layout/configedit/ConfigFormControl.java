@@ -349,7 +349,7 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		_onCancel = onCancel;
 		_toolbarCommands = commands == Commands.TOOLBAR ? createCommands() : Collections.emptyList();
 		_model.addListener(_onModeChange);
-		_index.observeFields(_onFieldChange::watch);
+		_onFieldChange.watch(_index);
 		_index.observeFields(field -> field.addListener(_onValidityChange));
 		_index.observeFields(field -> field.addListener(REVEAL_ON_CHANGE));
 		rebuild();

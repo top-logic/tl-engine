@@ -340,6 +340,21 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 	}
 
 	/**
+	 * Removing the only annotation hands the field the empty list, although the editor is left
+	 * without any field that could report the change.
+	 */
+	public void testRemovingTheLastAnnotationReachesTheField() {
+		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<>(List.of(someAnnotation())));
+
+		ReactControl holder = AnnotationsFieldControlProvider.createControl(_context, model, this::container);
+		ReactButtonControl remove = buttonLabelled(holder, "\u2715");
+		assertNotNull("An annotation must offer a Remove button.", remove);
+		remove.executeCommand("click", Collections.emptyMap());
+
+		assertEquals("The removal must have reached the field.", List.of(), model.getValue());
+	}
+
+	/**
 	 * An annotation whose options reach out of it can be rendered.
 	 *
 	 * <p>

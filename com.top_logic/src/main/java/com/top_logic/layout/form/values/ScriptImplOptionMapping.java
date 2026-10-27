@@ -11,6 +11,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.ScriptImplementationProvider;
 import com.top_logic.basic.config.ScriptImplementations;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 
 /**
@@ -86,6 +87,19 @@ public class ScriptImplOptionMapping implements OptionMapping {
 	 */
 	public Class<?> getScriptOption() {
 		return _scriptOption;
+	}
+
+	/**
+	 * The label of the {@link #getScriptOption() script option}.
+	 *
+	 * <p>
+	 * The script option is a class only technically. For the user, it is the choice of a script as
+	 * implementation, it is therefore labelled with the label of its class (e.g. "TL-Script")
+	 * without the class name that labels of Java implementation classes carry.
+	 * </p>
+	 */
+	public ResKey getScriptOptionLabel() {
+		return ResKey.forClass(_scriptOption);
 	}
 
 	/**

@@ -26,9 +26,12 @@ import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.func.Function3;
 import com.top_logic.basic.func.IFunction1;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ScriptFunction1;
+import com.top_logic.layout.ScriptFunction3;
 import com.top_logic.layout.form.values.Fields;
 import com.top_logic.layout.form.values.ImplOptionMapping;
 import com.top_logic.layout.form.values.ScriptImplOptionMapping;
@@ -36,11 +39,15 @@ import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.initializer.InitializerIndex;
 import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.form.ScriptFunction1Impl;
+import com.top_logic.model.search.form.ScriptFunction3Impl;
 import com.top_logic.model.search.form.ScriptImplementation;
 import com.top_logic.model.search.form.ScriptImplementationType;
 import com.top_logic.model.search.form.TLScriptImplementationProvider;
 import com.top_logic.model.search.form.WithExpression;
+import com.top_logic.model.search.ui.model.options.NavigationOptions;
 
 /**
  * Test of the TL-Script option that the configuration editors offer through
@@ -60,6 +67,8 @@ public class TestScriptImplOptionMapping extends TestCase {
 
 	private static final String CUSTOM = "custom";
 
+	private static final String LABEL = "label";
+
 	/**
 	 * Sub interface of {@link PolymorphicConfiguration} that the TL-Script provider does not
 	 * support.
@@ -77,6 +86,19 @@ public class TestScriptImplOptionMapping extends TestCase {
 
 		@Name(CUSTOM)
 		CustomFilterConfig getCustom();
+
+		@Name(LABEL)
+		ScriptFunction3<Object, TLObject, ResKey, TLStructuredTypePart> getLabel();
+	}
+
+	/**
+	 * Java implementation fitting the type arguments of {@link A#getLabel()}.
+	 */
+	public static class FittingLabel extends Function3<Object, TLObject, ResKey, TLStructuredTypePart> {
+		@Override
+		public Object apply(TLObject arg1, ResKey arg2, TLStructuredTypePart arg3) {
+			return arg2;
+		}
 	}
 
 	public void testScriptOptionForScriptProperties() throws ConfigurationException {
@@ -92,6 +114,20 @@ public class TestScriptImplOptionMapping extends TestCase {
 		assertEquals(ScriptFunction1Impl.class, scriptOption(function));
 		assertEquals("The script implementation class is no Java option.",
 			1, Collections.frequency(function.options(), ScriptFunction1Impl.class));
+	}
+
+	/**
+	 * Only implementation classes whose type arguments fit the generic type of the property are
+	 * offered.
+	 */
+	public void testOptionsFitTheTypeArguments() {
+		A a = TypedConfiguration.newConfigItem(A.class);
+		Options label = options(a, LABEL);
+		assertTrue(label.options().contains(FittingLabel.class));
+		assertTrue(label.options().contains(ScriptFunction3Impl.class));
+		assertFalse("Function3<Object, Object, Object, Object> does not fit invariant type arguments.",
+			label.options().contains(com.top_logic.basic.func.IfElse.class));
+		assertFalse(label.options().contains(NavigationOptions.class));
 	}
 
 	public void testNoScriptOptionForOtherProperties() {

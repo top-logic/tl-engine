@@ -21,7 +21,8 @@
 	the product the diagram draws; a step of another product stays selected while the
 	diagram has no node to mark for it. A click with Ctrl (or Shift) in the diagram adds a
 	node to the selection and keeps the selected steps of other products, a click without a
-	modifier replaces the whole selection.
+	modifier replaces the whole selection. Dragging with Ctrl held draws a rectangle and adds
+	every node inside it to the selection.
 	
 	The Details form shows the selected step through the derived channel detailNode, which
 	has a value only while exactly one step is selected.

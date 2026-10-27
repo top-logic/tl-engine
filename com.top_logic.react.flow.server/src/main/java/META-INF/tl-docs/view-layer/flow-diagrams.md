@@ -1,5 +1,5 @@
 ---
-description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection), and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
+description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle), and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
 order: 75
 ---
 
@@ -57,6 +57,7 @@ $parts.isEmpty()
 A diagram element is selectable when the script makes it so: `reactFlowSelection(content: …, userObject: $obj)` wraps a box into a selectable node, and `reactFlowGraphEdge(…, selectable: true, userObject: $obj)` makes an edge of a graph layout selectable. The **user object** is what connects the diagram to the rest of the view: the `selection` channel holds user objects, not diagram elements (`DiagramSelectionBinding`).
 
 - A click selects the element alone, and a ctrl-click on a selected element removes it. With `selection-mode="multi"`, a click with shift or ctrl held adds the element to the selection; a ctrl-click keeps the objects of the channel no element of the diagram carries, while a click without a modifier replaces the whole selection.
+- With `selection-mode="multi"`, dragging with ctrl held draws a rectangle (CSS class `tlSelectionRectangle`) instead of panning the diagram; releasing the button adds every selectable element lying completely inside it to the selection, like a ctrl-click on each of them (`SelectionRectangle` in `com.top_logic.react.flow.client`, `DiagramOperations.addToSelection()`).
 - The channel then holds the user object of the selected element, the set of user objects for several, and no value for none.
 - A value written to the channel by another element - a row selected in a table over the same objects - marks every element carrying that user object. A value no element of the diagram carries is shown as no selection and is left on the channel.
 - An element without a user object takes no part in the shared selection.

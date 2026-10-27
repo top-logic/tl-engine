@@ -111,4 +111,37 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 		}
 		event.stopPropagation();
 	}
+
+	/**
+	 * Adds the given elements to the selection, as a selection rectangle drawn over them does.
+	 *
+	 * <p>
+	 * The change is {@link Diagram#isIncrementalSelection() incremental}: the elements selected so
+	 * far stay selected, and so do the selected objects the diagram does not display. Elements that
+	 * cannot be selected are skipped. A diagram without {@link Diagram#isMultiSelect() multiple
+	 * selection} is left unchanged.
+	 * </p>
+	 *
+	 * @param elements
+	 *        The elements to select.
+	 */
+	default void addToSelection(Iterable<? extends Widget> elements) {
+		Diagram diagram = self();
+		if (!diagram.isMultiSelect()) {
+			return;
+		}
+		boolean incrementalSet = false;
+		for (Widget element : elements) {
+			if (!SelectionUtil.canSelect(element) || SelectionUtil.isSelected(element)) {
+				continue;
+			}
+			if (!incrementalSet) {
+				// Must be set before the selection changes, see Diagram#isIncrementalSelection().
+				diagram.setIncrementalSelection(true);
+				incrementalSet = true;
+			}
+			diagram.getSelection().add(element);
+			SelectionUtil.setSelected(element, true);
+		}
+	}
 }

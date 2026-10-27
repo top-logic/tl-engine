@@ -144,9 +144,10 @@ public class FlowDiagramElement implements UIElement {
 		 * <p>
 		 * {@link SelectionMode#MULTI} adds an element to the selection by a click with
 		 * {@code Ctrl} or {@code Shift}, and takes a selected one out again by a click with
-		 * {@code Ctrl}. A click with {@code Ctrl} keeps the objects of the
-		 * {@link #getSelection() selection channel} no element of the diagram carries, a click
-		 * without a modifier replaces the whole selection.
+		 * {@code Ctrl}. Dragging with {@code Ctrl} held draws a rectangle and adds every element
+		 * lying completely inside it to the selection. A click or drag with {@code Ctrl} keeps the
+		 * objects of the {@link #getSelection() selection channel} no element of the diagram
+		 * carries, a click without a modifier replaces the whole selection.
 		 * </p>
 		 *
 		 * <p>

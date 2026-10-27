@@ -45,6 +45,21 @@ public class SelectionUtil {
 	}
 
 	/**
+	 * Whether the user may select the given widget.
+	 *
+	 * <p>
+	 * In contrast to {@link #isSelectable(Widget)}, a {@link GraphEdge} only counts if it is marked
+	 * {@link GraphEdge#isSelectable() selectable}.
+	 * </p>
+	 */
+	public static boolean canSelect(Widget widget) {
+		if (widget instanceof GraphEdge) {
+			return ((GraphEdge) widget).isSelectable();
+		}
+		return isSelectable(widget);
+	}
+
+	/**
 	 * Returns whether the given widget is currently selected.
 	 */
 	public static boolean isSelected(Widget widget) {

@@ -67,6 +67,13 @@ import com.top_logic.util.Resources;
  * selecting the link. Whenever the session shows another file, the tree displays that file's tree
  * with the nodes expanded the user had expanded when it was displayed last, and selects its root.
  * </p>
+ *
+ * <p>
+ * The rows follow the {@link DesignTreeDisplay}: a property group with a single entry shares the row
+ * of that entry. The row stands for the entry - selecting it selects the entry, and selecting the
+ * entry reveals the row - and its context menu offers the commands of the group below those of the
+ * entry.
+ * </p>
  */
 public class DesignerTreeElement implements UIElement {
 
@@ -154,7 +161,7 @@ public class DesignerTreeElement implements UIElement {
 			TreeSelectionDisplay.of(treeControl, selectionModel),
 			uiNode -> openLink(session, uiNode));
 		TreeSelectionBinding selectionBinding =
-			new TreeSelectionBinding(display, () -> currentModel[0], NodeLocator.SEARCHING, selectionChannel);
+			new TreeSelectionBinding(display, () -> currentModel[0], DISPLAYED_NODE_LOCATOR, selectionChannel);
 		treeControl.addCleanupAction(selectionBinding::dispose);
 
 		// 6. Wire context menu for structural editing commands.
@@ -225,6 +232,20 @@ public class DesignerTreeElement implements UIElement {
 		return newTreeModel;
 	}
 
+	/**
+	 * Locator finding the row displaying a {@link DesignTreeNode}, which is the row of its single
+	 * entry for a group sharing that row, see {@link DesignTreeDisplay#displayedNode(DesignTreeNode)}.
+	 */
+	private static final NodeLocator DISPLAYED_NODE_LOCATOR =
+		(root, businessObject) -> NodeLocator.SEARCHING.locate(root, displayedObject(businessObject));
+
+	/**
+	 * The business object of the row displaying the given object.
+	 */
+	private static Object displayedObject(Object businessObject) {
+		return businessObject instanceof DesignTreeNode node ? DesignTreeDisplay.displayedNode(node) : businessObject;
+	}
+
 	/** Clique of the element-creating commands. */
 	private static final String CLIQUE_ADD = "add";
 
@@ -265,7 +286,8 @@ public class DesignerTreeElement implements UIElement {
 			DefaultTreeUINodeModel newTreeModel =
 				rebuildKeepingExpansion(treeControl, builder, currentModel);
 
-			DefaultTreeUINode uiNode = toSelect == null ? null : TreeNodes.findNode(newTreeModel.getRoot(), toSelect);
+			DefaultTreeUINode uiNode =
+				toSelect == null ? null : DISPLAYED_NODE_LOCATOR.locate(newTreeModel.getRoot(), toSelect);
 			if (uiNode != null) {
 				TreeNodes.revealNode(uiNode);
 				selectionModel.setSelected(uiNode, true);
@@ -279,11 +301,7 @@ public class DesignerTreeElement implements UIElement {
 		};
 
 		List<CommandModel> commands = List.of(
-			SimpleCommandModel.create("designerAddChild", Resources.getInstance().getString(
-				I18NConstants.DESIGNER_ADD_CHILD),
-				ctx -> addChild(target[0], opener, menuPosition, rebuild))
-				.setClique(CLIQUE_ADD)
-				.setExecutable(() -> AddChildCommand.canExecute(target[0])),
+			addChildCommand(target, opener, menuPosition, rebuild),
 
 			SimpleCommandModel.create("designerRemove", Resources.getInstance().getString(
 				I18NConstants.DESIGNER_REMOVE),
@@ -306,6 +324,11 @@ public class DesignerTreeElement implements UIElement {
 		ContextMenuContribution contribution =
 			new ContextMenuContribution(value -> target[0] = (DesignTreeNode) value, commands);
 
+		// The group sharing the row of its single entry, for which the menu offers the commands of
+		// the group's container.
+		DesignTreeNode[] groupTarget = new DesignTreeNode[1];
+		List<CommandModel> groupCommands = List.of(addChildCommand(groupTarget, opener, menuPosition, rebuild));
+
 		treeControl.setContextMenuProvider((tree, node, x, y) -> {
 			DesignTreeNode designNode = designNodeOf(node);
 			if (designNode == null) {
@@ -322,8 +345,31 @@ public class DesignerTreeElement implements UIElement {
 			// Remember where the menu was opened, so that a follow-up type menu appears there too.
 			menuPosition[0] = x;
 			menuPosition[1] = y;
-			opener.open(x, y, List.of(new Targeted(contribution, designNode)));
+			List<DesignTreeNode> targets = DesignTreeDisplay.commandTargets(designNode);
+			List<Targeted> contributions = new ArrayList<>(targets.size());
+			contributions.add(new Targeted(contribution, designNode));
+			for (DesignTreeNode groupNode : targets.subList(1, targets.size())) {
+				contributions.add(new Targeted(new ContextMenuContribution(
+					value -> groupTarget[0] = (DesignTreeNode) value, groupCommands, groupNode.getDisplayLabel()),
+					groupNode));
+			}
+			opener.open(x, y, contributions);
 		});
+	}
+
+	/**
+	 * The command adding an element to the container of the node the menu is opened for.
+	 *
+	 * @param target
+	 *        Holder of the node the menu is opened for.
+	 */
+	private CommandModel addChildCommand(DesignTreeNode[] target, ContextMenuOpener opener, int[] menuPosition,
+			Consumer<DesignTreeNode> rebuild) {
+		return SimpleCommandModel.create("designerAddChild", Resources.getInstance().getString(
+			I18NConstants.DESIGNER_ADD_CHILD),
+			ctx -> addChild(target[0], opener, menuPosition, rebuild))
+			.setClique(CLIQUE_ADD)
+			.setExecutable(() -> AddChildCommand.canExecute(target[0]));
 	}
 
 	/**
@@ -395,16 +441,16 @@ public class DesignerTreeElement implements UIElement {
 
 	/**
 	 * Provider that renders a {@link DesignTreeNode} as a {@link ReactTextControl}, using the
-	 * node's {@link DesignTreeNode#getDisplayLabel() display label} and
-	 * {@link DesignTreeNode#getTooltipHtml() tooltip HTML}.
+	 * {@link DesignTreeDisplay#displayLabel(DesignTreeNode) label} and
+	 * {@link DesignTreeDisplay#tooltipHtml(DesignTreeNode) tooltip HTML} of its row.
 	 */
 	private static ReactControlProvider designNodeControlProvider(ReactTreeControl[] treeRef,
 			DefaultTreeUINodeModel[] currentModel) {
 		return (context, model) -> {
 			if (model instanceof DesignTreeNode designNode) {
-				String label = designNode.getDisplayLabel();
+				String label = DesignTreeDisplay.displayLabel(designNode);
 				ReactTextControl control = new ReactTextControl(context, label);
-				String tooltip = designNode.getTooltipHtml();
+				String tooltip = DesignTreeDisplay.tooltipHtml(designNode);
 				if (tooltip != null && !tooltip.isEmpty()) {
 					control.setTooltip(tooltip, label, false);
 				}
@@ -445,7 +491,7 @@ public class DesignerTreeElement implements UIElement {
 			public List<DefaultTreeUINode> createChildList(DefaultTreeUINode node) {
 				Object businessObj = node.getBusinessObject();
 				if (businessObj instanceof DesignTreeNode designNode) {
-					List<DesignTreeNode> designChildren = designNode.getChildren();
+					List<DesignTreeNode> designChildren = DesignTreeDisplay.displayedChildren(designNode);
 					List<DefaultTreeUINode> children = new ArrayList<>(designChildren.size());
 					for (DesignTreeNode child : designChildren) {
 						DefaultTreeUINode childNode = createNode(node.getModel(), node, child);

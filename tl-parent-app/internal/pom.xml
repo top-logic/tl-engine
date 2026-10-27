@@ -74,7 +74,7 @@
 			<id>with-h2</id>
 			
 			<properties>
-				<tl.app.metaConfAddons>db-h2.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-h2.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -92,7 +92,7 @@
 			<id>with-mysql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-mysql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-mysql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -106,7 +106,7 @@
 			<id>with-oracle</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-oracle.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-oracle.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -120,7 +120,7 @@
 			<id>with-postgresql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-postgresql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-postgresql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -134,7 +134,7 @@
 			<id>with-db2</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-db2.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-db2.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>
@@ -149,7 +149,7 @@
 			<id>with-mssql</id>
 
 			<properties>
-				<tl.app.metaConfAddons>db-mssql.xml</tl.app.metaConfAddons>
+				<tl.app.metaConfAddons.db>db-mssql.xml</tl.app.metaConfAddons.db>
 			</properties>
 
 			<dependencies>

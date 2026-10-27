@@ -349,11 +349,13 @@ each other and with a database profile:
 mvn package -P with-postgresql,with-ldap,with-openid-keycloak,with-openid-azure
 ```
 
-Each profile sets a property of its own whose name starts with `tl.app.metaConfAddons.`, e.g.
-`tl.app.metaConfAddons.ldap`. The packaging `tl-app` adds the comma-separated references of all
-such properties, in the order of their names, after those of `tl.app.metaConfAddons`, which the
-database profiles set. A project with the packaging `tl-app` and without `tl-parent-app` defines
-such profiles itself, as can an application for configuration of its own:
+Each profile sets a property of its own whose name starts with `tl.app.metaConfAddons.`: the
+database profiles `tl.app.metaConfAddons.db` (default `db-jndi.xml`, one database at a time), the
+profiles above e.g. `tl.app.metaConfAddons.ldap`. The packaging `tl-app` adds the comma-separated
+references of `tl.app.metaConfAddons` - free for references of the application itself - and then
+those of all prefixed properties in the order of their names. A project with the packaging `tl-app`
+and without `tl-parent-app` defines such profiles itself, as can an application for configuration
+of its own:
 
 ```xml
 <profile>

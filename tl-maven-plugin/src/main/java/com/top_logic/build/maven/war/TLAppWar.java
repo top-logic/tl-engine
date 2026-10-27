@@ -165,15 +165,13 @@ public class TLAppWar extends AbstractMojo {
 	 * during deployment.
 	 * 
 	 * <p>
-	 * To to prepare the deployed application to use the H2 database, you can e.g. set the value to
-	 * <code>db-h2.xml</code> to include the corresponding configuration reference to its
-	 * configuration.
-	 * </p>
-	 * 
-	 * <p>
+	 * The value holds the references of the application itself, e.g. <code>enable-debug.xml</code>.
 	 * Further references are given in project properties whose names start with
 	 * {@link #META_CONF_ADDONS_PREFIX}, see {@link #metaConfAddons(String, Properties)}. Several
-	 * Maven profiles can so contribute references at the same time.
+	 * Maven profiles can so contribute references at the same time: the database profiles of
+	 * <code>tl-parent-app</code> set <code>tl.app.metaConfAddons.db</code> (e.g. to
+	 * <code>db-h2.xml</code>), the profile <code>with-ldap</code> sets
+	 * <code>tl.app.metaConfAddons.ldap</code>.
 	 * </p>
 	 */
 	@Parameter(defaultValue = "", property = META_CONF_ADDONS)

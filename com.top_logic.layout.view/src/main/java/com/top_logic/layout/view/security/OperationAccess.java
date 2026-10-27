@@ -33,23 +33,21 @@ import com.top_logic.tool.execution.ExecutableState;
  * <p>
  * The checked object is the value the {@link Config#getObject() object} expression yields from the
  * {@link CommandArguments arguments} of the command. Without an expression, it is the object of the
- * innermost enclosing UI unit with an {@link AccessControl} (see {@link SecuredObject#of(ViewContext)}),
- * and without such a unit, or for a unit checked on the security root, the security root.
+ * innermost enclosing UI unit with an {@link AccessControl} (its {@link SecuredObject}), and without
+ * such a unit, or for a unit checked on the security root, the security root.
  * </p>
  *
  * <p>
  * The decision for the current user:
  * </p>
  * <ul>
- * <li>Hidden: the user can never hold the operation - no role can hold it on the checked type (see
- * {@link ModelAccessPolicy#isOffered(BoundCommandGroup, TLClass)}), or, on the security root, it is
- * not allowed there.</li>
+ * <li>Hidden: the user can never hold the operation - no role can hold it on the checked type - or,
+ * on the security root, it is not allowed there.</li>
  * <li>Disabled: there is no object to check ({@code null} or an empty collection), or the operation
  * is refused on a checked object, giving the refusal as reason. An object that is no instance of the
  * checked type is refused.</li>
  * <li>Otherwise, as the {@link com.top_logic.tool.execution.service.CommandApprovalService} decides
- * about the operation on every checked object (see
- * {@link ModelAccessPolicy#approval(BoundCommandGroup, com.top_logic.model.TLObject)}).</li>
+ * about the operation on every checked object.</li>
  * </ul>
  *
  * <pre>
@@ -58,6 +56,12 @@ import com.top_logic.tool.execution.ExecutableState;
  *     type="tl.demo.projectManagement:ProjectScope"/&gt;
  * &lt;/access&gt;
  * </pre>
+ *
+ * @implNote The object of the enclosing unit is {@link SecuredObject#of(ViewContext)}. Whether a
+ *           role can hold the operation on the checked type at all is
+ *           {@link ModelAccessPolicy#isOffered(BoundCommandGroup, TLClass)}, the final decision on
+ *           an allowed object is
+ *           {@link ModelAccessPolicy#approval(BoundCommandGroup, com.top_logic.model.TLObject)}.
  */
 public class OperationAccess implements AccessCheck {
 

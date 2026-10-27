@@ -52,7 +52,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * checked on its {@code type}, or - without an object - on what the innermost enclosing unit of the
  * same view file checks;</li>
  * <li>a command with an {@code <access>} of a {@code <create type="…">} ({@link CreateAccess}),
- * checking {@link SimpleBoundCommandGroup#CREATE} on the created type;</li>
+ * checking the creation right on the created type;</li>
  * <li>a {@code <form>} declaring an {@code edit-operation} ({@link FormElement}); the type of the
  * form object is not declared.</li>
  * </ul>
@@ -77,6 +77,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * The index contributes to the {@link SecurityCoverageCheck.Config#getOperationUses() operation
  * uses} of the {@link SecurityCoverageCheck}.
  * </p>
+ *
+ * @implNote A {@code <create>} is indexed as a use of {@link SimpleBoundCommandGroup#CREATE}.
  */
 public class OperationUseIndex implements OperationUseProvider {
 

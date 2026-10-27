@@ -165,6 +165,7 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	 *
 	 * @param operation
 	 *        An operation, see {@link #operations(TypeGrants)}.
+	 * @return The name of the command group of the operation.
 	 */
 	@Label("Name of an operation")
 	@SideEffectFree
@@ -253,6 +254,7 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	 *
 	 * @param row
 	 *        A row, see {@link #rows(TypeGrants)}.
+	 * @return The role the row is about.
 	 */
 	@Label("Role of a row of the grants")
 	@SideEffectFree
@@ -268,6 +270,7 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	 *        The grants, see {@link #of(TLClass)}.
 	 * @param row
 	 *        A row, see {@link #rows(TypeGrants)}.
+	 * @return The attribute of the row, or the type for a row about the objects of the type.
 	 */
 	@Label("Model part of a row of the grants")
 	@SideEffectFree
@@ -309,6 +312,7 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	 *        A row, see {@link #rows(TypeGrants)}.
 	 * @param operation
 	 *        An operation, see {@link #operations(TypeGrants)}.
+	 * @return Whether a click on the cell changes the grant.
 	 */
 	@Label("Whether a grant can be changed")
 	@SideEffectFree

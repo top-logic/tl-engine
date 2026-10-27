@@ -49,8 +49,7 @@ import com.top_logic.tool.execution.ExecutableState;
  * </p>
  *
  * <p>
- * The decision for the current user, see {@link ModelAccessPolicy#onCreate(TLClass,
- * TLStructuredTypePart, Object)}: hidden when the user can never create the type; disabled when
+ * The decision for the current user: hidden when the user can never create the type; disabled when
  * there is no context ({@code null} or an empty collection); disabled with the refusal as reason
  * when the creation is refused in a context (in a collection, every context must allow it).
  * </p>
@@ -60,6 +59,9 @@ import com.top_logic.tool.execution.ExecutableState;
  *   &lt;create type="demo.tickets:Comment" in="$ticket" reference="demo.tickets:Ticket#comments"/&gt;
  * &lt;/access&gt;
  * </pre>
+ *
+ * @implNote The decision is made by
+ *           {@link ModelAccessPolicy#onCreate(TLClass, TLStructuredTypePart, Object)}.
  *
  * @see IntrinsicAccessRules#creation(TLModelPartRef, com.top_logic.layout.view.channel.ChannelRef,
  *      String)

@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>8.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>tl-factory-gitea</artifactId>
+  <name>${project.artifactId}</name>
+  <description>Gitea as git hosting service of the control application tl-factory: the repositories of the projects and their branch protection, through a client generated from the OpenAPI specification of Gitea.</description>
+  <url>https://github.com/top-logic/tl-engine/</url>
+
+  <properties>
+    <!--
+      The Gitea version the client is generated from and the integration test runs against. The
+      specification of this version is src/main/openapi/gitea-<version>.swagger.json, as a Gitea of
+      this version serves it at /swagger.v1.json. An update of the version replaces the
+      specification file by the one of the new version, see the developer article
+      factory/git-hosting, section "Updating Gitea".
+    -->
+    <!-- renovate: datasource=docker depName=gitea/gitea -->
+    <gitea.version>28.2.0</gitea.version>
+
+    <!-- Package of the generated client. -->
+    <gitea.client.package>com.top_logic.factory.gitea.client</gitea.client.package>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-factory</artifactId>
+    </dependency>
+
+    <!-- Runtime of the generated client: JSON binding with Jackson. -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
+    <dependency>
+      <!-- The nullness annotations of the generated client. -->
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+    </dependency>
+
+    <!-- Tests -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!-- Starts the Gitea of the integration test. -->
+      <groupId>com.github.docker-java</groupId>
+      <artifactId>docker-java-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.docker-java</groupId>
+      <artifactId>docker-java-transport-httpclient5</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!-- An update of gitea.version needs the specification of that version, see the property. -->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>gitea-specification</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireFilesExist>
+                  <files>
+                    <file>${project.basedir}/src/main/openapi/gitea-${gitea.version}.swagger.json</file>
+                  </files>
+                  <message>The OpenAPI specification of Gitea ${gitea.version} is missing: src/main/openapi/gitea-${gitea.version}.swagger.json. Fetch it from a Gitea ${gitea.version} at /swagger.v1.json and delete the one of the previous version, see the steps "Updating Gitea" of the developer article factory/git-hosting (tl-factory/src/main/java/META-INF/tl-docs/factory/git-hosting.md).</message>
+                </requireFilesExist>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>${openapi-generator.version}</version>
+        <executions>
+          <execution>
+            <?m2e execute onConfiguration?>
+            <id>gitea-client</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/src/main/openapi/gitea-${gitea.version}.swagger.json</inputSpec>
+              <generatorName>java</generatorName>
+              <library>native</library>
+              <output>${project.build.directory}/generated-sources/openapi</output>
+              <apiPackage>${gitea.client.package}.api</apiPackage>
+              <modelPackage>${gitea.client.package}.model</modelPackage>
+              <invokerPackage>${gitea.client.package}</invokerPackage>
+
+              <!-- Only the operations the provider and its test use. -->
+              <apisToGenerate>Repository,Organization</apisToGenerate>
+              <openapiNormalizer>FILTER=operationId:createOrgRepo|orgCreate|repoGet|repoGetBranchProtection|repoCreateBranchProtection|repoEditBranchProtection</openapiNormalizer>
+              <!-- The models of these operations, with all models they refer to. -->
+              <modelsToGenerate>BranchProtection,CreateBranchProtectionOption,CreateOrgOption,CreateRepoOption,EditBranchProtectionOption,ExternalTracker,ExternalWiki,InternalTracker,Organization,Permission,RepoTransfer,Repository,Team,User</modelsToGenerate>
+              <generateApiTests>false</generateApiTests>
+              <generateModelTests>false</generateModelTests>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateModelDocumentation>false</generateModelDocumentation>
+              <!-- The Java sources only, no build files of a stand-alone project. -->
+              <supportingFilesToGenerate>ApiClient.java,ApiException.java,ApiResponse.java,Configuration.java,JSON.java,Pair.java,RFC3339DateFormat.java,RFC3339InstantDeserializer.java,RFC3339JavaTimeModule.java,ServerConfiguration.java,ServerVariable.java,AbstractOpenApiSchema.java</supportingFilesToGenerate>
+              <configOptions>
+                <sourceFolder>src/main/java</sourceFolder>
+                <useJakartaEe>true</useJakartaEe>
+                <openApiNullable>false</openApiNullable>
+                <annotationLibrary>none</annotationLibrary>
+                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                <asyncNative>false</asyncNative>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unused-imports</id>
+            <configuration>
+              <!--
+                Only the own sources: the generated client, a source root as well, is seen by the run
+                in the lifecycle forked by the javadoc goal.
+              -->
+              <sourceDirectories>
+                <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+              </sourceDirectories>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgs combine.children="append">
+            <!-- The JavaDoc of the generated client is not checked. -->
+            <arg>-Xdoclint/package:-${gitea.client.package},-${gitea.client.package}.*</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <!-- No JavaDoc and no messages for the generated client. -->
+          <excludePackageNames>${gitea.client.package}:${gitea.client.package}.*</excludePackageNames>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemPropertyVariables>
+            <!-- The Gitea of the integration test. -->
+            <tl.factory.gitea.image>gitea/gitea:${gitea.version}</tl.factory.gitea.image>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

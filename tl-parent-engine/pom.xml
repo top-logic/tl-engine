@@ -149,6 +149,7 @@
 
 		<!-- Control application for applications built by agents -->
 		<module>../tl-factory</module>
+		<module>../tl-factory-gitea</module>
 		<module>../tl-factory-app</module>
 
 		<!-- Migration utilities -->

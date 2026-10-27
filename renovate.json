@@ -36,6 +36,16 @@
         "FROM (?<depName>[a-z0-9./_-]+):(?<currentValue>[^@\\s]+)@(?<currentDigest>sha256:[0-9a-f]{64})"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Gitea version of tl-factory-gitea in the property gitea.version, annotated by a preceding '<!-- renovate: -->' comment: the version of the OpenAPI specification its client is generated from and of the image its integration test runs against.",
+      "managerFilePatterns": [
+        "/(^|/)tl-factory-gitea/pom\\.xml$/"
+      ],
+      "matchStrings": [
+        "<!-- renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+) -->\\s*<gitea\\.version>(?<currentValue>[^<]+)</gitea\\.version>"
+      ]
     }
   ],
   "packageRules": [
@@ -81,6 +91,26 @@
         "patch"
       ],
       "enabled": false
+    },
+    {
+      "description": "Gitea of tl-factory-gitea: an update also needs the specification of the new version in src/main/openapi (the build fails without it) and the integration test against the new image, see the developer article factory/git-hosting.",
+      "matchFileNames": [
+        "tl-factory-gitea/pom.xml"
+      ],
+      "matchDepNames": [
+        "gitea/gitea"
+      ],
+      "automerge": false,
+      "labels": [
+        "manual-step"
+      ],
+      "prBodyNotes": [
+        "**Manual step before merging:** this update needs the OpenAPI specification of the new Gitea version, the build fails without it (enforcer rule `gitea-specification` of `tl-factory-gitea`).",
+        "1. `docker run -d --name gitea-spec -p 127.0.0.1:3000:3000 -e GITEA__security__INSTALL_LOCK=true gitea/gitea:{{{newVersion}}}`",
+        "2. `curl -o tl-factory-gitea/src/main/openapi/gitea-{{{newVersion}}}.swagger.json http://127.0.0.1:3000/swagger.v1.json && docker rm -f gitea-spec`",
+        "3. Delete `tl-factory-gitea/src/main/openapi/gitea-{{{currentVersion}}}.swagger.json`, build the module (a newly referenced model goes into `modelsToGenerate`) and run `mvn test -DskipTests=false -pl tl-factory-gitea`.",
+        "See the section \"Updating Gitea\" of the developer article factory/git-hosting."
+      ]
     }
   ]
 }

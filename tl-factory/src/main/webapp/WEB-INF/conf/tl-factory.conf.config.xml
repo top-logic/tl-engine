@@ -6,6 +6,7 @@
 			<instance>
 				<modules>
 					<module key="com.top_logic.factory.workspace.WorkspaceService$Module" value="true"/>
+					<module key="com.top_logic.factory.git.GitHostingService$Module" value="true"/>
 					<module key="com.top_logic.factory.project.ProjectWorkspaces$Module" value="true"/>
 					<module key="com.top_logic.factory.proxy.WorkspaceProxyService$Module" value="true"/>
 					<module key="com.top_logic.factory.agent.WorkspaceAgentService$Module" value="true"/>
@@ -36,6 +37,14 @@
 					build-timeout="%FACTORY_BUILD_TIMEOUT%"
 				/>
 			</instance>
+		</config>
+
+		<!--
+			The git hosting service of the project repositories, switched off: an installation configures
+			a provider, e.g. the GiteaHostingProvider of the module tl-factory-gitea.
+		-->
+		<config service-class="com.top_logic.factory.git.GitHostingService">
+			<instance class="com.top_logic.factory.git.GitHostingService"/>
 		</config>
 
 		<config service-class="com.top_logic.factory.project.ProjectWorkspaces">

@@ -133,6 +133,11 @@ public class XAIProviderConfig implements LLMProviderConfig {
 	}
 
 	@Override
+	public CredentialProvider getCredentials() {
+		return _credentials;
+	}
+
+	@Override
 	public LLMProvider createProvider() {
 		String baseUrl = ModelDiscoveryHelper.normalizeBaseUrl(_config.getBaseUrl());
 		int connectTimeout = _config.getConnectTimeout();

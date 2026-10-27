@@ -3,7 +3,8 @@
 <!--
 	The model the agents of the tl-chat tests run on: "test-assigned-model" of the provider in
 	com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml next to this file. The test agents
-	that run an agent loop are assigned the scripted model of the same file.
+	that run an agent loop are assigned the scripted model of the same file, TestGatedAgent the model
+	of the provider without its key.
 -->
 <application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -15,6 +16,7 @@
 			>
 				<agent-overrides>
 					<agent name="TestChatPlanner" model="test-scripted-model" provider="scripted"/>
+					<agent name="TestGatedAgent" model="test-gated-model" provider="gated"/>
 				</agent-overrides>
 			</instance>
 		</config>

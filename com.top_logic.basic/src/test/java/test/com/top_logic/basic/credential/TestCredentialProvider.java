@@ -8,6 +8,8 @@ package test.com.top_logic.basic.credential;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,6 +21,7 @@ import junit.framework.Test;
 import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -29,6 +32,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.credential.BasicCredentials;
 import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.EnvironmentSecretSource;
+import com.top_logic.basic.credential.FileSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.LiteralSecretSource;
@@ -36,12 +41,14 @@ import com.top_logic.basic.credential.NoCredentials;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
+import com.top_logic.basic.exception.I18NRuntimeException;
 
 /**
  * Test case for the static {@link CredentialProvider}s {@link HeaderCredentials},
  * {@link BasicCredentials} and {@link NoCredentials}, and for the choice between credentials and an
  * API key shorthand in
- * {@link CredentialProvider#create(com.top_logic.basic.config.InstantiationContext, String, PolymorphicConfiguration, PolymorphicConfiguration, String, String)}.
+ * {@link CredentialProvider#create(com.top_logic.basic.config.InstantiationContext, String, PolymorphicConfiguration, PolymorphicConfiguration, String, String)},
+ * and for their {@link CredentialProvider#isAvailable() availability}.
  */
 @SuppressWarnings("javadoc")
 public class TestCredentialProvider extends AbstractTypedConfigurationTestCase {
@@ -49,6 +56,24 @@ public class TestCredentialProvider extends AbstractTypedConfigurationTestCase {
 	private static final String ROOT_TAG = "config";
 
 	private static final String OWNER = "test-service";
+
+	private static final String TEST_VARIABLE = "test.credential.provider.secret";
+
+	private Path _dir;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		System.clearProperty(TEST_VARIABLE);
+		_dir = Files.createTempDirectory(TestCredentialProvider.class.getSimpleName());
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		System.clearProperty(TEST_VARIABLE);
+		FileUtilities.deleteR(_dir.toFile());
+		super.tearDown();
+	}
 
 	public interface Config extends ConfigurationItem {
 
@@ -186,6 +211,78 @@ public class TestCredentialProvider extends AbstractTypedConfigurationTestCase {
 		} catch (ConfigurationError ex) {
 			assertEquals(I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__OWNER.fill(OWNER), ex.getErrorKey());
 		}
+	}
+
+	public void testHeaderCredentialsAvailable() throws ConfigurationException {
+		System.setProperty(TEST_VARIABLE, "s3cr3t");
+		CredentialProvider provider = envHeaderProvider();
+
+		assertTrue(provider.isAvailable());
+		assertEquals(Collections.singletonMap("x-api-key", "s3cr3t"), authenticate(provider));
+	}
+
+	public void testHeaderCredentialsNotAvailable() throws ConfigurationException {
+		CredentialProvider provider = envHeaderProvider();
+
+		assertFalse(provider.isAvailable());
+	}
+
+	public void testHeaderCredentialsBecomeAvailable() throws ConfigurationException {
+		CredentialProvider provider = envHeaderProvider();
+		assertFalse(provider.isAvailable());
+
+		System.setProperty(TEST_VARIABLE, "provided-later");
+		assertTrue("A secret provided later must make the same provider available.", provider.isAvailable());
+		assertEquals(Collections.singletonMap("x-api-key", "provided-later"), authenticate(provider));
+
+		System.clearProperty(TEST_VARIABLE);
+		assertFalse("A removed secret must make the provider unavailable.", provider.isAvailable());
+	}
+
+	public void testHeaderCredentialsUnreadableSecretAvailable() throws Exception {
+		Path secretFile = _dir.resolve("empty-secret");
+		Files.write(secretFile, new byte[0]);
+		CredentialProvider provider = provider("<credentials class='" + HeaderCredentials.class.getName() + "'>"
+			+ "<secret class='" + FileSecretSource.class.getName() + "' path='" + secretFile + "'/>"
+			+ "</credentials>");
+
+		assertTrue("A present but unreadable secret is reported on use, not hidden.", provider.isAvailable());
+		try {
+			authenticate(provider);
+			fail("An empty secret file must be reported on use.");
+		} catch (I18NRuntimeException ex) {
+			// Expected.
+		}
+	}
+
+	public void testBasicCredentialsAvailability() throws ConfigurationException {
+		CredentialProvider provider = provider("<credentials class='" + BasicCredentials.class.getName()
+			+ "' user='service-user'>"
+			+ "<password class='" + EnvironmentSecretSource.class.getName() + "' name='" + TEST_VARIABLE + "'/>"
+			+ "</credentials>");
+		assertFalse(provider.isAvailable());
+
+		System.setProperty(TEST_VARIABLE, "pw");
+		assertTrue(provider.isAvailable());
+	}
+
+	public void testLiteralSecretAvailable() throws ConfigurationException {
+		CredentialProvider provider = provider(
+			"<credentials class='" + HeaderCredentials.class.getName() + "' scheme='Bearer' secret='unencrypted:s3cr3t'/>");
+
+		assertTrue(provider.isAvailable());
+	}
+
+	public void testNoCredentialsAvailable() throws ConfigurationException {
+		CredentialProvider provider = provider("<credentials class='" + NoCredentials.class.getName() + "'/>");
+
+		assertTrue(provider.isAvailable());
+	}
+
+	private CredentialProvider envHeaderProvider() throws ConfigurationException {
+		return provider("<credentials class='" + HeaderCredentials.class.getName() + "' header='x-api-key'>"
+			+ "<secret class='" + EnvironmentSecretSource.class.getName() + "' name='" + TEST_VARIABLE + "'/>"
+			+ "</credentials>");
 	}
 
 	private CredentialProvider create(String xml) throws ConfigurationException {

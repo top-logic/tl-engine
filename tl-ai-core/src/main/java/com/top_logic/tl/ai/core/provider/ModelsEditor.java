@@ -18,6 +18,7 @@ import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.func.Identity;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.DisplayContext;
@@ -130,7 +131,8 @@ public class ModelsEditor extends AbstractEditor {
 	 * <p>
 	 * Delegates to the provider's own {@link LLMProviderConfig#discoverModels()}, which uses the
 	 * correct authentication headers for each provider. Any failure is reported to the user and
-	 * yields an empty result.
+	 * yields an empty result, so does a provider whose credentials are not available, which is not
+	 * asked at all.
 	 * </p>
 	 *
 	 * @param config
@@ -149,6 +151,14 @@ public class ModelsEditor extends AbstractEditor {
 		}
 		try {
 			LLMProviderConfig provider = TypedConfigUtil.createInstance(providerConfig);
+			if (!provider.isAvailable()) {
+				// No request without credentials: its failure would not tell what is missing.
+				ResKey secret = provider.credentialsReference();
+				InfoService.showError(secret == null
+					? I18NConstants.ERROR_DISCOVERY_UNAVAILABLE__PROVIDER.fill(providerConfig.getName())
+					: I18NConstants.ERROR_DISCOVERY_UNAVAILABLE__PROVIDER_SECRET.fill(providerConfig.getName(), secret));
+				return List.of();
+			}
 			return provider.discoverModels();
 		} catch (Exception ex) {
 			InfoService.showError(I18NConstants.MODEL_DISCOVERY_FAILED);

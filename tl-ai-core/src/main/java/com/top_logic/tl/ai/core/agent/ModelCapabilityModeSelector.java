@@ -25,6 +25,7 @@ import com.top_logic.model.util.Pointer;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ModeSelector} that controls field/group visibility based on the agent's selected model.
@@ -100,8 +101,9 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 				return FormVisibility.HIDDEN;
 			}
 			assignment = runtime.resolveModelAssignment(agentName != null ? agentName : "");
-		} catch (IllegalStateException e) {
-			// No model configured for this agent and no default — hide provider-specific fields.
+		} catch (IllegalStateException | TopLogicException e) {
+			// No model configured for this agent and no provider to take a default from - hide
+			// provider-specific fields.
 			return FormVisibility.HIDDEN;
 		}
 		String model = assignment.model();

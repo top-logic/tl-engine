@@ -201,6 +201,22 @@ public class DefaultConfigConstructorScheme {
 		return true;
 	}
 
+	/**
+	 * Whether a factory method declared in the given implementation class may return the given
+	 * type.
+	 *
+	 * <p>
+	 * A factory method either creates instances of its declaring class (or a subclass of it), or
+	 * creates instances of an interface, e.g. dynamic proxies. In the latter case, the declaring
+	 * class only serves as factory, and the instance is checked against the expected type where
+	 * it is used, like any other instance created from a configuration.
+	 * </p>
+	 */
+	private static boolean isFactoryResultType(Class<?> implementationClass, Class<?> returnType) {
+		return implementationClass.isAssignableFrom(returnType) || returnType.isInterface()
+			|| returnType == Object.class;
+	}
+
 	private static Factory lookupFactoryMethod(Class<?> implementationClass) throws ConfigurationException {
 		Factory factory = null;
 		Method[] declaredMethods = implementationClass.getDeclaredMethods();
@@ -219,7 +235,7 @@ public class DefaultConfigConstructorScheme {
 				continue;
 			}
 			Class<?> returnType = m.getReturnType();
-			if (!implementationClass.isAssignableFrom(returnType)) {
+			if (!isFactoryResultType(implementationClass, returnType)) {
 				throw new ConfigurationException("Implementation class '" + implementationClass.getName()
 					+ "' has factory method of unexpected return type: '" + returnType.getName() + "'");
 			}
@@ -518,7 +534,12 @@ public class DefaultConfigConstructorScheme {
 	 * {@link DefaultConfigConstructorScheme.Factory} that looks up objects through a public static
 	 * <code>newInstance({@link InstantiationContext}, {@link PolymorphicConfiguration})</code>
 	 * method.
-	 * 
+	 *
+	 * <p>
+	 * The method returns instances of its declaring class, or of an interface, see
+	 * {@link DefaultConfigConstructorScheme#isFactoryResultType(Class, Class)}.
+	 * </p>
+	 *
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	private static final class FactoryMethodFactory extends AbstractConfiguredClassFactory {

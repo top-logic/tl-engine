@@ -6,17 +6,25 @@
 package com.top_logic.basic.reflect;
 
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.google.common.reflect.TypeToken;
 
 import com.top_logic.basic.UnreachableAssertion;
 
 /**
- * Utility for finding type bounds of generic super types.
+ * Utility for finding type bounds of generic super types and for resolving generic types in the
+ * context of a concrete parameterization.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -139,6 +147,94 @@ public class JavaTypeUtil {
 		} catch (ClassNotFoundException ex) {
 			throw new UnreachableAssertion("Component class already loaded.", ex);
 		}
+	}
+
+
+	/**
+	 * Resolves the given type in the context of a (potentially parameterized) type.
+	 *
+	 * <p>
+	 * Type variables of the context type and of all its super types are replaced by the arguments
+	 * they are bound to in the context. Parameterized types stay parameterized, e.g. resolving the
+	 * return type of {@link java.util.function.Function#apply(Object)} in the context
+	 * <code>UnaryOperator&lt;List&lt;String&gt;&gt;</code> results in
+	 * <code>List&lt;String&gt;</code>. A type variable that is not bound in the context is kept.
+	 * </p>
+	 *
+	 * @param context
+	 *        The type providing the bindings of type variables, e.g. the
+	 *        {@link java.lang.reflect.Method#getGenericReturnType() generic return type} of a
+	 *        property getter.
+	 * @param type
+	 *        The type to resolve, e.g. a type variable of a super type of the context, or the
+	 *        generic parameter or return type of a method declared in a super type of the context.
+	 * @return The given type with all type variables bound in the context replaced.
+	 */
+	public static Type resolve(Type context, Type type) {
+		return TypeToken.of(context).resolveType(type).getType();
+	}
+
+	/**
+	 * The abstract methods of the given interface, including the ones inherited from its super
+	 * interfaces.
+	 *
+	 * <p>
+	 * Default and static methods are not abstract. Abstract re-declarations of the public methods of
+	 * {@link Object} (such as {@link Object#equals(Object)}) are not counted, because every
+	 * implementation inherits them. A method that is declared in several super interfaces, or that
+	 * is re-declared with a type argument bound in a sub interface, is reported once. An interface
+	 * with exactly one abstract method is a functional interface.
+	 * </p>
+	 *
+	 * @param type
+	 *        The interface to analyze.
+	 * @return The abstract methods of the given type in declaration order of
+	 *         {@link Class#getMethods()}. Of methods with the same signature (resolved in the context
+	 *         of the given type), only the first one is contained.
+	 */
+	public static List<Method> getAbstractMethods(Class<?> type) {
+		Map<List<Object>, Method> abstractMethods = new LinkedHashMap<>();
+		Map<List<Object>, Boolean> implemented = new HashMap<>();
+		TypeToken<?> context = TypeToken.of(type);
+		for (Method method : type.getMethods()) {
+			if (method.isSynthetic() || method.isBridge() || Modifier.isStatic(method.getModifiers())) {
+				continue;
+			}
+			if (isObjectMethod(method)) {
+				continue;
+			}
+			List<Object> signature = resolvedSignature(context, method);
+			if (Modifier.isAbstract(method.getModifiers())) {
+				abstractMethods.putIfAbsent(signature, method);
+			} else {
+				implemented.put(signature, Boolean.TRUE);
+			}
+		}
+		List<Method> result = new ArrayList<>();
+		for (Map.Entry<List<Object>, Method> entry : abstractMethods.entrySet()) {
+			if (!implemented.containsKey(entry.getKey())) {
+				result.add(entry.getValue());
+			}
+		}
+		return result;
+	}
+
+	private static boolean isObjectMethod(Method method) {
+		try {
+			Object.class.getMethod(method.getName(), method.getParameterTypes());
+			return true;
+		} catch (NoSuchMethodException ex) {
+			return false;
+		}
+	}
+
+	private static List<Object> resolvedSignature(TypeToken<?> context, Method method) {
+		List<Object> signature = new ArrayList<>();
+		signature.add(method.getName());
+		for (Type parameterType : method.getGenericParameterTypes()) {
+			signature.add(context.resolveType(parameterType).getRawType());
+		}
+		return signature;
 	}
 
 }

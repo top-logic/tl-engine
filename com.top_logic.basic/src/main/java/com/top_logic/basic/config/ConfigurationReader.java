@@ -343,7 +343,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					switch (property.kind()) {
 						case ITEM: {
 							ConfigurationValueProvider<?> format = property.getValueProvider();
-							if (format != null) {
+							if (format != null && !ScriptImplementationFormat.isImplementationClass(format, configValue)) {
 								value = parseValue(reader, format, property, configValue);
 								break;
 							}
@@ -2184,6 +2184,10 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 							 * be "forgotten". */
 							return newBuilder(expectedDescriptor);
 						}
+						ConfigBuilder scriptBuilder = createScriptBuilder(reader, defaultDescriptor, owningProperty);
+						if (scriptBuilder != null) {
+							return scriptBuilder;
+						}
 						return newBuilderForDefaultImplementationClass(reader, defaultDescriptor);
 					} else {
 						return createBuilderForImplementationClass(reader, expectedDescriptor, concreteImplClassName);
@@ -2207,6 +2211,28 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				throw new ConfigurationException("No implementation class set " + atLocation(reader) + ".");
 			}
 			return createBuilderForImplementationClass(reader, expectedDescriptor, implementationClass);
+		}
+
+		/**
+		 * Creates the builder for a script implementation configured in element form.
+		 *
+		 * @return The builder of the {@link ScriptImplementationProvider}, or <code>null</code>, if
+		 *         the given property does not accept scripts in element form, or has a concrete
+		 *         default implementation class that the element configures.
+		 * 
+		 * @see ScriptImplementationProvider#createScriptBuilder(PropertyDescriptor)
+		 */
+		private ConfigBuilder createScriptBuilder(XMLStreamReader reader, ConfigurationDescriptor defaultDescriptor,
+				PropertyDescriptor owningProperty) throws ConfigurationException {
+			if (!ScriptImplementations.acceptsScript(owningProperty)) {
+				return null;
+			}
+			Class<?> implementationClass = (Class<?>) classProperty(reader, defaultDescriptor).getDefaultValue();
+			if (implementationClass != null && !implementationClass.isInterface()
+				&& DefaultConfigConstructorScheme.getFactory(implementationClass).isConcrete()) {
+				return null;
+			}
+			return ScriptImplementations.getProvider().createScriptBuilder(owningProperty);
 		}
 
 		private ConfigBuilder newBuilderForDefaultImplementationClass(XMLStreamReader reader, ConfigurationDescriptor defaultDescriptor)

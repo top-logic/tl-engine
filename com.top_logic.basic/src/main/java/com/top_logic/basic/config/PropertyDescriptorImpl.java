@@ -178,6 +178,11 @@ public abstract class PropertyDescriptorImpl
 
 	private boolean _instanceValued;
 
+	/**
+	 * @see #acceptsScript()
+	 */
+	private boolean _acceptsScript;
+
 	private boolean _hasContainerAnnotation;
 
 	private boolean _hasLocalContainerAnnotation;
@@ -293,9 +298,9 @@ public abstract class PropertyDescriptorImpl
 			}
 			
 			if (inheritedValueProvider == null) {
-				inheritedValueProvider = inheritedProperty.getValueProvider();
+				inheritedValueProvider = inheritedProperty.getInheritableValueProvider();
 			} else {
-				if (! inheritedValueProvider.equals(inheritedProperty.getValueProvider())) {
+				if (! inheritedValueProvider.equals(inheritedProperty.getInheritableValueProvider())) {
 					inheritedValueProvider = MISMATCH;
 				}
 			}
@@ -893,6 +898,28 @@ public abstract class PropertyDescriptorImpl
 	public ConfigurationValueProvider getValueProvider() {
 		return valueProvider;
 	}
+
+	/**
+	 * The value provider that an overriding property inherits.
+	 *
+	 * <p>
+	 * A {@link ScriptImplementationFormat} is bound to the property it was created for and is
+	 * therefore not inherited. An overriding property decides on its own, whether it
+	 * {@link #acceptsScript() accepts scripts}.
+	 * </p>
+	 */
+	private ConfigurationValueProvider<?> getInheritableValueProvider() {
+		return _acceptsScript ? null : valueProvider;
+	}
+
+	/**
+	 * Whether this property accepts values implemented by a script.
+	 *
+	 * @see ScriptImplementationProvider#supports(PropertyDescriptor)
+	 */
+	boolean acceptsScript() {
+		return _acceptsScript;
+	}
 	
 	/*package protected*/ void setValueBinding(ConfigurationValueBinding<?> valueBinding) {
 		this.valueBinding = valueBinding;
@@ -965,7 +992,35 @@ public abstract class PropertyDescriptorImpl
 				error(protocol, "Encryption can only be used for properties with a value provider.");
 			}
 		}
+		initScriptImplementation();
 		_nullable = new NullableAspect(this, protocol);
+	}
+
+	/**
+	 * Decides whether this property {@link #acceptsScript() accepts scripts} and creates the
+	 * {@link ScriptImplementationFormat} of a property implementing a functional interface.
+	 */
+	private void initScriptImplementation() {
+		_acceptsScript = false;
+		if (kind() != PropertyKind.ITEM || getValueProvider() != null || getValueBinding() != null
+			|| isInstanceValued()) {
+			return;
+		}
+		if (!PolymorphicConfiguration.class.isAssignableFrom(getType())) {
+			return;
+		}
+		Class<?> instanceType = getInstanceType();
+		if (instanceType == null || !instanceType.isInterface()) {
+			return;
+		}
+		ScriptImplementationProvider provider = ScriptImplementations.getProvider();
+		if (provider == null || !provider.supports(this)) {
+			return;
+		}
+		_acceptsScript = true;
+		if (JavaTypeUtil.getAbstractMethods(instanceType).size() == 1) {
+			setValueProvider(new ScriptImplementationFormat(this, provider));
+		}
 	}
 
 	abstract void resolveFromDeclaredReturnType(Protocol protocol);

@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.react.control.IReactControl;
@@ -45,6 +46,7 @@ import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.server.control.DiagramSelectionBinding;
 import com.top_logic.react.flow.server.control.FlowDiagramControl;
+import com.top_logic.table.SelectionMode;
 
 /**
  * {@link UIElement} for embedding a flow diagram in the React View framework.
@@ -76,6 +78,9 @@ public class FlowDiagramElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getSelectionMode()}. */
+		String SELECTION_MODE = "selection-mode";
 
 		/**
 		 * TL-Script expression that creates a {@link Diagram}.
@@ -127,6 +132,31 @@ public class FlowDiagramElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * Whether the user may select one diagram element at a time, or any number of them.
+		 *
+		 * <p>
+		 * {@link SelectionMode#SINGLE} (the default) replaces the selection with every click, and
+		 * a click on a selected element with {@code Ctrl} gives it up again.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link SelectionMode#MULTI} adds an element to the selection by a click with
+		 * {@code Ctrl} or {@code Shift}, and takes a selected one out again by a click with
+		 * {@code Ctrl}. A click with {@code Ctrl} keeps the objects of the
+		 * {@link #getSelection() selection channel} no element of the diagram carries, a click
+		 * without a modifier replaces the whole selection.
+		 * </p>
+		 *
+		 * <p>
+		 * The mode applies to every diagram the {@link #getCreateChart() create chart script}
+		 * builds, the script need not set it.
+		 * </p>
+		 */
+		@Name(SELECTION_MODE)
+		@ComplexDefault(SelectionMode.SingleDefault.class)
+		SelectionMode getSelectionMode();
 
 		/**
 		 * Common super-interface for configurations of a {@link DiagramHandler}.
@@ -232,6 +262,12 @@ public class FlowDiagramElement implements UIElement {
 	}
 
 	private Diagram buildDiagram(List<ViewChannel> inputChannels) {
+		Diagram diagram = createDiagram(inputChannels);
+		diagram.setMultiSelect(_config.getSelectionMode() == SelectionMode.MULTI);
+		return diagram;
+	}
+
+	private Diagram createDiagram(List<ViewChannel> inputChannels) {
 		Object result = _createChart.execute(ChannelInputs.arguments(inputChannels, _handlers));
 		if (result instanceof Diagram) {
 			return (Diagram) result;

@@ -295,6 +295,8 @@ The rule counts only errors on display: an error the user cannot see yet leaves 
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
 
+**A new object shows its create visibility.** While the form displays a new object that is not stored yet - the transient draft of a create dialog (`<create-transient>`) or an edit overlay of it - a field follows the `<create-visibility>` of its attribute instead of its `<visibility>` (hidden, read-only, editable, mandatory; without a create visibility the visibility applies), as in the classic user interface: an attribute that is `read-only` but `<create-visibility value="editable"/>` is entered in the create dialog and read-only once stored. A `<dynamic-visibility>` of the attribute takes precedence over both (`AttributeFieldControl`).
+
 ## Normalizing an entered value
 
 An attribute annotated with `<value-normalizer>` (`TLValueNormalizer`) brings an entered value into its canonical form before it reaches the form's overlay: a code is trimmed, a rule is printed in its canonical notation. The annotation lists normalizers, applied in the given order, each one to the result of the one before. The field shows the canonical form once the input is left. A value a normalizer cannot canonicalize - a rule text that does not parse - stays as it was typed, and the constraints of the attribute report it.

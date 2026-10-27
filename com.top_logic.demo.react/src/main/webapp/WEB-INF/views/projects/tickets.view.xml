@@ -105,12 +105,7 @@
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="ticket"
 				view="projects/ticket-detail.view.xml"
-			>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="$ticket.get(`tl.demo.projectManagement:Ticket#title`)"
-					inputs="ticket"
-				/>
-			</on-activate>
+			/>
 		</table>
 	</panel>
 </view>

@@ -112,12 +112,7 @@
 			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
 				bind-input-to="milestone"
 				view="projects/tickets.view.xml"
-			>
-				<frame-label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
-					expr="$milestone.get(`tl.demo.projectManagement:Milestone#name`)"
-					inputs="milestone"
-				/>
-			</on-activate>
+			/>
 		</table>
 	</panel>
 </view>

@@ -44,6 +44,26 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 SHADOWED_RULES__TYPE_RULES;
 
+	/**
+	 * @en The operation "{1}" is declared for the type "{0}", but no role holds it there: it is
+	 *     granted to no role, neither directly nor through an operation implying it. Every check
+	 *     of the operation on an object of the type is refused.
+	 */
+	public static ResKey2 UNGRANTED_OPERATION__TYPE_OPERATION;
+
+	/**
+	 * @en The operation "{1}" does not apply to the type "{0}", but "{2}" check it on an object of
+	 *     the type. The check is refused for every user. Declare the operation for the type, or
+	 *     check another operation.
+	 */
+	public static ResKey3 INAPPLICABLE_OPERATION__TYPE_OPERATION_USERS;
+
+	/**
+	 * @en The operation "{0}" checked by "{1}" is no known command group. Register the command
+	 *     group, or check another operation.
+	 */
+	public static ResKey2 UNKNOWN_OPERATION__OPERATION_USERS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

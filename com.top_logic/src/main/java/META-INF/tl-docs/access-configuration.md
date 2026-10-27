@@ -392,13 +392,28 @@ module not listed in its `excluded-modules` and reports, per type:
 | no read grant | no role is granted `Read` on the type (after module and inherited grants), so its objects are inaccessible to every user | grant on the type or its module, or mark internal |
 | dead grant | an operation is granted to roles that no rule can deliver on the type or its role parents; the grant never takes effect | add a rule delivering the role, or grant a delivered role |
 | shadowed rules | the type has a configured access parent, but role rules or role parent rules apply to it; they have no effect | delete the rules, or drop the access parent |
+| ungranted operation | an operation declared for the type (not a built-in one) is held by no role there, neither by a grant nor through an implying operation, so every check of it on the type is refused | grant it to a role, or declare it `implied-by` an operation the roles hold |
+| inapplicable operation | a view unit, a command, a form or a privileged script checks an operation on the type that does not apply to it (a check on the security root is reported for the type of the root) | declare the operation for the type, or check another one |
+| unknown operation | such a place checks an operation that is no registered command group | register the command group, or check another one |
+
+The places checking an operation are reported to the check by the `OperationUseProvider`s of its
+`operation-uses`: `com.top_logic.layout.view` contributes the `OperationUseIndex`, which scans the
+`*.view.xml` files (`<access-control>`, the `<access>` of commands, `<form edit-operation>`) and the
+privileged scripts of the configured TL-Script functions (see the section "Administration of
+grants" of the article `view-layer/access-control` of that module). A place
+naming the type it checks is checked against that type and its concrete specializations; a type
+delegating to an access parent is not checked for applicability. A place not declaring its type (a
+privileged script, a form, a command whose unit lies in another view file) is only checked for an
+unknown operation; such findings belong to no type and are reported by
+`SecurityCoverageAnalysis.getUnattachedFindings()`.
 
 A type is **covered** when it has a role source and at least one role may read it, **delegated**
 when it has an access parent (whether the parent is accessible is reported with the parent's type),
 **exempt** when it is internal or without security, **incomplete** otherwise.
 
-- At startup the findings are logged at INFO (`log-findings="false"` switches the log off, not the
-  analysis).
+- At startup the findings of the access definition are logged at INFO (`log-findings="false"`
+  switches the log off, not the analysis); the places checking an operation are read on demand, so
+  their findings appear in the admin hub and in `TestSecurityCoverage`, not in the startup log.
 - In the React admin hub (Administration → Access control → Coverage) the same analysis is a table
   with a findings detail; the "Access parent" column shows what a delegating type delegates to.
   Its commands edit the definition: role parent and role rules, the grants, marks and access parent
@@ -408,6 +423,13 @@ when it has an access parent (whether the parent is accessible is reported with 
   and only then does the table show the change. An access parent the underlying configuration
   sets is dropped - by a mark, or by removing it in the dialog - by storing `<self/>`, written with
   `config:override="true"`, since an access parent left out would leave that one in effect.
+- The grants of a type are edited as a matrix in Administration → Access control → Grants: a row
+  per role a user can hold on the type (`SecurityCoverageAnalysis.getHoldableRoles`), a column per
+  operation applying to it (see the section "Administration of grants" of the article
+  `view-layer/access-control`). A changed
+  cell is stored as a single `<grant>` or `<revoke>` of the role in the entry of the type
+  (`SecurityDefinitionEditor.setGranted`), not inherited by its specializations, and takes effect
+  with "Apply configuration".
 - An application makes the check part of its test suite with `test-security-coverage="true"` in
   the `ElementTestCollector` global test configuration; `TestSecurityCoverage` then fails on every
-  incomplete type.
+  incomplete type and on every finding belonging to no type.

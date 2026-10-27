@@ -41,6 +41,14 @@
 				/>
 			</instance>
 		</config>
+		<!-- The views, commands, forms and privileged scripts checking an operation. -->
+		<config service-class="com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck">
+			<instance>
+				<operation-uses>
+					<provider class="com.top_logic.layout.view.security.OperationUseIndex"/>
+				</operation-uses>
+			</instance>
+		</config>
 		<!-- The entries of the developer documentation, shown in its documentation window. -->
 		<config service-class="com.top_logic.layout.provider.LabelProviderService">
 			<instance>

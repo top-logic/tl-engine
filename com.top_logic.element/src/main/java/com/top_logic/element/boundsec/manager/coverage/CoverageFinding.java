@@ -45,14 +45,26 @@ public final class CoverageFinding {
 
 	private final List<String> _ruleIds;
 
+	private final String _operationName;
+
+	private final List<OperationUse> _uses;
+
 	private CoverageFinding(FindingKind kind, TLClass type, ResKey message, BoundCommandGroup operation,
 			Set<BoundedRole> roles, List<String> ruleIds) {
+		this(kind, type, message, operation, operation == null ? null : operation.getID(), roles, ruleIds,
+			Collections.emptyList());
+	}
+
+	private CoverageFinding(FindingKind kind, TLClass type, ResKey message, BoundCommandGroup operation,
+			String operationName, Set<BoundedRole> roles, List<String> ruleIds, List<OperationUse> uses) {
 		_kind = Objects.requireNonNull(kind);
-		_type = Objects.requireNonNull(type);
+		_type = type;
 		_message = Objects.requireNonNull(message);
 		_operation = operation;
+		_operationName = operationName;
 		_roles = roles;
 		_ruleIds = ruleIds;
+		_uses = uses;
 	}
 
 	/**
@@ -101,7 +113,7 @@ public final class CoverageFinding {
 	public static CoverageFinding deadGrant(TLClass type, BoundCommandGroup operation, Set<BoundedRole> roles) {
 		String roleNames = roles.stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(DETAIL_SEPARATOR));
 		ResKey message = I18NConstants.DEAD_GRANT__TYPE_OPERATION_ROLES
-			.fill(TLModelUtil.qualifiedName(type), operation.getID(), roleNames);
+			.fill(TLModelUtil.qualifiedName(type), operationLabel(operation), roleNames);
 		return new CoverageFinding(FindingKind.DEAD_GRANT, type, message, operation,
 			Collections.unmodifiableSet(roles), Collections.emptyList());
 	}
@@ -123,6 +135,95 @@ public final class CoverageFinding {
 	}
 
 	/**
+	 * Creates a {@link FindingKind#UNGRANTED_OPERATION} finding.
+	 *
+	 * @param type
+	 *        The type the operation applies to.
+	 * @param operation
+	 *        The operation declared for the type that no role holds on it.
+	 * @return The new finding.
+	 */
+	public static CoverageFinding ungrantedOperation(TLClass type, BoundCommandGroup operation) {
+		ResKey message = I18NConstants.UNGRANTED_OPERATION__TYPE_OPERATION
+			.fill(TLModelUtil.qualifiedName(type), operationLabel(operation));
+		return new CoverageFinding(FindingKind.UNGRANTED_OPERATION, type, message, operation,
+			Collections.emptySet(), Collections.emptyList());
+	}
+
+	/**
+	 * Creates a {@link FindingKind#INAPPLICABLE_OPERATION} finding.
+	 *
+	 * @param type
+	 *        The type an object of which the operation is checked on, the type of the security
+	 *        root for uses checking the security root.
+	 * @param operation
+	 *        The operation that does not apply to the type.
+	 * @param uses
+	 *        The places checking the operation on an object of the type.
+	 * @return The new finding.
+	 */
+	public static CoverageFinding inapplicableOperation(TLClass type, BoundCommandGroup operation,
+			List<OperationUse> uses) {
+		ResKey message = I18NConstants.INAPPLICABLE_OPERATION__TYPE_OPERATION_USERS
+			.fill(TLModelUtil.qualifiedName(type), operationLabel(operation), users(uses));
+		return new CoverageFinding(FindingKind.INAPPLICABLE_OPERATION, type, message, operation, operation.getID(),
+			Collections.emptySet(), Collections.emptyList(), List.copyOf(uses));
+	}
+
+	/**
+	 * Creates a {@link FindingKind#UNKNOWN_OPERATION} finding.
+	 *
+	 * @param type
+	 *        The type an object of which the operation is checked on, <code>null</code> when the
+	 *        uses do not declare it.
+	 * @param operationName
+	 *        The name that is no registered command group.
+	 * @param uses
+	 *        The places checking the operation.
+	 * @return The new finding.
+	 */
+	public static CoverageFinding unknownOperation(TLClass type, String operationName, List<OperationUse> uses) {
+		ResKey message = I18NConstants.UNKNOWN_OPERATION__OPERATION_USERS.fill(operationName, users(uses));
+		return new CoverageFinding(FindingKind.UNKNOWN_OPERATION, type, message, null, operationName,
+			Collections.emptySet(), Collections.emptyList(), List.copyOf(uses));
+	}
+
+	/**
+	 * The label of the given operation, as the administration shows it: the label of its command
+	 * group, its name where the command group has none.
+	 *
+	 * @param operation
+	 *        The operation.
+	 * @return The internationalized label.
+	 */
+	public static ResKey operationLabel(BoundCommandGroup operation) {
+		return ResKey.fallback(
+			com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(operation.getID()),
+			ResKey.text(operation.getID()));
+	}
+
+	/**
+	 * The label of the {@link #getOperationName() operation} this finding is about.
+	 *
+	 * @return The label of the command group, the bare name of an
+	 *         {@link FindingKind#UNKNOWN_OPERATION unknown operation}, <code>null</code> for a
+	 *         finding about no operation.
+	 */
+	public ResKey getOperationLabel() {
+		if (_operation != null) {
+			return operationLabel(_operation);
+		}
+		return _operationName == null ? null : ResKey.text(_operationName);
+	}
+
+	/**
+	 * The descriptions of the given uses as a single text.
+	 */
+	private static String users(List<OperationUse> uses) {
+		return uses.stream().map(OperationUse::user).collect(Collectors.joining(DETAIL_SEPARATOR));
+	}
+
+	/**
 	 * The classification of this finding.
 	 */
 	public FindingKind getKind() {
@@ -131,6 +232,9 @@ public final class CoverageFinding {
 
 	/**
 	 * The type this finding was reported for.
+	 *
+	 * @return <code>null</code> only for a {@link FindingKind#UNKNOWN_OPERATION} of places that
+	 *         do not declare the type they check.
 	 */
 	public TLClass getType() {
 		return _type;
@@ -144,12 +248,35 @@ public final class CoverageFinding {
 	}
 
 	/**
-	 * The operation whose grant is dead.
+	 * The operation the finding is about: the one whose grant is dead, which is not granted, or
+	 * which does not apply.
 	 * 
-	 * @return <code>null</code> for a finding other than {@link FindingKind#DEAD_GRANT}.
+	 * @return <code>null</code> for a finding of another kind, and for an
+	 *         {@link FindingKind#UNKNOWN_OPERATION}, which names no registered command group, see
+	 *         {@link #getOperationName()}.
 	 */
 	public BoundCommandGroup getOperation() {
 		return _operation;
+	}
+
+	/**
+	 * The name of the operation the finding is about.
+	 *
+	 * @return <code>null</code> for a finding about no operation.
+	 * @see #getOperation()
+	 */
+	public String getOperationName() {
+		return _operationName;
+	}
+
+	/**
+	 * The places checking the operation of a {@link FindingKind#INAPPLICABLE_OPERATION} or an
+	 * {@link FindingKind#UNKNOWN_OPERATION}.
+	 *
+	 * @return An empty list for a finding of another kind.
+	 */
+	public List<OperationUse> getUses() {
+		return _uses;
 	}
 
 	/**
@@ -173,7 +300,8 @@ public final class CoverageFinding {
 
 	@Override
 	public String toString() {
-		return _kind + "(" + TLModelUtil.qualifiedName(_type) + ")";
+		return _kind + "(" + (_type == null ? "?" : TLModelUtil.qualifiedName(_type))
+			+ (_operationName == null ? "" : ", " + _operationName) + ")";
 	}
 
 }

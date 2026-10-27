@@ -383,6 +383,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
 
 	/**
+	 * The rights of every type before the rules of its own entry are applied.
+	 *
+	 * @see #getInheritedRoles(TLClass, BoundCommandGroup)
+	 */
+	private final Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _inheritedClassRights = new HashMap<>();
+
+	/**
 	 * The roles holding {@link SimpleBoundCommandGroup#DISCOVER} on the instances of a class: the
 	 * union of all roles of its class rights, of the rights of its attributes, and of the
 	 * {@link SimpleBoundCommandGroup#CREATE} rights of the types creatable in its compositions.
@@ -1149,6 +1156,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			addRights(inheritable, inherited);
 		}
 		applyRules(moduleRules.getOrDefault(type.getModule(), Collections.emptyList()), effective, inheritable);
+		Map<BoundCommandGroup, Set<BoundedRole>> inherited = new HashMap<>();
+		addRights(inherited, effective);
+		_inheritedClassRights.put(type, inherited);
 		applyRules(classRules.getOrDefault(type, Collections.emptyList()), effective, inheritable);
 
 		if (!effective.isEmpty()) {
@@ -1264,6 +1274,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return _discoverRoles.getOrDefault(type, Collections.emptySet());
 		}
 		return _expandedClassRights
+			.getOrDefault(type, Collections.emptyMap())
+			.getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public Set<BoundedRole> getInheritedRoles(TLClass type, BoundCommandGroup commandGroup) {
+		return _inheritedClassRights
 			.getOrDefault(type, Collections.emptyMap())
 			.getOrDefault(commandGroup, Collections.emptySet());
 	}

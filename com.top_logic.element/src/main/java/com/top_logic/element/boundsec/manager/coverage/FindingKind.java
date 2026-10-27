@@ -64,6 +64,42 @@ public enum FindingKind {
 	 * 
 	 * @see CoverageFinding#getRuleIds()
 	 */
-	SHADOWED_RULES;
+	SHADOWED_RULES,
+
+	/**
+	 * An operation is declared for the type, but no role holds it there: it is granted to no
+	 * role, neither directly nor through an operation implying it. Every place checking it on
+	 * an object of the type refuses every user.
+	 *
+	 * <p>
+	 * The {@link com.top_logic.model.security.ApplicableOperations#BUILT_IN built-in operations}
+	 * apply to every type without a declaration and are not reported.
+	 * </p>
+	 *
+	 * @see CoverageFinding#getOperation()
+	 */
+	UNGRANTED_OPERATION,
+
+	/**
+	 * A view, a command, a form or a privileged script checks an operation on an object of the
+	 * type, but the operation does not apply to the type. The check refuses every user.
+	 *
+	 * <p>
+	 * A place checking the security root is reported for the type of the security root.
+	 * </p>
+	 *
+	 * @see CoverageFinding#getOperation()
+	 * @see CoverageFinding#getUses()
+	 */
+	INAPPLICABLE_OPERATION,
+
+	/**
+	 * A view, a command, a form or a privileged script checks an operation that is no registered
+	 * command group.
+	 *
+	 * @see CoverageFinding#getOperationName()
+	 * @see CoverageFinding#getUses()
+	 */
+	UNKNOWN_OPERATION;
 
 }

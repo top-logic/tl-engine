@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="project"/>
+	</channels>
+	<tab-bar>
+		<tab id="admin">
+			<access-control operation="Administration"/>
+			<panel id="admin-panel">
+				<commands>
+					<generic-command>
+						<access>
+							<operation name="Write"/>
+						</access>
+						<execute-script function="null"/>
+					</generic-command>
+				</commands>
+			</panel>
+		</tab>
+		<tab id="planning">
+			<access-control
+				inputs="project"
+				object="$project"
+				operation="Finish"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel id="planning-panel">
+				<commands>
+					<generic-command>
+						<access>
+							<operation name="Delete"/>
+						</access>
+						<execute-script function="null"/>
+					</generic-command>
+					<generic-command inputs="project">
+						<access>
+							<operation name="Read"
+								object="$project.get(`TestViewModelAccess:Project#tasks`)"
+								type="TestViewModelAccess:Task"
+							/>
+							<create type="TestViewModelAccess:Task"/>
+						</access>
+						<execute-script function="null"/>
+					</generic-command>
+				</commands>
+				<form id="planning-form"
+					edit-operation="Finish"
+					input="project"
+				/>
+			</panel>
+		</tab>
+		<tab id="free">
+			<panel id="free-panel">
+				<commands>
+					<generic-command>
+						<access>
+							<operation name="Finish"/>
+						</access>
+						<execute-script function="null"/>
+					</generic-command>
+				</commands>
+				<form id="default-form"
+					input="project"
+				/>
+			</panel>
+		</tab>
+	</tab-bar>
+</view>

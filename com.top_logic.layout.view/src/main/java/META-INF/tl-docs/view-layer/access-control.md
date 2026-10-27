@@ -179,3 +179,54 @@ The rules of `<edit-executability>` decide in addition.
 	...
 </form>
 ```
+## Administration of grants
+
+Units, commands, forms and privileged scripts only name the operation they check; who holds it is
+decided by the grants of the type of the checked object. The administration edits these grants per
+type under *Administration → Access control → Grants* (`admin/access-control/grants.view.xml`):
+
+- The left side is the type tree of the security coverage (`SecurityCoverageTable`); "Apply
+  configuration" makes the stored changes effective.
+- The right side shows the grants of the selected type as a matrix (`TypeGrants` of
+  `com.top_logic.element`, presented by the TL-Script functions `securityGrants…` of
+  `SecurityGrantFunctions`): a row per role a user can hold on objects of the type - delivered by a
+  role rule or a role parent rule, or assigned to such an object directly
+  (`SecurityCoverageAnalysis.getHoldableRoles`) - and a row per such role on each attribute; a
+  column per operation applying to the type, the built-in ones first. An attribute row offers
+  `Read` and `Write` only. Roles that cannot be held on the type and operations that do not apply
+  to it are not offered, since a grant of them has no effect.
+- The tooltip of a column lists the places checking the operation on the type or one of its
+  generalizations; for an operation the application declares, also the places not declaring the
+  type they check (privileged scripts, forms, commands outside a unit of their view file).
+- A click on a cell stores the grant, or its revocation, at once: a single `<grant>` or `<revoke>`
+  of the role in the entry of the type (or of the attribute) in the autoconf file of the
+  `SecurityConfigurationService`, applying to the type alone, not to its specializations. A cell
+  whose stored state is not in effect yet is marked (`tl-status-warning`) until "Apply
+  configuration". A grant held through an implying operation (`implied-by`, and every operation
+  implying `Discover`) is shown checked and cannot be changed in that column. An attribute without
+  a grant of the operation is not restricted; granting it to a role restricts the attribute to the
+  roles granted, and revoking it from the last of them lifts the restriction again.
+- A role that is granted an operation on the type (in effect or by a stored rule) but cannot be
+  held there gets a row as well, marked ineffective (`tl-status-warning`, with a tooltip on the
+  role), so that the grant the coverage check reports as dead can be revoked here.
+- A grant held through an implying operation shows a read-only check box.
+- A type delegating to an access parent, and a type exempt from access control, has no grants:
+  the panel names the access parent by the labels of its type and reference
+  (`AccessParentFunction.getLabel()`), or says that the type is exempt, instead of showing a
+  matrix.
+
+The matrix is a plain `<table edit-in-place="true">` with a `<dynamic-columns>` per operation (see
+[tables](doc:view-layer/tables#column-declarations)) inside a `<switch rebuild="true">`, which
+builds the table anew for every selected type, since the columns of a table are computed when it is
+built.
+
+The places checking an operation come from the `OperationUseIndex`, the provider this module
+contributes to the `operation-uses` of the `SecurityCoverageCheck`. It scans every `*.view.xml` of
+the application - `<access-control>` (checked on its `type`, or on the security root without
+`object`), `<access>` with `<operation>` (on its `type`, or on what the innermost enclosing unit of
+the same file checks) and `<create>` (`Create` on the created type), `<form edit-operation>` (type
+not declared) - and the privileged scripts of the configured TL-Script functions (type of the
+security object not declared). A view is scanned again when the `ViewLoader` reads it anew. The
+coverage check reports a place checking an operation that does not apply to the checked type, or
+that is unknown, see
+[the coverage check](doc:access-configuration#checking-that-the-definition-is-complete-the-coverage-check).

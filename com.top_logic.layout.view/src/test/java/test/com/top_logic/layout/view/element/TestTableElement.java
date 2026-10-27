@@ -498,6 +498,18 @@ public class TestTableElement extends TestCase {
 	/**
 	 * The problems reported while instantiating the given configuration.
 	 */
+	/**
+	 * Tests that a row-edit table edited in place is reported: a row-edit table buffers its edits
+	 * in the form, an edit in place writes at once.
+	 */
+	public void testEditInPlaceWithRowEditReported() throws Exception {
+		TableElement.Config tableConfig = TypedConfiguration.copy(readTableConfig());
+		tableConfig.update(tableConfig.descriptor().getProperty(TableElement.Config.ROW_EDIT), RowEditPolicy.ALL);
+		tableConfig.update(tableConfig.descriptor().getProperty(TableElement.Config.EDIT_IN_PLACE), Boolean.TRUE);
+
+		assertContains(TableElement.Config.EDIT_IN_PLACE, errors(tableConfig));
+	}
+
 	private static List<String> errors(TableElement.Config tableConfig) {
 		BufferingProtocol log = new BufferingProtocol();
 		new DefaultInstantiationContext(log).getInstance(tableConfig);

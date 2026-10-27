@@ -6,6 +6,7 @@
 
 package com.top_logic.model.security;
 
+import java.util.Collections;
 import java.util.Set;
 
 import com.top_logic.basic.thread.ThreadContext;
@@ -39,6 +40,23 @@ public interface ModelAccessRights {
 	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup);
+
+	/**
+	 * The roles granted the given command group on the given type before the rules of the access
+	 * rights entry of the type itself are applied: those the generalizations of the type pass on,
+	 * and those the entry of its module grants.
+	 *
+	 * <p>
+	 * Applying the rules of the type's own entry to this set in order yields the roles granted the
+	 * command group on the type, without the roles holding it through an implying operation. An
+	 * editor of that entry computes from it what a changed rule sequence grants.
+	 * </p>
+	 *
+	 * @return An empty set for an implementation without rule sequences.
+	 */
+	default Set<BoundedRole> getInheritedRoles(TLClass type, BoundCommandGroup commandGroup) {
+		return Collections.emptySet();
+	}
 
 	/**
 	 * Whether objects of the given type are not access controlled at all.

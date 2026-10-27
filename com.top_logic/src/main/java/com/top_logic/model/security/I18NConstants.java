@@ -6,6 +6,7 @@ package com.top_logic.model.security;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -32,9 +33,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ACCESS_PARENT_CONTAINER;
 
 	/**
-	 * @en container via {0}
+	 * @en container (through {0}#{1})
 	 */
-	public static ResKey1 ACCESS_PARENT_CONTAINER_VIA__COMPOSITION;
+	public static ResKey2 ACCESS_PARENT_CONTAINER_VIA__OWNER_COMPOSITION;
+
+	/**
+	 * @en target of {0}#{1}
+	 */
+	public static ResKey2 ACCESS_PARENT_TARGET__OWNER_REFERENCE;
 
 	static {
 		initConstants(I18NConstants.class);

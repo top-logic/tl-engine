@@ -19,6 +19,7 @@ import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
 import com.top_logic.element.boundsec.manager.coverage.FindingKind;
+import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageCheck;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 
@@ -27,7 +28,9 @@ import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
  *
  * <p>
  * The test reports every type whose objects no user can see: a type without a role source, a type
- * nobody may read, and a type carrying a grant to a role that no rule delivers on it. It runs
+ * nobody may read, and a type carrying a grant to a role that no rule delivers on it. It reports
+ * the operations no role holds and those checked where they do not apply or that are unknown as
+ * well. It runs
  * against the definitions of the application under test, therefore it is added to the test suite of
  * an application only when the application switches it on, see
  * {@link test.com.top_logic.element.util.ElementTestCollector.GlobalConfig#getTestSecurityCoverage()}.
@@ -48,13 +51,17 @@ public class TestSecurityCoverage extends BasicTestCase {
 
 	public void testSecurityCoverage() {
 		List<String> problems = new ArrayList<>();
-		for (TypeCoverage coverage : SecurityCoverageCheck.getInstance().analyze()) {
+		SecurityCoverageAnalysis analysis = SecurityCoverageCheck.getInstance().newAnalysis();
+		for (TypeCoverage coverage : analysis.analyze()) {
 			if (!fails(coverage)) {
 				continue;
 			}
 			for (CoverageFinding finding : coverage.findings()) {
 				problems.add(SecurityCoverageCheck.describe(finding));
 			}
+		}
+		for (CoverageFinding finding : analysis.getUnattachedFindings()) {
+			problems.add(SecurityCoverageCheck.describe(finding));
 		}
 		if (!problems.isEmpty()) {
 			fail("The access definition is incomplete for " + problems.size() + " finding(s):\n"

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Grants: which role holds which operation on the objects of a type and on their attributes. The
+	left side is the type tree of the security coverage (SecurityCoverageTable), which writes the
+	selected type to the selectedType channel; the grants channel derives the grants of that type
+	(securityGrantsOf), again when "Apply configuration" replaces the rows of the tree.
+	
+	The right side shows the grants as a matrix: a row per role a user can hold on objects of the
+	type, followed by a row per role and attribute, grouped by what the grants are on; a column per
+	operation applying to the type, whose tooltip lists the views, commands and privileged scripts
+	checking the operation on the type. An attribute row offers Read and Write only. The table is
+	edited in place: a click on a check box stores the grant or its revocation in the application
+	configuration at once. A cell held through an implying operation is shown checked and cannot be
+	changed; its tooltip names the implying operation. A cell whose stored state is not yet in effect
+	is marked, the change taking effect with "Apply configuration".
+	
+	A role that is granted an operation on the type but cannot be held there gets a row as well,
+	marked as ineffective (row class and tooltip of the role), so that its grant can be revoked. A
+	cell the role holds through an implying operation shows a read-only check box.
+	
+	The columns of a table are computed when it is built, so the switch rebuilds the table for every
+	new value of the grants channel. A type delegating to an access parent, or one exempt from access
+	control, has no grants: the panel explains why instead of showing a table.
+-->
+<view>
+	<channels>
+		<channel name="rows"/>
+		<channel name="selection"/>
+		<channel name="selectedType"/>
+		<channel name="pending"/>
+		<derived-channel name="grants"
+			expr="securityGrantsOf($selectedType)"
+			inputs="selectedType, rows"
+		/>
+		<derived-channel name="grantsInfo"
+			expr="securityGrantsInfo($grants)"
+			inputs="grants"
+		/>
+	</channels>
+	<split-panel id="main"
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane id="types"
+				min-size="250"
+				size="35"
+				unit="%"
+			>
+				<panel id="types-panel"
+					fill="true"
+				>
+					<title>
+						<en>Types</en>
+						<de>Typen</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-arrow-repeat"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Apply configuration</en>
+								<de>Konfiguration anwenden</de>
+							</label>
+							<tooltip>
+								<en>Reads the stored access definition again and restarts the access services. Only then do the changed grants take effect.</en>
+								<de>Liest die gespeicherte Zugriffsdefinition neu ein und startet die Zugriffsdienste neu. Erst danach werden die geänderten Rechte wirksam.</de>
+							</tooltip>
+							<confirm expr="#('The configuration files are read again and the access services are restarted. This takes a moment.'@en, 'Die Konfigurationsdateien werden neu gelesen und die Zugriffsdienste neu gestartet. Das dauert einen Moment.'@de)"/>
+							<action class="com.top_logic.layout.view.admin.SecurityDefinitionAction"
+								mode="APPLY"
+							>
+								<with-result>
+									<write-channel name="rows"/>
+								</with-result>
+							</action>
+							<write-channel name="pending"
+								clear="true"
+							/>
+						</generic-command>
+					</commands>
+					<child id="types-table"
+						class="com.top_logic.layout.view.admin.SecurityCoverageTable"
+						input="rows"
+						pending="pending"
+						selected-type="selectedType"
+						selection="selection"
+					/>
+				</panel>
+			</pane>
+			<pane id="grants"
+				size="65"
+				unit="%"
+			>
+				<panel id="grants-panel"
+					fill="true"
+				>
+					<title>
+						<en>Grants</en>
+						<de>Rechte</de>
+					</title>
+					<visible-if
+						expr="$grantsInfo != null"
+						input="grantsInfo"
+					>
+						<inset>
+							<html input="grantsInfo"/>
+						</inset>
+					</visible-if>
+					<switch id="grants-switch"
+						input="grants"
+						rebuild="true"
+					>
+						<case id="with-grants"
+							test="$grants != null &amp;&amp; securityGrantsInfo($grants) == null"
+						>
+							<table id="grants-table"
+								edit-in-place="true"
+								group-by="part"
+								personalization-key="security-grants"
+								row-class="securityGrantsRowClass($grants, $row)"
+							>
+								<inputs>
+									<input channel="grants"/>
+								</inputs>
+								<columns>
+									<computed-column name="part"
+										sortable="false"
+										type="tl.model:TLModelPart"
+										width="220"
+									>
+										<label>
+											<en>Grant on</en>
+											<de>Recht an</de>
+											<tooltip>
+												<en>The type itself, for the operations on its objects, or one of its attributes, for reading and writing its values.</en>
+												<de>Der Typ selbst, für die Operationen an seinen Objekten, oder eines seiner Attribute, für das Lesen und Schreiben seiner Werte.</de>
+											</tooltip>
+										</label>
+										<inputs>
+											<input channel="grants"/>
+										</inputs>
+										<value><![CDATA[securityGrantsPart($grants, $row)]]></value>
+									</computed-column>
+									<computed-column name="role"
+										type="tl.accounts:Role"
+										width="220"
+									>
+										<label>
+											<en>Role</en>
+											<de>Rolle</de>
+											<tooltip>
+												<en>A role a user can hold on objects of the type: a role rule or a role parent rule delivers it, or it is assigned to an object of the type directly.</en>
+												<de>Eine Rolle, die ein Benutzer an Objekten des Typs haben kann: Eine Rollenregel oder eine Rollenelternregel vergibt sie, oder sie ist einem Objekt des Typs direkt zugewiesen.</de>
+											</tooltip>
+										</label>
+										<inputs>
+											<input channel="grants"/>
+										</inputs>
+										<value><![CDATA[securityGrantsRole($row)]]></value>
+										<tooltip><![CDATA[securityGrantsRoleTooltip($grants, $row)]]></tooltip>
+									</computed-column>
+									<dynamic-columns name="operations"
+										column-as="operation"
+										sortable="false"
+										type="tl.core:Boolean"
+										width="120"
+									>
+										<inputs>
+											<input channel="grants"/>
+										</inputs>
+										<columns><![CDATA[securityGrantsOperations($grants)]]></columns>
+										<column-name><![CDATA[securityGrantsOperationName($operation)]]></column-name>
+										<column-label><![CDATA[securityGrantsOperationLabel($grants, $operation)]]></column-label>
+										<value><![CDATA[securityGrantsGranted($grants, $row, $operation)]]></value>
+										<update><![CDATA[securityGrantsSet($grants, $row, $operation, $value)]]></update>
+										<can-update><![CDATA[securityGrantsEditable($grants, $row, $operation)]]></can-update>
+										<tooltip><![CDATA[securityGrantsTooltip($grants, $row, $operation)]]></tooltip>
+										<cell-class><![CDATA[securityGrantsCellClass($grants, $row, $operation)]]></cell-class>
+									</dynamic-columns>
+								</columns>
+								<rows><![CDATA[securityGrantsRows($grants)]]></rows>
+							</table>
+						</case>
+					</switch>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

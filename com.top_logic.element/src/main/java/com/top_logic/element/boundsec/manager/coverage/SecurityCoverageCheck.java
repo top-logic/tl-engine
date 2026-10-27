@@ -6,12 +6,16 @@
 
 package com.top_logic.element.boundsec.manager.coverage;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStringSet;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
@@ -23,6 +27,7 @@ import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -45,6 +50,14 @@ import com.top_logic.util.model.ModelService;
  * application decides which of the gaps it accepts, so the log is a report, not an alarm: the
  * coverage tab of the security administration shows the same findings interactively, and a test
  * that must not tolerate a gap asserts on them.
+ * </p>
+ *
+ * <p>
+ * Besides the read access, the check reports the operations: an operation declared for a type that
+ * no role holds there, and an operation that a view, a command, a form or a privileged script checks
+ * on a type it does not apply to, or that is not known at all. The places checking an operation are
+ * reported by the configured {@link Config#getOperationUses() providers}; the startup log covers
+ * the access definition alone, since those places are read on demand.
  * </p>
  *
  * <p>
@@ -74,6 +87,9 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 	/** Separator between the type of a finding and its message. */
 	private static final String TYPE_SEPARATOR = ": ";
 
+	/** What a finding about places not declaring the type they check is reported for. */
+	private static final String UNKNOWN_TYPE = "?";
+
 	/**
 	 * Configuration options for {@link SecurityCoverageCheck}.
 	 */
@@ -84,6 +100,12 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 
 		/** Configuration name for the value of {@link #getLogFindings()}. */
 		String LOG_FINDINGS = "log-findings";
+
+		/** Configuration name for the value of {@link #getOperationUses()}. */
+		String OPERATION_USES = "operation-uses";
+
+		/** Tag of an entry of {@link #getOperationUses()}. */
+		String PROVIDER = "provider";
 
 		/**
 		 * Names of the model modules that are deliberately left without an access definition.
@@ -110,7 +132,22 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 		@BooleanDefault(true)
 		boolean getLogFindings();
 
+		/**
+		 * The sources of the places checking an operation: views, commands, forms, privileged
+		 * scripts.
+		 *
+		 * <p>
+		 * The analysis reports an operation such a place uses that is unknown or does not apply to
+		 * the type it is checked on. A module defining such places contributes its provider here.
+		 * </p>
+		 */
+		@Name(OPERATION_USES)
+		@EntryTag(PROVIDER)
+		List<PolymorphicConfiguration<? extends OperationUseProvider>> getOperationUses();
+
 	}
+
+	private final List<OperationUseProvider> _useProviders;
 
 	/**
 	 * Creates a {@link SecurityCoverageCheck}.
@@ -122,6 +159,13 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 	 */
 	public SecurityCoverageCheck(InstantiationContext context, Config config) {
 		super(context, config);
+		_useProviders = new ArrayList<>();
+		for (PolymorphicConfiguration<? extends OperationUseProvider> provider : config.getOperationUses()) {
+			OperationUseProvider instance = context.getInstance(provider);
+			if (instance != null) {
+				_useProviders.add(instance);
+			}
+		}
 	}
 
 	@Override
@@ -129,7 +173,10 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 		super.startUp();
 
 		if (getConfig().getLogFindings()) {
-			ThreadContext.inSystemContext(SecurityCoverageCheck.class, () -> logCoverage(analyze()));
+			// The places checking an operation - the views above all - are read on demand, not
+			// while the services start up.
+			ThreadContext.inSystemContext(SecurityCoverageCheck.class,
+				() -> logCoverage(SecurityCoverageAnalysis.newInstance(getConfig().getExcludedModules()).analyze()));
 		}
 	}
 
@@ -140,7 +187,46 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 	 * @return The coverage of every analyzed type, ordered by the qualified type name.
 	 */
 	public List<TypeCoverage> analyze() {
-		return SecurityCoverageAnalysis.newInstance(getConfig().getExcludedModules()).analyze();
+		return newAnalysis().analyze();
+	}
+
+	/**
+	 * A new analysis of the access definition in effect, with the exclusions and the
+	 * {@link #getOperationUses() operation uses} of this check.
+	 *
+	 * <p>
+	 * An analysis answers more than the findings: which roles a user can hold on a type, which
+	 * places check an operation. A user interface working with these asks the analysis of the
+	 * check, so that it sees what the check reports.
+	 * </p>
+	 */
+	public SecurityCoverageAnalysis newAnalysis() {
+		return SecurityCoverageAnalysis.newInstance(getConfig().getExcludedModules(), getOperationUses());
+	}
+
+	/**
+	 * The places of the application checking an operation, as the configured
+	 * {@link Config#getOperationUses() providers} report them.
+	 *
+	 * <p>
+	 * A provider failing to report is logged and contributes nothing, so that a broken source of
+	 * uses does not hide the findings of the access definition itself.
+	 * </p>
+	 */
+	public List<OperationUse> getOperationUses() {
+		if (_useProviders.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<OperationUse> result = new ArrayList<>();
+		for (OperationUseProvider provider : _useProviders) {
+			try {
+				result.addAll(provider.getOperationUses());
+			} catch (RuntimeException ex) {
+				Logger.error("Cannot determine the operation uses of " + provider + ".", ex,
+					SecurityCoverageCheck.class);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -181,7 +267,8 @@ public class SecurityCoverageCheck extends ConfiguredManagedClass<SecurityCovera
 	 * @return The line to write to the log, or to a test failure report.
 	 */
 	public static String describe(CoverageFinding finding) {
-		return TLModelUtil.qualifiedName(finding.getType()) + TYPE_SEPARATOR
+		TLClass type = finding.getType();
+		return (type == null ? UNKNOWN_TYPE : TLModelUtil.qualifiedName(type)) + TYPE_SEPARATOR
 			+ Resources.getLogInstance().getString(finding.getMessage());
 	}
 

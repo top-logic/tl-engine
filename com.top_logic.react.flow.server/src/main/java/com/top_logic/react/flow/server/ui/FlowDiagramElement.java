@@ -36,10 +36,13 @@ import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewScripts;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.react.flow.callback.DiagramHandler;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
@@ -76,6 +79,9 @@ public class FlowDiagramElement implements UIElement {
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
 
 		/**
 		 * TL-Script expression that creates a {@link Diagram}.
@@ -127,6 +133,20 @@ public class FlowDiagramElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * Types whose object changes (create / update / delete) redraw the diagram, in addition to
+		 * the objects on the {@link #getInputs() input} channels, which are always observed.
+		 *
+		 * <p>
+		 * Configure this for a diagram that draws more than its input objects - the parts of a
+		 * product, their names and the connections between them: a part created, edited or deleted
+		 * then shows in the diagram right away.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 
 		/**
 		 * Common super-interface for configurations of a {@link DiagramHandler}.
@@ -206,13 +226,18 @@ public class FlowDiagramElement implements UIElement {
 		control.setCssClass(_config.getCssClass());
 
 		// 4. Listen for input channel changes and rebuild diagram.
-		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> {
-			Diagram newDiagram = buildDiagram(inputChannels);
-			control.setModel(newDiagram);
-		};
+		Runnable rebuild = () -> control.setModel(buildDiagram(inputChannels));
+		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> rebuild.run();
 		for (ViewChannel channel : inputChannels) {
 			channel.addListener(listener);
 		}
+
+		// Rebuild as well when the objects on the input channels or objects of the observed types
+		// change.
+		ChannelObjectObserver observer = new ChannelObjectObserver(inputChannels,
+			ObservedTypes.resolve(_config.getObservedTypes()), rebuild);
+		control.addAttachListener(() -> observer.attach(context.getModelScope()));
+		control.addDetachListener(observer::detach);
 
 		// 5. Wire selection channel if configured.
 		ChannelRef selectionRef = _config.getSelection();

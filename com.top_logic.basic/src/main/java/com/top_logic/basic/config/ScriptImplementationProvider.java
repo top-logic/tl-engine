@@ -168,8 +168,9 @@ public interface ScriptImplementationProvider {
 	 *        A script configuration created by this provider.
 	 * @param property
 	 *        A property of the given script configuration.
-	 * @return The implemented method, or <code>null</code>, if the given property is no script of
-	 *         a method, or the given configuration is no script configuration of this provider.
+	 * @return The implemented method, or <code>null</code>, if the given property implements no
+	 *         method (neither as script, nor as value of a method without parameters), or the given
+	 *         configuration is no script configuration of this provider.
 	 */
 	default Method getImplementedMethod(ConfigurationItem script, PropertyDescriptor property) {
 		return null;

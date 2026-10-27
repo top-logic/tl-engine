@@ -6,9 +6,12 @@
 package test.com.top_logic.basic.config;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -24,6 +27,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.I18NConstants;
 import com.top_logic.basic.config.MethodProperty;
 import com.top_logic.basic.reflect.JavaTypeUtil;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Test case for {@link MethodProperty}.
@@ -144,6 +148,86 @@ public class TestMethodProperty extends TestCase {
 
 		@Override
 		String toString();
+	}
+
+	public enum Color {
+		RED, GREEN;
+	}
+
+	public interface Values<T> {
+		boolean isActive();
+
+		default String getTitle() {
+			return "java";
+		}
+
+		Object compute(Object x);
+
+		Object getAnything();
+
+		default Color getColor() {
+			return Color.RED;
+		}
+
+		T getTyped();
+
+		default ResKey getLabel() {
+			return null;
+		}
+
+		default List<String> getNames() {
+			return List.of();
+		}
+
+		default Class<? extends Number> getNumberType() {
+			return Integer.class;
+		}
+
+		default Runnable getAction() {
+			return null;
+		}
+	}
+
+	public void testValueTypes() throws ConfigurationException {
+		Map<String, MethodProperty> properties = byName(MethodProperty.getMethodProperties(Values.class, RESERVED));
+		assertEquals("Abstract value method.", boolean.class, properties.get("is-active").getValueType(null));
+		assertEquals("Default value method.", String.class, properties.get("get-title").getValueType(null));
+		assertNull("Method with parameters.", properties.get("compute").getValueType(null));
+		assertNull("Method returning Object.", properties.get("get-anything").getValueType(null));
+		assertEquals("Enum.", Color.class, properties.get("get-color").getValueType(null));
+		assertNull("Unresolved type variable.", properties.get("get-typed").getValueType(null));
+		assertEquals("Type with own format.", ResKey.class, properties.get("get-label").getValueType(null));
+		assertNull("Collection.", properties.get("get-names").getValueType(null));
+		assertEquals("Parameterized class type.", Class.class, properties.get("get-number-type").getValueType(null));
+		assertNull("Interface.", properties.get("get-action").getValueType(null));
+
+		Type implementedType = JavaTypeUtil.newParameterizedType(Values.class, String.class);
+		assertEquals("Type variable resolved in the implemented type.", String.class,
+			properties.get("get-typed").getValueType(implementedType));
+		assertNull("Type variable resolved to a non-value type.",
+			properties.get("get-typed").getValueType(JavaTypeUtil.newParameterizedType(Values.class, Object.class)));
+	}
+
+	public void testIsValueType() {
+		assertTrue(MethodProperty.isValueType(int.class));
+		assertTrue(MethodProperty.isValueType(Integer.class));
+		assertTrue(MethodProperty.isValueType(String.class));
+		assertTrue(MethodProperty.isValueType(Color.class));
+		assertTrue(MethodProperty.isValueType(Class.class));
+		assertTrue(MethodProperty.isValueType(ResKey.class));
+		assertFalse(MethodProperty.isValueType(void.class));
+		assertFalse(MethodProperty.isValueType(Object.class));
+		assertFalse(MethodProperty.isValueType(Runnable.class));
+		assertFalse(MethodProperty.isValueType(List.class));
+		assertFalse(MethodProperty.isValueType(com.top_logic.basic.config.ConfigurationItem.class));
+	}
+
+	private static Map<String, MethodProperty> byName(List<MethodProperty> properties) {
+		Map<String, MethodProperty> result = new LinkedHashMap<>();
+		for (MethodProperty property : properties) {
+			result.put(property.getPropertyName(), property);
+		}
+		return result;
 	}
 
 	public void testDefaultConfigurationName() {

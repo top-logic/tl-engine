@@ -32,6 +32,7 @@ import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyDescriptorConfig;
+import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -50,7 +51,9 @@ import com.top_logic.layout.ScriptFunction2;
 import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
+import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.I18NConstants;
 import com.top_logic.model.search.form.ScriptFunction1Impl;
 import com.top_logic.model.search.form.ScriptFunction2Impl;
@@ -151,6 +154,36 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 		}
 	}
 
+	/**
+	 * Interface with methods implemented by values and by scripts.
+	 */
+	public interface Settings {
+		boolean isActive();
+
+		Object compute(Object x);
+
+		Object getAnything();
+
+		default String getTitle() {
+			return "java";
+		}
+
+		default int getCount() {
+			return 7;
+		}
+
+		default Color getColor() {
+			return Color.RED;
+		}
+	}
+
+	/**
+	 * Functional interface implemented by a value.
+	 */
+	public interface Flag {
+		boolean isOn();
+	}
+
 	public interface A extends ConfigurationItem {
 		String FILTER = "filter";
 
@@ -183,6 +216,12 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 		String OVERLOADED = "overloaded";
 
 		String COMPARATOR = "comparator";
+
+		String SETTINGS = "settings";
+
+		String FLAG = "flag";
+
+		String DEFAULT_PROVIDER = "default-provider";
 
 		@Name(FILTER)
 		PolymorphicConfiguration<Filter<Object>> getFilter();
@@ -231,6 +270,15 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 
 		@Name(COMPARATOR)
 		PolymorphicConfiguration<Comparator<Object>> getComparator();
+
+		@Name(SETTINGS)
+		PolymorphicConfiguration<Settings> getSettings();
+
+		@Name(FLAG)
+		PolymorphicConfiguration<Flag> getFlag();
+
+		@Name(DEFAULT_PROVIDER)
+		PolymorphicConfiguration<DefaultProvider> getDefaultProvider();
 	}
 
 	public void testRealProvider() {
@@ -625,6 +673,119 @@ public class TestTLScriptImplementation extends AbstractSearchExpressionTest {
 			writer.write(ROOT_TAG, descriptor, item);
 		}
 		assertTrue(buffer.toString(), buffer.toString().contains("filter=\"x -&gt; true\""));
+	}
+
+	public void testValueProperties() throws ConfigurationException {
+		A a = read("<a><settings is-active='true' get-title='t' compute='x -> $x + 1'>"
+			+ "<get-anything>'v'</get-anything>"
+			+ "</settings></a>");
+		ConfigurationDescriptor descriptor = a.getSettings().descriptor();
+		PropertyDescriptor active = descriptor.getProperty("is-active");
+		assertEquals(PropertyKind.PLAIN, active.kind());
+		assertEquals(boolean.class, active.getType());
+		assertTrue("Abstract value method.", active.isMandatory());
+		assertEquals(String.class, descriptor.getProperty("get-title").getType());
+		assertFalse("Default value method.", descriptor.getProperty("get-title").isMandatory());
+		assertEquals("Method with parameters.", Expr.class, descriptor.getProperty("compute").getType());
+		assertEquals("Method without parameters returning Object.", Expr.class,
+			descriptor.getProperty("get-anything").getType());
+
+		Settings settings = instance(a.getSettings());
+		assertTrue(settings.isActive());
+		assertEquals("t", settings.getTitle());
+		assertEquals(2L, ((Number) settings.compute(1)).longValue());
+		assertEquals("Script without parameters.", "v", settings.getAnything());
+		assertEquals("Java default of an unset value method.", 7, settings.getCount());
+		assertEquals("Java default of an unset value method.", Color.RED, settings.getColor());
+
+		Settings overridden = instance(read("<a><settings is-active='false' get-count='3' get-color='GREEN'"
+			+ " compute='x -> null' get-anything='null'/></a>").getSettings());
+		assertFalse(overridden.isActive());
+		assertEquals(3, overridden.getCount());
+		assertEquals(Color.GREEN, overridden.getColor());
+		assertEquals("java", overridden.getTitle());
+	}
+
+	public void testMissingValue() {
+		try {
+			read("<a><settings compute='x -> $x' get-anything='null'/></a>");
+			fail("Abstract value method is-active not implemented.");
+		} catch (ConfigurationException | ConfigurationError ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("is-active"));
+		}
+	}
+
+	public void testValueImplementedMethod() throws Exception {
+		A a = read("<a><settings is-active='true' compute='x -> $x' get-anything='null'/></a>");
+		ConfigurationDescriptor descriptor = a.getSettings().descriptor();
+		assertEquals(Settings.class.getMethod("isActive"),
+			ScriptImplementations.getImplementedMethod(a.getSettings(), descriptor.getProperty("is-active")));
+		assertEquals(Settings.class.getMethod("getCount"),
+			ScriptImplementations.getImplementedMethod(a.getSettings(), descriptor.getProperty("get-count")));
+	}
+
+	public void testValueXmlRoundTrip() throws Exception {
+		A a = read("<a><settings is-active='true' get-count='3' compute='x -> $x' get-anything='null'/>"
+			+ "<default-provider is-computed-in-transaction='true' create-default='c -> a -> 42'/></a>");
+		String xml = toXML(a);
+		assertTrue("Value written as value: " + xml, xml.contains("is-active=\"true\""));
+		assertTrue("Value written as value: " + xml, xml.contains("get-count=\"3\""));
+		assertTrue("Value written as value: " + xml, xml.contains("is-computed-in-transaction=\"true\""));
+		assertFalse(xml, xml.contains("class="));
+
+		A copy = read(xml);
+		assertEquals(a, copy);
+		DefaultProvider provider = instance(copy.getDefaultProvider());
+		assertTrue(provider.isComputedInTransaction());
+		assertEquals(42, ((Number) provider.createDefault(null, null)).intValue());
+	}
+
+	public void testDefaultProviderTextForm() throws Exception {
+		A a = read("<a default-provider='c -> a -> 1'/>");
+		DefaultProvider provider = instance(a.getDefaultProvider());
+		assertFalse("Java default of the unset value method.", provider.isComputedInTransaction());
+		String xml = toXML(a);
+		assertTrue("Text form, since no default method is implemented: " + xml,
+			xml.contains("default-provider=\"c -&gt; a -&gt; 1\"") || xml.contains("default-provider=\"c -> a -> 1\""));
+	}
+
+	public void testValueJsonRoundTrip() throws Exception {
+		A a = read("<a flag='true'><settings is-active='true' get-count='3' get-color='GREEN' compute='x -> $x'"
+			+ " get-anything='null'/></a>");
+		ConfigurationDescriptor staticType = TypedConfiguration.getConfigurationDescriptor(A.class);
+		StringWriter buffer = new StringWriter();
+		new JsonConfigurationWriter(buffer).write(staticType, a);
+		String json = buffer.toString();
+		assertFalse("No type annotation: " + json, json.contains(ScriptImplementation.class.getName()));
+		assertTrue("Value written as JSON value: " + json, json.contains("\"is-active\":true"));
+		assertTrue("Value written as JSON value: " + json, json.contains("\"get-count\":3"));
+		assertTrue("Text form of a functional value: " + json, json.contains("\"flag\":\"true\""));
+
+		A copy = (A) new JsonConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			staticType).setSource(CharacterContents.newContent(json)).read();
+		assertEquals(a, copy);
+		Settings settings = instance(copy.getSettings());
+		assertTrue(settings.isActive());
+		assertEquals(3, settings.getCount());
+		assertEquals(Color.GREEN, settings.getColor());
+		assertTrue(((Flag) instance(copy.getFlag())).isOn());
+	}
+
+	public void testFunctionalValue() throws Exception {
+		A attribute = read("<a flag='true'/>");
+		A text = read("<a><flag>true</flag></a>");
+		A element = read("<a><flag is-on='true'/></a>");
+		assertTrue(((Flag) instance(attribute.getFlag())).isOn());
+		assertEquals(attribute, text);
+		assertEquals(attribute, element);
+
+		PropertyDescriptor on = attribute.getFlag().descriptor().getProperty("is-on");
+		assertEquals(Boolean.TRUE, attribute.getFlag().value(on));
+
+		String xml = toXML(element);
+		assertTrue("Text form of the value: " + xml, xml.contains("flag=\"true\""));
+		assertEquals(element, read(xml));
+		assertFalse(((Flag) instance(read("<a flag='false'/>").getFlag())).isOn());
 	}
 
 	private static A read(String xml) throws ConfigurationException {

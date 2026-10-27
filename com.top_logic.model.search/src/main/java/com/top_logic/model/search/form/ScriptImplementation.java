@@ -15,10 +15,12 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.MethodProperty;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.model.search.expr.config.ExprFormat;
@@ -33,14 +35,16 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * <p>
  * The configuration of a script implementation of an interface <code>F</code> has the descriptor
- * of the {@link ScriptImplementationType} of <code>F</code>: one {@link Expr expression} property
- * per method of <code>F</code>. The instance created from such a configuration is a dynamic proxy
- * implementing <code>F</code> and {@link ConfiguredInstance}. A call to a method of <code>F</code>
- * executes the expression of the method with the call arguments (the elements of a variable
- * argument array are passed as separate arguments). The script result is converted to the return
- * type of the method, resolved in the context of the {@link Config#getImplementedType()
- * implemented type}, see {@link #resultConverter(Type, Method)}. A default method of
- * <code>F</code> without expression executes its Java implementation.
+ * of the {@link ScriptImplementationType} of <code>F</code>: one property per method of
+ * <code>F</code>, an {@link Expr expression} or, for a method without parameters returning a plain
+ * value, a value. The instance created from such a configuration is a dynamic proxy implementing
+ * <code>F</code> and {@link ConfiguredInstance}. A call to a method of <code>F</code> executes the
+ * expression of the method with the call arguments (the elements of a variable argument array are
+ * passed as separate arguments). The script result is converted to the return type of the method,
+ * resolved in the context of the {@link Config#getImplementedType() implemented type}, see
+ * {@link #resultConverter(Type, Method)}. A method implemented by a value returns the configured
+ * value. A default method of <code>F</code> without expression or value executes its Java
+ * implementation.
  * </p>
  *
  * <p>
@@ -108,17 +112,37 @@ public final class ScriptImplementation {
 		}
 		Map<List<Object>, MethodImplementation> implementations = new LinkedHashMap<>();
 		for (MethodProperty method : type.getMethods()) {
-			Expr expression = (Expr) config.value(type.getProperty(method));
+			PropertyDescriptor property = type.getProperty(method);
+			if (type.isValue(method)) {
+				if (!config.valueSet(property)) {
+					continue;
+				}
+				Object value = config.value(property);
+				implementations.put(method.getSignature(),
+					new MethodImplementation(method, specification(property, value), null, null, value));
+				continue;
+			}
+			Expr expression = (Expr) config.value(property);
 			if (expression == null) {
 				continue;
 			}
-			implementations.put(method.getSignature(), new MethodImplementation(method, expression,
-				QueryExecutor.compile(expression), resultConverter(implementedType, method.getMethod())));
+			implementations.put(method.getSignature(),
+				new MethodImplementation(method, ExprFormat.INSTANCE.getSpecification(expression),
+					QueryExecutor.compile(expression), resultConverter(implementedType, method.getMethod()), null));
 		}
 		Class<?> implementedInterface = type.getImplementedInterface();
 		Handler handler = new Handler(config, implementedInterface, implementations);
 		return Proxy.newProxyInstance(classLoader(implementedInterface), new Class<?>[] {
 			implementedInterface, ConfiguredInstance.class }, handler);
+	}
+
+	/**
+	 * The text form of the value of the given property.
+	 */
+	private static String specification(PropertyDescriptor property, Object value) {
+		@SuppressWarnings("unchecked")
+		ConfigurationValueProvider<Object> format = (ConfigurationValueProvider<Object>) property.getValueProvider();
+		return format == null ? String.valueOf(value) : format.getSpecification(value);
 	}
 
 	/**
@@ -210,12 +234,26 @@ public final class ScriptImplementation {
 	}
 
 	/**
-	 * The script implementing a method.
+	 * The script or value implementing a method.
+	 *
+	 * @param method
+	 *        The implemented method.
+	 * @param specification
+	 *        The text form of the script or value.
+	 * @param query
+	 *        The compiled script, <code>null</code> for a method implemented by a value.
+	 * @param resultConverter
+	 *        The conversion of the script result.
+	 * @param value
+	 *        The value returned by a method implemented by a value.
 	 */
-	private record MethodImplementation(MethodProperty method, Expr expression, QueryExecutor query,
-			ValueConverter resultConverter) {
+	private record MethodImplementation(MethodProperty method, String specification, QueryExecutor query,
+			ValueConverter resultConverter, Object value) {
 
 		Object invoke(Method called, Object[] args) {
+			if (query == null) {
+				return value;
+			}
 			Object result = query.execute(scriptArguments(called, args));
 			if (called.getReturnType() == void.class) {
 				return null;
@@ -233,7 +271,7 @@ public final class ScriptImplementation {
 		/**
 		 * Marker for a method without script in {@link #_byMethod}.
 		 */
-		private static final MethodImplementation NONE = new MethodImplementation(null, null, null, null);
+		private static final MethodImplementation NONE = new MethodImplementation(null, null, null, null, null);
 
 		private final Config<?> _config;
 
@@ -304,7 +342,7 @@ public final class ScriptImplementation {
 					result.append(implementation.method().getPropertyName());
 					result.append(": ");
 				}
-				result.append(ExprFormat.INSTANCE.getSpecification(implementation.expression()));
+				result.append(implementation.specification());
 			}
 			result.append(")");
 			return result.toString();

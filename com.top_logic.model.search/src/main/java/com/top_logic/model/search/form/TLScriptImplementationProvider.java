@@ -14,6 +14,7 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigBuilder;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.MethodProperty;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -31,7 +32,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * <p>
  * A property of type {@link PolymorphicConfiguration PolymorphicConfiguration&lt;F&gt;} is
  * implemented by a {@link ScriptImplementation} with one TL-Script expression per method of
- * <code>F</code>. Its configuration has the descriptor of the {@link ScriptImplementationType} of
+ * <code>F</code>, or a value for a method without parameters returning a plain value (see
+ * {@link ScriptImplementationType}). Its configuration has the descriptor of the {@link ScriptImplementationType} of
  * <code>F</code> (with the type arguments of the property), and is written as element without
  * implementation class, one property per method:
  * </p>
@@ -52,8 +54,9 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * </p>
  *
  * <p>
- * If <code>F</code> is a functional interface, the expression of its single abstract method is also
- * given as text: <code>filter="x -&gt; ..."</code> or <code>&lt;filter&gt;x -&gt; ...&lt;/filter&gt;</code>.
+ * If <code>F</code> is a functional interface, the expression (or value) of its single abstract
+ * method is also given as text: <code>filter="x -&gt; ..."</code> or
+ * <code>&lt;filter&gt;x -&gt; ...&lt;/filter&gt;</code>.
  * Such a configuration is written back in this text form, as long as it implements no default
  * method.
  * </p>
@@ -127,7 +130,6 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 	@Override
 	public PolymorphicConfiguration<?> parse(PropertyDescriptor property, CharSequence text)
 			throws ConfigurationException {
-		Expr expression = ExprFormat.INSTANCE.getValue(property.getPropertyName(), text);
 		if (isGeneric(property)) {
 			ScriptImplementationType type = ScriptImplementationType.of(implementedType(property));
 			MethodProperty method = type.getFunctionalMethod();
@@ -136,10 +138,18 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 				throw new IllegalStateException(
 					"No functional interface: " + type.getImplementedInterface().getName());
 			}
+			PropertyDescriptor methodProperty = type.getProperty(method);
+			Object value;
+			if (type.isValue(method)) {
+				value = methodProperty.getValueProvider().getValue(property.getPropertyName(), text);
+			} else {
+				value = ExprFormat.INSTANCE.getValue(property.getPropertyName(), text);
+			}
 			ScriptImplementation.Config<?> result = type.newConfig();
-			result.update(type.getProperty(method), expression);
+			result.update(methodProperty, value);
 			return result;
 		}
+		Expr expression = ExprFormat.INSTANCE.getValue(property.getPropertyName(), text);
 		WithExpression result = newScriptFunctionConfig(property);
 		result.setExpression(expression);
 		return (PolymorphicConfiguration<?>) result;
@@ -166,7 +176,16 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 		ScriptImplementationType type = ScriptImplementationType.forDescriptor(config.descriptor());
 		Expr expression;
 		if (type != null) {
-			expression = (Expr) config.value(type.getProperty(type.getFunctionalMethod()));
+			MethodProperty method = type.getFunctionalMethod();
+			PropertyDescriptor methodProperty = type.getProperty(method);
+			Object value = config.value(methodProperty);
+			if (type.isValue(method)) {
+				@SuppressWarnings("unchecked")
+				ConfigurationValueProvider<Object> format =
+					(ConfigurationValueProvider<Object>) methodProperty.getValueProvider();
+				return format.getSpecification(value);
+			}
+			expression = (Expr) value;
 		} else {
 			expression = ((WithExpression) config).getExpression();
 		}
@@ -221,9 +240,9 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 
 	/**
 	 * Creates the script configuration with a {@link #skeleton(Method) skeleton} for each method
-	 * that must be implemented: the expression of a script function, and the abstract methods of a
-	 * {@link ScriptImplementationType}. A default method keeps its Java implementation, until a
-	 * script is entered for it.
+	 * that must be implemented by a script: the expression of a script function, and the abstract
+	 * methods of a {@link ScriptImplementationType} that are not implemented by a value. A default
+	 * method keeps its Java implementation, until a script or value is entered for it.
 	 */
 	@Override
 	public PolymorphicConfiguration<?> createScriptConfig(PropertyDescriptor property) throws ConfigurationException {
@@ -231,7 +250,7 @@ public class TLScriptImplementationProvider implements ScriptImplementationProvi
 		ScriptImplementationType type = ScriptImplementationType.forDescriptor(result.descriptor());
 		if (type != null) {
 			for (MethodProperty method : type.getMethods()) {
-				if (method.isAbstract()) {
+				if (method.isAbstract() && !type.isValue(method)) {
 					result.update(type.getProperty(method), skeleton(method.getMethod()));
 				}
 			}

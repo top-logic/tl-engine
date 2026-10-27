@@ -35,9 +35,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * The configuration type of TL-Script implementations of a Java interface.
  *
  * <p>
- * A TL-Script implementation of an interface <code>F</code> is configured with one TL-Script
- * {@link Expr expression} per method of <code>F</code>. The configuration has one property per
- * method, named after the method in hyphenated form:
+ * A TL-Script implementation of an interface <code>F</code> is configured with one property per
+ * method of <code>F</code>, named after the method in hyphenated form:
  * </p>
  *
  * <pre>
@@ -46,6 +45,14 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *     &lt;supports-model&gt;...&lt;/supports-model&gt;
  * &lt;/builder&gt;
  * </pre>
+ *
+ * <p>
+ * A method without parameters whose return type has a plain value representation (e.g.
+ * <code>boolean</code>, {@link String}, an enumeration, see
+ * {@link MethodProperty#getValueType(Type)}) is implemented by a value property of that type,
+ * e.g. <code>&lt;provider is-computed-in-transaction="true" .../&gt;</code>. All other methods are
+ * implemented by a TL-Script {@link Expr expression}.
+ * </p>
  *
  * <p>
  * The {@link #getDescriptor() descriptor} of this configuration is created from the methods of
@@ -64,9 +71,10 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  *
  * <ul>
  * <li>An abstract method of <code>F</code> is a mandatory property, a missing one is reported as
- * configuration error.</li>
- * <li>A default method of <code>F</code> is an optional property. If it is given, the script
- * overrides the Java implementation of the default method.</li>
+ * configuration error. This also holds for a value method with a primitive return type, its
+ * property has no implicit default.</li>
+ * <li>A default method of <code>F</code> is an optional property. If it is given, the script or
+ * value overrides the Java implementation of the default method.</li>
  * <li>An interface cannot be implemented by TL-Script, if one of its abstract methods is overloaded
  * or generic, or if the property name of a method clashes with the one of another method or with
  * the {@link PolymorphicConfiguration#IMPLEMENTATION_CLASS_NAME implementation class} or
@@ -132,11 +140,15 @@ public final class ScriptImplementationType {
 
 	private final Map<MethodProperty, PropertyDescriptor> _properties;
 
+	private final Map<MethodProperty, Class<?>> _valueTypes;
+
 	private ScriptImplementationType(Type implementedType, Class<?> implementedInterface,
-			List<MethodProperty> methods, ConfigurationDescriptor descriptor) {
+			List<MethodProperty> methods, Map<MethodProperty, Class<?>> valueTypes,
+			ConfigurationDescriptor descriptor) {
 		_implementedType = implementedType;
 		_implementedInterface = implementedInterface;
 		_methods = methods;
+		_valueTypes = valueTypes;
 		_descriptor = descriptor;
 
 		Map<MethodProperty, PropertyDescriptor> properties = new HashMap<>();
@@ -203,9 +215,16 @@ public final class ScriptImplementationType {
 		set(config, RES_PREFIX, implementedInterface.getName().replace('$', '.') + ".");
 
 		Map<String, PropertyDescriptorConfig> properties = new LinkedHashMap<>();
+		Map<MethodProperty, Class<?>> valueTypes = new HashMap<>();
 		for (MethodProperty method : methods) {
 			PropertyDescriptorConfig property = newProperty(method.getPropertyName());
-			set(property, PropertyDescriptorConfig.TYPE, Expr.class);
+			Class<?> valueType = method.getValueType(implementedType);
+			if (valueType != null) {
+				valueTypes.put(method, valueType);
+				set(property, PropertyDescriptorConfig.TYPE, valueType);
+			} else {
+				set(property, PropertyDescriptorConfig.TYPE, Expr.class);
+			}
 			set(property, PropertyDescriptorConfig.LABEL, ResKey.text(method.getPropertyName()));
 			if (method.isAbstract()) {
 				set(property, ANNOTATIONS, annotations(TypedConfiguration.newAnnotationItem(Mandatory.class)));
@@ -228,7 +247,7 @@ public final class ScriptImplementationType {
 			throw new ConfigurationException("Cannot create the script configuration of '"
 				+ implementedType.getTypeName() + "': " + protocol.getErrors());
 		}
-		return new ScriptImplementationType(implementedType, implementedInterface, methods, descriptor);
+		return new ScriptImplementationType(implementedType, implementedInterface, methods, valueTypes, descriptor);
 	}
 
 	private static PropertyDescriptorConfig newProperty(String name) {
@@ -290,15 +309,39 @@ public final class ScriptImplementationType {
 	}
 
 	/**
-	 * The property of {@link #getDescriptor()} holding the expression that implements the given
-	 * method.
+	 * The property of {@link #getDescriptor()} implementing the given method.
 	 *
 	 * @param method
 	 *        One of {@link #getMethods()}.
-	 * @return The property of type {@link Expr}.
+	 * @return The property of type {@link Expr}, or of the {@link #getValueType(MethodProperty)
+	 *         value type} of a method implemented by a value.
 	 */
 	public PropertyDescriptor getProperty(MethodProperty method) {
 		return _properties.get(method);
+	}
+
+	/**
+	 * The type of the value implementing the given method.
+	 *
+	 * @param method
+	 *        One of {@link #getMethods()}.
+	 * @return The type of the value property implementing the given method, or <code>null</code>,
+	 *         if the method is implemented by a TL-Script expression.
+	 *
+	 * @see MethodProperty#getValueType(Type)
+	 */
+	public Class<?> getValueType(MethodProperty method) {
+		return _valueTypes.get(method);
+	}
+
+	/**
+	 * Whether the given method is implemented by a value instead of a TL-Script expression.
+	 *
+	 * @param method
+	 *        One of {@link #getMethods()}.
+	 */
+	public boolean isValue(MethodProperty method) {
+		return _valueTypes.containsKey(method);
 	}
 
 	/**
@@ -315,7 +358,8 @@ public final class ScriptImplementationType {
 	 * functional method} of the implemented interface.
 	 *
 	 * <p>
-	 * Such a configuration is fully described by the expression of the functional method.
+	 * Such a configuration is fully described by the expression (or value) of the functional
+	 * method.
 	 * </p>
 	 *
 	 * @param config

@@ -22,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.ScriptImplementations;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -34,6 +35,7 @@ import com.top_logic.layout.ScriptFunction4;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -78,6 +80,15 @@ public class TestTLScriptEditorControls extends TestCase {
 	 */
 	private static final String ACCEPT_FIELD = "accept";
 
+	/**
+	 * Interface with a method implemented by a value and a method implemented by a script.
+	 */
+	public interface Switch {
+		boolean isOn();
+
+		Object compute(Object x);
+	}
+
 	public interface ScriptProperties extends ConfigurationItem {
 		@Name("expr")
 		Expr getExpr();
@@ -99,6 +110,9 @@ public class TestTLScriptEditorControls extends TestCase {
 
 		@Name("filter")
 		PolymorphicConfiguration<Filter<Object>> getFilter();
+
+		@Name("switch")
+		PolymorphicConfiguration<Switch> getSwitch();
 	}
 
 	/**
@@ -178,6 +192,37 @@ public class TestTLScriptEditorControls extends TestCase {
 		FormField accept = find((FormContainer) group.getMember("filter"), ACCEPT_FIELD);
 		assertEquals(Labels.propertyLabel(filter, false), accept.getLabel());
 		assertTrue(accept.getTooltip(), accept.getTooltip().contains(signature("1. Object", "boolean")));
+	}
+
+	/**
+	 * A method without parameters returning a plain value is edited with the editor of its value
+	 * type, a <code>boolean</code> with a checkbox, while the other methods get code editors.
+	 */
+	public void testValueMethodEditor() throws ConfigurationException {
+		ScriptProperties model = read("<a><switch is-on='true' compute='x -> $x'/></a>");
+		FormGroup group = build(model);
+
+		FormContainer container = (FormContainer) group.getMember("switch");
+		FormField on = find(container, "is-on");
+		assertTrue("Checkbox for a boolean value: " + on.getClass(), on instanceof BooleanField);
+		assertEquals(Boolean.TRUE, on.getValue());
+		assertCodeEditor(find(container, "compute"));
+	}
+
+	/**
+	 * A new script configuration leaves a value method empty instead of filling it with a script
+	 * skeleton, the editor shows it with its value editor.
+	 */
+	public void testNewScriptWithValueMethod() throws ConfigurationException {
+		ScriptProperties model = TypedConfiguration.newConfigItem(ScriptProperties.class);
+		PropertyDescriptor property = model.descriptor().getProperty("switch");
+		PolymorphicConfiguration<?> config = ScriptImplementations.getProvider().createScriptConfig(property);
+		assertFalse(config.valueSet(config.descriptor().getProperty("is-on")));
+		assertTrue("Skeleton for the script method.", config.valueSet(config.descriptor().getProperty("compute")));
+
+		model.update(property, config);
+		FormGroup group = build(model);
+		assertTrue(find((FormContainer) group.getMember("switch"), "is-on") instanceof BooleanField);
 	}
 
 	private static String signature(String arguments, String result) {

@@ -7,6 +7,8 @@ package com.top_logic.basic.config;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,6 +18,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.format.BuiltInFormats;
 import com.top_logic.basic.reflect.JavaTypeUtil;
 
 /**
@@ -44,6 +49,13 @@ import com.top_logic.basic.reflect.JavaTypeUtil;
  * covariant return type or bound type arguments) are one property, described by its
  * {@link JavaTypeUtil#isMoreSpecific(Method, Method) most specific} declaration.</li>
  * </ul>
+ *
+ * <p>
+ * A method without parameters whose (resolved) return type has a plain value representation in the
+ * typed configuration is implemented by a value property of that type, see
+ * {@link #getValueType(Type)}. All other methods are implemented by the configuration of an
+ * implementing provider, e.g. a script.
+ * </p>
  *
  * <p>
  * An interface cannot be implemented through properties (the analysis fails with a
@@ -126,6 +138,68 @@ public final class MethodProperty {
 	 */
 	public List<Object> getSignature() {
 		return _signature;
+	}
+
+	/**
+	 * The type of the plain value implementing this method.
+	 *
+	 * <p>
+	 * A method is implemented by a value, if it has no parameters, and its return type, resolved in
+	 * the context of the implemented type, is a {@link #isValueType(Class) value type}. The
+	 * implementation returns the configured value.
+	 * </p>
+	 *
+	 * @param implementedType
+	 *        The implemented interface, possibly parameterized, that determines the return type of
+	 *        a method declared with a type variable. May be <code>null</code>, then a type
+	 *        variable return type is not resolved.
+	 * @return The value type (a primitive type for a method returning a primitive), or
+	 *         <code>null</code>, if the method is not implemented by a value.
+	 */
+	public Class<?> getValueType(Type implementedType) {
+		if (_method.getParameterCount() > 0) {
+			return null;
+		}
+		Type returnType = _method.getGenericReturnType();
+		if (implementedType != null) {
+			returnType = JavaTypeUtil.resolve(implementedType, returnType);
+		}
+		Class<?> rawType;
+		if (returnType instanceof Class<?> type) {
+			rawType = type;
+		} else if (returnType instanceof ParameterizedType parameterized) {
+			rawType = (Class<?>) parameterized.getRawType();
+		} else {
+			// A type variable or generic array.
+			return null;
+		}
+		return isValueType(rawType) ? rawType : null;
+	}
+
+	/**
+	 * Whether a property of the given type holds a plain value in the typed configuration.
+	 *
+	 * <p>
+	 * These are the types the configuration framework represents with a built-in format
+	 * ({@link BuiltInFormats#isPrimitive(Class)}: primitives and their wrappers, {@link String},
+	 * enumerations, {@link Class}, {@link java.util.Date}, and arrays of those), and other types
+	 * that are no {@link ConfigurationItem}s but declare their {@link Format} or {@link Binding}
+	 * themselves, e.g. {@link com.top_logic.basic.util.ResKey}. A property of such a type gets its
+	 * format without annotation of the property.
+	 * </p>
+	 *
+	 * @param type
+	 *        The property type.
+	 * @return Whether the given type is a value type.
+	 */
+	public static boolean isValueType(Class<?> type) {
+		if (type == void.class || ConfigurationItem.class.isAssignableFrom(type)) {
+			return false;
+		}
+		if (BuiltInFormats.isPrimitive(type)) {
+			return true;
+		}
+		return type.isAnnotationPresent(Format.class) || type.isAnnotationPresent(Binding.class);
 	}
 
 	@Override

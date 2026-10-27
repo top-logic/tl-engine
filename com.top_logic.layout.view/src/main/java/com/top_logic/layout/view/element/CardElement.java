@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -46,6 +47,7 @@ public class CardElement extends ContainerElement implements TitledElement {
 	 * Configuration for {@link CardElement}.
 	 */
 	@TagName("card")
+	@TypeIcon("css:bi bi-card-heading")
 	public interface Config extends ContainerElement.Config {
 
 		@Override

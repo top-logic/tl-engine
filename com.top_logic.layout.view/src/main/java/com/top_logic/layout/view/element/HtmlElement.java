@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.exception.I18NException;
@@ -71,6 +72,7 @@ public class HtmlElement implements UIElement {
 	 * Configuration for {@link HtmlElement}.
 	 */
 	@TagName("html")
+	@TypeIcon("css:bi bi-filetype-html")
 	public interface Config extends UIElement.Config, ActionScopeDefinition {
 
 	/** Access to the default methods of this interface for the configuration proxy. */

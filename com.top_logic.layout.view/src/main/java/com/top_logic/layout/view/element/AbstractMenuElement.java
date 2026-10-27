@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -72,6 +73,7 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 	/**
 	 * Configuration for {@link AbstractMenuElement}.
 	 */
+	@TypeIcon("css:bi bi-menu-button-wide")
 	public interface Config extends CommandCarrierElement.Config {
 
 		/** Configuration name for {@link #getInput()}. */

@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
@@ -111,6 +112,7 @@ public class AlertElement implements UIElement {
 	 * Configuration for {@link AlertElement}.
 	 */
 	@TagName("alert")
+	@TypeIcon("css:bi bi-info-circle")
 	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition {
 
 	/** Access to the default methods of this interface for the configuration proxy. */

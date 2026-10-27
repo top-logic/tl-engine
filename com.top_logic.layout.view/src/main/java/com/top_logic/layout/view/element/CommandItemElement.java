@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
@@ -50,6 +51,7 @@ public class CommandItemElement implements SidebarItemElement {
 	 * Configuration for {@link CommandItemElement}.
 	 */
 	@TagName("command-item")
+	@TypeIcon("css:bi bi-lightning")
 	public interface Config extends SidebarItemConfig {
 
 		@Override

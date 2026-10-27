@@ -102,7 +102,7 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 	/**
 	 * Whether this node is the view of a file, not part of the file of its parent.
 	 */
-	private boolean isViewFileRoot() {
+	public boolean isViewFileRoot() {
 		String sourceFile = getSourceFile();
 		DesignTreeNode parent = getParent();
 		return _config instanceof ViewElement.Config && sourceFile != null

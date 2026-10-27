@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Id;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
@@ -41,6 +42,7 @@ public interface ViewCommand {
 	 * Configuration for {@link ViewCommand}.
 	 */
 	@Id(ViewCommand.class)
+	@TypeIcon("css:bi bi-lightning")
 	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig, NamedInputs,
 			ActionScopeDefinition {
 

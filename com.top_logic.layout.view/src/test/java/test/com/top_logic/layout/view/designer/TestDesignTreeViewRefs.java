@@ -85,7 +85,7 @@ public class TestDesignTreeViewRefs extends TestCase {
 		ViewLinkDesignTreeNode link = link(ref.getChildren().get(0), "a-child.view.xml");
 		assertEquals("The link belongs to the referring view.", path("a-root.view.xml"), link.getSourceFile());
 		assertTrue("A link is a leaf.", link.getChildren().isEmpty());
-		assertEquals("→ a-child.view.xml", link.getDisplayLabel());
+		assertEquals("a-child.view.xml", link.getDisplayLabel());
 		assertNull("A link carries no configuration.", DesignTreeNodes.configOf(link));
 		assertEquals("The view of the root file is named by the file.", "a-root.view.xml", root.getLabel());
 		assertNull("The reference is no child container.", ref.getChildContainer());

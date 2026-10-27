@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
@@ -86,6 +87,7 @@ public class TileStackElement implements UIElement {
 	 * Configuration for {@link TileStackElement}.
 	 */
 	@TagName("tile-stack")
+	@TypeIcon("css:bi bi-stack")
 	public interface Config extends UIElement.Config {
 
 		@Override

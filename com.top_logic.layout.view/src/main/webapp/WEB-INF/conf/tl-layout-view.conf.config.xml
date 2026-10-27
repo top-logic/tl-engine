@@ -21,6 +21,17 @@
 				</security-config>
 			</instance>
 		</config>
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<stylesheet name="tl-view-designer-css"
+						layer="tl"
+						requires="tl-design-system-components"
+						resource="/style/tlViewDesigner.css"
+					/>
+				</resources>
+			</instance>
+		</config>
 		<!-- The entries of the developer documentation, shown in its documentation window. -->
 		<config service-class="com.top_logic.layout.provider.LabelProviderService">
 			<instance>

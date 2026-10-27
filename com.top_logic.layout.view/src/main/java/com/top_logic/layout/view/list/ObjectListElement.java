@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -205,6 +206,7 @@ public class ObjectListElement implements UIElement {
 	 * Configuration for {@link ObjectListElement}.
 	 */
 	@TagName("object-list")
+	@TypeIcon("css:bi bi-list-ul")
 	public interface Config extends UIElement.Config, Inputs, GridOptions, ElementAsConfig {
 
 		/** Configuration name for {@link #getLayout()}. */

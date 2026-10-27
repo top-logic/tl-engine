@@ -9,6 +9,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.sidebar.HeaderItem;
@@ -33,6 +34,7 @@ public class HeaderItemElement implements SidebarItemElement {
 	 * Configuration for {@link HeaderItemElement}.
 	 */
 	@TagName("header-item")
+	@TypeIcon("css:bi bi-type-h1")
 	public interface Config extends SidebarItemConfig {
 
 		@Override

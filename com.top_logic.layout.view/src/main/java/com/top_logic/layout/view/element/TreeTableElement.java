@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
@@ -89,6 +90,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	 * Configuration for {@link TreeTableElement}.
 	 */
 	@TagName("tree-table")
+	@TypeIcon("css:bi bi-list-nested")
 	public interface Config extends AbstractTableElement.Config, TreeStructureConfig, RowClassConfig {
 
 		/** Access to the default methods of this interface for the configuration proxy. */

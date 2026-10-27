@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
@@ -46,6 +47,7 @@ public class TabBarElement implements UIElement {
 	 * Configuration for {@link TabBarElement}.
 	 */
 	@TagName("tab-bar")
+	@TypeIcon("css:bi bi-signpost-split")
 	public interface Config extends UIElement.Config {
 
 		@Override

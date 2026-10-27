@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.configedit.ConfigTypeChoice;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
@@ -30,6 +31,7 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
+import com.top_logic.layout.react.control.table.ReactResourceCellControl;
 import com.top_logic.layout.react.control.tree.ReactTreeControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
@@ -72,7 +74,7 @@ import com.top_logic.util.Resources;
  * The rows follow the {@link DesignTreeDisplay}: a property group with a single entry shares the row
  * of that entry. The row stands for the entry - selecting it selects the entry, and selecting the
  * entry reveals the row - and its context menu offers the commands of the group below those of the
- * entry.
+ * entry. Label, icon, style and tooltip of a row come from the {@link DesignTreeNodeResourceProvider}.
  * </p>
  */
 public class DesignerTreeElement implements UIElement {
@@ -142,10 +144,10 @@ public class DesignerTreeElement implements UIElement {
 		// instead of a captured local, which would go stale after a rebuild.
 		DefaultTreeUINodeModel[] currentModel = { treeModel };
 
-		// 4. Create the ReactTreeControl with a designer-specific label provider that renders each
-		//    DesignTreeNode's display label and JavaDoc tooltip. The provider needs the control it
-		//    renders into to refresh a node whose label changed, so it is handed a holder that is
-		//    filled in right after construction.
+		// 4. Create the ReactTreeControl with a control provider that renders each DesignTreeNode
+		//    with the label, icon, style and JavaDoc tooltip of its row. The provider needs the
+		//    control it renders into to refresh a node whose label changed, so it is handed a holder
+		//    that is filled in right after construction.
 		ReactTreeControl[] treeRef = new ReactTreeControl[1];
 		ReactTreeControl treeControl = new ReactTreeControl(context, treeModel, selectionModel,
 			designNodeControlProvider(treeRef, currentModel));
@@ -389,13 +391,21 @@ public class DesignerTreeElement implements UIElement {
 		List<CommandModel> typeCommands = new ArrayList<>(choices.size());
 		for (ConfigTypeChoice.Choice choice : choices) {
 			typeCommands.add(SimpleCommandModel.create(null, choice.label(),
-				ctx -> createChild(parent, choice.option(), rebuild)));
+				ctx -> createChild(parent, choice.option(), rebuild))
+				.setImage(typeIcon(parent, choice)));
 		}
 		opener.open(menuPosition[0], menuPosition[1],
 			List.of(new Targeted(new ContextMenuContribution(value -> {
 				// The commands carry their target, nothing to publish.
 			}, typeCommands), parent)));
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The icon of an element of the given type choice, as the design tree shows it once added.
+	 */
+	private static ThemeImage typeIcon(DesignTreeNode parent, ConfigTypeChoice.Choice choice) {
+		return DesignTreeNodeResourceProvider.icon(parent.getChildContainer().newElement(choice.option()));
 	}
 
 	private HandlerResult createChild(DesignTreeNode parent, Object typeOption,
@@ -440,20 +450,20 @@ public class DesignerTreeElement implements UIElement {
 	}
 
 	/**
-	 * Provider that renders a {@link DesignTreeNode} as a {@link ReactTextControl}, using the
-	 * {@link DesignTreeDisplay#displayLabel(DesignTreeNode) label} and
-	 * {@link DesignTreeDisplay#tooltipHtml(DesignTreeNode) tooltip HTML} of its row.
+	 * Provider that renders a {@link DesignTreeNode} as a {@link ReactResourceCellControl} displaying
+	 * the label, icon, style and tooltip the {@link DesignTreeNodeResourceProvider} gives its row.
+	 *
+	 * <p>
+	 * The display is no link: a click on a row selects its node.
+	 * </p>
 	 */
 	private static ReactControlProvider designNodeControlProvider(ReactTreeControl[] treeRef,
 			DefaultTreeUINodeModel[] currentModel) {
 		return (context, model) -> {
 			if (model instanceof DesignTreeNode designNode) {
-				String label = DesignTreeDisplay.displayLabel(designNode);
-				ReactTextControl control = new ReactTextControl(context, label);
-				String tooltip = DesignTreeDisplay.tooltipHtml(designNode);
-				if (tooltip != null && !tooltip.isEmpty()) {
-					control.setTooltip(tooltip, label, false);
-				}
+				ReactResourceCellControl control =
+					new ReactResourceCellControl(context, designNode, DesignTreeNodeResourceProvider.INSTANCE, true,
+						true, false);
 
 				// Re-render the node when an identifying property is edited in the configuration
 				// form, so that the tree does not keep showing the previous label. The tree caches

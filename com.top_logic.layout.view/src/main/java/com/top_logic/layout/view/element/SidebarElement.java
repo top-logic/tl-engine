@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
@@ -76,6 +77,7 @@ public class SidebarElement implements UIElement {
 	 * Configuration for {@link SidebarElement}.
 	 */
 	@TagName("sidebar")
+	@TypeIcon("css:bi bi-layout-sidebar")
 	public interface Config extends UIElement.Config {
 
 		@Override
@@ -323,6 +325,7 @@ public class SidebarElement implements UIElement {
 	 * A navigation item with content.
 	 */
 	@TagName("nav-item")
+	@TypeIcon("css:bi bi-link-45deg")
 	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl, WithFinalTitle {
 
 		@Override
@@ -418,6 +421,7 @@ public class SidebarElement implements UIElement {
 	 * A separator line between sidebar items.
 	 */
 	@TagName("separator")
+	@TypeIcon("css:bi bi-dash-lg")
 	public interface SeparatorConfig extends SidebarItemConfig {
 
 		@Override

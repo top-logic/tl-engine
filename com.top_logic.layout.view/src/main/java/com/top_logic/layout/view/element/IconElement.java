@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
@@ -34,6 +35,7 @@ public class IconElement implements UIElement {
 	 * Configuration for {@link IconElement}.
 	 */
 	@TagName("theme-icon")
+	@TypeIcon("css:bi bi-star")
 	public interface Config extends UIElement.Config {
 
 		/** Configuration name for {@link #getImage()}. */

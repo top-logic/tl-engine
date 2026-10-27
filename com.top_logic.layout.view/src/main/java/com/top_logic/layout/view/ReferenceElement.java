@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -56,6 +57,7 @@ public class ReferenceElement implements UIElement {
 	 * Configuration for {@link ReferenceElement}.
 	 */
 	@TagName("view-ref")
+	@TypeIcon("css:bi bi-box-arrow-in-down-right")
 	public interface Config extends UIElement.Config {
 
 		@Override

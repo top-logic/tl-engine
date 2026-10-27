@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
@@ -74,6 +75,7 @@ public class OpenDialogAction extends InterruptibleViewAction {
 	 * Configuration for {@link OpenDialogAction}.
 	 */
 	@TagName("open-dialog")
+	@TypeIcon("css:bi bi-window-plus")
 	public interface Config extends PolymorphicConfiguration<OpenDialogAction>, WithValueArgument {
 
 		@Override

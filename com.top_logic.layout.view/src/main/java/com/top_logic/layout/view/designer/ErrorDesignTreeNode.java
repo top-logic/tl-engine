@@ -5,6 +5,10 @@
  */
 package com.top_logic.layout.view.designer;
 
+import com.top_logic.basic.xml.TagUtil;
+import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.util.Resources;
+
 /**
  * Synthetic design-tree node standing in for a referenced view that could not be loaded.
  *
@@ -17,9 +21,6 @@ package com.top_logic.layout.view.designer;
  * </p>
  */
 public class ErrorDesignTreeNode extends DesignTreeNode {
-
-	/** Warning sign (U+26A0) prefixed to the label to mark the node as an error. */
-	private static final String WARNING_SIGN = "\u26A0";
 
 	private final String _viewName;
 
@@ -48,15 +49,14 @@ public class ErrorDesignTreeNode extends DesignTreeNode {
 
 	@Override
 	public String getDisplayLabel() {
-		return WARNING_SIGN + " Invalid view: " + _viewName;
+		// The icon of the row marks the node as an error, see DesignNodeKind#ERROR.
+		return Resources.getInstance().getString(I18NConstants.DESIGNER_INVALID_VIEW__PATH.fill(_viewName));
 	}
 
 	@Override
 	public String getTooltipHtml() {
-		return "Failed to load referenced view <code>" + escape(_viewName) + "</code>: " + escape(_message);
+		return TagUtil.encodeXML(Resources.getInstance()
+			.getString(I18NConstants.DESIGNER_INVALID_VIEW__PATH_DETAILS.fill(_viewName, _message)));
 	}
 
-	private static String escape(String text) {
-		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
-	}
 }

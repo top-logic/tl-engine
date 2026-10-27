@@ -30,6 +30,7 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
+import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
@@ -90,6 +91,7 @@ public class FormElement extends ContainerElement {
 	 * Configuration for {@link FormElement}.
 	 */
 	@TagName("form")
+	@TypeIcon("css:bi bi-ui-checks")
 	public interface Config extends ContainerElement.Config, FormLayoutOptions, ActionScopeDefinition {
 
 	/** Access to the default methods of this interface for the configuration proxy. */

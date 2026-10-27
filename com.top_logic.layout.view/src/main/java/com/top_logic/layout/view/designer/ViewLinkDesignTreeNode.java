@@ -15,15 +15,13 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * A design tree shows the content of a single view file, see {@link DesignTreeBuilder}. A
- * reference to another view file is shown as this node, which names the referenced file. Selecting
+ * reference to another view file is shown as this node, which is labelled with the path of the
+ * referenced file and marked as a link by its icon, see {@link DesignNodeKind#LINK}. Selecting
  * the node opens that file in the designer, see {@link DesignSession#open(String)}. The node
  * carries no {@link com.top_logic.basic.config.ConfigurationItem}, so it is never edited or saved.
  * </p>
  */
 public class ViewLinkDesignTreeNode extends DesignTreeNode {
-
-	/** Arrow (U+2192) prefixed to the label to mark the node as a link. */
-	private static final String ARROW = "→";
 
 	private final ViewRef _target;
 
@@ -58,11 +56,6 @@ public class ViewLinkDesignTreeNode extends DesignTreeNode {
 	@Override
 	public String getTagName() {
 		return _target.getPath();
-	}
-
-	@Override
-	public String getDisplayLabel() {
-		return ARROW + " " + _target.getPath();
 	}
 
 	@Override
